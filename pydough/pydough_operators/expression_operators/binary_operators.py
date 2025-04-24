@@ -36,6 +36,9 @@ class BinOp(Enum):
     BXR = "^"
 
 
+BinOp.__members__.items()
+
+
 class BinaryOperator(PyDoughExpressionOperator):
     """
     Implementation class for PyDough operators that return an expression

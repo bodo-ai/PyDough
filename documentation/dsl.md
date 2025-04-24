@@ -1282,24 +1282,17 @@ Addresses.CALCULATE(
 <!-- TOC --><a name="best"></a>
 ### BEST
 
-> [!IMPORTANT]
-> This feature has not yet been implemented in PyDough
-
-PyDough supports identifying a specific record from a sub-collection that is optimal with regards to some metric, per-record of the current collection. This is done by using `BEST` instead of directly accessing the sub-collection. The first argument to `BEST` is the sub-collection to be accessed, and the second is a `by` argument used to find the optimal record of the sub-collection. The rules for the `by` argument are the same as `PREV`, `NEXT`, `TOP_K`, etc.: it must be either a single collation term, or an iterable of 1+ collation terms.
-
-A call to `BEST` can either be done with `.` syntax, to step from a parent collection to a child collection, or can be a freestanding accessor used inside of a collection operator, just like `BACK`, `PREV` or `NEXT`. For example, both `Parent.BEST(child, by=...)` and `Parent(x=BEST(child, by=...).y)` are allowed.
-
-The original ancestry of the sub-collection is intact, so any down-streaming is preserved.
+PyDough supports selecting the optimal record from a collection based on a given metric, evaluated per-record of an ancestor collection. The `BEST` method is called on the collection with a `by` argument used to define the metric(s) for finding the optimal record of the sub-collection. The `by` argument follows the same rules as `PREV`, `NEXT`, `TOP_K`, etc.: it must be either a single collation term, or an iterable of 1+ collation terms. The ancestor that the optimal record is found with regards to is defined via the same optional `per` argument as window functions: a string referring to the name of the ancestor in question (absent if the optimal record globally is to be found instead).
 
 Additional keyword arguments can be supplied to `BEST` that change its behavior:
 - `allow_ties` (default=False): if True, changes the behavior to keep all records of the sub-collection that share the optimal values of the collation terms. If `allow_ties` is True, the `BEST` clause is no longer singular.
 - `n_best=True`(defaults=1): if an integer greater than 1, changes the behavior to keep the top `n_best` values of the sub-collection for each record of the parent collection (fewer if `n_best` records of the sub-collection do not exist). If `n_best` is greater than 1, the `BEST` clause is no longer singular. NOTE: `n_best` cannot be greater than 1 at the same time that `allow_ties` is True.
 
-**Good Example #1**: Find the package id & zip code the package was shipped to for every package that was the first-ever purchase for the customer.
+**Good Example #1**: Find the package id & zip code the package was shipped to for every package that was the first-ever purchase for its customer.
 
 ```py
 %%pydough
-Customers.BEST(packages, by=order_date.ASC()).CALCULATE(
+Customers.packages.BEST(by=order_date.ASC(), per="Customers").CALCULATE(
     package_id,
     shipping_address.zip_code
 )
@@ -1311,25 +1304,25 @@ Customers.BEST(packages, by=order_date.ASC()).CALCULATE(
 %%pydough
 Customers.CALCULATE(
     ssn,
-    most_recent_cost=BEST(packages, by=order_date.DESC()).package_cost
+    most_recent_cost=packages.BEST(by=order_date.DESC(), per="Customers").package_cost
 )
 ```
 
-**Good Example #3**: Find the address in the state of New York with the most occupants, ties broken by address id. Note: the `GRAPH.` prefix is optional in this case, since it is implied if there is no prefix to the `BEST` call.
+**Good Example #3**: Find the address in the state of New York with the most occupants, ties broken by address id. Note that since `per` is not provided, the best record globally is found.
 
 ```py
 %%pydough
 addr_info = Addresses.WHERE(
     state == "NY"
 ).CALCULATE(address_id, n_occupants=COUNT(current_occupants))
-GRAPH.BEST(addr_info, by=(n_occupants.DESC(), address_id.ASC()))
+addr_info.BEST(by=(n_occupants.DESC(), address_id.ASC()))
 ```
 
 **Good Example #4**: For each customer, find the number of people currently living in the address that they most recently shipped a package to.
 
 ```py
 %%pydough
-most_recent_package = BEST(packages, by=order_date.DESC())
+most_recent_package = packages.BEST(by=order_date.DESC(), per="Customers")
 Customers.CALCULATE(
     ssn,
     n_occ_most_recent_addr=COUNT(most_recent_package.shipping_address.current_occupants)
@@ -1344,9 +1337,11 @@ Addresses.WHERE(HAS(current_occupants)).CALCULATE(
     city,
     state,
     n_occupants=COUNT(current_occupants),
+).current_occupants.CALCULATE(
+    n_orders=COUNT(packages)
 ).BEST(
-    current_occupants.CALCULATE(n_orders=COUNT(packages)),
-    by=(n_orders.DESC(), ssn.ASC())
+    by=(n_orders.DESC(), ssn.ASC()),
+    per="Addresses"
 ).CALCULATE(
     first_name,
     last_name,
@@ -1361,7 +1356,7 @@ Addresses.WHERE(HAS(current_occupants)).CALCULATE(
 
 ```py
 %%pydough
-five_most_recent = BEST(packages, by=order_date.DESC(), n_best=5)
+five_most_recent = packages.BEST(per="People", by=order_date.DESC(), n_best=5)
 People.CALCULATE(
     ssn,
     value_most_recent_5=SUM(five_most_recent.package_cost)
@@ -1373,7 +1368,7 @@ People.CALCULATE(
 ```py
 %%pydough
 packages_from_occupants = current_occupants.CALCULATE(email).packages
-most_recent_package = BEST(packages_from_occupants, by=order_date.DESC())
+most_recent_package = packages_from_occupants.BEST(by=order_date.DESC(), per="Adresses")
 Addresses.CALCULATE(address_id).most_recent_package.CALCULATE(
     address_id,
     email,
@@ -1382,62 +1377,72 @@ Addresses.CALCULATE(address_id).most_recent_package.CALCULATE(
 )
 ```
 
+**Good Example #8**: Find all addresses where the most recently purchased package by any current occupant of the address was sent to the same address.
+
+```py
+%%pydough
+most_recent_package = current_occupants.packages.BEST(per="Addresses", by=order_date.DESC())
+Addresses.WHERE(most_recent_package.shipping_address.address_id == address_id)
+```
+
+**Good Example #9**: Find each person whose most recently purchased package was shipped to their current address.
+
+```py
+%%pydough
+most_recent_package = packages.BEST(per="current_occupants", by=order_date.DESC())
+people_info = Addresses.CALCULATE(home_id=address_id).current_occupants
+people_info.WHERE(most_recent_package.shipping_address.address_id == home_id)
+```
+
 **Bad Example #1**: For each person find their best email. This is invalid because `email` is not a sub-collection of `People` (it is a scalar attribute, so there is only 1 `email` per-person).
 
 ```py
 %%pydough
-People.CALCULATE(first_name, BEST(email, by=birth_date.DESC()))
+People.CALCULATE(first_name, email.BEST(by=birth_date.DESC()))
 ```
 
 **Bad Example #2**: For each person find their best package. This is invalid because the `by` argument is missing.
 
 ```py
 %%pydough
-People.BEST(packages)
+People.packages.BEST(per="People")
 ```
 
-**Bad Example #3**: For each person find their best package. This is invalid because the: `by` argument is not a collation
+**Bad Example #3**: For each person find their best package. This is invalid because the `by` argument is empty
 
 ```py
 %%pydough
-People.BEST(packages, by=order_date)
+People.packages.BEST(by=(), per="People")
 ```
 
-**Bad Example #4**: For each person find their best package. This is invalid because the `by` argument is empty
+**Bad Example #4**: For each person find the 5 most recent packages they have ordered, allowing ties. This is invalid because `n_best` is greater than 1 at the same time that `allow_ties` is True.
 
 ```py
 %%pydough
-People.BEST(packages, by=())
+People.packages.BEST(by=order_date.DESC(), per="People", n_best=5, allow_ties=True)
 ```
 
-**Bad Example #5**: For each person find the 5 most recent packages they have ordered, allowing ties. This is invalid because `n_best` is greater than 1 at the same time that `allow_ties` is True.
+**Bad Example #5**: For each person, find the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
 
 ```py
 %%pydough
-People.BEST(packages, by=order_date.DESC(), n_best=5, allow_ties=True)
-```
-
-**Bad Example #6**: For each person, find the package cost of their 10 most recent packages. This is invalid because `n_best` is greater than 1, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
-
-```py
-%%pydough
-best_packages = BEST(packages, by=order_date.DESC(), n_best=10)
+best_packages = packages.BEST(by=order_date.DESC(), per="People", n_best=10)
 People.CALCULATE(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #7**: For each person, find the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
+**Bad Example #6**: For each person, find the package cost of their most expensive package(s), allowing ties. This is invalid because `allow_ties` is True, which means that the `BEST` clause is non-singular so its terms cannot be accessed in the `CALCULATE` without aggregating.
 
 ```py
 %%pydough
-best_packages = BEST(packages, by=package_cost.DESC(), allow_ties=True)
+best_packages = packages.BEST(by=package_cost.DESC(), per="People", allow_ties=True)
 People.CALCULATE(first_name, best_cost=best_packages.package_cost)
 ```
 
-**Bad Example #8**: For each address, find the package most recently ordered by one of the current occupants of that address, including the address id of the address. This is invalid because `address_id` is used despite not being down-streamed from `Addressed`.
+**Bad Example #7**: For each address, find the package most recently ordered by one of the current occupants of that address, including the address id of the address. This is invalid because `address_id` is used despite not being down-streamed from `Addresses`.
 
 ```py
 %%pydough
-most_recent_package = BEST(current_occupants.packages, by=order_date.DESC())
+most_recent_package = current_occupants.packages.BEST(by=order_date.DESC(), per="Addresses")
 Addresses.most_recent_package.CALCULATE(
     address_id=address_id,
     package_id=package_id,
@@ -1445,11 +1450,18 @@ Addresses.most_recent_package.CALCULATE(
 )
 ```
 
-**Bad Example #9**: For each address find the oldest occupant. This is invalid because the `BEST` clause is placed in the `CALCULATE` without accessing any of its attributes.
+**Bad Example #8**: For each address find the oldest occupant. This is invalid because the `BEST` clause is placed in the `CALCULATE` without accessing any of its attributes.
 
 ```py
 %%pydough
-Addresses.CALCULATE(address_id, oldest_occupant=BEST(current_occupants, by=birth_date.ASC()))
+Addresses.CALCULATE(address_id, oldest_occupant=current_occupants.BEST(by=birth_date.ASC(), per="Addresses"))
+```
+
+**Bad Example #9**: For each person find their most recent package. This is invalid because the `per` argument is not the name of one of the ancestors of `packages`.
+
+```py
+%%pydough
+People.packages.BEST(by=order_date.DESC(), per="packages")
 ```
 
 <!-- TOC --><a name="induced-properties"></a>

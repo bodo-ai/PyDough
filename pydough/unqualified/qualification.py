@@ -21,6 +21,7 @@ from pydough.qdag import (
     ChildReferenceExpression,
     CollationExpression,
     ColumnProperty,
+    ExpressionFunctionCall,
     GlobalContext,
     Literal,
     OrderBy,
@@ -33,18 +34,21 @@ from pydough.qdag import (
     SubCollection,
     TopK,
     Where,
+    WindowCall,
 )
 from pydough.types import PyDoughType
 
 from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
     UnqualifiedAccess,
+    UnqualifiedBest,
     UnqualifiedBinaryOperation,
     UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedLiteral,
     UnqualifiedNode,
     UnqualifiedOperation,
+    UnqualifiedOperator,
     UnqualifiedOrderBy,
     UnqualifiedPartition,
     UnqualifiedRoot,
@@ -1116,6 +1120,84 @@ class Qualifier:
         )
         return self.builder.build_singular(answer)
 
+    def qualify_best(
+        self,
+        unqualified: UnqualifiedBest,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+    ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedBEST` into a PyDoughCollectionQDAG node by
+        expanding it into a WHERE call with RANKING, possibly followed by a
+        SINGULAR call.
+
+        Args:
+            `unqualified`: the UnqualifiedBest instance to be transformed.
+            `context`: the collection QDAG whose context the singular is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+
+        Returns:
+            The PyDough QDAG object for the qualified singular node.
+        """
+
+        unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
+        by: Iterable[UnqualifiedNode] = unqualified._parcel[1]
+        per: str | None = unqualified._parcel[2]
+        allow_ties: bool = unqualified._parcel[3]
+        n_best: int = unqualified._parcel[4]
+
+        # Qualify the parent context, then qualify the child data with regards
+        # to the parent.
+        qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
+            unqualified_parent, context, is_child
+        )
+
+        # Generate the ranking/comparison call to append an appropriate WHERE
+        # clause to the end of the result.
+        kwargs: dict[str, object] = {"by": by, "allow_ties": allow_ties}
+        if per:
+            kwargs["per"] = per
+        rank: UnqualifiedNode = UnqualifiedOperator("RANKING")(**kwargs)
+        unqualified_cond: UnqualifiedNode = (
+            (rank == n_best) if n_best == 1 else (rank <= n_best)
+        )
+        children: list[PyDoughCollectionQDAG] = []
+        qualified_cond: PyDoughExpressionQDAG = self.qualify_expression(
+            unqualified_cond, qualified_parent, children
+        )
+
+        # Build the final expanded window-based filter
+        qualified_child: PyDoughCollectionQDAG = self.builder.build_where(
+            qualified_parent, children
+        ).with_condition(qualified_cond)
+
+        # Extract the `levels` argument from the condition
+        assert isinstance(qualified_cond, ExpressionFunctionCall)
+        rank_call = qualified_cond.args[0]
+        assert isinstance(rank_call, WindowCall)
+        levels: int | None = rank_call.levels
+
+        # Add `SINGULAR` if applicable (there is a levels argument and that
+        # ancestor either is the context or is singular with regards to it).
+        if n_best == 1 and not allow_ties and is_child:
+            base: PyDoughCollectionQDAG = qualified_parent
+            if levels is not None:
+                for _ in range(levels):
+                    assert base.ancestor_context is not None
+                    base = base.ancestor_context
+                base = base.starting_predecessor
+                relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
+                if (
+                    base == relative_ancestor
+                    or base.is_singular(relative_ancestor)
+                    or relative_ancestor.is_singular(base)
+                ):
+                    qualified_child = self.builder.build_singular(qualified_child)
+
+        return qualified_child
+
     def qualify_node(
         self,
         unqualified: UnqualifiedNode,
@@ -1175,6 +1257,8 @@ class Qualifier:
                 answer = self.qualify_collation(unqualified, context, children)
             case UnqualifiedSingular():
                 answer = self.qualify_singular(unqualified, context, is_child)
+            case UnqualifiedBest():
+                answer = self.qualify_best(unqualified, context, is_child)
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"

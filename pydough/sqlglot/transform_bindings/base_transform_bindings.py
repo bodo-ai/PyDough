@@ -224,6 +224,12 @@ class BaseTransformBindings:
                 return self.convert_dayofweek(args, types)
             case pydop.DAYNAME:
                 return self.convert_dayname(args, types)
+            case pydop.INTEGER:
+                return self.convert_integer(args, types)
+            case pydop.FLOAT:
+                return self.convert_float(args, types)
+            case pydop.STRING:
+                return self.convert_string(args, types)
             case pydop.SMALLEST:
                 return self.convert_smallest_or_largest(args, types, False)
             case pydop.LARGEST:
@@ -1387,6 +1393,71 @@ class BaseTransformBindings:
             )
         answer = apply_parens(answer)
         return answer
+
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `INTEGER(X)`.
+
+        Args:
+            `args`: The operands to `INTEGER`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `INTEGER`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `INTEGER(X)`.
+        """
+        return sqlglot_expressions.Cast(
+            this=args[0], to=sqlglot_expressions.DataType.build("BIGINT")
+        )
+
+    def convert_float(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `FLOAT(X)`.
+
+        Args:
+            `args`: The operands to `FLOAT`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `FLOAT`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `FLOAT(X)`.
+        """
+        return sqlglot_expressions.Cast(
+            this=args[0], to=sqlglot_expressions.DataType.build("DOUBLE")
+        )
+
+    def convert_string(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `STRING(X)`.
+
+        Args:
+            `args`: The operands to `STRING`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `STRING`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `STRING(X)`.
+        """
+        if len(args) == 1:
+            return sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("TEXT")
+            )
+        else:
+            assert len(args) == 2
+            if (
+                not isinstance(args[1], sqlglot_expressions.Literal)
+                or not args[1].is_string
+            ):
+                raise ValueError(
+                    f"STRING(X,Y) requires the second argument to be a string date format literal, but received {args[1]}"
+                )
+            return sqlglot_expressions.TimeToStr(this=args[0], format=args[1])
 
     def convert_smallest_or_largest(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
