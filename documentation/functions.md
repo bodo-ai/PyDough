@@ -1035,6 +1035,8 @@ The `RELSUM` function returns the sum of multiple rows of a singular expression 
 
 - `expression`: the singular expression to take the sum of across multiple rows.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the sum of all of the data in the context, returns the cumulative sum of all rows up to and including the current row when sorted according to the keys in the `by` argument.
 
 For example:
 
@@ -1046,6 +1048,10 @@ Customers.CALCULATE(ratio=acctbal / RELSUM(acctbal))
 # Finds the ratio between each customer's account balance and the sum of all
 # all customers' account balances within that nation.
 Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, per="Nations"))
+
+# Finds, for each customer, the wealth of that customer combined with all
+# poorer customers.
+Customers.CALCULATE(cumulative_wealth=RELSUM(acctbal, by=acctbal.ASC(), cumulative=True))
 ```
 
 
@@ -1057,6 +1063,8 @@ The `RELAVG` function returns the average of multiple rows of a singular express
 
 - `expression`: the singular expression to take the average of across multiple rows.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the average of all of the data in the context, returns the cumulative average of all rows up to and including the current row when sorted according to the keys in the `by` argument.
 
 ```py
 # Finds all customers whose account balance is above the global average of all
@@ -1066,6 +1074,10 @@ Customers.WHERE(acctbal > RELAVG(acctbal))
 # Finds all customers whose account balance is above the average of all
 # customers' account balances within that nation.
 Nations.customers.WHERE(acctbal > RELAVG(acctbal, per="Nations"))
+
+# Finds the cumulative average of the total price of orders when sorted by
+# order date (breaking ties by the order key).
+Orders.CALCULATE(average_price_so_far=RELAVG(total_price, by=(order_date.ASC(), key.ASC()), cumulative=True))
 ```
 
 
@@ -1077,6 +1089,8 @@ The `RELCOUNT` function returns the number of non-null records in multiple rows 
 
 - `expression`: the singular expression to count the number of non-null entries across multiple rows.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the count of all of the data in the context, returns the cumulative count of all rows up to and including the current row when sorted according to the keys in the `by` argument.
 
 
 ```py
@@ -1087,6 +1101,10 @@ Customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
 # Divides each customer's account balance by the total number of positive
 # account balances in the same nation.
 Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0), per="Nations"))
+
+# For each customer, count how many customers are poorer than them but are not
+# in debt.
+Customers.CALCULATE(n_poorer_non_debt=RELCOUNT(KEEP_IF(acctbal, acctbal >= 0), by=(acctbal.ASC()), cumulative=True) - (acctbal >= 0))
 ```
 
 
@@ -1097,6 +1115,8 @@ Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal 
 The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection rows per some ancestor collection. The arguments:
 
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the number rows in the context, returns the cumulative number of rows up to and including the current row when sorted according to the keys in the `by` argument.
 
 
 ```py
@@ -1107,6 +1127,9 @@ Customers.CALCULATE(ratio = acctbal / RELSIZE())
 # Divides each customer's account balance by the
 # number of total customers in that nation.
 Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
+
+# For each customer, returns the number of customers poorer than them.
+Customers.CALCULATE(customers_poorer=RELSIZE(by=(acctbal.ASC()), cumulative=True) - 1)
 ```
 
 

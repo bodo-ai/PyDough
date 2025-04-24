@@ -29,6 +29,8 @@ from bad_pydough_functions import (
     bad_window_2,
     bad_window_3,
     bad_window_4,
+    bad_window_5,
+    bad_window_6,
 )
 from simple_pydough_functions import (
     abs_round_magic_method,
@@ -606,6 +608,16 @@ def test_init_pydough_context(
             bad_window_4,
             "`n_buckets` argument must be a positive integer",
             id="bad_window_4",
+        ),
+        pytest.param(
+            bad_window_5,
+            "The `cumulative` argument to `RELSUM` must be True when the `by` argument is provided",
+            id="bad_window_5",
+        ),
+        pytest.param(
+            bad_window_6,
+            "The `by` argument to `RELAVG` must be provided when the `cumulative` argument is True",
+            id="bad_window_6",
         ),
         pytest.param(
             bad_floor,

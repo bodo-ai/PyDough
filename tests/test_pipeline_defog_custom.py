@@ -495,7 +495,8 @@ def get_day_of_week(
                         ],
                     }
                 ),
-            )
+            ),
+            id="cumulative_stock_analysis",
         ),
         pytest.param(
             (
@@ -519,7 +520,8 @@ def get_day_of_week(
                         ],
                     }
                 ),
-            )
+            ),
+            id="time_threshold_reached",
         ),
         pytest.param(
             (
