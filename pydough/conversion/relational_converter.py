@@ -283,7 +283,7 @@ class RelTranslation:
         rhs_alias: str | None,
     ) -> RelationalExpression:
         """
-        Converts a the condition for a non-equijoin from a hybrid expression
+        Converts the condition for a non-equijoin from a hybrid expression
         into a relational expression. The columns from the RHS are assumed to
         be ordinary references/back-references within the condition expr, while
         columns from the LHS are assumed to be `HybridSidedRefExpr`, denoting
