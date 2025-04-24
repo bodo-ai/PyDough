@@ -8,7 +8,6 @@ from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
-from .relational_visitor import RelationalVisitor
 from .single_relational import SingleRelational
 
 
@@ -47,7 +46,7 @@ class Filter(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"FILTER(condition={self.condition.to_string(compact)}, columns={self.make_column_string(self.columns, compact)})"
 
-    def accept(self, visitor: RelationalVisitor) -> None:
+    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_filter(self)
 
     def node_copy(

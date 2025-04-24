@@ -25,6 +25,7 @@ from bad_pydough_functions import (
 )
 from simple_pydough_functions import (
     agg_partition,
+    avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
     customer_largest_order_deltas,
@@ -43,8 +44,10 @@ from simple_pydough_functions import (
     nation_acctbal_breakdown,
     nation_best_order,
     nation_window_aggs,
+    odate_and_rdate_avggap,
     order_info_per_priority,
     orders_versus_first_orders,
+    part_reduced_size,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
     percentile_nations,
@@ -62,8 +65,10 @@ from simple_pydough_functions import (
     regional_suppliers_percentile,
     richest_customer_per_region,
     simple_filter_top_five,
+    simple_int_float_string_cast,
     simple_scan,
     simple_scan_top_five,
+    simple_smallest_or_largest,
     singular1,
     singular2,
     singular3,
@@ -71,6 +76,7 @@ from simple_pydough_functions import (
     singular5,
     singular6,
     singular7,
+    string_format_specifiers_sqlite,
     supplier_best_part,
     supplier_pct_national_qty,
     suppliers_bal_diffs,
@@ -84,7 +90,7 @@ from test_utils import (
     graph_fetcher,
 )
 
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
@@ -1458,6 +1464,171 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
+                simple_int_float_string_cast,
+                None,
+                "simple_int_float_string_cast",
+                lambda: pd.DataFrame(
+                    {
+                        "i1": [1],
+                        "i2": [2],
+                        "i3": [3],
+                        "i4": [4],
+                        "i5": [-5],
+                        "i6": [-6],
+                        "f1": [1.0],
+                        "f2": [2.2],
+                        "f3": [3.0],
+                        "f4": [4.3],
+                        "f5": [-5.888],
+                        "f6": [-6.0],
+                        "f7": [0.0],
+                        "s1": ["1"],
+                        "s2": ["2.2"],
+                        "s3": ["3"],
+                        "s4": ["4.3"],
+                        "s5": ["-5.888"],
+                        "s6": ["-6.0"],
+                        "s7": ["0.0"],
+                        "s8": ["0.0"],
+                        "s9": ["abc def"],
+                    }
+                ),
+            ),
+            id="simple_int_float_string_cast",
+        ),
+        pytest.param(
+            (
+                string_format_specifiers_sqlite,
+                None,
+                "string_format_specifiers_sqlite",
+                lambda: pd.DataFrame(
+                    {
+                        "d1": ["15"],
+                        "d2": ["15"],
+                        "d3": ["45.000"],
+                        "d4": ["2023-07-15"],
+                        "d5": ["14"],
+                        "d6": ["02"],
+                        "d7": ["196"],
+                        "d8": ["2460141.1046875"],
+                        "d9": ["14"],
+                        "d10": [" 2"],
+                        "d11": ["07"],
+                        "d12": ["30"],
+                        "d13": ["PM"],
+                        "d14": ["pm"],
+                        "d15": ["14:30"],
+                        "d16": ["1689431445"],
+                        "d17": ["45"],
+                        "d18": ["14:30:45"],
+                        "d19": ["6"],
+                        "d20": ["6"],
+                        "d21": ["28"],
+                        "d22": ["2023"],
+                        "d23": ["07-15-2023"],
+                    }
+                ),
+            ),
+            id="string_format_specifiers_sqlite",
+        ),
+        pytest.param(
+            (
+                part_reduced_size,
+                None,
+                "part_reduced_size",
+                lambda: pd.DataFrame(
+                    {
+                        "reduced_size": [2.8, 2.8, 4.0, 4.0, 2.8],
+                        "retail_price_int": [901, 901, 901, 901, 901],
+                        "message": [
+                            "old size: 7",
+                            "old size: 7",
+                            "old size: 10",
+                            "old size: 10",
+                            "old size: 7",
+                        ],
+                        "discount": [0.1, 0.1, 0.1, 0.1, 0.09],
+                        "date_dmy": [
+                            "01-11-1995",
+                            "02-11-1992",
+                            "07-11-1997",
+                            "06-08-1996",
+                            "06-07-1997",
+                        ],
+                        "date_md": ["11/01", "11/02", "11/07", "08/06", "07/06"],
+                        "am_pm": ["00:00AM"] * 5,
+                    }
+                ),
+            ),
+            id="part_reduced_size",
+        ),
+        pytest.param(
+            (
+                simple_smallest_or_largest,
+                None,
+                "simple_smallest_or_largest",
+                lambda: pd.DataFrame(
+                    {
+                        "s1": [10],
+                        "s2": [20],
+                        "s3": [0],
+                        "s4": [-200],
+                        "s5": [None],
+                        "s6": [-0.34],
+                        "s7": ["2023-01-01 00:00:00"],
+                        "s8": [""],
+                        "s9": [None],
+                        "l1": [20],
+                        "l2": [20],
+                        "l3": [20],
+                        "l4": [300],
+                        "l5": [None],
+                        "l6": [100.22],
+                        "l7": ["2025-01-01 00:00:00"],
+                        "l8": ["alphabet soup"],
+                        "l9": [None],
+                    }
+                ),
+            ),
+            id="simple_smallest_or_largest",
+        ),
+        pytest.param(
+            (
+                avg_acctbal_wo_debt,
+                None,
+                "avg_acctbal_wo_debt",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "avg_bal_without_debt_erasure": [
+                            4547.554121,
+                            4536.852848,
+                            4548.741422,
+                            4539.072249,
+                            4533.254352,
+                        ],
+                    },
+                ),
+            ),
+            id="avg_acctbal_wo_debt",
+        ),
+        pytest.param(
+            (
+                odate_and_rdate_avggap,
+                None,
+                "odate_and_rdate_avggap",
+                lambda: pd.DataFrame({"avg_gap": [50.41427]}),
+            ),
+            id="odate_and_rdate_avggap",
+        ),
+        pytest.param(
+            (
                 dumb_aggregation,
                 None,
                 "dumb_aggregation",
@@ -1566,6 +1737,7 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

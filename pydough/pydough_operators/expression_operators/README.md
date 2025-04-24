@@ -115,6 +115,8 @@ These functions must be called on singular data as a function.
 - `POWER`: exponentiates the first argument to the power of second argument.
 - `SQRT`: returns the square root of the input. 
 - `SIGN`: returns the sign of the input. It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
+- `SMALLEST`: returns the smallest value from the set of values it is called on.
+- `LARGEST`: returns the largest value from the set of values it is called on.
 
 #### Aggregation Functions
 
@@ -157,6 +159,12 @@ For an example of how `per` works, when doing `Regions.nations.customers.CALCULA
 - If `per=None`, `r` is the ranking across all `customers`.
 - If `per="nations"`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).
 - If `per="Regions"`, `r` is the ranking of customers per-region (meaning the ranking resets to 1 within each region).
+
+#### Casting Functions
+
+- `STRING`: casts the first argument to the second argument. If a second argument is provided, it is used as the datetime format string that gets passed to the underlying database.
+- `INTEGER`: casts the argument to an integer.
+- `FLOAT`: casts the argument to a float.
 
 ## Interaction with Type Inference
 

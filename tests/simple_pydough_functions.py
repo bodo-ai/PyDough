@@ -1830,3 +1830,170 @@ def singular7():
         )
         .TOP_K(5, by=(n_orders.DESC(), supplier_name.ASC()))
     )
+
+
+def simple_int_float_string_cast():
+    # String format specifiers for date/time with a static datetime
+    # Using a specific date: 2023-07-15 14:30:45
+    # static_date = DATETIME("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        i1=INTEGER(1),
+        i2=INTEGER(2.2),
+        i3=INTEGER("3"),
+        i4=INTEGER("4.3"),
+        i5=INTEGER("-5.888"),
+        i6=INTEGER(-6.0),
+        f1=FLOAT(1.0),
+        f2=FLOAT(2.2),
+        f3=FLOAT("3"),
+        f4=FLOAT("4.3"),
+        f5=FLOAT("-5.888"),
+        f6=FLOAT(-6.0),
+        f7=FLOAT(0.0),
+        s1=STRING(1),
+        s2=STRING(2.2),
+        s3=STRING("3"),
+        s4=STRING("4.3"),
+        s5=STRING("-5.888"),
+        s6=STRING(-6.0),
+        s7=STRING(0.0),
+        s8=STRING("0.0"),
+        s9=STRING("abc def"),
+    )
+
+
+def string_format_specifiers_sqlite():
+    # String format specifiers for date/time with a static datetime
+    # Works for SQLite versions >= v3.43.2
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # day of month: 01-31
+        d1=STRING(static_date, "%d"),
+        # day of month without leading zero: 1-31
+        d2=STRING("2023-07-15 14:30:45", "%e"),
+        # fractional seconds: SS.SSS
+        d3=STRING("2023-07-15 14:30:45", "%f"),
+        # ISO 8601 date: YYYY-MM-DD
+        d4=STRING("2023-07-15 14:30:45", "%F"),
+        # hour: 00-24
+        d5=STRING(static_date, "%H"),
+        # hour for 12-hour clock: 01-12
+        d6=STRING(static_date, "%I"),
+        # day of year: 001-366
+        d7=STRING(static_date, "%j"),
+        # Julian day number (fractional)
+        d8=STRING(static_date, "%J"),
+        # hour without leading zero: 0-24
+        d9=STRING(static_date, "%k"),
+        # %I without leading zero: 1-12
+        d10=STRING(static_date, "%l"),
+        # month: 01-12
+        d11=STRING(static_date, "%m"),
+        # minute: 00-59
+        d12=STRING(static_date, "%M"),
+        # "AM" or "PM" depending on the hour
+        d13=STRING(static_date, "%p"),
+        # "am" or "pm" depending on the hour
+        d14=STRING(static_date, "%P"),
+        # ISO 8601 time: HH:MM
+        d15=STRING(static_date, "%R"),
+        # seconds since 1970-01-01
+        d16=STRING(static_date, "%s"),
+        # seconds: 00-59
+        d17=STRING(static_date, "%S"),
+        # ISO 8601 time: HH:MM:SS
+        d18=STRING(static_date, "%T"),
+        # day of week 1-7 with Monday==1
+        d19=STRING(static_date, "%u"),
+        # day of week 0-6 with Sunday==0
+        d20=STRING(static_date, "%w"),
+        # week of year (00-53)
+        d21=STRING(static_date, "%W"),
+        # year: 0000-9999
+        d22=STRING(static_date, "%Y"),
+        # month-day-year
+        d23=STRING(static_date, "%m-%d-%Y"),
+    )
+
+
+def part_reduced_size():
+    # What are the top 5 line items with the highest discounts
+    # on parts with the lowest retail prices casted to integers?
+    # Include the part name, the reduced size, the retail price, the discount,
+    # and the date in day-month-year, month/day, and AM/PM format.
+    return (
+        Parts.CALCULATE(
+            reduced_size=FLOAT(size / 2.5),
+            retail_price_int=INTEGER(retail_price),
+            message=JOIN_STRINGS(
+                "",
+                "old size: ",
+                STRING(size),
+            ),
+        )
+        .TOP_K(2, by=retail_price_int.ASC())
+        .lines.CALCULATE(
+            reduced_size,
+            retail_price_int,
+            message,
+            discount,
+            # day-month-year: 15-07-2023
+            date_dmy=STRING(receipt_date, "%d-%m-%Y"),
+            # month/day: 07/15
+            date_md=STRING(receipt_date, "%m/%d"),
+            # AM or PM
+            am_pm=STRING(receipt_date, "%H:%M%p"),
+        )
+        .TOP_K(5, by=discount.DESC())
+    )
+
+
+def simple_smallest_or_largest():
+    return TPCH.CALCULATE(
+        s1=SMALLEST(20, 10),
+        s2=SMALLEST(20, 20),
+        s3=SMALLEST(20, 10, 0),
+        s4=SMALLEST(20, 10, 10, -1, -2, 100, -200),
+        s5=SMALLEST(20, 10, None, 100, 200),
+        s6=SMALLEST(20.22, 10.22, -0.34),
+        s7=SMALLEST(
+            datetime.datetime(2025, 1, 1),
+            datetime.datetime(2024, 1, 1),
+            datetime.datetime(2023, 1, 1),
+        ),
+        s8=SMALLEST("", "alphabet soup", "Hello World"),
+        s9=SMALLEST(None, "alphabet soup", "Hello World"),
+        l1=LARGEST(20, 10),
+        l2=LARGEST(20, 20),
+        l3=LARGEST(20, 10, 0),
+        l4=LARGEST(20, 10, 10, -1, -2, 100, -200, 300),
+        l5=LARGEST(20, 10, None, 100, 200),
+        l6=LARGEST(20.22, 100.22, -0.34),
+        l7=LARGEST(
+            datetime.datetime(2025, 1, 1),
+            datetime.datetime(2024, 1, 1),
+            datetime.datetime(2023, 1, 1),
+        ),
+        l8=LARGEST("", "alphabet soup", "Hello World"),
+        l9=LARGEST(None, "alphabet soup", "Hello World"),
+    )
+
+
+def avg_acctbal_wo_debt():
+    # For each region, what is the average account balance of all
+    # customers in a hypothetical scenario where all debt was erased
+    return Regions.CALCULATE(
+        region_name=name,
+        avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.acctbal, 0)),
+    )
+
+
+def odate_and_rdate_avggap():
+    # Average gap, in days, for shipments between when they were ordered
+    # versus when they were expected to arrive (or when they actually arrived,
+    # if they were early), for shipments done via rail
+    delay_info = Lineitems.WHERE(HAS(order) & (ship_mode == "RAIL")).CALCULATE(
+        day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
+    )
+    return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))

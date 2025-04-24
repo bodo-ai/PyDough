@@ -50,6 +50,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [POWER](#power)
    * [SQRT](#sqrt)
    * [SIGN](#sign)
+   * [SMALLEST](#smallest)
+   * [LARGEST](#largest)
 - [Aggregation Functions](#aggregation-functions)
    * [SUM](#sum)
    * [AVG](#avg)
@@ -70,6 +72,10 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [RELAVG](#relavg)
    * [RELCOUNT](#relcount)
    * [RELSIZE](#relsize)
+- [Casting Functions](#casting-functions)
+   * [STRING](#string)
+   * [INTEGER](#integer)
+   * [FLOAT](#float)
 - [Banned Python Logic](#banned-python-logic)
    * [\_\_bool\_\_](#__bool__)
    * [\_\_call\_\_](#call_banned)
@@ -723,6 +729,49 @@ The `SIGN` function returns the sign of its input. It returns 1 if the input is 
 Suppliers.CALCULATE(sign_of_acctbal = SIGN(account_balance))
 ```
 
+<!-- TOC --><a name="smallest"></a>
+
+### SMALLEST
+
+The `SMALLEST` function returns the smallest value from the set of values it is called on. It can take in a variable number of arguments, but at least two arguments are required. If any of the arguments are `NULL`, the function will return `NULL`.
+
+```py
+TPCH.CALCULATE(
+    s1=SMALLEST(20,10,10,-1,-2,100,-200), # Returns -200
+    s2=SMALLEST(-0.001,-0.01,-0.0001), # Returns -0.0001
+    s3=SMALLEST(datetime.datetime(2025,1,1),datetime.datetime(2024,1,1)), # Returns 2024-01-01
+    s4=SMALLEST(1,None,3,4), # Returns NULL
+)
+# Average gap, in days, for shipments between when they were ordered
+# versus when they were expected to arrive (or when they actually arrived,
+# if they were early), for shipments done via rail.
+delay_info = Lineitems.WHERE(HAS(order) & (ship_mode == "RAIL")).CALCULATE(
+   day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
+)
+return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))
+```
+
+<!-- TOC --><a name="largest"></a>
+
+### LARGEST
+
+The `LARGEST` function returns the largest value from the set of values it is called on. It can take in a variable number of arguments, but at least two arguments are required. If any of the arguments are `NULL`, the function will return `NULL`.
+
+```py
+TPCH.CALCULATE(
+    l1=LARGEST(20,10,10,-1,-2,100,-200), # Returns 100
+    l2=LARGEST(-0.001,-0.01,-0.0001), # Returns -0.01
+    l3=LARGEST(datetime.datetime(2025,1,1),datetime.datetime(2024,1,1)), # Returns 2025-01-01
+    l4=LARGEST(1,None,3,4), # Returns NULL
+)
+# For each region, what is the average account balance of all
+# customers in a hypothetical scenario where all debt was erased
+Regions.CALCULATE(
+   region_name=name,
+   avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.acctbal, 0)),
+)
+```
+
 <!-- TOC --><a name="aggregation-functions"></a>
 
 ## Aggregation Functions
@@ -1051,14 +1100,72 @@ The `RELSIZE` function returns the number of total records, either globally or t
 
 
 ```py
-# Divides each customer's account balance by the number of total customers.
+# Divides each customer's account balance by
+# the number of total customers.
 Customers.CALCULATE(ratio = acctbal / RELSIZE())
 
-# Divides each customer's account balance by the number of total customers in
-# that nation.
+# Divides each customer's account balance by the
+# number of total customers in that nation.
 Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
 ```
 
+
+<!-- TOC --><a name="casting-functions"></a>
+
+## Casting Functions
+
+<!-- TOC --><a name="string"></a>
+### STRING
+
+The `STRING` function casts the first argument to a string data type. The first argument can be of any data type. This function also supports formatting of dates. This is possible by placing a date-time format string in the second argument. **Please refer to your underlying database's documentation for the format strings it supports.**
+
+
+```py
+Orders.CALCULATE(
+   # Casts the key column (numeric type) to a string.
+   key_string=STRING(key),
+   # Casts the order_date column (date type) to a string
+   # with the format YYYY-MM-DD.
+   # Please refer to your underlying database's documentation
+   # for the format strings it supports.
+   # In this case, the database used is SQLite.
+   order_date_string=STRING(order_date, "%Y-%m-%d"),
+)
+```
+
+Here is a list of reference links for the format strings of different databases:
+
+- [SQLite](https://www.sqlite.org/lang_datefunc.html)
+
+<!-- TOC --><a name="integer"></a>
+
+### INTEGER
+
+The `INTEGER` function casts the argument to an integer.
+
+```py
+Orders.CALCULATE(
+   # Casts the total_price column (decimal type) to an integer.
+   total_price_int=INTEGER(total_price),
+   # Casts the string "2" to an integer.
+   discount = INTEGER("2")
+)
+```
+
+<!-- TOC --><a name="float"></a>
+
+### FLOAT
+
+The `FLOAT` function casts the argument to a float.
+
+```py
+Orders.CALCULATE(
+   # Casts the ship_priority column (integer type) to a float.
+   ship_priority_float=FLOAT(ship_priority),
+   # Casts the string "2" to a float.
+   discount = FLOAT("-2.71")
+)
+```
 
 ## Banned Python Logic
 

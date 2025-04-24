@@ -17,6 +17,7 @@ from simple_pydough_functions import (
     region_acctbal_breakdown,
     simple_filter,
     simple_scan,
+    simple_smallest_or_largest,
     transaction_week_sampler,
     week_offset,
 )
@@ -89,6 +90,12 @@ from pydough.unqualified import (
             None,
             "global_acctbal_breakdown",
             id="global_acctbal_breakdown",
+        ),
+        pytest.param(
+            simple_smallest_or_largest,
+            None,
+            "simple_smallest_or_largest",
+            id="simple_smallest_or_largest",
         ),
     ],
 )
