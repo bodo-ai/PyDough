@@ -66,14 +66,26 @@ flowchart TD
 <!-- TOC --><a name="unqualified-nodes"></a>
 ## Unqualified Nodes
 
-TODO
+The first intermediary representation of PyDough are the unqualified nodes, which carry minimal semantic information and instead carry the syntactic description of the PyDough query. Every unqualified node has a field `_parcel` which is a tuple of values, where the type signature of the tuple depends on which kind of unqualified node it is. Nodes that build on top of another node contain that other node object in their `_parcel`.
+
+The reason this `_parcel` name is special (and RESERVED) is because whenever getattr is used on an UnqualifiedNode, except for very few names, the logic will instead return a new node referring to an access of a term from the previous node. E.g. if `foo` is an unqualified node and I write `foo.bar`, this returns `UnqualifiedAccess(foo, "bar")` which means "access term `bar` from `foo`".
+
+The same idea of Python functionality building new nodes on top of existing nodes also goes for PyDough operations & Python magic methods. For example:
+- `foo.CALCULATE(...)` returns an unqualified node for a calculate operation that points to `foo` in its parcel as the thing it is building on top of.
+- `x == y` returns an unqualified node for a function call where the operator is `==` and the operands are `x` and `y`.
+
+> [!NOTE]
+> As a consequence of the `==` behavior, unqualified nodes should never be used as dictionary keys, cached via `@cache`, or compared with `==`, because this will always return a new unqualified node instead of a boolean indicating whether or not they are equal. Instead, it is better to convert the unqualified nodes to strings then check if the strings are equal. All unqualified nodes have a repr implementation that dumps their full structure (so `str` and `repr` should NOT be used as casting functions in PyDough).
+
+Most magic methods have this sort of behavior, with some notable exceptions. For example, `__len__` is not allowed because any implementation of that magic method in Python must return an integer, so it cannot return a call to the `LENGTH` function in PyDough (unlike `__abs__`, which is implemented so when `abs` is called on an unqualified node it invokes the `ABS` PyDough function).
+
 
 Below is an example of the structure of unqualified nodes for the following PyDough expression:
 ```py
 nation_info = nations.CALCULATE(
   region_name=region.name,
   nation_name=name,
-  n_customers_in_debt=COUNT(customers.WHERE(acctbal < 0))
+  n_orders_from_debt_customers=COUNT(customers.WHERE(acctbal < 0).orders)
 ).ORDER_BY(nation_name.ASC())
 ```
 
@@ -93,7 +105,9 @@ flowchart RL
     B2A --> B2B[ROOT]
     B -.-> B3A[Call:
     'COUNT']
-    B3A --> B3B[Where]
+    B3A --> B3A1[Access:
+    Orders]
+    B3A1 --> B3B[Where]
     B3B --> B3C[Access:
     'customers']
     B3C --> B3D[ROOT]
@@ -112,10 +126,29 @@ flowchart RL
     A2 --> A3[ROOT]
 ```
 
-In the example above, `nation_info` refers to the `OrderBy` node on the right side of the diagram.
+In the example above, the value of the `nation_info` is the `OrderBy` node on the right side of the diagram.
 
 <!-- TOC --><a name="unqualified-transform"></a>
 ### Unqualified Transform
+
+The unqualified nodes are created by executing Python code after a transformation is applied to modify the text. This modification creates a variable at the top of the code block called `_ROOT` which is an unqualified root, then replaces all undefined variables `x` with `_ROOT.x`. For example, the `nation_info` example earlier would be rewritten into the following, which then gets executed with `graph` passed in to the environment.
+
+```
+_ROOT = UnqualifiedRoot(graph)
+nation_info = _ROOT.nations.CALCULATE(
+  region_name=_ROOT.region.name,
+  nation_name=_ROOT.name,
+  n_orders_from_debt_customers=_ROOT.COUNT(_ROOT.customers.WHERE(_ROOT.acctbal < 0).orders)
+).ORDER_BY(_ROOT.nation_name.ASC())
+```
+
+All of these `_ROOT.x` terms become `UnqualifiedAccess` nodes accessing term `x` and pointing to `_ROOT` as the thing they are accessing from, except for `_ROOT.COUNT`, which becomes a function call because the transformation recognizes this as a function name.
+
+There are several variations of the logic that invoke this rewrite in different contexts, (e.g. unit tests vs jupyter notebooks) but they all occur in [unqualified_transform.py](../PyDough/unqualified/unqualified_transform.py).
+
+
+<!-- TOC --><a name="qdag-nodes"></a>
+## QDAG Nodes
 
 TODO
 
@@ -125,7 +158,7 @@ For an example of the QDAG structure, consider the `nation_info` example earlier
 nation_info = nations.CALCULATE(
   region_name=region.name,
   nation_name=name,
-  n_customers_in_debt=COUNT(customers.WHERE(acctbal < 0))
+  n_orders_from_debt_customers=COUNT(customers.WHERE(acctbal < 0).orders)
 ).ORDER_BY(nation_name.ASC())
 ```
 
@@ -139,15 +172,10 @@ This has the following structure as QDAG nodes:
   │ │ └─── SubCollection[region]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[customers]
-  │   └─── Where[acctbal < 0]
+  │   └─┬─ Where[acctbal < 0]
+  │     └─── SubCollection[orders]
   └─── OrderBy[nation_name.ASC(na_pos='first')]
 ```
-
-
-<!-- TOC --><a name="qdag-nodes"></a>
-## QDAG Nodes
-
-TODO
 
 <!-- TOC --><a name="qualification"></a>
 ### Qualification
@@ -170,7 +198,7 @@ For an example of the Hybrid Tree structure, consider the `nation_info` example 
 nation_info = nations.CALCULATE(
   region_name=region.name,
   nation_name=name,
-  n_customers_in_debt=COUNT(customers.WHERE(acctbal < 0))
+  n_customers_in_debt=COUNT(customers.WHERE(acctbal < 0).orders)
 ).ORDER_BY(nation_name.ASC())
 ```
 
@@ -194,12 +222,17 @@ flowchart TD
   end
   subgraph L4c["($1)"]
   subgraph L4["(H4)"]
-  direction LR
-  R[Sub-Collection:
-  customers]
-  S[Where:
-  acctbal < 0]
-  R --> S
+    direction LR
+    R[Sub-Collection:
+    customers]
+    S[Where:
+    acctbal < 0]
+    R --> S
+  end
+  subgraph L5["(H5)"]
+    direction LR
+    V[Sub-Collection:
+    orders]
   end
   T["Child Info:
   join_keys: [(key, nation_key)]
@@ -219,6 +252,7 @@ flowchart TD
   L1 --> L2
   L2 -.->|Singular| L3c
   L2 -.->|Aggregation| L4c
+  L4 --> L5
 ```
 
 In this example, the main hybrid tree has two levels H1 and `H2` (`H2` is the value pointed to when the QDAG is converted to a hybrid tree).
@@ -230,19 +264,24 @@ In this example, the main hybrid tree has two levels H1 and `H2` (`H2` is the va
   - An order-by that sorts by `nation_name` in ascending order.
 - `$0` is a singular access, meaning the data from `H2` and `$0` can be directly joined without needing to worry about changes in cardinality. They are joined on the condition that the `region_key` term from `H2` equals the `key` term from the bottom subtree of `$0` (which is `H3`).
   - The contents of `$0` is just a single tree level `H3` which does not have any children and has a pipeline containing only an access to the `regions` collection.
-- `$1` is an aggregation access, meaning the data from `$1` must first be aggregated before it is joined with `H2`. The aggregation is done by grouping on the `nation_key` field of the bottom subtree of `$1` (which is `H4`) and computes the term `agg_0` as `COUNT()`. Then, the result is joined with `H2` on the condition that the `key` term from `H2` equals the `nation_key` field just used to aggregate.
-  - The contents of `$1` is just a single tree level `H4` which does not have any children and has a pipeline containing an access to the `customers` collection followed by a filter on the condition that `acctbal < 0`.
+- `$1` is an aggregation access, meaning the data from `$1` must first be aggregated before it is joined with `H2`. The aggregation is done by grouping on the `nation_key` field of the bottom subtree of `$1` (which is `H5`) and computes the term `agg_0` as `COUNT()`. Then, the result is joined with `H2` on the condition that the `key` term from `H2` equals the `nation_key` field just used to aggregate.
+  - The contents of `$1` is two tree levels `H4` and `H5`. `H4` does not have any children and has a pipeline containing an access to the `customers` collection followed by a filter on the condition that `acctbal < 0`. `H5` does not have any children and only contains a single operation accessing the `orders` sub-collection of the parent level.
 
 
-Now consider a slightly more complex example below. This PyDough code finds the 5 nations with the largest number of orders made by customers in that nation in the building market segment where the total price of the order is at least double the average of the total prices of **all** orders.
+<!-- TOC --><a name="hybrid-decorrelation"></a>
+### Hybrid Decorrelation
+
+To understand why de-correlation matters, first consider the slightly more complex PyDough code example below. This PyDough code finds, for each nation in Europe, the total purchase quantity made by customers in that nation from suppliers in the same nation. 5 nations with the largest number of orders made by customers in that nation in the building market segment where the total price of the order is at least double the average of the total prices of **all** orders.
+
 ```py
-global_info = TPCH.CALCULATE(avg_price=AVG(Orders.total_price))
-building_customers = customers.WHERE(mktsegment=="BUILDING")
-selected_orders = building_customers.WHERE(total_price >= 2.0 * avg_price)
-nation_info = Nations.CALCULATE(
-    name=name,
-    n_expensive_building_orders=COUNT(selected_orders),
-).TOP_K(5, by=n_expensive_orders.DESC())
+selected_nations = regions.WHERE(
+  name == "EUROPE"
+).nations.CALCULATE(nation_name=name)
+domestic_lines = customers.orders.lines.WHERE(supplier.nation.name == nation_name)
+nation_domestic_purchase_info = selected_nations.CALCULATE(
+    nation_name,
+    domestic_quantity=SUM(domestic_lines.quantity),
+)
 ```
 
 Below is the Hybrid Tree structure for this query:
@@ -252,33 +291,26 @@ flowchart TD
   subgraph L1["(H1)"]
   direction LR
     A["Root"]
-    A'["Calculate:
-    avg_price=$0.agg_0"]
-    A --> A'
   end
 
-  subgraph C1["($0)"]
-    subgraph L3["(H3)"]
-    direction LR
-      B["Collection:
-      orders"]
-    end
-    data0["Child Info:
-    join_keys: []
-    agg_keys: []
-    aggs: {'agg_0': AVG(total_price)}"]
-  end
-    L1 -..->|Aggregation| C1
-
-  subgraph L2["(H2)"]
+  subgraph R1["(H2)"]
   direction LR
-    E["Collection:
+    R["Collection:
+    regions"]
+    S["Where
+    name == 'EUROPE'"]
+    R --> S
+  end
+
+  subgraph L2["(H3)"]
+  direction LR
+    E["Sub-collection:
     nations"]
     F["Calculate
-    name: name
-    n_expensive_orders: DEFAULT_TO($0.agg_0, 0)"]
-    G["Limit (5)
-    n_expensive_orders (descending)"]
+    nation_name: name"]
+    G["Calculate
+    nation_name
+    domestic_quantity = DEFAULT_TO($0.agg_0, 0)"]
     E --> F --> G
   end
 
@@ -287,33 +319,255 @@ flowchart TD
     direction LR
       C["Sub-Collection:
       customers"]
-      H["Where
-      mktsgment == 'Building'"]
-      C --> H
     end
     subgraph L5["(H5)"]
     direction LR
       D["Sub-Collection:
       orders"]
-      D'["Where:
-      total_price >= 2.0 * CORREL(avg_price)"]
-      D --> D'
+    end
+    subgraph L6["(H6)"]
+    direction LR
+      V1["Sub-Collection:
+      lines"]
+      V2["Where
+      $0.name == CORREL(nation_name)"]
+      V1 --> V2
+    end
+    subgraph C4["($0)"]
+    direction TB
+        subgraph H7["(H7)"]
+        Q1["Sub-Collection:
+      supplier"]
+        end
+        subgraph H8["(H8)"]
+        Q2["Sub-Collection:
+      nation"]
+        end
+      data2["Child Info:
+        join_keys: [(supplier_key, BACK(1).key)]"]
     end
     data1["Child Info:
     join_keys: [(key, BACK(1).nation_key)]
     agg_keys: [BACK(1).nation_key]
-    aggs: {'agg_0': COUNT()}"]
+    aggs: {'agg_0': SUM(quantity)}"]
   end
 
-    L1 --> L2
+    L1 --> R1
+    R1 --> L2
     L2 -.->|Aggregation| C2
     L4 --> L5
+    L5 --> L6
+    L6 -.->|Singular| C4
+    Q1 --> Q2
 ```
 
-<!-- TOC --><a name="hybrid-decorrelation"></a>
-### Hybrid Decorrelation
+Notice that `H6` contains a filter condition `$0.name == CORREL(nation_name)`. This means that even though `H6` is inside child `$0` of `H3` (not to be confused with child `$0` of `H6`), it still references the `nation_name` field from `H3`. This is a called a correlated reference, because it means that child `$0` of `H3` requires information from `H3` in order to be derived, but the whole point is that the data from child `$0` is calculated then joined onto he data from `H3`, so there is a catch-22.
 
-TODO
+To fix this, we next run the de-correlation procedure. This will recursively traverse the entire tree and look for hybrid nodes that have a correlated child (where the child type is NOT semi/anti join, since those two do allow correlated references). This procedure will reach tree `H3` and see that its child `$0` is correlated and is an `AGGREGATION` connection, and will therefore de-correlate it. It does so by copying the entire hybrid tree so far (`H1`, `H2`, and the first two operators from `H3`) and attaching them to the top of child `$0`, above `H4`. This now means that the `CORREL(nation_name)` term in `H6` can be rephrased into a back-reference to the `nation_name` field in the copied version of `H3` (which is 3 levels above `H6`). This does change the join/aggregation keys when connecting H3 to child `$0`, since now we must connect each unique record of `H3` to the corresponding prepended section of `$0`. This is done by changing the join keys into the uniqueness keys of `H1`/`H2`/`H3`, which is aka `key` from `regions` (`BACK(1).key` from the perspective of `H3` and `BACK(4).key` from the perspective of `H6`) and `key` from `nations` (`key` from the perspective of `H3` and `BACK(3).key` from the perspective of `H6`).
+
+The result is the following:
+
+
+```mermaid
+flowchart TD
+  subgraph L1["(H1)"]
+  direction LR
+    A["Root"]
+  end
+
+  subgraph R1["(H2)"]
+  direction LR
+    R["Collection:
+    regions"]
+    S["Where
+    name == 'EUROPE'"]
+    R --> S
+  end
+
+  subgraph L2["(H3)"]
+  direction LR
+    E["Sub-collection:
+    nations"]
+    F["Calculate
+    nation_name: name"]
+    G["Calculate
+    nation_name
+    domestic_quantity = DEFAULT_TO($0.agg_0, 0)"]
+    E --> F --> G
+  end
+
+  subgraph C2["($0)"]
+    subgraph L1'["(H1')"]
+    direction LR
+        A'["Root"]
+    end
+
+    subgraph R1'["(H2')"]
+    direction LR
+        R'["Collection:
+        regions"]
+        S'["Where
+        name == 'EUROPE'"]
+        R' --> S'
+    end
+
+    subgraph L2'["(H3')"]
+    direction LR
+        E'["Sub-collection:
+        nations"]
+        F'["Calculate
+        nation_name: name"]
+        E' --> F'
+    end
+    subgraph L4["(H4)"]
+    direction LR
+      C["Sub-Collection:
+      customers"]
+    end
+    subgraph L5["(H5)"]
+    direction LR
+      D["Sub-Collection:
+      orders"]
+    end
+    subgraph L6["(H6)"]
+    direction LR
+      V1["Sub-Collection:
+      lines"]
+      V2["Where
+      $0.name == BACK(3).nation_name"]
+      V1 --> V2
+    end
+    subgraph C4["($0)"]
+    direction TB
+        subgraph H7["(H7)"]
+        Q1["Sub-Collection:
+      supplier"]
+        end
+        subgraph H8["(H8)"]
+        Q2["Sub-Collection:
+      nation"]
+        end
+      data2["Child Info:
+        join_keys: [(supplier_key, BACK(1).key)]"]
+    end
+    data1["Child Info:
+    join_keys: [(key, BACK(3).key), (BACK(1).key, BACK(4).key)]
+    agg_keys: [BACK(3).key, BACK(4).key]
+    aggs: {'agg_0': SUM(quantity)}"]
+  end
+
+    L1 --> R1
+    R1 --> L2
+    L1' --> R1'
+    R1' --> L2'
+    L2' -->L4
+    L2 -.->|Aggregation| C2
+    L4 --> L5
+    L5 --> L6
+    L6 -.->|Singular| C4
+    Q1 --> Q2
+```
+
+However, we can go one step further if we make an observation about this hybrid tree. Notice how now, we are computing the logic of `H1`, `H2`, and most of `H3` twice. This must happen if we intend to keep *every* nation, including the ones without any entries of `$0`. However, if we don't intend to keep nations where there are no records of `$0` to join onto, we can modify the original PyDough code as follows:
+
+```py
+selected_nations = regions.WHERE(
+  name == "EUROPE"
+).nations.CALCULATE(nation_name=name)
+domestic_lines = customers.orders.lines.WHERE(supplier.nation.name == nation_name)
+nation_domestic_purchase_info = selected_nations
+.WHERE(HAS(domestic_lines)).CALCULATE(
+    nation_name,
+    domestic_quantity=SUM(domestic_lines.quantity),
+)
+```
+
+With this modification, the original hybrid tree changes so the access to child `$0` of `H3` is now an `AGGREGATION_ONLY_MATCH` access, meaning we do an inner join instead of a left join. The de-correlation procedure will notice this and, after transforming child `$0` into its de-correlated form, realize it can do an optimization to delete the original `H1`, `H2` and prefix of `H3` since all of the data required from them is accessible inside `$0`. This is done via the hybrid "pull up" node, which specifies that the data comes from the specified child, instead of having existing data that gets joined with data from the child. This will look as follows:
+
+
+```mermaid
+flowchart TD
+  subgraph L2["(H3)"]
+  direction LR
+    F["Pull Up ($0)
+    nation_name = $0.agg_1"]
+    G["Calculate
+    nation_name
+    domestic_quantity = DEFAULT_TO($0.agg_0, 0)"]
+    F --> G
+  end
+
+  subgraph C2["($0)"]
+    subgraph L1'["(H1')"]
+    direction LR
+        A'["Root"]
+    end
+
+    subgraph R1'["(H2')"]
+    direction LR
+        R'["Collection:
+        regions"]
+        S'["Where
+        name == 'EUROPE'"]
+        R' --> S'
+    end
+
+    subgraph L2'["(H3')"]
+    direction LR
+        E'["Sub-collection:
+        nations"]
+        F'["Calculate
+        nation_name: name"]
+        E' --> F'
+    end
+    subgraph L4["(H4)"]
+    direction LR
+      C["Sub-Collection:
+      customers"]
+    end
+    subgraph L5["(H5)"]
+    direction LR
+      D["Sub-Collection:
+      orders"]
+    end
+    subgraph L6["(H6)"]
+    direction LR
+      V1["Sub-Collection:
+      lines"]
+      V2["Where
+      $0.name == BACK(3).nation_name"]
+      V1 --> V2
+    end
+    subgraph C4["($0)"]
+    direction TB
+        subgraph H7["(H7)"]
+        Q1["Sub-Collection:
+      supplier"]
+        end
+        subgraph H8["(H8)"]
+        Q2["Sub-Collection:
+      nation"]
+        end
+      data2["Child Info:
+        join_keys: [(supplier_key, BACK(1).key)]"]
+    end
+    data1["Child Info:
+    agg_keys: [BACK(3).key, BACK(4).key]
+    aggs: {'agg_0': SUM(quantity)
+    'agg_1': ANYTHING(BACK(3).nation_name)}"]
+  end
+
+    L1' --> R1'
+    R1' --> L2'
+    L2' -->L4
+    L2 -.->|Aggregation| C2
+    L4 --> L5
+    L5 --> L6
+    L6 -.->|Singular| C4
+    Q1 --> Q2
+```
+
+The way to interpret this is that the entirety of child `$0` of H3 is evaluated, from `H1'` to `H6`, then grouped on `BACK(3).key` and `BACK(4).key` to calculate `agg_0` and `agg_1` (renaming the latter to `nation_name`), and that result is passed along from the PullUp node to the calculate in `H3` which builds on it.
 
 <!-- TOC --><a name="relational-tree"></a>
 ## Relational Tree
