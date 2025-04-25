@@ -574,6 +574,68 @@ The way to interpret this is that the entirety of child `$0` of H3 is evaluated,
 
 TODO
 
+For an example of the relational tree, consider the `nation_info` example from earlier.
+```py
+nation_info = nations.CALCULATE(
+  region_name=region.name,
+  nation_name=name,
+  n_orders_from_debt_customers=COUNT(customers.WHERE(acctbal < 0).orders)
+).ORDER_BY(nation_name.ASC())
+```
+
+Using the hybrid tree from earlier, the following is how the relational tree created by relational conversion could look:
+
+```mermaid
+flowchart BT
+  S1["Scan
+  NATION"]
+  S2["Scan
+  REGION"]
+  J1["JOIN (left)
+  CONDITION: t0.region_key == t1.key
+  name = t0.name
+  key = t0.key
+  region_name = t1.name
+  "]
+  S3["Scan
+  CUSTOMER"]
+  F1["Filter
+  CONDITION: acctbal < 0"]
+  S4["Scan
+  ORDERS"]
+  J2["Join (inner)
+  CONDITION: t0.key == t1.cust_key
+  nation_key = t0.nation_key"]
+  A1["Aggregate
+  KEYS: {nation_key}
+  agg_0 = COUNT(*)
+  "]
+  J3["Join (left)
+  CONDITION: t0.key == t1.nation_key
+  region_name = t0.region_name
+  name = t0.name
+  agg_0 = t1.agg_0"]
+  P1["Project
+  region_name = region_name
+  nation_name = name
+  n_customers_in_debt = DEFAULT_TO(agg_0, 0)"]
+  R1["Root
+  COLUMNS: [nation_name, n_customers_in_debt]
+  ORDER: nation_name (ASC)
+  "]
+  
+  S1 --> J1
+  S2 --> J1
+  S3 --> F1
+  F1 --> J2
+  S4 --> J2
+  J2 --> A1
+  J1 --> J3
+  A1 --> J3
+  J3 --> P1
+  P1 --> R1
+```
+
 <!-- TOC --><a name="relational-conversion"></a>
 ### Relational Conversion
 
