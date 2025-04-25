@@ -27,8 +27,8 @@ class CompoundRelationshipMetadata(ReversiblePropertyMetadata):
     """
     Concrete metadata implementation for a PyDough property created by
     combining two reversible properties, one mapping a collection to
-    one of its subcollections and the other mapping that subcollection
-    to one of its subcollections. A property also grants access to
+    one of its sub-collections and the other mapping that subcollection
+    to one of its sub-collections. A property also grants access to
     certain inherited properties derived from the middle collection.
     """
 

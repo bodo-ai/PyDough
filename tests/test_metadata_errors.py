@@ -2,13 +2,16 @@
 Error-handling unit tests for the PyDough metadata module.
 """
 
+import ast
 import re
 
 import pytest
 from test_utils import graph_fetcher
 
 from pydough import parse_json_metadata_from_file
+from pydough.configs import PyDoughConfigs
 from pydough.metadata import CollectionMetadata, GraphMetadata, PyDoughMetadataException
+from pydough.unqualified import UnqualifiedNode, qualify_node, transform_code
 
 
 def test_missing_collection(get_sample_graph: graph_fetcher) -> None:
@@ -489,3 +492,83 @@ def test_invalid_graphs(
         parse_json_metadata_from_file(
             file_path=invalid_graph_path, graph_name=graph_name
         )
+
+
+@pytest.mark.parametrize(
+    "pydough_string, error_message",
+    [
+        pytest.param(
+            "parent.sub1",
+            "Malformed general join condition: '' (Expected the join condition to be a valid PyDough expression)",
+            id="empty",
+        ),
+        pytest.param(
+            "parent.sub2",
+            "Malformed general join condition: '(4' ('(' was never closed (<unknown>, line 1))",
+            id="bad_syntax_1",
+        ),
+        pytest.param(
+            "parent.sub3",
+            "Malformed general join condition: 'self.j1 in self.k2' (PyDough objects cannot be used with the 'in' operator.)",
+            id="bad_syntax_2",
+        ),
+        pytest.param(
+            "parent.sub4",
+            "Malformed general join condition: 'is_prime(self.j1) != is_prime(self.j2)' (PyDough nodes is_prime is not callable. Did you mean to use a function?)",
+            id="bad_syntax_3",
+        ),
+        pytest.param(
+            "parent.sub4a",
+            "Malformed general join condition: 'foo = other.k1' (invalid syntax. Maybe you meant '==' or ':=' instead of '='? (<unknown>, line 1))",
+            id="bad_syntax_4",
+        ),
+        pytest.param(
+            "parent.sub5",
+            "Malformed general join condition: 'self.j1 == COUNT(self.sub0)' (Accessing sub-collection terms is currently unsupported in PyDough general join conditions)",
+            id="collection_1",
+        ),
+        pytest.param(
+            "parent.sub6",
+            "Malformed general join condition: 'self.j1 == other.sub0.k1' (Accessing sub-collection terms is currently unsupported in PyDough general join conditions)",
+            id="collection_2",
+        ),
+        pytest.param(
+            "parent.sub7",
+            "Malformed general join condition: 'self.sub0.CALCULATE(y=YEAR(k1)) == other.k1' (Collection accesses are currently unsupported in PyDough general join conditions)",
+            id="collection_3",
+        ),
+        pytest.param(
+            "parent.sub8",
+            "Malformed general join condition: 'RANKING(by=self.j1.ASC()) < other.k1' (Window functions are currently unsupported in PyDough general join conditions)",
+            id="window_function",
+        ),
+        pytest.param(
+            "parent.sub9",
+            "Malformed general join condition: 'self.j1 == other.k5' (Unrecognized term of simple table collection 'child' in graph 'BAD_JOIN_CONDITIONS': 'k5')",
+            id="wrong_names_1",
+        ),
+        pytest.param(
+            "parent.sub10",
+            "Malformed general join condition: 'this.j1 == other.k1' (Accessing sub-collection terms is currently unsupported in PyDough general join conditions",
+            id="wrong_names_2",
+        ),
+    ],
+)
+def test_invalid_general_join_conditions(
+    invalid_graph_path: str,
+    pydough_string: str,
+    error_message: str,
+    default_config: PyDoughConfigs,
+) -> None:
+    with pytest.raises(Exception, match=re.escape(error_message)):
+        graph: GraphMetadata = parse_json_metadata_from_file(
+            file_path=invalid_graph_path, graph_name="BAD_JOIN_CONDITIONS"
+        )
+        pydough_string = ast.unparse(
+            transform_code(f"answer = {pydough_string}", {"graph": graph}, set())
+        )
+        local_variables: dict[str, object] = {"graph": graph}
+        exec(pydough_string, {}, local_variables)
+        pydough_code = local_variables["answer"]
+        assert isinstance(pydough_code, UnqualifiedNode)
+        qualify_node(pydough_code, graph, default_config)

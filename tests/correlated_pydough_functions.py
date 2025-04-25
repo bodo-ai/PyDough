@@ -447,7 +447,7 @@ def correl_25():
 
 
 def correl_26():
-    # For every nation in EUROPE, count how many urggent purchases were made by
+    # For every nation in EUROPE, count how many urgent purchases were made by
     # customers in that nation from suppliers in the same nation in 1994.
     # ASsumes each European nation has at least one such person.
     selected_lines = customers.orders.WHERE(
@@ -493,7 +493,7 @@ def correl_28():
 def correl_29():
     # Edge case for de-correlation behavior: for each nation not in Asia,
     # Africa, or the Middle East, find its region key, nation name,
-    # number of customers/suppliers with an account balance above teh average
+    # number of customers/suppliers with an account balance above the average
     # for customers/suppliers in that nation, and the min/max account balance
     # of customers in that nation. Only consider nations that have at least 1
     # such customer/supplier, and sort by region key followed by nation name.

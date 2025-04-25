@@ -408,5 +408,127 @@
         }
       }
   },
-  "Empty": {}
+  "Empty": {},
+  "Epoch": {
+    "seasons": {
+      "type": "simple_table",
+      "table_path": "SEASONS",
+      "unique_properties": ["name", "first_month", "second_month", "third_month"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "s_name", "data_type": "string"},
+        "first_month": {"type": "table_column", "column_name": "s_month1", "data_type": "int64"},
+        "second_month": {"type": "table_column", "column_name": "s_month2", "data_type": "int64"},
+        "third_month": {"type": "table_column", "column_name": "s_month3", "data_type": "int64"}
+      }
+    },
+    "times_of_day": {
+      "type": "simple_table",
+      "table_path": "TIMES",
+      "unique_properties": ["name", "start_hour", "end_hour"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "t_name", "data_type": "string"},
+        "start_hour": {"type": "table_column", "column_name": "t_start_hour", "data_type": "int64"},
+        "end_hour": {"type": "table_column", "column_name": "t_end_hour", "data_type": "int64"}
+      }
+    },
+    "eras": {
+      "type": "simple_table",
+      "table_path": "ERAS",
+      "unique_properties": ["name", "start_year", "end_year"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "er_name", "data_type": "string"},
+        "start_year": {"type": "table_column", "column_name": "er_start_year", "data_type": "int64"},
+        "end_year": {"type": "table_column", "column_name": "er_end_year", "data_type": "int64"}
+      }
+    },
+    "events": {
+      "type": "simple_table",
+      "table_path": "EVENTS",
+      "unique_properties": ["name"],
+      "properties": {
+        "name": {"type": "table_column", "column_name": "ev_name", "data_type": "string"},
+        "date_time": {"type": "table_column", "column_name": "ev_dt", "data_type": "timestamp[9]"},
+        "event_type": {"type": "table_column", "column_name": "ev_typ", "data_type": "string"},
+        "season": {
+          "type": "general_join",
+          "other_collection_name": "seasons",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(MONTH(self.date_time) == other.first_month) | (MONTH(self.date_time) == other.second_month) | (MONTH(self.date_time) == other.third_month)",
+          "reverse_relationship_name": "events"
+        },
+        "time_of_day": {
+          "type": "general_join",
+          "other_collection_name": "times_of_day",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(other.start_hour <= HOUR(self.date_time)) & (HOUR(self.date_time) < other.end_hour)",
+          "reverse_relationship_name": "events"
+        },
+        "era": {
+          "type": "general_join",
+          "other_collection_name": "eras",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(other.start_year <= YEAR(self.date_time)) & (YEAR(self.date_time) < other.end_year)",
+          "reverse_relationship_name": "events"
+        }
+      }
+    },
+    "users": {
+      "type": "simple_table",
+      "table_path": "USERS",
+      "unique_properties": ["user_id", "name"],
+      "properties": {
+        "user_id": {"type": "table_column", "column_name": "user_id", "data_type": "int64"},
+        "name": {"type": "table_column", "column_name": "user_name", "data_type": "string"},
+        "region": {"type": "table_column", "column_name": "user_region", "data_type": "string"},
+        "searches": {
+          "type": "simple_join",
+          "other_collection_name": "searches",
+          "singular": false,
+          "no_collisions": true,
+          "keys": {"user_id": ["user_id"]},
+          "reverse_relationship_name": "user"
+        }
+      }
+    },
+    "searches": {
+      "type": "simple_table",
+      "table_path": "SEARCHES",
+      "unique_properties": ["search_id"],
+      "properties": {
+        "search_id": {"type": "table_column", "column_name": "search_id", "data_type": "int64"},
+        "user_id": {"type": "table_column", "column_name": "search_user_id", "data_type": "int64"},
+        "search_engine": {"type": "table_column", "column_name": "search_engine", "data_type": "string"},
+        "search_string": {"type": "table_column", "column_name": "search_string", "data_type": "string"},
+        "ts": {"type": "table_column", "column_name": "search_ts", "data_type": "timestamp[9]"},
+        "n_results": {"type": "table_column", "column_name": "search_num_results", "data_type": "int64"},
+        "events": {
+          "type": "general_join",
+          "other_collection_name": "events",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "CONTAINS(LOWER(self.search_string), LOWER(other.name))",
+          "reverse_relationship_name": "searches"
+        },
+        "season": {
+          "type": "general_join",
+          "other_collection_name": "seasons",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(MONTH(self.ts) == other.first_month) | (MONTH(self.ts) == other.second_month) | (MONTH(self.ts) == other.third_month)",
+          "reverse_relationship_name": "searches"
+        },
+        "time_of_day": {
+          "type": "general_join",
+          "other_collection_name": "times_of_day",
+          "singular": true,
+          "no_collisions": false,
+          "condition": "(other.start_hour <= HOUR(self.ts)) & (HOUR(self.ts) < other.end_hour)",
+          "reverse_relationship_name": "searches"
+        }
+      }
+    }
+  } 
 }
