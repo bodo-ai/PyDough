@@ -135,7 +135,7 @@ def parse_graph(graph_name: str, graph_json: dict) -> GraphMetadata:
             incomplete_collection, property.property_name, property.property_json
         )
 
-    # Finally, after every property has been parseed, run an additional round
+    # Finally, after every property has been parsed, run an additional round
     # of completeness checks on each collection to verify any predicates about
     # the metadata being well/ill-formatted that are impossible to determine
     # until every property has been defined.
@@ -282,7 +282,7 @@ def get_property_dependencies(
 
         Raises:
             `PyDoughMetadataException` if the property or the dependency
-            is not a valid cannonical representative property.
+            is not a valid canonical representative property.
         """
         true_property: PropertyKey | None = get_true_property(property)
         true_dependency: PropertyKey | None = get_true_property(dependency)
@@ -307,8 +307,8 @@ def get_property_dependencies(
     # The set of all properties that are table columns
     table_columns: set[PropertyKey] = set()
 
-    # The set of all properties that are cartesian products
-    cartesian_products: set[PropertyKey] = set()
+    # The set of all properties that are cartesian products or general joins.
+    cartesian_or_general: set[PropertyKey] = set()
 
     # The set of all properties that are simple joins
     simple_joins: set[PropertyKey] = set()
@@ -330,8 +330,8 @@ def get_property_dependencies(
         match property_json["type"]:
             case "table_column":
                 table_columns.add(reformatted_property)
-            case "cartesian_product":
-                cartesian_products.add(reformatted_property)
+            case "cartesian_product" | "general_join":
+                cartesian_or_general.add(reformatted_property)
             case "simple_join":
                 simple_joins.add(reformatted_property)
             case "compound":
@@ -346,11 +346,11 @@ def get_property_dependencies(
     for table_property in table_columns:
         defined.add(table_property)
 
-    def define_cartesian_property(property: PropertyKey) -> None:
+    def define_cartesian_or_general_property(property: PropertyKey) -> None:
         """
-        Defines a cartesian product property, adding its dependencies
-        to the datastructure and marking the property as defined so
-        subsequent properties can use it as a dependency.
+        Defines a cartesian product or general join property, adding its
+        dependencies to the datastructure and marking the property as defined
+        so subsequent properties can use it as a dependency.
 
         Args:
             `property`: the property that the algorithm is attempting to
@@ -372,8 +372,8 @@ def get_property_dependencies(
         defined.add(reverse)
 
     # Define every cartesian property
-    for cartesian_property in cartesian_products:
-        define_cartesian_property(cartesian_property)
+    for cart_or_general_property in cartesian_or_general:
+        define_cartesian_or_general_property(cart_or_general_property)
 
     def define_simple_join_property(property: PropertyKey) -> None:
         """
@@ -391,7 +391,7 @@ def get_property_dependencies(
         """
         # The simple join definition process is a superset of the same process
         # for cartesian products.
-        define_cartesian_property(property)
+        define_cartesian_or_general_property(property)
         property_json, _ = reformatted_properties[property]
         collection: str = property.collection_name
         other_collection: str = property_json["other_collection_name"]

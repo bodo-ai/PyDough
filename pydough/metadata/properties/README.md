@@ -25,5 +25,6 @@ The properties classes in PyDough follow a hierarchy that includes both abstract
         - [`ReversiblePropertyMetadata`](reversible_property_metadata.py) (abstract): Base class for properties that map to a subcollection and have a corresponding reverse relationship.
             - [`SimpleJoinMetadata`](simple_join_metadata.py) (concrete): Represents a join between a collection and its subcollection based on equi-join keys.
             - [`CartesianProductMetadata`](cartesian_product_metadata.py) (concrete): Represents a cartesian product between a collection and its subcollection.
+            - ['GeneralJoinMetadata](general_join_metadata.py) (concrete): Represents a join between a collection and its subcollection based on an arbitrary join condition, as opposed to equi-join keys.
         - [`CompoundRelationshipMetadata`](compound_relationship_metadata.py) (concrete): Represents a property created by combining two reversible properties that share a middle collection.
     - [`InheritedPropertyMetadata`](inherited_property_metadata.py) (concrete): Represents a property that is inherited from one of the skipped middle collections in a compound relationship.
