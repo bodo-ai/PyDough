@@ -6,6 +6,7 @@ __all__ = [
     "CartesianProductMetadata",
     "CollectionMetadata",
     "CompoundRelationshipMetadata",
+    "GeneralJoinMetadata",
     "GraphMetadata",
     "PropertyMetadata",
     "PyDoughMetadataException",
@@ -23,6 +24,7 @@ from .parse import parse_json_metadata_from_file
 from .properties import (
     CartesianProductMetadata,
     CompoundRelationshipMetadata,
+    GeneralJoinMetadata,
     PropertyMetadata,
     SimpleJoinMetadata,
     SubcollectionRelationshipMetadata,

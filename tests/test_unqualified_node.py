@@ -277,6 +277,34 @@ answer = x.TOP_K(100)\
             "Parts.CALCULATE(name=name, rank=RANKING(by=(retail_price.DESC(na_pos='last'), per='B', allow_ties=True, dense=True))",
             id="ranking_4",
         ),
+        pytest.param(
+            "answer = _ROOT.Nations.CALCULATE(name=_ROOT.name, num_customers=_ROOT.COUNT(_ROOT.customers)).BEST(by=_ROOT.num_customers.DESC())",
+            "Nations.CALCULATE(name=name, num_customers=COUNT(customers)).BEST(by=(num_customers.DESC(na_pos='last')))",
+            id="best_global",
+        ),
+        pytest.param(
+            "answer = _ROOT.Nations.CALCULATE(nation_name=_ROOT.name).Suppliers.BEST(per='Nations', by=_ROOT.account_balance.DESC()).CALCULATE(nation_name=_ROOT.nation_name, supplier_name=_ROOT.name, supplier_balance=_ROOT.account_balance)",
+            "Nations.CALCULATE(nation_name=name).Suppliers.BEST(by=(account_balance.DESC(na_pos='last')), per=False).CALCULATE(nation_name=nation_name, supplier_name=name, supplier_balance=account_balance)",
+            id="best_access",
+        ),
+        pytest.param(
+            """\
+richest_customer = _ROOT.customers.BEST(per='Nations', by=_ROOT.acct_bal.DESC())
+answer = _ROOT.Nations.CALCULATE(name=_ROOT.name, richest_customer_name=richest_customer.name)
+""",
+            "Nations.CALCULATE(name=name, richest_customer_name=customers.BEST(by=(acct_bal.DESC(na_pos='last')), per=False).name)",
+            id="best_child",
+        ),
+        pytest.param(
+            "answer = _ROOT.Customers.orders.line.BEST(per='Customers', by=_ROOT.ship_date.DESC(), allow_ties=True)",
+            "Customers.orders.line.BEST(by=(ship_date.DESC(na_pos='last')), per=True, allow_ties=True)",
+            id="best_ties",
+        ),
+        pytest.param(
+            "answer = _ROOT.Customers.orders.lines.BEST(per='Customers', by=_ROOT.ship_date.DESC(), n_best=5)",
+            "Customers.orders.lines.BEST(by=(ship_date.DESC(na_pos='last')), per=False, n_best=5)",
+            id="best_multiple",
+        ),
     ],
 )
 def test_unqualified_to_string(

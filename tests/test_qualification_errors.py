@@ -128,46 +128,107 @@ def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
 
 
 def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    best_customer = nations.customers.BEST(per='nations', by=acctbal.DESC())
+    Regions.CALCULATE(n=best_customer.name)
+    ```
+    The problem: The cardinality is off since even though the `BEST` ensures
+    the customers are singular with regards to the nation, the nations are
+    still plural with regards to the region.
+    """
+    best_customer = root.nations.customers.BEST(per="nations", by=root.acctbal.DESC())
+    return root.Regions.CALCULATE(n=best_customer.name)
+
+
+def bad_pydough_impl_10(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    best_customer = nations.customers.BEST(per='Regions', by=acctbal.DESC(), allow_ties=True)
+    Regions.CALCULATE(n=best_customer.name)
+    ```
+    The problem: the presence of `allow_ties=True` means that the `BEST`
+    operator does not guarantee `nations.customers` is plural with regards to
+    `Regions`.
+    """
+    best_customer = root.nations.customers.BEST(
+        per="Regions", by=root.acctbal.DESC(), allow_ties=True
+    )
+    return root.Regions.CALCULATE(n=best_customer.name)
+
+
+def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    best_customer = nations.customers.BEST(per='Regions', by=acctbal.DESC(), n_best=3)
+    Regions.CALCULATE(n=best_customer.name)
+    ```
+    The problem: the presence of `n_best=3` means that the `BEST` operator
+    does not guarantee `nations.customers` is plural with regards to `Regions`.
+    """
+    best_customer = root.nations.customers.BEST(
+        per="Regions", by=root.acctbal.DESC(), allow_ties=True
+    )
+    return root.Regions.CALCULATE(n=best_customer.name)
+
+
+def bad_pydough_impl_12(root: UnqualifiedNode) -> UnqualifiedNode:
+    """
+    Creates an UnqualifiedNode for the following invalid PyDough snippet:
+    ```
+    Regions.nations.customers.BEST(per='regions', by=acctbal.DESC(), n_best=3, allow_ties=True)
+    ```
+    The problem: cannot simultaneously use `n_best=3` and `allow_ties=True`.
+    """
+    return root.Regions.nations.customers.BEST(
+        per="Regions", by=root.acctbal.DESC(), n_best=3, allow_ties=True
+    )
+
+
+def bad_pydough_impl_13(root: UnqualifiedNode) -> UnqualifiedNode:
     # Non-existent per name
     return root.Customers.orders.CALCULATE(root.RANKING(by=root.key.ASC(), per="custs"))
 
 
-def bad_pydough_impl_10(root: UnqualifiedNode) -> UnqualifiedNode:
+def bad_pydough_impl_14(root: UnqualifiedNode) -> UnqualifiedNode:
     # Bad index of valid per name
     return root.Customers.orders.CALCULATE(
         root.RANKING(by=root.key.ASC(), per="Customers:2")
     )
 
 
-def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
+def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
     # Ambiguous per name
     return root.Customers.orders.customer.orders.lines.CALCULATE(
         root.RANKING(by=root.extended_price.DESC(), per="orders")
     )
 
 
-def bad_pydough_impl_12(root: UnqualifiedNode) -> UnqualifiedNode:
+def bad_pydough_impl_16(root: UnqualifiedNode) -> UnqualifiedNode:
     # Malformed per name
     return root.Customers.orders.CALCULATE(
         root.RANKING(by=root.key.ASC(), per="Customers:k")
     )
 
 
-def bad_pydough_impl_13(root: UnqualifiedNode) -> UnqualifiedNode:
+def bad_pydough_impl_17(root: UnqualifiedNode) -> UnqualifiedNode:
     # Malformed per name
     return root.Customers.orders.CALCULATE(
         root.RANKING(by=root.key.ASC(), per="Customers:1:2")
     )
 
 
-def bad_pydough_impl_14(root: UnqualifiedNode) -> UnqualifiedNode:
+def bad_pydough_impl_18(root: UnqualifiedNode) -> UnqualifiedNode:
     # Malformed per name
     return root.Customers.orders.CALCULATE(
         root.RANKING(by=root.key.ASC(), per="Customers:")
     )
 
 
-def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
+def bad_pydough_impl_19(root: UnqualifiedNode) -> UnqualifiedNode:
     # Malformed per name
     return root.Customers.orders.CALCULATE(
         root.RANKING(by=root.key.ASC(), per="Customers:0")
@@ -219,38 +280,58 @@ def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_09,
-            "Per string refers to unrecognized ancestor 'custs' of TPCH.Customers.orders",
+            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=1, allow_ties=False) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=1, allow_ties=False) == 1).name",
             id="09",
         ),
         pytest.param(
             bad_pydough_impl_10,
-            "Per string 'Customers:2' invalid as there are not 2 ancestors of the current context with name 'Customers'.",
+            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name",
             id="10",
         ),
         pytest.param(
             bad_pydough_impl_11,
-            "Per string 'orders' is ambiguous for TPCH.Customers.orders.customer.orders.lines. Use the form 'orders:index' to disambiguate, where 'orders:1' refers to the most recent ancestor.",
+            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(acctbal.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name",
             id="11",
         ),
         pytest.param(
             bad_pydough_impl_12,
-            "Malformed per string: 'Customers:k' (expected the index after ':' to be a positive integer)",
+            "Cannot allow ties when multiple best values are requested",
             id="12",
         ),
         pytest.param(
             bad_pydough_impl_13,
-            "Malformed per string: 'Customers:1:2' (expected 0 or 1 ':', found 2)",
+            "Per string refers to unrecognized ancestor 'custs' of TPCH.Customers.orders",
             id="13",
         ),
         pytest.param(
             bad_pydough_impl_14,
-            "Malformed per string: 'Customers:' (expected the index after ':' to be a positive integer)",
+            "Per string 'Customers:2' invalid as there are not 2 ancestors of the current context with name 'Customers'.",
             id="14",
         ),
         pytest.param(
             bad_pydough_impl_15,
-            "Malformed per string: 'Customers:0' (expected the index after ':' to be a positive integer)",
+            "Per string 'orders' is ambiguous for TPCH.Customers.orders.customer.orders.lines. Use the form 'orders:index' to disambiguate, where 'orders:1' refers to the most recent ancestor.",
             id="15",
+        ),
+        pytest.param(
+            bad_pydough_impl_16,
+            "Malformed per string: 'Customers:k' (expected the index after ':' to be a positive integer)",
+            id="16",
+        ),
+        pytest.param(
+            bad_pydough_impl_17,
+            "Malformed per string: 'Customers:1:2' (expected 0 or 1 ':', found 2)",
+            id="17",
+        ),
+        pytest.param(
+            bad_pydough_impl_18,
+            "Malformed per string: 'Customers:' (expected the index after ':' to be a positive integer)",
+            id="18",
+        ),
+        pytest.param(
+            bad_pydough_impl_19,
+            "Malformed per string: 'Customers:0' (expected the index after ':' to be a positive integer)",
+            id="19",
         ),
     ],
 )

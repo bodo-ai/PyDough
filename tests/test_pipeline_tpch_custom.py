@@ -29,6 +29,7 @@ from simple_pydough_functions import (
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
     customer_largest_order_deltas,
+    customer_most_recent_orders,
     datetime_current,
     datetime_relative,
     double_partition,
@@ -39,12 +40,14 @@ from simple_pydough_functions import (
     global_acctbal_breakdown,
     highest_priority_per_year,
     month_year_sliding_windows,
+    n_orders_first_day,
     nation_acctbal_breakdown,
     nation_best_order,
     nation_window_aggs,
     odate_and_rdate_avggap,
     order_info_per_priority,
     order_quarter_test,
+    orders_versus_first_orders,
     part_reduced_size,
     parts_quantity_increase_95_96,
     percentile_customers_per_region,
@@ -59,7 +62,10 @@ from simple_pydough_functions import (
     rank_with_filters_c,
     region_acctbal_breakdown,
     region_nation_window_aggs,
+    region_orders_from_nations_richest,
+    regional_first_order_best_line_part,
     regional_suppliers_percentile,
+    richest_customer_per_region,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -73,10 +79,12 @@ from simple_pydough_functions import (
     singular6,
     singular7,
     string_format_specifiers_sqlite,
+    supplier_best_part,
     supplier_pct_national_qty,
     suppliers_bal_diffs,
     top_customers_by_orders,
     triple_partition,
+    wealthiest_supplier,
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
@@ -1002,6 +1010,176 @@ from pydough.unqualified import (
                 ),
             ),
             id="top_customers_by_orders",
+        ),
+        pytest.param(
+            (
+                customer_most_recent_orders,
+                None,
+                "customer_most_recent_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Customer#000036487",
+                            "Customer#000088562",
+                            "Customer#000059543",
+                        ],
+                        "total_recent_value": [1614134.33, 1592016.2, 1565721.92],
+                    }
+                ),
+            ),
+            id="customer_most_recent_orders",
+        ),
+        pytest.param(
+            (
+                richest_customer_per_region,
+                None,
+                "richest_customer_per_region",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nation_name": [
+                            "MOROCCO",
+                            "UNITED STATES",
+                            "VIETNAM",
+                            "GERMANY",
+                            "SAUDI ARABIA",
+                        ],
+                        "customer_name": [
+                            "Customer#000061453",
+                            "Customer#000002487",
+                            "Customer#000081976",
+                            "Customer#000144232",
+                            "Customer#000076011",
+                        ],
+                        "balance": [9999.99, 9999.72, 9998.36, 9999.74, 9998.68],
+                    }
+                ),
+            ),
+            id="richest_customer_per_region",
+        ),
+        pytest.param(
+            (
+                n_orders_first_day,
+                None,
+                "n_orders_first_day",
+                lambda: pd.DataFrame(
+                    {
+                        "n_orders": [621],
+                    }
+                ),
+            ),
+            id="n_orders_first_day",
+        ),
+        pytest.param(
+            (
+                wealthiest_supplier,
+                None,
+                "wealthiest_supplier",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["Supplier#000009450"],
+                        "account_balance": [9999.72],
+                    }
+                ),
+            ),
+            id="wealthiest_supplier",
+        ),
+        pytest.param(
+            (
+                supplier_best_part,
+                None,
+                "supplier_best_part",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_name": [
+                            "Supplier#000006340",
+                            "Supplier#000000580",
+                            "Supplier#000006090",
+                        ],
+                        "part_name": [
+                            "black sky red lavender navy",
+                            "dark red antique mint gainsboro",
+                            "cream navajo thistle dodger red",
+                        ],
+                        "total_quantity": [131, 103, 99],
+                        "n_shipments": [4, 3, 3],
+                    }
+                ),
+            ),
+            id="supplier_best_part",
+        ),
+        pytest.param(
+            (
+                region_orders_from_nations_richest,
+                None,
+                "region_orders_from_nations_richest",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_orders": [74, 19, 62, 73, 41],
+                    }
+                ),
+            ),
+            id="region_orders_from_nations_richest",
+        ),
+        pytest.param(
+            (
+                regional_first_order_best_line_part,
+                None,
+                "regional_first_order_best_line_part",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "part_name": [
+                            "tomato saddle brown cornsilk khaki",
+                            "coral midnight cyan burlywood maroon",
+                            "azure peru burnished seashell green",
+                            "ivory peach linen lemon powder",
+                            "cyan sienna ivory powder forest",
+                        ],
+                    }
+                ),
+            ),
+            id="regional_first_order_best_line_part",
+        ),
+        pytest.param(
+            (
+                orders_versus_first_orders,
+                None,
+                "orders_versus_first_orders",
+                lambda: pd.DataFrame(
+                    {
+                        "customer_name": [
+                            "Customer#000063541",
+                            "Customer#000066847",
+                            "Customer#000072955",
+                            "Customer#000082832",
+                            "Customer#000003661",
+                        ],
+                        "order_key": [985892, 4451681, 2699750, 2005667, 4447044],
+                        "days_since_first_order": [2399, 2399, 2398, 2398, 2396],
+                    }
+                ),
+            ),
+            id="orders_versus_first_orders",
         ),
         pytest.param(
             (

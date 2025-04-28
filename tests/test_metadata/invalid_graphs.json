@@ -2950,5 +2950,125 @@
             "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
         }
       }
+  },
+  "BAD_JOIN_CONDITIONS": {
+    "parent": {
+      "type": "simple_table",
+      "table_path": "PARENT",
+      "unique_properties": [["j1", "j3"]],
+      "properties": {
+        "j1": {"type": "table_column", "column_name": "j1", "data_type": "int64"},
+        "j2": {"type": "table_column", "column_name": "j2", "data_type": "string"},
+        "j3": {"type": "table_column", "column_name": "j3", "data_type": "timestamp[9]"},
+        "j4": {"type": "table_column", "column_name": "j4", "data_type": "bool"},
+        "sub0": {
+          "type": "simple_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "keys": {"j1": ["k1"], "j4": ["k4"]},
+          "reverse_relationship_name": "par0"
+        },
+        "sub1": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "",
+          "reverse_relationship_name": "par1"
+        },
+        "sub2": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "(4",
+          "reverse_relationship_name": "par2"
+        },
+        "sub3": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "self.j1 in self.k2",
+          "reverse_relationship_name": "par3"
+        },
+        "sub4": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "is_prime(self.j1) != is_prime(self.j2)",
+          "reverse_relationship_name": "par4"
+        },
+        "sub4a": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "foo = other.k1",
+          "reverse_relationship_name": "par4a"
+        },
+        "sub5": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "self.j1 == COUNT(self.sub0)",
+          "reverse_relationship_name": "par5"
+        },
+        "sub6": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "self.j1 == other.sub0.k1",
+          "reverse_relationship_name": "par6"
+        },
+        "sub7": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "self.sub0.CALCULATE(y=YEAR(k1)) == other.k1",
+          "reverse_relationship_name": "par7"
+        },
+        "sub8": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "RANKING(by=self.j1.ASC()) < other.k1",
+          "reverse_relationship_name": "par8"
+        },
+        "sub9": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "self.j1 == other.k5",
+          "reverse_relationship_name": "par9"
+        },
+        "sub10": {
+          "type": "general_join",
+          "other_collection_name": "child",
+          "singular": false,
+          "no_collisions": false,
+          "condition": "this.j1 == other.k1",
+          "reverse_relationship_name": "par10"
+        }
+      }
+    },
+    "child": {
+      "type": "simple_table",
+      "table_path": "PARENT",
+      "unique_properties": [["k1", "k2"]],
+      "properties": {
+        "k1": {"type": "table_column", "column_name": "k1", "data_type": "int64"},
+        "k2": {"type": "table_column", "column_name": "k2", "data_type": "string"},
+        "k3": {"type": "table_column", "column_name": "k3", "data_type": "timestamp[9]"},
+        "k4": {"type": "table_column", "column_name": "k4", "data_type": "bool"}
+      }
+    }
   }
 }

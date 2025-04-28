@@ -457,6 +457,78 @@ def avg_gap_prev_urgent_same_clerk():
     return TPCH.CALCULATE(avg_delta=AVG(order_info.delta))
 
 
+def customer_most_recent_orders():
+    # Finds the 3 customers with the highest total value from their 5 most
+    # recent urgent orders, breaking ties in favor of the lower order key.
+    most_recent_orders = orders.BEST(
+        per="Customers", by=(order_date.DESC(), key.ASC()), n_best=5
+    )
+    return (
+        Customers.WHERE(HAS(most_recent_orders))
+        .CALCULATE(name, total_recent_value=SUM(most_recent_orders.total_price))
+        .TOP_K(3, by=total_recent_value.DESC())
+    )
+
+
+def richest_customer_per_region():
+    # Identifies the name of the customer with the largest account balance in
+    # every region, breaking ties by the customer's name alphabetically, and
+    # including the name of the customer's nation.
+    return (
+        Regions.CALCULATE(region_name=name)
+        .nations.CALCULATE(nation_name=name)
+        .customers.BEST(
+            per="Regions",
+            by=(acctbal.DESC(), name.ASC()),
+        )
+        .CALCULATE(region_name, nation_name, customer_name=name, balance=acctbal)
+    )
+
+
+def n_orders_first_day():
+    # Counts how many orders were made on the first recorded day of orders.
+    first_day_orders = Orders.BEST(by=order_date.ASC(), allow_ties=True)
+    return TPCH.CALCULATE(n_orders=COUNT(first_day_orders))
+
+
+def wealthiest_supplier():
+    # Identifies the richest supplier globally, breaking ties alphabetically.
+    return Suppliers.BEST(by=(account_balance.DESC(), name.ASC())).CALCULATE(
+        name, account_balance
+    )
+
+
+def supplier_best_part():
+    # For each French supplier, identifies the part that the supplier shipped
+    # the largest quantity of in 1994, ignoring shipments that were taxed. List
+    # out the supplier name, part name, quantity and number of such shipments
+    # for the 3 suppliers with the highest such quantities, breaking ties alphabetically.
+    selected_suppliers = Suppliers.WHERE(nation.name == "FRANCE")
+    selected_lines = lines.WHERE((YEAR(ship_date) == 1994) & (tax == 0))
+    best_part_supplied = (
+        supply_records.WHERE(HAS(selected_lines))
+        .CALCULATE(
+            part_name=part.name,
+            quantity=SUM(selected_lines.quantity),
+            n_shipments=COUNT(selected_lines),
+        )
+        .BEST(
+            per="Suppliers",
+            by=quantity.DESC(),
+        )
+    )
+    return (
+        selected_suppliers.WHERE(HAS(best_part_supplied))
+        .CALCULATE(
+            supplier_name=name,
+            part_name=best_part_supplied.part_name,
+            total_quantity=best_part_supplied.quantity,
+            n_shipments=best_part_supplied.n_shipments,
+        )
+        .TOP_K(3, by=(total_quantity.DESC(), supplier_name.ASC()))
+    )
+
+
 def nation_window_aggs():
     # Calculating multiple global windowed aggregations for each nation, only
     # considering nations whose names do not start with a vowel.
@@ -471,6 +543,52 @@ def nation_window_aggs():
         )
         .ORDER_BY(region_key.ASC(), nation_name.ASC())
     )
+
+
+def region_orders_from_nations_richest():
+    # Find the orders from the wealthiest customer in each nation, breaking
+    # ties alphabetically by customer name.
+    nations_richest_customers = nations.customers.BEST(
+        per="nations", by=(acctbal.DESC(), name.ASC())
+    ).orders
+    return Regions.CALCULATE(
+        region_name=name, n_orders=COUNT(nations_richest_customers)
+    ).ORDER_BY(region_name.ASC())
+
+
+def regional_first_order_best_line_part():
+    # For each region, identify the first order made by a customer in that region,
+    # (breaking ties by order key), and the name of the part from that order
+    # with the largest quantity shipped, breaking ties by line number within
+    # the order.
+    first_order = nations.customers.orders.BEST(
+        per="Regions", by=(order_date.ASC(), key.ASC())
+    )
+    largest_quantity_line = first_order.lines.BEST(
+        per="Regions", by=(quantity.DESC(), line_number.ASC())
+    )
+    return Regions.CALCULATE(
+        region_name=name, part_name=largest_quantity_line.part.name
+    ).ORDER_BY(region_name.ASC())
+
+
+def orders_versus_first_orders():
+    # Identify the 5 biggest day gaps between an order and the customer's first
+    # order. Include the customer name, the day gap, and the key or the order.
+    # Break ties alphabetically by customer name. Only consider customers from
+    # Vietnam.
+    first_order_from_cust = (
+        customer.WHERE(nation.name == "VIETNAM")
+        .CALCULATE(customer_name=name)
+        .orders.BEST(per="customer", by=(order_date.ASC(), key.ASC()))
+    )
+    return Orders.CALCULATE(
+        customer_name=first_order_from_cust.customer_name,
+        order_key=key,
+        days_since_first_order=DATEDIFF(
+            "days", first_order_from_cust.order_date, order_date
+        ),
+    ).TOP_K(5, by=(days_since_first_order.DESC(), customer_name.ASC()))
 
 
 def region_nation_window_aggs():
@@ -556,8 +674,7 @@ def nation_best_order():
             value_percentage=100.0 * total_price / RELSUM(total_price, per="Nations"),
             order_key=key,
         )
-        .WHERE(RANKING(by=order_value.DESC(), per="Nations") == 1)
-        .SINGULAR()
+        .BEST(by=order_value.DESC(), per="Nations")
     )
     return (
         selected_nations.WHERE(HAS(best_order))
