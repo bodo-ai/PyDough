@@ -69,7 +69,8 @@ flowchart TD
 
 Before jumping into the workflow, it is important to understand how the PyDough operators work since these are daisy-chained throughout the workflow and play a role in nearly every IR.
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 
 <!-- TOC --><a name="unqualified-nodes"></a>
@@ -166,7 +167,8 @@ There are several variations of the logic that invoke this rewrite in different 
 <!-- TOC --><a name="qdag-nodes"></a>
 ## QDAG Nodes
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 For an example of the QDAG structure, consider the `nation_info` example earlier from the unqualified nodes:
 
@@ -196,17 +198,20 @@ This has the following structure as QDAG nodes:
 <!-- TOC --><a name="qualification"></a>
 ### Qualification
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="hybrid-tree"></a>
 ## Hybrid Tree
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="hybrid-conversion"></a>
 ### Hybrid Conversion
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 For an example of the Hybrid Tree structure, consider the `nation_info` example earlier from the unqualified nodes:
 
@@ -588,7 +593,8 @@ The way to interpret this is that the entirety of child `$0` of H3 is evaluated,
 <!-- TOC --><a name="relational-tree"></a>
 ## Relational Tree
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 For an example of the relational tree, consider the `nation_info` example from earlier.
 ```py
@@ -652,27 +658,37 @@ flowchart BT
   P1 --> R1
 ```
 
+The way to read this is as follows:
+
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
+
 <!-- TOC --><a name="relational-conversion"></a>
 ### Relational Conversion
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="relational-optimization"></a>
 ### Relational Optimization
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="sqlglot-ast"></a>
 ## SQLGlot AST
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="sqlglot-conversion"></a>
 ### SQLGlot Conversion
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="sqlglot-optimization"></a>
 ### SQLGlot Optimization
 
-TODO: FINISH THIS SECTION.
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
