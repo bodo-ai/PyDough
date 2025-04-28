@@ -270,8 +270,8 @@ flowchart TD
   L4 --> L5
 ```
 
-In this example, the main hybrid tree has two levels H1 and `H2` (`H2` is the value pointed to when the QDAG is converted to a hybrid tree).
-- `H1`/`H2` have a parent/successor relationship where H1 is the parent and `H2` is the successor.
+In this example, the main hybrid tree has two levels `H1` and `H2` (`H2` is the value pointed to when the QDAG is converted to a hybrid tree).
+- `H1`/`H2` have a parent/successor relationship where `H1` is the parent and `H2` is the successor.
 - `H1` has no children and its pipeline has a single operation denoting the root level.
 - `H2` has two children (`$0` and `$1`) and its pipeline has 3 operations:
   - An access to the nations collection (how the step-down from `H1` to `H2` begins)
