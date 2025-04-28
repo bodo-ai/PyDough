@@ -1832,6 +1832,106 @@ def singular7():
     )
 
 
+def quarter_function_test():
+    return TPCH.CALCULATE(
+        QUARTER("2023-01-15"),  # Q1
+        QUARTER("2023-02-28"),  # Q1
+        QUARTER("2023-03-31"),  # Q1
+        QUARTER("2023-04-01"),  # Q2
+        QUARTER("2023-05-15"),  # Q2
+        QUARTER("2023-06-30"),  # Q2
+        QUARTER("2023-07-01"),  # Q3
+        QUARTER("2023-08-15"),  # Q3
+        QUARTER("2023-09-30"),  # Q3
+        QUARTER("2023-10-01"),  # Q4
+        QUARTER("2023-11-15"),  # Q4
+        QUARTER("2023-12-31"),  # Q4
+        QUARTER(pd.Timestamp("2024-02-29 12:30:45")),  # Q1 (leap year)
+        # Testing start of quarter for different months
+        q1_jan=DATETIME(
+            "2023-01-15 12:30:45", "start of quarter"
+        ),  # Should be 2023-01-01
+        q1_feb=DATETIME(
+            "2023-02-28 12:30:45", "start of quarter"
+        ),  # Should be 2023-01-01
+        q1_mar=DATETIME("2023-03-31", "start of quarter"),  # Should be 2023-01-01
+        q2_apr=DATETIME("2023-04-01", "start of quarter"),  # Should be 2023-04-01
+        q2_may=DATETIME(
+            "2023-05-15 12:30:45", "start of quarter"
+        ),  # Should be 2023-04-01
+        q2_jun=DATETIME(
+            "2023-06-30 12:30:45", "start of quarter"
+        ),  # Should be 2023-04-01
+        q3_jul=DATETIME(
+            "2023-07-01 12:30:45", "start of quarter"
+        ),  # Should be 2023-07-01
+        q3_aug=DATETIME("2023-08-15", "start of quarter"),  # Should be 2023-07-01
+        q3_sep=DATETIME("2023-09-30", "start of quarter"),  # Should be 2023-07-01
+        q4_oct=DATETIME("2023-10-01", "start of quarter"),  # Should be 2023-10-01
+        q4_nov=DATETIME("2023-11-15", "start of quarter"),  # Should be 2023-10-01
+        q4_dec=DATETIME("2023-12-31", "start of quarter"),  # Should be 2023-10-01
+        # Testing with different aliases for 'start of quarter'
+        ts_q1=DATETIME(pd.Timestamp("2024-02-29 12:30:45"), "start of quarter"),
+        alias1=DATETIME("2023-05-15", "START OF QUARTER"),
+        alias2=DATETIME("2023-08-15", "Start Of Quarter"),
+        alias3=DATETIME("2023-11-15", "\n  Start  Of\tQuarter\n\n"),
+        alias4=DATETIME("2023-02-15", "\tSTART\tOF\tquarter\t"),
+        # Testing chained operations
+        chain1=DATETIME("2023-05-15", "start of quarter", "+1 day", "+2 hours"),
+        chain2=DATETIME("2023-08-15", "start of quarter", "start of day"),
+        # Oct 1 from previous quarter
+        chain3=DATETIME("2023-11-15", "-1 month", "start of quarter"),
+        plus_1q=DATETIME("2023-01-15 12:30:45", "+1 quarter"),  # Should be 2023-04-15
+        plus_2q=DATETIME("2023-01-15 12:30:45", "+2 quarters"),  # Should be 2023-07-15
+        plus_3q=DATETIME("2023-01-15", "+3 quarters"),  # Should be 2023-10-15
+        minus_1q=DATETIME("2023-01-15 12:30:45", "-1 quarter"),  # Should be 2022-10-15
+        minus_2q=DATETIME("2023-01-15 12:30:45", "-2 quarters"),  # Should be 2022-07-15
+        minus_3q=DATETIME("2023-01-15", "-3 quarters"),  # Should be 2022-04-15
+        # Testing with different syntax for quarter offsets
+        syntax1=DATETIME("2023-05-15", " +1 QUARTER "),
+        syntax2=DATETIME("2023-08-15", "+2 Q"),
+        syntax3=DATETIME("2023-11-15", " \n +\t3 \nQuarters \n\r "),
+        syntax4=DATETIME("2023-02-15", "\t-\t2\tq\t"),
+        # Basic quarter differences within the same year
+        q_diff1=DATEDIFF("quarter", "2023-01-15", "2023-04-15"),  # 1 quarter
+        q_diff2=DATEDIFF("quarter", "2023-01-15", "2023-07-15"),  # 2 quarters
+        q_diff3=DATEDIFF("quarter", "2023-01-15", "2023-10-15"),  # 3 quarters
+        q_diff4=DATEDIFF("quarter", "2023-01-15", "2023-12-31"),  # 3 quarters
+        # Quarter differences across year boundaries
+        q_diff5=DATEDIFF("quarter", "2023-01-15", "2024-01-15"),  # 4 quarters
+        q_diff6=DATEDIFF("quarter", "2023-01-15", "2024-04-15"),  # 5 quarters
+        q_diff7=DATEDIFF("quarter", "2022-10-15", "2024-04-15"),  # 6 quarters
+        q_diff8=DATEDIFF("quarter", "2020-01-01", "2025-01-01"),  # 20 quarters
+        # Negative quarter differences (earlier end date)
+        q_diff9=DATEDIFF("quarter", "2023-04-15", "2023-01-15"),  # -1 quarter
+        q_diff10=DATEDIFF("quarter", "2024-01-15", "2023-01-15"),  # -4 quarters
+        # Testing with partial quarters (should still count as crossing a quarter boundary)
+        q_diff11=DATEDIFF("quarter", "2023-03-31", "2023-04-01"),  # 1 quarter
+        q_diff12=DATEDIFF("quarter", "2023-12-31", "2024-01-01"),  # 1 quarter
+        # QUARTER(order_date),
+    )
+
+
+def order_quarter_test():
+    return (
+        Orders.WHERE(YEAR(order_date) == 1995)
+        .TOP_K(1, by=order_date.ASC())
+        .CALCULATE(
+            order_date,
+            quarter=QUARTER(order_date),
+            quarter_start=DATETIME(order_date, "start of quarter"),
+            next_quarter=DATETIME(order_date, "+1 quarter"),
+            prev_quarter=DATETIME(order_date, "-1 quarter"),
+            two_quarters_ahead=DATETIME(order_date, "+2 quarters"),
+            two_quarters_behind=DATETIME(order_date, "-2 quarters"),
+            quarters_since_1995=DATEDIFF("quarter", "1995-01-01", order_date),
+            quarters_until_2000=DATEDIFF("quarter", order_date, "2000-01-01"),
+            same_quarter_prev_year=DATETIME(order_date, "-4 quarters"),
+            same_quarter_next_year=DATETIME(order_date, "+4 quarters"),
+        )
+    )
+
+
 def simple_int_float_string_cast():
     # String format specifiers for date/time with a static datetime
     # Using a specific date: 2023-07-15 14:30:45

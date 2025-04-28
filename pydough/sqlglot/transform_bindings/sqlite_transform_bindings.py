@@ -10,7 +10,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.types import DateType, PyDoughType, StringType
+from pydough.types import DateType, Int32Type, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -35,6 +35,8 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 return self.convert_iff_case(args, types)
             case pydop.JOIN_STRINGS if sqlite3.sqlite_version < "3.44.1":
                 return self.convert_concat_ws_to_concat(args, types)
+            case pydop.QUARTER:
+                return self.convert_quarter(args, types)
         return super().convert_call_to_sqlglot(operator, args, types)
 
     def convert_concat_ws_to_concat(
@@ -109,6 +111,28 @@ class SQLiteTransformBindings(BaseTransformBindings):
                     this=year_y, expression=year_x
                 )
                 return years_diff
+            case DateTimeUnit.QUARTER:
+                # Calculate quarter difference as:
+                # 4 * DATEDIFF("years", x, y) + QUARTER(y) - QUARTER(x)
+                years_diff = self.convert_datediff(
+                    [sqlglot_expressions.Literal.string("year")] + args[1:],
+                    types,
+                )
+                years_diff_in_quarters = sqlglot_expressions.Mul(
+                    this=apply_parens(years_diff),
+                    expression=sqlglot_expressions.Literal.number(4),
+                )
+
+                quarter_x = self.convert_quarter([args[1]], [types[1]])
+                quarter_y = self.convert_quarter([args[2]], [types[2]])
+
+                quarters_diff = sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Add(
+                        this=years_diff_in_quarters, expression=quarter_y
+                    ),
+                    expression=quarter_x,
+                )
+                return quarters_diff
             case DateTimeUnit.MONTH:
                 # Extracts the difference in years multiplied by 12.
                 # Extracts the month from the date and subtracts the months.
@@ -269,6 +293,58 @@ class SQLiteTransformBindings(BaseTransformBindings):
             case _:
                 raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
+    def convert_quarter(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for extracting the quarter from a date/timestamp.
+
+        Args:
+            `args`: The operands to QUARTER, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to QUARTER.
+
+        Returns:
+            The SQLGlot expression extracting the quarter (1-4) from the date.
+        """
+        assert len(args) == 1
+        # Extract month (1-12)
+        month_expr = self.convert_extract_datetime(args, types, DateTimeUnit.MONTH)
+
+        # Calculate quarter with CASE statement:
+        # CASE
+        #   WHEN month BETWEEN 1 AND 3 THEN 1
+        #   WHEN month BETWEEN 4 AND 6 THEN 2
+        #   WHEN month BETWEEN 7 AND 9 THEN 3
+        #   WHEN month BETWEEN 10 AND 12 THEN 4
+        # END
+        case_expr = sqlglot_expressions.Case()
+
+        # Define quarters as ranges of months
+        quarters = [
+            (1, 3, 1),  # Quarter 1: months 1-3
+            (4, 6, 2),  # Quarter 2: months 4-6
+            (7, 9, 3),  # Quarter 3: months 7-9
+            (10, 12, 4),  # Quarter 4: months 10-12
+        ]
+
+        # Add each quarter condition to the case expression
+        for start_month, end_month, quarter_num in quarters:
+            case_expr = case_expr.when(
+                self.convert_monotonic(
+                    [
+                        sqlglot_expressions.Literal.number(start_month),
+                        month_expr,
+                        sqlglot_expressions.Literal.number(end_month),
+                    ],
+                    [Int32Type(), Int32Type(), Int32Type()],
+                ),
+                sqlglot_expressions.Literal.number(quarter_num),
+            )
+        return apply_parens(case_expr)
+
     def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         """
         Gets the day of the week, as an integer, for the `base` argument in
@@ -316,6 +392,41 @@ class SQLiteTransformBindings(BaseTransformBindings):
                     )
                 return sqlglot_expressions.Date(
                     this=[base, trunc_expr],
+                )
+            case DateTimeUnit.QUARTER:
+                # First truncate to month
+                month_trunc = self.apply_datetime_truncation(base, DateTimeUnit.MONTH)
+
+                # Calculate the month within the quarter (0-2)
+                month_within_quarter = sqlglot_expressions.Mod(
+                    this=apply_parens(
+                        sqlglot_expressions.Sub(
+                            this=self.convert_extract_datetime(
+                                [base], [DateType()], DateTimeUnit.MONTH
+                            ),
+                            expression=sqlglot_expressions.Literal.number(1),
+                        )
+                    ),
+                    expression=sqlglot_expressions.Literal.number(3),
+                )
+
+                # Subtract the appropriate number of months to get to the start of the quarter
+                offset_expr_qtr: SQLGlotExpression = self.convert_concat(
+                    [
+                        sqlglot_expressions.convert("-"),
+                        sqlglot_expressions.Cast(
+                            this=apply_parens(month_within_quarter),
+                            to=sqlglot_expressions.DataType.build("TEXT"),
+                        ),
+                        sqlglot_expressions.convert(" months"),
+                    ],
+                    [StringType()] * 3,
+                )
+                if isinstance(month_trunc, sqlglot_expressions.Date):
+                    month_trunc.this.append(offset_expr_qtr)
+                    return month_trunc
+                return sqlglot_expressions.Date(
+                    this=[month_trunc, offset_expr_qtr],
                 )
             case DateTimeUnit.WEEK:
                 # Implementation for week.
@@ -365,9 +476,11 @@ class SQLiteTransformBindings(BaseTransformBindings):
     def apply_datetime_offset(
         self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
     ) -> SQLGlotExpression:
-        # Convert "+n weeks" to "+7n days"
+        # Convert "+n weeks" to "+7n days" and "+n quarters" to "+3n months"
         if unit == DateTimeUnit.WEEK:
             amt, unit = amt * 7, DateTimeUnit.DAY
+        elif unit == DateTimeUnit.QUARTER:
+            amt, unit = amt * 3, DateTimeUnit.MONTH
         # For sqlite, use the DATETIME operator to add the interval
         offset_expr: SQLGlotExpression = sqlglot_expressions.convert(
             f"{amt} {unit.value}"
