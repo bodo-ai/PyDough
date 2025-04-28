@@ -5,6 +5,7 @@ This document describes the various IRs used by PyDough to convert raw PyDough c
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
 - [Overview](#overview)
+- [PyDough Operators](#pydough-operators)
 - [Unqualified Nodes](#unqualified-nodes)
   - [Unqualified Transform](#unqualified-transform)
 - [QDAG Nodes](#qdag-nodes)
@@ -63,6 +64,14 @@ flowchart TD
 ```
 
 
+<!-- TOC --><a name="pydough-operators"></a>
+## PyDough Operators
+
+Before jumping into the workflow, it is important to understand how the PyDough operators work since these are daisy-chained throughout the workflow and play a role in nearly every IR.
+
+TODO: FINISH THIS SECTION.
+
+
 <!-- TOC --><a name="unqualified-nodes"></a>
 ## Unqualified Nodes
 
@@ -76,6 +85,13 @@ The same idea of Python functionality building new nodes on top of existing node
 
 > [!NOTE]
 > As a consequence of the `==` behavior, unqualified nodes should never be used as dictionary keys, cached via `@cache`, or compared with `==`, because this will always return a new unqualified node instead of a boolean indicating whether or not they are equal. Instead, it is better to convert the unqualified nodes to strings then check if the strings are equal. All unqualified nodes have a repr implementation that dumps their full structure (so `str` and `repr` should NOT be used as casting functions in PyDough).
+
+Some examples of how the various unqualified nodes work:
+- `UnqualifiedCalculate`: created by calling `x.CALCULATE(...)`. The `_parcel` contains two items: the unqualified node `x`, and a list of `(name, expr)` terms for the arguments to the `CALCULATE` where `name` is the name given to the term and `expr` is the unqualified node for the expression inside the `CALCULATE`. When `x.CALCULATE(...)` is called, every expression that is not passed in via a keyword argument is given a dummy name (e.g. `expr_0`) before so it can be passed in to `UnqualifiedCalculate` with a name.
+- `UnqualifiedAccess`: created by accessing a field of any other unqualified node, e.g. `x.y`. The `_parcel` contains two items: the unqualified node `x` and the string `"y"` denoting the field to access from `x`. This represents an access of some property of `x` with a specific name, which could be an expression, collection, or an invalid access.
+  - Accessing a collection of PyDough is always done in the form `UnqualifiedAccess(root, "collection_name")` where `root` is an `UnqualifiedRoot` object, and  `"collection_name"` is the name of one of the collections in the graph.
+  - Terms inside of a `CALCULATE` or similar expression are similarly phrased. For example, if doing `nations.CALCULATE(nation_name=name, region_name=region.name)`, the term for `nation_name` is `UnqualifiedAccess(root, "name")`, and the term for `region_name` is `UnqualifiedAccess(UnqualifiedAccess(root, "region"), "name")`.
+- `UnqualifiedOperator`: created to represent a function operation. When a function is invoked in root level, e.g. `root.COUNT`, instead of creating an `UnqualifiedAccess`, PyDough can detect that this child of the root is a function name so it will return `UnqualifiedOperator("COUNT")`. This is possible because the `UnqualifiedRoot` internally stores information about the available function names. When this `UnqualifiedOperator` object is called as a function, e.g. `UnqualifiedOperator("COUNT")(...)`, it is transformed into a function call (either `UnqualifiedOperation` or `UnqualifiedWindow` depending on what kind).
 
 Most magic methods have this sort of behavior, with some notable exceptions. For example, `__len__` is not allowed because any implementation of that magic method in Python must return an integer, so it cannot return a call to the `LENGTH` function in PyDough (unlike `__abs__`, which is implemented so when `abs` is called on an unqualified node it invokes the `ABS` PyDough function).
 
@@ -111,7 +127,7 @@ flowchart RL
     B3B --> B3C[Access:
     'customers']
     B3C --> B3D[ROOT]
-    B3B -.-> P1[Call:
+    B3B -.-> P1[BinOp:
     '<']
     P1 --> P2[Access:
     'acctbal']
@@ -150,7 +166,7 @@ There are several variations of the logic that invoke this rewrite in different 
 <!-- TOC --><a name="qdag-nodes"></a>
 ## QDAG Nodes
 
-TODO
+TODO: FINISH THIS SECTION.
 
 For an example of the QDAG structure, consider the `nation_info` example earlier from the unqualified nodes:
 
@@ -180,17 +196,17 @@ This has the following structure as QDAG nodes:
 <!-- TOC --><a name="qualification"></a>
 ### Qualification
 
-TODO
+TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="hybrid-tree"></a>
 ## Hybrid Tree
 
-TODO
+TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="hybrid-conversion"></a>
 ### Hybrid Conversion
 
-TODO
+TODO: FINISH THIS SECTION.
 
 For an example of the Hybrid Tree structure, consider the `nation_info` example earlier from the unqualified nodes:
 
@@ -572,7 +588,7 @@ The way to interpret this is that the entirety of child `$0` of H3 is evaluated,
 <!-- TOC --><a name="relational-tree"></a>
 ## Relational Tree
 
-TODO
+TODO: FINISH THIS SECTION.
 
 For an example of the relational tree, consider the `nation_info` example from earlier.
 ```py
@@ -639,24 +655,24 @@ flowchart BT
 <!-- TOC --><a name="relational-conversion"></a>
 ### Relational Conversion
 
-TODO
+TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="relational-optimization"></a>
 ### Relational Optimization
 
-TODO
+TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="sqlglot-ast"></a>
 ## SQLGlot AST
 
-TODO
+TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="sqlglot-conversion"></a>
 ### SQLGlot Conversion
 
-TODO
+TODO: FINISH THIS SECTION.
 
 <!-- TOC --><a name="sqlglot-optimization"></a>
 ### SQLGlot Optimization
 
-TODO
+TODO: FINISH THIS SECTION.
