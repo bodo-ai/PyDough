@@ -207,12 +207,6 @@ This has the following structure as QDAG nodes:
 > [!IMPORTANT]
 > TODO: FINISH THIS SECTION.
 
-<!-- TOC --><a name="hybrid-conversion"></a>
-### Hybrid Conversion
-
-> [!IMPORTANT]
-> TODO: FINISH THIS SECTION.
-
 For an example of the Hybrid Tree structure, consider the `nation_info` example earlier from the unqualified nodes:
 
 ```py
@@ -287,6 +281,12 @@ In this example, the main hybrid tree has two levels H1 and `H2` (`H2` is the va
   - The contents of `$0` is just a single tree level `H3` which does not have any children and has a pipeline containing only an access to the `regions` collection.
 - `$1` is an aggregation access, meaning the data from `$1` must first be aggregated before it is joined with `H2`. The aggregation is done by grouping on the `nation_key` field of the bottom subtree of `$1` (which is `H5`) and computes the term `agg_0` as `COUNT()`. Then, the result is joined with `H2` on the condition that the `key` term from `H2` equals the `nation_key` field just used to aggregate.
   - The contents of `$1` is two tree levels `H4` and `H5`. `H4` does not have any children and has a pipeline containing an access to the `customers` collection followed by a filter on the condition that `acctbal < 0`. `H5` does not have any children and only contains a single operation accessing the `orders` sub-collection of the parent level.
+
+<!-- TOC --><a name="hybrid-conversion"></a>
+### Hybrid Conversion
+
+> [!IMPORTANT]
+> TODO: FINISH THIS SECTION.
 
 
 <!-- TOC --><a name="hybrid-decorrelation"></a>
