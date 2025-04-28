@@ -1,0 +1,248 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f5f5f5;
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+header {
+  background-color: #333;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.file-upload-container {
+  display: flex;
+  align-items: center;
+}
+
+.load-json-btn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.load-json-btn:hover {
+  background-color: #45a049;
+}
+
+.graph-container {
+  flex: 1;
+  background-color: white;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  margin: 1rem;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+/* Graph styling */
+.node {
+  cursor: pointer;
+  stroke: #333;
+  stroke-width: 1.5px;
+  fill: #c6dbef;
+}
+
+.node text {
+  pointer-events: none;
+  fill: #333;
+}
+
+.node-title {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.table-path {
+  font-style: italic;
+  font-size: 14px;
+  fill: #666;
+}
+
+.properties-header {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.column-item {
+  font-size: 14px;
+}
+
+.subcollection-item {
+  font-size: 14px;
+}
+
+.subcollection-simple_join {
+  fill: #1f77b4;
+}
+
+.subcollection-compound {
+  fill: #2ca02c;
+}
+
+.subcollection-cartesian_product {
+  fill: #ff7f0e;
+}
+
+.link {
+  stroke-opacity: 0.8;
+  stroke-width: 2px;
+}
+
+.link-simple_join {
+  stroke: #1f77b4;
+}
+
+.link-cartesian_product {
+  stroke: #ff7f0e;
+  stroke-dasharray: 4, 4;
+}
+
+.link-compound {
+  stroke: #2ca02c;
+  stroke-dasharray: 6, 3;
+}
+
+.link-reverse {
+  stroke-opacity: 0.5;
+  stroke-dasharray: 2, 2;
+}
+
+.link-label {
+  font-size: 14px;
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff,
+    1px 1px 0 #fff;
+  font-weight: normal;
+  pointer-events: none;
+  fill: #333;
+}
+
+.link-label-highlighted {
+  fill: #d62728;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.link-highlighted {
+  stroke: #d62728;
+  stroke-width: 3px;
+  stroke-dasharray: none;
+  stroke-opacity: 1;
+}
+
+.node-highlighted {
+  stroke: #d62728;
+  stroke-width: 3px;
+  fill: #f7dcdb;
+}
+
+.arrowhead {
+  fill: #666;
+}
+
+.arrowhead-highlighted {
+  fill: #d62728;
+}
+
+/* Tooltip */
+.tooltip {
+  position: absolute;
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  pointer-events: none;
+  font-size: 14px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  line-height: 1.4;
+}
+
+.tooltip strong {
+  color: #333;
+  font-size: 16px;
+}
+
+.reverse-note {
+  color: #777;
+  font-style: italic;
+}
+
+/* Legend */
+.legend {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 15px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+}
+
+.legend h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.legend-line {
+  display: inline-block;
+  width: 40px;
+  height: 3px;
+  margin-right: 10px;
+}
+
+.simple_join-line {
+  background-color: #1f77b4;
+}
+
+.compound-line {
+  background-color: #2ca02c;
+  border-top: 3px dashed #2ca02c;
+}
+
+.cartesian_product-line {
+  background-color: #ff7f0e;
+  border-top: 3px dotted #ff7f0e;
+}
+
+.reverse-line {
+  background-color: #999;
+  border-top: 2px dashed #999;
+}
+
+.legend-note {
+  font-size: 13px;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
