@@ -14,9 +14,7 @@ from pydough.metadata.errors import (
 from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.properties import (
     CartesianProductMetadata,
-    CompoundRelationshipMetadata,
     GeneralJoinMetadata,
-    InheritedPropertyMetadata,
     PropertyMetadata,
     SimpleJoinMetadata,
     TableColumnMetadata,
@@ -35,8 +33,8 @@ class SimpleTableMetadata(CollectionMetadata):
     # Set of names of fields that can be included in the JSON
     # object describing a simple table collection.
     allowed_fields: set[str] = CollectionMetadata.allowed_fields | {
-        "table_path",
-        "unique_properties",
+        "table path",
+        "unique properties",
     }
 
     def __init__(
@@ -121,24 +119,20 @@ class SimpleTableMetadata(CollectionMetadata):
                     f"{property.error_name} cannot be a unique property since it is a subcollection"
                 )
 
-    def verify_allows_property(
-        self, property: AbstractMetadata, inherited: bool
-    ) -> None:
+    def verify_allows_property(self, property: AbstractMetadata) -> None:
         """
         Verifies that a property is safe to add to the collection.
 
         Args:
             `property`: the metadata for a PyDough property that is being
             added to the collection.
-            `inherited`: True if verifying a property being inserted as an
-            inherited property, False otherwise.
 
         Raises:
             `PyDoughMetadataException`: if `property` is not a valid property
             to insert into the collection.
         """
         # Invoke the more generic checks.
-        super().verify_allows_property(property, inherited)
+        super().verify_allows_property(property)
 
         # Ensure that the property is one of the supported types for this
         # type of collection.
@@ -147,8 +141,6 @@ class SimpleTableMetadata(CollectionMetadata):
                 TableColumnMetadata()
                 | CartesianProductMetadata()
                 | SimpleJoinMetadata()
-                | CompoundRelationshipMetadata()
-                | InheritedPropertyMetadata()
                 | GeneralJoinMetadata()
             ):
                 pass
@@ -184,8 +176,8 @@ class SimpleTableMetadata(CollectionMetadata):
 
         # Check that the JSON data contains the required properties
         # `table_path` and `unique_properties`, without any extra properties.
-        HasPropertyWith("table_path", is_string).verify(collection_json, error_name)
-        HasPropertyWith("unique_properties", unique_properties_predicate).verify(
+        HasPropertyWith("table path", is_string).verify(collection_json, error_name)
+        HasPropertyWith("unique properties", unique_properties_predicate).verify(
             collection_json, error_name
         )
         NoExtraKeys(SimpleTableMetadata.allowed_fields).verify(
@@ -219,8 +211,8 @@ class SimpleTableMetadata(CollectionMetadata):
 
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
-        table_path: str = collection_json["table_path"]
-        unique_properties: list[str | list[str]] = collection_json["unique_properties"]
+        table_path: str = collection_json["table path"]
+        unique_properties: list[str | list[str]] = collection_json["unique properties"]
         new_collection: SimpleTableMetadata = SimpleTableMetadata(
             collection_name, graph, table_path, unique_properties
         )

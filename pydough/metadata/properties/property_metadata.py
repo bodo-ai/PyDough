@@ -33,7 +33,7 @@ class PropertyMetadata(AbstractMetadata):
 
     # Set of names of fields that can be included in the JSON object
     # describing a property. Implementations should extend this.
-    allowed_fields: set[str] = {"type"}
+    allowed_fields: set[str] = {"name", "type"}
 
     def __init__(self, name: str, collection: CollectionMetadata):
         is_valid_name.verify(name, "name")
@@ -126,7 +126,6 @@ class PropertyMetadata(AbstractMetadata):
         """
         from pydough.metadata.properties import (
             CartesianProductMetadata,
-            CompoundRelationshipMetadata,
             GeneralJoinMetadata,
             SimpleJoinMetadata,
             TableColumnMetadata,
@@ -141,8 +140,6 @@ class PropertyMetadata(AbstractMetadata):
                 return GeneralJoinMetadata
             case "cartesian_product":
                 return CartesianProductMetadata
-            case "compound":
-                return CompoundRelationshipMetadata
             case property_type:
                 raise PyDoughMetadataException(
                     f"Unrecognized property type for {error_name}: {repr(property_type)}"
@@ -182,38 +179,3 @@ class PropertyMetadata(AbstractMetadata):
             property_json["type"], error_name
         )
         property_class.verify_json_metadata(collection, property_name, property_json)
-
-    @staticmethod
-    def parse_from_json(
-        collection: CollectionMetadata, property_name: str, property_json: dict
-    ) -> None:
-        """
-        Parse the JSON describing the metadata for a property within a
-        collection to create the property and insert into the collection. It
-        is assumed that `PropertyMetadata.verify_json_metadata` has already
-        been invoked on the JSON.
-
-        Args:
-            `collection`: the metadata for the PyDough collection that the
-            property would be inserted into.
-            `property_name`: the name of the property that would be inserted.
-            `property_json`: the JSON object that would be parsed to create
-            the new property.
-
-        Raises:
-            `PyDoughMetadataException`: if the JSON for the property is
-            malformed.
-        """
-        # Create the string used to identify the property in error messages.
-        error_name = f"property {property_name!r} of {collection.error_name}"
-
-        # Dispatch to each implementation's parseing method based on the type.
-        property_class: type[PropertyMetadata] = (
-            PropertyMetadata.get_class_for_property_type(
-                property_json["type"], error_name
-            )
-        )
-        property_class.parse_from_json(collection, property_name, property_json)
-
-    def get_nouns(self) -> dict[str, list[AbstractMetadata]]:
-        return {self.name: [self]}

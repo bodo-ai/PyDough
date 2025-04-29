@@ -50,7 +50,6 @@ from pydough.qdag import (
     CollationExpression,
     CollectionAccess,
     ColumnProperty,
-    CompoundSubCollection,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -2337,8 +2336,7 @@ class HybridTranslator:
                 back_idx: int = 0
                 true_steps_back: int = 0
                 # Keep stepping backward until `expr.back_levels` non-hidden
-                # steps have been taken (to ignore steps that are part of a
-                # compound).
+                # steps have been taken.
                 collection = expr.collection
                 while true_steps_back < expr.back_levels:
                     assert collection.ancestor_context is not None
@@ -2530,8 +2528,6 @@ class HybridTranslator:
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot(), node.ancestral_mapping)
-            case CompoundSubCollection():
-                raise NotImplementedError(f"{node.__class__.__name__}")
             case TableCollection() | SubCollection():
                 collection_access = HybridCollectionAccess(node)
                 successor_hybrid = HybridTree(collection_access, node.ancestral_mapping)
@@ -2651,9 +2647,7 @@ class HybridTranslator:
             case ChildOperatorChildAccess():
                 assert parent is not None
                 match node.child_access:
-                    case TableCollection() | SubCollection() if not isinstance(
-                        node.child_access, CompoundSubCollection
-                    ):
+                    case TableCollection() | SubCollection():
                         collection_access = HybridCollectionAccess(node.child_access)
                         successor_hybrid = HybridTree(
                             collection_access,

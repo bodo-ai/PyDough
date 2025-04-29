@@ -7,7 +7,13 @@ __all__ = ["CartesianProductMetadata"]
 
 
 from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import HasPropertyWith, HasType, NoExtraKeys, is_string
+from pydough.metadata.errors import (
+    HasPropertyWith,
+    NoExtraKeys,
+    extract_string,
+    is_string,
+)
+from pydough.metadata.graphs import GraphMetadata
 
 from .property_metadata import PropertyMetadata
 from .reversible_property_metadata import ReversiblePropertyMetadata
@@ -22,18 +28,17 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
     # Set of names of fields that can be included in the JSON object
     # describing a cartesian product property.
     allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
-        "other_collection_name",
-        "reverse_relationship_name",
+        "parent collection",
+        "child collection",
     }
 
     def __init__(
         self,
         name: str,
-        reverse_name: str,
-        collection: CollectionMetadata,
-        other_collection: CollectionMetadata,
+        parent_collection: CollectionMetadata,
+        child_collection: CollectionMetadata,
     ):
-        super().__init__(name, reverse_name, collection, other_collection, False, False)
+        super().__init__(name, parent_collection, child_collection, False)
 
     @staticmethod
     def create_error_name(name: str, collection_error_name: str):
@@ -84,15 +89,17 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
 
     @staticmethod
     def parse_from_json(
-        collection: CollectionMetadata, property_name: str, property_json: dict
+        graph: GraphMetadata, property_name: str, property_json: dict
     ) -> None:
         """
-        Procedure dispatched from PropertyMetadata.parse_from_json to handle
-        the parsing for cartesian product properties.
+        Procedure to generate a new CartesianProductMetadata instance from the
+        JSON describing the metadata for a property within a collection.
+        Inserts the new property directly into the metadata for one of the
+        collections in the graph.
 
         Args:
-            `collection`: the metadata for the PyDough collection that the
-            property would be inserted into.
+            `graph`: the metadata for the entire graph, already containing the
+            collection that the property would be inserted into.
             `property_name`: the name of the property that would be inserted.
             `property_json`: the JSON object that would be parsed to create
             the new table column property.
@@ -101,36 +108,31 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
             `PyDoughMetadataException`: if the JSON for the property is
             malformed.
         """
-        # Extract the other collection's name and the reverse relationship's
-        # name from the JSON, then fetch the other collection from the graph's
-        # collections. Assumes the other collection has already been defined
-        # and added to the graph.
-        other_collection_name = property_json["other_collection_name"]
-        reverse_name = property_json["reverse_relationship_name"]
-        HasPropertyWith(other_collection_name, HasType(CollectionMetadata)).verify(
-            collection.graph.collections, collection.graph.error_name
+        # Extract the parent collection from the graph.
+        parent_collection_name: str = extract_string(
+            property_json,
+            "parent collection",
+            f"metadata for property {property_name!r} within {graph.error_name}",
         )
-        other_collection = collection.graph.collections[other_collection_name]
-        assert isinstance(other_collection, CollectionMetadata)
+        parent_collection = graph.get_collection(parent_collection_name)
+        assert isinstance(parent_collection, CollectionMetadata)
 
-        # Build the new property, its reverse, then add both
-        # to their collection's properties.
+        # Extract the child collection from the graph.
+        child_collection_name: str = extract_string(
+            property_json,
+            "child collection",
+            f"metadata for property {property_name!r} within {graph.error_name}",
+        )
+        child_collection = graph.get_collection(child_collection_name)
+        assert isinstance(child_collection, CollectionMetadata)
+
+        # Build the new property and add it to the parent collection.
         property: CartesianProductMetadata = CartesianProductMetadata(
-            property_name, reverse_name, collection, other_collection
+            property_name, parent_collection, child_collection
         )
-        property.build_reverse_relationship()
-        collection.add_property(property)
-        other_collection.add_property(property.reverse_property)
+        parent_collection.add_property(property)
 
-    def build_reverse_relationship(self) -> None:
-        # Construct the reverse relationship by flipping the forward & reverse
-        # names, the source / target collections, and the plural properties.
-        # Then fill the `reverse_property` fields with one another.
-        reverse = CartesianProductMetadata(
-            self.reverse_name,
-            self.name,
-            self.other_collection,
-            self.collection,
-        )
-        self._reverse_property = reverse
-        reverse._reverse_property = self
+    def build_reverse_relationship(
+        self, name: str, is_singular: bool
+    ) -> ReversiblePropertyMetadata:
+        return CartesianProductMetadata(name, self.child_collection, self.collection)

@@ -2,8 +2,6 @@
 Definition of PyDough metadata for a graph.
 """
 
-from collections import defaultdict
-
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.errors import HasType, PyDoughMetadataException, is_valid_name
 
@@ -93,11 +91,3 @@ class GraphMetadata(AbstractMetadata):
 
     def __getitem__(self, key: str):
         return self.get_collection(key)
-
-    def get_nouns(self) -> dict[str, list[AbstractMetadata]]:
-        nouns: dict[str, list[AbstractMetadata]] = defaultdict(list)
-        nouns[self.name].append(self)
-        for collection in self.collections.values():
-            for name, values in collection.get_nouns().items():
-                nouns[name].extend(values)
-        return nouns

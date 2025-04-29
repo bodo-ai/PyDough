@@ -15,7 +15,7 @@ class AbstractMetadata(ABC):
 
     - `error_name`
     - `components`
-    - `get_nouns`
+    - `path`
     """
 
     @property
@@ -32,17 +32,6 @@ class AbstractMetadata(ABC):
         """
         A list of objects used to uniquely identify a metadata object
         by equality.
-        """
-
-    @abstractmethod
-    def get_nouns(self) -> dict[str, list["AbstractMetadata"]]:
-        """
-        Fetches all of the names of nouns accessible from the metadata for
-        a PyDough graph, collection, or property.
-
-        Returns:
-            A dictionary mapping the name of each noun to a list of all
-            metadata objects with that name.
         """
 
     @property

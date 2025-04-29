@@ -10,7 +10,6 @@ from functools import cache
 
 from pydough.metadata import (
     CollectionMetadata,
-    CompoundRelationshipMetadata,
     PropertyMetadata,
     SimpleTableMetadata,
     TableColumnMetadata,
@@ -139,14 +138,11 @@ class CollectionAccess(ChildAccess):
         """
         Fetch the QDAG node corresponding to a property of the collection.
         """
-        from .compound_sub_collection import CompoundSubCollection
         from .sub_collection import SubCollection
 
         property = self.collection.get_property(term_name)
         assert isinstance(property, PropertyMetadata)
-        if isinstance(property, CompoundRelationshipMetadata):
-            return CompoundSubCollection(property, self)
-        elif isinstance(property, SubcollectionRelationshipMetadata):
+        if isinstance(property, SubcollectionRelationshipMetadata):
             return SubCollection(property, self)
         elif isinstance(property, TableColumnMetadata):
             return ColumnProperty(property)

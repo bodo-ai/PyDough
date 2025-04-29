@@ -22,32 +22,26 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
     def __init__(
         self,
         name: str,
-        collection: CollectionMetadata,
-        other_collection: CollectionMetadata,
+        parent_collection: CollectionMetadata,
+        child_collection: CollectionMetadata,
         singular: bool,
-        no_collisions: bool,
     ):
-        super().__init__(name, collection)
+        super().__init__(name, parent_collection)
         HasType(CollectionMetadata).verify(
-            collection,
-            f"other collection of {self.__class__.__name__}",
+            child_collection,
+            f"child collection of {self.__class__.__name__}",
         )
         is_bool.verify(singular, f"Property 'singular' of {self.__class__.__name__}")
-        is_bool.verify(
-            no_collisions,
-            f"Property 'no_collisions' of {self.__class__.__name__}",
-        )
-        self._other_collection: CollectionMetadata = other_collection
+        self._child_collection: CollectionMetadata = child_collection
         self._singular: bool = singular
-        self._no_collisions: bool = no_collisions
 
     @property
-    def other_collection(self) -> CollectionMetadata:
+    def child_collection(self) -> CollectionMetadata:
         """
         The metadata for the subcollection that the property maps its own
         collection to.
         """
-        return self._other_collection
+        return self._child_collection
 
     @property
     def singular(self) -> bool:
@@ -58,21 +52,11 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         return self._singular
 
     @property
-    def no_collisions(self) -> bool:
-        """
-        True if no two distinct record from the collection have the same record
-        of the subcollection referenced by the property, False if such
-        collisions can occur.
-        """
-        return self._no_collisions
-
-    @property
     @abstractmethod
     def components(self) -> list:
         comp: list = super().components
-        comp.append(self.other_collection.name)
+        comp.append(self.child_collection.name)
         comp.append(self.singular)
-        comp.append(self.no_collisions)
         return comp
 
     @property
