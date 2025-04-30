@@ -47,7 +47,7 @@ from pydough.relational import (
     WindowCallExpression,
 )
 from pydough.sqlglot import convert_relation_to_sql
-from pydough.types import BooleanType, Int64Type, StringType, UnknownType
+from pydough.types import BooleanType, NumericType, StringType, UnknownType
 
 
 @pytest.mark.parametrize(
@@ -88,10 +88,10 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                         "b": make_relational_column_reference("b"),
                         "c": CallExpression(
                             ADD,
-                            Int64Type(),
+                            NumericType(),
                             [
                                 make_relational_column_reference("a"),
-                                make_relational_literal(1, Int64Type()),
+                                make_relational_literal(1, NumericType()),
                             ],
                         ),
                     },
@@ -115,7 +115,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                 input=Project(
                     input=EmptySingleton(),
                     columns={
-                        "A": make_relational_literal(42, Int64Type()),
+                        "A": make_relational_literal(42, NumericType()),
                         "B": make_relational_literal("foo", StringType()),
                     },
                 ),
@@ -145,7 +145,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                 ),
@@ -161,7 +161,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                 ],
                 input=Limit(
                     input=build_simple_scan(),
-                    limit=LiteralExpression(1, Int64Type()),
+                    limit=LiteralExpression(1, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -180,13 +180,13 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                 input=Limit(
                     input=Limit(
                         input=build_simple_scan(),
-                        limit=LiteralExpression(1, Int64Type()),
+                        limit=LiteralExpression(1, NumericType()),
                         columns={
                             "a": make_relational_column_reference("a"),
                             "b": make_relational_column_reference("b"),
                         },
                     ),
-                    limit=LiteralExpression(5, Int64Type()),
+                    limit=LiteralExpression(5, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -205,7 +205,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                 input=Limit(
                     input=Limit(
                         input=build_simple_scan(),
-                        limit=LiteralExpression(5, Int64Type()),
+                        limit=LiteralExpression(5, NumericType()),
                         columns={
                             "a": make_relational_column_reference("a"),
                             "b": make_relational_column_reference("b"),
@@ -223,7 +223,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                             ),
                         ],
                     ),
-                    limit=LiteralExpression(1, Int64Type()),
+                    limit=LiteralExpression(1, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -242,7 +242,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                 input=Limit(
                     input=Limit(
                         input=build_simple_scan(),
-                        limit=LiteralExpression(5, Int64Type()),
+                        limit=LiteralExpression(5, NumericType()),
                         columns={
                             "a": make_relational_column_reference("a"),
                             "b": make_relational_column_reference("b"),
@@ -255,7 +255,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                             ),
                         ],
                     ),
-                    limit=LiteralExpression(2, Int64Type()),
+                    limit=LiteralExpression(2, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -280,7 +280,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                 ],
                 input=Limit(
                     input=build_simple_scan(),
-                    limit=LiteralExpression(10, Int64Type()),
+                    limit=LiteralExpression(10, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -328,7 +328,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                     keys={},
                     aggregations={
                         "a": CallExpression(
-                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                            SUM, NumericType(), [make_relational_column_reference("a")]
                         )
                     },
                 ),
@@ -349,7 +349,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                     },
                     aggregations={
                         "a": CallExpression(
-                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                            SUM, NumericType(), [make_relational_column_reference("a")]
                         )
                     },
                 ),
@@ -588,7 +588,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                                     UnknownType(),
                                     [
                                         make_relational_column_reference("b"),
-                                        make_relational_literal(1, Int64Type()),
+                                        make_relational_literal(1, NumericType()),
                                     ],
                                 ),
                             ],
@@ -603,7 +603,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                                     UnknownType(),
                                     [
                                         make_relational_column_reference("b"),
-                                        make_relational_literal(1, Int64Type()),
+                                        make_relational_literal(1, NumericType()),
                                     ],
                                 ),
                             ],
@@ -624,7 +624,7 @@ from pydough.types import BooleanType, Int64Type, StringType, UnknownType
                     make_relational_ordering(
                         CallExpression(
                             ABS,
-                            Int64Type(),
+                            NumericType(),
                             [make_relational_column_reference("a")],
                         ),
                         ascending=True,
@@ -858,14 +858,14 @@ def test_convert_relation_to_sqlite_sql(
                     columns={
                         "a": CallExpression(
                             IFF,
-                            Int64Type(),
+                            NumericType(),
                             [
                                 CallExpression(
                                     GEQ,
                                     BooleanType(),
                                     [
                                         make_relational_column_reference("b"),
-                                        make_relational_literal(0, Int64Type()),
+                                        make_relational_literal(0, NumericType()),
                                     ],
                                 ),
                                 make_relational_literal("Positive", StringType()),
@@ -890,14 +890,14 @@ def test_convert_relation_to_sqlite_sql(
                     columns={
                         "a": CallExpression(
                             IFF,
-                            Int64Type(),
+                            NumericType(),
                             [
                                 CallExpression(
                                     GEQ,
                                     BooleanType(),
                                     [
                                         make_relational_column_reference("b"),
-                                        make_relational_literal(0, Int64Type()),
+                                        make_relational_literal(0, NumericType()),
                                     ],
                                 ),
                                 make_relational_literal("Positive", StringType()),
@@ -921,7 +921,7 @@ def test_convert_relation_to_sqlite_sql(
                     columns={
                         "a": CallExpression(
                             YEAR,
-                            Int64Type(),
+                            NumericType(),
                             [make_relational_column_reference("a")],
                         ),
                     },
@@ -946,7 +946,7 @@ def test_convert_relation_to_sqlite_sql(
                                 "b": make_relational_column_reference("b"),
                                 "r": WindowCallExpression(
                                     RANKING,
-                                    Int64Type(),
+                                    NumericType(),
                                     [],
                                     [],
                                     [
@@ -970,7 +970,7 @@ def test_convert_relation_to_sqlite_sql(
                             BooleanType(),
                             [
                                 make_relational_column_reference("b"),
-                                LiteralExpression(0, Int64Type()),
+                                LiteralExpression(0, NumericType()),
                             ],
                         ),
                     ),
@@ -984,7 +984,7 @@ def test_convert_relation_to_sqlite_sql(
                         BooleanType(),
                         [
                             make_relational_column_reference("r"),
-                            LiteralExpression(3, Int64Type()),
+                            LiteralExpression(3, NumericType()),
                         ],
                     ),
                 ),
@@ -1008,7 +1008,7 @@ def test_convert_relation_to_sqlite_sql(
                                 "b": make_relational_column_reference("b"),
                                 "r": WindowCallExpression(
                                     RANKING,
-                                    Int64Type(),
+                                    NumericType(),
                                     [],
                                     [],
                                     [
@@ -1032,7 +1032,7 @@ def test_convert_relation_to_sqlite_sql(
                             BooleanType(),
                             [
                                 make_relational_column_reference("r"),
-                                LiteralExpression(3, Int64Type()),
+                                LiteralExpression(3, NumericType()),
                             ],
                         ),
                     ),
@@ -1046,7 +1046,7 @@ def test_convert_relation_to_sqlite_sql(
                         BooleanType(),
                         [
                             make_relational_column_reference("b"),
-                            LiteralExpression(0, Int64Type()),
+                            LiteralExpression(0, NumericType()),
                         ],
                     ),
                 ),

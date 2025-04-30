@@ -103,7 +103,7 @@ def impl_defog_broker_adv1():
     Who are the top 5 customers by total transaction amount? Return their name
     and total amount.
     """
-    return Customers.CALCULATE(name, total_amount=SUM(transactions_made.amount)).TOP_K(
+    return customers.CALCULATE(name, total_amount=SUM(transactions_made.amount)).TOP_K(
         5, by=total_amount.DESC()
     )
 
@@ -134,7 +134,7 @@ def impl_defog_broker_adv3():
     n_transactions = COUNT(transactions_made)
     n_success = SUM(transactions_made.status == "success")
     return (
-        Customers.WHERE(n_transactions >= 5)
+        customers.WHERE(n_transactions >= 5)
         .CALCULATE(name, success_rate=100.0 * n_success / n_transactions)
         .ORDER_BY(success_rate.ASC(na_pos="first"))
     )
@@ -203,7 +203,7 @@ def impl_defog_broker_adv6():
     with rank 1 being the customer with the highest total transaction amount.
     """
     total_amount = SUM(transactions_made.amount)
-    return Customers.WHERE(HAS(transactions_made)).CALCULATE(
+    return customers.WHERE(HAS(transactions_made)).CALCULATE(
         name,
         num_tx=COUNT(transactions_made),
         total_amount=total_amount,
@@ -219,7 +219,7 @@ def impl_defog_broker_adv7():
     excluding the current month? PMCS = per month customer signups. PMAT = per
     month average transaction amount. Truncate date to month for aggregation.
     """
-    selected_customers = Customers.WHERE(
+    selected_customers = customers.WHERE(
         (join_date >= DATETIME("now", "-6 months", "start of month"))
         & (join_date < DATETIME("now", "start of month"))
     ).CALCULATE(
@@ -228,12 +228,12 @@ def impl_defog_broker_adv7():
         month=JOIN_STRINGS("-", YEAR(join_date), LPAD(MONTH(join_date), 2, "0")),
     )
     month_groups = selected_customers.PARTITION(name="months", by=month)
-    selected_txns = Customers.transactions_made.WHERE(
+    selected_txns = customers.transactions_made.WHERE(
         (YEAR(date_time) == join_year) & (MONTH(date_time) == join_month)
     )
     return month_groups.CALCULATE(
         month,
-        customer_signups=COUNT(Customers),
+        customer_signups=COUNT(customers),
         avg_tx_amount=AVG(selected_txns.amount),
     )
 
@@ -290,7 +290,7 @@ def impl_defog_broker_adv10():
     Which customer made the highest number of transactions in the same month as
     they signed up? Return the customer's id, name and number of transactions.
     """
-    cust_info = Customers.CALCULATE(
+    cust_info = customers.CALCULATE(
         join_year=YEAR(join_date), join_month=MONTH(join_date)
     )
     selected_txns = transactions_made.WHERE(
@@ -309,7 +309,7 @@ def impl_defog_broker_adv11():
     FAANG companies (Amazon, Apple, Google, Meta or Netflix)?
     """
     faang = ("AMZN", "AAPL", "GOOGL", "META", "NFLX")
-    selected_customers = Customers.WHERE(
+    selected_customers = customers.WHERE(
         ENDSWITH(email, ".com")
         & HAS(transactions_made.WHERE(ISIN(ticker.symbol, faang)))
     )
@@ -323,7 +323,7 @@ def impl_defog_broker_adv12():
     What is the number of customers whose name starts with J or ends with
     'ez', and who live in a state ending with the letter 'a'?
     """
-    selected_customers = Customers.WHERE(
+    selected_customers = customers.WHERE(
         (STARTSWITH(LOWER(name), "j") | ENDSWITH(LOWER(name), "ez"))
         & ENDSWITH(LOWER(state), "a")
     )
@@ -336,11 +336,11 @@ def impl_defog_broker_adv13():
 
     How many TAC are there from each country, for customers who joined on or
     after January 1, 2023? Return the country and the count. TAC = Total Active
-    Customers who joined on or after January 1, 2023.
+    customers who joined on or after January 1, 2023.
     """
-    selected_customers = Customers.WHERE(join_date >= datetime.date(2023, 1, 1))
+    selected_customers = customers.WHERE(join_date >= datetime.date(2023, 1, 1))
     countries = selected_customers.PARTITION(name="countries", by=country)
-    return countries.CALCULATE(cust_country=country, TAC=COUNT(Customers))
+    return countries.CALCULATE(cust_country=country, TAC=COUNT(customers))
 
 
 def impl_defog_broker_adv14():
@@ -366,15 +366,15 @@ def impl_defog_broker_adv15():
     PyDough implementation of the following question for the Broker graph:
 
     What is the AR for each country for customers who joined in 2022? Return
-    the country and AR. AR (Activity Ratio) = (Number of Active Customers with
-    Transactions / Total Number of Customers with Transactions) * 100.
+    the country and AR. AR (Activity Ratio) = (Number of Active customers with
+    Transactions / Total Number of customers with Transactions) * 100.
     """
-    selected_customers = Customers.WHERE(
+    selected_customers = customers.WHERE(
         (join_date >= "2022-01-01") & (join_date <= "2022-12-31")
     )
     countries = selected_customers.PARTITION(name="countries", by=country)
-    n_active = SUM(Customers.status == "active")
-    n_custs = COUNT(Customers)
+    n_active = SUM(customers.status == "active")
+    n_custs = COUNT(customers)
     return countries.CALCULATE(
         country,
         ar=100 * DEFAULT_TO(n_active / n_custs, 0.0),
@@ -412,8 +412,8 @@ def impl_defog_broker_basic1():
     days, inclusive of 30 days ago? Return the country name, number of
     transactions and total transaction amount.
     """
-    countries = Customers.PARTITION(name="countries", by=country)
-    selected_txns = Customers.transactions_made.WHERE(
+    countries = customers.PARTITION(name="countries", by=country)
+    selected_txns = customers.transactions_made.WHERE(
         date_time >= DATETIME("now", "-30 days", "start of day")
     )
     return countries.CALCULATE(
@@ -466,7 +466,7 @@ def impl_defog_broker_basic4():
     number of transactions? Return the customer state, ticker type and number
     of transactions.
     """
-    data = Customers.CALCULATE(state=state).transactions_made.CALCULATE(
+    data = customers.CALCULATE(state=state).transactions_made.CALCULATE(
         ticker_type=ticker.ticker_type
     )
     return (
@@ -486,7 +486,7 @@ def impl_defog_broker_basic5():
 
     Return the distinct list of customer IDs who have made a 'buy' transaction.
     """
-    return Customers.WHERE(
+    return customers.WHERE(
         HAS(transactions_made.WHERE(transaction_type == "buy"))
     ).CALCULATE(_id)
 
@@ -524,8 +524,8 @@ def impl_defog_broker_basic8():
     name and number of customers.
     """
     return (
-        Customers.PARTITION(name="countries", by=country)
-        .CALCULATE(country, num_customers=COUNT(Customers))
+        customers.PARTITION(name="countries", by=country)
+        .CALCULATE(country, num_customers=COUNT(customers))
         .TOP_K(5, by=num_customers.DESC())
     )
 
@@ -537,7 +537,7 @@ def impl_defog_broker_basic9():
     Return the customer ID and name of customers who have not made any
     transactions.
     """
-    return Customers.WHERE(HASNOT(transactions_made)).CALCULATE(_id, name)
+    return customers.WHERE(HASNOT(transactions_made)).CALCULATE(_id, name)
 
 
 def impl_defog_broker_basic10():
@@ -584,7 +584,7 @@ def impl_defog_broker_gen3():
     joining to their first transaction. Ignore customers who haven't made
     any transactions.
     """
-    selected_customers = Customers.WHERE(HAS(transactions_made))
+    selected_customers = customers.WHERE(HAS(transactions_made))
 
     return selected_customers.CALCULATE(
         cust_id=_id,
@@ -606,7 +606,7 @@ def impl_defog_broker_gen4():
         (DATETIME(date_time, "start of day") == datetime.date(2023, 4, 1))
         & (transaction_type == "sell")
     )
-    return Customers.CALCULATE(_id, name, num_tx=COUNT(selected_transactions)).TOP_K(
+    return customers.CALCULATE(_id, name, num_tx=COUNT(selected_transactions)).TOP_K(
         1, by=num_tx.DESC()
     )
 
@@ -985,7 +985,7 @@ def impl_defog_dealership_basic2():
     Return the distinct list of customer IDs that have made a purchase, based
     on joining the customers and sales tables.
     """
-    return Customers.WHERE(HAS(car_purchases)).CALCULATE(_id)
+    return customers.WHERE(HAS(car_purchases)).CALCULATE(_id)
 
 
 def impl_defog_dealership_basic3():
@@ -1043,7 +1043,7 @@ def impl_defog_dealership_basic6():
     Return the top 5 states by total revenue, showing the number of unique
     customers and total revenue (based on sale price) for each state.
     """
-    purchase_info = Customers.CALCULATE(state).car_purchases
+    purchase_info = customers.CALCULATE(state).car_purchases
     states = purchase_info.PARTITION(name="states", by=state)
     return states.CALCULATE(
         state,
@@ -1093,8 +1093,8 @@ def impl_defog_dealership_basic9():
     the state and total signups, starting from the top.
     """
     return (
-        Customers.PARTITION(name="grouped", by=state)
-        .CALCULATE(state, total_signups=COUNT(Customers))
+        customers.PARTITION(name="grouped", by=state)
+        .CALCULATE(state, total_signups=COUNT(customers))
         .TOP_K(2, by=total_signups.DESC())
     )
 

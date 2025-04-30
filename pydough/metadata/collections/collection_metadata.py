@@ -9,6 +9,7 @@ from pydough.metadata.errors import (
     HasPropertyWith,
     HasType,
     PyDoughMetadataException,
+    extract_string,
     is_string,
     is_valid_name,
 )
@@ -294,3 +295,24 @@ class CollectionMetadata(AbstractMetadata):
         # `properties`.
         HasPropertyWith("type", is_string).verify(collection_json, error_name)
         HasPropertyWith("properties", HasType(dict)).verify(collection_json, error_name)
+
+    def add_properties_from_json(self, properties_json: list) -> None:
+        """
+        TODO
+        """
+        from pydough.metadata.properties import TableColumnMetadata
+
+        for property_json in properties_json:
+            # Extract the name/type, and create the string used to identify
+            # the property in error messages.
+            property_name: str = extract_string(
+                property_json, "name", f"property of {self.error_name}"
+            )
+            error_name = f"property {property_json['name']!r} of {self.error_name}"
+            property_type: str = extract_string(property_json, "type", error_name)
+            # Dispatch to the correct implementation based on the type.
+            match property_type:
+                case "table column":
+                    TableColumnMetadata.parse_from_json(
+                        self, property_name, property_json
+                    )

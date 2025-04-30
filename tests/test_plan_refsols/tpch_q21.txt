@@ -1,6 +1,6 @@
 ROOT(columns=[('S_NAME', S_NAME), ('NUMWAIT', NUMWAIT)], orderings=[(NUMWAIT):desc_last, (S_NAME):asc_first])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'NUMWAIT': NUMWAIT, 'S_NAME': S_NAME}, orderings=[(NUMWAIT):desc_last, (S_NAME):asc_first])
-  PROJECT(columns={'NUMWAIT': DEFAULT_TO(agg_0, 0:int64), 'S_NAME': name})
+ LIMIT(limit=Literal(value=10, type=NumericType()), columns={'NUMWAIT': NUMWAIT, 'S_NAME': S_NAME}, orderings=[(NUMWAIT):desc_last, (S_NAME):asc_first])
+  PROJECT(columns={'NUMWAIT': DEFAULT_TO(agg_0, 0:numeric), 'S_NAME': name})
    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
     JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'name': t0.name})
      SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name, 'nation_key': s_nationkey})

@@ -16,16 +16,16 @@ The types module provides functionality to define and manage various data types 
 
 ### [integer_types.py](integer_types.py)
 
-- `IntegerType`: The PyDough type superclass for integers.
-- `Int8Type`: The PyDough type for 8-bit integers.
-- `Int16Type`: The PyDough type for 16-bit integers.
-- `Int32Type`: The PyDough type for 32-bit integers.
-- `Int64Type`: The PyDough type for 64-bit integers.
+- `NumericType`: The PyDough type superclass for integers.
+- `NumericType`: The PyDough type for 8-bit integers.
+- `NumericType`: The PyDough type for 16-bit integers.
+- `NumericType`: The PyDough type for 32-bit integers.
+- `NumericType`: The PyDough type for 64-bit integers.
 
 ### [float_types.py](float_types.py)
 
-- `Float32Type`: The PyDough type for 32-bit floating point numbers.
-- `Float64Type`: The PyDough type for 64-bit floating point numbers.
+- `NumericType`: The PyDough type for 32-bit floating point numbers.
+- `NumericType`: The PyDough type for 64-bit floating point numbers.
 
 ### [boolean_type.py](boolean_type.py)
 
@@ -33,7 +33,7 @@ The types module provides functionality to define and manage various data types 
 
 ### [decimal_type.py](decimal_type.py)
 
-- `DecimalType`: The PyDough type representing fixed point numbers with a precision and scale.
+- `NumericType`: The PyDough type representing fixed point numbers with a precision and scale.
 
 ### [string_type.py](string_type.py)
 
@@ -45,7 +45,7 @@ The types module provides functionality to define and manage various data types 
 
 ### [date_type.py](date_type.py)
 
-- `DateType`: The PyDough type representing dates.
+- `DatetimeType`: The PyDough type representing dates.
 
 ### [time_type.py](time_type.py)
 
@@ -88,10 +88,10 @@ The types module provides a comprehensive set of data types that can be used to 
 To use the types module, you can import the necessary classes and call them with the appropriate arguments. For example:
 
 ```python
-from pydough.types import Int64Type, StringType, StructType, parse_type_from_string
+from pydough.types import NumericType, StringType, StructType, parse_type_from_string
 
 # Create an integer type
-int_type = Int64Type()
+int_type = NumericType()
 
 # Create a string type
 string_type = StringType()

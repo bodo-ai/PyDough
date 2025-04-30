@@ -6,12 +6,13 @@ __all__ = ["parse_json_metadata_from_file"]
 
 import json
 
-from .collections import SimpleTableMetadata
+from .collections import CollectionMetadata, SimpleTableMetadata
 from .errors import (
     HasPropertyWith,
     HasType,
     PyDoughMetadataException,
     extract_array,
+    extract_bool,
     extract_string,
     is_json_object,
     is_string,
@@ -20,6 +21,8 @@ from .graphs import GraphMetadata
 from .properties import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
+    PropertyMetadata,
+    ReversiblePropertyMetadata,
     SimpleJoinMetadata,
 )
 
@@ -157,35 +160,58 @@ def parse_collection_v2(graph: GraphMetadata, collection_json: dict):
             )
 
 
-def parse_relationship_v2(graph: GraphMetadata, relationships_json: dict):
+def parse_relationship_v2(graph: GraphMetadata, relationship_json: dict):
     """
     TODO
     """
     relationship_name: str = extract_string(
-        relationships_json,
+        relationship_json,
         "name",
         f"metadata for relationships within {graph.error_name}",
     )
     relationship_type: str = extract_string(
-        relationships_json,
+        relationship_json,
         "type",
         f"metadata for relationships within {graph.error_name}",
     )
     match relationship_type:
         case "cartesian product":
             CartesianProductMetadata.parse_from_json(
-                graph, relationship_name, relationships_json
+                graph, relationship_name, relationship_json
             )
         case "simple join":
             SimpleJoinMetadata.parse_from_json(
-                graph, relationship_name, relationships_json
+                graph, relationship_name, relationship_json
             )
         case "general join":
             GeneralJoinMetadata.parse_from_json(
-                graph, relationship_name, relationships_json
+                graph, relationship_name, relationship_json
             )
+        case "reverse":
+            original_collection_name: str = relationship_json["original parent"]
+            original_property_name: str = relationship_json["original property"]
+            original_collection = graph.get_collection(original_collection_name)
+            assert isinstance(original_collection, CollectionMetadata)
+            original_property = original_collection.get_property(original_property_name)
+            assert isinstance(original_property, PropertyMetadata)
+            is_singular: bool = extract_bool(
+                relationship_json,
+                "singular",
+                f"metadata for reverse relationship {relationship_name!r} relationships within {graph.error_name}",
+            )
+            if not isinstance(original_property, ReversiblePropertyMetadata):
+                raise PyDoughMetadataException(
+                    f"Property {original_property_name!r} in collection {original_collection_name!r} is not reversible."
+                )
+            reverse_collection: CollectionMetadata = original_property.child_collection
+            reverse_property: ReversiblePropertyMetadata = (
+                original_property.build_reverse_relationship(
+                    relationship_name, is_singular=is_singular
+                )
+            )
+            reverse_collection.add_property(reverse_property)
         case "custom":
-            pass
+            raise NotImplementedError("Custom relationships are not yet supported.")
         case _:
             raise PyDoughMetadataException(
                 f"Unrecognized PyDough relationship type for relationship {relationship_name!r}: {relationship_type!r}"

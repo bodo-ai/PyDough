@@ -33,47 +33,47 @@ from pydough.qdag import AstNodeBuilder
             id="table_dne",
         ),
         pytest.param(
-            TableCollectionInfo("Regions") ** SubCollectionInfo("postage_stamps"),
-            "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'postage_stamps'",
+            TableCollectionInfo("regions") ** SubCollectionInfo("postage_stamps"),
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'postage_stamps'",
             id="subcollection_dne",
         ),
         pytest.param(
-            TableCollectionInfo("Regions")
+            TableCollectionInfo("regions")
             ** CalculateInfo([], foo=ReferenceInfo("bar")),
-            "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'bar'",
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'bar'",
             id="reference_dne",
         ),
         pytest.param(
-            TableCollectionInfo("Nations")
+            TableCollectionInfo("nations")
             ** SubCollectionInfo("suppliers")
             ** CalculateInfo([], foo=ReferenceInfo("region_key")),
-            "Unrecognized term of simple table collection 'Suppliers' in graph 'TPCH': 'region_key'",
+            "Unrecognized term of simple table collection 'suppliers' in graph 'TPCH': 'region_key'",
             id="reference_bad_ancestry",
         ),
         pytest.param(
-            TableCollectionInfo("Regions")
+            TableCollectionInfo("regions")
             ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 0)),
             "Expected number of levels in BACK to be a positive integer, received 0",
             id="back_zero",
         ),
         pytest.param(
-            TableCollectionInfo("Regions")
+            TableCollectionInfo("regions")
             ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
             "Unrecognized term of graph 'TPCH': 'foo'",
             id="back_on_root",
         ),
         pytest.param(
-            TableCollectionInfo("Regions")
+            TableCollectionInfo("regions")
             ** SubCollectionInfo("nations")
             ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 3)),
-            "Cannot reference back 3 levels above TPCH.Regions.nations",
+            "Cannot reference back 3 levels above TPCH.regions.nations",
             id="back_too_far",
         ),
         pytest.param(
-            TableCollectionInfo("Regions")
+            TableCollectionInfo("regions")
             ** SubCollectionInfo("nations")
             ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
-            "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'foo'",
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'foo'",
             id="back_dne",
         ),
         pytest.param(
@@ -83,14 +83,14 @@ from pydough.qdag import AstNodeBuilder
         ),
         pytest.param(
             CalculateInfo(
-                [TableCollectionInfo("Regions")],
+                [TableCollectionInfo("regions")],
                 foo=ChildReferenceExpressionInfo("bar", 0),
             ),
-            "Unrecognized term of simple table collection 'Regions' in graph 'TPCH': 'bar'",
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'bar'",
             id="child_expr_dne",
         ),
         pytest.param(
-            TableCollectionInfo("Customers")
+            TableCollectionInfo("customers")
             ** WhereInfo(
                 [SubCollectionInfo("orders")],
                 FunctionInfo(
@@ -104,7 +104,7 @@ from pydough.qdag import AstNodeBuilder
             id="has_on_expression",
         ),
         pytest.param(
-            TableCollectionInfo("Customers")
+            TableCollectionInfo("customers")
             ** WhereInfo(
                 [SubCollectionInfo("orders")],
                 FunctionInfo(
@@ -118,7 +118,7 @@ from pydough.qdag import AstNodeBuilder
             id="hasnot_on_expression",
         ),
         pytest.param(
-            TableCollectionInfo("Regions")
+            TableCollectionInfo("regions")
             ** CalculateInfo(
                 [SubCollectionInfo("nations")],
                 nation_name=ChildReferenceExpressionInfo("name", 0),
@@ -127,7 +127,7 @@ from pydough.qdag import AstNodeBuilder
             id="bad_plural_a",
         ),
         pytest.param(
-            TableCollectionInfo("Customers")
+            TableCollectionInfo("customers")
             ** CalculateInfo(
                 [
                     SubCollectionInfo("nation")
@@ -140,7 +140,7 @@ from pydough.qdag import AstNodeBuilder
             id="bad_plural_b",
         ),
         pytest.param(
-            TableCollectionInfo("Parts")
+            TableCollectionInfo("parts")
             ** SubCollectionInfo("supply_records")
             ** CalculateInfo(
                 [SubCollectionInfo("lines")],
@@ -151,14 +151,14 @@ from pydough.qdag import AstNodeBuilder
         ),
         pytest.param(
             CalculateInfo(
-                [TableCollectionInfo("Customers")],
+                [TableCollectionInfo("customers")],
                 cust_name=ChildReferenceExpressionInfo("name", 0),
             ),
-            "Expected all terms in CALCULATE(cust_name=Customers.name) to be singular, but encountered a plural expression: Customers.name",
+            "Expected all terms in CALCULATE(cust_name=customers.name) to be singular, but encountered a plural expression: customers.name",
             id="bad_plural_d",
         ),
         pytest.param(
-            TableCollectionInfo("Orders")
+            TableCollectionInfo("orders")
             ** WhereInfo(
                 [SubCollectionInfo("lines")],
                 FunctionInfo(
@@ -173,7 +173,7 @@ from pydough.qdag import AstNodeBuilder
             id="bad_plural_e",
         ),
         pytest.param(
-            TableCollectionInfo("Customers")
+            TableCollectionInfo("customers")
             ** OrderInfo(
                 [SubCollectionInfo("orders")],
                 (ChildReferenceExpressionInfo("order_date", 0), True, True),
@@ -182,7 +182,7 @@ from pydough.qdag import AstNodeBuilder
             id="bad_plural_f",
         ),
         pytest.param(
-            TableCollectionInfo("Customers")
+            TableCollectionInfo("customers")
             ** TopKInfo(
                 [SubCollectionInfo("orders")],
                 5,
@@ -193,34 +193,34 @@ from pydough.qdag import AstNodeBuilder
         ),
         pytest.param(
             PartitionInfo(
-                TableCollectionInfo("Parts"),
+                TableCollectionInfo("parts"),
                 "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("Parts")],
+                [SubCollectionInfo("parts")],
                 container=ReferenceInfo("container"),
                 price=ChildReferenceExpressionInfo("retail_price", 0),
             ),
-            "Expected all terms in CALCULATE(container=container, price=Parts.retail_price) to be singular, but encountered a plural expression: Parts.retail_price",
+            "Expected all terms in CALCULATE(container=container, price=parts.retail_price) to be singular, but encountered a plural expression: parts.retail_price",
             id="bad_plural_h",
         ),
         pytest.param(
             PartitionInfo(
-                TableCollectionInfo("Parts"),
+                TableCollectionInfo("parts"),
                 "containers",
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("Parts") ** SubCollectionInfo("suppliers_of_part")],
+                [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
                 container=ReferenceInfo("container"),
                 balance=ChildReferenceExpressionInfo("account_balance", 0),
             ),
-            "Expected all terms in CALCULATE(container=container, balance=Parts.suppliers_of_part.account_balance) to be singular, but encountered a plural expression: Parts.suppliers_of_part.account_balance",
+            "Expected all terms in CALCULATE(container=container, balance=parts.suppliers_of_part.account_balance) to be singular, but encountered a plural expression: parts.suppliers_of_part.account_balance",
             id="bad_plural_i",
         ),
         pytest.param(
-            TableCollectionInfo("Nations")
+            TableCollectionInfo("nations")
             ** CalculateInfo(
                 [
                     SubCollectionInfo("customers")

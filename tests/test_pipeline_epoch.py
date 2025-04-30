@@ -57,9 +57,9 @@ from pydough.unqualified import (
                         ],
                         "event_name": [
                             "Assassination of Archduke Ferdinand",
-                            "Founding of the League of Nations",
+                            "Founding of the League of nations",
                             "Invasion of Poland",
-                            "First Meeting of the United Nations General Assembly",
+                            "First Meeting of the United nations General Assembly",
                             "Dissolution of the Soviet Union",
                         ],
                     }

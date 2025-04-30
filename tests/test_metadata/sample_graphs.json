@@ -53,7 +53,7 @@
             "synonyms": ["id"]
           },
           {
-            "name": "key",
+            "name": "region_key",
             "type": "table column",
             "column name": "n_regionkey",
             "data type": "numeric",
@@ -748,9 +748,10 @@
         "type": "simple join",
         "name": "part_and_supplier",
         "parent collection": "lines",
-        "child_collection": "supply_records",
+        "child collection": "supply_records",
         "singular": true,
         "always matches": true,
+        "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
         "description": "The corresponding entry in the supply records detailing more information about the supplier of the purchase and the part that was purchased",
         "synonyms": ["supply records", "supplier part information", "partsupp info"]
       },

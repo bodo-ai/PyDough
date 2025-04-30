@@ -29,13 +29,13 @@ from pydough.pydough_operators.type_inference import (
     ConstantType,
     RequireNumArgs,
 )
-from pydough.types import Int64Type
+from pydough.types import NumericType
 
 # Create a type verifier that requires exactly 0 arguments
 num_args_verifier = RequireNumArgs(0)
 
 # Create a type deducer that always returns int64
-constant_type_deducer = ConstantType(Int64Type())
+constant_type_deducer = ConstantType(NumericType())
 
 # An empty list of arguments
 args = []

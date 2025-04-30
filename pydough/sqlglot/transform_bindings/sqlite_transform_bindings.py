@@ -10,7 +10,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.types import DateType, PyDoughType, StringType
+from pydough.types import DatetimeType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -282,7 +282,9 @@ class SQLiteTransformBindings(BaseTransformBindings):
             The SQLGlot expression to calculating the day of week of `base` in
             terms of the dialect's start of week.
         """
-        return self.convert_extract_datetime([base], [DateType()], DateTimeUnit.WEEK)
+        return self.convert_extract_datetime(
+            [base], [DatetimeType()], DateTimeUnit.WEEK
+        )
 
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit

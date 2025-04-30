@@ -8,6 +8,7 @@ from pydough.metadata.errors import (
     HasPropertyWith,
     NoExtraKeys,
     PyDoughMetadataException,
+    extract_array,
     is_string,
     unique_properties_predicate,
 )
@@ -216,4 +217,8 @@ class SimpleTableMetadata(CollectionMetadata):
         new_collection: SimpleTableMetadata = SimpleTableMetadata(
             collection_name, graph, table_path, unique_properties
         )
+        properties: list = extract_array(
+            collection_json, "properties", new_collection.error_name
+        )
+        new_collection.add_properties_from_json(properties)
         graph.add_collection(new_collection)

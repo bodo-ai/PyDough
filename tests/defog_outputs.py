@@ -371,7 +371,7 @@ def defog_sql_text_broker_adv13():
 
     How many TAC are there from each country, for customers who joined on or
     after January 1, 2023? Return the country and the count. TAC = Total Active
-    Customers who joined on or after January 1, 2023
+    customers who joined on or after January 1, 2023
     """
     return """
     SELECT sbCustCountry, COUNT(sbCustId) AS TAC
@@ -405,8 +405,8 @@ def defog_sql_text_broker_adv15() -> str:
     SQLite query text for the following question for the Broker graph:
 
     What is the AR for each country for customers who joined in 2022? Return
-    the country and AR. AR (Activity Ratio) = (Number of Active Customers with
-    Transactions / Total Number of Customers with Transactions) * 100.
+    the country and AR. AR (Activity Ratio) = (Number of Active customers with
+    Transactions / Total Number of customers with Transactions) * 100.
     """
     return """
     SELECT

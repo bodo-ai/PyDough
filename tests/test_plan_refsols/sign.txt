@@ -1,5 +1,5 @@
 ROOT(columns=[('high', high), ('high_neg', high_neg), ('high_zero', high_zero), ('sign_high', sign_high), ('sign_high_neg', sign_high_neg), ('sign_high_zero', sign_high_zero)], orderings=[(high):asc_first])
  PROJECT(columns={'high': high, 'high_neg': high_neg, 'high_zero': high_zero, 'sign_high': SIGN(high), 'sign_high_neg': SIGN(high_neg), 'sign_high_zero': SIGN(high_zero)})
-  LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'high': high, 'high_neg': high_neg, 'high_zero': high_zero}, orderings=[(high):asc_first])
+  LIMIT(limit=Literal(value=5, type=NumericType()), columns={'high': high, 'high_neg': high_neg, 'high_zero': high_zero}, orderings=[(high):asc_first])
    PROJECT(columns={'high': high, 'high_neg': -1:int64 * high, 'high_zero': 0:int64 * high})
     SCAN(table=main.sbDailyPrice, columns={'high': sbDpHigh})

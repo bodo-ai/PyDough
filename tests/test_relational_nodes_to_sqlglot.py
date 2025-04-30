@@ -72,7 +72,7 @@ from pydough.sqlglot import (
     find_identifiers,
     set_glot_alias,
 )
-from pydough.types import BooleanType, Int64Type, StringType
+from pydough.types import BooleanType, NumericType, StringType
 
 
 @pytest.fixture(scope="module")
@@ -251,7 +251,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 columns={
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
-                    "c": make_relational_literal(1, Int64Type()),
+                    "c": make_relational_literal(1, NumericType()),
                 },
             ),
             mkglot(
@@ -276,7 +276,9 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ),
                 columns={
                     "col2": CallExpression(
-                        LENGTH, Int64Type(), [make_relational_column_reference("col1")]
+                        LENGTH,
+                        NumericType(),
+                        [make_relational_column_reference("col1")],
                     )
                 },
             ),
@@ -323,7 +325,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(1, Int64Type()),
+                        make_relational_literal(1, NumericType()),
                     ],
                 ),
             ),
@@ -352,7 +354,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                 ),
@@ -364,7 +366,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("b"),
-                        make_relational_literal(5, Int64Type()),
+                        make_relational_literal(5, NumericType()),
                     ],
                 ),
             ),
@@ -396,10 +398,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         columns={
                             "c": CallExpression(
                                 ADD,
-                                Int64Type(),
+                                NumericType(),
                                 [
                                     make_relational_column_reference("a"),
-                                    make_relational_literal(1, Int64Type()),
+                                    make_relational_literal(1, NumericType()),
                                 ],
                             ),
                             "b": make_relational_column_reference("b"),
@@ -410,7 +412,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("c"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                     columns={
@@ -461,7 +463,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
         pytest.param(
             Limit(
                 input=build_simple_scan(),
-                limit=LiteralExpression(1, Int64Type()),
+                limit=LiteralExpression(1, NumericType()),
                 columns={
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -480,7 +482,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
         pytest.param(
             Limit(
                 input=build_simple_scan(),
-                limit=LiteralExpression(1, Int64Type()),
+                limit=LiteralExpression(1, NumericType()),
                 columns={
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -515,7 +517,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
         pytest.param(
             Limit(
                 input=build_simple_scan(),
-                limit=LiteralExpression(1, Int64Type()),
+                limit=LiteralExpression(1, NumericType()),
                 columns={
                     "a": make_relational_column_reference("a"),
                 },
@@ -523,7 +525,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     make_relational_ordering(
                         CallExpression(
                             ABS,
-                            Int64Type(),
+                            NumericType(),
                             [make_relational_column_reference("a")],
                         ),
                         ascending=True,
@@ -547,7 +549,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             Limit(
                 input=Limit(
                     input=build_simple_scan(),
-                    limit=LiteralExpression(5, Int64Type()),
+                    limit=LiteralExpression(5, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -560,7 +562,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         ),
                     ],
                 ),
-                limit=LiteralExpression(2, Int64Type()),
+                limit=LiteralExpression(2, NumericType()),
                 columns={
                     "a": make_relational_column_reference("a"),
                 },
@@ -582,14 +584,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                     columns={
                         "b": make_relational_column_reference("b"),
                     },
                 ),
-                limit=LiteralExpression(2, Int64Type()),
+                limit=LiteralExpression(2, NumericType()),
                 columns={
                     "b": make_relational_column_reference("b"),
                 },
@@ -616,7 +618,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             Filter(
                 input=Limit(
                     input=build_simple_scan(),
-                    limit=LiteralExpression(2, Int64Type()),
+                    limit=LiteralExpression(2, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -627,7 +629,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(1, Int64Type()),
+                        make_relational_literal(1, NumericType()),
                     ],
                 ),
                 columns={
@@ -656,14 +658,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             Project(
                 input=Limit(
                     input=build_simple_scan(),
-                    limit=LiteralExpression(2, Int64Type()),
+                    limit=LiteralExpression(2, NumericType()),
                     columns={
                         "b": make_relational_column_reference("b"),
                     },
                 ),
                 columns={
                     "b": make_relational_column_reference("b"),
-                    "c": make_relational_literal(1, Int64Type()),
+                    "c": make_relational_literal(1, NumericType()),
                 },
             ),
             mkglot(
@@ -701,7 +703,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 keys={},
                 aggregations={
                     "a": CallExpression(
-                        SUM, Int64Type(), [make_relational_column_reference("a")]
+                        SUM, NumericType(), [make_relational_column_reference("a")]
                     )
                 },
             ),
@@ -732,7 +734,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
                 aggregations={
                     "a": CallExpression(
-                        SUM, Int64Type(), [make_relational_column_reference("a")]
+                        SUM, NumericType(), [make_relational_column_reference("a")]
                     )
                 },
             ),
@@ -766,7 +768,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                     columns={
@@ -805,7 +807,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     },
                     aggregations={
                         "a": CallExpression(
-                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                            SUM, NumericType(), [make_relational_column_reference("a")]
                         )
                     },
                 ),
@@ -814,7 +816,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(20, Int64Type()),
+                        make_relational_literal(20, NumericType()),
                     ],
                 ),
                 columns={
@@ -856,7 +858,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             Aggregate(
                 input=Limit(
                     input=build_simple_scan(),
-                    limit=LiteralExpression(10, Int64Type()),
+                    limit=LiteralExpression(10, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -892,7 +894,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     },
                     aggregations={},
                 ),
-                limit=LiteralExpression(10, Int64Type()),
+                limit=LiteralExpression(10, NumericType()),
                 columns={
                     "b": make_relational_column_reference("b"),
                 },
@@ -925,10 +927,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 columns={
                     "b": CallExpression(
                         SUB,
-                        Int64Type(),
+                        NumericType(),
                         [
                             make_relational_column_reference("b"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                 },
@@ -1209,7 +1211,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(5, Int64Type()),
+                        make_relational_literal(5, NumericType()),
                     ],
                 ),
                 columns={
@@ -1359,10 +1361,10 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         "b": make_relational_column_reference("b"),
                         "c": CallExpression(
                             ADD,
-                            Int64Type(),
+                            NumericType(),
                             [
                                 make_relational_column_reference("a"),
-                                make_relational_literal(1, Int64Type()),
+                                make_relational_literal(1, NumericType()),
                             ],
                         ),
                     },
@@ -1422,7 +1424,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                     columns={
@@ -1447,7 +1449,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             RelationalRoot(
                 input=Limit(
                     input=build_simple_scan(),
-                    limit=LiteralExpression(10, Int64Type()),
+                    limit=LiteralExpression(10, NumericType()),
                     columns={
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
@@ -1501,7 +1503,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     },
                     aggregations={
                         "a": CallExpression(
-                            SUM, Int64Type(), [make_relational_column_reference("a")]
+                            SUM, NumericType(), [make_relational_column_reference("a")]
                         )
                     },
                 ),
@@ -1617,7 +1619,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     make_relational_ordering(
                         CallExpression(
                             ABS,
-                            Int64Type(),
+                            NumericType(),
                             [make_relational_column_reference("a")],
                         ),
                         ascending=True,
@@ -1645,7 +1647,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     [
                         WindowCallExpression(
                             RANKING,
-                            Int64Type(),
+                            NumericType(),
                             [],
                             [],
                             [
@@ -1657,7 +1659,7 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                             ],
                             {},
                         ),
-                        make_relational_literal(3, Int64Type()),
+                        make_relational_literal(3, NumericType()),
                     ],
                 ),
                 columns={
@@ -1786,7 +1788,7 @@ def test_expression_identifiers(expr: Expression, expected: set[Ident]) -> None:
                         BooleanType(),
                         [
                             make_relational_column_reference("a"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                     columns={

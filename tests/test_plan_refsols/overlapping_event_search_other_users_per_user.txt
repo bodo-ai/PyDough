@@ -1,5 +1,5 @@
 ROOT(columns=[('user_name', user_name), ('n_other_users', n_other_users)], orderings=[(n_other_users):desc_last, (agg_2):asc_first])
- LIMIT(limit=Literal(value=7, type=Int64Type()), columns={'agg_2': agg_2, 'n_other_users': n_other_users, 'user_name': user_name}, orderings=[(n_other_users):desc_last, (agg_2):asc_first])
+ LIMIT(limit=Literal(value=7, type=NumericType()), columns={'agg_2': agg_2, 'n_other_users': n_other_users, 'user_name': user_name}, orderings=[(n_other_users):desc_last, (agg_2):asc_first])
   PROJECT(columns={'agg_2': agg_2, 'n_other_users': agg_0, 'user_name': agg_2})
    AGGREGATE(keys={'user_id': user_id}, aggregations={'agg_0': NDISTINCT(user_id_11), 'agg_2': ANYTHING(original_user_name)})
     FILTER(condition=name_9 != original_user_name, columns={'original_user_name': original_user_name, 'user_id': user_id, 'user_id_11': user_id_11})

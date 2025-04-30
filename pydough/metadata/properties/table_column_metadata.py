@@ -11,6 +11,7 @@ from pydough.metadata.errors import (
     HasPropertyWith,
     NoExtraKeys,
     PyDoughMetadataException,
+    extract_string,
     is_string,
 )
 from pydough.types import PyDoughType, parse_type_from_string
@@ -29,8 +30,8 @@ class TableColumnMetadata(ScalarAttributeMetadata):
     # Set of names of fields that can be included in the JSON object
     # describing a table column property.
     allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
-        "data_type",
-        "column_name",
+        "data type",
+        "column name",
     }
 
     def __init__(
@@ -41,7 +42,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         column_name: str,
     ):
         super().__init__(name, collection, data_type)
-        is_string.verify(column_name, "column_name")
+        is_string.verify(column_name, "column name")
         self._column_name: str = column_name
 
     @property
@@ -85,8 +86,8 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         )
         # Verify that the property has the required `column_name` and
         # `data_type` fields, without anything extra.
-        HasPropertyWith("column_name", is_string).verify(property_json, error_name)
-        HasPropertyWith("data_type", is_string).verify(property_json, error_name)
+        HasPropertyWith("column name", is_string).verify(property_json, error_name)
+        HasPropertyWith("data type", is_string).verify(property_json, error_name)
         NoExtraKeys(TableColumnMetadata.allowed_fields).verify(
             property_json, error_name
         )
@@ -110,13 +111,16 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             `PyDoughMetadataException`: if the JSON for the property is
             malformed.
         """
+        error_name: str = TableColumnMetadata.create_error_name(
+            property_name, collection.error_name
+        )
         # Extract the `data_type` and `column_name` fields from the JSON object
-        type_string: str = property_json["data_type"]
+        type_string: str = extract_string(property_json, "data type", error_name)
         try:
             data_type: PyDoughType = parse_type_from_string(type_string)
         except PyDoughTypeException as e:
             raise PyDoughMetadataException(*e.args)
-        column_name: str = property_json["column_name"]
+        column_name: str = extract_string(property_json, "column name", error_name)
 
         # Build the new property metadata object and add it to the collection.
         property: TableColumnMetadata = TableColumnMetadata(

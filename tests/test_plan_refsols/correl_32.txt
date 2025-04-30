@@ -1,5 +1,5 @@
 ROOT(columns=[('customer_name', customer_name), ('delta', delta)], orderings=[(delta):asc_first])
- LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'customer_name': customer_name, 'delta': delta}, orderings=[(delta):asc_first])
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'customer_name': customer_name, 'delta': delta}, orderings=[(delta):asc_first])
   PROJECT(columns={'customer_name': agg_7, 'delta': ABS(agg_1 - agg_0)})
    AGGREGATE(keys={'key': key}, aggregations={'agg_0': MEDIAN(account_balance), 'agg_1': ANYTHING(acctbal), 'agg_7': ANYTHING(name)})
     FILTER(condition=SLICE(phone_12, -1:int64, None:unknown, None:unknown) == SLICE(cust_phone, -1:int64, None:unknown, None:unknown), columns={'account_balance': account_balance, 'acctbal': acctbal, 'key': key, 'name': name})

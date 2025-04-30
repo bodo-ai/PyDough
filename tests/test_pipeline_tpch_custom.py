@@ -1844,13 +1844,13 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             simple_scan,
             ["A", "B", "C"],
-            "Unrecognized term of simple table collection 'Orders' in graph 'TPCH': 'A'",
+            "Unrecognized term of simple table collection 'orders' in graph 'TPCH': 'A'",
             id="bad_columns_3",
         ),
         pytest.param(
             simple_scan,
             {"X": "key", "W": "Y"},
-            "Unrecognized term of simple table collection 'Orders' in graph 'TPCH': 'Y'",
+            "Unrecognized term of simple table collection 'orders' in graph 'TPCH': 'Y'",
             id="bad_columns_4",
         ),
         pytest.param(
