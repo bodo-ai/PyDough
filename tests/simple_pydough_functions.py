@@ -673,7 +673,7 @@ def time_threshold_reached():
             / RELSUM(shares, per="days"),
         )
         .WHERE(pct_of_day >= 50.0)
-        .WHERE(RANKING(by=pct_of_day.ASC(), per="days") == 1)
+        .BEST(by=pct_of_day.ASC(), per="days")
         .CALCULATE(date_time)
         .ORDER_BY(date_time)
     )
