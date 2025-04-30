@@ -44,6 +44,16 @@ def bad_window_4():
     return Orders.CALCULATE(PERCENTILE(by=order_key.ASC(), n_buckets=[1, 2, 3]))
 
 
+def bad_window_5():
+    # Relsum with by but without cumulative
+    return Customers.CALCULATE(RELSUM(acctbal, by=acctbal.ASC()))
+
+
+def bad_window_6():
+    # Relavg with cumulative but without by
+    return Customers.CALCULATE(RELAVG(acctbal, cumulative=True))
+
+
 def bad_lpad_1():
     # String length argument
     return Customers.CALCULATE(padded_name=LPAD(name, "20", "*"))

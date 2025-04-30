@@ -112,6 +112,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 glot_expr = glot_expr.desc(nulls_first=na_first)
             order_exprs.append(glot_expr)
         this: SQLGlotExpression
+        cumulative: bool = False
         match window_expression.op.function_name:
             case "PERCENTILE":
                 # Extract the number of buckets to use for the percentile
@@ -153,12 +154,16 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 this = func(**lag_args)
             case "RELSUM":
                 this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
+                cumulative = bool(window_expression.kwargs.get("cumulative", False))
             case "RELAVG":
                 this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)
+                cumulative = bool(window_expression.kwargs.get("cumulative", False))
             case "RELCOUNT":
                 this = sqlglot_expressions.Count.from_arg_list(arg_exprs)
+                cumulative = bool(window_expression.kwargs.get("cumulative", False))
             case "RELSIZE":
                 this = sqlglot_expressions.Count.from_arg_list([SQLGlotStar()])
+                cumulative = bool(window_expression.kwargs.get("cumulative", False))
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"
@@ -169,6 +174,13 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         if order_exprs:
             window_args["order"] = sqlglot_expressions.Order(
                 this=None, expressions=order_exprs
+            )
+        if cumulative:
+            window_args["spec"] = sqlglot_expressions.WindowSpec(
+                kind="ROWS",
+                start="UNBOUNDED",
+                start_side="PRECEDING",
+                end="CURRENT ROW",
             )
         self._stack.append(sqlglot_expressions.Window(**window_args))
 

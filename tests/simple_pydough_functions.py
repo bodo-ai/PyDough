@@ -609,6 +609,76 @@ def region_nation_window_aggs():
     )
 
 
+def cumulative_stock_analysis():
+    # Analyzes successfull ticker transactions in April 2023 with the following
+    # cumulative analyses for each transaction:
+    # - What ordinal transaction was it within the day
+    # - What percentage of all transactions made so far were for Apple/Amazon
+    # - What is the total number of net stocks bought (subtracting sold)
+    # - What is the rolling average of the amount of money spent on all of the
+    #   transactions so far.
+    # - What is the number of buy transactions made within the day so far.
+    return (
+        Transactions.WHERE(
+            (YEAR(date_time) == 2023) & (MONTH(date_time) == 4) & (status == "success")
+        )
+        .CALCULATE(txn_day=DATETIME(date_time, "start of day"))
+        .PARTITION(name="days", by=txn_day)
+        .Transactions.CALCULATE(
+            date_time,
+            txn_within_day=RELSIZE(by=date_time.ASC(), cumulative=True, per="days"),
+            n_buys_within_day=RELCOUNT(
+                KEEP_IF(transaction_type, transaction_type == "buy"),
+                by=date_time.ASC(),
+                cumulative=True,
+                per="days",
+            ),
+            pct_apple_txns=ROUND(
+                (
+                    100.0
+                    * RELSUM(
+                        ISIN(ticker.symbol, ("AAPL", "AMZN")),
+                        by=date_time.ASC(),
+                        cumulative=True,
+                    )
+                )
+                / RELSIZE(by=date_time.ASC(), cumulative=True),
+                2,
+            ),
+            share_change=RELSUM(
+                IFF(transaction_type == "buy", shares, -shares),
+                by=date_time.ASC(),
+                cumulative=True,
+            ),
+            rolling_avg_amount=ROUND(
+                RELAVG(amount, by=date_time.ASC(), cumulative=True), 2
+            ),
+        )
+        .ORDER_BY(date_time.ASC())
+    )
+
+
+def time_threshold_reached():
+    # For every day in 2023, find the time of the first transaction made that
+    # represents at least 50% of all shares bought/sold that day so far
+    # having been completed.
+    return (
+        Transactions.WHERE((YEAR(date_time) == 2023))
+        .CALCULATE(txn_day=DATETIME(date_time, "start of day"))
+        .PARTITION(name="days", by=txn_day)
+        .Transactions.CALCULATE(
+            pct_of_day=(
+                100.0 * RELSUM(shares, by=date_time.ASC(), cumulative=True, per="days")
+            )
+            / RELSUM(shares, per="days"),
+        )
+        .WHERE(pct_of_day >= 50.0)
+        .BEST(by=pct_of_day.ASC(), per="days")
+        .CALCULATE(date_time)
+        .ORDER_BY(date_time)
+    )
+
+
 def supplier_pct_national_qty():
     # Find the 5 African suppliers with the highest percentage of total
     # quantity of product shipped from them out of all suppliers in that nation
