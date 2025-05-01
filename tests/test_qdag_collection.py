@@ -154,7 +154,7 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
             ),
         )
     )
-    is_intra: str = "order.customer.region.name == region_name"
+    is_intra: str = "order.customer.nation.region.name == region_name"
     base_value: str = "retail_price * quantity"
     path_to_lines = "nations.suppliers.supply_records.CALCULATE(retail_price=part.retail_price).lines.WHERE(ship_mode == 'AIR')"
     part_values: str = (
@@ -179,7 +179,8 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
               └─┬─ AccessChild
                 └─┬─ SubCollection[order]
                   └─┬─ SubCollection[customer]
-                    └─── SubCollection[region]
+                    └─┬─ SubCollection[nation]
+                      └─── SubCollection[region]
 """
     return test_info, string_representation, tree_string_representation
 
@@ -247,16 +248,12 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "key",
                 "comment",
                 "nations",
-                "customers",
-                "lines_sourced_from",
-                "orders_shipped_to",
-                "suppliers",
             },
             id="regions",
         ),
         pytest.param(
             TableCollectionInfo("regions") ** SubCollectionInfo("nations"),
-            {"key": 0, "name": 1, "region_key": 2, "comment": 3},
+            {"key": 0, "region_key": 1, "name": 2, "comment": 3},
             {
                 "name",
                 "key",
@@ -265,7 +262,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "region",
                 "customers",
                 "suppliers",
-                "orders_shipped_to",
             },
             id="regions_nations",
         ),
@@ -280,10 +276,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "key",
                 "comment",
                 "nations",
-                "customers",
-                "lines_sourced_from",
-                "orders_shipped_to",
-                "suppliers",
             },
             id="regions_empty_calc",
         ),
@@ -300,10 +292,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "key",
                 "comment",
                 "nations",
-                "customers",
-                "lines_sourced_from",
-                "orders_shipped_to",
-                "suppliers",
                 "foo",
                 "bar",
             },
@@ -317,7 +305,7 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 )
                 ** SubCollectionInfo("nations")
             ),
-            {"key": 0, "name": 1, "region_key": 2, "comment": 3},
+            {"key": 0, "region_key": 1, "name": 2, "comment": 3},
             {
                 "foo",
                 "bar",
@@ -327,7 +315,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "comment",
                 "customers",
                 "region",
-                "orders_shipped_to",
                 "suppliers",
             },
             id="regions_calc_nations",
@@ -348,7 +335,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "comment",
                 "customers",
                 "region",
-                "orders_shipped_to",
                 "suppliers",
                 "foo",
                 "bar",
@@ -375,10 +361,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "key",
                 "comment",
                 "nations",
-                "customers",
-                "lines_sourced_from",
-                "orders_shipped_to",
-                "suppliers",
                 "foo",
                 "bar",
                 "fizz",
@@ -387,7 +369,9 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
             id="regions_calc_calc",
         ),
         pytest.param(
-            TableCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part"),
+            TableCollectionInfo("parts")
+            ** SubCollectionInfo("supply_records")
+            ** SubCollectionInfo("supplier"),
             {
                 "key": 0,
                 "name": 1,
@@ -396,9 +380,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "phone": 4,
                 "account_balance": 5,
                 "comment": 6,
-                "ps_available_quantity": 7,
-                "ps_supply_cost": 8,
-                "ps_comment": 9,
             },
             {
                 "key",
@@ -408,23 +389,18 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "phone",
                 "account_balance",
                 "comment",
+                "nation",
                 "lines",
                 "supply_records",
                 "lines",
-                "parts_supplied",
-                "nation",
-                "region",
-                "ps_available_quantity",
-                "ps_comment",
-                "ps_supply_cost",
-                "ps_lines",
             },
             id="parts_suppliers",
         ),
         pytest.param(
             (
                 TableCollectionInfo("parts")
-                ** SubCollectionInfo("suppliers_of_part")
+                ** SubCollectionInfo("supply_records")
+                ** SubCollectionInfo("supplier")
                 ** CalculateInfo(
                     [],
                     good_comment=FunctionInfo(
@@ -452,99 +428,11 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "lines",
                 "supply_records",
                 "lines",
-                "parts_supplied",
                 "nation",
-                "region",
-                "ps_available_quantity",
-                "ps_comment",
-                "ps_supply_cost",
-                "ps_lines",
                 "good_comment",
                 "negative_balance",
             },
             id="parts_suppliers_calc",
-        ),
-        pytest.param(
-            TableCollectionInfo("regions") ** SubCollectionInfo("suppliers"),
-            {
-                "key": 0,
-                "name": 1,
-                "address": 2,
-                "nation_key": 3,
-                "phone": 4,
-                "account_balance": 5,
-                "comment": 6,
-                "nation_name": 7,
-            },
-            {
-                "key",
-                "name",
-                "address",
-                "nation_key",
-                "phone",
-                "account_balance",
-                "comment",
-                "lines",
-                "supply_records",
-                "lines",
-                "parts_supplied",
-                "nation",
-                "region",
-                "nation_name",
-            },
-            id="regions_suppliers",
-        ),
-        pytest.param(
-            TableCollectionInfo("regions") ** SubCollectionInfo("lines_sourced_from"),
-            {
-                "order_key": 0,
-                "part_key": 1,
-                "supplier_key": 2,
-                "line_number": 3,
-                "quantity": 4,
-                "extended_price": 5,
-                "discount": 6,
-                "tax": 7,
-                "status": 8,
-                "ship_date": 9,
-                "commit_date": 10,
-                "receipt_date": 11,
-                "ship_instruct": 12,
-                "ship_mode": 13,
-                "return_flag": 14,
-                "comment": 15,
-                "nation_name": 16,
-                "supplier_name": 17,
-                "supplier_address": 18,
-            },
-            {
-                "order_key",
-                "part_key",
-                "supplier_key",
-                "line_number",
-                "quantity",
-                "extended_price",
-                "discount",
-                "tax",
-                "status",
-                "ship_date",
-                "commit_date",
-                "receipt_date",
-                "ship_instruct",
-                "ship_mode",
-                "return_flag",
-                "comment",
-                "part_and_supplier",
-                "order",
-                "supplier",
-                "part",
-                "nation_name",
-                "supplier_name",
-                "supplier_address",
-                "other_parts_supplied",
-                "supplier_region",
-            },
-            id="regions_lines",
         ),
         pytest.param(
             (
@@ -579,7 +467,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "comment",
                 "customers",
                 "region",
-                "orders_shipped_to",
                 "suppliers",
             },
             id="regions_nations_backcalc",
@@ -632,53 +519,8 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "order",
                 "supplier",
                 "part",
-                "supplier_region",
             },
             id="regions_nations_suppliers_ps_lines_backcalc",
-        ),
-        pytest.param(
-            (
-                TableCollectionInfo("regions")
-                ** SubCollectionInfo("lines_sourced_from")
-                ** CalculateInfo(
-                    [],
-                    source_region_name=BackReferenceExpressionInfo("name", 1),
-                    taxation=ReferenceInfo("tax"),
-                    name_of_nation=ReferenceInfo("nation_name"),
-                )
-            ),
-            {"source_region_name": 0, "taxation": 1, "name_of_nation": 2},
-            {
-                "source_region_name",
-                "taxation",
-                "name_of_nation",
-                "order_key",
-                "part_key",
-                "supplier_key",
-                "line_number",
-                "quantity",
-                "extended_price",
-                "discount",
-                "tax",
-                "status",
-                "ship_date",
-                "commit_date",
-                "receipt_date",
-                "ship_instruct",
-                "ship_mode",
-                "return_flag",
-                "comment",
-                "part_and_supplier",
-                "order",
-                "supplier",
-                "part",
-                "nation_name",
-                "supplier_name",
-                "supplier_address",
-                "other_parts_supplied",
-                "supplier_region",
-            },
-            id="regions_lines_backcalc",
         ),
         pytest.param(
             PartitionInfo(
@@ -737,7 +579,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                 "part_name",
                 "retail_price",
                 "size",
-                "suppliers_of_part",
                 "supply_records",
                 "part_type",
                 "total_price",
@@ -955,7 +796,7 @@ def test_collections_calc_terms(
         pytest.param(
             TableCollectionInfo("suppliers")
             ** CalculateInfo(
-                [SubCollectionInfo("parts_supplied")],
+                [SubCollectionInfo("supply_records") ** SubCollectionInfo("part")],
                 supplier_name=ReferenceInfo("name"),
                 total_retail_price=FunctionInfo(
                     "SUM",
@@ -970,13 +811,14 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.suppliers.CALCULATE(supplier_name=name, total_retail_price=SUM(parts_supplied.retail_price - 1.0))",
+            "TPCH.suppliers.CALCULATE(supplier_name=name, total_retail_price=SUM(supply_records.part.retail_price - 1.0))",
             """
 ──┬─ TPCH
   ├─── TableCollection[suppliers]
   └─┬─ Calculate[supplier_name=name, total_retail_price=SUM($1.retail_price - 1.0)]
     └─┬─ AccessChild
-      └─── SubCollection[parts_supplied]
+      └─┬─ SubCollection[supply_records]
+        └─── SubCollection[part]
 """,
             id="suppliers_childcalc_parts_a",
         ),
@@ -984,7 +826,8 @@ def test_collections_calc_terms(
             TableCollectionInfo("suppliers")
             ** CalculateInfo(
                 [
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** CalculateInfo(
                         [],
                         adj_retail_price=FunctionInfo(
@@ -1001,14 +844,15 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("adj_retail_price", 0)]
                 ),
             ),
-            "TPCH.suppliers.CALCULATE(supplier_name=name, total_retail_price=SUM(parts_supplied.CALCULATE(adj_retail_price=retail_price - 1.0).adj_retail_price))",
+            "TPCH.suppliers.CALCULATE(supplier_name=name, total_retail_price=SUM(supply_records.part.CALCULATE(adj_retail_price=retail_price - 1.0).adj_retail_price))",
             """
 ──┬─ TPCH
   ├─── TableCollection[suppliers]
   └─┬─ Calculate[supplier_name=name, total_retail_price=SUM($1.adj_retail_price)]
     └─┬─ AccessChild
-      ├─── SubCollection[parts_supplied]
-      └─── Calculate[adj_retail_price=retail_price - 1.0]
+      └─┬─ SubCollection[supply_records]
+        ├─── SubCollection[part]
+        └─── Calculate[adj_retail_price=retail_price - 1.0]
 """,
             id="suppliers_childcalc_parts_b",
         ),
@@ -1070,13 +914,17 @@ def test_collections_calc_terms(
                 [
                     TableCollectionInfo("customers"),
                     TableCollectionInfo("suppliers")
-                    ** SubCollectionInfo("parts_supplied")
+                    ** SubCollectionInfo("supply_records")
+                    ** CalculateInfo(
+                        [], available_quantity=ReferenceInfo("available_quantity")
+                    )
+                    ** SubCollectionInfo("part")
                     ** CalculateInfo(
                         [],
                         value=FunctionInfo(
                             "MUL",
                             [
-                                ReferenceInfo("ps_available_quantity"),
+                                ReferenceInfo("available_quantity"),
                                 ReferenceInfo("retail_price"),
                             ],
                         ),
@@ -1089,7 +937,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("value", 1)]
                 ),
             ),
-            "TPCH.CALCULATE(total_demand=SUM(customers.account_balance), total_supply=SUM(suppliers.parts_supplied.CALCULATE(value=ps_available_quantity * retail_price).value))",
+            "TPCH.CALCULATE(total_demand=SUM(customers.account_balance), total_supply=SUM(suppliers.supply_records.CALCULATE(available_quantity=available_quantity).part.CALCULATE(value=available_quantity * retail_price).value))",
             """
 ┌─── TPCH
 └─┬─ Calculate[total_demand=SUM($1.account_balance), total_supply=SUM($2.value)]
@@ -1097,8 +945,10 @@ def test_collections_calc_terms(
   │ └─── TableCollection[customers]
   └─┬─ AccessChild
     └─┬─ TableCollection[suppliers]
-      ├─── SubCollection[parts_supplied]
-      └─── Calculate[value=ps_available_quantity * retail_price]
+      ├─── SubCollection[supply_records]
+      └─┬─ Calculate[available_quantity=available_quantity]
+        ├─── SubCollection[part]
+        └─── Calculate[value=available_quantity * retail_price]
 """,
             id="globalcalc_b",
         ),
@@ -1238,6 +1088,7 @@ def test_collections_calc_terms(
         pytest.param(
             TableCollectionInfo("regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
             ** SubCollectionInfo("customers")
             ** OrderInfo([], (ReferenceInfo("key"), True, True))
             ** WhereInfo(
@@ -1259,17 +1110,18 @@ def test_collections_calc_terms(
                     [ReferenceInfo("region_name"), LiteralInfo("ASIA", StringType())],
                 ),
             ),
-            "TPCH.regions.ORDER_BY(name.ASC(na_pos='last')).customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(account_balance > 1000).CALCULATE(region_name=name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
+            "TPCH.regions.ORDER_BY(name.ASC(na_pos='last')).nations.customers.ORDER_BY(key.ASC(na_pos='last')).WHERE(account_balance > 1000).CALCULATE(region_name=name).ORDER_BY(region_name.ASC(na_pos='last')).WHERE(region_name != 'ASIA')",
             """
 ──┬─ TPCH
   ├─── TableCollection[regions]
   └─┬─ OrderBy[name.ASC(na_pos='last')]
-    ├─── SubCollection[customers]
-    ├─── OrderBy[key.ASC(na_pos='last')]
-    ├─── Where[account_balance > 1000]
-    ├─── Calculate[region_name=name]
-    ├─── OrderBy[region_name.ASC(na_pos='last')]
-    └─── Where[region_name != 'ASIA']
+    └─┬─ SubCollection[nations]
+      ├─── SubCollection[customers]
+      ├─── OrderBy[key.ASC(na_pos='last')]
+      ├─── Where[account_balance > 1000]
+      ├─── Calculate[region_name=name]
+      ├─── OrderBy[region_name.ASC(na_pos='last')]
+      └─── Where[region_name != 'ASIA']
 """,
             id="regions_customers_order_where_calc_order_where",
         ),
@@ -1310,7 +1162,9 @@ def test_collections_calc_terms(
                 ** CalculateInfo(
                     [
                         SubCollectionInfo("order")
-                        ** SubCollectionInfo("shipping_region"),
+                        ** SubCollectionInfo("customer")
+                        ** SubCollectionInfo("nation")
+                        ** SubCollectionInfo("region"),
                         SubCollectionInfo("part"),
                     ],
                     region_name=ChildReferenceExpressionInfo("name", 0),
@@ -1330,7 +1184,7 @@ def test_collections_calc_terms(
                     "SUM", [ChildReferenceExpressionInfo("extended_price", 0)]
                 ),
             ),
-            "TPCH.Partition(lines.WHERE(tax == 0).CALCULATE(region_name=order.shipping_region.name, part_type=part.part_type), name='groups', by=('region_name', 'part_type')).CALCULATE(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
+            "TPCH.Partition(lines.WHERE(tax == 0).CALCULATE(region_name=order.customer.nation.region.name, part_type=part.part_type), name='groups', by=('region_name', 'part_type')).CALCULATE(region_name=region_name, part_type=part_type, total_price=SUM(lines.extended_price))",
             """
 ──┬─ TPCH
   ├─┬─ Partition[name='groups', by=(region_name, part_type)]
@@ -1340,7 +1194,9 @@ def test_collections_calc_terms(
   │   └─┬─ Calculate[region_name=$1.name, part_type=$2.part_type]
   │     ├─┬─ AccessChild
   │     │ └─┬─ SubCollection[order]
-  │     │   └─── SubCollection[shipping_region]
+  │     │   └─┬─ SubCollection[customer]
+  │     │     └─┬─ SubCollection[nation]
+  │     │       └─── SubCollection[region]
   │     └─┬─ AccessChild
   │       └─── SubCollection[part]
   └─┬─ Calculate[region_name=region_name, part_type=part_type, total_price=SUM($1.extended_price)]
@@ -1442,7 +1298,8 @@ def test_collections_calc_terms(
             TableCollectionInfo("parts")
             ** WhereInfo(
                 [
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1457,15 +1314,16 @@ def test_collections_calc_terms(
                 ],
                 FunctionInfo("HAS", [ChildReferenceCollectionInfo(0)]),
             ),
-            "TPCH.parts.WHERE(HAS(suppliers_of_part.nation.WHERE(name == 'GERMANY')))",
+            "TPCH.parts.WHERE(HAS(supply_records.supplier.nation.WHERE(name == 'GERMANY')))",
             """
 ──┬─ TPCH
   ├─── TableCollection[parts]
   └─┬─ Where[HAS($1)]
     └─┬─ AccessChild
-      └─┬─ SubCollection[suppliers_of_part]
-        ├─── SubCollection[nation]
-        └─── Where[name == 'GERMANY']
+      └─┬─ SubCollection[supply_records]
+        └─┬─ SubCollection[supplier]
+          ├─── SubCollection[nation]
+          └─── Where[name == 'GERMANY']
 """,
             id="simple_has",
         ),
@@ -1514,7 +1372,8 @@ def test_collections_calc_terms(
             TableCollectionInfo("suppliers")
             ** CalculateInfo(
                 [
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1522,7 +1381,8 @@ def test_collections_calc_terms(
                             [ReferenceInfo("size"), LiteralInfo(24, NumericType())],
                         ),
                     ),
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1538,7 +1398,8 @@ def test_collections_calc_terms(
             )
             ** WhereInfo(
                 [
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1546,7 +1407,8 @@ def test_collections_calc_terms(
                             [ReferenceInfo("size"), LiteralInfo(26, NumericType())],
                         ),
                     ),
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1565,7 +1427,8 @@ def test_collections_calc_terms(
             )
             ** TopKInfo(
                 [
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1573,7 +1436,8 @@ def test_collections_calc_terms(
                             [ReferenceInfo("size"), LiteralInfo(28, NumericType())],
                         ),
                     ),
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1589,7 +1453,8 @@ def test_collections_calc_terms(
             )
             ** OrderInfo(
                 [
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1597,7 +1462,8 @@ def test_collections_calc_terms(
                             [ReferenceInfo("size"), LiteralInfo(30, NumericType())],
                         ),
                     ),
-                    SubCollectionInfo("parts_supplied")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("part")
                     ** WhereInfo(
                         [],
                         FunctionInfo(
@@ -1610,38 +1476,46 @@ def test_collections_calc_terms(
                 (FunctionInfo("HAS", [ChildReferenceCollectionInfo(1)]), True, True),
                 (ReferenceInfo("key"), True, True),
             ),
-            "TPCH.suppliers.CALCULATE(has_part_24=COUNT(parts_supplied.WHERE(size == 24)) > 0, hasnot_part_25=COUNT(parts_supplied.WHERE(size == 25)) == 0).WHERE(HASNOT(parts_supplied.WHERE(size == 26)) & HAS(parts_supplied.WHERE(size == 27))).TOP_K(100, (COUNT(parts_supplied.WHERE(size == 28)) > 0).ASC(na_pos='last'), (COUNT(parts_supplied.WHERE(size == 29)) == 0).ASC(na_pos='last'), key.ASC(na_pos='last')).ORDER_BY((COUNT(parts_supplied.WHERE(size == 30)) == 0).ASC(na_pos='last'), (COUNT(parts_supplied.WHERE(size == 31)) > 0).ASC(na_pos='last'), key.ASC(na_pos='last'))",
+            "TPCH.suppliers.CALCULATE(has_part_24=COUNT(supply_records.part.WHERE(size == 24)) > 0, hasnot_part_25=COUNT(supply_records.part.WHERE(size == 25)) == 0).WHERE(HASNOT(supply_records.part.WHERE(size == 26)) & HAS(supply_records.part.WHERE(size == 27))).TOP_K(100, (COUNT(supply_records.part.WHERE(size == 28)) > 0).ASC(na_pos='last'), (COUNT(supply_records.part.WHERE(size == 29)) == 0).ASC(na_pos='last'), key.ASC(na_pos='last')).ORDER_BY((COUNT(supply_records.part.WHERE(size == 30)) == 0).ASC(na_pos='last'), (COUNT(supply_records.part.WHERE(size == 31)) > 0).ASC(na_pos='last'), key.ASC(na_pos='last'))",
             """
 ──┬─ TPCH
   ├─── TableCollection[suppliers]
   ├─┬─ Calculate[has_part_24=COUNT($1) > 0, hasnot_part_25=COUNT($2) == 0]
   │ ├─┬─ AccessChild
-  │ │ ├─── SubCollection[parts_supplied]
-  │ │ └─── Where[size == 24]
+  │ │ └─┬─ SubCollection[supply_records]
+  │ │   ├─── SubCollection[part]
+  │ │   └─── Where[size == 24]
   │ └─┬─ AccessChild
-  │   ├─── SubCollection[parts_supplied]
-  │   └─── Where[size == 25]
+  │   └─┬─ SubCollection[supply_records]
+  │     ├─── SubCollection[part]
+  │     └─── Where[size == 25]
   ├─┬─ Where[HASNOT($1) & HAS($2)]
   │ ├─┬─ AccessChild
-  │ │ ├─── SubCollection[parts_supplied]
-  │ │ └─── Where[size == 26]
+  │ │ └─┬─ SubCollection[supply_records]
+  │ │   ├─── SubCollection[part]
+  │ │   └─── Where[size == 26]
   │ └─┬─ AccessChild
-  │   ├─── SubCollection[parts_supplied]
-  │   └─── Where[size == 27]
+  │   └─┬─ SubCollection[supply_records]
+  │     ├─── SubCollection[part]
+  │     └─── Where[size == 27]
   ├─┬─ TopK[100, (COUNT($1) > 0).ASC(na_pos='last'), (COUNT($2) == 0).ASC(na_pos='last'), key.ASC(na_pos='last')]
   │ ├─┬─ AccessChild
-  │ │ ├─── SubCollection[parts_supplied]
-  │ │ └─── Where[size == 28]
+  │ │ └─┬─ SubCollection[supply_records]
+  │ │   ├─── SubCollection[part]
+  │ │   └─── Where[size == 28]
   │ └─┬─ AccessChild
-  │   ├─── SubCollection[parts_supplied]
-  │   └─── Where[size == 29]
+  │   └─┬─ SubCollection[supply_records]
+  │     ├─── SubCollection[part]
+  │     └─── Where[size == 29]
   └─┬─ OrderBy[(COUNT($1) == 0).ASC(na_pos='last'), (COUNT($2) > 0).ASC(na_pos='last'), key.ASC(na_pos='last')]
     ├─┬─ AccessChild
-    │ ├─── SubCollection[parts_supplied]
-    │ └─── Where[size == 30]
+    │ └─┬─ SubCollection[supply_records]
+    │   ├─── SubCollection[part]
+    │   └─── Where[size == 30]
     └─┬─ AccessChild
-      ├─── SubCollection[parts_supplied]
-      └─── Where[size == 31]
+      └─┬─ SubCollection[supply_records]
+        ├─── SubCollection[part]
+        └─── Where[size == 31]
 """,
             id="multiple_locations_has_hasnot",
         ),
@@ -1649,7 +1523,8 @@ def test_collections_calc_terms(
             TableCollectionInfo("parts")
             ** WhereInfo(
                 [
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1661,7 +1536,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1673,7 +1549,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1682,7 +1559,8 @@ def test_collections_calc_terms(
                             [ReferenceInfo("name"), LiteralInfo("USA", StringType())],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1712,27 +1590,31 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.parts.WHERE(HAS(suppliers_of_part.nation.WHERE(name == 'GERMANY')) & HASNOT(suppliers_of_part.nation.WHERE(name == 'BRAZIL')) & HAS(suppliers_of_part.nation.WHERE(name == 'USA')) & HASNOT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) & CONTAINS(part_type, 'ECONOMY'))",
+            "TPCH.parts.WHERE(HAS(supply_records.supplier.nation.WHERE(name == 'GERMANY')) & HASNOT(supply_records.supplier.nation.WHERE(name == 'BRAZIL')) & HAS(supply_records.supplier.nation.WHERE(name == 'USA')) & HASNOT(supply_records.supplier.nation.WHERE(name == 'FRANCE')) & CONTAINS(part_type, 'ECONOMY'))",
             """
 ──┬─ TPCH
   ├─── TableCollection[parts]
   └─┬─ Where[HAS($1) & HASNOT($2) & HAS($3) & HASNOT($4) & CONTAINS(part_type, 'ECONOMY')]
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'GERMANY']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'GERMANY']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'BRAZIL']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'BRAZIL']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'USA']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'USA']
     └─┬─ AccessChild
-      └─┬─ SubCollection[suppliers_of_part]
-        ├─── SubCollection[nation]
-        └─── Where[name == 'FRANCE']
+      └─┬─ SubCollection[supply_records]
+        └─┬─ SubCollection[supplier]
+          ├─── SubCollection[nation]
+          └─── Where[name == 'FRANCE']
 """,
             id="conjunction_has_hasnot",
         ),
@@ -1740,7 +1622,8 @@ def test_collections_calc_terms(
             TableCollectionInfo("parts")
             ** WhereInfo(
                 [
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1752,7 +1635,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1764,7 +1648,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1773,7 +1658,8 @@ def test_collections_calc_terms(
                             [ReferenceInfo("name"), LiteralInfo("USA", StringType())],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1803,27 +1689,31 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.parts.WHERE((COUNT(suppliers_of_part.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'BRAZIL')) == 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'USA')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) == 0) | CONTAINS(part_type, 'ECONOMY'))",
+            "TPCH.parts.WHERE((COUNT(supply_records.supplier.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(supply_records.supplier.nation.WHERE(name == 'BRAZIL')) == 0) | (COUNT(supply_records.supplier.nation.WHERE(name == 'USA')) > 0) | (COUNT(supply_records.supplier.nation.WHERE(name == 'FRANCE')) == 0) | CONTAINS(part_type, 'ECONOMY'))",
             """
 ──┬─ TPCH
   ├─── TableCollection[parts]
   └─┬─ Where[(COUNT($1) > 0) | (COUNT($2) == 0) | (COUNT($3) > 0) | (COUNT($4) == 0) | CONTAINS(part_type, 'ECONOMY')]
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'GERMANY']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'GERMANY']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'BRAZIL']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'BRAZIL']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'USA']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'USA']
     └─┬─ AccessChild
-      └─┬─ SubCollection[suppliers_of_part]
-        ├─── SubCollection[nation]
-        └─── Where[name == 'FRANCE']
+      └─┬─ SubCollection[supply_records]
+        └─┬─ SubCollection[supplier]
+          ├─── SubCollection[nation]
+          └─── Where[name == 'FRANCE']
 """,
             id="disjunction_has_hasnot",
         ),
@@ -1831,7 +1721,8 @@ def test_collections_calc_terms(
             TableCollectionInfo("parts")
             ** WhereInfo(
                 [
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1843,7 +1734,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1855,7 +1747,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1864,7 +1757,8 @@ def test_collections_calc_terms(
                             [ReferenceInfo("name"), LiteralInfo("USA", StringType())],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1876,7 +1770,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1888,7 +1783,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1900,7 +1796,8 @@ def test_collections_calc_terms(
                             ],
                         ),
                     ),
-                    SubCollectionInfo("suppliers_of_part")
+                    SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
                     ** SubCollectionInfo("nation")
                     ** WhereInfo(
                         [],
@@ -1956,39 +1853,46 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.parts.WHERE(((COUNT(suppliers_of_part.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'BRAZIL')) > 0)) & ((COUNT(suppliers_of_part.nation.WHERE(name == 'USA')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) > 0)) & HAS(suppliers_of_part.nation.WHERE(name == 'ARGENTINA')) & HAS(suppliers_of_part.nation.WHERE(name == 'CANADA')) & HAS(suppliers_of_part.nation.WHERE(name == 'INDIA')) & CONTAINS(part_type, 'ECONOMY') & ((COUNT(suppliers_of_part.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(suppliers_of_part.nation.WHERE(name == 'FRANCE')) > 0)))",
+            "TPCH.parts.WHERE(((COUNT(supply_records.supplier.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(supply_records.supplier.nation.WHERE(name == 'BRAZIL')) > 0)) & ((COUNT(supply_records.supplier.nation.WHERE(name == 'USA')) > 0) | (COUNT(supply_records.supplier.nation.WHERE(name == 'FRANCE')) > 0)) & HAS(supply_records.supplier.nation.WHERE(name == 'ARGENTINA')) & HAS(supply_records.supplier.nation.WHERE(name == 'CANADA')) & HAS(supply_records.supplier.nation.WHERE(name == 'INDIA')) & CONTAINS(part_type, 'ECONOMY') & ((COUNT(supply_records.supplier.nation.WHERE(name == 'GERMANY')) > 0) | (COUNT(supply_records.supplier.nation.WHERE(name == 'FRANCE')) > 0)))",
             """
 ──┬─ TPCH
   ├─── TableCollection[parts]
   └─┬─ Where[((COUNT($1) > 0) | (COUNT($2) > 0)) & ((COUNT($3) > 0) | (COUNT($4) > 0)) & HAS($5) & HAS($6) & HAS($7) & CONTAINS(part_type, 'ECONOMY') & ((COUNT($1) > 0) | (COUNT($4) > 0))]
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'GERMANY']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'GERMANY']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'BRAZIL']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'BRAZIL']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'USA']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'USA']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'FRANCE']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'FRANCE']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'ARGENTINA']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'ARGENTINA']
     ├─┬─ AccessChild
-    │ └─┬─ SubCollection[suppliers_of_part]
-    │   ├─── SubCollection[nation]
-    │   └─── Where[name == 'CANADA']
+    │ └─┬─ SubCollection[supply_records]
+    │   └─┬─ SubCollection[supplier]
+    │     ├─── SubCollection[nation]
+    │     └─── Where[name == 'CANADA']
     └─┬─ AccessChild
-      └─┬─ SubCollection[suppliers_of_part]
-        ├─── SubCollection[nation]
-        └─── Where[name == 'INDIA']
+      └─┬─ SubCollection[supply_records]
+        └─┬─ SubCollection[supplier]
+          ├─── SubCollection[nation]
+          └─── Where[name == 'INDIA']
 """,
             id="hybrid_has_hasnot",
         ),
@@ -2127,18 +2031,6 @@ def test_collections_to_string(
             id="global_calc",
         ),
         pytest.param(
-            TableCollectionInfo("regions")
-            ** SubCollectionInfo("suppliers")
-            ** CalculateInfo(
-                [],
-                region_name=BackReferenceExpressionInfo("name", 1),
-                nation_name=ReferenceInfo("nation_name"),
-                supplier_name=ReferenceInfo("name"),
-            ),
-            None,
-            id="regions_suppliers_calc",
-        ),
-        pytest.param(
             TableCollectionInfo("nations")
             ** OrderInfo([], (ReferenceInfo("name"), True, True)),
             ["name.ASC(na_pos='last')"],
@@ -2185,6 +2077,7 @@ def test_collections_to_string(
         pytest.param(
             TableCollectionInfo("regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
             ** SubCollectionInfo("customers")
             ** OrderInfo([], (ReferenceInfo("key"), True, True))
             ** WhereInfo(
@@ -2212,6 +2105,7 @@ def test_collections_to_string(
         pytest.param(
             TableCollectionInfo("regions")
             ** OrderInfo([], (ReferenceInfo("name"), True, True))
+            ** SubCollectionInfo("nations")
             ** SubCollectionInfo("customers")
             ** OrderInfo([], (ReferenceInfo("key"), True, True))
             ** WhereInfo(

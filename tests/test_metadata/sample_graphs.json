@@ -423,6 +423,13 @@
             "description": "The cost that it takes for the supplier to produce a single unit of the part. The cost is rounded to the nearest cent and most of the values are between $1 and $1,000.",
             "sample values": [144.43, 772.21, 285.90, 50.12, 983.998],
             "synonyms": ["production cost", "manufacturing cost", "cost of goods sold"]
+          },
+          {
+            "name": "comment",
+            "type": "table column",
+            "column name": "ps_comment",
+            "data type": "string",
+            "description": "Commentary/remark on the supply record"
           }
         ],
         "description": "Every combination of a supplier and a part that the supplier supplies. Each record contains information about the supplier of the part, the part itself, and the availability of the part from the supplier.",

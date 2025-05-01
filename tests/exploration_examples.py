@@ -94,7 +94,7 @@ def order_by_impl() -> UnqualifiedNode:
 
 
 def top_k_impl() -> UnqualifiedNode:
-    return parts.CALCULATE(name, n_suppliers=COUNT(suppliers_of_part)).TOP_K(
+    return parts.CALCULATE(name, n_suppliers=COUNT(supply_records)).TOP_K(
         100, by=(n_suppliers.DESC(), name.ASC())
     )
 
@@ -124,7 +124,7 @@ def contextless_expr_impl() -> UnqualifiedNode:
 
 
 def contextless_collections_impl() -> UnqualifiedNode:
-    return lines.CALCULATE(extended_price, name=part.name)
+    return line_items.CALCULATE(extended_price, name=part.name)
 
 
 def contextless_func_impl() -> UnqualifiedNode:
