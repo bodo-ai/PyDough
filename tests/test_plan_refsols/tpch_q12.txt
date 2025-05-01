@@ -4,6 +4,6 @@ ROOT(columns=[('L_SHIPMODE', L_SHIPMODE), ('HIGH_LINE_COUNT', HIGH_LINE_COUNT), 
    PROJECT(columns={'expr_2': NOT(is_high_priority), 'is_high_priority': is_high_priority, 'ship_mode': ship_mode})
     PROJECT(columns={'is_high_priority': order_priority == '1-URGENT':string | order_priority == '2-HIGH':string, 'ship_mode': ship_mode})
      JOIN(conditions=[t0.order_key == t1.key], types=['left'], columns={'order_priority': t1.order_priority, 'ship_mode': t0.ship_mode})
-      FILTER(condition=commit_date < receipt_date & receipt_date < datetime.date(1995, 1, 1):datetime & ship_date < commit_date & receipt_date >= datetime.date(1994, 1, 1):datetime & ship_mode == 'MAIL':string | ship_mode == 'SHIP':string, columns={'order_key': order_key, 'ship_mode': ship_mode})
+      FILTER(condition=commit_date < receipt_date & receipt_date < datetime.date(1995, 1, 1):datetimetime & ship_date < commit_date & receipt_date >= datetime.date(1994, 1, 1):datetimetime & ship_mode == 'MAIL':string | ship_mode == 'SHIP':string, columns={'order_key': order_key, 'ship_mode': ship_mode})
        SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate, 'ship_date': l_shipdate, 'ship_mode': l_shipmode})
       SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_priority': o_orderpriority})

@@ -23,19 +23,19 @@ from pydough.types import NumericType, PyDoughType, StringType
             pydop.ConstantType(NumericType()),
             [],
             NumericType(),
-            id="always_int64-empty_args",
+            id="always_numeric-empty_args",
         ),
         pytest.param(
             pydop.SelectArgumentType(0),
             [LiteralInfo(0, NumericType()), LiteralInfo("foo", StringType())],
             NumericType(),
-            id="first_arg-int64_string",
+            id="first_arg-numeric_string",
         ),
         pytest.param(
             pydop.SelectArgumentType(1),
             [LiteralInfo(1, NumericType()), LiteralInfo("foo", StringType())],
             StringType(),
-            id="second_arg-int64_string",
+            id="second_arg-numeric_string",
         ),
     ],
 )

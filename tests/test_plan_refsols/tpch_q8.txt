@@ -16,7 +16,7 @@ ROOT(columns=[('O_YEAR', o_year), ('MKT_SHARE', DEFAULT_TO(agg_0, 0:numeric) / D
        PROJECT(columns={'order_key': order_key, 'part_key': part_key, 'supplier_key': supplier_key, 'volume': extended_price * 1:numeric - discount})
         SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey, 'supplier_key': l_suppkey})
      PROJECT(columns={'customer_key': customer_key, 'key': key, 'o_year': YEAR(order_date)})
-      FILTER(condition=order_date <= datetime.date(1996, 12, 31):datetime & order_date >= datetime.date(1995, 1, 1):datetime, columns={'customer_key': customer_key, 'key': key, 'order_date': order_date})
+      FILTER(condition=order_date <= datetime.date(1996, 12, 31):datetimetime & order_date >= datetime.date(1995, 1, 1):datetimetime, columns={'customer_key': customer_key, 'key': key, 'order_date': order_date})
        SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
    JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'key': t0.key})
     JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'region_key': t1.region_key})

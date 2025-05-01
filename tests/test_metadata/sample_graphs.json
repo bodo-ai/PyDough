@@ -824,127 +824,470 @@
   {
     "name": "Epoch",
     "version": "V2",
-    "collections": {"seasons": {
-      "type": "simple_table",
-      "table path": "SEASONS",
-      "unique properties": ["name", "first_month", "second_month", "third_month"],
-      "properties": {
-        "name": {"type": "table column", "column name": "s_name", "data type": "string"},
-        "first_month": {"type": "table column", "column name": "s_month1", "data type": "numeric"},
-        "second_month": {"type": "table column", "column name": "s_month2", "data type": "numeric"},
-        "third_month": {"type": "table column", "column name": "s_month3", "data type": "numeric"}
+    "collections": [
+      {
+        "name": "seasons",
+        "type": "simple table",
+        "table path": "SEASONS",
+        "unique properties": [
+          "name",
+          "first_month",
+          "second_month",
+          "third_month"
+        ],
+        "properties": [
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "s_name",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "first_month",
+            "type": "table column",
+            "column name": "s_month1",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "second_month",
+            "type": "table column",
+            "column name": "s_month2",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "third_month",
+            "type": "table column",
+            "column name": "s_month3",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "times_of_day",
+        "type": "simple table",
+        "table path": "TIMES",
+        "unique properties": [
+          "name",
+          "start_hour",
+          "end_hour"
+        ],
+        "properties": [
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "t_name",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "start_hour",
+            "type": "table column",
+            "column name": "t_start_hour",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "end_hour",
+            "type": "table column",
+            "column name": "t_end_hour",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "eras",
+        "type": "simple table",
+        "table path": "ERAS",
+        "unique properties": [
+          "name",
+          "start_year",
+          "end_year"
+        ],
+        "properties": [
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "er_name",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "start_year",
+            "type": "table column",
+            "column name": "er_start_year",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "end_year",
+            "type": "table column",
+            "column name": "er_end_year",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "events",
+        "type": "simple table",
+        "table path": "EVENTS",
+        "unique properties": [
+          "name"
+        ],
+        "properties": [
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "ev_name",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "date_time",
+            "type": "table column",
+            "column name": "ev_dt",
+            "data type": "datetime",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "event_type",
+            "type": "table column",
+            "column name": "ev_typ",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "users",
+        "type": "simple table",
+        "table path": "USERS",
+        "unique properties": [
+          "user_id",
+          "name"
+        ],
+        "properties": [
+          {
+            "name": "user_id",
+            "type": "table column",
+            "column name": "user_id",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "user_name",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "region",
+            "type": "table column",
+            "column name": "user_region",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "searches",
+        "type": "simple table",
+        "table path": "SEARCHES",
+        "unique properties": [
+          "search_id"
+        ],
+        "properties": [
+          {
+            "name": "search_id",
+            "type": "table column",
+            "column name": "search_id",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "user_id",
+            "type": "table column",
+            "column name": "search_user_id",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "search_engine",
+            "type": "table column",
+            "column name": "search_engine",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "search_string",
+            "type": "table column",
+            "column name": "search_string",
+            "data type": "string",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "ts",
+            "type": "table column",
+            "column name": "search_ts",
+            "data type": "datetime",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          },
+          {
+            "name": "n_results",
+            "type": "table column",
+            "column name": "search_num_results",
+            "data type": "numeric",
+            "description": "TODO",
+            "sample values": [
+              "TODO"
+            ],
+            "synonyms": "TODO"
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
       }
-    },
-    "times_of_day": {
-      "type": "simple_table",
-      "table path": "TIMES",
-      "unique properties": ["name", "start_hour", "end_hour"],
-      "properties": {
-        "name": {"type": "table column", "column name": "t_name", "data type": "string"},
-        "start_hour": {"type": "table column", "column name": "t_start_hour", "data type": "numeric"},
-        "end_hour": {"type": "table column", "column name": "t_end_hour", "data type": "numeric"}
-      }
-    },
-    "eras": {
-      "type": "simple_table",
-      "table path": "ERAS",
-      "unique properties": ["name", "start_year", "end_year"],
-      "properties": {
-        "name": {"type": "table column", "column name": "er_name", "data type": "string"},
-        "start_year": {"type": "table column", "column name": "er_start_year", "data type": "numeric"},
-        "end_year": {"type": "table column", "column name": "er_end_year", "data type": "numeric"}
-      }
-    },
-    "events": {
-      "type": "simple_table",
-      "table path": "EVENTS",
-      "unique properties": ["name"],
-      "properties": {
-        "name": {"type": "table column", "column name": "ev_name", "data type": "string"},
-        "date_time": {"type": "table column", "column name": "ev_dt", "data type": "datetime"},
-        "event_type": {"type": "table column", "column name": "ev_typ", "data type": "string"},
-        "season": {
-          "type": "general_join",
-          "other_collection_name": "seasons",
-          "singular": true,
-          "no_collisions": false,
-          "condition": "(MONTH(self.date_time) == other.first_month) | (MONTH(self.date_time) == other.second_month) | (MONTH(self.date_time) == other.third_month)",
-          "reverse_relationship_name": "events"
+    ],
+    "relationships": [
+      {
+        "name": "season",
+        "type": "general join",
+        "parent collection": "events",
+        "child collection": "seasons",
+        "singular": true,
+        "condition": "(MONTH(self.date_time) == other.first_month) | (MONTH(self.date_time) == other.second_month) | (MONTH(self.date_time) == other.third_month)",
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "events",
+        "type": "reverse",
+        "original parent": "events",
+        "original property": "season",
+        "singular": false,
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "time_of_day",
+        "type": "general join",
+        "parent collection": "events",
+        "child collection": "times_of_day",
+        "singular": true,
+        "condition": "(other.start_hour <= HOUR(self.date_time)) & (HOUR(self.date_time) < other.end_hour)",
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "events",
+        "type": "reverse",
+        "original parent": "events",
+        "original property": "time_of_day",
+        "singular": false,
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "era",
+        "type": "general join",
+        "parent collection": "events",
+        "child collection": "eras",
+        "singular": true,
+        "condition": "(other.start_year <= YEAR(self.date_time)) & (YEAR(self.date_time) < other.end_year)",
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "events",
+        "type": "reverse",
+        "original parent": "events",
+        "original property": "era",
+        "singular": false,
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "searches",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "searches",
+        "singular": false,
+        "keys": {
+          "user_id": [
+            "user_id"
+          ]
         },
-        "time_of_day": {
-          "type": "general_join",
-          "other_collection_name": "times_of_day",
-          "singular": true,
-          "no_collisions": false,
-          "condition": "(other.start_hour <= HOUR(self.date_time)) & (HOUR(self.date_time) < other.end_hour)",
-          "reverse_relationship_name": "events"
-        },
-        "era": {
-          "type": "general_join",
-          "other_collection_name": "eras",
-          "singular": true,
-          "no_collisions": false,
-          "condition": "(other.start_year <= YEAR(self.date_time)) & (YEAR(self.date_time) < other.end_year)",
-          "reverse_relationship_name": "events"
-        }
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "user",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "searches",
+        "singular": true,
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "events",
+        "type": "general join",
+        "parent collection": "searches",
+        "child collection": "events",
+        "singular": false,
+        "condition": "CONTAINS(LOWER(self.search_string), LOWER(other.name))",
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "searches",
+        "type": "reverse",
+        "original parent": "searches",
+        "original property": "events",
+        "singular": false,
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "season",
+        "type": "general join",
+        "parent collection": "searches",
+        "child collection": "seasons",
+        "singular": true,
+        "condition": "(MONTH(self.ts) == other.first_month) | (MONTH(self.ts) == other.second_month) | (MONTH(self.ts) == other.third_month)",
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "searches",
+        "type": "reverse",
+        "original parent": "searches",
+        "original property": "season",
+        "singular": false,
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "time_of_day",
+        "type": "general join",
+        "parent collection": "searches",
+        "child collection": "times_of_day",
+        "singular": true,
+        "condition": "(other.start_hour <= HOUR(self.ts)) & (HOUR(self.ts) < other.end_hour)",
+        "description": "TODO",
+        "synonyms": "TODO"
+      },
+      {
+        "name": "searches",
+        "type": "reverse",
+        "original parent": "searches",
+        "original property": "time_of_day",
+        "singular": false,
+        "description": "TODO",
+        "synonyms": "TODO"
       }
-    },
-    "users": {
-      "type": "simple_table",
-      "table path": "USERS",
-      "unique properties": ["user_id", "name"],
-      "properties": {
-        "user_id": {"type": "table column", "column name": "user_id", "data type": "numeric"},
-        "name": {"type": "table column", "column name": "user_name", "data type": "string"},
-        "region": {"type": "table column", "column name": "user_region", "data type": "string"},
-        "searches": {
-          "type": "simple_join",
-          "other_collection_name": "searches",
-          "singular": false,
-          "no_collisions": true,
-          "keys": {"user_id": ["user_id"]},
-          "reverse_relationship_name": "user"
-        }
-      }
-    },
-    "searches": {
-      "type": "simple_table",
-      "table path": "SEARCHES",
-      "unique properties": ["search_id"],
-      "properties": {
-        "search_id": {"type": "table column", "column name": "search_id", "data type": "numeric"},
-        "user_id": {"type": "table column", "column name": "search_user_id", "data type": "numeric"},
-        "search_engine": {"type": "table column", "column name": "search_engine", "data type": "string"},
-        "search_string": {"type": "table column", "column name": "search_string", "data type": "string"},
-        "ts": {"type": "table column", "column name": "search_ts", "data type": "datetime"},
-        "n_results": {"type": "table column", "column name": "search_num_results", "data type": "numeric"},
-        "events": {
-          "type": "general_join",
-          "other_collection_name": "events",
-          "singular": false,
-          "no_collisions": false,
-          "condition": "CONTAINS(LOWER(self.search_string), LOWER(other.name))",
-          "reverse_relationship_name": "searches"
-        },
-        "season": {
-          "type": "general_join",
-          "other_collection_name": "seasons",
-          "singular": true,
-          "no_collisions": false,
-          "condition": "(MONTH(self.ts) == other.first_month) | (MONTH(self.ts) == other.second_month) | (MONTH(self.ts) == other.third_month)",
-          "reverse_relationship_name": "searches"
-        },
-        "time_of_day": {
-          "type": "general_join",
-          "other_collection_name": "times_of_day",
-          "singular": true,
-          "no_collisions": false,
-          "condition": "(other.start_hour <= HOUR(self.ts)) & (HOUR(self.ts) < other.end_hour)",
-          "reverse_relationship_name": "searches"
-        }
-      }
-    }
-  },
-    "relationships": []
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": []
   }
 ]

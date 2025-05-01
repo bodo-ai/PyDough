@@ -1180,29 +1180,29 @@ def agg_partition():
 def multi_partition_access_1():
     # A use of multiple PARTITION and stepping into partition children that is
     # a no-op.
-    data = Tickers.CALCULATE(symbol).TOP_K(5, by=symbol.ASC())
+    data = tickers.CALCULATE(symbol).TOP_K(5, by=symbol.ASC())
     grps_a = data.PARTITION(name="cet", by=(currency, exchange, ticker_type))
     grps_b = grps_a.PARTITION(name="ce", by=(currency, exchange))
     grps_c = grps_b.PARTITION(name="e", by=exchange)
-    return grps_c.ce.cet.Tickers
+    return grps_c.ce.cet.tickers
 
 
 def multi_partition_access_2():
     # Identify transactions that are below the average number of shares for
     # transactions of the same combinations of (customer, stock, type), or
     # the same combination of (customer, stock), or the same customer.
-    cust_tick_typ_groups = Transactions.PARTITION(
+    cust_tick_typ_groups = transactions.PARTITION(
         name="ctt_groups",
         by=(customer_id, ticker_id, transaction_type),
-    ).CALCULATE(cus_tick_typ_avg_shares=AVG(Transactions.shares))
+    ).CALCULATE(cus_tick_typ_avg_shares=AVG(transactions.shares))
     cust_tick_groups = cust_tick_typ_groups.PARTITION(
         name="ct_groups", by=(customer_id, ticker_id)
-    ).CALCULATE(cust_tick_avg_shares=AVG(ctt_groups.Transactions.shares))
+    ).CALCULATE(cust_tick_avg_shares=AVG(ctt_groups.transactions.shares))
     cus_groups = cust_tick_groups.PARTITION(name="c_groups", by=customer_id).CALCULATE(
-        cust_avg_shares=AVG(ct_groups.ctt_groups.Transactions.shares)
+        cust_avg_shares=AVG(ct_groups.ctt_groups.transactions.shares)
     )
     return (
-        cus_groups.ct_groups.ctt_groups.Transactions.WHERE(
+        cus_groups.ct_groups.ctt_groups.transactions.WHERE(
             (shares < cus_tick_typ_avg_shares)
             & (shares < cust_tick_avg_shares)
             & (shares < cust_avg_shares)
@@ -1223,15 +1223,15 @@ def multi_partition_access_2():
 def multi_partition_access_3():
     # Find all daily price updates whose closing price was the high mark for
     # that ticker, but not for tickers of that type.
-    data = Tickers.CALCULATE(symbol, ticker_type).historical_prices
+    data = tickers.CALCULATE(symbol, ticker_type).daily_prices
     ticker_groups = data.PARTITION(name="tickers", by=ticker_id).CALCULATE(
-        ticker_high_price=MAX(historical_prices.close)
+        ticker_high_price=MAX(daily_prices.close)
     )
-    type_groups = ticker_groups.historical_prices.PARTITION(
+    type_groups = ticker_groups.daily_prices.PARTITION(
         name="types", by=ticker_type
-    ).CALCULATE(type_high_price=MAX(historical_prices.close))
+    ).CALCULATE(type_high_price=MAX(daily_prices.close))
     return (
-        type_groups.historical_prices.WHERE(
+        type_groups.daily_prices.WHERE(
             (close == ticker_high_price) & (close < type_high_price)
         )
         .CALCULATE(symbol, close)
@@ -1242,14 +1242,14 @@ def multi_partition_access_3():
 def multi_partition_access_4():
     # Find all transactions that were the largest for a customer of that ticker
     # (by number of shares) but not the largest for that customer overall.
-    cust_ticker_groups = Transactions.PARTITION(
+    cust_ticker_groups = transactions.PARTITION(
         name="groups", by=(customer_id, ticker_id)
-    ).CALCULATE(cust_ticker_max_shares=MAX(Transactions.shares))
+    ).CALCULATE(cust_ticker_max_shares=MAX(transactions.shares))
     cust_groups = cust_ticker_groups.PARTITION(
         name="cust_groups", by=customer_id
     ).CALCULATE(cust_max_shares=MAX(groups.cust_ticker_max_shares))
     return (
-        cust_groups.groups.Transactions.WHERE(
+        cust_groups.groups.transactions.WHERE(
             (shares >= cust_ticker_max_shares) & (shares < cust_max_shares)
         )
         .CALCULATE(transaction_id)
@@ -1263,9 +1263,9 @@ def multi_partition_access_5():
     # that type were from that ticker. List the transaction ID, the number of
     # transactions of that ticker/type, ticker, and type. Sort by the number of
     # transactions of that ticker/type, breaking ties by transaction ID.
-    ticker_type_groups = Transactions.PARTITION(
+    ticker_type_groups = transactions.PARTITION(
         name="groups", by=(ticker_id, transaction_type)
-    ).CALCULATE(n_ticker_type_trans=COUNT(Transactions))
+    ).CALCULATE(n_ticker_type_trans=COUNT(transactions))
     ticker_groups = ticker_type_groups.PARTITION(
         name="tickers", by=ticker_id
     ).CALCULATE(n_ticker_trans=SUM(groups.n_ticker_type_trans))
@@ -1273,7 +1273,7 @@ def multi_partition_access_5():
         name="types", by=transaction_type
     ).CALCULATE(n_type_trans=SUM(groups.n_ticker_type_trans))
     return (
-        type_groups.groups.Transactions.CALCULATE(
+        type_groups.groups.transactions.CALCULATE(
             transaction_id,
             n_ticker_type_trans,
             n_ticker_trans,
@@ -1292,24 +1292,24 @@ def multi_partition_access_6():
     # that ticker, or the only transaction of that type for that customer,
     # but not the only transaction for that customer, type, or ticker. List
     # the transaction IDs in ascending order.
-    ticker_type_groups = Transactions.PARTITION(
+    ticker_type_groups = transactions.PARTITION(
         name="groups", by=(ticker_id, transaction_type)
-    ).CALCULATE(n_ticker_type_trans=COUNT(Transactions))
+    ).CALCULATE(n_ticker_type_trans=COUNT(transactions))
     ticker_groups = ticker_type_groups.PARTITION(name="groups", by=ticker_id).CALCULATE(
         n_ticker_trans=SUM(groups.n_ticker_type_trans)
     )
     type_groups = ticker_groups.groups.PARTITION(
         name="groups", by=transaction_type
     ).CALCULATE(n_type_trans=SUM(groups.n_ticker_type_trans))
-    cust_type_groups = type_groups.groups.Transactions.PARTITION(
+    cust_type_groups = type_groups.groups.transactions.PARTITION(
         name="groups",
         by=(customer_id, transaction_type),
-    ).CALCULATE(n_cust_type_trans=COUNT(Transactions))
+    ).CALCULATE(n_cust_type_trans=COUNT(transactions))
     cust_groups = cust_type_groups.PARTITION(name="groups", by=customer_id).CALCULATE(
         n_cust_trans=SUM(groups.n_cust_type_trans)
     )
     return (
-        cust_groups.groups.Transactions.CALCULATE(transaction_id)
+        cust_groups.groups.transactions.CALCULATE(transaction_id)
         .WHERE(
             ((n_ticker_type_trans == 1) | (n_cust_type_trans == 1))
             & (n_cust_trans > 1)
@@ -1374,7 +1374,7 @@ def hour_minute_day():
     ordered by transaction ID in ascending order.
     """
     return (
-        Transactions.CALCULATE(
+        transactions.CALCULATE(
             transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
         )
         .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
@@ -1383,7 +1383,7 @@ def hour_minute_day():
 
 
 def exponentiation():
-    return DailyPrices.CALCULATE(
+    return daily_prices.CALCULATE(
         low_square=low**2,
         low_sqrt=SQRT(low),
         low_cbrt=POWER(low, 1 / 3),
@@ -1470,7 +1470,7 @@ def annotated_assignment():
 
 
 def abs_round_magic_method():
-    return DailyPrices.CALCULATE(
+    return daily_prices.CALCULATE(
         abs_low=abs(low), round_low=round(low, 2), round_zero=round(low)
     )
 
@@ -1478,7 +1478,7 @@ def abs_round_magic_method():
 def years_months_days_hours_datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     return (
-        Transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1504,7 +1504,7 @@ def years_months_days_hours_datediff():
 def minutes_seconds_datediff():
     y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
     return (
-        Transactions.WHERE(YEAR(date_time) <= 2024)
+        transactions.WHERE(YEAR(date_time) <= 2024)
         .CALCULATE(
             x=date_time,
             y=y_datetime,
@@ -1555,7 +1555,7 @@ def simple_week_sampler():
 
 
 def transaction_week_sampler():
-    return Transactions.WHERE(
+    return transactions.WHERE(
         (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
     ).CALCULATE(
         date_time,
@@ -1566,7 +1566,7 @@ def transaction_week_sampler():
 
 
 def week_offset():
-    return Transactions.WHERE(
+    return transactions.WHERE(
         (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
     ).CALCULATE(
         date_time,
@@ -1585,7 +1585,7 @@ def datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
     return (
-        Transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1668,7 +1668,7 @@ def step_slicing():
 
 def sign():
     return (
-        DailyPrices.CALCULATE(
+        daily_prices.CALCULATE(
             high,
             high_neg=-1 * high,
             high_zero=0 * high,

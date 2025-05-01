@@ -542,7 +542,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             abs_round_magic_method,
-            "DailyPrices.CALCULATE(abs_low=ABS(low), round_low=ROUND(low, 2), round_zero=ROUND(low, 0))",
+            "daily_prices.CALCULATE(abs_low=ABS(low), round_low=ROUND(low, 2), round_zero=ROUND(low, 0))",
             id="abs_round_magic_method",
         ),
     ],

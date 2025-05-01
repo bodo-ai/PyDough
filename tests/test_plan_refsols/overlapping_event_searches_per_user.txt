@@ -2,7 +2,7 @@ ROOT(columns=[('user_name', user_name), ('n_searches', n_searches)], orderings=[
  LIMIT(limit=Literal(value=4, type=NumericType()), columns={'agg_2': agg_2, 'n_searches': n_searches, 'user_name': user_name}, orderings=[(n_searches):desc_last, (agg_2):asc_first])
   PROJECT(columns={'agg_2': agg_2, 'n_searches': agg_0, 'user_name': agg_2})
    AGGREGATE(keys={'agg_10': agg_10}, aggregations={'agg_0': COUNT(), 'agg_2': ANYTHING(agg_8)})
-    FILTER(condition=agg_0 > 0:int64, columns={'agg_10': agg_10, 'agg_8': agg_8})
+    FILTER(condition=agg_0 > 0:numeric, columns={'agg_10': agg_10, 'agg_8': agg_8})
      AGGREGATE(keys={'search_id': search_id, 'user_id': user_id}, aggregations={'agg_0': COUNT(), 'agg_10': ANYTHING(user_id), 'agg_8': ANYTHING(original_user_name)})
       FILTER(condition=name_9 != original_user_name, columns={'original_user_name': original_user_name, 'search_id': search_id, 'user_id': user_id})
        JOIN(conditions=[t0.user_id_8 == t1.user_id], types=['inner'], columns={'name_9': t1.name, 'original_user_name': t0.original_user_name, 'search_id': t0.search_id, 'user_id': t0.user_id})

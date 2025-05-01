@@ -59,12 +59,12 @@ from pydough.types import parse_type_from_string
             id="struct-cartesian_points",
         ),
         pytest.param(
-            "struct[first_name:string,last_name:string,birthday:datetime]",
+            "struct[first_name:string,last_name:string,birthday:datetimetime]",
             "StructType([('first_name', StringType()), ('last_name', StringType()), ('birthday', DatetimeType())])",
             id="struct-person",
         ),
         pytest.param(
-            "struct[spouse:struct[first_name:string,last_name:string,birthday:datetime],children:array[struct[first_name:string,last_name:string,birthday:datetime]]]",
+            "struct[spouse:struct[first_name:string,last_name:string,birthday:datetimetime],children:array[struct[first_name:string,last_name:string,birthday:datetimetime]]]",
             "StructType([('spouse', StructType([('first_name', StringType()), ('last_name', StringType()), ('birthday', DatetimeType())])), ('children', ArrayType(StructType([('first_name', StringType()), ('last_name', StringType()), ('birthday', DatetimeType())])))])",
             id="struct-parent",
         ),

@@ -79,7 +79,7 @@ def test_column_property_type(
             FunctionInfo("SUM", [ColumnInfo("Products", "price_per_unit")]),
             NumericType(),
             True,
-            id="sum-float64",
+            id="sum-numeric",
         ),
         pytest.param(
             "TPCH",
@@ -142,7 +142,7 @@ def test_function_call_return(
         pytest.param(
             LiteralInfo(-1, NumericType()),
             NumericType(),
-            id="int64",
+            id="numeric",
         ),
         pytest.param(
             LiteralInfo(date(2024, 10, 28), DatetimeType()),

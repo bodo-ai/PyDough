@@ -106,6 +106,6 @@ json_string = struct_type.json_string
 parsed_type = StructType.parse_from_string(json_string)
 
 # Parse a map type from a json string (the keys are strings and the values are
-# arrays of int64 values)
-map_str_arr_int64 = parse_type_from_string("map[string,array[int64]]")
+# arrays of numeric values)
+map_str_arr_numeric = parse_type_from_string("map[string,array[numeric]]")
 ```

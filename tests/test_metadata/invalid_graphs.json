@@ -33,7 +33,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -45,7 +45,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -57,7 +57,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -68,7 +68,7 @@
             "type": "simple_table",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -80,7 +80,7 @@
             "table_path": {"tpch": "REGION"},
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -91,7 +91,7 @@
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -102,7 +102,7 @@
             "type": "simple_table",
             "table_path": "tpch.REGION",
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -114,7 +114,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": "key",
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -126,7 +126,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": [],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -138,7 +138,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["A", 2, "3"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -150,7 +150,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": [[]],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -162,7 +162,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": [["A", "B"], "C", ["D", true, false]],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -174,7 +174,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -186,7 +186,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": 42, "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": 42, "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -198,7 +198,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -210,7 +210,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "data_type": "int64"},
+                "key": {"type": "table_column", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -222,7 +222,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": ["r", "regionkey"], "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": ["r", "regionkey"], "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -270,7 +270,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64", "key": "value"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric", "key": "value"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -282,7 +282,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             },
@@ -295,7 +295,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["nations"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"},
                 "nations": {
@@ -313,9 +313,9 @@
             "table_path": "tpch.NATION",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "n_nationkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "n_nationkey", "data_type": "numeric"},
               "name": {"type": "table_column", "column_name": "n_name", "data_type": "string"},
-              "region_key": {"type": "table_column", "column_name": "n_regionkey", "data_type": "int64"},
+              "region_key": {"type": "table_column", "column_name": "n_regionkey", "data_type": "numeric"},
               "comment": {"type": "table_column", "column_name": "n_comment", "data_type": "string"}
             }
         }
@@ -326,7 +326,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["region_key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -338,7 +338,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key", "name", "key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -350,7 +350,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": [["key", "name"], ["name", "key"]],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -362,7 +362,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": [["key", "name", "key"]],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64"},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -374,7 +374,7 @@
             "table_path": "tpch.REGION",
             "unique_properties": ["key"],
             "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int64", "keys": []},
+                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric", "keys": []},
                 "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
                 "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
             }
@@ -386,7 +386,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "cartesian_product",
                 "reverse_relationship_name": "part"
@@ -400,7 +400,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "cartesian_product",
                 "other_collection_name": ["tpch", "PARTSUPP"],
@@ -415,7 +415,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "cartesian_product",
                 "other_collection_name": "PartSupp",
@@ -430,7 +430,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "cartesian_product",
                 "other_collection_name": "PartSupp"
@@ -442,8 +442,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -454,7 +454,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "cartesian_product",
                 "other_collection_name": "PartSupp",
@@ -467,8 +467,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -479,7 +479,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "cartesian_product",
                 "other_collection_name": "PartSupp",
@@ -492,8 +492,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -504,7 +504,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "cartesian_product",
                 "other_collection_name": "PartSupp",
@@ -518,8 +518,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -530,7 +530,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "singular": false,
@@ -545,8 +545,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -557,7 +557,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": {"Part": "Supp"},
@@ -573,8 +573,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -585,7 +585,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -603,7 +603,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -618,8 +618,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -630,7 +630,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -646,8 +646,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -658,7 +658,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -674,8 +674,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -686,7 +686,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -701,8 +701,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -713,7 +713,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -729,8 +729,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -741,7 +741,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -756,8 +756,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -768,7 +768,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -784,8 +784,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -796,7 +796,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -811,8 +811,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -823,7 +823,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -839,8 +839,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -851,7 +851,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -867,8 +867,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -879,7 +879,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -895,8 +895,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -907,7 +907,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -923,8 +923,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -935,7 +935,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -951,8 +951,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -963,7 +963,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -979,8 +979,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -991,7 +991,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "cartesian_supply_records": {
                 "type": "cartesian_product",
                 "other_collection_name": "PartSupp",
@@ -1012,8 +1012,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1024,7 +1024,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1040,8 +1040,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"},
               "cartesian_parts_records": {
                 "type": "cartesian_product",
@@ -1057,7 +1057,7 @@
           "table_path": "tpch.PART",
           "unique_properties": ["key"],
           "properties": {
-            "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+            "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
             "supply_records": {
               "type": "simple_join",
               "other_collection_name": "PartSupp",
@@ -1074,8 +1074,8 @@
         "table_path": "tpch.PARTSUPP",
         "unique_properties": [["part_key", "supplier_key"]],
         "properties": {
-            "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-            "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+            "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+            "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
             "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
         }
       }
@@ -1086,7 +1086,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1119,7 +1119,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1144,9 +1144,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1162,8 +1162,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1174,7 +1174,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1208,7 +1208,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1233,9 +1233,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1251,8 +1251,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1263,7 +1263,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1297,7 +1297,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1322,9 +1322,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1340,8 +1340,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1352,7 +1352,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1385,7 +1385,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1410,9 +1410,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1428,8 +1428,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1440,7 +1440,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1474,7 +1474,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1499,9 +1499,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1517,8 +1517,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1529,7 +1529,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1563,7 +1563,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1588,9 +1588,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1606,8 +1606,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1618,7 +1618,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1651,7 +1651,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1676,9 +1676,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1694,8 +1694,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1706,7 +1706,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1740,7 +1740,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1765,9 +1765,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1783,8 +1783,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1795,7 +1795,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1828,7 +1828,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1853,9 +1853,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1871,8 +1871,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1883,7 +1883,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1917,7 +1917,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1942,9 +1942,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -1960,8 +1960,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -1972,7 +1972,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2005,7 +2005,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2030,9 +2030,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2048,8 +2048,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2060,7 +2060,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2094,7 +2094,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2119,9 +2119,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2137,8 +2137,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2149,7 +2149,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2183,7 +2183,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2208,9 +2208,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2226,8 +2226,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2238,7 +2238,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2271,7 +2271,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2295,9 +2295,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2313,8 +2313,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2325,7 +2325,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2359,7 +2359,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2384,9 +2384,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2402,8 +2402,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2414,7 +2414,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2448,7 +2448,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2473,9 +2473,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2491,8 +2491,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2503,7 +2503,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2537,7 +2537,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2562,9 +2562,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2580,8 +2580,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2592,7 +2592,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2626,7 +2626,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2651,9 +2651,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2669,8 +2669,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2681,7 +2681,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2715,7 +2715,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2740,9 +2740,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2758,8 +2758,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"},
               "cycle": {
                 "type": "compound",
@@ -2779,7 +2779,7 @@
             "table_path": "tpch.PART",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2813,7 +2813,7 @@
             "table_path": "tpch.SUPPLIER",
             "unique_properties": ["key"],
             "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
               "supply_records": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2838,9 +2838,9 @@
             "table_path": "tpch.LINEITEM",
             "unique_properties": [["part_key", "supplier_key", "order_key"]],
             "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
               "part_and_supplier": {
                 "type": "simple_join",
                 "other_collection_name": "PartSupp",
@@ -2856,8 +2856,8 @@
           "table_path": "tpch.PARTSUPP",
           "unique_properties": [["part_key", "supplier_key"]],
           "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
               "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
           }
         }
@@ -2868,7 +2868,7 @@
           "table_path": "tpch.PART",
           "unique_properties": ["key"],
           "properties": {
-            "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "int64"},
+            "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
             "supply_records": {
               "type": "simple_join",
               "other_collection_name": "PartSupp",
@@ -2902,7 +2902,7 @@
           "table_path": "tpch.SUPPLIER",
           "unique_properties": ["key"],
           "properties": {
-            "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "int64"},
+            "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
             "supply_records": {
               "type": "simple_join",
               "other_collection_name": "PartSupp",
@@ -2927,9 +2927,9 @@
           "table_path": "tpch.LINEITEM",
           "unique_properties": [["part_key", "supplier_key", "order_key"]],
           "properties": {
-            "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "int64"},
-            "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "int64"},
-            "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "int64"},
+            "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
+            "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
+            "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
             "part_and_supplier": {
               "type": "simple_join",
               "other_collection_name": "PartSupp",
@@ -2945,8 +2945,8 @@
         "table_path": "tpch.PARTSUPP",
         "unique_properties": [["part_key", "supplier_key"]],
         "properties": {
-            "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "int64"},
-            "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "int64"},
+            "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
+            "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
             "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
         }
       }
@@ -2957,7 +2957,7 @@
       "table_path": "PARENT",
       "unique_properties": [["j1", "j3"]],
       "properties": {
-        "j1": {"type": "table_column", "column_name": "j1", "data_type": "int64"},
+        "j1": {"type": "table_column", "column_name": "j1", "data_type": "numeric"},
         "j2": {"type": "table_column", "column_name": "j2", "data_type": "string"},
         "j3": {"type": "table_column", "column_name": "j3", "data_type": "timestamp[9]"},
         "j4": {"type": "table_column", "column_name": "j4", "data_type": "bool"},
@@ -3064,7 +3064,7 @@
       "table_path": "PARENT",
       "unique_properties": [["k1", "k2"]],
       "properties": {
-        "k1": {"type": "table_column", "column_name": "k1", "data_type": "int64"},
+        "k1": {"type": "table_column", "column_name": "k1", "data_type": "numeric"},
         "k2": {"type": "table_column", "column_name": "k2", "data_type": "string"},
         "k3": {"type": "table_column", "column_name": "k3", "data_type": "timestamp[9]"},
         "k4": {"type": "table_column", "column_name": "k4", "data_type": "bool"}

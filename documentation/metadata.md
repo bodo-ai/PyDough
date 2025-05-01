@@ -40,7 +40,7 @@ Example of the structure of the metadata for the entire file:
     "BankerGraph": {
         "Accounts": {...},
         "Clients": {...},
-        "Transactions": {...}
+        "transactions": {...}
     },
     "GroceryGraph": {
         "FoodItems": {...},
@@ -167,12 +167,12 @@ A property with this type describes a subcollection of the current collection th
 - `other_collection_name`: a string indicating the name of the other collection that this property connects the current collection to. This must be another collection in the same graph that supports cartesian_product properties.
 - `reverse_relationship_name`: the name of the property that is to be added to the other collection to describe the reverse version of this relationship. This string must be a valid property name but cannot be equal to another existing property name in the other collection.
 
-Example of the structure of the metadata for a cartesian product property (connects every record of a collection `CalendarDates` to every record of collection `InventorySnapshots`):
+Example of the structure of the metadata for a cartesian product property (connects every record of a collection `CalendarDates` to every record of collection `inventory_snapshots`):
 
 ```json
 "snapshots": {
     "type": "cartesian_product",
-    "other_collection_name": "InventorySnapshots",
+    "other_collection_name": "inventory_snapshots",
     "reverse_relationship_name": "calendar_dates"
 }
 ```
@@ -186,9 +186,9 @@ The strings used in the type field for certain properties must be one of the fol
 - `int8`: an 8-bit integer.
 - `int16`: a 16-bit integer.
 - `int32`: a 32-bit integer.
-- `int64`: a 64-bit integer.
+- `numeric`: a 64-bit integer.
 - `float32`: a 32-bit float.
-- `float64`: a 64-bit float.
+- `numeric`: a 64-bit float.
 - `decimal[p,s]`: a fixed-point number with precision p (integer between 1 and 38) indicating the number of digits and scale s (integer between 0 and p, exclusive of p) indicating the number of digits to the right hand side of the decimal point.
 - `bool`: a boolean.
 - `string`: a string.
@@ -198,8 +198,8 @@ The strings used in the type field for certain properties must be one of the fol
 - `timestamp[p]`: a date with a time of day of a precision p (same rules as time).
 - `timestamp[p,tz]`: a date with a time of day of a precision p (same rules as time) with the timezone described by tz (e.g. `timestamp[9,America/Los_Angeles]`).
 - `array[t]`: an array of values of type t (where t is another PyDough type). For example: `array[int32]` or `array[array[string]]`.
-- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,int64]` or `map[string,array[date]]`.
-- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:date,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
+- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,numeric]` or `map[string,array[date]]`.
+- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:datetime,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
 - `unknown`: an unknown type.
 
 <!-- TOC --><a name="metadata-samples"></a>
@@ -300,7 +300,7 @@ The knowledge graph is for the following information about tables in a schema ca
         "gpa": {
           "type": "table_column",
           "column_name": "a_gpa",
-          "data_type": "float64"
+          "data_type": "numeric"
         },
         "graduation_date": {
           "type": "table_column",
@@ -411,7 +411,7 @@ The knowledge graph is for the following information about tables in a schema ca
         "ca_id": {
           "type": "table_column",
           "column_name": "email",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "current_address": {
           "type": "simple_join",
@@ -443,7 +443,7 @@ The knowledge graph is for the following information about tables in a schema ca
         "package_id": {
           "type": "table_column",
           "column_name": "pid",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "customer_ssn": {
           "type": "table_column",
@@ -453,12 +453,12 @@ The knowledge graph is for the following information about tables in a schema ca
         "shipping_address_id": {
           "type": "table_column",
           "column_name": "ship_id",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "billing_address_id": {
           "type": "table_column",
           "column_name": "ship_id",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "order_date": {
           "type": "table_column",

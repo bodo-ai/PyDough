@@ -34,7 +34,7 @@ from pydough.types import NumericType
 # Create a type verifier that requires exactly 0 arguments
 num_args_verifier = RequireNumArgs(0)
 
-# Create a type deducer that always returns int64
+# Create a type deducer that always returns numeric
 constant_type_deducer = ConstantType(NumericType())
 
 # An empty list of arguments
@@ -43,6 +43,6 @@ args = []
 # Silently accepts the argument list
 num_args_verifier.accepts(args)
 
-# Returns the int64 type
+# Returns the numeric type
 return_type = constant_type_deducer.infer_return_type(args)
 ```

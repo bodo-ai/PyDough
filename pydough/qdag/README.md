@@ -163,23 +163,23 @@ Below are some examples of PyDough snippets that are/aren't affected by the rewr
 
 
 ```python
-# Will be rewritten to `Customers.CALCULATE(name, has_orders=COUNT(orders) > 0)`
-Customers.CALCULATE(name, has_orders=HAS(orders))
+# Will be rewritten to `customers.CALCULATE(name, has_orders=COUNT(orders) > 0)`
+customers.CALCULATE(name, has_orders=HAS(orders))
 
-# Will be rewritten to `Customers.CALCULATE(name, never_made_order=COUNT(orders) == 0)`
-Customers.CALCULATE(name, never_made_order=HASNOT(orders))
-
-# Will not be rewritten
-Customers.WHERE(HAS(orders) & (nation.region.name == "EUROPE"))
+# Will be rewritten to `customers.CALCULATE(name, never_made_order=COUNT(orders) == 0)`
+customers.CALCULATE(name, never_made_order=HASNOT(orders))
 
 # Will not be rewritten
-Customers.WHERE(HASNOT(orders))
+customers.WHERE(HAS(orders) & (nation.region.name == "EUROPE"))
+
+# Will not be rewritten
+customers.WHERE(HASNOT(orders))
 
 # Will be rewritten to
-# `Customers.WHERE((COUNT(orders) > 0) | (nation.region.name == "EUROPE"))`
-Customers.WHERE(HAS(orders) | (nation.region.name == "EUROPE"))
+# `customers.WHERE((COUNT(orders) > 0) | (nation.region.name == "EUROPE"))`
+customers.WHERE(HAS(orders) | (nation.region.name == "EUROPE"))
 
 # Will be rewritten to
-# `Customers.WHERE((COUNT(orders) == 0) | (acct_bal < 0))`
-Customers.WHERE(HASNOT(orders) | (acct_bal < 0))
+# `customers.WHERE((COUNT(orders) == 0) | (acct_bal < 0))`
+customers.WHERE(HASNOT(orders) | (acct_bal < 0))
 ```

@@ -1,5 +1,5 @@
 ROOT(columns=[('tod', tod), ('pct_searches', pct_searches)], orderings=[(start_hour):asc_first])
- PROJECT(columns={'pct_searches': ROUND(100.0:float64 * DEFAULT_TO(agg_0, 0:int64) / RELSUM(args=[DEFAULT_TO(agg_0, 0:int64)], partition=[], order=[]), 2:int64), 'start_hour': start_hour, 'tod': name})
+ PROJECT(columns={'pct_searches': ROUND(100.0:numeric * DEFAULT_TO(agg_0, 0:numeric) / RELSUM(args=[DEFAULT_TO(agg_0, 0:numeric)], partition=[], order=[]), 2:numeric), 'start_hour': start_hour, 'tod': name})
   JOIN(conditions=[t0.name == t1.name], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name, 'start_hour': t0.start_hour})
    SCAN(table=TIMES, columns={'name': t_name, 'start_hour': t_start_hour})
    AGGREGATE(keys={'name': name}, aggregations={'agg_0': COUNT()})
