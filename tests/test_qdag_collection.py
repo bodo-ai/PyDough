@@ -73,7 +73,7 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
     ).lines.WHERE(
         shipmode == 'AIR
     ).CALCULATE(
-        is_intra = order.customer.region.name == region_name.name,
+        is_intra = order.customer.nation.region.name == region_name.name,
         value = retail_price * quantity,
     )
     result = regions.CALCULATE(region_name = name).CALCULATE(
@@ -106,6 +106,7 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
                     [
                         SubCollectionInfo("order")
                         ** SubCollectionInfo("customer")
+                        ** SubCollectionInfo("nation")
                         ** SubCollectionInfo("region")
                     ],
                     is_intra=FunctionInfo(
@@ -910,24 +911,6 @@ def test_collections_calc_terms(
     └─── Calculate[region_name=name, nation_name=name]
 """,
             id="regions_nations_calc",
-        ),
-        pytest.param(
-            TableCollectionInfo("regions")
-            ** SubCollectionInfo("suppliers")
-            ** CalculateInfo(
-                [],
-                region_name=BackReferenceExpressionInfo("name", 1),
-                nation_name=ReferenceInfo("nation_name"),
-                supplier_name=ReferenceInfo("name"),
-            ),
-            "TPCH.regions.suppliers.CALCULATE(region_name=name, nation_name=nation_name, supplier_name=name)",
-            """
-──┬─ TPCH
-  └─┬─ TableCollection[regions]
-    ├─── SubCollection[suppliers]
-    └─── Calculate[region_name=name, nation_name=nation_name, supplier_name=name]
-""",
-            id="regions_suppliers_calc",
         ),
         pytest.param(
             TableCollectionInfo("nations")

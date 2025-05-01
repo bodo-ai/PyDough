@@ -188,31 +188,40 @@ def parse_relationship_v2(graph: GraphMetadata, relationship_json: dict):
                 graph, relationship_name, relationship_json
             )
         case "reverse":
-            original_collection_name: str = relationship_json["original parent"]
-            original_property_name: str = relationship_json["original property"]
-            original_collection = graph.get_collection(original_collection_name)
-            assert isinstance(original_collection, CollectionMetadata)
-            original_property = original_collection.get_property(original_property_name)
-            assert isinstance(original_property, PropertyMetadata)
-            is_singular: bool = extract_bool(
-                relationship_json,
-                "singular",
-                f"metadata for reverse relationship {relationship_name!r} relationships within {graph.error_name}",
-            )
-            if not isinstance(original_property, ReversiblePropertyMetadata):
-                raise PyDoughMetadataException(
-                    f"Property {original_property_name!r} in collection {original_collection_name!r} is not reversible."
-                )
-            reverse_collection: CollectionMetadata = original_property.child_collection
-            reverse_property: ReversiblePropertyMetadata = (
-                original_property.build_reverse_relationship(
-                    relationship_name, is_singular=is_singular
-                )
-            )
-            reverse_collection.add_property(reverse_property)
+            create_reverse_relationship(graph, relationship_name, relationship_json)
         case "custom":
             raise NotImplementedError("Custom relationships are not yet supported.")
         case _:
             raise PyDoughMetadataException(
                 f"Unrecognized PyDough relationship type for relationship {relationship_name!r}: {relationship_type!r}"
             )
+
+
+def create_reverse_relationship(
+    graph: GraphMetadata, relationship_name: str, relationship_json: dict
+) -> None:
+    """
+    TODO
+    """
+    original_collection_name: str = relationship_json["original parent"]
+    original_property_name: str = relationship_json["original property"]
+    original_collection = graph.get_collection(original_collection_name)
+    assert isinstance(original_collection, CollectionMetadata)
+    original_property = original_collection.get_property(original_property_name)
+    assert isinstance(original_property, PropertyMetadata)
+    is_singular: bool = extract_bool(
+        relationship_json,
+        "singular",
+        f"metadata for reverse relationship {relationship_name!r} relationships within {graph.error_name}",
+    )
+    if not isinstance(original_property, ReversiblePropertyMetadata):
+        raise PyDoughMetadataException(
+            f"Property {original_property_name!r} in collection {original_collection_name!r} is not reversible."
+        )
+    reverse_collection: CollectionMetadata = original_property.child_collection
+    reverse_property: ReversiblePropertyMetadata = (
+        original_property.build_reverse_relationship(
+            relationship_name, is_singular=is_singular
+        )
+    )
+    reverse_collection.add_property(reverse_property)

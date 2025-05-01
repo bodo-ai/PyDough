@@ -1,4 +1,4 @@
-ROOT(columns=[('name', name), ('n_top_suppliers', DEFAULT_TO(agg_0, 0:int64))], orderings=[])
+ROOT(columns=[('name', name), ('n_top_suppliers', DEFAULT_TO(agg_0, 0:numeric))], orderings=[])
  JOIN(conditions=[t0.key == t1.nation_key], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})

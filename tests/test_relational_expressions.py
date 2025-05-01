@@ -17,7 +17,7 @@ from pydough.relational import (
     LiteralExpression,
     RelationalExpression,
 )
-from pydough.types import NumericType, StringType
+from pydough.types import NumericType, StringType, UnknownType
 
 
 @pytest.mark.parametrize(
@@ -137,7 +137,7 @@ def test_literal_expression_to_string(literal: LiteralExpression, output: str) -
         ),
         pytest.param(
             LiteralExpression(1, NumericType()),
-            LiteralExpression(1, NumericType()),
+            LiteralExpression(1, UnknownType()),
             False,
             id="different_type",
         ),
@@ -289,7 +289,7 @@ def test_call_expressions_to_string(expr: CallExpression, output: str) -> None:
         ),
         pytest.param(
             CallExpression(SUM, NumericType(), [ColumnReference("a", NumericType())]),
-            CallExpression(SUM, NumericType(), [ColumnReference("a", NumericType())]),
+            CallExpression(SUM, UnknownType(), [ColumnReference("a", NumericType())]),
             False,
             id="different_return_type",
         ),

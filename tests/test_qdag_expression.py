@@ -40,12 +40,6 @@ from pydough.types import (
             id="string",
         ),
         pytest.param(
-            "Amazon",
-            ColumnInfo("Products", "price_per_unit"),
-            NumericType(),
-            id="float64",
-        ),
-        pytest.param(
             "TPCH",
             ColumnInfo("lines", "ship_date"),
             DatetimeType(),

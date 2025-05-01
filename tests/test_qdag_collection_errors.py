@@ -212,11 +212,15 @@ from pydough.qdag import AstNodeBuilder
                 [ChildReferenceExpressionInfo("container", 0)],
             )
             ** CalculateInfo(
-                [SubCollectionInfo("parts") ** SubCollectionInfo("suppliers_of_part")],
+                [
+                    SubCollectionInfo("parts")
+                    ** SubCollectionInfo("supply_records")
+                    ** SubCollectionInfo("supplier")
+                ],
                 container=ReferenceInfo("container"),
                 balance=ChildReferenceExpressionInfo("account_balance", 0),
             ),
-            "Expected all terms in CALCULATE(container=container, balance=parts.suppliers_of_part.account_balance) to be singular, but encountered a plural expression: parts.suppliers_of_part.account_balance",
+            "Expected all terms in CALCULATE(container=container, balance=parts.supply_records.supplier.account_balance) to be singular, but encountered a plural expression: parts.supply_records.supplier.account_balance",
             id="bad_plural_i",
         ),
         pytest.param(

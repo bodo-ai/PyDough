@@ -14,7 +14,7 @@ from pydough.types import parse_type_from_string
     [
         pytest.param("numeric", "NumericType()", id="numeric"),
         pytest.param("bool", "BooleanType()", id="bool"),
-        pytest.param("datetime", "DatetimeType()", id="date"),
+        pytest.param("datetime", "DatetimeType()", id="datetime"),
         pytest.param("string", "StringType()", id="string"),
         pytest.param("array[numeric]", "ArrayType(NumericType())", id="array-numeric"),
         pytest.param("array[string]", "ArrayType(StringType())", id="array-string"),
@@ -24,9 +24,9 @@ from pydough.types import parse_type_from_string
             id="array-array-datetime",
         ),
         pytest.param(
-            "array[array[array[float64]]]",
+            "array[array[array[numeric]]]",
             "ArrayType(ArrayType(ArrayType(NumericType())))",
-            id="array-array-array-float64",
+            id="array-array-array-numeric",
         ),
         pytest.param(
             "map[string,numeric]",
@@ -41,11 +41,11 @@ from pydough.types import parse_type_from_string
         pytest.param(
             "map[string,array[map[string,datetime]]]",
             "MapType(StringType(),ArrayType(MapType(StringType(),DatetimeType())))",
-            id="map-string-array-map-string-date",
+            id="map-string-array-map-string-datetime",
         ),
         pytest.param(
-            "map[map[map[string,numeric],map[numeric,string]],map[map[string,datetime],date]]",
-            "MapType(MapType(MapType(StringType(),NumericType()),MapType(NumericType(),StringType())),MapType(MapType(StringType(),TimeType(0)),DatetimeType()))",
+            "map[map[map[string,numeric],map[numeric,string]],map[map[string,datetime],unknown]]",
+            "MapType(MapType(MapType(StringType(),NumericType()),MapType(NumericType(),StringType())),MapType(MapType(StringType(),DatetimeType()),UnknownType()))",
             id="map-multi_nested_maps",
         ),
         pytest.param(
@@ -54,17 +54,17 @@ from pydough.types import parse_type_from_string
             id="struct-single_field",
         ),
         pytest.param(
-            "struct[x:float64,y:float64]",
+            "struct[x:numeric,y:numeric]",
             "StructType([('x', NumericType()), ('y', NumericType())])",
             id="struct-cartesian_points",
         ),
         pytest.param(
-            "struct[first_name:string,last_name:string,birthday:date]",
+            "struct[first_name:string,last_name:string,birthday:datetime]",
             "StructType([('first_name', StringType()), ('last_name', StringType()), ('birthday', DatetimeType())])",
             id="struct-person",
         ),
         pytest.param(
-            "struct[spouse:struct[first_name:string,last_name:string,birthday:date],children:array[struct[first_name:string,last_name:string,birthday:date]]]",
+            "struct[spouse:struct[first_name:string,last_name:string,birthday:datetime],children:array[struct[first_name:string,last_name:string,birthday:datetime]]]",
             "StructType([('spouse', StructType([('first_name', StringType()), ('last_name', StringType()), ('birthday', DatetimeType())])), ('children', ArrayType(StructType([('first_name', StringType()), ('last_name', StringType()), ('birthday', DatetimeType())])))])",
             id="struct-parent",
         ),

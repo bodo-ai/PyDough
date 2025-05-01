@@ -14,7 +14,7 @@ ROOT(columns=[('cust_region_name', agg_17), ('cust_region_key', agg_16), ('cust_
             SCAN(table=tpch.NATION, columns={'cust_nation_key': n_nationkey, 'cust_nation_name': n_name, 'key_2': n_nationkey, 'region_key': n_regionkey})
            SCAN(table=tpch.CUSTOMER, columns={'key_5': c_custkey, 'name_6': c_name, 'nation_key': c_nationkey})
           PROJECT(columns={'customer_key': customer_key, 'key_8': key})
-           FILTER(condition=YEAR(order_date) == 1996:int64 & order_priority == '1-URGENT':string, columns={'customer_key': customer_key, 'key': key})
+           FILTER(condition=YEAR(order_date) == 1996:numeric & order_priority == '1-URGENT':string, columns={'customer_key': customer_key, 'key': key})
             SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority})
          FILTER(condition=ship_mode == 'RAIL':string, columns={'order_key': order_key, 'supplier_key': supplier_key})
           SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'ship_mode': l_shipmode, 'supplier_key': l_suppkey})
