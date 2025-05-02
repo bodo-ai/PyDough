@@ -1,5 +1,5 @@
-ROOT(columns=[('name', name), ('num_10parts', DEFAULT_TO(NULL_1, 0:numeric)), ('avg_price_of_10parts', DEFAULT_TO(NULL_1, 0:numeric)), ('sum_price_of_10parts', NULL_1)], orderings=[])
- JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_1': None:unknown, 'name': t0.name})
+ROOT(columns=[('name', name), ('num_10parts', DEFAULT_TO(NULL_2, 0:numeric)), ('avg_price_of_10parts', DEFAULT_TO(NULL_2, 0:numeric)), ('sum_price_of_10parts', NULL_2)], orderings=[])
+ JOIN(conditions=[t0.key == t1.supplier_key], types=['anti'], columns={'NULL_2': None:unknown, 'name': t0.name})
   SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'name': s_name})
   JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'supplier_key': t0.supplier_key})
    SCAN(table=tpch.PARTSUPP, columns={'part_key': ps_partkey, 'supplier_key': ps_suppkey})

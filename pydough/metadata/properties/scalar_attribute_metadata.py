@@ -21,10 +21,18 @@ class ScalarAttributeMetadata(PropertyMetadata):
     """
 
     def __init__(
-        self, name: str, collection: CollectionMetadata, data_type: PyDoughType
+        self,
+        name: str,
+        collection: CollectionMetadata,
+        data_type: PyDoughType,
+        sample_values: list | None,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
-        super().__init__(name, collection)
+        super().__init__(name, collection, description, synonyms, extra_semantic_info)
         HasType(PyDoughType).verify(data_type, "data_type")
+        self._sample_values: list | None = sample_values
         self._data_type: PyDoughType = data_type
 
     @property
@@ -52,3 +60,10 @@ class ScalarAttributeMetadata(PropertyMetadata):
     @property
     def is_reversible(self) -> bool:
         return False
+
+    @property
+    def sample_values(self) -> list | None:
+        """
+        A list of sample values for the attribute, if it exists.
+        """
+        return self._sample_values

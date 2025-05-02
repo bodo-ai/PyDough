@@ -13,8 +13,6 @@ from pydough.metadata.errors import (
     PyDoughMetadataException,
     extract_bool,
     extract_string,
-    is_bool,
-    is_string,
     simple_join_keys_predicate,
 )
 from pydough.metadata.graphs import GraphMetadata
@@ -36,6 +34,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         "child collection",
         "singular",
         "keys",
+        "always matches",
     }
 
     def __init__(
@@ -44,9 +43,22 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         parent_collection: CollectionMetadata,
         child_collection: CollectionMetadata,
         singular: bool,
+        always_matches: bool,
         keys: dict[str, list[str]],
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
-        super().__init__(name, parent_collection, child_collection, singular)
+        super().__init__(
+            name,
+            parent_collection,
+            child_collection,
+            singular,
+            always_matches,
+            description,
+            synonyms,
+            extra_semantic_info,
+        )
         simple_join_keys_predicate.verify(keys, self.error_name)
         self._keys: dict[str, list[str]] = keys
         self._join_pairs: list[tuple[PropertyMetadata, PropertyMetadata]] = []
@@ -99,48 +111,6 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         return f"simple join property {name!r} of {collection_error_name}"
 
     @staticmethod
-    def verify_json_metadata(
-        collection: CollectionMetadata, property_name: str, property_json: dict
-    ) -> None:
-        """
-        Verifies that the JSON describing the metadata for a property within
-        a collection is well-formed to create a new SimpleJoinMetadata instance
-        Should be dispatched from PropertyMetadata.verify_json_metadata which
-        implements more generic checks.
-
-        Args:
-            `collection`: the metadata for the PyDough collection that the
-            property would be inserted into.
-            `property_name`: the name of the property that would be inserted.
-            `property_json`: the JSON object that would be parsed to create
-            the new property.
-
-        Raises:
-            `PyDoughMetadataException`: if the JSON for the property is
-            malformed.
-        """
-        # Create the string used to identify the property in error messages.
-        error_name = SimpleJoinMetadata.create_error_name(
-            property_name, collection.error_name
-        )
-
-        # Verify that the JSON has the fields `other_collection_name`,
-        # `singular`, `no_collisions`, `reverse_relationship_name`,
-        # and `keys`, without any extra fields.
-        HasPropertyWith("other_collection_name", is_string).verify(
-            property_json, error_name
-        )
-        HasPropertyWith("singular", is_bool).verify(property_json, error_name)
-        HasPropertyWith("no_collisions", is_bool).verify(property_json, error_name)
-        HasPropertyWith("reverse_relationship_name", is_string).verify(
-            property_json, error_name
-        )
-        HasPropertyWith("keys", simple_join_keys_predicate).verify(
-            property_json, error_name
-        )
-        NoExtraKeys(SimpleJoinMetadata.allowed_fields).verify(property_json, error_name)
-
-    @staticmethod
     def parse_from_json(
         graph: GraphMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -169,6 +139,10 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         )
         parent_collection = graph.get_collection(parent_collection_name)
         assert isinstance(parent_collection, CollectionMetadata)
+        # Create the string used to identify the property in error messages.
+        error_name = SimpleJoinMetadata.create_error_name(
+            property_name, parent_collection.error_name
+        )
 
         # Extract the child collection from the graph.
         child_collection_name: str = extract_string(
@@ -185,7 +159,18 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             "singular",
             f"metadata for property {property_name} within {graph.error_name}",
         )
+        always_matches: bool = property_json.get("always matches", False)
+        HasPropertyWith("keys", simple_join_keys_predicate).verify(
+            property_json, error_name
+        )
         keys = property_json["keys"]
+
+        description: str | None = property_json.get("description", None)
+        synonyms: list[str] | None = property_json.get("synonyms", None)
+        extra_semantic_info: dict | None = property_json.get(
+            "extra semantic info", None
+        )
+        NoExtraKeys(SimpleJoinMetadata.allowed_fields).verify(property_json, error_name)
 
         # Build the new property, its reverse, then add both
         # to their collection's properties.
@@ -194,12 +179,22 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             parent_collection,
             child_collection,
             singular,
+            always_matches,
             keys,
+            description,
+            synonyms,
+            extra_semantic_info,
         )
         parent_collection.add_property(property)
 
     def build_reverse_relationship(
-        self, name: str, is_singular: bool
+        self,
+        name: str,
+        is_singular: bool,
+        always_matches: bool,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ) -> ReversiblePropertyMetadata:
         # Invert the keys dictionary, mapping each string that was in any of
         # the lists of self.keys to all of the keys of self.keys that mapped
@@ -217,5 +212,9 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             self.child_collection,
             self.collection,
             is_singular,
+            always_matches,
             reverse_keys,
+            description,
+            synonyms,
+            extra_semantic_info,
         )

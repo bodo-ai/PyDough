@@ -75,8 +75,8 @@ def test_column_property_type(
             id="lower-string",
         ),
         pytest.param(
-            "Amazon",
-            FunctionInfo("SUM", [ColumnInfo("Products", "price_per_unit")]),
+            "TPCH",
+            FunctionInfo("SUM", [ColumnInfo("lines", "quantity")]),
             NumericType(),
             True,
             id="sum-numeric",

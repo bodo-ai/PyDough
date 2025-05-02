@@ -8,12 +8,9 @@ __all__ = ["GeneralJoinMetadata"]
 
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
-    HasPropertyWith,
     NoExtraKeys,
     extract_bool,
     extract_string,
-    is_bool,
-    is_string,
 )
 from pydough.metadata.graphs import GraphMetadata
 
@@ -36,6 +33,7 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         "child collection",
         "singular",
         "condition",
+        "always matches",
     }
 
     def __init__(
@@ -44,11 +42,24 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         collection: CollectionMetadata,
         other_collection: CollectionMetadata,
         singular: bool,
+        always_matches: bool,
         condition: str,
         self_name: str,
         other_name: str,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
-        super().__init__(name, collection, other_collection, singular)
+        super().__init__(
+            name,
+            collection,
+            other_collection,
+            singular,
+            always_matches,
+            description,
+            synonyms,
+            extra_semantic_info,
+        )
         self._condition: str = condition
         self._self_name: str = self_name
         self._other_name: str = other_name
@@ -90,48 +101,6 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         return f"general join property {name!r} of {collection_error_name}"
 
     @staticmethod
-    def verify_json_metadata(
-        collection: CollectionMetadata, property_name: str, property_json: dict
-    ) -> None:
-        """
-        Verifies that the JSON describing the metadata for a property within
-        a collection is well-formed to create a new GeneralJoinMetadata instance
-        Should be dispatched from PropertyMetadata.verify_json_metadata which
-        implements more generic checks.
-
-        Args:
-            `collection`: the metadata for the PyDough collection that the
-            property would be inserted into.
-            `property_name`: the name of the property that would be inserted.
-            `property_json`: the JSON object that would be parsed to create
-            the new property.
-
-        Raises:
-            `PyDoughMetadataException`: if the JSON for the property is
-            malformed.
-        """
-        # Create the string used to identify the property in error messages.
-        error_name = GeneralJoinMetadata.create_error_name(
-            property_name, collection.error_name
-        )
-
-        # Verify that the JSON has the fields `other_collection_name`,
-        # `singular`, `no_collisions`, `reverse_relationship_name`,
-        # and `keys`, without any extra fields.
-        HasPropertyWith("other_collection_name", is_string).verify(
-            property_json, error_name
-        )
-        HasPropertyWith("singular", is_bool).verify(property_json, error_name)
-        HasPropertyWith("no_collisions", is_bool).verify(property_json, error_name)
-        HasPropertyWith("reverse_relationship_name", is_string).verify(
-            property_json, error_name
-        )
-        HasPropertyWith("condition", is_string).verify(property_json, error_name)
-        NoExtraKeys(GeneralJoinMetadata.allowed_fields).verify(
-            property_json, error_name
-        )
-
-    @staticmethod
     def parse_from_json(
         graph: GraphMetadata, property_name: str, property_json: dict
     ) -> None:
@@ -160,6 +129,9 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         )
         parent_collection = graph.get_collection(parent_collection_name)
         assert isinstance(parent_collection, CollectionMetadata)
+        error_name = GeneralJoinMetadata.create_error_name(
+            property_name, parent_collection.error_name
+        )
 
         # Extract the child collection from the graph.
         child_collection_name: str = extract_string(
@@ -174,9 +146,21 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         singular: bool = extract_bool(
             property_json,
             "singular",
-            f"metadata for property {property_name} within {graph.error_name}",
+            error_name,
         )
-        condition = property_json["condition"]
+        always_matches: bool = property_json.get("always matches", False)
+        condition = extract_string(property_json, "condition", error_name)
+
+        # Extract the remaining optional fields from the JSON, and verify there
+        # are no extra fields.
+        description: str | None = property_json.get("description", None)
+        synonyms: list[str] | None = property_json.get("synonyms", None)
+        extra_semantic_info: dict | None = property_json.get(
+            "extra semantic info", None
+        )
+        NoExtraKeys(GeneralJoinMetadata.allowed_fields).verify(
+            property_json, error_name
+        )
 
         # Build the new property, its reverse, then add both
         # to their collection's properties.
@@ -185,21 +169,35 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
             parent_collection,
             child_collection,
             singular,
+            always_matches,
             condition,
             "self",
             "other",
+            description,
+            synonyms,
+            extra_semantic_info,
         )
         parent_collection.add_property(property)
 
     def build_reverse_relationship(
-        self, name: str, is_singular
+        self,
+        name: str,
+        is_singular: bool,
+        always_matches: bool,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ) -> ReversiblePropertyMetadata:
         return GeneralJoinMetadata(
             name,
             self.child_collection,
             self.collection,
             is_singular,
+            always_matches,
             self.condition,
             self.other_name,
             self.self_name,
+            description,
+            synonyms,
+            extra_semantic_info,
         )

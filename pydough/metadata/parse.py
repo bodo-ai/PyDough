@@ -10,6 +10,7 @@ from .collections import CollectionMetadata, SimpleTableMetadata
 from .errors import (
     HasPropertyWith,
     HasType,
+    NoExtraKeys,
     PyDoughMetadataException,
     extract_array,
     extract_bool,
@@ -78,9 +79,31 @@ def parse_json_metadata_from_file(file_path: str, graph_name: str) -> GraphMetad
 
 def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
     """
-    TODO
+    Parses the JSON object for a PyDough graph in version 2 of the
+    PyDough metadata format.
+
+    Args:
+        `graph_name`: the name of the graph being parsed.
+        `graph_json`: the JSON object containing the metadata for the graph.
+
+    Returns:
+        The metadata for the PyDough graph, including all of the collections
+        and properties defined within.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
     """
-    graph: GraphMetadata = GraphMetadata(graph_name)
+    verified_analysis: list[dict] = []
+    additional_definitions: list[dict] = []
+    graph: GraphMetadata = GraphMetadata(
+        graph_name,
+        verified_analysis,
+        additional_definitions,
+        None,
+        None,
+        {},
+    )
 
     # Parse and extract the metadata for all of the collections in the graph.
     collections_json: list = extract_array(graph_json, "collections", graph.error_name)
@@ -138,19 +161,37 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
             HasPropertyWith("code", is_string).verify(
                 verified_json, "metadata for verified pydough analysis"
             )
+    NoExtraKeys(GraphMetadata.allowed_fields).verify(graph_json, graph.error_name)
+    for collection in graph.collections.values():
+        assert isinstance(collection, CollectionMetadata)
+        collection.verify_complete()
     return graph
 
 
-def parse_collection_v2(graph: GraphMetadata, collection_json: dict):
+def parse_collection_v2(graph: GraphMetadata, collection_json: dict) -> None:
     """
-    TODO
+    Parses the JSON object for a PyDough collection in version 2 of the
+    PyDough metadata format.
+
+    Args:
+        `graph`: the metadata for the graph that the collection would be
+        added to. The collection will be added to this graph in-place.
+        `collection_json`: the JSON object containing the metadata for the
+        collection.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
     """
+    # Extract the collection name and type from the JSON.
     collection_name: str = extract_string(
         collection_json, "name", f"metadata for collections within {graph.error_name}"
     )
     collection_type: str = extract_string(
         collection_json, "type", f"metadata for collections within {graph.error_name}"
     )
+    # Dispatch to the appropriate collection type based on the type
+    # specified in the JSON.
     match collection_type:
         case "simple table":
             SimpleTableMetadata.parse_from_json(graph, collection_name, collection_json)
@@ -162,8 +203,21 @@ def parse_collection_v2(graph: GraphMetadata, collection_json: dict):
 
 def parse_relationship_v2(graph: GraphMetadata, relationship_json: dict):
     """
-    TODO
+    Parses the JSON object for a PyDough relationship in version 2 of the
+    PyDough metadata format.
+
+    Args:
+        `graph`: the metadata for the graph that the relationship would be
+        added to. The relationship will be added to one of the collections of
+        the graph in-place.
+        `relationship_json`: the JSON object containing the metadata for the
+        relationship.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
     """
+    # Extract the relationship name and type from the JSON.
     relationship_name: str = extract_string(
         relationship_json,
         "name",
@@ -174,6 +228,8 @@ def parse_relationship_v2(graph: GraphMetadata, relationship_json: dict):
         "type",
         f"metadata for relationships within {graph.error_name}",
     )
+    # Dispatch to the appropriate relationship type based on the type
+    # specified in the JSON.
     match relationship_type:
         case "cartesian product":
             CartesianProductMetadata.parse_from_json(
@@ -201,8 +257,21 @@ def create_reverse_relationship(
     graph: GraphMetadata, relationship_name: str, relationship_json: dict
 ) -> None:
     """
-    TODO
+    Creates a reverse relationship from the JSON object for a PyDough
+    relationship in version 2 of the PyDough metadata format.
+
+    Args:
+        `graph`: the metadata for the graph that the relationship would be
+        added to. The relationship will be added to one of the collections of
+        the graph in-place.
+        `relationship_json`: the JSON object containing the metadata for the
+        relationship.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
     """
+    # Identify the property to be reversed and the two collections it connects.
     original_collection_name: str = relationship_json["original parent"]
     original_property_name: str = relationship_json["original property"]
     original_collection = graph.get_collection(original_collection_name)
@@ -214,14 +283,26 @@ def create_reverse_relationship(
         "singular",
         f"metadata for reverse relationship {relationship_name!r} relationships within {graph.error_name}",
     )
+    always_matches: bool = relationship_json.get("always matches", False)
     if not isinstance(original_property, ReversiblePropertyMetadata):
         raise PyDoughMetadataException(
             f"Property {original_property_name!r} in collection {original_collection_name!r} is not reversible."
         )
     reverse_collection: CollectionMetadata = original_property.child_collection
+    description: str | None = relationship_json.get("description", None)
+    synonyms: list[str] | None = relationship_json.get("synonyms", None)
+    extra_semantic_info: dict | None = relationship_json.get(
+        "extra semantic info", None
+    )
+    # Build the reverse relationship and add it to the child collection.
     reverse_property: ReversiblePropertyMetadata = (
         original_property.build_reverse_relationship(
-            relationship_name, is_singular=is_singular
+            relationship_name,
+            is_singular,
+            always_matches,
+            description,
+            synonyms,
+            extra_semantic_info,
         )
     )
     reverse_collection.add_property(reverse_property)

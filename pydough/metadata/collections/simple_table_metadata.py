@@ -3,22 +3,18 @@ Definition of PyDough metadata for a collection that trivially corresponds to a
 table in a relational system.
 """
 
-from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.errors import (
     HasPropertyWith,
     NoExtraKeys,
     PyDoughMetadataException,
     extract_array,
+    extract_string,
     is_string,
     unique_properties_predicate,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.properties import (
-    CartesianProductMetadata,
-    GeneralJoinMetadata,
     PropertyMetadata,
-    SimpleJoinMetadata,
-    TableColumnMetadata,
 )
 
 from .collection_metadata import CollectionMetadata
@@ -44,8 +40,11 @@ class SimpleTableMetadata(CollectionMetadata):
         graph,
         table_path: str,
         unique_properties: list[str | list[str]],
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
-        super().__init__(name, graph)
+        super().__init__(name, graph, description, synonyms, extra_semantic_info)
         is_string.verify(table_path, f"Property 'table_path' of {self.error_name}")
         unique_properties_predicate.verify(
             unique_properties, f"property 'unique_properties' of {self.error_name}"
@@ -120,71 +119,6 @@ class SimpleTableMetadata(CollectionMetadata):
                     f"{property.error_name} cannot be a unique property since it is a subcollection"
                 )
 
-    def verify_allows_property(self, property: AbstractMetadata) -> None:
-        """
-        Verifies that a property is safe to add to the collection.
-
-        Args:
-            `property`: the metadata for a PyDough property that is being
-            added to the collection.
-
-        Raises:
-            `PyDoughMetadataException`: if `property` is not a valid property
-            to insert into the collection.
-        """
-        # Invoke the more generic checks.
-        super().verify_allows_property(property)
-
-        # Ensure that the property is one of the supported types for this
-        # type of collection.
-        match property:
-            case (
-                TableColumnMetadata()
-                | CartesianProductMetadata()
-                | SimpleJoinMetadata()
-                | GeneralJoinMetadata()
-            ):
-                pass
-            case _:
-                raise PyDoughMetadataException(
-                    f"Simple table collections does not allow inserting {property.error_name}"
-                )
-
-    @staticmethod
-    def verify_json_metadata(
-        graph: GraphMetadata, collection_name: str, collection_json: dict
-    ) -> None:
-        """
-        Verifies that a JSON object contains well formed data to create a new simple
-        table collection.
-
-        Args:
-            `graph`: the metadata for the graph that the collection would
-            be added to.
-            `collection_name`: the name of the collection that would be added
-            to the graph.
-            `collection_json`: the JSON object that is being verified to ensure
-            it represents a valid collection.
-
-        Raises:
-            `PyDoughMetadataException`: if the JSON does not meet the necessary
-            structure properties.
-        """
-        # Create the string used to identify the collection in error messages.
-        error_name: str = SimpleTableMetadata.create_error_name(
-            collection_name, graph.error_name
-        )
-
-        # Check that the JSON data contains the required properties
-        # `table_path` and `unique_properties`, without any extra properties.
-        HasPropertyWith("table path", is_string).verify(collection_json, error_name)
-        HasPropertyWith("unique properties", unique_properties_predicate).verify(
-            collection_json, error_name
-        )
-        NoExtraKeys(SimpleTableMetadata.allowed_fields).verify(
-            collection_json, error_name
-        )
-
     @staticmethod
     def parse_from_json(
         graph: GraphMetadata, collection_name: str, collection_json: dict
@@ -205,17 +139,33 @@ class SimpleTableMetadata(CollectionMetadata):
             `PyDoughMetadataException`: if the JSON does not meet the necessary
             structure properties.
         """
-        # Verify that the JSON is well structured.
-        SimpleTableMetadata.verify_json_metadata(
-            graph, collection_name, collection_json
+        error_name: str = SimpleTableMetadata.create_error_name(
+            collection_name, graph.error_name
         )
 
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
-        table_path: str = collection_json["table path"]
+        table_path: str = extract_string(collection_json, "table path", error_name)
+        description: str | None = collection_json.get("description", None)
+        synonyms: list[str] | None = collection_json.get("synonyms", None)
+        extra_semantic_info: dict | None = collection_json.get(
+            "extra semantic info", None
+        )
+        HasPropertyWith("unique properties", unique_properties_predicate).verify(
+            collection_json, error_name
+        )
         unique_properties: list[str | list[str]] = collection_json["unique properties"]
+        NoExtraKeys(SimpleTableMetadata.allowed_fields).verify(
+            collection_json, error_name
+        )
         new_collection: SimpleTableMetadata = SimpleTableMetadata(
-            collection_name, graph, table_path, unique_properties
+            collection_name,
+            graph,
+            table_path,
+            unique_properties,
+            description,
+            synonyms,
+            extra_semantic_info,
         )
         properties: list = extract_array(
             collection_json, "properties", new_collection.error_name

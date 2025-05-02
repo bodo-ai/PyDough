@@ -6,11 +6,9 @@ from abc import abstractmethod
 
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.errors import (
-    HasPropertyWith,
     HasType,
     PyDoughMetadataException,
     extract_string,
-    is_string,
     is_valid_name,
 )
 from pydough.metadata.graphs import GraphMetadata
@@ -24,16 +22,28 @@ class CollectionMetadata(AbstractMetadata):
     - `create_error_name`
     - `components`
     - `verify_complete`
-    - `verify_allows_property`
-    - `verify_json_metadata`
     - `parse_from_json`
     """
 
     # Set of names of fields that can be included in the JSON
     # object describing a collection. Implementations should extend this.
-    allowed_fields: set[str] = {"name", "type", "properties", "description", "synonyms"}
+    allowed_fields: set[str] = {
+        "name",
+        "type",
+        "properties",
+        "description",
+        "synonyms",
+        "extra semantic info",
+    }
 
-    def __init__(self, name: str, graph: GraphMetadata):
+    def __init__(
+        self,
+        name: str,
+        graph: GraphMetadata,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
+    ):
         from pydough.metadata.properties import (
             PropertyMetadata,
         )
@@ -45,6 +55,7 @@ class CollectionMetadata(AbstractMetadata):
         self._name: str = name
         self._properties: dict[str, PropertyMetadata] = {}
         self._definition_order: dict[str, int] = {}
+        super().__init__(description, synonyms, extra_semantic_info)
 
     @property
     def graph(self) -> GraphMetadata:
@@ -151,37 +162,6 @@ class CollectionMetadata(AbstractMetadata):
                         f"{property.error_name} should not be plural but is"
                     )
 
-    @abstractmethod
-    def verify_allows_property(self, property: AbstractMetadata) -> None:
-        """
-        Verifies that a property is safe to add to the collection. Each
-        implementation should extend this method with its own checks.
-
-        Args:
-            `property`: the metadata for a PyDough property that is being
-            added to the collection.
-
-        Raises:
-            `PyDoughMetadataException`: if `property` is not a valid property
-            to insert into the collection.
-        """
-        from pydough.metadata.properties import PropertyMetadata
-
-        # First, make sure that the candidate property is indeed a property
-        # metadata of the appropriate type.
-        HasType(PropertyMetadata).verify(property, "property")
-        assert isinstance(property, PropertyMetadata)
-
-        # Verify that there is not a name conflict between a regular property
-        # and the candidate property.
-        if property.name in self.properties:
-            if self.properties[property.name] == property:
-                raise PyDoughMetadataException(f"Already added {property.error_name}")
-            else:
-                raise PyDoughMetadataException(
-                    f"Duplicate property: {property.error_name} versus {self.properties[property.name].error_name}."
-                )
-
     def add_property(self, property: AbstractMetadata) -> None:
         """
         Inserts a new property into the collection.
@@ -197,7 +177,10 @@ class CollectionMetadata(AbstractMetadata):
         from pydough.metadata.properties import PropertyMetadata
 
         assert isinstance(property, PropertyMetadata)
-        self.verify_allows_property(property)
+        if property.name in self.properties:
+            raise PyDoughMetadataException(
+                f"Duplicate property: {property.error_name} versus {self.properties[property.name].error_name}."
+            )
         self.properties[property.name] = property
         self.definition_order[property.name] = len(self.definition_order)
 
@@ -260,42 +243,6 @@ class CollectionMetadata(AbstractMetadata):
                     f"Unrecognized collection type for {error_name}: {repr(property_type)}"
                 )
 
-    @staticmethod
-    def verify_json_metadata(
-        graph: GraphMetadata, collection_name: str, collection_json: dict
-    ) -> None:
-        """
-        Generic verification that the JSON for a collection is well formed.
-
-        Args:
-            `graph`: the metadata for the graph that the collection would
-            be added to.
-            `collection_name`: the name of the collection that would be added
-            to the graph.
-            `collection_json`: the JSON object that is being verified to ensure
-            it represents a valid collection.
-
-        Raises:
-            `PyDoughMetadataException`: if the JSON does not meet the necessary
-            structure properties.
-        """
-        # Check that the collection name is valid string.
-        is_valid_name.verify(collection_name, "collection name")
-
-        # Check that the graph argument is indeed a graph metadata, and that the
-        # name of the graph does not collide with the name of the collection.
-        HasType(GraphMetadata).verify(graph, "graph")
-        error_name: str = f"collection {collection_name!r} in {graph.error_name}"
-        if collection_name == graph.name:
-            raise PyDoughMetadataException(
-                f"Cannot have collection named {collection_name!r} share the same name as the graph containing it."
-            )
-
-        # Check that the JSON data contains the required properties `type` and
-        # `properties`.
-        HasPropertyWith("type", is_string).verify(collection_json, error_name)
-        HasPropertyWith("properties", HasType(dict)).verify(collection_json, error_name)
-
     def add_properties_from_json(self, properties_json: list) -> None:
         """
         TODO
@@ -315,4 +262,8 @@ class CollectionMetadata(AbstractMetadata):
                 case "table column":
                     TableColumnMetadata.parse_from_json(
                         self, property_name, property_json
+                    )
+                case _:
+                    raise PyDoughMetadataException(
+                        f"Unrecognized property type {property_type!r} for {error_name}"
                     )

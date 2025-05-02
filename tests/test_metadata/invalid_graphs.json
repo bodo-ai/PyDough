@@ -1,3074 +1,632 @@
-{
-    "#badgraphname": {},
-    "BAD_NAME_1": { "bad collection name": {} },
-    "BAD_NAME_2": { 
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "4fizz": {}
-            }
-        } 
+[
+    {
+      "name": "#BadGraphName",
+      "version": "V2",
+      "collections": [],
+      "relationships": []
     },
-    "BAD_NAME_3": { "BAD_NAME_3": {} },
-    "REGION_FORMAT_1": 42,
-    "REGION_FORMAT_2": {
-        "Regions": "fizz"
+    {
+      "name": "MISSING_VERSION",
+      "collections": [],
+      "relationships": []
     },
-    "REGION_FORMAT_3": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": true,
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_VERSION",
+      "version": "HelloWorld",
+      "collections": [],
+      "relationships": []
+    },
+    {
+      "name": "MISSING_COLLECTIONS",
+      "version": "V2",
+      "relationships": []
+    },
+    {
+      "name": "MISSING_RELATIONSHIPS",
+      "version": "V2",
+      "collections": []
+    },
+    {
+      "name": "EXTRA_GRAPH_FIELDS",
+      "version": "V2",
+      "collections": [],
+      "relationships": [],
+      "foo": 42
+    },
+    {
+      "name": "BAD_COLLECTION_NAME_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "0",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_4": {
-        "Regions": {
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "0",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_5": {
-        "Regions": {
-            "type": ["simple_table"],
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_PROPERTY_NAME_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "0",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "bad name"}
+          ]
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_6": {
-        "Regions": {
-            "type": "¡SIMPLE!",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_PROPERTY_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "0",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": true}
+          ]
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_7": {
-        "Regions": {
-            "type": "simple_table",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_RELATIONSHIP_NAME",
+      "version": "V2",
+      "collections": [],
+      "relationships": [{"name": "foobår"}]
+    },
+    {
+      "name": "MISSING_COLLECTION_NAME",
+      "version": "V2",
+      "collections": [{}],
+      "relationships": []
+    },
+    {
+      "name": "MISSING_COLLECTION_TYPE",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection"
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_8": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": {"tpch": "REGION"},
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_TYPE_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": 42
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_9": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_TYPE_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "no collection type"
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_10": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "MISSING_COLLECTION_TABLE_PATH",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "unique properties": ["key"],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_11": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": "key",
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_TABLE_PATH",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": 0,
+          "unique properties": ["key"],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_12": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": [],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "MISSING_COLLECTION_UNIQUE_PROPERTIES",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_13": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["A", 2, "3"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_UNIQUE_PROPERTIES_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": "Fizz",
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_14": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": [[]],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_UNIQUE_PROPERTIES_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": [],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_15": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": [["A", "B"], "C", ["D", true, false]],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_UNIQUE_PROPERTIES_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": [[]],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_16": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_UNIQUE_PROPERTIES_4",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": [42],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_17": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": 42, "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_UNIQUE_PROPERTIES_5",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": [[0]],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_18": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_UNIQUE_PROPERTIES_6",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["Foo"],
+          "properties": []
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_19": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "MISSING_COLLECTION_PROPERTIES",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"]
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_20": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": ["r", "regionkey"], "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "BAD_COLLECTION_PROPERTIES",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": "Missing"
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_21": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
+    {
+      "name": "MISSING_PROPERTIES_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [{}]
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_22": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": 0},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+    {
+      "name": "MISSING_PROPERTIES_TYPE",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property"
             }
+          ]
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_23": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "int512"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+    {
+      "name": "BAD_PROPERTIES_TYPE_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property",
+              "type": -1
             }
+          ]
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_24": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric", "key": "value"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+    {
+      "name": "BAD_PROPERTIES_TYPE_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property",
+              "type": "unknown property type"
             }
+          ]
         }
+      ],
+      "relationships": []
     },
-    "REGION_FORMAT_25": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
+    {
+      "name": "MISSING_TABLE_COLUMN_DATA_TYPE",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property",
+              "type": "table column",
+              "column name": "column_name"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_DATA_TYPE_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": 0
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_DATA_TYPE_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "foobar"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "MISSING_TABLE_COLUMN_COLUMN_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property",
+              "type": "table column",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_COLUMN_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "property",
+              "type": "table column",
+              "column name": 42,
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_JOIN_CONDITIONS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "PARENT",
+          "unique properties": [["j1", "j3"]],
+          "properties": [
+            {
+              "name": "j1",
+              "type": "table column",
+              "column name": "j1",
+              "data type": "numeric"
             },
-            "key": "value"
-        }
-    },
-    "REGION_FORMAT_26": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["nations"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"},
-                "nations": {
-                    "type": "simple_join",
-                    "other_collection_name": "Nations",
-                    "singular": false,
-                    "no_collisions": true,
-                    "keys": {"key": ["region_key"]},
-                    "reverse_relationship_name": "region"
-                  }
-            }
-        },
-        "Nations": {
-            "type": "simple_table",
-            "table_path": "tpch.NATION",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "n_nationkey", "data_type": "numeric"},
-              "name": {"type": "table_column", "column_name": "n_name", "data_type": "string"},
-              "region_key": {"type": "table_column", "column_name": "n_regionkey", "data_type": "numeric"},
-              "comment": {"type": "table_column", "column_name": "n_comment", "data_type": "string"}
-            }
-        }
-    },
-    "REGION_FORMAT_27": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["region_key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
-        }
-    },
-    "REGION_FORMAT_28": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key", "name", "key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
-        }
-    },
-    "REGION_FORMAT_29": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": [["key", "name"], ["name", "key"]],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
-        }
-    },
-    "REGION_FORMAT_30": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": [["key", "name", "key"]],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric"},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
-        }
-    },
-    "REGION_FORMAT_31": {
-        "Regions": {
-            "type": "simple_table",
-            "table_path": "tpch.REGION",
-            "unique_properties": ["key"],
-            "properties": {
-                "key": {"type": "table_column", "column_name": "r_regionkey", "data_type": "numeric", "keys": []},
-                "name": {"type": "table_column", "column_name": "r_name", "data_type": "string"},
-                "comment": {"type": "table_column", "column_name": "r_comment", "data_type": "string"}
-            }
-        }
-    },
-    "PARTSUPP_FORMAT_1": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "cartesian_product",
-                "reverse_relationship_name": "part"
-              }
-            }
-          }
-    },
-    "PARTSUPP_FORMAT_2": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "cartesian_product",
-                "other_collection_name": ["tpch", "PARTSUPP"],
-                "reverse_relationship_name": "part"
-              }
-            }
-          }
-    },
-    "PARTSUPP_FORMAT_3": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "cartesian_product",
-                "other_collection_name": "PartSupp",
-                "reverse_relationship_name": "part"
-              }
-            }
-          }
-    },
-    "PARTSUPP_FORMAT_4": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "cartesian_product",
-                "other_collection_name": "PartSupp"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_5": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "cartesian_product",
-                "other_collection_name": "PartSupp",
-                "reverse_relationship_name": 42
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_6": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "cartesian_product",
-                "other_collection_name": "PartSupp",
-                "reverse_relationship_name": "part_key"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_7": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "cartesian_product",
-                "other_collection_name": "PartSupp",
-                "reverse_relationship_name": "part",
-                "singular": true
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_8": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_9": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": {"Part": "Supp"},
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_10": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          }
-    },
-    "PARTSUPP_FORMAT_11": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]}
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_12": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": null
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_13": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "supplier_key"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_14": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_15": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": 3,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_16": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_17": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": "true",
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_18": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_19": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": ["foo", "bar"],
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_20": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": [1, 2, 3]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_21": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_22": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": []},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_23": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"fizz": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_24": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["buzz"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_25": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "cartesian_supply_records": {
-                "type": "cartesian_product",
-                "other_collection_name": "PartSupp",
-                "reverse_relationship_name": "all_parts"
-              },
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"cartesian_supply_records": ["part_key"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_26": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["cartesian_parts_records"]},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"},
-              "cartesian_parts_records": {
-                "type": "cartesian_product",
-                "other_collection_name": "Parts",
-                "reverse_relationship_name": "all_parts"
-              }
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_27": {
-      "Parts": {
-          "type": "simple_table",
-          "table_path": "tpch.PART",
-          "unique_properties": ["key"],
-          "properties": {
-            "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-            "supply_records": {
-              "type": "simple_join",
-              "other_collection_name": "PartSupp",
-              "singular": false,
-              "no_collisions": true,
-              "keys": {"key": ["part_key"]},
-              "reverse_relationship_name": "part",
-              "extra_field": "foo"
-            }
-          }
-        },
-      "PartSupp": {
-        "type": "simple_table",
-        "table_path": "tpch.PARTSUPP",
-        "unique_properties": [["part_key", "supplier_key"]],
-        "properties": {
-            "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-            "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-            "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-        }
-      }
-    },
-    "PARTSUPP_FORMAT_28": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_29": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": 0,
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_30": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "bad_property_name",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_31": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_32": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": ["supplier"],
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_33": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supply_records",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_34": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_35": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": "abc",
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_36": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_37": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": 0,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_38": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"}
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_39": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": -6
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_40": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supply_records"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_41": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_42": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": ["foo", "bar"],
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_43": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": 42},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_44": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_45": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "fizzbuzz", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_46": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty", "ps_cycle": "cycle"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"},
-              "cycle": {
-                "type": "compound",
-                "primary_property": "part",
-                "secondary_property": "suppliers_of_part",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {},
-                "reverse_relationship_name": "supplier"
-              }
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_47": {
-        "Parts": {
-            "type": "simple_table",
-            "table_path": "tpch.PART",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["part_key"]},
-                "reverse_relationship_name": "part"
-              },
-              "suppliers_of_part": {
-                "type": "compound",
-                "primary_property": "lines",
-                "secondary_property": "supplier",
-                "singular": false,
-                "no_collisions": false,
-                "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "parts_supplied"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "suppliers_of_part",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "part"
-              }
-            }
-          },
-          "Suppliers": {
-            "type": "simple_table",
-            "table_path": "tpch.SUPPLIER",
-            "unique_properties": ["key"],
-            "properties": {
-              "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-              "supply_records": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": false,
-                "no_collisions": true,
-                "keys": {"key": ["supplier_key"]},
-                "reverse_relationship_name": "supplier"
-              },
-              "lines": {
-                "type": "compound",
-                "primary_property": "supply_records",
-                "secondary_property": "lines",
-                "singular": false,
-                "no_collisions": true,
-                "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-                "reverse_relationship_name": "supplier"
-              }
-            }
-          },
-          "Lineitems": {
-            "type": "simple_table",
-            "table_path": "tpch.LINEITEM",
-            "unique_properties": [["part_key", "supplier_key", "order_key"]],
-            "properties": {
-              "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-              "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-              "part_and_supplier": {
-                "type": "simple_join",
-                "other_collection_name": "PartSupp",
-                "singular": true,
-                "no_collisions": false,
-                "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-                "reverse_relationship_name": "lines"
-              }
-            }
-          },
-        "PartSupp": {
-          "type": "simple_table",
-          "table_path": "tpch.PARTSUPP",
-          "unique_properties": [["part_key", "supplier_key"]],
-          "properties": {
-              "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-              "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-              "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
-          }
-        }
-    },
-    "PARTSUPP_FORMAT_48": {
-      "Parts": {
-          "type": "simple_table",
-          "table_path": "tpch.PART",
-          "unique_properties": ["key"],
-          "properties": {
-            "key": {"type": "table_column", "column_name": "p_partkey", "data_type": "numeric"},
-            "supply_records": {
-              "type": "simple_join",
-              "other_collection_name": "PartSupp",
-              "singular": false,
-              "no_collisions": true,
-              "keys": {"key": ["part_key"]},
-              "reverse_relationship_name": "part"
+            {
+              "name": "j2",
+              "type": "table column",
+              "column name": "j2",
+              "data type": "string"
             },
-            "suppliers_of_part": {
-              "type": "compound",
-              "primary_property": "supply_records",
-              "secondary_property": "lines",
-              "singular": false,
-              "no_collisions": false,
-              "inherited_properties": {"ps_lines": "lines", "ps_availqty": "availqty"},
-              "reverse_relationship_name": "parts_supplied"
+            {
+              "name": "j3",
+              "type": "table column",
+              "column name": "j3",
+              "data type": "datetime"
             },
-            "lines": {
-              "type": "compound",
-              "primary_property": "supply_records",
-              "secondary_property": "suppliers_of_part",
-              "singular": false,
-              "no_collisions": true,
-              "inherited_properties": {"ps_supplier": "supplier", "ps_availqty": "availqty"},
-              "reverse_relationship_name": "part"
+            {
+              "name": "j4",
+              "type": "table column",
+              "column name": "j4",
+              "data type": "bool"
             }
-          }
+          ]
         },
-        "Suppliers": {
-          "type": "simple_table",
-          "table_path": "tpch.SUPPLIER",
-          "unique_properties": ["key"],
-          "properties": {
-            "key": {"type": "table_column", "column_name": "s_suppkey", "data_type": "numeric"},
-            "supply_records": {
-              "type": "simple_join",
-              "other_collection_name": "PartSupp",
-              "singular": false,
-              "no_collisions": true,
-              "keys": {"key": ["supplier_key"]},
-              "reverse_relationship_name": "supplier"
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "CHILD",
+          "unique properties": [["k1", "k2"]],
+          "properties": [
+            {
+              "name": "k1",
+              "type": "table column",
+              "column name": "k1",
+              "data type": "numeric"
             },
-            "lines": {
-              "type": "compound",
-              "primary_property": "supply_records",
-              "secondary_property": "lines",
-              "singular": false,
-              "no_collisions": true,
-              "inherited_properties": {"ps_part": "part", "ps_availqty": "availqty"},
-              "reverse_relationship_name": "supplier"
+            {
+              "name": "k2",
+              "type": "table column",
+              "column name": "k2",
+              "data type": "string"
+            },
+            {
+              "name": "k3",
+              "type": "table column",
+              "column name": "k3",
+              "data type": "datetime"
+            },
+            {
+              "name": "k4",
+              "type": "table column",
+              "column name": "k4",
+              "data type": "bool"
             }
-          }
-        },
-        "Lineitems": {
-          "type": "simple_table",
-          "table_path": "tpch.LINEITEM",
-          "unique_properties": [["part_key", "supplier_key", "order_key"]],
-          "properties": {
-            "order_key": {"type": "table_column", "column_name": "l_orderkey", "data_type": "numeric"},
-            "part_key": {"type": "table_column", "column_name": "l_partkey", "data_type": "numeric"},
-            "supplier_key": {"type": "table_column", "column_name": "l_suppkey", "data_type": "numeric"},
-            "part_and_supplier": {
-              "type": "simple_join",
-              "other_collection_name": "PartSupp",
-              "singular": true,
-              "no_collisions": false,
-              "keys": {"part_key": ["part_key"], "supplier_key": ["supplier_key"]},
-              "reverse_relationship_name": "lines"
-            }
-          }
-        },
-      "PartSupp": {
-        "type": "simple_table",
-        "table_path": "tpch.PARTSUPP",
-        "unique_properties": [["part_key", "supplier_key"]],
-        "properties": {
-            "part_key": {"type": "table_column", "column_name": "ps_partkey", "data_type": "numeric"},
-            "supplier_key": {"type": "table_column", "column_name": "ps_suppkey", "data_type": "numeric"},
-            "availqty": {"type": "table_column", "column_name": "ps_availqty", "data_type": "decimal[12,2]"}
+          ]
         }
-      }
-  },
-  "BAD_JOIN_CONDITIONS": {
-    "parent": {
-      "type": "simple_table",
-      "table_path": "PARENT",
-      "unique_properties": [["j1", "j3"]],
-      "properties": {
-        "j1": {"type": "table_column", "column_name": "j1", "data_type": "numeric"},
-        "j2": {"type": "table_column", "column_name": "j2", "data_type": "string"},
-        "j3": {"type": "table_column", "column_name": "j3", "data_type": "timestamp[9]"},
-        "j4": {"type": "table_column", "column_name": "j4", "data_type": "bool"},
-        "sub0": {
-          "type": "simple_join",
-          "other_collection_name": "child",
+      ],
+      "relationships": [
+        {
+          "name": "sub0",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "keys": {"j1": ["k1"], "j4": ["k4"]},
-          "reverse_relationship_name": "par0"
+          "keys": {"j1": ["k1"], "j4": ["k4"]}
         },
-        "sub1": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub1",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "",
-          "reverse_relationship_name": "par1"
+          "condition": ""
         },
-        "sub2": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub2",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "(4",
-          "reverse_relationship_name": "par2"
+          "condition": "(4"
         },
-        "sub3": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub3",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "self.j1 in self.k2",
-          "reverse_relationship_name": "par3"
+          "condition": "self.j1 in self.k2"
         },
-        "sub4": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub4",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "is_prime(self.j1) != is_prime(self.j2)",
-          "reverse_relationship_name": "par4"
+          "condition": "is_prime(self.j1) != is_prime(self.j2)"
         },
-        "sub4a": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub5",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "foo = other.k1",
-          "reverse_relationship_name": "par4a"
+          "condition": "foo = other.k1"
         },
-        "sub5": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub6",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "self.j1 == COUNT(self.sub0)",
-          "reverse_relationship_name": "par5"
+          "condition": "self.j1 == COUNT(self.sub0)"
         },
-        "sub6": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub7",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "self.j1 == other.sub0.k1",
-          "reverse_relationship_name": "par6"
+          "condition": "self.j1 == other.sub0.k1"
         },
-        "sub7": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub8",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "self.sub0.CALCULATE(y=YEAR(k1)) == other.k1",
-          "reverse_relationship_name": "par7"
+          "condition": "self.sub0.CALCULATE(y=YEAR(k1)) == other.k1"
         },
-        "sub8": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub9",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "RANKING(by=self.j1.ASC()) < other.k1",
-          "reverse_relationship_name": "par8"
+          "condition": "RANKING(by=self.j1.ASC()) < other.k1"
         },
-        "sub9": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub10",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "self.j1 == other.k5",
-          "reverse_relationship_name": "par9"
+          "condition": "self.j1 == other.k5"
         },
-        "sub10": {
-          "type": "general_join",
-          "other_collection_name": "child",
+        {
+          "name": "sub11",
+          "type": "general join",
+          "parent collection": "parent",
+          "child collection": "child",
           "singular": false,
-          "no_collisions": false,
-          "condition": "this.j1 == other.k1",
-          "reverse_relationship_name": "par10"
+          "condition": "this.j1 == other.k1"
         }
-      }
-    },
-    "child": {
-      "type": "simple_table",
-      "table_path": "PARENT",
-      "unique_properties": [["k1", "k2"]],
-      "properties": {
-        "k1": {"type": "table_column", "column_name": "k1", "data_type": "numeric"},
-        "k2": {"type": "table_column", "column_name": "k2", "data_type": "string"},
-        "k3": {"type": "table_column", "column_name": "k3", "data_type": "timestamp[9]"},
-        "k4": {"type": "table_column", "column_name": "k4", "data_type": "bool"}
-      }
+      ]
     }
-  }
-}
+]

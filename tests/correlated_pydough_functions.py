@@ -317,9 +317,9 @@ def correl_19():
     # higher account balance than that supplier. Pick the 5 suppliers with the
     # largest such count.
     # (This is a correlated aggregation access)
-    super_cust = nation.customers.WHERE(account_balance > account_balance)
+    super_cust = nation.customers.WHERE(account_balance > supplier_balance)
     return (
-        suppliers.CALCULATE(account_balance)
+        suppliers.CALCULATE(supplier_balance=account_balance)
         .WHERE(HAS(super_cust))
         .CALCULATE(supplier_name=name, n_super_cust=COUNT(super_cust))
         .TOP_K(5, n_super_cust.DESC())

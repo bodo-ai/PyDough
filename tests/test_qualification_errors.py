@@ -51,14 +51,14 @@ def bad_pydough_impl_03(root: UnqualifiedNode) -> UnqualifiedNode:
     """
     Creates an UnqualifiedNode for the following invalid PyDough snippet:
     ```
-    TPCH.nations.CALCULATE(y=suppliers.CALCULATE(x=COUNT(parts_supplied)).x)
+    TPCH.nations.CALCULATE(y=suppliers.CALCULATE(x=COUNT(supply_records)).x)
     ```
-    The problem: `suppliers.CALCULATE(x=COUNT(parts_supplied))` is plural with regards
+    The problem: `suppliers.CALCULATE(x=COUNT(supply_records))` is plural with regards
     to nations, so accessing its `x` property is still plural, therefore it
     cannot be used as a term inside a CALCULATE from the context of nations.
     """
     return root.nations.CALCULATE(
-        y=root.suppliers.CALCULATE(x=root.COUNT(root.parts_supplied)).x
+        y=root.suppliers.CALCULATE(x=root.COUNT(root.supply_records)).x
     )
 
 
@@ -252,7 +252,7 @@ def bad_pydough_impl_19(root: UnqualifiedNode) -> UnqualifiedNode:
         ),
         pytest.param(
             bad_pydough_impl_03,
-            "Expected all terms in CALCULATE(y=suppliers.CALCULATE(x=COUNT(parts_supplied)).x) to be singular, but encountered a plural expression: suppliers.CALCULATE(x=COUNT(parts_supplied)).x",
+            "Expected all terms in CALCULATE(y=suppliers.CALCULATE(x=COUNT(supply_records)).x) to be singular, but encountered a plural expression: suppliers.CALCULATE(x=COUNT(supply_records)).x",
             id="03",
         ),
         pytest.param(

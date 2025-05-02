@@ -11,7 +11,6 @@ The properties metadata has the following notable APIs available for use:
 - `is_plural`: Indicates if the property can map to multiple values.
 - `is_subcollection`: Indicates if the property maps to another collection.
 - `is_reversible`: Indicates if the property has a corresponding reverse relationship.
-- `verify_json_metadata`: A static method that verifies the JSON describing the metadata for a property. Every concrete class has an implementation of this static method.
 - `parse_from_json`: A static method that parses the JSON to create the property and insert it into the collection. Every concrete class has an implementation of this static method.
 
 ## Hierarchy of Properties Classes

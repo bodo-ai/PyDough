@@ -9,10 +9,7 @@ from abc import abstractmethod
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
-    HasPropertyWith,
     HasType,
-    PyDoughMetadataException,
-    is_string,
     is_valid_name,
 )
 
@@ -27,19 +24,32 @@ class PropertyMetadata(AbstractMetadata):
     - `is_plural`
     - `is_subcollection`
     - `is_reversible`
-    - `verify_json_metadata`
     - `parse_from_json`
     """
 
     # Set of names of fields that can be included in the JSON object
     # describing a property. Implementations should extend this.
-    allowed_fields: set[str] = {"name", "type"}
+    allowed_fields: set[str] = {
+        "name",
+        "type",
+        "description",
+        "synonyms",
+        "extra semantic info",
+    }
 
-    def __init__(self, name: str, collection: CollectionMetadata):
+    def __init__(
+        self,
+        name: str,
+        collection: CollectionMetadata,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
+    ):
         is_valid_name.verify(name, "name")
         HasType(CollectionMetadata).verify(collection, "collection")
         self._name: str = name
         self._collection: CollectionMetadata = collection
+        super().__init__(description, synonyms, extra_semantic_info)
 
     @property
     def name(self) -> str:
@@ -103,79 +113,3 @@ class PropertyMetadata(AbstractMetadata):
         comp: list = self.collection.components
         comp.append(self.name)
         return comp
-
-    @staticmethod
-    def get_class_for_property_type(
-        name: str, error_name: str
-    ) -> type["PropertyMetadata"]:
-        """
-        Fetches the PropertyType implementation class for a string
-        representation of the property type.
-
-        Args:
-            `name`: the string representation of a property type.
-            `error_name`: the string used in error messages to describe
-            the object that `name` came from.
-
-        Returns:
-            The class of the property type corresponding to `name`.
-
-        Raises:
-            `PyDoughMetadataException` if the string does not correspond
-            to a known property type.
-        """
-        from pydough.metadata.properties import (
-            CartesianProductMetadata,
-            GeneralJoinMetadata,
-            SimpleJoinMetadata,
-            TableColumnMetadata,
-        )
-
-        match name:
-            case "table_column":
-                return TableColumnMetadata
-            case "simple_join":
-                return SimpleJoinMetadata
-            case "general_join":
-                return GeneralJoinMetadata
-            case "cartesian_product":
-                return CartesianProductMetadata
-            case property_type:
-                raise PyDoughMetadataException(
-                    f"Unrecognized property type for {error_name}: {repr(property_type)}"
-                )
-
-    @staticmethod
-    def verify_json_metadata(
-        collection: CollectionMetadata, property_name: str, property_json: dict
-    ) -> None:
-        """
-        Verifies that the JSON describing the metadata for a property within
-        a collection is well-formed before parsing it to create the property
-        and insert into the collection.
-
-        Args:
-            `collection`: the metadata for the PyDough collection that the
-            property would be inserted into.
-            `property_name`: the name of the property that would be inserted.
-            `property_json`: the JSON object that would be parsed to create
-            the new property.
-
-        Raises:
-            `PyDoughMetadataException`: if the JSON for the property is
-            malformed.
-        """
-
-        # Create the string used to identify the property in error messages.
-        error_name = f"property {property_name!r} of {collection.error_name}"
-
-        # Ensure that the property's name is valid and that the JSON has the
-        # required `type` field.
-        is_valid_name.verify(property_name, "property name")
-        HasPropertyWith("type", is_string).verify(property_json, error_name)
-
-        # Dispatch to each implementation's verification method based on the type.
-        property_class = PropertyMetadata.get_class_for_property_type(
-            property_json["type"], error_name
-        )
-        property_class.verify_json_metadata(collection, property_name, property_json)

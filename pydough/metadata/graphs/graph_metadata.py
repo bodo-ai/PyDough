@@ -12,10 +12,34 @@ class GraphMetadata(AbstractMetadata):
     PyDough collections.
     """
 
-    def __init__(self, name: str):
+    allowed_fields: set[str] = {
+        "name",
+        "version",
+        "collections",
+        "relationships",
+        "additional definitions",
+        "verified pydough analysis",
+        "extra semantic info",
+    }
+    """
+    Fields allowed in the JSON object describing a graph.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        additional_definitions: list[dict] | None,
+        verified_pydough_analysis: list[dict] | None,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
+    ):
         is_valid_name.verify(name, "graph name")
+        self._additional_definitions: list[dict] | None = additional_definitions
+        self._verified_pydough_analysis: list[dict] | None = verified_pydough_analysis
         self._name: str = name
         self._collections: dict[str, AbstractMetadata] = {}
+        super().__init__(description, synonyms, extra_semantic_info)
 
     @property
     def name(self) -> str:
@@ -42,6 +66,22 @@ class GraphMetadata(AbstractMetadata):
     @property
     def path(self) -> str:
         return self.name
+
+    @property
+    def additional_definitions(self) -> list[dict] | None:
+        """
+        Additional semantic definitions of logical concepts using the
+        collections within the graph.
+        """
+        return self._additional_definitions
+
+    @property
+    def verified_pydough_analysis(self) -> list[dict] | None:
+        """
+        Verified PyDough analysis examples using the collections within
+        the graph.
+        """
+        return self._verified_pydough_analysis
 
     def add_collection(self, collection: AbstractMetadata) -> None:
         """

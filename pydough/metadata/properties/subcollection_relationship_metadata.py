@@ -25,8 +25,14 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         parent_collection: CollectionMetadata,
         child_collection: CollectionMetadata,
         singular: bool,
+        always_matches: bool,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
-        super().__init__(name, parent_collection)
+        super().__init__(
+            name, parent_collection, description, synonyms, extra_semantic_info
+        )
         HasType(CollectionMetadata).verify(
             child_collection,
             f"child collection of {self.__class__.__name__}",
@@ -34,6 +40,7 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         is_bool.verify(singular, f"Property 'singular' of {self.__class__.__name__}")
         self._child_collection: CollectionMetadata = child_collection
         self._singular: bool = singular
+        self._always_matches: bool = always_matches
 
     @property
     def child_collection(self) -> CollectionMetadata:
@@ -50,6 +57,15 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         of the collection, False if there could be more than 1.
         """
         return self._singular
+
+    @property
+    def always_matches(self) -> bool:
+        """
+        True if the property always matches onto at least one record of the
+        subcollection for each record of the collection, False if it may not
+        match.
+        """
+        return self._always_matches
 
     @property
     @abstractmethod

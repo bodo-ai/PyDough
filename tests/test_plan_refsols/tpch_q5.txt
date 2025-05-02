@@ -12,7 +12,7 @@ ROOT(columns=[('N_NAME', N_NAME), ('REVENUE', REVENUE)], orderings=[(REVENUE):de
           FILTER(condition=name == 'ASIA':string, columns={'key': key})
            SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
          SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})
-        FILTER(condition=order_date < datetime.date(1995, 1, 1):datetimetime & order_date >= datetime.date(1994, 1, 1):datetimetime, columns={'customer_key': customer_key, 'key': key})
+        FILTER(condition=order_date < datetime.date(1995, 1, 1):datetime & order_date >= datetime.date(1994, 1, 1):datetime, columns={'customer_key': customer_key, 'key': key})
          SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
        SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'order_key': l_orderkey, 'supplier_key': l_suppkey})
       JOIN(conditions=[t0.nation_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_12': t1.name})
