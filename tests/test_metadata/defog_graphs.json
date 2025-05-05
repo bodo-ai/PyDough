@@ -533,7 +533,7 @@
             "type": "table column",
             "column name": "_id",
             "data type": "numeric",
-            "description": "TODO",
+            "description": "Unique identifying string for each customer",
             "sample values": [],
             "synonyms": []
           },

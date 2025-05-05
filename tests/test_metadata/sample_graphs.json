@@ -813,7 +813,9 @@
         "description": "The orders that a customer has placed, each of which contains one or more line items",
         "synonyms": ["transactions", "purchases"]
       }
-    ]
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": []
   },
   {
     "name": "Empty",
