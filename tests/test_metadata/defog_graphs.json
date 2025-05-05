@@ -16,136 +16,110 @@
             "type": "table column",
             "column name": "sbCustId",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The unique identifying string for the customer",
+            "sample values": ["C001", "C005", "C014"],
+            "synonyms": ["customer key"]
           },
           {
             "name": "name",
             "type": "table column",
             "column name": "sbCustName",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The name of the customer",
+            "sample values": ["Ava Wilson", "Bob Johnson", "David Kim", "Emily Davis"],
+            "synonyms": ["customer name", "first and last name"]
           },
           {
             "name": "email",
             "type": "table column",
             "column name": "sbCustEmail",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The email of the customer",
+            "sample values": ["alex.rodriguez@email.com", "ava.wilson@email.com", "arah.nguyen@email.com", "samantha.lee@email.com"],
+            "synonyms": ["email address", "customer email"]
           },
           {
             "name": "phone",
             "type": "table column",
             "column name": "sbCustPhone",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The phone number of the customer",
+            "sample values": ["555-123-4567", "555-623-7419", "555-135-7902"],
+            "synonyms": ["phone number", "customer phone"]
           },
           {
             "name": "address1",
             "type": "table column",
             "column name": "sbCustAddress1",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The address of the customer",
+            "sample values": ["123 Main St", "951 Pine Rd", "246 Elm St", "258 Elm Ave"],
+            "synonyms": ["first address line", "street address"]
           },
           {
             "name": "address2",
             "type": "table column",
             "column name": "sbCustAddress2",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The second address of the customer, if one exists",
+            "synonyms": ["second address line"]
           },
           {
             "name": "city",
             "type": "table column",
             "column name": "sbCustCity",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The city the customer lives in",
+            "sample values": ["Anytown", "Yourtown", "Someville", "Mytown"],
+            "synonyms": ["customer address city"]
           },
           {
             "name": "state",
             "type": "table column",
             "column name": "sbCustState",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The state the customer lives in, by its capitalized two-letter abbreviation",
+            "sample values": ["CA", "NY", "TX", "FL", "NJ"],
+            "synonyms": ["customer address state"]
           },
           {
             "name": "country",
             "type": "table column",
             "column name": "sbCustCountry",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The country the customer lives in",
+            "sample values": ["USA"],
+            "synonyms": ["customer address country"]
           },
           {
             "name": "postal_code",
             "type": "table column",
             "column name": "sbCustPostalCode",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The postal/zip code of the customer's address",
+            "sample values": ["90001", "10002", "08801"],
+            "synonyms": ["zip code", "customer address postal code"]
           },
           {
             "name": "join_date",
             "type": "table column",
             "column name": "sbCustJoinDate",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The date the customer joined the brokerage",
+            "synonyms": ["signup date", "customer join date", "account creation date"]
           },
           {
             "name": "status",
             "type": "table column",
             "column name": "sbCustStatus",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The state of the customer's account, which is either 'active', 'inactive', or 'suspended'",
+            "sample values": ["active", "inactive", "suspended"],
+            "synonyms": ["customer account status", "activity state"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The customers who have accounts with the the brokerage",
+        "synonyms": ["users", "clients", "members", "subscribers"]
       },
       {
         "name": "tickers",
@@ -160,92 +134,74 @@
             "type": "table column",
             "column name": "sbTickerId",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The unique identifying string for each ticker",
+            "sample values": ["T001", "T003", "T007", "T0018"],
+            "synonyms": ["ticker key"]
           },
           {
             "name": "symbol",
             "type": "table column",
             "column name": "sbTickerSymbol",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The symbol used to abbreviate the ticker name in a recognizable manner, e.g. APPL for Apple, or GOOG for Google",
+            "sample values": ["APPL", "AMZN", "BRK.B", "FB", "GOOG", "NFLX", "MSFT"],
+            "synonyms": ["ticker symbol", "ticker abbreviation"]
           },
           {
             "name": "name",
             "type": "table column",
             "column name": "sbTickerName",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The full name of the ticker, e.g. the company name",
+            "sample values": ["Berkshire Hathaway Inc.", "Alphabet Inc.", "Apple Inc.", "Microsoft Corporation"],
+            "synonyms": ["company name", "business name"]
           },
           {
             "name": "ticker_type",
             "type": "table column",
             "column name": "sbTickerType",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The category of ticker, which is either 'stock', 'etf', or 'mutual fund'",
+            "sample values": ["stock", "etf", "mutual fund"],
+            "synonyms": ["category", "classification"]
           },
           {
             "name": "exchange",
             "type": "table column",
             "column name": "sbTickerExchange",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The exchange that the ticker is listed on, which is either 'NASDAQ', 'NYSE', 'NYSE Arca', or 'Vanguard'",
+            "sample values": ["NASDAQ", "NYSE", "NYSE Arca", "Vanguard"],
+            "synonyms": []
           },
           {
             "name": "currency",
             "type": "table column",
             "column name": "sbTickerCurrency",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The currency that the ticker is traded in, which is always 'USD'",
+            "sample values": ["USD"]
           },
           {
             "name": "db2x",
             "type": "table column",
             "column name": "sbTickerDb2x",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The two-letter exchange code corresponding to the ticker's exchange, which is either 'NQ' for NASDAQ, 'NY' for NYSE, 'NX' for 'NYSE Arca', or 'VA' for Vanguard",
+            "sample values": ["NQ", "NY", "NX", "VG"],
+            "synonyms": ["exchange code"]
           },
           {
             "name": "is_active",
             "type": "table column",
             "column name": "sbTickerIsActive",
             "data type": "bool",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "Whether the ticker is still active",
+            "synonyms": ["ticker in use"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All of the tickers that the brokerage trades",
+        "synonyms": ["stocks", "etfs", "mutual funds"]
       },
       {
         "name": "daily_prices",
@@ -263,110 +219,92 @@
             "type": "table column",
             "column name": "sbDpTickerId",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The ticker id from the ticker whose price is being record",
+            "sample values": ["T002", "T003", "T005", "T007", "T011"],
+            "synonyms": ["ticker key"]
           },
           {
             "name": "date",
             "type": "table column",
             "column name": "sbDpDate",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The date of the price record",
+            "synonyms": ["record datetime", "price update date"]
           },
           {
             "name": "open",
             "type": "table column",
             "column name": "sbDpOpen",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The opening price of the ticker on the day of the record",
+            "sample values": [150, 3200, 2500, 280],
+            "synonyms": ["opening price"]
           },
           {
             "name": "high",
             "type": "table column",
             "column name": "sbDpHigh",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The highest price of the ticker during the day of the record",
+            "sample values": [152.5, 282.75, 3225, 185, 2525],
+            "synonyms": ["high price", "high-point", "maximum price during day"]
           },
           {
             "name": "low",
             "type": "table column",
             "column name": "sbDpLow",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The lowest price of the ticker during the day of the record",
+            "sample values": [148.75, 279.5, 3180, 178.5, 2475],
+            "synonyms": ["low price", "low-point", "minimum price during day"]
           },
           {
             "name": "close",
             "type": "table column",
             "column name": "sbDpClose",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The close price of the ticker on the day of the record",
+            "sample values": [151.25, 281, 3210, 184.25, 2510],
+            "synonyms": ["closing price"]
           },
           {
             "name": "volume",
             "type": "table column",
             "column name": "sbDpVolume",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The total number of shares of the ticker traded during the day",
+            "sample values": [75000000, 4000000, 1500000, 35000000],
+            "synonyms": ["daily trading volume"]
           },
           {
             "name": "epoch_ms",
             "type": "table column",
             "column name": "sbDpEpochMs",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The number of milliseconds since the epoch (January 1, 1970) that the record was created",
+            "sample values": [1680336000000, 1680336000000, 1680336000000],
+            "synonyms": ["created timestamp in epoch milliseconds"]
           },
           {
             "name": "source",
             "type": "table column",
             "column name": "sbDpSource",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The exchange where the price record originated from, which is either 'NASDAQ', 'NYSE' or 'Vanguard'",
+            "sample values": ["NYSE", "NASDAQ", "Vanguard"],
+            "synonyms": ["price record origin"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The daily updates on tickers including their price information within a single day",
+        "synonyms": ["historical stock prices", "daily ticker price data"]
       },
       {
         "name": "transactions",
         "type": "simple table",
         "table path": "main.sbTransaction",
         "unique properties": [
-          "transaction_id"
+          "transaction_id",
+          "kpx"
         ],
         "properties": [
           {
@@ -374,158 +312,128 @@
             "type": "table column",
             "column name": "sbTxId",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The unique identifying string for each transaction",
+            "sample values": ["TX035", "TX001", "TX008", "TX033"],
+            "synonyms": ["transaction key"]
           },
           {
             "name": "customer_id",
             "type": "table column",
             "column name": "sbTxCustId",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The id of the customer who made the transaction",
+            "sample values": ["C003", "C005", "C007", "C001", "C008"],
+            "synonyms": ["customer key"]
           },
           {
             "name": "ticker_id",
             "type": "table column",
             "column name": "sbTxTickerId",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The id of the ticker being bought/sold in the transaction",
+            "sample values": ["T001", "T007", "T008"],
+            "synonyms": ["ticker key"]
           },
           {
             "name": "date_time",
             "type": "table column",
             "column name": "sbTxDateTime",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The timestamp that the transaction was made at",
+            "synonyms": ["transaction timestamp", "buy/sell datetime"]
           },
           {
             "name": "transaction_type",
             "type": "table column",
             "column name": "sbTxType",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The type of transaction, which is either 'buy' or 'sell'",
+            "sample values": ["buy", "sell"],
+            "synonyms": ["category", "classification"]
           },
           {
             "name": "shares",
             "type": "table column",
             "column name": "sbTxShares",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The number of shares being bought/sold in the transaction",
+            "sample values": [150, 120, 110],
+            "synonyms": ["volume traded", "transaction size"]
           },
           {
             "name": "price",
             "type": "table column",
             "column name": "sbTxPrice",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The price that the ticker was bought/sold at in the transaction",
+            "sample values": [180, 200, 220, 150, 130],
+            "synonyms": ["buy price", "sell price", "cost", "per-share value"]
           },
           {
             "name": "amount",
             "type": "table column",
             "column name": "sbTxAmount",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The total monetary value of the transaction (cost for buy, revenue for sell), which is the price multiplied by the number of shares",
+            "sample values": [27000, 24000, 24200, 15000, 13000],
+            "synonyms": ["total cost", "total revenue", "transaction value"]
           },
           {
             "name": "currency",
             "type": "table column",
             "column name": "sbTxCcy",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The currency that the transaction was made in, which is always 'USD'",
+            "sample values": ["USD"]
           },
           {
             "name": "tax",
             "type": "table column",
             "column name": "sbTxTax",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The tax applied by the brokerage onto the transaction",
+            "sample values": [135, 120, 121, 75, 65],
+            "synonyms": ["levy", "duty", "tariff"]
           },
           {
             "name": "commission",
             "type": "table column",
             "column name": "sbTxCommission",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The commission taken by the brokerage for the transaction",
+            "sample values": [20, 15, 10],
+            "synonyms": ["brokerage fee", "transaction fee"]
           },
           {
             "name": "kpx",
             "type": "table column",
             "column name": "sbTxKpx",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The internal code used for the transaction, which corresponds to the transaction id",
+            "sample values": ["KP056", "KP053", "KP011"],
+            "synonyms": []
           },
           {
             "name": "settlement_date_str",
             "type": "table column",
             "column name": "sbTxSettlementDateStr",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The date the transaction was settled, which is a string in the form YYYYMMDD HH:MM:SS, or null if not settled yet",
+            "sample values": ["20230401 09:30:00", "20230401 10:15:00", "20230401 11:00:00"],
+            "synonyms": ["settlement timestamp", "datetime of transaction finalization"]
           },
           {
             "name": "status",
             "type": "table column",
             "column name": "sbTxStatus",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The status of the transaction, which is either 'success', 'fail', or 'pending'",
+            "sample values": ["success", "fail", "pending"],
+            "synonyms": ["transaction state"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All transactions made through the brokerage",
+        "synonyms": ["exchanges", "trades", "buy/sell orders"]
       }
     ],
     "relationships": [
@@ -535,13 +443,14 @@
         "parent collection": "customers",
         "child collection": "transactions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "_id": [
             "customer_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "All of the transactions made by the customer, including both buys and sells",
+        "synonyms": ["exchanges made", "trades made", "stock purchases and sales"]
       },
       {
         "name": "customer",
@@ -549,8 +458,9 @@
         "original parent": "customers",
         "original property": "transactions_made",
         "singular": true,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The customer who made the transaction",
+        "synonyms": ["user", "client", "stock buyer/seller"]
       },
       {
         "name": "transactions_of",
@@ -558,13 +468,14 @@
         "parent collection": "tickers",
         "child collection": "transactions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "_id": [
             "ticker_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The transactions made of a ticker, including both buys and sells of the ticker",
+        "synonyms": ["purchases", "sales", "exchanges", "trades of ticker"]
       },
       {
         "name": "ticker",
@@ -572,8 +483,9 @@
         "original parent": "tickers",
         "original property": "transactions_of",
         "singular": true,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The ticker that the transaction was made of",
+        "synonyms": ["stock", "etf", "fund", "company"]
       },
       {
         "name": "ticker",
@@ -581,13 +493,14 @@
         "parent collection": "daily_prices",
         "child collection": "tickers",
         "singular": true,
+        "always matches": true,
         "keys": {
           "ticker_id": [
             "_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The ticker that the daily price record corresponds to",
+        "synonyms": ["stock", "etf", "fund", "company"]
       },
       {
         "name": "daily_prices",
@@ -595,8 +508,9 @@
         "original parent": "daily_prices",
         "original property": "ticker",
         "singular": false,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": false,
+        "description": "The daily price records for the ticker",
+        "synonyms": ["historical prices", "price updates"]
       }
     ],
     "additional definitions": [],
@@ -620,10 +534,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "make",
@@ -631,10 +543,8 @@
             "column name": "make",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "model",
@@ -642,10 +552,8 @@
             "column name": "model",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "year",
@@ -653,10 +561,8 @@
             "column name": "year",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "color",
@@ -664,10 +570,8 @@
             "column name": "color",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "vin_number",
@@ -675,10 +579,8 @@
             "column name": "vin_number",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "engine_type",
@@ -686,10 +588,8 @@
             "column name": "engine_type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "transmission",
@@ -697,10 +597,8 @@
             "column name": "transmission",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "cost",
@@ -708,10 +606,8 @@
             "column name": "cost",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "crtd_ts",
@@ -719,10 +615,8 @@
             "column name": "crtd_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -742,10 +636,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "first_name",
@@ -753,10 +645,8 @@
             "column name": "first_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "last_name",
@@ -764,10 +654,8 @@
             "column name": "last_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "email",
@@ -775,10 +663,8 @@
             "column name": "email",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "phone",
@@ -786,10 +672,8 @@
             "column name": "phone",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "hire_date",
@@ -797,10 +681,8 @@
             "column name": "hire_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "termination_date",
@@ -808,10 +690,8 @@
             "column name": "termination_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "crtd_ts",
@@ -819,10 +699,8 @@
             "column name": "crtd_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -842,10 +720,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "first_name",
@@ -853,10 +729,8 @@
             "column name": "first_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "last_name",
@@ -864,10 +738,8 @@
             "column name": "last_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "email",
@@ -875,10 +747,8 @@
             "column name": "email",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "phone",
@@ -886,10 +756,8 @@
             "column name": "phone",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "address",
@@ -897,10 +765,8 @@
             "column name": "address",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "city",
@@ -908,10 +774,8 @@
             "column name": "city",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "state",
@@ -919,10 +783,8 @@
             "column name": "state",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "zip_code",
@@ -930,10 +792,8 @@
             "column name": "zip_code",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "crtd_ts",
@@ -941,10 +801,8 @@
             "column name": "crtd_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -964,10 +822,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "vendor_name",
@@ -975,10 +831,8 @@
             "column name": "vendor_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "payment_date",
@@ -986,10 +840,8 @@
             "column name": "payment_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "payment_amount",
@@ -997,10 +849,8 @@
             "column name": "payment_amount",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "payment_method",
@@ -1008,10 +858,8 @@
             "column name": "payment_method",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "invoice_number",
@@ -1019,10 +867,8 @@
             "column name": "invoice_number",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "invoice_date",
@@ -1030,10 +876,8 @@
             "column name": "invoice_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "due_date",
@@ -1041,10 +885,8 @@
             "column name": "due_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "crtd_ts",
@@ -1052,10 +894,8 @@
             "column name": "crtd_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1075,10 +915,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "sale_id",
@@ -1086,10 +924,8 @@
             "column name": "sale_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "payment_date",
@@ -1097,10 +933,8 @@
             "column name": "payment_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "payment_amount",
@@ -1108,10 +942,8 @@
             "column name": "payment_amount",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "payment_method",
@@ -1119,10 +951,8 @@
             "column name": "payment_method",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "crtd_ts",
@@ -1130,10 +960,8 @@
             "column name": "crtd_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1153,10 +981,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "car_id",
@@ -1164,10 +990,8 @@
             "column name": "car_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "salesperson_id",
@@ -1175,10 +999,8 @@
             "column name": "salesperson_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "customer_id",
@@ -1186,10 +1008,8 @@
             "column name": "customer_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "sale_price",
@@ -1197,10 +1017,8 @@
             "column name": "sale_price",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "sale_date",
@@ -1208,10 +1026,8 @@
             "column name": "sale_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "crtd_ts",
@@ -1219,10 +1035,8 @@
             "column name": "crtd_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1242,10 +1056,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "snapshot_date",
@@ -1253,10 +1065,8 @@
             "column name": "snapshot_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "car_id",
@@ -1264,10 +1074,8 @@
             "column name": "car_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "is_in_inventory",
@@ -1275,10 +1083,8 @@
             "column name": "is_in_inventory",
             "data type": "bool",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "crtd_ts",
@@ -1286,10 +1092,8 @@
             "column name": "crtd_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1309,7 +1113,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "car",
@@ -1318,7 +1122,7 @@
         "original property": "sale_records",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "inventory_snapshots",
@@ -1332,7 +1136,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "car",
@@ -1341,7 +1145,7 @@
         "original property": "inventory_snapshots",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "sales_made",
@@ -1355,7 +1159,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "salesperson",
@@ -1364,7 +1168,7 @@
         "original property": "sales_made",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "car_purchases",
@@ -1378,7 +1182,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "customer",
@@ -1387,7 +1191,7 @@
         "original property": "car_purchases",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "payment",
@@ -1401,7 +1205,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "sale_record",
@@ -1410,7 +1214,7 @@
         "original property": "payment",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       }
     ],
     "additional definitions": [],
@@ -1434,10 +1238,8 @@
             "column name": "doc_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "first_name",
@@ -1445,10 +1247,8 @@
             "column name": "first_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "last_name",
@@ -1456,10 +1256,8 @@
             "column name": "last_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "speciality",
@@ -1467,10 +1265,8 @@
             "column name": "specialty",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "year_reg",
@@ -1478,10 +1274,8 @@
             "column name": "year_reg",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "med_school_name",
@@ -1489,10 +1283,8 @@
             "column name": "med_school_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "loc_city",
@@ -1500,10 +1292,8 @@
             "column name": "loc_city",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "loc_state",
@@ -1511,10 +1301,8 @@
             "column name": "loc_state",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "loc_zip",
@@ -1522,10 +1310,8 @@
             "column name": "loc_zip",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "bd_cert_num",
@@ -1533,10 +1319,8 @@
             "column name": "bd_cert_num",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1556,10 +1340,8 @@
             "column name": "patient_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "first_name",
@@ -1567,10 +1349,8 @@
             "column name": "first_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "last_name",
@@ -1578,10 +1358,8 @@
             "column name": "last_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "date_of_birth",
@@ -1589,10 +1367,8 @@
             "column name": "date_of_birth",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "date_of_registration",
@@ -1600,10 +1376,8 @@
             "column name": "date_of_registration",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "gender",
@@ -1611,10 +1385,8 @@
             "column name": "gender",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "email",
@@ -1622,10 +1394,8 @@
             "column name": "email",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "phone",
@@ -1633,10 +1403,8 @@
             "column name": "phone",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "addr_city",
@@ -1644,10 +1412,8 @@
             "column name": "addr_city",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "addr_state",
@@ -1655,10 +1421,8 @@
             "column name": "addr_state",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "addr_zip",
@@ -1666,10 +1430,8 @@
             "column name": "addr_zip",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "ins_type",
@@ -1677,10 +1439,8 @@
             "column name": "ins_type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "ins_policy_num",
@@ -1688,10 +1448,8 @@
             "column name": "ins_policy_num",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "height_cm",
@@ -1699,10 +1457,8 @@
             "column name": "height_cm",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "weight_kg",
@@ -1710,10 +1466,8 @@
             "column name": "weight_kg",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1733,10 +1487,8 @@
             "column name": "drug_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "drug_name",
@@ -1744,10 +1496,8 @@
             "column name": "drug_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "manufacturer",
@@ -1755,10 +1505,8 @@
             "column name": "manufacturer",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "drug_type",
@@ -1766,10 +1514,8 @@
             "column name": "drug_type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "moa",
@@ -1777,10 +1523,8 @@
             "column name": "moa",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "fda_appr_dt",
@@ -1788,10 +1532,8 @@
             "column name": "fda_appr_dt",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "admin_route",
@@ -1799,10 +1541,8 @@
             "column name": "admin_route",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "dos_amt",
@@ -1810,10 +1550,8 @@
             "column name": "dos_amt",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "dos_unit",
@@ -1821,10 +1559,8 @@
             "column name": "dos_unit",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "dos_freq_hrs",
@@ -1832,10 +1568,8 @@
             "column name": "dos_freq_hrs",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "ndc",
@@ -1843,10 +1577,8 @@
             "column name": "ndc",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1866,10 +1598,8 @@
             "column name": "diag_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "diag_code",
@@ -1877,10 +1607,8 @@
             "column name": "diag_code",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "diag_name",
@@ -1888,10 +1616,8 @@
             "column name": "diag_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "diag_desc",
@@ -1899,10 +1625,8 @@
             "column name": "diag_desc",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -1922,10 +1646,8 @@
             "column name": "treatment_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "patient_id",
@@ -1933,10 +1655,8 @@
             "column name": "patient_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "doc_id",
@@ -1944,10 +1664,8 @@
             "column name": "doc_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "drug_id",
@@ -1955,10 +1673,8 @@
             "column name": "drug_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "diag_id",
@@ -1966,10 +1682,8 @@
             "column name": "diag_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "start_dt",
@@ -1977,10 +1691,8 @@
             "column name": "start_dt",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "end_dt",
@@ -1988,10 +1700,8 @@
             "column name": "end_dt",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "is_placebo",
@@ -1999,10 +1709,8 @@
             "column name": "is_placebo",
             "data type": "bool",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "tot_drug_amt",
@@ -2010,10 +1718,8 @@
             "column name": "tot_drug_amt",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "drug_unit",
@@ -2021,10 +1727,8 @@
             "column name": "drug_unit",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -2044,10 +1748,8 @@
             "column name": "outcome_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "treatment_id",
@@ -2055,10 +1757,8 @@
             "column name": "treatment_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "assess_dt",
@@ -2066,10 +1766,8 @@
             "column name": "assess_dt",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day7_lesion_cnt",
@@ -2077,10 +1775,8 @@
             "column name": "day7_lesion_cnt",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day30_lesion_cnt",
@@ -2088,10 +1784,8 @@
             "column name": "day30_lesion_cnt",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day100_lesion_cnt",
@@ -2099,10 +1793,8 @@
             "column name": "day100_lesion_cnt",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day7_pasi_score",
@@ -2110,10 +1802,8 @@
             "column name": "day7_pasi_score",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day30_pasi_score",
@@ -2121,10 +1811,8 @@
             "column name": "day30_pasi_score",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day100_pasi_score",
@@ -2132,10 +1820,8 @@
             "column name": "day100_pasi_score",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day7_tewl",
@@ -2143,10 +1829,8 @@
             "column name": "day7_tewl",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day30_tewl",
@@ -2154,10 +1838,8 @@
             "column name": "day30_tewl",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day100_tewl",
@@ -2165,10 +1847,8 @@
             "column name": "day100_tewl",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day7_itch_vas",
@@ -2176,10 +1856,8 @@
             "column name": "day7_itch_vas",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day30_itch_vas",
@@ -2187,10 +1865,8 @@
             "column name": "day30_itch_vas",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day100_itch_vas",
@@ -2198,10 +1874,8 @@
             "column name": "day100_itch_vas",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day7_hfg",
@@ -2209,10 +1883,8 @@
             "column name": "day7_hfg",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day30_hfg",
@@ -2220,10 +1892,8 @@
             "column name": "day30_hfg",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "day100_hfg",
@@ -2231,10 +1901,8 @@
             "column name": "day100_hfg",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -2254,10 +1922,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "treatment_id",
@@ -2265,10 +1931,8 @@
             "column name": "treatment_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "med_name",
@@ -2276,10 +1940,8 @@
             "column name": "med_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "start_dt",
@@ -2287,10 +1949,8 @@
             "column name": "start_dt",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "end_dt",
@@ -2298,10 +1958,8 @@
             "column name": "end_dt",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "dose_amt",
@@ -2309,10 +1967,8 @@
             "column name": "dose_amt",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "dose_unit",
@@ -2320,10 +1976,8 @@
             "column name": "dose_unit",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "freq_hrs",
@@ -2331,10 +1985,8 @@
             "column name": "freq_hrs",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -2354,10 +2006,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "treatment_id",
@@ -2365,10 +2015,8 @@
             "column name": "treatment_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "reported_dt",
@@ -2376,10 +2024,8 @@
             "column name": "reported_dt",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "description",
@@ -2387,10 +2033,8 @@
             "column name": "description",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -2410,7 +2054,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "prescribed_treatments",
@@ -2419,7 +2063,7 @@
         "original property": "doctor",
         "singular": false,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "patient",
@@ -2433,7 +2077,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "treatments_received",
@@ -2442,7 +2086,7 @@
         "original property": "patient",
         "singular": false,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "drug",
@@ -2456,7 +2100,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "treatments_used_in",
@@ -2465,7 +2109,7 @@
         "original property": "drug",
         "singular": false,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "diagnosis",
@@ -2479,7 +2123,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "treatments_for",
@@ -2488,7 +2132,7 @@
         "original property": "diagnosis",
         "singular": false,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "outcome_records",
@@ -2502,7 +2146,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "treatment",
@@ -2511,7 +2155,7 @@
         "original property": "outcome_records",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "concomitant_meds",
@@ -2525,7 +2169,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "treatment",
@@ -2534,7 +2178,7 @@
         "original property": "concomitant_meds",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "adverse_events",
@@ -2548,7 +2192,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "treatment",
@@ -2557,7 +2201,7 @@
         "original property": "adverse_events",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       }
     ],
     "additional definitions": [],
@@ -2582,10 +2226,8 @@
             "column name": "uid",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "username",
@@ -2593,10 +2235,8 @@
             "column name": "username",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "email",
@@ -2604,10 +2244,8 @@
             "column name": "email",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "phone_number",
@@ -2615,10 +2253,8 @@
             "column name": "phone_number",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "created_at",
@@ -2626,10 +2262,8 @@
             "column name": "created_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "last_login_at",
@@ -2637,10 +2271,8 @@
             "column name": "last_login_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "user_type",
@@ -2648,10 +2280,8 @@
             "column name": "user_type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "status",
@@ -2659,10 +2289,8 @@
             "column name": "status",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "country",
@@ -2670,10 +2298,8 @@
             "column name": "country",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "address_billing",
@@ -2681,10 +2307,8 @@
             "column name": "address_billing",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "address_delivery",
@@ -2692,10 +2316,8 @@
             "column name": "address_delivery",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "kyc_status",
@@ -2703,10 +2325,8 @@
             "column name": "kyc_status",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "kyc_verified_at",
@@ -2714,10 +2334,8 @@
             "column name": "kyc_verified_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -2737,10 +2355,8 @@
             "column name": "mid",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "name",
@@ -2748,10 +2364,8 @@
             "column name": "name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "description",
@@ -2759,10 +2373,8 @@
             "column name": "description",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "website_url",
@@ -2770,10 +2382,8 @@
             "column name": "website_url",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "logo_url",
@@ -2781,10 +2391,8 @@
             "column name": "logo_url",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "created_at",
@@ -2792,10 +2400,8 @@
             "column name": "created_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "country",
@@ -2803,10 +2409,8 @@
             "column name": "country",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "state",
@@ -2814,10 +2418,8 @@
             "column name": "state",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "city",
@@ -2825,10 +2427,8 @@
             "column name": "city",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "postal_code",
@@ -2836,10 +2436,8 @@
             "column name": "postal_code",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "address",
@@ -2847,10 +2445,8 @@
             "column name": "address",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "status",
@@ -2858,10 +2454,8 @@
             "column name": "status",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "category",
@@ -2869,10 +2463,8 @@
             "column name": "category",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "sub_category",
@@ -2880,10 +2472,8 @@
             "column name": "sub_category",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "mcc",
@@ -2891,10 +2481,8 @@
             "column name": "mcc",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "contact_name",
@@ -2902,10 +2490,8 @@
             "column name": "contact_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "contact_email",
@@ -2913,10 +2499,8 @@
             "column name": "contact_email",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "contact_phone",
@@ -2924,10 +2508,8 @@
             "column name": "contact_phone",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -2947,10 +2529,8 @@
             "column name": "cid",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "merchant_id",
@@ -2958,10 +2538,8 @@
             "column name": "merchant_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "code",
@@ -2969,10 +2547,8 @@
             "column name": "code",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "description",
@@ -2980,10 +2556,8 @@
             "column name": "description",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "start_date",
@@ -2991,10 +2565,8 @@
             "column name": "start_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "end_date",
@@ -3002,10 +2574,8 @@
             "column name": "end_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "discount_type",
@@ -3013,10 +2583,8 @@
             "column name": "discount_type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "discount_value",
@@ -3024,10 +2592,8 @@
             "column name": "discount_value",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "min_purchase_amount",
@@ -3035,10 +2601,8 @@
             "column name": "min_purchase_amount",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "max_discount_amount",
@@ -3046,10 +2610,8 @@
             "column name": "max_discount_amount",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "redemption_limit",
@@ -3057,10 +2619,8 @@
             "column name": "redemption_limit",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "status",
@@ -3068,10 +2628,8 @@
             "column name": "status",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "created_at",
@@ -3079,10 +2637,8 @@
             "column name": "created_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "updated_at",
@@ -3090,10 +2646,8 @@
             "column name": "updated_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -3113,10 +2667,8 @@
             "column name": "txid",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "sender_id",
@@ -3124,10 +2676,8 @@
             "column name": "sender_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "sender_type",
@@ -3135,10 +2685,8 @@
             "column name": "sender_type",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "receiver_id",
@@ -3146,10 +2694,8 @@
             "column name": "receiver_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "receiver_type",
@@ -3157,10 +2703,8 @@
             "column name": "receiver_type",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "amount",
@@ -3168,10 +2712,8 @@
             "column name": "amount",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "status",
@@ -3179,10 +2721,8 @@
             "column name": "status",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "transaction_type",
@@ -3190,10 +2730,8 @@
             "column name": "type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "description",
@@ -3201,10 +2739,8 @@
             "column name": "description",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "coupon_id",
@@ -3212,10 +2748,8 @@
             "column name": "coupon_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "created_at",
@@ -3223,10 +2757,8 @@
             "column name": "created_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "completed_at",
@@ -3234,10 +2766,8 @@
             "column name": "completed_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "transaction_ref",
@@ -3245,10 +2775,8 @@
             "column name": "transaction_ref",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "gateway_name",
@@ -3256,10 +2784,8 @@
             "column name": "gateway_name",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "gateway_ref",
@@ -3267,10 +2793,8 @@
             "column name": "gateway_ref",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "device_id",
@@ -3278,10 +2802,8 @@
             "column name": "device_id",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "ip_address",
@@ -3289,10 +2811,8 @@
             "column name": "ip_address",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "user_agent",
@@ -3300,10 +2820,8 @@
             "column name": "user_agent",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -3326,10 +2844,8 @@
             "column name": "user_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "balance",
@@ -3337,10 +2853,8 @@
             "column name": "balance",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "updated_at",
@@ -3348,10 +2862,8 @@
             "column name": "updated_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -3374,10 +2886,8 @@
             "column name": "merchant_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "balance",
@@ -3385,10 +2895,8 @@
             "column name": "balance",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "updated_at",
@@ -3396,10 +2904,8 @@
             "column name": "updated_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -3419,10 +2925,8 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "user_id",
@@ -3430,10 +2934,8 @@
             "column name": "user_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "message",
@@ -3441,10 +2943,8 @@
             "column name": "message",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "notification_type",
@@ -3452,10 +2952,8 @@
             "column name": "type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "status",
@@ -3463,10 +2961,8 @@
             "column name": "status",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "created_at",
@@ -3474,10 +2970,8 @@
             "column name": "created_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "read_at",
@@ -3485,10 +2979,8 @@
             "column name": "read_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "device_type",
@@ -3496,10 +2988,8 @@
             "column name": "device_type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "device_id",
@@ -3507,10 +2997,8 @@
             "column name": "device_id",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "action_url",
@@ -3518,10 +3006,8 @@
             "column name": "action_url",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -3545,10 +3031,8 @@
             "column name": "user_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "session_start_ts",
@@ -3556,10 +3040,8 @@
             "column name": "session_start_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "session_end_ts",
@@ -3567,10 +3049,8 @@
             "column name": "session_end_ts",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "device_type",
@@ -3578,10 +3058,8 @@
             "column name": "device_type",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "device_id",
@@ -3589,10 +3067,8 @@
             "column name": "device_id",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -3615,10 +3091,8 @@
             "column name": "user_id",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "snapshot_date",
@@ -3626,10 +3100,8 @@
             "column name": "snapshot_date",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "tx_limit_daily",
@@ -3637,10 +3109,8 @@
             "column name": "tx_limit_daily",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "tx_limit_monthly",
@@ -3648,10 +3118,8 @@
             "column name": "tx_limit_monthly",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "membership_status",
@@ -3659,10 +3127,8 @@
             "column name": "membership_status",
             "data type": "numeric",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "password_hash",
@@ -3670,10 +3136,8 @@
             "column name": "password_hash",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "api_key",
@@ -3681,10 +3145,8 @@
             "column name": "api_key",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "verified_devices",
@@ -3692,10 +3154,8 @@
             "column name": "verified_devices",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "verified_ips",
@@ -3703,10 +3163,8 @@
             "column name": "verified_ips",
             "data type": "string",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "mfa_enabled",
@@ -3714,10 +3172,8 @@
             "column name": "mfa_enabled",
             "data type": "bool",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "marketing_opt_in",
@@ -3725,10 +3181,8 @@
             "column name": "marketing_opt_in",
             "data type": "bool",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           },
           {
             "name": "created_at",
@@ -3736,10 +3190,8 @@
             "column name": "created_at",
             "data type": "datetime",
             "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "sample values": [],
+            "synonyms": []
           }
         ],
         "description": "TODO",
@@ -3759,7 +3211,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "sending_user",
@@ -3768,7 +3220,7 @@
         "original property": "transactions_sent",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "transactions_received",
@@ -3782,7 +3234,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "receiving_user",
@@ -3791,7 +3243,7 @@
         "original property": "transactions_received",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "balances",
@@ -3805,7 +3257,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "user",
@@ -3814,7 +3266,7 @@
         "original property": "balances",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "notifications",
@@ -3828,7 +3280,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "user",
@@ -3837,7 +3289,7 @@
         "original property": "notifications",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "sessions",
@@ -3851,7 +3303,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "user",
@@ -3860,7 +3312,7 @@
         "original property": "sessions",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "setting_snapshots",
@@ -3874,7 +3326,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "user",
@@ -3883,7 +3335,7 @@
         "original property": "setting_snapshots",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "transactions_sent",
@@ -3897,7 +3349,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "sending_merchant",
@@ -3906,7 +3358,7 @@
         "original property": "transactions_sent",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "transactions_received",
@@ -3920,7 +3372,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "receiving_merchant",
@@ -3929,7 +3381,7 @@
         "original property": "transactions_received",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "balances",
@@ -3943,7 +3395,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "merchant",
@@ -3952,7 +3404,7 @@
         "original property": "balances",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "coupons",
@@ -3966,7 +3418,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "merchant",
@@ -3975,7 +3427,7 @@
         "original property": "coupons",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "transaction_used_in",
@@ -3989,7 +3441,7 @@
           ]
         },
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       },
       {
         "name": "coupon",
@@ -3998,7 +3450,7 @@
         "original property": "transaction_used_in",
         "singular": true,
         "description": "TODO",
-        "synonyms": "TODO"
+        "synonyms": []
       }
     ],
     "additional definitions": [],
