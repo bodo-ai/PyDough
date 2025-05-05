@@ -58,6 +58,7 @@ __all__ = [
     "POWER",
     "PRESENT",
     "PREV",
+    "QUARTER",
     "RANKING",
     "RELAVG",
     "RELCOUNT",
@@ -183,6 +184,9 @@ DATETIME = ExpressionFunctionOperator(
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(NumericType())
 )
+QUARTER = ExpressionFunctionOperator(
+    "QUARTER", False, RequireNumArgs(1), ConstantType(NumericType())
+)
 MONTH = ExpressionFunctionOperator(
     "MONTH", False, RequireNumArgs(1), ConstantType(NumericType())
 )
@@ -253,16 +257,16 @@ PERCENTILE = ExpressionWindowOperator(
 PREV = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
 NEXT = ExpressionWindowOperator("NEXT", RequireNumArgs(1), SelectArgumentType(0))
 RELSUM = ExpressionWindowOperator(
-    "RELSUM", RequireNumArgs(1), SelectArgumentType(0), False, False
+    "RELSUM", RequireNumArgs(1), SelectArgumentType(0), True, False
 )
 RELAVG = ExpressionWindowOperator(
-    "RELAVG", RequireNumArgs(1), SelectArgumentType(0), False, False
+    "RELAVG", RequireNumArgs(1), SelectArgumentType(0), True, False
 )
 RELCOUNT = ExpressionWindowOperator(
-    "RELCOUNT", RequireNumArgs(1), ConstantType(NumericType()), False, False
+    "RELCOUNT", RequireNumArgs(1), ConstantType(NumericType()), True, False
 )
 RELSIZE = ExpressionWindowOperator(
-    "RELSIZE", RequireNumArgs(0), ConstantType(NumericType()), False, False
+    "RELSIZE", RequireNumArgs(0), ConstantType(NumericType()), True, False
 )
 INTEGER = ExpressionFunctionOperator(
     "INTEGER", False, RequireNumArgs(1), ConstantType(NumericType())

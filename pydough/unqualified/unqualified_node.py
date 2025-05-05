@@ -491,17 +491,39 @@ def get_by_arg(
         `PyDoughUnqualifiedException` if the `by` argument is missing or the
         wrong type.
     """
-    if "by" not in kwargs:
+    is_cumulative: bool = bool(kwargs.get("cumulative", False))
+    has_by = "by" in kwargs
+    # Verify the arguments are well formed when cumulative=True.
+    if is_cumulative:
+        if not window_operator.allows_frame:
+            raise PyDoughUnqualifiedException(
+                f"The function `{window_operator.function_name}` does not allow the `cumulative` argument"
+            )
+        if not has_by:
+            raise PyDoughUnqualifiedException(
+                f"The `by` argument to `{window_operator.function_name}` must be provided when the `cumulative` argument is True"
+            )
+    if has_by:
+        # Verify the arguments are well formed when by is provided.
+        if window_operator.allows_frame:
+            if not is_cumulative:
+                raise PyDoughUnqualifiedException(
+                    f"The `cumulative` argument to `{window_operator.function_name}` must be True when the `by` argument is provided"
+                )
+        elif not window_operator.requires_order:
+            raise PyDoughUnqualifiedException(
+                f"The `{window_operator.function_name}` function does not allow a `by` argument"
+            )
+    else:
+        # Verify the arguments are well formed when by is not provided.
         if window_operator.requires_order:
             raise PyDoughUnqualifiedException(
                 f"The `by` argument to `{window_operator.function_name}` must be provided"
             )
         else:
             return []
-    elif not window_operator.allows_order:
-        raise PyDoughUnqualifiedException(
-            f"The `{window_operator.function_name}` function does not allow a `by` argument"
-        )
+    # Now that the arguments have been verified, extract the by argument and
+    # convert to a singleton list if it is a single unqualified node.
     by = kwargs.pop("by")
     if isinstance(by, UnqualifiedNode):
         by = [by]

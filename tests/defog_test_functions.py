@@ -1187,15 +1187,7 @@ def impl_defog_dealership_gen4():
     """
     filtered_sales = sales.WHERE(YEAR(sale_date) == 2023).CALCULATE(
         sale_price,
-        quarter=IFF(
-            MONTH(sale_date) <= 3,
-            "2023-01-01",
-            IFF(
-                MONTH(sale_date) <= 6,
-                "2023-04-01",
-                IFF(MONTH(sale_date) <= 9, "2023-07-01", "2023-10-01"),
-            ),
-        ),
+        quarter=DATETIME(sale_date, "start of quarter"),
         customer_state=customer.state,
     )
 
