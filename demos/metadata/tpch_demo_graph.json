@@ -6,7 +6,7 @@
       {
         "name": "regions",
         "type": "simple table",
-        "table path": "tpch.REGION",
+        "table path": "main.REGION",
         "unique properties": ["key"],
         "properties": [
           {
@@ -40,7 +40,7 @@
       {
         "name": "nations",
         "type": "simple table",
-        "table path": "tpch.NATION",
+        "table path": "main.NATION",
         "unique properties": ["key"],
         "properties": [
           {
@@ -82,7 +82,7 @@
       {
         "name": "parts",
         "type": "simple table",
-        "table path": "tpch.PART",
+        "table path": "main.PART",
         "unique properties": ["key"],
         "properties": [
           {
@@ -169,7 +169,7 @@
       {
         "name": "suppliers",
         "type": "simple table",
-        "table path": "tpch.SUPPLIER",
+        "table path": "main.SUPPLIER",
         "unique properties": ["key", "name"],
         "properties": [
           {
@@ -239,7 +239,7 @@
       {
         "name": "lines",
         "type": "simple table",
-        "table path": "tpch.LINEITEM",
+        "table path": "main.LINEITEM",
         "unique properties": [["order_key", "line_number"]],
         "properties": [
           {
@@ -385,7 +385,7 @@
       {
         "name": "supply_records",
         "type": "simple table",
-        "table path": "tpch.PARTSUPP",
+        "table path": "main.PARTSUPP",
         "unique properties": [["part_key", "supplier_key"]],
         "properties": [
           {
@@ -438,7 +438,7 @@
       {
         "name": "orders",
         "type": "simple table",
-        "table path": "tpch.ORDERS",
+        "table path": "main.ORDERS",
         "unique properties": ["key"],
         "properties": [
           {
@@ -526,7 +526,7 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "tpch.CUSTOMER",
+        "table path": "main.CUSTOMER",
         "unique properties": ["key", "name"],
         "properties": [
           {
