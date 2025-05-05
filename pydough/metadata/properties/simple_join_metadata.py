@@ -11,7 +11,9 @@ from pydough.metadata.errors import (
     HasPropertyWith,
     NoExtraKeys,
     PyDoughMetadataException,
+    extract_array,
     extract_bool,
+    extract_object,
     extract_string,
     simple_join_keys_predicate,
 )
@@ -159,17 +161,26 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             "singular",
             f"metadata for property {property_name} within {graph.error_name}",
         )
-        always_matches: bool = property_json.get("always matches", False)
+        always_matches: bool = False
+        if "always matches" in property_json:
+            always_matches = extract_bool(property_json, "always matches", error_name)
         HasPropertyWith("keys", simple_join_keys_predicate).verify(
             property_json, error_name
         )
         keys = property_json["keys"]
 
-        description: str | None = property_json.get("description", None)
-        synonyms: list[str] | None = property_json.get("synonyms", None)
-        extra_semantic_info: dict | None = property_json.get(
-            "extra semantic info", None
-        )
+        # Extract the optional fields from the JSON object.
+        description: str | None = None
+        synonyms: list[str] | None = None
+        extra_semantic_info: dict | None = None
+        if "description" in property_json:
+            description = extract_string(property_json, "description", error_name)
+        if "synonyms" in property_json:
+            synonyms = extract_array(property_json, "synonyms", error_name)
+        if "extra semantic info" in property_json:
+            extra_semantic_info = extract_object(
+                property_json, "extra semantic info", error_name
+            )
         NoExtraKeys(SimpleJoinMetadata.allowed_fields).verify(property_json, error_name)
 
         # Build the new property, its reverse, then add both

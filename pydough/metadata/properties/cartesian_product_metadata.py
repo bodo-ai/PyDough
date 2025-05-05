@@ -9,6 +9,9 @@ __all__ = ["CartesianProductMetadata"]
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
     NoExtraKeys,
+    extract_array,
+    extract_bool,
+    extract_object,
     extract_string,
 )
 from pydough.metadata.graphs import GraphMetadata
@@ -101,13 +104,23 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         )
         child_collection = graph.get_collection(child_collection_name)
         assert isinstance(child_collection, CollectionMetadata)
-        always_matches: bool = property_json.get("always matches", False)
+        always_matches: bool = False
+        if "always matches" in property_json:
+            always_matches = extract_bool(property_json, "always matches", error_name)
 
-        description: str | None = property_json.get("description", None)
-        synonyms: list[str] | None = property_json.get("synonyms", None)
-        extra_semantic_info: dict | None = property_json.get(
-            "extra semantic info", None
-        )
+        # Extract the optional fields from the JSON object.
+        description: str | None = None
+        synonyms: list[str] | None = None
+        extra_semantic_info: dict | None = None
+        if "description" in property_json:
+            description = extract_string(property_json, "description", error_name)
+        if "synonyms" in property_json:
+            synonyms = extract_array(property_json, "synonyms", error_name)
+        if "extra semantic info" in property_json:
+            extra_semantic_info = extract_object(
+                property_json, "extra semantic info", error_name
+            )
+
         NoExtraKeys(CartesianProductMetadata.allowed_fields).verify(
             property_json, error_name
         )

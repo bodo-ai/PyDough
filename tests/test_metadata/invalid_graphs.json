@@ -313,7 +313,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property"
+              "name": "key"
             }
           ]
         }
@@ -331,7 +331,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property",
+              "name": "key",
               "type": -1
             }
           ]
@@ -350,7 +350,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property",
+              "name": "key",
               "type": "unknown property type"
             }
           ]
@@ -369,7 +369,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property",
+              "name": "key",
               "type": "table column",
               "column name": "column_name"
             }
@@ -389,7 +389,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property",
+              "name": "key",
               "type": "table column",
               "column name": "column_name",
               "data type": 0
@@ -410,7 +410,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property",
+              "name": "key",
               "type": "table column",
               "column name": "column_name",
               "data type": "foobar"
@@ -431,7 +431,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property",
+              "name": "key",
               "type": "table column",
               "data type": "string"
             }
@@ -451,7 +451,7 @@
           "unique properties": ["key"],
           "properties": [
             {
-              "name": "property",
+              "name": "key",
               "type": "table column",
               "column name": 42,
               "data type": "string"
@@ -460,6 +460,1232 @@
         }
       ],
       "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_DESCRIPTION",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": 42
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_SYNONYMS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "synonyms": 42
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_SAMPLE_VALUES",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "sample values": 42
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "extra semantic info": 42
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_COLUMN_EXTRA_FIELDS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "foo": "hello world"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_SIMPLE_TABLE_DESCRIPTION",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ],
+          "description": 42
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_SIMPLE_TABLE_SYNONYMS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ],
+          "synonyms": 42
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_SIMPLE_TABLE_EXTRA_SEMANTIC_INFO",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ],
+          "extra semantic info": 42
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_SIMPLE_TABLE_EXTRA_FIELDS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [],
+      "fizbuzz": 42
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_MISSING_PARENT",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "child collection": "child"
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_MISSING_CHILD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent"
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_INVALID_PARENT_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": 42,
+          "child collection": "child"
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_INVALID_PARENT_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "fake_collection_name",
+          "child collection": "child"
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_INVALID_CHILD_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_INVALID_CHILD_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": "fake_collection_name"
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_DESCRIPTION",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": "child",
+          "description": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_ALWAYS_MATCHES",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": "child",
+          "always matches": "foo"
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_SYNONYMS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": "child",
+          "synonyms": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_EXTRA_SEMANTIC_INFO",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": "child",
+          "extra semantic info": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": "child",
+          "size": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_MISSING_PARENT",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "child collection": "child",
+          "keys": {"key": ["key"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_PARENT_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": 42,
+          "child collection": "child",
+          "keys": {"key": ["key"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_PARENT_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "bad_collection_name",
+          "child collection": "child",
+          "keys": {"key": ["key"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_MISSING_CHILD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "keys": {"key": ["key"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_CHILD_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": 42,
+          "keys": {"key": ["key"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_CHILD_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "bad_collection_name",
+          "keys": {"key": ["key"]}
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_MISSING_KEYS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "singular": false
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_KEYS_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "keys": 42,
+          "singular": false
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_KEYS_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "keys": {"key": "key"},
+          "singular": false
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_KEYS_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "keys": {"foo": ["key"]},
+          "singular": false
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_KEYS_4",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "keys": {"key": ["bar"]},
+          "singular": false
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_KEYS_5",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "keys": {"key": []},
+          "singular": false
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_INVALID_KEYS_6",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "keys": {},
+          "singular": false
+        }
+      ]
     },
     {
       "name": "BAD_JOIN_CONDITIONS",

@@ -8,6 +8,7 @@ from pydough.metadata.errors import (
     NoExtraKeys,
     PyDoughMetadataException,
     extract_array,
+    extract_object,
     extract_string,
     is_string,
     unique_properties_predicate,
@@ -146,15 +147,22 @@ class SimpleTableMetadata(CollectionMetadata):
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
         table_path: str = extract_string(collection_json, "table path", error_name)
-        description: str | None = collection_json.get("description", None)
-        synonyms: list[str] | None = collection_json.get("synonyms", None)
-        extra_semantic_info: dict | None = collection_json.get(
-            "extra semantic info", None
-        )
         HasPropertyWith("unique properties", unique_properties_predicate).verify(
             collection_json, error_name
         )
         unique_properties: list[str | list[str]] = collection_json["unique properties"]
+        # Extract the optional fields from the JSON.
+        description: str | None = None
+        synonyms: list[str] | None = None
+        extra_semantic_info: dict | None = None
+        if "description" in collection_json:
+            description = extract_string(collection_json, "description", error_name)
+        if "synonyms" in collection_json:
+            synonyms = extract_array(collection_json, "synonyms", error_name)
+        if "extra semantic info" in collection_json:
+            extra_semantic_info = extract_object(
+                collection_json, "extra semantic info", error_name
+            )
         NoExtraKeys(SimpleTableMetadata.allowed_fields).verify(
             collection_json, error_name
         )

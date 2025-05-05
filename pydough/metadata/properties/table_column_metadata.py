@@ -10,6 +10,8 @@ from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
     NoExtraKeys,
     PyDoughMetadataException,
+    extract_array,
+    extract_object,
     extract_string,
     is_string,
 )
@@ -105,8 +107,31 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             property_json, error_name
         )
 
+        # Extract the optional fields from the JSON object.
+        sample_values: list | None = None
+        description: str | None = None
+        synonyms: list[str] | None = None
+        extra_semantic_info: dict | None = None
+        if "sample values" in property_json:
+            sample_values = extract_array(property_json, "sample values", error_name)
+        if "description" in property_json:
+            description = extract_string(property_json, "description", error_name)
+        if "synonyms" in property_json:
+            synonyms = extract_array(property_json, "synonyms", error_name)
+        if "extra semantic info" in property_json:
+            extra_semantic_info = extract_object(
+                property_json, "extra semantic info", error_name
+            )
+
         # Build the new property metadata object and add it to the collection.
         property: TableColumnMetadata = TableColumnMetadata(
-            property_name, collection, data_type, column_name
+            property_name,
+            collection,
+            data_type,
+            column_name,
+            sample_values,
+            description,
+            synonyms,
+            extra_semantic_info,
         )
         collection.add_property(property)
