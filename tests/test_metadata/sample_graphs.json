@@ -841,48 +841,42 @@
             "type": "table column",
             "column name": "s_name",
             "data type": "string",
-            "description": "TODO",
+            "description": "The name of the season, which is always 'Summer', 'Fall', 'Winter' or 'Spring'",
             "sample values": [
-              "TODO"
+              "Summer", "Fall", "Winter", "Spring"
             ],
-            "synonyms": "TODO"
+            "synonyms": ["time of year"]
           },
           {
             "name": "first_month",
             "type": "table column",
             "column name": "s_month1",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The index of the first month of the season, out of 1 (January) to 12 (December)",
+            "sample values": [1, 4, 7, 10],
+            "synonyms": ["beginning month", "start month", "first month of season index"]
           },
           {
             "name": "second_month",
             "type": "table column",
             "column name": "s_month2",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The index of the middle month of the season, out of 1 (January) to 12 (December)",
+            "sample values": [2, 5, 8, 11],
+            "synonyms": ["middle month", "second month of season index"]
           },
           {
             "name": "third_month",
             "type": "table column",
             "column name": "s_month3",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The index of the last month of the season, out of 1 (January) to 12 (December)",
+            "sample values": [3, 6, 9, 12],
+            "synonyms": ["last month", "end month", "third month of season index"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The seasons of the year",
+        "synonyms": ["times of year"]
       },
       {
         "name": "times_of_day",
@@ -899,37 +893,31 @@
             "type": "table column",
             "column name": "t_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The name of what time of day it is, which is always 'Pre-Dawn', 'Morning', 'Afternoon', 'Evening' or 'Night'",
+            "sample values": ["Pre-Dawn", "Morning", "Afternoon", "Evening", "Night"],
+            "synonyms": ["time of day"]
           },
           {
             "name": "start_hour",
             "type": "table column",
             "column name": "t_start_hour",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The first hour of the time of day, out of 0 (midnight) to 24 (midnight of the next day) that the time of day starts at (inclusive)",
+            "sample values": [0, 6, 12, 18, 21],
+            "synonyms": ["beginning hour"]
           },
           {
             "name": "end_hour",
             "type": "table column",
             "column name": "t_end_hour",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The last hour of the time of day, out of 0 (midnight) to 24 (midnight of the next day) that the time of day ends at (exclusive)",
+            "sample values": [6, 12, 18, 21, 24],
+            "synonyms": ["last hour"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The times of day",
+        "synonyms": ["parts of day"]
       },
       {
         "name": "eras",
@@ -946,82 +934,94 @@
             "type": "table column",
             "column name": "er_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The name of the era, which is always 'WWI', 'Interwar', 'WWII', 'Cold War' or 'Modern Era'",
+            "sample values": ["WWI", "Interwar", "WWII", "Cold War", "Modern Era"],
+            "synonyms": ["age", "period", "epoch", "time period", "time frame"]
           },
           {
             "name": "start_year",
             "type": "table column",
             "column name": "er_start_year",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The first year of the era (inclusive)",
+            "sample values": [1914, 1920, 1939, 1946, 1991],
+            "synonyms": ["beginning of era", "start of era", "start year of era"]
           },
           {
             "name": "end_year",
             "type": "table column",
             "column name": "er_end_year",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The last year of the era (exclusive)",
+            "sample values": [1920, 1939, 1946, 1991, 2025],
+            "synonyms": ["end of era", "last year of era"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The different eras in history",
+        "synonyms": ["ages", "periods", "epochs", "time periods", "time frames"]
       },
       {
         "name": "events",
         "type": "simple table",
         "table path": "EVENTS",
         "unique properties": [
+          "key",
           "name"
         ],
         "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "ev_key",
+            "data type": "numeric",
+            "description": "A unique identifier id for the event",
+            "sample values": ["event id"],
+            "synonyms": ["id"]
+          },
           {
             "name": "name",
             "type": "table column",
             "column name": "ev_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The description of the event in history",
+            "sample values": ["Assassination of Archduke Ferdinand", "First Battle of Ypres", "Amazon Becomes a Trillion-Dollar Company", "19th Amendment Ratified"],
+            "synonyms": ["description"]
           },
           {
             "name": "date_time",
             "type": "table column",
             "column name": "ev_dt",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The date/time when the event occurred.",
+            "synonyms": ["timestamp", "date of event", "time of event"]
           },
           {
             "name": "event_type",
             "type": "table column",
             "column name": "ev_typ",
             "data type": "string",
-            "description": "TODO",
+            "description": "A tag identifying what category the event belongs to, which is always 'death', 'war', 'science', 'politics', 'culture', 'health', 'economy', 'sports', 'terrorism', 'technology', 'natural_disaster', 'violence', 'disaster' or 'religion'",
             "sample values": [
-              "TODO"
+              "death",
+              "war",
+              "science",
+              "politics",
+              "culture",
+              "health",
+              "economy",
+              "sports",
+              "terrorism",
+              "technology",
+              "natural_disaster",
+              "violence",
+              "disaster",
+              "religion"
             ],
-            "synonyms": "TODO"
+            "synonyms": ["event category", "classification"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Various recorded events of history",
+        "synonyms": ["notable events", "historical events"]
       },
       {
         "name": "users",
@@ -1037,37 +1037,33 @@
             "type": "table column",
             "column name": "user_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The identifying number of the user",
+            "sample values": [1, 7, 12, 20],
+            "synonyms": ["user key"]
           },
           {
             "name": "name",
             "type": "table column",
             "column name": "user_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The name of the user",
+            "sample values": ["Trixie Maattel", "Plasma", "Sasha Velour", "Kandy Muse", "Alyssa Edwards"],
+            "synonyms": ["User name"]
           },
           {
             "name": "region",
             "type": "table column",
             "column name": "user_region",
             "data type": "string",
-            "description": "TODO",
+            "description": "The descriptor tag of the region that the user is from, which is always 'Canada', 'UK', 'US-Midwest', 'US-South', 'US-East' or 'US-West'",
             "sample values": [
-              "TODO"
+              "Canada", "UK", "US-Midwest", "US-South", "US-East", "US-West"
             ],
-            "synonyms": "TODO"
+            "synonyms": ["part of world", "area"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The various users registered in the system",
+        "synonyms": ["people", "individuals", "clients", "customers", "consumers"]
       },
       {
         "name": "searches",
@@ -1082,70 +1078,72 @@
             "type": "table column",
             "column name": "search_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The unique identifier id for the search",
+            "sample values": [1, 13, 56, 78, 111],
+            "synonyms": ["search key"]
           },
           {
             "name": "user_id",
             "type": "table column",
             "column name": "search_user_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The user id of the user that performed the search",
+            "sample values": [2, 4, 6, 15, 19],
+            "synonyms": ["user key"]
           },
           {
             "name": "search_engine",
             "type": "table column",
             "column name": "search_engine",
             "data type": "string",
-            "description": "TODO",
+            "description": "The name of the search engine that was used to perform the search, which is always 'Bing', 'Brave', 'DuckDuckGo', 'Ecosia', 'Google', 'Mojeek', 'Qwant', 'Swisscows', 'Yahoo' or 'Yandex'",
             "sample values": [
-              "TODO"
+              "Bing",
+              "Brave",
+              "DuckDuckGo",
+              "Ecosia",
+              "Google",
+              "Mojeek",
+              "Qwant",
+              "Swisscows",
+              "Yahoo",
+              "Yandex"
             ],
-            "synonyms": "TODO"
+            "synonyms": ["search engine name", "search browser", "search platform"]
           },
           {
             "name": "search_string",
             "type": "table column",
             "column name": "search_string",
             "data type": "string",
-            "description": "TODO",
+            "description": "The string typed by the user into the search engine",
             "sample values": [
-              "TODO"
+              "Details about First Crusade and Godfrey of Bouillon",
+              "Fall of Constantinople and its consequence",
+              "On what day of the year was the first test-tube baby born?"
             ],
-            "synonyms": "TODO"
+            "synonyms": ["query", "search term", "search query", "search input"]
           },
           {
             "name": "ts",
             "type": "table column",
             "column name": "search_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The date/time when the search was performed",
+            "synonyms": ["search timestamp"]
           },
           {
             "name": "n_results",
             "type": "table column",
             "column name": "search_num_results",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [
-              "TODO"
-            ],
-            "synonyms": "TODO"
+            "description": "The number of results the search engine returned for the search",
+            "sample values": [7381, 1044, 13, 3, 209],
+            "synonyms": []
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Various searches made by users across multiple search engines",
+        "synonyms": ["queries", "user searches"]
       }
     ],
     "relationships": [
@@ -1155,9 +1153,10 @@
         "parent collection": "events",
         "child collection": "seasons",
         "singular": true,
+        "always matches": true,
         "condition": "(MONTH(self.date_time) == other.first_month) | (MONTH(self.date_time) == other.second_month) | (MONTH(self.date_time) == other.third_month)",
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The season that the event occurred in",
+        "synonyms": ["event season", "time of year"]
       },
       {
         "name": "events",
@@ -1165,8 +1164,9 @@
         "original parent": "events",
         "original property": "season",
         "singular": false,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The events that occurred in the season",
+        "synonyms": ["seasonal events"]
       },
       {
         "name": "time_of_day",
@@ -1174,9 +1174,10 @@
         "parent collection": "events",
         "child collection": "times_of_day",
         "singular": true,
+        "always matches": true,
         "condition": "(other.start_hour <= HOUR(self.date_time)) & (HOUR(self.date_time) < other.end_hour)",
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The time of day that the event occurred at",
+        "synonyms": ["event time of day", "part of day", "time of day of event"]
       },
       {
         "name": "events",
@@ -1184,8 +1185,9 @@
         "original parent": "events",
         "original property": "time_of_day",
         "singular": false,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The events that occurred during a certain time of day",
+        "synonyms": ["events during time of day"]
       },
       {
         "name": "era",
@@ -1193,9 +1195,10 @@
         "parent collection": "events",
         "child collection": "eras",
         "singular": true,
+        "always matches": true,
         "condition": "(other.start_year <= YEAR(self.date_time)) & (YEAR(self.date_time) < other.end_year)",
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The era that an event was part of",
+        "synonyms": ["event era", "age", "period", "epoch", "time period", "time frame"]
       },
       {
         "name": "events",
@@ -1203,8 +1206,9 @@
         "original parent": "events",
         "original property": "era",
         "singular": false,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The events that happened during an era",
+        "synonyms": ["era notable moments", "historical events"]
       },
       {
         "name": "searches",
@@ -1212,13 +1216,14 @@
         "parent collection": "users",
         "child collection": "searches",
         "singular": false,
+        "always matches": true,
         "keys": {
           "user_id": [
             "user_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The searches made by the user",
+        "synonyms": ["user searches", "user queries"]
       },
       {
         "name": "user",
@@ -1226,8 +1231,9 @@
         "original parent": "users",
         "original property": "searches",
         "singular": true,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The user who made the search",
+        "synonyms": ["search user"]
       },
       {
         "name": "events",
@@ -1235,9 +1241,10 @@
         "parent collection": "searches",
         "child collection": "events",
         "singular": false,
+        "always matches": false,
         "condition": "CONTAINS(LOWER(self.search_string), LOWER(other.name))",
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "Any historical events that the search string is related to because it contains as a sub-string (case-insensitive",
+        "synonyms": ["search event subjects"]
       },
       {
         "name": "searches",
@@ -1245,8 +1252,9 @@
         "original parent": "searches",
         "original property": "events",
         "singular": false,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": false,
+        "description": "Any searches that were identifiable as being related about the historical event because they contain the event name as a sub-string (case-insensitive)",
+        "synonyms": ["searches about event", "searches related to event"]
       },
       {
         "name": "season",
@@ -1254,9 +1262,10 @@
         "parent collection": "searches",
         "child collection": "seasons",
         "singular": true,
+        "always matches": true,
         "condition": "(MONTH(self.ts) == other.first_month) | (MONTH(self.ts) == other.second_month) | (MONTH(self.ts) == other.third_month)",
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The season that the search was performed in",
+        "synonyms": ["search season", "search time of year"]
       },
       {
         "name": "searches",
@@ -1264,8 +1273,9 @@
         "original parent": "searches",
         "original property": "season",
         "singular": false,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The searches that were performed in the season",
+        "synonyms": ["seasonal searches", "searches during time of year"]
       },
       {
         "name": "time_of_day",
@@ -1273,9 +1283,10 @@
         "parent collection": "searches",
         "child collection": "times_of_day",
         "singular": true,
+        "always matches": true,
         "condition": "(other.start_hour <= HOUR(self.ts)) & (HOUR(self.ts) < other.end_hour)",
-        "description": "TODO",
-        "synonyms": "TODO"
+        "description": "The time of day the search was performed during",
+        "synonyms": ["search time of day", "search part of day"]
       },
       {
         "name": "searches",
@@ -1283,8 +1294,9 @@
         "original parent": "searches",
         "original property": "time_of_day",
         "singular": false,
-        "description": "TODO",
-        "synonyms": "TODO"
+        "always matches": true,
+        "description": "The searches that  were performed during a certain time of day",
+        "synonyms": ["searches during time of day"]
       }
     ],
     "additional definitions": [],
