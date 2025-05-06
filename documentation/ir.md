@@ -30,7 +30,7 @@ The overarching pipeline for converting PyDough Python text into SQL text is as 
 2. When `to_sql` or `to_df` is called on this unqualified nodes, it is first sent through a process called [qualification](#qualification) which converts unqualified nodes into qualified DAG nodes, or [QDAG nodes](#qdag) for short. These QDAG nodes utilize the metadata in order to correctly associate every aspect of the PyDough logic with the data being analyzed/transformed, and is also where a great deal of the verification of the PyDough code's validity happens.
 3. Next, the QDAG nodes are run through a process called [hybrid conversion](#hybrid-conversion) which restructures the logic into a data structure known as the [hybrid tree](#hybrid-tree) to better organize how different types of subtrees are linked together.
 4. The hybrid tree is further transformed by the [decorrelation procedure](#hybrid-decorrelation) to remove correlated references created by the hybrid conversion process.
-5. The transformed hybrid tree is converted into a [relational tree](#relational-tree) highly reminiscent of the data structure used to represent relational algebra in frameworks such as Apache Calcite. The conversion to this data structure is called [relational conversion](#relational-conversion).
+5. The transformed hybrid tree is converted into a [relational tree](#relational-tree) highly reminiscent of the data structure used to represent relational algebra in frameworks such as [Apache Calcite](https://calcite.apache.org/docs/algebra.html). The conversion to this data structure is called [relational conversion](#relational-conversion).
 6. Several [optimizations](#relational-optimization) are performed on the relational tree to combine/delete/split/transpose relational nodes, resulting in plans that are better for performance and/or visual quality when converted to SQL.
 7. The Relational tree is [converted](#sqlglot-conversion) into the [internal AST](#sqlglot-ast) used by the open source Python library SQLGlot. This library is used for transpiling between different SQL dialects, so it is trivial to convert the SQLglot AST into SQL text of many different dialects.
 8. The SQLGlot AST is [simplified & optimized](#sqlglot-optimization) less so to improve the performance of the SQL when executed, and moreso to improve the visual quality when it is converted into text.
@@ -40,27 +40,29 @@ To recap, the overall pipeline is as follows (if viewing with VSCode preview, yo
 ```mermaid
 flowchart TD
     A[Python
-    Text] -->|"Unqualified
+    Text] -->|"(1) Unqualified
     Transform"| B(Unqualified
     Node)
-    B -->|Qualification| C[QDAG
+    B -->|"(2) Qualification"| C[QDAG
     Node]
     B'[Metadata] -->C
-    C -->|"Hybrid
+    C -->|"(3) Hybrid
     Conversion"| D[Hybrid Tree]
-    D <--> D'{{Hybrid
-    Decorrelation}}
-    D --> E[Relational
-    Tree]
-    E <--> E'{{Relational
-    Optimization}}
-    F <--> F'{{SQLGlot
-    Optimization}}
-    E -->|SQLGlot
-    Conversion| F[SQLGlot
+    D <--> D'{{"(4) Hybrid
+    Decorrelation"}}
+    D -->|"(5) Relational
+    Conversion"| E["Relational
+    Tree"]
+    E <--> E'{{"(6) Relational
+    Optimization"}}
+    F <--> F'{{"(8) SQLGlot
+    Optimization"}}
+    E -->|"(7) SQLGlot
+    Conversion"| F[SQLGlot
     AST]
-    F --> G[SQL
-    Text]
+    F -->|"(9) SQLGlot
+    API"| G["SQL
+    Text"]
 ```
 
 
@@ -185,7 +187,7 @@ This has the following structure as QDAG nodes:
 ```
 ──┬─ TPCH
   ├─── TableCollection[nations]
-  ├─┬─ Calculate[region_name=$1.name, nation_name=name, n_customers_in_debt=COUNT($2)]
+  ├─┬─ Calculate[region_name=$1.name, nation_name=name, n_orders_from_debt_customers=COUNT($2)]
   │ ├─┬─ AccessChild
   │ │ └─── SubCollection[region]
   │ └─┬─ AccessChild
@@ -277,10 +279,15 @@ In this example, the main hybrid tree has two levels `H1` and `H2` (`H2` is the 
   - An access to the nations collection (how the step-down from `H1` to `H2` begins)
   - A calculate that defines `region_name`, `nation_name`, and `n_customers_in_debt`
   - An order-by that sorts by `nation_name` in ascending order.
-- `$0` is a singular access, meaning the data from `H2` and `$0` can be directly joined without needing to worry about changes in cardinality. They are joined on the condition that the `region_key` term from `H2` equals the `key` term from the bottom subtree of `$0` (which is `H3`).
+- `$0` is a singular access, meaning the data from `H2` and `$0` can be directly joined without needing to worry about changes in cardinality.
   - The contents of `$0` is just a single tree level `H3` which does not have any children and has a pipeline containing only an access to the `regions` collection.
-- `$1` is an aggregation access, meaning the data from `$1` must first be aggregated before it is joined with `H2`. The aggregation is done by grouping on the `nation_key` field of the bottom subtree of `$1` (which is `H5`) and computes the term `agg_0` as `COUNT()`. Then, the result is joined with `H2` on the condition that the `key` term from `H2` equals the `nation_key` field just used to aggregate.
-  - The contents of `$1` is two levels `H4` and `H5`. `H4` does not have any children and has a pipeline containing an access to the `customers` collection followed by a filter on the condition that `acctbal < 0`. `H5` does not have any children and only contains a single operation accessing the `orders` sub-collection of the parent level.
+  - The data from `$0` will be joined back onto `H2` on the condition that the `region_key` term from `H2` equals the `key` term from the bottom subtree of `$0` (which is `H3`).
+- `$1` is an aggregation access of `customers.orders`, meaning the data from `$1` must first be aggregated before it is joined with `H2`.
+  - The contents of `$1` is two levels `H4` and `H5`.
+  - `H4` does not have any children and has a pipeline containing an access to the `customers` collection followed by a filter on the condition that `acctbal < 0`.
+  - `H5` does not have any children and only contains a single operation accessing the `orders` sub-collection of the parent level.
+  - The aggregation will be done by grouping on the `nation_key` field of the bottom subtree of `$1` (which is `H5`) and computes the term `agg_0` as `COUNT()`.
+  - After aggregation, the result will be joined with `H2` on the condition that the `key` term from `H2` equals the `nation_key` field just used to aggregate.
 
 <!-- TOC --><a name="hybrid-conversion"></a>
 ### Hybrid Conversion
@@ -292,7 +299,7 @@ In this example, the main hybrid tree has two levels `H1` and `H2` (`H2` is the 
 <!-- TOC --><a name="hybrid-decorrelation"></a>
 ### Hybrid Decorrelation
 
-To understand why de-correlation matters, first consider the slightly more complex PyDough code example below. This PyDough code finds, for each nation in Europe, the total quantity of purchases made by customers from suppliers in the same nation. 5 nations with the largest number of orders made by customers in that nation in the building market segment where the total price of the order is at least double the average of the total prices of **all** orders.
+To understand why de-correlation matters, first consider the slightly more complex PyDough code example below. This PyDough code finds, for each nation in Europe, the total quantity of purchases made by customers from suppliers in the same nation.
 
 ```py
 selected_nations = regions.WHERE(
