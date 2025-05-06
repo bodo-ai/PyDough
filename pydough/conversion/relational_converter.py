@@ -46,7 +46,7 @@ from pydough.relational import (
     Scan,
     WindowCallExpression,
 )
-from pydough.types import BooleanType, Int64Type, UnknownType
+from pydough.types import BooleanType, NumericType, UnknownType
 
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
@@ -933,7 +933,7 @@ class RelTranslation:
             for name in context.relational_node.columns
         }
         limit_expr: LiteralExpression = LiteralExpression(
-            node.records_to_keep, Int64Type()
+            node.records_to_keep, NumericType()
         )
         orderings: list[ExpressionSortInfo] = make_relational_ordering(
             node.orderings, context.expressions

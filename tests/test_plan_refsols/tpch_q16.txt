@@ -1,6 +1,6 @@
 ROOT(columns=[('P_BRAND', P_BRAND), ('P_TYPE', P_TYPE), ('P_SIZE', P_SIZE), ('SUPPLIER_COUNT', SUPPLIER_COUNT)], orderings=[(SUPPLIER_COUNT):desc_last, (P_BRAND):asc_first, (P_TYPE):asc_first, (P_SIZE):asc_first])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'P_BRAND': P_BRAND, 'P_SIZE': P_SIZE, 'P_TYPE': P_TYPE, 'SUPPLIER_COUNT': SUPPLIER_COUNT}, orderings=[(SUPPLIER_COUNT):desc_last, (P_BRAND):asc_first, (P_TYPE):asc_first, (P_SIZE):asc_first])
-  PROJECT(columns={'P_BRAND': p_brand, 'P_SIZE': p_size, 'P_TYPE': p_type, 'SUPPLIER_COUNT': DEFAULT_TO(agg_0, 0:int64)})
+ LIMIT(limit=Literal(value=10, type=NumericType()), columns={'P_BRAND': P_BRAND, 'P_SIZE': P_SIZE, 'P_TYPE': P_TYPE, 'SUPPLIER_COUNT': SUPPLIER_COUNT}, orderings=[(SUPPLIER_COUNT):desc_last, (P_BRAND):asc_first, (P_TYPE):asc_first, (P_SIZE):asc_first])
+  PROJECT(columns={'P_BRAND': p_brand, 'P_SIZE': p_size, 'P_TYPE': p_type, 'SUPPLIER_COUNT': DEFAULT_TO(agg_0, 0:numeric)})
    AGGREGATE(keys={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type}, aggregations={'agg_0': NDISTINCT(supplier_key)})
     FILTER(condition=NOT(LIKE(comment_2, '%Customer%Complaints%':string)), columns={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type, 'supplier_key': supplier_key})
      JOIN(conditions=[t0.supplier_key == t1.key], types=['left'], columns={'comment_2': t1.comment, 'p_brand': t0.p_brand, 'p_size': t0.p_size, 'p_type': t0.p_type, 'supplier_key': t0.supplier_key})

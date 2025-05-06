@@ -39,22 +39,22 @@ from pydough.relational.relational_expressions import (
     WindowCallExpression,
 )
 from pydough.pydough_operators import ADD, RANKING
-from pydough.types import Int64Type
+from pydough.types import NumericType
 
 # Create a column reference
-column_ref = ColumnReference("column_name", Int64Type())
+column_ref = ColumnReference("column_name", NumericType())
 
 # Create a literal expression
-literal_expr = LiteralExpression(10, Int64Type())
+literal_expr = LiteralExpression(10, NumericType())
 
 # Create a call expression for addition
-call_expr = CallExpression(ADD, Int64Type(), [column_ref, literal_expr])
+call_expr = CallExpression(ADD, NumericType(), [column_ref, literal_expr])
 
 # Create an expression sort info
 sort_info = ExpressionSortInfo(call_expr, ascending=True, nulls_first=False)
 
 # Create a call to a window function
-window_call = WindowCallExpression(RANKING, Int64Type(), [], [], [sort_info], {})
+window_call = WindowCallExpression(RANKING, NumericType(), [], [], [sort_info], {})
 
 # Convert the call expression to a string
 call_expr_str = call_expr.to_string()
@@ -114,20 +114,20 @@ from pydough.relational.relational_expressions import (
     ColumnReference,
     LiteralExpression,
 )
-from pydough.types import Int64Type, BooleanType
+from pydough.types import NumericType, BooleanType
 
 # Create a scan node
-scan_node = Scan("table_name", {"column_name": ColumnReference("column_name", Int64Type())})
+scan_node = Scan("table_name", {"column_name": ColumnReference("column_name", NumericType())})
 
 # Create a filter node
 filter_condition = LiteralExpression(True, BooleanType())
 filter_node = Filter(scan_node, filter_condition, scan_node.columns)
 
 # Create a project node
-project_node = Project(filter_node, {"column_name": ColumnReference("column_name", Int64Type())})
+project_node = Project(filter_node, {"column_name": ColumnReference("column_name", NumericType())})
 
 # Create a limit node
-limit_expression = LiteralExpression(10, Int64Type())
+limit_expression = LiteralExpression(10, NumericType())
 limit_node = Limit(project_node, limit_expression, project_node.columns)
 
 # Create a join node
@@ -135,7 +135,7 @@ join_condition = LiteralExpression(True, BooleanType())
 join_node = Join([scan_node, filter_node], [join_condition], [JoinType.INNER], scan_node.columns)
 
 # Create a relational root node
-root_node = RelationalRoot(limit_node, [("column_name", ColumnReference("column_name", Int64Type()))])
+root_node = RelationalRoot(limit_node, [("column_name", ColumnReference("column_name", NumericType()))])
 
 # Convert the root node to a string
 root_node_str = root_node.to_string()

@@ -7,7 +7,7 @@ from test_utils import AstNodeTestInfo, LiteralInfo
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import AstNodeBuilder, PyDoughQDAG
-from pydough.types import Int64Type, PyDoughType, StringType
+from pydough.types import NumericType, PyDoughType, StringType
 
 
 @pytest.mark.parametrize(
@@ -20,22 +20,22 @@ from pydough.types import Int64Type, PyDoughType, StringType
             id="always_string-empty_args",
         ),
         pytest.param(
-            pydop.ConstantType(Int64Type()),
+            pydop.ConstantType(NumericType()),
             [],
-            Int64Type(),
-            id="always_int64-empty_args",
+            NumericType(),
+            id="always_numeric-empty_args",
         ),
         pytest.param(
             pydop.SelectArgumentType(0),
-            [LiteralInfo(0, Int64Type()), LiteralInfo("foo", StringType())],
-            Int64Type(),
-            id="first_arg-int64_string",
+            [LiteralInfo(0, NumericType()), LiteralInfo("foo", StringType())],
+            NumericType(),
+            id="first_arg-numeric_string",
         ),
         pytest.param(
             pydop.SelectArgumentType(1),
-            [LiteralInfo(1, Int64Type()), LiteralInfo("foo", StringType())],
+            [LiteralInfo(1, NumericType()), LiteralInfo("foo", StringType())],
             StringType(),
-            id="second_arg-int64_string",
+            id="second_arg-numeric_string",
         ),
     ],
 )

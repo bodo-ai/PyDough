@@ -91,20 +91,20 @@ from pydough.relational.relational_expressions import (
     ColumnReference,
     LiteralExpression,
 )
-from pydough.types import Int64Type, BooleanType
+from pydough.types import NumericType, BooleanType
 
 # Create a scan node
-scan_node = Scan("table_name", {"column_name": ColumnReference("column_name", Int64Type())})
+scan_node = Scan("table_name", {"column_name": ColumnReference("column_name", NumericType())})
 
 # Create a filter node
 filter_condition = LiteralExpression(True, BooleanType())
 filter_node = Filter(scan_node, filter_condition, scan_node.columns)
 
 # Create a project node
-project_node = Project(filter_node, {"column_name": ColumnReference("column_name", Int64Type())})
+project_node = Project(filter_node, {"column_name": ColumnReference("column_name", NumericType())})
 
 # Create a limit node
-limit_expression = LiteralExpression(10, Int64Type())
+limit_expression = LiteralExpression(10, NumericType())
 limit_node = Limit(project_node, limit_expression, project_node.columns)
 
 # Create a join node
@@ -112,7 +112,7 @@ join_condition = LiteralExpression(True, BooleanType())
 join_node = Join([scan_node, filter_node], [join_condition], [JoinType.INNER], scan_node.columns)
 
 # Create a relational root node
-root_node = RelationalRoot(limit_node, [("column_name", ColumnReference("column_name", Int64Type()))])
+root_node = RelationalRoot(limit_node, [("column_name", ColumnReference("column_name", NumericType()))])
 
 # Convert the root node to a string
 root_node_str = root_node.to_string()

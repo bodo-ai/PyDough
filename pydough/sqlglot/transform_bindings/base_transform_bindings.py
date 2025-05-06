@@ -13,7 +13,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
-from pydough.types import BooleanType, Int64Type, PyDoughType, StringType
+from pydough.types import BooleanType, NumericType, PyDoughType, StringType
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
@@ -523,7 +523,7 @@ class BaseTransformBindings:
                                 sql_one,  # If true, use index 1 (start from beginning)
                                 start_idx_glot,  # If false, use the calculated positive index
                             ],
-                            [BooleanType(), Int64Type(), Int64Type()],
+                            [BooleanType(), NumericType(), NumericType()],
                         ),
                     )
                     return answer
@@ -556,7 +556,7 @@ class BaseTransformBindings:
                                 sql_zero,  # If true, length is 0 (empty string)
                                 stop_idx_glot,  # If false, use index position as length
                             ],
-                            [BooleanType(), Int64Type(), Int64Type()],
+                            [BooleanType(), NumericType(), NumericType()],
                         ),
                     )
             case _:
@@ -585,7 +585,7 @@ class BaseTransformBindings:
                             sql_one,  # If calculated position < 1, use position 1
                             start_idx_glot,  # Otherwise use calculated position
                         ],
-                        [BooleanType(), Int64Type(), Int64Type()],
+                        [BooleanType(), NumericType(), NumericType()],
                     )
 
                     # Convert positive stop_idx to 1-based indexing by adding 1
@@ -615,7 +615,7 @@ class BaseTransformBindings:
                                     expression=start_idx_adjusted_glot,
                                 ),
                             ],
-                            [BooleanType(), Int64Type(), Int64Type()],
+                            [BooleanType(), NumericType(), NumericType()],
                         ),
                     )
                     return answer
@@ -656,10 +656,10 @@ class BaseTransformBindings:
                                             expression=start_idx_adjusted_glot,
                                         ),
                                     ],
-                                    [BooleanType(), Int64Type(), Int64Type()],
+                                    [BooleanType(), NumericType(), NumericType()],
                                 ),
                             ],
-                            [BooleanType(), Int64Type(), Int64Type()],
+                            [BooleanType(), NumericType(), NumericType()],
                         ),
                     )
                     return answer
@@ -682,7 +682,7 @@ class BaseTransformBindings:
                             sql_one,  # If calculated position < 1, use position 1
                             pos_start_idx_glot,  # Otherwise use calculated position
                         ],
-                        [BooleanType(), Int64Type(), Int64Type()],
+                        [BooleanType(), NumericType(), NumericType()],
                     )
 
                     # Convert negative stop index to positive equivalent
@@ -704,7 +704,7 @@ class BaseTransformBindings:
                                     expression=start_idx_adjusted_glot,
                                 ),
                             ],
-                            [BooleanType(), Int64Type(), Int64Type()],
+                            [BooleanType(), NumericType(), NumericType()],
                         ),
                     )
 
@@ -1048,11 +1048,11 @@ class BaseTransformBindings:
                             minus_one_glot,
                             one_glot,
                         ],
-                        [BooleanType(), Int64Type(), Int64Type()],
+                        [BooleanType(), NumericType(), NumericType()],
                     ),
                 ),
             ],
-            [BooleanType(), Int64Type(), Int64Type()],
+            [BooleanType(), NumericType(), NumericType()],
         )
         return answer
 

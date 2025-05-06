@@ -1,4 +1,4 @@
-ROOT(columns=[('nation_name', name), ('name', name_3), ('cust_rank', RANKING(args=[], partition=[key], order=[(acctbal):desc_first], allow_ties=True))], orderings=[])
- JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'acctbal': t1.acctbal, 'key': t0.key, 'name': t0.name, 'name_3': t1.name})
+ROOT(columns=[('nation_name', name), ('name', name_3), ('cust_rank', RANKING(args=[], partition=[key], order=[(account_balance):desc_first], allow_ties=True))], orderings=[])
+ JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'key': t0.key, 'name': t0.name, 'name_3': t1.name})
   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-  SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal, 'name': c_name, 'nation_key': c_nationkey})
+  SCAN(table=tpch.CUSTOMER, columns={'account_balance': c_acctbal, 'name': c_name, 'nation_key': c_nationkey})

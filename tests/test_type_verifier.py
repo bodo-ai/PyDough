@@ -7,7 +7,7 @@ from test_utils import AstNodeTestInfo, LiteralInfo
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import AstNodeBuilder, PyDoughQDAG
-from pydough.types import Int64Type
+from pydough.types import NumericType
 
 
 @pytest.mark.parametrize(
@@ -17,12 +17,12 @@ from pydough.types import Int64Type
         pytest.param(pydop.RequireNumArgs(0), [], id="require_zero-empty_args"),
         pytest.param(
             pydop.RequireNumArgs(1),
-            [LiteralInfo(16, Int64Type())],
+            [LiteralInfo(16, NumericType())],
             id="require_one-one_arg",
         ),
         pytest.param(
             pydop.RequireNumArgs(2),
-            [LiteralInfo(72, Int64Type()), LiteralInfo(-1, Int64Type())],
+            [LiteralInfo(72, NumericType()), LiteralInfo(-1, NumericType())],
             id="require_two-two_args",
         ),
     ],

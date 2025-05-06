@@ -1,6 +1,6 @@
 ROOT(columns=[('container', container), ('n_types', n_types)], orderings=[(n_types):desc_last, (container):asc_first])
- LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'container': container, 'n_types': n_types}, orderings=[(n_types):desc_last, (container):asc_first])
-  PROJECT(columns={'container': container, 'n_types': DEFAULT_TO(agg_1, 0:int64)})
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'container': container, 'n_types': n_types}, orderings=[(n_types):desc_last, (container):asc_first])
+  PROJECT(columns={'container': container, 'n_types': DEFAULT_TO(agg_1, 0:numeric)})
    AGGREGATE(keys={'container': container}, aggregations={'agg_1': COUNT()})
     FILTER(condition=agg_0 > global_avg_price, columns={'container': container})
      JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t1.agg_0, 'container': t1.container, 'global_avg_price': t0.global_avg_price})

@@ -25,7 +25,7 @@ from pydough.relational.rel_util import (
     fetch_or_insert,
     transpose_expression,
 )
-from pydough.types import Int64Type
+from pydough.types import NumericType
 
 partial_aggregates: dict[
     pydop.PyDoughExpressionOperator,
@@ -93,7 +93,7 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
             )
             count_call: CallExpression = CallExpression(
                 pydop.COUNT,
-                Int64Type(),
+                NumericType(),
                 [agg_input],
             )
             sum_name: str = fetch_or_insert(new_aggregations, sum_call)
@@ -112,7 +112,7 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
                 avg_call = CallExpression(
                     pydop.DEFAULT_TO,
                     agg.data_type,
-                    [avg_call, LiteralExpression(0, Int64Type())],
+                    [avg_call, LiteralExpression(0, NumericType())],
                 )
             final_agg_columns[name] = avg_call
         else:
@@ -208,7 +208,7 @@ def transpose_aggregate_join(
                 agg.data_type,
                 [
                     ColumnReference(name, agg.data_type),
-                    LiteralExpression(0, Int64Type()),
+                    LiteralExpression(0, NumericType()),
                 ],
             )
             need_projection = True

@@ -414,7 +414,7 @@ Addresses.CALCULATE(zip_code).current_occupants.CALCULATE(email).packages.CALCUL
 )
 
 # Invoking normal functions/operations on other singular data
-Customers.CALCULATE(
+customers.CALCULATE(
     lowered_name=LOWER(name),
     normalized_birth_month=MONTH(birth_date) - 1,
     lives_in_c_state=STARTSWITH(current_address.state, "C"),
@@ -433,7 +433,7 @@ Customers.CALCULATE(
 from pandas import Timestamp
 from datetime import date
 from decimal import Decimal
-Customers.CALCULATE(
+customers.CALCULATE(
     a=0,
     b=3.14,
     c="hello world",
@@ -447,7 +447,7 @@ Customers.CALCULATE(
 )
 
 # Invoking aggregation functions on plural data
-Customers.CALCULATE(
+customers.CALCULATE(
     n_packages=COUNT(packages),
     home_has_had_packages_billed=HAS(current_address.billed_packages),
     avg_package_cost=AVG(packages.package_cost),
@@ -456,7 +456,7 @@ Customers.CALCULATE(
 )
 
 # Invoking window functions on singular data
-Customers.CALCULATE(
+customers.CALCULATE(
     cust_ranking=RANKING(by=COUNT(packages).DESC()),
     cust_percentile=PERCENTILE(by=COUNT(packages).DESC()),
 )
@@ -512,7 +512,7 @@ GRAPH.CALCULATE(n_cases=SUM(package_info.is_shipped_to_current_addr))
 
 ```py
 %%pydough
-Customers.CALCULATE(
+customers.CALCULATE(
     avg_package_cost=AVG(packages.cost)
 ).packages.CALCULATE(
     is_above_avg=cost > avg_package_cost
@@ -563,14 +563,14 @@ People.packages.CALCULATE(email)
 People.CALCULATE(my_email=email).packages.CALCULATE(email)
 ```
 
-**Bad Example #5**: Even though `cust_info` has defined `avg_package_cost`, the final expression `Customers.packages.CALCULATE(...)` does not have `cust_info` as an ancestor, so it cannot access `avg_package_cost` since it is not part of its own ancestry.
+**Bad Example #5**: Even though `cust_info` has defined `avg_package_cost`, the final expression `customers.packages.CALCULATE(...)` does not have `cust_info` as an ancestor, so it cannot access `avg_package_cost` since it is not part of its own ancestry.
 
 ```py
 %%pydough
-cust_info = Customers.CALCULATE(
+cust_info = customers.CALCULATE(
     avg_package_cost=AVG(packages.cost)
 )
-Customers.packages.CALCULATE(
+customers.packages.CALCULATE(
     is_above_avg=cost > avg_package_cost
 )
 ```
@@ -1292,7 +1292,7 @@ Additional keyword arguments can be supplied to `BEST` that change its behavior:
 
 ```py
 %%pydough
-Customers.packages.BEST(by=order_date.ASC(), per="Customers").CALCULATE(
+customers.packages.BEST(by=order_date.ASC(), per="customers").CALCULATE(
     package_id,
     shipping_address.zip_code
 )
@@ -1302,9 +1302,9 @@ Customers.packages.BEST(by=order_date.ASC(), per="Customers").CALCULATE(
 
 ```py
 %%pydough
-Customers.CALCULATE(
+customers.CALCULATE(
     ssn,
-    most_recent_cost=packages.BEST(by=order_date.DESC(), per="Customers").package_cost
+    most_recent_cost=packages.BEST(by=order_date.DESC(), per="customers").package_cost
 )
 ```
 
@@ -1322,8 +1322,8 @@ addr_info.BEST(by=(n_occupants.DESC(), address_id.ASC()))
 
 ```py
 %%pydough
-most_recent_package = packages.BEST(by=order_date.DESC(), per="Customers")
-Customers.CALCULATE(
+most_recent_package = packages.BEST(by=order_date.DESC(), per="customers")
+customers.CALCULATE(
     ssn,
     n_occ_most_recent_addr=COUNT(most_recent_package.shipping_address.current_occupants)
 )

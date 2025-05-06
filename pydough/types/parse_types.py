@@ -6,19 +6,14 @@ __all__ = ["parse_type_from_string"]
 
 
 from .array_type import ArrayType
-from .binary_type import BinaryType
 from .boolean_type import BooleanType
-from .date_type import DateType
-from .decimal_type import DecimalType
+from .datetime_type import DatetimeType
 from .errors import PyDoughTypeException
-from .float_types import Float32Type, Float64Type
-from .integer_types import Int8Type, Int16Type, Int32Type, Int64Type
 from .map_type import MapType
+from .numeric_type import NumericType
 from .pydough_type import PyDoughType
 from .string_type import StringType
 from .struct_type import StructType
-from .time_type import TimeType
-from .timestamp_type import TimestampType
 from .unknown_type import UnknownType
 
 
@@ -38,19 +33,10 @@ def parse_type_from_string(type_string: str) -> PyDoughType:
         PyDough type.
     """
     type_classes: list[type[PyDoughType]] = [
-        BinaryType,
-        BooleanType,
-        DecimalType,
-        DateType,
-        Float32Type,
-        Float64Type,
-        Int8Type,
-        Int16Type,
-        Int32Type,
-        Int64Type,
+        NumericType,
         StringType,
-        TimeType,
-        TimestampType,
+        BooleanType,
+        DatetimeType,
         UnknownType,
         ArrayType,
         MapType,

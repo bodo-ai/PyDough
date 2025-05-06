@@ -9,10 +9,10 @@ This page document the exact format that the JSON files containing PyDough metad
    * [Collection Type: Simple Table](#collection-type-simple-table)
 - [Properties](#properties)
    * [Property Type: Table Column](#property-type-table-column)
-   * [Property Type: Simple Join](#property-type-simple-join)
-   * [Property Type: General Join](#property-type-general-join)
-   * [Property Type: Cartesian Product](#property-type-cartesian-product)
-   * [Property Type: Compound Relationship](#property-type-compound-relationship)
+- [Relationship](#relationship)
+   * [Relationship Type: Simple Join](#relationship-type-simple-join)
+   * [Relationship Type: General Join](#relationship-type-general-join)
+   * [Relationship Type: Cartesian Product](#relationship-type-cartesian-product)
 - [PyDough Type Strings](#pydough-type-strings)
 - [Metadata Samples](#metadata-samples)
    * [Example: Education](#example-education)
@@ -40,7 +40,7 @@ Example of the structure of the metadata for the entire file:
     "BankerGraph": {
         "Accounts": {...},
         "Clients": {...},
-        "Transactions": {...}
+        "transactions": {...}
     },
     "GroceryGraph": {
         "FoodItems": {...},
@@ -58,15 +58,14 @@ Example of the structure of the metadata for the entire file:
 
 A collection with this type is essentially just a view of a table stored in whatever database is being used to execute the queries. Collections of this type have a type string of "simple_table" and the following additional key-value pairs in their metadata JSON object:
 
-- `table_path`: a string indicating the fully-qualified path to reach the table based on where it is stored, e.g. `<db_name>.<schema_name>.<table_name>`. The table_name here does not need to be the same as the name of the collection.
-- `unique_properties`: a list of JSON values indicating which properties are unique within the collection, meaning that no two rows of the table will have the same values. If a value in this list is a string, it means that property is unique within the collection. If a value in the list is a list of strings, it means that every combination of the properties in that list is unique within the collection.
+- `table path`: a string indicating the fully-qualified path to reach the table based on where it is stored, e.g. `<db_name>.<schema_name>.<table_name>`. The table_name here does not need to be the same as the name of the collection.
+- `unique properties`: a list of JSON values indicating which properties are unique within the collection, meaning that no two rows of the table will have the same values. If a value in this list is a string, it means that property is unique within the collection. If a value in the list is a list of strings, it means that every combination of the properties in that list is unique within the collection.
 
 The following types of properties are supported on this type of collection:
 
-- `table_column`
-- `simple_join`
-- `cartesian_product`
-- `compound`
+- `table column`
+- `simple join`
+- `cartesian product`
 
 Example of the structure of the metadata for a simple table collection:
 
@@ -105,8 +104,11 @@ Example of the structure of the metadata for a table column property:
 }
 ```
 
-<!-- TOC --><a name="property-type-simple-join"></a>
-### Property Type: Simple Join
+<!-- TOC --><a name="relationships"></a>
+## Relationships
+
+<!-- TOC --><a name="relationship-type-simple-join"></a>
+### Relationship Type: Simple Join
 
 A property with this type describes a subcollection of the current collection that is derived from performing an equi-join on two tables (e.g. `SELECT ... FROM T1 JOIN T2 ON T1.a=T2.x AND T1.b = T2.y`). Properties of this type are subcollections of the collection, as opposed to scalar attributes. If a collection has a property of this type, a corresponding property is added to the other collection to describe the reverse of the relationship. Properties of this type have a type string of "simple_join" and have the following additional key-value pairs in their metadata JSON object:
 
@@ -129,8 +131,8 @@ Example of the structure of the metadata for a simple join property (connects a 
 }
 ```
 
-<!-- TOC --><a name="property-type-general-join"></a>
-### Property Type: General Join
+<!-- TOC --><a name="relationship-type-general-join"></a>
+### Relationship Type: General Join
 
 This property type is a relationship variant of the simple join is the "general join", which instead of joining on equality of key columns has an arbitrary PyDough expression as a condition. This is useful for more arbitrary join conditions such as interval joins (e.g. `SELECT ... FROM T1 JOIN T2 ON T1.a <= T2.B AND T2.B <= T1.c`). Properties of this type are subcollections of the collection, as opposed to scalar attributes. If a collection has a property of this type, a corresponding property is added to the other collection to describe the reverse of the relationship. Properties of this type have a type string of "general_join" and have the following additional key-value pairs in their metadata JSON object:
 
@@ -157,51 +159,24 @@ Example of the structure of the metadata for a simple join property (connects a 
 }
 ```
 
-<!-- TOC --><a name="property-type-cartesian-product"></a>
-### Property Type: Cartesian Product
+<!-- TOC --><a name="relationship-type-cartesian-product"></a>
+### Relationship Type: Cartesian Product
 
 A property with this type describes a subcollection of the current collection that is derived from performing an cross-join on two collections (e.g. SELECT ... FROM T1, T2). Properties of this type are subcollections of the collection, as opposed to scalar attributes. If a collection has a property of this type, a corresponding property is added to the other collection to describe the reverse of the relationship. Properties of this type have a type string of "cartesian_product" and have the following additional key-value pairs in their metadata JSON object:
 
 - `other_collection_name`: a string indicating the name of the other collection that this property connects the current collection to. This must be another collection in the same graph that supports cartesian_product properties.
 - `reverse_relationship_name`: the name of the property that is to be added to the other collection to describe the reverse version of this relationship. This string must be a valid property name but cannot be equal to another existing property name in the other collection.
 
-Example of the structure of the metadata for a cartesian product property (connects every record of a collection `CalendarDates` to every record of collection `InventorySnapshots`):
+Example of the structure of the metadata for a cartesian product property (connects every record of a collection `CalendarDates` to every record of collection `inventory_snapshots`):
 
 ```json
 "snapshots": {
     "type": "cartesian_product",
-    "other_collection_name": "InventorySnapshots",
+    "other_collection_name": "inventory_snapshots",
     "reverse_relationship_name": "calendar_dates"
 }
 ```
 
-<!-- TOC --><a name="property-type-compound-relationship"></a>
-### Property Type: Compound Relationship
-
-A property with this type describes a subcollection of the current collection that is derived from combining a relationship from this collection to one of its subcollections with a relationship from that subcollection to one of its subcollections. Properties of this type are subcollections of the collection, as opposed to scalar attributes. If a collection has a property of this type, a corresponding property is added to the other collection to describe the reverse of the relationship, and the subcollection can inherit additional properties from the middle subcollection. Properties of this type have a type string of "compound" and have the following additional key-value pairs in their metadata JSON object:
-
-- `primary_property`: a string indicating the name of a property that connects this collection to a subcollection.
-- `secondary_property`: a string indicating the name of the property that connects the primary subcollection to one of its subcollections.
-- `singular`: a boolean that is true if each record in the current collection has at most 1 matching record of the subcollection’s subcollection, and false otherwise.
-- `no_collisions`: a boolean that is true if multiple records from this collection can match onto the same record from the subcollection’s subcollection, and false otherwise (true if-and-only-if the reverse relationship is singular).
-- `reverse_relationship_name`: the name of the property that is to be added to the other collection to describe the reverse version of this relationship. This string must be a valid property name but cannot be equal to another existing property name in the other collection.
-- `inherited_properties`: a JSON object indicating any properties of the primary subcollection that should be accessible from the secondary subcollection. The keys are the string names that the inherited properties are referred to by, which can be a new alias or the original name, and the values are names of the properties of the collection accessed by the primary property. The names used for the inherited properties cannot overlap with any other names of properties of the secondary subcollection, including other inherited properties it could have from other compound relationships. This JSON object can be empty if there are no inherited properties.
-
-Example of the structure of the metadata for a compound relationship property (connects a collection `Regions` to a collection `Customers` by combining `Regions.nations.customers` into a single property, skipping over a middle collection `Nations` but picking up its property `name` under a new name `nation_name):
-
-```json
-"customers": {
-    "type": "compound",
-    "primary_property": "nations",
-    "secondary_property": "customers",
-    "singular": false,
-    "no_collisions": true,
-    "inherited_properties": {
-        "nation_name": "name"
-    },
-    "reverse_relationship_name": "region"
-}
-```
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
@@ -211,9 +186,9 @@ The strings used in the type field for certain properties must be one of the fol
 - `int8`: an 8-bit integer.
 - `int16`: a 16-bit integer.
 - `int32`: a 32-bit integer.
-- `int64`: a 64-bit integer.
+- `numeric`: a 64-bit integer.
 - `float32`: a 32-bit float.
-- `float64`: a 64-bit float.
+- `numeric`: a 64-bit float.
 - `decimal[p,s]`: a fixed-point number with precision p (integer between 1 and 38) indicating the number of digits and scale s (integer between 0 and p, exclusive of p) indicating the number of digits to the right hand side of the decimal point.
 - `bool`: a boolean.
 - `string`: a string.
@@ -223,8 +198,8 @@ The strings used in the type field for certain properties must be one of the fol
 - `timestamp[p]`: a date with a time of day of a precision p (same rules as time).
 - `timestamp[p,tz]`: a date with a time of day of a precision p (same rules as time) with the timezone described by tz (e.g. `timestamp[9,America/Los_Angeles]`).
 - `array[t]`: an array of values of type t (where t is another PyDough type). For example: `array[int32]` or `array[array[string]]`.
-- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,int64]` or `map[string,array[date]]`.
-- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:date,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
+- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,numeric]` or `map[string,array[date]]`.
+- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:datetime,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
 - `unknown`: an unknown type.
 
 <!-- TOC --><a name="metadata-samples"></a>
@@ -277,19 +252,6 @@ The knowledge graph is for the following information about tables in a schema ca
             "p_ssn": ["a_ssn"]
           },
           "reverse_relationship_name": "person"
-        },
-        "schools_attended": {
-          "type": "compound",
-          "primary_property": "attendances",
-          "secondary_property": "school",
-          "singular": false,
-          "no_collisions": false,
-          "inherited_properties": {
-            "gpa": "gpa",
-            "graduation_date": "graduation_date",
-            "degree": "degree"
-          },
-          "reverse_relationship_name": "students"
         }
       }
     },
@@ -338,7 +300,7 @@ The knowledge graph is for the following information about tables in a schema ca
         "gpa": {
           "type": "table_column",
           "column_name": "a_gpa",
-          "data_type": "float64"
+          "data_type": "numeric"
         },
         "graduation_date": {
           "type": "table_column",
@@ -449,7 +411,7 @@ The knowledge graph is for the following information about tables in a schema ca
         "ca_id": {
           "type": "table_column",
           "column_name": "email",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "current_address": {
           "type": "simple_join",
@@ -481,7 +443,7 @@ The knowledge graph is for the following information about tables in a schema ca
         "package_id": {
           "type": "table_column",
           "column_name": "pid",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "customer_ssn": {
           "type": "table_column",
@@ -491,12 +453,12 @@ The knowledge graph is for the following information about tables in a schema ca
         "shipping_address_id": {
           "type": "table_column",
           "column_name": "ship_id",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "billing_address_id": {
           "type": "table_column",
           "column_name": "ship_id",
-          "data_type": "int64"
+          "data_type": "numeric"
         },
         "order_date": {
           "type": "table_column",

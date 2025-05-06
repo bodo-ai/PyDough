@@ -15,8 +15,18 @@ class AbstractMetadata(ABC):
 
     - `error_name`
     - `components`
-    - `get_nouns`
+    - `path`
     """
+
+    def __init__(
+        self,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
+    ):
+        self._description: str | None = description
+        self._synonyms: list[str] | None = synonyms
+        self._extra_semantic_info: dict | None = extra_semantic_info
 
     @property
     @abstractmethod
@@ -34,17 +44,6 @@ class AbstractMetadata(ABC):
         by equality.
         """
 
-    @abstractmethod
-    def get_nouns(self) -> dict[str, list["AbstractMetadata"]]:
-        """
-        Fetches all of the names of nouns accessible from the metadata for
-        a PyDough graph, collection, or property.
-
-        Returns:
-            A dictionary mapping the name of each noun to a list of all
-            metadata objects with that name.
-        """
-
     @property
     @abstractmethod
     def path(self) -> str:
@@ -58,3 +57,25 @@ class AbstractMetadata(ABC):
 
     def __repr__(self):
         return f"PyDoughMetadata[{self.error_name}]"
+
+    @property
+    def description(self) -> str | None:
+        """
+        The semantic description of the metadata object, if it exists.
+        """
+        return self._description
+
+    @property
+    def synonyms(self) -> list[str] | None:
+        """
+        The list of synonyms names for the metadata object, if they exist.
+        """
+        return self._synonyms
+
+    @property
+    def extra_semantic_info(self) -> dict | None:
+        """
+        A dictionary containing any extra semantic information that is
+        associated with the metadata object, if it exists.
+        """
+        return self._extra_semantic_info

@@ -8,9 +8,11 @@ __all__ = ["TableColumnMetadata"]
 
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
-    HasPropertyWith,
     NoExtraKeys,
     PyDoughMetadataException,
+    extract_array,
+    extract_object,
+    extract_string,
     is_string,
 )
 from pydough.types import PyDoughType, parse_type_from_string
@@ -29,8 +31,9 @@ class TableColumnMetadata(ScalarAttributeMetadata):
     # Set of names of fields that can be included in the JSON object
     # describing a table column property.
     allowed_fields: set[str] = PropertyMetadata.allowed_fields | {
-        "data_type",
-        "column_name",
+        "data type",
+        "column name",
+        "sample values",
     }
 
     def __init__(
@@ -39,9 +42,21 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         collection: CollectionMetadata,
         data_type: PyDoughType,
         column_name: str,
+        sample_values: list | None = None,
+        description: str | None = None,
+        synonyms: list[str] | None = None,
+        extra_semantic_info: dict | None = None,
     ):
-        super().__init__(name, collection, data_type)
-        is_string.verify(column_name, "column_name")
+        super().__init__(
+            name,
+            collection,
+            data_type,
+            sample_values,
+            description,
+            synonyms,
+            extra_semantic_info,
+        )
+        is_string.verify(column_name, "column name")
         self._column_name: str = column_name
 
     @property
@@ -57,39 +72,6 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         comp: list = super().components
         comp.append(self.column_name)
         return comp
-
-    @staticmethod
-    def verify_json_metadata(
-        collection: CollectionMetadata, property_name: str, property_json: dict
-    ) -> None:
-        """
-        Verifies that the JSON describing the metadata for a property within
-        a collection is well-formed to create a new TableColumnMetadata instance.
-        Should be dispatched from PropertyMetadata.verify_json_metadata which
-        implements more generic checks.
-
-        Args:
-            `collection`: the metadata for the PyDough collection that the
-            property would be inserted into.
-            `property_name`: the name of the property that would be inserted.
-            `property_json`: the JSON object that would be parsed to create
-            the new property.
-
-        Raises:
-            `PyDoughMetadataException`: if the JSON for the property is
-            malformed.
-        """
-        # Create the string used to identify the property in error messages.
-        error_name = TableColumnMetadata.create_error_name(
-            property_name, collection.error_name
-        )
-        # Verify that the property has the required `column_name` and
-        # `data_type` fields, without anything extra.
-        HasPropertyWith("column_name", is_string).verify(property_json, error_name)
-        HasPropertyWith("data_type", is_string).verify(property_json, error_name)
-        NoExtraKeys(TableColumnMetadata.allowed_fields).verify(
-            property_json, error_name
-        )
 
     @staticmethod
     def parse_from_json(
@@ -110,16 +92,46 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             `PyDoughMetadataException`: if the JSON for the property is
             malformed.
         """
+        error_name: str = TableColumnMetadata.create_error_name(
+            property_name, collection.error_name
+        )
         # Extract the `data_type` and `column_name` fields from the JSON object
-        type_string: str = property_json["data_type"]
+        type_string: str = extract_string(property_json, "data type", error_name)
         try:
             data_type: PyDoughType = parse_type_from_string(type_string)
         except PyDoughTypeException as e:
             raise PyDoughMetadataException(*e.args)
-        column_name: str = property_json["column_name"]
+        column_name: str = extract_string(property_json, "column name", error_name)
+
+        NoExtraKeys(TableColumnMetadata.allowed_fields).verify(
+            property_json, error_name
+        )
+
+        # Extract the optional fields from the JSON object.
+        sample_values: list | None = None
+        description: str | None = None
+        synonyms: list[str] | None = None
+        extra_semantic_info: dict | None = None
+        if "sample values" in property_json:
+            sample_values = extract_array(property_json, "sample values", error_name)
+        if "description" in property_json:
+            description = extract_string(property_json, "description", error_name)
+        if "synonyms" in property_json:
+            synonyms = extract_array(property_json, "synonyms", error_name)
+        if "extra semantic info" in property_json:
+            extra_semantic_info = extract_object(
+                property_json, "extra semantic info", error_name
+            )
 
         # Build the new property metadata object and add it to the collection.
         property: TableColumnMetadata = TableColumnMetadata(
-            property_name, collection, data_type, column_name
+            property_name,
+            collection,
+            data_type,
+            column_name,
+            sample_values,
+            description,
+            synonyms,
+            extra_semantic_info,
         )
         collection.add_property(property)

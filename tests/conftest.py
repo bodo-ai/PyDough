@@ -3,7 +3,6 @@ Definitions of various fixtures used in PyDough tests that are automatically
 available.
 """
 
-import json
 import os
 import sqlite3
 import subprocess
@@ -11,7 +10,7 @@ from collections.abc import Callable
 from functools import cache
 
 import pytest
-from test_utils import graph_fetcher, map_over_dict_values, noun_fetcher
+from test_utils import graph_fetcher
 
 import pydough
 import pydough.pydough_operators as pydop
@@ -84,15 +83,6 @@ def sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
-def sample_graph_nouns_path() -> str:
-    """
-    Tuple of the path to the JSON file containing the nouns for each
-    of the sample graphs.
-    """
-    return f"{os.path.dirname(__file__)}/test_metadata/sample_graphs_nouns.json"
-
-
-@pytest.fixture(scope="session")
 def invalid_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the invalid graphs.
@@ -105,10 +95,10 @@ def valid_sample_graph_names() -> set[str]:
     """
     Set of valid names to use to access a sample graph.
     """
-    return {"Amazon", "TPCH", "Empty", "Epoch"}
+    return {"TPCH", "Empty", "Epoch"}
 
 
-@pytest.fixture(params=["Amazon", "TPCH", "Empty"])
+@pytest.fixture(params=["TPCH", "Empty", "Epoch"])
 def sample_graph_names(request) -> str:
     """
     Fixture for the names that each of the sample graphs can be accessed.
@@ -133,28 +123,6 @@ def get_sample_graph(
         return pydough.parse_json_metadata_from_file(
             file_path=sample_graph_path, graph_name=name
         )
-
-    return impl
-
-
-@pytest.fixture
-def get_sample_graph_nouns(
-    sample_graph_nouns_path: str, valid_sample_graph_names: set[str]
-) -> noun_fetcher:
-    """
-    A function that takes in the name of a graph (currently only supports the
-    values 'amazon', 'tpch', and 'empty') and returns the metadata for that
-    PyDough graph.
-    """
-
-    def impl(name: str) -> dict[str, set[str]]:
-        if name not in valid_sample_graph_names:
-            raise Exception(f"Unrecognized graph name '{name}'")
-        nouns: dict[str, set[str]]
-        with open(sample_graph_nouns_path) as f:
-            nouns = json.load(f)[name]
-        # Convert the noun values for each name from a list to a set
-        return map_over_dict_values(nouns, set)
 
     return impl
 

@@ -40,9 +40,8 @@ from pydough.relational import (
 )
 from pydough.types import (
     BooleanType,
-    DateType,
-    DecimalType,
-    Int64Type,
+    DatetimeType,
+    NumericType,
     StringType,
     UnknownType,
 )
@@ -150,7 +149,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                     ),
                     "COUNT_ORDER": CallExpression(
                         COUNT,
-                        Int64Type(),
+                        NumericType(),
                         [],
                     ),
                 },
@@ -177,7 +176,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                                     ADD,
                                     UnknownType(),
                                     [
-                                        make_relational_literal(1, Int64Type()),
+                                        make_relational_literal(1, NumericType()),
                                         make_relational_column_reference("L_TAX"),
                                     ],
                                 ),
@@ -211,7 +210,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                                         SUB,
                                         UnknownType(),
                                         [
-                                            make_relational_literal(1, Int64Type()),
+                                            make_relational_literal(1, NumericType()),
                                             make_relational_column_reference(
                                                 "L_DISCOUNT"
                                             ),
@@ -229,7 +228,7 @@ def tpch_query_1_plan() -> RelationalRoot:
                                     # Note: This will be treated as a string literal
                                     # which is fine for now.
                                     make_relational_literal(
-                                        date(1998, 12, 1), DateType()
+                                        date(1998, 12, 1), DatetimeType()
                                     ),
                                 ],
                             ),
@@ -298,7 +297,7 @@ def tpch_query_3_plan() -> RelationalRoot:
             EQU,
             BooleanType(),
             [
-                make_relational_column_reference("C_MKTSEGMENT"),
+                make_relational_column_reference("C_market_segment"),
                 make_relational_literal("BUILDING", StringType()),
             ],
         ),
@@ -306,7 +305,9 @@ def tpch_query_3_plan() -> RelationalRoot:
             table_name="CUSTOMER",
             columns={
                 "C_CUSTKEY": make_relational_column_reference("C_CUSTKEY"),
-                "C_MKTSEGMENT": make_relational_column_reference("C_MKTSEGMENT"),
+                "C_market_segment": make_relational_column_reference(
+                    "C_market_segment"
+                ),
             },
         ),
     )
@@ -323,7 +324,7 @@ def tpch_query_3_plan() -> RelationalRoot:
             BooleanType(),
             [
                 make_relational_column_reference("O_ORDERDATE"),
-                make_relational_literal(date(1995, 3, 15), DateType()),
+                make_relational_literal(date(1995, 3, 15), DatetimeType()),
             ],
         ),
         input=Scan(
@@ -375,7 +376,7 @@ def tpch_query_3_plan() -> RelationalRoot:
                         SUB,
                         UnknownType(),
                         [
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                             make_relational_column_reference("L_DISCOUNT"),
                         ],
                     ),
@@ -393,7 +394,7 @@ def tpch_query_3_plan() -> RelationalRoot:
                 BooleanType(),
                 [
                     make_relational_column_reference("L_SHIPDATE"),
-                    make_relational_literal(date(1995, 3, 15), DateType()),
+                    make_relational_literal(date(1995, 3, 15), DatetimeType()),
                 ],
             ),
             input=Scan(
@@ -435,7 +436,7 @@ def tpch_query_3_plan() -> RelationalRoot:
             ),
         ],
         input=Limit(
-            limit=make_relational_literal(10, Int64Type()),
+            limit=make_relational_literal(10, NumericType()),
             columns={
                 "L_ORDERKEY": make_relational_column_reference("L_ORDERKEY"),
                 "REVENUE": make_relational_column_reference("REVENUE"),
@@ -555,7 +556,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 BooleanType(),
                                 [
                                     make_relational_column_reference("L_QUANTITY"),
-                                    make_relational_literal(24, Int64Type()),
+                                    make_relational_literal(24, NumericType()),
                                 ],
                             ),
                             CallExpression(
@@ -564,7 +565,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 [
                                     make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal(
-                                        Decimal("0.07"), DecimalType(3, 2)
+                                        Decimal("0.07"), NumericType()
                                     ),
                                 ],
                             ),
@@ -574,7 +575,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 [
                                     make_relational_column_reference("L_DISCOUNT"),
                                     make_relational_literal(
-                                        Decimal("0.05"), DecimalType(3, 2)
+                                        Decimal("0.05"), NumericType()
                                     ),
                                 ],
                             ),
@@ -584,7 +585,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 [
                                     make_relational_column_reference("L_SHIPDATE"),
                                     make_relational_literal(
-                                        date(1995, 1, 1), DateType()
+                                        date(1995, 1, 1), DatetimeType()
                                     ),
                                 ],
                             ),
@@ -594,7 +595,7 @@ def tpch_query_6_plan() -> RelationalRoot:
                                 [
                                     make_relational_column_reference("L_SHIPDATE"),
                                     make_relational_literal(
-                                        date(1994, 1, 1), DateType()
+                                        date(1994, 1, 1), DatetimeType()
                                     ),
                                 ],
                             ),
