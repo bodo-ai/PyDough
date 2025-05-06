@@ -10,8 +10,6 @@ __all__ = ["CorrelatedReference"]
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
-from .relational_expression_shuttle import RelationalExpressionShuttle
-from .relational_expression_visitor import RelationalExpressionVisitor
 
 
 class CorrelatedReference(RelationalExpression):
@@ -56,10 +54,11 @@ class CorrelatedReference(RelationalExpression):
             and super().equals(other)
         )
 
-    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+    def accept(self, visitor: "RelationalExpressionVisitor") -> None:  # type: ignore # noqa
         visitor.visit_correlated_reference(self)
 
     def accept_shuttle(
-        self, shuttle: RelationalExpressionShuttle
+        self,
+        shuttle: "RelationalExpressionShuttle",  # type: ignore # noqa
     ) -> RelationalExpression:
         return shuttle.visit_correlated_reference(self)

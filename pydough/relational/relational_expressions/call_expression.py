@@ -9,8 +9,6 @@ from pydough.pydough_operators import PyDoughExpressionOperator
 from pydough.types import PyDoughType
 
 from .abstract_expression import RelationalExpression
-from .relational_expression_shuttle import RelationalExpressionShuttle
-from .relational_expression_visitor import RelationalExpressionVisitor
 
 
 class CallExpression(RelationalExpression):
@@ -62,10 +60,11 @@ class CallExpression(RelationalExpression):
             and super().equals(other)
         )
 
-    def accept(self, visitor: RelationalExpressionVisitor) -> None:
+    def accept(self, visitor: "RelationalExpressionVisitor") -> None:  # type: ignore # noqa
         visitor.visit_call_expression(self)
 
     def accept_shuttle(
-        self, shuttle: RelationalExpressionShuttle
+        self,
+        shuttle: "RelationalExpressionShuttle",  # type: ignore # noqa
     ) -> RelationalExpression:
         return shuttle.visit_call_expression(self)

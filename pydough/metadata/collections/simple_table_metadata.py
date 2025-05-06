@@ -15,6 +15,7 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.properties import (
     CartesianProductMetadata,
     CompoundRelationshipMetadata,
+    GeneralJoinMetadata,
     InheritedPropertyMetadata,
     PropertyMetadata,
     SimpleJoinMetadata,
@@ -148,6 +149,7 @@ class SimpleTableMetadata(CollectionMetadata):
                 | SimpleJoinMetadata()
                 | CompoundRelationshipMetadata()
                 | InheritedPropertyMetadata()
+                | GeneralJoinMetadata()
             ):
                 pass
             case _:

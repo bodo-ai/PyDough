@@ -29,6 +29,7 @@ __all__ = [
     "PyDoughQDAG",
     "PyDoughQDAGException",
     "Reference",
+    "SidedReference",
     "Singular",
     "SubCollection",
     "TableCollection",
@@ -68,6 +69,7 @@ from .expressions import (
     PartitionKey,
     PyDoughExpressionQDAG,
     Reference,
+    SidedReference,
     WindowCall,
 )
 from .node_builder import AstNodeBuilder

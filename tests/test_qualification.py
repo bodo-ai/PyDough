@@ -9,12 +9,20 @@ import pytest
 from simple_pydough_functions import (
     absurd_partition_window_per,
     absurd_window_per,
+    customer_most_recent_orders,
+    n_orders_first_day,
+    orders_versus_first_orders,
     partition_as_child,
+    region_orders_from_nations_richest,
+    regional_first_order_best_line_part,
+    richest_customer_per_region,
     simple_collation,
     singular1,
     singular2,
     singular3,
     singular4,
+    supplier_best_part,
+    wealthiest_supplier,
 )
 from test_utils import (
     graph_fetcher,
@@ -601,6 +609,154 @@ from pydough.unqualified import (
   └─── Calculate[name=name]        
         """,
             id="singular4",
+        ),
+        pytest.param(
+            customer_most_recent_orders,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Customers]
+  ├─┬─ Where[HAS($1)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[orders]
+  │   └─── Where[RANKING(by=(order_date.DESC(na_pos='last'), key.ASC(na_pos='first')), levels=1, allow_ties=False) <= 5]
+  ├─┬─ Calculate[name=name, total_recent_value=SUM($1.total_price)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[orders]
+  │   └─── Where[RANKING(by=(order_date.DESC(na_pos='last'), key.ASC(na_pos='first')), levels=1, allow_ties=False) <= 5]
+  └─── TopK[3, total_recent_value.DESC(na_pos='last')] 
+        """,
+            id="customer_most_recent_orders",
+        ),
+        pytest.param(
+            richest_customer_per_region,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  └─┬─ Calculate[region_name=name]
+    ├─── SubCollection[nations]
+    └─┬─ Calculate[nation_name=name]
+      ├─── SubCollection[customers]
+      ├─── Where[RANKING(by=(acctbal.DESC(na_pos='last'), name.ASC(na_pos='first')), levels=2, allow_ties=False) == 1]
+      └─── Calculate[region_name=region_name, nation_name=nation_name, customer_name=name, balance=acctbal]   
+        """,
+            id="richest_customer_per_region",
+        ),
+        pytest.param(
+            wealthiest_supplier,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─── Where[RANKING(by=(account_balance.DESC(na_pos='last'), name.ASC(na_pos='first')), allow_ties=False) == 1]
+  └─── Calculate[name=name, account_balance=account_balance] 
+        """,
+            id="wealthiest_supplier",
+        ),
+        pytest.param(
+            n_orders_first_day,
+            """
+┌─── TPCH
+└─┬─ Calculate[n_orders=COUNT($1)]
+  └─┬─ AccessChild
+    ├─── TableCollection[Orders]
+    └─── Where[RANKING(by=(order_date.ASC(na_pos='first')), allow_ties=True) == 1]   
+        """,
+            id="n_orders_first_day",
+        ),
+        pytest.param(
+            supplier_best_part,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Suppliers]
+  ├─┬─ Where[$1.name == 'FRANCE']
+  │ └─┬─ AccessChild
+  │   └─── SubCollection[nation]
+  ├─┬─ Where[HAS($1)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[supply_records]
+  │   ├─┬─ Where[HAS($1)]
+  │   │ └─┬─ AccessChild
+  │   │   ├─── SubCollection[lines]
+  │   │   └─── Where[(YEAR(ship_date) == 1994) & (tax == 0)]
+  │   ├─┬─ Calculate[part_name=$1.name, quantity=SUM($2.quantity), n_shipments=COUNT($2)]
+  │   │ ├─┬─ AccessChild
+  │   │ │ └─── SubCollection[part]
+  │   │ └─┬─ AccessChild
+  │   │   ├─── SubCollection[lines]
+  │   │   └─── Where[(YEAR(ship_date) == 1994) & (tax == 0)]
+  │   ├─── Where[RANKING(by=(quantity.DESC(na_pos='last')), levels=1, allow_ties=False) == 1]
+  │   └─── Singular
+  ├─┬─ Calculate[supplier_name=name, part_name=$1.part_name, total_quantity=$1.quantity, n_shipments=$1.n_shipments]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[supply_records]
+  │   ├─┬─ Where[HAS($1)]
+  │   │ └─┬─ AccessChild
+  │   │   ├─── SubCollection[lines]
+  │   │   └─── Where[(YEAR(ship_date) == 1994) & (tax == 0)]
+  │   ├─┬─ Calculate[part_name=$1.name, quantity=SUM($2.quantity), n_shipments=COUNT($2)]
+  │   │ ├─┬─ AccessChild
+  │   │ │ └─── SubCollection[part]
+  │   │ └─┬─ AccessChild
+  │   │   ├─── SubCollection[lines]
+  │   │   └─── Where[(YEAR(ship_date) == 1994) & (tax == 0)]
+  │   ├─── Where[RANKING(by=(quantity.DESC(na_pos='last')), levels=1, allow_ties=False) == 1]
+  │   └─── Singular
+  └─── TopK[3, total_quantity.DESC(na_pos='last'), supplier_name.ASC(na_pos='first')]  
+        """,
+            id="supplier_best_part",
+        ),
+        pytest.param(
+            region_orders_from_nations_richest,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  ├─┬─ Calculate[region_name=name, n_orders=COUNT($1)]
+  │ └─┬─ AccessChild
+  │   └─┬─ SubCollection[nations]
+  │     ├─── SubCollection[customers]
+  │     └─┬─ Where[RANKING(by=(acctbal.DESC(na_pos='last'), name.ASC(na_pos='first')), levels=1, allow_ties=False) == 1]
+  │       └─── SubCollection[orders]
+  └─── OrderBy[region_name.ASC(na_pos='first')]
+        """,
+            id="region_orders_from_nations_richest",
+        ),
+        pytest.param(
+            regional_first_order_best_line_part,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Regions]
+  ├─┬─ Calculate[region_name=name, part_name=$1.name]
+  │ └─┬─ AccessChild
+  │   └─┬─ SubCollection[nations]
+  │     └─┬─ SubCollection[customers]
+  │       ├─── SubCollection[orders]
+  │       ├─── Where[RANKING(by=(order_date.ASC(na_pos='first'), key.ASC(na_pos='first')), levels=3, allow_ties=False) == 1]
+  │       └─┬─ Singular
+  │         ├─── SubCollection[lines]
+  │         ├─── Where[RANKING(by=(quantity.DESC(na_pos='last'), line_number.ASC(na_pos='first')), levels=4, allow_ties=False) == 1]
+  │         └─┬─ Singular
+  │           └─── SubCollection[part]
+  └─── OrderBy[region_name.ASC(na_pos='first')]
+        """,
+            id="regional_first_order_best_line_part",
+        ),
+        pytest.param(
+            orders_versus_first_orders,
+            """
+──┬─ TPCH
+  ├─── TableCollection[Orders]
+  ├─┬─ Calculate[customer_name=$1.customer_name, order_key=key, days_since_first_order=DATEDIFF('days', $1.order_date, order_date)]
+  │ └─┬─ AccessChild
+  │   ├─── SubCollection[customer]
+  │   ├─┬─ Where[$1.name == 'VIETNAM']
+  │   │ └─┬─ AccessChild
+  │   │   └─── SubCollection[nation]
+  │   └─┬─ Calculate[customer_name=name]
+  │     ├─── SubCollection[orders]
+  │     ├─── Where[RANKING(by=(order_date.ASC(na_pos='first'), key.ASC(na_pos='first')), levels=1, allow_ties=False) == 1]
+  │     └─── Singular
+  └─── TopK[5, days_since_first_order.DESC(na_pos='last'), customer_name.ASC(na_pos='first')]
+        """,
+            id="orders_versus_first_orders",
         ),
         pytest.param(
             absurd_window_per,

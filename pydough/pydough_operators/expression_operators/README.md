@@ -169,6 +169,12 @@ For an example of how `per` works, when doing `Regions.nations.customers.CALCULA
 - If `per="nations"`, `r` is the ranking of customers per-nation (meaning the ranking resets to 1 within each nation).
 - If `per="Regions"`, `r` is the ranking of customers per-region (meaning the ranking resets to 1 within each region).
 
+#### Casting Functions
+
+- `STRING`: casts the first argument to the second argument. If a second argument is provided, it is used as the datetime format string that gets passed to the underlying database.
+- `INTEGER`: casts the argument to an integer.
+- `FLOAT`: casts the argument to a float.
+
 ## Interaction with Type Inference
 
 Expression operators interact with the type inference module to ensure that the arguments passed to them are valid and to infer the return types of those expressions. This helps maintain type safety and correctness in PyDough operations. Every operator has a type verifier object and a type deducer object.

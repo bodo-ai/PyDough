@@ -10,6 +10,7 @@ This page document the exact format that the JSON files containing PyDough metad
 - [Properties](#properties)
    * [Property Type: Table Column](#property-type-table-column)
    * [Property Type: Simple Join](#property-type-simple-join)
+   * [Property Type: General Join](#property-type-general-join)
    * [Property Type: Cartesian Product](#property-type-cartesian-product)
    * [Property Type: Compound Relationship](#property-type-compound-relationship)
 - [PyDough Type Strings](#pydough-type-strings)
@@ -107,7 +108,7 @@ Example of the structure of the metadata for a table column property:
 <!-- TOC --><a name="property-type-simple-join"></a>
 ### Property Type: Simple Join
 
-A property with this type describes a subcollection of the current collection that is derived from performing an equi-join on two tables (e.g. SELECT ... FROM T1 JOIN T2 ON T1.a=T2.x AND T1.b = T2.y). Properties of this type are subcollections of the collection, as opposed to scalar attributes. If a collection has a property of this type, a corresponding property is added to the other collection to describe the reverse of the relationship. Properties of this type have a type string of "simple_join" and have the following additional key-value pairs in their metadata JSON object:
+A property with this type describes a subcollection of the current collection that is derived from performing an equi-join on two tables (e.g. `SELECT ... FROM T1 JOIN T2 ON T1.a=T2.x AND T1.b = T2.y`). Properties of this type are subcollections of the collection, as opposed to scalar attributes. If a collection has a property of this type, a corresponding property is added to the other collection to describe the reverse of the relationship. Properties of this type have a type string of "simple_join" and have the following additional key-value pairs in their metadata JSON object:
 
 - `other_collection_name`: a string indicating the name of the other collection that this property connects the current collection to. This must be another collection in the same graph that supports simple_join properties.
 - `singular`: a boolean that is true if each record in the current collection has at most 1 matching record of the subcollection, and false otherwise.
@@ -125,6 +126,34 @@ Example of the structure of the metadata for a simple join property (connects a 
     "no_collisions": true,
     "keys": {"id": ["client_id"]},
     "reverse_relationship_name": "account_holder"
+}
+```
+
+<!-- TOC --><a name="property-type-general-join"></a>
+### Property Type: General Join
+
+This property type is a relationship variant of the simple join is the "general join", which instead of joining on equality of key columns has an arbitrary PyDough expression as a condition. This is useful for more arbitrary join conditions such as interval joins (e.g. `SELECT ... FROM T1 JOIN T2 ON T1.a <= T2.B AND T2.B <= T1.c`). Properties of this type are subcollections of the collection, as opposed to scalar attributes. If a collection has a property of this type, a corresponding property is added to the other collection to describe the reverse of the relationship. Properties of this type have a type string of "general_join" and have the following additional key-value pairs in their metadata JSON object:
+
+- `other_collection_name`: a string indicating the name of the other collection that this property connects the current collection to. This must be another collection in the same graph that supports simple_join properties.
+- `singular`: a boolean that is true if each record in the current collection has at most 1 matching record of the subcollection, and false otherwise.
+- `no_collisions`: a boolean that is true if multiple records from this collection can match onto the same record from the other collection, and false otherwise (true if-and-only-if the reverse relationship is singular).
+- `condition`: a string representing the PyDough code for the condition, where columns from the current collection are referred to as `self.xyz` and columns from the child collection being accessed are referred to as `other.xyz`. This can be any valid PyDough code, with the following caveats:
+  - The code must be a single Python expression.
+  - The code must return a PyDough expression, as opposed to a collection.
+  - The code may call regular PyDough functions, but not window functions.
+  - The code may not access any sub-collections of either collection.
+- `reverse_relationship_name`: the name of the property that is to be added to the other collection to describe the reverse version of this relationship. This string must be a valid property name but cannot be equal to another existing property name in the other collection.
+
+Example of the structure of the metadata for a simple join property (connects a collection `Incidents` to a collection `WorkerShifts` by joining on whether `Incidents.incident_timestamp` is between `WorkerShifts.start_of_shift` and `WorkerShifts.end_of_shift`):
+
+```json
+"shifts_overlapping_with_incident": {
+    "type": "general_join",
+    "other_collection_name": "WorkerShifts",
+    "singular": false,
+    "no_collisions": false,
+    "condition": "MONOTONIC(other.start_of_shift, self.incident_timestamp, other.end_of_shift)",
+    "reverse_relationship_name": "incidents_during_shift"
 }
 ```
 

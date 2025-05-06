@@ -54,6 +54,7 @@ null_propagating_operators = {
     pydop.UPPER,
     pydop.LENGTH,
     pydop.YEAR,
+    pydop.QUARTER,
     pydop.MONTH,
     pydop.DAY,
     pydop.HOUR,

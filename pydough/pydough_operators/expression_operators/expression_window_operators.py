@@ -25,13 +25,13 @@ class ExpressionWindowOperator(PyDoughExpressionOperator):
         function_name: str,
         verifier: TypeVerifier,
         deducer: ExpressionTypeDeducer,
-        allows_order: bool = True,
+        allows_frame: bool = False,
         requires_order: bool = True,
         public: bool = True,
     ):
         super().__init__(verifier, deducer, public)
         self._function_name: str = function_name
-        self._allows_order: bool = allows_order
+        self._allows_frame: bool = allows_frame
         self._requires_order: bool = requires_order
 
     @property
@@ -39,11 +39,11 @@ class ExpressionWindowOperator(PyDoughExpressionOperator):
         return f"WINDOW_FUNCTION-{self.function_name}"
 
     @property
-    def allows_order(self) -> bool:
+    def allows_frame(self) -> bool:
         """
-        Whether the window function allows collation terms.
+        Whether the window function allows window frames.
         """
-        return self._allows_order
+        return self._allows_frame
 
     @property
     def requires_order(self) -> bool:

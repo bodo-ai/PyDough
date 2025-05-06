@@ -33,6 +33,8 @@ from bad_pydough_functions import (
     bad_window_2,
     bad_window_3,
     bad_window_4,
+    bad_window_5,
+    bad_window_6,
 )
 from simple_pydough_functions import (
     abs_round_magic_method,
@@ -280,6 +282,34 @@ answer = x.TOP_K(100)\
             "answer = _ROOT.Parts.CALCULATE(_ROOT.name, rank=_ROOT.RANKING(by=_ROOT.retail_price.DESC(), per='B', allow_ties=True, dense=True))",
             "Parts.CALCULATE(name=name, rank=RANKING(by=(retail_price.DESC(na_pos='last'), per='B', allow_ties=True, dense=True))",
             id="ranking_4",
+        ),
+        pytest.param(
+            "answer = _ROOT.Nations.CALCULATE(name=_ROOT.name, num_customers=_ROOT.COUNT(_ROOT.customers)).BEST(by=_ROOT.num_customers.DESC())",
+            "Nations.CALCULATE(name=name, num_customers=COUNT(customers)).BEST(by=(num_customers.DESC(na_pos='last')))",
+            id="best_global",
+        ),
+        pytest.param(
+            "answer = _ROOT.Nations.CALCULATE(nation_name=_ROOT.name).Suppliers.BEST(per='Nations', by=_ROOT.account_balance.DESC()).CALCULATE(nation_name=_ROOT.nation_name, supplier_name=_ROOT.name, supplier_balance=_ROOT.account_balance)",
+            "Nations.CALCULATE(nation_name=name).Suppliers.BEST(by=(account_balance.DESC(na_pos='last')), per=False).CALCULATE(nation_name=nation_name, supplier_name=name, supplier_balance=account_balance)",
+            id="best_access",
+        ),
+        pytest.param(
+            """\
+richest_customer = _ROOT.customers.BEST(per='Nations', by=_ROOT.acct_bal.DESC())
+answer = _ROOT.Nations.CALCULATE(name=_ROOT.name, richest_customer_name=richest_customer.name)
+""",
+            "Nations.CALCULATE(name=name, richest_customer_name=customers.BEST(by=(acct_bal.DESC(na_pos='last')), per=False).name)",
+            id="best_child",
+        ),
+        pytest.param(
+            "answer = _ROOT.Customers.orders.line.BEST(per='Customers', by=_ROOT.ship_date.DESC(), allow_ties=True)",
+            "Customers.orders.line.BEST(by=(ship_date.DESC(na_pos='last')), per=True, allow_ties=True)",
+            id="best_ties",
+        ),
+        pytest.param(
+            "answer = _ROOT.Customers.orders.lines.BEST(per='Customers', by=_ROOT.ship_date.DESC(), n_best=5)",
+            "Customers.orders.lines.BEST(by=(ship_date.DESC(na_pos='last')), per=False, n_best=5)",
+            id="best_multiple",
         ),
     ],
 )
@@ -582,6 +612,16 @@ def test_init_pydough_context(
             bad_window_4,
             "`n_buckets` argument must be a positive integer",
             id="bad_window_4",
+        ),
+        pytest.param(
+            bad_window_5,
+            "The `cumulative` argument to `RELSUM` must be True when the `by` argument is provided",
+            id="bad_window_5",
+        ),
+        pytest.param(
+            bad_window_6,
+            "The `by` argument to `RELAVG` must be provided when the `cumulative` argument is True",
+            id="bad_window_6",
         ),
         pytest.param(
             bad_floor,

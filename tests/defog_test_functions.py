@@ -1187,15 +1187,7 @@ def impl_defog_dealership_gen4():
     """
     filtered_sales = Sales.WHERE(YEAR(sale_date) == 2023).CALCULATE(
         sale_price,
-        quarter=IFF(
-            MONTH(sale_date) <= 3,
-            "2023-01-01",
-            IFF(
-                MONTH(sale_date) <= 6,
-                "2023-04-01",
-                IFF(MONTH(sale_date) <= 9, "2023-07-01", "2023-10-01"),
-            ),
-        ),
+        quarter=DATETIME(sale_date, "start of quarter"),
         customer_state=customer.state,
     )
 
@@ -1335,7 +1327,7 @@ def impl_defog_ewallet_adv6():
         RANKING(by=updated_at.DESC(), per="Users") == 1
     ).SINGULAR()
 
-    return Users.WHERE(HAS(balances)).CALCULATE(
+    return Users.WHERE(HAS(latest_balance_record)).CALCULATE(
         user_id=uid, latest_balance=latest_balance_record.balance
     )
 

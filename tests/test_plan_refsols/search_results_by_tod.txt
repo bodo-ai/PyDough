@@ -1,0 +1,8 @@
+ROOT(columns=[('tod', tod), ('pct_searches', pct_searches), ('avg_results', avg_results)], orderings=[(start_hour):asc_first])
+ PROJECT(columns={'avg_results': ROUND(agg_0, 2:int64), 'pct_searches': ROUND(100.0:float64 * DEFAULT_TO(agg_1, 0:int64) / RELSUM(args=[DEFAULT_TO(agg_1, 0:int64)], partition=[], order=[]), 2:int64), 'start_hour': start_hour, 'tod': name})
+  JOIN(conditions=[t0.name == t1.name], types=['left'], columns={'agg_0': t1.agg_0, 'agg_1': t1.agg_1, 'name': t0.name, 'start_hour': t0.start_hour})
+   SCAN(table=TIMES, columns={'name': t_name, 'start_hour': t_start_hour})
+   AGGREGATE(keys={'name': name}, aggregations={'agg_0': AVG(n_results), 'agg_1': COUNT()})
+    JOIN(conditions=[t0.start_hour <= HOUR(t1.ts) & HOUR(t1.ts) < t0.end_hour], types=['inner'], columns={'n_results': t1.n_results, 'name': t0.name})
+     SCAN(table=TIMES, columns={'end_hour': t_end_hour, 'name': t_name, 'start_hour': t_start_hour})
+     SCAN(table=SEARCHES, columns={'n_results': search_num_results, 'ts': search_ts})

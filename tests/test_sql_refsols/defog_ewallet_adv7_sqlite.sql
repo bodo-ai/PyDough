@@ -1,15 +1,13 @@
 WITH _t AS (
   SELECT
-    user_setting_snapshot.marketing_opt_in,
-    users.uid,
-    ROW_NUMBER() OVER (PARTITION BY users.uid ORDER BY user_setting_snapshot.created_at DESC) AS _w
-  FROM main.users AS users
-  JOIN main.user_setting_snapshot AS user_setting_snapshot
-    ON user_setting_snapshot.user_id = users.uid
+    marketing_opt_in,
+    user_id,
+    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS _w
+  FROM main.user_setting_snapshot
 )
 SELECT
-  uid,
-  marketing_opt_in
-FROM _t
-WHERE
-  _w = 1
+  users.uid,
+  _t.marketing_opt_in
+FROM main.users AS users
+JOIN _t AS _t
+  ON _t._w = 1 AND _t.user_id = users.uid

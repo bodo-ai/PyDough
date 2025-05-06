@@ -23,12 +23,14 @@ __all__ = [
     "ENDSWITH",
     "EQU",
     "FIND",
+    "FLOAT",
     "GEQ",
     "GRT",
     "HAS",
     "HASNOT",
     "HOUR",
     "IFF",
+    "INTEGER",
     "ISIN",
     "JOIN_STRINGS",
     "KEEP_IF",
@@ -58,6 +60,7 @@ __all__ = [
     "POWER",
     "PRESENT",
     "PREV",
+    "QUARTER",
     "RANKING",
     "RELAVG",
     "RELCOUNT",
@@ -74,6 +77,7 @@ __all__ = [
     "SQRT",
     "STARTSWITH",
     "STD",
+    "STRING",
     "STRIP",
     "SUB",
     "SUM",
@@ -185,6 +189,9 @@ DATETIME = ExpressionFunctionOperator(
 YEAR = ExpressionFunctionOperator(
     "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
+QUARTER = ExpressionFunctionOperator(
+    "QUARTER", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
 MONTH = ExpressionFunctionOperator(
     "MONTH", False, RequireNumArgs(1), ConstantType(Int64Type())
 )
@@ -280,14 +287,23 @@ PERCENTILE = ExpressionWindowOperator(
 PREV = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
 NEXT = ExpressionWindowOperator("NEXT", RequireNumArgs(1), SelectArgumentType(0))
 RELSUM = ExpressionWindowOperator(
-    "RELSUM", RequireNumArgs(1), SelectArgumentType(0), False, False
+    "RELSUM", RequireNumArgs(1), SelectArgumentType(0), True, False
 )
 RELAVG = ExpressionWindowOperator(
-    "RELAVG", RequireNumArgs(1), SelectArgumentType(0), False, False
+    "RELAVG", RequireNumArgs(1), SelectArgumentType(0), True, False
 )
 RELCOUNT = ExpressionWindowOperator(
-    "RELCOUNT", RequireNumArgs(1), ConstantType(Int64Type()), False, False
+    "RELCOUNT", RequireNumArgs(1), ConstantType(Int64Type()), True, False
 )
 RELSIZE = ExpressionWindowOperator(
-    "RELSIZE", RequireNumArgs(0), ConstantType(Int64Type()), False, False
+    "RELSIZE", RequireNumArgs(0), ConstantType(Int64Type()), True, False
+)
+INTEGER = ExpressionFunctionOperator(
+    "INTEGER", False, RequireNumArgs(1), ConstantType(Int64Type())
+)
+FLOAT = ExpressionFunctionOperator(
+    "FLOAT", False, RequireNumArgs(1), ConstantType(Float64Type())
+)
+STRING = ExpressionFunctionOperator(
+    "STRING", False, RequireArgRange(1, 2), ConstantType(StringType())
 )
