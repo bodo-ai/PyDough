@@ -1,10 +1,14 @@
 // Zoom Handler - Implements zoom and pan functionality for the graph
 
 /**
- * Setup zoom and pan behavior for the graph
- * @param {Object} svg - The SVG element
- * @param {Object} g - The SVG group element
- * @returns {Object} The D3 zoom behavior
+ * Initializes and configures the D3 zoom behavior for the SVG canvas.
+ * Sets up the zoom/pan limits, attaches the zoom listener to the main SVG group,
+ * disables double-click zoom, prevents page scroll during zoom, and sets an initial transform.
+ *
+ * @param {Object} svg - The D3 selection of the main SVG element.
+ * @param {Object} g - The D3 selection of the primary SVG group (`<g>`) that contains all graph elements (nodes, links).
+ *                  This is the group whose transform will be updated by the zoom behavior.
+ * @returns {Object} The configured D3 zoom behavior object, which can be used to programmatically control zoom/pan.
  */
 export function setupZoom(svg, g) {
   // Enable zoom and pan behavior with enhanced settings
@@ -40,10 +44,12 @@ export function setupZoom(svg, g) {
 }
 
 /**
- * Create zoom instructions and controls
- * @param {Object} svg - The SVG element
- * @param {number} width - The width of the SVG
- * @param {number} height - The height of the SVG
+ * Creates and appends zoom instruction text and zoom control buttons (+/-) to the SVG canvas.
+ * These elements are positioned in corners and are not affected by the zoom/pan transforms applied to the main graph group `g`.
+ *
+ * @param {Object} svg - The D3 selection of the main SVG element where controls will be added.
+ * @param {number} width - The width of the SVG canvas, used for positioning controls.
+ * @param {number} height - The height of the SVG canvas, used for positioning controls.
  */
 export function createZoomControls(svg, width, height) {
   // Add zoom instructions text
@@ -70,13 +76,15 @@ export function createZoomControls(svg, width, height) {
 }
 
 /**
- * Create a zoom control button
- * @param {Object} container - The container element for the button
- * @param {number} x - The x coordinate
- * @param {number} y - The y coordinate
- * @param {string} label - The button label
- * @param {number} scaleFactor - The scale factor for zooming
- * @param {Object} svg - The SVG element
+ * Creates a single zoom button (background rectangle and text label) within a given container group.
+ * Attaches a click handler to trigger a zoom transition on the main SVG element.
+ *
+ * @param {Object} container - The D3 selection of the SVG group (`<g>`) where the button should be appended.
+ * @param {number} x - The x-coordinate for the button's top-left corner, relative to the container.
+ * @param {number} y - The y-coordinate for the button's top-left corner, relative to the container.
+ * @param {string} label - The text label for the button (e.g., "+", "−").
+ * @param {number} scaleFactor - The multiplicative factor to apply when the button is clicked (e.g., 1.3 for zoom in, 0.7 for zoom out).
+ * @param {Object} svg - The D3 selection of the main SVG element, which the zoom action targets.
  */
 function createZoomButton(container, x, y, label, scaleFactor, svg) {
   // Create button background

@@ -114,3 +114,10 @@ The full list of dependencies can be found in the `pyproject.toml` file.
 The `demo` folder contains a series of example Jupyter Notebooks
 that can be used to understand PyDough's capabilities. We recommend any new user start
 with the [demo readme](https://github.com/bodo-ai/PyDough/blob/main/demos/README.md) and then walk through the example Juypter notebooks.
+
+## Meta Visualizer
+
+The `meta_visualizer` folder contains a simple web application that can be used to visualize the metadata of a PyDough Knowledge Graph.
+It displays the collections, properties, and relationships between collections in a knowledge graph and can be used to check the relations between collections to debug PyDough queries as well as build complex queries.
+
+Please refer to the [meta visualizer README](https://github.com/bodo-ai/PyDough/blob/main/meta_visualizer/README.md) for more information on features and usage.

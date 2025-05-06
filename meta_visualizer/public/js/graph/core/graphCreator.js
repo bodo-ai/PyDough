@@ -8,9 +8,20 @@ import { createLinks } from "../renderers/linkRenderer.js";
 import { setupZoom, createZoomControls } from "../interactions/zoomHandler.js";
 import { setupDrag } from "../interactions/dragHandler.js";
 import { setupHighlighting } from "../interactions/highlightHandler.js";
-import { createTooltip } from "../interactions/tooltipHandler.js";
+import {
+  createTooltip,
+  showNodeTooltip,
+  hideTooltip,
+  isMouseOverTooltip,
+  clearHoverElement,
+  forceHideTooltips,
+  scheduleHide,
+  cancelHide,
+  isMouseInBottomRightQuadrant,
+} from "../interactions/tooltipHandler.js";
 import { setupForceSimulation } from "../layouts/forceLayout.js";
 import { applyGraphStyles } from "../styles/graphStyles.js";
+import { calculateLinkPath } from "../utils/geometryUtils.js";
 
 /**
  * Create the graph visualization from metadata
@@ -30,6 +41,12 @@ export function createGraph(data) {
 
   // Process the metadata into D3-compatible node and link structures
   const { nodes, links, graphName } = processMetadata(data);
+
+  // Debug logging
+  console.log("Processed metadata:");
+  console.log("Number of nodes:", nodes.length);
+  console.log("Number of links:", links.length);
+  console.log("Links:", links);
 
   // Get the dimensions of the container for proper sizing
   const container = document.getElementById("graph");
@@ -88,15 +105,88 @@ export function createGraph(data) {
 
   // Render the links (relationships) between collections
   // These are SVG paths with directional markers
-  const link = createLinks(g, links);
+  const link = createLinks(g, links, nodes);
+
+  // Debug logging for link creation
+  console.log("Created link elements:", link.size());
 
   // Render the nodes (collections) with their properties
   // Each node is a complex SVG group with multiple elements
-  const node = createNodes(g, nodes);
+  const tooltipHandlers = {
+    tooltip: tooltip,
+    showNodeTooltip,
+    hideTooltip,
+    isMouseOverTooltip,
+    clearHoverElement,
+    scheduleHide,
+    cancelHide,
+  };
+  const node = createNodes(g, nodes, tooltipHandlers);
+
+  // State variables to track interactive modes
+  let activeNode = null; // Currently selected node for tree view
+  let isTreeView = false; // Whether we're in tree view mode
+
+  // Create a state object to share with drag handler
+  const state = {
+    isTreeView,
+    // Track if we've already added tree view tooltips
+    treeViewTooltipsAdded: false,
+    // Callback to exit tree view mode while keeping current positions
+    onExitTreeView: () => {
+      console.log("Exiting tree view mode due to node drag");
+      // Force hide any visible tooltips
+      forceHideTooltips();
+
+      isTreeView = false;
+      activeNode = null;
+
+      // Don't reset node positions since we want to keep the layout
+      // Mark all nodes as not part of the tree anymore
+      nodes.forEach((node) => {
+        // Keep fx/fy positions but clear tree metadata
+        node.treePosition = null;
+        node.treeLevel = null;
+        node.treeParent = null;
+      });
+
+      // Remove tree-specific highlighting
+      node
+        .classed("node-highlighted", false)
+        .classed("node-primary", false)
+        .classed("node-depth-1", false)
+        .classed("node-depth-2", false)
+        .classed("node-faded", false);
+
+      // Reset link styling
+      link.each(function () {
+        d3.select(this)
+          .select("path")
+          .classed("link-highlighted", false)
+          .attr("marker-end", (d) => `url(#arrowhead-${d.type})`);
+
+        d3.select(this)
+          .select("text")
+          .classed("link-label-highlighted", false)
+          .attr("dy", 20)
+          .style("font-size", "16px")
+          .style("letter-spacing", "0.5px");
+      });
+
+      // Update the state for drag handler
+      updateDragBehavior();
+    },
+  };
 
   // Make nodes draggable to allow manual positioning
   // This enhances the user experience when exploring the graph
-  setupDrag(node, simulation);
+  setupDrag(node, simulation, state);
+
+  // Function to update drag behavior when tree view state changes
+  const updateDragBehavior = () => {
+    // Update the shared state object
+    state.isTreeView = isTreeView;
+  };
 
   // Configure highlight behavior for connected nodes and links
   // This helps visualize relationships when hovering over elements
@@ -113,58 +203,125 @@ export function createGraph(data) {
       height
     );
 
-  // State variables to track interactive modes
-  let activeNode = null; // Currently selected node for tree view
-  let isTreeView = false; // Whether we're in tree view mode
-
   // Configure interactive behavior for nodes (hover and click events)
   node
     .on("mouseover", (event, d) => {
-      // Only highlight connections if not in tree view mode
+      // Highlight connections if not in tree view mode
       if (!isTreeView) {
         highlightConnections(event, d);
       }
     })
     .on("mouseout", (event, d) => {
+      const nodeId = `node-${d.id}`;
+
+      // Always clear hover element tracking when leaving node
+      // But only if we're not hovering over the tooltip indicator or tooltip
+      const isOnTooltipIndicator =
+        event.relatedTarget &&
+        (event.relatedTarget.classList.contains("tooltip-indicator") ||
+          event.relatedTarget.parentNode.classList.contains(
+            "tooltip-indicator-group"
+          ));
+
+      // Use the tooltip element we have in scope
+      const isOnTooltip = isMouseOverTooltip(event, tooltip);
+
+      if (!isOnTooltipIndicator && !isOnTooltip) {
+        clearHoverElement(nodeId);
+      }
+
       // Reset highlighting when mouse leaves node
       if (!isTreeView) {
         resetHighlighting();
       }
     })
     .on("click", (event, d) => {
+      // If already in tree view mode and clicking a different node
+      if (isTreeView && activeNode !== d.id) {
+        // Force hide any visible tooltips
+        forceHideTooltips();
+
+        // First reset the existing tree layout
+        resetTreeLayout(false); // Keep fixed positions when changing root node
+
+        // Make the clicked node the new root for tree view
+        activeNode = d.id;
+        createTreeLayout(d);
+        return;
+      }
+
       // Toggle between force layout and tree layout views
       // If clicking the same node again, return to force layout
       if (activeNode === d.id) {
+        // Force hide any visible tooltips
+        forceHideTooltips();
+
         isTreeView = false;
         activeNode = null;
         resetHighlighting();
 
         // Release fixed positions to allow force simulation to resume
-        nodes.forEach((node) => {
-          node.fx = null; // Clear fixed x-coordinate
-          node.fy = null; // Clear fixed y-coordinate
-          node.treePosition = null; // Clear tree positioning data
-          node.treeLevel = null;
-          node.treeParent = null;
-        });
+        resetTreeLayout(true);
+
+        // Update drag behavior for new state
+        updateDragBehavior();
 
         // Restart the force simulation with high alpha for movement
         simulation.alpha(1).restart();
       } else {
+        // Force hide any visible tooltips
+        forceHideTooltips();
+
         // Switch to tree view centered on the clicked node
         isTreeView = true;
         activeNode = d.id;
 
+        // Update drag behavior for new state
+        updateDragBehavior();
+
         // Arrange nodes in a hierarchical tree layout
         createTreeLayout(d);
+
+        // Ensure we have tooltip functionality on all nodes in tree view
+        if (!state.treeViewTooltipsAdded) {
+          state.treeViewTooltipsAdded = true;
+
+          // Clear any previous event handlers if they exist
+          svg
+            .selectAll(".node")
+            .on("mouseover.tooltip", null)
+            .on("mouseout.tooltip", null);
+        }
       }
     });
+
+  // Helper function to reset the tree layout
+  function resetTreeLayout(clearFixedPositions = true) {
+    // Release fixed positions to allow force simulation to resume
+    nodes.forEach((node) => {
+      if (clearFixedPositions) {
+        node.fx = null;
+        node.fy = null;
+      }
+      node.treePosition = null; // Clear tree positioning data
+      node.treeLevel = null;
+      node.treeParent = null;
+    });
+  }
 
   // Update visual elements on each simulation tick
   // This is the animation loop that moves nodes and links
   simulation.on("tick", () => {
     // Update link paths to follow their connected nodes
-    link.selectAll("path").attr("d", calculateLinkPath(nodes));
+    link.each(function (d) {
+      // Find the source and target node objects for this link
+      // Needed here because the 'd' object only holds IDs initially
+      const sourceNode = nodes.find((n) => n.id === d.source.id);
+      const targetNode = nodes.find((n) => n.id === d.target.id);
+      const paths = calculateLinkPath(sourceNode, targetNode); // Use the utility function
+      // Update path
+      d3.select(this).select("path").attr("d", paths.forward);
+    });
 
     // Update node positions based on simulation
     node.attr("transform", (d) => `translate(${d.x},${d.y})`);
@@ -180,79 +337,6 @@ export function createGraph(data) {
 
   // Apply CSS styling to the visualization elements
   applyGraphStyles();
-}
-
-/**
- * Calculate the path between nodes with accurate edge connection points
- *
- * This function determines where a link should connect to node rectangles.
- * It calculates the exact intersection points with the node boundaries,
- * creating visually accurate connections with proper arrow placement.
- *
- * @param {Array} nodes - The array of all node objects
- * @returns {Function} A function that calculates the path for a specific link
- */
-function calculateLinkPath(nodes) {
-  return (d) => {
-    // Find the source and target node objects for this link
-    const sourceNode = nodes.find((n) => n.id === d.source.id);
-    const targetNode = nodes.find((n) => n.id === d.target.id);
-
-    if (!sourceNode || !targetNode) return "";
-
-    // Get node centers as starting reference points
-    const sourceX = sourceNode.x + sourceNode.width / 2;
-    const sourceY = sourceNode.y + sourceNode.height / 2;
-    const targetX = targetNode.x + targetNode.width / 2;
-    const targetY = targetNode.y + targetNode.height / 2;
-
-    // Calculate the angle between source and target centers
-    const angle = Math.atan2(targetY - sourceY, targetX - sourceX);
-
-    // Calculate source intersection point with the node boundary
-    // This involves determining which edge of the rectangle the line intersects
-    let sx = sourceX,
-      sy = sourceY;
-    if (Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle))) {
-      // Intersect with left or right edge
-      sx = sourceNode.x + (Math.cos(angle) > 0 ? sourceNode.width : 0);
-      sy =
-        sourceNode.y +
-        sourceNode.height / 2 +
-        Math.tan(angle) * (sx - sourceNode.x - sourceNode.width / 2);
-    } else {
-      // Intersect with top or bottom edge
-      sy = sourceNode.y + (Math.sin(angle) > 0 ? sourceNode.height : 0);
-      sx =
-        sourceNode.x +
-        sourceNode.width / 2 +
-        (sy - sourceNode.y - sourceNode.height / 2) / Math.tan(angle);
-    }
-
-    // Calculate target intersection point with the node boundary
-    // Uses the same approach but in reverse direction
-    let tx = targetX,
-      ty = targetY;
-    const revAngle = Math.atan2(sourceY - targetY, sourceX - targetX);
-    if (Math.abs(Math.cos(revAngle)) > Math.abs(Math.sin(revAngle))) {
-      // Intersect with left or right edge
-      tx = targetNode.x + (Math.cos(revAngle) > 0 ? targetNode.width : 0);
-      ty =
-        targetNode.y +
-        targetNode.height / 2 +
-        Math.tan(revAngle) * (tx - targetNode.x - targetNode.width / 2);
-    } else {
-      // Intersect with top or bottom edge
-      ty = targetNode.y + (Math.sin(revAngle) > 0 ? targetNode.height : 0);
-      tx =
-        targetNode.x +
-        targetNode.width / 2 +
-        (ty - targetNode.y - targetNode.height / 2) / Math.tan(revAngle);
-    }
-
-    // Return SVG path string connecting the two intersection points
-    return `M${sx},${sy}L${tx},${ty}`;
-  };
 }
 
 /**

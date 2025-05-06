@@ -68,3 +68,57 @@ export function calculateMidpoint(x1, y1, x2, y2) {
     y: (y1 + y2) / 2,
   };
 }
+
+/**
+ * Calculate the SVG path string for a link between two nodes,
+ * ensuring the path connects to the node boundaries accurately.
+ * Also calculates a parallel path for potential reverse links.
+ *
+ * @param {Object} sourceNode - The source node object.
+ * @param {Object} targetNode - The target node object.
+ * @param {number} [offset=10] - The perpendicular distance between forward and reverse paths.
+ * @returns {{forward: string, reverse: string}|{forward: string, reverse: string}} Path strings or empty strings if nodes invalid.
+ */
+export function calculateLinkPath(sourceNode, targetNode, offset = 10) {
+  if (!sourceNode || !targetNode) {
+    console.warn("CalculateLinkPath: Invalid source or target node provided.");
+    return { forward: "", reverse: "" }; // Return empty paths
+  }
+
+  // Get centers
+  const sourceCenter = calculateCenter(sourceNode);
+  const targetCenter = calculateCenter(targetNode);
+
+  // Calculate intersection points
+  const sourceIntersection = calculateIntersection(
+    sourceNode,
+    targetCenter.x,
+    targetCenter.y
+  );
+  const targetIntersection = calculateIntersection(
+    targetNode,
+    sourceCenter.x,
+    sourceCenter.y
+  );
+
+  // Calculate the angle for offsetting
+  const angle = Math.atan2(
+    targetIntersection.y - sourceIntersection.y,
+    targetIntersection.x - sourceIntersection.x
+  );
+  const perpAngle = angle + Math.PI / 2; // Perpendicular angle
+  const offsetX = Math.cos(perpAngle) * offset;
+  const offsetY = Math.sin(perpAngle) * offset;
+
+  // Define source and target points for the path calculation
+  const sx = sourceIntersection.x;
+  const sy = sourceIntersection.y;
+  const tx = targetIntersection.x;
+  const ty = targetIntersection.y;
+
+  // Return both forward and reverse paths with offset
+  return {
+    forward: `M${sx + offsetX},${sy + offsetY}L${tx + offsetX},${ty + offsetY}`,
+    reverse: `M${tx - offsetX},${ty - offsetY}L${sx - offsetX},${sy - offsetY}`, // Note: Reverse direction for reverse path
+  };
+}

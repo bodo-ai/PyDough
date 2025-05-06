@@ -1,82 +1,149 @@
 # MetaViewer - Graph Visualization Tool
 
-MetaViewer is a web-based graph visualization tool designed to display and explore relationships between collections in a metadata schema. It provides an interactive interface for navigating complex data relationships and understanding the structure of the data model.
-
-## Features
-
-- **Interactive Graph Visualization**: View collections and their relationships in an interactive force-directed graph
-- **Tree View**: Click on any node to see a hierarchical tree view of its connections
-- **Relationship Details**: Hover over connections to see detailed information about the relationship
-- **Zoom and Pan**: Navigate large graphs with zoom and pan controls
-- **Highlighting**: Highlight connections and related nodes on hover
-- **Tooltips**: Get detailed information about nodes and links via tooltips
-
-## Project Structure
-
-- **public/**: Contains all the front-end code
-  - **css/**: CSS stylesheets
-  - **data/**: JSON metadata files
-  - **js/**: JavaScript code
-    - **graph/**: Modular graph visualization components (see below)
-  - **index.html**: Main HTML file
-
-### Graph Visualization Components
-
-The graph visualization is implemented as a modular component with the following structure:
-
-- **core/**: Core functionality for initializing and creating the graph
-- **renderers/**: Components responsible for rendering visual elements
-- **layouts/**: Different layout strategies for positioning nodes
-- **interactions/**: User interaction handling
-- **styles/**: Visual styling for the graph
-- **utils/**: Utility functions
-
-For detailed information about each component, see the README.md files in the respective directories.
+MetaViewer is a web-based graph visualization tool designed to display and explore relationships between collections defined in a user-provided JSON metadata schema. It provides an interactive interface using D3.js for navigating complex data relationships.
 
 ## Getting Started
 
-1. Clone the repository
-2. Serve the `public` directory with a web server
-3. Access the application in your browser
+### For Users
 
-Example using Python's built-in HTTP server:
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the server:
+    ```bash
+    ./serve.sh
+    ```
+4.  Visit `http://localhost:8000` (or the port specified in `serve.sh`) in your browser.
+5.  Click the "Load JSON File" button and select your first metadata JSON file. The graph will be displayed.
+6.  To load more graphs, click "Load JSON File" again and select another file.
+7.  To switch between loaded graphs, click the hamburger icon (☰) in the header and select the desired graph filename from the dropdown.
 
-```bash
-cd public
-python -m http.server 8000
-```
+### For Developers
 
-Then visit http://localhost:8000 in your browser.
+1.  Clone the repository.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server (which typically includes live reloading):
+    ```bash
+    npm start
+    ```
+4.  Visit `http://localhost:3000` (or the port configured for the development server) in your browser.
+5.  The application will load. Use the "Load JSON File" button as described in the user section.
 
-## Data Format
+## Features
 
-The visualization expects a JSON file located at `/data/metadata.json` with the following structure:
+- **Load Multiple Graphs**: Upload multiple JSON files containing metadata schemas. Each file is treated as a separate graph.
+- **Switch Between Graphs**: Use the hamburger menu (☰) in the top-left corner to select and view any of the loaded graphs.
+- **Interactive Graph Visualization**: View collections and their relationships in a force-directed graph for the currently selected graph.
+- **Tree View**: Click on any node to see a hierarchical tree view of its outgoing connections.
+- **Relationship Details**: Hover over connections or nodes to see detailed information.
+- **Zoom and Pan**: Navigate large graphs with zoom (mouse wheel, buttons) and pan (drag background) controls.
+- **Highlighting**: Hovering highlights connected nodes and links.
+- **Tooltips**: Detailed information about nodes and links appears on hover over indicators/links.
+- **Node Dragging**: Manually reposition nodes.
+
+## Visual Elements
+
+The graph visualization displays the following information:
+
+- **Nodes (Collections)**:
+
+  - Each collection is represented as a rectangular box.
+  - **Title**: The collection name is shown at the top.
+  - **Table Path**: The source `table_path` is displayed below the title.
+  - **Properties (Columns)**: Attributes with `type: "table_column"` are listed under "Properties:".
+  - **Relationships (Subcollections)**: Outgoing relationships (like `simple_join`, `cartesian_product`) are listed under "Subcollections:".
+  - **Tooltip Indicator**: A small circle in the bottom-right corner can be hovered over to show a detailed tooltip with all properties.
+
+- **Links (Relationships)**:
+
+  - Each defined relationship between collections is drawn as a line connecting the corresponding nodes.
+  - **Direction & Type**: An arrowhead indicates the direction and type of relationship (different styles for simple join vs. cartesian product).
+  - **Label**: The subcollection access name is displayed as a label along the link path.
+  - **Tooltip**: Hovering directly over the link line shows a tooltip with relationship details.
+
+- **Interactions & Highlighting**:
+  - **Hover**: Hovering over a node highlights the node, its direct links, and connected nodes. Hovering over a link highlights the link and its source/target nodes.
+  - **Click (Tree View)**: Clicking a node transitions the layout to a hierarchical tree view, showing only the clicked node (as root) and nodes reachable via outgoing links. Dragging any node again returns to the force layout.
+  - **Zoom/Pan**: Standard mouse wheel/trackpad controls for zooming, and dragging the background for panning. Buttons are also available.
+
+## Project Structure
+
+- **`public/`**: Contains all the front-end code and assets.
+  - **`css/`**: CSS stylesheets.
+  - **`js/`**: JavaScript code.
+    - **`graph/`**: Graph visualization components (see below).
+    - **`main.js`**: Entry point that initializes the graph visualization.
+  - **`index.html`**: Main HTML file.
+
+### Graph Visualization Components (`public/js/graph/`)
+
+The graph visualization is implemented as a modular component:
+
+- **`core/`**: Handles initialization, data processing (JSON to nodes/links), and orchestration (`graphCreator`).
+- **`renderers/`**: Creates SVG elements for nodes, links, and arrow markers.
+- **`layouts/`**: Implements node positioning algorithms (force-directed, hierarchical tree).
+- **`interactions/`**: Manages user input (zoom, pan, drag, hover, click) and feedback (highlighting, tooltips, tree view activation).
+- **`styles/`**: Defines CSS styles injected for visual appearance.
+- **`utils/`**: Provides utility functions (e.g., geometry calculations).
+
+(See the README.md files in the respective subdirectories for more details.)
+
+## Expected JSON Data Structure
+
+The application expects a JSON file with a single top-level key representing the graph name. Inside this, there should be an object where keys are collection names. Each collection object should contain details like `properties`, `table_path`, and `unique_properties`.
 
 ```json
 {
-  "graph_name": {
-    "collection_name": {
+  "your_graph_name": {
+    "collection_one": {
       "properties": {
-        "property_name": {
+        "column_a": {
           "type": "table_column",
-          "column_name": "column_name",
-          "data_type": "data_type"
+          "column_name": "col_a",
+          "data_type": "string"
         },
-        "relationship_name": {
-          "type": "simple_join|compound|cartesian_product",
-          "other_collection_name": "target_collection",
-          "singular": true|false,
-          "no_collisions": true|false,
-          "reverse_relationship_name": "reverse_name"
+        "subcollection_access_link": {
+          "type": "simple_join", // or "cartesian_product", "general_join"
+          "other_collection_name": "collection_two",
+          "singular": false,
+          "no_collisions": false,
+          "reverse_relationship_name": "relation_from_one"
+          // ... other relationship-specific fields
         }
+        // ... other properties
       },
-      "table_path": "path/to/table",
-      "unique_properties": ["id", "name"]
+      "table_path": "path/to/source_one",
+      "unique_properties": ["id"]
+    },
+    "collection_two": {
+      // ... similar structure ...
+      "properties": {
+        "relation_from_one": {
+          // Matching reverse relationship name
+          "type": "simple_join",
+          "other_collection_name": "collection_one",
+          "reverse_relationship_name": "subcollection_access_link" // Points back
+          // ... other fields matching the forward relationship
+        }
+      }
     }
+    // ... other collections
   }
 }
 ```
 
+Key aspects processed:
+
+- **Collections**: Top-level objects under the graph name.
+- **Properties**: Divided into `table_column` (attributes) and relationship types (`simple_join`, `cartesian_product`, `general_join`).
+- **Relationships**: Define connections to `other_collection_name`. Fields like `singular`, `no_collisions`, and especially `reverse_relationship_name` are used for processing and display.
+- **Metadata**: `table_path` and `unique_properties` are displayed in the node details.
+
 ## Dependencies
 
-- D3.js v7.x - For data visualization
+- D3.js v7.x - Used for DOM manipulation, SVG rendering, force simulation, zoom/drag behaviors, and transitions.

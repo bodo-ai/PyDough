@@ -29,8 +29,5 @@ export function setupForceSimulation(nodes, links, width, height) {
     .force(
       "collision",
       d3.forceCollide().radius((d) => Math.sqrt(d.width * d.height) / 2 + 150) // Prevent node overlap by adding collision detection
-      // Radius calculation based on node dimensions plus padding
     );
-  // Note: The simulation auto-starts and will modify node positions by adding x,y coordinates
-  // To update the visual representation, you need to listen to the 'tick' event
 }

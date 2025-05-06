@@ -5,22 +5,22 @@
  * @param {Object} svg - The SVG element
  */
 export function setupMarkers(svg) {
-  // Define arrow markers with elegant styling
+  // Define arrow markers
   svg
     .append("defs")
     .selectAll("marker")
     .data([
       "standard",
       "simple_join",
-      "compound",
       "cartesian_product",
+      "general_join",
       "highlighted",
     ])
     .enter()
     .append("marker")
     .attr("id", (d) => `arrowhead-${d}`)
     .attr("viewBox", "0 -5 10 10")
-    .attr("refX", 25)
+    .attr("refX", 33)
     .attr("refY", 0)
     .attr("markerWidth", 10)
     .attr("markerHeight", 10)
@@ -28,7 +28,13 @@ export function setupMarkers(svg) {
     .append("path")
     .attr("d", (d) => getMarkerPath(d))
     .attr("class", (d) =>
-      d === "highlighted" ? "arrowhead-highlighted" : "arrowhead"
+      d === "highlighted"
+        ? "arrowhead-highlighted"
+        : d === "general_join"
+        ? "arrowhead-general_join"
+        : d === "cartesian_product"
+        ? "arrowhead-cartesian_product"
+        : "arrowhead"
     );
 }
 
@@ -42,8 +48,6 @@ function getMarkerPath(type) {
     return "M0,-5L10,0L0,5";
   } else if (type === "cartesian_product") {
     return "M0,-5L10,0L0,5M-2,-3L8,0L-2,3";
-  } else if (type === "compound") {
-    return "M0,-5L10,0L0,5M-2,-2L8,0L-2,2";
   } else {
     return "M0,-5L10,0L0,5";
   }

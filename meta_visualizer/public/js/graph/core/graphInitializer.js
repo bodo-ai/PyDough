@@ -1,44 +1,57 @@
-// Graph Initializer - Handles fetching data and initializing the graph
+// Graph Initializer - Handles loading multiple JSON graph data files and switching between them.
 import { createGraph } from "./graphCreator.js";
 
+// Store loaded graphs (filename -> data)
+const loadedGraphs = new Map();
+// Track the name of the currently displayed graph
+let currentGraphName = null;
+
 /**
- * Initialize the graph visualization by setting up file upload functionality
+ * Initialize the graph visualization: setup file upload, hamburger menu, and display initial prompt.
  */
 export function initGraphVisualization() {
-  // Set up the file upload button functionality
   setupFileUpload();
-
-  // Display initial prompt to load a file
-  displayLoadPrompt();
+  setupHamburgerMenu();
+  displayLoadPrompt(); // Display initial prompt
 }
 
 /**
- * Setup file upload button and file input handling
+ * Setup file upload button: Handles file selection, JSON parsing, storing graph data,
+ * updating the dropdown, and displaying the newly loaded graph.
  */
 function setupFileUpload() {
   const fileInput = document.getElementById("jsonFileInput");
   const loadButton = document.getElementById("loadJsonButton");
 
-  // Trigger file input when button is clicked
   loadButton.addEventListener("click", () => {
     fileInput.click();
   });
 
-  // Handle file selection
   fileInput.addEventListener("change", (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Check if file is JSON
       if (file.type === "application/json" || file.name.endsWith(".json")) {
         const reader = new FileReader();
 
         reader.onload = (e) => {
           try {
             const data = JSON.parse(e.target.result);
-            console.log("JSON file loaded, parsing successful");
+            const graphName = file.name;
+            console.log(
+              `JSON file '${graphName}' loaded and parsed successfully.`
+            );
 
-            // Create new graph with uploaded data
-            createGraph(data);
+            // Store the graph data
+            loadedGraphs.set(graphName, data);
+
+            // Update the dropdown list
+            updateGraphListDropdown();
+
+            // Display the newly loaded graph
+            displayGraph(graphName);
+
+            // Reset file input to allow loading the same file again if needed
+            fileInput.value = "";
           } catch (error) {
             console.error("Error parsing JSON file:", error);
             alert(
@@ -61,7 +74,90 @@ function setupFileUpload() {
 }
 
 /**
- * Display initial prompt to load a file
+ * Setup hamburger menu interaction: Toggles dropdown visibility on button click
+ * and closes dropdown when clicking outside.
+ */
+function setupHamburgerMenu() {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const dropdown = document.getElementById("graph-list-dropdown");
+
+  hamburgerBtn.addEventListener("click", (event) => {
+    event.stopPropagation(); // Prevent click from immediately closing the menu
+    dropdown.classList.toggle("show");
+  });
+
+  // Close the dropdown if the user clicks outside of it
+  window.addEventListener("click", (event) => {
+    if (
+      !dropdown.contains(event.target) &&
+      !hamburgerBtn.contains(event.target)
+    ) {
+      if (dropdown.classList.contains("show")) {
+        dropdown.classList.remove("show");
+      }
+    }
+  });
+}
+
+/**
+ * Update the graph list in the hamburger dropdown menu.
+ * Populates the list with names of loaded graphs and handles click events to switch graphs.
+ */
+function updateGraphListDropdown() {
+  const graphList = document.getElementById("graph-list");
+  const dropdown = document.getElementById("graph-list-dropdown");
+
+  // Clear existing list items
+  graphList.innerHTML = "";
+
+  if (loadedGraphs.size === 0) {
+    const li = document.createElement("li");
+    li.textContent = "No graphs loaded";
+    li.style.fontStyle = "italic";
+    li.style.color = "#888";
+    graphList.appendChild(li);
+    return;
+  }
+
+  // Add newly loaded graphs
+  loadedGraphs.forEach((data, graphName) => {
+    const li = document.createElement("li");
+    li.textContent = graphName;
+    if (graphName === currentGraphName) {
+      li.style.fontWeight = "bold"; // Highlight current graph
+    }
+    li.addEventListener("click", () => {
+      displayGraph(graphName);
+      dropdown.classList.remove("show"); // Close dropdown after selection
+    });
+    graphList.appendChild(li);
+  });
+}
+
+/**
+ * Display the selected graph.
+ * Clears the container (via createGraph) and renders the graph corresponding to the given name.
+ * @param {string} graphName - The name (key) of the graph to display in the loadedGraphs map.
+ */
+function displayGraph(graphName) {
+  if (!loadedGraphs.has(graphName)) {
+    console.error(`Graph '${graphName}' not found.`);
+    return;
+  }
+
+  console.log(`Displaying graph: ${graphName}`);
+  currentGraphName = graphName;
+  const data = loadedGraphs.get(graphName);
+
+  // Create the new graph (createGraph clears the container internally)
+  createGraph(data);
+
+  // Update the dropdown to potentially highlight the new current graph
+  updateGraphListDropdown();
+}
+
+/**
+ * Display initial prompt message in the graph container when no graph is loaded.
  */
 function displayLoadPrompt() {
   const container = document.getElementById("graph");
@@ -69,6 +165,9 @@ function displayLoadPrompt() {
     console.error("Graph container not found!");
     return;
   }
+
+  // Clear any existing content (like a previous graph)
+  d3.select(container).selectAll("*").remove();
 
   const width = container.clientWidth || 1000;
   const height = container.clientHeight || 800;

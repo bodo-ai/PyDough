@@ -2,22 +2,33 @@
 // This layout organizes nodes in a parent-child hierarchy with multiple levels
 
 /**
- * Create a tree layout with the given node as the root
+ * Calculates and applies a hierarchical tree layout starting from a given root node.
  *
- * - D3 tree layouts position nodes in a hierarchical structure
- * - Nodes are arranged in levels with consistent vertical spacing
- * - Each level's nodes are positioned horizontally to balance the tree
- * - Fixed positions (fx, fy) are used to override force simulation
+ * This function performs the following steps:
+ * 1. Resets any existing tree layout properties on all nodes.
+ * 2. Performs a Breadth-First Search (BFS) starting from the `rootNode`,
+ *    following only outgoing links to discover reachable nodes.
+ * 3. Assigns `treeLevel` (depth) and `treeParent` (ID of parent) to discovered nodes.
+ * 4. Calculates a relative horizontal `treePosition` for nodes within each level to spread them out.
+ * 5. Sets fixed positions (`fx`, `fy`) for all nodes:
+ *    - Nodes in the tree are positioned according to their level (vertical) and position (horizontal).
+ *    - Nodes *not* in the tree are moved far off-screen by setting high `fx`/`fy` values.
+ * 6. Calls `highlightTreeView` to apply specific visual styles to tree nodes/links.
+ * 7. Restarts the D3 force simulation so it respects the new `fx`/`fy` values.
+ * 8. Calls `fitTreeToView` to adjust the SVG zoom/pan to focus on the generated tree.
  *
- * @param {Object} rootNode - The root node for the tree
- * @param {Array} nodes - The array of nodes
- * @param {Array} links - The array of links
- * @param {Object} node - The D3 selection of nodes
- * @param {Object} link - The D3 selection of links
- * @param {Object} simulation - The D3 force simulation
- * @param {Object} svg - The SVG element
- * @param {number} width - The width of the SVG
- * @param {number} height - The height of the SVG
+ * Note: This function modifies the `nodes` array in-place, adding/updating `treeLevel`,
+ * `treePosition`, `treeParent`, `fx`, and `fy` properties on the node objects.
+ *
+ * @param {Object} rootNode - The node data object to use as the root of the tree.
+ * @param {Array} nodes - The complete array of node data objects.
+ * @param {Array} links - The complete array of link data objects.
+ * @param {Object} node - The D3 selection of node elements (<g class="node">).
+ * @param {Object} link - The D3 selection of link elements (<g class="link-group">).
+ * @param {Object} simulation - The D3 force simulation instance.
+ * @param {Object} svg - The main SVG element D3 selection.
+ * @param {number} width - The width of the SVG canvas.
+ * @param {number} height - The height of the SVG canvas.
  */
 export function createTreeLayout(
   rootNode,
@@ -104,8 +115,9 @@ export function createTreeLayout(
     if (node.treeLevel !== null) {
       // Fix nodes in place in a tree structure with better centering
       // Using fx/fy properties to override force simulation positions
+      // These fixed positions ensure the tree structure is maintained and dragging is unnecessary
       node.fx = width / 2 + node.treePosition * HORIZONTAL_SPACING;
-      node.fy = height / 5 + node.treeLevel * LEVEL_VERTICAL_SPACING; // Start higher in the viewport (1/5 instead of 1/3)
+      node.fy = height / 5 + node.treeLevel * LEVEL_VERTICAL_SPACING;
     } else {
       // Move unconnected nodes far away
       node.fx = width * 2; // Move off-screen
@@ -125,18 +137,29 @@ export function createTreeLayout(
 }
 
 /**
- * Highlight tree connections
+ * Applies visual highlighting styles specific to the tree view.
+ * This function assumes that `treeLevel`, `treeParent`, etc., have already been calculated
+ * and set on the node objects by `createTreeLayout`.
  *
- * - Applies visual styling to differentiate tree elements
- * - Root node gets primary highlight
- * - Tree nodes and links are highlighted based on their level
- * - Non-tree elements are faded out
+ * Steps:
+ * 1. Identifies all nodes and links that are part of the current tree structure.
+ * 2. Resets any previous highlighting/styling on all nodes and links.
+ * 3. Applies specific CSS classes to nodes based on their tree status and level:
+ *    - `.node-highlighted` for all tree nodes.
+ *    - `.node-primary` for the root node.
+ *    - `.node-depth-1`, `.node-depth-2` for nodes at specific levels.
+ *    - `.node-faded` for nodes *not* part of the tree.
+ * 4. Applies specific styling to links that connect nodes within the tree:
+ *    - Uses `.link-highlighted` class.
+ *    - Sets marker to `arrowhead-highlighted`.
+ *    - Adjusts label position (`dy`) and size/spacing for emphasis.
+ * 5. Applies minor text style adjustments (letter-spacing) to tree nodes after a short delay.
  *
- * @param {Object} rootNode - The root node for the tree
- * @param {Array} nodes - The array of nodes
- * @param {Array} links - The array of links
- * @param {Object} node - The D3 selection of nodes
- * @param {Object} link - The D3 selection of links
+ * @param {Object} rootNode - The node data object used as the root of the tree.
+ * @param {Array} nodes - The complete array of node data objects (with tree properties calculated).
+ * @param {Array} links - The complete array of link data objects.
+ * @param {Object} node - The D3 selection of node elements (<g class="node">).
+ * @param {Object} link - The D3 selection of link elements (<g class="link-group">).
  */
 function highlightTreeView(rootNode, nodes, links, node, link) {
   // Identify nodes and links that are part of the tree
@@ -162,6 +185,29 @@ function highlightTreeView(rootNode, nodes, links, node, link) {
       targetNode.treeParent === sourceNode.id;
 
     treeLinks.set(i, isTreeLink);
+  });
+
+  // First reset all highlighting to ensure clean state
+  node
+    .classed("node-highlighted", false)
+    .classed("node-primary", false)
+    .classed("node-depth-1", false)
+    .classed("node-depth-2", false)
+    .classed("node-faded", false);
+
+  // Reset all link styling
+  link.each(function () {
+    d3.select(this)
+      .select("path")
+      .classed("link-highlighted", false)
+      .attr("marker-end", (d) => `url(#arrowhead-${d.type})`);
+
+    d3.select(this)
+      .select("text")
+      .classed("link-label-highlighted", false)
+      .attr("dy", 20)
+      .style("font-size", "16px")
+      .style("letter-spacing", "0.5px");
   });
 
   // Apply highlighting to nodes
@@ -192,15 +238,16 @@ function highlightTreeView(rootNode, nodes, links, node, link) {
 
       // If the link connects nodes with different tree levels, adjust vertical position
       if (sourceLevel !== null && targetLevel !== null) {
-        // For links going down in the tree, position the label above the line
-        textElement.attr("dy", -40); // Further increased for better visibility (-35 to -40)
+        // Use positive dy value for consistent positioning with other views
+        textElement.attr("dy", 30); // Use positive value for positioning
       }
 
       textElement
         .classed("link-label-highlighted", true)
         .transition()
         .duration(200)
-        .style("font-size", "26px"); // Consistent with hover highlight size
+        .style("font-size", "26px") // Consistent with hover highlight size
+        .style("letter-spacing", "1.2px"); // Match letter spacing with other highlighted links
     }
   });
 
@@ -222,16 +269,25 @@ function highlightTreeView(rootNode, nodes, links, node, link) {
 }
 
 /**
- * Fit the tree view to the viewport
+ * Calculates the appropriate zoom transform (scale and translate) to fit the
+ * currently laid-out tree structure within the SVG viewport bounds and applies it.
  *
- * - Calculates the bounding box of all tree nodes
- * - Determines optimal zoom and pan to fit the tree
- * - Animates transition to the new view
+ * Steps:
+ * 1. Filters the `nodes` array to include only those nodes that are part of the tree
+ *    (i.e., have a non-null `treeLevel`).
+ * 2. Calculates the bounding box (min/max X and Y coordinates) encompassing all tree nodes,
+ *    using their fixed positions (`fx`, `fy`) and dimensions (`width`, `height`).
+ * 3. Adds padding to the bounding box.
+ * 4. Calculates the required scale factor to fit the padded bounding box within the
+ *    SVG `width` and `height`, ensuring the scale doesn't exceed 1.0 and applying a small margin.
+ * 5. Calculates the translation needed to center the bounding box within the viewport.
+ * 6. Applies the calculated scale and translation to the main SVG element using a smooth
+ *    zoom transition after a short delay (allowing the simulation tick to potentially update positions first).
  *
- * @param {Array} nodes - The array of nodes
- * @param {Object} svg - The SVG element
- * @param {number} width - The width of the SVG
- * @param {number} height - The height of the SVG
+ * @param {Array} nodes - The complete array of node data objects (with tree properties and `fx`/`fy` calculated).
+ * @param {Object} svg - The D3 selection of the main SVG element.
+ * @param {number} width - The width of the SVG canvas.
+ * @param {number} height - The height of the SVG canvas.
  */
 function fitTreeToView(nodes, svg, width, height) {
   // Filter to only include tree nodes (those with a level assigned)

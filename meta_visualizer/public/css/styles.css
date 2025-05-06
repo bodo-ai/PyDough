@@ -34,7 +34,7 @@ header {
 }
 
 .load-json-btn {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   padding: 10px 15px;
   border: none;
@@ -61,7 +61,7 @@ header {
 .node {
   cursor: pointer;
   stroke: #333;
-  stroke-width: 1.5px;
+  stroke-width: 1px;
   fill: #c6dbef;
 }
 
@@ -140,22 +140,21 @@ header {
 }
 
 .link-label-highlighted {
-  fill: #d62728;
-  font-weight: bold;
+  fill: #000;
   font-size: 16px;
 }
 
 .link-highlighted {
-  stroke: #d62728;
+  stroke: #000;
   stroke-width: 3px;
   stroke-dasharray: none;
   stroke-opacity: 1;
 }
 
 .node-highlighted {
-  stroke: #d62728;
-  stroke-width: 3px;
-  fill: #f7dcdb;
+  stroke: #000;
+  stroke-width: 1px;
+  fill: #e0e0e0;
 }
 
 .arrowhead {
@@ -163,7 +162,7 @@ header {
 }
 
 .arrowhead-highlighted {
-  fill: #d62728;
+  fill: #000;
 }
 
 /* Tooltip */
@@ -245,4 +244,59 @@ header {
   font-size: 13px;
   margin-top: 10px;
   margin-bottom: 0;
+}
+
+/* Hamburger Menu & Dropdown */
+.header-left {
+  position: relative;
+  display: inline-block;
+}
+
+.hamburger-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 15px;
+}
+
+.dropdown-content {
+  display: none; /* Hidden by default */
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 200px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  border-radius: 4px;
+  top: 100%; /* Position below the button */
+  left: 0;
+}
+
+.dropdown-content ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dropdown-content li {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.dropdown-content li:last-child {
+  border-bottom: none;
+}
+
+.dropdown-content li:hover {
+  background-color: #f1f1f1;
+}
+
+/* Class to show the dropdown */
+.show {
+  display: block;
 }

@@ -35,7 +35,6 @@ export function processMetadata(data) {
   // Third pass: Create links based on all subcollection relationships
   createLinks(nodes, links);
   // Debugging breakpoint to inspect the final graph data
-  debugger;
   return { nodes, links, graphName };
 }
 
@@ -126,7 +125,9 @@ function processProperties(
     }
     // Handle relationship properties between collections
     else if (
-      ["simple_join", "compound", "cartesian_product"].includes(propData.type)
+      ["simple_join", "cartesian_product", "general_join"].includes(
+        propData.type
+      )
     ) {
       processRelationship(
         collectionName,
@@ -160,29 +161,17 @@ function processRelationship(
   subcollections
 ) {
   let targetCollection;
+  let condition = null; // Variable to store the condition for general_join
 
   try {
     // Handle different relationship types to determine the target collection
     if (propData.type === "simple_join") {
       // For simple joins, the target is directly specified
       targetCollection = propData.other_collection_name;
-    } else if (propData.type === "compound") {
-      // For compound relationships, we need to find the secondary property's collection
-      if (
-        propData.secondary_property &&
-        collectionData.properties[propData.secondary_property] &&
-        collectionData.properties[propData.secondary_property]
-          .other_collection_name
-      ) {
-        targetCollection =
-          collectionData.properties[propData.secondary_property]
-            .other_collection_name;
-      } else {
-        console.warn(
-          `Secondary property issue for compound relationship ${propName} in ${collectionName}`
-        );
-        targetCollection = "unknown";
-      }
+    } else if (propData.type === "general_join") {
+      // For general joins, target is specified, and there's a condition
+      targetCollection = propData.other_collection_name;
+      condition = propData.condition; // Extract the condition string
     } else {
       // For cartesian product relationships
       targetCollection = propData.other_collection_name;
@@ -205,10 +194,8 @@ function processRelationship(
       target: targetCollection,
       singular: propData.singular || false, // One-to-one relationship flag
       noCollisions: propData.no_collisions || false, // Indicates if duplicate relations are prevented
-      reverseRelationship:
-        propData.reverse_relationship_name || `${collectionName}_reverse`, // Name for the inverse relationship
-      primary: propData.primary_property, // Primary join column/property
-      secondary: propData.secondary_property, // Secondary join column/property (for compound)
+      primary: propData.primary_property, // Primary join property
+      condition: condition, // Add the condition field (will be null for non-general joins)
       propertyData: propData, // Store the original property data for reference
       isForward: true, // Flag this as a forward relationship (vs reverse relationships created later)
     });
@@ -225,38 +212,38 @@ function processRelationship(
  * @param {Array} nodes - The array of all node objects with their subcollections
  */
 function processReverseRelationships(nodes) {
-  nodes.forEach((node) => {
-    node.subcollections.forEach((subCol) => {
-      // Only process forward relationships to avoid infinite loops
-      if (subCol.isForward) {
-        // Find the target node to add the reverse relationship to
-        const targetNode = nodes.find((n) => n.id === subCol.target);
-        if (targetNode) {
-          // Check if a reverse relationship with this name already exists
-          const existingReverseRel = targetNode.subcollections.find(
-            (sc) =>
-              sc.name === subCol.reverseRelationship && sc.target === node.id
+  nodes.forEach((sourceNode) => {
+    sourceNode.subcollections.forEach((subcollection) => {
+      const targetNode = nodes.find((n) => n.id === subcollection.target);
+      if (targetNode && subcollection.propertyData?.reverse_relationship_name) {
+        console.log(
+          `Adding reverse relationship from ${targetNode.id} to ${sourceNode.id}`
+        );
+
+        // Transform the condition for the reverse relationship if it exists
+        let reverseCondition = subcollection.condition;
+        if (reverseCondition) {
+          // Use placeholders to safely swap 'self.' and 'other.'
+          const tempSelf = "__TEMP_SELF__";
+          reverseCondition = reverseCondition.replace(/self\./g, tempSelf);
+          reverseCondition = reverseCondition.replace(/other\./g, "self.");
+          reverseCondition = reverseCondition.replace(
+            new RegExp(tempSelf, "g"),
+            "other."
           );
-
-          // Skip if this reverse relationship was already added
-          if (existingReverseRel) {
-            return;
-          }
-
-          // Add the reverse relationship to the target node's subcollections
-          // Cardinality is flipped for the reverse relationship
-          targetNode.subcollections.push({
-            name: subCol.reverseRelationship,
-            type: subCol.type,
-            target: node.id,
-            // In reverse relationships, cardinality flags are swapped
-            singular: subCol.noCollisions, // If A->B is one-to-many, then B->A is many-to-one
-            noCollisions: subCol.singular, // Maintain the inverse relationship logic
-            isReverse: true, // Flag to indicate this is a reverse relationship
-            originalRelationship: subCol.name, // Reference to the original relationship
-            originalCollection: node.id, // Add reference to the original collection
-          });
         }
+
+        targetNode.subcollections.push({
+          name: subcollection.propertyData.reverse_relationship_name,
+          type: subcollection.type, // Keep the same type
+          target: sourceNode.id,
+          singular: !subcollection.singular, // Reverse cardinality (approximate)
+          noCollisions: subcollection.noCollisions, // Maintain collision property
+          primary: subcollection.primary, // Reverse relationships might not have a clear primary property
+          condition: reverseCondition, // Use the transformed condition
+          propertyData: { original_relationship: subcollection.name }, // Reference original
+          isForward: false, // This is a reverse relationship
+        });
       }
     });
   });
@@ -273,25 +260,20 @@ function processReverseRelationships(nodes) {
  * @param {Array} links - The array to store the created link objects (modified in-place)
  */
 function createLinks(nodes, links) {
-  nodes.forEach((node) => {
-    node.subcollections.forEach((subCol) => {
-      // Find the target node for the relationship
-      const targetNode = nodes.find((n) => n.id === subCol.target);
+  nodes.forEach((sourceNode) => {
+    sourceNode.subcollections.forEach((subcollection) => {
+      const targetNode = nodes.find((n) => n.id === subcollection.target);
       if (targetNode) {
-        // Create a link object for the graph visualization
+        console.log(
+          `Creating link: ${sourceNode.id} -> ${targetNode.id} (${subcollection.type})`
+        );
         links.push({
-          source: node.id, // Source collection
-          target: targetNode.id, // Target collection
-          type: subCol.type, // Relationship type (simple_join, compound, cartesian_product)
-          name: subCol.name, // Name of the relationship
-          singular: subCol.singular, // One-to-one flag
-          noCollisions: subCol.noCollisions, // Duplicate prevention flag
-          isReverse: subCol.isReverse || false, // Whether this is a reverse relationship
-          primary: subCol.primary, // Primary join property
-          secondary: subCol.secondary, // Secondary join property
-          propertyData: subCol.propertyData, // Original property data
-          originalRelationship: subCol.originalRelationship, // For reverse links, reference to original
-          isSplit: true, // Flag to indicate this is a split link (for compatibility)
+          source: sourceNode.id,
+          target: targetNode.id,
+          type: subcollection.type,
+          singular: subcollection.singular,
+          name: subcollection.name, // Add the relationship name to the link
+          condition: subcollection.condition, // Add the condition to the link data
         });
       }
     });

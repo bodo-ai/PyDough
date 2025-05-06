@@ -1,22 +1,23 @@
 # Graph Renderers
 
-This directory contains components responsible for rendering the visual elements of the graph.
+This directory contains modules responsible for creating the visual SVG elements of the graph based on the processed data.
 
 ## Files
 
-- `nodeRenderer.js`: Renders node elements (collection boxes) with titles, properties, and subcollections
-- `linkRenderer.js`: Renders links between nodes, including path calculation and labels
-- `markerRenderer.js`: Renders arrow markers for different link types
+- `nodeRenderer.js`: Creates the visual representation for each node (collection). It builds an SVG group containing a rectangle, title text, table path text, property/column lists, subcollection list, and a tooltip indicator.
+- `linkRenderer.js`: Creates the visual representation for each link (relationship). It builds an SVG group containing a path element (the line connecting nodes) with an appropriate arrowhead marker and a text label displaying the relationship name along the path.
+- `markerRenderer.js`: Defines reusable SVG `<marker>` elements (arrowheads) used by `linkRenderer.js` to indicate relationship direction and type (e.g., `simple_join`, `cartesian_product`, `highlighted`).
 
 ## Responsibilities
 
-- Creating and styling visual elements for nodes and links
-- Defining the appearance of different node and link types
-- Calculating positions for SVG elements
-- Setting up visual attributes for elements
+- Translating node data (name, path, columns, subcollections) into structured SVG elements (rectangles, text, lines).
+- Translating link data (source, target, name, type) into SVG paths and text labels.
+- Defining and applying appropriate markers (arrowheads) to links based on relationship type and interaction state.
+- Structuring the SVG output within the main graph group (`<g>`) provided by `graphCreator.js`.
+- Setting up basic element attributes (IDs, classes) for styling and interaction handling.
 
 ## Rendering Process
 
-1. Marker definitions are created to style the arrows on links
-2. Nodes are rendered with their internal structure
-3. Links are rendered between nodes with appropriate markers and labels
+1. `markerRenderer.js` (`setupMarkers`) is called first by `graphCreator.js` to define the SVG arrowheads in the `<defs>` section.
+2. `nodeRenderer.js` (`createNodes`) is called to generate the SVG groups and internal elements for all nodes.
+3. `linkRenderer.js` (`createLinks`) is called to generate the SVG groups, paths, and labels for all links, referencing the pre-defined markers.

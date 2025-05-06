@@ -10,6 +10,14 @@
   <body>
     <div class="container">
       <header>
+        <div class="header-left">
+          <button id="hamburger-btn" class="hamburger-btn">☰</button>
+          <div id="graph-list-dropdown" class="dropdown-content">
+            <ul id="graph-list">
+              <!-- Loaded graph names will be added here -->
+            </ul>
+          </div>
+        </div>
         <h1>PyDough Knowledge Graph Viewer</h1>
         <div class="file-upload-container">
           <input
@@ -31,16 +39,8 @@
           <span>Simple Join</span>
         </div>
         <div class="legend-item">
-          <span class="legend-line compound-line"></span>
-          <span>Compound</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-line cartesian_product-line"></span>
-          <span>Cartesian Product</span>
-        </div>
-        <div class="legend-item">
-          <span class="legend-line reverse-line"></span>
-          <span>Reverse Relationship</span>
+          <span class="legend-line general_join-line"></span>
+          <span>General Join</span>
         </div>
         <p class="legend-note">
           Hover over a collection to highlight all its subcollection

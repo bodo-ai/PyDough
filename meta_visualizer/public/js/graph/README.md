@@ -1,50 +1,47 @@
 # Graph Visualization Component
 
-This directory contains the code for the interactive graph visualization component used in MetaViewer.
+This directory contains the JavaScript modules responsible for creating and managing the interactive graph visualization component of MetaViewer. It leverages D3.js for rendering and interaction.
 
 ## Directory Structure
 
-- **core/**: Core functionality for initializing and creating the graph
+- **`core/`**: Handles the overall initialization, data processing, and orchestration of the graph creation.
 
-  - `graphInitializer.js`: Entry point for graph initialization
-  - `dataProcessor.js`: Processes the metadata into nodes and links
-  - `graphCreator.js`: Main function to create the graph visualization
+  - `graphInitializer.js`: Sets up the UI (file load button), handles JSON file input, parses data, and calls `graphCreator`.
+  - `dataProcessor.js`: Transforms the raw JSON metadata into `nodes` and `links` arrays suitable for D3, processing collections, properties, and relationships (including reverse links).
+  - `graphCreator.js`: The main orchestrator that sets up the SVG canvas, calls renderers, initializes layouts and interactions, and manages the main D3 simulation loop.
 
-- **renderers/**: Components responsible for rendering visual elements
+- **`renderers/`**: Modules focused on creating the visual SVG elements.
 
-  - `nodeRenderer.js`: Renders node elements (collection boxes)
-  - `linkRenderer.js`: Renders links between nodes
-  - `markerRenderer.js`: Renders arrow markers for links
+  - `nodeRenderer.js`: Renders nodes as SVG groups (rect, text for title/path/columns/subcollections, tooltip indicator).
+  - `linkRenderer.js`: Renders links as SVG groups (path with markers, text label).
+  - `markerRenderer.js`: Defines SVG arrowheads (`<marker>`) for different link types and states.
 
-- **layouts/**: Different layout strategies for positioning nodes
+- **`layouts/`**: Algorithms for positioning nodes and links.
 
-  - `forceLayout.js`: Force-directed graph layout
-  - `treeLayout.js`: Tree visualization layout
+  - `forceLayout.js`: Implements the default force-directed layout using D3 simulation forces.
+  - `treeLayout.js`: Implements a hierarchical tree layout triggered by node clicks, arranging nodes based on outgoing links from a root.
 
-- **interactions/**: User interaction handling
+- **`interactions/`**: Modules handling user input and visual feedback.
 
-  - `dragHandler.js`: Drag functionality for nodes
-  - `highlightHandler.js`: Highlighting nodes and connections
-  - `zoomHandler.js`: Zoom and pan functionality
-  - `tooltipHandler.js`: Tooltip display functionality
+  - `dragHandler.js`: Enables node dragging and updates fixed positions (`fx`, `fy`).
+  - `highlightHandler.js`: Manages highlighting of related nodes/links on hover and click, triggers tree layout.
+  - `zoomHandler.js`: Implements zoom/pan functionality with UI controls.
+  - `tooltipHandler.js`: Manages the display of informative tooltips on hover.
 
-- **styles/**: Visual styling for the graph
+- **`styles/`**: Styling definitions for the graph.
 
-  - `graphStyles.js`: CSS styles for the graph components
+  - `graphStyles.js`: Injects CSS rules to style nodes, links, tooltips, and interaction states (highlighted, faded, etc.).
 
-- **utils/**: Utility functions
-  - `geometryUtils.js`: Utility functions for geometric calculations
+- **`utils/`**: Reusable utility functions.
+  - `geometryUtils.js`: Provides geometric calculation helpers (intersections, distances, centers).
 
-## Usage
+## Initialization and Data Flow
 
-The graph visualization is initialized when the DOM is loaded:
+The visualization is bootstrapped by `main.js`, which calls `initGraphVisualization` from `core/graphInitializer.js`.
 
-```javascript
-import { initGraphVisualization } from "./graph/core/graphInitializer.js";
-
-document.addEventListener("DOMContentLoaded", () => {
-  initGraphVisualization();
-});
-```
-
-The component reads data from `/data/metadata.json` and creates an interactive visualization of the relationships between collections.
+1.  `graphInitializer.js` sets up the "Load JSON File" button and waits for user input.
+2.  When a user selects a valid JSON file, it's read and parsed.
+3.  The parsed data object is passed to `createGraph` in `core/graphCreator.js`.
+4.  `graphCreator.js` calls `processMetadata` (from `core/dataProcessor.js`) to get `nodes` and `links`.
+5.  `graphCreator.js` then initializes the D3 simulation (`layouts/forceLayout.js`), sets up SVG markers (`renderers/markerRenderer.js`), renders nodes (`renderers/nodeRenderer.js`) and links (`renderers/linkRenderer.js`), applies styles (`styles/graphStyles.js`), and sets up interactions (`interactions/` handlers).
+6.  The force simulation automatically positions nodes, and interaction handlers provide zoom, pan, drag, highlight, and tooltip features.

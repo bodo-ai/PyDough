@@ -1,39 +1,24 @@
 # Graph Styles
 
-This directory contains the styling for the graph visualization.
+This directory contains the styling definitions for the graph visualization.
 
 ## Files
 
-- `graphStyles.js`: Contains the CSS styles for the graph components
+- `graphStyles.js`: Defines and injects CSS rules for all visual components of the graph, including nodes, links, markers, tooltips, and interaction states.
 
 ## Responsibilities
 
-- Defining the visual appearance of all graph elements
-- Styling nodes, links, tooltips, and other visual components
-- Managing transitions and animations
-- Ensuring consistent styling across the visualization
+- Defining the visual appearance of nodes (rectangles, text, titles, properties sections) in various states (default, highlighted, primary, faded).
+- Styling links based on type (forward, reverse) and state (default, highlighted), including line style, color, thickness, and labels.
+- Styling arrow markers for links.
+- Defining the appearance and layout of tooltips.
+- Using CSS transitions for smooth visual feedback during interactions.
+- Ensuring a consistent and readable visual language for the graph.
 
-## Styling Categories
+## Key Styling Areas
 
-### Node Styles
-
-- Base styling for collection boxes
-- Styles for highlighted and selected nodes
-- Text styling for node content
-
-### Link Styles
-
-- Styling for different relationship types
-- Arrow styling for different link types
-- Transition effects for hovering and selection
-
-### Tooltip Styles
-
-- Appearance of tooltips
-- Layout of tooltip content
-- Transition effects for showing/hiding tooltips
-
-### Animation Styles
-
-- Transition effects for various interactions
-- Duration and easing for animations
+- **Nodes:** Base appearance, text formatting (title, headers, items), state-based highlighting (stroke, fill, font size changes).
+- **Links:** Distinguishing forward (solid blue) and reverse (dashed orange) relationships, highlighting (thicker green), label appearance and positioning.
+- **Tooltips:** Background, border, padding, font sizes, layout for titles and content sections, hints.
+- **Interaction States:** Styles for `.node-highlighted`, `.node-primary`, `.node-faded`, `.link-highlighted`, `.arrowhead-highlighted`, `.link-label-highlighted`.
+- **Transitions:** Smooth visual changes for properties like stroke, fill, opacity, font-size, etc.
