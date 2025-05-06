@@ -514,7 +514,8 @@
       }
     ],
     "additional definitions": [],
-    "verified pydough analysis": []
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   },
   {
     "name": "Dealership",
@@ -525,274 +526,274 @@
         "type": "simple table",
         "table path": "main.cars",
         "unique properties": [
-          "_id"
+          "_id", "vin_number"
         ],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "numeric",
-            "description": "Unique identifying string for each customer",
-            "sample values": [],
-            "synonyms": []
+            "data type": "string",
+            "description": "Unique identifier for each car",
+            "sample values": ["1", "3", "5", "6", "18"],
+            "synonyms": ["car key", "car id"]
           },
           {
             "name": "make",
             "type": "table column",
             "column name": "make",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The make of the car, e.g. Ford, Toyota, etc.",
+            "sample values": ["Toyota", "Honda", "Ford", "Tesla", "Nissan"],
+            "synonyms": ["car brand", "car manufacturer"]
           },
           {
             "name": "model",
             "type": "table column",
             "column name": "model",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The model name of the car, e..g Civic, Model 3, A4, RX350, Equinox, etc.",
+            "sample values": ["Camry", "Accord", "Mustang", "Civic", "Altima", "Tiguan"],
+            "synonyms": ["car model", "car type"]
           },
           {
             "name": "year",
             "type": "table column",
             "column name": "year",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Year the car was manufactured",
+            "sample values": [2021, 2022, 2023],
+            "synonyms": ["year of production", "manufacturing year"]
           },
           {
             "name": "color",
             "type": "table column",
             "column name": "color",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Color of the car",
+            "sample values": ["Silver", "platinum/grey", "blue", "Titan Silver", "black", "ebony black", "baby blue", "Black", "Jade", "Fiery red"],
+            "synonyms": ["paint color"]
           },
           {
             "name": "vin_number",
             "type": "table column",
             "column name": "vin_number",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Vehicle identification number, a unique code used to identify individual motor vehicles",
+            "sample values": ["1C4HJXDG3NW123456", "1C6SRFFT3NN123456", "3VV2B7AX1NM123456"],
+            "synonyms": ["VIN", "vehicle ID"]
           },
           {
             "name": "engine_type",
             "type": "table column",
             "column name": "engine_type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Type of engine (e.g., V6, V8, Electric)",
+            "sample values": [
+              "Boxer 4",
+              "Electric",
+              "Flat 6",
+              "Inline 4",
+              "Inline 6",
+              "V6",
+              "V8"
+            ],
+            "synonyms": ["motor", "engine model"]
           },
           {
             "name": "transmission",
             "type": "table column",
             "column name": "transmission",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Type of transmission, which is always either 'Automatic', 'Manual', or 'CVT'",
+            "sample values": ["Automatic", "Manual", "CVT"],
+            "synonyms": ["gearbox", "transmission type"]
           },
           {
             "name": "cost",
             "type": "table column",
             "column name": "cost",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Cost of the car",
+            "sample values": [38000.0, 45000.0, 22000.0, 32000.0],
+            "synonyms": ["value"]
           },
           {
             "name": "crtd_ts",
             "type": "table column",
             "column name": "crtd_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the car was added to the system",
+            "synonyms": ["created timestamp", "system entry date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All cars recorded in the dealership system",
+        "synonyms": ["vehicles", "automobiles"]
       },
       {
         "name": "salespeople",
         "type": "simple table",
         "table path": "main.salespersons",
         "unique properties": [
-          "_id"
+          "_id", "email"
         ],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "data type": "string",
+            "description": "Unique identifier for each salesperson in the dealership",
+            "sample values": ["1", "5", "10", "13"],
+            "synonyms": ["salesperson key", "salesperson id", "salesperson number"]
           },
           {
             "name": "first_name",
             "type": "table column",
             "column name": "first_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The first name of the salesperson",
+            "sample values": ["John", "Jane", "David", "Sarah"]
           },
           {
             "name": "last_name",
             "type": "table column",
             "column name": "last_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The last name of the salesperson",
+            "sample values": ["Doe", "Smith", "Taylor", "Thomas"],
+            "synonyms": ["surname"]
           },
           {
             "name": "email",
             "type": "table column",
             "column name": "email",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Work email of the salesperson",
+            "sample values": ["john.doe@autonation.com", "michael.johnson@autonation.com", "jennifer.davis@directauto.com"],
+            "synonyms": ["email address", "work email"]
           },
           {
             "name": "phone",
             "type": "table column",
             "column name": "phone",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Contact phone number of the salesperson, where tte first 3 digits are the area code. Format: (123)-456-7890",
+            "sample values": ["(555)-123-4567", "(444)-333-4444", "(001)-415-5678", "(555)-789-0123"],
+            "synonyms": ["phone number", "contact information"]
           },
           {
             "name": "hire_date",
             "type": "table column",
             "column name": "hire_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the salesperson was hired",
+            "synonyms": ["employment date", "start date"]
           },
           {
             "name": "termination_date",
             "type": "table column",
             "column name": "termination_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the salesperson left the dealership, if applicable (null if still working there)",
+            "synonyms": ["firing date", "exit date", "quitting date", "end date"]
           },
           {
             "name": "crtd_ts",
             "type": "table column",
             "column name": "crtd_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the salesperson record was created",
+            "synonyms": ["created timestamp", "system entry date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The salespeople working at the dealership, current and former",
+        "synonyms": ["dealership employees", "sales staff", "sales associates"]
       },
       {
         "name": "customers",
         "type": "simple table",
         "table path": "main.customers",
         "unique properties": [
-          "_id"
+          "_id", "email"
         ],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "data type": "string",
+            "description": "Unique identifier for each customer",
+            "sample values": ["1", "5", "9", "12"],
+            "synonyms": ["customer key", "customer id"]
           },
           {
             "name": "first_name",
             "type": "table column",
             "column name": "first_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The first name of the customer",
+            "sample values": ["William", "Ava", "Sophia", "Mia"]
           },
           {
             "name": "last_name",
             "type": "table column",
             "column name": "last_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The last name of the customer",
+            "sample values": ["Davis", "Miller", "Jackson", "Lee"],
+            "synonyms": ["surname"]
           },
           {
             "name": "email",
             "type": "table column",
             "column name": "email",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The email address of the customer",
+            "sample values": ["william.davis@example.com", "charlotte.anderson@example.com", "sophia.lee@microsoft.com", "christopher.brown@ai.com", "abigail.harris@company.io"],
+            "synonyms": ["contact email", "email address"]
           },
           {
             "name": "phone",
             "type": "table column",
             "column name": "phone",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The phone number of the customer listed with the dealership",
+            "sample values": ["555-888-9999", "555-666-5555", "555-456-7890", "555-444-3333"],
+            "synonyms": ["contact information", "phone number"]
           },
           {
             "name": "address",
             "type": "table column",
             "column name": "address",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The home address of the customer given to the dealership",
+            "sample values": ["123 Main St", "456 Oak Ave", "987 Birch Dr", "951 Oak Ln"],
+            "synonyms": ["street address", "home address", "street name and street number"]
           },
           {
             "name": "city",
             "type": "table column",
             "column name": "city",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The city of the customer's home address",
+            "sample values": ["New York", "Los Angeles", "Chicago", "Dallas"]
           },
           {
             "name": "state",
             "type": "table column",
             "column name": "state",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The state of the customer's home address, by its capitalized two-letter abbreviation",
+            "sample values": ["NY", "CA", "TX", "IL"]
           },
           {
             "name": "zip_code",
             "type": "table column",
             "column name": "zip_code",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The zip-code of the customer's home address",
+            "sample values": ["10001", "60007", "95101", "94101"],
             "synonyms": []
           },
           {
@@ -800,106 +801,100 @@
             "type": "table column",
             "column name": "crtd_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the customer record was created",
+            "synonyms": ["created timestamp", "system entry date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All the customers who are registered with the dealership",
+        "synonyms": ["clients", "users", "buyers", "consumers"]
       },
       {
         "name": "payments_made",
         "type": "simple table",
         "table path": "main.payments_made",
         "unique properties": [
-          "_id"
+          "_id", "invoice_number"
         ],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "data type": "string",
+            "description": "Unique identifier for each payment made",
+            "sample values": ["1", "11", "16", "17"],
+            "synonyms": ["payment key", "payment id"]
           },
           {
             "name": "vendor_name",
             "type": "table column",
             "column name": "vendor_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Name of the vendor to whom the payment was made",
+            "sample values": ["Chevrolet Auto", "Marketing Agency", "Car Manufacturer Inc"],
+            "synonyms": ["payment recipient", "vendor"]
           },
           {
             "name": "payment_date",
             "type": "table column",
             "column name": "payment_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Date that the payment was made"
           },
           {
             "name": "payment_amount",
             "type": "table column",
             "column name": "payment_amount",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The amount that was paid in the payment in USD",
+            "sample values": [150000.0, 1500.0, 22000.0],
+            "synonyms": ["payment sum", "dollar value"]
           },
           {
             "name": "payment_method",
             "type": "table column",
             "column name": "payment_method",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Method of payment, which is either 'bank_transfer', 'credit_card', 'check', or 'credit_card'",
+            "sample values": ["bank_transfer", "credit_card", "check", "credit_card"],
+            "synonyms": ["transfer medium", "payment type"]
           },
           {
             "name": "invoice_number",
             "type": "table column",
             "column name": "invoice_number",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Invoice number associated with the payment",
+            "sample values": ["INV-001", "INV-017", "INV-008"],
+            "synonyms": ["invoice id", "invoice key", "invoice serial"]
           },
           {
             "name": "invoice_date",
             "type": "table column",
             "column name": "invoice_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Date of the invoice",
+            "synonyms": ["date of payment"]
           },
           {
             "name": "due_date",
             "type": "table column",
             "column name": "due_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Due date of the invoice",
+            "synonyms": ["deadline", "expected payment date"]
           },
           {
             "name": "crtd_ts",
             "type": "table column",
             "column name": "crtd_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the payment made record was created",
+            "synonyms": ["system entry date", "created timestamp"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Records of payments made by the dealership to vendors",
+        "synonyms": ["vendor payments", "vendor transactions", "vendor expenditures"]
       },
       {
         "name": "payments_received",
@@ -914,58 +909,56 @@
             "type": "table column",
             "column name": "_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Unique identifier for each payment received record",
+            "sample values": ["1", "2", "10", "19", "23"],
+            "synonyms": ["payment key", "payment id"]
           },
           {
             "name": "sale_id",
             "type": "table column",
             "column name": "sale_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the sale that the payment is associated with",
+            "sample values": ["1", "5", "9", "20", "21"],
+            "synonyms": ["sale key", "sale id"]
           },
           {
             "name": "payment_date",
             "type": "table column",
             "column name": "payment_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Date when the payment was received. Can take place after the sale date, or in installments.",
+            "synonyms": ["transaction date", "installment date"]
           },
           {
             "name": "payment_amount",
             "type": "table column",
             "column name": "payment_amount",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Amount of the payment received. Can be less than the sale price if the payment is made in installments.",
+            "sample values": [115000.0, 5000.0, 44000.0, 26000.0],
+            "synonyms": ["cash received", "payment sum"]
           },
           {
             "name": "payment_method",
             "type": "table column",
             "column name": "payment_method",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Method used to make the payment, which can be 'check', 'financing', 'credit_card', 'debit_card', or 'cash'",
+            "sample values": ["check", "financing", "credit_card", "debit_card", "cash"],
+            "synonyms": ["transfer method", "payment type"]
           },
           {
             "name": "crtd_ts",
             "type": "table column",
             "column name": "crtd_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the payment received record was created",
+            "synonyms": ["system entry date", "created timestamp"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Records of payments received by the dealership from customers as part of a sale",
+        "synonyms": ["car purchase payments", "customer payments", "customer transactions", "car purchase installments"]
       },
       {
         "name": "sales",
@@ -979,68 +972,66 @@
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "data type": "string",
+            "description": "Unique identifier for each car sale",
+            "sample values": ["5", "11", "12", "18", "22"],
+            "synonyms": ["sale key", "sale id"]
           },
           {
             "name": "car_id",
             "type": "table column",
             "column name": "car_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the car being purchased in the sale",
+            "sample values": ["1", "3", "5", "6", "18"],
+            "synonyms": ["car key", "car id"]
           },
           {
             "name": "salesperson_id",
             "type": "table column",
             "column name": "salesperson_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the salesperson who brokered the sale",
+            "sample values": ["1", "5", "10", "13"],
+            "synonyms": ["salesperson key", "salesperson id"]
           },
           {
             "name": "customer_id",
             "type": "table column",
             "column name": "customer_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the customer who purchased the car in the sale",
+            "sample values": ["1", "5", "9", "12"],
+            "synonyms": ["customer key", "customer id"]
           },
           {
             "name": "sale_price",
             "type": "table column",
             "column name": "sale_price",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Price at which the car was sold",
+            "sample values": [43500.0, 30500.0, 38000.0, 49000.0, 26500.0],
+            "synonyms": ["purchase cost", "sale amount", "dollar value"]
           },
           {
             "name": "sale_date",
             "type": "table column",
             "column name": "sale_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Date when the car was sold",
+            "synonyms": ["purchase date", "transaction date"]
           },
           {
             "name": "crtd_ts",
             "type": "table column",
             "column name": "crtd_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the sale record was created",
+            "synonyms": ["system entry date", "created timestamp"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Records of cars being purchased from the dealership from a customer via one of the salespeople",
+        "synonyms": ["car purchases", "sale records", "vehicle sale transactions"]
       },
       {
         "name": "inventory_snapshots",
@@ -1055,49 +1046,46 @@
             "type": "table column",
             "column name": "_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Unique identifier for each inventory snapshot entry",
+            "sample values": ["1", "4", "13", "19", "23"],
+            "synonyms": ["inventory snapshot key", "snapshot id"]
           },
           {
             "name": "snapshot_date",
             "type": "table column",
             "column name": "snapshot_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Date of the inventory snapshot",
+            "synonyms": ["date of snapshot", "inventory date"]
           },
           {
             "name": "car_id",
             "type": "table column",
             "column name": "car_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The key of the car that the inventory snapshot is for",
+            "sample values": ["2", "10", "1", "4", "9"],
+            "synonyms": ["car key", "car id"]
           },
           {
             "name": "is_in_inventory",
             "type": "table column",
             "column name": "is_in_inventory",
             "data type": "bool",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Whether that specific car was in the dealership's inventory at the time of the snapshot",
+            "synonyms": ["car in inventory", "car availability"]
           },
           {
             "name": "crtd_ts",
             "type": "table column",
             "column name": "crtd_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the inventory snapshot record was created",
+            "synonyms": ["system entry date", "created timestamp"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Records of whether specific individual cars were in the dealership's inventory as of specific dates",
+        "synonyms": ["inventory records", "stock records", "car availability manifest"]
       }
     ],
     "relationships": [
@@ -1107,13 +1095,14 @@
         "parent collection": "cars",
         "child collection": "sales",
         "singular": false,
+        "always matches": false,
         "keys": {
           "_id": [
             "car_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "All sales made where the car was sold",
+        "synonyms": ["purchases of vehicle", "car sales", "vehicle transactions"]
       },
       {
         "name": "car",
@@ -1121,8 +1110,9 @@
         "original parent": "cars",
         "original property": "sale_records",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The car being purchased in the sale",
+        "synonyms": ["vehicle", "automobile"]
       },
       {
         "name": "inventory_snapshots",
@@ -1130,13 +1120,14 @@
         "parent collection": "cars",
         "child collection": "inventory_snapshots",
         "singular": false,
+        "always matches": false,
         "keys": {
           "_id": [
             "car_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The inventory snapshots for the car, which show whether it was in the dealership's inventory at specific dates",
+        "synonyms": ["availability records", "inventory history"]
       },
       {
         "name": "car",
@@ -1144,8 +1135,9 @@
         "original parent": "cars",
         "original property": "inventory_snapshots",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The car that the inventory snapshot belongs to",
+        "synonyms": ["vehicle", "automobile"]
       },
       {
         "name": "sales_made",
@@ -1153,13 +1145,14 @@
         "parent collection": "salespeople",
         "child collection": "sales",
         "singular": false,
+        "always matches": false,
         "keys": {
           "_id": [
             "salesperson_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "All the sales brokered by the salesperson",
+        "synonyms": ["sales records", "transactions made", "deals closed"]
       },
       {
         "name": "salesperson",
@@ -1167,8 +1160,9 @@
         "original parent": "salespeople",
         "original property": "sales_made",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The salesperson who brokered the car purchase deal",
+        "synonyms": ["broker", "sales associate", "sales staff", "dealer"]
       },
       {
         "name": "car_purchases",
@@ -1176,13 +1170,14 @@
         "parent collection": "customers",
         "child collection": "sales",
         "singular": false,
+        "always matches": false,
         "keys": {
           "_id": [
             "customer_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "All car purchases made by the customer",
+        "synonyms": ["vehicle purchase records", "car transactions", "automobile purchases"]
       },
       {
         "name": "customer",
@@ -1190,8 +1185,9 @@
         "original parent": "customers",
         "original property": "car_purchases",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The customer who purchased the car",
+        "synonyms": ["client", "buyer", "purchaser", "consumer", "user"]
       },
       {
         "name": "payment",
@@ -1199,13 +1195,14 @@
         "parent collection": "sales",
         "child collection": "payments_received",
         "singular": false,
+        "always matches": false,
         "keys": {
           "_id": [
             "sale_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The payment installments made for the sale, which can be one or multiple installments for a single sale",
+        "synonyms": ["sale purchase installments", "payment records"]
       },
       {
         "name": "sale_record",
@@ -1213,12 +1210,14 @@
         "original parent": "sales",
         "original property": "payment",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The sale that the payment is a part of",
+        "synonyms": ["purchase record", "vehicle sale", "car purchase"]
       }
     ],
     "additional definitions": [],
-    "verified pydough analysis": []
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   },
   {
     "name": "DermTreatment",
@@ -2205,7 +2204,8 @@
       }
     ],
     "additional definitions": [],
-    "verified pydough analysis": []
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   },
   {
     "name": "Ewallet",
@@ -3454,6 +3454,7 @@
       }
     ],
     "additional definitions": [],
-    "verified pydough analysis": []
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   }
 ]

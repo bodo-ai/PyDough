@@ -815,7 +815,8 @@
       }
     ],
     "additional definitions": [],
-    "verified pydough analysis": []
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   },
   {
     "name": "Empty",
@@ -1302,6 +1303,7 @@
       }
     ],
     "additional definitions": [],
-    "verified pydough analysis": []
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   }
 ]
