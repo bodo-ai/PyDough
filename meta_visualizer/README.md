@@ -16,7 +16,7 @@ MetaViewer is a web-based graph visualization tool designed to display and explo
     ./serve.sh
     ```
 4.  Visit `http://localhost:8000` (or the port specified in `serve.sh`) in your browser.
-5.  Click the "Load JSON File" button and select your first metadata JSON file. The graph will be displayed.
+5.  Click the "Load JSON File" button and select your first metadata JSON file. The graph will be displayed. The metada JSON file should adhere to the schema defined in [metadata](https://github.com/bodo-ai/PyDough/blob/main/documentation/metadata.md).
 6.  To load more graphs, click "Load JSON File" again and select another file.
 7.  To switch between loaded graphs, click the hamburger icon (☰) in the header and select the desired graph filename from the dropdown.
 
@@ -92,57 +92,6 @@ The graph visualization is implemented as a modular component:
 - **`utils/`**: Provides utility functions (e.g., geometry calculations).
 
 (See the README.md files in the respective subdirectories for more details.)
-
-## Expected JSON Data Structure
-
-The application expects a JSON file with a single top-level key representing the graph name. Inside this, there should be an object where keys are collection names. Each collection object should contain details like `properties`, `table_path`, and `unique_properties`.
-
-```json
-{
-  "your_graph_name": {
-    "collection_one": {
-      "properties": {
-        "column_a": {
-          "type": "table_column",
-          "column_name": "col_a",
-          "data_type": "string"
-        },
-        "subcollection_access_link": {
-          "type": "simple_join", // or "cartesian_product", "general_join"
-          "other_collection_name": "collection_two",
-          "singular": false,
-          "no_collisions": false,
-          "reverse_relationship_name": "relation_from_one"
-          // ... other relationship-specific fields
-        }
-        // ... other properties
-      },
-      "table_path": "path/to/source_one",
-      "unique_properties": ["id"]
-    },
-    "collection_two": {
-      // ... similar structure ...
-      "properties": {
-        "relation_from_one": {
-          // Matching reverse relationship name
-          "type": "simple_join",
-          "other_collection_name": "collection_one",
-          "reverse_relationship_name": "subcollection_access_link" // Points back
-          // ... other fields matching the forward relationship
-        }
-      }
-    }
-    // ... other collections
-  }
-}
-```
-
-Key aspects processed:
-
-- **Collections**: Top-level objects under the graph name.
-- **Properties**: Divided into `table_column` (attributes) and relationship types (`simple_join`, `cartesian_product`, `general_join`).
-- **Relationships**: Define connections to `other_collection_name`. Fields like `singular`, `no_collisions`, and especially `reverse_relationship_name` are used for processing and display.
-- **Metadata**: `table_path` and `unique_properties` are displayed in the node details.
 
 ## Dependencies
 

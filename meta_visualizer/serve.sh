@@ -26,4 +26,4 @@ echo "Press Ctrl+C to stop the server."
 echo ""
 
 # Change to the public directory and start a simple HTTP server
-cd public && $PYTHON_CMD -m http.server $PORT 
+cd public && $PYTHON_CMD -m http.server $PORT
