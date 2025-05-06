@@ -398,6 +398,53 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_INVALID_KEYS_6' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
             id="BAD_SIMPLE_JOIN_INVALID_KEYS_6",
         ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_MISSING_SINGULAR",
+            "metadata for property children within graph 'BAD_SIMPLE_JOIN_MISSING_SINGULAR' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
+            id="BAD_SIMPLE_JOIN_MISSING_SINGULAR",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_SINGULAR",
+            "metadata for property children within graph 'BAD_SIMPLE_JOIN_INVALID_SINGULAR' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
+            id="BAD_SIMPLE_JOIN_INVALID_SINGULAR",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_DESCRIPTION",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_DESCRIPTION' must be a JSON object containing a field 'description' and field 'description' must be a string",
+            id="BAD_SIMPLE_JOIN_DESCRIPTION",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_SYNONYMS",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_SYNONYMS' must be a JSON object containing a field 'synonyms' and field 'synonyms' must be a JSON array",
+            id="BAD_SIMPLE_JOIN_SYNONYMS",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
+            id="BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_EXTRA_FIELDS",
+            re.escape(
+                "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['always matches', 'child collection', 'description', 'extra semantic info', 'keys', 'name', 'parent collection', 'singular', 'synonyms', 'type']"
+            ),
+            id="BAD_SIMPLE_JOIN_EXTRA_FIELDS",
+        ),
+        pytest.param(
+            "DUPLICATE_RELATIONSHIP_NAMES",
+            "Duplicate property: cartesian property 'children' of simple table collection 'parent' in graph 'DUPLICATE_RELATIONSHIP_NAMES' versus simple join property 'children' of simple table collection 'parent' in graph 'DUPLICATE_RELATIONSHIP_NAMES'.",
+            id="DUPLICATE_RELATIONSHIP_NAMES",
+        ),
+        pytest.param(
+            "DUPLICATE_PROPERTY_NAMES",
+            "Duplicate property: table column property 'key' of simple table collection 'parent' in graph 'DUPLICATE_PROPERTY_NAMES' versus table column property 'key' of simple table collection 'parent' in graph 'DUPLICATE_PROPERTY_NAMES'.",
+            id="DUPLICATE_PROPERTY_NAMES",
+        ),
+        pytest.param(
+            "DUPLICATE_COLLECTION_NAMES",
+            "Duplicate collections: simple table collection 'parent' in graph 'DUPLICATE_COLLECTION_NAMES' versus simple table collection 'parent' in graph 'DUPLICATE_COLLECTION_NAMES'",
+            id="DUPLICATE_COLLECTION_NAMES",
+        ),
     ],
 )
 def test_invalid_graphs(
