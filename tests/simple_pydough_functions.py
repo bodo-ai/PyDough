@@ -1775,3 +1775,14 @@ def simple_var_std():
         pop_var=VAR(suppliers.account_balance, type="population"),
         pop_std=STD(suppliers.account_balance, type="population"),
     )
+
+
+def simple_var_std_with_nulls():
+    # return Nations.WHERE(ISIN(name, ("ALGERIA", "ARGENTINA"))).CALCULATE(
+    #     name,
+    #     var=VAR(suppliers.account_balance),
+    #     std=STD(suppliers.account_balance),
+    # )
+    return Customers.TOP_K(5, by=key.ASC()).CALCULATE(
+        key,
+    )

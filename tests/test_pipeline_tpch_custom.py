@@ -62,6 +62,7 @@ from simple_pydough_functions import (
     simple_scan_top_five,
     simple_smallest_or_largest,
     simple_var_std,
+    simple_var_std_with_nulls,
     singular1,
     singular2,
     singular3,
@@ -1387,6 +1388,15 @@ from pydough.unqualified import (
             ),
             id="simple_var_std",
         ),
+        pytest.param(
+            (
+                simple_var_std_with_nulls,
+                None,
+                "simple_var_std_with_nulls",
+                lambda: pd.DataFrame(),
+            ),
+            id="simple_var_std_with_nulls",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -1476,6 +1486,7 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 
