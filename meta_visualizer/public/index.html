@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PyDough Knowledge Graph Viewer</title>
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-left">
+          <button id="hamburger-btn" class="hamburger-btn">☰</button>
+          <div id="graph-list-dropdown" class="dropdown-content">
+            <ul id="graph-list">
+              <!-- Loaded graph names will be added here -->
+            </ul>
+          </div>
+        </div>
+        <h1>PyDough Knowledge Graph Viewer</h1>
+        <div class="file-upload-container">
+          <input
+            type="file"
+            id="jsonFileInput"
+            accept=".json"
+            style="display: none"
+          />
+          <button id="loadJsonButton" class="load-json-btn">
+            Load JSON File
+          </button>
+        </div>
+      </header>
+      <div class="graph-container" id="graph"></div>
+      <div class="legend">
+        <h3>Relationship Types</h3>
+        <div class="legend-item">
+          <span class="legend-line simple_join-line"></span>
+          <span>Simple Join</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-line general_join-line"></span>
+          <span>General Join</span>
+        </div>
+        <p class="legend-note">
+          Hover over a collection to highlight all its subcollection
+          relationships.
+        </p>
+        <p class="legend-note">
+          Hover over a relationship arrow to see its details.
+        </p>
+      </div>
+    </div>
+    <script type="module" src="js/graph/index.js"></script>
+  </body>
+</html>
