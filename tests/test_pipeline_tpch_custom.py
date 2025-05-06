@@ -1393,7 +1393,22 @@ from pydough.unqualified import (
                 simple_var_std_with_nulls,
                 None,
                 "simple_var_std_with_nulls",
-                lambda: pd.DataFrame(),
+                lambda: pd.DataFrame(
+                    {
+                        "var_samp_0_nnull": [None],
+                        "var_samp_1_nnull": [None],
+                        "var_samp_2_nnull": [27206154.83045],
+                        "var_pop_0_nnull": [None],
+                        "var_pop_1_nnull": [0.0],
+                        "var_pop_2_nnull": [13603077.415225],
+                        "std_samp_0_nnull": [None],
+                        "std_samp_1_nnull": [None],
+                        "std_samp_2_nnull": [5215.951958],
+                        "std_pop_0_nnull": [None],
+                        "std_pop_1_nnull": [0.0],
+                        "std_pop_2_nnull": [3688.235],
+                    }
+                ),
             ),
             id="simple_var_std_with_nulls",
         ),
@@ -1486,7 +1501,6 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
-    breakpoint()
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

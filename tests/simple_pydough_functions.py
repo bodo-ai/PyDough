@@ -1778,11 +1778,32 @@ def simple_var_std():
 
 
 def simple_var_std_with_nulls():
-    # return Nations.WHERE(ISIN(name, ("ALGERIA", "ARGENTINA"))).CALCULATE(
-    #     name,
-    #     var=VAR(suppliers.account_balance),
-    #     std=STD(suppliers.account_balance),
-    # )
-    return Customers.TOP_K(5, by=key.ASC()).CALCULATE(
-        key,
+    first_customers = Customers.WHERE(ISIN(key, (1, 2, 3)))
+    return TPCH.CALCULATE(
+        var_samp_0_nnull=VAR(
+            KEEP_IF(first_customers.acctbal, first_customers.key > 3), type="sample"
+        ),
+        var_samp_1_nnull=VAR(
+            KEEP_IF(first_customers.acctbal, first_customers.key > 2), type="sample"
+        ),
+        var_samp_2_nnull=VAR(
+            KEEP_IF(first_customers.acctbal, first_customers.key > 1), type="sample"
+        ),
+        var_pop_0_nnull=VAR(
+            KEEP_IF(first_customers.acctbal, first_customers.key > 3), type="population"
+        ),
+        var_pop_1_nnull=VAR(KEEP_IF(first_customers.acctbal, first_customers.key > 2)),
+        var_pop_2_nnull=VAR(KEEP_IF(first_customers.acctbal, first_customers.key > 1)),
+        std_samp_0_nnull=STD(
+            KEEP_IF(first_customers.acctbal, first_customers.key > 3), type="sample"
+        ),
+        std_samp_1_nnull=STD(
+            KEEP_IF(first_customers.acctbal, first_customers.key > 2), type="sample"
+        ),
+        std_samp_2_nnull=STD(
+            KEEP_IF(first_customers.acctbal, first_customers.key > 1), type="sample"
+        ),
+        std_pop_0_nnull=STD(KEEP_IF(first_customers.acctbal, first_customers.key > 3)),
+        std_pop_1_nnull=STD(KEEP_IF(first_customers.acctbal, first_customers.key > 2)),
+        std_pop_2_nnull=STD(KEEP_IF(first_customers.acctbal, first_customers.key > 1)),
     )
