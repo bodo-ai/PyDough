@@ -26,11 +26,11 @@ This document describes the various IRs used by PyDough to convert raw PyDough c
 ## Overview
 
 The overarching pipeline for converting PyDough Python text into SQL text is as follows:
-1. The Python text is intercepted and re-written in a [transformation](#unqualified-transform) that replaces undefined variable names with certain objects, ensuring that when the Python code is executed the result is an [unqualified node](#unqualified-nodes). These unqualified nodes are very minimal in terms of information stored,
+1. The Python text is intercepted and re-written in a [transformation](#unqualified-transform) that replaces undefined variable names with certain objects, ensuring that when the Python code is executed the result is an [unqualified node](#unqualified-nodes). These unqualified nodes are very minimal in terms of information stored.
 2. When `to_sql` or `to_df` is called on this unqualified nodes, it is first sent through a process called [qualification](#qualification) which converts unqualified nodes into qualified DAG nodes, or [QDAG nodes](#qdag) for short. These QDAG nodes utilize the metadata in order to correctly associate every aspect of the PyDough logic with the data being analyzed/transformed, and is also where a great deal of the verification of the PyDough code's validity happens.
-3. Next, the QDAG nodes are run through a process called [hybrid conversion](#hybrid-conversion) which restructures the logic into the datastructure known as the [hybrid tree](#hybrid-tree) in order to better organize the types of ways different subtrees of the data are linked together.
+3. Next, the QDAG nodes are run through a process called [hybrid conversion](#hybrid-conversion) which restructures the logic into a data structure known as the [hybrid tree](#hybrid-tree) to better organize how different types of subtrees are linked together.
 4. The hybrid tree is further transformed by the [decorrelation procedure](#hybrid-decorrelation) to remove correlated references created by the hybrid conversion process.
-5. The transformed hybrid tree is converted into a [relational tree](#relational-tree) highly reminiscent of the datastructure used to represent relational algebra in frameworks such as Apache Calcite. The conversion to this datastructure is called [relational conversion](#relational-conversion).
+5. The transformed hybrid tree is converted into a [relational tree](#relational-tree) highly reminiscent of the data structure used to represent relational algebra in frameworks such as Apache Calcite. The conversion to this data structure is called [relational conversion](#relational-conversion).
 6. Several [optimizations](#relational-optimization) are performed on the relational tree to combine/delete/split/transpose relational nodes, resulting in plans that are better for performance and/or visual quality when converted to SQL.
 7. The Relational tree is [converted](#sqlglot-conversion) into the [internal AST](#sqlglot-ast) used by the open source Python library SQLGlot. This library is used for transpiling between different SQL dialects, so it is trivial to convert the SQLglot AST into SQL text of many different dialects.
 8. The SQLGlot AST is [simplified & optimized](#sqlglot-optimization) less so to improve the performance of the SQL when executed, and moreso to improve the visual quality when it is converted into text.
@@ -53,7 +53,7 @@ flowchart TD
     D --> E[Relational
     Tree]
     E <--> E'{{Relational
-    Optimiation}}
+    Optimization}}
     F <--> F'{{SQLGlot
     Optimization}}
     E -->|SQLGlot
@@ -81,14 +81,14 @@ The first intermediary representation of PyDough are the unqualified nodes, whic
 The reason this `_parcel` name is special (and RESERVED) is because whenever getattr is used on an UnqualifiedNode, except for very few names, the logic will instead return a new node referring to an access of a term from the previous node. E.g. if `foo` is an unqualified node and I write `foo.bar`, this returns `UnqualifiedAccess(foo, "bar")` which means "access term `bar` from `foo`".
 
 The same idea of Python functionality building new nodes on top of existing nodes also goes for PyDough operations & Python magic methods. For example:
-- `foo.CALCULATE(...)` returns an unqualified node for a calculate operation that points to `foo` in its parcel as the thing it is building on top of.
+- `foo.CALCULATE(...)` returns an unqualified node for a calculate operation that points to `foo` in its `_parcel` as the thing it is building on top of.
 - `x == y` returns an unqualified node for a function call where the operator is `==` and the operands are `x` and `y`.
 
 > [!NOTE]
 > As a consequence of the `==` behavior, unqualified nodes should never be used as dictionary keys, cached via `@cache`, or compared with `==`, because this will always return a new unqualified node instead of a boolean indicating whether or not they are equal. Instead, it is better to convert the unqualified nodes to strings then check if the strings are equal. All unqualified nodes have a repr implementation that dumps their full structure (so `str` and `repr` should NOT be used as casting functions in PyDough).
 
 Some examples of how the various unqualified nodes work:
-- `UnqualifiedCalculate`: created by calling `x.CALCULATE(...)`. The `_parcel` contains two items: the unqualified node `x`, and a list of `(name, expr)` terms for the arguments to the `CALCULATE` where `name` is the name given to the term and `expr` is the unqualified node for the expression inside the `CALCULATE`. When `x.CALCULATE(...)` is called, every expression that is not passed in via a keyword argument is given a dummy name (e.g. `expr_0`) before so it can be passed in to `UnqualifiedCalculate` with a name.
+- `UnqualifiedCalculate`: created by calling `x.CALCULATE(...)`. The `_parcel` contains two items: the unqualified node `x`, and a list of `(name, expr)` terms for the arguments to the `CALCULATE` where `name` is the name given to the term and `expr` is the unqualified node for the expression inside the `CALCULATE`. When `x.CALCULATE(...)` is called, every expression that is not passed in via a keyword argument is given a dummy name (e.g. `expr_0`) so it can be passed in to `UnqualifiedCalculate` with a name.
 - `UnqualifiedAccess`: created by accessing a field of any other unqualified node, e.g. `x.y`. The `_parcel` contains two items: the unqualified node `x` and the string `"y"` denoting the field to access from `x`. This represents an access of some property of `x` with a specific name, which could be an expression, collection, or an invalid access.
   - Accessing a collection of PyDough is always done in the form `UnqualifiedAccess(root, "collection_name")` where `root` is an `UnqualifiedRoot` object, and  `"collection_name"` is the name of one of the collections in the graph.
   - Terms inside of a `CALCULATE` or similar expression are similarly phrased. For example, if doing `nations.CALCULATE(nation_name=name, region_name=region.name)`, the term for `nation_name` is `UnqualifiedAccess(root, "name")`, and the term for `region_name` is `UnqualifiedAccess(UnqualifiedAccess(root, "region"), "name")`.
@@ -148,7 +148,7 @@ In the example above, the value of the `nation_info` is the `OrderBy` node on th
 <!-- TOC --><a name="unqualified-transform"></a>
 ### Unqualified Transform
 
-The unqualified nodes are created by executing Python code after a transformation is applied to modify the text. This modification creates a variable at the top of the code block called `_ROOT` which is an unqualified root, then replaces all undefined variables `x` with `_ROOT.x`. For example, the `nation_info` example earlier would be rewritten into the following, which then gets executed with `graph` passed in to the environment.
+The unqualified nodes are created by executing Python code after a transformation is applied to modify the text. This transformation inserts a `_ROOT` variable at the top of the code block to represent the unqualified root. It then replaces all undefined variables `x` with `_ROOT.x` For example, the `nation_info` example earlier would be rewritten into the following, which then gets executed with `graph` passed in to the environment.
 
 ```
 _ROOT = UnqualifiedRoot(graph)
@@ -280,7 +280,7 @@ In this example, the main hybrid tree has two levels `H1` and `H2` (`H2` is the 
 - `$0` is a singular access, meaning the data from `H2` and `$0` can be directly joined without needing to worry about changes in cardinality. They are joined on the condition that the `region_key` term from `H2` equals the `key` term from the bottom subtree of `$0` (which is `H3`).
   - The contents of `$0` is just a single tree level `H3` which does not have any children and has a pipeline containing only an access to the `regions` collection.
 - `$1` is an aggregation access, meaning the data from `$1` must first be aggregated before it is joined with `H2`. The aggregation is done by grouping on the `nation_key` field of the bottom subtree of `$1` (which is `H5`) and computes the term `agg_0` as `COUNT()`. Then, the result is joined with `H2` on the condition that the `key` term from `H2` equals the `nation_key` field just used to aggregate.
-  - The contents of `$1` is two tree levels `H4` and `H5`. `H4` does not have any children and has a pipeline containing an access to the `customers` collection followed by a filter on the condition that `acctbal < 0`. `H5` does not have any children and only contains a single operation accessing the `orders` sub-collection of the parent level.
+  - The contents of `$1` is two levels `H4` and `H5`. `H4` does not have any children and has a pipeline containing an access to the `customers` collection followed by a filter on the condition that `acctbal < 0`. `H5` does not have any children and only contains a single operation accessing the `orders` sub-collection of the parent level.
 
 <!-- TOC --><a name="hybrid-conversion"></a>
 ### Hybrid Conversion
@@ -292,7 +292,7 @@ In this example, the main hybrid tree has two levels `H1` and `H2` (`H2` is the 
 <!-- TOC --><a name="hybrid-decorrelation"></a>
 ### Hybrid Decorrelation
 
-To understand why de-correlation matters, first consider the slightly more complex PyDough code example below. This PyDough code finds, for each nation in Europe, the total purchase quantity made by customers in that nation from suppliers in the same nation. 5 nations with the largest number of orders made by customers in that nation in the building market segment where the total price of the order is at least double the average of the total prices of **all** orders.
+To understand why de-correlation matters, first consider the slightly more complex PyDough code example below. This PyDough code finds, for each nation in Europe, the total quantity of purchases made by customers from suppliers in the same nation. 5 nations with the largest number of orders made by customers in that nation in the building market segment where the total price of the order is at least double the average of the total prices of **all** orders.
 
 ```py
 selected_nations = regions.WHERE(
@@ -382,9 +382,9 @@ flowchart TD
     Q1 --> Q2
 ```
 
-Notice that `H6` contains a filter condition `$0.name == CORREL(nation_name)`. This means that even though `H6` is inside child `$0` of `H3` (not to be confused with child `$0` of `H6`), it still references the `nation_name` field from `H3`. This is a called a correlated reference, because it means that child `$0` of `H3` requires information from `H3` in order to be derived, but the whole point is that the data from child `$0` is calculated then joined onto he data from `H3`, so there is a catch-22.
+Notice that `H6` contains a filter condition `$0.name == CORREL(nation_name)`, indicating a correlated reference. Although `H6` is nested within child `$0` of `H3`, it still references the `nation_name` field from `H3`. This is called a correlated reference — child `$0` of `H3` depends on `H3`'s data (`nation_name`) to compute its result. But since this data is meant to be computed before joining with `H3`, this creates a catch-22.
 
-To fix this, we next run the de-correlation procedure. This will recursively traverse the entire tree and look for hybrid nodes that have a correlated child (where the child type is NOT semi/anti join, since those two do allow correlated references). This procedure will reach tree `H3` and see that its child `$0` is correlated and is an `AGGREGATION` connection, and will therefore de-correlate it. It does so by copying the entire hybrid tree so far (`H1`, `H2`, and the first two operators from `H3`) and attaching them to the top of child `$0`, above `H4`. This now means that the `CORREL(nation_name)` term in `H6` can be rephrased into a back-reference to the `nation_name` field in the copied version of `H3` (which is 3 levels above `H6`). This does change the join/aggregation keys when connecting H3 to child `$0`, since now we must connect each unique record of `H3` to the corresponding prepended section of `$0`. This is done by changing the join keys into the uniqueness keys of `H1`/`H2`/`H3`, which is aka `key` from `regions` (`BACK(1).key` from the perspective of `H3` and `BACK(4).key` from the perspective of `H6`) and `key` from `nations` (`key` from the perspective of `H3` and `BACK(3).key` from the perspective of `H6`).
+To fix this, we next run the de-correlation procedure. This procedure recursively traverses the entire tree, looking for hybrid nodes with correlated children (excluding semi and anti joins, which do allow correlated references). This procedure will reach tree `H3` and see that its child `$0` is correlated and is an `AGGREGATION` connection, and will therefore de-correlate it. To do this, it copies the hybrid tree built so far (`H1`, `H2`, and the first two operators of `H3`) and attaches them above child `$0`, specifically before `H4`. This now means that the `CORREL(nation_name)` term in `H6` can be rephrased into a back-reference to the `nation_name` field in the copied version of `H3` (which is 3 levels above `H6`). This changes the join and aggregation keys used when connecting `H3` to child `$0`, as each unique record from `H3` must now align with the prepended section of `$0`. This is done by changing the join keys into the uniqueness keys of `H1`/`H2`/`H3`, the `key` from `regions` (accessed as `BACK(1).key` from`H3` and `BACK(4).key` from `H6`) and the `key` from `nations` (`key` from  `H3` and `BACK(3).key` from `H6`).
 
 The result is the following:
 
@@ -489,7 +489,7 @@ flowchart TD
     Q1 --> Q2
 ```
 
-However, we can go one step further if we make an observation about this hybrid tree. Notice how now, we are computing the logic of `H1`, `H2`, and most of `H3` twice. This must happen if we intend to keep *every* nation, including the ones without any entries of `$0`. However, if we don't intend to keep nations where there are no records of `$0` to join onto, we can modify the original PyDough code as follows:
+However, we can go one step further if we make an observation about this hybrid tree. Notice how now, we are computing the logic of `H1`, `H2`, and most of `H3` twice. This must happen if we intend to keep *every* nation, including the ones without any entries of `$0`. However, if we don't intend to keep nations that lack corresponding `$0` records to join with, we can modify the original PyDough code as follows:
 
 ```py
 selected_nations = regions.WHERE(
@@ -503,7 +503,7 @@ nation_domestic_purchase_info = selected_nations
 )
 ```
 
-With this modification, the original hybrid tree changes so the access to child `$0` of `H3` is now an `AGGREGATION_ONLY_MATCH` access, meaning we do an inner join instead of a left join. The de-correlation procedure will notice this and, after transforming child `$0` into its de-correlated form, realize it can do an optimization to delete the original `H1`, `H2` and prefix of `H3` since all of the data required from them is accessible inside `$0`. This is done via the hybrid "pull up" node, which specifies that the data comes from the specified child, instead of having existing data that gets joined with data from the child. This will look as follows:
+With this modification, the original hybrid tree is modified so that access to child `$0` of `H3` is now an `AGGREGATION_ONLY_MATCH` access, meaning we do an inner join instead of a left join. The de-correlation procedure will notice this and, after transforming child `$0` into its de-correlated form, recognize an opportunity to optimize by removing the original `H1`, `H2` and prefix of `H3` since all of the data required from them is accessible inside `$0`. This is done via the hybrid "pull up" node, which specifies that the data comes from the specified child, instead of having existing data that gets joined with data from the child. This will look as follows:
 
 
 ```mermaid
@@ -588,7 +588,7 @@ flowchart TD
     Q1 --> Q2
 ```
 
-The way to interpret this is that the entirety of child `$0` of H3 is evaluated, from `H1'` to `H6`, then grouped on `BACK(3).key` and `BACK(4).key` to calculate `agg_0` and `agg_1` (renaming the latter to `nation_name`), and that result is passed along from the PullUp node to the calculate in `H3` which builds on it.
+This means the entire child `$0` subtree of `H3` is evaluated, from `H1'` to `H6`, then grouped on `BACK(3).key` and `BACK(4).key` to calculate `agg_0` and `agg_1` (renaming the latter to `nation_name`), and that result is passed along from the PullUp node to the calculate in `H3` which builds on it.
 
 <!-- TOC --><a name="relational-tree"></a>
 ## Relational Tree
@@ -596,7 +596,7 @@ The way to interpret this is that the entirety of child `$0` of H3 is evaluated,
 > [!IMPORTANT]
 > TODO: FINISH THIS SECTION.
 
-For an example of the relational tree, consider the `nation_info` example from earlier.
+To illustrate the relational tree, consider the `nation_info` example from earlier.
 ```py
 nation_info = nations.CALCULATE(
   region_name=region.name,
@@ -605,7 +605,7 @@ nation_info = nations.CALCULATE(
 ).ORDER_BY(nation_name.ASC())
 ```
 
-Using the hybrid tree from earlier, the following is how the relational tree created by relational conversion could look:
+Using the hybrid tree from earlier, here’s how the relational tree created by the conversion would look:
 
 ```mermaid
 flowchart BT
