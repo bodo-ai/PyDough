@@ -56,9 +56,13 @@ class BinaryOperator(PyDoughExpressionOperator):
     """
 
     def __init__(
-        self, binop: BinOp, verifier: TypeVerifier, deducer: ExpressionTypeDeducer
+        self,
+        binop: BinOp,
+        verifier: TypeVerifier,
+        deducer: ExpressionTypeDeducer,
+        public: bool = True,
     ):
-        super().__init__(verifier, deducer)
+        super().__init__(verifier, deducer, public)
         self._binop: BinOp = binop
 
     @property

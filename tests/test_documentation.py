@@ -14,7 +14,10 @@ def test_function_list():
     Note: this test should only be run from the root directory of the project.
     """
     # Identify every function that should be documented
-    special_names = {"NOT", "SLICE"}
+    special_names = {
+        "NOT",
+        "SLICE",
+    }
     function_names: set[str] = set()
     for function_name, operator in pydop.builtin_registered_operators().items():
         if not (

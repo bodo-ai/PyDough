@@ -71,6 +71,8 @@ from simple_pydough_functions import (
     simple_scan,
     simple_scan_top_five,
     simple_smallest_or_largest,
+    simple_var_std,
+    simple_var_std_with_nulls,
     singular1,
     singular2,
     singular3,
@@ -1649,6 +1651,49 @@ from pydough.unqualified import (
                 ),
             ),
             id="dumb_aggregation",
+        ),
+        pytest.param(
+            (
+                simple_var_std,
+                None,
+                "simple_var_std",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["ALGERIA", "ARGENTINA"],
+                        "var": [9.268000e06, 1.003823e07],
+                        "std": [3044.339064, 3168.316441],
+                        "sample_var": [9.290120e06, 1.006259e07],
+                        "sample_std": [3047.969762, 3172.159155],
+                        "pop_var": [9.268000e06, 1.003823e07],
+                        "pop_std": [3044.339064, 3168.316441],
+                    }
+                ),
+            ),
+            id="simple_var_std",
+        ),
+        pytest.param(
+            (
+                simple_var_std_with_nulls,
+                None,
+                "simple_var_std_with_nulls",
+                lambda: pd.DataFrame(
+                    {
+                        "var_samp_0_nnull": [None],
+                        "var_samp_1_nnull": [None],
+                        "var_samp_2_nnull": [27206154.83045],
+                        "var_pop_0_nnull": [None],
+                        "var_pop_1_nnull": [0.0],
+                        "var_pop_2_nnull": [13603077.415225],
+                        "std_samp_0_nnull": [None],
+                        "std_samp_1_nnull": [None],
+                        "std_samp_2_nnull": [5215.951958],
+                        "std_pop_0_nnull": [None],
+                        "std_pop_1_nnull": [0.0],
+                        "std_pop_2_nnull": [3688.235],
+                    }
+                ),
+            ),
+            id="simple_var_std_with_nulls",
         ),
         pytest.param(
             (

@@ -2167,3 +2167,37 @@ def odate_and_rdate_avggap():
         day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
     )
     return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))
+
+
+def simple_var_std():
+    return Nations.WHERE(ISIN(name, ("ALGERIA", "ARGENTINA"))).CALCULATE(
+        name,
+        var=VAR(suppliers.account_balance),
+        std=STD(suppliers.account_balance),
+        sample_var=VAR(suppliers.account_balance, type="sample"),
+        sample_std=STD(suppliers.account_balance, type="sample"),
+        pop_var=VAR(suppliers.account_balance, type="population"),
+        pop_std=STD(suppliers.account_balance, type="population"),
+    )
+
+
+def simple_var_std_with_nulls():
+    first_customers = Customers.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(
+        key_0=KEEP_IF(acctbal, key > 3),
+        key_1=KEEP_IF(acctbal, key > 2),
+        key_2=KEEP_IF(acctbal, key > 1),
+    )
+    return TPCH.CALCULATE(
+        var_samp_0_nnull=VAR(first_customers.key_0, type="sample"),
+        var_samp_1_nnull=VAR(first_customers.key_1, type="sample"),
+        var_samp_2_nnull=VAR(first_customers.key_2, type="sample"),
+        var_pop_0_nnull=VAR(first_customers.key_0),
+        var_pop_1_nnull=VAR(first_customers.key_1),
+        var_pop_2_nnull=VAR(first_customers.key_2),
+        std_samp_0_nnull=STD(first_customers.key_0, type="sample"),
+        std_samp_1_nnull=STD(first_customers.key_1, type="sample"),
+        std_samp_2_nnull=STD(first_customers.key_2, type="sample"),
+        std_pop_0_nnull=STD(first_customers.key_0),
+        std_pop_1_nnull=STD(first_customers.key_1),
+        std_pop_2_nnull=STD(first_customers.key_2),
+    )
