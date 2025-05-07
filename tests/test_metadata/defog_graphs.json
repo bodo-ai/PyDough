@@ -2434,7 +2434,7 @@
             "column name": "city",
             "data type": "string",
             "description": "The city for the merchant's location within the country",
-            "sample values": ["Los Angeles", "Berlin", "Rome", "Vancouver", "Sydney"],
+            "sample values": ["Los Angeles", "Berlin", "Rome", "Vancouver", "Sydney"]
           },
           {
             "name": "postal_code",
