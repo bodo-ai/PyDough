@@ -1246,7 +1246,7 @@
         "singular": false,
         "always matches": false,
         "condition": "CONTAINS(LOWER(self.search_string), LOWER(other.name))",
-        "description": "Any historical events that the search string is related to because it contains as a sub-string (case-insensitive",
+        "description": "Any historical events that the search string is related to because it contains as a sub-string (case-insensitive)",
         "synonyms": ["search event subjects"]
       },
       {

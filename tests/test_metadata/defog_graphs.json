@@ -533,9 +533,9 @@
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "string",
+            "data type": "numeric",
             "description": "Unique identifier for each car",
-            "sample values": ["1", "3", "5", "6", "18"],
+            "sample values": [1, 3, 5, 6, 18],
             "synonyms": ["car key", "car id"]
           },
           {
@@ -642,9 +642,9 @@
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "string",
+            "data type": "numeric",
             "description": "Unique identifier for each salesperson in the dealership",
-            "sample values": ["1", "5", "10", "13"],
+            "sample values": [1, 5, 10, 13],
             "synonyms": ["salesperson key", "salesperson id", "salesperson number"]
           },
           {
@@ -722,9 +722,9 @@
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "string",
+            "data type": "numeric",
             "description": "Unique identifier for each customer",
-            "sample values": ["1", "5", "9", "12"],
+            "sample values": [1, 5, 9, 12],
             "synonyms": ["customer key", "customer id"]
           },
           {
@@ -820,9 +820,9 @@
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "string",
+            "data type": "numeric",
             "description": "Unique identifier for each payment made",
-            "sample values": ["1", "11", "16", "17"],
+            "sample values": [1, 11, 16, 17],
             "synonyms": ["payment key", "payment id"]
           },
           {
@@ -910,7 +910,7 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "Unique identifier for each payment received record",
-            "sample values": ["1", "2", "10", "19", "23"],
+            "sample values": [1, 2, 10, 19, 23],
             "synonyms": ["payment key", "payment id"]
           },
           {
@@ -919,7 +919,7 @@
             "column name": "sale_id",
             "data type": "numeric",
             "description": "The id of the sale that the payment is associated with",
-            "sample values": ["1", "5", "9", "20", "21"],
+            "sample values": [1, 5, 9, 20, 21],
             "synonyms": ["sale key", "sale id"]
           },
           {
@@ -972,9 +972,9 @@
             "name": "_id",
             "type": "table column",
             "column name": "_id",
-            "data type": "string",
+            "data type": "numeric",
             "description": "Unique identifier for each car sale",
-            "sample values": ["5", "11", "12", "18", "22"],
+            "sample values": [5, 11, 12, 18, 22],
             "synonyms": ["sale key", "sale id"]
           },
           {
@@ -983,7 +983,7 @@
             "column name": "car_id",
             "data type": "numeric",
             "description": "The id of the car being purchased in the sale",
-            "sample values": ["1", "3", "5", "6", "18"],
+            "sample values": [1, 3, 5, 6, 18],
             "synonyms": ["car key", "car id"]
           },
           {
@@ -992,7 +992,7 @@
             "column name": "salesperson_id",
             "data type": "numeric",
             "description": "The id of the salesperson who brokered the sale",
-            "sample values": ["1", "5", "10", "13"],
+            "sample values": [1, 5, 10, 13],
             "synonyms": ["salesperson key", "salesperson id"]
           },
           {
@@ -1001,7 +1001,7 @@
             "column name": "customer_id",
             "data type": "numeric",
             "description": "The id of the customer who purchased the car in the sale",
-            "sample values": ["1", "5", "9", "12"],
+            "sample values": [1, 5, 9, 12],
             "synonyms": ["customer key", "customer id"]
           },
           {
@@ -1047,7 +1047,7 @@
             "column name": "_id",
             "data type": "numeric",
             "description": "Unique identifier for each inventory snapshot entry",
-            "sample values": ["1", "4", "13", "19", "23"],
+            "sample values": [1, 4, 13, 19, 23],
             "synonyms": ["inventory snapshot key", "snapshot id"]
           },
           {
@@ -1064,7 +1064,7 @@
             "column name": "car_id",
             "data type": "numeric",
             "description": "The key of the car that the inventory snapshot is for",
-            "sample values": ["2", "10", "1", "4", "9"],
+            "sample values": [2, 10, 1, 4, 9],
             "synonyms": ["car key", "car id"]
           },
           {
@@ -1236,101 +1236,100 @@
             "type": "table column",
             "column name": "doc_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Unique identifier for each doctor in the system",
+            "sample values": [1, 2, 4, 8, 10],
+            "synonyms": ["doctor key", "doctor id"]
           },
           {
             "name": "first_name",
             "type": "table column",
             "column name": "first_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The first name of the doctor",
+            "sample values": ["John", "Michael", "Daniel", "Olivia"]
           },
           {
             "name": "last_name",
             "type": "table column",
             "column name": "last_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The last name of the doctor",
+            "sample values": ["Smith", "Brown", "Wilson", "Garcia"],
+            "synonyms": ["surname"]
           },
           {
-            "name": "speciality",
+            "name": "specialty",
             "type": "table column",
             "column name": "specialty",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The specialty of the doctor, which can be one of the following: dermatology, immunology, general, or oncology",
+            "sample values": ["dermatology", "immunology", "general", "oncology"],
+            "synonyms": ["focus", "area", "specialization", "expertise", "type of doctor"]
           },
           {
             "name": "year_reg",
             "type": "table column",
             "column name": "year_reg",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Year the doctor was registered and obtained license",
+            "sample values": [1998, 2006, 2012, 2015, 2018],
+            "synonyms": ["registration year", "year received license"]
           },
           {
             "name": "med_school_name",
             "type": "table column",
             "column name": "med_school_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The name of the medical school where the doctor graduated",
+            "sample values": ["University of Pennsylvania", "Johns Hopkins University", "Columbia University"],
+            "synonyms": ["alma matter", "medical school", "graduated from"]
           },
           {
-            "name": "loc_city",
+            "name": "city",
             "type": "table column",
             "column name": "loc_city",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The city where the doctor is located",
+            "sample values": ["San Francisco", "Durham", "Ann Arbour", "New York"],
+            "synonyms": ["city of practice", "city of work", "location city", "city of residence"]
           },
           {
-            "name": "loc_state",
+            "name": "state",
             "type": "table column",
             "column name": "loc_state",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The state where the doctor is located, by its capitalized two-letter abbreviation",
+            "sample values": ["CA", "NC", "NY", "MI"],
+            "synonyms": ["state of practice", "state of work", "location state", "state of residence"]
           },
           {
-            "name": "loc_zip",
+            "name": "zip_code",
             "type": "table column",
             "column name": "loc_zip",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The zip code where the doctor is located",
+            "sample values": ["21201", "02115", "94304", "10027"],
+            "synonyms": ["zip code of practice", "zip code of work", "location zip code", "zip code of residence"]
           },
           {
-            "name": "bd_cert_num",
+            "name": "board_certification_number",
             "type": "table column",
             "column name": "bd_cert_num",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The board certification number of the doctor",
+            "sample values": ["YZA890", "ABC123", "GHI012", "JKL345"],
+            "synonyms": ["board certification number", "certification number"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All the doctors registered in the system",
+        "synonyms": ["practitioners", "physicians", "medical professionals"]
       },
       {
         "name": "patients",
         "type": "simple table",
         "table path": "main.patients",
         "unique properties": [
-          "patient_id"
+          "patient_id", "email", "phone"
         ],
         "properties": [
           {
@@ -1338,146 +1337,152 @@
             "type": "table column",
             "column name": "patient_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each patient in the system",
+            "sample values": [1, 3, 5, 7, 9],
+            "synonyms": ["patient key", "patient id"]
           },
           {
             "name": "first_name",
             "type": "table column",
             "column name": "first_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The first name of the patient",
+            "sample values": ["Alice", "Bob", "Carol", "David", "Eve"]
           },
           {
             "name": "last_name",
             "type": "table column",
             "column name": "last_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The last name of the patient",
+            "sample values": ["Smith", "Richter", "Martinez", "Taylor"],
+            "synonyms": ["surname"]
           },
           {
             "name": "date_of_birth",
             "type": "table column",
             "column name": "date_of_birth",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the patient was born",
+            "synonyms": ["birthday"]
           },
           {
             "name": "date_of_registration",
             "type": "table column",
             "column name": "date_of_registration",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the patient was registered in the system",
+            "synonyms": ["registration date", "system entry date"]
           },
           {
             "name": "gender",
             "type": "table column",
             "column name": "gender",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The gender of the patient, which can either 'Male', 'Female', or 'Others'",
+            "sample values": ["Male", "Female", "Others"],
+            "synonyms": ["sex"]
           },
           {
             "name": "email",
             "type": "table column",
             "column name": "email",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The email of the patient used for contact information",
+            "sample values": ["alice@email.com", "eve@email.com", "frank@email.com", "john@qwik.com'"],
+            "synonyms": ["email address", "contact email"]
           },
           {
             "name": "phone",
             "type": "table column",
             "column name": "phone",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The phone number of the patient used for contact information",
+            "sample values": ["555-123-4567", "555-987-6543", "555-123-4567"],
+            "synonyms": ["contact phone", "phone number"]
           },
           {
-            "name": "addr_city",
+            "name": "street_address",
             "type": "table column",
             "column name": "addr_city",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The street address of the patient's home, including street name and number",
+            "sample values": ["987 Birch Dr", "753 Walnut Ave", "951 Spruce Blvd"],
+            "synonyms": ["street name and number", "home address"]
           },
           {
-            "name": "addr_state",
+            "name": "city",
+            "type": "table column",
+            "column name": "addr_city",
+            "data type": "string",
+            "description": "The city of the patient's address",
+            "sample values": ["Anytown", "Somecity", "Somewhere", "Somewhere"],
+            "synonyms": ["home city", "town", "city of residence"]
+          },
+          {
+            "name": "state",
             "type": "table column",
             "column name": "addr_state",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The state of the patient's address, by its capitalized two-letter abbreviation",
+            "sample values": ["CA", "TX", "FL", "OH"],
+            "synonyms": ["home state", "state of residence"]
           },
           {
-            "name": "addr_zip",
+            "name": "zip_code",
             "type": "table column",
             "column name": "addr_zip",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The zip code of the patient's address",
+            "sample values": ["12345", "54321", "86420"],
+            "synonyms": ["home zip code", "postal code", "zip code of residence"]
           },
           {
-            "name": "ins_type",
+            "name": "insurance_type",
             "type": "table column",
             "column name": "ins_type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The type of insurance the patient has, which can be one of the following: private, medicare, medicaid, or uninsured",
+            "sample values": ["private", "medicare", "medicaid", "uninsured"],
             "synonyms": []
           },
           {
-            "name": "ins_policy_num",
+            "name": "insurance_policy_number",
             "type": "table column",
             "column name": "ins_policy_num",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The policy number of the patient's insurance (null if uninsured)",
+            "sample values": ["ABC123456", "XYZ789012", "JKL567890", "PQR135790"],
+            "synonyms": ["policy number"]
           },
           {
-            "name": "height_cm",
+            "name": "height",
             "type": "table column",
             "column name": "height_cm",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The height of the patient in centimeters",
+            "sample values": [165, 180, 160, 178],
+            "synonyms": ["centimeter height"]
           },
           {
-            "name": "weight_kg",
+            "name": "weight",
             "type": "table column",
             "column name": "weight_kg",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The weight of the patient in kilograms",
+            "sample values": [60, 78, 90, 60],
+            "synonyms": ["kilogram weight"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The personal & registration information about every patient registered in the system",
+        "synonyms": ["patient records", "patient information", "patient data", "clients", "trial subjects", "participants"]
       },
       {
         "name": "drugs",
         "type": "simple table",
         "table path": "main.drugs",
         "unique properties": [
-          "drug_id"
+          "drug_id", "national_drug_code"
         ],
         "properties": [
           {
@@ -1485,151 +1490,150 @@
             "type": "table column",
             "column name": "drug_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each drug in the system",
+            "sample values": [1, 2, 4, 8],
+            "synonyms": ["drug key", "drug id"]
           },
           {
             "name": "drug_name",
             "type": "table column",
             "column name": "drug_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The brand name of the drug",
+            "sample values": ["Drugalin", "Topizol", "Biologic-X", "Topicalin"],
+            "synonyms": ["brand name", "pharmaceutical name", "medication name"]
           },
           {
             "name": "manufacturer",
             "type": "table column",
             "column name": "manufacturer",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The name of the company who produces the drug",
+            "sample values": ["Pharma Inc", "Acme Pharma", "Derma Rx", "BioMed Ltd"],
+            "synonyms": ["producer", "drug manufacturer", "pharmaceutical company", "drug company"]
           },
           {
             "name": "drug_type",
             "type": "table column",
             "column name": "drug_type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The category of drug, which can be one of the following: 'biologic', 'small molecule', or 'topical'",
+            "sample values": ["biologic", "small molecule", "topical"],
+            "synonyms": ["category", "classification", "type of drug"]
           },
           {
-            "name": "moa",
+            "name": "mechanism_of_activation",
             "type": "table column",
             "column name": "moa",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The mechanism of activation of the drug",
+            "sample values": ["TNF-alpha inhibitor", "PDE4 inhibitor", "IL-12/23 inhibitor"],
+            "synonyms": ["moa"]
           },
           {
-            "name": "fda_appr_dt",
+            "name": "fda_approval_date",
             "type": "table column",
             "column name": "fda_appr_dt",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the drug was approved by the FDA (null if not approved because it is still under trial)",
+            "synonyms": ["approval date"]
           },
           {
-            "name": "admin_route",
+            "name": "administration_route",
             "type": "table column",
             "column name": "admin_route",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The means used to administer the drug, which can be one of the following: 'oral', 'injection' or 'topical'",
+            "sample values": ["oral", "injection", "topical"],
+            "synonyms": ["method of procedure", "administration method", "delivery means"]
           },
           {
-            "name": "dos_amt",
+            "name": "recommended_dosage_amount",
             "type": "table column",
             "column name": "dos_amt",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The recommended amount of the drug to be taken per dose, where the unit is specified in the dosage_units property",
+            "sample values": [40, 30, 15, 5],
+            "synonyms": ["dose size", "quantity per dose", "amount taken per administration"]
           },
           {
-            "name": "dos_unit",
+            "name": "dosage_units",
             "type": "table column",
             "column name": "dos_unit",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unit used by recommended_dosage_amount, which is either `mg` (for milligrams) or `g` (for grams)",
+            "sample values": ["mg", "g"],
+            "synonyms": ["units of measurement", "dosage unit", "dose quantity scale factor"]
           },
           {
-            "name": "dos_freq_hrs",
+            "name": "dose_frequency_hours",
             "type": "table column",
             "column name": "dos_freq_hrs",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The recommended number of hours between dosages",
+            "sample values": [336, 24, 12, 672],
+            "synonyms": ["gap between doses", "administration hour intervals", "time between doses"]
           },
           {
-            "name": "ndc",
+            "name": "national_drug_code",
             "type": "table column",
             "column name": "ndc",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The national drug code of the drug, which is a unique identifier assigned to each drug by the FDA",
+            "sample values": ["12345-678-90", "13579-246-80", "95146-753-19"],
             "synonyms": []
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The drugs listed in the system, which are used for treatment of patients",
+        "synonyms": ["medications", "pharmaceuticals"]
       },
       {
         "name": "diagnoses",
         "type": "simple table",
         "table path": "main.diagnoses",
         "unique properties": [
-          "diag_id"
+          "_id", "code", "name"
         ],
         "properties": [
           {
-            "name": "diag_id",
+            "name": "_id",
             "type": "table column",
-            "column name": "diag_id",
+            "column name": "diagnosis_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each diagnosis in the system",
+            "sample values": [1, 3, 5, 7, 9],
+            "synonyms": ["diagnosis key", "diagnosis id"]
           },
           {
-            "name": "diag_code",
+            "name": "code",
             "type": "table column",
             "column name": "diag_code",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The code of the diagnosis, which is a unique identifier assigned to each diagnosis by the ICD-10 system",
+            "sample values": ["L40.0", "L40.59", "F40.8", "L40.50"],
+            "synonyms": ["diagnosis code", "ICD-10 code"]
           },
           {
-            "name": "diag_name",
+            "name": "name",
             "type": "table column",
             "column name": "diag_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Name of the diagnosis, in medical terms",
+            "sample values": ["Psoriasis vulgaris", "Generalized pustular psoriasis", "Psoriasis, unspecified", "Other psoriatic arthropathy", "Psoriatic arthritis mutilans"],
+            "synonyms": ["title"]
           },
           {
-            "name": "diag_desc",
+            "name": "description",
             "type": "table column",
             "column name": "diag_desc",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "An elaboration of the diagnosis, in more layman's terms and/or with some symptoms included",
+            "sample values": ["Plaque psoriasis, the most common form", "Psoriasis not further specified", "Includes flexural, erythrodermic, and other rare types", "Small, teardrop-shaped lesions", "Widespread pustules on top of red skin"],
+            "synonyms": ["details", "symptoms", "explanation"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Records of each diagnosis in the system, which are identified when treating patients",
+        "synonyms": ["medical conditions", "diagnostic codes"]
       },
       {
         "name": "treatments",
@@ -1644,94 +1648,91 @@
             "type": "table column",
             "column name": "treatment_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Unique identifier for each treatment record in the system",
+            "sample values": [1, 4, 7, 16, 26],
+            "synonyms": ["treatment id", "treatment key"]
           },
           {
             "name": "patient_id",
             "type": "table column",
             "column name": "patient_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the patient who is receiving the treatment",
+            "sample values": [1, 3, 5, 7, 9],
+            "synonyms": ["patient key", "patient id"]
           },
           {
             "name": "doc_id",
             "type": "table column",
             "column name": "doc_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the doctor who is administering the treatment",
+            "sample values": [1, 2, 4, 8],
+            "synonyms": ["doctor key", "doctor id"]
           },
           {
             "name": "drug_id",
             "type": "table column",
             "column name": "drug_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the drug being used in the treatment",
+            "sample values": [1, 2, 3, 5],
+            "synonyms": ["drug key", "drug id"]
           },
           {
-            "name": "diag_id",
+            "name": "diagnosis_id",
             "type": "table column",
-            "column name": "diag_id",
+            "column name": "diagnosis_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the diagnosis the patient is being treated for",
+            "sample values": [2, 4, 5, 6, 8],
+            "synonyms": ["diagnosis key", "diagnosis id"]
           },
           {
-            "name": "start_dt",
+            "name": "start_date",
             "type": "table column",
             "column name": "start_dt",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the treatment began",
+            "synonyms": ["treatment start date", "treatment initiation date"]
           },
           {
-            "name": "end_dt",
+            "name": "end_date",
             "type": "table column",
             "column name": "end_dt",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the treatment ended (null if ongoing)",
+            "synonyms": ["treatment end date", "treatment completion date"]
           },
           {
             "name": "is_placebo",
             "type": "table column",
             "column name": "is_placebo",
             "data type": "bool",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "True if the treatment is a placebo, false otherwise",
+            "synonyms": ["placebo treatment", "dummy treatment"]
           },
           {
-            "name": "tot_drug_amt",
+            "name": "total_drug_amount",
             "type": "table column",
             "column name": "tot_drug_amt",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The total quantity of the drug used in the treatment, where the unit is specified in the drug_unit property",
+            "sample values": [240, 180, 720, 360],
+            "synonyms": ["amount of drug used", "total drug quantity", "total dosage"]
           },
           {
             "name": "drug_unit",
             "type": "table column",
             "column name": "drug_unit",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unit used by total_drug_amount, which is either `mg` (for milligrams) or `g` (for grams)",
+            "sample values": ["mg", "g"],
+            "synonyms": ["dosage unit", "unit of measurement", "drug quantity scale factor"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The records of each treatment administered to patients in the system, which can be either a drug or a placebo",
+        "synonyms": ["treatment records", "medical treatments", "therapies"]
       },
       {
         "name": "outcomes",
@@ -1746,173 +1747,172 @@
             "type": "table column",
             "column name": "outcome_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each treatment outcome in the system",
+            "sample values": [1, 5, 16, 20, 21],
+            "synonyms": ["outcome key", "outcome id"]
           },
           {
             "name": "treatment_id",
             "type": "table column",
             "column name": "treatment_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id for the treatment that the outcome is related to",
+            "sample values": [3, 5, 9, 25, 26],
+            "synonyms": ["treatment key", "treatment id"]
           },
           {
-            "name": "assess_dt",
+            "name": "assessment_date",
             "type": "table column",
             "column name": "assess_dt",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date when the outcome assessment was made",
+            "synonyms": ["date of assessment", "evaluation date"]
           },
           {
-            "name": "day7_lesion_cnt",
+            "name": "day7_lesion_count",
             "type": "table column",
             "column name": "day7_lesion_cnt",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The number of lesions counted on the patient's skin at day 7 after treatment started",
+            "sample values": [20, 25, 18, 30, 22],
+            "synonyms": ["lesions observed on day 7"]
           },
           {
-            "name": "day30_lesion_cnt",
+            "name": "day30_lesion_count",
             "type": "table column",
             "column name": "day30_lesion_cnt",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The number of lesions counted on the patient's skin at day 30 after treatment started (null if not enough time has passed)",
+            "sample values": [15, 18, 12, 25, 16],
+            "synonyms": ["lesions observed on day 30"]
           },
           {
-            "name": "day100_lesion_cnt",
+            "name": "day100_lesion_count",
             "type": "table column",
             "column name": "day100_lesion_cnt",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The number of lesions counted on the patient's skin at day 100 after treatment started (null if not enough time has passed)",
+            "sample values": [5, 8, 3, 12, 6],
+            "synonyms": ["lesions observed on day 100"]
           },
           {
             "name": "day7_pasi_score",
             "type": "table column",
             "column name": "day7_pasi_score",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The PASI score calculated at day 7 after treatment started, (Psoriasis Area and Severity Index) which is a measure of the severity of psoriasis from 0 to 72",
+            "sample values": [12.5, 15.0, 10.8, 18.2, 13.1],
+            "synonyms": ["PASI on day 7"]
           },
           {
             "name": "day30_pasi_score",
             "type": "table column",
             "column name": "day30_pasi_score",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The PASI score calculated at day 30 after treatment started, (Psoriasis Area and Severity Index) which is a measure of the severity of psoriasis from 0 to 72 (null if not enough time has passed)",
+            "sample values": [8.2, 10.1, 6.4, 18.2, 13.1],
+            "synonyms": ["PASI on day 30"]
           },
           {
             "name": "day100_pasi_score",
             "type": "table column",
             "column name": "day100_pasi_score",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The PASI score calculated at day 100 after treatment started, (Psoriasis Area and Severity Index) which is a measure of the severity of psoriasis from 0 to 72 (null if not enough time has passed)",
+            "sample values": [2.1, 3.5, 1.2, 5.8, 2.6],
+            "synonyms": ["PASI on day 100"]
           },
           {
             "name": "day7_tewl",
             "type": "table column",
             "column name": "day7_tewl",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "TEWL score (Transepidermal Water Loss) calculated at day 7 after treatment started, which is a measure of skin hydration",
+            "sample values": [18.2, 20.1, 16.5, 22.4],
+            "synonyms": ["TEWL on day 7"]
           },
           {
             "name": "day30_tewl",
             "type": "table column",
             "column name": "day30_tewl",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "TEWL score (Transepidermal Water Loss) calculated at day 30 after treatment started, which is a measure of skin hydration, in n g/m^2/h (null if not enough time has passed)",
+            "sample values": [15.6, 17.2, 14.0, 19.1],
+            "synonyms": ["TEWL on day 30"]
           },
           {
             "name": "day100_tewl",
             "type": "table column",
             "column name": "day100_tewl",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "TEWL score (Transepidermal Water Loss) calculated at day 100 after treatment started, which is a measure of skin hydration, in n g/m^2/h (null if not enough time has passed)",
+            "sample values": [12.1, 13.5, 10.8, 15.2],
+            "synonyms": ["TEWL on day 100"]
           },
           {
             "name": "day7_itch_vas",
             "type": "table column",
             "column name": "day7_itch_vas",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The itch visual analog scale (VAS) score at day 7 after treatment started, which is a measure of itch severity from 0 to 100",
+            "sample values": [60, 70, 55, 80, 65],
+            "synonyms": ["VAS on day 7"]
           },
           {
             "name": "day30_itch_vas",
             "type": "table column",
             "column name": "day30_itch_vas",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The itch visual analog scale (VAS) score at day 30 after treatment started, which is a measure of itch severity from 0 to 100 (null if not enough time has passed)",
+            "sample values": [40, 50, 35, 60, 45],
+            "synonyms": ["VAS on day 30"]
           },
           {
             "name": "day100_itch_vas",
             "type": "table column",
             "column name": "day100_itch_vas",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The itch visual analog scale (VAS) score at day 100 after treatment started, which is a measure of itch severity from 0 to 100 (null if not enough time has passed)",
+            "sample values": [20, 30, 15, 40, 25],
+            "synonyms": ["VAS on day 100"]
           },
           {
             "name": "day7_hfg",
             "type": "table column",
             "column name": "day7_hfg",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Hair growth factor (HGF) score at day 7 after treatment started, on a scale from 0 to 5",
+            "sample values": [1.5, 1.0, 2.0, 0.5, 1.2],
+            "synonyms": ["HFG on day 7"]
           },
           {
             "name": "day30_hfg",
             "type": "table column",
             "column name": "day30_hfg",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Hair growth factor (HGF) score at day 30 after treatment started, on a scale from 0 to 5 (null if not enough time has passed)",
+            "sample values": [2.5, 2.0, 3.0, 1.5, 2.2],
+            "synonyms": ["HFG on day 30"]
           },
           {
             "name": "day100_hfg",
             "type": "table column",
             "column name": "day100_hfg",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Hair growth factor (HGF) score at day 100 after treatment started, on a scale from 0 to 5 (null if not enough time has passed)",
+            "sample values": [4.0, 3.5, 4.5, 3.0, 3.8],
+            "synonyms": ["HFG on day 100"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The recorded outcomes of treatments, which can include the same treatment at different points in time if not enough time has elapsed to record the complete outcome for a treatment",
+        "synonyms": ["results", "treatment evaluations", "assessments"]
       },
       {
         "name": "concomitant_meds",
         "type": "simple table",
         "table path": "main.concomitant_meds",
         "unique properties": [
-          "_id"
+          "_id", ["treatment_id", "medicine_name"]
         ],
         "properties": [
           {
@@ -1920,76 +1920,74 @@
             "type": "table column",
             "column name": "_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each concomitant medication record in the system",
+            "sample values": [1, 5, 12, 14, 15],
+            "synonyms": ["concomitant drug key", "concomitant drug id"]
           },
           {
             "name": "treatment_id",
             "type": "table column",
             "column name": "treatment_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The id of the treatment that the concomitant medication record is related to",
+            "sample values": [1, 4, 8, 11, 13, 14],
             "synonyms": []
           },
           {
-            "name": "med_name",
+            "name": "medicine_name",
             "type": "table column",
             "column name": "med_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The name of the medicine being taken by the patient as a concomitant drug",
+            "sample values": ["Acetaminophen", "Ibuprofen", "Loratadine", "Multivitamin", "Calcium supplement", "Vitamin D", "Hydrocortisone cream"],
+            "synonyms": ["concomitant drug name"]
           },
           {
-            "name": "start_dt",
+            "name": "start_date",
             "type": "table column",
             "column name": "start_dt",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Date the concomitant drug treatment was started",
+            "synonyms": ["concomitant drug start date", "first date"]
           },
           {
-            "name": "end_dt",
+            "name": "end_date",
             "type": "table column",
             "column name": "end_dt",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Date the concomitant drug treatment finished (null if ongoing)",
+            "synonyms": ["last date", "concomitant drug end date"]
           },
           {
-            "name": "dose_amt",
+            "name": "dose_amount",
             "type": "table column",
             "column name": "dose_amt",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The amount of the medicine taken per dose, where the unit is specified in the dose_unit property",
+            "sample values": [500, 200, 10, 1, 50],
+            "synonyms": ["amount of dose", "quantity per dose", "dose size"]
           },
           {
             "name": "dose_unit",
             "type": "table column",
             "column name": "dose_unit",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The unit used by dose_amount",
+            "sample values": ["mg", "g", "tablet", "IU"],
             "synonyms": []
           },
           {
-            "name": "freq_hrs",
+            "name": "dose_frequency",
             "type": "table column",
             "column name": "freq_hrs",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The frequency of the dose in hours (null if one-time use)",
+            "sample values": [6, 24, 8, 12],
+            "synonyms": ["gap between doses", "administration hour intervals", "time between doses"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Records of medications that are taken by patients in addition to the treatment they are receiving during their treatment",
+        "synonyms": ["additional drugs", "ancillary medications", "concomitant drugs", "accompanying medications", "concurrent drugs"]
       },
       {
         "name": "adverse_events",
@@ -2004,40 +2002,39 @@
             "type": "table column",
             "column name": "_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each adverse event record in the system",
+            "sample values": [1, 3, 5, 7, 8],
+            "synonyms": ["adverse event key", "adverse event id"]
           },
           {
             "name": "treatment_id",
             "type": "table column",
             "column name": "treatment_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id for the treatment that the adverse event occurred during",
+            "sample values": [2, 5, 9, 11, 14],
+            "synonyms": ["treatment key", "treatment id"]
           },
           {
-            "name": "reported_dt",
+            "name": "reported_date",
             "type": "table column",
             "column name": "reported_dt",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date the adverse event was reported",
+            "synonyms": ["incident date", "date of reaction"]
           },
           {
             "name": "description",
             "type": "table column",
             "column name": "description",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "Descriptor of the adverse event, which can be a single word or a phrase",
+            "sample values": ["Mild injection site  reaction", "Headache, nausea", "Severe allergic reaction, hospitalization required", "Diarrhea"],
             "synonyms": []
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All records of adverse events that have been reported in the system  related to a treatment",
+        "synonyms": ["incidents during treatment", "adverse reactions", "side effects"]
       }
     ],
     "relationships": [
@@ -2047,13 +2044,14 @@
         "parent collection": "treatments",
         "child collection": "doctors",
         "singular": true,
+        "always matches": true,
         "keys": {
           "doc_id": [
             "doc_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The doctor who administered the treatment",
+        "synonyms": ["medical professional", "treatment administrator", "prescribing doctor"]
       },
       {
         "name": "prescribed_treatments",
@@ -2061,8 +2059,9 @@
         "original parent": "treatments",
         "original property": "doctor",
         "singular": false,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The treatments prescribed/administered by the doctor",
+        "synonyms": ["regimens", "treatment plans", "medical prescriptions"]
       },
       {
         "name": "patient",
@@ -2070,13 +2069,14 @@
         "parent collection": "treatments",
         "child collection": "patients",
         "singular": true,
+        "always matches": true,
         "keys": {
           "patient_id": [
             "patient_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The patient who the treatment was administered to",
+        "synonyms": ["trial subject", "participant", "client", "drug recipient"]
       },
       {
         "name": "treatments_received",
@@ -2084,8 +2084,9 @@
         "original parent": "treatments",
         "original property": "patient",
         "singular": false,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The drug treatment regimens the patient has been a part of",
+        "synonyms": ["Drug regimens", "medical treatments", "therapies", "treatment history"]
       },
       {
         "name": "drug",
@@ -2093,13 +2094,14 @@
         "parent collection": "treatments",
         "child collection": "drugs",
         "singular": true,
+        "always matches": true,
         "keys": {
           "drug_id": [
             "drug_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The drug being used as part of the treatment",
+        "synonyms": ["medication", "pharmaceutical", "drug product", "therapy"]
       },
       {
         "name": "treatments_used_in",
@@ -2107,8 +2109,9 @@
         "original parent": "treatments",
         "original property": "drug",
         "singular": false,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The treatments the drug was used in",
+        "synonyms": ["therapies", "uses", "regimens", "prescriptions"]
       },
       {
         "name": "diagnosis",
@@ -2116,13 +2119,14 @@
         "parent collection": "treatments",
         "child collection": "diagnoses",
         "singular": true,
+        "always matches": true,
         "keys": {
-          "diag_id": [
-            "diag_id"
+          "diagnosis_id": [
+            "_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The diagnosis associated with the treatment which the drug is treating",
+        "synonyms": ["medical condition", "associated condition", "cause of treatment"]
       },
       {
         "name": "treatments_for",
@@ -2130,7 +2134,8 @@
         "original parent": "treatments",
         "original property": "diagnosis",
         "singular": false,
-        "description": "TODO",
+        "always matches": false,
+        "description": "The drug treatment regimens targeted at a patient with this diagnosis",
         "synonyms": []
       },
       {
@@ -2139,13 +2144,14 @@
         "parent collection": "treatments",
         "child collection": "outcomes",
         "singular": false,
+        "always matches": false,
         "keys": {
           "treatment_id": [
             "treatment_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The reported outcomes of the treatment, which can include the same treatment at different points in time if not enough time has elapsed to record the complete outcome for a treatment",
+        "synonyms": ["quality reports", "evaluations", "assessments"]
       },
       {
         "name": "treatment",
@@ -2153,8 +2159,9 @@
         "original parent": "treatments",
         "original property": "outcome_records",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The treatment that the outcome record is reporting on",
+        "synonyms": ["regimen", "prescription", "medical trial"]
       },
       {
         "name": "concomitant_meds",
@@ -2162,13 +2169,14 @@
         "parent collection": "treatments",
         "child collection": "concomitant_meds",
         "singular": false,
+        "always matches": false,
         "keys": {
           "treatment_id": [
             "treatment_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The ancillary medications that were taken by a patient in addition to the treatment they are receiving during their treatment",
+        "synonyms": ["additional drugs", "ancillary medications", "concomitant drugs", "accompanying medications", "concurrent drugs"]
       },
       {
         "name": "treatment",
@@ -2176,8 +2184,9 @@
         "original parent": "treatments",
         "original property": "concomitant_meds",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The treatment that the administration of the concomitant medication was related to",
+        "synonyms": ["medical trial", "regimen", "main prescription"]
       },
       {
         "name": "adverse_events",
@@ -2185,13 +2194,14 @@
         "parent collection": "treatments",
         "child collection": "adverse_events",
         "singular": false,
+        "always matches": false,
         "keys": {
           "treatment_id": [
             "treatment_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "Any incident events recorded in association with the treatment",
+        "synonyms": ["side effects", "medical incidents"]
       },
       {
         "name": "treatment",
@@ -2199,8 +2209,9 @@
         "original parent": "treatments",
         "original property": "adverse_events",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The treatment that the adverse event occurred during",
+        "synonyms": ["regimen", "medical trial", "prescription"]
       }
     ],
     "additional definitions": [],
