@@ -2236,8 +2236,8 @@
             "type": "table column",
             "column name": "uid",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The unique identifier for each user in the system",
+            "sample values": [1, 3, 5, 10, 11],
             "synonyms": []
           },
           {
@@ -2245,89 +2245,87 @@
             "type": "table column",
             "column name": "username",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The username for the user",
+            "sample values": ["john_doe", "michael_brown", "bizuser", "huang2143"],
+            "synonyms": ["name", "account profile"]
           },
           {
             "name": "email",
             "type": "table column",
             "column name": "email",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The email for the user",
+            "sample values": ["john.doe@email.com", "lisa.jones@email.com", "customerserv@shopsmart.biz", "huang2143@example.com", "contact@business.co"],
+            "synonyms": ["email address", "contact email"]
           },
           {
             "name": "phone_number",
             "type": "table column",
             "column name": "phone_number",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The phone number for the user (null if not provided), which always starts with a `+` and the country code and does not have dashes",
+            "sample values": ["+1234567890", "+9876543210", "+8091017161", "+8612345678901", "+6123456789"],
+            "synonyms": ["phone", "mobile number", "contact number"]
           },
           {
             "name": "created_at",
             "type": "table column",
             "column name": "created_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the user account was created",
+            "synonyms": ["account creation date", "registration datetime"]
           },
           {
             "name": "last_login_at",
             "type": "table column",
             "column name": "last_login_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The last time the user logged into their account (null if never logged in)",
+            "synonyms": ["most recent login datetime", "latest access timestmap"]
           },
           {
             "name": "user_type",
             "type": "table column",
             "column name": "user_type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The type of user, which can be either `individual` or `business`",
+            "sample values": ["individual", "business"],
+            "synonyms": ["category", "classification"]
           },
           {
             "name": "status",
             "type": "table column",
             "column name": "status",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The status of the user account, which can be either `active`, `inactive`, `deleted` or `suspended`",
+            "sample values": ["active", "inactive", "suspended", "deleted"],
+            "synonyms": ["account state", "activity", "user status"]
           },
           {
             "name": "country",
             "type": "table column",
             "column name": "country",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The two-letter country code for the country of the user",
+            "sample values": ["US", "CA", "FR", "GB", "AU"],
+            "synonyms": ["nation"]
           },
           {
             "name": "address_billing",
             "type": "table column",
             "column name": "address_billing",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The billing address for the user, including street address, city, sometimes province/country, and postal code",
+            "sample values": ["123 Main St, Anytown US 12345", "456 Oak Rd, Toronto ON M1M2M2", "12 Rue Baptiste, Paris 75001", "12 Mardon Rd, Wellington 6012"],
+            "synonyms": ["billing location", "billing street address"]
           },
           {
             "name": "address_delivery",
             "type": "table column",
             "column name": "address_delivery",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The delivery address for the user, including street address, city, sometimes province/country, and postal code, or null if not provided",
+            "sample values": ["123 Main St, Anytown US 12345", "25 London Road, Manchester M12 4XY", "19 Smith St, Brunswick VIC 3056"],
             "synonyms": []
           },
           {
@@ -2335,29 +2333,28 @@
             "type": "table column",
             "column name": "kyc_status",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The KYC status, which can be either `approved`, `pending`, or `rejected`",
+            "sample values": ["approved", "pending", "rejected"],
+            "synonyms": ["approval status", "verification status"]
           },
           {
             "name": "kyc_verified_at",
             "type": "table column",
             "column name": "kyc_verified_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date when the kyc status became verified (null if not provided)",
+            "synonyms": ["date of approval", "date of verification"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Every user in the system, which can be either an individual or a business",
+        "synonyms": ["accounts", "user profiles", "user accounts", "clients", "consumers"]
       },
       {
         "name": "merchants",
         "type": "simple table",
         "table path": "main.merchants",
         "unique properties": [
-          "mid"
+          "mid", "name"
         ],
         "properties": [
           {
@@ -2365,134 +2362,132 @@
             "type": "table column",
             "column name": "mid",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Unique identifier for each merchant in the system",
+            "sample values": [1, 5, 10, 12, 15],
+            "synonyms": ["merchant key", "merchant id"]
           },
           {
             "name": "name",
             "type": "table column",
             "column name": "name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The name of the merchant",
+            "sample values": ["TechMart", "FitLifeGear", "UrbanDining", "KidzPlayhouse", "GameRush"],
+            "synonyms": ["merchant name", "business name", "company name"]
           },
           {
             "name": "description",
             "type": "table column",
             "column name": "description",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The detailed description of what the merchant does or sells",
+            "sample values": ["Leading electronics retailer", "SaaS productivity tools for developers", "Cosmetics and beauty supplies", "Books and reading accessories"],
+            "synonyms": ["business industry description", "merchant product types", "market segment description", "company description"]
           },
           {
             "name": "website_url",
             "type": "table column",
             "column name": "website_url",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The URL to the merchant's website",
+            "sample values": ["https://fitlifegear.com", "https://hometechsolutions.net", "https://bookworms.co.uk", "https://www.zenhomegoods.com'"],
+            "synonyms": ["website link", "web address"]
           },
           {
             "name": "logo_url",
             "type": "table column",
             "column name": "logo_url",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The URL to the merchant's logo image",
+            "sample values": ["https://www.techmart.com/logo.png", "https://www.fashiontrend.com/logo.png", "https://gamerush.co/gr-logo.png", "https://kidzplayhouse.com/logo.png"],
+            "synonyms": ["image link", "logo image address"]
           },
           {
             "name": "created_at",
             "type": "table column",
             "column name": "created_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the merchant was registered in the system",
+            "synonyms": ["merchant registration date", "merchant creation date"]
           },
           {
             "name": "country",
             "type": "table column",
             "column name": "country",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The two-letter capitalized country code for the country of the merchant",
+            "sample values": ["US", "CA", "IT", "FR", "UK"],
+            "synonyms": ["nation"]
           },
           {
             "name": "state",
             "type": "table column",
             "column name": "state",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The state for the merchant within the country, or null if not applicable",
+            "sample values": ["California", "Ontario", "Catalonia", "New South Wales", "British Columbia"],
+            "synonyms": ["province"]
           },
           {
             "name": "city",
             "type": "table column",
             "column name": "city",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The city for the merchant's location within the country",
+            "sample values": ["Los Angeles", "Berlin", "Rome", "Vancouver", "Sydney"],
           },
           {
             "name": "postal_code",
             "type": "table column",
             "column name": "postal_code",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The postal/zip code of the merchant's location within the city",
+            "sample values": ["90011", "M5V2J2", "1010", "94105"],
+            "synonyms": ["zip code"]
           },
           {
             "name": "address",
             "type": "table column",
             "column name": "address",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The full address of the merchant, including street address, city, sometimes province, and postal code",
+            "sample values": ["645 Wilshire Blvd, Los Angeles CA 90011", "159 Franklin St, Melbourne VIC 3004", "350 Mission St, San Francisco CA 94105", "35 Rue du Faubourg Saint-Antoine, 75011 Paris", "Passeig de Gracia 35, Barcelona 08003"],
+            "synonyms": ["street address", "full location"]
           },
           {
             "name": "status",
             "type": "table column",
             "column name": "status",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The status of the merchant account, which can be either `active`, `inactive` or `suspended`",
+            "sample values": ["active", "inactive", "suspended"],
+            "synonyms": ["account state", "activity", "merchant status"]
           },
           {
             "name": "category",
             "type": "table column",
             "column name": "category",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The blanket category/industry/market segment that the merchant is in",
+            "sample values": ["retail (hardware)", "Food & Dining", "Travel & Hospitality", "Retail", "Business Services"],
+            "synonyms": ["industry", "high-level market segment"]
           },
           {
             "name": "sub_category",
             "type": "table column",
             "column name": "sub_category",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The more specific category/industry/market segment that the merchant is in within the category",
+            "sample values": ["Electronics", "Sporting GOods", "Restaurants", "Accommodation", "Toys & Games", "Books", "Pets", "Groceries"],
+            "synonyms": ["sub-industry", "specific market segment"]
           },
           {
-            "name": "mcc",
+            "name": "merchant_category_code",
             "type": "table column",
             "column name": "mcc",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The category code for the merchant, which is a 4-digit number that identifies the type of business",
+            "sample values": [5734, 5977, 7011, 5719, 5732],
             "synonyms": []
           },
           {
@@ -2500,31 +2495,31 @@
             "type": "table column",
             "column name": "contact_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The full name of the individual who is the primary contact for the merchant",
+            "sample values": ["John Jacobs", "Daniel Lee", "Marco Rossi", "Sophia Turner"],
+            "synonyms": ["contact person", "contact individual"]
           },
           {
             "name": "contact_email",
             "type": "table column",
             "column name": "contact_email",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The email of the contact person for the merchant",
+            "sample values": ["jjacobs@techmart.com", "dlee@greengourmet.com", "ebrown@hometechsolutions.net", "sturner@bookworms.co.uk", "mschmidt@codesuite.io", "agarcia@handycraft.store"],
+            "synonyms": ["contact email", "contact person email"]
           },
           {
             "name": "contact_phone",
             "type": "table column",
             "column name": "contact_phone",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The phone number of the contact person, which always starts with a `+` and the country code and does not have dashes",
+            "sample values": ["+15551234567", "+49301234567", "+441612345678", "+61298765432", "+442078912345"],
+            "synonyms": ["contact phone number", "contact person phone"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The merchant accounts registered in the system",
+        "synonyms": ["companies", "businesses", "vendors", "retailers", "stores"]
       },
       {
         "name": "coupons",
@@ -3216,13 +3211,14 @@
         "parent collection": "users",
         "child collection": "transactions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "uid": [
             "sender_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "All transactions made where the user is the sender",
+        "synonyms": ["transactions from user"]
       },
       {
         "name": "sending_user",
@@ -3230,8 +3226,9 @@
         "original parent": "users",
         "original property": "transactions_sent",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The user who sent the transaction, if it was sent by a user (not found if it was sent by a merchant)",
+        "synonyms": ["source user", "originating user"]
       },
       {
         "name": "transactions_received",
@@ -3239,13 +3236,14 @@
         "parent collection": "users",
         "child collection": "transactions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "uid": [
             "receiver_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The transactions where the user was the recipient",
+        "synonyms": ["transactions to user"]
       },
       {
         "name": "receiving_user",
@@ -3253,8 +3251,9 @@
         "original parent": "users",
         "original property": "transactions_received",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The user who received the transaction, if it was received by a user (not found if it was received by a merchant)",
+        "synonyms": ["destination user", "receiving user account"]
       },
       {
         "name": "balances",
@@ -3262,13 +3261,14 @@
         "parent collection": "users",
         "child collection": "user_balances",
         "singular": false,
+        "always matches": false,
         "keys": {
           "uid": [
             "user_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The historical account balance for the user, which can include multiple updates over time",
+        "synonyms": ["historical account balance", "user balance history"]
       },
       {
         "name": "user",
@@ -3276,8 +3276,9 @@
         "original parent": "users",
         "original property": "balances",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The user who the account balance belongs to",
+        "synonyms": ["customer"]
       },
       {
         "name": "notifications",
@@ -3285,13 +3286,14 @@
         "parent collection": "users",
         "child collection": "notifications",
         "singular": false,
+        "always matches": false,
         "keys": {
           "uid": [
             "user_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The notifications that have been sent to the user",
+        "synonyms": ["user notifications", "user alerts"]
       },
       {
         "name": "user",
@@ -3299,8 +3301,9 @@
         "original parent": "users",
         "original property": "notifications",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The user who received the notification",
+        "synonyms": ["customer", "client", "user account"]
       },
       {
         "name": "sessions",
@@ -3308,13 +3311,14 @@
         "parent collection": "users",
         "child collection": "user_sessions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "uid": [
             "user_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The login sessions by the user",
+        "synonyms": ["user login sessions", "session history"]
       },
       {
         "name": "user",
@@ -3322,8 +3326,8 @@
         "original parent": "users",
         "original property": "sessions",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "description": "The user who the login session information belongs to",
+        "synonyms": ["customer", "client", "user account"]
       },
       {
         "name": "setting_snapshots",
@@ -3331,13 +3335,14 @@
         "parent collection": "users",
         "child collection": "user_setting_snapshots",
         "singular": false,
+        "always matches": false,
         "keys": {
           "uid": [
             "user_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The setting snapshot history for the user, which can include multiple updates over time",
+        "synonyms": ["setting history", "user setting snapshots"]
       },
       {
         "name": "user",
@@ -3345,8 +3350,8 @@
         "original parent": "users",
         "original property": "setting_snapshots",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "description": "The user who the setting snapshot belongs to",
+        "synonyms": ["customer", "client", "user account"]
       },
       {
         "name": "transactions_sent",
@@ -3354,13 +3359,14 @@
         "parent collection": "merchants",
         "child collection": "transactions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "mid": [
             "sender_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The transactions sent by the merchant",
+        "synonyms": ["merchant transactions sent", "merchant outgoing transactions"]
       },
       {
         "name": "sending_merchant",
@@ -3368,8 +3374,9 @@
         "original parent": "merchants",
         "original property": "transactions_sent",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The merchant who sent the transaction, if it was sent by a merchant (not found if it was sent by a user)",
+        "synonyms": ["merchant source", "merchant origin"]
       },
       {
         "name": "transactions_received",
@@ -3377,13 +3384,14 @@
         "parent collection": "merchants",
         "child collection": "transactions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "mid": [
             "receiver_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The transactions received by the merchant",
+        "synonyms": ["merchant transactions received", "merchant incoming transactions"]
       },
       {
         "name": "receiving_merchant",
@@ -3391,8 +3399,9 @@
         "original parent": "merchants",
         "original property": "transactions_received",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The merchant who received the transaction, if it was received by a merchant (not found if it was received by a user)",
+        "synonyms": ["merchant destination", "merchant recipient"]
       },
       {
         "name": "balances",
@@ -3400,13 +3409,14 @@
         "parent collection": "merchants",
         "child collection": "merchant_balances",
         "singular": false,
+        "always matches": false,
         "keys": {
           "mid": [
             "merchant_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The historical account balance for the merchant, which can include multiple updates over time",
+        "synonyms": ["historical account balance", "merchant balance history"]
       },
       {
         "name": "merchant",
@@ -3414,8 +3424,9 @@
         "original parent": "merchants",
         "original property": "balances",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The merchant who the account balance information belongs to",
+        "synonyms": ["business", "company", "merchant account"]
       },
       {
         "name": "coupons",
@@ -3423,13 +3434,14 @@
         "parent collection": "merchants",
         "child collection": "coupons",
         "singular": false,
+        "always matches": false,
         "keys": {
           "mid": [
             "merchant_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The coupons issued by the merchant",
+        "synonyms": ["merchant coupons", "merchant discount codes"]
       },
       {
         "name": "merchant",
@@ -3437,8 +3449,9 @@
         "original parent": "merchants",
         "original property": "coupons",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": true,
+        "description": "The merchant who issued the coupon",
+        "synonyms": ["issuing company", "business"]
       },
       {
         "name": "transaction_used_in",
@@ -3446,13 +3459,14 @@
         "parent collection": "coupons",
         "child collection": "transactions",
         "singular": false,
+        "always matches": false,
         "keys": {
           "cid": [
             "coupon_id"
           ]
         },
-        "description": "TODO",
-        "synonyms": []
+        "description": "The transactions that the coupon was used in",
+        "synonyms": ["uses", "transactions with coupon"]
       },
       {
         "name": "coupon",
@@ -3460,8 +3474,9 @@
         "original parent": "coupons",
         "original property": "transaction_used_in",
         "singular": true,
-        "description": "TODO",
-        "synonyms": []
+        "always matches": false,
+        "description": "The coupon that was used in the transaction, if one exists",
+        "synonyms": ["coupon used", "discount used"]
       }
     ],
     "additional definitions": [],
