@@ -1305,5 +1305,208 @@
     "additional definitions": [],
     "verified pydough analysis": [],
     "extra semantic info": {}
+  },
+  {
+    "name": "Grocery",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "products",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "stores",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "farms",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "factories",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "trucks",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "deliveries",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "purchases",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      },
+      {
+        "name": "purchase_contents",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      }
+      {
+        "name": "regions",
+        "type": "simple table",
+        "table path": "TODO",
+        "unique properties": ["TODO"],
+        "properties": [
+          {
+            "name": "TODO",
+            "type": "table column",
+            "column name": "TODO",
+            "data type": "TODO",
+            "description": "TODO",
+            "sample values": [],
+            "synonyms": ["TODO"]
+          }
+        ],
+        "description": "TODO",
+        "synonyms": []
+      }
+    ],
+    "relationships": [
+      {
+        "name": "TODO",
+        "type": "TODO",
+        "parent collection": "TODO",
+        "child collection": "TODO",
+        "singular": null,
+        "always matches": null,
+        "condition": "TODO",
+        "description": "TODO",
+        "synonyms": ["TODO"]
+      },
+      {
+        "name": "TODO",
+        "type": "reverse",
+        "original parent": "TODO",
+        "original property": "TODO",
+        "singular": null,
+        "always matches": null,
+        "description": "TODOn",
+        "synonyms": ["TODO"]
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   }
 ]
