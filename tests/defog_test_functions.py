@@ -1422,9 +1422,9 @@ def impl_defog_ewallet_adv11():
     duration first.
     """
     selected_sessions = sessions.WHERE(
-        (session_start_ts >= "2023-06-01") & (session_end_ts < "2023-06-08")
+        (session_start >= "2023-06-01") & (session_end < "2023-06-08")
     ).CALCULATE(
-        duration=DATEDIFF("seconds", session_start_ts, session_end_ts)
+        duration=DATEDIFF("seconds", session_start, session_end)
     )  # Pydough cannot convert dates to seconds directly, DATEDIFF
 
     # Calculate the total session duration for each user and order by the total duration in descending order
@@ -1455,7 +1455,7 @@ def impl_defog_ewallet_adv13():
     total count. TUC = Total number of user sessions in the past month
     """
     selected_sessions = user_sessions.WHERE(
-        session_start_ts >= DATETIME("now", "-1 month", "start of day")
+        session_start >= DATETIME("now", "-1 month", "start of day")
     )
 
     return Ewallet.CALCULATE(TUC=COUNT(selected_sessions))
@@ -1699,10 +1699,10 @@ def impl_defog_ewallet_gen2():
 
     return Ewallet.CALCULATE(min_date=MIN(snapshots_2023.snapshot_date)).CALCULATE(
         avg_daily_limit=AVG(
-            snapshots_2023.WHERE(min_date == snapshot_date).tx_limit_daily
+            snapshots_2023.WHERE(min_date == snapshot_date).daily_transaction_limit
         ),
         avg_monthly_limit=AVG(
-            snapshots_2023.WHERE(min_date == snapshot_date).tx_limit_monthly
+            snapshots_2023.WHERE(min_date == snapshot_date).monthly_transaction_limit
         ),
     )
 
@@ -1716,9 +1716,7 @@ def impl_defog_ewallet_gen3():
     return user_sessions.PARTITION(name="device_types", by=device_type).CALCULATE(
         device_type=device_type,
         avg_session_duration_seconds=AVG(
-            DATEDIFF(
-                "seconds", user_sessions.session_start_ts, user_sessions.session_end_ts
-            )
+            DATEDIFF("seconds", user_sessions.session_start, user_sessions.session_end)
         ),
     )
 

@@ -7,9 +7,7 @@
         "name": "customers",
         "type": "simple table",
         "table path": "main.sbCustomer",
-        "unique properties": [
-          "_id"
-        ],
+        "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
@@ -125,9 +123,7 @@
         "name": "tickers",
         "type": "simple table",
         "table path": "main.sbTicker",
-        "unique properties": [
-          "_id"
-        ],
+        "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
@@ -207,12 +203,7 @@
         "name": "daily_prices",
         "type": "simple table",
         "table path": "main.sbDailyPrice",
-        "unique properties": [
-          [
-            "ticker_id",
-            "date"
-          ]
-        ],
+        "unique properties": [["ticker_id", "date"]],
         "properties": [
           {
             "name": "ticker_id",
@@ -302,10 +293,7 @@
         "name": "transactions",
         "type": "simple table",
         "table path": "main.sbTransaction",
-        "unique properties": [
-          "transaction_id",
-          "kpx"
-        ],
+        "unique properties": ["transaction_id", "kpx"],
         "properties": [
           {
             "name": "transaction_id",
@@ -525,9 +513,7 @@
         "name": "cars",
         "type": "simple table",
         "table path": "main.cars",
-        "unique properties": [
-          "_id", "vin_number"
-        ],
+        "unique properties": ["_id", "vin_number"],
         "properties": [
           {
             "name": "_id",
@@ -634,9 +620,7 @@
         "name": "salespeople",
         "type": "simple table",
         "table path": "main.salespersons",
-        "unique properties": [
-          "_id", "email"
-        ],
+        "unique properties": ["_id", "email"],
         "properties": [
           {
             "name": "_id",
@@ -714,9 +698,7 @@
         "name": "customers",
         "type": "simple table",
         "table path": "main.customers",
-        "unique properties": [
-          "_id", "email"
-        ],
+        "unique properties": ["_id", "email"],
         "properties": [
           {
             "name": "_id",
@@ -812,9 +794,7 @@
         "name": "payments_made",
         "type": "simple table",
         "table path": "main.payments_made",
-        "unique properties": [
-          "_id", "invoice_number"
-        ],
+        "unique properties": ["_id", "invoice_number"],
         "properties": [
           {
             "name": "_id",
@@ -900,9 +880,7 @@
         "name": "payments_received",
         "type": "simple table",
         "table path": "main.payments_received",
-        "unique properties": [
-          "_id"
-        ],
+        "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
@@ -964,9 +942,7 @@
         "name": "sales",
         "type": "simple table",
         "table path": "main.sales",
-        "unique properties": [
-          "_id"
-        ],
+        "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
@@ -1037,9 +1013,7 @@
         "name": "inventory_snapshots",
         "type": "simple table",
         "table path": "main.inventory_snapshots",
-        "unique properties": [
-          "_id"
-        ],
+        "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
@@ -1227,9 +1201,7 @@
         "name": "doctors",
         "type": "simple table",
         "table path": "main.doctors",
-        "unique properties": [
-          "doc_id"
-        ],
+        "unique properties": ["doc_id"],
         "properties": [
           {
             "name": "doc_id",
@@ -1328,9 +1300,7 @@
         "name": "patients",
         "type": "simple table",
         "table path": "main.patients",
-        "unique properties": [
-          "patient_id", "email", "phone"
-        ],
+        "unique properties": ["patient_id", "email", "phone"],
         "properties": [
           {
             "name": "patient_id",
@@ -1481,9 +1451,7 @@
         "name": "drugs",
         "type": "simple table",
         "table path": "main.drugs",
-        "unique properties": [
-          "drug_id", "national_drug_code"
-        ],
+        "unique properties": ["drug_id", "national_drug_code"],
         "properties": [
           {
             "name": "drug_id",
@@ -1591,9 +1559,7 @@
         "name": "diagnoses",
         "type": "simple table",
         "table path": "main.diagnoses",
-        "unique properties": [
-          "_id", "code", "name"
-        ],
+        "unique properties": ["_id", "code", "name"],
         "properties": [
           {
             "name": "_id",
@@ -1639,9 +1605,7 @@
         "name": "treatments",
         "type": "simple table",
         "table path": "main.treatments",
-        "unique properties": [
-          "treatment_id"
-        ],
+        "unique properties": ["treatment_id"],
         "properties": [
           {
             "name": "treatment_id",
@@ -1738,9 +1702,7 @@
         "name": "outcomes",
         "type": "simple table",
         "table path": "main.outcomes",
-        "unique properties": [
-          "outcome_id"
-        ],
+        "unique properties": ["outcome_id"],
         "properties": [
           {
             "name": "outcome_id",
@@ -1911,9 +1873,7 @@
         "name": "concomitant_meds",
         "type": "simple table",
         "table path": "main.concomitant_meds",
-        "unique properties": [
-          "_id", ["treatment_id", "medicine_name"]
-        ],
+        "unique properties": ["_id", ["treatment_id", "medicine_name"]],
         "properties": [
           {
             "name": "_id",
@@ -1993,9 +1953,7 @@
         "name": "adverse_events",
         "type": "simple table",
         "table path": "main.adverse_events",
-        "unique properties": [
-          "_id"
-        ],
+        "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
@@ -2226,10 +2184,7 @@
         "name": "users",
         "type": "simple table",
         "table path": "main.users",
-        "unique properties": [
-          "uid",
-          "username"
-        ],
+        "unique properties": ["uid", "username"],
         "properties": [
           {
             "name": "uid",
@@ -2238,7 +2193,7 @@
             "data type": "numeric",
             "description": "The unique identifier for each user in the system",
             "sample values": [1, 3, 5, 10, 11],
-            "synonyms": []
+            "synonyms": ["user id", "user key"]
           },
           {
             "name": "username",
@@ -2353,9 +2308,7 @@
         "name": "merchants",
         "type": "simple table",
         "table path": "main.merchants",
-        "unique properties": [
-          "mid", "name"
-        ],
+        "unique properties": ["mid", "name"],
         "properties": [
           {
             "name": "mid",
@@ -2525,44 +2478,42 @@
         "name": "coupons",
         "type": "simple table",
         "table path": "main.coupons",
-        "unique properties": [
-          "cid"
-        ],
+        "unique properties": ["cid"],
         "properties": [
           {
             "name": "cid",
             "type": "table column",
             "column name": "cid",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each coupon in the system",
+            "sample values": [1, 4, 5, 7, 10],
+            "synonyms": ["coupon key", "coupon id"]
           },
           {
             "name": "merchant_id",
             "type": "table column",
             "column name": "merchant_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the merchant who issues the coupon",
+            "sample values": [2, 5, 7, 8, 9],
+            "synonyms": ["merchant key", "merchant id", "issuing business id"]
           },
           {
             "name": "code",
             "type": "table column",
             "column name": "code",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The code used to enter the coupon",
+            "sample values": ["TECH20", "DINEDISCOUNT", "HOME15", "GLOWUP", "GAMERALERT"],
+            "synonyms": ["coupon code", "discount code", "promo code"]
           },
           {
             "name": "description",
             "type": "table column",
             "column name": "description",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "A verbal description of what hte coupon is for",
+            "sample values": ["20% off tech and electronics", "Buy 2 get 1 free on cosmetics'", "Get 25% off accessories", "$10 off $75+ purchase"],
             "synonyms": []
           },
           {
@@ -2570,119 +2521,113 @@
             "type": "table column",
             "column name": "start_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date when the coupon first became valid",
+            "synonyms": ["available since", "valid from"]
           },
           {
             "name": "end_date",
             "type": "table column",
             "column name": "end_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date when the coupon is no longer valid",
+            "synonyms": ["available until", "valid until", "expiration date"]
           },
           {
             "name": "discount_type",
             "type": "table column",
             "column name": "discount_type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The category of the coupon, which can be either `percentage` or `fixed_amount`",
+            "sample values": ["percentage", "fixed_amount"],
+            "synonyms": ["classification", "category"]
           },
           {
             "name": "discount_value",
             "type": "table column",
             "column name": "discount_value",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The value of the discount, which is the percentage off if the discount type is `percentage`, or the number of dollars off if `fixed_amount`",
+            "sample values": [20.0, 30.0, 10.0, 15.0, 25.0],
+            "synonyms": ["dollars off", "percentage off", "amount", "size"]
           },
           {
             "name": "min_purchase_amount",
             "type": "table column",
             "column name": "min_purchase_amount",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The minimum amount of money that must be spent on a purchase in USD to be eligible for the coupon (null if not applicable)",
+            "sample values": [100.0, 50.0, 1000.0, 150.0],
+            "synonyms": ["minimum spend", "minimum purchase", "minimum order price"]
           },
           {
             "name": "max_discount_amount",
             "type": "table column",
             "column name": "max_discount_amount",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The maximum amount of money that can be saved using the coupon in USD (null if not applicable)",
+            "sample values": [50.0, 300.0, 10.0, 15.0],
+            "synonyms": ["promotion limit", "discount cap", "maximum savings"]
           },
           {
             "name": "redemption_limit",
             "type": "table column",
             "column name": "redemption_limit",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The maximum number of times the coupon can be redeemed before expiring/becoming invalid (null if not applicable)",
+            "sample values": [500, 1000, 200, 300, 750],
+            "synonyms": ["maximum number of uses", "redemption cap", "usage limit"]
           },
           {
             "name": "status",
             "type": "table column",
             "column name": "status",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The status of the coupon, which can be either `active`, `inactive`, or `expired`",
+            "sample values": ["active", "inactive", "expired"],
+            "synonyms": ["availability", "usability", "activity state"]
           },
           {
             "name": "created_at",
             "type": "table column",
             "column name": "created_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the coupon record was created in the system",
+            "synonyms": ["creation datetime"]
           },
           {
             "name": "updated_at",
             "type": "table column",
             "column name": "updated_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Timestamp when the coupon record was last updated in the system (null if never updated after creation)",
+            "synonyms": ["update datetime"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The records of coupons that have been issued by merchants in the system",
+        "synonyms": ["discounts", "promotions", "special offers"]
       },
       {
         "name": "transactions",
         "type": "simple table",
         "table path": "main.wallet_transactions_daily",
-        "unique properties": [
-          "txid"
-        ],
+        "unique properties": ["txid", "transaction_ref"],
         "properties": [
           {
             "name": "txid",
             "type": "table column",
             "column name": "txid",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each transaction in the system (the original transaction & coupon applied are different rows with different values of this key)",
+            "sample values": [1, 3, 17, 21, 26],
+            "synonyms": ["transaction key", "transaction id"]
           },
           {
             "name": "sender_id",
             "type": "table column",
             "column name": "sender_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The id of the key of the individual who sent the transaction, which is either the id of a user or a merchant, depending on sender_type",
+            "sample values": [1, 3, 8, 4, 10],
             "synonyms": []
           },
           {
@@ -2690,17 +2635,17 @@
             "type": "table column",
             "column name": "sender_type",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Which type of individual sent the transaction: 0 for user (meaning sender_id is a uid from users) or 1 for merchant (meaning sender_id is a mid from merchants)",
+            "sample values": [0, 1],
+            "synonyms": ["sent by merchant"]
           },
           {
             "name": "receiver_id",
             "type": "table column",
             "column name": "receiver_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The id of the key of the individual who received the transaction, which is either the id of a user or a merchant, depending on receiver_type",
+            "sample values": [1, 9, 10, 2, 5],
             "synonyms": []
           },
           {
@@ -2708,17 +2653,17 @@
             "type": "table column",
             "column name": "receiver_type",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Which type of individual received the transaction: 0 for user (meaning receiver_id is a uid from users) or 1 for merchant (meaning receiver_id is a mid from merchants)",
+            "sample values": [0, 1],
+            "synonyms": ["received by merchant"]
           },
           {
             "name": "amount",
             "type": "table column",
             "column name": "amount",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The dollar amount of the transaction, which is the total amount for a record without a coupon applied, or the amount saved/rebated when the coupon is applied",
+            "sample values": [99.99, 20.0, 16.0, 125.50, 10.0],
             "synonyms": []
           },
           {
@@ -2726,275 +2671,257 @@
             "type": "table column",
             "column name": "status",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The status of the transaction, which can be either `success`, `failed`, `refunded`, or `pending`",
+            "sample values": ["success", "failed", "pending", "refunded"],
+            "synonyms": ["outcome", "result", "transaction status"]
           },
           {
             "name": "transaction_type",
             "type": "table column",
             "column name": "type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The means the transaction was made, which can be either `credit` or `debit",
+            "sample values": ["credit", "debit"],
+            "synonyms": ["payment method", "credit or debit"]
           },
           {
             "name": "description",
             "type": "table column",
             "column name": "description",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The category of transaction, which either says what was purchased or 'Coupon discount' if the transaction is a coupon discount being applied to a previous transaction in the system",
+            "sample values": ["Online purchase", "Coupon discount", "Product purchase", "Order #438721", "Villa rental deposit", "Refund on order #1234"],
+            "synonyms": ["description of purchase", "purchase subject"]
           },
           {
             "name": "coupon_id",
             "type": "table column",
             "column name": "coupon_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the coupon being used in the transaction, or null if the transaction is not a coupon discount",
+            "sample values": [1, 3, 9, 10],
+            "synonyms": ["coupon key", "coupon id"]
           },
           {
             "name": "created_at",
             "type": "table column",
             "column name": "created_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the transfer was created in the system",
+            "synonyms": ["creation datetime"]
           },
           {
             "name": "completed_at",
             "type": "table column",
             "column name": "completed_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the transfer was completed (null if not completed yet)",
+            "synonyms": ["completion datetime"]
           },
           {
             "name": "transaction_ref",
             "type": "table column",
             "column name": "transaction_ref",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Randomly generated uuid4 for users' reference",
+            "sample values": ["ad154bf7-8185-4230-a8d8-3ef59b4e0012", "kd454bf7-428d-eig2-a8d8-3ef59b4e0012", "a7659c81-0cd0-4635-af6c-cf68d2c15ab2'"],
+            "synonyms": ["transaction uuid", "reference number"]
           },
           {
             "name": "gateway_name",
             "type": "table column",
             "column name": "gateway_name",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The portal through which the transaction was made, which can be either 'Stripe', 'PayPal', 'Checkout.com', 'Braintree' or 'Adyen'",
+            "sample values": ["Stripe", "PayPal", "Checkout.com", "Braintree", "Adyen"],
+            "synonyms": ["payment gateway", "payment processor", "payment portal"]
           },
           {
             "name": "gateway_ref",
             "type": "table column",
             "column name": "gateway_ref",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "A reference number generated by the payment gateway for the transaction, which is used to track the transaction in the payment processor's system",
+            "sample values": ["tx_123abc456def", "rfnd_xkt521", "sub_pjj908", "stripe_ref_11_1", "paypal_ref_12_1"],
+            "synonyms": ["gateway reference number", "payment processor reference"]
           },
           {
             "name": "device_id",
             "type": "table column",
             "column name": "device_id",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for the device used to make the transaction",
+            "sample values": ["mobile_8fh2k1", "web_8902wknz", "web_zld22f", "device_11_1", "mobile_1av8p0"],
+            "synonyms": ["device key", "device identifier", "device number"]
           },
           {
             "name": "ip_address",
             "type": "table column",
             "column name": "ip_address",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The IP address of the device used to make the transaction",
+            "sample values": ["199.59.148.201", "199.59.148.201", "70.121.39.25", "8.26.53.165"],
+            "synonyms": ["IP"]
           },
           {
             "name": "user_agent",
             "type": "table column",
             "column name": "user_agent",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The user agent used to make the transaction, which is a string that identifies the browser, operating system, and device type of the device used to make the transaction",
+            "sample values": ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_3_1 like Mac OS X) ...", "Mozilla/5.0 (Linux; Android 13; SM-S901B) ...", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ..."],
+            "synonyms": ["device information", "browser information", "device details"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Every transaction that has occurred in the system, where the source can be either a user or a merchant and the destination can be either a user or a merchant. If a coupon is used, there will be two identical transaction records, one for the original transaction (where the coupon id is null) and one for the coupon discount applied (where the coupon id is provided)",
+        "synonyms": ["transfers", "payments", "purchases"]
       },
       {
         "name": "user_balances",
         "type": "simple table",
         "table path": "main.wallet_user_balance_daily",
-        "unique properties": [
-          [
-            "user_id",
-            "updated_at"
-          ]
-        ],
+        "unique properties": [["user_id", "updated_at"]],
         "properties": [
           {
             "name": "user_id",
             "type": "table column",
             "column name": "user_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the user whose account balance is being recorded",
+            "sample values": [1, 4, 9, 10, 5],
+            "synonyms": ["user id", "user key"]
           },
           {
             "name": "balance",
             "type": "table column",
             "column name": "balance",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The balance of the user's account in USD on the date of the record",
+            "sample values": [525.80, -725.55, -55.99, -559.98, 0.00, 2733.92],
+            "synonyms": ["amount in account", "user balance", "account value"]
           },
           {
             "name": "updated_at",
             "type": "table column",
             "column name": "updated_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the user's balance was recorded",
+            "synonyms": ["update datetime", "balance record date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The records of users' account balances in the system, which can include negative balances and multiple records for the same user made at different points in time",
+        "synonyms": ["user balance histories", "user balance records", "user account balances"]
       },
       {
         "name": "merchant_balances",
         "type": "simple table",
         "table path": "main.wallet_merchant_balance_daily",
-        "unique properties": [
-          [
-            "merchant_id",
-            "updated_at"
-          ]
-        ],
+        "unique properties": [["merchant_id", "updated_at"]],
         "properties": [
           {
             "name": "merchant_id",
             "type": "table column",
             "column name": "merchant_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the merchant whose account balance is being recorded",
+            "sample values": [2, 4, 5, 9, 1],
+            "synonyms": ["merchant key", "merchant id"]
           },
           {
             "name": "balance",
             "type": "table column",
             "column name": "balance",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The balance of the user's account in USD on the date of the record",
+            "sample values": [3897.99, 29.95, 0.00, 89.99],
+            "synonyms": ["amount in account", "merchant balance", "account value"]
           },
           {
             "name": "updated_at",
             "type": "table column",
             "column name": "updated_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the merchant's balance was recorded",
+            "synonyms": ["update datetime", "balance record date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The records of merchants' account balances in the system, which can include negative balances and multiple records for the same merchant made at different points in time",
+        "synonyms": ["merchant balance histories", "merchant balance records", "merchant account balances"]
       },
       {
         "name": "notifications",
         "type": "simple table",
         "table path": "main.notifications",
-        "unique properties": [
-          "_id"
-        ],
+        "unique properties": ["notif_id"],
         "properties": [
           {
-            "name": "_id",
+            "name": "notif_id",
             "type": "table column",
             "column name": "_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The unique identifier for each notification in the system",
+            "sample values": [1, 5, 10, 14, 16],
+            "synonyms": ["notification key", "notification id"]
           },
           {
             "name": "user_id",
             "type": "table column",
             "column name": "user_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id for the user who received the notification",
+            "sample values": [3, 5, 9, 10],
+            "synonyms": ["user key", "user id"]
           },
           {
             "name": "message",
             "type": "table column",
             "column name": "message",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The message contained in the notification sent to the user",
+            "sample values": ["Your order #123abc has been shipped!", "Your CodeSuite subscription will renew on 7/1", "Here''s $10 to start your glow up!'", "Reminder: Your FitLife membership expires in 7 days", "An order from UrbanDining was unsuccessful", "Weekend Flash Sale: 25% off all activewear!"],
+            "synonyms": ["contents", "text", "description"]
           },
           {
             "name": "notification_type",
             "type": "table column",
             "column name": "type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The type of notification message, which can be either `transaction`, `promotion`, or `general`",
+            "sample values": ["transaction", "promotion", "general"],
+            "synonyms": ["message category", "alert classification"]
           },
           {
             "name": "status",
             "type": "table column",
             "column name": "status",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The status of the notification, which can be either `read`, `unread`, or `archived`",
+            "sample values": ["read", "unread", "archived"],
+            "synonyms": ["has been read"]
           },
           {
             "name": "created_at",
             "type": "table column",
             "column name": "created_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the notification was created",
+            "synonyms": ["creation datetime", "notification creation date"]
           },
           {
             "name": "read_at",
             "type": "table column",
             "column name": "read_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the notification was read (null if not read yet)",
+            "synonyms": ["datetime read"]
           },
           {
             "name": "device_type",
             "type": "table column",
             "column name": "device_type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The type of device/medium the notification was sent through, which can be either `mobile_app`, `email`, `sms`, or `web_app`",
+            "sample values": ["mobile_app", "email", "sms", "web_app"],
             "synonyms": []
           },
           {
@@ -3002,8 +2929,8 @@
             "type": "table column",
             "column name": "device_id",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The id of the device the notification was sent to, or null if the device type does not have device ids",
+            "sample values": ["mobile_8fh2k1", "web_d8180kaf", "mobile_8fh2k1"],
             "synonyms": []
           },
           {
@@ -3011,138 +2938,124 @@
             "type": "table column",
             "column name": "action_url",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The URL included in hte notification that the user can click on to take action; can be external https or deeplink url within the app",
+            "sample values": ["app://orders/123abc", "https://zenhomesurvey.com/order/c51e10d1", "https://kidzplayhouse.com/new-arrivals", "https://techmart.com/promo/TECH20"],
+            "synonyms": ["link", "notification hyperlink"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All notifications sent to users in the system, such as alerts, reminders, and promotional messages",
+        "synonyms": ["alerts", "messages"]
       },
       {
         "name": "user_sessions",
         "type": "simple table",
         "table path": "main.user_sessions",
-        "unique properties": [
-          [
-            "user_id",
-            "session_start_ts",
-            "session_end_ts"
-          ]
-        ],
+        "unique properties": [["user_id", "session_start"], ["user_id", "session_end"]],
         "properties": [
           {
             "name": "user_id",
             "type": "table column",
             "column name": "user_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id of the user who the session belongs to",
+            "sample values": [1, 2, 3, 8, 10],
+            "synonyms": ["user id", "user key"]
           },
           {
-            "name": "session_start_ts",
+            "name": "session_start",
             "type": "table column",
             "column name": "session_start_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the user session started",
+            "synonyms": ["beginning timestamp", "session initialization datetime"]
           },
           {
-            "name": "session_end_ts",
+            "name": "session_end",
             "type": "table column",
             "column name": "session_end_ts",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the user session ended",
+            "synonyms": ["ending timestamp", "session termination datetime"]
           },
           {
             "name": "device_type",
             "type": "table column",
             "column name": "device_type",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The type of device the session was made with, which can be either `web_app` or `mobile_app`",
+            "sample values": ["web_app", "mobile_app"],
+            "synonyms": ["session device", "web or mobile"]
           },
           {
             "name": "device_id",
             "type": "table column",
             "column name": "device_id",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The id of the device the session was made with",
+            "sample values": ["web_d8180kaf", "mobile_g3mjfz", "web_zz91p44l", "web_8902wknz"],
             "synonyms": []
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The records of user sessions in the system, which can include multiple sessions for the same user made at different points in time, each session with a start/end timestamp",
+        "synonyms": ["system logs", "user activity logs", "user session records"]
       },
       {
         "name": "user_setting_snapshots",
         "type": "simple table",
         "table path": "main.user_setting_snapshot",
-        "unique properties": [
-          [
-            "user_id",
-            "snapshot_date"
-          ]
-        ],
+        "unique properties": [["user_id", "snapshot_date"]],
         "properties": [
           {
             "name": "user_id",
             "type": "table column",
             "column name": "user_id",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The id for the user whose settings are being recorded",
+            "sample values": [1, 2, 3, 5, 9],
+            "synonyms": ["user key", "user id"]
           },
           {
             "name": "snapshot_date",
             "type": "table column",
             "column name": "snapshot_date",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The date when the setting snapshot was taken",
+            "synonyms": ["date of setting update", "recorded date"]
           },
           {
-            "name": "tx_limit_daily",
+            "name": "daily_transaction_limit",
             "type": "table column",
             "column name": "tx_limit_daily",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The cap in settings of how much the user account allows to be spent in a single day",
+            "sample values": [1000.0, 500.0, 50.0, 250.0],
+            "synonyms": ["daily spending cap"]
           },
           {
-            "name": "tx_limit_monthly",
+            "name": "monthly_transaction_limit",
             "type": "table column",
             "column name": "tx_limit_monthly",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The cap in settings of how much the user account allows to be spent in a single month",
+            "sample values": [5000.0, 500.0, 2000.0, 1000.0],
+            "synonyms": ["monthly spending cap"]
           },
           {
             "name": "membership_status",
             "type": "table column",
             "column name": "membership_status",
             "data type": "numeric",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The member's status level within the system: 0 for bronze, 1 for silver, 2 for gold, 3 for platinum, 4 for VIP",
+            "sample values": [0, 1, 2, 3, 4],
+            "synonyms": ["rank", "membership level", "membership tier"]
           },
           {
             "name": "password_hash",
             "type": "table column",
             "column name": "password_hash",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
+            "description": "The hashed password of the user, which is used to verify the user's identity when they log in",
+            "sample values": ["bcryptHash($2yz9!&ka1)", "bcryptHash($2yz9!&ka1)", "bcryptHash(C0d3Rul3z!99)"],
             "synonyms": []
           },
           {
@@ -3150,58 +3063,55 @@
             "type": "table column",
             "column name": "api_key",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The user's API key, which is used to authenticate the user when they make API requests (null if not provided)",
+            "sample values": ["9d61c49b-8977-4914-a36b-80d1445e38fa", "6c03c175-9ac9-4854-b064-a3fff2c62e31"],
+            "synonyms": ["api token", "application programming interface key"]
           },
           {
             "name": "verified_devices",
             "type": "table column",
             "column name": "verified_devices",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "A comma-separated list of the ids of the devices that have been verified for the user (null if not provided)",
+            "sample values": ["mobile_8fh2k1", "mobile_yjp08q, mobile_1av8p0", "web_k29qjd, mobile_x28qlj", "web_d8180kaf, mobile_q3mz8n"],
+            "synonyms": ["device list", "device ids"]
           },
           {
             "name": "verified_ips",
             "type": "table column",
             "column name": "verified_ips",
             "data type": "string",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "A comma-sparated list of the IP addresses that have been verified for the user (null if not provided)",
+            "sample values": ["8.26.53.165, 68.85.32.201", "203.96.81.36", "192.168.0.1", "198.51.100.233, 70.121.39.25"],
+            "synonyms": ["IP addresses", "IP list"]
           },
           {
             "name": "mfa_enabled",
             "type": "table column",
             "column name": "mfa_enabled",
             "data type": "bool",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Whether the user has enabled multi-factor authentication (MFA) for their account",
+            "synonyms": ["has mfa"]
           },
           {
             "name": "marketing_opt_in",
             "type": "table column",
             "column name": "marketing_opt_in",
             "data type": "bool",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "Whether the user has opted in to receive marketing communications",
+            "synonyms": ["allowed marketing"]
           },
           {
             "name": "created_at",
             "type": "table column",
             "column name": "created_at",
             "data type": "datetime",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": []
+            "description": "The timestamp when the record was added to the system",
+            "synonyms": ["system entry date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The records of user settings in the system, which can include multiple updates for the same user made at different points in time",
+        "synonyms": ["user settings history", "user settings records"]
       }
     ],
     "relationships": [
