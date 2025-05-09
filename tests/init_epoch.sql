@@ -1,5 +1,5 @@
 -- Custom SQL schema to initialize a custom EPOCH database with tables for
--- historical events and their eras, seasons, and times of day.
+-- historical events and their eras, seasons, times of day, and user searches.
 
 CREATE TABLE SEASONS (
   s_name varchar(7) NOT NULL,

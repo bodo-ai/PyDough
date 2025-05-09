@@ -1307,7 +1307,7 @@
     "extra semantic info": {}
   },
   {
-    "name": "Grocery",
+    "name": "TechnoGraph",
     "version": "V2",
     "collections": [
       {
@@ -1330,7 +1330,7 @@
         "synonyms": []
       },
       {
-        "name": "stores",
+        "name": "countries",
         "type": "simple table",
         "table path": "TODO",
         "unique properties": ["TODO"],
@@ -1349,7 +1349,7 @@
         "synonyms": []
       },
       {
-        "name": "farms",
+        "name": "devices",
         "type": "simple table",
         "table path": "TODO",
         "unique properties": ["TODO"],
@@ -1368,7 +1368,7 @@
         "synonyms": []
       },
       {
-        "name": "factories",
+        "name": "users",
         "type": "simple table",
         "table path": "TODO",
         "unique properties": ["TODO"],
@@ -1387,7 +1387,7 @@
         "synonyms": []
       },
       {
-        "name": "trucks",
+        "name": "incidents",
         "type": "simple table",
         "table path": "TODO",
         "unique properties": ["TODO"],
@@ -1406,64 +1406,7 @@
         "synonyms": []
       },
       {
-        "name": "deliveries",
-        "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
-        "properties": [
-          {
-            "name": "TODO",
-            "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
-          }
-        ],
-        "description": "TODO",
-        "synonyms": []
-      },
-      {
-        "name": "purchases",
-        "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
-        "properties": [
-          {
-            "name": "TODO",
-            "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
-          }
-        ],
-        "description": "TODO",
-        "synonyms": []
-      },
-      {
-        "name": "purchase_contents",
-        "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
-        "properties": [
-          {
-            "name": "TODO",
-            "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
-          }
-        ],
-        "description": "TODO",
-        "synonyms": []
-      }
-      {
-        "name": "regions",
+        "name": "errors",
         "type": "simple table",
         "table path": "TODO",
         "unique properties": ["TODO"],
