@@ -1313,139 +1313,493 @@
       {
         "name": "products",
         "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
+        "table path": "main.PRODUCTS",
+        "unique properties": ["_id", "name"],
         "properties": [
           {
-            "name": "TODO",
+            "name": "_id",
             "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
+            "column name": "pr_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each product",
+            "sample values": [618070, 143712, 696967, 975807],
+            "synonyms": ["product key", "product id"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "pr_name",
+            "data type": "string",
+            "description": "The name of the product",
+            "sample values": ["GoldCopper-Star", "RubyScream-III", "SapphireCopper-Wave", "EmeraldBeat-Core"],
+            "synonyms": ["product name", "title"] 
+          },
+          {
+            "name": "category",
+            "type": "table column",
+            "column name": "pr_type",
+            "data type": "string",
+            "description": "The type of product, which is always 'laptop', 'tablet', 'accessory' or 'phone'",
+            "sample values": ["laptop", "tablet", "accessory", "phone"],
+            "synonyms": ["product type", "classification"]
+          },
+          {
+            "name": "brand",
+            "type": "table column",
+            "column name": "pr_brand",
+            "data type": "string",
+            "description": "The brand of the product, which is always 'OrangeRectangle', 'AstralSea', 'Dreadnought' or 'Zenith'",
+            "sample values": ["OrangeRectangle", "AstralSea", "Dreadnought", "Zenith"],
+            "synonyms": ["product brand", "manufacturer", "product line"]
+          },
+          {
+            "name": "production_cost",
+            "type": "table column",
+            "column name": "pr_prodcost",
+            "data type": "numeric",
+            "description": "The cost to create a unit of the product in USD",
+            "sample values": [180.65, 7.73, 9514.12, 139.01, 12.42],
+            "synonyms": ["manufacturing cost", "cost to produce", "cost to build"]
+          },
+          {
+            "name": "release_date",
+            "type": "table column",
+            "column name": "pr_release",
+            "data type": "datetime",
+            "description": "The date when the product was first released to the market",
+            "synonyms": ["date made public", "date launched", "date first available"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The products available in the system",
+        "synonyms": ["items", "goods", "merchandise", "stock", "inventory", "selection", "catalog", "line of products"]
       },
       {
         "name": "countries",
         "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
+        "table path": "main.COUNTRIES",
+        "unique properties": ["_id", "name"],
         "properties": [
           {
-            "name": "TODO",
+            "name": "_id",
             "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
+            "column name": "co_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each country",
+            "sample values": [1803, 4949, 7964],
+            "synonyms": ["country key", "country id"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "co_name",
+            "data type": "string",
+            "description": "The capitalized two-letter abbreviation of the country, which is always 'US', 'JP', 'FR', 'MX', 'CA' or 'CN'",
+            "sample values": ["US", "JP", "FR", "MX", "CA", "CN"],
+            "synonyms": ["nation name", "country name", "country code", "abbreviated name"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "Every country in the system",
+        "synonyms": ["nations"]
       },
       {
         "name": "devices",
         "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
+        "table path": "main.DEVICES",
+        "unique properties": ["_id"],
         "properties": [
           {
-            "name": "TODO",
+            "name": "_id",
             "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
+            "column name": "de_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each device",
+            "sample values": [1000001, 1012156, 1017633],
+            "synonyms": ["device key", "device id"]
+          },
+          {
+            "name": "product_id",
+            "type": "table column",
+            "column name": "de_product_id",
+            "data type": "numeric",
+            "description": "The id of the product that the device is an instance of",
+            "sample values": [145131, 241850, 995917, 387218],
+            "synonyms": ["product key", "product id"]
+          },
+          {
+            "name": "store_country_id",
+            "type": "table column",
+            "column name": "de_purchase_country_id",
+            "data type": "numeric",
+            "description": "The country code of the country containing the store the device was purchased from",
+            "sample values": [6890, 8726, 7964],
+            "synonyms": ["purchase country id"]
+          },
+          {
+            "name": "factory_country_id",
+            "type": "table column",
+            "column name": "de_production_country_id",
+            "data type": "numeric",
+            "description": "The country code of the country containing the factory the device was manufactured in",
+            "sample values": [6890, 8726, 4896],
+            "synonyms": ["manufacturing country id"]
+          },
+          {
+            "name": "user_id",
+            "type": "table column",
+            "column name": "de_user_id",
+            "data type": "numeric",
+            "description": "The id of the user who purchased the device",
+            "sample values": [80737013, 54970681, 34429547],
+            "synonyms": ["user key", "user id"]
+          },
+          {
+            "name": "purchase_timestamp",
+            "type": "table column",
+            "column name": "de_purchase_ts",
+            "data type": "datetime",
+            "description": "The timestamp of when the device was purchased",
+            "synonyms": ["purchase datetime"]
+          },
+          {
+            "name": "purchase_cost",
+            "type": "table column",
+            "column name": "de_purchase_cost",
+            "data type": "numeric",
+            "description": "The amount that the device was purchased for in the store, in USD, including taxes and fees",
+            "sample values": [2651.16, 42.07, 3113.91, 1508.68, 170.60],
+            "synonyms": ["customer payment", "purchase price"]
+          },
+          {
+            "name": "tax",
+            "type": "table column",
+            "column name": "de_purchase_tax",
+            "data type": "numeric",
+            "description": "The amount from the purchase cost that went to taxes, in USD",
+            "sample values": [0.0, 871.86, 74.48, 18.64, 1303.50, 14.90],
+            "synonyms": ["levy", "duty", "tariff"]
+          },
+          {
+            "name": "warranty_type",
+            "type": "table column",
+            "column name": "de_warranty_type",
+            "data type": "string",
+            "description": "The type of warranty that the device has when purchased, which is either 'ALPHA', 'OMEGA' or 'svx' (or null if no warranty was purchased)",
+            "sample values": ["ALPHA", "OMEGA", "svx"],
+            "synonyms": ["warranty name", "guarantee"]
+          },
+          {
+            "name": "warranty_expiration",
+            "type": "table column",
+            "column name": "de_warranty_ex",
+            "data type": "datetime",
+            "description": "The date when the warranty for the device expires, or null if no warranty was purchased",
+            "synonyms": ["warranty expiration date", "warranty end date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The records for each device that has been purchased",
+        "synonyms": ["items sold", "devices purchased", "sales"]
       },
       {
         "name": "users",
         "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
+        "table path": "main.USERS",
+        "unique properties": ["_id", "username"],
         "properties": [
           {
-            "name": "TODO",
+            "name": "_id",
             "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
+            "column name": "us_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each user",
+            "sample values": [55929332, 17329823, 32311151],
+            "synonyms": ["user key", "user id"]
+          },
+          {
+            "name": "username",
+            "type": "table column",
+            "column name": "us_username",
+            "data type": "string",
+            "description": "The username of the user's account",
+            "sample values": ["KIMBERLYRODRIGUEZ512", "Jordan39", "smithjames_91", "mary_brown"],
+            "synonyms": ["name", "account name"]
+          },
+          {
+            "name": "country_id",
+            "type": "table column",
+            "column name": "us_country_id",
+            "data type": "numeric",
+            "description": "The id of the country the user lives in",
+            "sample values": [8726, 8726, 6890],
+            "synonyms": ["country key", "country id"]
+          },
+          {
+            "name": "birth_date",
+            "type": "table column",
+            "column name": "us_birthdate",
+            "data type": "datetime",
+            "description": "The date of the user's birthday",
+            "synonyms": ["birthday"]
+          },
+          {
+            "name": "account_creation_date",
+            "type": "table column",
+            "column name": "us_account_creation_date",
+            "data type": "datetime",
+            "description": "The date when the user's account was created",
+            "synonyms": ["registration date"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The users in the system who have registered an account and can buy/repair their devices",
+        "synonyms": ["customers", "clients", "consumers", "account holders", "members"]
       },
       {
         "name": "incidents",
         "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
+        "table path": "main.INCIDENTS",
+        "unique properties": ["_id"],
         "properties": [
           {
-            "name": "TODO",
+            "name": "_id",
             "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
+            "column name": "in_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each incident report",
+            "sample values": [824700278, 755289337, 425685120],
+            "synonyms": ["incident key", "incident id"]
+          },
+          {
+            "name": "device_id",
+            "type": "table column",
+            "column name": "in_device_id",
+            "data type": "numeric",
+            "description": "The id for the device that the incident is related to",
+            "sample values": [1109578, 5846835, 2353903],
+            "synonyms": ["device key", "device id"]
+          },
+          {
+            "name": "repair_country_id",
+            "type": "table column",
+            "column name": "in_repair_country_id",
+            "data type": "numeric",
+            "description": "The id for the country where the incident was raised & resolved by repairing the device",
+            "sample values": [6890, 8726, 7964, 4949],
+            "synonyms": ["country key", "country id"]
+          },
+          {
+            "name": "error_id",
+            "type": "table column",
+            "column name": "in_error_id",
+            "data type": "numeric",
+            "description": "The id of the error the incident was attributed to",
+            "sample values": [784, 726, 573, 177, 806],
+            "synonyms": ["error key", "error id"]
+          },
+          {
+            "name": "reported_timestamp",
+            "type": "table column",
+            "column name": "in_error_report_ts",
+            "data type": "datetime",
+            "description": "The timestamp of when the incident was reported",
+            "synonyms": ["report datetime", "timestamp of incident"]
+          },
+          {
+            "name": "repair_cost",
+            "type": "table column",
+            "column name": "in_error_repair_cost",
+            "data type": "numeric",
+            "description": "The amount charged to the user for the repair of the device, in USD, which depends on several factors including the cost of the product, the type of error, and whether it is still in warranty (and if so, which kind)",
+            "sample values": [4.52, 133.89, 10386.11, 0.00, 42.44],
+            "synonyms": ["amount charged", "repair price", "cost of repair"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "All records of incidents with devices, with each incident being reported by a user and repaired by a technician in a store in a country, which may be different from the purchase/production/user countries, and which are affected by the warranty if it has not yet expired",
+        "synonyms": ["error events", "issues", "problems", "malfunctions", "breakdowns", "repairs", "service requests", "service incidents"]
       },
       {
         "name": "errors",
         "type": "simple table",
-        "table path": "TODO",
-        "unique properties": ["TODO"],
+        "table path": "main.ERRORS",
+        "unique properties": ["_id", "name"],
         "properties": [
           {
-            "name": "TODO",
+            "name": "_id",
             "type": "table column",
-            "column name": "TODO",
-            "data type": "TODO",
-            "description": "TODO",
-            "sample values": [],
-            "synonyms": ["TODO"]
+            "column name": "er_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each error",
+            "sample values": [177, 184, 573],
+            "synonyms": ["error key", "error id"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "er_name",
+            "data type": "string",
+            "description": "The name for the error",
+            "sample values": ["Cracked Screen", "Battery Failure", "Network Issue", "Software Bug", "Camera Malfunction", "Overheating"],
+            "synonyms": ["description"]
+          },
+          {
+            "name": "error_type",
+            "type": "table column",
+            "column name": "er_type",
+            "data type": "string",
+            "description": "The type of error, which is always 'hardware', 'software' or 'network'",
+            "sample values": ["hardware", "software", "network"],
+            "synonyms": ["classification", "category"]
           }
         ],
-        "description": "TODO",
-        "synonyms": []
+        "description": "The various errors known in the system which are the causes of incidents",
+        "synonyms": ["bugs", "issues", "problems", "malfunctions", "diagnoses"]
       }
     ],
     "relationships": [
       {
-        "name": "TODO",
-        "type": "TODO",
-        "parent collection": "TODO",
-        "child collection": "TODO",
-        "singular": null,
-        "always matches": null,
-        "condition": "TODO",
-        "description": "TODO",
-        "synonyms": ["TODO"]
+        "name": "product",
+        "type": "simple join",
+        "parent collection": "devices",
+        "child collection": "products",
+        "singular": true,
+        "always matches": true,
+        "keys": {"product_id": ["_id"]},
+        "description": "The product that the device is an instance of",
+        "synonyms": ["item", "model", "spec"]
       },
       {
-        "name": "TODO",
+        "name": "devices",
         "type": "reverse",
-        "original parent": "TODO",
-        "original property": "TODO",
-        "singular": null,
-        "always matches": null,
-        "description": "TODOn",
-        "synonyms": ["TODO"]
+        "original parent": "devices",
+        "original property": "product",
+        "singular": false,
+        "always matches": true,
+        "description": "All individual devices made from the product line",
+        "synonyms": ["instances", "units", "purchases"]
+      },
+      {
+        "name": "manufacturing_country",
+        "type": "simple join",
+        "parent collection": "devices",
+        "child collection": "countries",
+        "singular": true,
+        "always matches": true,
+        "keys": {"factory_country_id": ["_id"]},
+        "description": "The country where the device was manufactured",
+        "synonyms": ["factory country", "production country"]
+      },
+      {
+        "name": "devices_made",
+        "type": "reverse",
+        "original parent": "devices",
+        "original property": "manufacturing_country",
+        "singular": false,
+        "always matches": true,
+        "description": "All devices that were produced in the country",
+        "synonyms": ["items made", "units produced"]
+      },
+      {
+        "name": "purchase_country",
+        "type": "simple join",
+        "parent collection": "devices",
+        "child collection": "countries",
+        "singular": true,
+        "always matches": true,
+        "keys": {"store_country_id": ["_id"]},
+        "description": "The country where the device was sold",
+        "synonyms": ["store country", "sale country"]
+      },
+      {
+        "name": "devices_sold",
+        "type": "reverse",
+        "original parent": "devices",
+        "original property": "purchase_country",
+        "singular": false,
+        "always matches": true,
+        "description": "All devices that were sold by stores in the country",
+        "synonyms": ["items sold", "units sold"]
+      },
+      {
+        "name": "country",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "countries",
+        "singular": true,
+        "always matches": true,
+        "keys": {"country_id": ["_id"]},
+        "description": "The country where the user resides",
+        "synonyms": ["residence nation", "home country"]
+      },
+      {
+        "name": "users",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "country",
+        "singular": false,
+        "always matches": true,
+        "description": "The users who live in the country",
+        "synonyms": ["residents", "inhabitants"]
+      },
+      {
+        "name": "user",
+        "type": "simple join",
+        "parent collection": "devices",
+        "child collection": "users",
+        "singular": true,
+        "always matches": true,
+        "keys": {"user_id": ["_id"]},
+        "description": "The user who purchased the device",
+        "synonyms": ["owner", "customer"]
+      },
+      {
+        "name": "devices",
+        "type": "reverse",
+        "original parent": "devices",
+        "original property": "user",
+        "singular": false,
+        "always matches": false,
+        "description": "The devices purchased by the user",
+        "synonyms": ["devices owned", "items purchased"]
+      },
+      {
+        "name": "incidents",
+        "type": "simple join",
+        "parent collection": "devices",
+        "child collection": "incidents",
+        "singular": false,
+        "always matches": false,
+        "keys": {"_id": ["device_id"]},
+        "description": "The service incidents related to the device",
+        "synonyms": ["repairs", "failures", "service requests", "malfunctions", "issues"]
+      },
+      {
+        "name": "device",
+        "type": "reverse",
+        "original parent": "devices",
+        "original property": "incidents",
+        "singular": true,
+        "always matches": true,
+        "description": "The device that the service incident is related to",
+        "synonyms": ["device involved", "device affected"]
+      },
+      {
+        "name": "error",
+        "type": "simple join",
+        "parent collection": "incidents",
+        "child collection": "errors",
+        "singular": true,
+        "always matches": true,
+        "keys": {"error_id": ["_id"]},
+        "description": "The error that the incident is attributed to",
+        "synonyms": ["problem", "bug", "cause"]
+      },
+      {
+        "name": "incidents",
+        "type": "reverse",
+        "original parent": "incidents",
+        "original property": "error",
+        "singular": false,
+        "always matches": true,
+        "description": "The incidents that are attributed to the error",
+        "synonyms": ["occurrences", "cases", "reports"]
       }
     ],
     "additional definitions": [],

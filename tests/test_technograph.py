@@ -7,7 +7,14 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from technograph_pydough_functions import global_incident_rate
+from technograph_pydough_functions import (
+    error_percentages_sun_set_by_error,
+    error_rate_sun_set_by_factory_country,
+    global_incident_rate,
+    incident_rate_by_release_year,
+    incident_rate_per_brand,
+    most_unreliable_products,
+)
 from test_utils import graph_fetcher
 
 from pydough import init_pydough_context, to_df, to_sql
@@ -30,9 +37,147 @@ from pydough.unqualified import (
             (
                 global_incident_rate,
                 "global_incident_rate",
-                lambda: pd.DataFrame({"irpm": [42.3]}),
+                lambda: pd.DataFrame({"ir": [2.41]}),
             ),
             id="global_incident_rate",
+        ),
+        pytest.param(
+            (
+                incident_rate_per_brand,
+                "incident_rate_per_brand",
+                lambda: pd.DataFrame(
+                    {
+                        "brand": [
+                            "AstralSea",
+                            "Dreadnought",
+                            "OrangeRectangle",
+                            "Zenith",
+                        ],
+                        "ir": [2.58, 2.58, 2.23, 2.39],
+                    }
+                ),
+            ),
+            id="incident_rate_per_brand",
+        ),
+        pytest.param(
+            (
+                most_unreliable_products,
+                "most_unreliable_products",
+                lambda: pd.DataFrame(
+                    {
+                        "product": [
+                            "Sun-Set",
+                            "SapphireBolt-Flare",
+                            "EmeraldScream-Vision",
+                            "Void-Flare",
+                            "OnyxCopper-Fox",
+                        ],
+                        "product_brand": [
+                            "AstralSea",
+                            "Zenith",
+                            "AstralSea",
+                            "Dreadnought",
+                            "OrangeRectangle",
+                        ],
+                        "product_type": [
+                            "laptop",
+                            "tablet",
+                            "laptop",
+                            "phone",
+                            "phone",
+                        ],
+                        "ir": [15.80, 15.08, 13.19, 12.63, 11.95],
+                    }
+                ),
+            ),
+            id="most_unreliable_products",
+        ),
+        pytest.param(
+            (
+                incident_rate_by_release_year,
+                "incident_rate_by_release_year",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [
+                            2013,
+                            2014,
+                            2015,
+                            2016,
+                            2017,
+                            2018,
+                            2019,
+                            2020,
+                            2021,
+                            2022,
+                            2023,
+                            2024,
+                        ],
+                        "ir": [
+                            2.34,
+                            4.82,
+                            3.79,
+                            4.14,
+                            3.36,
+                            2.58,
+                            1.89,
+                            2.70,
+                            1.48,
+                            0.84,
+                            0.32,
+                            0.35,
+                        ],
+                    }
+                ),
+            ),
+            id="incident_rate_by_release_year",
+        ),
+        pytest.param(
+            (
+                error_rate_sun_set_by_factory_country,
+                "error_rate_sun_set_by_factory_country",
+                lambda: pd.DataFrame(
+                    {
+                        "country": ["CA", "CN", "FR", "JP", "MX", "US"],
+                        "ir": [14.0, 19.4, 18.5, 5.0, 14.17, 22.5],
+                    }
+                ),
+            ),
+            id="error_rate_sun_set_by_factory_country",
+        ),
+        pytest.param(
+            (
+                error_percentages_sun_set_by_error,
+                "error_percentages_sun_set_by_error",
+                lambda: pd.DataFrame(
+                    {
+                        "error": [
+                            "Charging Port Issue",
+                            "Overheating",
+                            "Cracked Screen",
+                            "Display Issue",
+                            "Software Bug",
+                            "Microphone Issue",
+                            "Network Issue",
+                            "Speaker Issue",
+                            "Camera Malfunction",
+                            "Battery Failure",
+                        ],
+                        "pct": [
+                            38.61,
+                            22.78,
+                            19.94,
+                            5.7,
+                            4.75,
+                            2.85,
+                            2.53,
+                            1.58,
+                            1.27,
+                            0.00,
+                        ],
+                    }
+                ),
+            ),
+            id="error_percentages_sun_set_by_error",
         ),
     ],
 )

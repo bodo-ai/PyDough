@@ -277,9 +277,9 @@ def gen_devices_info_records(
         ** 2
     )
 
-    # Repeat the process of generating device records 4000 times.
+    # Repeat the process of generating device records 3500 times.
     devices: dict[int, dict] = {}
-    for _ in range(4000):
+    for _ in range(3500):
         # Generate a random identifier for the device
         de_id: int = 1000001
         while de_id in devices:
@@ -291,17 +291,38 @@ def gen_devices_info_records(
         pr_id: int = product_codes[pr_idx]
 
         # Randomly choose a purchase user ID, slightly unevenly distributed.
-        us_idx = int(rng.integers(0, len(user_ids), 1))
+        us_idx = int(
+            rng.choice(
+                [
+                    min(rng.integers(0, len(user_ids), 2)),
+                    rng.integers(0, len(user_ids)),
+                    max(rng.integers(0, len(user_ids), 2)),
+                ]
+            )
+        )
         purchase_us_id: int = user_ids[us_idx]
+        user_country_id: int = users[purchase_us_id]["country_id"]
+        user_country_idx: int = country_codes.index(user_country_id)
 
-        # Randomly choose a store country ID
-        store_co_idx: int = int(rng.integers(0, len(country_codes)))
+        # Randomly choose a store country ID either as the same as the
+        # user country id, or another randomly selected one.
+        store_co_idx: int = int(
+            rng.choice(
+                [
+                    user_country_idx,
+                    user_country_idx,
+                    rng.integers(0, len(country_codes)),
+                ]
+            )
+        )
         store_co_id: int = country_codes[store_co_idx]
 
         # Randomly choose a factory country ID as either the same as the store
         # country or another randomly selected one.
         factory_co_idx: int = int(
-            rng.choice([store_co_idx, rng.integers(0, len(country_codes))])
+            rng.choice(
+                [store_co_idx, store_co_idx, rng.integers(0, len(country_codes))]
+            )
         )
         factory_co_id: int = country_codes[factory_co_idx]
 
@@ -576,11 +597,14 @@ def gen_incident_info_records(
         device_info = devices[device_id]
         pr_id = device_info["pr_id"]
         co_id = device_info["factory_co_id"]
+        store_co_id = device_info["store_co_id"]
         purchase_ts: pd.Timestamp = device_info["purchase_ts"]
         error_density: float = pce_densities[
             pr_codes.index(pr_id), co_codes.index(co_id)
         ]
-        repair_id = int(rng.choice([co_id, co_id, rng.choice(co_codes)]))
+        # Amplify the error density if the store/factory country are different
+        if co_id != store_co_id:
+            error_density **= 0.9
         years_since = max(1, (pd.Timestamp("2025") - purchase_ts).days // 365)
 
         # Iterate a number of times based on the number of years since the
@@ -593,6 +617,10 @@ def gen_incident_info_records(
                 in_id: int = 100000000
                 while in_id in incidents:
                     in_id = int(rng.integers(100000000, 999999999, 1))
+
+                # Choose a random repair ID, either the same as where the device
+                # was purchased, made, or another random one.
+                repair_id = int(rng.choice([co_id, store_co_id, rng.choice(co_codes)]))
 
                 # Generate a random incident timestamp based on the purchase
                 # timestamp, with the randomness distributed further in the
@@ -777,3 +805,4 @@ def gen_technograph_records(cursor: sqlite3.Cursor) -> None:
             f"INSERT INTO incidents VALUES ({', '.join(['?'] * len(incident_record))})",
             incident_record,
         )
+    cursor.connection.commit()
