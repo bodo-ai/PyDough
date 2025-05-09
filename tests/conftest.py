@@ -384,6 +384,7 @@ def sqlite_technograph_connection() -> DatabaseContext:
     cursor: sqlite3.Cursor = connection.cursor()
     gen_technograph_records(cursor)
     print(pd.DataFrame(cursor.execute("select * from countries").fetchall()))
+    print(pd.DataFrame(cursor.execute("select * from users").fetchall()))
     print(pd.DataFrame(cursor.execute("select * from products").fetchall()))
     print(pd.DataFrame(cursor.execute("select * from errors").fetchall()))
     print(pd.DataFrame(cursor.execute("select * from devices").fetchall()))
@@ -392,6 +393,7 @@ def sqlite_technograph_connection() -> DatabaseContext:
     # pd.DataFrame(cursor.execute("select * from devices").fetchall())[1].value_counts()
     # pd.DataFrame(cursor.execute("select * from devices").fetchall())[5].apply(lambda x: pd.Timestamp(x).hour)
     # pd.DataFrame(cursor.execute("select * from incidents").fetchall())[6].value_counts()
+    # pd.DataFrame(cursor.execute("select us_birthdate, de_purchase_ts from devices inner join users on de_owner_id = us_id").fetchall())
     # pd.DataFrame(cursor.execute("select count(distinct in_device_id) from incidents").fetchall())
     # pd.DataFrame(cursor.execute("select in_device_id, count(*) from incidents group by 1 order by 2 asc").fetchall())
     # pd.DataFrame(cursor.execute("select pr_type, pr_brand, (100.0 * count(in_id)) / (1.0 * count(distinct de_id)) from incidents, devices, products WHERE in_device_id = de_id AND de_product_id = pr_id group by 1, 2").fetchall())
@@ -407,6 +409,6 @@ def sqlite_technograph_connection() -> DatabaseContext:
     # pd.DataFrame(cursor.execute("select co_name, pr_name, in_error_id, COUNT(distinct de_id), COUNT(in_error_id) from devices, countries, products left join incidents on in_device_id = de_id WHERE de_production_country_id = co_id AND de_product_id = pr_id AND co_name = 'US' AND pr_name='RubyBolt-II' group by 1, 2, 3").fetchall()).sort_values(by=4)
     #
     # pd.DataFrame(cursor.execute("select pr_type, pr_brand, count(de_product_id) from products left join devices ON de_product_id = pr_id group by 1, 2").fetchall())
-    breakpoint()
+
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
