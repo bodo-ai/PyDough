@@ -13,6 +13,7 @@ from technograph_pydough_functions import (
     error_percentages_sun_set_by_error,
     error_rate_sun_set_by_factory_country,
     global_incident_rate,
+    hot_purchase_window,
     incident_rate_by_release_year,
     incident_rate_per_brand,
     most_unreliable_products,
@@ -341,6 +342,19 @@ from pydough.unqualified import (
                 ),
             ),
             id="year_cumulative_incident_rate_overall",
+        ),
+        pytest.param(
+            (
+                hot_purchase_window,
+                "hot_purchase_window",
+                lambda: pd.DataFrame(
+                    {
+                        "start_of_period": ["2024-04-30"],
+                        "n_purchases": [25],
+                    }
+                ),
+            ),
+            id="hot_purchase_window",
         ),
     ],
 )

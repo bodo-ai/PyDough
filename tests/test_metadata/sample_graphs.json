@@ -1881,6 +1881,15 @@
         "always matches": true,
         "description": "The calendar day of when the product was released",
         "synonyms": ["calendar day of release"]
+      },
+      {
+        "name": "other_dates",
+        "type": "cartesian product",
+        "parent collection": "calendar",
+        "child collection": "calendar",
+        "always matches": true,
+        "description": "Matches every calendar day to every other calendar day",
+        "synonyms": ["other days"]
       }
     ],
     "additional definitions": [],

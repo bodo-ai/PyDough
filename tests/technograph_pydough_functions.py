@@ -180,3 +180,23 @@ def year_cumulative_incident_rate_overall():
         )
         .ORDER_BY(yr.ASC())
     )
+
+
+def hot_purchase_window():
+    # Identify the 5-day period starting in 2024 with the most purchases of
+    # devices, listed by the first day of the period.
+    selected_purchases = other_dates.WHERE(
+        (calendar_day >= start_of_period)
+        & (calendar_day < DATETIME(start_of_period, "+5 days"))
+    ).devices_sold
+
+    return (
+        calendar.WHERE(YEAR(calendar_day) == 2024)
+        .CALCULATE(start_of_period=calendar_day)
+        .WHERE(HAS(selected_purchases))
+        .CALCULATE(
+            start_of_period,
+            n_purchases=COUNT(selected_purchases),
+        )
+        .TOP_K(1, by=(n_purchases.DESC(), start_of_period.ASC()))
+    )

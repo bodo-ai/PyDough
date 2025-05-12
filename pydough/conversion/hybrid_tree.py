@@ -2686,6 +2686,8 @@ class HybridTranslator:
                                     {},
                                     False,
                                 )
+                            elif isinstance(sub_property, CartesianProductMetadata):
+                                pass
                             else:
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"
