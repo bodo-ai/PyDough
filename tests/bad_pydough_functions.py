@@ -278,3 +278,18 @@ def bad_round1():
 
 def bad_round2():
     return daily_prices.CALCULATE(rounded_high=ROUND(high, -0.5, 2))
+
+
+def bad_unsupported_kwarg1():
+    # Unsupported value of supported keyword argument
+    return nations.CALCULATE(var1=VAR(suppliers.account_balance, type="wrong_type"))
+
+
+def bad_unsupported_kwarg2():
+    # Unsupported keyword argument
+    return nations.CALCULATE(var1=VAR(suppliers.account_balance, wrong_type="sample"))
+
+
+def bad_unsupported_kwarg3():
+    # Unsupported keyword argument for non keyword operator
+    return nations.CALCULATE(sum=SUM(suppliers.account_balance, wrong_kwarg="sample"))

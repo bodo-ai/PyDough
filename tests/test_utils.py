@@ -30,6 +30,7 @@ from typing import Any
 
 import pydough.pydough_operators as pydop
 from pydough.metadata import GraphMetadata
+from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
     AstNodeBuilder,
     Calculate,
@@ -192,7 +193,8 @@ class FunctionInfo(AstNodeTestInfo):
         args: list[PyDoughQDAG] = [
             info.build(builder, context, children_contexts) for info in self.args_info
         ]
-        return builder.build_expression_function_call(self.function_name, args)
+        operator = get_operator_by_name(self.function_name)
+        return builder.build_expression_function_call(operator, args)
 
 
 class WindowInfo(AstNodeTestInfo):

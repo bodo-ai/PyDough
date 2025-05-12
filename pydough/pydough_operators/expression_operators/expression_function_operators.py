@@ -25,8 +25,9 @@ class ExpressionFunctionOperator(PyDoughExpressionOperator):
         is_aggregation: bool,
         verifier: TypeVerifier,
         deducer: ExpressionTypeDeducer,
+        public: bool = True,
     ):
-        super().__init__(verifier, deducer)
+        super().__init__(verifier, deducer, public)
         self._function_name: str = function_name
         self._is_aggregation: bool = is_aggregation
 
