@@ -1091,8 +1091,32 @@ This example of a PYDough metadata JSON contains a single knowledge graph for th
         "synonyms": ["transactions", "purchases"]
       }
     ],
-    "additional definitions": [],
-    "verified pydough analysis": [],
+    "additional definitions": [
+      "Revenue is defined as the price after accounting for discount, taxes, and supply cost: extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost",
+      "An order is considered high priority if its priority is `1-URGENT` or `2-HIGH`, and low priority otherwise"
+    ],
+    "verified pydough analysis": [
+      {
+        "question": "What is the total wealth of all customer accounts per region?",
+        "code": "result = regions.CALCULATE(name, total_wealth=SUM(nations.suppliers.account_balance))"
+      },
+      {
+        "question": "How many French suppliers are there?",
+        "code": "result = TPCH.CALCULATE(n_sup=COUNT(suppliers.WHERE(nation.name == 'FRANCE')))"
+      },
+      {
+        "question": "Which 5 parts had the most orders, by quantity, in 1996?",
+        "code": "result = parts.CALCULATE(name, qty_96=SUM(lines.WHERE(YEAR(order.order_date) == 1996).quantity)).TOP_K(5, by=qty_96.DESC())"
+      },
+      {
+        "question": "What percentage of orders are of each priority value?",
+        "code": "priorities = orders.PARTITION(name='priorities', by=order_priority)\nresult = priorities.CALCULATE(priority, n_orders=COUNT(orders))"
+      },
+      {
+        "question": "How many customers' first ever order was made in each year?",
+        "code": "first_orders = customers.orders.BEST(by=order_date.ASC(), per='customers').CALCULATE(year=YEAR(order_date))\nresult = first_orders.PARTITION(name='years', by=year).CALCULATE(year, n_first_orders=COUNT(orders))"
+      }
+    ],
     "extra semantic info": {}
   }
 ]
