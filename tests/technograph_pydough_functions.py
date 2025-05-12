@@ -102,14 +102,23 @@ def year_cumulative_incident_rate_goldcopperstar():
     # percent change from the previous year in the number of incidents versus
     # the number of devices purchased, and the number of purchases/incidents.
     # from that year.
-    years = calendar.CALCULATE(year=YEAR(calendar_day)).PARTITION(name="years", by=year)
-    p_filter = name == "GoldCopper-Star"
-    selected_devices_product = calendar.devices_sold.product.WHERE(p_filter)
     return (
-        years.CALCULATE(
-            release_date=ANYTHING(selected_devices_product.release_date),
-            n_devices=COUNT(selected_devices_product),
-            n_incidents=COUNT(calendar.incidents_reported.WHERE(p_filter)),
+        TechnoGraph.CALCULATE(
+            release_date=ANYTHING(
+                products.WHERE(name == "GoldCopper-Star").release_date
+            ),
+        )
+        .calendar.CALCULATE(year=YEAR(calendar_day))
+        .PARTITION(name="years", by=year)
+        .CALCULATE(
+            n_devices=COUNT(
+                calendar.devices_sold.product.WHERE(name == "GoldCopper-Star")
+            ),
+            n_incidents=COUNT(
+                calendar.incidents_reported.device.product.WHERE(
+                    name == "GoldCopper-Star"
+                )
+            ),
         )
         .WHERE(YEAR(release_date) <= year)
         .CALCULATE(

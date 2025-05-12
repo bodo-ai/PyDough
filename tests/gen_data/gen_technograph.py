@@ -679,6 +679,17 @@ def gen_incident_info_records(
                     "cost": repair_cost,
                 }
 
+    # For each incident report, have a 25% chance of reducing the time between
+    # the incident and 2026 by 80%.
+    for in_id in incidents:
+        incident_info = incidents[in_id]
+        incident_ts = incident_info["incident_ts"]
+        if rng.random() < 0.25:
+            incident_ts = (
+                pd.Timestamp("2026") - (pd.Timestamp("2026") - incident_ts) * 0.2
+            )
+            incident_info["incident_ts"] = incident_ts
+
     return incidents
 
 
@@ -812,7 +823,7 @@ def gen_technograph_records(cursor: sqlite3.Cursor) -> None:
 
     # Synthesize the CALENDAR record with every date from
     # 2010-01-01 to 2025-12-31
-    for date_ordinal in range(733773, 739252):
+    for date_ordinal in range(733773, 739616):
         cursor.execute(
             "INSERT INTO calendar VALUES (?)",
             (datetime.date.fromordinal(date_ordinal),),
