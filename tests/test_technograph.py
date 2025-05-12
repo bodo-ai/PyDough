@@ -8,12 +8,16 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 from technograph_pydough_functions import (
+    battery_failure_rates_anomalies,
+    country_incident_rate_analysis,
     error_percentages_sun_set_by_error,
     error_rate_sun_set_by_factory_country,
     global_incident_rate,
     incident_rate_by_release_year,
     incident_rate_per_brand,
     most_unreliable_products,
+    year_cumulative_incident_rate_goldcopperstar,
+    year_cumulative_incident_rate_overall,
 )
 from test_utils import graph_fetcher
 
@@ -179,6 +183,143 @@ from pydough.unqualified import (
             ),
             id="error_percentages_sun_set_by_error",
         ),
+        pytest.param(
+            (
+                battery_failure_rates_anomalies,
+                "battery_failure_rates_anomalies",
+                lambda: pd.DataFrame(
+                    {
+                        "country_name": ["MX", "CA", "CA", "MX", "FR"],
+                        "product_name": [
+                            "RubyVoid-III",
+                            "SapphireBolt-Flare",
+                            "GoldBolt-Flare",
+                            "Void-Flare",
+                            "OnyxBeat-II",
+                        ],
+                        "ir": [17.0, 15.57, 15.0, 15.0, 14.43],
+                    }
+                ),
+            ),
+            id="battery_failure_rates_anomalies",
+        ),
+        pytest.param(
+            (
+                country_incident_rate_analysis,
+                "country_incident_rate_analysis",
+                lambda: pd.DataFrame(
+                    {
+                        "country_name": ["CA", "CN", "FR", "JP", "MX", "US"],
+                        "made_ir": [2.75, 3.89, 2.22, 0.93, 2.52, 1.54],
+                        "sold_ir": [2.52, 3.42, 2.40, 1.56, 2.18, 1.74],
+                        "user_ir": [2.45, 3.20, 2.48, 1.56, 2.09, 1.91],
+                    }
+                ),
+            ),
+            id="country_incident_rate_analysis",
+        ),
+        pytest.param(
+            (
+                year_cumulative_incident_rate_goldcopperstar,
+                "year_cumulative_incident_rate_goldcopperstar",
+                lambda: pd.DataFrame(
+                    {
+                        "years_since_release": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                        "cum_ir": [0.0, 0.14, 0.33, 0.19, 0.25, 0.5, 0.79, 0.81, 0.94],
+                        "pct_bought_change": [
+                            None,
+                            150.0,
+                            -60.0,
+                            250.0,
+                            -42.86,
+                            50.0,
+                            -50.0,
+                            0.0,
+                            0.0,
+                        ],
+                        "pct_incident_change": [
+                            None,
+                            None,
+                            100.0,
+                            -100.0,
+                            None,
+                            300.0,
+                            25.0,
+                            -70.0,
+                            133.33,
+                        ],
+                        "bought": [2, 5, 2, 7, 4, 6, 3, 3, 3],
+                        "incidents": [0, 1, 2, 0, 2, 8, 10, 3, 7],
+                    }
+                ),
+            ),
+            id="year_cumulative_incident_rate_goldcopperstar",
+        ),
+        pytest.param(
+            (
+                year_cumulative_incident_rate_overall,
+                "year_cumulative_incident_rate_overall",
+                lambda: pd.DataFrame(
+                    {
+                        "yr": range(2014, 2025),
+                        "cum_ir": [
+                            0.38,
+                            0.77,
+                            1.12,
+                            1.6,
+                            1.9,
+                            2.23,
+                            2.53,
+                            2.79,
+                            2.92,
+                            2.75,
+                            2.4,
+                        ],
+                        "pct_bought_change": [
+                            None,
+                            175.0,
+                            110.61,
+                            59.71,
+                            34.68,
+                            16.72,
+                            12.32,
+                            5.36,
+                            9.69,
+                            25.83,
+                            0.53,
+                        ],
+                        "pct_incident_change": [
+                            None,
+                            566.67,
+                            211.67,
+                            149.73,
+                            50.54,
+                            46.51,
+                            27.77,
+                            16.57,
+                            3.06,
+                            -27.01,
+                            -68.98,
+                        ],
+                        "bought": [24, 66, 139, 222, 299, 349, 392, 413, 453, 570, 573],
+                        "incidents": [
+                            9,
+                            60,
+                            187,
+                            467,
+                            703,
+                            1030,
+                            1316,
+                            1534,
+                            1581,
+                            1154,
+                            358,
+                        ],
+                    }
+                ),
+            ),
+            id="year_cumulative_incident_rate_overall",
+        ),
     ],
 )
 def pydough_pipeline_test_data_technograph(
@@ -256,7 +397,7 @@ def test_pipeline_until_sql_technograph(
     into SQL text.
     """
     unqualified_impl, test_name, _ = pydough_pipeline_test_data_technograph
-    file_name: str = f"epoch_{test_name}"
+    file_name: str = f"technograph_{test_name}"
     file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
     graph: GraphMetadata = get_sample_graph("TechnoGraph")
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()

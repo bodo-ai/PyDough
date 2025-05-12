@@ -1446,7 +1446,7 @@
           {
             "name": "user_id",
             "type": "table column",
-            "column name": "de_user_id",
+            "column name": "de_owner_id",
             "data type": "numeric",
             "description": "The id of the user who purchased the device",
             "sample values": [80737013, 54970681, 34429547],
@@ -1651,6 +1651,24 @@
         ],
         "description": "The various errors known in the system which are the causes of incidents",
         "synonyms": ["bugs", "issues", "problems", "malfunctions", "diagnoses"]
+      },
+      {
+        "name": "calendar",
+        "type": "simple table",
+        "table path": "main.CALENDAR",
+        "unique properties": ["calendar_day"],
+        "properties": [
+          {
+            "name": "calendar_day",
+            "type": "table column",
+            "column name": "ca_dt",
+            "data type": "datetime",
+            "description": "The day on the calendar including year, month and day",
+            "synonyms": ["date"]
+          }
+        ],
+        "description": "Every calendar day from 2010-01-01 to 2024-12-31",
+        "synonyms": [""]
       }
     ],
     "relationships": [
@@ -1800,6 +1818,69 @@
         "always matches": true,
         "description": "The incidents that are attributed to the error",
         "synonyms": ["occurrences", "cases", "reports"]
+      },
+      {
+        "name": "devices_sold",
+        "type": "general join",
+        "parent collection": "calendar",
+        "child collection": "devices",
+        "singular": false,
+        "always matches": false,
+        "condition": "self.calendar_day == DATETIME(other.purchase_timestamp, 'start of day')",
+        "description": "The devices bought/sold during the specified calendar day",
+        "synonyms": ["items sold", "units sold", "purchases", "sales"]
+      },
+      {
+        "name": "purchase_calendar",
+        "type": "reverse",
+        "original parent": "calendar",
+        "original property": "devices_sold",
+        "singular": true,
+        "always matches": true,
+        "description": "The calendar day of when the device was purchased",
+        "synonyms": ["calendar day of purchase"]
+      },
+      {
+        "name": "incidents_reported",
+        "type": "general join",
+        "parent collection": "calendar",
+        "child collection": "incidents",
+        "singular": false,
+        "always matches": false,
+        "condition": "self.calendar_day == DATETIME(other.reported_timestamp, 'start of day')",
+        "description": "The device incidents that reported during the specified calendar day",
+        "synonyms": ["errors", "failures", "malfunctions"]
+      },
+      {
+        "name": "error_calendar",
+        "type": "reverse",
+        "original parent": "calendar",
+        "original property": "incidents_reported",
+        "singular": true,
+        "always matches": true,
+        "description": "The calendar day of when the incident was reported",
+        "synonyms": ["calendar day of error"]
+      },
+      {
+        "name": "products_released",
+        "type": "simple join",
+        "parent collection": "calendar",
+        "child collection": "products",
+        "singular": false,
+        "always matches": false,
+        "keys": {"calendar_day": ["release_date"]},
+        "description": "The products released on the specified calendar day",
+        "synonyms": ["items launched", "products made public", "items released"]
+      },
+      {
+        "name": "release_calendar",
+        "type": "reverse",
+        "original parent": "calendar",
+        "original property": "products_released",
+        "singular": true,
+        "always matches": true,
+        "description": "The calendar day of when the product was released",
+        "synonyms": ["calendar day of release"]
       }
     ],
     "additional definitions": [],

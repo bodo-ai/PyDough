@@ -805,4 +805,13 @@ def gen_technograph_records(cursor: sqlite3.Cursor) -> None:
             f"INSERT INTO incidents VALUES ({', '.join(['?'] * len(incident_record))})",
             incident_record,
         )
+
+    # Synthesize the CALENDAR record with every date from
+    # 2010-01-01 to 2025-12-31
+    for date_ordinal in range(733773, 739252):
+        cursor.execute(
+            "INSERT INTO calendar VALUES (?)",
+            (datetime.date.fromordinal(date_ordinal),),
+        )
+
     cursor.connection.commit()

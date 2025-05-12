@@ -62,3 +62,148 @@ def error_percentages_sun_set_by_error():
         error=name,
         pct=ROUND(100.0 * COUNT(selected_errors) / RELSUM(COUNT(selected_errors)), 2),
     ).ORDER_BY(pct.DESC())
+
+
+def battery_failure_rates_anomalies():
+    # Return the 5 product/producing country pairs with the highest battery
+    # failure rates.
+    return (
+        countries.CALCULATE(country_name=name)
+        .devices_made.CALCULATE(
+            product_name=product.name,
+            n_incidents=COUNT(incidents.WHERE(error.name == "Battery Failure")),
+        )
+        .PARTITION(name="product_manufacturing_pairs", by=(country_name, product_name))
+        .CALCULATE(
+            country_name,
+            product_name,
+            ir=ROUND(SUM(devices_made.n_incidents) / COUNT(devices_made), 2),
+        )
+        .TOP_K(5, by=(ir.DESC(), product_name.ASC(), country_name.ASC()))
+    )
+
+
+def country_incident_rate_analysis():
+    # For each country, identify the incident rate of products made in that
+    # country, versus the incident rate of products bought in that country,
+    # versus the incident rate of products bought by customers from that
+    # country.
+    return countries.CALCULATE(
+        country_name=name,
+        made_ir=ROUND(COUNT(devices_made.incidents) / COUNT(devices_made), 2),
+        sold_ir=ROUND(COUNT(devices_sold.incidents) / COUNT(devices_sold), 2),
+        user_ir=ROUND(COUNT(users.devices.incidents) / COUNT(users.devices), 2),
+    ).ORDER_BY(country_name.ASC())
+
+
+def year_cumulative_incident_rate_goldcopperstar():
+    # Break the cumulative incident rate for GoldCopper-Star devices down
+    # by the years since the product was released, and also include the
+    # percent change from the previous year in the number of incidents versus
+    # the number of devices purchased, and hte number of purchases/incidents.
+    # from that year.
+    years = calendar.CALCULATE(year=YEAR(calendar_day)).PARTITION(name="years", by=year)
+    return (
+        years.CALCULATE(
+            release_date=ANYTHING(
+                calendar.devices_sold.product.WHERE(
+                    name == "GoldCopper-Star"
+                ).release_date
+            ),
+            n_devices=COUNT(
+                calendar.devices_sold.product.WHERE(name == "GoldCopper-Star")
+            ),
+            n_incidents=COUNT(
+                calendar.incidents_reported.WHERE(
+                    device.product.name == "GoldCopper-Star"
+                )
+            ),
+        )
+        .WHERE(YEAR(release_date) <= year)
+        .CALCULATE(
+            years_since_release=year - YEAR(release_date),
+            cum_ir=ROUND(
+                RELSUM(n_incidents, by=year.ASC(), cumulative=True)
+                / RELSUM(n_devices, by=year.ASC(), cumulative=True),
+                2,
+            ),
+            pct_bought_change=ROUND(
+                (100.0 * (n_devices - PREV(n_devices, by=year.ASC())))
+                / PREV(n_devices, by=year.ASC()),
+                2,
+            ),
+            pct_incident_change=ROUND(
+                (100.0 * (n_incidents - PREV(n_incidents, by=year.ASC())))
+                / PREV(n_incidents, by=year.ASC()),
+                2,
+            ),
+            bought=n_devices,
+            incidents=n_incidents,
+        )
+        .ORDER_BY(years_since_release.ASC())
+    )
+
+
+def year_cumulative_incident_rate_overall():
+    # Break the cumulative incident rate for ALL devices down
+    # by the the year and also include the percent change from the
+    # previous year in the number of incidents versus the raw number
+    # of devices purchased, and the number of purchases/incidents.
+    # from that year.
+    years = calendar.CALCULATE(year=YEAR(calendar_day)).PARTITION(name="years", by=year)
+    return (
+        years.CALCULATE(
+            n_devices=COUNT(calendar.devices_sold),
+            n_incidents=COUNT(calendar.incidents_reported),
+        )
+        .WHERE(n_devices > 0)
+        .CALCULATE(
+            yr=year,
+            cum_ir=ROUND(
+                RELSUM(n_incidents, by=year.ASC(), cumulative=True)
+                / RELSUM(n_devices, by=year.ASC(), cumulative=True),
+                2,
+            ),
+            pct_bought_change=ROUND(
+                (100.0 * (n_devices - PREV(n_devices, by=year.ASC())))
+                / PREV(n_devices, by=year.ASC()),
+                2,
+            ),
+            pct_incident_change=ROUND(
+                (100.0 * (n_incidents - PREV(n_incidents, by=year.ASC())))
+                / PREV(n_incidents, by=year.ASC()),
+                2,
+            ),
+            bought=n_devices,
+            incidents=n_incidents,
+        )
+        .ORDER_BY(yr.ASC())
+    )
+
+
+"""
+SELECT co_name, (1.0*COUNT(in_id)) / COUNT(distinct de_id) AS ir
+FROM countries
+JOIN users ON co_id = us_country_id
+JOIN devices ON us_id = de_owner_id
+LEFT JOIN incidents ON de_id = in_device_id
+GROUP BY 1
+ORDER BY 1
+;
+
+SELECT co_name, (1.0*COUNT(in_id)) / COUNT(distinct de_id) AS ir
+FROM countries
+JOIN devices ON co_id = de_purchase_country_id
+LEFT JOIN incidents ON de_id = in_device_id
+GROUP BY 1
+ORDER BY 1
+;
+
+SELECT pr_name, COUNT(*)
+FROM devices
+JOIN products ON de_product_id = pr_id
+WHERE pr_release < '2014-01-01'
+GROUP BY 1
+ORDER BY 2 DESC
+;
+"""

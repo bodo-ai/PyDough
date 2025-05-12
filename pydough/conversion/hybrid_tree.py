@@ -1339,7 +1339,15 @@ class HybridTree:
             child that matches it).
         """
         for idx, existing_connection in enumerate(self.children):
-            if (child == existing_connection.subtree) or (
+            if (
+                child == existing_connection.subtree
+                and (child.join_keys, child.general_join_condition, child.agg_keys)
+                == (
+                    existing_connection.subtree.join_keys,
+                    existing_connection.subtree.general_join_condition,
+                    existing_connection.subtree.agg_keys,
+                )
+            ) or (
                 isinstance(self.pipeline[0], HybridPartition)
                 and (child.parent is None)
                 and (len(child.pipeline) == 1)
