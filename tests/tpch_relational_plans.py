@@ -297,7 +297,7 @@ def tpch_query_3_plan() -> RelationalRoot:
             EQU,
             BooleanType(),
             [
-                make_relational_column_reference("C_market_segment"),
+                make_relational_column_reference("c_mktsegment"),
                 make_relational_literal("BUILDING", StringType()),
             ],
         ),
@@ -305,9 +305,7 @@ def tpch_query_3_plan() -> RelationalRoot:
             table_name="CUSTOMER",
             columns={
                 "C_CUSTKEY": make_relational_column_reference("C_CUSTKEY"),
-                "C_market_segment": make_relational_column_reference(
-                    "C_market_segment"
-                ),
+                "C_MKTSEGMENT": make_relational_column_reference("c_mktsegment"),
             },
         ),
     )

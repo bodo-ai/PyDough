@@ -616,7 +616,7 @@ def gen_incident_info_records(
                 # Generate a random incident ID that is not already in use.
                 in_id: int = 100000000
                 while in_id in incidents:
-                    in_id = int(rng.integers(100000000, 999999999, 1))
+                    in_id = int(rng.integers(100000000, 999999999))
 
                 # Choose a random repair ID, either the same as where the device
                 # was purchased, made, or another random one.
@@ -725,6 +725,10 @@ def gen_technograph_records(cursor: sqlite3.Cursor) -> None:
     incidents: dict[int, dict] = gen_incident_info_records(
         rng, products, countries, errors, devices
     )
+
+    # Register the adaptors for date/datetime
+    sqlite3.register_adapter(datetime.date, lambda d: d.isoformat())
+    sqlite3.register_adapter(datetime.datetime, lambda dt: dt.isoformat())
 
     # Insert everything into the database
     for co_id in sorted(countries):
