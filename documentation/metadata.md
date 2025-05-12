@@ -14,7 +14,7 @@ This page document the exact format that the JSON files containing PyDough metad
    * [Relationship Type: General Join](#relationship-type-general-join)
    * [Relationship Type: Cartesian Product](#relationship-type-cartesian-product)
 - [PyDough Type Strings](#pydough-type-strings)
-- [Metadata Samples](#metadata-samples)
+- [Metadata Examples](#metadata-examples)
    * [Example: TPC-H](#example-tpch)
 
 <!-- TOC end -->
@@ -265,8 +265,8 @@ The strings used in the type field for certain properties must be one of the fol
 - `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:datetime,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
 - `unknown`: an unknown/other type.
 
-<!-- TOC --><a name="metadata-samples"></a>
-## Metadata Samples
+<!-- TOC --><a name="metadata-examples"></a>
+## Metadata Examples
 
 
 <!-- TOC --><a name="example-tpch"></a>

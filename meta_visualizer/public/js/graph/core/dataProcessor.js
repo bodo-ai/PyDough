@@ -116,7 +116,9 @@ function processProperties(
 }
 
 /**
- * TODO
+ * Finalize each node's properties after all relationships are processed,
+ * namely to derive the height of the node based on the number of properties
+ * and relationships.
  *
  * @param {Array} nodes - The array containing the node objects (modified in-place)
  */
@@ -136,7 +138,8 @@ function postProcessCollections(nodes) {
 }
 
 /**
- * TODO
+ * Process relationships between collections into graph links and entries in
+ * the sub-collections array of the source node.
  *
  * @param {Array} nodes - The array of all relationship objects
  * @param {Array} nodes - The array of all node objects

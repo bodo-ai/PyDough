@@ -179,31 +179,3 @@ def year_cumulative_incident_rate_overall():
         )
         .ORDER_BY(yr.ASC())
     )
-
-
-"""
-SELECT co_name, (1.0*COUNT(in_id)) / COUNT(distinct de_id) AS ir
-FROM countries
-JOIN users ON co_id = us_country_id
-JOIN devices ON us_id = de_owner_id
-LEFT JOIN incidents ON de_id = in_device_id
-GROUP BY 1
-ORDER BY 1
-;
-
-SELECT co_name, (1.0*COUNT(in_id)) / COUNT(distinct de_id) AS ir
-FROM countries
-JOIN devices ON co_id = de_purchase_country_id
-LEFT JOIN incidents ON de_id = in_device_id
-GROUP BY 1
-ORDER BY 1
-;
-
-SELECT pr_name, COUNT(*)
-FROM devices
-JOIN products ON de_product_id = pr_id
-WHERE pr_release < '2014-01-01'
-GROUP BY 1
-ORDER BY 2 DESC
-;
-"""
