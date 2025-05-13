@@ -8,7 +8,7 @@ WITH _t2 AS (
     ON LOWER(searches.search_string) LIKE (
       '%' || LOWER(events.ev_name) || '%'
     )
-  LEFT JOIN users AS users
+  JOIN users AS users
     ON searches.search_user_id = users.user_id
   GROUP BY
     events.ev_typ,

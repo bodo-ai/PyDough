@@ -1,7 +1,8 @@
-WITH _s3 AS (
+WITH _t1 AS (
   SELECT
-    COUNT() AS agg_0,
-    times.t_name AS name
+    ANY_VALUE(times.t_name) AS agg_2,
+    ANY_VALUE(times.t_start_hour) AS agg_3,
+    COUNT() AS agg_0
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > EXTRACT(HOUR FROM searches.search_ts)
@@ -10,18 +11,16 @@ WITH _s3 AS (
     times.t_name
 ), _t0 AS (
   SELECT
-    times.t_name AS tod,
+    agg_2 AS tod,
     ROUND((
-      100.0 * COALESCE(_s3.agg_0, 0)
-    ) / SUM(COALESCE(_s3.agg_0, 0)) OVER (), 2) AS pct_searches,
-    times.t_start_hour AS start_hour
-  FROM times AS times
-  LEFT JOIN _s3 AS _s3
-    ON _s3.name = times.t_name
+      100.0 * agg_0
+    ) / SUM(agg_0) OVER (), 2) AS pct_searches,
+    agg_3
+  FROM _t1
 )
 SELECT
   tod,
   pct_searches
 FROM _t0
 ORDER BY
-  start_hour
+  agg_3

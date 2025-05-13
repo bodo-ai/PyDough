@@ -6,7 +6,7 @@ WITH _t2 AS (
   FROM events AS events
   JOIN searches AS searches
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
-  LEFT JOIN users AS users
+  JOIN users AS users
     ON searches.search_user_id = users.user_id
   GROUP BY
     events.ev_typ,

@@ -1,7 +1,7 @@
-WITH _s3 AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
-    seasons.s_name AS name
+    MAX(seasons.s_name) AS agg_2,
+    COUNT() AS agg_0
   FROM seasons AS seasons
   JOIN events AS events
     ON seasons.s_month1 = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
@@ -11,11 +11,9 @@ WITH _s3 AS (
     seasons.s_name
 )
 SELECT
-  seasons.s_name AS season_name,
-  COALESCE(_s3.agg_0, 0) AS n_events
-FROM seasons AS seasons
-LEFT JOIN _s3 AS _s3
-  ON _s3.name = seasons.s_name
+  agg_2 AS season_name,
+  agg_0 AS n_events
+FROM _t0
 ORDER BY
-  n_events DESC,
-  season_name
+  agg_0 DESC,
+  agg_2

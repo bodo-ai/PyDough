@@ -1,6 +1,6 @@
 ROOT(columns=[('rname', name), ('price', extended_price)], orderings=[])
  FILTER(condition=name == name_16, columns={'extended_price': extended_price, 'name': name})
-  JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['left'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'name_16': t1.name_16})
+  JOIN(conditions=[t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key], types=['inner'], columns={'extended_price': t0.extended_price, 'name': t0.name, 'name_16': t1.name_16})
    JOIN(conditions=[t0.key_8 == t1.order_key], types=['inner'], columns={'extended_price': t1.extended_price, 'name': t0.name, 'part_key': t1.part_key, 'supplier_key': t1.supplier_key})
     JOIN(conditions=[t0.key_5 == t1.customer_key], types=['inner'], columns={'key_8': t1.key, 'name': t0.name})
      JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'key_5': t1.key, 'name': t0.name})
