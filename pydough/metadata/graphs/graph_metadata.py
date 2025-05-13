@@ -28,14 +28,14 @@ class GraphMetadata(AbstractMetadata):
     def __init__(
         self,
         name: str,
-        additional_definitions: list[dict] | None,
+        additional_definitions: list[str] | None,
         verified_pydough_analysis: list[dict] | None,
         description: str | None,
         synonyms: list[str] | None,
         extra_semantic_info: dict | None,
     ):
         is_valid_name.verify(name, "graph name")
-        self._additional_definitions: list[dict] | None = additional_definitions
+        self._additional_definitions: list[str] | None = additional_definitions
         self._verified_pydough_analysis: list[dict] | None = verified_pydough_analysis
         self._name: str = name
         self._collections: dict[str, AbstractMetadata] = {}
@@ -68,7 +68,7 @@ class GraphMetadata(AbstractMetadata):
         return self.name
 
     @property
-    def additional_definitions(self) -> list[dict] | None:
+    def additional_definitions(self) -> list[str] | None:
         """
         Additional semantic definitions of logical concepts using the
         collections within the graph.

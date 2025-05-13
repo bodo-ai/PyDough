@@ -95,11 +95,11 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
         structure properties.
     """
     verified_analysis: list[dict] = []
-    additional_definitions: list[dict] = []
+    additional_definitions: list[str] = []
     graph: GraphMetadata = GraphMetadata(
         graph_name,
-        verified_analysis,
         additional_definitions,
+        verified_analysis,
         None,
         None,
         {},
@@ -133,17 +133,10 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
         additional_definitions_json: list = extract_array(
             graph_json, "additional definitions", graph.error_name
         )
-        for definition_json in additional_definitions_json:
-            is_json_object.verify(
-                definition_json,
+        for defn in additional_definitions_json:
+            is_string.verify(
+                defn,
                 f"metadata for additional definitions inside {graph.error_name}",
-            )
-            assert isinstance(definition_json, dict)
-            HasPropertyWith("definition", is_string).verify(
-                definition_json, "metadata for verified pydough analysis"
-            )
-            HasPropertyWith("code", is_string).verify(
-                definition_json, "metadata for verified pydough analysis"
             )
     if "verified pydough analysis" in graph_json:
         verified_analysis_json: list = extract_array(
