@@ -6,7 +6,7 @@ WITH _t1 AS (
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
     ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
-  LEFT JOIN main.sbticker AS sbticker
+  JOIN main.sbticker AS sbticker
     ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
   GROUP BY
     sbcustomer.sbcuststate,
