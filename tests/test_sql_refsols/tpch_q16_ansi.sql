@@ -7,11 +7,11 @@ WITH _t1 AS (
   FROM tpch.part AS part
   JOIN tpch.partsupp AS partsupp
     ON part.p_partkey = partsupp.ps_partkey
-  LEFT JOIN tpch.supplier AS supplier
-    ON partsupp.ps_suppkey = supplier.s_suppkey
+  JOIN tpch.supplier AS supplier
+    ON NOT supplier.s_comment LIKE '%Customer%Complaints%'
+    AND partsupp.ps_suppkey = supplier.s_suppkey
   WHERE
     NOT part.p_type LIKE 'MEDIUM POLISHED%%'
-    AND NOT supplier.s_comment LIKE '%Customer%Complaints%'
     AND part.p_brand <> 'BRAND#45'
     AND part.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
   GROUP BY
