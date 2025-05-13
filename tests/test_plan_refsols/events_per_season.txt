@@ -1,5 +1,5 @@
-ROOT(columns=[('season_name', agg_2), ('n_events', agg_0)], orderings=[(agg_0):desc_last, (agg_2):asc_first])
- AGGREGATE(keys={'name': name}, aggregations={'agg_0': COUNT(), 'agg_2': ANYTHING(name)})
+ROOT(columns=[('season_name', season_name), ('n_events', n_events)], orderings=[(n_events):desc_last, (season_name):asc_first])
+ AGGREGATE(keys={'name': name}, aggregations={'n_events': COUNT(), 'season_name': ANYTHING(name)})
   JOIN(conditions=[MONTH(t1.date_time) == t0.first_month | MONTH(t1.date_time) == t0.second_month | MONTH(t1.date_time) == t0.third_month], types=['inner'], columns={'name': t0.name})
    SCAN(table=SEASONS, columns={'first_month': s_month1, 'name': s_name, 'second_month': s_month2, 'third_month': s_month3})
    SCAN(table=EVENTS, columns={'date_time': ev_dt})
