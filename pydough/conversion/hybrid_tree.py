@@ -1403,6 +1403,47 @@ class HybridTree:
             assert shifted_join_condition is not None
             successor.general_join_condition = shifted_join_condition
 
+    def always_exists(self) -> bool:
+        """
+        TODO
+        """
+        start_operation: HybridOperation = self.pipeline[0]
+        match start_operation:
+            case HybridCollectionAccess():
+                if isinstance(start_operation.collection, TableCollection):
+                    pass
+                else:
+                    assert isinstance(start_operation.collection, SubCollection)
+                    meta: SubcollectionRelationshipMetadata = (
+                        start_operation.collection.subcollection_property
+                    )
+                    if not meta.always_matches:
+                        return False
+            case HybridPartition():
+                if not self.children[0].subtree.always_exists():
+                    return False
+            case HybridChildPullUp():
+                if not start_operation.child.subtree.always_exists():
+                    return False
+            case HybridPartitionChild():
+                if not start_operation.subtree.always_exists():
+                    return False
+            case _:
+                raise NotImplementedError(
+                    f"Invalid start of pipeline: {start_operation.__class__.__name__}"
+                )
+        for operation in self.pipeline[1:]:
+            match operation:
+                case HybridCalculate() | HybridNoop() | HybridRoot():
+                    pass
+                case HybridFilter() | HybridLimit():
+                    return False
+                case operation:
+                    raise NotImplementedError(
+                        f"Invalid intermediary pipeline operation: {operation.__class__.__name__}"
+                    )
+        return True if self.parent is None else self.parent.always_exists()
+
 
 class HybridTranslator:
     """
@@ -1765,6 +1806,14 @@ class HybridTranslator:
                     )
                 )
             self.alias_counter = snapshot
+            # If the subtree is guaranteed to exist with regards to the current
+            # context, promote it by reconciling with SEMI so the logic will
+            # not worry about trying to maintain records of the parent even
+            # when the child does not exist.
+            if (not connection_type.is_anti) and subtree.always_exists():
+                connection_type = connection_type.reconcile_connection_types(
+                    ConnectionType.SEMI
+                )
             child_idx_mapping[child_idx] = hybrid.add_child(
                 subtree, connection_type, original_correlated_children
             )

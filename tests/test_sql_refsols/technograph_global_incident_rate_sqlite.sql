@@ -10,5 +10,4 @@ WITH _s0 AS (
 SELECT
   ROUND(CAST(_s0.agg_0 AS REAL) / _s1.agg_1, 2) AS ir
 FROM _s0 AS _s0
-LEFT JOIN _s1 AS _s1
-  ON TRUE
+CROSS JOIN _s1 AS _s1

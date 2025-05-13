@@ -4,7 +4,7 @@ ROOT(columns=[('years_since_release', years_since_release), ('cum_ir', cum_ir), 
    JOIN(conditions=[t0.year == t1.year], types=['left'], columns={'agg_1': t0.agg_1, 'agg_2': t1.agg_2, 'release_date': t0.release_date, 'year': t0.year})
     JOIN(conditions=[t0.year == t1.year], types=['left'], columns={'agg_1': t1.agg_1, 'release_date': t0.release_date, 'year': t0.year})
      FILTER(condition=YEAR(release_date) <= year, columns={'release_date': release_date, 'year': year})
-      JOIN(conditions=[True:bool], types=['left'], columns={'release_date': t0.release_date, 'year': t1.year})
+      JOIN(conditions=[True:bool], types=['inner'], columns={'release_date': t0.release_date, 'year': t1.year})
        PROJECT(columns={'release_date': agg_0})
         AGGREGATE(keys={}, aggregations={'agg_0': ANYTHING(release_date)})
          FILTER(condition=name == 'GoldCopper-Star':string, columns={'release_date': release_date})
