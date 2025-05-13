@@ -3,7 +3,7 @@ ROOT(columns=[('nation_name', nation_name), ('n_selected_purchases', n_selected_
   PROJECT(columns={'agg_5': agg_5, 'n_selected_purchases': agg_0, 'nation_name': agg_4})
    AGGREGATE(keys={'key': key}, aggregations={'agg_0': COUNT(), 'agg_4': ANYTHING(nation_name), 'agg_5': ANYTHING(region_key)})
     FILTER(condition=name_9 == nation_name, columns={'key': key, 'nation_name': nation_name, 'region_key': region_key})
-     JOIN(conditions=[t0.supplier_key == t1.key], types=['left'], columns={'key': t0.key, 'name_9': t1.name_9, 'nation_name': t0.nation_name, 'region_key': t0.region_key})
+     JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'key': t0.key, 'name_9': t1.name_9, 'nation_name': t0.nation_name, 'region_key': t0.region_key})
       JOIN(conditions=[t0.key_5 == t1.order_key], types=['inner'], columns={'key': t0.key, 'nation_name': t0.nation_name, 'region_key': t0.region_key, 'supplier_key': t1.supplier_key})
        JOIN(conditions=[t0.key_2 == t1.customer_key], types=['inner'], columns={'key': t0.key, 'key_5': t1.key, 'nation_name': t0.nation_name, 'region_key': t0.region_key})
         JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key, 'nation_name': t0.nation_name, 'region_key': t0.region_key})

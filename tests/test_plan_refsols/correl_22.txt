@@ -3,7 +3,7 @@ ROOT(columns=[('container', container), ('n_types', n_types)], orderings=[(n_typ
   PROJECT(columns={'container': container, 'n_types': DEFAULT_TO(agg_1, 0:numeric)})
    AGGREGATE(keys={'container': container}, aggregations={'agg_1': COUNT()})
     FILTER(condition=agg_0 > global_avg_price, columns={'container': container})
-     JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t1.agg_0, 'container': t1.container, 'global_avg_price': t0.global_avg_price})
+     JOIN(conditions=[True:bool], types=['inner'], columns={'agg_0': t1.agg_0, 'container': t1.container, 'global_avg_price': t0.global_avg_price})
       PROJECT(columns={'global_avg_price': agg_0})
        AGGREGATE(keys={}, aggregations={'agg_0': AVG(retail_price)})
         SCAN(table=tpch.PART, columns={'retail_price': p_retailprice})
