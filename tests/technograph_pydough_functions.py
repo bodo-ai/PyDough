@@ -200,3 +200,20 @@ def hot_purchase_window():
         )
         .TOP_K(1, by=(n_purchases.DESC(), start_of_period.ASC()))
     )
+
+
+def country_combination_analysis():
+    # Find the 5 combinations of manufacturing & purchase country with the
+    # highest incident rate for devices sold in the purchase country but made
+    # in the manufacturing country.
+    country_combinations = countries.CALCULATE(
+        factory_country=name, factory_id=_id
+    ).other_countries.CALCULATE(purhcase_country=name)
+    selected_devices = devices_sold.WHERE(factory_country_id == factory_id)
+    return country_combinations.CALCULATE(
+        factory_country,
+        purchase_country=name,
+        ir=ROUND(
+            (1.0 * COUNT(selected_devices.incidents)) / COUNT(selected_devices), 2
+        ),
+    ).TOP_K(5, by=ir.DESC())

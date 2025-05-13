@@ -1890,6 +1890,15 @@
         "always matches": true,
         "description": "Matches every calendar day to every other calendar day",
         "synonyms": ["other days"]
+      },
+      {
+        "name": "other_countries",
+        "type": "cartesian product",
+        "parent collection": "countries",
+        "child collection": "countries",
+        "always matches": true,
+        "description": "Matches every country to every other country",
+        "synonyms": ["other countries"]
       }
     ],
     "additional definitions": [],

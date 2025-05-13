@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from technograph_pydough_functions import (
     battery_failure_rates_anomalies,
+    country_combination_analysis,
     country_incident_rate_analysis,
     error_percentages_sun_set_by_error,
     error_rate_sun_set_by_factory_country,
@@ -355,6 +356,20 @@ from pydough.unqualified import (
                 ),
             ),
             id="hot_purchase_window",
+        ),
+        pytest.param(
+            (
+                country_combination_analysis,
+                "country_combination_analysis",
+                lambda: pd.DataFrame(
+                    {
+                        "factory_country": ["CN", "CN", "CN", "CA", "MX"],
+                        "purchase_country": ["JP", "FR", "US", "JP", "JP"],
+                        "ir": [5.46, 5.27, 4.63, 4.07, 4.02],
+                    }
+                ),
+            ),
+            id="country_combination_analysis",
         ),
     ],
 )
