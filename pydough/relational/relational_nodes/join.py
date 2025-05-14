@@ -109,7 +109,9 @@ class Join(RelationalNode):
     @property
     def is_prunable(self) -> bool:
         """
-        TODO
+        Returns True if the join can be pruned to just return the first input
+        if none of the other inputs are used. This is only applicable for
+        certain join use cases.
         """
         return self._is_prunable
 
