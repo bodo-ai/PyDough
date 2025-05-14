@@ -21,8 +21,8 @@ WITH _s1 AS (
 ), _s2 AS (
   SELECT
     COUNT(sbdpclose) AS expr_1,
-    MAX(sbdphigh) AS agg_1,
-    MIN(sbdplow) AS agg_2,
+    MAX(sbdphigh) AS max_high,
+    MIN(sbdplow) AS min_low,
     SUM(sbdpclose) AS expr_0,
     CONCAT_WS(
       '-',
@@ -52,8 +52,8 @@ WITH _s1 AS (
     sbdptickerid
 ), _t2 AS (
   SELECT
-    MAX(_s2.agg_1) AS agg_1,
-    MIN(_s2.agg_2) AS agg_2,
+    MAX(_s2.max_high) AS max_high,
+    MIN(_s2.min_low) AS min_low,
     SUM(_s2.expr_0) AS expr_0,
     SUM(_s2.expr_1) AS expr_1,
     _s2.month,
@@ -69,8 +69,8 @@ SELECT
   _s4.symbol,
   _s4.month,
   CAST(_t2.expr_0 AS REAL) / _t2.expr_1 AS avg_close,
-  _t2.agg_1 AS max_high,
-  _t2.agg_2 AS min_low,
+  _t2.max_high,
+  _t2.min_low,
   CAST((
     (
       CAST(_t2.expr_0 AS REAL) / _t2.expr_1
