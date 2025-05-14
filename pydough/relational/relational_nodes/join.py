@@ -48,6 +48,7 @@ class Join(RelationalNode):
         join_types: list[JoinType],
         columns: dict[str, RelationalExpression],
         correl_name: str | None = None,
+        is_prunable: bool = False,
     ) -> None:
         super().__init__(columns)
         num_inputs = len(inputs)
@@ -65,6 +66,7 @@ class Join(RelationalNode):
         self._conditions: list[RelationalExpression] = conditions
         self._join_types: list[JoinType] = join_types
         self._correl_name: str | None = correl_name
+        self._is_prunable: bool = is_prunable
 
     @property
     def correl_name(self) -> str | None:
@@ -104,6 +106,13 @@ class Join(RelationalNode):
         """
         return [f"t{i}" for i in range(len(self.inputs))]
 
+    @property
+    def is_prunable(self) -> bool:
+        """
+        TODO
+        """
+        return self._is_prunable
+
     def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Join)
@@ -131,4 +140,11 @@ class Join(RelationalNode):
         columns: dict[str, RelationalExpression],
         inputs: list[RelationalNode],
     ) -> RelationalNode:
-        return Join(inputs, self.conditions, self.join_types, columns, self.correl_name)
+        return Join(
+            inputs,
+            self.conditions,
+            self.join_types,
+            columns,
+            self.correl_name,
+            self.is_prunable,
+        )

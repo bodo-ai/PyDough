@@ -119,6 +119,8 @@ def push_filters(
                     for expr in pushable_filters
                 }
                 node.inputs[idx] = push_filters(child, pushable_filters)
+            if remaining_filters < filters:
+                node._is_prunable = False
             # Materialize all of the remaining filters.
             return build_filter(node, remaining_filters)
         case Aggregate():
