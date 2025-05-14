@@ -1,5 +1,5 @@
-ROOT(columns=[('nation_name', agg_5), ('mean_rev', agg_0), ('median_rev', agg_1)], orderings=[(agg_5):asc_first])
- AGGREGATE(keys={'key': key}, aggregations={'agg_0': AVG(revenue), 'agg_1': MEDIAN(revenue), 'agg_5': ANYTHING(name)})
+ROOT(columns=[('nation_name', nation_name), ('mean_rev', mean_rev), ('median_rev', median_rev)], orderings=[(nation_name):asc_first])
+ AGGREGATE(keys={'key': key}, aggregations={'mean_rev': AVG(revenue), 'median_rev': MEDIAN(revenue), 'nation_name': ANYTHING(name)})
   PROJECT(columns={'key': key, 'name': name, 'revenue': extended_price * 1:numeric - discount})
    FILTER(condition=nation_key_15 == cust_nation_key, columns={'discount': discount, 'extended_price': extended_price, 'key': key, 'name': name})
     JOIN(conditions=[t0.supplier_key == t1.key], types=['inner'], columns={'cust_nation_key': t0.cust_nation_key, 'discount': t0.discount, 'extended_price': t0.extended_price, 'key': t0.key, 'name': t0.name, 'nation_key_15': t1.nation_key})

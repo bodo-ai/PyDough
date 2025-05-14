@@ -1,5 +1,5 @@
-ROOT(columns=[('region', supp_region), ('avgpct', agg_0)], orderings=[(supp_region):asc_first])
- AGGREGATE(keys={'supp_region': supp_region}, aggregations={'agg_0': AVG(percentage)})
+ROOT(columns=[('region', supp_region), ('avgpct', avg_percentage)], orderings=[(supp_region):asc_first])
+ AGGREGATE(keys={'supp_region': supp_region}, aggregations={'avg_percentage': AVG(percentage)})
   PROJECT(columns={'percentage': 100.0:numeric * agg_0 / DEFAULT_TO(agg_1, 0:numeric), 'supp_region': supp_region})
    AGGREGATE(keys={'cust_region': cust_region, 'supp_region': supp_region}, aggregations={'agg_0': MAX(n_instances), 'agg_1': SUM(n_instances)})
     PROJECT(columns={'cust_region': cust_region, 'n_instances': DEFAULT_TO(agg_0, 0:numeric), 'supp_region': supp_region})

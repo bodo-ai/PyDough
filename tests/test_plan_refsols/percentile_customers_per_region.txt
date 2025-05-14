@@ -1,5 +1,5 @@
-ROOT(columns=[('name', name_8)], orderings=[(name_8):asc_first])
- FILTER(condition=PERCENTILE(args=[], partition=[key], order=[(account_balance):asc_last]) == 95:numeric & ENDSWITH(phone, '00':string), columns={'name_8': name_8})
+ROOT(columns=[('name', name_9)], orderings=[(name_9):asc_first])
+ FILTER(condition=PERCENTILE(args=[], partition=[key], order=[(account_balance):asc_last]) == 95:numeric & ENDSWITH(phone, '00':string), columns={'name_9': name_8})
   JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'key': t0.key, 'name_8': t1.name_8, 'phone': t1.phone})
    JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key': t0.key, 'key_2': t1.key_2})
     SCAN(table=tpch.REGION, columns={'key': r_regionkey})

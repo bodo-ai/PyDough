@@ -7,6 +7,5 @@ ROOT(columns=[('name', name), ('suppliers_in_black', suppliers_in_black), ('tota
      AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
       FILTER(condition=account_balance > 0.0:numeric, columns={'key': key, 'nation_key': nation_key})
        SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'key': s_suppkey, 'nation_key': s_nationkey})
-   PROJECT(columns={'nation_key': nation_key, 'total_suppliers': agg_1})
-    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_1': COUNT(key)})
-     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})
+   AGGREGATE(keys={'nation_key': nation_key, 'nation_key_1': nation_key}, aggregations={'total_suppliers': COUNT(key)})
+    SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey})

@@ -2,6 +2,5 @@ ROOT(columns=[('name', name), ('var', var), ('std', std), ('sample_var', sample_
  JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'name': t0.name, 'pop_std': t1.pop_std, 'pop_var': t1.pop_var, 'sample_std': t1.sample_std, 'sample_var': t1.sample_var, 'std': t1.std, 'var': t1.var})
   FILTER(condition=ISIN(name, ['ALGERIA', 'ARGENTINA']:array[unknown]), columns={'key': key, 'name': name})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
-  PROJECT(columns={'nation_key': nation_key, 'pop_std': agg_0, 'pop_var': agg_1, 'sample_std': agg_2, 'sample_var': agg_3, 'std': agg_0, 'var': agg_1})
-   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': POPULATION_STD(account_balance), 'agg_1': POPULATION_VARIANCE(account_balance), 'agg_2': SAMPLE_STD(account_balance), 'agg_3': SAMPLE_VARIANCE(account_balance)})
-    SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
+  AGGREGATE(keys={'nation_key': nation_key}, aggregations={'pop_std': POPULATION_STD(account_balance), 'pop_var': POPULATION_VARIANCE(account_balance), 'sample_std': SAMPLE_STD(account_balance), 'sample_var': SAMPLE_VARIANCE(account_balance), 'std': POPULATION_STD(account_balance), 'var': POPULATION_VARIANCE(account_balance)})
+   SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
