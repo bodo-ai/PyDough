@@ -13,7 +13,7 @@ WITH _t1 AS (
 )
 SELECT
   country,
-  COALESCE(agg_1, 0) AS user_count,
+  agg_1 AS user_count,
   COALESCE(agg_0, 0) AS total_amount
 FROM _t1
 ORDER BY

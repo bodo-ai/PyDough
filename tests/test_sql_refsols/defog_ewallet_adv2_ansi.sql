@@ -30,6 +30,6 @@ WITH _s1 AS (
 )
 SELECT
   week,
-  COALESCE(agg_0, 0) AS num_notifs,
+  agg_0 AS num_notifs,
   COALESCE(agg_1, 0) AS weekend_notifs
 FROM _t0

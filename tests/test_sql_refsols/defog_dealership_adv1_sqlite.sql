@@ -88,6 +88,6 @@ WITH _s0 AS (
 )
 SELECT
   payment_week,
-  COALESCE(agg_0, 0) AS total_payments,
+  agg_0 AS total_payments,
   COALESCE(agg_1, 0) AS weekend_payments
 FROM _t0

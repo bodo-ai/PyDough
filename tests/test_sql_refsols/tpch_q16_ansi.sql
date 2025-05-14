@@ -1,6 +1,9 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    COUNT(DISTINCT partsupp.ps_suppkey) AS agg_0,
+    COUNT(DISTINCT partsupp.ps_suppkey) AS supplier_count,
+    part.p_brand,
+    part.p_size,
+    part.p_type,
     part.p_brand,
     part.p_size,
     part.p_type
@@ -23,8 +26,8 @@ SELECT
   p_brand AS P_BRAND,
   p_type AS P_TYPE,
   p_size AS P_SIZE,
-  COALESCE(agg_0, 0) AS SUPPLIER_COUNT
-FROM _t1
+  supplier_count AS SUPPLIER_COUNT
+FROM _t0
 ORDER BY
   supplier_count DESC,
   p_brand,

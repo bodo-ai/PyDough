@@ -761,6 +761,13 @@ class HybridChildPullUp(HybridOperation):
             current_level = current_level.parent
             extra_height += 1
 
+        if self.child.connection_type.is_aggregation:
+            agg_keys: list[HybridExpr] | None = self.child.subtree.agg_keys
+            if agg_keys is not None:
+                for agg_key in agg_keys:
+                    if isinstance(agg_key, HybridRefExpr):
+                        self.pullup_remapping[agg_key] = agg_key
+
         super().__init__(terms, renamings, [], unique_exprs)
 
     def __repr__(self):
@@ -1405,14 +1412,29 @@ class HybridTree:
 
     def always_exists(self) -> bool:
         """
-        TODO
+        Returns whether the hybrid tree & its ancestors always exist with
+        regards to the parent context. This is true if all of the level
+        changing operations (e.g. sub-collection accesses) are guaranteed to
+        always have a match, and all other pipeline operations are guaranteed
+        to not filter out any records.
+
+        There is no need to check the children data (except for partitions &
+        pull-ups) since the only way a child could cause the current context
+        to reduce records is if there is a HAS/HASNOT somewhere, which
+        would mean there is a filter in the pipeline.
         """
+        # Verify that the first operation in the pipeline guarantees a match
+        # with every record from the previous level (or parent context if it
+        # is the top level)
         start_operation: HybridOperation = self.pipeline[0]
         match start_operation:
             case HybridCollectionAccess():
                 if isinstance(start_operation.collection, TableCollection):
+                    # Regular table collection accesses always exist.
                     pass
                 else:
+                    # Sub-collection accesses are only guaranteed to exist if
+                    # the metadata property has `always matches` set to True.
                     assert isinstance(start_operation.collection, SubCollection)
                     meta: SubcollectionRelationshipMetadata = (
                         start_operation.collection.subcollection_property
@@ -1420,28 +1442,36 @@ class HybridTree:
                     if not meta.always_matches:
                         return False
             case HybridPartition():
+                # For partition nodes, verify the data being partitioned always
+                # exists.
                 if not self.children[0].subtree.always_exists():
                     return False
             case HybridChildPullUp():
+                # For pull-up nodes, make sure the data being pulled up always
+                # exists.
                 if not start_operation.child.subtree.always_exists():
                     return False
             case HybridPartitionChild():
-                if not start_operation.subtree.always_exists():
-                    return False
+                # Stepping into a partition child always has a matching data
+                # record for each parent, by definition.
+                pass
             case _:
                 raise NotImplementedError(
                     f"Invalid start of pipeline: {start_operation.__class__.__name__}"
                 )
+        # Check the operations after the start of the pipeline, returning False if
+        # there are any operations that could remove a row.
         for operation in self.pipeline[1:]:
             match operation:
                 case HybridCalculate() | HybridNoop() | HybridRoot():
-                    pass
+                    continue
                 case HybridFilter() | HybridLimit():
                     return False
                 case operation:
                     raise NotImplementedError(
                         f"Invalid intermediary pipeline operation: {operation.__class__.__name__}"
                     )
+        # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.always_exists()
 
 
