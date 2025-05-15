@@ -28,6 +28,14 @@ from simple_pydough_functions import (
     avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
+    common_prefix_a,
+    common_prefix_b,
+    common_prefix_c,
+    common_prefix_d,
+    common_prefix_e,
+    common_prefix_f,
+    common_prefix_g,
+    common_prefix_h,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -1784,6 +1792,139 @@ from pydough.unqualified import (
                 ),
             ),
             id="order_quarter_test",
+        ),
+        pytest.param(
+            (
+                common_prefix_a,
+                None,
+                "common_prefix_a",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_nations": [5, 5, 5, 5, 5],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                    }
+                ),
+            ),
+            id="common_prefix_a",
+        ),
+        pytest.param(
+            (
+                common_prefix_b,
+                None,
+                "common_prefix_b",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_nations": [5, 5, 5, 5, 5],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
+                    }
+                ),
+            ),
+            id="common_prefix_b",
+        ),
+        pytest.param(
+            (
+                common_prefix_c,
+                None,
+                "common_prefix_c",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_nations": [5, 5, 5, 5, 5],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
+                        "n_orders": [298994, 299103, 301740, 303286, 296877],
+                        "n_parts": [156400, 162880, 160240, 158960, 161520],
+                    }
+                ),
+            ),
+            id="common_prefix_c",
+        ),
+        pytest.param(
+            (
+                common_prefix_d,
+                None,
+                "common_prefix_d",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_nations": [5, 5, 5, 5, 5],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
+                        "n_orders_94": [45152, 45335, 46008, 46093, 45009],
+                        "n_orders_95": [45822, 45630, 45731, 46197, 45257],
+                        "n_orders_96": [45352, 45549, 45976, 46518, 45231],
+                    }
+                ),
+            ),
+            id="common_prefix_d",
+        ),
+        pytest.param(
+            (
+                common_prefix_e,
+                None,
+                "common_prefix_e",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                        "n_nations": [5, 5, 5, 5, 5],
+                    }
+                ),
+            ),
+            id="common_prefix_e",
+        ),
+        pytest.param(
+            (
+                common_prefix_f,
+                None,
+                "common_prefix_f",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                        "n_nations": [5, 5, 5, 5, 5],
+                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
+                    }
+                ),
+            ),
+            id="common_prefix_f",
+        ),
+        pytest.param(
+            (
+                common_prefix_g,
+                None,
+                "common_prefix_g",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
+                        "n_nations": [5, 5, 5, 5, 5],
+                    }
+                ),
+            ),
+            id="common_prefix_g",
+        ),
+        pytest.param(
+            (
+                common_prefix_h,
+                None,
+                "common_prefix_h",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_nations": [5, 5, 5, 5, 5],
+                        "n_orders": [298994, 299103, 301740, 303286, 296877],
+                        "n_customers": [29764, 29952, 30183, 30197, 29904],
+                        "n_parts": [156400, 162880, 160240, 158960, 161520],
+                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
+                    }
+                ),
+            ),
+            id="common_prefix_h",
         ),
     ],
 )

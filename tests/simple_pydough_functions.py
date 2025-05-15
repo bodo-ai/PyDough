@@ -830,6 +830,96 @@ def top_customers_by_orders():
     ).TOP_K(5, by=(COUNT(orders).DESC(), customer_key.ASC()))
 
 
+def common_prefix_a():
+    # For each region, count how many nations & customers are in the region.
+    return regions.CALCULATE(
+        name,
+        n_nations=COUNT(nations),
+        n_customers=COUNT(nations.customers),
+    ).ORDER_BY(name.ASC())
+
+
+def common_prefix_b():
+    # For each region, count how many nations, customers and suppliers are in
+    # the region.
+    return regions.CALCULATE(
+        name,
+        n_nations=COUNT(nations),
+        n_customers=COUNT(nations.customers),
+        n_suppliers=COUNT(nations.suppliers),
+    ).ORDER_BY(name.ASC())
+
+
+def common_prefix_c():
+    # For each region, count how many nations, customers and suppliers are in
+    # the region, as well as how many orders were made by customers in that
+    # region and how many parts are supplied by suppliers in that region.
+    return regions.CALCULATE(
+        name,
+        n_nations=COUNT(nations),
+        n_customers=COUNT(nations.customers),
+        n_suppliers=COUNT(nations.suppliers),
+        n_orders=COUNT(nations.customers.orders),
+        n_parts=COUNT(nations.suppliers.supply_records),
+    ).ORDER_BY(name.ASC())
+
+
+def common_prefix_d():
+    # For each region, count how many nations, customers and suppliers are in
+    # the region, as well as how many orders were made by customers in that
+    # region in 1994, 1995 and 1996.
+    return regions.CALCULATE(
+        name,
+        n_nations=COUNT(nations),
+        n_customers=COUNT(nations.customers),
+        n_suppliers=COUNT(nations.suppliers),
+        n_orders_94=COUNT(nations.customers.orders.WHERE(YEAR(order_date) == 1994)),
+        n_orders_95=COUNT(nations.customers.orders.WHERE(YEAR(order_date) == 1995)),
+        n_orders_96=COUNT(nations.customers.orders.WHERE(YEAR(order_date) == 1996)),
+    ).ORDER_BY(name.ASC())
+
+
+def common_prefix_e():
+    # Same as common_prefix_a, but a different order of the fields.
+    return regions.CALCULATE(
+        name,
+        n_customers=COUNT(nations.customers),
+        n_nations=COUNT(nations),
+    ).ORDER_BY(name.ASC())
+
+
+def common_prefix_f():
+    # Same as common_prefix_b, but a different order of the fields.
+    return regions.CALCULATE(
+        name,
+        n_customers=COUNT(nations.customers),
+        n_nations=COUNT(nations),
+        n_suppliers=COUNT(nations.suppliers),
+    ).ORDER_BY(name.ASC())
+
+
+def common_prefix_g():
+    # Same as common_prefix_b, but a different order of the fields.
+    return regions.CALCULATE(
+        name,
+        n_customers=COUNT(nations.customers),
+        n_suppliers=COUNT(nations.suppliers),
+        n_nations=COUNT(nations),
+    ).ORDER_BY(name.ASC())
+
+
+def common_prefix_h():
+    # Same as common_prefix_c, but a different order of the fields.
+    return regions.CALCULATE(
+        name,
+        n_nations=COUNT(nations),
+        n_orders=COUNT(nations.customers.orders),
+        n_customers=COUNT(nations.customers),
+        n_parts=COUNT(nations.suppliers.supply_records),
+        n_suppliers=COUNT(nations.suppliers),
+    ).ORDER_BY(name.ASC())
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,

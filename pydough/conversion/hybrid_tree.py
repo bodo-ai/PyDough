@@ -522,6 +522,9 @@ class HybridOperation:
         self.orderings: list[HybridCollation] = orderings
         self.unique_exprs: list[HybridExpr] = unique_exprs
 
+    def __eq__(self, other):
+        return type(self) is type(other) and repr(self) == repr(other)
+
     def search_term_definition(self, name: str) -> HybridExpr | None:
         return self.terms.get(name, None)
 
@@ -1142,6 +1145,12 @@ class HybridConnection:
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
 
+    def __eq__(self, other):
+        return (
+            self.connection_type == other.connection_type
+            and self.subtree == other.subtree
+        )
+
     def fetch_agg_name(self, call: HybridFunctionExpr) -> str:
         """
         Returns the name of an aggregation call within the connection. Throws
@@ -1355,10 +1364,23 @@ class HybridTree:
                     existing_connection.subtree.agg_keys,
                 )
             ) or (
-                isinstance(self.pipeline[0], HybridPartition)
+                idx == 0
+                and isinstance(self.pipeline[0], HybridPartition)
                 and (child.parent is None)
-                and (len(child.pipeline) == 1)
-                and isinstance(child.pipeline[0], HybridPartitionChild)
+                and all(
+                    operation in existing_connection.subtree.pipeline
+                    for operation in child.pipeline[1:]
+                )
+                and all(
+                    grandchild in existing_connection.subtree.children
+                    for grandchild in child.children
+                )
+                and all(
+                    (c1.subtree, c1.connection_type) == (c2.subtree, c2.connection_type)
+                    for c1, c2 in zip(
+                        child.children, existing_connection.subtree.children
+                    )
+                )
             ):
                 connection_type = connection_type.reconcile_connection_types(
                     existing_connection.connection_type
@@ -1473,6 +1495,27 @@ class HybridTree:
                     )
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.always_exists()
+
+    def equalsIgnoringSuccessors(self, other: "HybridTree") -> bool:
+        """
+        Compares two hybrid trees without taking into account their
+        successors.
+
+        Args:
+            `other`: the other HybridTree to compare to.
+
+        Returns:
+            True if the two trees are equal, False otherwise.
+        """
+        successor1: HybridTree | None = self.successor
+        successor2: HybridTree | None = other.successor
+        self._successor = None
+        other._successor = None
+        # breakpoint()
+        result: bool = self == other
+        self._successor = successor1
+        other._successor = successor2
+        return result
 
 
 class HybridTranslator:
@@ -2871,3 +2914,56 @@ class HybridTranslator:
                 return successor_hybrid
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
+
+    def syncretize_subtrees(
+        self, child1: HybridConnection, child2: HybridConnection
+    ) -> bool:
+        """
+        TODO
+        """
+        supported_syncretize_operators = {
+            pydop.COUNT: (pydop.COUNT, pydop.SUM),
+            pydop.SUM: (pydop.SUM, pydop.SUM),
+            pydop.MIN: (pydop.MIN, pydop.MIN),
+            pydop.MAX: (pydop.MAX, pydop.MAX),
+            pydop.ANYTHING: (pydop.ANYTHING, pydop.ANYTHING),
+        }
+        if (
+            child1.connection_type == ConnectionType.AGGREGATION_ONLY_MATCH
+            and child2.connection_type.is_aggregation
+            and not child2.connection_type.is_anti
+        ):
+            # breakpoint()
+            if not all(
+                agg.operator in supported_syncretize_operators
+                for agg in child2.aggs.values()
+            ):
+                return False
+            prefix_levels_up: int = 0
+            subtree1: HybridTree = child1.subtree
+            subtree2: HybridTree = child2.subtree
+            while True:
+                if subtree1.equalsIgnoringSuccessors(subtree2):
+                    break
+                if subtree2.parent is None:
+                    return False
+                subtree2 = subtree2.parent
+                prefix_levels_up += 1
+            return True
+        return False
+
+    def syncretize_children(self, tree: HybridTree) -> None:
+        """
+        TODO
+        """
+        if tree.parent is not None:
+            self.syncretize_children(tree.parent)
+        children_to_delete: set[int] = set()
+        for idx1 in range(len(tree.children) - 1):
+            for idx2 in range(idx1 + 1, len(tree.children)):
+                if self.syncretize_subtrees(tree.children[idx1], tree.children[idx2]):
+                    children_to_delete.add(idx2)
+        # if children_to_delete:
+        #     breakpoint()
+        for child in tree.children:
+            self.syncretize_children(child.subtree)
