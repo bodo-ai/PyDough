@@ -664,6 +664,7 @@ class RelTranslation:
                         | ConnectionType.ANTI
                     ):
                         if child.connection_type.is_aggregation:
+                            # breakpoint()
                             assert child.subtree.agg_keys is not None
                             child_output = self.apply_aggregations(
                                 child, child_output, child.subtree.agg_keys
@@ -1426,12 +1427,15 @@ def convert_ast_to_relational(
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)
+    # print()
+    # print(hybrid)
     run_hybrid_decorrelation(hybrid)
     hybrid_translator.run_rewrites(hybrid)
     # print()
     # print(hybrid)
     # breakpoint()
-    hybrid_translator.syncretize_children(hybrid)
+    # hybrid_translator.syncretize_children(hybrid)
+    # print()
     # print(hybrid)
     # breakpoint()
 

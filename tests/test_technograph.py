@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from technograph_pydough_functions import (
     battery_failure_rates_anomalies,
+    country_cartesian_oddball,
     country_combination_analysis,
     country_incident_rate_analysis,
     error_percentages_sun_set_by_error,
@@ -370,6 +371,19 @@ from pydough.unqualified import (
                 ),
             ),
             id="country_combination_analysis",
+        ),
+        pytest.param(
+            (
+                country_cartesian_oddball,
+                "country_cartesian_oddball",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["CA", "CN", "FR", "JP", "MX", "US"],
+                        "n_other_countries": [6] * 6,
+                    }
+                ),
+            ),
+            id="country_cartesian_oddball",
         ),
     ],
 )

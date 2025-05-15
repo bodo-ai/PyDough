@@ -215,3 +215,9 @@ def country_combination_analysis():
             (1.0 * COUNT(selected_devices.incidents)) / COUNT(selected_devices), 2
         ),
     ).TOP_K(5, by=ir.DESC())
+
+
+def country_cartesian_oddball():
+    return countries.CALCULATE(name, n_other_countries=COUNT(other_countries)).ORDER_BY(
+        name.ASC()
+    )

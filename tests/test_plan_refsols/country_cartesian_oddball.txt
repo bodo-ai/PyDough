@@ -1,0 +1,5 @@
+ROOT(columns=[('name', name), ('n_other_countries', n_other_countries)], orderings=[(name):asc_first])
+ AGGREGATE(keys={'_id': _id}, aggregations={'n_other_countries': COUNT(), 'name': ANYTHING(name)})
+  JOIN(conditions=[True:bool], types=['inner'], columns={'_id': t0._id, 'name': t0.name})
+   SCAN(table=main.COUNTRIES, columns={'_id': co_id, 'name': co_name})
+   SCAN(table=main.COUNTRIES, columns={})
