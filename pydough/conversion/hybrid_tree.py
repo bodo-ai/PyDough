@@ -1705,6 +1705,18 @@ class HybridTree:
                 case _:
                     continue
 
+        # Renumber the required steps for the children
+        for child in self.children:
+            req_steps: int = child.required_steps
+            while True:
+                if req_steps in child_remapping:
+                    child.required_steps = child_remapping[req_steps]
+                    break
+                if req_steps == 0:
+                    child.required_steps = 0
+                    break
+                req_steps -= 1
+
         # Renumber the correlated children
         new_correlated_children: set[int] = set()
         for correlated_idx in self.correlated_children:

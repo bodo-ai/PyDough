@@ -881,31 +881,53 @@ def common_prefix_d():
 
 def common_prefix_e():
     # Same as common_prefix_a, but a different order of the fields.
-    return regions.CALCULATE(
-        name,
-        n_customers=COUNT(nations.customers),
-        n_nations=COUNT(nations),
-    ).ORDER_BY(name.ASC())
+    return (
+        regions.CALCULATE(
+            n_customers=COUNT(nations.customers),
+        )
+        .CALCULATE(
+            name,
+            n_customers,
+            n_nations=COUNT(nations),
+        )
+        .ORDER_BY(name.ASC())
+    )
 
 
 def common_prefix_f():
     # Same as common_prefix_b, but a different order of the fields.
-    return regions.CALCULATE(
-        name,
-        n_customers=COUNT(nations.customers),
-        n_nations=COUNT(nations),
-        n_suppliers=COUNT(nations.suppliers),
-    ).ORDER_BY(name.ASC())
+    return (
+        regions.CALCULATE(
+            n_customers=COUNT(nations.customers),
+        )
+        .CALCULATE(
+            n_nations=COUNT(nations),
+        )
+        .CALCULATE(
+            name,
+            n_customers,
+            n_nations,
+            n_suppliers=COUNT(nations.suppliers),
+        )
+        .ORDER_BY(name.ASC())
+    )
 
 
 def common_prefix_g():
     # Same as common_prefix_b, but a different order of the fields.
-    return regions.CALCULATE(
-        name,
-        n_customers=COUNT(nations.customers),
-        n_suppliers=COUNT(nations.suppliers),
-        n_nations=COUNT(nations),
-    ).ORDER_BY(name.ASC())
+    return (
+        regions.CALCULATE(
+            n_customers=COUNT(nations.customers),
+            n_suppliers=COUNT(nations.suppliers),
+        )
+        .CALCULATE(
+            name,
+            n_customers,
+            n_suppliers,
+            n_nations=COUNT(nations),
+        )
+        .ORDER_BY(name.ASC())
+    )
 
 
 def common_prefix_h():
