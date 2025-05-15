@@ -3106,7 +3106,7 @@ class HybridTranslator:
                             operation,
                         )
                     elif isinstance(sub_property, GeneralJoinMetadata):
-                        pass
+                        general_join_cond = operation.general_condition
                     else:
                         join_keys = []
             case HybridPartitionChild():
