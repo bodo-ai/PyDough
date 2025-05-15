@@ -3163,6 +3163,7 @@ class HybridTranslator:
                 self.extract_link_root_info(child.parent, child, True)
             )
             child._parent = None
+            child._successor = None
         else:
             assert child.parent is not None
             parent: HybridTree = self.make_extension_child(child.parent, levels_up - 1)

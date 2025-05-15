@@ -910,14 +910,25 @@ def common_prefix_g():
 
 def common_prefix_h():
     # Same as common_prefix_c, but a different order of the fields.
-    return regions.CALCULATE(
-        name,
-        n_nations=COUNT(nations),
-        n_orders=COUNT(nations.customers.orders),
-        n_customers=COUNT(nations.customers),
-        n_parts=COUNT(nations.suppliers.supply_records),
-        n_suppliers=COUNT(nations.suppliers),
-    ).ORDER_BY(name.ASC())
+    return (
+        regions.CALCULATE(
+            n_nations=COUNT(nations),
+            n_orders=COUNT(nations.customers.orders),
+        )
+        .CALCULATE(
+            n_customers=COUNT(nations.customers),
+            n_parts=COUNT(nations.suppliers.supply_records),
+        )
+        .CALCULATE(
+            name,
+            n_nations,
+            n_orders,
+            n_customers,
+            n_parts,
+            n_suppliers=COUNT(nations.suppliers),
+        )
+        .ORDER_BY(name.ASC())
+    )
 
 
 def function_sampler():
