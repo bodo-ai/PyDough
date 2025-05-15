@@ -131,6 +131,17 @@ class HybridExpr(ABC):
             return self
         return HybridRefExpr(name, self.typ)
 
+    def replace_expressions(
+        self,
+        replacements: dict["HybridExpr", "HybridExpr"],
+    ) -> "HybridExpr":
+        """
+        TODO
+        """
+        if self in replacements:
+            return replacements[self]
+        return self
+
 
 class HybridCollation:
     """
@@ -342,6 +353,19 @@ class HybridFunctionExpr(HybridExpr):
             shifted_args.append(shifted_arg)
         return HybridFunctionExpr(self.operator, shifted_args, self.typ)
 
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> HybridExpr:
+        """
+        TODO
+        """
+        if self in replacements:
+            return replacements[self]
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.replace_expressions(replacements)
+        return self
+
 
 class HybridWindowExpr(HybridExpr):
     """
@@ -446,6 +470,20 @@ class HybridWindowExpr(HybridExpr):
             self.kwargs,
         )
 
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> HybridExpr:
+        if self in replacements:
+            return replacements[self]
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.replace_expressions(replacements)
+        for idx, part_arg in enumerate(self.partition_args):
+            self.partition_args[idx] = part_arg.replace_expressions(replacements)
+        for idx, order_arg in enumerate(self.order_args):
+            self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
+        return self
+
 
 def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
     """
@@ -527,6 +565,17 @@ class HybridOperation:
 
     def search_term_definition(self, name: str) -> HybridExpr | None:
         return self.terms.get(name, None)
+
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        """
+        TODO
+        """
+        for term_name, term in self.terms.items():
+            new_term: HybridExpr = term.replace_expressions(replacements)
+            self.terms[term_name] = new_term
 
 
 class HybridRoot(HybridOperation):
@@ -640,6 +689,16 @@ class HybridCalculate(HybridOperation):
                 return self.new_expressions[name]
         return self.predecessor.search_term_definition(name)
 
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        for term_name, term in self.terms.items():
+            new_term: HybridExpr = term.replace_expressions(replacements)
+            self.terms[term_name] = new_term
+            if term_name in self.new_expressions:
+                self.new_expressions[term_name] = new_term
+
 
 class HybridFilter(HybridOperation):
     """
@@ -661,6 +720,12 @@ class HybridFilter(HybridOperation):
 
     def search_term_definition(self, name: str) -> HybridExpr | None:
         return self.predecessor.search_term_definition(name)
+
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        self.condition = self.condition.replace_expressions(replacements)
 
 
 class HybridChildPullUp(HybridOperation):
@@ -2915,42 +2980,117 @@ class HybridTranslator:
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
 
-    def syncretize_subtrees(
-        self, child1: HybridConnection, child2: HybridConnection
-    ) -> bool:
+    def make_extension_child(self, child: HybridTree, levels_up: int) -> HybridTree:
         """
         TODO
         """
-        supported_syncretize_operators = {
-            pydop.COUNT: (pydop.COUNT, pydop.SUM),
-            pydop.SUM: (pydop.SUM, pydop.SUM),
-            pydop.MIN: (pydop.MIN, pydop.MIN),
-            pydop.MAX: (pydop.MAX, pydop.MAX),
-            pydop.ANYTHING: (pydop.ANYTHING, pydop.ANYTHING),
-        }
-        if (
-            child1.connection_type == ConnectionType.AGGREGATION_ONLY_MATCH
-            and child2.connection_type.is_aggregation
-            and not child2.connection_type.is_anti
-        ):
-            # breakpoint()
-            if not all(
-                agg.operator in supported_syncretize_operators
-                for agg in child2.aggs.values()
+        raise NotImplementedError()
+
+    supported_syncretize_operators: dict[
+        pydop.PyDoughExpressionOperator,
+        tuple[pydop.PyDoughExpressionOperator, pydop.PyDoughExpressionOperator],
+    ] = {
+        pydop.COUNT: (pydop.COUNT, pydop.SUM),
+        pydop.SUM: (pydop.SUM, pydop.SUM),
+        pydop.MIN: (pydop.MIN, pydop.MIN),
+        pydop.MAX: (pydop.MAX, pydop.MAX),
+        pydop.ANYTHING: (pydop.ANYTHING, pydop.ANYTHING),
+    }
+    """
+    TODO
+    """
+
+    def can_syncretize_subtrees(
+        self, base_child: HybridConnection, extension_child: HybridConnection
+    ) -> tuple[bool, int]:
+        """
+        TODO
+        """
+        match (base_child.connection_type, extension_child.connection_type):
+            case (
+                (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION)
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.AGGREGATION)
+                # | (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
+                # | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.AGGREGATION_ONLY_MATCH)
             ):
-                return False
-            prefix_levels_up: int = 0
-            subtree1: HybridTree = child1.subtree
-            subtree2: HybridTree = child2.subtree
-            while True:
-                if subtree1.equalsIgnoringSuccessors(subtree2):
-                    break
-                if subtree2.parent is None:
-                    return False
-                subtree2 = subtree2.parent
-                prefix_levels_up += 1
-            return True
-        return False
+                pass
+            case _:
+                return False, -1
+        if not all(
+            agg.operator in self.supported_syncretize_operators
+            for agg in extension_child.aggs.values()
+        ):
+            return False, -1
+        prefix_levels_up: int = 0
+        base_subtree: HybridTree = base_child.subtree
+        crawl_subtree: HybridTree = extension_child.subtree
+        while True:
+            if base_subtree.equalsIgnoringSuccessors(crawl_subtree):
+                break
+            if crawl_subtree.parent is None:
+                return False, -1
+            crawl_subtree = crawl_subtree.parent
+            prefix_levels_up += 1
+        return True, prefix_levels_up
+
+    def syncretize_subtrees(
+        self, tree: HybridTree, base_idx: int, extension_idx: int, extension_height: int
+    ) -> None:
+        """
+        TODO
+        """
+        remapping: dict[HybridExpr, HybridExpr] = {}
+        base_child: HybridConnection = tree.children[base_idx]
+        base_subtree: HybridTree = base_child.subtree
+        extension_child: HybridConnection = tree.children[extension_idx]
+
+        # extension_subtree: HybridTree = self.make_extension_child(extension_child.subtree, extension_height)
+        extension_subtree: HybridTree = extension_child.subtree
+        new_connection_type: ConnectionType = extension_child.connection_type
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, base_subtree.correlated_children
+        )
+        new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
+
+        new_columns: dict[str, HybridExpr] = {}
+        for agg_name, agg in extension_child.aggs.items():
+            extension_op, base_op = self.supported_syncretize_operators[agg.operator]
+
+            # Insert the bottom aggregation call into the extension
+            extension_agg_name: str = self.gen_agg_name(extension_child)
+            extension_agg: HybridFunctionExpr = HybridFunctionExpr(
+                extension_op, agg.args, agg.typ
+            )
+            new_extension_child.aggs[extension_agg_name] = extension_agg
+            switch_name: str = self.get_internal_name(
+                "expr", [base_subtree.pipeline[-1].terms, new_columns]
+            )
+            new_columns[switch_name] = HybridChildRefExpr(
+                extension_agg_name, new_child_idx, extension_agg.typ
+            )
+
+            # Insert the top aggregation call into the base
+            base_agg_name: str = self.gen_agg_name(base_child)
+            base_agg: HybridFunctionExpr = HybridFunctionExpr(
+                base_op, [HybridRefExpr(switch_name, extension_agg.typ)], agg.typ
+            )
+            base_child.aggs[base_agg_name] = base_agg
+
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                agg_name, extension_idx, agg.typ
+            )
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                base_agg_name, base_idx, agg.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+        # breakpoint()
+
+        base_subtree.pipeline.append(
+            HybridCalculate(base_subtree.pipeline[-1], new_columns, [])
+        )
+
+        for operation in tree.pipeline:
+            operation.replace_expressions(remapping)
 
     def syncretize_children(self, tree: HybridTree) -> None:
         """
@@ -2958,12 +3098,35 @@ class HybridTranslator:
         """
         if tree.parent is not None:
             self.syncretize_children(tree.parent)
+        syncretize_options: list[tuple[int, int, int]] = []
+        ignore_idx: int = -1
+        if isinstance(tree.pipeline[0], HybridChildPullUp):
+            ignore_idx = tree.pipeline[0].child_idx
+        for base_idx in range(len(tree.children)):
+            for extension_idx in range(len(tree.children)):
+                if extension_idx in (base_idx, ignore_idx):
+                    continue
+                can_syncretize, extension_height = self.can_syncretize_subtrees(
+                    tree.children[base_idx], tree.children[extension_idx]
+                )
+                if can_syncretize:
+                    syncretize_options.append(
+                        (extension_height, extension_idx, base_idx)
+                    )
         children_to_delete: set[int] = set()
-        for idx1 in range(len(tree.children) - 1):
-            for idx2 in range(idx1 + 1, len(tree.children)):
-                if self.syncretize_subtrees(tree.children[idx1], tree.children[idx2]):
-                    children_to_delete.add(idx2)
-        # if children_to_delete:
-        #     breakpoint()
+        if len(syncretize_options) > 0:
+            syncretize_options.sort()
+            for extension_height, extension_idx, base_idx in syncretize_options:
+                if (
+                    extension_idx in children_to_delete
+                    or base_idx in children_to_delete
+                ):
+                    continue
+                children_to_delete.add(extension_idx)
+                self.syncretize_subtrees(
+                    tree, base_idx, extension_idx, extension_height
+                )
+            for child_idx in sorted(children_to_delete, reverse=True):
+                tree.children.pop(child_idx)
         for child in tree.children:
             self.syncretize_children(child.subtree)
