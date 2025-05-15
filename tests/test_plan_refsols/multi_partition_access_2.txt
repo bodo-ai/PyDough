@@ -21,7 +21,7 @@ ROOT(columns=[('transaction_id', transaction_id), ('name', name), ('symbol', sym
              SCAN(table=main.sbTransaction, columns={'customer_id': sbTxCustId, 'ticker_id': sbTxTickerId, 'transaction_type': sbTxType})
            AGGREGATE(keys={'customer_id': customer_id, 'ticker_id': ticker_id, 'transaction_type': transaction_type}, aggregations={'expr_0': SUM(shares), 'expr_1': COUNT(shares)})
             SCAN(table=main.sbTransaction, columns={'customer_id': sbTxCustId, 'shares': sbTxShares, 'ticker_id': sbTxTickerId, 'transaction_type': sbTxType})
-       JOIN(conditions=[t0.customer_id == t1.customer_id & t0.ticker_id == t1.ticker_id], types=['inner'], columns={'cust_tick_avg_shares': t1.cust_tick_avg_shares, 'customer_id': t0.customer_id, 'ticker_id': t0.ticker_id})
+       JOIN(conditions=[t0.ticker_id == t1.ticker_id & t0.customer_id == t1.customer_id], types=['inner'], columns={'cust_tick_avg_shares': t1.cust_tick_avg_shares, 'customer_id': t0.customer_id, 'ticker_id': t0.ticker_id})
         AGGREGATE(keys={'customer_id': customer_id, 'ticker_id': ticker_id}, aggregations={})
          AGGREGATE(keys={'customer_id': customer_id, 'ticker_id': ticker_id, 'transaction_type': transaction_type}, aggregations={})
           SCAN(table=main.sbTransaction, columns={'customer_id': sbTxCustId, 'ticker_id': sbTxTickerId, 'transaction_type': sbTxType})

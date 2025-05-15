@@ -1,15 +1,12 @@
-WITH _t0 AS (
+WITH _s1 AS (
   SELECT
-    MAX(countries.co_name) AS name,
     COUNT() AS n_other_countries
-  FROM main.countries AS countries
-  CROSS JOIN main.countries AS countries_2
-  GROUP BY
-    countries.co_id
+  FROM main.countries
 )
 SELECT
-  name,
-  n_other_countries
-FROM _t0
+  countries.co_name AS name,
+  _s1.n_other_countries
+FROM main.countries AS countries
+CROSS JOIN _s1 AS _s1
 ORDER BY
   name
