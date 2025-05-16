@@ -293,7 +293,6 @@ from pydough.unqualified import (
                         "engine": [
                             "Bing",
                             "Brave",
-                            "Duck Duck Go",
                             "DuckDuckGo",
                             "Ecosia",
                             "Google",
@@ -301,10 +300,9 @@ from pydough.unqualified import (
                             "Qwant",
                             "Swisscows",
                             "Yahoo",
-                            "Yahoo!",
                             "Yandex",
                         ],
-                        "n_users": [7, 3, 0, 7, 5, 10, 0, 6, 0, 3, 1, 2],
+                        "n_users": [7, 3, 7, 5, 10, 0, 6, 0, 4, 2],
                     }
                 ),
             ),

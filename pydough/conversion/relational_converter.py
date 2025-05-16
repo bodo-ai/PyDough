@@ -46,7 +46,7 @@ from pydough.relational import (
     Scan,
     WindowCallExpression,
 )
-from pydough.types import BooleanType, Int64Type, UnknownType
+from pydough.types import BooleanType, NumericType, UnknownType
 
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
@@ -453,7 +453,7 @@ class RelTranslation:
         out_columns: dict[HybridExpr, ColumnReference] = {}
         join_columns: dict[str, RelationalExpression] = {}
 
-        assert (join_keys is None) != (join_cond is None)
+        assert (join_keys is None) or (join_cond is None)
 
         # Special case: if the lhs is an EmptySingleton, just return the RHS,
         # decorated if needed.
@@ -496,11 +496,14 @@ class RelTranslation:
                 )
                 cond_terms.append(cond)
             out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
-        else:
-            assert join_cond is not None
+        elif join_cond is not None:
+            # General join case
             out_rel.conditions[0] = self.build_general_join_condition(
                 join_cond, lhs_result, rhs_result, input_aliases[0], input_aliases[1]
             )
+        else:
+            # Cartesian join case
+            out_rel.conditions[0] = LiteralExpression(True, BooleanType())
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
@@ -933,7 +936,7 @@ class RelTranslation:
             for name in context.relational_node.columns
         }
         limit_expr: LiteralExpression = LiteralExpression(
-            node.records_to_keep, Int64Type()
+            node.records_to_keep, NumericType()
         )
         orderings: list[ExpressionSortInfo] = make_relational_ordering(
             node.orderings, context.expressions

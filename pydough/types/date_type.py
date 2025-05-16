@@ -2,13 +2,13 @@
 Definition of the PyDough type for dates.
 """
 
-__all__ = ["DateType"]
+__all__ = ["DatetimeType"]
 
 
 from .pydough_type import PyDoughType
 
 
-class DateType(PyDoughType):
+class DatetimeType(PyDoughType):
     """
     The PyDough type representing dates with a year/month/day.
     """
@@ -17,7 +17,7 @@ class DateType(PyDoughType):
         pass
 
     def __repr__(self):
-        return "DateType()"
+        return "DatetimeType()"
 
     @property
     def json_string(self) -> str:
@@ -25,4 +25,4 @@ class DateType(PyDoughType):
 
     @staticmethod
     def parse_from_string(type_string: str) -> PyDoughType | None:
-        return DateType() if type_string == "date" else None
+        return DatetimeType() if type_string == "date" else None

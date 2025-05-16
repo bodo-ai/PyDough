@@ -50,7 +50,6 @@ from pydough.qdag import (
     CollationExpression,
     CollectionAccess,
     ColumnProperty,
-    CompoundSubCollection,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -70,7 +69,7 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.relational import JoinType
-from pydough.types import BooleanType, Float64Type, Int64Type, PyDoughType
+from pydough.types import BooleanType, NumericType, PyDoughType
 
 
 class HybridExpr(ABC):
@@ -560,7 +559,7 @@ class HybridCollectionAccess(HybridOperation):
         super().__init__(terms, {}, [], unique_exprs)
 
     def __repr__(self):
-        return f"COLLECTION[{self.collection.collection.name}]"
+        return f"COLLECTION[{self.collection.name}]"
 
 
 class HybridPartitionChild(HybridOperation):
@@ -1340,7 +1339,15 @@ class HybridTree:
             child that matches it).
         """
         for idx, existing_connection in enumerate(self.children):
-            if (child == existing_connection.subtree) or (
+            if (
+                child == existing_connection.subtree
+                and (child.join_keys, child.general_join_condition, child.agg_keys)
+                == (
+                    existing_connection.subtree.join_keys,
+                    existing_connection.subtree.general_join_condition,
+                    existing_connection.subtree.agg_keys,
+                )
+            ) or (
                 isinstance(self.pipeline[0], HybridPartition)
                 and (child.parent is None)
                 and (len(child.pipeline) == 1)
@@ -1797,7 +1804,7 @@ class HybridTranslator:
         ):
             agg_ref = HybridFunctionExpr(
                 pydop.DEFAULT_TO,
-                [agg_ref, HybridLiteralExpr(Literal(0, Int64Type()))],
+                [agg_ref, HybridLiteralExpr(Literal(0, NumericType()))],
                 agg_call.typ,
             )
         return agg_ref
@@ -2069,34 +2076,34 @@ class HybridTranslator:
         # used to aggregate the child connection.
         assert len(expr.args) == 1
         data_expr: HybridExpr = expr.args[0]
-        one: HybridExpr = HybridLiteralExpr(Literal(1.0, Float64Type()))
-        two: HybridExpr = HybridLiteralExpr(Literal(2.0, Float64Type()))
+        one: HybridExpr = HybridLiteralExpr(Literal(1.0, NumericType()))
+        two: HybridExpr = HybridLiteralExpr(Literal(2.0, NumericType()))
         assert child_connection.subtree.agg_keys is not None
         partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
         order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
         rank: HybridExpr = HybridWindowExpr(
-            pydop.RANKING, [], partition_args, order_args, Int64Type(), {}
+            pydop.RANKING, [], partition_args, order_args, NumericType(), {}
         )
         rows: HybridExpr = HybridWindowExpr(
-            pydop.RELCOUNT, [data_expr], partition_args, [], Int64Type(), {}
+            pydop.RELCOUNT, [data_expr], partition_args, [], NumericType(), {}
         )
         adjusted_rank: HybridExpr = HybridFunctionExpr(
-            pydop.SUB, [rank, one], Float64Type()
+            pydop.SUB, [rank, one], NumericType()
         )
         adjusted_rows: HybridExpr = HybridFunctionExpr(
-            pydop.SUB, [rows, one], Float64Type()
+            pydop.SUB, [rows, one], NumericType()
         )
         centerpoint: HybridExpr = HybridFunctionExpr(
-            pydop.DIV, [adjusted_rows, two], Float64Type()
+            pydop.DIV, [adjusted_rows, two], NumericType()
         )
         distance_from_center = HybridFunctionExpr(
             pydop.ABS,
             [
                 HybridFunctionExpr(
-                    pydop.SUB, [adjusted_rank, centerpoint], Float64Type()
+                    pydop.SUB, [adjusted_rank, centerpoint], NumericType()
                 )
             ],
-            Float64Type(),
+            NumericType(),
         )
         is_median_row: HybridExpr = HybridFunctionExpr(
             pydop.LET, [distance_from_center, one], BooleanType()
@@ -2337,8 +2344,7 @@ class HybridTranslator:
                 back_idx: int = 0
                 true_steps_back: int = 0
                 # Keep stepping backward until `expr.back_levels` non-hidden
-                # steps have been taken (to ignore steps that are part of a
-                # compound).
+                # steps have been taken.
                 collection = expr.collection
                 while true_steps_back < expr.back_levels:
                     assert collection.ancestor_context is not None
@@ -2530,8 +2536,6 @@ class HybridTranslator:
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot(), node.ancestral_mapping)
-            case CompoundSubCollection():
-                raise NotImplementedError(f"{node.__class__.__name__}")
             case TableCollection() | SubCollection():
                 collection_access = HybridCollectionAccess(node)
                 successor_hybrid = HybridTree(collection_access, node.ancestral_mapping)
@@ -2651,9 +2655,7 @@ class HybridTranslator:
             case ChildOperatorChildAccess():
                 assert parent is not None
                 match node.child_access:
-                    case TableCollection() | SubCollection() if not isinstance(
-                        node.child_access, CompoundSubCollection
-                    ):
+                    case TableCollection() | SubCollection():
                         collection_access = HybridCollectionAccess(node.child_access)
                         successor_hybrid = HybridTree(
                             collection_access,
@@ -2684,6 +2686,8 @@ class HybridTranslator:
                                     {},
                                     False,
                                 )
+                            elif isinstance(sub_property, CartesianProductMetadata):
+                                pass
                             else:
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"

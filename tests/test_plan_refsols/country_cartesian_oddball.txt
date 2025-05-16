@@ -1,0 +1,6 @@
+ROOT(columns=[('name', name), ('n_other_countries', n_other_countries)], orderings=[(name):asc_first])
+ PROJECT(columns={'n_other_countries': DEFAULT_TO(agg_0, 0:numeric), 'name': name})
+  JOIN(conditions=[True:bool], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
+   SCAN(table=main.COUNTRIES, columns={'name': co_name})
+   AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+    SCAN(table=main.COUNTRIES, columns={})

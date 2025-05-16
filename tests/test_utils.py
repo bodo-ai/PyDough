@@ -21,7 +21,6 @@ __all__ = [
     "WhereInfo",
     "graph_fetcher",
     "map_over_dict_values",
-    "noun_fetcher",
 ]
 
 from abc import ABC, abstractmethod
@@ -62,10 +61,6 @@ from pydough.unqualified import (
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
 graph_fetcher = Callable[[str], GraphMetadata]
-
-# Type alias for a function that takes in a string and generates the
-# representation of all the nouns in a metadata graphs based on it.
-noun_fetcher = Callable[[str], dict[str, set[str]]]
 
 
 def map_over_dict_values(

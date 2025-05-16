@@ -28,7 +28,7 @@ from pydough.relational import (
     RelationalRoot,
     Scan,
 )
-from pydough.types import BooleanType, Int64Type, UnknownType
+from pydough.types import BooleanType, NumericType, UnknownType
 
 
 @pytest.fixture(scope="module")
@@ -66,7 +66,7 @@ def column_pruner() -> ColumnPruner:
                         BooleanType(),
                         [
                             make_relational_column_reference("c"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                     input=Scan(
@@ -88,7 +88,7 @@ def column_pruner() -> ColumnPruner:
                         BooleanType(),
                         [
                             make_relational_column_reference("c"),
-                            make_relational_literal(1, Int64Type()),
+                            make_relational_literal(1, NumericType()),
                         ],
                     ),
                     input=Scan(
@@ -112,7 +112,7 @@ def column_pruner() -> ColumnPruner:
                             UnknownType(),
                             [
                                 make_relational_column_reference("a"),
-                                make_relational_literal(1, Int64Type()),
+                                make_relational_literal(1, NumericType()),
                             ],
                         ),
                         "b": make_relational_column_reference("b"),
@@ -136,7 +136,7 @@ def column_pruner() -> ColumnPruner:
                             UnknownType(),
                             [
                                 make_relational_column_reference("a"),
-                                make_relational_literal(1, Int64Type()),
+                                make_relational_literal(1, NumericType()),
                             ],
                         )
                     },
@@ -158,7 +158,7 @@ def column_pruner() -> ColumnPruner:
                             UnknownType(),
                             [
                                 make_relational_column_reference("a"),
-                                make_relational_literal(1, Int64Type()),
+                                make_relational_literal(1, NumericType()),
                             ],
                         ),
                         "b": make_relational_column_reference("b"),
@@ -190,7 +190,7 @@ def column_pruner() -> ColumnPruner:
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
                     },
-                    limit=make_relational_literal(1, Int64Type()),
+                    limit=make_relational_literal(1, NumericType()),
                     orderings=[
                         make_relational_ordering(
                             make_relational_column_reference("b"), True
@@ -218,7 +218,7 @@ def column_pruner() -> ColumnPruner:
                         "a": make_relational_column_reference("a"),
                         "b": make_relational_column_reference("b"),
                     },
-                    limit=make_relational_literal(1, Int64Type()),
+                    limit=make_relational_literal(1, NumericType()),
                     orderings=[
                         make_relational_ordering(
                             make_relational_column_reference("b"), True
@@ -247,7 +247,7 @@ def column_pruner() -> ColumnPruner:
                     keys={"a": make_relational_column_reference("a")},
                     aggregations={
                         "b": CallExpression(
-                            SUM, Int64Type(), [make_relational_column_reference("b")]
+                            SUM, NumericType(), [make_relational_column_reference("b")]
                         )
                     },
                     input=Scan(
@@ -280,7 +280,7 @@ def column_pruner() -> ColumnPruner:
                     keys={"a": make_relational_column_reference("a")},
                     aggregations={
                         "b": CallExpression(
-                            SUM, Int64Type(), [make_relational_column_reference("b")]
+                            SUM, NumericType(), [make_relational_column_reference("b")]
                         )
                     },
                     input=Scan(
@@ -299,7 +299,7 @@ def column_pruner() -> ColumnPruner:
                     keys={"a": make_relational_column_reference("a")},
                     aggregations={
                         "b": CallExpression(
-                            SUM, Int64Type(), [make_relational_column_reference("b")]
+                            SUM, NumericType(), [make_relational_column_reference("b")]
                         )
                     },
                     input=Scan(

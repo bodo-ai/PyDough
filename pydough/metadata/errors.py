@@ -15,9 +15,14 @@ __all__ = [
     "PossiblyEmptyMapOf",
     "PyDoughMetadataException",
     "PyDoughPredicate",
-    "compound_relationship_inherited_predicate",
+    "extract_array",
+    "extract_bool",
+    "extract_object",
+    "extract_string",
     "is_bool",
     "is_integer",
+    "is_json_array",
+    "is_json_object",
     "is_positive_int",
     "is_string",
     "is_valid_name",
@@ -304,13 +309,117 @@ is_valid_name: PyDoughPredicate = ValidName()
 is_integer = HasType(int, "integer")
 is_string = HasType(str, "string")
 is_bool = HasType(bool, "boolean")
+is_json_object = HasType(dict, "JSON object")
+is_json_array = HasType(list, "JSON array")
 is_positive_int = PositiveInteger()
 unique_properties_predicate: PyDoughPredicate = NonEmptyListOf(
     OrCondition([is_string, NonEmptyListOf(is_string)])
 )
-compound_relationship_inherited_predicate: PyDoughPredicate = PossiblyEmptyMapOf(
-    is_string, is_string
-)
 simple_join_keys_predicate: PyDoughPredicate = NonEmptyMapOf(
     is_string, NonEmptyListOf(is_string)
 )
+
+
+################################################################################
+# Extraction functions
+################################################################################
+
+
+def extract_string(json_obj: dict, key_name: str, obj_name: str) -> str:
+    """
+    Extracts a string field from a JSON object, returning the string field
+    and verifying that the field exists and is well formed.
+
+    Args:
+        `json_obj`: the JSON object to extract the string from.
+        `key_name`: the name of the key in the JSON object that
+        contains the string.
+        `obj_name`: the name of the object being extracted from, to be used
+        in error messages.
+
+    Returns:
+        The string value of the field.
+
+    Raises:
+        `PyDoughMetadataException` if the JSON object does not contain a key
+        with the name `key_name`, or if the value of the key is not a string.
+    """
+    HasPropertyWith(key_name, is_string).verify(json_obj, obj_name)
+    value = json_obj[key_name]
+    assert isinstance(value, str)
+    return value
+
+
+def extract_bool(json_obj: dict, key_name: str, obj_name: str) -> bool:
+    """
+    Extracts a boolean field from a JSON object, returning the string field
+    and verifying that the field exists and is well formed.
+
+    Args:
+        `json_obj`: the JSON object to extract the string from.
+        `key_name`: the name of the key in the JSON object that
+        contains the boolean.
+        `obj_name`: the name of the object being extracted from, to be used
+        in error messages.
+
+    Returns:
+        The boolean value of the field.
+
+    Raises:
+        `PyDoughMetadataException` if the JSON object does not contain a key
+        with the name `key_name`, or if the value of the key is not a boolean.
+    """
+    HasPropertyWith(key_name, is_bool).verify(json_obj, obj_name)
+    value = json_obj[key_name]
+    assert isinstance(value, bool)
+    return value
+
+
+def extract_array(json_obj: dict, key_name: str, obj_name: str) -> list:
+    """
+    Extracts an array field from a JSON object, returning the string field
+    and verifying that the field exists and is well formed.
+
+    Args:
+        `json_obj`: the JSON object to extract the string from.
+        `key_name`: the name of the key in the JSON object that
+        contains the array.
+        `obj_name`: the name of the object being extracted from, to be used
+        in error messages.
+
+    Returns:
+        A list containing the elements of the array.
+
+    Raises:
+        `PyDoughMetadataException` if the JSON object does not contain a key
+        with the name `key_name`, or if the value of the key is not an array.
+    """
+    HasPropertyWith(key_name, is_json_array).verify(json_obj, obj_name)
+    value = json_obj[key_name]
+    assert isinstance(value, list)
+    return value
+
+
+def extract_object(json_obj: dict, key_name: str, obj_name: str) -> dict:
+    """
+    Extracts an object field from a JSON object, returning the string field
+    and verifying that the field exists and is well formed.
+
+    Args:
+        `json_obj`: the JSON object to extract the string from.
+        `key_name`: the name of the key in the JSON object that
+        contains the object.
+        `obj_name`: the name of the object being extracted from, to be used
+        in error messages.
+
+    Returns:
+        A dictionary containing the elements of the object.
+
+    Raises:
+        `PyDoughMetadataException` if the JSON object does not contain a key
+        with the name `key_name`, or if the value of the key is not a dictionary.
+    """
+    HasPropertyWith(key_name, is_json_object).verify(json_obj, obj_name)
+    value = json_obj[key_name]
+    assert isinstance(value, dict)
+    return value

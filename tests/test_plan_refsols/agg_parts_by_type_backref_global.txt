@@ -1,4 +1,4 @@
-ROOT(columns=[('part_type', part_type), ('percentage_of_parts', DEFAULT_TO(agg_3, 0:int64) / total_num_parts), ('avg_price', agg_2)], orderings=[])
+ROOT(columns=[('part_type', part_type), ('percentage_of_parts', DEFAULT_TO(agg_3, 0:numeric) / total_num_parts), ('avg_price', agg_2)], orderings=[])
  FILTER(condition=agg_2 >= global_avg_price, columns={'agg_2': agg_2, 'agg_3': agg_3, 'part_type': part_type, 'total_num_parts': total_num_parts})
   JOIN(conditions=[True:bool], types=['left'], columns={'agg_2': t1.agg_2, 'agg_3': t1.agg_3, 'global_avg_price': t0.global_avg_price, 'part_type': t1.part_type, 'total_num_parts': t0.total_num_parts})
    PROJECT(columns={'global_avg_price': agg_0, 'total_num_parts': agg_1})

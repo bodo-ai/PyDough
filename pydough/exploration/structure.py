@@ -63,7 +63,7 @@ def explain_structure(
                     assert isinstance(property, ReversiblePropertyMetadata)
                     card = "multiple" if property.is_plural else "one member of"
                     subcollection_properties.append(
-                        f"{property.name} [{card} {property.other_collection.name}] (reverse of {property.other_collection.name}.{property.reverse_name})"
+                        f"{property.name} [{card} {property.child_collection.name}]"
                     )
                 else:
                     assert isinstance(property, ScalarAttributeMetadata)

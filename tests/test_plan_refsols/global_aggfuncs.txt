@@ -1,3 +1,3 @@
-ROOT(columns=[('total_bal', DEFAULT_TO(agg_5, 0:int64)), ('num_bal', agg_3), ('avg_bal', agg_0), ('min_bal', agg_2), ('max_bal', agg_1), ('num_cust', agg_4)], orderings=[])
- AGGREGATE(keys={}, aggregations={'agg_0': AVG(acctbal), 'agg_1': MAX(acctbal), 'agg_2': MIN(acctbal), 'agg_3': COUNT(acctbal), 'agg_4': COUNT(), 'agg_5': SUM(acctbal)})
-  SCAN(table=tpch.CUSTOMER, columns={'acctbal': c_acctbal})
+ROOT(columns=[('total_bal', DEFAULT_TO(agg_5, 0:numeric)), ('num_bal', agg_3), ('avg_bal', agg_0), ('min_bal', agg_2), ('max_bal', agg_1), ('num_cust', agg_4)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'agg_0': AVG(account_balance), 'agg_1': MAX(account_balance), 'agg_2': MIN(account_balance), 'agg_3': COUNT(account_balance), 'agg_4': COUNT(), 'agg_5': SUM(account_balance)})
+  SCAN(table=tpch.CUSTOMER, columns={'account_balance': c_acctbal})

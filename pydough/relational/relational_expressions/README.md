@@ -81,20 +81,20 @@ from pydough.relational.relational_expressions import (
     CorrelatedReferenceFinder,
 )
 from pydough.pydough_operators import ADD
-from pydough.types import Int64Type
+from pydough.types import NumericType
 
 # Create a column reference
-column_ref = ColumnReference("column_name", Int64Type())
+column_ref = ColumnReference("column_name", NumericType())
 
 # Create a literal expression
-literal_expr = LiteralExpression(10, Int64Type())
+literal_expr = LiteralExpression(10, NumericType())
 
 # Create a call expression for addition
-call_expr = CallExpression(ADD, Int64Type(), [column_ref, literal_expr])
+call_expr = CallExpression(ADD, NumericType(), [column_ref, literal_expr])
 
 # Create a correlated reference to column `column_name` in the first input to
 # an ancestor join of `corr1`
-correlated_ref = CorrelatedReference("column_name", "corr1", Int64Type())
+correlated_ref = CorrelatedReference("column_name", "corr1", NumericType())
 
 # Create an expression sort info
 sort_info = ExpressionSortInfo(call_expr, ascending=True, nulls_first=False)

@@ -1,5 +1,5 @@
 ROOT(columns=[('season_name', season_name), ('n_events', n_events)], orderings=[(n_events):desc_last, (season_name):asc_first])
- PROJECT(columns={'n_events': DEFAULT_TO(agg_0, 0:int64), 'season_name': name})
+ PROJECT(columns={'n_events': DEFAULT_TO(agg_0, 0:numeric), 'season_name': name})
   JOIN(conditions=[t0.name == t1.name], types=['left'], columns={'agg_0': t1.agg_0, 'name': t0.name})
    SCAN(table=SEASONS, columns={'name': s_name})
    AGGREGATE(keys={'name': name}, aggregations={'agg_0': COUNT()})

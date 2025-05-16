@@ -1,6 +1,6 @@
-ROOT(columns=[('AVG_YEARLY', DEFAULT_TO(agg_0, 0:int64) / 7.0:float64)], orderings=[])
+ROOT(columns=[('AVG_YEARLY', DEFAULT_TO(agg_0, 0:numeric) / 7.0:numeric)], orderings=[])
  AGGREGATE(keys={}, aggregations={'agg_0': SUM(extended_price)})
-  FILTER(condition=quantity < 0.2:float64 * part_avg_quantity, columns={'extended_price': extended_price})
+  FILTER(condition=quantity < 0.2:numeric * part_avg_quantity, columns={'extended_price': extended_price})
    JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'extended_price': t1.extended_price, 'part_avg_quantity': t0.part_avg_quantity, 'quantity': t1.quantity})
     PROJECT(columns={'key': key, 'part_avg_quantity': agg_0})
      JOIN(conditions=[t0.key == t1.part_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
