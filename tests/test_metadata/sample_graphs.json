@@ -1892,6 +1892,17 @@
         "synonyms": ["other days"]
       },
       {
+        "name": "last_six_months",
+        "type": "general join",
+        "parent collection": "calendar",
+        "child collection": "calendar",
+        "singular": false,
+        "always matches": false,
+        "condition": "other.calendar_day >= DATETIME(self.calendar_day, '-6 months')",
+        "description": "All calendar days within the last six months of the specified calendar day",
+        "synonyms": ["days within warranty period"]
+      },
+      {
         "name": "other_countries",
         "type": "cartesian product",
         "parent collection": "countries",

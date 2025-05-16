@@ -221,3 +221,33 @@ def country_cartesian_oddball():
     return countries.CALCULATE(name, n_other_countries=COUNT(other_countries)).ORDER_BY(
         name.ASC()
     )
+
+
+def monthly_incident_rate():
+    # For every month in 2020 and 2021, calculate the incident rate for devices
+    # in that month per million devices sold in the past 6 months, only considering
+    # devices manufactured in china.
+    months = (
+        calendar.CALCULATE(year=YEAR(calendar_day), month=MONTH(calendar_day))
+        .WHERE(ISIN(year, (2020, 2021)))
+        .PARTITION(name="months", by=(year, month))
+    )
+    return months.CALCULATE(
+        month=JOIN_STRINGS("-", year, LPAD(month, 2, "0")),
+        ir=ROUND(
+            (
+                1000000.0
+                * COUNT(
+                    calendar.incidents_reported.WHERE(
+                        device.manufacturing_country.name == "CN"
+                    )
+                )
+            )
+            / COUNT(
+                calendar.last_six_months.devices_sold.WHERE(
+                    manufacturing_country.name == "CN"
+                )
+            ),
+            2,
+        ),
+    ).ORDER_BY(month.ASC())
