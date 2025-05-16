@@ -1,6 +1,6 @@
-WITH _t2 AS (
+WITH _t1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS n_searches,
     searches.search_engine,
     times.t_name AS tod
   FROM times AS times
@@ -12,11 +12,11 @@ WITH _t2 AS (
     times.t_name
 ), _t AS (
   SELECT
-    COALESCE(agg_0, 0) AS n_searches,
+    n_searches,
     search_engine,
     tod,
-    ROW_NUMBER() OVER (PARTITION BY tod ORDER BY COALESCE(agg_0, 0) DESC, search_engine) AS _w
-  FROM _t2
+    ROW_NUMBER() OVER (PARTITION BY tod ORDER BY n_searches DESC, search_engine) AS _w
+  FROM _t1
 )
 SELECT
   tod,

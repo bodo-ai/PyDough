@@ -69,14 +69,12 @@ WITH _s0 AS (
     ) AS cum_ir,
     _s1.year - CAST(STRFTIME('%Y', _s0.release_date) AS INTEGER) AS years_since_release
   FROM _s0 AS _s0
-  LEFT JOIN _s1 AS _s1
-    ON TRUE
+  JOIN _s1 AS _s1
+    ON _s1.year >= CAST(STRFTIME('%Y', _s0.release_date) AS INTEGER)
   LEFT JOIN _s7 AS _s7
     ON _s1.year = _s7.year
   LEFT JOIN _s15 AS _s15
     ON _s1.year = _s15.year
-  WHERE
-    _s1.year >= CAST(STRFTIME('%Y', _s0.release_date) AS INTEGER)
 )
 SELECT
   years_since_release,

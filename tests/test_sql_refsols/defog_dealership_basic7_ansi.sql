@@ -9,7 +9,7 @@ WITH _t1 AS (
 )
 SELECT
   payment_method,
-  COALESCE(agg_1, 0) AS total_payments,
+  agg_1 AS total_payments,
   COALESCE(agg_0, 0) AS total_amount
 FROM _t1
 ORDER BY

@@ -7,10 +7,10 @@ WITH _s1 AS (
     NOT o_comment LIKE '%special%requests%'
   GROUP BY
     o_custkey
-), _t1 AS (
+), _t0 AS (
   SELECT
-    COUNT() AS agg_0,
-    COALESCE(_s1.agg_0, 0) AS num_non_special_orders
+    COUNT() AS custdist,
+    COALESCE(_s1.agg_0, 0) AS c_count
   FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.customer_key = customer.c_custkey
@@ -18,9 +18,9 @@ WITH _s1 AS (
     COALESCE(_s1.agg_0, 0)
 )
 SELECT
-  num_non_special_orders AS C_COUNT,
-  COALESCE(agg_0, 0) AS CUSTDIST
-FROM _t1
+  c_count AS C_COUNT,
+  custdist AS CUSTDIST
+FROM _t0
 ORDER BY
   custdist DESC,
   c_count DESC

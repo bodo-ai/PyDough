@@ -3,14 +3,13 @@ WITH _s3 AS (
     COUNT() AS agg_0,
     coupons.merchant_id
   FROM main.coupons AS coupons
-  LEFT JOIN main.merchants AS merchants
-    ON coupons.merchant_id = merchants.mid
-  WHERE
-    (
+  JOIN main.merchants AS merchants
+    ON (
       (
         CAST(STRFTIME('%Y', coupons.created_at) AS INTEGER) - CAST(STRFTIME('%Y', merchants.created_at) AS INTEGER)
       ) * 12 + CAST(STRFTIME('%m', coupons.created_at) AS INTEGER) - CAST(STRFTIME('%m', merchants.created_at) AS INTEGER)
     ) = 0
+    AND coupons.merchant_id = merchants.mid
   GROUP BY
     coupons.merchant_id
 )

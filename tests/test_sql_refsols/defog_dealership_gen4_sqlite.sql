@@ -1,32 +1,41 @@
-WITH _t1 AS (
+WITH _s0 AS (
   SELECT
-    SUM(sales.sale_price) AS agg_0,
-    customers.state AS customer_state,
+    SUM(sale_price) AS agg_0,
+    customer_id,
     DATE(
-      sales.sale_date,
+      sale_date,
       'start of month',
       '-' || CAST((
         (
-          CAST(STRFTIME('%m', DATETIME(sales.sale_date)) AS INTEGER) - 1
+          CAST(STRFTIME('%m', DATETIME(sale_date)) AS INTEGER) - 1
         ) % 3
       ) AS TEXT) || ' months'
     ) AS quarter
-  FROM main.sales AS sales
-  LEFT JOIN main.customers AS customers
-    ON customers._id = sales.customer_id
+  FROM main.sales
   WHERE
-    CAST(STRFTIME('%Y', sales.sale_date) AS INTEGER) = 2023
+    CAST(STRFTIME('%Y', sale_date) AS INTEGER) = 2023
   GROUP BY
-    customers.state,
+    customer_id,
     DATE(
-      sales.sale_date,
+      sale_date,
       'start of month',
       '-' || CAST((
         (
-          CAST(STRFTIME('%m', DATETIME(sales.sale_date)) AS INTEGER) - 1
+          CAST(STRFTIME('%m', DATETIME(sale_date)) AS INTEGER) - 1
         ) % 3
       ) AS TEXT) || ' months'
     )
+), _t1 AS (
+  SELECT
+    SUM(_s0.agg_0) AS agg_0,
+    customers.state AS customer_state,
+    _s0.quarter
+  FROM _s0 AS _s0
+  JOIN main.customers AS customers
+    ON _s0.customer_id = customers._id
+  GROUP BY
+    customers.state,
+    _s0.quarter
 )
 SELECT
   quarter,

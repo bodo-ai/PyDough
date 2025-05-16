@@ -14,11 +14,10 @@ WITH _s0 AS (
     _s1.created_at AS created_at_1,
     _s0.user_id AS user_id
   FROM _s0 AS _s0
-  LEFT JOIN _s1 AS _s1
-    ON _s0.user_id = _s1.uid
-  WHERE
-    _s0.created_at <= DATETIME(_s1.created_at, '1 year')
+  JOIN _s1 AS _s1
+    ON _s0.created_at <= DATETIME(_s1.created_at, '1 year')
     AND _s0.created_at >= _s1.created_at
+    AND _s0.user_id = _s1.uid
 ), _s3 AS (
   SELECT
     _t0.user_id AS user_id

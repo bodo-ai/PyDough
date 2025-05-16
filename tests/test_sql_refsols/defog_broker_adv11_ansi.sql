@@ -14,24 +14,23 @@ WITH _t1 AS (
     sbtransaction.sbtxcustid AS customer_id,
     sbtransaction.sbtxtickerid AS ticker_id
   FROM main.sbtransaction AS sbtransaction
-), _s1 AS (
+), _t2 AS (
   SELECT
     sbticker.sbtickerid AS _id,
     sbticker.sbtickersymbol AS symbol
   FROM main.sbticker AS sbticker
-), _t2 AS (
-  SELECT
-    _s0.customer_id AS customer_id,
-    _s1.symbol AS symbol
-  FROM _s0 AS _s0
-  LEFT JOIN _s1 AS _s1
-    ON _s0.ticker_id = _s1._id
   WHERE
-    _s1.symbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
+    sbticker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
+), _s1 AS (
+  SELECT
+    _t2._id AS _id
+  FROM _t2 AS _t2
 ), _s3 AS (
   SELECT
-    _t2.customer_id AS customer_id
-  FROM _t2 AS _t2
+    _s0.customer_id AS customer_id
+  FROM _s0 AS _s0
+  JOIN _s1 AS _s1
+    ON _s0.ticker_id = _s1._id
 ), _t0 AS (
   SELECT
     1 AS _
