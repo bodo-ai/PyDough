@@ -35,12 +35,10 @@ def most_unreliable_products():
 
 def incident_rate_by_release_year():
     # Return, for each year, the incident rate for products released that year
-    device_info = devices.CALCULATE(
-        year=YEAR(product.release_date), n_incidents=COUNT(incidents)
-    )
+    device_info = devices.CALCULATE(year=YEAR(product.release_date))
     return (
         device_info.PARTITION(name="years", by=year)
-        .CALCULATE(year, ir=ROUND(SUM(device_info.n_incidents) / COUNT(device_info), 2))
+        .CALCULATE(year, ir=ROUND(COUNT(device_info.incidents) / COUNT(device_info), 2))
         .ORDER_BY(year.ASC())
     )
 
@@ -217,3 +215,39 @@ def country_combination_analysis():
             (1.0 * COUNT(selected_devices.incidents)) / COUNT(selected_devices), 2
         ),
     ).TOP_K(5, by=ir.DESC())
+
+
+def country_cartesian_oddball():
+    return countries.CALCULATE(name, n_other_countries=COUNT(other_countries)).ORDER_BY(
+        name.ASC()
+    )
+
+
+def monthly_incident_rate():
+    # For every month in 2020 and 2021, calculate the incident rate for devices
+    # in that month per million devices sold in the past 6 months, only considering
+    # devices manufactured in china.
+    months = (
+        calendar.CALCULATE(year=YEAR(calendar_day), month=MONTH(calendar_day))
+        .WHERE(ISIN(year, (2020, 2021)))
+        .PARTITION(name="months", by=(year, month))
+    )
+    return months.CALCULATE(
+        month=JOIN_STRINGS("-", year, LPAD(month, 2, "0")),
+        ir=ROUND(
+            (
+                1000000.0
+                * COUNT(
+                    calendar.incidents_reported.WHERE(
+                        device.manufacturing_country.name == "CN"
+                    )
+                )
+            )
+            / COUNT(
+                calendar.last_six_months.devices_sold.WHERE(
+                    manufacturing_country.name == "CN"
+                )
+            ),
+            2,
+        ),
+    ).ORDER_BY(month.ASC())

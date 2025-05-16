@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from technograph_pydough_functions import (
     battery_failure_rates_anomalies,
+    country_cartesian_oddball,
     country_combination_analysis,
     country_incident_rate_analysis,
     error_percentages_sun_set_by_error,
@@ -17,6 +18,7 @@ from technograph_pydough_functions import (
     hot_purchase_window,
     incident_rate_by_release_year,
     incident_rate_per_brand,
+    monthly_incident_rate,
     most_unreliable_products,
     year_cumulative_incident_rate_goldcopperstar,
     year_cumulative_incident_rate_overall,
@@ -370,6 +372,61 @@ from pydough.unqualified import (
                 ),
             ),
             id="country_combination_analysis",
+        ),
+        pytest.param(
+            (
+                country_cartesian_oddball,
+                "country_cartesian_oddball",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["CA", "CN", "FR", "JP", "MX", "US"],
+                        "n_other_countries": [6] * 6,
+                    }
+                ),
+            ),
+            id="country_cartesian_oddball",
+        ),
+        pytest.param(
+            (
+                monthly_incident_rate,
+                "monthly_incident_rate",
+                lambda: pd.DataFrame(
+                    {
+                        "month": [
+                            f"{year}-{month:02d}"
+                            for year in range(2020, 2022)
+                            for month in range(1, 13)
+                        ],
+                        "ir": [
+                            1654.39,
+                            1785.71,
+                            1310.47,
+                            1488.1,
+                            1453.0,
+                            1583.76,
+                            1903.77,
+                            2061.73,
+                            2411.87,
+                            2052.77,
+                            2269.29,
+                            2284.94,
+                            2059.54,
+                            2576.06,
+                            2103.12,
+                            2604.51,
+                            2560.57,
+                            3041.4,
+                            2405.83,
+                            3283.27,
+                            2478.68,
+                            2694.04,
+                            3474.37,
+                            3048.78,
+                        ],
+                    }
+                ),
+            ),
+            id="monthly_incident_rate",
         ),
     ],
 )
