@@ -559,7 +559,7 @@ class HybridCollectionAccess(HybridOperation):
         super().__init__(terms, {}, [], unique_exprs)
 
     def __repr__(self):
-        return f"COLLECTION[{self.collection.collection.name}]"
+        return f"COLLECTION[{self.collection.name}]"
 
 
 class HybridPartitionChild(HybridOperation):

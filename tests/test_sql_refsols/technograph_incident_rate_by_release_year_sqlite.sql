@@ -1,39 +1,46 @@
-WITH _t0 AS (
+WITH _s0 AS (
+  SELECT
+    de_product_id AS product_id
+  FROM main.devices
+), _t1 AS (
   SELECT
     pr_id AS _id,
     pr_release AS release_date
   FROM main.products
 ), _s6 AS (
   SELECT DISTINCT
-    CAST(STRFTIME('%Y', _t0.release_date) AS INTEGER) AS year
-  FROM main.devices AS devices
-  JOIN _t0 AS _t0
-    ON _t0._id = devices.de_product_id
-), _s5 AS (
+    CAST(STRFTIME('%Y', _t1.release_date) AS INTEGER) AS year
+  FROM _s0 AS _s0
+  JOIN _t1 AS _t1
+    ON _s0.product_id = _t1._id
+), _s7 AS (
   SELECT
     COUNT() AS agg_0,
-    in_device_id AS device_id
-  FROM main.incidents
+    CAST(STRFTIME('%Y', _t3.release_date) AS INTEGER) AS year_10
+  FROM main.devices AS devices
+  JOIN _t1 AS _t3
+    ON _t3._id = devices.de_product_id
+  JOIN main.incidents AS incidents
+    ON devices.de_id = incidents.in_device_id
   GROUP BY
-    in_device_id
-), _t1 AS (
+    CAST(STRFTIME('%Y', _t3.release_date) AS INTEGER)
+), _s11 AS (
   SELECT
     COUNT() AS agg_1,
-    SUM(COALESCE(_s5.agg_0, 0)) AS agg_0,
-    CAST(STRFTIME('%Y', _s3.release_date) AS INTEGER) AS year_13
-  FROM main.devices AS devices
-  JOIN _t0 AS _s3
-    ON _s3._id = devices.de_product_id
-  LEFT JOIN _s5 AS _s5
-    ON _s5.device_id = devices.de_id
+    CAST(STRFTIME('%Y', _t5.release_date) AS INTEGER) AS year_19
+  FROM _s0 AS _s8
+  JOIN _t1 AS _t5
+    ON _s8.product_id = _t5._id
   GROUP BY
-    CAST(STRFTIME('%Y', _s3.release_date) AS INTEGER)
+    CAST(STRFTIME('%Y', _t5.release_date) AS INTEGER)
 )
 SELECT
   _s6.year,
-  ROUND(CAST(COALESCE(_t1.agg_0, 0) AS REAL) / _t1.agg_1, 2) AS ir
+  ROUND(CAST(COALESCE(_s7.agg_0, 0) AS REAL) / _s11.agg_1, 2) AS ir
 FROM _s6 AS _s6
-JOIN _t1 AS _t1
-  ON _s6.year = _t1.year_13
+LEFT JOIN _s7 AS _s7
+  ON _s6.year = _s7.year_10
+JOIN _s11 AS _s11
+  ON _s11.year_19 = _s6.year
 ORDER BY
   year
