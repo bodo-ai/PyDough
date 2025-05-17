@@ -633,7 +633,7 @@ class HybridPartitionChild(HybridOperation):
         )
 
     def __repr__(self):
-        return "PARTITION_CHILD[*]"
+        return repr(self.subtree)
 
 
 class HybridCalculate(HybridOperation):
@@ -1410,6 +1410,7 @@ class HybridTree:
         child: "HybridTree",
         connection_type: ConnectionType,
         original_correlated_children: set[int],
+        required_steps: int,
     ) -> int:
         """
         Adds a new child operation to the current level so that operations in
@@ -1423,6 +1424,8 @@ class HybridTree:
             `original_correlated_children`: the set of indices of children that
             contain correlated references to the current hybrid tree before
             adding the child.
+            `required_steps`: the index of the step in the pipeline that must
+            be completed before the child can be defined.
 
         Returns:
             The index of the newly inserted child (or the index of an existing
@@ -1465,7 +1468,7 @@ class HybridTree:
                     existing_connection.subtree.agg_keys = child.agg_keys
                 return idx
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}
+            self, child, connection_type, required_steps, {}
         )
         if not connection_type.is_aggregation:
             child.agg_keys = None
@@ -1657,10 +1660,14 @@ class HybridTree:
             case HybridCorrelExpr():
                 HybridTree.renumber_children_indices(expr.expr, child_remapping)
 
-    def remove_dead_children(self) -> dict[int, int]:
+    def remove_dead_children(self, must_remove: set[int]) -> dict[int, int]:
         """
         Deletes any children of a hybrid tree that are no longer referenced
         after de-correlation.
+
+        Args:
+            `must_remove`: the set of indices of children that must be removed
+            if possible, even if their join type filters the current level.
 
         Returns:
             The mapping of children before vs after other children are deleted.
@@ -1679,6 +1686,15 @@ class HybridTree:
                 case _:
                     for term in operation.terms.values():
                         self.identify_children_used(term, children_to_delete)
+
+        for child_idx in range(len(self.children)):
+            if child_idx in must_remove:
+                continue
+            if (
+                self.children[child_idx].connection_type.is_semi
+                or self.children[child_idx].connection_type.is_anti
+            ):
+                children_to_delete.discard(child_idx)
 
         if len(children_to_delete) == 0:
             return {i: i for i in range(len(self.children))}
@@ -2100,7 +2116,10 @@ class HybridTranslator:
                     ConnectionType.SEMI
                 )
             child_idx_mapping[child_idx] = hybrid.add_child(
-                subtree, connection_type, original_correlated_children
+                subtree,
+                connection_type,
+                original_correlated_children,
+                max(len(hybrid.pipeline) - 1, 0),
             )
         self.stack.pop()
 
@@ -2965,6 +2984,9 @@ class HybridTranslator:
                 successor_hybrid.children[
                     partition_child_idx
                 ].subtree.agg_keys = key_exprs
+                successor_hybrid.children[partition_child_idx].subtree.join_keys = [
+                    (k, k) for k in key_exprs
+                ]
                 return successor_hybrid
             case OrderBy() | TopK():
                 hybrid = self.make_hybrid_tree(
@@ -3045,12 +3067,13 @@ class HybridTranslator:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
                         )
-                assert parent is not None
                 (
                     successor_hybrid._join_keys,
                     successor_hybrid._agg_keys,
                     successor_hybrid._general_join_condition,
-                ) = self.extract_link_root_info(parent, successor_hybrid, is_aggregate)
+                ) = self.extract_link_root_info(
+                    parent, successor_hybrid, is_aggregate, len(parent.children)
+                )
                 return successor_hybrid
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
@@ -3070,10 +3093,7 @@ class HybridTranslator:
     """
 
     def extract_link_root_info(
-        self,
-        parent: HybridTree,
-        tree: HybridTree,
-        is_agg: bool,
+        self, parent: HybridTree, tree: HybridTree, is_agg: bool, child_idx: int
     ) -> tuple[
         list[tuple[HybridExpr, HybridExpr]] | None,
         list[HybridExpr] | None,
@@ -3160,10 +3180,12 @@ class HybridTranslator:
                     agg_keys.append(HybridRefExpr(key_name, expr.typ))
                 # Mark the parent's connection to this child as
                 # correlated, and set the agg keys.
-                parent.correlated_children.add(len(parent.children))
+                parent.correlated_children.add(child_idx)
         return join_keys, agg_keys, general_join_cond
 
-    def make_extension_child(self, child: HybridTree, levels_up: int) -> HybridTree:
+    def make_extension_child(
+        self, child: HybridTree, levels_up: int, new_base: HybridTree
+    ) -> HybridTree:
         """
         TODO
         """
@@ -3172,14 +3194,19 @@ class HybridTranslator:
         if levels_up == 1:
             assert child.parent is not None
             child._join_keys, child._agg_keys, child._general_join_condition = (
-                self.extract_link_root_info(child.parent, child, True)
+                self.extract_link_root_info(
+                    new_base, child, True, len(new_base.children)
+                )
             )
             child._parent = None
             child._successor = None
         else:
             assert child.parent is not None
-            parent: HybridTree = self.make_extension_child(child.parent, levels_up - 1)
+            parent: HybridTree = self.make_extension_child(
+                child.parent, levels_up - 1, new_base
+            )
             parent.add_successor(child)
+            child._successor = None
         return child
 
     def can_syncretize_subtrees(
@@ -3228,8 +3255,9 @@ class HybridTranslator:
         base_child: HybridConnection = tree.children[base_idx]
         base_subtree: HybridTree = base_child.subtree
         extension_child: HybridConnection = tree.children[extension_idx]
+        existing_correlates: set[int] = set(base_subtree.correlated_children)
         extension_subtree: HybridTree = self.make_extension_child(
-            extension_child.subtree, extension_height
+            extension_child.subtree, extension_height, base_subtree
         )
         new_connection_type: ConnectionType = extension_child.connection_type
         need_extension_match_filter: bool = False
@@ -3240,12 +3268,14 @@ class HybridTranslator:
         else:
             need_extension_match_filter = new_connection_type.is_semi
 
+        required_steps: int = len(base_subtree.pipeline) - 1
+        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
+            required_steps -= 1
         new_child_idx: int = base_subtree.add_child(
-            extension_subtree, new_connection_type, base_subtree.correlated_children
+            extension_subtree, new_connection_type, existing_correlates, required_steps
         )
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
-        new_columns: dict[str, HybridExpr] = {}
         for agg_name, agg in extension_child.aggs.items():
             extension_op, base_op = self.supported_syncretize_operators[agg.operator]
 
@@ -3255,17 +3285,18 @@ class HybridTranslator:
                 extension_op, agg.args, agg.typ
             )
             new_extension_child.aggs[extension_agg_name] = extension_agg
-            switch_name: str = self.get_internal_name(
-                "expr", [base_subtree.pipeline[-1].terms, new_columns]
-            )
-            new_columns[switch_name] = HybridChildRefExpr(
+
+            child_expr: HybridExpr = HybridChildRefExpr(
                 extension_agg_name, new_child_idx, extension_agg.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, False
             )
 
             # Insert the top aggregation call into the base
             base_agg_name: str = self.gen_agg_name(base_child)
             base_agg: HybridFunctionExpr = HybridFunctionExpr(
-                base_op, [HybridRefExpr(switch_name, extension_agg.typ)], agg.typ
+                base_op, [switch_ref], agg.typ
             )
             base_child.aggs[base_agg_name] = base_agg
 
@@ -3278,9 +3309,9 @@ class HybridTranslator:
             remapping[old_child_ref] = new_child_ref
         # breakpoint()
 
-        base_subtree.pipeline.append(
-            HybridCalculate(base_subtree.pipeline[-1], new_columns, [])
-        )
+        # base_subtree.pipeline.append(
+        #     HybridCalculate(base_subtree.pipeline[-1], new_columns, [])
+        # )
 
         if need_extension_match_filter:
             raise NotImplementedError()
@@ -3322,6 +3353,6 @@ class HybridTranslator:
                 self.syncretize_subtrees(
                     tree, base_idx, extension_idx, extension_height
                 )
-            tree.remove_dead_children()
+            tree.remove_dead_children(children_to_delete)
         for child in tree.children:
             self.syncretize_children(child.subtree)

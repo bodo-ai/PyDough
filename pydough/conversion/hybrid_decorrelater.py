@@ -70,7 +70,9 @@ class Decorrelater:
                     "Malformed hybrid tree: partition data input to a partition node cannot contain a correlated reference to the partition node."
                 )
             result = self.make_decorrelate_parent(
-                hybrid.parent, len(hybrid.parent.children), len(hybrid.pipeline)
+                hybrid.parent,
+                len(hybrid.parent.children) - 1,
+                len(hybrid.parent.pipeline) - 1,
             )
             return result[0], result[1] + 1
         # Temporarily detach the successor of the current level, then create a
@@ -84,7 +86,11 @@ class Decorrelater:
         hybrid._successor = successor
         # Ensure the new parent only includes the children & pipeline operators
         # that is has to.
-        new_hybrid._children = new_hybrid._children[:child_idx]
+        new_hybrid._children = [
+            child
+            for child in new_hybrid.children
+            if child.required_steps < required_steps
+        ]
         new_hybrid._pipeline = new_hybrid._pipeline[: required_steps + 1]
         return new_hybrid, 0
 
@@ -303,7 +309,7 @@ class Decorrelater:
             )
             for i in range(1, child.required_steps + 1):
                 old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
-            child_remapping: dict[int, int] = old_parent.remove_dead_children()
+            child_remapping: dict[int, int] = old_parent.remove_dead_children(set())
             return child_remapping[child_idx]
         return child_idx
 
@@ -350,6 +356,7 @@ class Decorrelater:
                         child_idx,
                         hybrid.children[child_idx].required_steps,
                     )
+                    # breakpoint()
                     child_idx = self.decorrelate_child(
                         hybrid,
                         child_idx,
