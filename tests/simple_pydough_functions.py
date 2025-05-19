@@ -737,25 +737,6 @@ def window_sliding_frame_relsum():
     ).TOP_K(8, by=date_time.ASC())
 
 
-"""
-SELECT
-    sbTxId,
-    SUM(sbTxShares) OVER (ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN CURRENT ROW AND 4 FOLLOWING) AS w1,
-    SUM(sbTxShares) OVER (PARTITION BY sbCustName ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN CURRENT ROW AND 4 FOLLOWING) AS w2,
-    SUM(sbTxShares) OVER (ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) AS w3,
-    SUM(sbTxShares) OVER (PARTITION BY sbCustName ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) AS w4,
-    SUM(sbTxShares) OVER (ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING) AS w5,
-    SUM(sbTxShares) OVER (PARTITION BY sbCustName ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN UNBOUNDED PRECEDING AND 1 FOLLOWING) AS w6,
-    SUM(sbTxShares) OVER (ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING) AS w7,
-    SUM(sbTxShares) OVER (PARTITION BY sbCustName ORDER BY sbTxDateTime, sbTxId ASC ROWS BETWEEN 5 PRECEDING AND 1 PRECEDING) AS w8
-FROM sbCustomer
-INNER JOIN sbTransaction ON sbCustId = sbTxCustId
-ORDER BY sbTxDateTime ASC
-LIMIT 8
-;
-"""
-
-
 def supplier_pct_national_qty():
     # Find the 5 African suppliers with the highest percentage of total
     # quantity of product shipped from them out of all suppliers in that nation

@@ -45,13 +45,35 @@ def bad_window_4():
 
 
 def bad_window_5():
-    # Relsum with by but without cumulative
+    # Relsum with by but without cumulative/frame
     return Customers.CALCULATE(RELSUM(acctbal, by=acctbal.ASC()))
 
 
 def bad_window_6():
     # Relavg with cumulative but without by
     return Customers.CALCULATE(RELAVG(acctbal, cumulative=True))
+
+
+def bad_window_7():
+    # Relcount with frame but without by
+    return Customers.CALCULATE(RELCOUNT(acctbal, frame=(-10, 0)))
+
+
+def bad_window_8():
+    # Relsize with frame but AND cumulative
+    return Customers.CALCULATE(
+        RELSIZE(by=acctbal.ASC(), cumulative=True, frame=(-10, 0))
+    )
+
+
+def bad_window_9():
+    # Relsum with malformed frame: not an integer/null
+    return Customers.CALCULATE(RELSUM(by=acctbal.ASC(), frame=(-10.5, 0)))
+
+
+def bad_window_10():
+    # Relsum with malformed frame: lower > upper
+    return Customers.CALCULATE(RELSUM(by=acctbal.ASC(), frame=(0, -1)))
 
 
 def bad_lpad_1():

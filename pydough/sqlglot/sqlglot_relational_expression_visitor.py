@@ -276,7 +276,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # nonsensical TIME_STR_TO_TIME or DATE_STR_TO_DATE function which each
         # specific dialect is responsible for translating into its own logic.
         # Rather than have that logic show up in the ANSI sql text, we will
-        # instead create the CAST callsCURRENT ourselves.
+        # instead create the CAST calls ourselves.
         if self._dialect == DatabaseDialect.ANSI:
             if isinstance(literal_expression.value, datetime.date):
                 date: datetime.date = literal_expression.value
