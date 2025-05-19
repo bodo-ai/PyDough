@@ -90,7 +90,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
         Args:
             kwargs (dict[str, object]): The keyword arguments to parse, which
-            may include a `frame` argument or a `cumulative` argument. It
+            may include a `frame` argument or a `cumulative` argument. It is
+            assumed the keyword arguments are the correct types/formats.
 
         Returns:
             The window specification if applicable, otherwise None.
