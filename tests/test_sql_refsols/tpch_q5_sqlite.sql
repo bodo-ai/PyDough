@@ -1,9 +1,9 @@
 WITH _t1 AS (
   SELECT
-    MAX(nation.n_name) AS agg_3,
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS agg_0
+    )) AS agg_0,
+    MAX(nation.n_name) AS agg_3
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'

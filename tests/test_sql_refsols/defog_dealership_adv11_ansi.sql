@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    SUM(cars.cost) AS agg_1,
-    SUM(sales.sale_price) AS agg_0
+    SUM(sales.sale_price) AS agg_0,
+    SUM(cars.cost) AS agg_1
   FROM main.sales AS sales
   JOIN main.cars AS cars
     ON cars._id = sales.car_id

@@ -1,25 +1,5 @@
 WITH _s1 AS (
   SELECT
-    CAST((
-      SUM((
-        POWER(s_acctbal, 2)
-      )) - (
-        CAST((
-          POWER(SUM(s_acctbal), 2)
-        ) AS REAL) / COUNT(s_acctbal)
-      )
-    ) AS REAL) / COUNT(s_acctbal) AS agg_1,
-    CAST((
-      SUM((
-        POWER(s_acctbal, 2)
-      )) - (
-        CAST((
-          POWER(SUM(s_acctbal), 2)
-        ) AS REAL) / COUNT(s_acctbal)
-      )
-    ) AS REAL) / (
-      COUNT(s_acctbal) - 1
-    ) AS agg_3,
     POWER(
       (
         CAST((
@@ -34,6 +14,15 @@ WITH _s1 AS (
       ),
       0.5
     ) AS agg_0,
+    CAST((
+      SUM((
+        POWER(s_acctbal, 2)
+      )) - (
+        CAST((
+          POWER(SUM(s_acctbal), 2)
+        ) AS REAL) / COUNT(s_acctbal)
+      )
+    ) AS REAL) / COUNT(s_acctbal) AS agg_1,
     POWER(
       (
         CAST((
@@ -50,6 +39,17 @@ WITH _s1 AS (
       ),
       0.5
     ) AS agg_2,
+    CAST((
+      SUM((
+        POWER(s_acctbal, 2)
+      )) - (
+        CAST((
+          POWER(SUM(s_acctbal), 2)
+        ) AS REAL) / COUNT(s_acctbal)
+      )
+    ) AS REAL) / (
+      COUNT(s_acctbal) - 1
+    ) AS agg_3,
     s_nationkey AS nation_key
   FROM tpch.supplier
   GROUP BY

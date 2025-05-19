@@ -501,8 +501,9 @@ def get_by_arg(
         wrong type.
     """
     is_cumulative: bool = bool(kwargs.get("cumulative", False))
+    is_frame: bool = "frame" in kwargs
     has_by = "by" in kwargs
-    # Verify the arguments are well formed when cumulative=True.
+    # Verify the arguments are well formed when cumulative or frame are provided
     if is_cumulative:
         if not window_operator.allows_frame:
             raise PyDoughUnqualifiedException(
@@ -512,12 +513,41 @@ def get_by_arg(
             raise PyDoughUnqualifiedException(
                 f"The `by` argument to `{window_operator.function_name}` must be provided when the `cumulative` argument is True"
             )
+        if is_frame:
+            raise PyDoughUnqualifiedException(
+                f"The `cumulative` argument to `{window_operator.function_name}` cannot be used with the `frame` argument"
+            )
+    elif is_frame:
+        if not window_operator.allows_frame:
+            raise PyDoughUnqualifiedException(
+                f"The function `{window_operator.function_name}` does not allow the `frame` argument"
+            )
+        if not has_by:
+            raise PyDoughUnqualifiedException(
+                f"The `by` argument to `{window_operator.function_name}` must be provided when the `frame` argument is provided"
+            )
+        frame = kwargs.get("frame")
+        if not isinstance(frame, tuple) or len(frame) != 2:
+            raise PyDoughUnqualifiedException(
+                f"Malformed `frame` argument to `{window_operator.function_name}`: {frame!r} (must be a tuple of two integers or None values)"
+            )
+        lower, upper = frame
+        if not isinstance(lower, (int, type(None))) or not isinstance(
+            upper, (int, type(None))
+        ):
+            raise PyDoughUnqualifiedException(
+                f"Malformed `frame` argument to `{window_operator.function_name}`: {frame!r} (must be a tuple of two integers or None values)"
+            )
+        if lower is not None and upper is not None and lower > upper:
+            raise PyDoughUnqualifiedException(
+                f"Malformed `frame` argument to `{window_operator.function_name}`: {frame!r} (lower bound must be less than or equal to upper bound)"
+            )
     if has_by:
         # Verify the arguments are well formed when by is provided.
         if window_operator.allows_frame:
-            if not is_cumulative:
+            if not (is_cumulative or is_frame):
                 raise PyDoughUnqualifiedException(
-                    f"The `cumulative` argument to `{window_operator.function_name}` must be True when the `by` argument is provided"
+                    f"When the `by` argument to `{window_operator.function_name}` is provided, either `cumulative=True` or the `frame` argument must be provided"
                 )
         elif not window_operator.requires_order:
             raise PyDoughUnqualifiedException(

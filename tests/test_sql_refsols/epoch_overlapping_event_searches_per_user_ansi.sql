@@ -1,8 +1,8 @@
-WITH _t3 AS (
+WITH _t2 AS (
   SELECT
-    ANY_VALUE(users.user_name) AS agg_8,
+    COUNT() AS agg_0,
     ANY_VALUE(users.user_id) AS agg_10,
-    COUNT() AS agg_0
+    ANY_VALUE(users.user_name) AS agg_8
   FROM users AS users
   JOIN searches AS searches
     ON searches.search_user_id = users.user_id
@@ -16,26 +16,16 @@ WITH _t3 AS (
   GROUP BY
     searches.search_id,
     users.user_id
-), _t1 AS (
+), _t0 AS (
   SELECT
     ANY_VALUE(agg_8) AS agg_2,
-    ANY_VALUE(agg_8) AS user_name,
-    COUNT() AS n_searches
-  FROM _t3
+    COUNT() AS n_searches,
+    ANY_VALUE(agg_8) AS user_name
+  FROM _t2
   WHERE
     agg_0 > 0
   GROUP BY
     agg_10
-), _t0 AS (
-  SELECT
-    agg_2,
-    n_searches,
-    user_name
-  FROM _t1
-  ORDER BY
-    n_searches DESC,
-    agg_2
-  LIMIT 4
 )
 SELECT
   user_name,
@@ -44,3 +34,4 @@ FROM _t0
 ORDER BY
   n_searches DESC,
   agg_2
+LIMIT 4

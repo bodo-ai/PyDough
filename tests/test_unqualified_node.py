@@ -615,7 +615,7 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_5,
-            "The `cumulative` argument to `RELSUM` must be True when the `by` argument is provided",
+            "When the `by` argument to `RELSUM` is provided, either `cumulative=True` or the `frame` argument must be provided",
             id="bad_window_5",
         ),
         pytest.param(

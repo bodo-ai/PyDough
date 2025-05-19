@@ -36,10 +36,10 @@ WITH _s0 AS (
     searches.search_id
 ), _s11 AS (
   SELECT
-    COUNT() AS agg_3,
     SUM((
       NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
     )) AS agg_2,
+    COUNT() AS agg_3,
     _s0.name
   FROM _s0 AS _s0
   JOIN searches AS searches
@@ -52,8 +52,8 @@ WITH _s0 AS (
     _s0.name
 ), _s19 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(_s12.season_name = _s17.name) AS agg_0,
+    COUNT() AS agg_1,
     _s12.name
   FROM _s2 AS _s12
   JOIN events AS events
