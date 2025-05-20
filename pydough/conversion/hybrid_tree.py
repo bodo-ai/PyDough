@@ -1761,46 +1761,6 @@ class HybridTranslator:
         self.rewrite_median: bool = dialect not in {DatabaseDialect.ANSI}
 
     @staticmethod
-    def get_join_keys(
-        parent_tree: HybridTree,
-        subcollection_property: SubcollectionRelationshipMetadata,
-        child_node: HybridOperation,
-    ) -> list[tuple[HybridExpr, HybridExpr]]:
-        """
-        Fetches the list of keys used to join a child node relative to its
-        parent node, specifically when the child is a subcollection access.
-
-        Args:
-            `parent_tree`: the HybridTree corresponding to the parent to access
-            from.
-            `subcollection_property`: the metadata for the subcollection
-            access.
-            `child_node`: the HybridOperation node corresponding to the access.
-
-        Returns:
-            The list of tuples expressions used to join the child, expressed in
-            terms of its level, to its parent, where the first tuple element is
-            the parent key and the second one is the child key.
-        """
-        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
-        if isinstance(subcollection_property, SimpleJoinMetadata):
-            # If the subcollection is a simple join property, extract the keys.
-            for lhs_name in subcollection_property.keys:
-                lhs_key: HybridExpr = (
-                    parent_tree.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
-                )
-                for rhs_name in subcollection_property.keys[lhs_name]:
-                    rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
-                        rhs_name
-                    )
-                    join_keys.append((lhs_key, rhs_key))
-        elif not isinstance(subcollection_property, CartesianProductMetadata):
-            raise NotImplementedError(
-                f"Unsupported subcollection property type used for accessing a subcollection: {subcollection_property.__class__.__name__}"
-            )
-        return join_keys
-
-    @staticmethod
     def get_subcollection_join_keys(
         subcollection_property: SubcollectionRelationshipMetadata,
         parent_node: HybridOperation,
@@ -3120,9 +3080,9 @@ class HybridTranslator:
                         # keys of the tree which will be bubbled
                         # down throughout the entire child tree.
                         assert parent is not None
-                        join_keys = HybridTranslator.get_join_keys(
-                            parent,
+                        join_keys = HybridTranslator.get_subcollection_join_keys(
                             sub_property,
+                            parent.pipeline[-1],
                             operation,
                         )
                     elif isinstance(sub_property, GeneralJoinMetadata):
@@ -3181,6 +3141,7 @@ class HybridTranslator:
                 # Mark the parent's connection to this child as
                 # correlated, and set the agg keys.
                 parent.correlated_children.add(child_idx)
+
         return join_keys, agg_keys, general_join_cond
 
     def make_extension_child(

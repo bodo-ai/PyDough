@@ -489,7 +489,7 @@ class RelTranslation:
         # Build the corresponding (lhs_key == rhs_key) conditions
         cond_terms: list[RelationalExpression] = []
         if join_keys is not None:
-            for lhs_key, rhs_key in join_keys:
+            for lhs_key, rhs_key in sorted(join_keys, key=repr):
                 lhs_key_column: ColumnReference = lhs_result.expressions[
                     lhs_key
                 ].with_input(input_aliases[0])
