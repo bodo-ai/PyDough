@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s0 AS (
   SELECT
     events.ev_dt AS date_time
   FROM events AS events
@@ -10,23 +10,23 @@ WITH _s1 AS (
   FROM times AS times
   WHERE
     times.t_name = 'Pre-Dawn'
-), _s2 AS (
+), _s1 AS (
   SELECT
     _t1.end_hour AS end_hour,
     _t1.start_hour AS start_hour
   FROM _t1 AS _t1
-), _s0 AS (
+), _s2 AS (
   SELECT
-    _s1.date_time AS date_time
-  FROM _s1 AS _s1
+    _s0.date_time AS date_time
+  FROM _s0 AS _s0
   WHERE
     EXISTS(
       SELECT
         1 AS "1"
-      FROM _s2 AS _s2
+      FROM _s1 AS _s1
       WHERE
-        _s2.end_hour > CAST(STRFTIME('%H', _s1.date_time) AS INTEGER)
-        AND _s2.start_hour <= CAST(STRFTIME('%H', _s1.date_time) AS INTEGER)
+        _s1.end_hour > CAST(STRFTIME('%H', _s0.date_time) AS INTEGER)
+        AND _s1.start_hour <= CAST(STRFTIME('%H', _s0.date_time) AS INTEGER)
     )
 ), _t2 AS (
   SELECT
@@ -44,15 +44,15 @@ WITH _s1 AS (
 ), _t0 AS (
   SELECT
     1 AS _
-  FROM _s0 AS _s0
+  FROM _s2 AS _s2
   WHERE
     EXISTS(
       SELECT
         1 AS "1"
       FROM _s3 AS _s3
       WHERE
-        _s3.end_year > CAST(STRFTIME('%Y', _s0.date_time) AS INTEGER)
-        AND _s3.start_year <= CAST(STRFTIME('%Y', _s0.date_time) AS INTEGER)
+        _s3.end_year > CAST(STRFTIME('%Y', _s2.date_time) AS INTEGER)
+        AND _s3.start_year <= CAST(STRFTIME('%Y', _s2.date_time) AS INTEGER)
     )
 )
 SELECT

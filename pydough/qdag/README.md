@@ -37,7 +37,7 @@ Examples of how to use the node builder to construct QDAG nodes:
 ```python
 from pydough.qdag import AstNodeBuilder, ChildOperatorChildAccess
 from pydough.metadata import parse_json_metadata_from_file
-from pydough.types import Int64Type, StringType
+from pydough.types import NumericType, StringType
 
 # Define the graph metadata & create a node builder
 graph = parse_json_metadata_from_file(...)
@@ -45,7 +45,7 @@ builder = AstNodeBuilder(graph)
 
 # Build a literal node
 # Equivalent PyDough code: `1`
-literal_node = builder.build_literal(1, Int64Type())
+literal_node = builder.build_literal(1, NumericType())
 
 # Build a column property node
 # Equivalent PyDough code: `TPCH.Orders.order_date`
@@ -100,7 +100,7 @@ regions_collection = builder.build_child_access("Regions", global_context_node)
 nations_sub_collection = builder.build_child_access("nations", regions_collection)
 # Create WHERE(key == 4) condition
 key_ref = builder.build_reference(nations_sub_collection, "key")
-literal_4 = builder.build_literal(4, Int64Type())
+literal_4 = builder.build_literal(4, NumericType())
 condition = builder.build_expression_function_call("EQU", [key_ref, literal_4])
 # Build WHERE node with condition
 where_node = builder.build_where(nations_sub_collection, [])
@@ -163,23 +163,23 @@ Below are some examples of PyDough snippets that are/aren't affected by the rewr
 
 
 ```python
-# Will be rewritten to `Customers.CALCULATE(name, has_orders=COUNT(orders) > 0)`
-Customers.CALCULATE(name, has_orders=HAS(orders))
+# Will be rewritten to `customers.CALCULATE(name, has_orders=COUNT(orders) > 0)`
+customers.CALCULATE(name, has_orders=HAS(orders))
 
-# Will be rewritten to `Customers.CALCULATE(name, never_made_order=COUNT(orders) == 0)`
-Customers.CALCULATE(name, never_made_order=HASNOT(orders))
-
-# Will not be rewritten
-Customers.WHERE(HAS(orders) & (nation.region.name == "EUROPE"))
+# Will be rewritten to `customers.CALCULATE(name, never_made_order=COUNT(orders) == 0)`
+customers.CALCULATE(name, never_made_order=HASNOT(orders))
 
 # Will not be rewritten
-Customers.WHERE(HASNOT(orders))
+customers.WHERE(HAS(orders) & (nation.region.name == "EUROPE"))
+
+# Will not be rewritten
+customers.WHERE(HASNOT(orders))
 
 # Will be rewritten to
-# `Customers.WHERE((COUNT(orders) > 0) | (nation.region.name == "EUROPE"))`
-Customers.WHERE(HAS(orders) | (nation.region.name == "EUROPE"))
+# `customers.WHERE((COUNT(orders) > 0) | (nation.region.name == "EUROPE"))`
+customers.WHERE(HAS(orders) | (nation.region.name == "EUROPE"))
 
 # Will be rewritten to
-# `Customers.WHERE((COUNT(orders) == 0) | (acct_bal < 0))`
-Customers.WHERE(HASNOT(orders) | (acct_bal < 0))
+# `customers.WHERE((COUNT(orders) == 0) | (acct_bal < 0))`
+customers.WHERE(HASNOT(orders) | (acct_bal < 0))
 ```

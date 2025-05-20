@@ -6,7 +6,7 @@ HASNOT.
 __all__ = ["has_hasnot_rewrite"]
 
 
-from pydough.types import Int64Type
+from pydough.types import NumericType
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .expressions import (
@@ -55,7 +55,7 @@ def has_hasnot_rewrite(
             cmp_op = GRT if exp.operator == HAS else EQU
             return ExpressionFunctionCall(
                 cmp_op,
-                [ExpressionFunctionCall(COUNT, exp.args), Literal(0, Int64Type())],
+                [ExpressionFunctionCall(COUNT, exp.args), Literal(0, NumericType())],
             )
         elif exp.operator == BAN:
             # When processing an AND call, flatten its children that are also

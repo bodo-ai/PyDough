@@ -489,7 +489,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             )
         if keys:
             if aggregations:
-                query = query.group_by(*sorted(keys, key=repr))
+                grouping_keys: list[SQLGlotExpression] = []
+                for key in sorted(keys, key=repr):
+                    while isinstance(key, SQLGlotAlias):
+                        key = key.this
+                    if key not in grouping_keys:
+                        grouping_keys.append(key)
+                query = query.group_by(*grouping_keys)
             else:
                 query = query.distinct()
         self._stack.append(query)

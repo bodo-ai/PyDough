@@ -14,46 +14,21 @@ The types module provides functionality to define and manage various data types 
     - `json_string` property
     - `parse_from_string` static method
 
-### [integer_types.py](integer_types.py)
+### [numeric_type.py](numeric_type.py)
 
-- `IntegerType`: The PyDough type superclass for integers.
-- `Int8Type`: The PyDough type for 8-bit integers.
-- `Int16Type`: The PyDough type for 16-bit integers.
-- `Int32Type`: The PyDough type for 32-bit integers.
-- `Int64Type`: The PyDough type for 64-bit integers.
-
-### [float_types.py](float_types.py)
-
-- `Float32Type`: The PyDough type for 32-bit floating point numbers.
-- `Float64Type`: The PyDough type for 64-bit floating point numbers.
+- `NumericType`: The PyDough type for integers, floats and decimals, regardless of scale/precision.
 
 ### [boolean_type.py](boolean_type.py)
 
 - `BooleanType`: The PyDough type representing boolean values.
 
-### [decimal_type.py](decimal_type.py)
-
-- `DecimalType`: The PyDough type representing fixed point numbers with a precision and scale.
-
 ### [string_type.py](string_type.py)
 
-- `StringType`: The PyDough type representing strings.
+- `StringType`: The PyDough type representing strings and other bytes-like data.
 
-### [binary_type.py](binary_type.py)
+### [datetime_type.py](datetime_type.py)
 
-- `BinaryType`: The PyDough type representing binary data.
-
-### [date_type.py](date_type.py)
-
-- `DateType`: The PyDough type representing dates.
-
-### [time_type.py](time_type.py)
-
-- `TimeType`: The PyDough type representing time of day. A time type can have a precision indicating the number of sub-second decimal points.
-
-### [timestamp_type.py](timestamp_type.py)
-
-- `TimestampType`: The PyDough type representing timestamps. A timestamp type can have a precision indicating the number of sub-second decimal points, and also an optional time zone for the type.
+- `DatetimeType`: The PyDough type representing date/timestamp values, regardless of precision/time zone.
 
 ### [array_type.py](array_type.py)
 
@@ -88,16 +63,16 @@ The types module provides a comprehensive set of data types that can be used to 
 To use the types module, you can import the necessary classes and call them with the appropriate arguments. For example:
 
 ```python
-from pydough.types import Int64Type, StringType, StructType, parse_type_from_string
+from pydough.types import NumericType, StringType, StructType, parse_type_from_string
 
 # Create an integer type
-int_type = Int64Type()
+nt = NumericType()
 
 # Create a string type
-string_type = StringType()
+st = StringType()
 
 # Create a struct type with fields
-struct_type = StructType([("id", int_type), ("name", string_type)])
+struct_type = StructType([("id", nt), ("name", st)])
 
 # Serialize the struct type to a JSON string
 json_string = struct_type.json_string
@@ -106,6 +81,6 @@ json_string = struct_type.json_string
 parsed_type = StructType.parse_from_string(json_string)
 
 # Parse a map type from a json string (the keys are strings and the values are
-# arrays of int64 values)
-map_str_arr_int64 = parse_type_from_string("map[string,array[int64]]")
+# arrays of numeric values)
+map_str_arr_numeric = parse_type_from_string("map[string,array[numeric]]")
 ```

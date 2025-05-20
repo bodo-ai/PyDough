@@ -94,21 +94,21 @@ export function showNodeTooltip(tooltip, node, event, elementId) {
   }
 
   // Add relationships with smaller font
-  if (node.subcollections && node.subcollections.length > 0) {
+  if (node.sub_collections && node.sub_collections.length > 0) {
     tooltipContent += `<div class="tooltip-section">
       <div class="tooltip-section-title">Relationships</div>
       <div class="tooltip-small-content">`;
 
     // Only show first 5 relationships with smaller font to keep compact
-    const displayRelations = node.subcollections.slice(0, 5);
+    const displayRelations = node.sub_collections.slice(0, 5);
     displayRelations.forEach((rel) => {
-      tooltipContent += `<div class="tooltip-relation">${rel.name} <span class="tooltip-relation-type">(${rel.type} → ${rel.target})</span></div>`;
+      tooltipContent += `<div class="tooltip-relation">${rel.name} <span class="tooltip-relation-type">(${rel.type} → ${rel.target.id})</span></div>`;
     });
 
     // If more relationships exist, add a count
-    if (node.subcollections.length > 5) {
+    if (node.sub_collections.length > 5) {
       tooltipContent += `<div class="tooltip-more">+${
-        node.subcollections.length - 5
+        node.sub_collections.length - 5
       } more</div>`;
     }
 
@@ -163,30 +163,59 @@ export function showLinkTooltip(tooltip, link, event, elementId) {
 
   // Add minimal relationship properties
   if (
-    link.type === "simple_join" ||
-    link.type === "compound" ||
-    link.type === "general_join"
+    link.type === "simple join" ||
+    link.type === "cartesian product" ||
+    link.type === "reverse" ||
+    link.type === "general join"
   ) {
     tooltipContent += `
     <tr>
       <td class="tooltip-label">Singular:</td>
-      <td><span class="${link.singular ? "true-value" : "false-value"}">${
-      link.singular ? "Yes" : "No"
+      <td><span class="${link.data.singular ? "true-value" : "false-value"}">${
+      link.data.singular ? "Yes" : "No"
     }</span></td>
     </tr>
     <tr>
-      <td class="tooltip-label">No Collisions:</td>
-      <td><span class="${link.noCollisions ? "true-value" : "false-value"}">${
-      link.noCollisions ? "Yes" : "No"
+      <td class="tooltip-label">Always Matches:</td>
+      <td><span class="${link.data["always matches"] ? "true-value" : "false-value"}">${
+      link.data["always matches"] ? "Yes" : "No"
     }</span></td>
-    </tr>`;
+    `;
+
+    // If it's a simple join, add the keys
+    if (link.type === "simple join" && link.data.keys) {
+      tooltipContent += `
+      <tr>
+        <td class="tooltip-label">Keys:</td>
+        <td>`
+      
+      Object.entries(link.data.keys).forEach(([lhsKey, rhsKeys], index) => {
+        rhsKeys.forEach((rhsKey) => {
+          if (index > 0) { tooltipContent += `<br>`; }
+          tooltipContent += `
+          self.${lhsKey} = other.${rhsKey}
+          `;
+        });
+      });
+      tooltipContent += `</td>
+      </tr>`;
+    }
 
     // If it's a general join, add the condition
-    if (link.type === "general_join" && link.condition) {
+    if (link.type === "general join" && link.data.condition) {
       tooltipContent += `
       <tr>
         <td class="tooltip-label">Condition:</td>
-        <td>${link.condition}</td>
+        <td>${link.data.condition}</td>
+      </tr>`;
+    }
+
+    // If it's a reverse, add the reverse info
+    if (link.type === "reverse") {
+      tooltipContent += `
+      <tr>
+        <td class="tooltip-label">Reverse of:</td>
+        <td>${link.data["original parent"]}.${link.data["original property"]}</td>
       </tr>`;
     }
   }

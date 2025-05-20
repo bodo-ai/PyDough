@@ -508,23 +508,23 @@ Structure of PyDough graph: TPCH
   ├── name
   ├── nation_key
   ├── phone
-  ├── nation [one member of nations] (reverse of nations.customers)
-  └── orders [multiple orders] (reverse of orders.customer)
+  ├── nation [one member of nations]
+  └── orders [multiple orders]
 
   nations
   ├── comment
   ├── key
   ├── name
   ├── region_key
-  ├── customers [multiple customers] (reverse of customers.nation)
-  ├── region [one member of regions] (reverse of regions.nations)
-  └── suppliers [multiple suppliers] (reverse of suppliers.nation)
+  ├── customers [multiple customers]
+  ├── region [one member of regions]
+  └── suppliers [multiple suppliers]
 
   regions
   ├── comment
   ├── key
   ├── name
-  └── nations [multiple nations] (reverse of nations.region)
+  └── nations [multiple nations]
 
 ...
 ```

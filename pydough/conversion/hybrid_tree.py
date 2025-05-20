@@ -50,7 +50,6 @@ from pydough.qdag import (
     CollationExpression,
     CollectionAccess,
     ColumnProperty,
-    CompoundSubCollection,
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
@@ -70,7 +69,7 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.relational import JoinType
-from pydough.types import BooleanType, Float64Type, Int64Type, PyDoughType
+from pydough.types import BooleanType, NumericType, PyDoughType
 
 
 class HybridExpr(ABC):
@@ -560,7 +559,7 @@ class HybridCollectionAccess(HybridOperation):
         super().__init__(terms, {}, [], unique_exprs)
 
     def __repr__(self):
-        return f"COLLECTION[{self.collection.collection.name}]"
+        return f"COLLECTION[{self.collection.name}]"
 
 
 class HybridPartitionChild(HybridOperation):
@@ -761,6 +760,13 @@ class HybridChildPullUp(HybridOperation):
                 break
             current_level = current_level.parent
             extra_height += 1
+
+        if self.child.connection_type.is_aggregation:
+            agg_keys: list[HybridExpr] | None = self.child.subtree.agg_keys
+            if agg_keys is not None:
+                for agg_key in agg_keys:
+                    if isinstance(agg_key, HybridRefExpr):
+                        self.pullup_remapping[agg_key] = agg_key
 
         super().__init__(terms, renamings, [], unique_exprs)
 
@@ -1340,7 +1346,15 @@ class HybridTree:
             child that matches it).
         """
         for idx, existing_connection in enumerate(self.children):
-            if (child == existing_connection.subtree) or (
+            if (
+                child == existing_connection.subtree
+                and (child.join_keys, child.general_join_condition, child.agg_keys)
+                == (
+                    existing_connection.subtree.join_keys,
+                    existing_connection.subtree.general_join_condition,
+                    existing_connection.subtree.agg_keys,
+                )
+            ) or (
                 isinstance(self.pipeline[0], HybridPartition)
                 and (child.parent is None)
                 and (len(child.pipeline) == 1)
@@ -1395,6 +1409,70 @@ class HybridTree:
             )
             assert shifted_join_condition is not None
             successor.general_join_condition = shifted_join_condition
+
+    def always_exists(self) -> bool:
+        """
+        Returns whether the hybrid tree & its ancestors always exist with
+        regards to the parent context. This is true if all of the level
+        changing operations (e.g. sub-collection accesses) are guaranteed to
+        always have a match, and all other pipeline operations are guaranteed
+        to not filter out any records.
+
+        There is no need to check the children data (except for partitions &
+        pull-ups) since the only way a child could cause the current context
+        to reduce records is if there is a HAS/HASNOT somewhere, which
+        would mean there is a filter in the pipeline.
+        """
+        # Verify that the first operation in the pipeline guarantees a match
+        # with every record from the previous level (or parent context if it
+        # is the top level)
+        start_operation: HybridOperation = self.pipeline[0]
+        match start_operation:
+            case HybridCollectionAccess():
+                if isinstance(start_operation.collection, TableCollection):
+                    # Regular table collection accesses always exist.
+                    pass
+                else:
+                    # Sub-collection accesses are only guaranteed to exist if
+                    # the metadata property has `always matches` set to True.
+                    assert isinstance(start_operation.collection, SubCollection)
+                    meta: SubcollectionRelationshipMetadata = (
+                        start_operation.collection.subcollection_property
+                    )
+                    if not meta.always_matches:
+                        return False
+            case HybridPartition():
+                # For partition nodes, verify the data being partitioned always
+                # exists.
+                if not self.children[0].subtree.always_exists():
+                    return False
+            case HybridChildPullUp():
+                # For pull-up nodes, make sure the data being pulled up always
+                # exists.
+                if not start_operation.child.subtree.always_exists():
+                    return False
+            case HybridPartitionChild():
+                # Stepping into a partition child always has a matching data
+                # record for each parent, by definition.
+                pass
+            case _:
+                raise NotImplementedError(
+                    f"Invalid start of pipeline: {start_operation.__class__.__name__}"
+                )
+        # Check the operations after the start of the pipeline, returning False if
+        # there are any operations that could remove a row.
+        for operation in self.pipeline[1:]:
+            match operation:
+                case HybridCalculate() | HybridNoop() | HybridRoot():
+                    continue
+                case HybridFilter() | HybridLimit():
+                    return False
+                case operation:
+                    raise NotImplementedError(
+                        f"Invalid intermediary pipeline operation: {operation.__class__.__name__}"
+                    )
+        # The current level is fine, so check any levels above it next.
+        return True if self.parent is None else self.parent.always_exists()
 
 
 class HybridTranslator:
@@ -1758,6 +1836,14 @@ class HybridTranslator:
                     )
                 )
             self.alias_counter = snapshot
+            # If the subtree is guaranteed to exist with regards to the current
+            # context, promote it by reconciling with SEMI so the logic will
+            # not worry about trying to maintain records of the parent even
+            # when the child does not exist.
+            if (not connection_type.is_anti) and subtree.always_exists():
+                connection_type = connection_type.reconcile_connection_types(
+                    ConnectionType.SEMI
+                )
             child_idx_mapping[child_idx] = hybrid.add_child(
                 subtree, connection_type, original_correlated_children
             )
@@ -1797,7 +1883,7 @@ class HybridTranslator:
         ):
             agg_ref = HybridFunctionExpr(
                 pydop.DEFAULT_TO,
-                [agg_ref, HybridLiteralExpr(Literal(0, Int64Type()))],
+                [agg_ref, HybridLiteralExpr(Literal(0, NumericType()))],
                 agg_call.typ,
             )
         return agg_ref
@@ -2069,34 +2155,34 @@ class HybridTranslator:
         # used to aggregate the child connection.
         assert len(expr.args) == 1
         data_expr: HybridExpr = expr.args[0]
-        one: HybridExpr = HybridLiteralExpr(Literal(1.0, Float64Type()))
-        two: HybridExpr = HybridLiteralExpr(Literal(2.0, Float64Type()))
+        one: HybridExpr = HybridLiteralExpr(Literal(1.0, NumericType()))
+        two: HybridExpr = HybridLiteralExpr(Literal(2.0, NumericType()))
         assert child_connection.subtree.agg_keys is not None
         partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
         order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
         rank: HybridExpr = HybridWindowExpr(
-            pydop.RANKING, [], partition_args, order_args, Int64Type(), {}
+            pydop.RANKING, [], partition_args, order_args, NumericType(), {}
         )
         rows: HybridExpr = HybridWindowExpr(
-            pydop.RELCOUNT, [data_expr], partition_args, [], Int64Type(), {}
+            pydop.RELCOUNT, [data_expr], partition_args, [], NumericType(), {}
         )
         adjusted_rank: HybridExpr = HybridFunctionExpr(
-            pydop.SUB, [rank, one], Float64Type()
+            pydop.SUB, [rank, one], NumericType()
         )
         adjusted_rows: HybridExpr = HybridFunctionExpr(
-            pydop.SUB, [rows, one], Float64Type()
+            pydop.SUB, [rows, one], NumericType()
         )
         centerpoint: HybridExpr = HybridFunctionExpr(
-            pydop.DIV, [adjusted_rows, two], Float64Type()
+            pydop.DIV, [adjusted_rows, two], NumericType()
         )
         distance_from_center = HybridFunctionExpr(
             pydop.ABS,
             [
                 HybridFunctionExpr(
-                    pydop.SUB, [adjusted_rank, centerpoint], Float64Type()
+                    pydop.SUB, [adjusted_rank, centerpoint], NumericType()
                 )
             ],
-            Float64Type(),
+            NumericType(),
         )
         is_median_row: HybridExpr = HybridFunctionExpr(
             pydop.LET, [distance_from_center, one], BooleanType()
@@ -2337,8 +2423,7 @@ class HybridTranslator:
                 back_idx: int = 0
                 true_steps_back: int = 0
                 # Keep stepping backward until `expr.back_levels` non-hidden
-                # steps have been taken (to ignore steps that are part of a
-                # compound).
+                # steps have been taken.
                 collection = expr.collection
                 while true_steps_back < expr.back_levels:
                     assert collection.ancestor_context is not None
@@ -2530,8 +2615,6 @@ class HybridTranslator:
         match node:
             case GlobalContext():
                 return HybridTree(HybridRoot(), node.ancestral_mapping)
-            case CompoundSubCollection():
-                raise NotImplementedError(f"{node.__class__.__name__}")
             case TableCollection() | SubCollection():
                 collection_access = HybridCollectionAccess(node)
                 successor_hybrid = HybridTree(collection_access, node.ancestral_mapping)
@@ -2651,9 +2734,7 @@ class HybridTranslator:
             case ChildOperatorChildAccess():
                 assert parent is not None
                 match node.child_access:
-                    case TableCollection() | SubCollection() if not isinstance(
-                        node.child_access, CompoundSubCollection
-                    ):
+                    case TableCollection() | SubCollection():
                         collection_access = HybridCollectionAccess(node.child_access)
                         successor_hybrid = HybridTree(
                             collection_access,
@@ -2684,6 +2765,8 @@ class HybridTranslator:
                                     {},
                                     False,
                                 )
+                            elif isinstance(sub_property, CartesianProductMetadata):
+                                pass
                             else:
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"
