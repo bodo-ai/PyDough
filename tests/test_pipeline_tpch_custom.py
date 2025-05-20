@@ -36,6 +36,13 @@ from simple_pydough_functions import (
     common_prefix_f,
     common_prefix_g,
     common_prefix_h,
+    common_prefix_i,
+    common_prefix_j,
+    common_prefix_k,
+    common_prefix_l,
+    common_prefix_m,
+    common_prefix_n,
+    common_prefix_o,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -1926,6 +1933,235 @@ from pydough.unqualified import (
             ),
             id="common_prefix_h",
         ),
+        pytest.param(
+            (
+                common_prefix_i,
+                None,
+                "common_prefix_i",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["FRANCE", "ROMANIA", "RUSSIA", "JORDAN", "CHINA"],
+                        "n_customers": [6100, 6100, 6078, 6033, 6024],
+                        "n_selected_orders": [1, 2, 1, 1, 1],
+                    }
+                ),
+            ),
+            id="common_prefix_i",
+        ),
+        pytest.param(
+            (
+                common_prefix_j,
+                None,
+                "common_prefix_j",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_name": [f"Customer#{i:09}" for i in range(1, 6)],
+                        "nation_name": [
+                            "MOROCCO",
+                            "JORDAN",
+                            "ARGENTINA",
+                            "EGYPT",
+                            "CANADA",
+                        ],
+                        "region_name": [
+                            "AFRICA",
+                            "MIDDLE EAST",
+                            "AMERICA",
+                            "MIDDLE EAST",
+                            "AMERICA",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_j",
+        ),
+        pytest.param(
+            (
+                common_prefix_k,
+                None,
+                "common_prefix_k",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_name": [f"Customer#{i:09}" for i in range(1, 6)],
+                        "region_name": [
+                            "AFRICA",
+                            "MIDDLE EAST",
+                            "AMERICA",
+                            "MIDDLE EAST",
+                            "AMERICA",
+                        ],
+                        "nation_name": [
+                            "MOROCCO",
+                            "JORDAN",
+                            "ARGENTINA",
+                            "EGYPT",
+                            "CANADA",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_k",
+        ),
+        pytest.param(
+            (
+                common_prefix_l,
+                None,
+                "common_prefix_l",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_name": [f"Customer#{i:09}" for i in (11, 15, 18, 20, 26)],
+                        "nation_name": [
+                            "UNITED KINGDOM",
+                            "UNITED KINGDOM",
+                            "FRANCE",
+                            "RUSSIA",
+                            "RUSSIA",
+                        ],
+                        "n_selected_suppliers": [173, 173, 167, 182, 182],
+                        "selected_suppliers_min": [
+                            -898.3,
+                            -898.3,
+                            -993.76,
+                            -878.57,
+                            -878.57,
+                        ],
+                        "selected_suppliers_max": [
+                            9938.53,
+                            9938.53,
+                            9807.46,
+                            9837.53,
+                            9837.53,
+                        ],
+                        "selected_suppliers_avg": [
+                            4496.83,
+                            4496.83,
+                            4725.76,
+                            4943.47,
+                            4943.47,
+                        ],
+                        "selected_suppliers_sum": [
+                            777952.16,
+                            777952.16,
+                            789202.26,
+                            899711.81,
+                            899711.81,
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_l",
+        ),
+        pytest.param(
+            (
+                common_prefix_m,
+                None,
+                "common_prefix_m",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_name": [f"Customer#{i:09}" for i in (11, 15, 18, 20, 26)],
+                        "n_selected_suppliers": [173, 173, 167, 182, 182],
+                        "selected_suppliers_min": [
+                            -898.3,
+                            -898.3,
+                            -993.76,
+                            -878.57,
+                            -878.57,
+                        ],
+                        "selected_suppliers_max": [
+                            9938.53,
+                            9938.53,
+                            9807.46,
+                            9837.53,
+                            9837.53,
+                        ],
+                        "selected_suppliers_avg": [
+                            4496.83,
+                            4496.83,
+                            4725.76,
+                            4943.47,
+                            4943.47,
+                        ],
+                        "selected_suppliers_sum": [
+                            777952.16,
+                            777952.16,
+                            789202.26,
+                            899711.81,
+                            899711.81,
+                        ],
+                        "nation_name": [
+                            "UNITED KINGDOM",
+                            "UNITED KINGDOM",
+                            "FRANCE",
+                            "RUSSIA",
+                            "RUSSIA",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_m",
+        ),
+        pytest.param(
+            (
+                common_prefix_n,
+                None,
+                "common_prefix_n",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1275072, 435237, 4682917, 2020999, 4069735],
+                        "order_date": [
+                            "1998-06-20",
+                            "1998-06-16",
+                            "1998-06-14",
+                            "1998-04-28",
+                            "1998-04-22",
+                        ],
+                        "n_elements": [5, 7, 7, 5, 7],
+                        "n_unique_containers": [4, 6, 6, 4, 6],
+                        "n_unique_supplier_nations": [4, 6, 5, 4, 6],
+                        "max_supplier_balance": [
+                            5882.44,
+                            7205.20,
+                            9487.41,
+                            8399.47,
+                            8471.66,
+                        ],
+                        "n_small_parts": [0, 1, 2, 0, 2],
+                    }
+                ),
+            ),
+            id="common_prefix_n",
+        ),
+        pytest.param(
+            (
+                common_prefix_o,
+                None,
+                "common_prefix_o",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [435237, 4682917, 4069735, 464226, 791522],
+                        "order_date": [
+                            "1998-06-16",
+                            "1998-06-14",
+                            "1998-04-22",
+                            "1998-01-07",
+                            "1997-10-18",
+                        ],
+                        "n_elements": [7] * 5,
+                        "n_unique_containers": [6] * 5,
+                        "n_unique_supplier_nations": [6, 5, 6, 6, 6],
+                        "max_supplier_balance": [
+                            7205.20,
+                            9487.41,
+                            8471.66,
+                            9852.52,
+                            9182.14,
+                        ],
+                        "n_small_parts": [1, 2, 2, 2, 1],
+                    }
+                ),
+            ),
+            id="common_prefix_o",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -2015,6 +2251,7 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    print(result.to_string())
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

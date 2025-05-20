@@ -953,6 +953,178 @@ def common_prefix_h():
     )
 
 
+def common_prefix_i():
+    # For each nation, count how many customers it has, and how many orders
+    # were made by customers in that nation in December of 1992 through clerk
+    # 272. Does NOT preserve any nations without any such orders. Keeps the
+    # 5 kept nations with the most total customers.
+    selected_orders = customers.orders.WHERE(
+        (YEAR(order_date) == 1992)
+        & (MONTH(order_date) == 12)
+        & (clerk == "Clerk#000000272")
+    )
+    return (
+        nations.CALCULATE(
+            name,
+            n_customers=COUNT(customers),
+            n_selected_orders=COUNT(selected_orders),
+        )
+        .WHERE(HAS(selected_orders))
+        .TOP_K(5, by=(n_customers.DESC(), name.ASC()))
+    )
+
+
+def common_prefix_j():
+    # For each customer, get its nation name and region name, and pick the
+    # first 5 customers alphabetically.
+    return customers.CALCULATE(
+        cust_name=name,
+        nation_name=nation.name,
+        region_name=nation.region.name,
+    ).TOP_K(5, by=name.ASC())
+
+
+def common_prefix_k():
+    # Same as common_prefix_j, but a different order of the fields.
+    return (
+        customers.CALCULATE(
+            region_name=nation.region.name,
+        )
+        .CALCULATE(
+            cust_name=name,
+            region_name=region_name,
+            nation_name=nation.name,
+        )
+        .TOP_K(5, by=name.ASC())
+    )
+
+
+def common_prefix_l():
+    # For each european customer, get its nation name and count the number of
+    # suppliers in the same nation who supply at least 5 mint products, as well
+    # as the minimum, maximum, average and total account balance of all such
+    # suppliers, and pick the first 5 customers alphabetically.
+    mint_part = supply_records.part.WHERE(CONTAINS(name, "mint"))
+    selected_suppliers = nation.suppliers.WHERE(COUNT(mint_part) >= 5)
+    selected_customers = customers.WHERE(nation.region.name == "EUROPE").TOP_K(
+        5, by=name.ASC()
+    )
+    return selected_customers.CALCULATE(
+        cust_name=name,
+        nation_name=nation.name,
+        n_selected_suppliers=COUNT(selected_suppliers),
+        selected_suppliers_min=MIN(selected_suppliers.account_balance),
+        selected_suppliers_max=MAX(selected_suppliers.account_balance),
+        selected_suppliers_avg=ROUND(AVG(selected_suppliers.account_balance), 2),
+        selected_suppliers_sum=SUM(selected_suppliers.account_balance),
+    )
+
+
+def common_prefix_m():
+    # Same as common_prefix_l, but a different order of the fields.
+    mint_part = supply_records.part.WHERE(CONTAINS(name, "mint"))
+    selected_suppliers = nation.suppliers.WHERE(COUNT(mint_part) >= 5)
+    selected_customers = customers
+    return (
+        selected_customers.CALCULATE(
+            cust_name=name,
+            n_selected_suppliers=COUNT(selected_suppliers),
+            selected_suppliers_min=MIN(selected_suppliers.account_balance),
+            selected_suppliers_max=MAX(selected_suppliers.account_balance),
+            selected_suppliers_avg=ROUND(AVG(selected_suppliers.account_balance), 2),
+            selected_suppliers_sum=SUM(selected_suppliers.account_balance),
+        )
+        .CALCULATE(
+            cust_name,
+            n_selected_suppliers,
+            selected_suppliers_min,
+            selected_suppliers_max,
+            selected_suppliers_avg,
+            selected_suppliers_sum,
+            nation_name=nation.name,
+        )
+        .WHERE(nation.region.name == "EUROPE")
+        .TOP_K(5, by=name.ASC())
+    )
+
+
+def common_prefix_n():
+    # For each order handled by clerk 540, get the number of elements in the
+    # order, the number of unique container types in the order, the number of
+    # of distinct nation that supplied the orders, the maximum account
+    # balance of any of the order's suppliers, and the number of items in the
+    # order that were for a small part. Only consider orders where there is at
+    # least one duplicate supplier nation and at least one duplicate container.
+    # Pick the five most qualifying orders, breaking ties by the key.
+    small_parts = lines.part.WHERE(STARTSWITH(container, "SM"))
+    selected_orders = orders.WHERE(clerk == "Clerk#000000540")
+    return (
+        selected_orders.CALCULATE(
+            key,
+            order_date,
+            n_elements=COUNT(lines),
+            n_unique_containers=NDISTINCT(lines.part.container),
+            n_unique_supplier_nations=NDISTINCT(lines.supplier.nation.name),
+            max_supplier_balance=MAX(lines.supplier.account_balance),
+            n_small_parts=COUNT(lines.part.WHERE(STARTSWITH(container, "SM"))),
+        )
+        .WHERE(
+            (n_elements > n_unique_containers)
+            & (n_elements > n_unique_supplier_nations)
+        )
+        .TOP_K(5, by=(order_date.DESC(), key.ASC()))
+    )
+
+
+def common_prefix_o():
+    # Same as common_prefix_n, but only allowing orders with at least
+    # 1 small part
+    small_parts = lines.part.WHERE(STARTSWITH(container, "SM"))
+    selected_orders = orders.WHERE((clerk == "Clerk#000000540") & HAS(small_parts))
+    return (
+        selected_orders.CALCULATE(
+            key,
+            order_date,
+            n_elements=COUNT(lines),
+            n_unique_containers=NDISTINCT(lines.part.container),
+            n_unique_supplier_nations=NDISTINCT(lines.supplier.nation.name),
+            max_supplier_balance=MAX(lines.supplier.account_balance),
+            n_small_parts=COUNT(small_parts),
+        )
+        .WHERE(
+            (n_elements > n_unique_containers)
+            & (n_elements > n_unique_supplier_nations)
+        )
+        .TOP_K(5, by=(order_date.DESC(), key.ASC()))
+    )
+
+
+"""
+SELECT
+    n_name,
+    COUNT(DISTINCT c_custkey) AS n_customers,
+    SUM(n) AS n_orders
+FROM nation
+INNER JOIN customer on n_nationkey = c_nationkey
+LEFT JOIN (
+    SELECT
+        o_custkey,
+        COUNT(*) AS n
+    FROM orders
+    WHERE strftime('%Y', o_orderdate) = '1992'
+    AND strftime('%m', o_orderdate) = '12'
+    AND o_clerk = 'Clerk#000000272'
+    GROUP BY 1
+) ON c_custkey = o_custkey
+GROUP BY 1
+HAVING n_orders > 0
+ORDER BY 2 DESC, 1 ASC
+LIMIT 5
+;
+
+"""
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,

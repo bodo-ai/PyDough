@@ -25,6 +25,7 @@ __all__ = [
     "HybridTree",
 ]
 
+import copy
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -139,7 +140,7 @@ class HybridExpr(ABC):
         TODO
         """
         if self in replacements:
-            return replacements[self]
+            return copy.deepcopy(replacements[self])
         return self
 
 
@@ -1573,6 +1574,29 @@ class HybridTree:
                     raise NotImplementedError(
                         f"Invalid intermediary pipeline operation: {operation.__class__.__name__}"
                     )
+        # The current level is fine, so check any levels above it next.
+        return True if self.parent is None else self.parent.always_exists()
+
+    def is_singular(self) -> bool:
+        """
+        TODO
+        """
+        match self.pipeline[0]:
+            case HybridCollectionAccess():
+                if isinstance(self.pipeline[0].collection, TableCollection):
+                    pass
+                else:
+                    assert isinstance(self.pipeline[0].collection, SubCollection)
+                    meta: SubcollectionRelationshipMetadata = self.pipeline[
+                        0
+                    ].collection.subcollection_property
+                    if not meta.singular:
+                        return False
+            case HybridChildPullUp():
+                if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
+                    return False
+            case _:
+                return False
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.always_exists()
 
@@ -3176,24 +3200,6 @@ class HybridTranslator:
         """
         TODO
         """
-        match (base_child.connection_type, extension_child.connection_type):
-            case (
-                (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION)
-                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.AGGREGATION)
-                | (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
-                | (
-                    ConnectionType.AGGREGATION_ONLY_MATCH,
-                    ConnectionType.AGGREGATION_ONLY_MATCH,
-                )
-            ):
-                pass
-            case _:
-                return False, -1
-        if not all(
-            agg.operator in self.supported_syncretize_operators
-            for agg in extension_child.aggs.values()
-        ):
-            return False, -1
         prefix_levels_up: int = 0
         base_subtree: HybridTree = base_child.subtree
         crawl_subtree: HybridTree = extension_child.subtree
@@ -3206,28 +3212,73 @@ class HybridTranslator:
             prefix_levels_up += 1
         return True, prefix_levels_up
 
-    def syncretize_subtrees(
-        self, tree: HybridTree, base_idx: int, extension_idx: int, extension_height: int
+    def add_extension_semi_count_filter(
+        self, tree: HybridTree, extension_idx: int
     ) -> None:
         """
         TODO
         """
-        remapping: dict[HybridExpr, HybridExpr] = {}
-        base_child: HybridConnection = tree.children[base_idx]
-        base_subtree: HybridTree = base_child.subtree
         extension_child: HybridConnection = tree.children[extension_idx]
-        existing_correlates: set[int] = set(base_subtree.correlated_children)
-        extension_subtree: HybridTree = self.make_extension_child(
-            extension_child.subtree, extension_height, base_subtree
+        agg_call: HybridFunctionExpr = HybridFunctionExpr(
+            pydop.COUNT, [], NumericType()
         )
+        agg_name: str
+        if agg_call in extension_child.aggs.values():
+            agg_name = extension_child.fetch_agg_name(agg_call)
+        else:
+            agg_name = self.gen_agg_name(extension_child)
+            extension_child.aggs[agg_name] = agg_call
+        agg_ref: HybridExpr = HybridChildRefExpr(agg_name, extension_idx, NumericType())
+        # Insert the new filter right after the required steps index,
+        # and update other children accordingly.
+        insert_idx: int = extension_child.required_steps + 1
+        tree.pipeline.insert(
+            insert_idx,
+            HybridFilter(
+                tree.pipeline[-1],
+                HybridFunctionExpr(
+                    pydop.GRT,
+                    [agg_ref, HybridLiteralExpr(Literal(0, NumericType()))],
+                    BooleanType(),
+                ),
+            ),
+        )
+        for child in tree.children:
+            if child.required_steps > insert_idx:
+                child.required_steps += 1
+
+    def syncretize_agg_onto_agg(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+        existing_correlates: set[int],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
         new_connection_type: ConnectionType = extension_child.connection_type
-        need_extension_match_filter: bool = False
+
         if extension_subtree.always_exists():
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
-        else:
-            need_extension_match_filter = new_connection_type.is_semi
+        elif new_connection_type.is_semi:
+            # If the extension child does not always exist but the parent
+            # must not preserve non-matching records, then convert it to a
+            # regular aggregation and add a filter to the parent where COUNT
+            # is > 0, and allow this count to be split by the extension child.
+            if new_connection_type.is_aggregation:
+                self.add_extension_semi_count_filter(tree, extension_idx)
+                new_connection_type = ConnectionType.AGGREGATION
+            else:
+                raise NotImplementedError("Unsupported syncretization pattern")
 
         required_steps: int = len(base_subtree.pipeline) - 1
         if isinstance(base_subtree.pipeline[-1], HybridCalculate):
@@ -3268,17 +3319,53 @@ class HybridTranslator:
                 base_agg_name, base_idx, agg.typ
             )
             remapping[old_child_ref] = new_child_ref
-        # breakpoint()
 
-        # base_subtree.pipeline.append(
-        #     HybridCalculate(base_subtree.pipeline[-1], new_columns, [])
-        # )
+    def syncretize_subtrees(
+        self, tree: HybridTree, base_idx: int, extension_idx: int, extension_height: int
+    ) -> bool:
+        """
+        TODO
+        """
+        remapping: dict[HybridExpr, HybridExpr] = {}
+        base_child: HybridConnection = tree.children[base_idx]
+        base_subtree: HybridTree = base_child.subtree
+        extension_child: HybridConnection = tree.children[extension_idx]
+        existing_correlates: set[int] = set(base_subtree.correlated_children)
+        extension_subtree: HybridTree = self.make_extension_child(
+            copy.deepcopy(extension_child.subtree), extension_height, base_subtree
+        )
 
-        if need_extension_match_filter:
-            raise NotImplementedError()
+        if not extension_subtree.is_singular():
+            if not all(
+                agg.operator in self.supported_syncretize_operators
+                for agg in extension_child.aggs.values()
+            ):
+                return False
+
+        if (
+            base_child.connection_type.is_aggregation
+            and extension_child.connection_type.is_aggregation
+        ):
+            if not all(
+                agg.operator in self.supported_syncretize_operators
+                for agg in extension_child.aggs.values()
+            ):
+                return False
+            self.syncretize_agg_onto_agg(
+                tree,
+                base_idx,
+                extension_idx,
+                extension_subtree,
+                remapping,
+                existing_correlates,
+            )
+        else:
+            return False
 
         for operation in tree.pipeline:
             operation.replace_expressions(remapping)
+
+        return True
 
     def syncretize_children(self, tree: HybridTree) -> None:
         """
@@ -3310,10 +3397,11 @@ class HybridTranslator:
                     or base_idx in children_to_delete
                 ):
                     continue
-                children_to_delete.add(extension_idx)
-                self.syncretize_subtrees(
+                success: bool = self.syncretize_subtrees(
                     tree, base_idx, extension_idx, extension_height
                 )
+                if success:
+                    children_to_delete.add(extension_idx)
             tree.remove_dead_children(children_to_delete)
         for child in tree.children:
             self.syncretize_children(child.subtree)
