@@ -14,7 +14,7 @@ def correl_1():
     # letter as the region. This is a true correlated join doing an aggregated
     # access without requiring the RHS be present.
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .CALCULATE(
             region_name,
             n_prefix_nations=COUNT(nations.WHERE(name[:1] == region_name[:1])),
@@ -31,7 +31,7 @@ def correl_2():
     # access without requiring the RHS be present.
     selected_custs = customers.WHERE(comment[:1] == LOWER(region_name[:1]))
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .WHERE(~STARTSWITH(name, "A"))
         .nations.CALCULATE(
             name,
@@ -49,7 +49,7 @@ def correl_3():
     # present.
     selected_custs = customers.WHERE(comment[:2] == LOWER(region_name[:2]))
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .CALCULATE(region_name, n_nations=COUNT(nations.WHERE(HAS(selected_custs))))
         .ORDER_BY(name.ASC())
     )
@@ -60,12 +60,12 @@ def correl_4():
     # Find every nation that does not have a customer whose account balance is
     # within $5 of the smallest known account balance globally.
     # (This is a correlated ANTI-join)
-    selected_customers = customers.WHERE(acctbal <= (smallest_bal + 5.0))
+    selected_customers = customers.WHERE(account_balance <= (smallest_bal + 5.0))
     return (
         TPCH.CALCULATE(
-            smallest_bal=MIN(Customers.acctbal),
+            smallest_bal=MIN(customers.account_balance),
         )
-        .Nations.CALCULATE(name)
+        .nations.CALCULATE(name)
         .WHERE(HASNOT(selected_customers))
         .ORDER_BY(name.ASC())
     )
@@ -81,9 +81,9 @@ def correl_5():
     )
     return (
         TPCH.CALCULATE(
-            smallest_bal=MIN(Suppliers.account_balance),
+            smallest_bal=MIN(suppliers.account_balance),
         )
-        .Regions.CALCULATE(name)
+        .regions.CALCULATE(name)
         .WHERE(HAS(selected_suppliers))
         .ORDER_BY(name.ASC())
     )
@@ -97,7 +97,7 @@ def correl_6():
     # require that records without the RHS be kept.
     selected_nations = nations.WHERE(name[:1] == region_name[:1])
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .WHERE(HAS(selected_nations))
         .CALCULATE(name, n_prefix_nations=COUNT(selected_nations))
     )
@@ -110,7 +110,7 @@ def correl_7():
     # nation. The true correlated join is trumped by the correlated ANTI-join.
     selected_nations = nations.WHERE(name[:1] == region_name[:1])
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .WHERE(HASNOT(selected_nations))
         .CALCULATE(name, n_prefix_nations=COUNT(selected_nations))
     )
@@ -125,7 +125,7 @@ def correl_8():
     # present.
     aug_region = region.WHERE(name[:1] == nation_name[:1])
     return (
-        Nations.CALCULATE(nation_name=name)
+        nations.CALCULATE(nation_name=name)
         .CALCULATE(name, rname=aug_region.name)
         .ORDER_BY(name.ASC())
     )
@@ -139,7 +139,7 @@ def correl_9():
     # access that also requires the RHS records be present.
     aug_region = region.WHERE(name[:1] == nation_name[:1])
     return (
-        Nations.CALCULATE(nation_name=name)
+        nations.CALCULATE(nation_name=name)
         .WHERE(HAS(aug_region))
         .CALCULATE(name, rname=aug_region.name)
         .ORDER_BY(name.ASC())
@@ -155,7 +155,7 @@ def correl_10():
     # the correlated ANTI-join.
     aug_region = region.WHERE(name[:1] == nation_name[:1])
     return (
-        Nations.CALCULATE(nation_name=name)
+        nations.CALCULATE(nation_name=name)
         .WHERE(HASNOT(aug_region))
         .CALCULATE(name, rname=aug_region.name)
         .ORDER_BY(name.ASC())
@@ -167,10 +167,10 @@ def correl_11():
     # Which part brands have at least 1 part that more than 40% above the
     # average retail price for all parts from that brand.
     # (This is a correlated SEMI-join)
-    brands = Parts.PARTITION(name="brands", by=brand).CALCULATE(
-        avg_price=AVG(Parts.retail_price)
+    brands = parts.PARTITION(name="brands", by=brand).CALCULATE(
+        avg_price=AVG(parts.retail_price)
     )
-    outlier_parts = Parts.WHERE(retail_price > 1.4 * avg_price)
+    outlier_parts = parts.WHERE(retail_price > 1.4 * avg_price)
     selected_brands = brands.WHERE(HAS(outlier_parts))
     return selected_brands.CALCULATE(brand).ORDER_BY(brand.ASC())
 
@@ -181,11 +181,11 @@ def correl_12():
     # price for parts of that brand, below the average retail price for all
     # parts, and has a size below 3.
     # (This is a correlated SEMI-join)
-    global_info = TPCH.CALCULATE(global_avg_price=AVG(Parts.retail_price))
-    brands = global_info.Parts.PARTITION(name="brands", by=brand).CALCULATE(
-        brand_avg_price=AVG(Parts.retail_price)
+    global_info = TPCH.CALCULATE(global_avg_price=AVG(parts.retail_price))
+    brands = global_info.parts.PARTITION(name="brands", by=brand).CALCULATE(
+        brand_avg_price=AVG(parts.retail_price)
     )
-    selected_parts = Parts.WHERE(
+    selected_parts = parts.WHERE(
         (retail_price > brand_avg_price)
         & (retail_price < global_avg_price)
         & (size < 3)
@@ -201,12 +201,12 @@ def correl_13():
     # from nations #1/#2/#3, and small parts.
     # (This is a correlated SEMI-joins)
     selected_part = part.WHERE(
-        STARTSWITH(container, "SM") & (retail_price < (supplycost * 1.5))
+        STARTSWITH(container, "SM") & (retail_price < (supply_cost * 1.5))
     )
-    selected_supply_records = supply_records.CALCULATE(supplycost).WHERE(
+    selected_supply_records = supply_records.CALCULATE(supply_cost).WHERE(
         HAS(selected_part)
     )
-    supplier_info = Suppliers.WHERE(nation_key <= 3).CALCULATE(
+    supplier_info = suppliers.WHERE(nation_key <= 3).CALCULATE(
         avg_price=AVG(supply_records.part.retail_price)
     )
     selected_suppliers = supplier_info.WHERE(COUNT(selected_supply_records) > 0)
@@ -222,13 +222,13 @@ def correl_14():
     # (This is multiple correlated SEMI-joins)
     selected_part = part.WHERE(
         (container == "LG DRUM")
-        & (retail_price < (supplycost * 1.5))
+        & (retail_price < (supply_cost * 1.5))
         & (retail_price < avg_price)
     )
-    selected_supply_records = supply_records.CALCULATE(supplycost).WHERE(
+    selected_supply_records = supply_records.CALCULATE(supply_cost).WHERE(
         HAS(selected_part)
     )
-    supplier_info = Suppliers.WHERE(nation_key == 19).CALCULATE(
+    supplier_info = suppliers.WHERE(nation_key == 19).CALCULATE(
         avg_price=AVG(supply_records.part.retail_price)
     )
     selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
@@ -245,18 +245,18 @@ def correl_15():
     # (This is multiple correlated SEMI-joins & a correlated aggregate)
     selected_part = part.WHERE(
         (container == "LG DRUM")
-        & (retail_price < (supplycost * 1.5))
+        & (retail_price < (supply_cost * 1.5))
         & (retail_price < supplier_avg_price)
         & (retail_price < global_avg_price * 0.85)
     )
-    selected_supply_records = supply_records.CALCULATE(supplycost).WHERE(
+    selected_supply_records = supply_records.CALCULATE(supply_cost).WHERE(
         HAS(selected_part)
     )
-    supplier_info = Suppliers.WHERE(nation_key == 19).CALCULATE(
+    supplier_info = suppliers.WHERE(nation_key == 19).CALCULATE(
         supplier_avg_price=AVG(supply_records.part.retail_price)
     )
     selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
-    global_info = TPCH.CALCULATE(global_avg_price=AVG(Parts.retail_price))
+    global_info = TPCH.CALCULATE(global_avg_price=AVG(parts.retail_price))
     return global_info.CALCULATE(n=COUNT(selected_suppliers))
 
 
@@ -268,10 +268,10 @@ def correl_16():
     # customers. Percentile should be measured down to increments of 0.01%.
     # (This is a correlated SEMI-joins)
     selected_customers = nation.CALCULATE(rname=region.name).customers.WHERE(
-        (PERCENTILE(by=(acctbal.ASC(), key.ASC()), n_buckets=10000) == tile)
+        (PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000) == tile)
         & (rname == "EUROPE")
     )
-    supplier_info = Suppliers.CALCULATE(
+    supplier_info = suppliers.CALCULATE(
         tile=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000)
     )
     selected_suppliers = supplier_info.WHERE(HAS(selected_customers))
@@ -284,7 +284,7 @@ def correl_17():
     # pair as a string.
     # (This is a correlated singular/semi access)
     region_info = region.CALCULATE(fname=JOIN_STRINGS("-", LOWER(name), lname))
-    nation_info = Nations.CALCULATE(lname=LOWER(name)).WHERE(HAS(region_info))
+    nation_info = nations.CALCULATE(lname=LOWER(name)).WHERE(HAS(region_info))
     return nation_info.CALCULATE(fullname=region_info.fname).ORDER_BY(fullname.ASC())
 
 
@@ -295,15 +295,15 @@ def correl_18():
     # ordered multiple orders in on that day. Only considers orders made in
     # 1993.
     # (This is a correlated aggregation access)
-    cust_date_groups = Orders.WHERE(YEAR(order_date) == 1993).PARTITION(
+    cust_date_groups = orders.WHERE(YEAR(order_date) == 1993).PARTITION(
         name="groups",
         by=(customer_key, order_date),
     )
-    above_average_orders = Orders.WHERE(total_price >= 0.5 * total_price_sum)
+    above_average_orders = orders.WHERE(total_price >= 0.5 * total_price_sum)
     selected_groups = (
-        cust_date_groups.WHERE(COUNT(Orders) > 1)
+        cust_date_groups.WHERE(COUNT(orders) > 1)
         .CALCULATE(
-            total_price_sum=SUM(Orders.total_price),
+            total_price_sum=SUM(orders.total_price),
         )
         .WHERE(HAS(above_average_orders))
         .CALCULATE(n_above_avg=COUNT(above_average_orders))
@@ -317,9 +317,9 @@ def correl_19():
     # higher account balance than that supplier. Pick the 5 suppliers with the
     # largest such count.
     # (This is a correlated aggregation access)
-    super_cust = nation.customers.WHERE(acctbal > account_balance)
+    super_cust = nation.customers.WHERE(account_balance > supplier_balance)
     return (
-        Suppliers.CALCULATE(account_balance)
+        suppliers.CALCULATE(supplier_balance=account_balance)
         .WHERE(HAS(super_cust))
         .CALCULATE(supplier_name=name, n_super_cust=COUNT(super_cust))
         .TOP_K(5, n_super_cust.DESC())
@@ -332,7 +332,7 @@ def correl_20():
     # customer in the same nation, only counting instances where the order was
     # made in June of 1998.
     # (This is a correlated singular/semi access)
-    selected_orders = Nations.CALCULATE(source_nation_name=name).customers.orders.WHERE(
+    selected_orders = nations.CALCULATE(source_nation_name=name).customers.orders.WHERE(
         (YEAR(order_date) == 1998) & (MONTH(order_date) == 6)
     )
     supplier_nation = supplier.nation.CALCULATE(domestic=name == source_nation_name)
@@ -347,7 +347,7 @@ def correl_21():
     # Count how many part sizes have an above-average number of parts
     # of that size.
     # (This is a correlated aggregation access)
-    sizes = Parts.PARTITION(name="sizes", by=size).CALCULATE(n_parts=COUNT(Parts))
+    sizes = parts.PARTITION(name="sizes", by=size).CALCULATE(n_parts=COUNT(parts))
     return TPCH.CALCULATE(avg_n_parts=AVG(sizes.n_parts)).CALCULATE(
         n_sizes=COUNT(sizes.WHERE(n_parts > avg_n_parts))
     )
@@ -360,9 +360,9 @@ def correl_22():
     # & part type is above the global average retail price.
     # (This is a correlated aggregation access)
     return (
-        TPCH.CALCULATE(global_avg_price=AVG(Parts.retail_price))
-        .Parts.PARTITION(name="groups", by=(container, part_type))
-        .CALCULATE(avg_price=AVG(Parts.retail_price))
+        TPCH.CALCULATE(global_avg_price=AVG(parts.retail_price))
+        .parts.PARTITION(name="groups", by=(container, part_type))
+        .CALCULATE(avg_price=AVG(parts.retail_price))
         .WHERE(avg_price > global_avg_price)
         .PARTITION(
             name="containers",
@@ -378,7 +378,7 @@ def correl_23():
     # Counts how many part sizes have an above-average number of combinations
     # of part types/containers.
     # (This is a correlated aggregation access)
-    combo_groups = Parts.PARTITION(name="groups", by=(size, part_type, container))
+    combo_groups = parts.PARTITION(name="groups", by=(size, part_type, container))
     size_groups = combo_groups.PARTITION(name="sizes", by=size).CALCULATE(
         n_combos=COUNT(groups)
     )
@@ -392,16 +392,16 @@ def correl_24():
     # total price that was between the average for that month and the previous
     # month. Drop year/month combos that have no such orders.
     # (This is a correlated semi/aggregation access)
-    order_info = Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)).WHERE(
+    order_info = orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date)).WHERE(
         year < 1994
     )
     month_info = order_info.PARTITION(name="months", by=(year, month)).CALCULATE(
-        curr_month_avg_price=AVG(Orders.total_price),
+        curr_month_avg_price=AVG(orders.total_price),
         prev_month_avg_price=PREV(
-            AVG(Orders.total_price), by=(year.ASC(), month.ASC())
+            AVG(orders.total_price), by=(year.ASC(), month.ASC())
         ),
     )
-    chosen_orders_from_month = Orders.WHERE(
+    chosen_orders_from_month = orders.WHERE(
         MONOTONIC(prev_month_avg_price, total_price, curr_month_avg_price)
         | MONOTONIC(curr_month_avg_price, total_price, prev_month_avg_price)
     )
@@ -429,7 +429,7 @@ def correl_25():
         )
     )
     return (
-        Regions.CALCULATE(cust_region_name=name, cust_region_key=key)
+        regions.CALCULATE(cust_region_name=name, cust_region_key=key)
         .nations.CALCULATE(cust_nation_name=name, cust_nation_key=key)
         .customers.WHERE(HAS(urgent_semi_domestic_rail_orders))
         .CALCULATE(
@@ -454,7 +454,7 @@ def correl_26():
         (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
     ).lines.WHERE(supplier.nation.name == nation_name)
     return (
-        Nations.CALCULATE(nation_name=name)
+        nations.CALCULATE(nation_name=name)
         .WHERE(region.name == "EUROPE")
         .WHERE(HAS(selected_lines))
         .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
@@ -468,7 +468,7 @@ def correl_27():
         (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
     ).lines.WHERE(supplier.nation.name == nation_name)
     return (
-        Nations.CALCULATE(nation_name=name)
+        nations.CALCULATE(nation_name=name)
         .WHERE((region.name == "EUROPE") & HAS(selected_lines))
         .WHERE(HAS(selected_lines))
         .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
@@ -482,7 +482,7 @@ def correl_28():
         (YEAR(order_date) == 1994) & (order_priority == "1-URGENT")
     ).lines.WHERE(supplier.nation.name == nation_name)
     return (
-        Nations.CALCULATE(nation_name=name)
+        nations.CALCULATE(nation_name=name)
         .WHERE(HAS(selected_lines))
         .WHERE(region.name == "EUROPE")
         .CALCULATE(nation_name, n_selected_purchases=COUNT(selected_lines))
@@ -497,12 +497,12 @@ def correl_29():
     # for customers/suppliers in that nation, and the min/max account balance
     # of customers in that nation. Only consider nations that have at least 1
     # such customer/supplier, and sort by region key followed by nation name.
-    above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
+    above_avg_customers = customers.WHERE(account_balance > avg_cust_acctbal)
     above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
     return (
-        Nations.CALCULATE(
+        nations.CALCULATE(
             nation_name=name,
-            avg_cust_acctbal=AVG(customers.acctbal),
+            avg_cust_acctbal=AVG(customers.account_balance),
             avg_supp_acctbal=AVG(suppliers.account_balance),
         )
         .ORDER_BY(
@@ -519,8 +519,8 @@ def correl_29():
             & ISIN(region_key, (1, 3))
         )
         .CALCULATE(
-            min_cust_acctbal=MIN(customers.acctbal),
-            max_cust_acctbal=MAX(customers.acctbal),
+            min_cust_acctbal=MIN(customers.account_balance),
+            max_cust_acctbal=MAX(customers.account_balance),
         )
         .CALCULATE(
             region_key,
@@ -537,11 +537,11 @@ def correl_30():
     # Edge case for de-correlation behavior: for each nation not in Asia,
     # Africa, or the Middle East, count how many customers/suppliers have an
     # above-average account balance.
-    above_avg_customers = customers.WHERE(acctbal > avg_cust_acctbal)
+    above_avg_customers = customers.WHERE(account_balance > avg_cust_acctbal)
     above_avg_suppliers = suppliers.WHERE(account_balance > avg_supp_acctbal)
     return (
-        Nations.CALCULATE(
-            avg_cust_acctbal=AVG(customers.acctbal),
+        nations.CALCULATE(
+            avg_cust_acctbal=AVG(customers.account_balance),
             avg_supp_acctbal=AVG(suppliers.account_balance),
             region_name=LOWER(region.name),
         )
@@ -578,7 +578,7 @@ def correl_31():
         .CALCULATE(revenue=extended_price * (1 - discount))
     )
     return (
-        Nations.CALCULATE(cust_nation_key=key)
+        nations.CALCULATE(cust_nation_key=key)
         .WHERE(region.name == "EUROPE")
         .WHERE(HAS(selected_lines))
         .CALCULATE(
@@ -599,12 +599,12 @@ def correl_32():
         phone[-1:] == cust_phone[-1:]
     )
     return (
-        Customers.CALCULATE(cust_phone=phone)
-        .WHERE(mktsegment == "AUTOMOBILE")
+        customers.CALCULATE(cust_phone=phone)
+        .WHERE(market_segment == "AUTOMOBILE")
         .WHERE(HAS(selected_suppliers))
         .CALCULATE(
             customer_name=name,
-            delta=ABS(acctbal - MEDIAN(selected_suppliers.account_balance)),
+            delta=ABS(account_balance - MEDIAN(selected_suppliers.account_balance)),
         )
         .TOP_K(5, by=delta.ASC())
     )
@@ -612,9 +612,9 @@ def correl_32():
 
 def correl_33():
     # Counts how many orders were made in the first month of orders being made.
-    return TPCH.CALCULATE(first_order_date=MIN(Orders.order_date)).CALCULATE(
+    return TPCH.CALCULATE(first_order_date=MIN(orders.order_date)).CALCULATE(
         n=COUNT(
-            Orders.WHERE(
+            orders.WHERE(
                 (YEAR(order_date) == YEAR(first_order_date))
                 & (MONTH(order_date) == MONTH(first_order_date))
             )

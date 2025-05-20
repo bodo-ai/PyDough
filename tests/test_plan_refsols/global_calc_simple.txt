@@ -1,2 +1,2 @@
-ROOT(columns=[('a', 0:int64), ('b', 'X':string), ('c', 3.14:float64), ('d', True:bool)], orderings=[])
+ROOT(columns=[('a', 0:numeric), ('b', 'X':string), ('c', 3.14:numeric), ('d', True:bool)], orderings=[])
  EMPTYSINGLETON()

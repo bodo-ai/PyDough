@@ -67,20 +67,20 @@ Collections: graph contains no collections
                 """
 PyDough graph: TPCH
 Collections:
-  Customers
-  Lineitems
-  Nations
-  Orders
-  PartSupp
-  Parts
-  Regions
-  Suppliers
+  customers
+  lines
+  nations
+  orders
+  parts
+  regions
+  suppliers
+  supply_records
 Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
 Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected.
 """,
                 """
 PyDough graph: TPCH
-Collections: Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+Collections: customers, lines, nations, orders, parts, regions, suppliers, supply_records
 Call pydough.explain(graph[collection_name]) to learn more about any of these collections.
 Call pydough.explain_structure(graph) to see how all of the collections in the graph are connected.
 """,
@@ -89,40 +89,39 @@ Call pydough.explain_structure(graph) to see how all of the collections in the g
         ),
         pytest.param(
             (
-                ("TPCH", "Customers", None),
+                ("TPCH", "customers", None),
                 """
-PyDough collection: Customers
+PyDough collection: customers
 Table path: tpch.CUSTOMER
-Unique properties of collection: ['key']
+Unique properties of collection: ['key', 'name']
 Scalar properties:
-  acctbal
+  account_balance
   address
   comment
   key
-  mktsegment
+  market_segment
   name
   nation_key
   phone
 Subcollection properties:
   nation
   orders
-  region
-Call pydough.explain(graph['Customers'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['customers'][property_name]) to learn more about any of these properties.
 """,
                 """
-PyDough collection: Customers
-Scalar properties: acctbal, address, comment, key, mktsegment, name, nation_key, phone
-Subcollection properties: nation, orders, region
-Call pydough.explain(graph['Customers'][property_name]) to learn more about any of these properties.
+PyDough collection: customers
+Scalar properties: account_balance, address, comment, key, market_segment, name, nation_key, phone
+Subcollection properties: nation, orders
+Call pydough.explain(graph['customers'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_customers",
         ),
         pytest.param(
             (
-                ("TPCH", "Regions", None),
+                ("TPCH", "regions", None),
                 """
-PyDough collection: Regions
+PyDough collection: regions
 Table path: tpch.REGION
 Unique properties of collection: ['key']
 Scalar properties:
@@ -130,29 +129,25 @@ Scalar properties:
   key
   name
 Subcollection properties:
-  customers
-  lines_sourced_from
   nations
-  orders_shipped_to
-  suppliers
-Call pydough.explain(graph['Regions'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['regions'][property_name]) to learn more about any of these properties.
 """,
                 """
-PyDough collection: Regions
+PyDough collection: regions
 Scalar properties: comment, key, name
-Subcollection properties: customers, lines_sourced_from, nations, orders_shipped_to, suppliers
-Call pydough.explain(graph['Regions'][property_name]) to learn more about any of these properties.
+Subcollection properties: nations
+Call pydough.explain(graph['regions'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_regions",
         ),
         pytest.param(
             (
-                ("TPCH", "Lineitems", None),
+                ("TPCH", "lines", None),
                 """
-PyDough collection: Lineitems
+PyDough collection: lines
 Table path: tpch.LINEITEM
-Unique properties of collection: [['order_key', 'line_number'], ['part_key', 'supplier_key', 'order_key']]
+Unique properties of collection: [['order_key', 'line_number']]
 Scalar properties:
   comment
   commit_date
@@ -175,72 +170,71 @@ Subcollection properties:
   part
   part_and_supplier
   supplier
-  supplier_region
-Call pydough.explain(graph['Lineitems'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['lines'][property_name]) to learn more about any of these properties.
 """,
                 """
-PyDough collection: Lineitems
+PyDough collection: lines
 Scalar properties: comment, commit_date, discount, extended_price, line_number, order_key, part_key, quantity, receipt_date, return_flag, ship_date, ship_instruct, ship_mode, status, supplier_key, tax
-Subcollection properties: order, part, part_and_supplier, supplier, supplier_region
-Call pydough.explain(graph['Lineitems'][property_name]) to learn more about any of these properties.
+Subcollection properties: order, part, part_and_supplier, supplier
+Call pydough.explain(graph['lines'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_lineitems",
         ),
         pytest.param(
             (
-                ("TPCH", "PartSupp", None),
+                ("TPCH", "supply_records", None),
                 """
-PyDough collection: PartSupp
+PyDough collection: supply_records
 Table path: tpch.PARTSUPP
 Unique properties of collection: [['part_key', 'supplier_key']]
 Scalar properties:
-  availqty
+  available_quantity
   comment
   part_key
   supplier_key
-  supplycost
+  supply_cost
 Subcollection properties:
   lines
   part
   supplier
-Call pydough.explain(graph['PartSupp'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['supply_records'][property_name]) to learn more about any of these properties.
 """,
                 """
-PyDough collection: PartSupp
-Scalar properties: availqty, comment, part_key, supplier_key, supplycost
+PyDough collection: supply_records
+Scalar properties: available_quantity, comment, part_key, supplier_key, supply_cost
 Subcollection properties: lines, part, supplier
-Call pydough.explain(graph['PartSupp'][property_name]) to learn more about any of these properties.
+Call pydough.explain(graph['supply_records'][property_name]) to learn more about any of these properties.
 """,
             ),
             id="explain_collection_tpch_partsupp",
         ),
         pytest.param(
             (
-                ("TPCH", "Regions", "key"),
+                ("TPCH", "regions", "key"),
                 """
-PyDough property: Regions.key
+PyDough property: regions.key
 Column name: tpch.REGION.r_regionkey
-Data type: int64
+Data type: numeric
 """,
                 """
-PyDough property: Regions.key
+PyDough property: regions.key
 Column name: tpch.REGION.r_regionkey
-Data type: int64
+Data type: numeric
 """,
             ),
             id="explain_property_tpch_regions_key",
         ),
         pytest.param(
             (
-                ("TPCH", "Regions", "name"),
+                ("TPCH", "regions", "name"),
                 """
-PyDough property: Regions.name
+PyDough property: regions.name
 Column name: tpch.REGION.r_name
 Data type: string
 """,
                 """
-PyDough property: Regions.name
+PyDough property: regions.name
 Column name: tpch.REGION.r_name
 Data type: string
 """,
@@ -249,14 +243,14 @@ Data type: string
         ),
         pytest.param(
             (
-                ("TPCH", "Regions", "comment"),
+                ("TPCH", "regions", "comment"),
                 """
-PyDough property: Regions.comment
+PyDough property: regions.comment
 Column name: tpch.REGION.r_comment
 Data type: string
 """,
                 """
-PyDough property: Regions.comment
+PyDough property: regions.comment
 Column name: tpch.REGION.r_comment
 Data type: string
 """,
@@ -265,276 +259,130 @@ Data type: string
         ),
         pytest.param(
             (
-                ("TPCH", "Regions", "nations"),
+                ("TPCH", "regions", "nations"),
                 """
-PyDough property: Regions.nations
-This property connects collection Regions to Nations.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: Nations.region
+PyDough property: regions.nations
+This property connects collection regions to nations.
+Cardinality of connection: plural
 The subcollection relationship is defined by the following join conditions:
-    Regions.key == Nations.region_key
+    regions.key == nations.region_key
 """,
                 """
-PyDough property: Regions.nations
-This property connects collection Regions to Nations.
-Use pydough.explain(graph['Regions']['nations'], verbose=True) to learn more details.
+PyDough property: regions.nations
+This property connects collection regions to nations.
+Use pydough.explain(graph['regions']['nations'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_regions_nations",
         ),
         pytest.param(
             (
-                ("TPCH", "Regions", "customers"),
+                ("TPCH", "supply_records", "part"),
                 """
-PyDough property: Regions.customers
-This property connects collection Regions to Customers.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: Customers.region
-Note: this property is a compound property; it is an alias for Regions.nations.customers.
-The following properties are inherited from Regions.nations:
-  nation_name is an alias for Regions.nations.nation_name
-""",
-                """
-PyDough property: Regions.customers
-This property connects collection Regions to Customers.
-Use pydough.explain(graph['Regions']['customers'], verbose=True) to learn more details.
-""",
-            ),
-            id="explain_property_tpch_regions_customers",
-        ),
-        pytest.param(
-            (
-                ("TPCH", "Regions", "suppliers"),
-                """
-PyDough property: Regions.suppliers
-This property connects collection Regions to Suppliers.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: Suppliers.region
-Note: this property is a compound property; it is an alias for Regions.nations.suppliers.
-The following properties are inherited from Regions.nations:
-  nation_name is an alias for Regions.nations.nation_name
-""",
-                """
-PyDough property: Regions.suppliers
-This property connects collection Regions to Suppliers.
-Use pydough.explain(graph['Regions']['suppliers'], verbose=True) to learn more details.
-""",
-            ),
-            id="explain_property_tpch_regions_suppliers",
-        ),
-        pytest.param(
-            (
-                ("TPCH", "Regions", "orders_shipped_to"),
-                """
-PyDough property: Regions.orders_shipped_to
-This property connects collection Regions to Orders.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: Orders.shipping_region
-Note: this property is a compound property; it is an alias for Regions.customers.orders.
-The following properties are inherited from Regions.customers:
-  nation_name is an alias for Regions.customers.nation_name
-""",
-                """
-PyDough property: Regions.orders_shipped_to
-This property connects collection Regions to Orders.
-Use pydough.explain(graph['Regions']['orders_shipped_to'], verbose=True) to learn more details.
-""",
-            ),
-            id="explain_property_tpch_regions_orders_shipped_to",
-        ),
-        pytest.param(
-            (
-                ("TPCH", "Regions", "lines_sourced_from"),
-                """
-PyDough property: Regions.lines_sourced_from
-This property connects collection Regions to Lineitems.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: Lineitems.supplier_region
-Note: this property is a compound property; it is an alias for Regions.suppliers.lines.
-The following properties are inherited from Regions.suppliers:
-  nation_name is an alias for Regions.suppliers.nation_name
-  other_parts_supplied is an alias for Regions.suppliers.other_parts_supplied
-  supplier_address is an alias for Regions.suppliers.supplier_address
-  supplier_name is an alias for Regions.suppliers.supplier_name
-""",
-                """
-PyDough property: Regions.lines_sourced_from
-This property connects collection Regions to Lineitems.
-Use pydough.explain(graph['Regions']['lines_sourced_from'], verbose=True) to learn more details.
-""",
-            ),
-            id="explain_property_tpch_regions_lines_sourced_from",
-        ),
-        pytest.param(
-            (
-                ("TPCH", "PartSupp", "part"),
-                """
-PyDough property: PartSupp.part
-This property connects collection PartSupp to Parts.
-Cardinality of connection: Many -> One
-Is reversible: yes
-Reverse property: Parts.supply_records
+PyDough property: supply_records.part
+This property connects collection supply_records to parts.
+Cardinality of connection: singular
 The subcollection relationship is defined by the following join conditions:
-    PartSupp.part_key == Parts.key
+    supply_records.part_key == parts.key
 """,
                 """
-PyDough property: PartSupp.part
-This property connects collection PartSupp to Parts.
-Use pydough.explain(graph['PartSupp']['part'], verbose=True) to learn more details.
+PyDough property: supply_records.part
+This property connects collection supply_records to parts.
+Use pydough.explain(graph['supply_records']['part'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_partsupp_part",
         ),
         pytest.param(
             (
-                ("TPCH", "PartSupp", "supplier"),
+                ("TPCH", "supply_records", "supplier"),
                 """
-PyDough property: PartSupp.supplier
-This property connects collection PartSupp to Suppliers.
-Cardinality of connection: Many -> One
-Is reversible: yes
-Reverse property: Suppliers.supply_records
+PyDough property: supply_records.supplier
+This property connects collection supply_records to suppliers.
+Cardinality of connection: singular
 The subcollection relationship is defined by the following join conditions:
-    PartSupp.supplier_key == Suppliers.key
+    supply_records.supplier_key == suppliers.key
 """,
                 """
-PyDough property: PartSupp.supplier
-This property connects collection PartSupp to Suppliers.
-Use pydough.explain(graph['PartSupp']['supplier'], verbose=True) to learn more details.
+PyDough property: supply_records.supplier
+This property connects collection supply_records to suppliers.
+Use pydough.explain(graph['supply_records']['supplier'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_partsupp_supplier",
         ),
         pytest.param(
             (
-                ("TPCH", "PartSupp", "lines"),
+                ("TPCH", "supply_records", "lines"),
                 """
-PyDough property: PartSupp.lines
-This property connects collection PartSupp to Lineitems.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: Lineitems.part_and_supplier
+PyDough property: supply_records.lines
+This property connects collection supply_records to lines.
+Cardinality of connection: plural
 The subcollection relationship is defined by the following join conditions:
-    PartSupp.part_key == Lineitems.part_key
-    PartSupp.supplier_key == Lineitems.supplier_key
+    supply_records.part_key == lines.part_key
+    supply_records.supplier_key == lines.supplier_key
 """,
                 """
-PyDough property: PartSupp.lines
-This property connects collection PartSupp to Lineitems.
-Use pydough.explain(graph['PartSupp']['lines'], verbose=True) to learn more details.
+PyDough property: supply_records.lines
+This property connects collection supply_records to lines.
+Use pydough.explain(graph['supply_records']['lines'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_partsupp_lines",
         ),
         pytest.param(
             (
-                ("TPCH", "Suppliers", "nation"),
+                ("TPCH", "suppliers", "nation"),
                 """
-PyDough property: Suppliers.nation
-This property connects collection Suppliers to Nations.
-Cardinality of connection: Many -> One
-Is reversible: yes
-Reverse property: Nations.suppliers
+PyDough property: suppliers.nation
+This property connects collection suppliers to nations.
+Cardinality of connection: singular
 The subcollection relationship is defined by the following join conditions:
-    Suppliers.nation_key == Nations.key
+    suppliers.nation_key == nations.key
 """,
                 """
-PyDough property: Suppliers.nation
-This property connects collection Suppliers to Nations.
-Use pydough.explain(graph['Suppliers']['nation'], verbose=True) to learn more details.
+PyDough property: suppliers.nation
+This property connects collection suppliers to nations.
+Use pydough.explain(graph['suppliers']['nation'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_suppliers_nation",
         ),
         pytest.param(
             (
-                ("TPCH", "Suppliers", "supply_records"),
+                ("TPCH", "suppliers", "supply_records"),
                 """
-PyDough property: Suppliers.supply_records
-This property connects collection Suppliers to PartSupp.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: PartSupp.supplier
+PyDough property: suppliers.supply_records
+This property connects collection suppliers to supply_records.
+Cardinality of connection: plural
 The subcollection relationship is defined by the following join conditions:
-    Suppliers.key == PartSupp.supplier_key
+    suppliers.key == supply_records.supplier_key
 """,
                 """
-PyDough property: Suppliers.supply_records
-This property connects collection Suppliers to PartSupp.
-Use pydough.explain(graph['Suppliers']['supply_records'], verbose=True) to learn more details.
+PyDough property: suppliers.supply_records
+This property connects collection suppliers to supply_records.
+Use pydough.explain(graph['suppliers']['supply_records'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_suppliers_supply_records",
         ),
         pytest.param(
             (
-                ("TPCH", "Suppliers", "parts_supplied"),
+                ("TPCH", "suppliers", "lines"),
                 """
-PyDough property: Suppliers.parts_supplied
-This property connects collection Suppliers to Parts.
-Cardinality of connection: Many -> Many
-Is reversible: yes
-Reverse property: Parts.suppliers_of_part
-Note: this property is a compound property; it is an alias for Suppliers.supply_records.part.
-The following properties are inherited from Suppliers.supply_records:
-  ps_availqty is an alias for Suppliers.supply_records.ps_availqty
-  ps_comment is an alias for Suppliers.supply_records.ps_comment
-  ps_lines is an alias for Suppliers.supply_records.ps_lines
-  ps_supplycost is an alias for Suppliers.supply_records.ps_supplycost
-""",
-                """
-PyDough property: Suppliers.parts_supplied
-This property connects collection Suppliers to Parts.
-Use pydough.explain(graph['Suppliers']['parts_supplied'], verbose=True) to learn more details.
-""",
-            ),
-            id="explain_property_tpch_suppliers_parts_supplied",
-        ),
-        pytest.param(
-            (
-                ("TPCH", "Suppliers", "lines"),
-                """
-PyDough property: Suppliers.lines
-This property connects collection Suppliers to Lineitems.
-Cardinality of connection: One -> Many
-Is reversible: yes
-Reverse property: Lineitems.supplier
+PyDough property: suppliers.lines
+This property connects collection suppliers to lines.
+Cardinality of connection: plural
 The subcollection relationship is defined by the following join conditions:
-    Suppliers.key == Lineitems.supplier_key
+    suppliers.key == lines.supplier_key
 """,
                 """
-PyDough property: Suppliers.lines
-This property connects collection Suppliers to Lineitems.
-Use pydough.explain(graph['Suppliers']['lines'], verbose=True) to learn more details.
+PyDough property: suppliers.lines
+This property connects collection suppliers to lines.
+Use pydough.explain(graph['suppliers']['lines'], verbose=True) to learn more details.
 """,
             ),
             id="explain_property_tpch_suppliers_lines",
-        ),
-        pytest.param(
-            (
-                ("TPCH", "Suppliers", "region"),
-                """
-PyDough property: Suppliers.region
-This property connects collection Suppliers to Regions.
-Cardinality of connection: Many -> One
-Is reversible: yes
-Reverse property: Regions.suppliers
-Note: this property is a compound property; it is an alias for Suppliers.nation.region.
-The following properties are inherited from Suppliers.nation:
-  nation_name is an alias for Suppliers.nation.nation_name
-""",
-                """
-PyDough property: Suppliers.region
-This property connects collection Suppliers to Regions.
-Use pydough.explain(graph['Suppliers']['region'], verbose=True) to learn more details.
-""",
-            ),
-            id="explain_property_tpch_suppliers_region",
         ),
     ]
 )
@@ -619,20 +467,19 @@ Structure of PyDough graph: Empty
             """
 Structure of PyDough graph: TPCH
 
-  Customers
-  ├── acctbal
+  customers
+  ├── account_balance
   ├── address
   ├── comment
   ├── key
-  ├── mktsegment
+  ├── market_segment
   ├── name
   ├── nation_key
   ├── phone
-  ├── nation [one member of Nations] (reverse of Nations.customers)
-  ├── orders [multiple Orders] (reverse of Orders.customer)
-  └── region [one member of Regions] (reverse of Regions.customers)
+  ├── nation [one member of nations]
+  └── orders [multiple orders]
 
-  Lineitems
+  lines
   ├── comment
   ├── commit_date
   ├── discount
@@ -649,23 +496,21 @@ Structure of PyDough graph: TPCH
   ├── status
   ├── supplier_key
   ├── tax
-  ├── order [one member of Orders] (reverse of Orders.lines)
-  ├── part [one member of Parts] (reverse of Parts.lines)
-  ├── part_and_supplier [one member of PartSupp] (reverse of PartSupp.lines)
-  ├── supplier [one member of Suppliers] (reverse of Suppliers.lines)
-  └── supplier_region [one member of Regions] (reverse of Regions.lines_sourced_from)
+  ├── order [one member of orders]
+  ├── part [one member of parts]
+  ├── part_and_supplier [one member of supply_records]
+  └── supplier [one member of suppliers]
 
-  Nations
+  nations
   ├── comment
   ├── key
   ├── name
   ├── region_key
-  ├── customers [multiple Customers] (reverse of Customers.nation)
-  ├── orders_shipped_to [multiple Orders] (reverse of Orders.shipping_nation)
-  ├── region [one member of Regions] (reverse of Regions.nations)
-  └── suppliers [multiple Suppliers] (reverse of Suppliers.nation)
+  ├── customers [multiple customers]
+  ├── region [one member of regions]
+  └── suppliers [multiple suppliers]
 
-  Orders
+  orders
   ├── clerk
   ├── comment
   ├── customer_key
@@ -675,22 +520,10 @@ Structure of PyDough graph: TPCH
   ├── order_status
   ├── ship_priority
   ├── total_price
-  ├── customer [one member of Customers] (reverse of Customers.orders)
-  ├── lines [multiple Lineitems] (reverse of Lineitems.order)
-  ├── shipping_nation [one member of Nations] (reverse of Nations.orders_shipped_to)
-  └── shipping_region [one member of Regions] (reverse of Regions.orders_shipped_to)
+  ├── customer [one member of customers]
+  └── lines [multiple lines]
 
-  PartSupp
-  ├── availqty
-  ├── comment
-  ├── part_key
-  ├── supplier_key
-  ├── supplycost
-  ├── lines [multiple Lineitems] (reverse of Lineitems.part_and_supplier)
-  ├── part [one member of Parts] (reverse of Parts.supply_records)
-  └── supplier [one member of Suppliers] (reverse of Suppliers.supply_records)
-
-  Parts
+  parts
   ├── brand
   ├── comment
   ├── container
@@ -700,21 +533,16 @@ Structure of PyDough graph: TPCH
   ├── part_type
   ├── retail_price
   ├── size
-  ├── lines [multiple Lineitems] (reverse of Lineitems.part)
-  ├── suppliers_of_part [multiple Suppliers] (reverse of Suppliers.parts_supplied)
-  └── supply_records [multiple PartSupp] (reverse of PartSupp.part)
+  ├── lines [multiple lines]
+  └── supply_records [multiple supply_records]
 
-  Regions
+  regions
   ├── comment
   ├── key
   ├── name
-  ├── customers [multiple Customers] (reverse of Customers.region)
-  ├── lines_sourced_from [multiple Lineitems] (reverse of Lineitems.supplier_region)
-  ├── nations [multiple Nations] (reverse of Nations.region)
-  ├── orders_shipped_to [multiple Orders] (reverse of Orders.shipping_region)
-  └── suppliers [multiple Suppliers] (reverse of Suppliers.region)
+  └── nations [multiple nations]
 
-  Suppliers
+  suppliers
   ├── account_balance
   ├── address
   ├── comment
@@ -722,11 +550,19 @@ Structure of PyDough graph: TPCH
   ├── name
   ├── nation_key
   ├── phone
-  ├── lines [multiple Lineitems] (reverse of Lineitems.supplier)
-  ├── nation [one member of Nations] (reverse of Nations.suppliers)
-  ├── parts_supplied [multiple Parts] (reverse of Parts.suppliers_of_part)
-  ├── region [one member of Regions] (reverse of Regions.suppliers)
-  └── supply_records [multiple PartSupp] (reverse of PartSupp.supplier)
+  ├── lines [multiple lines]
+  ├── nation [one member of nations]
+  └── supply_records [multiple supply_records]
+
+  supply_records
+  ├── available_quantity
+  ├── comment
+  ├── part_key
+  ├── supplier_key
+  ├── supply_cost
+  ├── lines [multiple lines]
+  ├── part [one member of parts]
+  └── supplier [one member of suppliers]
 """,
             id="tpch",
         ),
@@ -757,10 +593,10 @@ def test_graph_structure(
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    └─── TableCollection[Nations]
+    └─── TableCollection[nations]
 
-This node, specifically, accesses the collection Nations.
-Call pydough.explain(graph['Nations']) to learn more about this collection.
+This node, specifically, accesses the collection nations.
+Call pydough.explain(graph['nations']) to learn more about this collection.
 
 The following terms will be included in the result if this collection is executed:
   comment, key, name, region_key
@@ -769,20 +605,20 @@ The collection has access to the following expressions:
   comment, key, name, region_key
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
 """,
                 """
-This node, specifically, accesses the collection Nations.
-Call pydough.explain(graph['Nations']) to learn more about this collection.
+This node, specifically, accesses the collection nations.
+Call pydough.explain(graph['nations']) to learn more about this collection.
 
 The collection has access to the following expressions:
   comment, key, name, region_key
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -805,7 +641,7 @@ This node is a reference to the global context for the entire graph. An operatio
 The collection does not have any terms that can be included in a result if it is executed.
 
 The collection has access to the following collections:
-  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+  customers, lines, nations, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -814,7 +650,7 @@ expressions or collections that the collection has access to.
 This node is a reference to the global context for the entire graph. An operation must be done onto this node (e.g. a CALCULATE or accessing a collection) before it can be executed.
 
 The collection has access to the following collections:
-  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+  customers, lines, nations, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -844,7 +680,7 @@ The collection has access to the following expressions:
   x, y
 
 The collection has access to the following collections:
-  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+  customers, lines, nations, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -858,7 +694,7 @@ The collection has access to the following expressions:
   x, y
 
 The collection has access to the following collections:
-  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+  customers, lines, nations, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -877,19 +713,19 @@ PyDough collection representing the following logic:
   ┌─── TPCH
   └─┬─ Calculate[n_customers=COUNT($1), avg_part_price=AVG($2.retail_price)]
     ├─┬─ AccessChild
-    │ └─── TableCollection[Customers]
+    │ └─── TableCollection[customers]
     └─┬─ AccessChild
-      └─── TableCollection[Parts]
+      └─── TableCollection[parts]
 
 This node first derives the following children before doing its main task:
   child $1:
-    └─── TableCollection[Customers]
+    └─── TableCollection[customers]
   child $2:
-    └─── TableCollection[Parts]
+    └─── TableCollection[parts]
 
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
-  avg_part_price <- AVG($2.retail_price), aka AVG(Parts.retail_price)
-  n_customers <- COUNT($1), aka COUNT(Customers)
+  avg_part_price <- AVG($2.retail_price), aka AVG(parts.retail_price)
+  n_customers <- COUNT($1), aka COUNT(customers)
 
 The following terms will be included in the result if this collection is executed:
   avg_part_price, n_customers
@@ -898,25 +734,25 @@ The collection has access to the following expressions:
   avg_part_price, n_customers
 
 The collection has access to the following collections:
-  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+  customers, lines, nations, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
 """,
                 """
 This node first derives the following children before doing its main task:
-  child $1: Customers
-  child $2: Parts
+  child $1: customers
+  child $2: parts
 
 The main task of this node is to calculate the following additional expressions that are added to the terms of the collection:
-  avg_part_price <- AVG($2.retail_price), aka AVG(Parts.retail_price)
-  n_customers <- COUNT($1), aka COUNT(Customers)
+  avg_part_price <- AVG($2.retail_price), aka AVG(parts.retail_price)
+  n_customers <- COUNT($1), aka COUNT(customers)
 
 The collection has access to the following expressions:
   avg_part_price, n_customers
 
 The collection has access to the following collections:
-  Customers, Lineitems, Nations, Orders, PartSupp, Parts, Regions, Suppliers
+  customers, lines, nations, orders, parts, regions, suppliers, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -933,7 +769,7 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    ├─── TableCollection[Nations]
+    ├─── TableCollection[nations]
     └─┬─ Calculate[name=name, region_name=$1.name, num_customers=COUNT($2)]
       ├─┬─ AccessChild
       │ └─── SubCollection[region]
@@ -958,7 +794,7 @@ The collection has access to the following expressions:
   comment, key, name, num_customers, region_key, region_name
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -977,7 +813,7 @@ The collection has access to the following expressions:
   comment, key, name, num_customers, region_key, region_name
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -994,7 +830,7 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    ├─── TableCollection[Regions]
+    ├─── TableCollection[regions]
     └─┬─ Calculate[region_name=name]
       ├─── SubCollection[nations]
       └─┬─ Calculate[nation_name=name]
@@ -1010,10 +846,10 @@ The following terms will be included in the result if this collection is execute
   name, nation_name, region_name
 
 The collection has access to the following expressions:
-  acctbal, address, comment, key, mktsegment, name, nation_key, nation_name, phone, region_name
+  account_balance, address, comment, key, market_segment, name, nation_key, nation_name, phone, region_name
 
 The collection has access to the following collections:
-  nation, orders, region
+  nation, orders
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1025,10 +861,10 @@ The main task of this node is to calculate the following additional expressions 
   region_name <- region_name (propagated from previous collection)
 
 The collection has access to the following expressions:
-  acctbal, address, comment, key, mktsegment, name, nation_key, nation_name, phone, region_name
+  account_balance, address, comment, key, market_segment, name, nation_key, nation_name, phone, region_name
 
 The collection has access to the following collections:
-  nation, orders, region
+  nation, orders
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1045,11 +881,11 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    ├─── TableCollection[Nations]
+    ├─── TableCollection[nations]
     └─┬─ Calculate[nation_name=name]
       └─── SubCollection[region]
 
-This node, specifically, accesses the subcollection Nations.region. Call pydough.explain(graph['Nations']['region']) to learn more about this subcollection property.
+This node, specifically, accesses the subcollection nations.region. Call pydough.explain(graph['nations']['region']) to learn more about this subcollection property.
 
 The following terms will be included in the result if this collection is executed:
   comment, key, name
@@ -1058,19 +894,19 @@ The collection has access to the following expressions:
   comment, key, name, nation_name
 
 The collection has access to the following collections:
-  customers, lines_sourced_from, nations, orders_shipped_to, suppliers
+  nations
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
                 """,
                 """
-This node, specifically, accesses the subcollection Nations.region. Call pydough.explain(graph['Nations']['region']) to learn more about this subcollection property.
+This node, specifically, accesses the subcollection nations.region. Call pydough.explain(graph['nations']['region']) to learn more about this subcollection property.
 
 The collection has access to the following expressions:
   comment, key, name, nation_name
 
 The collection has access to the following collections:
-  customers, lines_sourced_from, nations, orders_shipped_to, suppliers
+  nations
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1087,7 +923,7 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    ├─── TableCollection[Nations]
+    ├─── TableCollection[nations]
     ├─── Calculate[nation_name=name]
     └─┬─ Where[($1.name == 'ASIA') & HAS($2) & (COUNT($3) > 100)]
       ├─┬─ AccessChild
@@ -1129,7 +965,7 @@ The collection has access to the following expressions:
   comment, key, name, nation_name, region_key
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1149,7 +985,7 @@ The collection has access to the following expressions:
   comment, key, name, nation_name, region_key
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1166,7 +1002,7 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    ├─── TableCollection[Nations]
+    ├─── TableCollection[nations]
     ├─── Calculate[name=name]
     └─┬─ OrderBy[COUNT($1).DESC(na_pos='last'), name.ASC(na_pos='first')]
       └─┬─ AccessChild
@@ -1187,7 +1023,7 @@ The collection has access to the following expressions:
   comment, key, name, region_key
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1204,7 +1040,7 @@ The collection has access to the following expressions:
   comment, key, name, region_key
 
 The collection has access to the following collections:
-  customers, orders_shipped_to, region, suppliers
+  customers, region, suppliers
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1221,10 +1057,10 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 PyDough collection representing the following logic:
   ──┬─ TPCH
-    ├─── TableCollection[Parts]
+    ├─── TableCollection[parts]
     ├─┬─ Calculate[name=name, n_suppliers=COUNT($1)]
     │ └─┬─ AccessChild
-    │   └─── SubCollection[suppliers_of_part]
+    │   └─── SubCollection[supply_records]
     └─── TopK[100, n_suppliers.DESC(na_pos='last'), name.ASC(na_pos='first')]
 
 The main task of this node is to sort the collection on the following and keep the first 100 records:
@@ -1238,7 +1074,7 @@ The collection has access to the following expressions:
   brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, suppliers_of_part, supply_records
+  lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1252,7 +1088,7 @@ The collection has access to the following expressions:
   brand, comment, container, key, manufacturer, n_suppliers, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, suppliers_of_part, supply_records
+  lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1271,15 +1107,15 @@ PyDough collection representing the following logic:
   ──┬─ TPCH
     └─┬─ Partition[name='part_types', by=part_type]
       └─┬─ AccessChild
-        └─── TableCollection[Parts]
+        └─── TableCollection[parts]
 
 This node first derives the following children before doing its main task:
   child $1:
-    └─── TableCollection[Parts]
+    └─── TableCollection[parts]
 
 The main task of this node is to partition the child data on the following keys:
   $1.part_type
-Note: the subcollection of this collection containing records from the unpartitioned data is called 'Parts'.
+Note: the subcollection of this collection containing records from the unpartitioned data is called 'parts'.
 
 The following terms will be included in the result if this collection is executed:
   part_type
@@ -1288,24 +1124,24 @@ The collection has access to the following expressions:
   part_type
 
 The collection has access to the following collections:
-  Parts
+  parts
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
                 """,
                 """
 This node first derives the following children before doing its main task:
-  child $1: Parts
+  child $1: parts
 
 The main task of this node is to partition the child data on the following keys:
   $1.part_type
-Note: the subcollection of this collection containing records from the unpartitioned data is called 'Parts'.
+Note: the subcollection of this collection containing records from the unpartitioned data is called 'parts'.
 
 The collection has access to the following expressions:
   part_type
 
 The collection has access to the following collections:
-  Parts
+  parts
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1324,14 +1160,14 @@ PyDough collection representing the following logic:
   ──┬─ TPCH
     ├─┬─ Partition[name='part_types', by=part_type]
     │ └─┬─ AccessChild
-    │   └─── TableCollection[Parts]
+    │   └─── TableCollection[parts]
     ├─┬─ Calculate[part_type=part_type, avg_price=AVG($1.retail_price)]
     │ └─┬─ AccessChild
-    │   └─── PartitionChild[Parts]
+    │   └─── PartitionChild[parts]
     └─┬─ Where[avg_price >= 27.5]
-      └─── PartitionChild[Parts]
+      └─── PartitionChild[parts]
 
-This node, specifically, accesses the unpartitioned data of a partitioning (child name: Parts).
+This node, specifically, accesses the unpartitioned data of a partitioning (child name: parts).
 
 The following terms will be included in the result if this collection is executed:
   brand, comment, container, key, manufacturer, name, part_type, retail_price, size
@@ -1340,19 +1176,19 @@ The collection has access to the following expressions:
   avg_price, brand, comment, container, key, manufacturer, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, suppliers_of_part, supply_records
+  lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
                 """,
                 """
-This node, specifically, accesses the unpartitioned data of a partitioning (child name: Parts).
+This node, specifically, accesses the unpartitioned data of a partitioning (child name: parts).
 
 The collection has access to the following expressions:
   avg_price, brand, comment, container, key, manufacturer, name, part_type, retail_price, size
 
 The collection has access to the following collections:
-  lines, suppliers_of_part, supply_records
+  lines, supply_records
 
 Call pydough.explain_term(collection, term) to learn more about any of these
 expressions or collections that the collection has access to.
@@ -1369,13 +1205,13 @@ Call pydough.explain(collection, verbose=True) for more details.
                 """
 If pydough.explain is called on an unqualified PyDough code, it is expected to
 be a collection, but instead received the following expression:
- TPCH.Nations.name
+ TPCH.nations.name
 Did you mean to use pydough.explain_term?
                 """,
                 """
 If pydough.explain is called on an unqualified PyDough code, it is expected to
 be a collection, but instead received the following expression:
- TPCH.Nations.name
+ TPCH.nations.name
 Did you mean to use pydough.explain_term?
                 """,
             ),
@@ -1386,13 +1222,13 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_collections_impl,
                 """
-Unrecognized term of graph 'TPCH': 'lines'
+Unrecognized term of graph 'TPCH': 'line_items'
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Unrecognized term of graph 'TPCH': 'lines'
+Unrecognized term of graph 'TPCH': 'line_items'
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
@@ -1507,22 +1343,22 @@ def test_unqualified_node_exploration(
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Nations]
+    └─── TableCollection[nations]
 
 The term is the following expression: name
 
-This is column 'name' of collection 'Nations'
+This is column 'name' of collection 'nations'
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Nations.CALCULATE(name)
+  TPCH.nations.CALCULATE(name)
 """,
                 """
-Collection: TPCH.Nations
+Collection: TPCH.nations
 
 The term is the following expression: name
 
-This is column 'name' of collection 'Nations'
+This is column 'name' of collection 'nations'
 """,
             ),
             id="nation-name",
@@ -1534,7 +1370,7 @@ This is column 'name' of collection 'Nations'
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Nations]
+    └─── TableCollection[nations]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
@@ -1546,10 +1382,10 @@ This is a reference to expression 'name' of child $1
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Nations.CALCULATE(region.name)
+  TPCH.nations.CALCULATE(region.name)
 """,
                 """
-Collection: TPCH.Nations
+Collection: TPCH.nations
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1: region
@@ -1568,7 +1404,7 @@ This is a reference to expression 'name' of child $1
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Nations]
+    └─── TableCollection[nations]
 
 The term is the following child of the collection:
   └─┬─ AccessChild
@@ -1576,13 +1412,13 @@ The term is the following child of the collection:
 
 This child is singular with regards to the collection, meaning its scalar terms can be accessed by the collection as if they were scalar terms of the expression.
 For example, the following is valid:
-  TPCH.Nations.CALCULATE(region.comment)
+  TPCH.nations.CALCULATE(region.comment)
 
 To learn more about this child, you can try calling pydough.explain on the following:
-  TPCH.Nations.region
+  TPCH.nations.region
 """,
                 """
-Collection: TPCH.Nations
+Collection: TPCH.nations
 
 The term is the following child of the collection:
   region
@@ -1597,7 +1433,7 @@ The term is the following child of the collection:
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Regions]
+    └─── TableCollection[regions]
 
 The term is the following child of the collection:
   └─┬─ AccessChild
@@ -1606,15 +1442,15 @@ The term is the following child of the collection:
 
 This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
 For example, the following are valid:
-  TPCH.Regions.CALCULATE(COUNT(nations.suppliers.account_balance))
-  TPCH.Regions.WHERE(HAS(nations.suppliers))
-  TPCH.Regions.ORDER_BY(COUNT(nations.suppliers).DESC())
+  TPCH.regions.CALCULATE(COUNT(nations.suppliers.account_balance))
+  TPCH.regions.WHERE(HAS(nations.suppliers))
+  TPCH.regions.ORDER_BY(COUNT(nations.suppliers).DESC())
 
 To learn more about this child, you can try calling pydough.explain on the following:
-  TPCH.Regions.nations.suppliers
+  TPCH.regions.nations.suppliers
 """,
                 """
-Collection: TPCH.Regions
+Collection: TPCH.regions
 
 The term is the following child of the collection:
   nations.suppliers
@@ -1629,7 +1465,7 @@ The term is the following child of the collection:
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Regions]
+    └─── TableCollection[regions]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
@@ -1642,10 +1478,10 @@ This is a reference to expression 'name' of child $1
 
 This expression is plural with regards to the collection, meaning it can be placed in a CALCULATE of a collection if it is aggregated.
 For example, the following is valid:
-  TPCH.Regions.CALCULATE(COUNT(nations.suppliers.name))
+  TPCH.regions.CALCULATE(COUNT(nations.suppliers.name))
 """,
                 """
-Collection: TPCH.Regions
+Collection: TPCH.regions
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1: nations.suppliers
@@ -1664,7 +1500,7 @@ This is a reference to expression 'name' of child $1
                 """
 Collection:
   ──┬─ TPCH
-    ├─── TableCollection[Regions]
+    ├─── TableCollection[regions]
     └─┬─ Calculate[region_name=name]
       └─── SubCollection[nations]
 
@@ -1672,20 +1508,20 @@ The term is the following expression: region_name
 
 This is a reference to expression 'region_name' of the 1st ancestor of the collection, which is the following:
   ──┬─ TPCH
-    ├─── TableCollection[Regions]
+    ├─── TableCollection[regions]
     └─── Calculate[region_name=name]
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Regions.CALCULATE(region_name=name).nations.CALCULATE(region_name)
+  TPCH.regions.CALCULATE(region_name=name).nations.CALCULATE(region_name)
 """,
                 """
-Collection: TPCH.Regions.CALCULATE(region_name=name).nations
+Collection: TPCH.regions.CALCULATE(region_name=name).nations
 
 The term is the following expression: region_name
 
 This is a reference to expression 'region_name' of the 1st ancestor of the collection, which is the following:
-  TPCH.Regions.CALCULATE(region_name=name)
+  TPCH.regions.CALCULATE(region_name=name)
 """,
             ),
             id="region_nations-back_name",
@@ -1697,7 +1533,7 @@ This is a reference to expression 'region_name' of the 1st ancestor of the colle
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Regions]
+    └─── TableCollection[regions]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
@@ -1714,10 +1550,10 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Regions.CALCULATE(COUNT(nations.suppliers.WHERE(account_balance > 0)))
+  TPCH.regions.CALCULATE(COUNT(nations.suppliers.WHERE(account_balance > 0)))
         """,
                 """
-Collection: TPCH.Regions
+Collection: TPCH.regions
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1: nations.suppliers.WHERE(account_balance > 0)
@@ -1741,33 +1577,33 @@ Collection:
   ──┬─ TPCH
     └─┬─ Partition[name='part_types', by=part_type]
       └─┬─ AccessChild
-        └─── TableCollection[Parts]
+        └─── TableCollection[parts]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
-    └─── PartitionChild[Parts]
+    └─── PartitionChild[parts]
 
 The term is the following expression: AVG($1.retail_price)
 
 This expression calls the function 'AVG' on the following arguments, aggregating them into a single value for each record of the collection:
-  Parts.retail_price
+  parts.retail_price
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Partition(Parts, name='part_types', by=part_type).CALCULATE(AVG(Parts.retail_price))
+  TPCH.Partition(parts, name='part_types', by=part_type).CALCULATE(AVG(parts.retail_price))
         """,
                 """
-Collection: TPCH.Partition(Parts, name='part_types', by=part_type)
+Collection: TPCH.Partition(parts, name='part_types', by=part_type)
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
-  child $1: Parts
+  child $1: parts
 
 The term is the following expression: AVG($1.retail_price)
 
 This expression calls the function 'AVG' on the following arguments, aggregating them into a single value for each record of the collection:
-  Parts.retail_price
+  parts.retail_price
 
 Call pydough.explain_term with this collection and any of the arguments to learn more about them.
         """,
@@ -1783,29 +1619,29 @@ Collection:
   ──┬─ TPCH
     ├─┬─ Partition[name='part_types', by=part_type]
     │ └─┬─ AccessChild
-    │   └─── TableCollection[Parts]
+    │   └─── TableCollection[parts]
     └─┬─ Where[AVG($1.retail_price) >= 27.5]
       └─┬─ AccessChild
-        └─── PartitionChild[Parts]
+        └─── PartitionChild[parts]
 
 The term is the following child of the collection:
   └─┬─ AccessChild
-    └─── PartitionChild[Parts]
+    └─── PartitionChild[parts]
 
 This child is plural with regards to the collection, meaning its scalar terms can only be accessed by the collection if they are aggregated.
 For example, the following are valid:
-  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).CALCULATE(COUNT(Parts.brand))
-  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).WHERE(HAS(Parts))
-  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).ORDER_BY(COUNT(Parts).DESC())
+  TPCH.Partition(parts, name='part_types', by=part_type).WHERE(AVG(parts.retail_price) >= 27.5).CALCULATE(COUNT(parts.brand))
+  TPCH.Partition(parts, name='part_types', by=part_type).WHERE(AVG(parts.retail_price) >= 27.5).WHERE(HAS(parts))
+  TPCH.Partition(parts, name='part_types', by=part_type).WHERE(AVG(parts.retail_price) >= 27.5).ORDER_BY(COUNT(parts).DESC())
 
 To learn more about this child, you can try calling pydough.explain on the following:
-  TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5).Parts
+  TPCH.Partition(parts, name='part_types', by=part_type).WHERE(AVG(parts.retail_price) >= 27.5).parts
         """,
                 """
-Collection: TPCH.Partition(Parts, name='part_types', by=part_type).WHERE(AVG(Parts.retail_price) >= 27.5)
+Collection: TPCH.Partition(parts, name='part_types', by=part_type).WHERE(AVG(parts.retail_price) >= 27.5)
 
 The term is the following child of the collection:
-  Parts
+  parts
         """,
             ),
             id="agg_parts-child",
@@ -1817,7 +1653,7 @@ The term is the following child of the collection:
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Nations]
+    └─── TableCollection[nations]
 
 The term is the following expression: LOWER(name)
 
@@ -1828,10 +1664,10 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Nations.CALCULATE(LOWER(name))
+  TPCH.nations.CALCULATE(LOWER(name))
         """,
                 """
-Collection: TPCH.Nations
+Collection: TPCH.nations
 
 The term is the following expression: LOWER(name)
 
@@ -1850,7 +1686,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Lineitems]
+    └─── TableCollection[lines]
 
 The term is the following expression: extended_price * (1 - discount)
 
@@ -1862,10 +1698,10 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Lineitems.CALCULATE(extended_price * (1 - discount))
+  TPCH.lines.CALCULATE(extended_price * (1 - discount))
         """,
                 """
-Collection: TPCH.Lineitems
+Collection: TPCH.lines
 
 The term is the following expression: extended_price * (1 - discount)
 
@@ -1885,7 +1721,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Suppliers]
+    └─── TableCollection[suppliers]
 
 The term is the following expression: IFF(account_balance < 0, 0, account_balance)
 
@@ -1898,10 +1734,10 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Suppliers.CALCULATE(IFF(account_balance < 0, 0, account_balance))
+  TPCH.suppliers.CALCULATE(IFF(account_balance < 0, 0, account_balance))
         """,
                 """
-Collection: TPCH.Suppliers
+Collection: TPCH.suppliers
 
 The term is the following expression: IFF(account_balance < 0, 0, account_balance)
 
@@ -1922,7 +1758,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Customers]
+    └─── TableCollection[customers]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
@@ -1937,10 +1773,10 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Customers.CALCULATE(HASNOT(orders))
+  TPCH.customers.CALCULATE(HASNOT(orders))
         """,
                 """
-Collection: TPCH.Customers
+Collection: TPCH.customers
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1: orders
@@ -1962,7 +1798,7 @@ Call pydough.explain_term with this collection and any of the arguments to learn
                 """
 Collection:
   ──┬─ TPCH
-    └─── TableCollection[Parts]
+    └─── TableCollection[parts]
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1:
@@ -1981,10 +1817,10 @@ Call pydough.explain_term with this collection and any of the arguments to learn
 
 This term is singular with regards to the collection, meaning it can be placed in a CALCULATE of a collection.
 For example, the following is valid:
-  TPCH.Parts.CALCULATE(HAS(supply_records.supplier.WHERE(nation.name == 'GERMANY')))
+  TPCH.parts.CALCULATE(HAS(supply_records.supplier.WHERE(nation.name == 'GERMANY')))
         """,
                 """
-Collection: TPCH.Parts
+Collection: TPCH.parts
 
 The evaluation of this term first derives the following additional children to the collection before doing its main task:
   child $1: supply_records.supplier.WHERE(nation.name == 'GERMANY')

@@ -1,4 +1,11 @@
-WITH _t1 AS (
+WITH _s11 AS (
+  SELECT
+    supplier.s_suppkey AS key,
+    nation.n_name AS name_12
+  FROM tpch.supplier AS supplier
+  JOIN tpch.nation AS nation
+    ON nation.n_nationkey = supplier.s_nationkey
+), _t1 AS (
   SELECT
     ANY_VALUE(nation.n_name) AS agg_3,
     SUM(lineitem.l_extendedprice * (
@@ -15,12 +22,8 @@ WITH _t1 AS (
     AND orders.o_orderdate >= CAST('1994-01-01' AS DATE)
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey
-  LEFT JOIN tpch.supplier AS supplier
-    ON lineitem.l_suppkey = supplier.s_suppkey
-  JOIN tpch.nation AS nation_2
-    ON nation_2.n_nationkey = supplier.s_nationkey
-  WHERE
-    nation.n_name = nation_2.n_name
+  JOIN _s11 AS _s11
+    ON _s11.key = lineitem.l_suppkey AND _s11.name_12 = nation.n_name
   GROUP BY
     nation.n_nationkey
 )

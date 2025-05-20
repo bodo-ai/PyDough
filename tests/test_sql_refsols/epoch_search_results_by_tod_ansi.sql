@@ -1,8 +1,9 @@
-WITH _s3 AS (
+WITH _t1 AS (
   SELECT
+    ANY_VALUE(times.t_name) AS agg_3,
+    ANY_VALUE(times.t_start_hour) AS agg_4,
     AVG(searches.search_num_results) AS agg_0,
-    COUNT() AS agg_1,
-    times.t_name AS name
+    COUNT() AS agg_1
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > EXTRACT(HOUR FROM searches.search_ts)
@@ -11,15 +12,13 @@ WITH _s3 AS (
     times.t_name
 ), _t0 AS (
   SELECT
-    times.t_name AS tod,
+    agg_3 AS tod,
     ROUND((
-      100.0 * COALESCE(_s3.agg_1, 0)
-    ) / SUM(COALESCE(_s3.agg_1, 0)) OVER (), 2) AS pct_searches,
-    ROUND(_s3.agg_0, 2) AS avg_results,
-    times.t_start_hour AS start_hour
-  FROM times AS times
-  LEFT JOIN _s3 AS _s3
-    ON _s3.name = times.t_name
+      100.0 * agg_1
+    ) / SUM(agg_1) OVER (), 2) AS pct_searches,
+    ROUND(agg_0, 2) AS avg_results,
+    agg_4
+  FROM _t1
 )
 SELECT
   tod,
@@ -27,4 +26,4 @@ SELECT
   avg_results
 FROM _t0
 ORDER BY
-  start_hour
+  agg_4

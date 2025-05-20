@@ -1,5 +1,5 @@
-ROOT(columns=[('key', key_2), ('name', name_3), ('region_key', region_key), ('comment', comment_1)], orderings=[])
- FILTER(condition=CONTAINS(name_3, name), columns={'comment_1': comment_1, 'key_2': key_2, 'name_3': name_3, 'region_key': region_key})
+ROOT(columns=[('key', key_6), ('region_key', region_key), ('name', name_7), ('comment', comment_5)], orderings=[])
+ FILTER(condition=CONTAINS(name_3, name), columns={'comment_5': comment_1, 'key_6': key_2, 'name_7': name_3, 'region_key': region_key})
   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t1.region_key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
    SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})

@@ -1,4 +1,4 @@
-ROOT(columns=[('okey', key), ('lsum', DEFAULT_TO(agg_0, 0:int64))], orderings=[])
+ROOT(columns=[('okey', key), ('lsum', DEFAULT_TO(agg_0, 0:numeric))], orderings=[])
  JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
   SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey})
   AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': SUM(agg_0)})
