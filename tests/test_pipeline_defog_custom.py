@@ -1380,7 +1380,6 @@ def test_pipeline_until_relational_defog(
     """
     unqualified_impl, columns, graph_name, file_name, _ = custom_defog_test_data
     graph: GraphMetadata = defog_graphs(graph_name)
-    init_pydough_context(graph)(unqualified_impl)()
     file_path: str = get_plan_test_filename(file_name)
     UnqualifiedRoot(graph)
     unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()

@@ -1099,30 +1099,24 @@ def common_prefix_o():
     )
 
 
-"""
-SELECT
-    n_name,
-    COUNT(DISTINCT c_custkey) AS n_customers,
-    SUM(n) AS n_orders
-FROM nation
-INNER JOIN customer on n_nationkey = c_nationkey
-LEFT JOIN (
-    SELECT
-        o_custkey,
-        COUNT(*) AS n
-    FROM orders
-    WHERE strftime('%Y', o_orderdate) = '1992'
-    AND strftime('%m', o_orderdate) = '12'
-    AND o_clerk = 'Clerk#000000272'
-    GROUP BY 1
-) ON c_custkey = o_custkey
-GROUP BY 1
-HAVING n_orders > 0
-ORDER BY 2 DESC, 1 ASC
-LIMIT 5
-;
-
-"""
+def common_prefix_p():
+    # For each customer, count how many orders they have made, the number of
+    # qualifying lineitems within those orders, and the number of unique parts
+    # they have ordered, keeping the top 5 customers with the smallest ratio of
+    # unique parts to total part orders, breaking ties by customer
+    # name. Only consider urgent orders, and lineitems without a tax.
+    selected_orders = orders.WHERE(order_priority == "1-URGENT")
+    selected_lines = selected_orders.lines.WHERE(tax == 0)
+    return (
+        customers.CALCULATE(
+            name,
+            n_orders=COUNT(selected_orders),
+            n_parts_ordered=COUNT(selected_lines),
+            n_distinct_parts=NDISTINCT(selected_lines.part_key),
+        )
+        .WHERE(HAS(selected_orders) & HAS(selected_lines))
+        .TOP_K(5, by=((n_distinct_parts / n_parts_ordered).ASC(), name.ASC()))
+    )
 
 
 def function_sampler():
