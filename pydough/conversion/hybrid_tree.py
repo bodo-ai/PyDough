@@ -3350,7 +3350,10 @@ class HybridTranslator:
 
         # If a singular is being added to a SEMI join, switch the SEMI
         # join to an singular-only-match.
-        if base_child.connection_type == ConnectionType.SEMI:
+        if (
+            base_child.connection_type == ConnectionType.SEMI
+            and extension_child.connection_type != ConnectionType.SEMI
+        ):
             base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
 
         required_steps: int = len(base_subtree.pipeline) - 1
@@ -3363,8 +3366,8 @@ class HybridTranslator:
 
         # For every term in the extension child, add a child reference to pull
         # it into the base child. Skip this step if the extension child is just
-        # a SEMI join.
-        if new_connection_type == ConnectionType.SEMI:
+        # a pure SEMI/ANTI join.
+        if new_connection_type in (ConnectionType.SEMI, ConnectionType.ANTI):
             return
         for term_name in sorted(extension_subtree.pipeline[-1].terms):
             old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
@@ -3397,6 +3400,16 @@ class HybridTranslator:
         extension_subtree: HybridTree = self.make_extension_child(
             copy.deepcopy(extension_child.subtree), extension_height, base_subtree
         )
+
+        # ANTI are automatically syncretized since the base not being
+        # present implies the extension is not present, so we can just
+        # have the extension child be pruned without modifying the
+        # base.
+        if (
+            base_child.connection_type.is_anti
+            and extension_child.connection_type.is_anti
+        ):
+            return True
 
         all_aggs_syncretizable: bool = all(
             agg.operator in self.supported_syncretize_operators
@@ -3436,14 +3449,17 @@ class HybridTranslator:
                 (ConnectionType.SINGULAR, ConnectionType.SINGULAR)
                 | (ConnectionType.SINGULAR, ConnectionType.SINGULAR_ONLY_MATCH)
                 | (ConnectionType.SINGULAR, ConnectionType.SEMI)
+                | (ConnectionType.SINGULAR, ConnectionType.ANTI)
                 | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.SINGULAR)
                 | (
                     ConnectionType.SINGULAR_ONLY_MATCH,
                     ConnectionType.SINGULAR_ONLY_MATCH,
                 )
                 | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.SEMI)
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.ANTI)
                 | (ConnectionType.SEMI, ConnectionType.SINGULAR)
                 | (ConnectionType.SEMI, ConnectionType.SINGULAR_ONLY_MATCH)
+                | (ConnectionType.SEMI, ConnectionType.SEMI)
             ):
                 self.syncretize_singular_onto_singular(
                     tree,
@@ -3498,4 +3514,4 @@ class HybridTranslator:
                     children_to_delete.add(extension_idx)
             tree.remove_dead_children(children_to_delete)
         for child in tree.children:
-            self.syncretize_children(child.subtree)
+            self.syncretize_children(child.subtree)  # t
