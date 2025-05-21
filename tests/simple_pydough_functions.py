@@ -1184,7 +1184,7 @@ def common_prefix_s():
 def common_prefix_t():
     # For each Indian customer in the building industry who has orders, get the
     # total sum of quantities of parts they have ordered, picking the 5
-    # customers with the higehst quantities (breaking ties by name).
+    # customers with the highest quantities (breaking ties by name).
     return (
         customers.WHERE(
             (nation.name == "INDIA") & (market_segment == "BUILDING") & HAS(orders)

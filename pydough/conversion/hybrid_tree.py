@@ -3274,11 +3274,8 @@ class HybridTranslator:
             # must not preserve non-matching records, then convert it to a
             # regular aggregation and add a filter to the parent where COUNT
             # is > 0, and allow this count to be split by the extension child.
-            if new_connection_type.is_aggregation:
-                self.add_extension_semi_count_filter(tree, extension_idx)
-                new_connection_type = ConnectionType.AGGREGATION
-            else:
-                raise NotImplementedError("Unsupported syncretization pattern")
+            self.add_extension_semi_count_filter(tree, extension_idx)
+            new_connection_type = ConnectionType.AGGREGATION
 
         # If an aggregation is being added to a SEMI join, switch the SEMI
         # join to an aggregation-only-match.
@@ -3325,6 +3322,61 @@ class HybridTranslator:
             )
             remapping[old_child_ref] = new_child_ref
 
+    def syncretize_singular_onto_singular(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+        existing_correlates: set[int],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
+        new_connection_type: ConnectionType = extension_child.connection_type
+
+        if extension_subtree.always_exists():
+            new_connection_type = new_connection_type.reconcile_connection_types(
+                ConnectionType.SEMI
+            )
+
+        # If a singular is being added to a SEMI join, switch the SEMI
+        # join to an singular-only-match.
+        if base_child.connection_type == ConnectionType.SEMI:
+            base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
+
+        required_steps: int = len(base_subtree.pipeline) - 1
+        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
+            required_steps -= 1
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, existing_correlates, required_steps
+        )
+        base_subtree.children[new_child_idx]
+
+        # For every term in the extension child, add a child reference to pull
+        # it into the base child.
+        for term_name in sorted(extension_subtree.pipeline[-1].terms):
+            old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
+            child_expr: HybridExpr = HybridChildRefExpr(
+                term_name, new_child_idx, old_term.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, False
+            )
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                term_name, extension_idx, old_term.typ
+            )
+            assert isinstance(switch_ref, HybridRefExpr)
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                switch_ref.name, base_idx, old_term.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+
     def syncretize_subtrees(
         self, tree: HybridTree, base_idx: int, extension_idx: int, extension_height: int
     ) -> bool:
@@ -3344,6 +3396,11 @@ class HybridTranslator:
             agg.operator in self.supported_syncretize_operators
             for agg in extension_child.aggs.values()
         )
+
+        if extension_child.required_steps < base_child.required_steps:
+            if base_idx in tree.correlated_children:
+                return False
+            base_child.required_steps = extension_child.required_steps
 
         match (base_child.connection_type, extension_child.connection_type):
             case (
@@ -3378,7 +3435,14 @@ class HybridTranslator:
                 | (ConnectionType.SEMI, ConnectionType.SINGULAR)
                 | (ConnectionType.SEMI, ConnectionType.SINGULAR_ONLY_MATCH)
             ):
-                return False
+                self.syncretize_singular_onto_singular(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                    existing_correlates,
+                )
             case _:
                 return False
 
