@@ -29,6 +29,9 @@ from simple_pydough_functions import (
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
     common_prefix_a,
+    common_prefix_aa,
+    common_prefix_ab,
+    common_prefix_ac,
     common_prefix_b,
     common_prefix_c,
     common_prefix_d,
@@ -49,6 +52,11 @@ from simple_pydough_functions import (
     common_prefix_s,
     common_prefix_t,
     common_prefix_u,
+    common_prefix_v,
+    common_prefix_w,
+    common_prefix_x,
+    common_prefix_y,
+    common_prefix_z,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -2308,6 +2316,128 @@ from pydough.unqualified import (
             ),
             id="common_prefix_u",
         ),
+        pytest.param(
+            (
+                common_prefix_v,
+                None,
+                "common_prefix_v",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [f"Customer#{i:09}" for i in (3, 14, 29, 30, 48)],
+                        "region_name": [
+                            "AMERICA",
+                            "AMERICA",
+                            "AFRICA",
+                            "AMERICA",
+                            "AFRICA",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_v",
+        ),
+        pytest.param(
+            (
+                common_prefix_w,
+                None,
+                "common_prefix_w",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [37, 64, 68, 228, 293] * 5,
+                        "cust_nation_name": ["ALGERIA"]
+                        + ["ARGENTINA"] * 3
+                        + ["ALGERIA"],
+                    }
+                ),
+            ),
+            id="common_prefix_w",
+        ),
+        pytest.param(
+            (
+                common_prefix_x,
+                None,
+                "common_prefix_x",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in (3451, 102004, 102022, 79300, 117082)
+                        ],
+                        "n_orders": [41, 41, 41, 40, 40],
+                    }
+                ),
+            ),
+            id="common_prefix_x",
+        ),
+        pytest.param(
+            (
+                common_prefix_y,
+                None,
+                "common_prefix_y",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in (138841, 36091, 54952, 103768, 46081)
+                        ],
+                        "n_orders": [21, 20, 19, 19, 17],
+                    }
+                ),
+            ),
+            id="common_prefix_y",
+        ),
+        pytest.param(
+            (
+                common_prefix_z,
+                None,
+                "common_prefix_z",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [f"Customer#{i:09}" for i in (7, 9, 19, 21, 25)],
+                        "nation_name": ["CHINA", "INDIA"] * 2 + ["JAPAN"],
+                    }
+                ),
+            ),
+            id="common_prefix_z",
+        ),
+        pytest.param(
+            (
+                common_prefix_aa,
+                None,
+                "common_prefix_aa",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [f"Customer#{i:09}" for i in (1, 2, 4, 6, 7)],
+                        "nation_name": [
+                            "MOROCCO",
+                            "JORDAN",
+                            "EGYPT",
+                            "SAUDI ARABIA",
+                            "CHINA",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_aa",
+        ),
+        pytest.param(
+            (
+                common_prefix_ab,
+                None,
+                "common_prefix_ab",
+                lambda: pd.DataFrame({"n": [54318]}),
+            ),
+            id="common_prefix_ab",
+        ),
+        pytest.param(
+            (
+                common_prefix_ac,
+                None,
+                "common_prefix_ac",
+                lambda: pd.DataFrame({"n": [137398]}),
+            ),
+            id="common_prefix_ac",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -2397,6 +2527,7 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    print(result)
     pd.testing.assert_frame_equal(result, answer_impl())
 
 
