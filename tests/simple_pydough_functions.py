@@ -1050,12 +1050,12 @@ def common_prefix_m():
 
 def common_prefix_n():
     # For each order handled by clerk 540, get the number of elements in the
-    # order, the number of unique container types in the order, the number of
+    # order, the total retail price of all parts ordered, the number of
     # of distinct nation that supplied the orders, the maximum account
     # balance of any of the order's suppliers, and the number of items in the
     # order that were for a small part. Only consider orders where there is at
-    # least one duplicate supplier nation and at least one duplicate container.
-    # Pick the five most qualifying orders, breaking ties by the key.
+    # least one duplicate supplier nation, and pick the five most recent
+    # qualifying orders, breaking ties by the key.
     small_parts = lines.part.WHERE(STARTSWITH(container, "SM"))
     selected_orders = orders.WHERE(clerk == "Clerk#000000540")
     return (
@@ -1063,15 +1063,12 @@ def common_prefix_n():
             key,
             order_date,
             n_elements=COUNT(lines),
-            n_unique_containers=NDISTINCT(lines.part.container),
+            total_retail_price=SUM(lines.part.retail_price),
             n_unique_supplier_nations=NDISTINCT(lines.supplier.nation.name),
             max_supplier_balance=MAX(lines.supplier.account_balance),
             n_small_parts=COUNT(lines.part.WHERE(STARTSWITH(container, "SM"))),
         )
-        .WHERE(
-            (n_elements > n_unique_containers)
-            & (n_elements > n_unique_supplier_nations)
-        )
+        .WHERE(n_elements > n_unique_supplier_nations)
         .TOP_K(5, by=(order_date.DESC(), key.ASC()))
     )
 

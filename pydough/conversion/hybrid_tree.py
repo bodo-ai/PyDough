@@ -3265,7 +3265,10 @@ class HybridTranslator:
 
         new_connection_type: ConnectionType = extension_child.connection_type
 
-        if extension_subtree.always_exists():
+        if (
+            extension_subtree.always_exists()
+            and new_connection_type != ConnectionType.SEMI
+        ):
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
@@ -3359,7 +3362,10 @@ class HybridTranslator:
         base_subtree.children[new_child_idx]
 
         # For every term in the extension child, add a child reference to pull
-        # it into the base child.
+        # it into the base child. Skip this step if the extension child is just
+        # a SEMI join.
+        if new_connection_type == ConnectionType.SEMI:
+            return
         for term_name in sorted(extension_subtree.pipeline[-1].terms):
             old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
             child_expr: HybridExpr = HybridChildRefExpr(
@@ -3406,11 +3412,13 @@ class HybridTranslator:
             case (
                 (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION)
                 | (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
+                | (ConnectionType.AGGREGATION, ConnectionType.SEMI)
                 | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.AGGREGATION)
                 | (
                     ConnectionType.AGGREGATION_ONLY_MATCH,
                     ConnectionType.AGGREGATION_ONLY_MATCH,
                 )
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.SEMI)
                 | (ConnectionType.SEMI, ConnectionType.AGGREGATION)
                 | (ConnectionType.SEMI, ConnectionType.AGGREGATION_ONLY_MATCH)
             ):
@@ -3427,11 +3435,13 @@ class HybridTranslator:
             case (
                 (ConnectionType.SINGULAR, ConnectionType.SINGULAR)
                 | (ConnectionType.SINGULAR, ConnectionType.SINGULAR_ONLY_MATCH)
+                | (ConnectionType.SINGULAR, ConnectionType.SEMI)
                 | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.SINGULAR)
                 | (
                     ConnectionType.SINGULAR_ONLY_MATCH,
                     ConnectionType.SINGULAR_ONLY_MATCH,
                 )
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.SEMI)
                 | (ConnectionType.SEMI, ConnectionType.SINGULAR)
                 | (ConnectionType.SEMI, ConnectionType.SINGULAR_ONLY_MATCH)
             ):
