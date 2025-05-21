@@ -44,6 +44,9 @@ from simple_pydough_functions import (
     common_prefix_n,
     common_prefix_o,
     common_prefix_p,
+    common_prefix_q,
+    common_prefix_r,
+    common_prefix_s,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -2179,6 +2182,96 @@ from pydough.unqualified import (
             ),
             id="common_prefix_p",
         ),
+        pytest.param(
+            (
+                common_prefix_q,
+                None,
+                "common_prefix_q",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in (127207, 14839, 18637, 52351, 117196)
+                        ],
+                        "total_spent": [
+                            907224.66,
+                            902286.22,
+                            856788.74,
+                            842691.87,
+                            836571.25,
+                        ],
+                        "line_price": [
+                            86804.77,
+                            83715.40,
+                            69682.50,
+                            71998.67,
+                            93875.18,
+                        ],
+                        "part_name": [
+                            "slate beige orange black burlywood",
+                            "chiffon ivory salmon frosted linen",
+                            "chartreuse cream royal misty cornflower",
+                            "lavender tomato midnight orchid thistle",
+                            "green navy sky blue lemon",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_q",
+        ),
+        pytest.param(
+            (
+                common_prefix_r,
+                None,
+                "common_prefix_r",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in (127207, 14839, 18637, 52351, 117196)
+                        ],
+                        "part_name": [
+                            "slate beige orange black burlywood",
+                            "chiffon ivory salmon frosted linen",
+                            "chartreuse cream royal misty cornflower",
+                            "lavender tomato midnight orchid thistle",
+                            "green navy sky blue lemon",
+                        ],
+                        "line_price": [
+                            86804.77,
+                            83715.40,
+                            69682.50,
+                            71998.67,
+                            93875.18,
+                        ],
+                        "total_spent": [
+                            907224.66,
+                            902286.22,
+                            856788.74,
+                            842691.87,
+                            836571.25,
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_r",
+        ),
+        pytest.param(
+            (
+                common_prefix_s,
+                None,
+                "common_prefix_s",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["Customer#000106507"],
+                        "most_recent_order_date": ["1998-05-25"],
+                        "most_recent_order_total": [7],
+                        "most_recent_order_distinct": [6],
+                    }
+                ),
+            ),
+            id="common_prefix_s",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -2268,7 +2361,6 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
-    print(result.to_string())
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

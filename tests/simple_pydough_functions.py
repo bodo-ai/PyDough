@@ -1119,6 +1119,68 @@ def common_prefix_p():
     )
 
 
+def common_prefix_q():
+    # For each customer, obtain the total price they have paid for all urgent
+    # orders in 1998, identify the single most expensive line item from any
+    # of those orders (breaking ties by part key) and the part name & extended
+    # price of that line item. Pick the 5 customers with the highest total
+    # price paid, breaking ties by customer name.
+    selected_orders = orders.WHERE(
+        (order_priority == "1-URGENT") & (YEAR(order_date) == 1998)
+    )
+    most_expensive_line = selected_orders.lines.BEST(
+        by=(extended_price.DESC(), part_key.ASC()), per="customers"
+    )
+    return customers.CALCULATE(
+        name,
+        total_spent=SUM(selected_orders.total_price),
+        line_price=most_expensive_line.extended_price,
+        part_name=most_expensive_line.part.name,
+    ).TOP_K(5, by=(total_spent.DESC(), name.ASC()))
+
+
+def common_prefix_r():
+    # Same as common_prefix_q, but with HAS filters and a different order of
+    # the fields.
+    selected_orders = orders.WHERE(
+        (order_priority == "1-URGENT") & (YEAR(order_date) == 1998)
+    )
+    most_expensive_line = selected_orders.lines.BEST(
+        by=(extended_price.DESC(), part_key.ASC()), per="customers"
+    )
+    return (
+        customers.CALCULATE(part_name=most_expensive_line.part.name)
+        .CALCULATE(line_price=most_expensive_line.extended_price)
+        .CALCULATE(
+            name,
+            part_name,
+            line_price,
+            total_spent=SUM(selected_orders.total_price),
+        )
+        .WHERE(HAS(selected_orders) & HAS(most_expensive_line))
+        .TOP_K(5, by=(total_spent.DESC(), name.ASC()))
+    )
+
+
+def common_prefix_s():
+    # For each german customer in the automobile industry, obtain the date of
+    # their most recent order (breaking ties by order key) and how many total
+    # vs unique suppliers were in that order. Keep all such customers who had
+    # at least one duplicate supplier in their order, sorted by customer name.
+    most_recent_order = orders.BEST(by=(order_date.DESC(), key.ASC()), per="customers")
+    return (
+        customers.WHERE((nation.name == "GERMANY") & (market_segment == "AUTOMOBILE"))
+        .CALCULATE(
+            name,
+            most_recent_order_date=most_recent_order.order_date,
+            most_recent_order_total=COUNT(most_recent_order.lines),
+            most_recent_order_distinct=NDISTINCT(most_recent_order.lines.supplier_key),
+        )
+        .WHERE(most_recent_order_distinct < most_recent_order_total)
+        .ORDER_BY(name.ASC())
+    )
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
