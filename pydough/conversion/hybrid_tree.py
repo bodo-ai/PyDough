@@ -3280,6 +3280,11 @@ class HybridTranslator:
             else:
                 raise NotImplementedError("Unsupported syncretization pattern")
 
+        # If an aggregation is being added to a SEMI join, switch the SEMI
+        # join to an aggregation-only-match.
+        if base_child.connection_type == ConnectionType.SEMI:
+            base_child.connection_type = ConnectionType.AGGREGATION
+
         required_steps: int = len(base_subtree.pipeline) - 1
         if isinstance(base_subtree.pipeline[-1], HybridCalculate):
             required_steps -= 1
@@ -3335,32 +3340,47 @@ class HybridTranslator:
             copy.deepcopy(extension_child.subtree), extension_height, base_subtree
         )
 
-        if not extension_subtree.is_singular():
-            if not all(
-                agg.operator in self.supported_syncretize_operators
-                for agg in extension_child.aggs.values()
-            ):
-                return False
+        all_aggs_syncretizable: bool = all(
+            agg.operator in self.supported_syncretize_operators
+            for agg in extension_child.aggs.values()
+        )
 
-        if (
-            base_child.connection_type.is_aggregation
-            and extension_child.connection_type.is_aggregation
-        ):
-            if not all(
-                agg.operator in self.supported_syncretize_operators
-                for agg in extension_child.aggs.values()
+        match (base_child.connection_type, extension_child.connection_type):
+            case (
+                (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION)
+                | (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.AGGREGATION)
+                | (
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                )
+                | (ConnectionType.SEMI, ConnectionType.AGGREGATION)
+                | (ConnectionType.SEMI, ConnectionType.AGGREGATION_ONLY_MATCH)
+            ):
+                if not all_aggs_syncretizable:
+                    return False
+                self.syncretize_agg_onto_agg(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                    existing_correlates,
+                )
+            case (
+                (ConnectionType.SINGULAR, ConnectionType.SINGULAR)
+                | (ConnectionType.SINGULAR, ConnectionType.SINGULAR_ONLY_MATCH)
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.SINGULAR)
+                | (
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                )
+                | (ConnectionType.SEMI, ConnectionType.SINGULAR)
+                | (ConnectionType.SEMI, ConnectionType.SINGULAR_ONLY_MATCH)
             ):
                 return False
-            self.syncretize_agg_onto_agg(
-                tree,
-                base_idx,
-                extension_idx,
-                extension_subtree,
-                remapping,
-                existing_correlates,
-            )
-        else:
-            return False
+            case _:
+                return False
 
         for operation in tree.pipeline:
             operation.replace_expressions(remapping)
