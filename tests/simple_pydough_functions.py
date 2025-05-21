@@ -1215,6 +1215,95 @@ def common_prefix_u():
     )
 
 
+def common_prefix_v():
+    # For each customer whose nation name starts with "A" get their region's
+    # name, and keep the first 5 such customers alphabetically by name.
+    selected_nation = nation.WHERE(name[:1] == "A")
+    return (
+        customers.WHERE(HAS(selected_nation))
+        .CALCULATE(name, region_name=selected_nation.region.name)
+        .TOP_K(5, by=name.ASC())
+    )
+
+
+def common_prefix_w():
+    # For each order purchasing customer is not in debt and the customer's
+    # nation starts with "A", get the order key and customer's nation's name
+    # of the first 5 qualifying orders with the lowest key.
+    selected_customer = customer.WHERE(account_balance > 0.0)
+    selected_nation = selected_customer.nation.WHERE(name[:1] == "A")
+    return (
+        orders.WHERE(HAS(selected_customer) & HAS(selected_nation))
+        .CALCULATE(key, cust_nation_name=selected_nation.name)
+        .TOP_K(5, by=key.ASC())
+    )
+
+
+def common_prefix_x():
+    # For each customer who has made a zero-tax purchase, count how
+    # many total orders they have made. Keep the top 5 customers by number
+    # of orders, breaking ties by customer name.
+    return (
+        customers.WHERE(HAS(orders.lines.WHERE(tax == 0)))
+        .CALCULATE(name, n_orders=COUNT(orders))
+        .TOP_K(5, by=(n_orders.DESC(), name.ASC()))
+    )
+
+
+def common_prefix_y():
+    # For each customer who has NEVER made a zero-tax purchase, count how
+    # many total orders they have made. Keep the top 5 customers by number
+    # of orders, breaking ties by customer name.
+    return (
+        customers.WHERE(HASNOT(orders.lines.WHERE(tax == 0)))
+        .CALCULATE(name, n_orders=COUNT(orders))
+        .TOP_K(5, by=(n_orders.DESC(), name.ASC()))
+    )
+
+
+def common_prefix_z():
+    # For each Asian customer, get the name of the country they live in.
+    # Keep the first 5 qualifying customers alphabetically.
+    return (
+        customers.WHERE(HAS(nation.region.WHERE(name == "ASIA")))
+        .CALCULATE(
+            name,
+            nation_name=nation.name,
+        )
+        .TOP_K(5, by=(name.ASC()))
+    )
+
+
+def common_prefix_aa():
+    # For each non-American customer, get the name of the country they live in.
+    # Keep the first 5 qualifying customers alphabetically.
+    return (
+        customers.WHERE(HASNOT(nation.region.WHERE(name == "AMERICA")))
+        .CALCULATE(
+            name,
+            nation_name=nation.name,
+        )
+        .TOP_K(5, by=(name.ASC()))
+    )
+
+
+def common_prefix_ab():
+    # Count how many orders were made by a customer not in debt from Japan.
+    selected_customer = customer.WHERE(account_balance > 0.0)
+    selected_nation = selected_customer.nation.WHERE(name == "JAPAN")
+    selected_orders = orders.WHERE(HAS(selected_customer) & HAS(selected_nation))
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def common_prefix_ac():
+    # Count how many orders were NOT made by a customer not in debt, NOR
+    # from a customer in debt from Japan.
+    selected_customer = customer.WHERE(account_balance > 0.0)
+    selected_nation = selected_customer.nation.WHERE(name == "JAPAN")
+    selected_orders = orders.WHERE(HASNOT(selected_customer) & HASNOT(selected_nation))
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
