@@ -48,6 +48,7 @@ from simple_pydough_functions import (
     common_prefix_r,
     common_prefix_s,
     common_prefix_t,
+    common_prefix_u,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -2282,13 +2283,30 @@ from pydough.unqualified import (
                     {
                         "name": [
                             f"Customer#{i:09}"
-                            for i in (127207, 14839, 18637, 52351, 117196)
+                            for i in (126850, 80485, 86209, 73420, 146809)
                         ],
-                        "total_qty": [0] * 5,
+                        "total_qty": [3670, 3439, 3422, 3409, 3409],
                     }
                 ),
             ),
             id="common_prefix_t",
+        ),
+        pytest.param(
+            (
+                common_prefix_u,
+                None,
+                "common_prefix_u",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in (111613, 112126, 92282, 69872, 135349)
+                        ],
+                        "total_qty": [169, 162, 151, 150, 136],
+                    }
+                ),
+            ),
+            id="common_prefix_u",
         ),
     ],
 )

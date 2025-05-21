@@ -1198,6 +1198,23 @@ def common_prefix_t():
     )
 
 
+def common_prefix_u():
+    # Same as common_prefix_t but only considers lineitems with a tax of 0
+    # shipped via rail, and ignores customers without any such orders.
+    selected_lines = orders.lines.WHERE((tax == 0) & (ship_mode == "RAIL"))
+    return (
+        customers.WHERE(
+            (nation.name == "INDIA") & (market_segment == "BUILDING") & HAS(orders)
+        )
+        .CALCULATE(
+            name,
+            total_qty=SUM(selected_lines.quantity),
+        )
+        .WHERE(HAS(orders) & HAS(selected_lines))
+        .TOP_K(5, by=(total_qty.DESC(), name.ASC()))
+    )
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
