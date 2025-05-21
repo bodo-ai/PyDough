@@ -47,6 +47,7 @@ from simple_pydough_functions import (
     common_prefix_q,
     common_prefix_r,
     common_prefix_s,
+    common_prefix_t,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -2271,6 +2272,23 @@ from pydough.unqualified import (
                 ),
             ),
             id="common_prefix_s",
+        ),
+        pytest.param(
+            (
+                common_prefix_t,
+                None,
+                "common_prefix_t",
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            f"Customer#{i:09}"
+                            for i in (127207, 14839, 18637, 52351, 117196)
+                        ],
+                        "total_qty": [0] * 5,
+                    }
+                ),
+            ),
+            id="common_prefix_t",
         ),
     ],
 )
