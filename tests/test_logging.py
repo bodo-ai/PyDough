@@ -185,19 +185,19 @@ def test_execute_df_logging(
  WITH _t0 AS (
   SELECT
     COUNT() AS count_order,
-    SUM(l_discount) AS sum_discount,
     SUM(l_extendedprice) AS sum_base_price,
-    SUM(l_quantity) AS sum_qty,
-    SUM((
-      l_extendedprice * (
-        1 - l_discount
-      )
-    )) AS sum_disc_price,
     SUM(l_extendedprice * (
       1 - l_discount
     ) * (
       1 + l_tax
     )) AS sum_charge,
+    SUM(l_discount) AS sum_discount,
+    SUM((
+      l_extendedprice * (
+        1 - l_discount
+      )
+    )) AS sum_disc_price,
+    SUM(l_quantity) AS sum_qty,
     l_linestatus,
     l_returnflag
   FROM lineitem
