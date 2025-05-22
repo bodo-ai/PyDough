@@ -1793,7 +1793,9 @@ from pydough.unqualified import (
                 "replace",
                 lambda: pd.DataFrame(
                     {
-                        "name": ["Alex Rodriguez", ],
+                        "name": [
+                            "Alex Rodriguez",
+                        ],
                     }
                 ),
             ),

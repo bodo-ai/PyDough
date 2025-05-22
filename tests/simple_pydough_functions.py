@@ -1837,6 +1837,7 @@ def strip():
         )
     )
 
+
 def replace():
     return (
         Customers.WHERE(name == "Alex Rodriguez")
@@ -1856,6 +1857,7 @@ def replace():
             replaced_alt_name4=REPLACE(alt_name4, "Alex Rodriguez", "A.R."),
         )
     )
+
 
 def singular1():
     # Singular in CALCULATE & WHERE

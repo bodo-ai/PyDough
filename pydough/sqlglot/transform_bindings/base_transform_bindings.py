@@ -319,6 +319,7 @@ class BaseTransformBindings:
             this=to_strip,
             expression=strip_char_glot,
         )
+
     def convert_replace(
         self,
         args: list[SQLGlotExpression],
@@ -339,7 +340,7 @@ class BaseTransformBindings:
         if len(args) == 2:
             # If only two arguments are provided, the third argument is set to an empty string
             args.append(sqlglot_expressions.Literal.string(""))
-        #HA: confirm this is correct?
+        # HA: confirm this is correct?
         return sqlglot_expressions.Replace(
             this=args[0],
             expression=[args[1], args[2]],
