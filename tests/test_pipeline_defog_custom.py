@@ -41,6 +41,7 @@ from simple_pydough_functions import (
     multi_partition_access_5,
     multi_partition_access_6,
     padding_functions,
+    replace,
     sign,
     simple_week_sampler,
     step_slicing,
@@ -1062,6 +1063,23 @@ def get_day_of_week(
                 ),
             ),
             id="strip",
+        ),
+        pytest.param(
+            (
+                replace,
+                None,
+                "Broker",
+                "replace",
+                # Answer
+                lambda: pd.DataFrame(
+                    {
+                        "name": [
+                            "Alex Rodriguez",
+                        ],
+                    }
+                ),
+            ),
+            id="replace",
         ),
         pytest.param(
             (

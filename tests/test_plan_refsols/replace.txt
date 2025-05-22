@@ -1,0 +1,3 @@
+ROOT(columns=[('replaced_name', REPLACE(name, 'Alex':string, 'Alexander':string)), ('removed_name', REPLACE(name, 'Alex':string)), ('replaced_alt_name1', REPLACE('alex Rodriguez':string, 'Rodriguez':string, 'Smith':string)), ('replaced_alt_name2', REPLACE('Mr. Alex Rodriguez':string, 'Mr. ':string, '':string)), ('replaced_alt_name3', REPLACE('Alex Rodriguez Jr.':string, ' Jr.':string)), ('replaced_alt_name4', REPLACE('Alex Rodriguez Alex Rodriguez':string, 'Alex Rodriguez':string, 'A.R.':string))], orderings=[])
+ FILTER(condition=name == 'Alex Rodriguez':string, columns={'name': name})
+  SCAN(table=main.sbCustomer, columns={'name': sbCustName})
