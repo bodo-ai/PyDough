@@ -1586,6 +1586,8 @@ class HybridTree:
         # is the top level)
         start_operation: HybridOperation = self.pipeline[0]
         match start_operation:
+            case HybridRoot():
+                return True
             case HybridCollectionAccess():
                 if isinstance(start_operation.collection, TableCollection):
                     # Regular table collection accesses always exist.
@@ -1654,6 +1656,16 @@ class HybridTree:
                 return False
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.always_exists()
+
+    def contains_sub_correlations(self) -> bool:
+        """
+        TODO
+        """
+        if len(self.correlated_children) > 0 or any(
+            child.subtree.contains_sub_correlations() for child in self.children
+        ):
+            return True
+        return self.parent is not None and self.parent.contains_sub_correlations()
 
     def equalsIgnoringSuccessors(self, other: "HybridTree") -> bool:
         """
@@ -1771,8 +1783,8 @@ class HybridTree:
                 continue
             if (
                 self.children[child_idx].connection_type.is_semi
-                or self.children[child_idx].connection_type.is_anti
-            ):
+                and not self.children[child_idx].subtree.always_exists()
+            ) or self.children[child_idx].connection_type.is_anti:
                 children_to_delete.discard(child_idx)
 
         if len(children_to_delete) == 0:
@@ -1799,18 +1811,6 @@ class HybridTree:
                         self.renumber_children_indices(term, child_remapping)
                 case _:
                     continue
-
-        # Renumber the required steps for the children
-        for child in self.children:
-            req_steps: int = child.required_steps
-            while True:
-                if req_steps in child_remapping:
-                    child.required_steps = child_remapping[req_steps]
-                    break
-                if req_steps == 0:
-                    child.required_steps = 0
-                    break
-                req_steps -= 1
 
         # Renumber the correlated children
         new_correlated_children: set[int] = set()
@@ -3634,6 +3634,14 @@ class HybridTranslator:
             agg.operator in self.supported_syncretize_operators
             for agg in extension_child.aggs.values()
         )
+
+        # TODO: support syncretization when the extension is itself
+        # correlated to any of its children
+        if (
+            extension_idx in tree.correlated_children
+            or extension_subtree.contains_sub_correlations()
+        ):
+            return False
 
         if extension_child.required_steps < base_child.required_steps:
             if base_idx in tree.correlated_children:

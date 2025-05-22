@@ -19,6 +19,6 @@ ROOT(columns=[('region_key', agg_7), ('nation_name', agg_6), ('n_above_avg_custo
      JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'avg_supp_acctbal': t0.avg_supp_acctbal, 'key': t0.key})
       JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'avg_supp_acctbal': t1.avg_supp_acctbal, 'key': t0.key})
        SCAN(table=tpch.NATION, columns={'key': n_nationkey})
-       AGGREGATE(keys={'nation_key': nation_key, 'nation_key_11': nation_key}, aggregations={'avg_supp_acctbal': AVG(account_balance)})
+       AGGREGATE(keys={'nation_key': nation_key, 'nation_key_9': nation_key}, aggregations={'avg_supp_acctbal': AVG(account_balance)})
         SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})
       SCAN(table=tpch.SUPPLIER, columns={'account_balance': s_acctbal, 'nation_key': s_nationkey})

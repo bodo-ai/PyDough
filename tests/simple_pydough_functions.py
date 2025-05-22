@@ -1358,6 +1358,127 @@ def common_prefix_af():
     )
 
 
+def common_prefix_ag():
+    # For every european nation, count how many customers in that region are in
+    # the machinery market segment, how many orders were made by those
+    # customers had priority 2-HIGH, how many line items were in those orders
+    # that were shipped by a supplier in the same nation, and the total revenue
+    # from those line items. The revenue accounts for the discount, and the
+    # cost to the supplier. The result is sorted alphabetically by nation name.
+    selected_customers = customers.WHERE(market_segment == "MACHINERY")
+    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
+    selected_lines = selected_orders.lines.WHERE(
+        supplier.nation.name == nation_name
+    ).CALCULATE(extended_price, discount, quantity)
+    selected_records = selected_lines.part_and_supplier.CALCULATE(
+        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    )
+    return (
+        nations.WHERE(region.name == "EUROPE")
+        .CALCULATE(nation_name=name)
+        .CALCULATE(
+            nation_name,
+            n_machine_cust=COUNT(selected_customers),
+            n_machine_high_orders=COUNT(selected_orders),
+            n_machine_high_domestic_lines=COUNT(selected_lines),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def common_prefix_ah():
+    # Same as common_prefix_ag, but with a different subset of fields.
+    selected_customers = customers.WHERE(market_segment == "MACHINERY")
+    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
+    selected_lines = selected_orders.lines.WHERE(
+        supplier.nation.name == nation_name
+    ).CALCULATE(extended_price, discount, quantity)
+    selected_records = selected_lines.part_and_supplier.CALCULATE(
+        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    )
+    return (
+        nations.WHERE(region.name == "EUROPE")
+        .CALCULATE(nation_name=name)
+        .CALCULATE(
+            nation_name,
+            n_machine_high_orders=COUNT(selected_orders),
+            n_machine_high_domestic_lines=COUNT(selected_lines),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def common_prefix_ai():
+    # Same as common_prefix_ag, but with a different subset of fields.
+    selected_customers = customers.WHERE(market_segment == "MACHINERY")
+    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
+    selected_lines = selected_orders.lines.WHERE(
+        supplier.nation.name == nation_name
+    ).CALCULATE(extended_price, discount, quantity)
+    selected_records = selected_lines.part_and_supplier.CALCULATE(
+        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    )
+    return (
+        nations.WHERE(region.name == "EUROPE")
+        .CALCULATE(nation_name=name)
+        .CALCULATE(
+            nation_name,
+            n_machine_cust=COUNT(selected_customers),
+            n_machine_high_domestic_lines=COUNT(selected_lines),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def common_prefix_aj():
+    # Same as common_prefix_ag, but with a different subset of fields.
+    selected_customers = customers.WHERE(market_segment == "MACHINERY")
+    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
+    selected_lines = selected_orders.lines.WHERE(
+        supplier.nation.name == nation_name
+    ).CALCULATE(extended_price, discount, quantity)
+    selected_records = selected_lines.part_and_supplier.CALCULATE(
+        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    )
+    return (
+        nations.WHERE(region.name == "EUROPE")
+        .CALCULATE(nation_name=name)
+        .CALCULATE(
+            nation_name,
+            n_machine_cust=COUNT(selected_customers),
+            n_machine_high_orders=COUNT(selected_orders),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def common_prefix_ak():
+    # Same as common_prefix_ag, but with a different subset of fields.
+    selected_customers = customers.WHERE(market_segment == "MACHINERY")
+    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
+    selected_lines = selected_orders.lines.WHERE(
+        supplier.nation.name == nation_name
+    ).CALCULATE(extended_price, discount, quantity)
+    selected_records = selected_lines.part_and_supplier.CALCULATE(
+        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    )
+    return (
+        nations.WHERE(region.name == "EUROPE")
+        .CALCULATE(nation_name=name)
+        .CALCULATE(
+            nation_name,
+            n_machine_cust=COUNT(selected_customers),
+            n_machine_high_orders=COUNT(selected_orders),
+            n_machine_high_domestic_lines=COUNT(selected_lines),
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
