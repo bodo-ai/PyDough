@@ -1842,18 +1842,36 @@ def replace():
     return (
         Customers.WHERE(name == "Alex Rodriguez")
         .CALCULATE(
-            alt_name1="alex Rodriguez",
-            alt_name2="Mr. Alex Rodriguez",
-            alt_name3="Alex Rodriguez Jr.",
-            alt_name4="Alex Rodriguez Alex Rodriguez",
+            name,
+            empty_string="",
+            simple_text="banana",
+            overlapping_text="aaa",
+            case_sensitive_text="Apple",
+            unicode_text="café",
+            special_chars="a$b$c",
+            same_all="foofoo",
+            nested_replace="abcabc",
         )
         .CALCULATE(
             replaced_name=REPLACE(name, "Alex", "Alexander"),
             removed_name=REPLACE(name, "Alex"),
-            replaced_alt_name1=REPLACE(alt_name1, "Rodriguez", "Smith"),
-            replaced_alt_name2=REPLACE(alt_name2, "Mr. ", ""),
-            replaced_alt_name3=REPLACE(alt_name3, " Jr."),
-            replaced_alt_name4=REPLACE(alt_name4, "Alex Rodriguez", "A.R."),
+            case_name=REPLACE(name, "alex"),
+            replace_empty_text=REPLACE(empty_string, "a", "b"),  # ""
+            replace_with_empty_pattern=REPLACE("abc", "", "x"),  # "abc"
+            remove_substring=REPLACE("abc", "a", ""),  # "bc"
+            empty_all=REPLACE("", "", ""),  # ""
+            substring_not_found=REPLACE("hello", "x", "y"),  # "hello"
+            overlapping_matches=REPLACE(overlapping_text, "aa", "b"),  # "ba"
+            multiple_occurrences=REPLACE("a a a", "a", "b"),  # "b b b"
+            case_sensitive=REPLACE(case_sensitive_text, "apple", "orange"),  # "Apple"
+            unicode_handling=REPLACE(unicode_text, "é", "e"),  # "cafe"
+            special_character_replace=REPLACE(special_chars, "$", ""),  # "abc"
+            longer_replacement=REPLACE("x", "x", "xyz"),  # "xyz"
+            shorter_replacement=REPLACE("xyzxyz", "xyz", "x"),  # "xx"
+            same_value_args=REPLACE(same_all, "foo", "foo"),  # "foofoo"
+            nested_like_replace=REPLACE(
+                nested_replace, "abc", "abcabc"
+            ),  # "abcabcabcabc"
         )
     )
 

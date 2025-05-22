@@ -340,7 +340,6 @@ class BaseTransformBindings:
         if len(args) == 2:
             # If only two arguments are provided, the third argument is set to an empty string
             args.append(sqlglot_expressions.Literal.string(""))
-        # HA: confirm this is correct?
         return sqlglot_expressions.Anonymous(this="REPLACE", expressions=args)
 
     def convert_startswith(

@@ -1073,9 +1073,23 @@ def get_day_of_week(
                 # Answer
                 lambda: pd.DataFrame(
                     {
-                        "name": [
-                            "Alex Rodriguez",
-                        ],
+                        "replaced_name": ["Alexander Rodriguez"],
+                        "removed_name": [" Rodriguez"],
+                        "case_name": ["Alex Rodriguez"],
+                        "replace_empty_text": [""],
+                        "replace_with_empty_pattern": ["abc"],
+                        "remove_substring": ["bc"],
+                        "empty_all": [""],
+                        "substring_not_found": ["hello"],
+                        "overlapping_matches": ["ba"],
+                        "multiple_occurrences": ["b b b"],
+                        "case_sensitive": ["Apple"],
+                        "unicode_handling": ["cafe"],
+                        "special_character_replace": ["abc"],
+                        "longer_replacement": ["xyz"],
+                        "shorter_replacement": ["xx"],
+                        "same_value_args": ["foofoo"],
+                        "nested_like_replace": ["abcabcabcabc"],
                     }
                 ),
             ),

@@ -267,6 +267,18 @@ def bad_pydough_impl_23(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
+def bad_replace_too_many_args(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Too many arguments to replace
+    return root.Nations.CALCULATE(
+        replace_name1=root.REPLACE(root.name, "a", "b", "c"),
+    )
+
+
+def bad_replace_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Not enough arguments to replace
+    return root.Nations.CALCULATE(replace_name2=root.REPLACE("a"))
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -384,6 +396,16 @@ def bad_pydough_impl_23(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_pydough_impl_23,
             "PyDough nodes POPULATION_STD is not callable. Did you mean to use a function?",
             id="23",
+        ),
+        pytest.param(
+            bad_replace_too_many_args,
+            "Expected between 2 and 3 arguments inclusive, received 4",
+            id="bad_replace_too_many_args",
+        ),
+        pytest.param(
+            bad_replace_few_args,
+            "Expected between 2 and 3 arguments inclusive, received 1",
+            id="bad_replace_few_args",
         ),
     ],
 )
