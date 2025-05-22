@@ -1323,37 +1323,48 @@ def common_prefix_ad():
     ).ORDER_BY(name.ASC())
 
 
-"""
-SELECT s_name, p_name, ps_availqty, SUM(l_quantity)
-FROM supplier
-LEFT JOIN (
-    SELECT p_name, ps_partkey, ps_availqty, ps_suppkey, ROW_NUMBER() OVER (PARTITION BY ps_suppkey ORDER BY ps_availqty DESC, p_name ASC) AS rn
-    FROM part
-    INNER JOIN partsupp
-    ON p_partkey = ps_partkey
-    WHERE p_container = 'WRAP CASE' 
-) ON s_suppkey = ps_suppkey AND rn = 1
-INNER JOIN (select * from lineitem WHERE STRFTIME('%Y-%m', l_shipdate) = '1995-02' AND l_shipdate < '1995-02-04') AS l
-ON ps_partkey = l_partkey
-AND ps_suppkey = l_suppkey
-INNER JOIN nation
-ON s_nationkey = n_nationkey AND n_name = 'JAPAN'
-GROUP BY 1
-ORDER BY 1
-;
-"""
+def common_prefix_ae():
+    # For each Asian nation, count how many customers are in that nation, and
+    # the name of the customers who made orders 1070368, 1347104, 1472135, or
+    # 2351457 (each of those orders is from a different nation).
+    selected_orders = customers.orders.WHERE(
+        ISIN(key, (1070368, 1347104, 1472135, 2351457))
+    ).SINGULAR()
+    return (
+        nations.WHERE(region.name == "ASIA")
+        .CALCULATE(
+            nation_name=name,
+            n_customers=COUNT(customers),
+            customer_name=selected_orders.customer.name,
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
+
+def common_prefix_af():
+    # Same as common_prefix_ae, but ignores nations without one of the
+    # requested customers/orders.
+    selected_orders = customers.orders.WHERE(
+        ISIN(key, (1070368, 1347104, 1472135, 2351457))
+    ).SINGULAR()
+    return (
+        nations.WHERE((region.name == "ASIA") & HAS(selected_orders))
+        .CALCULATE(
+            nation_name=name,
+            n_customers=COUNT(customers),
+            customer_name=selected_orders.customer.name,
+        )
+        .ORDER_BY(nation_name.ASC())
+    )
+
 
 """
-SELECT c_name, COUNT(DISTINCT o_orderkey) AS n_orders, SUM(l_tax = 0) AS tax_free_count
-FROM customer
-left JOIN orders
-ON c_custkey = o_custkey
-INNER JOIN lineitem
-ON o_orderkey = l_orderkey
-GROUP BY 1
-HAVING COALESCE(SUM(l_tax = 0), 0) = 0
-ORDER BY 2 DESC, 1 ASC
-LIMIT 5
+SELECT n_name, c_name
+from nation
+inner join customer on n_nationkey = c_nationkey
+inner join orders on c_custkey = o_custkey
+AND o_orderkey in (1070368, 1347104, 1472135, 2351457)
+order by 1
 ;
 """
 
