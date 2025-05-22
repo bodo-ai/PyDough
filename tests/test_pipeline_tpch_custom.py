@@ -32,6 +32,7 @@ from simple_pydough_functions import (
     common_prefix_aa,
     common_prefix_ab,
     common_prefix_ac,
+    common_prefix_ad,
     common_prefix_b,
     common_prefix_c,
     common_prefix_d,
@@ -2121,25 +2122,31 @@ from pydough.unqualified import (
                 "common_prefix_n",
                 lambda: pd.DataFrame(
                     {
-                        "key": [1275072, 435237, 4682917, 2020999, 4069735],
+                        "key": [3292610, 927968, 1117219, 3874244, 1069636],
                         "order_date": [
-                            "1998-06-20",
-                            "1998-06-16",
-                            "1998-06-14",
-                            "1998-04-28",
-                            "1998-04-22",
+                            "1998-07-19",
+                            "1998-07-13",
+                            "1998-07-11",
+                            "1998-07-10",
+                            "1998-06-23",
                         ],
-                        "n_elements": [5, 7, 7, 5, 7],
-                        "n_unique_containers": [4, 6, 6, 4, 6],
-                        "n_unique_supplier_nations": [4, 6, 5, 4, 6],
+                        "n_elements": [5, 4, 7, 7, 5],
+                        "total_retail_price": [
+                            7609.67,
+                            6379.40,
+                            9620.69,
+                            9268.20,
+                            7377.55,
+                        ],
+                        "n_unique_supplier_nations": [4, 3, 6, 6, 4],
                         "max_supplier_balance": [
-                            5882.44,
-                            7205.20,
-                            9487.41,
-                            8399.47,
-                            8471.66,
+                            8615.81,
+                            8797.73,
+                            9199.28,
+                            9469.81,
+                            7575.13,
                         ],
-                        "n_small_parts": [0, 1, 2, 0, 2],
+                        "n_small_parts": [1, 0, 2, 4, 1],
                     }
                 ),
             ),
@@ -2343,7 +2350,7 @@ from pydough.unqualified import (
                 "common_prefix_w",
                 lambda: pd.DataFrame(
                     {
-                        "key": [37, 64, 68, 228, 293] * 5,
+                        "key": [37, 64, 68, 228, 293],
                         "cust_nation_name": ["ALGERIA"]
                         + ["ARGENTINA"] * 3
                         + ["ALGERIA"],
@@ -2438,6 +2445,30 @@ from pydough.unqualified import (
             ),
             id="common_prefix_ac",
         ),
+        pytest.param(
+            (
+                common_prefix_ad,
+                None,
+                "common_prefix_ad",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_name": [
+                            "Supplier#000004704",
+                            "Supplier#000006661",
+                            "Supplier#000009766",
+                        ],
+                        "part_name": [
+                            "slate rosy misty medium mint",
+                            "goldenrod plum dark aquamarine bisque",
+                            "drab navajo rosy cornflower green",
+                        ],
+                        "part_qty": [9291, 9570, 1002],
+                        "qty_shipped": [4, 38, 31],
+                    }
+                ),
+            ),
+            id="common_prefix_ad",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -2527,7 +2558,6 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
-    print(result)
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

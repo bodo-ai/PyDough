@@ -1050,12 +1050,12 @@ def common_prefix_m():
 
 def common_prefix_n():
     # For each order handled by clerk 540, get the number of elements in the
-    # order, the number of unique container types in the order, the number of
+    # order, the total retail price of all parts ordered, the number of
     # of distinct nation that supplied the orders, the maximum account
     # balance of any of the order's suppliers, and the number of items in the
     # order that were for a small part. Only consider orders where there is at
-    # least one duplicate supplier nation and at least one duplicate container.
-    # Pick the five most qualifying orders, breaking ties by the key.
+    # least one duplicate supplier nation, and pick the five most recent
+    # qualifying orders, breaking ties by the key.
     small_parts = lines.part.WHERE(STARTSWITH(container, "SM"))
     selected_orders = orders.WHERE(clerk == "Clerk#000000540")
     return (
@@ -1063,15 +1063,12 @@ def common_prefix_n():
             key,
             order_date,
             n_elements=COUNT(lines),
-            n_unique_containers=NDISTINCT(lines.part.container),
+            total_retail_price=SUM(lines.part.retail_price),
             n_unique_supplier_nations=NDISTINCT(lines.supplier.nation.name),
             max_supplier_balance=MAX(lines.supplier.account_balance),
             n_small_parts=COUNT(lines.part.WHERE(STARTSWITH(container, "SM"))),
         )
-        .WHERE(
-            (n_elements > n_unique_containers)
-            & (n_elements > n_unique_supplier_nations)
-        )
+        .WHERE(n_elements > n_unique_supplier_nations)
         .TOP_K(5, by=(order_date.DESC(), key.ASC()))
     )
 
@@ -1184,7 +1181,7 @@ def common_prefix_s():
 def common_prefix_t():
     # For each Indian customer in the building industry who has orders, get the
     # total sum of quantities of parts they have ordered, picking the 5
-    # customers with the higehst quantities (breaking ties by name).
+    # customers with the highest quantities (breaking ties by name).
     return (
         customers.WHERE(
             (nation.name == "INDIA") & (market_segment == "BUILDING") & HAS(orders)
@@ -1302,6 +1299,63 @@ def common_prefix_ac():
     selected_nation = selected_customer.nation.WHERE(name == "JAPAN")
     selected_orders = orders.WHERE(HASNOT(selected_customer) & HASNOT(selected_nation))
     return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def common_prefix_ad():
+    # For each Japanese supplier find the part they sell with the highest
+    # available quantity that has a "WRAP CASE" container (breaking ties
+    # alphabetically by part name), and the total quantity of the part shipped
+    # by the supplier in the first 3 days of February of 1995. Only consider
+    # suppliers who had any of that part shipped on that date, ordered
+    # alphabetically.
+    best_supply_record = supply_records.WHERE(part.container == "WRAP CASE").BEST(
+        by=(available_quantity.DESC(), part.name.ASC()), per="suppliers"
+    )
+    selected_lines = best_supply_record.lines.WHERE(
+        (YEAR(ship_date) == 1995) & (MONTH(ship_date) == 2) & (DAY(ship_date) < 4)
+    )
+    selected_suppliers = suppliers.WHERE((nation.name == "JAPAN") & HAS(selected_lines))
+    return selected_suppliers.CALCULATE(
+        supplier_name=name,
+        part_name=best_supply_record.part.name,
+        part_qty=best_supply_record.available_quantity,
+        qty_shipped=SUM(selected_lines.quantity),
+    ).ORDER_BY(name.ASC())
+
+
+"""
+SELECT s_name, p_name, ps_availqty, SUM(l_quantity)
+FROM supplier
+LEFT JOIN (
+    SELECT p_name, ps_partkey, ps_availqty, ps_suppkey, ROW_NUMBER() OVER (PARTITION BY ps_suppkey ORDER BY ps_availqty DESC, p_name ASC) AS rn
+    FROM part
+    INNER JOIN partsupp
+    ON p_partkey = ps_partkey
+    WHERE p_container = 'WRAP CASE' 
+) ON s_suppkey = ps_suppkey AND rn = 1
+INNER JOIN (select * from lineitem WHERE STRFTIME('%Y-%m', l_shipdate) = '1995-02' AND l_shipdate < '1995-02-04') AS l
+ON ps_partkey = l_partkey
+AND ps_suppkey = l_suppkey
+INNER JOIN nation
+ON s_nationkey = n_nationkey AND n_name = 'JAPAN'
+GROUP BY 1
+ORDER BY 1
+;
+"""
+
+"""
+SELECT c_name, COUNT(DISTINCT o_orderkey) AS n_orders, SUM(l_tax = 0) AS tax_free_count
+FROM customer
+left JOIN orders
+ON c_custkey = o_custkey
+INNER JOIN lineitem
+ON o_orderkey = l_orderkey
+GROUP BY 1
+HAVING COALESCE(SUM(l_tax = 0), 0) = 0
+ORDER BY 2 DESC, 1 ASC
+LIMIT 5
+;
+"""
 
 
 def function_sampler():
