@@ -32,6 +32,7 @@ from simple_pydough_functions import (
     common_prefix_aa,
     common_prefix_ab,
     common_prefix_ac,
+    common_prefix_ad,
     common_prefix_b,
     common_prefix_c,
     common_prefix_d,
@@ -2444,6 +2445,29 @@ from pydough.unqualified import (
             ),
             id="common_prefix_ac",
         ),
+        pytest.param(
+            (
+                common_prefix_ad,
+                None,
+                "common_prefix_ad",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_name": [
+                            "Supplier#000004704",
+                            "Supplier#000006661",
+                            "Supplier#000009766",
+                        ],
+                        "part_name": [
+                            "slate rosy misty medium mint",
+                            "goldenrod plum dark aquamarine bisque",
+                            "drab navajo rosy cornflower green",
+                        ],
+                        "qty_shipped": [4, 38, 31],
+                    }
+                ),
+            ),
+            id="common_prefix_ad",
+        ),
     ],
 )
 def pydough_pipeline_test_data(
@@ -2533,6 +2557,13 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
+    from pydough import to_sql
+
+    print()
+    print(
+        to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
+    )
+    print(result)
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

@@ -1301,6 +1301,50 @@ def common_prefix_ac():
     return TPCH.CALCULATE(n=COUNT(selected_orders))
 
 
+def common_prefix_ad():
+    # For each Japanese supplier find the part they sell with the highest
+    # available quantity that has a "WRAP CASE" container (breaking ties
+    # alphabetically by part name), and the total quantity of the part shipped
+    # by the supplier in the first 3 days of February of 1995. Only consider
+    # suppliers who had any of that part shipped on that date, ordered
+    # alphabetically.
+    best_supply_record = supply_records.BEST(
+        by=(available_quantity.DESC(), part.name.ASC()), per="suppliers"
+    )
+    selected_lines = best_supply_record.lines.WHERE(
+        (YEAR(ship_date) == 1995) & (MONTH(ship_date) == 2) & (DAY(ship_date) < 4)
+    )
+    selected_suppliers = suppliers.WHERE((nation.name == "JAPAN") & HAS(selected_lines))
+    return selected_suppliers.CALCULATE(
+        supplier_name=name,
+        # part_name=best_supply_record.part.name,
+        part_name="best_supply_record.part.name",
+        qty_shipped=SUM(selected_lines.quantity),
+    ).ORDER_BY(name.ASC())
+
+
+"""
+SELECT s_name, p_name, SUM(l_quantity)
+FROM supplier
+LEFT JOIN (
+    SELECT p_name, p_partkey, ps_suppkey, ROW_NUMBER() OVER (PARTITION BY ps_suppkey ORDER BY ps_availqty DESC, p_name ASC) AS rn
+    FROM part
+    INNER JOIN partsupp
+    ON p_partkey = ps_partkey
+    WHERE p_container = 'WRAP CASE' 
+) ON s_suppkey = ps_suppkey AND rn = 1
+INNER JOIN (select * from lineitem WHERE STRFTIME('%Y-%m', l_shipdate) = '1995-02' AND l_shipdate < '1995-02-04') AS l
+ON p_partkey = l_partkey
+AND s_suppkey = l_suppkey
+INNER JOIN nation
+ON s_nationkey = n_nationkey AND n_name = 'JAPAN'
+WHERE s_acctbal > 0
+GROUP BY 1
+ORDER BY 1
+;
+"""
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,

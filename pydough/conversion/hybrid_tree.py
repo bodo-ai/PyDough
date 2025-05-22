@@ -3325,6 +3325,73 @@ class HybridTranslator:
             )
             remapping[old_child_ref] = new_child_ref
 
+    def syncretize_agg_onto_singular(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+        existing_correlates: set[int],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
+        new_connection_type: ConnectionType = extension_child.connection_type
+
+        if (
+            extension_subtree.always_exists()
+            and new_connection_type != ConnectionType.SEMI
+        ):
+            new_connection_type = new_connection_type.reconcile_connection_types(
+                ConnectionType.SEMI
+            )
+        elif new_connection_type.is_semi:
+            # If the extension child does not always exist but the parent
+            # must not preserve non-matching records, then convert it to a
+            # regular aggregation and add a filter to the parent where COUNT
+            # is > 0, and allow this count to be split by the extension child.
+            self.add_extension_semi_count_filter(tree, extension_idx)
+            new_connection_type = ConnectionType.AGGREGATION
+
+        # If an aggregation is being added to a SEMI join, switch the SEMI
+        # join to an aggregation-only-match.
+        if base_child.connection_type == ConnectionType.SEMI:
+            base_child.connection_type = ConnectionType.AGGREGATION
+
+        required_steps: int = len(base_subtree.pipeline) - 1
+        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
+            required_steps -= 1
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, existing_correlates, required_steps
+        )
+        new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
+
+        for agg_name, agg in extension_child.aggs.items():
+            # Insert the aggregation call into the new child
+            new_extension_child.aggs[agg_name] = agg
+
+            child_expr: HybridExpr = HybridChildRefExpr(
+                agg_name, new_child_idx, agg.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, False
+            )
+            assert isinstance(switch_ref, HybridRefExpr)
+
+            # Make a child reference to the reference to the aggregaiton call
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                agg_name, extension_idx, agg.typ
+            )
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                switch_ref.name, base_idx, agg.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+
     def syncretize_singular_onto_singular(
         self,
         tree: HybridTree,
@@ -3377,10 +3444,10 @@ class HybridTranslator:
             switch_ref: HybridExpr = self.inject_expression(
                 base_subtree, child_expr, False
             )
+            assert isinstance(switch_ref, HybridRefExpr)
             old_child_ref: HybridExpr = HybridChildRefExpr(
                 term_name, extension_idx, old_term.typ
             )
-            assert isinstance(switch_ref, HybridRefExpr)
             new_child_ref: HybridExpr = HybridChildRefExpr(
                 switch_ref.name, base_idx, old_term.typ
             )
@@ -3462,6 +3529,33 @@ class HybridTranslator:
                 | (ConnectionType.SEMI, ConnectionType.SEMI)
             ):
                 self.syncretize_singular_onto_singular(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                    existing_correlates,
+                )
+            case (
+                (ConnectionType.AGGREGATION, ConnectionType.SINGULAR)
+                | (ConnectionType.AGGREGATION, ConnectionType.SINGULAR_ONLY_MATCH)
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.SINGULAR)
+                | (
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                )
+            ):
+                raise NotImplementedError("Aggregation-Singular")
+            case (
+                (ConnectionType.SINGULAR, ConnectionType.AGGREGATION)
+                | (ConnectionType.SINGULAR, ConnectionType.AGGREGATION_ONLY_MATCH)
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.AGGREGATION)
+                | (
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                )
+            ):
+                self.syncretize_agg_onto_singular(
                     tree,
                     base_idx,
                     extension_idx,
