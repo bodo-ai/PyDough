@@ -564,6 +564,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         if self._is_mergeable_ordering(ordering_exprs, input_expr):
             # The columns used for ordering must only be noted as dependencies
             # if the root has an ordering but the input expression does not.
+            # This is done to avoid generating an extra duplicate ORDER BY
+            # after the final ORDER BY + LIMIT.
             ordering_dependencies: set[Identifier] = set()
             if len(ordering_exprs) > 0 and "order" not in input_expr.args:
                 ordering_dependencies = find_identifiers_in_list(ordering_exprs)
