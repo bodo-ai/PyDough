@@ -65,6 +65,7 @@ from simple_pydough_functions import (
     region_orders_from_nations_richest,
     regional_first_order_best_line_part,
     regional_suppliers_percentile,
+    replace,
     richest_customer_per_region,
     simple_filter_top_five,
     simple_int_float_string_cast,
@@ -1784,6 +1785,19 @@ from pydough.unqualified import (
                 ),
             ),
             id="order_quarter_test",
+        ),
+        pytest.param(
+            (
+                replace,
+                None,
+                "replace",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["Alex Rodriguez", ],
+                    }
+                ),
+            ),
+            id="replace",
         ),
     ],
 )

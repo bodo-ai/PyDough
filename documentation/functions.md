@@ -25,6 +25,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [RPAD](#rpad)
    * [FIND](#find)
    * [STRIP](#strip)
+   * [REPLACE] (#replace)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -394,6 +395,25 @@ Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading 
 | `'$$Hello$$'`              | `STRIP('$$Hello$$','$$')`          | `'Hello'`          |
 | `'---Test-String---'`      | `STRIP('---Test-String---','-')`  | `'Test-String'`    |
 | `'123456Hello654321'`      | `STRIP('123456Hello654321','123456')` | `'Hello'`         |
+
+<!-- TOC --><a name="replace"></a>
+
+### REPLACE
+
+The `REPLACE` function returns a copy of the first argument with all instances of the second argument (substring) replaced by the third argument.
+If the third argument is not provided, all instances of the second argument are removed from the first argument.
+This function is equivalent to Python’s `str.replace()` method with the default behavior of replacing with an empty string when the third argument is omitted.
+Note: This function is case-sensitive.
+
+```py
+Customers.CALCULATE(updated_name= REPLACE(name, "xy", "..")) # removes all `xy` with `..`
+Customers.CALCULATE(updated_name= STRIP(name, "xy")) # removes all `xy` appearances.
+```
+
+| **Input String (X)**          | **REPLACE(X, Y, Z)**                    | **Result**          |
+|-------------------------------|---------------------------------------|---------------------|
+| `'1121112111121'`| `REPLACE('1121112111121', '11', '.')`| `'.2.12..21'`    |
+| `'#123112140A'`| `REPLACE('#123112140A', '1')`          | `'#23240A'`          |
 
 <!-- TOC --><a name="datetime-functions"></a>
 

@@ -1837,6 +1837,25 @@ def strip():
         )
     )
 
+def replace():
+    return (
+        Customers.WHERE(name == "Alex Rodriguez")
+        .CALCULATE(
+            name,
+            alt_name1="Alex Rodriguez",
+            alt_name2="Mr. Alex Rodriguez",
+            alt_name3="Alex Rodriguez Jr.",
+            alt_name4="Alex Rodriguez Alex Rodriguez",
+        )
+        .CALCULATE(
+            replaced_name=REPLACE(name, "Alex", "Alexander"),
+            removed_name=REPLACE(name, "Alex"),
+            replaced_alt_name1=REPLACE(alt_name1, "Rodriguez", "Smith"),
+            replaced_alt_name2=REPLACE(alt_name2, "Mr. ", ""),
+            replaced_alt_name3=REPLACE(alt_name3, " Jr."),
+            replaced_alt_name4=REPLACE(alt_name4, "Alex Rodriguez", "A.R."),
+        )
+    )
 
 def singular1():
     # Singular in CALCULATE & WHERE

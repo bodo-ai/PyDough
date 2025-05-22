@@ -66,6 +66,7 @@ __all__ = [
     "RELCOUNT",
     "RELSIZE",
     "RELSUM",
+    "REPLACE",
     "ROUND",
     "RPAD",
     "SAMPLE_STD",
@@ -135,6 +136,9 @@ STARTSWITH = ExpressionFunctionOperator(
 )
 STRIP = ExpressionFunctionOperator(
     "STRIP", False, RequireArgRange(1, 2), SelectArgumentType(0)
+)
+REPLACE = ExpressionFunctionOperator(
+    "REPLACE", False, RequireArgRange(2, 3), SelectArgumentType(0)
 )
 ENDSWITH = ExpressionFunctionOperator(
     "ENDSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())

@@ -188,6 +188,8 @@ class BaseTransformBindings:
                 return self.convert_find(args, types)
             case pydop.STRIP:
                 return self.convert_strip(args, types)
+            case pydop.REPLACE:
+                return self.convert_replace(args, types)
             case pydop.SIGN:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
@@ -316,6 +318,31 @@ class BaseTransformBindings:
         return sqlglot_expressions.Trim(
             this=to_strip,
             expression=strip_char_glot,
+        )
+    def convert_replace(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """Convert a `REPLACE` call expression to a SQLGlot expression.
+
+        Args:
+            args (list[SQLGlotExpression]): The operands to `REPLACE`, after they were
+            converted to SQLGlot expressions.
+            types (list[PyDoughType]): The PyDough types of the arguments to `REPLACE`.
+
+        Returns:
+            SQLGlotExpression: The SQLGlot expression matching the functionality of `REPLACE`.
+            In Python, this is equivalent to `X.replace(Y, Z)`.
+        """
+        assert 2 <= len(args) <= 3
+        if len(args) == 2:
+            # If only two arguments are provided, the third argument is set to an empty string
+            args.append(sqlglot_expressions.Literal.string(""))
+        #HA: confirm this is correct?
+        return sqlglot_expressions.Replace(
+            this=args[0],
+            expression=[args[1], args[2]],
         )
 
     def convert_startswith(
