@@ -2462,6 +2462,7 @@ from pydough.unqualified import (
                             "goldenrod plum dark aquamarine bisque",
                             "drab navajo rosy cornflower green",
                         ],
+                        "part_qty": [9291, 9570, 1002],
                         "qty_shipped": [4, 38, 31],
                     }
                 ),
@@ -2557,13 +2558,6 @@ def test_pipeline_e2e_tpch_custom(
     result: pd.DataFrame = to_df(
         root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
     )
-    from pydough import to_sql
-
-    print()
-    print(
-        to_sql(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
-    )
-    print(result)
     pd.testing.assert_frame_equal(result, answer_impl())
 
 

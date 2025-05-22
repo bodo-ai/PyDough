@@ -3212,8 +3212,8 @@ class HybridTranslator:
             prefix_levels_up += 1
         return True, prefix_levels_up
 
-    def add_extension_semi_count_filter(
-        self, tree: HybridTree, extension_idx: int
+    def add_extension_semi_anti_count_filter(
+        self, tree: HybridTree, extension_idx: int, is_semi: bool
     ) -> None:
         """
         TODO
@@ -3237,7 +3237,7 @@ class HybridTranslator:
             HybridFilter(
                 tree.pipeline[-1],
                 HybridFunctionExpr(
-                    pydop.GRT,
+                    pydop.GRT if is_semi else pydop.EQU,
                     [agg_ref, HybridLiteralExpr(Literal(0, NumericType()))],
                     BooleanType(),
                 ),
@@ -3265,19 +3265,23 @@ class HybridTranslator:
 
         new_connection_type: ConnectionType = extension_child.connection_type
 
-        if (
-            extension_subtree.always_exists()
-            and new_connection_type != ConnectionType.SEMI
+        if extension_subtree.always_exists() and new_connection_type not in (
+            ConnectionType.SEMI,
+            ConnectionType.ANTI,
         ):
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
-        elif new_connection_type.is_semi:
+        elif new_connection_type.is_semi or new_connection_type.is_anti:
             # If the extension child does not always exist but the parent
             # must not preserve non-matching records, then convert it to a
             # regular aggregation and add a filter to the parent where COUNT
             # is > 0, and allow this count to be split by the extension child.
-            self.add_extension_semi_count_filter(tree, extension_idx)
+            # If the extension child is an anti join, do the same but with a
+            # COUNT() == 0 filter.
+            self.add_extension_semi_anti_count_filter(
+                tree, extension_idx, new_connection_type.is_semi
+            )
             new_connection_type = ConnectionType.AGGREGATION
 
         # If an aggregation is being added to a SEMI join, switch the SEMI
@@ -3352,12 +3356,9 @@ class HybridTranslator:
             )
         elif new_connection_type.is_semi:
             # If the extension child does not always exist but the parent
-            # must not preserve non-matching records, then convert it to a
-            # regular aggregation and add a filter to the parent where COUNT
-            # is > 0, and allow this count to be split by the extension child.
-            self.add_extension_semi_count_filter(tree, extension_idx)
-            new_connection_type = ConnectionType.AGGREGATION
-
+            # must not preserve non-matching records, then convert the
+            # base child into one that only preserves matches.
+            base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
         # If an aggregation is being added to a SEMI join, switch the SEMI
         # join to an aggregation-only-match.
         if base_child.connection_type == ConnectionType.SEMI:
@@ -3493,12 +3494,14 @@ class HybridTranslator:
                 (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION)
                 | (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
                 | (ConnectionType.AGGREGATION, ConnectionType.SEMI)
+                | (ConnectionType.AGGREGATION, ConnectionType.ANTI)
                 | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.AGGREGATION)
                 | (
                     ConnectionType.AGGREGATION_ONLY_MATCH,
                     ConnectionType.AGGREGATION_ONLY_MATCH,
                 )
                 | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.SEMI)
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.ANTI)
                 | (ConnectionType.SEMI, ConnectionType.AGGREGATION)
                 | (ConnectionType.SEMI, ConnectionType.AGGREGATION_ONLY_MATCH)
             ):
