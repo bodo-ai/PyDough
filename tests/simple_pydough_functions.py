@@ -1343,6 +1343,20 @@ ORDER BY 1
 ;
 """
 
+"""
+SELECT c_name, COUNT(DISTINCT o_orderkey) AS n_orders, SUM(l_tax = 0) AS tax_free_count
+FROM customer
+left JOIN orders
+ON c_custkey = o_custkey
+INNER JOIN lineitem
+ON o_orderkey = l_orderkey
+GROUP BY 1
+HAVING COALESCE(SUM(l_tax = 0), 0) = 0
+ORDER BY 2 DESC, 1 ASC
+LIMIT 5
+;
+"""
+
 
 def function_sampler():
     # Functions tested:

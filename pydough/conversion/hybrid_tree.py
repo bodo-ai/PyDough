@@ -3229,6 +3229,11 @@ class HybridTranslator:
             agg_name = self.gen_agg_name(extension_child)
             extension_child.aggs[agg_name] = agg_call
         agg_ref: HybridExpr = HybridChildRefExpr(agg_name, extension_idx, NumericType())
+        literal_zero: HybridExpr = HybridLiteralExpr(Literal(0, NumericType()))
+        if not is_semi:
+            agg_ref = HybridFunctionExpr(
+                pydop.DEFAULT_TO, [agg_ref, literal_zero], BooleanType()
+            )
         # Insert the new filter right after the required steps index,
         # and update other children accordingly.
         insert_idx: int = extension_child.required_steps + 1
@@ -3238,7 +3243,7 @@ class HybridTranslator:
                 tree.pipeline[-1],
                 HybridFunctionExpr(
                     pydop.GRT if is_semi else pydop.EQU,
-                    [agg_ref, HybridLiteralExpr(Literal(0, NumericType()))],
+                    [agg_ref, literal_zero],
                     BooleanType(),
                 ),
             ),
