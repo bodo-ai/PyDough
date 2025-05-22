@@ -60,7 +60,7 @@ def bad_window_7():
 
 
 def bad_window_8():
-    # Relsize with frame but AND cumulative
+    # Relsize with frame AND cumulative
     return Customers.CALCULATE(
         RELSIZE(by=acctbal.ASC(), cumulative=True, frame=(-10, 0))
     )
