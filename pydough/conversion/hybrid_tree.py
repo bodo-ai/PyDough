@@ -3125,7 +3125,7 @@ class HybridTranslator:
         pydop.SUM: (pydop.SUM, pydop.SUM),
         pydop.MIN: (pydop.MIN, pydop.MIN),
         pydop.MAX: (pydop.MAX, pydop.MAX),
-        pydop.ANYTHING: (pydop.ANYTHING, pydop.ANYTHING),
+        pydop.ANYTHING: (pydop.ANYTHING, pydop.MAX),
     }
     """
     TODO
@@ -3363,13 +3363,12 @@ class HybridTranslator:
             base_child.connection_type = ConnectionType.AGGREGATION
 
         required_steps: int = len(base_subtree.pipeline) - 1
-        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
-            required_steps -= 1
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, existing_correlates, required_steps
         )
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
+        idx: int = 0
         for agg_name, agg in extension_child.aggs.items():
             extension_op, base_op = self.supported_syncretize_operators[agg.operator]
 
@@ -3384,7 +3383,7 @@ class HybridTranslator:
                 extension_agg_name, new_child_idx, extension_agg.typ
             )
             switch_ref: HybridExpr = self.inject_expression(
-                base_subtree, child_expr, False
+                base_subtree, child_expr, idx == 0
             )
 
             # Insert the top aggregation call into the base
@@ -3401,6 +3400,7 @@ class HybridTranslator:
                 base_agg_name, base_idx, agg.typ
             )
             remapping[old_child_ref] = new_child_ref
+            idx += 1
 
     def syncretize_agg_onto_singular(
         self,
@@ -3438,13 +3438,12 @@ class HybridTranslator:
             base_child.connection_type = ConnectionType.AGGREGATION
 
         required_steps: int = len(base_subtree.pipeline) - 1
-        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
-            required_steps -= 1
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, existing_correlates, required_steps
         )
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
+        idx: int = 0
         for agg_name, agg in extension_child.aggs.items():
             # Insert the aggregation call into the new child
             new_extension_child.aggs[agg_name] = agg
@@ -3453,7 +3452,7 @@ class HybridTranslator:
                 agg_name, new_child_idx, agg.typ
             )
             switch_ref: HybridExpr = self.inject_expression(
-                base_subtree, child_expr, False
+                base_subtree, child_expr, idx == 0
             )
             assert isinstance(switch_ref, HybridRefExpr)
 
@@ -3465,6 +3464,7 @@ class HybridTranslator:
                 switch_ref.name, base_idx, agg.typ
             )
             remapping[old_child_ref] = new_child_ref
+            idx += 1
 
     def syncretize_singular_onto_singular(
         self,
@@ -3498,8 +3498,6 @@ class HybridTranslator:
             base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
 
         required_steps: int = len(base_subtree.pipeline) - 1
-        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
-            required_steps -= 1
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, existing_correlates, required_steps
         )
@@ -3510,13 +3508,13 @@ class HybridTranslator:
         # a pure SEMI/ANTI join.
         if new_connection_type in (ConnectionType.SEMI, ConnectionType.ANTI):
             return
-        for term_name in sorted(extension_subtree.pipeline[-1].terms):
+        for idx, term_name in enumerate(sorted(extension_subtree.pipeline[-1].terms)):
             old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
             child_expr: HybridExpr = HybridChildRefExpr(
                 term_name, new_child_idx, old_term.typ
             )
             switch_ref: HybridExpr = self.inject_expression(
-                base_subtree, child_expr, False
+                base_subtree, child_expr, idx == 0
             )
             assert isinstance(switch_ref, HybridRefExpr)
             old_child_ref: HybridExpr = HybridChildRefExpr(
@@ -3543,7 +3541,7 @@ class HybridTranslator:
         extension_child: HybridConnection = tree.children[extension_idx]
         base_subtree: HybridTree = base_child.subtree
 
-        new_connection_type: ConnectionType = ConnectionType.AGGREGATION
+        new_connection_type: ConnectionType = extension_child.connection_type
 
         if extension_subtree.always_exists():
             new_connection_type = new_connection_type.reconcile_connection_types(
@@ -3554,34 +3552,43 @@ class HybridTranslator:
             # must not preserve non-matching records, then convert it to a
             # regular aggregation and add a filter to the parent where COUNT
             # is > 0.
-            self.add_extension_semi_anti_count_filter(tree, extension_idx, False)
+            for term_name in sorted(extension_subtree.pipeline[-1].terms):
+                old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
+                passthrough_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    pydop.ANYTHING,
+                    [HybridRefExpr(term_name, old_term.typ)],
+                    old_term.typ,
+                )
+                extension_child.aggs[term_name] = passthrough_agg
+            self.add_extension_semi_anti_count_filter(tree, extension_idx, True)
+            extension_child.connection_type = ConnectionType.AGGREGATION
+            self.syncretize_agg_onto_agg(
+                tree,
+                base_idx,
+                extension_idx,
+                extension_subtree,
+                remapping,
+                existing_correlates,
+            )
+            return
 
         required_steps: int = len(base_subtree.pipeline) - 1
-        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
-            required_steps -= 1
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, existing_correlates, required_steps
         )
-        new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
+        base_subtree.children[new_child_idx]
 
-        for term_name in sorted(extension_subtree.pipeline[-1].terms):
-            old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
-
-            # Insert a pass-through aggregation call into the extension
-            extension_agg_name: str = self.gen_agg_name(extension_child)
-            extension_agg: HybridFunctionExpr = HybridFunctionExpr(
-                pydop.ANYTHING, [HybridRefExpr(term_name, old_term.typ)], old_term.typ
-            )
-            new_extension_child.aggs[extension_agg_name] = extension_agg
-
+        for idx, term_name in enumerate(sorted(extension_subtree.pipeline[-1].terms)):
+            old_term = extension_subtree.pipeline[-1].terms[term_name]
+            # Insert a reference to the child into the base
             child_expr: HybridExpr = HybridChildRefExpr(
-                extension_agg_name, new_child_idx, extension_agg.typ
+                term_name, new_child_idx, old_term.typ
             )
             switch_ref: HybridExpr = self.inject_expression(
-                base_subtree, child_expr, False
+                base_subtree, child_expr, idx == 0
             )
 
-            # Insert another pass-through aggregation call into the base, but
+            # Insert a pass-through aggregation call into the base, but
             # explicitly use MAX to ensure any null records from the base
             # are not chosen.
             base_agg_name: str = self.gen_agg_name(base_child)

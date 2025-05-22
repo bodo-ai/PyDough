@@ -33,6 +33,8 @@ from simple_pydough_functions import (
     common_prefix_ab,
     common_prefix_ac,
     common_prefix_ad,
+    common_prefix_ae,
+    common_prefix_af,
     common_prefix_b,
     common_prefix_c,
     common_prefix_d,
@@ -2468,6 +2470,53 @@ from pydough.unqualified import (
                 ),
             ),
             id="common_prefix_ad",
+        ),
+        pytest.param(
+            (
+                common_prefix_ae,
+                None,
+                "common_prefix_ae",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "CHINA",
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "VIETNAM",
+                        ],
+                        "n_customers": [6024, 6042, 6161, 5948, 6008],
+                        "customer_name": [
+                            "Customer#000018193",
+                            "Customer#000052147",
+                            "Customer#000067505",
+                            None,
+                            "Customer#000148697",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_ae",
+        ),
+        pytest.param(
+            (
+                common_prefix_af,
+                None,
+                "common_prefix_af",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"],
+                        "n_customers": [6024, 6042, 6161, 6008],
+                        "customer_name": [
+                            "Customer#000018193",
+                            "Customer#000052147",
+                            "Customer#000067505",
+                            "Customer#000148697",
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_af",
         ),
     ],
 )
