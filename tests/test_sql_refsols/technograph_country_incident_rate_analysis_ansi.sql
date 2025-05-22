@@ -4,7 +4,7 @@ WITH _t3 AS (
   FROM main.incidents
 ), _s1 AS (
   SELECT
-    COUNT() AS agg_6,
+    COUNT() AS agg_9,
     device_id
   FROM _t3
   GROUP BY
@@ -12,7 +12,7 @@ WITH _t3 AS (
 ), _s3 AS (
   SELECT
     COUNT() AS agg_1,
-    SUM(_s1.agg_6) AS agg_8,
+    SUM(_s1.agg_9) AS agg_11,
     devices.de_production_country_id AS factory_country_id
   FROM main.devices AS devices
   LEFT JOIN _s1 AS _s1
@@ -21,7 +21,7 @@ WITH _t3 AS (
     devices.de_production_country_id
 ), _s5 AS (
   SELECT
-    COUNT() AS agg_9,
+    COUNT() AS agg_12,
     device_id
   FROM _t3
   GROUP BY
@@ -29,7 +29,7 @@ WITH _t3 AS (
 ), _s7 AS (
   SELECT
     COUNT() AS agg_3,
-    SUM(_s5.agg_9) AS agg_11,
+    SUM(_s5.agg_12) AS agg_14,
     devices.de_purchase_country_id AS store_country_id
   FROM main.devices AS devices
   LEFT JOIN _s5 AS _s5
@@ -38,7 +38,7 @@ WITH _t3 AS (
     devices.de_purchase_country_id
 ), _s11 AS (
   SELECT
-    COUNT() AS agg_12,
+    COUNT() AS agg_6,
     device_id
   FROM _t3
   GROUP BY
@@ -46,7 +46,7 @@ WITH _t3 AS (
 ), _s13 AS (
   SELECT
     COUNT() AS agg_5,
-    SUM(_s11.agg_12) AS agg_14,
+    SUM(_s11.agg_6) AS agg_8,
     users.us_country_id AS country_id
   FROM main.users AS users
   JOIN main.devices AS devices
@@ -58,9 +58,9 @@ WITH _t3 AS (
 )
 SELECT
   countries.co_name AS country_name,
-  ROUND(COALESCE(_s3.agg_8, 0) / _s3.agg_1, 2) AS made_ir,
-  ROUND(COALESCE(_s7.agg_11, 0) / _s7.agg_3, 2) AS sold_ir,
-  ROUND(COALESCE(_s13.agg_14, 0) / COALESCE(_s13.agg_5, 0), 2) AS user_ir
+  ROUND(COALESCE(_s3.agg_11, 0) / _s3.agg_1, 2) AS made_ir,
+  ROUND(COALESCE(_s7.agg_14, 0) / _s7.agg_3, 2) AS sold_ir,
+  ROUND(COALESCE(_s13.agg_8, 0) / COALESCE(_s13.agg_5, 0), 2) AS user_ir
 FROM main.countries AS countries
 JOIN _s3 AS _s3
   ON _s3.factory_country_id = countries.co_id

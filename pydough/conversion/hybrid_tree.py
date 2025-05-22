@@ -143,6 +143,14 @@ class HybridExpr(ABC):
             return copy.deepcopy(replacements[self])
         return self
 
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ) -> "HybridExpr":
+        """
+        TODO
+        """
+        return self
+
 
 class HybridCollation:
     """
@@ -245,6 +253,21 @@ class HybridBackRefExpr(HybridExpr):
 
     def shift_back(self, levels: int) -> HybridExpr:
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
+
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ):
+        if self.back_idx >= level_threshold:
+            levels_remaining = self.back_idx - level_threshold
+            parent_expr: HybridExpr
+            if levels_remaining == 0:
+                parent_expr = HybridRefExpr(self.name, self.typ)
+            else:
+                parent_expr = HybridBackRefExpr(self.name, levels_remaining, self.typ)
+            hybrid.correlated_children.add(child_idx)
+            return HybridCorrelExpr(hybrid, parent_expr)
+        else:
+            return self
 
 
 class HybridSidedRefExpr(HybridExpr):
@@ -367,6 +390,18 @@ class HybridFunctionExpr(HybridExpr):
             self.args[idx] = arg.replace_expressions(replacements)
         return self
 
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ):
+        """
+        TODO
+        """
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
+        return self
+
 
 class HybridWindowExpr(HybridExpr):
     """
@@ -483,6 +518,26 @@ class HybridWindowExpr(HybridExpr):
             self.partition_args[idx] = part_arg.replace_expressions(replacements)
         for idx, order_arg in enumerate(self.order_args):
             self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
+        return self
+
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ):
+        """
+        TODO
+        """
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
+        for idx, part_arg in enumerate(self.partition_args):
+            self.partition_args[idx] = part_arg.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
+        for idx, order_arg in enumerate(self.order_args):
+            self.order_args[idx].expr = order_arg.expr.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
         return self
 
 
@@ -3192,6 +3247,19 @@ class HybridTranslator:
             )
             parent.add_successor(child)
             child._successor = None
+        # TODO WRITE COMMENT
+        for operation in child.pipeline:
+            for term_name, term in operation.terms.items():
+                operation.terms[term_name] = term.squish_backrefs_into_correl(
+                    levels_up, new_base, len(new_base.children)
+                )
+            if isinstance(operation, HybridFilter):
+                operation.condition = operation.condition.squish_backrefs_into_correl(
+                    levels_up, new_base, len(new_base.children)
+                )
+            if isinstance(operation, HybridCalculate):
+                for term_name, term in operation.new_expressions.items():
+                    operation.new_expressions[term_name] = operation.terms[term_name]
         return child
 
     def can_syncretize_subtrees(
@@ -3459,6 +3527,77 @@ class HybridTranslator:
             )
             remapping[old_child_ref] = new_child_ref
 
+    def syncretize_singular_onto_agg(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+        existing_correlates: set[int],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
+        new_connection_type: ConnectionType = ConnectionType.AGGREGATION
+
+        if extension_subtree.always_exists():
+            new_connection_type = new_connection_type.reconcile_connection_types(
+                ConnectionType.SEMI
+            )
+        elif new_connection_type.is_semi:
+            # If the extension child does not always exist but the parent
+            # must not preserve non-matching records, then convert it to a
+            # regular aggregation and add a filter to the parent where COUNT
+            # is > 0.
+            self.add_extension_semi_anti_count_filter(tree, extension_idx, False)
+
+        required_steps: int = len(base_subtree.pipeline) - 1
+        if isinstance(base_subtree.pipeline[-1], HybridCalculate):
+            required_steps -= 1
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, existing_correlates, required_steps
+        )
+        new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
+
+        for term_name in sorted(extension_subtree.pipeline[-1].terms):
+            old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
+
+            # Insert a pass-through aggregation call into the extension
+            extension_agg_name: str = self.gen_agg_name(extension_child)
+            extension_agg: HybridFunctionExpr = HybridFunctionExpr(
+                pydop.ANYTHING, [HybridRefExpr(term_name, old_term.typ)], old_term.typ
+            )
+            new_extension_child.aggs[extension_agg_name] = extension_agg
+
+            child_expr: HybridExpr = HybridChildRefExpr(
+                extension_agg_name, new_child_idx, extension_agg.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, False
+            )
+
+            # Insert another pass-through aggregation call into the base, but
+            # explicitly use MAX to ensure any null records from the base
+            # are not chosen.
+            base_agg_name: str = self.gen_agg_name(base_child)
+            base_agg: HybridFunctionExpr = HybridFunctionExpr(
+                pydop.MAX, [switch_ref], old_term.typ
+            )
+            base_child.aggs[base_agg_name] = base_agg
+
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                term_name, extension_idx, old_term.typ
+            )
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                base_agg_name, base_idx, old_term.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+
     def syncretize_subtrees(
         self, tree: HybridTree, base_idx: int, extension_idx: int, extension_height: int
     ) -> bool:
@@ -3553,7 +3692,14 @@ class HybridTranslator:
                     ConnectionType.SINGULAR_ONLY_MATCH,
                 )
             ):
-                raise NotImplementedError("Aggregation-Singular")
+                self.syncretize_singular_onto_agg(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                    existing_correlates,
+                )
             case (
                 (ConnectionType.SINGULAR, ConnectionType.AGGREGATION)
                 | (ConnectionType.SINGULAR, ConnectionType.AGGREGATION_ONLY_MATCH)
@@ -3585,7 +3731,7 @@ class HybridTranslator:
         """
         if tree.parent is not None:
             self.syncretize_children(tree.parent)
-        syncretize_options: list[tuple[int, int, int]] = []
+        syncretize_options: list[tuple[int, int, int, int]] = []
         ignore_idx: int = -1
         if isinstance(tree.pipeline[0], HybridChildPullUp):
             ignore_idx = tree.pipeline[0].child_idx
@@ -3597,13 +3743,18 @@ class HybridTranslator:
                     tree.children[base_idx], tree.children[extension_idx]
                 )
                 if can_syncretize:
+                    total_height: int = 1
+                    subtree: HybridTree = tree.children[extension_idx].subtree
+                    while subtree.parent is not None:
+                        subtree = subtree.parent
+                        total_height += 1
                     syncretize_options.append(
-                        (extension_height, extension_idx, base_idx)
+                        (extension_height, -total_height, extension_idx, base_idx)
                     )
         children_to_delete: set[int] = set()
         if len(syncretize_options) > 0:
             syncretize_options.sort()
-            for extension_height, extension_idx, base_idx in syncretize_options:
+            for extension_height, _, extension_idx, base_idx in syncretize_options:
                 if (
                     extension_idx in children_to_delete
                     or base_idx in children_to_delete
