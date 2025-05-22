@@ -4,6 +4,7 @@ WITH _t1 AS (
     AVG(l_extendedprice) AS agg_1,
     AVG(l_quantity) AS agg_2,
     COUNT() AS agg_3,
+    SUM(l_extendedprice) AS agg_4,
     SUM(l_extendedprice * (
       1 - l_discount
     ) * (
@@ -12,7 +13,6 @@ WITH _t1 AS (
     SUM(l_extendedprice * (
       1 - l_discount
     )) AS agg_6,
-    SUM(l_extendedprice) AS agg_4,
     SUM(l_quantity) AS agg_7,
     l_returnflag AS return_flag,
     l_linestatus AS status

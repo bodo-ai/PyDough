@@ -1,9 +1,9 @@
 WITH _s1 AS (
   SELECT
-    STDDEV(s_acctbal) AS agg_2,
     STDDEV_POP(s_acctbal) AS agg_0,
-    VARIANCE(s_acctbal) AS agg_3,
     VARIANCE_POP(s_acctbal) AS agg_1,
+    STDDEV(s_acctbal) AS agg_2,
+    VARIANCE(s_acctbal) AS agg_3,
     s_nationkey AS nation_key
   FROM tpch.supplier
   GROUP BY

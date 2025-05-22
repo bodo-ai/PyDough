@@ -6,8 +6,8 @@ WITH _s0 AS (
   FROM tpch.supplier AS supplier
 ), _t2 AS (
   SELECT
-    nation.n_name AS name,
-    nation.n_nationkey AS key
+    nation.n_nationkey AS key,
+    nation.n_name AS name
   FROM tpch.nation AS nation
   WHERE
     nation.n_name = 'SAUDI ARABIA'

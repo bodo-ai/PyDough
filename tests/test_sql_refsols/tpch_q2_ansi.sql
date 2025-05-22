@@ -1,7 +1,7 @@
 WITH _t3 AS (
   SELECT
-    r_name AS name,
-    r_regionkey AS key
+    r_regionkey AS key,
+    r_name AS name
   FROM tpch.region
   WHERE
     r_name = 'EUROPE'

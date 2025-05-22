@@ -3,6 +3,19 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
+          ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END DESC) - 1.0
+        ) - (
+          CAST((
+            COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY nation.n_regionkey) - 1.0
+          ) AS REAL) / 2.0
+        )
+      ) < 1.0
+      THEN CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END
+      ELSE NULL
+    END AS expr_5,
+    CASE
+      WHEN ABS(
+        (
           ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal DESC) - 1.0
         ) - (
           CAST((
@@ -26,19 +39,6 @@ WITH _t1 AS (
       THEN CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END DESC) - 1.0
-        ) - (
-          CAST((
-            COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) OVER (PARTITION BY nation.n_regionkey) - 1.0
-          ) AS REAL) / 2.0
-        )
-      ) < 1.0
-      THEN CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END
-      ELSE NULL
-    END AS expr_5,
     CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END AS negative_acctbal,
     CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END AS non_negative_acctbal,
     nation.n_regionkey AS region_key
@@ -50,8 +50,8 @@ WITH _t1 AS (
     AVG(expr_5) AS agg_0,
     AVG(expr_6) AS agg_1,
     AVG(expr_7) AS agg_2,
-    COUNT(negative_acctbal) AS agg_4,
     COUNT(non_negative_acctbal) AS agg_3,
+    COUNT(negative_acctbal) AS agg_4,
     region_key
   FROM _t1
   GROUP BY

@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    COUNT(DISTINCT sales.customer_id) AS agg_1,
     SUM(sales.sale_price) AS agg_0,
+    COUNT(DISTINCT sales.customer_id) AS agg_1,
     customers.state
   FROM main.customers AS customers
   JOIN main.sales AS sales
