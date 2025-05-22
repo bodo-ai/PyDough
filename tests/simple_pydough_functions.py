@@ -1358,17 +1358,6 @@ def common_prefix_af():
     )
 
 
-"""
-SELECT n_name, c_name
-from nation
-inner join customer on n_nationkey = c_nationkey
-inner join orders on c_custkey = o_custkey
-AND o_orderkey in (1070368, 1347104, 1472135, 2351457)
-order by 1
-;
-"""
-
-
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
