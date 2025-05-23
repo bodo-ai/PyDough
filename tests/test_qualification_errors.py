@@ -271,14 +271,14 @@ def bad_pydough_impl_23(root: UnqualifiedNode) -> UnqualifiedNode:
 
 def bad_replace_too_many_args(root: UnqualifiedNode) -> UnqualifiedNode:
     # Too many arguments to replace
-    return root.Nations.CALCULATE(
+    return root.nations.CALCULATE(
         replace_name1=root.REPLACE(root.name, "a", "b", "c"),
     )
 
 
 def bad_replace_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
     # Not enough arguments to replace
-    return root.Nations.CALCULATE(replace_name2=root.REPLACE("a"))
+    return root.nations.CALCULATE(replace_name2=root.REPLACE("a"))
 
 
 @pytest.mark.parametrize(
