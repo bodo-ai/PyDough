@@ -245,7 +245,13 @@ class CollectionMetadata(AbstractMetadata):
 
     def add_properties_from_json(self, properties_json: list) -> None:
         """
-        TODO
+        Insert the scalar properties from the JSON for collection into the
+        metadata object for the collection.
+
+        Args:
+            `properties_json`: the list of JSON objects, each representing a
+            scalar property that should be parsed and inserted into the
+            collection.
         """
         from pydough.metadata.properties import TableColumnMetadata
 
