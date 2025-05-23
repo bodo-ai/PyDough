@@ -45,6 +45,23 @@ from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVi
 __all__ = ["SQLGlotRelationalVisitor"]
 
 
+def expr_sort_key(expr: SQLGlotExpression) -> str:
+    """
+    A key function for sorting SQLGlot expressions. This is used to
+    ensure that the expressions are sorted in a consistent order.
+
+    Args:
+        expr (SQLGlotExpression): The expression to sort.
+
+    Returns:
+        str: The string representation of the expression.
+    """
+    if isinstance(expr, SQLGlotAlias):
+        return repr(expr.alias)
+    else:
+        return repr(expr)
+
+
 class SQLGlotRelationalVisitor(RelationalVisitor):
     """
     The visitor pattern for creating SQLGlot expressions from
@@ -215,7 +232,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             new_columns, orig_select.expressions, deps
         )
         if sort:
-            old_exprs = sorted(old_exprs, key=repr)
+            old_exprs = sorted(old_exprs, key=expr_sort_key)
         orig_select.set("expressions", old_exprs)
         if new_exprs is None:
             return orig_select
@@ -309,7 +326,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             Select: A select statement representing the subquery.
         """
         if sort:
-            column_exprs = sorted(column_exprs, key=repr)
+            column_exprs = sorted(column_exprs, key=expr_sort_key)
         # If the subquery has no columns(because of PyDough's column pruning), add a NULL column to make it valid.
         if len(column_exprs) == 0:
             column_exprs = [sqlglot_convert((None,))]
@@ -544,10 +561,16 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ]
         ordering_exprs: list[SQLGlotExpression] = self._convert_ordering(root.orderings)
         query: Select
-
         if self._is_mergeable_ordering(ordering_exprs, input_expr):
+            # The columns used for ordering must only be noted as dependencies
+            # if the root has an ordering but the input expression does not.
+            # This is done to avoid generating an extra duplicate ORDER BY
+            # after the final ORDER BY + LIMIT.
+            ordering_dependencies: set[Identifier] = set()
+            if len(ordering_exprs) > 0 and "order" not in input_expr.args:
+                ordering_dependencies = find_identifiers_in_list(ordering_exprs)
             query = self._merge_selects(
-                exprs, input_expr, find_identifiers_in_list(ordering_exprs), sort=False
+                exprs, input_expr, ordering_dependencies, sort=False
             )
             if "order" in query.args:
                 # avoid repeating the order by clause

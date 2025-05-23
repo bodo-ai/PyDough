@@ -11,11 +11,11 @@ WITH _s3 AS (
     times.t_name
 ), _t0 AS (
   SELECT
-    times.t_name AS tod,
+    ROUND(_s3.agg_0, 2) AS avg_results,
     ROUND((
       100.0 * COALESCE(_s3.agg_1, 0)
     ) / SUM(COALESCE(_s3.agg_1, 0)) OVER (), 2) AS pct_searches,
-    ROUND(_s3.agg_0, 2) AS avg_results,
+    times.t_name AS tod,
     times.t_start_hour AS start_hour
   FROM times AS times
   LEFT JOIN _s3 AS _s3

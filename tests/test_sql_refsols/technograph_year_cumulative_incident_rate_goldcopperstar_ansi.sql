@@ -46,6 +46,10 @@ WITH _s0 AS (
 ), _t0 AS (
   SELECT
     COALESCE(_s7.agg_1, 0) AS bought,
+    ROUND(
+      SUM(COALESCE(_s15.agg_2, 0)) OVER (ORDER BY _s1.year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s7.agg_1, 0)) OVER (ORDER BY _s1.year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      2
+    ) AS cum_ir,
     COALESCE(_s15.agg_2, 0) AS incidents,
     ROUND(
       (
@@ -63,10 +67,6 @@ WITH _s0 AS (
       ) / LAG(COALESCE(_s15.agg_2, 0), 1) OVER (ORDER BY _s1.year NULLS LAST),
       2
     ) AS pct_incident_change,
-    ROUND(
-      SUM(COALESCE(_s15.agg_2, 0)) OVER (ORDER BY _s1.year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s7.agg_1, 0)) OVER (ORDER BY _s1.year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
-      2
-    ) AS cum_ir,
     _s1.year - EXTRACT(YEAR FROM _s0.release_date) AS years_since_release
   FROM _s0 AS _s0
   LEFT JOIN _s1 AS _s1

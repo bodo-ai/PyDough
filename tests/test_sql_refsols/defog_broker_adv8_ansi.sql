@@ -22,8 +22,8 @@ WITH _t4 AS (
     _t3.customer_id
 ), _t5 AS (
   SELECT
-    sbcustomer.sbcustcountry AS country,
-    sbcustomer.sbcustid AS _id
+    sbcustomer.sbcustid AS _id,
+    sbcustomer.sbcustcountry AS country
   FROM main.sbcustomer AS sbcustomer
   WHERE
     LOWER(sbcustomer.sbcustcountry) = 'usa'

@@ -3,11 +3,11 @@ WITH _s1 AS (
     search_string,
     search_user_id AS user_id
   FROM searches
-), _t1 AS (
+), _t0 AS (
   SELECT
     MAX(users.user_name) AS agg_2,
-    MAX(users.user_name) AS user_name,
-    COUNT(DISTINCT users_2.user_id) AS n_other_users
+    COUNT(DISTINCT users_2.user_id) AS n_other_users,
+    MAX(users.user_name) AS user_name
   FROM users AS users
   JOIN _s1 AS _s1
     ON _s1.user_id = users.user_id
@@ -23,16 +23,6 @@ WITH _s1 AS (
     ON _s5.user_id = users_2.user_id AND users.user_name <> users_2.user_name
   GROUP BY
     users.user_id
-), _t0 AS (
-  SELECT
-    agg_2,
-    n_other_users,
-    user_name
-  FROM _t1
-  ORDER BY
-    n_other_users DESC,
-    agg_2
-  LIMIT 7
 )
 SELECT
   user_name,
@@ -41,3 +31,4 @@ FROM _t0
 ORDER BY
   n_other_users DESC,
   agg_2
+LIMIT 7

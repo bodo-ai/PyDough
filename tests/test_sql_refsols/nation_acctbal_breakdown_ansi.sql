@@ -1,10 +1,10 @@
 WITH _s3 AS (
   SELECT
-    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS agg_4,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_3,
+    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_0,
     MEDIAN(c_acctbal) AS agg_1,
     MEDIAN(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS agg_2,
-    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_0,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_3,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS agg_4,
     c_nationkey AS nation_key
   FROM tpch.customer
   GROUP BY

@@ -3,6 +3,19 @@ WITH _t3 AS (
     CASE
       WHEN ABS(
         (
+          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
+        ) - (
+          CAST((
+            COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
+          ) AS REAL) / 2.0
+        )
+      ) < 1.0
+      THEN CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END
+      ELSE NULL
+    END AS expr_5,
+    CASE
+      WHEN ABS(
+        (
           ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY c_acctbal DESC) - 1.0
         ) - (
           CAST((
@@ -26,19 +39,6 @@ WITH _t3 AS (
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
-        ) - (
-          CAST((
-            COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
-          ) AS REAL) / 2.0
-        )
-      ) < 1.0
-      THEN CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END
-      ELSE NULL
-    END AS expr_5,
     c_nationkey AS nation_key,
     CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END AS negative_acctbal,
     CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END AS non_negative_acctbal
@@ -48,8 +48,8 @@ WITH _t3 AS (
     AVG(expr_5) AS agg_0,
     AVG(expr_6) AS agg_1,
     AVG(expr_7) AS agg_2,
-    COUNT(negative_acctbal) AS agg_4,
     COUNT(non_negative_acctbal) AS agg_3,
+    COUNT(negative_acctbal) AS agg_4,
     nation_key
   FROM _t3
   GROUP BY

@@ -10,10 +10,10 @@ WITH _s3 AS (
     times.t_name
 ), _t0 AS (
   SELECT
-    times.t_name AS tod,
     ROUND((
       100.0 * COALESCE(_s3.agg_0, 0)
     ) / SUM(COALESCE(_s3.agg_0, 0)) OVER (), 2) AS pct_searches,
+    times.t_name AS tod,
     times.t_start_hour AS start_hour
   FROM times AS times
   LEFT JOIN _s3 AS _s3

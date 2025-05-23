@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    COUNT(DISTINCT wallet_transactions_daily.sender_id) AS agg_1,
     SUM(wallet_transactions_daily.amount) AS agg_0,
+    COUNT(DISTINCT wallet_transactions_daily.sender_id) AS agg_1,
     users.country
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
   LEFT JOIN main.users AS users

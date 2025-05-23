@@ -1,13 +1,13 @@
 WITH _t1 AS (
   SELECT
+    SUM((
+      orders.o_orderpriority = '1-URGENT' OR orders.o_orderpriority = '2-HIGH'
+    )) AS agg_0,
     SUM(
       (
         orders.o_orderpriority <> '1-URGENT' AND orders.o_orderpriority <> '2-HIGH'
       )
     ) AS agg_1,
-    SUM((
-      orders.o_orderpriority = '1-URGENT' OR orders.o_orderpriority = '2-HIGH'
-    )) AS agg_0,
     lineitem.l_shipmode AS ship_mode
   FROM tpch.lineitem AS lineitem
   LEFT JOIN tpch.orders AS orders
