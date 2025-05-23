@@ -406,7 +406,7 @@ This function is equivalent to Python’s `str.replace()` method with the defaul
 Note: This function is case-sensitive.
 
 ```py
-Customers.CALCULATE(updated_name= REPLACE(name, "xy", "..")) # removes all `xy` with `..`
+Customers.CALCULATE(updated_name= REPLACE(name, "xy", "..")) # replaces all `xy` with `..`
 Customers.CALCULATE(updated_name= STRIP(name, "xy")) # removes all `xy` appearances.
 ```
 

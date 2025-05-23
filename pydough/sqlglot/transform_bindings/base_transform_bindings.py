@@ -333,7 +333,8 @@ class BaseTransformBindings:
             types (list[PyDoughType]): The PyDough types of the arguments to `REPLACE`.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression matching the functionality of `REPLACE`.
+            SQLGlotExpression: The SQLGlot expression matching
+            the functionality of `REPLACE`.
             In Python, this is equivalent to `X.replace(Y, Z)`.
         """
         assert 2 <= len(args) <= 3
