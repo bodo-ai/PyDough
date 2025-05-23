@@ -26,7 +26,7 @@ from pydough.relational import (
     RelationalRoot,
     Scan,
 )
-from pydough.types import BooleanType, Int64Type, StringType
+from pydough.types import BooleanType, NumericType, StringType
 
 
 def test_scan_inputs() -> None:
@@ -294,36 +294,36 @@ def test_project_equals(
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(1, Int64Type()),
+                make_relational_literal(1, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            "LIMIT(limit=Literal(value=1, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
+            "LIMIT(limit=Literal(value=1, type=NumericType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
             id="limit_1",
         ),
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(5, Int64Type()),
+                make_relational_literal(5, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            "LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
+            "LIMIT(limit=Literal(value=5, type=NumericType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[])",
             id="limit_5",
         ),
         pytest.param(
-            Limit(build_simple_scan(), make_relational_literal(10, Int64Type()), {}),
-            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={}, orderings=[])",
+            Limit(build_simple_scan(), make_relational_literal(10, NumericType()), {}),
+            "LIMIT(limit=Literal(value=10, type=NumericType()), columns={}, orderings=[])",
             id="no_columns",
         ),
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -335,7 +335,7 @@ def test_project_equals(
                     ),
                 ],
             ),
-            "LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ExpressionSortInfo(expression=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ExpressionSortInfo(expression=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
+            "LIMIT(limit=Literal(value=10, type=NumericType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())}, orderings=[ExpressionSortInfo(expression=Column(name=a, type=UnknownType()), ascending=True, nulls_first=True), ExpressionSortInfo(expression=Column(name=b, type=UnknownType()), ascending=False, nulls_first=True)])",
             id="orderings",
         ),
     ],
@@ -353,7 +353,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -361,7 +361,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
             ),
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -373,7 +373,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -381,7 +381,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
             ),
             Limit(
                 build_simple_scan(),
-                make_relational_literal(5, Int64Type()),
+                make_relational_literal(5, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -393,7 +393,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -401,7 +401,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
             ),
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                 },
@@ -412,7 +412,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -421,7 +421,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
             ),
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -434,7 +434,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -447,7 +447,7 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
             ),
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -462,15 +462,15 @@ def test_limit_to_string(limit: Limit, output: str) -> None:
             id="different_orderings",
         ),
         pytest.param(
-            Limit(build_simple_scan(), make_relational_literal(5, Int64Type()), {}),
-            Limit(Scan("table2", {}), make_relational_literal(5, Int64Type()), {}),
+            Limit(build_simple_scan(), make_relational_literal(5, NumericType()), {}),
+            Limit(Scan("table2", {}), make_relational_literal(5, NumericType()), {}),
             False,
             id="unequal_inputs",
         ),
         pytest.param(
             Limit(
                 build_simple_scan(),
-                make_relational_literal(10, Int64Type()),
+                make_relational_literal(10, NumericType()),
                 {
                     "a": make_relational_column_reference("a"),
                     "b": make_relational_column_reference("b"),
@@ -524,11 +524,11 @@ def test_invalid_limit(literal: LiteralExpression) -> None:
                 },
                 {
                     "b": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     )
                 },
             ),
-            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=Function[SUM], inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
             id="key_and_agg",
         ),
         pytest.param(
@@ -549,14 +549,14 @@ def test_invalid_limit(literal: LiteralExpression) -> None:
                 {},
                 {
                     "a": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("a", NumericType())]
                     ),
                     "b": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     ),
                 },
             ),
-            "AGGREGATE(keys={}, aggregations={'a': Call(op=Function[SUM], inputs=[Column(name=a, type=Int64Type())], return_type=Int64Type()), 'b': Call(op=Function[SUM], inputs=[Column(name=b, type=Int64Type())], return_type=Int64Type())})",
+            "AGGREGATE(keys={}, aggregations={'a': Call(op=Function[SUM], inputs=[Column(name=a, type=NumericType())], return_type=NumericType()), 'b': Call(op=Function[SUM], inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
             id="no_keys",
         ),
         pytest.param(
@@ -606,10 +606,10 @@ def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
                 {},
                 {
                     "a": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("a", NumericType())]
                     ),
                     "b": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     ),
                 },
             ),
@@ -618,10 +618,10 @@ def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
                 {},
                 {
                     "a": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("a", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("a", NumericType())]
                     ),
                     "b": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     ),
                 },
             ),
@@ -636,7 +636,7 @@ def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
                 },
                 {
                     "b": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     )
                 },
             ),
@@ -647,7 +647,7 @@ def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
                 },
                 {
                     "b": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     )
                 },
             ),
@@ -682,7 +682,7 @@ def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
                 },
                 {
                     "b": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     )
                 },
             ),
@@ -693,7 +693,7 @@ def test_aggregate_to_string(agg: Aggregate, output: str) -> None:
                 },
                 {
                     "c": CallExpression(
-                        SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                        SUM, NumericType(), [ColumnReference("b", NumericType())]
                     )
                 },
             ),
@@ -810,7 +810,7 @@ def test_aggregate_unique_keys() -> None:
             },
             {
                 "a": CallExpression(
-                    SUM, Int64Type(), [ColumnReference("b", Int64Type())]
+                    SUM, NumericType(), [ColumnReference("b", NumericType())]
                 )
             },
         )
@@ -839,7 +839,7 @@ def test_aggregate_unique_keys() -> None:
                     BooleanType(),
                     [
                         make_relational_column_reference("a"),
-                        make_relational_literal(1, Int64Type()),
+                        make_relational_literal(1, NumericType()),
                     ],
                 ),
                 {
@@ -847,7 +847,7 @@ def test_aggregate_unique_keys() -> None:
                     "b": make_relational_column_reference("b"),
                 },
             ),
-            "FILTER(condition=Call(op=BinaryOperator[==], inputs=[Column(name=a, type=UnknownType()), Literal(value=1, type=Int64Type())], return_type=BooleanType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
+            "FILTER(condition=Call(op=BinaryOperator[==], inputs=[Column(name=a, type=UnknownType()), Literal(value=1, type=NumericType())], return_type=BooleanType()), columns={'a': Column(name=a, type=UnknownType()), 'b': Column(name=b, type=UnknownType())})",
             id="function_filter",
         ),
     ],
@@ -986,7 +986,7 @@ def test_filter_requires_boolean_condition() -> None:
     with pytest.raises(AssertionError, match="Filter condition must be a boolean type"):
         Filter(
             build_simple_scan(),
-            make_relational_literal(1, Int64Type()),
+            make_relational_literal(1, NumericType()),
             {
                 "a": make_relational_column_reference("a"),
             },
@@ -1935,7 +1935,7 @@ def test_join_requires_boolean_condition() -> None:
     with pytest.raises(AssertionError, match="Join condition must be a boolean type"):
         Join(
             [build_simple_scan(), build_simple_scan()],
-            [make_relational_literal(1, Int64Type())],
+            [make_relational_literal(1, NumericType())],
             [JoinType.INNER],
             {
                 "a": make_relational_column_reference("a", input_name="t0"),
@@ -1946,7 +1946,7 @@ def test_join_requires_boolean_condition() -> None:
             [build_simple_scan(), build_simple_scan(), build_simple_scan()],
             [
                 make_relational_literal(True, BooleanType()),
-                make_relational_literal(1, Int64Type()),
+                make_relational_literal(1, NumericType()),
             ],
             [JoinType.INNER, JoinType.INNER],
             {

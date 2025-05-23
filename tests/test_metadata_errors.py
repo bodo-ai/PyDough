@@ -35,9 +35,9 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
     graph: GraphMetadata = get_sample_graph("TPCH")
     with pytest.raises(
         PyDoughMetadataException,
-        match="simple table collection 'Parts' in graph 'TPCH' does not have a property 'color'",
+        match="simple table collection 'parts' in graph 'TPCH' does not have a property 'color'",
     ):
-        collection = graph.get_collection("Parts")
+        collection = graph.get_collection("parts")
         assert isinstance(collection, CollectionMetadata)
         collection.get_property("color")
 
@@ -51,437 +51,399 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="missing_graph",
         ),
         pytest.param(
-            "#badgraphname",
+            "#BadGraphName",
             "graph name must be a string that is a Python identifier",
-            id="naming-invalid_collection",
+            id="#BadGraphName",
         ),
         pytest.param(
-            "BAD_NAME_1",
-            "collection name must be a string that is a Python identifier",
-            id="naming-invalid_property",
+            "MISSING_VERSION",
+            "metadata for PyDough graph must be a JSON object containing a field 'version' and field 'version' must be a string",
+            id="MISSING_VERSION",
         ),
         pytest.param(
-            "BAD_NAME_2",
-            "property name must be a string that is a Python identifier",
-            id="naming-invalid_property",
+            "BAD_VERSION",
+            "Unrecognized PyDough metadata version: 'HelloWorld'",
+            id="BAD_VERSION",
         ),
         pytest.param(
-            "BAD_NAME_3",
-            "Cannot have collection named 'BAD_NAME_3' share the same name as the graph containing it.",
-            id="naming-collection_same_as_graph",
+            "MISSING_COLLECTIONS",
+            "graph 'MISSING_COLLECTIONS' must be a JSON object containing a field 'collections' and field 'collections' must be a JSON array",
+            id="MISSING_COLLECTIONS",
         ),
         pytest.param(
-            "REGION_FORMAT_1",
-            "metadata for PyDough graph must be a dict",
-            id="graph-not_json",
+            "MISSING_RELATIONSHIPS",
+            "graph 'MISSING_RELATIONSHIPS' must be a JSON object containing a field 'relationships' and field 'relationships' must be a JSON array",
+            id="MISSING_RELATIONSHIPS",
         ),
         pytest.param(
-            "REGION_FORMAT_2",
-            "collection 'Regions' in graph 'REGION_FORMAT_2' must be a JSON object containing a field 'type' and field 'type' must be a string",
-            id="collection-not_json",
-        ),
-        pytest.param(
-            "REGION_FORMAT_3",
-            "property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_3' must be a JSON object containing a field 'type' and field 'type' must be a string",
-            id="property-not_json",
-        ),
-        pytest.param(
-            "REGION_FORMAT_4",
-            "collection 'Regions' in graph 'REGION_FORMAT_4' must be a JSON object containing a field 'type' and field 'type' must be a string",
-            id="collection-collection_type-missing",
-        ),
-        pytest.param(
-            "REGION_FORMAT_5",
-            "collection 'Regions' in graph 'REGION_FORMAT_5' must be a JSON object containing a field 'type' and field 'type' must be a string",
-            id="collection-collection_type-wrong_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_6",
-            "nrecognized collection type for property 'Regions' of graph 'REGION_FORMAT_6': '¡SIMPLE!'",
-            id="collection-collection_type-bad_name",
-        ),
-        pytest.param(
-            "REGION_FORMAT_7",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_7' must be a JSON object containing a field 'table_path' and field 'table_path' must be a string",
-            id="simple_table-table_path-missing",
-        ),
-        pytest.param(
-            "REGION_FORMAT_8",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_8' must be a JSON object containing a field 'table_path' and field 'table_path' must be a string",
-            id="simple_table-table_path-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_9",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_9' must be a JSON object containing a field 'unique_properties' and field 'unique_properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
-            id="simple_table-unique_properties-missing",
-        ),
-        pytest.param(
-            "REGION_FORMAT_10",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_10' must be a JSON object containing a field 'unique_properties' and field 'unique_properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
-            id="simple_table-unique_properties-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_11",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_11' must be a JSON object containing a field 'unique_properties' and field 'unique_properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
-            id="simple_table-unique_properties-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_12",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_12' must be a JSON object containing a field 'unique_properties' and field 'unique_properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
-            id="simple_table-unique_properties-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_13",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_13' must be a JSON object containing a field 'unique_properties' and field 'unique_properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
-            id="simple_table-unique_properties-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_14",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_14' must be a JSON object containing a field 'unique_properties' and field 'unique_properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
-            id="simple_table-unique_properties-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_15",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_15' must be a JSON object containing a field 'unique_properties' and field 'unique_properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
-            id="simple_table-unique_properties-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_16",
-            "property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_16' must be a JSON object containing a field 'type' and field 'type' must be a string",
-            id="simple_table-property_type-missing",
-        ),
-        pytest.param(
-            "REGION_FORMAT_17",
-            "property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_17' must be a JSON object containing a field 'type' and field 'type' must be a string",
-            id="simple_table-property_type-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_18",
-            "Unrecognized property type for property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_18': 'table column'",
-            id="simple_table-property_type-bad_name",
-        ),
-        pytest.param(
-            "REGION_FORMAT_19",
-            "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_19' must be a JSON object containing a field 'column_name' and field 'column_name' must be a string",
-            id="table_column-column_name-missing",
-        ),
-        pytest.param(
-            "REGION_FORMAT_20",
-            "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_20' must be a JSON object containing a field 'column_name' and field 'column_name' must be a string",
-            id="table_column-column_name-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_21",
-            "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_21' must be a JSON object containing a field 'data_type' and field 'data_type' must be a string",
-            id="table_column-data_type-missing",
-        ),
-        pytest.param(
-            "REGION_FORMAT_22",
-            "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_22' must be a JSON object containing a field 'data_type' and field 'data_type' must be a string",
-            id="table_column-data_type-bad_type",
-        ),
-        pytest.param(
-            "REGION_FORMAT_23",
-            "Unrecognized type string 'int512'",
-            id="table_column-data_type-bad_name",
-        ),
-        pytest.param(
-            "REGION_FORMAT_24",
+            "EXTRA_GRAPH_FIELDS",
             re.escape(
-                "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_24' must be a JSON object containing no fields except for ['column_name', 'data_type', 'type']"
+                "graph 'EXTRA_GRAPH_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'collections', 'extra semantic info', 'name', 'relationships', 'verified pydough analysis', 'version']"
             ),
-            id="table_column-extra_field",
+            id="EXTRA_GRAPH_FIELDS",
         ),
         pytest.param(
-            "REGION_FORMAT_25",
+            "BAD_COLLECTION_NAME_1",
+            "name must be a string that is a Python identifier",
+            id="BAD_COLLECTION_NAME_1",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_NAME_2",
+            "name must be a string that is a Python identifier",
+            id="BAD_COLLECTION_NAME_2",
+        ),
+        pytest.param(
+            "BAD_PROPERTY_NAME_1",
+            "name must be a string that is a Python identifier",
+            id="BAD_PROPERTY_NAME_1",
+        ),
+        pytest.param(
+            "BAD_PROPERTY_NAME_2",
+            "name must be a string that is a Python identifier",
+            id="BAD_PROPERTY_NAME_2",
+        ),
+        pytest.param(
+            "BAD_RELATIONSHIP_NAME",
+            "metadata for relationships within graph 'BAD_RELATIONSHIP_NAME' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_RELATIONSHIP_NAME",
+        ),
+        pytest.param(
+            "MISSING_COLLECTION_NAME",
+            "metadata for collections within graph 'MISSING_COLLECTION_NAME' must be a JSON object containing a field 'name' and field 'name' must be a string",
+            id="MISSING_COLLECTION_NAME",
+        ),
+        pytest.param(
+            "MISSING_COLLECTION_TYPE",
+            "metadata for collections within graph 'MISSING_COLLECTION_TYPE' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="MISSING_COLLECTION_TYPE",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_TYPE_1",
+            "metadata for collections within graph 'BAD_COLLECTION_TYPE_1' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_COLLECTION_TYPE_1",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_TYPE_2",
+            "Unrecognized PyDough collection type for collection 'collection': 'no collection type'",
+            id="BAD_COLLECTION_TYPE_2",
+        ),
+        pytest.param(
+            "MISSING_COLLECTION_TABLE_PATH",
+            "simple table collection 'collection' in graph 'MISSING_COLLECTION_TABLE_PATH' must be a JSON object containing a field 'table path' and field 'table path' must be a string",
+            id="MISSING_COLLECTION_TABLE_PATH",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_TABLE_PATH",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_TABLE_PATH' must be a JSON object containing a field 'table path' and field 'table path' must be a string",
+            id="BAD_COLLECTION_TABLE_PATH",
+        ),
+        pytest.param(
+            "MISSING_COLLECTION_UNIQUE_PROPERTIES",
+            "simple table collection 'collection' in graph 'MISSING_COLLECTION_UNIQUE_PROPERTIES' must be a JSON object containing a field 'unique properties' and field 'unique properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
+            id="MISSING_COLLECTION_UNIQUE_PROPERTIES",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_UNIQUE_PROPERTIES_1",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_UNIQUE_PROPERTIES_1' must be a JSON object containing a field 'unique properties' and field 'unique properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
+            id="BAD_COLLECTION_UNIQUE_PROPERTIES_1",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_UNIQUE_PROPERTIES_2",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_UNIQUE_PROPERTIES_2' must be a JSON object containing a field 'unique properties' and field 'unique properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
+            id="BAD_COLLECTION_UNIQUE_PROPERTIES_2",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_UNIQUE_PROPERTIES_3",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_UNIQUE_PROPERTIES_3' must be a JSON object containing a field 'unique properties' and field 'unique properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
+            id="BAD_COLLECTION_UNIQUE_PROPERTIES_3",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_UNIQUE_PROPERTIES_4",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_UNIQUE_PROPERTIES_4' must be a JSON object containing a field 'unique properties' and field 'unique properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
+            id="BAD_COLLECTION_UNIQUE_PROPERTIES_4",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_UNIQUE_PROPERTIES_5",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_UNIQUE_PROPERTIES_5' must be a JSON object containing a field 'unique properties' and field 'unique properties' must be a non-empty list where each element must be a string or it must be a non-empty list where each element must be a string",
+            id="BAD_COLLECTION_UNIQUE_PROPERTIES_5",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_UNIQUE_PROPERTIES_6",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_UNIQUE_PROPERTIES_6' does not have a property named 'Foo' to use as a unique property",
+            id="BAD_COLLECTION_UNIQUE_PROPERTIES_6",
+        ),
+        pytest.param(
+            "MISSING_COLLECTION_PROPERTIES",
+            "simple table collection 'collection' in graph 'MISSING_COLLECTION_PROPERTIES' must be a JSON object containing a field 'properties' and field 'properties' must be a JSON array",
+            id="MISSING_COLLECTION_PROPERTIES",
+        ),
+        pytest.param(
+            "BAD_COLLECTION_PROPERTIES",
+            "simple table collection 'collection' in graph 'BAD_COLLECTION_PROPERTIES' must be a JSON object containing a field 'properties' and field 'properties' must be a JSON array",
+            id="BAD_COLLECTION_PROPERTIES",
+        ),
+        pytest.param(
+            "MISSING_PROPERTIES_NAME",
+            "property of simple table collection 'collection' in graph 'MISSING_PROPERTIES_NAME' must be a JSON object containing a field 'name' and field 'name' must be a string",
+            id="MISSING_PROPERTIES_NAME",
+        ),
+        pytest.param(
+            "MISSING_PROPERTIES_TYPE",
+            "property 'key' of simple table collection 'collection' in graph 'MISSING_PROPERTIES_TYPE' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="MISSING_PROPERTIES_TYPE",
+        ),
+        pytest.param(
+            "BAD_PROPERTIES_TYPE_1",
+            "property 'key' of simple table collection 'collection' in graph 'BAD_PROPERTIES_TYPE_1' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_PROPERTIES_TYPE_1",
+        ),
+        pytest.param(
+            "BAD_PROPERTIES_TYPE_2",
+            "Unrecognized property type 'unknown property type' for property 'key' of simple table collection 'collection' in graph 'BAD_PROPERTIES_TYPE_2'",
+            id="BAD_PROPERTIES_TYPE_2",
+        ),
+        pytest.param(
+            "MISSING_TABLE_COLUMN_DATA_TYPE",
+            "table column property 'key' of simple table collection 'collection' in graph 'MISSING_TABLE_COLUMN_DATA_TYPE' must be a JSON object containing a field 'data type' and field 'data type' must be a string",
+            id="MISSING_TABLE_COLUMN_DATA_TYPE",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_DATA_TYPE_1",
+            "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_DATA_TYPE_1' must be a JSON object containing a field 'data type' and field 'data type' must be a string",
+            id="BAD_TABLE_COLUMN_DATA_TYPE_1",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_DATA_TYPE_2",
+            "Unrecognized type string 'foobar'",
+            id="BAD_TABLE_COLUMN_DATA_TYPE_2",
+        ),
+        pytest.param(
+            "MISSING_TABLE_COLUMN_COLUMN_NAME",
+            "table column property 'key' of simple table collection 'collection' in graph 'MISSING_TABLE_COLUMN_COLUMN_NAME' must be a JSON object containing a field 'column name' and field 'column name' must be a string",
+            id="MISSING_TABLE_COLUMN_COLUMN_NAME",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_COLUMN_NAME",
+            "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_COLUMN_NAME' must be a JSON object containing a field 'column name' and field 'column name' must be a string",
+            id="BAD_TABLE_COLUMN_COLUMN_NAME",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_DESCRIPTION",
+            "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_DESCRIPTION' must be a JSON object containing a field 'description' and field 'description' must be a string",
+            id="BAD_TABLE_COLUMN_DESCRIPTION",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_SYNONYMS",
+            "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_SYNONYMS' must be a JSON object containing a field 'synonyms' and field 'synonyms' must be a JSON array",
+            id="BAD_TABLE_COLUMN_SYNONYMS",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_SAMPLE_VALUES",
+            "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_SAMPLE_VALUES' must be a JSON object containing a field 'sample values' and field 'sample values' must be a JSON array",
+            id="BAD_TABLE_COLUMN_SAMPLE_VALUES",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO",
+            "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
+            id="BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO",
+        ),
+        pytest.param(
+            "BAD_TABLE_COLUMN_EXTRA_FIELDS",
             re.escape(
-                "simple table collection 'Regions' in graph 'REGION_FORMAT_25' must be a JSON object containing no fields except for ['properties', 'table_path', 'type', 'unique_properties']"
+                "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'sample values', 'synonyms', 'type']"
             ),
-            id="simple_table-extra_field",
+            id="BAD_TABLE_COLUMN_EXTRA_FIELDS",
         ),
         pytest.param(
-            "REGION_FORMAT_26",
-            "simple join property 'nations' of simple table collection 'Regions' in graph 'REGION_FORMAT_26' cannot be a unique property since it is a subcollection",
-            id="simple_table-unique_property-is_subcollection",
+            "BAD_SIMPLE_TABLE_DESCRIPTION",
+            "simple table collection 'collection' in graph 'BAD_SIMPLE_TABLE_DESCRIPTION' must be a JSON object containing a field 'description' and field 'description' must be a string",
+            id="BAD_SIMPLE_TABLE_DESCRIPTION",
         ),
         pytest.param(
-            "REGION_FORMAT_27",
-            "simple table collection 'Regions' in graph 'REGION_FORMAT_27' does not have a property named 'region_key' to use as a unique property",
-            id="simple_table-unique_property-does_not_exist",
+            "BAD_SIMPLE_TABLE_SYNONYMS",
+            "simple table collection 'collection' in graph 'BAD_SIMPLE_TABLE_SYNONYMS' must be a JSON object containing a field 'synonyms' and field 'synonyms' must be a JSON array",
+            id="BAD_SIMPLE_TABLE_SYNONYMS",
         ),
         pytest.param(
-            "REGION_FORMAT_28",
+            "BAD_SIMPLE_TABLE_EXTRA_SEMANTIC_INFO",
+            "simple table collection 'collection' in graph 'BAD_SIMPLE_TABLE_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
+            id="BAD_SIMPLE_TABLE_EXTRA_SEMANTIC_INFO",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_TABLE_EXTRA_FIELDS",
             re.escape(
-                "simple table collection 'Regions' in graph 'REGION_FORMAT_28' has malformed unique properties set: ['key', 'name', 'key']"
+                "graph 'BAD_SIMPLE_TABLE_EXTRA_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'collections', 'extra semantic info', 'name', 'relationships', 'verified pydough analysis', 'version']"
             ),
-            id="simple_table-unique_property-duplicates",
+            id="BAD_SIMPLE_TABLE_EXTRA_FIELDS",
         ),
         pytest.param(
-            "REGION_FORMAT_29",
+            "BAD_CARTESIAN_PRODUCT_MISSING_PARENT",
+            "metadata for property 'cross' within graph 'BAD_CARTESIAN_PRODUCT_MISSING_PARENT' must be a JSON object containing a field 'parent collection' and field 'parent collection' must be a string",
+            id="BAD_CARTESIAN_PRODUCT_MISSING_PARENT",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_MISSING_CHILD",
+            "metadata for property 'cross' within graph 'BAD_CARTESIAN_PRODUCT_MISSING_CHILD' must be a JSON object containing a field 'child collection' and field 'child collection' must be a string",
+            id="BAD_CARTESIAN_PRODUCT_MISSING_CHILD",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_INVALID_PARENT_1",
+            "metadata for property 'cross' within graph 'BAD_CARTESIAN_PRODUCT_INVALID_PARENT_1' must be a JSON object containing a field 'parent collection' and field 'parent collection' must be a string",
+            id="BAD_CARTESIAN_PRODUCT_INVALID_PARENT_1",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_INVALID_PARENT_2",
+            "graph 'BAD_CARTESIAN_PRODUCT_INVALID_PARENT_2' does not have a collection named 'fake_collection_name'",
+            id="BAD_CARTESIAN_PRODUCT_INVALID_PARENT_2",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_INVALID_CHILD_1",
+            "metadata for property 'cross' within graph 'BAD_CARTESIAN_PRODUCT_INVALID_CHILD_1' must be a JSON object containing a field 'child collection' and field 'child collection' must be a string",
+            id="BAD_CARTESIAN_PRODUCT_INVALID_CHILD_1",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_INVALID_CHILD_2",
+            "graph 'BAD_CARTESIAN_PRODUCT_INVALID_CHILD_2' does not have a collection named 'fake_collection_name'",
+            id="BAD_CARTESIAN_PRODUCT_INVALID_CHILD_2",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_DESCRIPTION",
+            "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_DESCRIPTION' must be a JSON object containing a field 'description' and field 'description' must be a string",
+            id="BAD_CARTESIAN_PRODUCT_DESCRIPTION",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_ALWAYS_MATCHES",
+            "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_ALWAYS_MATCHES' must be a JSON object containing a field 'always matches' and field 'always matches' must be a boolean",
+            id="BAD_CARTESIAN_PRODUCT_ALWAYS_MATCHES",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_SYNONYMS",
+            "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_SYNONYMS' must be a JSON object containing a field 'synonyms' and field 'synonyms' must be a JSON array",
+            id="BAD_CARTESIAN_PRODUCT_SYNONYMS",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_EXTRA_SEMANTIC_INFO",
+            "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
+            id="BAD_CARTESIAN_PRODUCT_EXTRA_SEMANTIC_INFO",
+        ),
+        pytest.param(
+            "BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS",
             re.escape(
-                "simple table collection 'Regions' in graph 'REGION_FORMAT_29' has malformed unique properties set: [['key', 'name'], ['name', 'key']]"
+                "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS' must be a JSON object containing no fields except for ['always matches', 'child collection', 'description', 'extra semantic info', 'name', 'parent collection', 'synonyms', 'type']"
             ),
-            id="simple_table-unique_property-duplicates",
+            id="BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS",
         ),
         pytest.param(
-            "REGION_FORMAT_30",
+            "BAD_SIMPLE_JOIN_MISSING_PARENT",
+            "metadata for property 'children' within graph 'BAD_SIMPLE_JOIN_MISSING_PARENT' must be a JSON object containing a field 'parent collection' and field 'parent collection' must be a string",
+            id="BAD_SIMPLE_JOIN_MISSING_PARENT",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_PARENT_1",
+            "metadata for property 'children' within graph 'BAD_SIMPLE_JOIN_INVALID_PARENT_1' must be a JSON object containing a field 'parent collection' and field 'parent collection' must be a string",
+            id="BAD_SIMPLE_JOIN_INVALID_PARENT_1",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_PARENT_2",
+            "graph 'BAD_SIMPLE_JOIN_INVALID_PARENT_2' does not have a collection named 'bad_collection_name'",
+            id="BAD_SIMPLE_JOIN_INVALID_PARENT_2",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_MISSING_CHILD",
+            "metadata for property 'children' within graph 'BAD_SIMPLE_JOIN_MISSING_CHILD' must be a JSON object containing a field 'child collection' and field 'child collection' must be a string",
+            id="BAD_SIMPLE_JOIN_MISSING_CHILD",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_CHILD_1",
+            "metadata for property 'children' within graph 'BAD_SIMPLE_JOIN_INVALID_CHILD_1' must be a JSON object containing a field 'child collection' and field 'child collection' must be a string",
+            id="BAD_SIMPLE_JOIN_INVALID_CHILD_1",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_CHILD_2",
+            "graph 'BAD_SIMPLE_JOIN_INVALID_CHILD_2' does not have a collection named 'bad_collection_name'",
+            id="BAD_SIMPLE_JOIN_INVALID_CHILD_2",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_MISSING_KEYS",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_MISSING_KEYS' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
+            id="BAD_SIMPLE_JOIN_MISSING_KEYS",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_KEYS_1",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_INVALID_KEYS_1' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
+            id="BAD_SIMPLE_JOIN_INVALID_KEYS_1",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_KEYS_2",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_INVALID_KEYS_2' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
+            id="BAD_SIMPLE_JOIN_INVALID_KEYS_2",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_KEYS_3",
+            "simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_INVALID_KEYS_3' does not have a property 'foo'",
+            id="BAD_SIMPLE_JOIN_INVALID_KEYS_3",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_KEYS_4",
+            "simple table collection 'child' in graph 'BAD_SIMPLE_JOIN_INVALID_KEYS_4' does not have a property 'bar'",
+            id="BAD_SIMPLE_JOIN_INVALID_KEYS_4",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_KEYS_5",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_INVALID_KEYS_5' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
+            id="BAD_SIMPLE_JOIN_INVALID_KEYS_5",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_KEYS_6",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_INVALID_KEYS_6' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
+            id="BAD_SIMPLE_JOIN_INVALID_KEYS_6",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_MISSING_SINGULAR",
+            "metadata for property children within graph 'BAD_SIMPLE_JOIN_MISSING_SINGULAR' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
+            id="BAD_SIMPLE_JOIN_MISSING_SINGULAR",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_INVALID_SINGULAR",
+            "metadata for property children within graph 'BAD_SIMPLE_JOIN_INVALID_SINGULAR' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
+            id="BAD_SIMPLE_JOIN_INVALID_SINGULAR",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_DESCRIPTION",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_DESCRIPTION' must be a JSON object containing a field 'description' and field 'description' must be a string",
+            id="BAD_SIMPLE_JOIN_DESCRIPTION",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_SYNONYMS",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_SYNONYMS' must be a JSON object containing a field 'synonyms' and field 'synonyms' must be a JSON array",
+            id="BAD_SIMPLE_JOIN_SYNONYMS",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
+            id="BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO",
+        ),
+        pytest.param(
+            "BAD_SIMPLE_JOIN_EXTRA_FIELDS",
             re.escape(
-                "simple table collection 'Regions' in graph 'REGION_FORMAT_30' has malformed unique properties set: [['key', 'name', 'key']]"
+                "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['always matches', 'child collection', 'description', 'extra semantic info', 'keys', 'name', 'parent collection', 'singular', 'synonyms', 'type']"
             ),
-            id="simple_table-unique_property-duplicates",
+            id="BAD_SIMPLE_JOIN_EXTRA_FIELDS",
         ),
         pytest.param(
-            "REGION_FORMAT_31",
-            re.escape(
-                "table column property 'key' of simple table collection 'Regions' in graph 'REGION_FORMAT_31' must be a JSON object containing no fields except for ['column_name', 'data_type', 'type']"
-            ),
-            id="simple_table-table_collection-extra_field",
+            "DUPLICATE_RELATIONSHIP_NAMES",
+            "Duplicate property: cartesian property 'children' of simple table collection 'parent' in graph 'DUPLICATE_RELATIONSHIP_NAMES' versus simple join property 'children' of simple table collection 'parent' in graph 'DUPLICATE_RELATIONSHIP_NAMES'.",
+            id="DUPLICATE_RELATIONSHIP_NAMES",
         ),
         pytest.param(
-            "PARTSUPP_FORMAT_1",
-            "cartesian property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_1' must be a JSON object containing a field 'other_collection_name' and field 'other_collection_name' must be a string",
-            id="cartesian_product-other_collection_name-missing",
+            "DUPLICATE_PROPERTY_NAMES",
+            "Duplicate property: table column property 'key' of simple table collection 'parent' in graph 'DUPLICATE_PROPERTY_NAMES' versus table column property 'key' of simple table collection 'parent' in graph 'DUPLICATE_PROPERTY_NAMES'.",
+            id="DUPLICATE_PROPERTY_NAMES",
         ),
         pytest.param(
-            "PARTSUPP_FORMAT_2",
-            "cartesian property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_2' must be a JSON object containing a field 'other_collection_name' and field 'other_collection_name' must be a string",
-            id="cartesian_product-other_collection_name-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_3",
-            "graph 'PARTSUPP_FORMAT_3' must be a JSON object containing a field 'PartSupp' and field 'PartSupp' must be a CollectionMetadata",
-            id="cartesian_product-other_collection_name-does_not_exist",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_4",
-            "cartesian property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_4' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
-            id="cartesian_product-reverse_relationship_name-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_5",
-            "cartesian property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_5' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
-            id="cartesian_product-reverse_relationship_name-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_6",
-            "Duplicate property: table column property 'part_key' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_6' versus cartesian property 'part_key' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_6'.",
-            id="cartesian_product-reverse_relationship_name-overload",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_7",
-            re.escape(
-                "cartesian property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_7' must be a JSON object containing no fields except for ['other_collection_name', 'reverse_relationship_name', 'type']"
-            ),
-            id="cartesian_product-extra_field",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_8",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_8' must be a JSON object containing a field 'other_collection_name' and field 'other_collection_name' must be a string",
-            id="simple_join-other_collection_name-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_9",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_9' must be a JSON object containing a field 'other_collection_name' and field 'other_collection_name' must be a string",
-            id="simple_join-other_collection_name-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_10",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property 'PartSupp.part_key'",
-            id="simple_join-other_collection_name-no_exist",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_11",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_11' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
-            id="simple_join-reverse_relationship_name-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_12",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_12' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
-            id="simple_join-reverse_relationship_name-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_13",
-            "Duplicate property: table column property 'supplier_key' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_13' versus simple join property 'supplier_key' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_13'.",
-            id="simple_join-reverse_relationship_name-overload",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_14",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_14' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
-            id="simple_join-singular-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_15",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_15' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
-            id="simple_join-singular-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_16",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_16' must be a JSON object containing a field 'no_collisions' and field 'no_collisions' must be a boolean",
-            id="simple_join-no_collisions-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_17",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_17' must be a JSON object containing a field 'no_collisions' and field 'no_collisions' must be a boolean",
-            id="simple_join-no_collisions-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_18",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_18' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
-            id="simple_join-keys-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_19",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_19' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
-            id="simple_join-keys-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_20",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_20' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
-            id="simple_join-keys-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_21",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_21' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
-            id="simple_join-keys-empty_outer",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_22",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_22' must be a JSON object containing a field 'keys' and field 'keys' must be a non-empty dictionary where each key must be a string and each value must be a non-empty list where each element must be a string",
-            id="simple_join-keys-empty_inner",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_23",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property 'Parts.fizz'",
-            id="simple_join-keys-absent_key",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_24",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties due to unrecognized property 'PartSupp.buzz'",
-            id="simple_join-keys-absent_other_key",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_25",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_25' cannot use cartesian property 'cartesian_supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_25' as a join key",
-            id="simple_join-keys-key_not_scalar",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_26",
-            "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_26' cannot use cartesian property 'cartesian_parts_records' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_26' as a join key",
-            id="simple_join-keys-other_key_not_scalar",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_27",
-            re.escape(
-                "simple join property 'supply_records' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_27' must be a JSON object containing no fields except for ['keys', 'no_collisions', 'other_collection_name', 'reverse_relationship_name', 'singular', 'type']"
-            ),
-            id="simple_join-extra_field",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_28",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_28' must be a JSON object containing a field 'primary_property' and field 'primary_property' must be a string",
-            id="compound-primary_property-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_29",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_29' must be a JSON object containing a field 'primary_property' and field 'primary_property' must be a string",
-            id="compound-primary_property-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_30",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
-            id="compound-primary_property-absent",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_31",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_31' must be a JSON object containing a field 'secondary_property' and field 'secondary_property' must be a string",
-            id="compound-secondary_property-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_32",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_32' must be a JSON object containing a field 'secondary_property' and field 'secondary_property' must be a string",
-            id="compound-secondary_property-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_33",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
-            id="compound-secondary_property-absent",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_34",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_34' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
-            id="compound-singular-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_35",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_35' must be a JSON object containing a field 'singular' and field 'singular' must be a boolean",
-            id="compound-singular-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_36",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_36' must be a JSON object containing a field 'no_collisions' and field 'no_collisions' must be a boolean",
-            id="compound-no_collisions-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_37",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_37' must be a JSON object containing a field 'no_collisions' and field 'no_collisions' must be a boolean",
-            id="compound-no_collisions-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_38",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_38' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
-            id="compound-reverse_relationship_name-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_39",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_39' must be a JSON object containing a field 'reverse_relationship_name' and field 'reverse_relationship_name' must be a string",
-            id="compound-reverse_relationship_name-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_40",
-            "Duplicate property: compound property 'supply_records' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_40' versus simple join property 'supply_records' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_40'",
-            id="compound-reverse_relationship_name-overload",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_41",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_41' must be a JSON object containing a field 'inherited_properties' and field 'inherited_properties' must be a dictionary where each key must be a string and each value must be a string",
-            id="compound-inherited_properties-absent",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_42",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_42' must be a JSON object containing a field 'inherited_properties' and field 'inherited_properties' must be a dictionary where each key must be a string and each value must be a string",
-            id="compound-inherited_properties-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_43",
-            "compound relationship property 'suppliers_of_part' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_43' must be a JSON object containing a field 'inherited_properties' and field 'inherited_properties' must be a dictionary where each key must be a string and each value must be a string",
-            id="compound-inherited_properties-bad_type",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_44",
-            re.escape(
-                "inherited property 'lines' (alias of compound property 'parts_supplied' of simple table collection 'Suppliers' in graph 'PARTSUPP_FORMAT_44' inherited from simple join property 'lines' of simple table collection 'PartSupp' in graph 'PARTSUPP_FORMAT_44') of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44' conflicts with compound property 'lines' of simple table collection 'Parts' in graph 'PARTSUPP_FORMAT_44'."
-            ),
-            id="compound-inherited_properties-overload",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_45",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
-            id="compound-inherited_properties-missing",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_46",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
-            id="compound-inherited_properties-cycle",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_47",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
-            id="compound-primary_property-cycle",
-        ),
-        pytest.param(
-            "PARTSUPP_FORMAT_48",
-            "Unable to extract dependencies of properties in PyDough metadata due to either a dependency not existing or a cyclic dependency between properties",
-            id="compound-secondary_property-cycle",
+            "DUPLICATE_COLLECTION_NAMES",
+            "Duplicate collections: simple table collection 'parent' in graph 'DUPLICATE_COLLECTION_NAMES' versus simple table collection 'parent' in graph 'DUPLICATE_COLLECTION_NAMES'",
+            id="DUPLICATE_COLLECTION_NAMES",
         ),
     ],
 )
@@ -518,37 +480,37 @@ def test_invalid_graphs(
             id="bad_syntax_3",
         ),
         pytest.param(
-            "parent.sub4a",
+            "parent.sub5",
             "Malformed general join condition: 'foo = other.k1' (invalid syntax. Maybe you meant '==' or ':=' instead of '='? (<unknown>, line 1))",
             id="bad_syntax_4",
         ),
         pytest.param(
-            "parent.sub5",
+            "parent.sub6",
             "Malformed general join condition: 'self.j1 == COUNT(self.sub0)' (Accessing sub-collection terms is currently unsupported in PyDough general join conditions)",
             id="collection_1",
         ),
         pytest.param(
-            "parent.sub6",
+            "parent.sub7",
             "Malformed general join condition: 'self.j1 == other.sub0.k1' (Accessing sub-collection terms is currently unsupported in PyDough general join conditions)",
             id="collection_2",
         ),
         pytest.param(
-            "parent.sub7",
+            "parent.sub8",
             "Malformed general join condition: 'self.sub0.CALCULATE(y=YEAR(k1)) == other.k1' (Collection accesses are currently unsupported in PyDough general join conditions)",
             id="collection_3",
         ),
         pytest.param(
-            "parent.sub8",
+            "parent.sub9",
             "Malformed general join condition: 'RANKING(by=self.j1.ASC()) < other.k1' (Window functions are currently unsupported in PyDough general join conditions)",
             id="window_function",
         ),
         pytest.param(
-            "parent.sub9",
+            "parent.sub10",
             "Malformed general join condition: 'self.j1 == other.k5' (Unrecognized term of simple table collection 'child' in graph 'BAD_JOIN_CONDITIONS': 'k5')",
             id="wrong_names_1",
         ),
         pytest.param(
-            "parent.sub10",
+            "parent.sub11",
             "Malformed general join condition: 'this.j1 == other.k1' (Accessing sub-collection terms is currently unsupported in PyDough general join conditions",
             id="wrong_names_2",
         ),

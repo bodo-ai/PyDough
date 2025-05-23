@@ -8,7 +8,7 @@ from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     RelationalExpression,
 )
-from pydough.types.integer_types import IntegerType
+from pydough.types.numeric_type import NumericType
 
 from .abstract_node import RelationalNode
 from .single_relational import SingleRelational
@@ -32,7 +32,7 @@ class Limit(SingleRelational):
         # Note: The limit is a relational expression because it should be a constant
         # now but in the future could be a more complex expression that may require
         # multi-step SQL to successfully evaluate.
-        assert isinstance(limit.data_type, IntegerType), (
+        assert isinstance(limit.data_type, NumericType), (
             "Limit must be an integer type."
         )
         self._limit: RelationalExpression = limit

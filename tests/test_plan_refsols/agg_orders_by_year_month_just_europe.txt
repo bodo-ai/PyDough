@@ -1,4 +1,4 @@
-ROOT(columns=[('year', year), ('month', month), ('num_european_orders', DEFAULT_TO(agg_0, 0:int64))], orderings=[])
+ROOT(columns=[('year', year), ('month', month), ('num_european_orders', DEFAULT_TO(agg_0, 0:numeric))], orderings=[])
  JOIN(conditions=[t0.year == t1.year & t0.month == t1.month], types=['left'], columns={'agg_0': t1.agg_0, 'month': t0.month, 'year': t0.year})
   AGGREGATE(keys={'month': month, 'year': year}, aggregations={})
    PROJECT(columns={'month': MONTH(order_date), 'year': YEAR(order_date)})

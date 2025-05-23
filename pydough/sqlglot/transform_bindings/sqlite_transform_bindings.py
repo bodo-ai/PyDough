@@ -10,7 +10,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.types import DateType, Int32Type, PyDoughType, StringType
+from pydough.types import DatetimeType, NumericType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -339,7 +339,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
                         month_expr,
                         sqlglot_expressions.Literal.number(end_month),
                     ],
-                    [Int32Type(), Int32Type(), Int32Type()],
+                    [NumericType(), NumericType(), NumericType()],
                 ),
                 sqlglot_expressions.Literal.number(quarter_num),
             )
@@ -358,7 +358,9 @@ class SQLiteTransformBindings(BaseTransformBindings):
             The SQLGlot expression to calculating the day of week of `base` in
             terms of the dialect's start of week.
         """
-        return self.convert_extract_datetime([base], [DateType()], DateTimeUnit.WEEK)
+        return self.convert_extract_datetime(
+            [base], [DatetimeType()], DateTimeUnit.WEEK
+        )
 
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
@@ -402,7 +404,7 @@ class SQLiteTransformBindings(BaseTransformBindings):
                     this=apply_parens(
                         sqlglot_expressions.Sub(
                             this=self.convert_extract_datetime(
-                                [base], [DateType()], DateTimeUnit.MONTH
+                                [base], [DatetimeType()], DateTimeUnit.MONTH
                             ),
                             expression=sqlglot_expressions.Literal.number(1),
                         )

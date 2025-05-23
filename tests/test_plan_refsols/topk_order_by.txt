@@ -1,3 +1,3 @@
 ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):asc_last])
- LIMIT(limit=Literal(value=10, type=Int64Type()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[(name):asc_last])
+ LIMIT(limit=Literal(value=10, type=NumericType()), columns={'comment': comment, 'key': key, 'name': name}, orderings=[(name):asc_last])
   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})

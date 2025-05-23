@@ -13,7 +13,6 @@ from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
 from pydough.metadata.graphs import GraphMetadata
 from pydough.metadata.properties import (
     CartesianProductMetadata,
-    CompoundRelationshipMetadata,
     GeneralJoinMetadata,
     PropertyMetadata,
     ReversiblePropertyMetadata,
@@ -63,17 +62,7 @@ def property_cardinality_string(property: ReversiblePropertyMetadata) -> str:
         A string representation of the relationship between the two collections
         that are connected by the relationship.
     """
-    match (property.is_plural, property.reverse_property.is_plural):
-        case (False, False):
-            return "One -> One"
-        case (False, True):
-            return "Many -> One"
-        case (True, False):
-            return "One -> Many"
-        case (True, True):
-            return "Many -> Many"
-        case _:
-            raise ValueError("Malformed case")
+    return "plural" if property.is_plural else "singular"
 
 
 def explain_property(property: PropertyMetadata, verbose: bool) -> str:
@@ -105,7 +94,7 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
             lines.append(f"Data type: {property.data_type.json_string}")
 
         case ReversiblePropertyMetadata():
-            child_name: str = property.other_collection.name
+            child_name: str = property.child_collection.name
             lines.append(
                 f"This property connects collection {collection_name} to {child_name}."
             )
@@ -113,8 +102,6 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
                 lines.append(
                     f"Cardinality of connection: {property_cardinality_string(property)}"
                 )
-                lines.append("Is reversible: yes")
-                lines.append(f"Reverse property: {child_name}.{property.reverse_name}")
                 match property:
                     case CartesianProductMetadata():
                         lines.append(
@@ -142,27 +129,6 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
                         )
                         for cond_str in conditions:
                             lines.append(f"  {cond_str}")
-                    case CompoundRelationshipMetadata():
-                        primary_name: str = (
-                            f"{collection_name}.{property.primary_property.name}"
-                        )
-                        lines.append(
-                            f"Note: this property is a compound property; it is an alias for {primary_name}.{property.secondary_property.name}."
-                        )
-                        if len(property.inherited_properties) > 0:
-                            lines.append(
-                                f"The following properties are inherited from {primary_name}:"
-                            )
-                            for alias, inherited_property in sorted(
-                                property.inherited_properties.items()
-                            ):
-                                lines.append(
-                                    f"  {alias} is an alias for {primary_name}.{inherited_property.name}"
-                                )
-                        else:
-                            lines.append(
-                                f"There are no properties inherited from {primary_name}"
-                            )
                     case _:
                         raise ValueError(
                             f"Unrecognized type of property: {property.__class__.__name__}"
