@@ -151,6 +151,12 @@ class HybridExpr(ABC):
         """
         return self
 
+    def contains_correlates(self) -> bool:
+        """
+        Returns whether this expression contains any correlated references.
+        """
+        return False
+
 
 class HybridCollation:
     """
@@ -264,8 +270,7 @@ class HybridBackRefExpr(HybridExpr):
                 parent_expr = HybridRefExpr(self.name, self.typ)
             else:
                 parent_expr = HybridBackRefExpr(self.name, levels_remaining, self.typ)
-            hybrid.correlated_children.add(child_idx)
-            return HybridCorrelExpr(hybrid, parent_expr)
+            return HybridCorrelExpr(parent_expr)
         else:
             return self
 
@@ -296,9 +301,8 @@ class HybridCorrelExpr(HybridExpr):
     rather than an ancestor, which requires a correlated reference.
     """
 
-    def __init__(self, hybrid: "HybridTree", expr: HybridExpr):
+    def __init__(self, expr: HybridExpr):
         super().__init__(expr.typ)
-        self.hybrid = hybrid
         self.expr: HybridExpr = expr
 
     def __repr__(self):
@@ -310,7 +314,10 @@ class HybridCorrelExpr(HybridExpr):
     def shift_back(self, levels: int) -> HybridExpr:
         shifted_expr: HybridExpr | None = self.expr.shift_back(levels)
         assert shifted_expr is not None
-        return HybridCorrelExpr(self.hybrid, shifted_expr)
+        return HybridCorrelExpr(shifted_expr)
+
+    def contains_correlates(self) -> bool:
+        return True
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -401,6 +408,9 @@ class HybridFunctionExpr(HybridExpr):
                 level_threshold, hybrid, child_idx
             )
         return self
+
+    def contains_correlates(self) -> bool:
+        return any(arg.contains_correlates() for arg in self.args)
 
 
 class HybridWindowExpr(HybridExpr):
@@ -539,6 +549,18 @@ class HybridWindowExpr(HybridExpr):
                 level_threshold, hybrid, child_idx
             )
         return self
+
+    def contains_correlates(self) -> bool:
+        return (
+            any(arg.contains_correlates() for arg in self.args)
+            or any(
+                partition_arg.contains_correlates()
+                for partition_arg in self.partition_args
+            )
+            or any(
+                order_arg.expr.contains_correlates() for order_arg in self.order_args
+            )
+        )
 
 
 def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
@@ -1465,7 +1487,6 @@ class HybridTree:
         self,
         child: "HybridTree",
         connection_type: ConnectionType,
-        original_correlated_children: set[int],
         required_steps: int,
     ) -> int:
         """
@@ -1477,9 +1498,6 @@ class HybridTree:
             (starting at the bottom of the subtree).
             `connection_type`: enum indicating what kind of connection is to be
             used to link `self` to `child`.
-            `original_correlated_children`: the set of indices of children that
-            contain correlated references to the current hybrid tree before
-            adding the child.
             `required_steps`: the index of the step in the pipeline that must
             be completed before the child can be defined.
 
@@ -1518,8 +1536,6 @@ class HybridTree:
                     existing_connection.connection_type
                 )
                 existing_connection.connection_type = connection_type
-                if len(self.correlated_children) > len(original_correlated_children):
-                    self._correlated_children = original_correlated_children
                 if existing_connection.subtree.agg_keys is None:
                     existing_connection.subtree.agg_keys = child.agg_keys
                 return idx
@@ -1657,15 +1673,22 @@ class HybridTree:
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.always_exists()
 
-    def contains_sub_correlations(self) -> bool:
+    def contains_correlates(self) -> bool:
         """
         TODO
         """
-        if len(self.correlated_children) > 0 or any(
-            child.subtree.contains_sub_correlations() for child in self.children
-        ):
+        for operation in self.pipeline:
+            for expr in operation.terms.values():
+                if expr.contains_correlates():
+                    return True
+            if (
+                isinstance(operation, HybridFilter)
+                and operation.condition.contains_correlates()
+            ):
+                return True
+        if any(child.subtree.contains_correlates() for child in self.children):
             return True
-        return self.parent is not None and self.parent.contains_sub_correlations()
+        return self.parent is not None and self.parent.contains_correlates()
 
     def equalsIgnoringSuccessors(self, other: "HybridTree") -> bool:
         """
@@ -1811,13 +1834,6 @@ class HybridTree:
                         self.renumber_children_indices(term, child_remapping)
                 case _:
                     continue
-
-        # Renumber the correlated children
-        new_correlated_children: set[int] = set()
-        for correlated_idx in self.correlated_children:
-            if correlated_idx in child_remapping:
-                new_correlated_children.add(child_remapping[correlated_idx])
-        self._correlated_children = new_correlated_children
 
         return child_remapping
 
@@ -2113,7 +2129,6 @@ class HybridTranslator:
             # value within this context.
             snapshot: int = self.alias_counter
             self.alias_counter = 0
-            original_correlated_children: set[int] = set(hybrid.correlated_children)
             subtree: HybridTree = self.make_hybrid_tree(
                 child,
                 hybrid,
@@ -2157,7 +2172,6 @@ class HybridTranslator:
             child_idx_mapping[child_idx] = hybrid.add_child(
                 subtree,
                 connection_type,
-                original_correlated_children,
                 max(len(hybrid.pipeline) - 1, 0),
             )
         self.stack.pop()
@@ -2584,14 +2598,12 @@ class HybridTranslator:
                 collection, back_expr.term_name, remaining_steps_back
             )
             parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
-        if not isinstance(parent_result, HybridCorrelExpr):
-            parent_tree.correlated_children.add(len(parent_tree.children))
         # Restore parent_tree back onto the stack, since evaluating `back_expr`
         # does not change the program's current placement in the subtrees.
         self.stack.append(parent_tree)
         # Create the correlated reference to the expression with regards to
         # the parent tree, which could also be a correlated expression.
-        return HybridCorrelExpr(parent_tree, parent_result)
+        return HybridCorrelExpr(parent_result)
 
     def add_unique_terms(
         self,
@@ -2650,14 +2662,7 @@ class HybridTranslator:
                     partition_args.append(equivalent_key)
                 else:
                     # Otherwise, create a correlated reference to the term.
-                    if not isinstance(arg, HybridCorrelExpr):
-                        if child_idx is not None:
-                            prev_hybrid.correlated_children.add(child_idx)
-                        else:
-                            prev_hybrid.correlated_children.add(
-                                len(prev_hybrid.children)
-                            )
-                    partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
+                    partition_args.append(HybridCorrelExpr(arg))
             self.stack.append(prev_hybrid)
         else:
             # Otherwise, we have to step back further, so we recursively
@@ -3203,7 +3208,7 @@ class HybridTranslator:
                         key_name = f"key_{len(lhs_unique_keys)}"
                         shifted_expr: HybridExpr | None = expr.shift_back(back_levels)
                         assert shifted_expr is not None
-                        expr = HybridCorrelExpr(parent, shifted_expr)
+                        expr = HybridCorrelExpr(shifted_expr)
                         lhs_unique_keys[key_name] = expr
                     back_levels += 1
                     current_level = current_level.parent
@@ -3217,9 +3222,6 @@ class HybridTranslator:
                 tree.pipeline.append(new_calc)
                 for key_name, expr in lhs_unique_keys.items():
                     agg_keys.append(HybridRefExpr(key_name, expr.typ))
-                # Mark the parent's connection to this child as
-                # correlated, and set the agg keys.
-                parent.correlated_children.add(child_idx)
 
         return join_keys, agg_keys, general_join_cond
 
@@ -3327,7 +3329,6 @@ class HybridTranslator:
         extension_idx: int,
         extension_subtree: HybridTree,
         remapping: dict[HybridExpr, HybridExpr],
-        existing_correlates: set[int],
     ) -> None:
         """
         TODO
@@ -3364,7 +3365,7 @@ class HybridTranslator:
 
         required_steps: int = len(base_subtree.pipeline) - 1
         new_child_idx: int = base_subtree.add_child(
-            extension_subtree, new_connection_type, existing_correlates, required_steps
+            extension_subtree, new_connection_type, required_steps
         )
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
@@ -3409,7 +3410,6 @@ class HybridTranslator:
         extension_idx: int,
         extension_subtree: HybridTree,
         remapping: dict[HybridExpr, HybridExpr],
-        existing_correlates: set[int],
     ) -> None:
         """
         TODO
@@ -3439,7 +3439,7 @@ class HybridTranslator:
 
         required_steps: int = len(base_subtree.pipeline) - 1
         new_child_idx: int = base_subtree.add_child(
-            extension_subtree, new_connection_type, existing_correlates, required_steps
+            extension_subtree, new_connection_type, required_steps
         )
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
@@ -3473,7 +3473,6 @@ class HybridTranslator:
         extension_idx: int,
         extension_subtree: HybridTree,
         remapping: dict[HybridExpr, HybridExpr],
-        existing_correlates: set[int],
     ) -> None:
         """
         TODO
@@ -3499,7 +3498,7 @@ class HybridTranslator:
 
         required_steps: int = len(base_subtree.pipeline) - 1
         new_child_idx: int = base_subtree.add_child(
-            extension_subtree, new_connection_type, existing_correlates, required_steps
+            extension_subtree, new_connection_type, required_steps
         )
         base_subtree.children[new_child_idx]
 
@@ -3532,7 +3531,6 @@ class HybridTranslator:
         extension_idx: int,
         extension_subtree: HybridTree,
         remapping: dict[HybridExpr, HybridExpr],
-        existing_correlates: set[int],
     ) -> None:
         """
         TODO
@@ -3568,13 +3566,12 @@ class HybridTranslator:
                 extension_idx,
                 extension_subtree,
                 remapping,
-                existing_correlates,
             )
             return
 
         required_steps: int = len(base_subtree.pipeline) - 1
         new_child_idx: int = base_subtree.add_child(
-            extension_subtree, new_connection_type, existing_correlates, required_steps
+            extension_subtree, new_connection_type, required_steps
         )
         base_subtree.children[new_child_idx]
 
@@ -3615,7 +3612,6 @@ class HybridTranslator:
         base_child: HybridConnection = tree.children[base_idx]
         base_subtree: HybridTree = base_child.subtree
         extension_child: HybridConnection = tree.children[extension_idx]
-        existing_correlates: set[int] = set(base_subtree.correlated_children)
         extension_subtree: HybridTree = self.make_extension_child(
             copy.deepcopy(extension_child.subtree), extension_height, base_subtree
         )
@@ -3637,14 +3633,11 @@ class HybridTranslator:
 
         # TODO: support syncretization when the extension is itself
         # correlated to any of its children
-        if (
-            extension_idx in tree.correlated_children
-            or extension_subtree.contains_sub_correlations()
-        ):
+        if extension_subtree.contains_correlates():
             return False
 
         if extension_child.required_steps < base_child.required_steps:
-            if base_idx in tree.correlated_children:
+            if base_subtree.contains_correlates():
                 return False
             base_child.required_steps = extension_child.required_steps
 
@@ -3672,7 +3665,6 @@ class HybridTranslator:
                     extension_idx,
                     extension_subtree,
                     remapping,
-                    existing_correlates,
                 )
             case (
                 (ConnectionType.SINGULAR, ConnectionType.SINGULAR)
@@ -3696,7 +3688,6 @@ class HybridTranslator:
                     extension_idx,
                     extension_subtree,
                     remapping,
-                    existing_correlates,
                 )
             case (
                 (ConnectionType.AGGREGATION, ConnectionType.SINGULAR)
@@ -3713,7 +3704,6 @@ class HybridTranslator:
                     extension_idx,
                     extension_subtree,
                     remapping,
-                    existing_correlates,
                 )
             case (
                 (ConnectionType.SINGULAR, ConnectionType.AGGREGATION)
@@ -3730,7 +3720,6 @@ class HybridTranslator:
                     extension_idx,
                     extension_subtree,
                     remapping,
-                    existing_correlates,
                 )
             case _:
                 return False

@@ -34,6 +34,10 @@ class Decorrelater:
     Class that encapsulates the logic used for de-correlation of hybrid trees.
     """
 
+    def __init__(self) -> None:
+        self.stack: list[HybridTree] = []
+        self.children_indices: list[int] = []
+
     def make_decorrelate_parent(
         self, hybrid: HybridTree, child_idx: int, required_steps: int
     ) -> tuple[HybridTree, int]:
@@ -118,17 +122,13 @@ class Decorrelater:
         """
         match expr:
             case HybridCorrelExpr():
-                # If the correlated reference points to the parent, then
-                # replace it with a BACK reference. Otherwise, recursively
-                # transform its input expression in case it contains another
-                # correlated reference.
-                if expr.hybrid is parent:
+                # TODO ADD COMMENT
+                if isinstance(expr.expr, HybridCorrelExpr):
+                    return expr.expr
+                else:
                     result: HybridExpr | None = expr.expr.shift_back(child_height)
                     assert result is not None
                     return result
-                else:
-                    expr.expr = self.remove_correl_refs(expr.expr, parent, child_height)
-                    return expr
             case HybridFunctionExpr():
                 # For regular functions, recursively transform all of their
                 # arguments.
@@ -382,6 +382,28 @@ class Decorrelater:
             child.subtree = self.decorrelate_hybrid_tree(child.subtree)
         return hybrid
 
+    def find_correlated_children(self, hybrid: HybridTree) -> None:
+        """
+        Recursively finds all correlated children of a hybrid tree and stores
+        them in the hybrid tree.
+
+        Args:
+            `hybrid`: The hybrid tree to find correlated children in.
+        """
+        correl_levels: int = 0
+        assert correl_levels <= len(self.stack)
+        for i in range(-1, -correl_levels - 1, -1):
+            self.stack[i].correlated_children.add(self.children_indices[i])
+
+        self.stack.append(hybrid)
+        for idx, child in enumerate(hybrid.children):
+            self.children_indices.append(idx)
+            self.find_correlated_children(child.subtree)
+            self.children_indices.pop()
+        self.stack.pop()
+        if hybrid.parent is not None:
+            self.find_correlated_children(hybrid.parent)
+
 
 def run_hybrid_decorrelation(hybrid: HybridTree) -> HybridTree:
     """
@@ -398,4 +420,5 @@ def run_hybrid_decorrelation(hybrid: HybridTree) -> HybridTree:
         references. The transformation is also done in-place.
     """
     decorr: Decorrelater = Decorrelater()
+    decorr.find_correlated_children(hybrid)
     return decorr.decorrelate_hybrid_tree(hybrid)
