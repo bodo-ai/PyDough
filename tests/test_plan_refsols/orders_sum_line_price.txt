@@ -1,4 +1,4 @@
-ROOT(columns=[('okey', key), ('lsum', DEFAULT_TO(agg_0, 0:int64))], orderings=[])
+ROOT(columns=[('okey', key), ('lsum', DEFAULT_TO(agg_0, 0:numeric))], orderings=[])
  JOIN(conditions=[t0.key == t1.order_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})
   SCAN(table=tpch.ORDERS, columns={'key': o_orderkey})
   AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(extended_price)})

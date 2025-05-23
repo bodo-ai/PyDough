@@ -31,7 +31,7 @@ function calculateNodeHeight(d) {
   }
 
   // Calculate Y position of the baseline of the last subcollection item
-  if (d.subcollections.length > 0) {
+  if (d.sub_collections.length > 0) {
     // Y position of the subcollection header
     const subcollectionHeaderBaseY =
       d.columns.length > 0
@@ -46,7 +46,7 @@ function calculateNodeHeight(d) {
 
     // Y position of the last subcollection item's baseline
     lastElementY =
-      firstSubcollectionItemY + (d.subcollections.length - 1) * lineHeight;
+      firstSubcollectionItemY + (d.sub_collections.length - 1) * lineHeight;
   }
 
   // Calculate total height: baseline of last element + padding below it
@@ -253,7 +253,7 @@ function addSubcollectionsList(node) {
   // Add subcollection items
   node
     .selectAll(".subcollection-item")
-    .data((d) => d.subcollections.map((subcol) => ({ subcol, parent: d })))
+    .data((d) => d.sub_collections.map((subcol) => ({ subcol, parent: d })))
     .enter()
     .append("text")
     .attr("x", paddingX + 10) // Indent subcollections slightly
@@ -281,6 +281,6 @@ function addSubcollectionsList(node) {
     .style("font-size", "13px")
     .text((d) => {
       // Always show relationships as outgoing (→) to indicate they can be accessed from this node
-      return `${d.subcol.name} → ${d.subcol.target}`;
+      return `${d.subcol.name} → ${d.subcol.target.id}`;
     });
 }

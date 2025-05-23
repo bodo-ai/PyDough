@@ -123,7 +123,7 @@ Lineitems.CALCULATE(value = (extended_price * (1 - (discount ** 2)) + 1.0) / par
 Expression values can be compared using standard comparison operators: `<=`, `<`, `==`, `!=`, `>` and `>=`:
 
 ```py
-Customers.CALCULATE(
+customers.CALCULATE(
     in_debt = acctbal < 0,
     at_most_12_orders = COUNT(orders) <= 12,
     is_european = nation.region.name == "EUROPE",
@@ -146,7 +146,7 @@ Multiple boolean expression values can be logically combined with `&`, `|` and `
 is_asian = nation.region.name == "ASIA"
 is_european = nation.region.name == "EUROPE"
 in_debt = acctbal < 0
-Customers.CALCULATE(
+customers.CALCULATE(
     is_eurasian = is_asian | is_european,
     is_not_eurasian = ~(is_asian | is_european),
     is_european_in_debt = is_european & in_debt
@@ -186,7 +186,7 @@ A string expression can have a substring extracted with Python string slicing sy
 The implementation is based on Python slicing semantics. PyDough supports negative slicing, but currently, it does not support providing step values other than 1.
 
 ```py
-Customers.CALCULATE(
+customers.CALCULATE(
     country_code = phone[:3],
     name_without_first_char = name[1:],
     last_digit = phone[-1:],
@@ -212,7 +212,7 @@ Below is each function currently supported in PyDough that operates on strings.
 Calling `LOWER` on a string converts its characters to lowercase:
 
 ```py
-Customers.CALCULATE(lowercase_name = LOWER(name))
+customers.CALCULATE(lowercase_name = LOWER(name))
 ```
 
 <!-- TOC --><a name="upper"></a>
@@ -222,7 +222,7 @@ Customers.CALCULATE(lowercase_name = LOWER(name))
 Calling `UPPER` on a string converts its characters to uppercase:
 
 ```py
-Customers.CALCULATE(uppercase_name = UPPER(name))
+customers.CALCULATE(uppercase_name = UPPER(name))
 ```
 
 <!-- TOC --><a name="length"></a>
@@ -313,7 +313,7 @@ The function behaves as follows:
 - If the padding argument is not a single character, it raises an error.
 
 ```py
-Customers.CALCULATE(left_padded_name = LPAD(name, 30, "*"))
+customers.CALCULATE(left_padded_name = LPAD(name, 30, "*"))
 ```
 
 Here are examples on how it pads on string literals:
@@ -343,7 +343,7 @@ The function behaves as follows:
 - If the padding argument is not a single character, it raises an error
 
 ```py
-Customers.CALCULATE(right_padded_name = RPAD(name, 30, "*"))
+customers.CALCULATE(right_padded_name = RPAD(name, 30, "*"))
 ```
 
 Here are examples on how it pads on string literals:
@@ -362,7 +362,7 @@ Here are examples on how it pads on string literals:
 The `FIND` function returns the position (0-indexed) of the first occurrence of a substring within a string, or -1 if the substring is not found. The first argument is the string to search within, and the second argument is the substring to search for.
 
 ```py
-Customers.WHERE(name == "Alex Rodriguez")
+customers.WHERE(name == "Alex Rodriguez")
          .CALCULATE(
             idx_Alex = FIND(name, "Alex"), # 0
             idx_Rodriguez = FIND(name, "Rodriguez"), # 5
@@ -385,8 +385,8 @@ This function is equivalent to python's `str.strip()` method.
 Note: This function is case-sensitive.
 
 ```py
-Customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trailing whitespace
-Customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
+customers.CALCULATE(stripped_name = STRIP(name)) # removes all leading and trailing whitespace
+customers.CALCULATE(stripped_name = STRIP(name, "aeiou")) # removes all leading and trailing vowels
 ```
 
 | **Input String (X)**       | **STRIP(X, Y)**                    | **Result**          |
@@ -627,7 +627,7 @@ The `IFF` function cases on the True/False value of its first argument. If it is
 
 ```py
 qty_from_germany = IFF(supplier.nation.name == "GERMANY", quantity, 0)
-Customers.CALCULATE(
+customers.CALCULATE(
     total_quantity_shipped_from_germany = SUM(lines.CALCULATE(q=qty_from_germany).q)
 )
 ```
@@ -679,7 +679,7 @@ Lineitems.CALCULATE(no_tax = ABSENT(tax))
 The `KEEP_IF` function returns the first function if the second arguments is True, otherwise it returns a null value. In other words, `KEEP_IF(a, b)` is equivalent to the SQL expression `CASE WHEN b THEN a END`.
 
 ```py
-TPCH.CALCULATE(avg_non_debt_balance = AVG(Customers.CALCULATE(no_debt_bal = KEEP_IF(acctbal, acctbal > 0)).no_debt_bal))
+TPCH.CALCULATE(avg_non_debt_balance = AVG(customers.CALCULATE(no_debt_bal = KEEP_IF(acctbal, acctbal > 0)).no_debt_bal))
 ```
 
 <!-- TOC --><a name="monotonic"></a>
@@ -705,9 +705,9 @@ Below is each numerical function currently supported in PyDough.
 The `ABS` function returns the absolute value of its input. The Python builtin `abs()` function can also be used to accomplish the same thing.
 
 ```py
-Customers.CALCULATE(acct_magnitude = ABS(acctbal))
+customers.CALCULATE(acct_magnitude = ABS(acctbal))
 # The below statement is equivalent to above.
-Customers.CALCULATE(acct_magnitude = abs(acctbal))
+customers.CALCULATE(acct_magnitude = abs(acctbal))
 ```
 
 <!-- TOC --><a name="round"></a>
@@ -845,7 +845,7 @@ The `MEDIAN` function takes the median of the plural set of numerical values it 
 Note: absent records are ignored when deriving the median.
 
 ```py
-Customers.CALCULATE(
+customers.CALCULATE(
    name,
    median_order_price = MEDIAN(orders.total_price)
 )
@@ -888,7 +888,7 @@ Suppliers.CALCULATE(chosen_part_name = ANYTHING(supply_records.part.name))
 The `COUNT` function returns how many non-null records exist on the set of plural values it is called on.
 
 ```py
-Customers.CALCULATE(num_taxed_purchases = COUNT(orders.lines.tax))
+customers.CALCULATE(num_taxed_purchases = COUNT(orders.lines.tax))
 ```
 
 The `COUNT` function can also be called on a sub-collection, in which case it will return how many records from that sub-collection exist.
@@ -904,7 +904,7 @@ Nations.CALCULATE(num_customers_in_debt = COUNT(customers.WHERE(acctbal < 0)))
 The `NDISTINCT` function returns how many distinct values of its argument exist.
 
 ```py
-Customers.CALCULATE(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
+customers.CALCULATE(num_unique_parts_purchased = NDISTINCT(orders.lines.parts.key))
 ```
 
 <!-- TOC --><a name="has"></a>
@@ -924,7 +924,7 @@ Parts.WHERE(HAS(supply_records.supplier.WHERE(nation.name == "GERMANY")))
 The `HASNOT` function is called on a sub-collection and returns `True` if no records of the sub-collection exist. In other words, `HASNOT(x)` is equivalent to `COUNT(x) == 0`.
 
 ```py
-Customers.WHERE(HASNOT(orders))
+customers.WHERE(HASNOT(orders))
 ```
 
 <!-- TOC --><a name="var"></a>
@@ -1024,7 +1024,7 @@ Nations.customers.CALCULATE(r = RANKING(by=acctbal.DESC(), per="Nations"))
 
 # For every customer, finds their most recent order
 # (ties allowed)
-Customers.orders.WHERE(RANKING(by=order_date.DESC(), per="Customers", allow_ties=True) == 1)
+customers.orders.WHERE(RANKING(by=order_date.DESC(), per="customers", allow_ties=True) == 1)
 ```
 
 <!-- TOC --><a name="percentile"></a>
@@ -1039,7 +1039,7 @@ The `PERCENTILE` function returns what index the current record belongs to if al
 
 ```py
 # Keep the top 0.1% of customers with the highest account balances.
-Customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
+customers.WHERE(PERCENTILE(by=acctbal.ASC(), n_buckets=1000) == 1000)
 
 # For every region, find the top 5% of customers with the highest account balances.
 Regions.nations.customers.WHERE(PERCENTILE(by=acctbal.ASC(), per="Regions") > 95)
@@ -1061,9 +1061,9 @@ The `PREV` function returns the value of an expression from a preceding record i
 # Find the 10 customers with at least 5 orders with the largest average time
 # gap between their orders, in days.
 order_info = orders.CALCULATE(
-   day_diff=DATEDIFF("days", PREV(order_date, by=order_date.ASC(), per="Customers"), order_date)
+   day_diff=DATEDIFF("days", PREV(order_date, by=order_date.ASC(), per="customers"), order_date)
 )
-Customers.WHERE(COUNT(orders) > 5).CALCULATE(
+customers.WHERE(COUNT(orders) > 5).CALCULATE(
    name,
    average_order_gap=AVG(order_info.day_diff)
 ).TOP_K(10, by=average_order_gap.DESC())
@@ -1122,7 +1122,7 @@ For example:
 ```py
 # Finds the ratio between each customer's account balance and the global
 # sum of all customers' account balances.
-Customers.CALCULATE(ratio=acctbal / RELSUM(acctbal))
+customers.CALCULATE(ratio=acctbal / RELSUM(acctbal))
 
 # Finds the ratio between each customer's account balance and the sum of all
 # all customers' account balances within that nation.
@@ -1160,7 +1160,7 @@ The `RELAVG` function returns the average of multiple rows of a singular express
 ```py
 # Finds all customers whose account balance is above the global average of all
 # customers' account balances.
-Customers.WHERE(acctbal > RELAVG(acctbal))
+customers.WHERE(acctbal > RELAVG(acctbal))
 
 # Finds all customers whose account balance is above the average of all
 # customers' account balances within that nation.
@@ -1200,7 +1200,7 @@ The `RELCOUNT` function returns the number of non-null records in multiple rows 
 ```py
 # Divides each customer's account balance by the total number of positive
 # account balances globally.
-Customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
+customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal > 0.0)))
 
 # Divides each customer's account balance by the total number of positive
 # account balances in the same nation.
@@ -1238,7 +1238,7 @@ The `RELSIZE` function returns the number of total records, either globally or t
 ```py
 # Divides each customer's account balance by
 # the number of total customers.
-Customers.CALCULATE(ratio = acctbal / RELSIZE())
+customers.CALCULATE(ratio = acctbal / RELSIZE())
 
 # Divides each customer's account balance by the
 # number of total customers in that nation.
@@ -1325,9 +1325,9 @@ The `__bool__` magic method is not supported in PyDough. PyDough code cannot be 
 if Customer and Order:
    print("Available")
 
-Customers.WHERE((acctbal > 0) and (nation.name == "GERMANY"))
+customers.WHERE((acctbal > 0) and (nation.name == "GERMANY"))
 # Use &`instead of `and`:
-# Customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
+# customers.WHERE((acctbal > 0) & (nation.name == "GERMANY"))
 
 Orders.WHERE((discount > 0.05) or (tax > 0.08))
 # Use `|` instead of `or` 
@@ -1455,7 +1455,7 @@ The `len` function calls the `__len__` magic method, which is not supported in P
 
 ```py
 # Not allowed currently as it would need to return an int instead of a PyDough object
-Customers(len(customer.name))
+customers(len(customer.name))
 ```
 
 <!-- TOC --><a name="__contains__"></a>

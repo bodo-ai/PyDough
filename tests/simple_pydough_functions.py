@@ -10,22 +10,22 @@ import datetime
 
 
 def simple_scan():
-    return Orders.CALCULATE(key)
+    return orders.CALCULATE(key)
 
 
 def simple_filter():
-    return Orders.CALCULATE(o_orderkey=key, o_totalprice=total_price).WHERE(
+    return orders.CALCULATE(o_orderkey=key, o_totalprice=total_price).WHERE(
         o_totalprice < 1000.0
     )
 
 
 def simple_scan_top_five():
-    return Orders.CALCULATE(key).TOP_K(5, by=key.ASC())
+    return orders.CALCULATE(key).TOP_K(5, by=key.ASC())
 
 
 def simple_filter_top_five():
     return (
-        Orders.CALCULATE(key, total_price)
+        orders.CALCULATE(key, total_price)
         .WHERE(total_price < 1000.0)
         .TOP_K(5, by=key.DESC())
     )
@@ -35,18 +35,18 @@ def order_info_per_priority():
     # Find information about the highest total price order for each priority
     # type in 1992. Specifically, for each order priority, the key & total
     # price of the order. Order the results by priority.
-    prios = Orders.WHERE(YEAR(order_date) == 1992).PARTITION(
+    prios = orders.WHERE(YEAR(order_date) == 1992).PARTITION(
         name="priorities", by=order_priority
     )
     return (
-        prios.Orders.WHERE(RANKING(by=total_price.DESC(), per="priorities") == 1)
+        prios.orders.WHERE(RANKING(by=total_price.DESC(), per="priorities") == 1)
         .CALCULATE(order_priority, order_key=key, order_total_price=total_price)
         .ORDER_BY(order_priority.ASC())
     )
 
 
 def dumb_aggregation():
-    return Nations.TOP_K(2, by=name.ASC()).CALCULATE(
+    return nations.TOP_K(2, by=name.ASC()).CALCULATE(
         nation_name=name,
         a1=MIN(region.name),
         a2=MAX(region.name),
@@ -61,7 +61,7 @@ def dumb_aggregation():
 
 def simple_collation():
     return (
-        Suppliers.CALCULATE(
+        suppliers.CALCULATE(
             p=PERCENTILE(
                 by=(
                     COUNT(supply_records).ASC(),
@@ -113,8 +113,8 @@ def simple_collation():
 
 def absurd_window_per():
     return (
-        Regions.nations.customers.orders.lines.supplier.nation.suppliers.nation.customers.nation.region.CALCULATE(
-            w1=RELSIZE(per="Regions"),
+        regions.nations.customers.orders.lines.supplier.nation.suppliers.nation.customers.nation.region.CALCULATE(
+            w1=RELSIZE(per="regions"),
             w2=RELSIZE(per="nations:1"),
         )
         .CALCULATE(
@@ -142,14 +142,14 @@ def absurd_window_per():
 
 def absurd_partition_window_per():
     return (
-        Lineitems.PARTITION(
+        lines.PARTITION(
             name="groups", by=(ship_mode, ship_date, status, return_flag, part_key)
         )
         .PARTITION(name="groups", by=(ship_mode, ship_date, status, return_flag))
         .PARTITION(name="groups", by=(ship_mode, ship_date, status))
         .PARTITION(name="groups", by=(ship_mode, ship_date))
         .PARTITION(name="groups", by=(ship_mode))
-        .groups.groups.groups.groups.Lineitems.order.CALCULATE(
+        .groups.groups.groups.groups.lines.order.CALCULATE(
             w1=RELSIZE(per="groups:1"),
             w2=RELSIZE(per="groups:2"),
             w3=RELSIZE(per="groups:3"),
@@ -163,7 +163,7 @@ def year_month_nation_orders():
     # Finds the 5 largest instances of numbers of orders made in a month of a
     # year by customers in a nation, only looking at nations from Asia and
     # Africa.
-    selected_regions = Regions.WHERE(ISIN(name, ("ASIA", "AFRICA")))
+    selected_regions = regions.WHERE(ISIN(name, ("ASIA", "AFRICA")))
     urgent_orders = (
         selected_regions.nations.CALCULATE(nation_name=name)
         .customers.orders.WHERE(order_priority == "1-URGENT")
@@ -189,45 +189,45 @@ def parts_quantity_increase_95_96():
     orders_95 = lines.WHERE((YEAR(order.order_date) == 1995) & (ship_mode == "RAIL"))
     orders_96 = lines.WHERE((YEAR(order.order_date) == 1996) & (ship_mode == "RAIL"))
     return (
-        Parts.WHERE(STARTSWITH(container, "SM") & HAS(orders_95) & HAS(orders_96))
+        parts.WHERE(STARTSWITH(container, "SM") & HAS(orders_95) & HAS(orders_96))
         .CALCULATE(name, qty_95=SUM(orders_95.quantity), qty_96=SUM(orders_96.quantity))
         .TOP_K(3, by=((qty_96 - qty_95).DESC(), name.ASC()))
     )
 
 
 def rank_a():
-    return Customers.CALCULATE(rank=RANKING(by=acctbal.DESC()))
+    return customers.CALCULATE(rank=RANKING(by=account_balance.DESC()))
 
 
 def rank_b():
-    return Orders.CALCULATE(rank=RANKING(by=(order_priority.ASC()), allow_ties=True))
+    return orders.CALCULATE(rank=RANKING(by=(order_priority.ASC()), allow_ties=True))
 
 
 def rank_c():
-    return Orders.CALCULATE(
+    return orders.CALCULATE(
         order_date, rank=RANKING(by=order_date.ASC(), allow_ties=True, dense=True)
     )
 
 
 def rank_nations_by_region():
-    return Nations.CALCULATE(name, rank=RANKING(by=region.name.ASC(), allow_ties=True))
+    return nations.CALCULATE(name, rank=RANKING(by=region.name.ASC(), allow_ties=True))
 
 
 def rank_nations_per_region_by_customers():
-    return Regions.nations.CALCULATE(
-        name, rank=RANKING(by=COUNT(customers).DESC(), per="Regions")
+    return regions.nations.CALCULATE(
+        name, rank=RANKING(by=COUNT(customers).DESC(), per="regions")
     ).TOP_K(5, by=rank.ASC())
 
 
 def rank_parts_per_supplier_region_by_size():
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .nations.suppliers.supply_records.part.CALCULATE(
             key,
             region=region_name,
             rank=RANKING(
                 by=(size.DESC(), container.DESC(), part_type.DESC()),
-                per="Regions",
+                per="regions",
                 allow_ties=True,
                 dense=True,
             ),
@@ -238,7 +238,7 @@ def rank_parts_per_supplier_region_by_size():
 
 def rank_with_filters_a():
     return (
-        Customers.CALCULATE(n=name, r=RANKING(by=acctbal.DESC()))
+        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
         .WHERE(ENDSWITH(name, "0"))
         .WHERE(r <= 30)
     )
@@ -246,7 +246,7 @@ def rank_with_filters_a():
 
 def rank_with_filters_b():
     return (
-        Customers.CALCULATE(n=name, r=RANKING(by=acctbal.DESC()))
+        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
         .WHERE(r <= 30)
         .WHERE(ENDSWITH(name, "0"))
     )
@@ -254,9 +254,9 @@ def rank_with_filters_b():
 
 def rank_with_filters_c():
     return (
-        Parts.PARTITION(name="sizes", by=size)
+        parts.PARTITION(name="sizes", by=size)
         .TOP_K(5, by=size.DESC())
-        .Parts.CALCULATE(size, name)
+        .parts.CALCULATE(size, name)
         .WHERE(RANKING(by=retail_price.DESC(), per="sizes") == 1)
     )
 
@@ -268,10 +268,10 @@ def first_order_per_customer():
     # with the lowest key. Only consider customers with at least $9k in their
     # account. Only look at customers with at least one order.
     first_order = orders.WHERE(
-        RANKING(by=(order_date.ASC(), key.ASC()), per="Customers") == 1
+        RANKING(by=(order_date.ASC(), key.ASC()), per="customers") == 1
     ).SINGULAR()
     return (
-        Customers.WHERE(acctbal >= 9000.0)
+        customers.WHERE(account_balance >= 9000.0)
         .WHERE(HAS(first_order))
         .CALCULATE(
             name,
@@ -285,7 +285,7 @@ def first_order_per_customer():
 def percentile_nations():
     # For every nation, give its name & its bucket from 1-5 ordered by name
     # alphabetically
-    return Nations.CALCULATE(name, p=PERCENTILE(by=name.ASC(), n_buckets=5))
+    return nations.CALCULATE(name, p=PERCENTILE(by=name.ASC(), n_buckets=5))
 
 
 def percentile_customers_per_region():
@@ -294,9 +294,9 @@ def percentile_customers_per_region():
     # means more money) and whose phone number ends in two zeros, sorted by the
     # name of the customers
     return (
-        Regions.nations.customers.CALCULATE(name)
+        regions.nations.customers.CALCULATE(name)
         .WHERE(
-            (PERCENTILE(by=(acctbal.ASC()), per="Regions") == 95)
+            (PERCENTILE(by=(account_balance.ASC()), per="regions") == 95)
             & ENDSWITH(phone, "00")
         )
         .ORDER_BY(name.ASC())
@@ -307,9 +307,9 @@ def regional_suppliers_percentile():
     # For each region, find the suppliers in the top 0.1% by number of parts
     # they supply, breaking ties by name, only keeping the suppliers in the top
     pct = PERCENTILE(
-        by=(COUNT(supply_records).ASC(), name.ASC()), per="Regions", n_buckets=1000
+        by=(COUNT(supply_records).ASC(), name.ASC()), per="regions", n_buckets=1000
     )
-    return Regions.nations.suppliers.CALCULATE(name).WHERE(
+    return regions.nations.suppliers.CALCULATE(name).WHERE(
         HAS(supply_records) & (pct == 1000)
     )
 
@@ -317,7 +317,7 @@ def regional_suppliers_percentile():
 def prev_next_regions():
     # Sorts the regions alphabetically and finds the previous and next regions'
     # names in a rolling window.
-    return Regions.CALCULATE(
+    return regions.CALCULATE(
         two_preceding=PREV(name, n=2, by=name.ASC()),
         one_preceding=PREV(name, by=name.ASC()),
         current=name,
@@ -329,11 +329,11 @@ def prev_next_regions():
 def avg_order_diff_per_customer():
     # Finds the 5 customers with the highest average difference in days between
     # orders made.
-    prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), per="Customers")
+    prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), per="customers")
     order_info = orders.CALCULATE(
         day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
-    selected_customers = Customers.WHERE(HAS(order_info))
+    selected_customers = customers.WHERE(HAS(order_info))
     return selected_customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
     )
@@ -342,9 +342,9 @@ def avg_order_diff_per_customer():
 def yoy_change_in_num_orders():
     # For every year, counts the number of orders made in that year and the
     # percentage change from the previous year.
-    years = Orders.CALCULATE(year=YEAR(order_date)).PARTITION(name="years", by=year)
-    current_year_orders = COUNT(Orders)
-    prev_year_orders = PREV(COUNT(Orders), by=year.ASC())
+    years = orders.CALCULATE(year=YEAR(order_date)).PARTITION(name="years", by=year)
+    current_year_orders = COUNT(orders)
+    prev_year_orders = PREV(COUNT(orders), by=year.ASC())
     return years.CALCULATE(
         year,
         current_year_orders=current_year_orders,
@@ -357,7 +357,7 @@ def first_order_in_year():
     # (breaking ties by order key).
     previous_order_date = PREV(order_date, by=(order_date.ASC(), key.ASC()))
     return (
-        Orders.WHERE(
+        orders.WHERE(
             ABSENT(previous_order_date)
             | (YEAR(previous_order_date) != YEAR(order_date))
         )
@@ -373,12 +373,12 @@ def customer_largest_order_deltas():
     # largest such difference. Only consider customers with orders.
     line_revenue = extended_price * (1 - discount)
     order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
-    previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), per="Customers")
+    previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), per="customers")
     orders_info = orders.WHERE(PRESENT(previous_order_revenue)).CALCULATE(
         revenue_delta=order_revenue - previous_order_revenue
     )
     return (
-        Customers.CALCULATE(
+        customers.CALCULATE(
             max_diff=MAX(orders_info.revenue_delta),
             min_diff=MIN(orders_info.revenue_delta),
         )
@@ -395,12 +395,12 @@ def suppliers_bal_diffs():
     # Finds the 5 suppliers with the largest difference in account balance from
     # the supplier with the next smallest account balance in the same region.
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .nations.suppliers.CALCULATE(
             name,
             region_name,
             acctbal_delta=account_balance
-            - PREV(account_balance, by=account_balance.ASC(), per="Regions"),
+            - PREV(account_balance, by=account_balance.ASC(), per="regions"),
         )
         .TOP_K(5, by=acctbal_delta.DESC())
     )
@@ -411,12 +411,12 @@ def month_year_sliding_windows():
     # that month was more than the preceding/following month, and the amount
     # spent in that year was more than the following year.
     ym_groups = (
-        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
+        orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
         .PARTITION(
             name="months",
             by=(year, month),
         )
-        .CALCULATE(month_total_spent=SUM(Orders.total_price))
+        .CALCULATE(month_total_spent=SUM(orders.total_price))
     )
     y_groups = (
         ym_groups.PARTITION(name="years", by=year)
@@ -447,9 +447,9 @@ def month_year_sliding_windows():
 def avg_gap_prev_urgent_same_clerk():
     # Finds the average gap in days between each urgent order and the previous
     # urgent order handled by the same clerk
-    urgent_orders = Orders.WHERE(order_priority == "1-URGENT")
+    urgent_orders = orders.WHERE(order_priority == "1-URGENT")
     clerk_groups = urgent_orders.PARTITION(name="clerks", by=clerk)
-    order_info = clerk_groups.Orders.CALCULATE(
+    order_info = clerk_groups.orders.CALCULATE(
         delta=DATEDIFF(
             "days", PREV(order_date, by=order_date.ASC(), per="clerks"), order_date
         )
@@ -461,10 +461,10 @@ def customer_most_recent_orders():
     # Finds the 3 customers with the highest total value from their 5 most
     # recent urgent orders, breaking ties in favor of the lower order key.
     most_recent_orders = orders.BEST(
-        per="Customers", by=(order_date.DESC(), key.ASC()), n_best=5
+        per="customers", by=(order_date.DESC(), key.ASC()), n_best=5
     )
     return (
-        Customers.WHERE(HAS(most_recent_orders))
+        customers.WHERE(HAS(most_recent_orders))
         .CALCULATE(name, total_recent_value=SUM(most_recent_orders.total_price))
         .TOP_K(3, by=total_recent_value.DESC())
     )
@@ -475,25 +475,27 @@ def richest_customer_per_region():
     # every region, breaking ties by the customer's name alphabetically, and
     # including the name of the customer's nation.
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .nations.CALCULATE(nation_name=name)
         .customers.BEST(
-            per="Regions",
-            by=(acctbal.DESC(), name.ASC()),
+            per="regions",
+            by=(account_balance.DESC(), name.ASC()),
         )
-        .CALCULATE(region_name, nation_name, customer_name=name, balance=acctbal)
+        .CALCULATE(
+            region_name, nation_name, customer_name=name, balance=account_balance
+        )
     )
 
 
 def n_orders_first_day():
     # Counts how many orders were made on the first recorded day of orders.
-    first_day_orders = Orders.BEST(by=order_date.ASC(), allow_ties=True)
+    first_day_orders = orders.BEST(by=order_date.ASC(), allow_ties=True)
     return TPCH.CALCULATE(n_orders=COUNT(first_day_orders))
 
 
 def wealthiest_supplier():
     # Identifies the richest supplier globally, breaking ties alphabetically.
-    return Suppliers.BEST(by=(account_balance.DESC(), name.ASC())).CALCULATE(
+    return suppliers.BEST(by=(account_balance.DESC(), name.ASC())).CALCULATE(
         name, account_balance
     )
 
@@ -503,7 +505,7 @@ def supplier_best_part():
     # the largest quantity of in 1994, ignoring shipments that were taxed. List
     # out the supplier name, part name, quantity and number of such shipments
     # for the 3 suppliers with the highest such quantities, breaking ties alphabetically.
-    selected_suppliers = Suppliers.WHERE(nation.name == "FRANCE")
+    selected_suppliers = suppliers.WHERE(nation.name == "FRANCE")
     selected_lines = lines.WHERE((YEAR(ship_date) == 1994) & (tax == 0))
     best_part_supplied = (
         supply_records.WHERE(HAS(selected_lines))
@@ -513,7 +515,7 @@ def supplier_best_part():
             n_shipments=COUNT(selected_lines),
         )
         .BEST(
-            per="Suppliers",
+            per="suppliers",
             by=quantity.DESC(),
         )
     )
@@ -533,7 +535,7 @@ def nation_window_aggs():
     # Calculating multiple global windowed aggregations for each nation, only
     # considering nations whose names do not start with a vowel.
     return (
-        Nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
         .CALCULATE(
             nation_name=name,
             key_sum=RELSUM(key),
@@ -549,9 +551,9 @@ def region_orders_from_nations_richest():
     # Find the orders from the wealthiest customer in each nation, breaking
     # ties alphabetically by customer name.
     nations_richest_customers = nations.customers.BEST(
-        per="nations", by=(acctbal.DESC(), name.ASC())
+        per="nations", by=(account_balance.DESC(), name.ASC())
     ).orders
-    return Regions.CALCULATE(
+    return regions.CALCULATE(
         region_name=name, n_orders=COUNT(nations_richest_customers)
     ).ORDER_BY(region_name.ASC())
 
@@ -562,12 +564,12 @@ def regional_first_order_best_line_part():
     # with the largest quantity shipped, breaking ties by line number within
     # the order.
     first_order = nations.customers.orders.BEST(
-        per="Regions", by=(order_date.ASC(), key.ASC())
+        per="regions", by=(order_date.ASC(), key.ASC())
     )
     largest_quantity_line = first_order.lines.BEST(
-        per="Regions", by=(quantity.DESC(), line_number.ASC())
+        per="regions", by=(quantity.DESC(), line_number.ASC())
     )
-    return Regions.CALCULATE(
+    return regions.CALCULATE(
         region_name=name, part_name=largest_quantity_line.part.name
     ).ORDER_BY(region_name.ASC())
 
@@ -582,7 +584,7 @@ def orders_versus_first_orders():
         .CALCULATE(customer_name=name)
         .orders.BEST(per="customer", by=(order_date.ASC(), key.ASC()))
     )
-    return Orders.CALCULATE(
+    return orders.CALCULATE(
         customer_name=first_order_from_cust.customer_name,
         order_key=key,
         days_since_first_order=DATEDIFF(
@@ -595,15 +597,15 @@ def region_nation_window_aggs():
     # Calculating multiple windowed aggregations for each nation, per-region,
     # only considering nations whose names do not start with a vowel.
     return (
-        Regions.nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
+        regions.nations.WHERE(~ISIN(name[:1], ("A", "E", "I", "O", "U")))
         .CALCULATE(
             nation_name=name,
-            key_sum=RELSUM(key, per="Regions"),
-            key_avg=RELAVG(key, per="Regions"),
+            key_sum=RELSUM(key, per="regions"),
+            key_avg=RELAVG(key, per="regions"),
             n_short_comment=RELCOUNT(
-                KEEP_IF(comment, LENGTH(comment) < 75), per="Regions"
+                KEEP_IF(comment, LENGTH(comment) < 75), per="regions"
             ),
-            n_nations=RELSIZE(per="Regions"),
+            n_nations=RELSIZE(per="regions"),
         )
         .ORDER_BY(region_key.ASC(), nation_name.ASC())
     )
@@ -619,12 +621,12 @@ def cumulative_stock_analysis():
     #   transactions so far.
     # - What is the number of buy transactions made within the day so far.
     return (
-        Transactions.WHERE(
+        transactions.WHERE(
             (YEAR(date_time) == 2023) & (MONTH(date_time) == 4) & (status == "success")
         )
         .CALCULATE(txn_day=DATETIME(date_time, "start of day"))
         .PARTITION(name="days", by=txn_day)
-        .Transactions.CALCULATE(
+        .transactions.CALCULATE(
             date_time,
             txn_within_day=RELSIZE(by=date_time.ASC(), cumulative=True, per="days"),
             n_buys_within_day=RELCOUNT(
@@ -663,10 +665,10 @@ def time_threshold_reached():
     # represents at least 50% of all shares bought/sold that day so far
     # having been completed.
     return (
-        Transactions.WHERE((YEAR(date_time) == 2023))
+        transactions.WHERE((YEAR(date_time) == 2023))
         .CALCULATE(txn_day=DATETIME(date_time, "start of day"))
         .PARTITION(name="days", by=txn_day)
-        .Transactions.CALCULATE(
+        .transactions.CALCULATE(
             pct_of_day=(
                 100.0 * RELSUM(shares, by=date_time.ASC(), cumulative=True, per="days")
             )
@@ -680,59 +682,59 @@ def time_threshold_reached():
 
 
 def window_sliding_frame_relsize():
-    return Customers.transactions_made.CALCULATE(
+    return customers.transactions_made.CALCULATE(
         transaction_id,
         w1=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(-4, 0)),
         w2=RELSIZE(
-            by=(date_time.ASC(), transaction_id.ASC()), frame=(-4, 0), per="Customers"
+            by=(date_time.ASC(), transaction_id.ASC()), frame=(-4, 0), per="customers"
         ),
         w3=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(0, None)),
         w4=RELSIZE(
-            by=(date_time.ASC(), transaction_id.ASC()), frame=(0, None), per="Customers"
+            by=(date_time.ASC(), transaction_id.ASC()), frame=(0, None), per="customers"
         ),
         w5=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(None, -1)),
         w6=RELSIZE(
             by=(date_time.ASC(), transaction_id.ASC()),
             frame=(None, -1),
-            per="Customers",
+            per="customers",
         ),
         w7=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(-3, 5)),
         w8=RELSIZE(
-            by=(date_time.ASC(), transaction_id.ASC()), frame=(-3, 5), per="Customers"
+            by=(date_time.ASC(), transaction_id.ASC()), frame=(-3, 5), per="customers"
         ),
     ).TOP_K(8, by=date_time.ASC())
 
 
 def window_sliding_frame_relsum():
-    return Customers.transactions_made.CALCULATE(
+    return customers.transactions_made.CALCULATE(
         transaction_id,
         w1=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(0, 4)),
         w2=RELSUM(
             shares,
             by=(date_time.ASC(), transaction_id.ASC()),
             frame=(0, 4),
-            per="Customers",
+            per="customers",
         ),
         w3=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(0, None)),
         w4=RELSUM(
             shares,
             by=(date_time.ASC(), transaction_id.ASC()),
             frame=(0, None),
-            per="Customers",
+            per="customers",
         ),
         w5=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(None, 1)),
         w6=RELSUM(
             shares,
             by=(date_time.ASC(), transaction_id.ASC()),
             frame=(None, 1),
-            per="Customers",
+            per="customers",
         ),
         w7=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(-5, -1)),
         w8=RELSUM(
             shares,
             by=(date_time.ASC(), transaction_id.ASC()),
             frame=(-5, -1),
-            per="Customers",
+            per="customers",
         ),
     ).TOP_K(8, by=date_time.ASC())
 
@@ -755,14 +757,14 @@ def supplier_pct_national_qty():
     )
     supp_qty = SUM(selected_lines.quantity)
     return (
-        Nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
+        nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
         .CALCULATE(nation_name=name)
         .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
             nation_name=name,
             supplier_quantity=supp_qty,
-            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="Nations"),
+            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
         )
         .TOP_K(5, by=national_qty_pct.DESC())
     )
@@ -772,10 +774,10 @@ def highest_priority_per_year():
     # For each year, identify the priority with the highest percentage of
     # made in that year with that priority, listing the year, priority, and
     # percentage. Sort the results by year.
-    order_info = Orders.CALCULATE(order_year=YEAR(order_date))
+    order_info = orders.CALCULATE(order_year=YEAR(order_date))
     yp_groups = order_info.PARTITION(
         name="years_priorities", by=(order_priority, order_year)
-    ).CALCULATE(n_orders=COUNT(Orders))
+    ).CALCULATE(n_orders=COUNT(orders))
     year_groups = yp_groups.PARTITION(name="years", by=order_year)
     return (
         year_groups.years_priorities.CALCULATE(
@@ -793,16 +795,16 @@ def nation_best_order():
     # customer in that nation in 1998, listing the nation name, customer
     # name, order key, the order's price, and percentage of the price of
     # all orders made in 1998. Order the nations alphabetically.
-    selected_nations = Nations.WHERE(region.name == "ASIA")
+    selected_nations = nations.WHERE(region.name == "ASIA")
     best_order = (
         customers.CALCULATE(customer_name=name)
         .orders.WHERE(YEAR(order_date) == 1998)
         .CALCULATE(
             order_value=total_price,
-            value_percentage=100.0 * total_price / RELSUM(total_price, per="Nations"),
+            value_percentage=100.0 * total_price / RELSUM(total_price, per="nations"),
             order_key=key,
         )
-        .BEST(by=order_value.DESC(), per="Nations")
+        .BEST(by=order_value.DESC(), per="nations")
     )
     return (
         selected_nations.WHERE(HAS(best_order))
@@ -822,18 +824,18 @@ def nation_acctbal_breakdown():
     # versus non-negative account balances, the median account balance for each
     # as well as the median account balance of all customers in the nation.
     customer_info = customers.CALCULATE(
-        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
-        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+        negative_acctbal=KEEP_IF(account_balance, account_balance < 0),
+        non_negative_acctbal=KEEP_IF(account_balance, account_balance >= 0),
     )
     return (
-        Nations.WHERE(region.name == "AMERICA")
+        nations.WHERE(region.name == "AMERICA")
         .CALCULATE(
             nation_name=name,
             n_red_acctbal=COUNT(customer_info.negative_acctbal),
             n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
             median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
             median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
-            median_overall_acctbal=MEDIAN(customer_info.acctbal),
+            median_overall_acctbal=MEDIAN(customer_info.account_balance),
         )
         .ORDER_BY(nation_name.ASC())
     )
@@ -844,18 +846,18 @@ def region_acctbal_breakdown():
     # non-negative account balances, the median account balance for each
     # as well as the median account balance of all customers in the nation.
     customer_info = nations.customers.CALCULATE(
-        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
-        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+        negative_acctbal=KEEP_IF(account_balance, account_balance < 0),
+        non_negative_acctbal=KEEP_IF(account_balance, account_balance >= 0),
     )
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .CALCULATE(
             region_name,
             n_red_acctbal=COUNT(customer_info.negative_acctbal),
             n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
             median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
             median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
-            median_overall_acctbal=MEDIAN(customer_info.acctbal),
+            median_overall_acctbal=MEDIAN(customer_info.account_balance),
         )
         .ORDER_BY(region_name.ASC())
     )
@@ -865,22 +867,22 @@ def global_acctbal_breakdown():
     # Count the number of customers with negative versus non-negative account
     # balances, the median account balance for each as well as the median
     # account balance of all customers in the nation.
-    customer_info = Customers.CALCULATE(
-        negative_acctbal=KEEP_IF(acctbal, acctbal < 0),
-        non_negative_acctbal=KEEP_IF(acctbal, acctbal >= 0),
+    customer_info = customers.CALCULATE(
+        negative_acctbal=KEEP_IF(account_balance, account_balance < 0),
+        non_negative_acctbal=KEEP_IF(account_balance, account_balance >= 0),
     )
     return TPCH.CALCULATE(
         n_red_acctbal=COUNT(customer_info.negative_acctbal),
         n_black_acctbal=COUNT(customer_info.non_negative_acctbal),
         median_red_acctbal=MEDIAN(customer_info.negative_acctbal),
         median_black_acctbal=MEDIAN(customer_info.non_negative_acctbal),
-        median_overall_acctbal=MEDIAN(customer_info.acctbal),
+        median_overall_acctbal=MEDIAN(customer_info.account_balance),
     )
 
 
 def top_customers_by_orders():
     # Finds the keys of the 5 customers with the most orders.
-    return Customers.CALCULATE(
+    return customers.CALCULATE(
         customer_key=key,
         n_orders=COUNT(orders),
     ).TOP_K(5, by=(COUNT(orders).DESC(), customer_key.ASC()))
@@ -895,17 +897,17 @@ def function_sampler():
     # ABSENT,
     # MONOTONIC
     return (
-        Regions.CALCULATE(region_name=name)
+        regions.CALCULATE(region_name=name)
         .nations.CALCULATE(nation_name=name)
         .customers.CALCULATE(
             a=JOIN_STRINGS("-", region_name, nation_name, name[16:]),
-            b=ROUND(acctbal, 1),
+            b=ROUND(account_balance, 1),
             c=KEEP_IF(name, phone[:1] == "3"),
             d=PRESENT(KEEP_IF(name, phone[1:2] == "1")),
             e=ABSENT(KEEP_IF(name, phone[14:] == "7")),
-            f=ROUND(acctbal),
+            f=ROUND(account_balance),
         )
-        .WHERE(MONOTONIC(0.0, acctbal, 100.0))
+        .WHERE(MONOTONIC(0.0, account_balance, 100.0))
         .TOP_K(10, by=address.ASC())
     )
 
@@ -921,7 +923,7 @@ def datetime_current():
 
 
 def datetime_relative():
-    selected_orders = Orders.TOP_K(
+    selected_orders = orders.TOP_K(
         10, by=(customer_key.ASC(), order_date.ASC())
     ).ORDER_BY(order_date.ASC())
     return selected_orders.CALCULATE(
@@ -946,7 +948,7 @@ def datetime_sampler():
     # Near-exhaustive edge cases coverage testing for DATETIME strings. The
     # terms were generated via random combination selection of various ways
     # of augmenting the base/modifier terms.
-    return Orders.CALCULATE(
+    return orders.CALCULATE(
         DATETIME("2025-07-04 12:58:45"),
         DATETIME("2024-12-31 11:59:00"),
         DATETIME("2025-01-01"),
@@ -1172,17 +1174,19 @@ def loop_generated_terms():
     terms = {"name": name}
     for i in range(3):
         terms[f"interval_{i}"] = COUNT(
-            customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))
+            customers.WHERE(MONOTONIC(i * 1000, account_balance, (i + 1) * 1000))
         )
-    return Nations.CALCULATE(**terms)
+    return nations.CALCULATE(**terms)
 
 
 def function_defined_terms():
     # Using a regular function to generate PyDough calculate terms
     def interval_n(n):
-        return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
+        return COUNT(
+            customers.WHERE(MONOTONIC(n * 1000, account_balance, (n + 1) * 1000))
+        )
 
-    return Nations.CALCULATE(
+    return nations.CALCULATE(
         name,
         interval_7=interval_n(7),
         interval_4=interval_n(4),
@@ -1194,9 +1198,11 @@ def function_defined_terms_with_duplicate_names():
     # Using a regular function to generate PyDough calculate terms with the
     # function argument same as collection's fields.
     def interval_n(n, name="test"):
-        return COUNT(customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000)))
+        return COUNT(
+            customers.WHERE(MONOTONIC(n * 1000, account_balance, (n + 1) * 1000))
+        )
 
-    return Nations.CALCULATE(
+    return nations.CALCULATE(
         name,
         redefined_name=name,
         interval_7=interval_n(7),
@@ -1208,10 +1214,10 @@ def function_defined_terms_with_duplicate_names():
 def lambda_defined_terms():
     # Using a lambda function to generate PyDough calculate terms
     interval_n = lambda n: COUNT(
-        customers.WHERE(MONOTONIC(n * 1000, acctbal, (n + 1) * 1000))
+        customers.WHERE(MONOTONIC(n * 1000, account_balance, (n + 1) * 1000))
     )
 
-    return Nations.CALCULATE(
+    return nations.CALCULATE(
         name,
         interval_7=interval_n(7),
         interval_4=interval_n(4),
@@ -1225,12 +1231,12 @@ def dict_comp_terms():
     terms.update(
         {
             f"interval_{i}": COUNT(
-                customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))
+                customers.WHERE(MONOTONIC(i * 1000, account_balance, (i + 1) * 1000))
             )
             for i in range(3)
         }
     )
-    return Nations.CALCULATE(**terms)
+    return nations.CALCULATE(**terms)
 
 
 def list_comp_terms():
@@ -1238,11 +1244,11 @@ def list_comp_terms():
     terms = [name]
     terms.extend(
         [
-            COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+            COUNT(customers.WHERE(MONOTONIC(i * 1000, account_balance, (i + 1) * 1000)))
             for i in range(3)
         ]
     )
-    return Nations.CALCULATE(*terms)
+    return nations.CALCULATE(*terms)
 
 
 def set_comp_terms():
@@ -1251,13 +1257,17 @@ def set_comp_terms():
     terms.extend(
         set(
             {
-                COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000)))
+                COUNT(
+                    customers.WHERE(
+                        MONOTONIC(i * 1000, account_balance, (i + 1) * 1000)
+                    )
+                )
                 for i in range(3)
             }
         )
     )
     sorted_terms = sorted(terms, key=lambda x: repr(x))
-    return Nations.CALCULATE(*sorted_terms)
+    return nations.CALCULATE(*sorted_terms)
 
 
 def generator_comp_terms():
@@ -1266,18 +1276,20 @@ def generator_comp_terms():
     for term, value in (
         (
             f"interval_{i}",
-            COUNT(customers.WHERE(MONOTONIC(i * 1000, acctbal, (i + 1) * 1000))),
+            COUNT(
+                customers.WHERE(MONOTONIC(i * 1000, account_balance, (i + 1) * 1000))
+            ),
         )
         for i in range(3)
     ):
         terms[term] = value
-    return Nations.CALCULATE(**terms)
+    return nations.CALCULATE(**terms)
 
 
 def partition_as_child():
     # Count how many part sizes have an above-average number of parts of that
     # size.
-    size_groups = Parts.PARTITION(name="sizes", by=size).CALCULATE(n_parts=COUNT(Parts))
+    size_groups = parts.PARTITION(name="sizes", by=size).CALCULATE(n_parts=COUNT(parts))
     return TPCH.CALCULATE(avg_n_parts=AVG(size_groups.n_parts)).CALCULATE(
         n_parts=COUNT(size_groups.WHERE(n_parts > avg_n_parts))
     )
@@ -1286,9 +1298,9 @@ def partition_as_child():
 def agg_partition():
     # Doing a global aggregation on the output of a partition aggregation
     yearly_data = (
-        Orders.CALCULATE(year=YEAR(order_date))
+        orders.CALCULATE(year=YEAR(order_date))
         .PARTITION(name="years", by=year)
-        .CALCULATE(n_orders=COUNT(Orders))
+        .CALCULATE(n_orders=COUNT(orders))
     )
     return TPCH.CALCULATE(best_year=MAX(yearly_data.n_orders))
 
@@ -1296,29 +1308,29 @@ def agg_partition():
 def multi_partition_access_1():
     # A use of multiple PARTITION and stepping into partition children that is
     # a no-op.
-    data = Tickers.CALCULATE(symbol).TOP_K(5, by=symbol.ASC())
+    data = tickers.CALCULATE(symbol).TOP_K(5, by=symbol.ASC())
     grps_a = data.PARTITION(name="cet", by=(currency, exchange, ticker_type))
     grps_b = grps_a.PARTITION(name="ce", by=(currency, exchange))
     grps_c = grps_b.PARTITION(name="e", by=exchange)
-    return grps_c.ce.cet.Tickers
+    return grps_c.ce.cet.tickers
 
 
 def multi_partition_access_2():
     # Identify transactions that are below the average number of shares for
     # transactions of the same combinations of (customer, stock, type), or
     # the same combination of (customer, stock), or the same customer.
-    cust_tick_typ_groups = Transactions.PARTITION(
+    cust_tick_typ_groups = transactions.PARTITION(
         name="ctt_groups",
         by=(customer_id, ticker_id, transaction_type),
-    ).CALCULATE(cus_tick_typ_avg_shares=AVG(Transactions.shares))
+    ).CALCULATE(cus_tick_typ_avg_shares=AVG(transactions.shares))
     cust_tick_groups = cust_tick_typ_groups.PARTITION(
         name="ct_groups", by=(customer_id, ticker_id)
-    ).CALCULATE(cust_tick_avg_shares=AVG(ctt_groups.Transactions.shares))
+    ).CALCULATE(cust_tick_avg_shares=AVG(ctt_groups.transactions.shares))
     cus_groups = cust_tick_groups.PARTITION(name="c_groups", by=customer_id).CALCULATE(
-        cust_avg_shares=AVG(ct_groups.ctt_groups.Transactions.shares)
+        cust_avg_shares=AVG(ct_groups.ctt_groups.transactions.shares)
     )
     return (
-        cus_groups.ct_groups.ctt_groups.Transactions.WHERE(
+        cus_groups.ct_groups.ctt_groups.transactions.WHERE(
             (shares < cus_tick_typ_avg_shares)
             & (shares < cust_tick_avg_shares)
             & (shares < cust_avg_shares)
@@ -1339,15 +1351,15 @@ def multi_partition_access_2():
 def multi_partition_access_3():
     # Find all daily price updates whose closing price was the high mark for
     # that ticker, but not for tickers of that type.
-    data = Tickers.CALCULATE(symbol, ticker_type).historical_prices
+    data = tickers.CALCULATE(symbol, ticker_type).daily_prices
     ticker_groups = data.PARTITION(name="tickers", by=ticker_id).CALCULATE(
-        ticker_high_price=MAX(historical_prices.close)
+        ticker_high_price=MAX(daily_prices.close)
     )
-    type_groups = ticker_groups.historical_prices.PARTITION(
+    type_groups = ticker_groups.daily_prices.PARTITION(
         name="types", by=ticker_type
-    ).CALCULATE(type_high_price=MAX(historical_prices.close))
+    ).CALCULATE(type_high_price=MAX(daily_prices.close))
     return (
-        type_groups.historical_prices.WHERE(
+        type_groups.daily_prices.WHERE(
             (close == ticker_high_price) & (close < type_high_price)
         )
         .CALCULATE(symbol, close)
@@ -1358,14 +1370,14 @@ def multi_partition_access_3():
 def multi_partition_access_4():
     # Find all transactions that were the largest for a customer of that ticker
     # (by number of shares) but not the largest for that customer overall.
-    cust_ticker_groups = Transactions.PARTITION(
+    cust_ticker_groups = transactions.PARTITION(
         name="groups", by=(customer_id, ticker_id)
-    ).CALCULATE(cust_ticker_max_shares=MAX(Transactions.shares))
+    ).CALCULATE(cust_ticker_max_shares=MAX(transactions.shares))
     cust_groups = cust_ticker_groups.PARTITION(
         name="cust_groups", by=customer_id
     ).CALCULATE(cust_max_shares=MAX(groups.cust_ticker_max_shares))
     return (
-        cust_groups.groups.Transactions.WHERE(
+        cust_groups.groups.transactions.WHERE(
             (shares >= cust_ticker_max_shares) & (shares < cust_max_shares)
         )
         .CALCULATE(transaction_id)
@@ -1379,9 +1391,9 @@ def multi_partition_access_5():
     # that type were from that ticker. List the transaction ID, the number of
     # transactions of that ticker/type, ticker, and type. Sort by the number of
     # transactions of that ticker/type, breaking ties by transaction ID.
-    ticker_type_groups = Transactions.PARTITION(
+    ticker_type_groups = transactions.PARTITION(
         name="groups", by=(ticker_id, transaction_type)
-    ).CALCULATE(n_ticker_type_trans=COUNT(Transactions))
+    ).CALCULATE(n_ticker_type_trans=COUNT(transactions))
     ticker_groups = ticker_type_groups.PARTITION(
         name="tickers", by=ticker_id
     ).CALCULATE(n_ticker_trans=SUM(groups.n_ticker_type_trans))
@@ -1389,7 +1401,7 @@ def multi_partition_access_5():
         name="types", by=transaction_type
     ).CALCULATE(n_type_trans=SUM(groups.n_ticker_type_trans))
     return (
-        type_groups.groups.Transactions.CALCULATE(
+        type_groups.groups.transactions.CALCULATE(
             transaction_id,
             n_ticker_type_trans,
             n_ticker_trans,
@@ -1408,24 +1420,24 @@ def multi_partition_access_6():
     # that ticker, or the only transaction of that type for that customer,
     # but not the only transaction for that customer, type, or ticker. List
     # the transaction IDs in ascending order.
-    ticker_type_groups = Transactions.PARTITION(
+    ticker_type_groups = transactions.PARTITION(
         name="groups", by=(ticker_id, transaction_type)
-    ).CALCULATE(n_ticker_type_trans=COUNT(Transactions))
+    ).CALCULATE(n_ticker_type_trans=COUNT(transactions))
     ticker_groups = ticker_type_groups.PARTITION(name="groups", by=ticker_id).CALCULATE(
         n_ticker_trans=SUM(groups.n_ticker_type_trans)
     )
     type_groups = ticker_groups.groups.PARTITION(
         name="groups", by=transaction_type
     ).CALCULATE(n_type_trans=SUM(groups.n_ticker_type_trans))
-    cust_type_groups = type_groups.groups.Transactions.PARTITION(
+    cust_type_groups = type_groups.groups.transactions.PARTITION(
         name="groups",
         by=(customer_id, transaction_type),
-    ).CALCULATE(n_cust_type_trans=COUNT(Transactions))
+    ).CALCULATE(n_cust_type_trans=COUNT(transactions))
     cust_groups = cust_type_groups.PARTITION(name="groups", by=customer_id).CALCULATE(
         n_cust_trans=SUM(groups.n_cust_type_trans)
     )
     return (
-        cust_groups.groups.Transactions.CALCULATE(transaction_id)
+        cust_groups.groups.transactions.CALCULATE(transaction_id)
         .WHERE(
             ((n_ticker_type_trans == 1) | (n_cust_type_trans == 1))
             & (n_cust_trans > 1)
@@ -1439,12 +1451,12 @@ def multi_partition_access_6():
 def double_partition():
     # Doing a partition aggregation on the output of a partition aggregation
     year_month_data = (
-        Orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
+        orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
         .PARTITION(
             name="months",
             by=(year, month),
         )
-        .CALCULATE(n_orders=COUNT(Orders))
+        .CALCULATE(n_orders=COUNT(orders))
     )
     return year_month_data.PARTITION(
         name="years",
@@ -1460,7 +1472,7 @@ def triple_partition():
     # customer region. Only considers lineitems from June of 1992 where the
     # container is small.
     line_info = (
-        Parts.CALCULATE(part_type)
+        parts.CALCULATE(part_type)
         .WHERE(STARTSWITH(container, "SM"))
         .lines.WHERE((MONTH(ship_date) == 6) & (YEAR(ship_date) == 1992))
         .CALCULATE(supp_region=supplier.nation.region.name)
@@ -1490,7 +1502,7 @@ def hour_minute_day():
     ordered by transaction ID in ascending order.
     """
     return (
-        Transactions.CALCULATE(
+        transactions.CALCULATE(
             transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
         )
         .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
@@ -1499,7 +1511,7 @@ def hour_minute_day():
 
 
 def exponentiation():
-    return DailyPrices.CALCULATE(
+    return daily_prices.CALCULATE(
         low_square=low**2,
         low_sqrt=SQRT(low),
         low_cbrt=POWER(low, 1 / 3),
@@ -1535,7 +1547,7 @@ def unpacking_in_iterable():
     terms = {}
     for i, j in zip(range(5), range(1992, 1997)):
         terms[f"c{i}"] = COUNT(orders.WHERE(YEAR(order_date) == j))
-    return Nations.CALCULATE(**terms)
+    return nations.CALCULATE(**terms)
 
 
 def with_import_statement():
@@ -1582,11 +1594,11 @@ def annotated_assignment():
     direction1 = "SOUTH "
     specific_region: tuple[str, str] = "WEST", "AMERICA"
     chosen_region: str = direction1 + " ".join(specific_region)
-    return Nations.WHERE(region.name == chosen_region)
+    return nations.WHERE(region.name == chosen_region)
 
 
 def abs_round_magic_method():
-    return DailyPrices.CALCULATE(
+    return daily_prices.CALCULATE(
         abs_low=abs(low), round_low=round(low, 2), round_zero=round(low)
     )
 
@@ -1594,7 +1606,7 @@ def abs_round_magic_method():
 def years_months_days_hours_datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     return (
-        Transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1620,7 +1632,7 @@ def years_months_days_hours_datediff():
 def minutes_seconds_datediff():
     y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
     return (
-        Transactions.WHERE(YEAR(date_time) <= 2024)
+        transactions.WHERE(YEAR(date_time) <= 2024)
         .CALCULATE(
             x=date_time,
             y=y_datetime,
@@ -1671,7 +1683,7 @@ def simple_week_sampler():
 
 
 def transaction_week_sampler():
-    return Transactions.WHERE(
+    return transactions.WHERE(
         (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
     ).CALCULATE(
         date_time,
@@ -1682,7 +1694,7 @@ def transaction_week_sampler():
 
 
 def week_offset():
-    return Transactions.WHERE(
+    return transactions.WHERE(
         (YEAR(date_time) < 2025) & (DAY(date_time) > 1)
     ).CALCULATE(
         date_time,
@@ -1701,7 +1713,7 @@ def datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     y_datetime = datetime.datetime(2023, 4, 3, 13, 16, 30)
     return (
-        Transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1718,7 +1730,7 @@ def datediff():
 
 
 def padding_functions():
-    return Customers.CALCULATE(
+    return customers.CALCULATE(
         original_name=name,
         ref_rpad=RPAD("Cust0001", 30, "*"),
         ref_lpad=LPAD("Cust0001", 30, "*"),
@@ -1734,7 +1746,7 @@ def padding_functions():
 
 
 def step_slicing():
-    return Customers.CALCULATE(
+    return customers.CALCULATE(
         name,
         neg_none_step=name[-2::1],
         pos_none_step=name[3::1],
@@ -1784,7 +1796,7 @@ def step_slicing():
 
 def sign():
     return (
-        DailyPrices.CALCULATE(
+        daily_prices.CALCULATE(
             high,
             high_neg=-1 * high,
             high_zero=0 * high,
@@ -1802,7 +1814,7 @@ def sign():
 
 
 def find():
-    return Customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
         name,
         idx_Alex=FIND(name, "Alex"),
         idx_Rodriguez=FIND(name, "Rodriguez"),
@@ -1816,7 +1828,7 @@ def find():
 
 def strip():
     return (
-        Customers.WHERE(name == "Alex Rodriguez")
+        customers.WHERE(name == "Alex Rodriguez")
         .CALCULATE(
             name,
             alt_name1="  Alex Rodriguez  ",
@@ -1879,12 +1891,12 @@ def replace():
 def singular1():
     # Singular in CALCULATE & WHERE
     nation_4 = nations.WHERE(key == 4).SINGULAR()
-    return Regions.CALCULATE(name, nation_4_name=nation_4.name)
+    return regions.CALCULATE(name, nation_4_name=nation_4.name)
 
 
 def singular2():
     # Singular in CALCULATE & WHERE with multiple SINGULARs
-    return Nations.CALCULATE(
+    return nations.CALCULATE(
         name,
         okey=customers.WHERE(key == 1)
         .SINGULAR()
@@ -1899,10 +1911,10 @@ def singular3():
     # Finds the names of the first 5 customers alphabetically, and sorts them
     # by the date of the most expensive order they ever made.
     return (
-        Customers.TOP_K(5, by=name.ASC())
+        customers.TOP_K(5, by=name.ASC())
         .CALCULATE(name)
         .ORDER_BY(
-            orders.WHERE(RANKING(by=total_price.DESC(), per="Customers") == 1)
+            orders.WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
             .SINGULAR()
             .order_date.ASC(na_pos="last")
         )
@@ -1914,11 +1926,11 @@ def singular4():
     # Finds the names of the first 5 customers from nation #6
     # by the date of the most expensive high-priority order they ever made.
     return (
-        Customers.WHERE(nation_key == 6)
+        customers.WHERE(nation_key == 6)
         .TOP_K(
             5,
             by=orders.WHERE(order_priority == "1-URGENT")
-            .WHERE(RANKING(by=total_price.DESC(), per="Customers") == 1)
+            .WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
             .SINGULAR()
             .order_date.ASC(na_pos="last"),
         )
@@ -1932,12 +1944,12 @@ def singular5():
     # Find the 5 containers with the earliest such date, breaking ties
     # alphabetically. For the purpose of this question, only shipments made by
     # rail and for parts from Brand#13.
-    top_containers = Parts.WHERE(brand == "Brand#13").PARTITION(
+    top_containers = parts.WHERE(brand == "Brand#13").PARTITION(
         name="containers",
         by=container,
     )
     highest_price_line = (
-        Parts.lines.WHERE(ship_mode == "RAIL")
+        parts.lines.WHERE(ship_mode == "RAIL")
         .WHERE(
             RANKING(by=(extended_price.DESC(), ship_date.ASC()), per="containers") == 1
         )
@@ -1963,11 +1975,11 @@ def singular6():
     lq = (
         orders.WHERE(clerk == "Clerk#000000017")
         .lines.CALCULATE(receipt_date)
-        .WHERE(RANKING(by=(receipt_date.ASC(), revenue.DESC()), per="Customers") == 1)
+        .WHERE(RANKING(by=(receipt_date.ASC(), revenue.DESC()), per="customers") == 1)
         .SINGULAR()
         .supplier.nation.CALCULATE(nation_name=name)
     )
-    selected_customers = Customers.WHERE((nation_key == 4) & HAS(lq))
+    selected_customers = customers.WHERE((nation_key == 4) & HAS(lq))
     return selected_customers.CALCULATE(name, lq.receipt_date, lq.nation_name).TOP_K(
         5, by=(receipt_date.ASC(), name.ASC())
     )
@@ -1984,11 +1996,11 @@ def singular7():
             n_orders=COUNT(lines.WHERE(YEAR(ship_date) == 1994)),
             part_name=part.name,
         )
-        .WHERE(RANKING(by=(n_orders.DESC(), part_name.ASC()), per="Suppliers") == 1)
+        .WHERE(RANKING(by=(n_orders.DESC(), part_name.ASC()), per="suppliers") == 1)
         .SINGULAR()
     )
     return (
-        Suppliers.WHERE(nation_key == 20)
+        suppliers.WHERE(nation_key == 20)
         .CALCULATE(
             supplier_name=name,
             part_name=best_part.part_name,
@@ -2080,7 +2092,7 @@ def quarter_function_test():
 
 def order_quarter_test():
     return (
-        Orders.WHERE(YEAR(order_date) == 1995)
+        orders.WHERE(YEAR(order_date) == 1995)
         .TOP_K(1, by=order_date.ASC())
         .CALCULATE(
             order_date,
@@ -2189,7 +2201,7 @@ def part_reduced_size():
     # Include the part name, the reduced size, the retail price, the discount,
     # and the date in day-month-year, month/day, and AM/PM format.
     return (
-        Parts.CALCULATE(
+        parts.CALCULATE(
             reduced_size=FLOAT(size / 2.5),
             retail_price_int=INTEGER(retail_price),
             message=JOIN_STRINGS(
@@ -2249,9 +2261,9 @@ def simple_smallest_or_largest():
 def avg_acctbal_wo_debt():
     # For each region, what is the average account balance of all
     # customers in a hypothetical scenario where all debt was erased
-    return Regions.CALCULATE(
+    return regions.CALCULATE(
         region_name=name,
-        avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.acctbal, 0)),
+        avg_bal_without_debt_erasure=AVG(LARGEST(nations.customers.account_balance, 0)),
     )
 
 
@@ -2259,14 +2271,14 @@ def odate_and_rdate_avggap():
     # Average gap, in days, for shipments between when they were ordered
     # versus when they were expected to arrive (or when they actually arrived,
     # if they were early), for shipments done via rail
-    delay_info = Lineitems.WHERE(HAS(order) & (ship_mode == "RAIL")).CALCULATE(
+    delay_info = lines.WHERE(HAS(order) & (ship_mode == "RAIL")).CALCULATE(
         day_gap=DATEDIFF("days", order.order_date, SMALLEST(commit_date, receipt_date))
     )
     return TPCH.CALCULATE(avg_gap=AVG(delay_info.day_gap))
 
 
 def simple_var_std():
-    return Nations.WHERE(ISIN(name, ("ALGERIA", "ARGENTINA"))).CALCULATE(
+    return nations.WHERE(ISIN(name, ("ALGERIA", "ARGENTINA"))).CALCULATE(
         name,
         var=VAR(suppliers.account_balance),
         std=STD(suppliers.account_balance),
@@ -2278,10 +2290,10 @@ def simple_var_std():
 
 
 def simple_var_std_with_nulls():
-    first_customers = Customers.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(
-        key_0=KEEP_IF(acctbal, key > 3),
-        key_1=KEEP_IF(acctbal, key > 2),
-        key_2=KEEP_IF(acctbal, key > 1),
+    first_customers = customers.WHERE(ISIN(key, (1, 2, 3))).CALCULATE(
+        key_0=KEEP_IF(account_balance, key > 3),
+        key_1=KEEP_IF(account_balance, key > 2),
+        key_2=KEEP_IF(account_balance, key > 1),
     )
     return TPCH.CALCULATE(
         var_samp_0_nnull=VAR(first_customers.key_0, type="sample"),

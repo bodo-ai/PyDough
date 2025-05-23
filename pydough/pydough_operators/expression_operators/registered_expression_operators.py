@@ -96,7 +96,7 @@ from pydough.pydough_operators.type_inference import (
     RequireNumArgs,
     SelectArgumentType,
 )
-from pydough.types import BooleanType, DateType, Float64Type, Int64Type, StringType
+from pydough.types import BooleanType, DatetimeType, NumericType, StringType
 
 from .binary_operators import BinaryOperator, BinOp
 from .expression_function_operators import ExpressionFunctionOperator
@@ -123,7 +123,7 @@ DEFAULT_TO = ExpressionFunctionOperator(
     "DEFAULT_TO", False, AllowAny(), SelectArgumentType(0)
 )
 LENGTH = ExpressionFunctionOperator(
-    "LENGTH", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "LENGTH", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 LOWER = ExpressionFunctionOperator(
     "LOWER", False, RequireNumArgs(1), SelectArgumentType(0)
@@ -151,21 +151,23 @@ LIKE = ExpressionFunctionOperator(
 )
 SUM = ExpressionFunctionOperator("SUM", True, RequireNumArgs(1), SelectArgumentType(0))
 AVG = ExpressionFunctionOperator(
-    "AVG", True, RequireNumArgs(1), ConstantType(Float64Type())
+    "AVG", True, RequireNumArgs(1), ConstantType(NumericType())
 )
 MEDIAN = ExpressionFunctionOperator(
-    "MEDIAN", True, RequireNumArgs(1), ConstantType(Float64Type())
+    "MEDIAN", True, RequireNumArgs(1), ConstantType(NumericType())
 )
 POWER = ExpressionFunctionOperator(
-    "POWER", False, RequireNumArgs(2), ConstantType(Float64Type())
+    "POWER", False, RequireNumArgs(2), ConstantType(NumericType())
 )
 SQRT = ExpressionFunctionOperator(
-    "SQRT", False, RequireNumArgs(1), ConstantType(Float64Type())
+    "SQRT", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 SIGN = ExpressionFunctionOperator(
-    "SIGN", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "SIGN", False, RequireNumArgs(1), ConstantType(NumericType())
 )
-COUNT = ExpressionFunctionOperator("COUNT", True, AllowAny(), ConstantType(Int64Type()))
+COUNT = ExpressionFunctionOperator(
+    "COUNT", True, AllowAny(), ConstantType(NumericType())
+)
 HAS = ExpressionFunctionOperator(
     "HAS", True, RequireCollection(), ConstantType(BooleanType())
 )
@@ -173,7 +175,7 @@ HASNOT = ExpressionFunctionOperator(
     "HASNOT", True, RequireCollection(), ConstantType(BooleanType())
 )
 NDISTINCT = ExpressionFunctionOperator(
-    "NDISTINCT", True, AllowAny(), ConstantType(Int64Type())
+    "NDISTINCT", True, AllowAny(), ConstantType(NumericType())
 )
 ANYTHING = ExpressionFunctionOperator(
     "ANYTHING", True, RequireNumArgs(1), SelectArgumentType(0)
@@ -188,37 +190,37 @@ LARGEST = ExpressionFunctionOperator(
 )
 IFF = ExpressionFunctionOperator("IFF", False, RequireNumArgs(3), SelectArgumentType(1))
 DATETIME = ExpressionFunctionOperator(
-    "DATETIME", False, AllowAny(), ConstantType(DateType())
+    "DATETIME", False, AllowAny(), ConstantType(DatetimeType())
 )
 YEAR = ExpressionFunctionOperator(
-    "YEAR", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "YEAR", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 QUARTER = ExpressionFunctionOperator(
-    "QUARTER", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "QUARTER", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 MONTH = ExpressionFunctionOperator(
-    "MONTH", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "MONTH", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 DAY = ExpressionFunctionOperator(
-    "DAY", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "DAY", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 DAYOFWEEK = ExpressionFunctionOperator(
-    "DAYOFWEEK", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "DAYOFWEEK", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 DAYNAME = ExpressionFunctionOperator(
     "DAYNAME", False, RequireNumArgs(1), ConstantType(StringType())
 )
 HOUR = ExpressionFunctionOperator(
-    "HOUR", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "HOUR", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 MINUTE = ExpressionFunctionOperator(
-    "MINUTE", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "MINUTE", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 SECOND = ExpressionFunctionOperator(
-    "SECOND", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "SECOND", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 DATEDIFF = ExpressionFunctionOperator(
-    "DATEDIFF", False, RequireNumArgs(3), ConstantType(Int64Type())
+    "DATEDIFF", False, RequireNumArgs(3), ConstantType(NumericType())
 )
 SLICE = ExpressionFunctionOperator(
     "SLICE", False, RequireNumArgs(4), SelectArgumentType(0)
@@ -230,7 +232,7 @@ RPAD = ExpressionFunctionOperator(
     "RPAD", False, RequireNumArgs(3), SelectArgumentType(0)
 )
 FIND = ExpressionFunctionOperator(
-    "FIND", False, RequireNumArgs(2), ConstantType(Int64Type())
+    "FIND", False, RequireNumArgs(2), ConstantType(NumericType())
 )
 NOT = ExpressionFunctionOperator(
     "NOT", False, RequireNumArgs(1), ConstantType(BooleanType())
@@ -263,7 +265,7 @@ VAR = KeywordBranchingExpressionFunctionOperator(
     "VAR",
     True,
     RequireNumArgs(1),
-    ConstantType(Float64Type()),
+    ConstantType(NumericType()),
     kwarg_defaults={"type": "population"},
 )
 # Define VAR with keyword branching for "type" which is represented internally.
@@ -275,7 +277,7 @@ STD = KeywordBranchingExpressionFunctionOperator(
     "STD",
     True,
     RequireNumArgs(1),
-    ConstantType(Float64Type()),
+    ConstantType(NumericType()),
     kwarg_defaults={"type": "population"},
 )
 # Define STD with keyword branching for "type" which is represented internally.
@@ -283,10 +285,10 @@ POPULATION_STD = STD.with_kwarg("POPULATION_STD", {"type": "population"})
 SAMPLE_STD = STD.with_kwarg("SAMPLE_STD", {"type": "sample"})
 
 RANKING = ExpressionWindowOperator(
-    "RANKING", RequireNumArgs(0), ConstantType(Int64Type())
+    "RANKING", RequireNumArgs(0), ConstantType(NumericType())
 )
 PERCENTILE = ExpressionWindowOperator(
-    "PERCENTILE", RequireNumArgs(0), ConstantType(Int64Type())
+    "PERCENTILE", RequireNumArgs(0), ConstantType(NumericType())
 )
 PREV = ExpressionWindowOperator("PREV", RequireNumArgs(1), SelectArgumentType(0))
 NEXT = ExpressionWindowOperator("NEXT", RequireNumArgs(1), SelectArgumentType(0))
@@ -297,16 +299,16 @@ RELAVG = ExpressionWindowOperator(
     "RELAVG", RequireNumArgs(1), SelectArgumentType(0), True, False
 )
 RELCOUNT = ExpressionWindowOperator(
-    "RELCOUNT", RequireNumArgs(1), ConstantType(Int64Type()), True, False
+    "RELCOUNT", RequireNumArgs(1), ConstantType(NumericType()), True, False
 )
 RELSIZE = ExpressionWindowOperator(
-    "RELSIZE", RequireNumArgs(0), ConstantType(Int64Type()), True, False
+    "RELSIZE", RequireNumArgs(0), ConstantType(NumericType()), True, False
 )
 INTEGER = ExpressionFunctionOperator(
-    "INTEGER", False, RequireNumArgs(1), ConstantType(Int64Type())
+    "INTEGER", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 FLOAT = ExpressionFunctionOperator(
-    "FLOAT", False, RequireNumArgs(1), ConstantType(Float64Type())
+    "FLOAT", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 STRING = ExpressionFunctionOperator(
     "STRING", False, RequireArgRange(1, 2), ConstantType(StringType())

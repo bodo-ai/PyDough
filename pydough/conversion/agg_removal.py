@@ -26,7 +26,7 @@ from pydough.relational.rel_util import (
     bubble_uniqueness,
     extract_equijoin_keys,
 )
-from pydough.types import BooleanType, Int64Type
+from pydough.types import BooleanType, NumericType
 
 
 def delete_aggregation(agg: Aggregate) -> RelationalNode:
@@ -61,17 +61,17 @@ def delete_aggregation(agg: Aggregate) -> RelationalNode:
             # otherwise 0.
             case pydop.COUNT:
                 if len(agg_call.inputs) == 0:
-                    projection_cols[name] = LiteralExpression(1, Int64Type())
+                    projection_cols[name] = LiteralExpression(1, NumericType())
                 else:
                     projection_cols[name] = CallExpression(
                         pydop.IFF,
-                        Int64Type(),
+                        NumericType(),
                         [
                             CallExpression(
                                 pydop.PRESENT, BooleanType(), [agg_call.inputs[0]]
                             ),
-                            LiteralExpression(1, Int64Type()),
-                            LiteralExpression(0, Int64Type()),
+                            LiteralExpression(1, NumericType()),
+                            LiteralExpression(0, NumericType()),
                         ],
                     )
             # If any other aggregations are present besides the supported

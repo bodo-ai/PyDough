@@ -98,12 +98,8 @@ header {
   fill: #1f77b4;
 }
 
-.subcollection-compound {
-  fill: #2ca02c;
-}
-
 .subcollection-cartesian_product {
-  fill: #ff7f0e;
+  fill: #8e44ad;
 }
 
 .link {
@@ -116,16 +112,15 @@ header {
 }
 
 .link-cartesian_product {
-  stroke: #ff7f0e;
-  stroke-dasharray: 4, 4;
+  stroke: #8e44ad;
 }
 
-.link-compound {
-  stroke: #2ca02c;
-  stroke-dasharray: 6, 3;
+.link-general_join {
+  stroke: #ff7f0e;
 }
 
 .link-reverse {
+  stroke: rgb(241, 20, 20);
   stroke-opacity: 0.5;
   stroke-dasharray: 2, 2;
 }
@@ -225,19 +220,17 @@ header {
   background-color: #1f77b4;
 }
 
-.compound-line {
-  background-color: #2ca02c;
-  border-top: 3px dashed #2ca02c;
+.cartesian_product-line {
+  background-color: #8e44ad; /* Purple */
 }
 
-.cartesian_product-line {
-  background-color: #ff7f0e;
-  border-top: 3px dotted #ff7f0e;
+.general_join-line {
+  background-color: #ff7f0e; /* Orange */
 }
 
 .reverse-line {
-  background-color: #999;
-  border-top: 2px dashed #999;
+  background-color:rgb(241, 20, 20); /* Red */
+  border-top: 2px dashed rgb(241, 20, 20);
 }
 
 .legend-note {

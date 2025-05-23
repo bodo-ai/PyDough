@@ -23,10 +23,8 @@ from pydough.qdag import (
 )
 from pydough.types import (
     BooleanType,
-    DateType,
-    DecimalType,
-    Float64Type,
-    Int64Type,
+    DatetimeType,
+    NumericType,
     PyDoughType,
     StringType,
 )
@@ -37,20 +35,14 @@ from pydough.types import (
     [
         pytest.param(
             "TPCH",
-            ColumnInfo("Regions", "name"),
+            ColumnInfo("regions", "name"),
             StringType(),
             id="string",
         ),
         pytest.param(
-            "Amazon",
-            ColumnInfo("Products", "price_per_unit"),
-            Float64Type(),
-            id="float64",
-        ),
-        pytest.param(
             "TPCH",
-            ColumnInfo("Lineitems", "ship_date"),
-            DateType(),
+            ColumnInfo("lines", "ship_date"),
+            DatetimeType(),
             id="date",
         ),
     ],
@@ -77,25 +69,25 @@ def test_column_property_type(
     [
         pytest.param(
             "TPCH",
-            FunctionInfo("LOWER", [ColumnInfo("Regions", "name")]),
+            FunctionInfo("LOWER", [ColumnInfo("regions", "name")]),
             StringType(),
             False,
             id="lower-string",
         ),
         pytest.param(
-            "Amazon",
-            FunctionInfo("SUM", [ColumnInfo("Products", "price_per_unit")]),
-            Float64Type(),
+            "TPCH",
+            FunctionInfo("SUM", [ColumnInfo("lines", "quantity")]),
+            NumericType(),
             True,
-            id="sum-float64",
+            id="sum-numeric",
         ),
         pytest.param(
             "TPCH",
             FunctionInfo(
                 "EQU",
                 [
-                    ColumnInfo("Lineitems", "ship_date"),
-                    ColumnInfo("Lineitems", "receipt_date"),
+                    ColumnInfo("lines", "ship_date"),
+                    ColumnInfo("lines", "receipt_date"),
                 ],
             ),
             BooleanType(),
@@ -108,11 +100,11 @@ def test_column_property_type(
                 "IFF",
                 [
                     LiteralInfo(True, BooleanType()),
-                    ColumnInfo("Lineitems", "tax"),
-                    ColumnInfo("Lineitems", "discount"),
+                    ColumnInfo("lines", "tax"),
+                    ColumnInfo("lines", "discount"),
                 ],
             ),
-            DecimalType(12, 2),
+            NumericType(),
             False,
             id="iff-bool-decimal-decimal",
         ),
@@ -148,13 +140,13 @@ def test_function_call_return(
             id="string",
         ),
         pytest.param(
-            LiteralInfo(-1, Int64Type()),
-            Int64Type(),
-            id="int64",
+            LiteralInfo(-1, NumericType()),
+            NumericType(),
+            id="numeric",
         ),
         pytest.param(
-            LiteralInfo(date(2024, 10, 28), DateType()),
-            DateType(),
+            LiteralInfo(date(2024, 10, 28), DatetimeType()),
+            DatetimeType(),
             id="date",
         ),
     ],
@@ -178,12 +170,12 @@ def test_literal_type(
     "expr_info, expected_string",
     [
         pytest.param(
-            FunctionInfo("LOWER", [ColumnInfo("Regions", "name")]),
+            FunctionInfo("LOWER", [ColumnInfo("regions", "name")]),
             "LOWER(Column[tpch.REGION.r_name])",
             id="regular_func",
         ),
         pytest.param(
-            FunctionInfo("SUM", [ColumnInfo("Lineitems", "tax")]),
+            FunctionInfo("SUM", [ColumnInfo("lines", "tax")]),
             "SUM(Column[tpch.LINEITEM.l_tax])",
             id="agg_func",
         ),
@@ -194,12 +186,12 @@ def test_literal_type(
                     FunctionInfo(
                         "EQU",
                         [
-                            ColumnInfo("Lineitems", "ship_date"),
-                            ColumnInfo("Lineitems", "receipt_date"),
+                            ColumnInfo("lines", "ship_date"),
+                            ColumnInfo("lines", "receipt_date"),
                         ],
                     ),
-                    ColumnInfo("Lineitems", "tax"),
-                    LiteralInfo(0, Int64Type()),
+                    ColumnInfo("lines", "tax"),
+                    LiteralInfo(0, NumericType()),
                 ],
             ),
             "IFF(Column[tpch.LINEITEM.l_shipdate] == Column[tpch.LINEITEM.l_receiptdate], Column[tpch.LINEITEM.l_tax], 0)",
@@ -209,10 +201,10 @@ def test_literal_type(
             FunctionInfo(
                 "ADD",
                 [
-                    LiteralInfo(1, Int64Type()),
+                    LiteralInfo(1, NumericType()),
                     FunctionInfo(
                         "ADD",
-                        [LiteralInfo(2, Int64Type()), LiteralInfo(3, Int64Type())],
+                        [LiteralInfo(2, NumericType()), LiteralInfo(3, NumericType())],
                     ),
                 ],
             ),
@@ -225,9 +217,9 @@ def test_literal_type(
                 [
                     FunctionInfo(
                         "ADD",
-                        [LiteralInfo(1, Int64Type()), LiteralInfo(2, Int64Type())],
+                        [LiteralInfo(1, NumericType()), LiteralInfo(2, NumericType())],
                     ),
-                    LiteralInfo(3, Int64Type()),
+                    LiteralInfo(3, NumericType()),
                 ],
             ),
             "(1 + 2) + 3",
@@ -243,22 +235,22 @@ def test_literal_type(
                             FunctionInfo(
                                 "ADD",
                                 [
-                                    LiteralInfo(1, Int64Type()),
-                                    LiteralInfo(2, Int64Type()),
+                                    LiteralInfo(1, NumericType()),
+                                    LiteralInfo(2, NumericType()),
                                 ],
                             ),
-                            LiteralInfo(3, Int64Type()),
+                            LiteralInfo(3, NumericType()),
                         ],
                     ),
                     FunctionInfo(
                         "ADD",
                         [
-                            LiteralInfo(4, Int64Type()),
+                            LiteralInfo(4, NumericType()),
                             FunctionInfo(
                                 "ADD",
                                 [
-                                    LiteralInfo(5, Int64Type()),
-                                    LiteralInfo(6, Int64Type()),
+                                    LiteralInfo(5, NumericType()),
+                                    LiteralInfo(6, NumericType()),
                                 ],
                             ),
                         ],
@@ -272,10 +264,10 @@ def test_literal_type(
             FunctionInfo(
                 "DIV",
                 [
-                    LiteralInfo(1, Int64Type()),
+                    LiteralInfo(1, NumericType()),
                     FunctionInfo(
                         "ADD",
-                        [LiteralInfo(2, Int64Type()), LiteralInfo(3, Int64Type())],
+                        [LiteralInfo(2, NumericType()), LiteralInfo(3, NumericType())],
                     ),
                 ],
             ),
@@ -288,9 +280,9 @@ def test_literal_type(
                 [
                     FunctionInfo(
                         "ADD",
-                        [LiteralInfo(1, Int64Type()), LiteralInfo(2, Int64Type())],
+                        [LiteralInfo(1, NumericType()), LiteralInfo(2, NumericType())],
                     ),
-                    LiteralInfo(3, Int64Type()),
+                    LiteralInfo(3, NumericType()),
                 ],
             ),
             "(1 + 2) * 3",
@@ -306,22 +298,22 @@ def test_literal_type(
                             FunctionInfo(
                                 "ADD",
                                 [
-                                    LiteralInfo(1, Int64Type()),
-                                    LiteralInfo(2, Int64Type()),
+                                    LiteralInfo(1, NumericType()),
+                                    LiteralInfo(2, NumericType()),
                                 ],
                             ),
-                            LiteralInfo(3, Int64Type()),
+                            LiteralInfo(3, NumericType()),
                         ],
                     ),
                     FunctionInfo(
                         "ADD",
                         [
-                            LiteralInfo(4, Int64Type()),
+                            LiteralInfo(4, NumericType()),
                             FunctionInfo(
                                 "POW",
                                 [
-                                    LiteralInfo(5, Int64Type()),
-                                    LiteralInfo(6, Int64Type()),
+                                    LiteralInfo(5, NumericType()),
+                                    LiteralInfo(6, NumericType()),
                                 ],
                             ),
                         ],

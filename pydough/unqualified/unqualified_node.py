@@ -22,7 +22,7 @@ __all__ = [
 
 from abc import ABC
 from collections.abc import Iterable
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Union
 
 import pydough.pydough_operators as pydop
@@ -31,11 +31,9 @@ from pydough.metadata.errors import is_bool, is_integer, is_positive_int, is_str
 from pydough.pydough_operators import get_operator_by_name
 from pydough.types import (
     ArrayType,
-    BinaryType,
     BooleanType,
-    DateType,
-    Float64Type,
-    Int64Type,
+    DatetimeType,
+    NumericType,
     PyDoughType,
     StringType,
     UnknownType,
@@ -77,15 +75,13 @@ class UnqualifiedNode(ABC):
         if isinstance(obj, bool):
             return UnqualifiedLiteral(obj, BooleanType())
         if isinstance(obj, int):
-            return UnqualifiedLiteral(obj, Int64Type())
+            return UnqualifiedLiteral(obj, NumericType())
         if isinstance(obj, float):
-            return UnqualifiedLiteral(obj, Float64Type())
-        if isinstance(obj, str):
+            return UnqualifiedLiteral(obj, NumericType())
+        if isinstance(obj, (str, bytes)):
             return UnqualifiedLiteral(obj, StringType())
-        if isinstance(obj, bytes):
-            return UnqualifiedLiteral(obj, BinaryType())
-        if isinstance(obj, date):
-            return UnqualifiedLiteral(obj, DateType())
+        if isinstance(obj, (date, datetime)):
+            return UnqualifiedLiteral(obj, DatetimeType())
         if obj is None:
             return UnqualifiedLiteral(obj, UnknownType())
         if isinstance(obj, (list, tuple, set)):

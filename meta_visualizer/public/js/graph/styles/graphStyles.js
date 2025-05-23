@@ -109,7 +109,7 @@ export function applyGraphStyles() {
     }
     
     .link-reverse {
-      stroke: #ff7f0e; /* Orange color for reverse links */
+      stroke: rgb(241, 20, 20); /* Orange color for reverse links */
       stroke-width: 2px;
       stroke-dasharray: 4, 4; /* Dashed line for reverse links */
     }
@@ -177,10 +177,6 @@ export function applyGraphStyles() {
     /* Relationship type colors */
     .subcollection-simple_join {
       fill: #16a085;
-    }
-    
-    .subcollection-compound {
-      fill: #8e44ad;
     }
     
     .subcollection-cartesian_product {
@@ -388,10 +384,6 @@ export function applyGraphStyles() {
       background-color: #1f77b4; /* Blue */
     }
     
-    .compound-line {
-      background-color: #8e44ad; /* Purple */
-    }
-    
     .cartesian_product-line {
       background-color: #8e44ad; /* Purple */
     }
@@ -401,7 +393,7 @@ export function applyGraphStyles() {
     }
     
     .reverse-line {
-      background-color: #ff7f0e; /* Orange */
+      background-color:rgb(241, 20, 20); /* Red */
     }
   `;
   document.head.appendChild(style);

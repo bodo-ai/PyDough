@@ -36,11 +36,11 @@ export function createLinks(g, links, nodes) {
   // Draw relationship paths with directional arrowheads
   link
     .append("path")
-    .attr("class", (d) => `link link-${d.type}`)
+    .attr("class", (d) => `link link-${d.type.replace(" ", "_")}`)
     .attr(
       "marker-end",
       (d) =>
-        `url(#arrowhead-${d.type === "general_join" ? "general_join" : d.type})`
+        `url(#arrowhead-${d.type.replace(" ", "_")})`
     )
     .attr("id", (d, i) => `link-${i}`)
     .attr("d", (d) => {

@@ -1,4 +1,4 @@
 ROOT(columns=[('key', key)], orderings=[(key):desc_last])
- LIMIT(limit=Literal(value=5, type=Int64Type()), columns={'key': key}, orderings=[(key):desc_last])
-  FILTER(condition=total_price < 1000.0:float64, columns={'key': key})
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'key': key}, orderings=[(key):desc_last])
+  FILTER(condition=total_price < 1000.0:numeric, columns={'key': key})
    SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'total_price': o_totalprice})

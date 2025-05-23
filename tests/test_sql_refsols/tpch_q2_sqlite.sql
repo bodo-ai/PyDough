@@ -28,7 +28,7 @@ WITH _t3 AS (
     supplier.s_comment,
     supplier.s_name,
     supplier.s_phone,
-    partsupp.ps_supplycost AS supplycost
+    partsupp.ps_supplycost AS supply_cost
   FROM tpch.nation AS nation
   JOIN _t3 AS _t5
     ON _t5.key = nation.n_regionkey
@@ -54,7 +54,7 @@ FROM _s6 AS _s6
 JOIN tpch.part AS part
   ON _s6.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
 JOIN _s17 AS _s17
-  ON _s17.key_19 = part.p_partkey AND _s17.supplycost = _s6.best_cost
+  ON _s17.key_19 = part.p_partkey AND _s17.supply_cost = _s6.best_cost
 ORDER BY
   s_acctbal DESC,
   n_name,

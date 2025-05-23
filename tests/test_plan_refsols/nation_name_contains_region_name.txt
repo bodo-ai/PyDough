@@ -1,4 +1,4 @@
-ROOT(columns=[('key', key_2), ('name', name_3), ('region_key', region_key), ('comment', comment_1)], orderings=[])
+ROOT(columns=[('key', key_2), ('region_key', region_key), ('name', name_3), ('comment', comment_1)], orderings=[])
  FILTER(condition=CONTAINS(name_3, name), columns={'comment_1': comment_1, 'key_2': key_2, 'name_3': name_3, 'region_key': region_key})
   JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'comment_1': t1.comment, 'key_2': t1.key, 'name': t0.name, 'name_3': t1.name, 'region_key': t1.region_key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})

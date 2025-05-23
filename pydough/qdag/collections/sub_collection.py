@@ -29,7 +29,7 @@ class SubCollection(CollectionAccess):
         subcollection_property: SubcollectionRelationshipMetadata,
         ancestor: PyDoughCollectionQDAG,
     ):
-        super().__init__(subcollection_property.other_collection, ancestor)
+        super().__init__(subcollection_property.child_collection, ancestor)
         self._subcollection_property: SubcollectionRelationshipMetadata = (
             subcollection_property
         )

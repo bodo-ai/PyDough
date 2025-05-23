@@ -11,7 +11,7 @@ from pydough.qdag import (
     PyDoughQDAG,
     PyDoughQDAGException,
 )
-from pydough.types import Int64Type
+from pydough.types import NumericType
 
 
 @pytest.mark.parametrize(
@@ -37,28 +37,28 @@ from pydough.types import Int64Type
         ),
         pytest.param(
             pydop.RequireNumArgs(0),
-            [LiteralInfo(0, Int64Type())],
+            [LiteralInfo(0, NumericType())],
             "Expected 0 arguments, received 1",
             id="require_zero-one_arg",
         ),
         pytest.param(
             pydop.RequireNumArgs(1),
-            [LiteralInfo(0, Int64Type()), LiteralInfo(16, Int64Type())],
+            [LiteralInfo(0, NumericType()), LiteralInfo(16, NumericType())],
             "Expected 1 argument, received 2",
             id="require_one-two_arg",
         ),
         pytest.param(
             pydop.RequireNumArgs(2),
-            [LiteralInfo(3, Int64Type())],
+            [LiteralInfo(3, NumericType())],
             "Expected 2 arguments, received 1",
             id="require_one-two_arg",
         ),
         pytest.param(
             pydop.RequireNumArgs(2),
             [
-                LiteralInfo(10, Int64Type()),
-                LiteralInfo(-20, Int64Type()),
-                LiteralInfo(35, Int64Type()),
+                LiteralInfo(10, NumericType()),
+                LiteralInfo(-20, NumericType()),
+                LiteralInfo(35, NumericType()),
             ],
             "Expected 2 arguments, received 3",
             id="require_one-two_arg",
@@ -71,20 +71,20 @@ from pydough.types import Int64Type
         ),
         pytest.param(
             pydop.RequireArgRange(2, 3),
-            [LiteralInfo(10, Int64Type())],
+            [LiteralInfo(10, NumericType())],
             "Expected between 2 and 3 arguments inclusive, received 1.",
             id="require_two_three-one_arg",
         ),
         pytest.param(
             pydop.RequireArgRange(2, 3),
-            [LiteralInfo(10, Int64Type())] * 5,
+            [LiteralInfo(10, NumericType())] * 5,
             "Expected between 2 and 3 arguments inclusive, received 5.",
             id="require_two_three-five_args",
         ),
         pytest.param(
             pydop.RequireCollection(),
             [
-                LiteralInfo(3, Int64Type()),
+                LiteralInfo(3, NumericType()),
             ],
             "Expected a collection as an argument, received an expression",
             id="require_collection-expression",
