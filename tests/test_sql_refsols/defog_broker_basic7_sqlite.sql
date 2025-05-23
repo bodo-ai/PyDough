@@ -1,6 +1,6 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS num_transactions,
     sbtxstatus AS status
   FROM main.sbtransaction
   GROUP BY
@@ -8,8 +8,8 @@ WITH _t1 AS (
 )
 SELECT
   status,
-  COALESCE(agg_0, 0) AS num_transactions
-FROM _t1
+  num_transactions
+FROM _t0
 ORDER BY
   num_transactions DESC
 LIMIT 3

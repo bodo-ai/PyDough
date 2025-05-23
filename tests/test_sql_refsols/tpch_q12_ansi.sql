@@ -10,7 +10,7 @@ WITH _t1 AS (
     ) AS agg_1,
     lineitem.l_shipmode AS ship_mode
   FROM tpch.lineitem AS lineitem
-  LEFT JOIN tpch.orders AS orders
+  JOIN tpch.orders AS orders
     ON lineitem.l_orderkey = orders.o_orderkey
   WHERE
     lineitem.l_commitdate < lineitem.l_receiptdate

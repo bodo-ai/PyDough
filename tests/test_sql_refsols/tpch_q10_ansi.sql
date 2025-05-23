@@ -34,7 +34,7 @@ SELECT
 FROM tpch.customer AS customer
 LEFT JOIN _s3 AS _s3
   ON _s3.customer_key = customer.c_custkey
-LEFT JOIN tpch.nation AS nation
+JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
   revenue DESC,

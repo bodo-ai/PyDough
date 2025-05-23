@@ -149,8 +149,12 @@ class ColumnPruner:
 
         # Special case: replace LEFT join where RHS is unused with LHS (only
         # possible if the join is used to bring 1:1 data into the rows of the
-        # LHS, which is unecessary if no data is being brought).
-        if isinstance(output, Join) and output.join_types == [JoinType.LEFT]:
+        # LHS, which is unecessary if no data is being brought). Also do the
+        # same for inner joins that meet certain criteria.
+        if isinstance(output, Join) and (
+            (output.join_types == [JoinType.LEFT])
+            or (output.join_types == [JoinType.INNER] and output.is_prunable)
+        ):
             uses_rhs: bool = False
             for column in output.columns.values():
                 if (

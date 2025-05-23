@@ -1,4 +1,4 @@
-WITH _t3 AS (
+WITH _t1 AS (
   SELECT
     CASE
       WHEN ABS(
@@ -45,27 +45,27 @@ WITH _t3 AS (
   FROM tpch.customer
 ), _s3 AS (
   SELECT
-    AVG(expr_5) AS agg_0,
-    AVG(expr_6) AS agg_1,
-    AVG(expr_7) AS agg_2,
-    COUNT(non_negative_acctbal) AS agg_3,
-    COUNT(negative_acctbal) AS agg_4,
+    AVG(expr_5) AS median_black_acctbal,
+    AVG(expr_6) AS median_overall_acctbal,
+    AVG(expr_7) AS median_red_acctbal,
+    COUNT(non_negative_acctbal) AS n_black_acctbal,
+    COUNT(negative_acctbal) AS n_red_acctbal,
     nation_key
-  FROM _t3
+  FROM _t1
   GROUP BY
     nation_key
 )
 SELECT
   nation.n_name AS nation_name,
-  COALESCE(_s3.agg_4, 0) AS n_red_acctbal,
-  COALESCE(_s3.agg_3, 0) AS n_black_acctbal,
-  _s3.agg_2 AS median_red_acctbal,
-  _s3.agg_0 AS median_black_acctbal,
-  _s3.agg_1 AS median_overall_acctbal
+  _s3.n_red_acctbal,
+  _s3.n_black_acctbal,
+  _s3.median_red_acctbal,
+  _s3.median_black_acctbal,
+  _s3.median_overall_acctbal
 FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
-LEFT JOIN _s3 AS _s3
+JOIN _s3 AS _s3
   ON _s3.nation_key = nation.n_nationkey
 ORDER BY
   nation_name

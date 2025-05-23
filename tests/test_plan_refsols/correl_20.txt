@@ -1,5 +1,5 @@
-ROOT(columns=[('n', agg_0)], orderings=[])
- AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+ROOT(columns=[('n', n)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n': COUNT()})
   FILTER(condition=domestic, columns={})
    PROJECT(columns={'domestic': name_16 == source_nation_name})
     JOIN(conditions=[t0.nation_key_12 == t1.key], types=['inner'], columns={'name_16': t1.name, 'source_nation_name': t0.source_nation_name})

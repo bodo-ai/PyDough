@@ -7,11 +7,14 @@ __all__ = ["merge_projects"]
 from collections import defaultdict
 
 from pydough.relational import (
+    Aggregate,
     ColumnReference,
     ColumnReferenceFinder,
     ExpressionSortInfo,
+    Filter,
     Join,
     JoinType,
+    Limit,
     Project,
     RelationalExpression,
     RelationalNode,
@@ -219,19 +222,28 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 # Otherwise, halt the merging process since it is no longer
                 # possible to merge the children of this project into it.
                 break
-    # Final round: if there is a project on top of a scan that only does
-    # column pruning/renaming, just push it into the scan.
+    # Final round: if there is a project on top of a scan/aggregate/filter that only does
+    # column pruning/renaming, just push it into the scan
     if (
         isinstance(node, Project)
-        and isinstance(node.input, Scan)
+        and isinstance(node.input, (Scan, Aggregate, Filter, Limit))
         and all(isinstance(expr, ColumnReference) for expr in node.columns.values())
     ):
-        return node.input.copy(
-            columns={
-                name: transpose_expression(expr, node.input.columns)
-                for name, expr in node.columns.items()
-            },
-        )
+        # If the input is an aggregate, make sure to include its keys in the result.
+        keys_used: set[str] = set()
+        new_columns: dict[str, RelationalExpression] = {}
+        for name, expr in node.columns.items():
+            transposed_expr: RelationalExpression = transpose_expression(
+                expr, node.input.columns
+            )
+            new_columns[name] = transposed_expr
+            if isinstance(node.input, Aggregate) and isinstance(expr, ColumnReference):
+                keys_used.add(expr.name)
+        if isinstance(node.input, Aggregate):
+            for key_name in node.input.keys:
+                if key_name not in keys_used:
+                    new_columns[key_name] = node.input.columns[key_name]
+        return node.input.copy(columns=new_columns)
     return node
 
 

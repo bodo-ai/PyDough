@@ -33,7 +33,7 @@ SELECT
   agg_2 AS AVG_QTY,
   agg_1 AS AVG_PRICE,
   agg_0 AS AVG_DISC,
-  COALESCE(agg_3, 0) AS COUNT_ORDER
+  agg_3 AS COUNT_ORDER
 FROM _t1
 ORDER BY
   l_returnflag,

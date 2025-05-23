@@ -11,5 +11,5 @@ WITH _t0 AS (
 )
 SELECT
   country,
-  100 * COALESCE(CAST(COALESCE(agg_0, 0) AS REAL) / COALESCE(agg_1, 0), 0.0) AS ar
+  100 * COALESCE(CAST(COALESCE(agg_0, 0) AS REAL) / agg_1, 0.0) AS ar
 FROM _t0

@@ -17,7 +17,7 @@ WITH _t1 AS (
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = partsupp.ps_partkey
     AND lineitem.l_suppkey = partsupp.ps_suppkey
-  LEFT JOIN tpch.orders AS orders
+  JOIN tpch.orders AS orders
     ON lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
     nation.n_name,

@@ -1,5 +1,5 @@
-ROOT(columns=[('n', agg_0)], orderings=[])
- AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+ROOT(columns=[('n', n)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n': COUNT()})
   FILTER(condition=DEFAULT_TO(agg_1, 0:numeric) > 0:numeric, columns={})
    JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_1': t1.agg_1})
     FILTER(condition=nation_key <= 3:numeric, columns={'key': key})

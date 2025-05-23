@@ -1,6 +1,6 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS num_customers,
     sbcustcountry AS country
   FROM main.sbcustomer
   GROUP BY
@@ -8,8 +8,8 @@ WITH _t1 AS (
 )
 SELECT
   country,
-  COALESCE(agg_0, 0) AS num_customers
-FROM _t1
+  num_customers
+FROM _t0
 ORDER BY
   num_customers DESC
 LIMIT 5
