@@ -1852,7 +1852,7 @@ def strip():
 
 def replace():
     return (
-        Customers.WHERE(name == "Alex Rodriguez")
+        customers.WHERE(name == "Alex Rodriguez")
         .CALCULATE(
             name,
             empty_string="",
