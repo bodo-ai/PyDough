@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(sbtxamount) AS agg_0,
+    COUNT() AS agg_1,
     sbtxcustid AS customer_id
   FROM main.sbtransaction
   GROUP BY

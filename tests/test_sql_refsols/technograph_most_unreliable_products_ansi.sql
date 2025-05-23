@@ -7,8 +7,8 @@ WITH _s1 AS (
     in_device_id
 ), _t0 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(COALESCE(_s1.agg_0, 0)) AS agg_0,
+    COUNT() AS agg_1,
     devices.de_product_id AS product_id
   FROM main.devices AS devices
   LEFT JOIN _s1 AS _s1

@@ -71,6 +71,91 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         )
         self._stack.append(output_expr)
 
+    @staticmethod
+    def get_window_spec(
+        kwargs: dict[str, object],
+    ) -> sqlglot_expressions.WindowSpec | None:
+        """
+        Parses the keyword arguments to a window function to extract the window
+        frame (if there is one). If `cumulative` is provided as a keyword
+        argument and its value is True, the cumulative window frame (UNBOUNDED
+        PRECEDING TO CURRENT ROW) is used. If `frame` is provided, it is
+        expected to be a tuple of two values (lower, upper) which can be
+        integers or None. These bounds have the following meaning:
+        - None: `UNBOUNDED PRECEDING` (for lower) or `UNBOUNDED FOLLOWING` (for
+        upper)
+        - Zero: `CURRENT ROW`
+        - `+N`: `N FOLLOWING`
+        - `-N`: `N PRECEDING`
+
+        Args:
+            kwargs (dict[str, object]): The keyword arguments to parse, which
+            may include a `frame` argument or a `cumulative` argument. It is
+            assumed the keyword arguments are the correct types/formats.
+
+        Returns:
+            The window specification if applicable, otherwise None.
+        """
+        lower: int | None = None
+        upper: int | None = None
+        if kwargs.get("cumulative", False):
+            # If cumulative=True, that is the same as the frame (None, 0)
+            lower, upper = None, 0
+
+        elif "frame" in kwargs:
+            # If frame is provided, parse it to extract the lower and upper bounds
+            # which are assumed to be correctly formatted
+            frame = kwargs["frame"]
+            assert isinstance(frame, tuple) and len(frame) == 2
+            lower_raw, upper_raw = frame[0], frame[1]
+            assert isinstance(lower_raw, (int, type(None))) and isinstance(
+                upper_raw, (int, type(None))
+            )
+            lower, upper = lower_raw, upper_raw
+
+        else:
+            # Otherwise, there is no frame
+            return None
+
+        spec_args: dict[str, str] = {"kind": "ROWS"}
+
+        # Build the spec for the lower bound, where the `start` argument
+        # is the magnitude of the lower value of the frame (or `CURRENT ROW` if
+        # `0`) and the `start_side` indicates whether it is `PRECEDING` or
+        # `FOLLOWING`.
+        if lower is None:
+            spec_args["start"] = "UNBOUNDED"
+            spec_args["start_side"] = "PRECEDING"
+        else:
+            if lower == 0:
+                spec_args["start"] = "CURRENT ROW"
+            elif lower > 0:
+                spec_args["start"] = str(lower)
+                spec_args["start_side"] = "FOLLOWING"
+            else:
+                spec_args["start"] = str(abs(lower))
+                spec_args["start_side"] = "PRECEDING"
+
+        # Build the spec for the upper bound, where the `end` argument
+        # is the magnitude of the upper value of the frame (or `CURRENT ROW` if
+        # `0`) and the `end_side` indicates whether it is `PRECEDING` or
+        # `FOLLOWING`.
+        if upper is None:
+            spec_args["end"] = "UNBOUNDED"
+            spec_args["end_side"] = "FOLLOWING"
+        else:
+            if upper == 0:
+                spec_args["end"] = "CURRENT ROW"
+            elif upper > 0:
+                spec_args["end"] = str(upper)
+                spec_args["end_side"] = "FOLLOWING"
+            else:
+                spec_args["end"] = str(abs(upper))
+                spec_args["end_side"] = "PRECEDING"
+
+        # Combine the spec values to return the SQLGlot WindowSpec value
+        return sqlglot_expressions.WindowSpec(**spec_args)
+
     def visit_window_expression(self, window_expression: WindowCallExpression) -> None:
         # Visit the inputs in reverse order so we can pop them off in order.
         for arg in reversed(window_expression.inputs):
@@ -112,7 +197,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 glot_expr = glot_expr.desc(nulls_first=na_first)
             order_exprs.append(glot_expr)
         this: SQLGlotExpression
-        cumulative: bool = False
+        window_spec: sqlglot_expressions.WindowSpec | None = None
         match window_expression.op.function_name:
             case "PERCENTILE":
                 # Extract the number of buckets to use for the percentile
@@ -154,16 +239,16 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 this = func(**lag_args)
             case "RELSUM":
                 this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
-                cumulative = bool(window_expression.kwargs.get("cumulative", False))
+                window_spec = self.get_window_spec(window_expression.kwargs)
             case "RELAVG":
                 this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)
-                cumulative = bool(window_expression.kwargs.get("cumulative", False))
+                window_spec = self.get_window_spec(window_expression.kwargs)
             case "RELCOUNT":
                 this = sqlglot_expressions.Count.from_arg_list(arg_exprs)
-                cumulative = bool(window_expression.kwargs.get("cumulative", False))
+                window_spec = self.get_window_spec(window_expression.kwargs)
             case "RELSIZE":
                 this = sqlglot_expressions.Count.from_arg_list([SQLGlotStar()])
-                cumulative = bool(window_expression.kwargs.get("cumulative", False))
+                window_spec = self.get_window_spec(window_expression.kwargs)
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"
@@ -175,13 +260,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             window_args["order"] = sqlglot_expressions.Order(
                 this=None, expressions=order_exprs
             )
-        if cumulative:
-            window_args["spec"] = sqlglot_expressions.WindowSpec(
-                kind="ROWS",
-                start="UNBOUNDED",
-                start_side="PRECEDING",
-                end="CURRENT ROW",
-            )
+        if window_spec is not None:
+            window_args["spec"] = window_spec
         self._stack.append(sqlglot_expressions.Window(**window_args))
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:

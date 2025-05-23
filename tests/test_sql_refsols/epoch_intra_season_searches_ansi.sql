@@ -43,10 +43,10 @@ WITH _s0 AS (
 ), _s18 AS (
   SELECT
     ANY_VALUE(_s0.name) AS agg_1,
-    COUNT() AS agg_3,
     SUM((
       NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
-    )) AS agg_2
+    )) AS agg_2,
+    COUNT() AS agg_3
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.first_month = EXTRACT(MONTH FROM searches.search_ts)
@@ -72,8 +72,8 @@ WITH _s0 AS (
     _s10.name
 ), _s19 AS (
   SELECT
-    COUNT() AS agg_1_15,
     SUM(_s12.agg_4 = _s17.name) AS agg_0,
+    COUNT() AS agg_1_15,
     _s12.agg_1
   FROM _s12 AS _s12
   JOIN _s5 AS _s13

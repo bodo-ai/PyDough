@@ -12,8 +12,8 @@ WITH _s2 AS (
   FROM tpch.supplier
 ), _t5 AS (
   SELECT
-    n_name AS name,
-    n_nationkey AS key
+    n_nationkey AS key,
+    n_name AS name
   FROM tpch.nation
   WHERE
     n_name = 'GERMANY'

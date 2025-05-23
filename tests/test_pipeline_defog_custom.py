@@ -48,6 +48,8 @@ from simple_pydough_functions import (
     time_threshold_reached,
     transaction_week_sampler,
     week_offset,
+    window_sliding_frame_relsize,
+    window_sliding_frame_relsum,
     years_months_days_hours_datediff,
 )
 from test_utils import (
@@ -1334,6 +1336,54 @@ def get_day_of_week(
                 ),
             ),
             id="week_offset",
+        ),
+        pytest.param(
+            (
+                window_sliding_frame_relsize,
+                None,
+                "Broker",
+                "window_sliding_frame_relsize",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{txn:03d}" for txn in [44, 45, 48, 46, 49, 47, 50, 1]
+                        ],
+                        "w1": [1, 2, 3, 4, 5, 5, 5, 5],
+                        "w2": [1, 2, 3, 1, 2, 1, 2, 1],
+                        "w3": [56, 55, 54, 53, 52, 51, 50, 49],
+                        "w4": [3, 2, 1, 2, 1, 2, 1, 5],
+                        "w5": [0, 1, 2, 3, 4, 5, 6, 7],
+                        "w6": [0, 1, 2, 0, 1, 0, 1, 0],
+                        "w7": [6, 7, 8, 9, 9, 9, 9, 9],
+                        "w8": [3, 3, 3, 2, 2, 2, 2, 5],
+                    }
+                ),
+            ),
+            id="window_sliding_frame_relsize",
+        ),
+        pytest.param(
+            (
+                window_sliding_frame_relsum,
+                None,
+                "Broker",
+                "window_sliding_frame_relsum",
+                lambda: pd.DataFrame(
+                    {
+                        "transaction_id": [
+                            f"TX{txn:03d}" for txn in [44, 45, 48, 46, 49, 47, 50, 1]
+                        ],
+                        "w1": [262, 187, 137, 197, 187, 195, 215, 190],
+                        "w2": [200, 120, 40, 62, 2, 35, 30, 375],
+                        "w3": [2798, 2718, 2638, 2598, 2538, 2536, 2531, 2501],
+                        "w4": [200, 120, 40, 62, 2, 35, 30, 375],
+                        "w5": [160, 200, 260, 262, 267, 297, 397, 447],
+                        "w6": [160, 200, 200, 62, 62, 35, 35, 150],
+                        "w7": [None, 80, 160, 200, 260, 262, 187, 137],
+                        "w8": [None, 80, 160, None, 60, None, 5, None],
+                    }
+                ),
+            ),
+            id="window_sliding_frame_relsum",
         ),
     ],
 )

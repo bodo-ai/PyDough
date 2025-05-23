@@ -8,6 +8,7 @@ import pandas as pd
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.errors import SqlglotError
 from sqlglot.expressions import Alias, Column, Select, Table
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
@@ -60,7 +61,13 @@ def convert_relation_to_sql(
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(dialect)
 
     # Apply the SQLGlot optimizer to the AST.
-    glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
+    try:
+        glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
+    except SqlglotError as e:
+        print(
+            f"ERROR WHILE OPTIMIZING QUERY:\n{glot_expr.sql(sqlglot_dialect, pretty=True)}"
+        )
+        raise e
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)

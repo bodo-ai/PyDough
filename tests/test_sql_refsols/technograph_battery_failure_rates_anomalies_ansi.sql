@@ -9,8 +9,8 @@ WITH _s7 AS (
     incidents.in_device_id
 ), _t1 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(COALESCE(_s7.agg_0, 0)) AS agg_0,
+    COUNT() AS agg_1,
     countries.co_name AS country_name,
     products.pr_name AS product_name
   FROM main.countries AS countries

@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    STDDEV(s_acctbal) AS sample_std,
     STDDEV_POP(s_acctbal) AS pop_std,
-    STDDEV_POP(s_acctbal) AS std,
-    VARIANCE(s_acctbal) AS sample_var,
     VARIANCE_POP(s_acctbal) AS pop_var,
+    STDDEV(s_acctbal) AS sample_std,
+    VARIANCE(s_acctbal) AS sample_var,
+    STDDEV_POP(s_acctbal) AS std,
     VARIANCE_POP(s_acctbal) AS var,
     s_nationkey AS nation_key
   FROM tpch.supplier

@@ -465,7 +465,8 @@ def test_pipeline_until_relational_technograph(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into relational plans.
     """
-    unqualified_impl, file_name, _ = pydough_pipeline_test_data_technograph
+    unqualified_impl, test_name, _ = pydough_pipeline_test_data_technograph
+    file_name: str = f"technograph_{test_name}"
     file_path: str = get_plan_test_filename(file_name)
     graph: GraphMetadata = get_sample_graph("TechnoGraph")
     UnqualifiedRoot(graph)
