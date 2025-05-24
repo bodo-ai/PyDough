@@ -23,11 +23,7 @@ from bad_pydough_functions import (
     bad_slice_13,
     bad_slice_14,
 )
-from simple_pydough_functions import (
-    agg_partition,
-    avg_acctbal_wo_debt,
-    avg_gap_prev_urgent_same_clerk,
-    avg_order_diff_per_customer,
+from common_prefix_pydough_functions import (
     common_prefix_a,
     common_prefix_aa,
     common_prefix_ab,
@@ -35,6 +31,11 @@ from simple_pydough_functions import (
     common_prefix_ad,
     common_prefix_ae,
     common_prefix_af,
+    common_prefix_ag,
+    common_prefix_ah,
+    common_prefix_ai,
+    common_prefix_aj,
+    common_prefix_ak,
     common_prefix_b,
     common_prefix_c,
     common_prefix_d,
@@ -60,6 +61,12 @@ from simple_pydough_functions import (
     common_prefix_x,
     common_prefix_y,
     common_prefix_z,
+)
+from simple_pydough_functions import (
+    agg_partition,
+    avg_acctbal_wo_debt,
+    avg_gap_prev_urgent_same_clerk,
+    avg_order_diff_per_customer,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -2517,6 +2524,141 @@ from pydough.unqualified import (
                 ),
             ),
             id="common_prefix_af",
+        ),
+        pytest.param(
+            (
+                common_prefix_ag,
+                None,
+                "common_prefix_ag",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
+                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
+                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
+                        "total_machine_high_domestic_revenue": [
+                            8595646.38,
+                            8313389.57,
+                            9834510.0,
+                            10473260.03,
+                            8492812.64,
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_ag",
+        ),
+        pytest.param(
+            (
+                common_prefix_ah,
+                None,
+                "common_prefix_ah",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
+                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
+                        "total_machine_high_domestic_revenue": [
+                            8595646.38,
+                            8313389.57,
+                            9834510.0,
+                            10473260.03,
+                            8492812.64,
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_ah",
+        ),
+        pytest.param(
+            (
+                common_prefix_ai,
+                None,
+                "common_prefix_ai",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
+                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
+                        "total_machine_high_domestic_revenue": [
+                            8595646.38,
+                            8313389.57,
+                            9834510.0,
+                            10473260.03,
+                            8492812.64,
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_ai",
+        ),
+        pytest.param(
+            (
+                common_prefix_aj,
+                None,
+                "common_prefix_aj",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
+                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
+                        "total_machine_high_domestic_revenue": [
+                            8595646.38,
+                            8313389.57,
+                            9834510.0,
+                            10473260.03,
+                            8492812.64,
+                        ],
+                    }
+                ),
+            ),
+            id="common_prefix_aj",
+        ),
+        pytest.param(
+            (
+                common_prefix_ak,
+                None,
+                "common_prefix_ak",
+                lambda: pd.DataFrame(
+                    {
+                        "nation_name": [
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                        ],
+                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
+                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
+                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
+                    }
+                ),
+            ),
+            id="common_prefix_ak",
         ),
     ],
 )
