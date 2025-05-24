@@ -8,18 +8,10 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 
-from pydough import init_pydough_context, to_df
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
-from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
 from pydough.unqualified import (
     UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
 )
 from tests.test_pydough_functions.bad_pydough_functions import (
     bad_slice_1,
@@ -143,46 +135,43 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
-from tests.testing_utilities import (
-    graph_fetcher,
-)
 
-from .testing_utilities import run_e2e_error_test
+from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
 @pytest.fixture(
     params=[
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_scan_top_five,
-                None,
-                "simple_scan_top_five",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [1, 2, 3, 4, 5],
                     }
                 ),
+                "simple_scan_top_five",
             ),
             id="simple_scan_top_five",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_filter_top_five,
-                ["key"],
-                "simple_filter_top_five",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [5989315, 5935174, 5881093, 5876066, 5866437],
                     }
                 ),
+                "simple_filter_top_five",
+                columns=["key"],
             ),
             id="simple_filter_top_five",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_nations_by_region,
-                None,
-                "rank_nations_by_region",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -215,28 +204,28 @@ from .testing_utilities import run_e2e_error_test
                         "rank": [1] * 5 + [6] * 5 + [11] * 5 + [16] * 5 + [21] * 5,
                     }
                 ),
+                "rank_nations_by_region",
             ),
             id="rank_nations_by_region",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_nations_per_region_by_customers,
-                None,
-                "rank_nations_per_region_by_customers",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["KENYA", "CANADA", "INDONESIA", "FRANCE", "JORDAN"],
                         "rank": [1] * 5,
                     }
                 ),
+                "rank_nations_per_region_by_customers",
             ),
             id="rank_nations_per_region_by_customers",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_parts_per_supplier_region_by_size,
-                None,
-                "rank_parts_per_supplier_region_by_size",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4],
@@ -276,14 +265,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "rank_parts_per_supplier_region_by_size",
             ),
             id="rank_parts_per_supplier_region_by_size",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_with_filters_a,
-                None,
-                "rank_with_filters_a",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "n": [
@@ -294,14 +283,14 @@ from .testing_utilities import run_e2e_error_test
                         "r": [9, 25, 29],
                     }
                 ),
+                "rank_with_filters_a",
             ),
             id="rank_with_filters_a",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_with_filters_b,
-                None,
-                "rank_with_filters_b",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "n": [
@@ -312,14 +301,14 @@ from .testing_utilities import run_e2e_error_test
                         "r": [9, 25, 29],
                     }
                 ),
+                "rank_with_filters_b",
             ),
             id="rank_with_filters_b",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_with_filters_c,
-                {"pname": "name", "psize": "size"},
-                "rank_with_filters_c",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "pname": [
@@ -332,14 +321,15 @@ from .testing_utilities import run_e2e_error_test
                         "psize": [46, 47, 48, 49, 50],
                     }
                 ),
+                "rank_with_filters_c",
+                columns={"pname": "name", "psize": "size"},
             ),
             id="rank_with_filters_c",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 percentile_nations,
-                {"name": "name", "p1": "p", "p2": "p"},
-                "percentile_nations",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -373,14 +363,15 @@ from .testing_utilities import run_e2e_error_test
                         "p2": [1] * 5 + [2] * 5 + [3] * 5 + [4] * 5 + [5] * 5,
                     }
                 ),
+                "percentile_nations",
+                columns={"name": "name", "p1": "p", "p2": "p"},
             ),
             id="percentile_nations",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 percentile_customers_per_region,
-                None,
-                "percentile_customers_per_region",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -397,14 +388,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "percentile_customers_per_region",
             ),
             id="percentile_customers_per_region",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 regional_suppliers_percentile,
-                ["name"],
-                "regional_suppliers_percentile",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -419,14 +410,15 @@ from .testing_utilities import run_e2e_error_test
                         ]
                     }
                 ),
+                "regional_suppliers_percentile",
+                columns=["name"],
             ),
             id="regional_suppliers_percentile",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 function_sampler,
-                None,
-                "function_sampler",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "a": [
@@ -473,14 +465,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "function_sampler",
             ),
             id="function_sampler",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 order_info_per_priority,
-                None,
-                "order_info_per_priority",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_priority": [
@@ -500,14 +492,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "order_info_per_priority",
             ),
             id="order_info_per_priority",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 year_month_nation_orders,
-                None,
-                "year_month_nation_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -522,14 +514,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_orders": [198, 194, 188, 186, 185],
                     }
                 ),
+                "year_month_nation_orders",
             ),
             id="year_month_nation_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 datetime_current,
-                None,
-                "datetime_current",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "d1": [f"{pd.Timestamp.now(tz='UTC').year}-05-31"],
@@ -544,14 +536,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     },
                 ),
+                "datetime_current",
             ),
             id="datetime_current",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 datetime_relative,
-                None,
-                "datetime_relative",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "d1": [
@@ -587,41 +579,37 @@ from .testing_utilities import run_e2e_error_test
                         "d6": ["2025-07-26 02:45:25"] * 10,
                     },
                 ),
+                "datetime_relative",
             ),
-            id="datetime_relative_tpch",
+            id="datetime_relative",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 agg_partition,
-                None,
+                "TPCH",
+                lambda: pd.DataFrame({"best_year": [228637]}),
                 "agg_partition",
-                lambda: pd.DataFrame(
-                    {
-                        "best_year": [228637],
-                    }
-                ),
             ),
             id="agg_partition",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 double_partition,
-                None,
-                "double_partition",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "year": [1992, 1993, 1994, 1995, 1996, 1997, 1998],
                         "best_month": [19439, 19319, 19546, 19502, 19724, 19519, 19462],
                     }
                 ),
+                "double_partition",
             ),
             id="double_partition",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 triple_partition,
-                {"region": "supp_region", "avgpct": "avg_percentage"},
-                "triple_partition",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region": [
@@ -640,14 +628,15 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "triple_partition",
+                columns={"region": "supp_region", "avgpct": "avg_percentage"},
             ),
             id="triple_partition",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 first_order_per_customer,
-                None,
-                "first_order_per_customer",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -673,14 +662,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "first_order_per_customer",
             ),
             id="first_order_per_customer",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 prev_next_regions,
-                None,
-                "prev_next_regions",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "two_preceding": [None, None, "AFRICA", "AMERICA", "ASIA"],
@@ -702,14 +691,14 @@ from .testing_utilities import run_e2e_error_test
                         "two_following": ["ASIA", "EUROPE", "MIDDLE EAST", None, None],
                     }
                 ),
+                "prev_next_regions",
             ),
             id="prev_next_regions",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 avg_order_diff_per_customer,
-                None,
-                "avg_order_diff_per_customer",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -722,14 +711,14 @@ from .testing_utilities import run_e2e_error_test
                         "avg_diff": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
                     }
                 ),
+                "avg_order_diff_per_customer",
             ),
             id="avg_order_diff_per_customer",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 yoy_change_in_num_orders,
-                None,
-                "yoy_change_in_num_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "year": range(1992, 1999),
@@ -753,28 +742,28 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "yoy_change_in_num_orders",
             ),
             id="yoy_change_in_num_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 first_order_in_year,
-                None,
-                "first_order_in_year",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_date": [f"{yr}-01-01" for yr in range(1992, 1999)],
                         "key": [3271, 15233, 290, 14178, 4640, 5895, 20064],
                     }
                 ),
+                "first_order_in_year",
             ),
             id="first_order_in_year",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 customer_largest_order_deltas,
-                None,
-                "customer_largest_order_deltas",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -793,14 +782,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "customer_largest_order_deltas",
             ),
             id="customer_largest_order_deltas",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 suppliers_bal_diffs,
-                None,
-                "suppliers_bal_diffs",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -820,42 +809,42 @@ from .testing_utilities import run_e2e_error_test
                         "acctbal_delta": [44.43, 43.25, 43.15, 41.54, 41.48],
                     }
                 ),
+                "suppliers_bal_diffs",
             ),
             id="suppliers_bal_diffs",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 month_year_sliding_windows,
-                None,
-                "month_year_sliding_windows",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "year": [1996] * 6 + [1997] * 4 + [1998] * 4,
                         "month": [1, 3, 5, 8, 10, 12, 3, 5, 7, 10, 1, 3, 5, 7],
                     }
                 ),
+                "month_year_sliding_windows",
             ),
             id="month_year_sliding_windows",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular1,
-                None,
-                "singular1",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
                         "nation_4_name": [None, None, None, None, "EGYPT"],
                     }
                 ),
+                "singular1",
             ),
             id="singular1",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular2,
-                None,
-                "singular2",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -888,14 +877,14 @@ from .testing_utilities import run_e2e_error_test
                         "okey": [None] * 15 + [454791] + [None] * 9,
                     }
                 ),
+                "singular2",
             ),
             id="singular2",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular3,
-                None,
-                "singular3",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -907,14 +896,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "singular3",
             ),
             id="singular3",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular4,
-                None,
-                "singular4",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -926,14 +915,14 @@ from .testing_utilities import run_e2e_error_test
                         ]
                     }
                 ),
+                "singular4",
             ),
             id="singular4",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular5,
-                None,
-                "singular5",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "container": [
@@ -952,14 +941,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "singular5",
             ),
             id="singular5",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular6,
-                None,
-                "singular6",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -982,14 +971,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "singular6",
             ),
             id="singular6",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular7,
-                None,
-                "singular7",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -1009,14 +998,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_orders": [8, 7, 7, 7, 7],
                     }
                 ),
+                "singular7",
             ),
             id="singular7",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 parts_quantity_increase_95_96,
-                None,
-                "parts_quantity_increase_95_96",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -1028,37 +1017,37 @@ from .testing_utilities import run_e2e_error_test
                         "qty_96": [156, 152, 167],
                     }
                 ),
+                "parts_quantity_increase_95_96",
             ),
             id="parts_quantity_increase_95_96",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 avg_gap_prev_urgent_same_clerk,
-                None,
-                "avg_gap_prev_urgent_same_clerk",
+                "TPCH",
                 lambda: pd.DataFrame({"avg_delta": [7.9820674]}),
+                "avg_gap_prev_urgent_same_clerk",
             ),
             id="avg_gap_prev_urgent_same_clerk",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 top_customers_by_orders,
-                None,
-                "top_customers_by_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "customer_key": [3451, 102004, 102022, 79300, 117082],
                         "n_orders": [41, 41, 41, 40, 40],
                     }
                 ),
+                "top_customers_by_orders",
             ),
             id="top_customers_by_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 customer_most_recent_orders,
-                None,
-                "customer_most_recent_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -1069,14 +1058,14 @@ from .testing_utilities import run_e2e_error_test
                         "total_recent_value": [1614134.33, 1592016.2, 1565721.92],
                     }
                 ),
+                "customer_most_recent_orders",
             ),
             id="customer_most_recent_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 richest_customer_per_region,
-                None,
-                "richest_customer_per_region",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1103,41 +1092,37 @@ from .testing_utilities import run_e2e_error_test
                         "balance": [9999.99, 9999.72, 9998.36, 9999.74, 9998.68],
                     }
                 ),
+                "richest_customer_per_region",
             ),
             id="richest_customer_per_region",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 n_orders_first_day,
-                None,
+                "TPCH",
+                lambda: pd.DataFrame({"n_orders": [621]}),
                 "n_orders_first_day",
-                lambda: pd.DataFrame(
-                    {
-                        "n_orders": [621],
-                    }
-                ),
             ),
             id="n_orders_first_day",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 wealthiest_supplier,
-                None,
-                "wealthiest_supplier",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["Supplier#000009450"],
                         "account_balance": [9999.72],
                     }
                 ),
+                "wealthiest_supplier",
             ),
             id="wealthiest_supplier",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 supplier_best_part,
-                None,
-                "supplier_best_part",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -1154,14 +1139,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_shipments": [4, 3, 3],
                     }
                 ),
+                "supplier_best_part",
             ),
             id="supplier_best_part",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 region_orders_from_nations_richest,
-                None,
-                "region_orders_from_nations_richest",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1174,14 +1159,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_orders": [74, 19, 62, 73, 41],
                     }
                 ),
+                "region_orders_from_nations_richest",
             ),
             id="region_orders_from_nations_richest",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 regional_first_order_best_line_part,
-                None,
-                "regional_first_order_best_line_part",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1200,14 +1185,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "regional_first_order_best_line_part",
             ),
             id="regional_first_order_best_line_part",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 orders_versus_first_orders,
-                None,
-                "orders_versus_first_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "customer_name": [
@@ -1221,14 +1206,14 @@ from .testing_utilities import run_e2e_error_test
                         "days_since_first_order": [2399, 2399, 2398, 2398, 2396],
                     }
                 ),
+                "orders_versus_first_orders",
             ),
             id="orders_versus_first_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 nation_window_aggs,
-                None,
-                "nation_window_aggs",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1254,14 +1239,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_nations": [15] * 15,
                     }
                 ),
+                "nation_window_aggs",
             ),
             id="nation_window_aggs",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 region_nation_window_aggs,
-                None,
-                "region_nation_window_aggs",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1291,14 +1276,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_nations": [3] * 9 + [4] * 4 + [2] * 2,
                     }
                 ),
+                "region_nation_window_aggs",
             ),
             id="region_nation_window_aggs",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 supplier_pct_national_qty,
-                None,
-                "supplier_pct_national_qty",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -1331,14 +1316,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "supplier_pct_national_qty",
             ),
             id="supplier_pct_national_qty",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 highest_priority_per_year,
-                None,
-                "highest_priority_per_year",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_year": range(1992, 1999),
@@ -1362,14 +1347,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "highest_priority_per_year",
             ),
             id="highest_priority_per_year",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 nation_best_order,
-                None,
-                "nation_best_order",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1403,14 +1388,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "nation_best_order",
             ),
             id="nation_best_order",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 nation_acctbal_breakdown,
-                None,
-                "nation_acctbal_breakdown",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1445,14 +1430,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "nation_acctbal_breakdown",
             ),
             id="nation_acctbal_breakdown",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 region_acctbal_breakdown,
-                None,
-                "region_acctbal_breakdown",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1487,14 +1472,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "region_acctbal_breakdown",
             ),
             id="region_acctbal_breakdown",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 global_acctbal_breakdown,
-                None,
-                "global_acctbal_breakdown",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "n_red_acctbal": [13692],
@@ -1504,14 +1489,14 @@ from .testing_utilities import run_e2e_error_test
                         "median_overall_acctbal": [4477.3],
                     }
                 ),
+                "global_acctbal_breakdown",
             ),
             id="global_acctbal_breakdown",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_int_float_string_cast,
-                None,
-                "simple_int_float_string_cast",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "i1": [1],
@@ -1538,14 +1523,14 @@ from .testing_utilities import run_e2e_error_test
                         "s9": ["abc def"],
                     }
                 ),
+                "simple_int_float_string_cast",
             ),
             id="simple_int_float_string_cast",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 string_format_specifiers_sqlite,
-                None,
-                "string_format_specifiers_sqlite",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "d1": ["15"],
@@ -1573,14 +1558,14 @@ from .testing_utilities import run_e2e_error_test
                         "d23": ["07-15-2023"],
                     }
                 ),
+                "string_format_specifiers_sqlite",
             ),
             id="string_format_specifiers_sqlite",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 part_reduced_size,
-                None,
-                "part_reduced_size",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "reduced_size": [2.8, 2.8, 4.0, 4.0, 2.8],
@@ -1604,14 +1589,14 @@ from .testing_utilities import run_e2e_error_test
                         "am_pm": ["00:00AM"] * 5,
                     }
                 ),
+                "part_reduced_size",
             ),
             id="part_reduced_size",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_smallest_or_largest,
-                None,
-                "simple_smallest_or_largest",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "s1": [10],
@@ -1634,14 +1619,14 @@ from .testing_utilities import run_e2e_error_test
                         "l9": [None],
                     }
                 ),
+                "simple_smallest_or_largest",
             ),
             id="simple_smallest_or_largest",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 avg_acctbal_wo_debt,
-                None,
-                "avg_acctbal_wo_debt",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1660,23 +1645,23 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     },
                 ),
+                "avg_acctbal_wo_debt",
             ),
             id="avg_acctbal_wo_debt",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 odate_and_rdate_avggap,
-                None,
-                "odate_and_rdate_avggap",
+                "TPCH",
                 lambda: pd.DataFrame({"avg_gap": [50.41427]}),
+                "odate_and_rdate_avggap",
             ),
             id="odate_and_rdate_avggap",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 dumb_aggregation,
-                None,
-                "dumb_aggregation",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": ["ALGERIA", "ARGENTINA"],
@@ -1690,14 +1675,14 @@ from .testing_utilities import run_e2e_error_test
                         "a8": [0, 1],
                     }
                 ),
+                "dumb_aggregation",
             ),
             id="dumb_aggregation",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_var_std,
-                None,
-                "simple_var_std",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["ALGERIA", "ARGENTINA"],
@@ -1709,14 +1694,14 @@ from .testing_utilities import run_e2e_error_test
                         "pop_std": [3044.339064, 3168.316441],
                     }
                 ),
+                "simple_var_std",
             ),
             id="simple_var_std",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_var_std_with_nulls,
-                None,
-                "simple_var_std_with_nulls",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "var_samp_0_nnull": [None],
@@ -1733,14 +1718,14 @@ from .testing_utilities import run_e2e_error_test
                         "std_pop_2_nnull": [3688.235],
                     }
                 ),
+                "simple_var_std_with_nulls",
             ),
             id="simple_var_std_with_nulls",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 quarter_function_test,
-                None,
-                "quarter_function_test",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "_expr0": [1],
@@ -1800,14 +1785,14 @@ from .testing_utilities import run_e2e_error_test
                         "q_diff12": [1],
                     }
                 ),
+                "quarter_function_test",
             ),
             id="quarter_function_test",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 order_quarter_test,
-                None,
-                "order_quarter_test",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_date": ["1995-01-01"],
@@ -1823,14 +1808,14 @@ from .testing_utilities import run_e2e_error_test
                         "same_quarter_next_year": ["1996-01-01 00:00:00"],
                     }
                 ),
+                "order_quarter_test",
             ),
             id="order_quarter_test",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_a,
-                None,
-                "common_prefix_a",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1838,14 +1823,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_customers": [29764, 29952, 30183, 30197, 29904],
                     }
                 ),
+                "common_prefix_a",
             ),
             id="common_prefix_a",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_b,
-                None,
-                "common_prefix_b",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1854,14 +1839,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_suppliers": [1955, 2036, 2003, 1987, 2019],
                     }
                 ),
+                "common_prefix_b",
             ),
             id="common_prefix_b",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_c,
-                None,
-                "common_prefix_c",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1872,14 +1857,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_parts": [156400, 162880, 160240, 158960, 161520],
                     }
                 ),
+                "common_prefix_c",
             ),
             id="common_prefix_c",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_d,
-                None,
-                "common_prefix_d",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1891,14 +1876,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_orders_96": [45352, 45549, 45976, 46518, 45231],
                     }
                 ),
+                "common_prefix_d",
             ),
             id="common_prefix_d",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_e,
-                None,
-                "common_prefix_e",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1906,14 +1891,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_nations": [5, 5, 5, 5, 5],
                     }
                 ),
+                "common_prefix_e",
             ),
             id="common_prefix_e",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_f,
-                None,
-                "common_prefix_f",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1922,14 +1907,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_suppliers": [1955, 2036, 2003, 1987, 2019],
                     }
                 ),
+                "common_prefix_f",
             ),
             id="common_prefix_f",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_g,
-                None,
-                "common_prefix_g",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1938,14 +1923,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_nations": [5, 5, 5, 5, 5],
                     }
                 ),
+                "common_prefix_g",
             ),
             id="common_prefix_g",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_h,
-                None,
-                "common_prefix_h",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
@@ -1956,14 +1941,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_suppliers": [1955, 2036, 2003, 1987, 2019],
                     }
                 ),
+                "common_prefix_h",
             ),
             id="common_prefix_h",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_i,
-                None,
-                "common_prefix_i",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["FRANCE", "ROMANIA", "RUSSIA", "JORDAN", "CHINA"],
@@ -1971,14 +1956,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_selected_orders": [1, 2, 1, 1, 1],
                     }
                 ),
+                "common_prefix_i",
             ),
             id="common_prefix_i",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_j,
-                None,
-                "common_prefix_j",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "cust_name": [f"Customer#{i:09}" for i in range(1, 6)],
@@ -1998,14 +1983,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_j",
             ),
             id="common_prefix_j",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_k,
-                None,
-                "common_prefix_k",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "cust_name": [f"Customer#{i:09}" for i in range(1, 6)],
@@ -2025,14 +2010,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_k",
             ),
             id="common_prefix_k",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_l,
-                None,
-                "common_prefix_l",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "cust_name": [f"Customer#{i:09}" for i in (11, 15, 18, 20, 26)],
@@ -2074,14 +2059,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_l",
             ),
             id="common_prefix_l",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_m,
-                None,
-                "common_prefix_m",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "cust_name": [f"Customer#{i:09}" for i in (11, 15, 18, 20, 26)],
@@ -2123,14 +2108,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_m",
             ),
             id="common_prefix_m",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_n,
-                None,
-                "common_prefix_n",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [3292610, 927968, 1117219, 3874244, 1069636],
@@ -2160,14 +2145,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_small_parts": [1, 0, 2, 4, 1],
                     }
                 ),
+                "common_prefix_n",
             ),
             id="common_prefix_n",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_o,
-                None,
-                "common_prefix_o",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [435237, 4682917, 4069735, 464226, 791522],
@@ -2191,14 +2176,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_small_parts": [1, 2, 2, 2, 1],
                     }
                 ),
+                "common_prefix_o",
             ),
             id="common_prefix_o",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_p,
-                None,
-                "common_prefix_p",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [f"Customer#{i:09}" for i in (140698, 1, 2, 4, 7)],
@@ -2207,14 +2192,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_distinct_parts": [1, 1, 2, 1, 1],
                     }
                 ),
+                "common_prefix_p",
             ),
             id="common_prefix_p",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_q,
-                None,
-                "common_prefix_q",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -2244,14 +2229,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_q",
             ),
             id="common_prefix_q",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_r,
-                None,
-                "common_prefix_r",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -2281,14 +2266,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_r",
             ),
             id="common_prefix_r",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_s,
-                None,
-                "common_prefix_s",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["Customer#000106507"],
@@ -2297,14 +2282,14 @@ from .testing_utilities import run_e2e_error_test
                         "most_recent_order_distinct": [6],
                     }
                 ),
+                "common_prefix_s",
             ),
             id="common_prefix_s",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_t,
-                None,
-                "common_prefix_t",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -2314,14 +2299,14 @@ from .testing_utilities import run_e2e_error_test
                         "total_qty": [3670, 3439, 3422, 3409, 3409],
                     }
                 ),
+                "common_prefix_t",
             ),
             id="common_prefix_t",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_u,
-                None,
-                "common_prefix_u",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -2331,14 +2316,14 @@ from .testing_utilities import run_e2e_error_test
                         "total_qty": [169, 162, 151, 150, 136],
                     }
                 ),
+                "common_prefix_u",
             ),
             id="common_prefix_u",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_v,
-                None,
-                "common_prefix_v",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [f"Customer#{i:09}" for i in (3, 14, 29, 30, 48)],
@@ -2351,14 +2336,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_v",
             ),
             id="common_prefix_v",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_w,
-                None,
-                "common_prefix_w",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [37, 64, 68, 228, 293],
@@ -2367,14 +2352,14 @@ from .testing_utilities import run_e2e_error_test
                         + ["ALGERIA"],
                     }
                 ),
+                "common_prefix_w",
             ),
             id="common_prefix_w",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_x,
-                None,
-                "common_prefix_x",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -2384,14 +2369,14 @@ from .testing_utilities import run_e2e_error_test
                         "n_orders": [41, 41, 41, 40, 40],
                     }
                 ),
+                "common_prefix_x",
             ),
             id="common_prefix_x",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_y,
-                None,
-                "common_prefix_y",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -2401,28 +2386,28 @@ from .testing_utilities import run_e2e_error_test
                         "n_orders": [21, 20, 19, 19, 17],
                     }
                 ),
+                "common_prefix_y",
             ),
             id="common_prefix_y",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_z,
-                None,
-                "common_prefix_z",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [f"Customer#{i:09}" for i in (7, 9, 19, 21, 25)],
                         "nation_name": ["CHINA", "INDIA"] * 2 + ["JAPAN"],
                     }
                 ),
+                "common_prefix_z",
             ),
             id="common_prefix_z",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_aa,
-                None,
-                "common_prefix_aa",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [f"Customer#{i:09}" for i in (1, 2, 4, 6, 7)],
@@ -2435,32 +2420,32 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_aa",
             ),
             id="common_prefix_aa",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ab,
-                None,
-                "common_prefix_ab",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [54318]}),
+                "common_prefix_ab",
             ),
             id="common_prefix_ab",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ac,
-                None,
-                "common_prefix_ac",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [137398]}),
+                "common_prefix_ac",
             ),
             id="common_prefix_ac",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ad,
-                None,
-                "common_prefix_ad",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -2477,14 +2462,14 @@ from .testing_utilities import run_e2e_error_test
                         "qty_shipped": [4, 38, 31],
                     }
                 ),
+                "common_prefix_ad",
             ),
             id="common_prefix_ad",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ae,
-                None,
-                "common_prefix_ae",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -2504,14 +2489,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_ae",
             ),
             id="common_prefix_ae",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_af,
-                None,
-                "common_prefix_af",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"],
@@ -2524,14 +2509,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_af",
             ),
             id="common_prefix_af",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ag,
-                None,
-                "common_prefix_ag",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -2553,14 +2538,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_ag",
             ),
             id="common_prefix_ag",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ah,
-                None,
-                "common_prefix_ah",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -2581,14 +2566,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_ah",
             ),
             id="common_prefix_ah",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ai,
-                None,
-                "common_prefix_ai",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -2609,14 +2594,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_ai",
             ),
             id="common_prefix_ai",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_aj,
-                None,
-                "common_prefix_aj",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -2637,14 +2622,14 @@ from .testing_utilities import run_e2e_error_test
                         ],
                     }
                 ),
+                "common_prefix_aj",
             ),
             id="common_prefix_aj",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 common_prefix_ak,
-                None,
-                "common_prefix_ak",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -2659,43 +2644,24 @@ from .testing_utilities import run_e2e_error_test
                         "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
                     }
                 ),
+                "common_prefix_ak",
             ),
             id="common_prefix_ak",
         ),
     ],
 )
-def pydough_pipeline_test_data(
-    request,
-) -> tuple[
-    Callable[[], UnqualifiedNode],
-    dict[str, str] | list[str] | None,
-    str,
-    Callable[[], pd.DataFrame],
-]:
+def pydough_pipeline_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for `test_pipeline_e2e_tpch_custom`. Returns a tuple of the
-    following arguments:
-    1. `unqualified_impl`: a function that takes in an unqualified root and
-    creates the unqualified node for the TPCH query.
-    2. `columns`: a valid value for the `columns` argument of `to_sql` or
-    `to_df`.
-    3. `file_name`: the name of the file containing the expected relational
-    plan.
-    4. `answer_impl`: a function that takes in nothing and returns the answer
-    to a TPCH query as a Pandas DataFrame.
+    Test data for e2e tests on custom queries using the TPC-H database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
     """
     return request.param
 
 
 def test_pipeline_until_relational_tpch_custom(
-    pydough_pipeline_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    pydough_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -2704,40 +2670,15 @@ def test_pipeline_until_relational_tpch_custom(
     qualified DAG version, with the correct string representation. Run on
     custom queries with the TPC-H graph.
     """
-    # Run the query through the stages from unqualified node to qualified node
-    # to relational tree, and confirm the tree string matches the expected
-    # structure.
-    unqualified_impl, columns, file_name, _ = pydough_pipeline_test_data
-    file_path: str = get_plan_test_filename(file_name)
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(qualified, PyDoughCollectionQDAG), (
-        "Expected qualified answer to be a collection, not an expression"
+    file_path: str = get_plan_test_filename(pydough_pipeline_test_data.test_name)
+    pydough_pipeline_test_data.run_relational_test(
+        get_sample_graph, file_path, update_tests
     )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, _load_column_selection({"columns": columns}), default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(relational.to_tree_string() + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert relational.to_tree_string() == expected_relational_string.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
-        )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_tpch_custom(
-    pydough_pipeline_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    pydough_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
 ):
@@ -2745,13 +2686,7 @@ def test_pipeline_e2e_tpch_custom(
     Test executing the the custom queries with TPC-H data from the original
     code generation.
     """
-    unqualified_impl, columns, _, answer_impl = pydough_pipeline_test_data
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
-    )
-    pd.testing.assert_frame_equal(result, answer_impl())
+    pydough_pipeline_test_data.run_e2e_test(get_sample_graph, sqlite_tpch_db_context)
 
 
 @pytest.mark.execute
