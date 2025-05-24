@@ -7,7 +7,6 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from test_utils import graph_fetcher
 
 from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
@@ -38,6 +37,7 @@ from tests.test_pydough_functions.epoch_pydough_functions import (
     unique_users_per_engine,
     users_most_cold_war_searches,
 )
+from tests.testing_utilities import graph_fetcher
 
 
 @pytest.fixture(

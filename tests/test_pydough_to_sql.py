@@ -5,9 +5,6 @@ Test that tests the full conversion of a PyDough object to a SQL query.
 from collections.abc import Callable
 
 import pytest
-from test_utils import (
-    graph_fetcher,
-)
 
 from pydough import init_pydough_context, to_sql
 from pydough.configs import PyDoughConfigs
@@ -34,6 +31,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     time_threshold_reached,
     transaction_week_sampler,
     week_offset,
+)
+from tests.testing_utilities import (
+    graph_fetcher,
 )
 
 

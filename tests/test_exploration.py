@@ -5,7 +5,6 @@ Unit tests for the PyDough exploration APIs.
 from collections.abc import Callable
 
 import pytest
-from test_utils import graph_fetcher
 
 import pydough
 from pydough.metadata import GraphMetadata
@@ -43,6 +42,7 @@ from tests.test_pydough_functions.exploration_examples import (
     table_calc_impl,
     top_k_impl,
 )
+from tests.testing_utilities import graph_fetcher
 
 
 @pytest.fixture(

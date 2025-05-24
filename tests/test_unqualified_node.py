@@ -36,7 +36,6 @@ from test_pydough_functions.bad_pydough_functions import (
     bad_window_5,
     bad_window_6,
 )
-from test_utils import graph_fetcher
 
 import pydough
 from pydough import init_pydough_context
@@ -89,6 +88,7 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
+from tests.testing_utilities import graph_fetcher
 
 
 @pytest.fixture

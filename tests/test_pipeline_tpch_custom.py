@@ -7,9 +7,6 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from test_utils import (
-    graph_fetcher,
-)
 
 from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
@@ -145,6 +142,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     wealthiest_supplier,
     year_month_nation_orders,
     yoy_change_in_num_orders,
+)
+from tests.testing_utilities import (
+    graph_fetcher,
 )
 
 

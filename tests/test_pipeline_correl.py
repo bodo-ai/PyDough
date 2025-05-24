@@ -7,9 +7,6 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from test_utils import (
-    graph_fetcher,
-)
 
 from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
@@ -58,6 +55,9 @@ from tests.test_pydough_functions.correlated_pydough_functions import (
     correl_31,
     correl_32,
     correl_33,
+)
+from tests.testing_utilities import (
+    graph_fetcher,
 )
 
 
