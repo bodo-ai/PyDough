@@ -25,6 +25,7 @@ __all__ = [
     "HybridTree",
 ]
 
+import copy
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -131,6 +132,31 @@ class HybridExpr(ABC):
             return self
         return HybridRefExpr(name, self.typ)
 
+    def replace_expressions(
+        self,
+        replacements: dict["HybridExpr", "HybridExpr"],
+    ) -> "HybridExpr":
+        """
+        TODO
+        """
+        if self in replacements:
+            return copy.deepcopy(replacements[self])
+        return self
+
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ) -> "HybridExpr":
+        """
+        TODO
+        """
+        return self
+
+    def contains_correlates(self) -> bool:
+        """
+        Returns whether this expression contains any correlated references.
+        """
+        return False
+
 
 class HybridCollation:
     """
@@ -234,6 +260,20 @@ class HybridBackRefExpr(HybridExpr):
     def shift_back(self, levels: int) -> HybridExpr:
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ):
+        if self.back_idx >= level_threshold:
+            levels_remaining = self.back_idx - level_threshold
+            parent_expr: HybridExpr
+            if levels_remaining == 0:
+                parent_expr = HybridRefExpr(self.name, self.typ)
+            else:
+                parent_expr = HybridBackRefExpr(self.name, levels_remaining, self.typ)
+            return HybridCorrelExpr(parent_expr)
+        else:
+            return self
+
 
 class HybridSidedRefExpr(HybridExpr):
     """
@@ -261,9 +301,8 @@ class HybridCorrelExpr(HybridExpr):
     rather than an ancestor, which requires a correlated reference.
     """
 
-    def __init__(self, hybrid: "HybridTree", expr: HybridExpr):
+    def __init__(self, expr: HybridExpr):
         super().__init__(expr.typ)
-        self.hybrid = hybrid
         self.expr: HybridExpr = expr
 
     def __repr__(self):
@@ -275,7 +314,10 @@ class HybridCorrelExpr(HybridExpr):
     def shift_back(self, levels: int) -> HybridExpr:
         shifted_expr: HybridExpr | None = self.expr.shift_back(levels)
         assert shifted_expr is not None
-        return HybridCorrelExpr(self.hybrid, shifted_expr)
+        return HybridCorrelExpr(shifted_expr)
+
+    def contains_correlates(self) -> bool:
+        return True
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -341,6 +383,34 @@ class HybridFunctionExpr(HybridExpr):
                 return None
             shifted_args.append(shifted_arg)
         return HybridFunctionExpr(self.operator, shifted_args, self.typ)
+
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> HybridExpr:
+        """
+        TODO
+        """
+        if self in replacements:
+            return replacements[self]
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.replace_expressions(replacements)
+        return self
+
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ):
+        """
+        TODO
+        """
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
+        return self
+
+    def contains_correlates(self) -> bool:
+        return any(arg.contains_correlates() for arg in self.args)
 
 
 class HybridWindowExpr(HybridExpr):
@@ -446,6 +516,52 @@ class HybridWindowExpr(HybridExpr):
             self.kwargs,
         )
 
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> HybridExpr:
+        if self in replacements:
+            return replacements[self]
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.replace_expressions(replacements)
+        for idx, part_arg in enumerate(self.partition_args):
+            self.partition_args[idx] = part_arg.replace_expressions(replacements)
+        for idx, order_arg in enumerate(self.order_args):
+            self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
+        return self
+
+    def squish_backrefs_into_correl(
+        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
+    ):
+        """
+        TODO
+        """
+        for idx, arg in enumerate(self.args):
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
+        for idx, part_arg in enumerate(self.partition_args):
+            self.partition_args[idx] = part_arg.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
+        for idx, order_arg in enumerate(self.order_args):
+            self.order_args[idx].expr = order_arg.expr.squish_backrefs_into_correl(
+                level_threshold, hybrid, child_idx
+            )
+        return self
+
+    def contains_correlates(self) -> bool:
+        return (
+            any(arg.contains_correlates() for arg in self.args)
+            or any(
+                partition_arg.contains_correlates()
+                for partition_arg in self.partition_args
+            )
+            or any(
+                order_arg.expr.contains_correlates() for order_arg in self.order_args
+            )
+        )
+
 
 def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
     """
@@ -508,6 +624,8 @@ class HybridOperation:
                that a hybrid operation is sorted by.
     - `unique_exprs`: list of expressions that are used to uniquely identify
                records within the current level of the hybrid tree.
+    - `is_hidden`: whether the operation is hidden when converting the tree
+               to a string.
     """
 
     def __init__(
@@ -521,9 +639,24 @@ class HybridOperation:
         self.renamings: dict[str, str] = renamings
         self.orderings: list[HybridCollation] = orderings
         self.unique_exprs: list[HybridExpr] = unique_exprs
+        self.is_hidden: bool = False
+
+    def __eq__(self, other):
+        return type(self) is type(other) and repr(self) == repr(other)
 
     def search_term_definition(self, name: str) -> HybridExpr | None:
         return self.terms.get(name, None)
+
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        """
+        TODO
+        """
+        for term_name, term in self.terms.items():
+            new_term: HybridExpr = term.replace_expressions(replacements)
+            self.terms[term_name] = new_term
 
 
 class HybridRoot(HybridOperation):
@@ -578,7 +711,7 @@ class HybridPartitionChild(HybridOperation):
         )
 
     def __repr__(self):
-        return "PARTITION_CHILD[*]"
+        return repr(self.subtree)
 
 
 class HybridCalculate(HybridOperation):
@@ -637,6 +770,16 @@ class HybridCalculate(HybridOperation):
                 return self.new_expressions[name]
         return self.predecessor.search_term_definition(name)
 
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        for term_name, term in self.terms.items():
+            new_term: HybridExpr = term.replace_expressions(replacements)
+            self.terms[term_name] = new_term
+            if term_name in self.new_expressions:
+                self.new_expressions[term_name] = new_term
+
 
 class HybridFilter(HybridOperation):
     """
@@ -658,6 +801,12 @@ class HybridFilter(HybridOperation):
 
     def search_term_definition(self, name: str) -> HybridExpr | None:
         return self.predecessor.search_term_definition(name)
+
+    def replace_expressions(
+        self,
+        replacements: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        self.condition = self.condition.replace_expressions(replacements)
 
 
 class HybridChildPullUp(HybridOperation):
@@ -1142,6 +1291,12 @@ class HybridConnection:
     required_steps: int
     aggs: dict[str, HybridFunctionExpr]
 
+    def __eq__(self, other):
+        return (
+            self.connection_type == other.connection_type
+            and self.subtree == other.subtree
+        )
+
     def fetch_agg_name(self, call: HybridFunctionExpr) -> str:
         """
         Returns the name of an aggregation call within the connection. Throws
@@ -1196,7 +1351,13 @@ class HybridTree:
         lines = []
         if self.parent is not None:
             lines.extend(repr(self.parent).splitlines())
-        lines.append(" -> ".join(repr(operation) for operation in self.pipeline))
+        lines.append(
+            " -> ".join(
+                repr(operation)
+                for operation in self.pipeline
+                if not operation.is_hidden
+            )
+        )
         prefix = " " if self.successor is None else "↓"
         for idx, child in enumerate(self.children):
             lines.append(f"{prefix} child #{idx} ({child.connection_type.name}):")
@@ -1326,7 +1487,7 @@ class HybridTree:
         self,
         child: "HybridTree",
         connection_type: ConnectionType,
-        original_correlated_children: set[int],
+        required_steps: int,
     ) -> int:
         """
         Adds a new child operation to the current level so that operations in
@@ -1337,9 +1498,8 @@ class HybridTree:
             (starting at the bottom of the subtree).
             `connection_type`: enum indicating what kind of connection is to be
             used to link `self` to `child`.
-            `original_correlated_children`: the set of indices of children that
-            contain correlated references to the current hybrid tree before
-            adding the child.
+            `required_steps`: the index of the step in the pipeline that must
+            be completed before the child can be defined.
 
         Returns:
             The index of the newly inserted child (or the index of an existing
@@ -1348,28 +1508,42 @@ class HybridTree:
         for idx, existing_connection in enumerate(self.children):
             if (
                 child == existing_connection.subtree
-                and (child.join_keys, child.general_join_condition, child.agg_keys)
+                and (child.join_keys, child.general_join_condition)
                 == (
                     existing_connection.subtree.join_keys,
                     existing_connection.subtree.general_join_condition,
-                    existing_connection.subtree.agg_keys,
                 )
             ) or (
-                isinstance(self.pipeline[0], HybridPartition)
+                idx == 0
+                and isinstance(self.pipeline[0], HybridPartition)
                 and (child.parent is None)
-                and (len(child.pipeline) == 1)
-                and isinstance(child.pipeline[0], HybridPartitionChild)
+                and all(
+                    operation in existing_connection.subtree.pipeline
+                    for operation in child.pipeline[1:]
+                )
+                and all(
+                    grandchild in existing_connection.subtree.children
+                    for grandchild in child.children
+                )
+                and all(
+                    (c1.subtree, c1.connection_type) == (c2.subtree, c2.connection_type)
+                    for c1, c2 in zip(
+                        child.children, existing_connection.subtree.children
+                    )
+                )
             ):
                 connection_type = connection_type.reconcile_connection_types(
                     existing_connection.connection_type
                 )
                 existing_connection.connection_type = connection_type
-                if len(self.correlated_children) > len(original_correlated_children):
-                    self._correlated_children = original_correlated_children
+                if existing_connection.subtree.agg_keys is None:
+                    existing_connection.subtree.agg_keys = child.agg_keys
                 return idx
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, len(self.pipeline) - 1, {}
+            self, child, connection_type, required_steps, {}
         )
+        if not connection_type.is_aggregation:
+            child.agg_keys = None
         self._children.append(connection)
         return len(self.children) - 1
 
@@ -1428,6 +1602,8 @@ class HybridTree:
         # is the top level)
         start_operation: HybridOperation = self.pipeline[0]
         match start_operation:
+            case HybridRoot():
+                return True
             case HybridCollectionAccess():
                 if isinstance(start_operation.collection, TableCollection):
                     # Regular table collection accesses always exist.
@@ -1474,6 +1650,193 @@ class HybridTree:
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.always_exists()
 
+    def is_singular(self) -> bool:
+        """
+        TODO
+        """
+        match self.pipeline[0]:
+            case HybridCollectionAccess():
+                if isinstance(self.pipeline[0].collection, TableCollection):
+                    pass
+                else:
+                    assert isinstance(self.pipeline[0].collection, SubCollection)
+                    meta: SubcollectionRelationshipMetadata = self.pipeline[
+                        0
+                    ].collection.subcollection_property
+                    if not meta.singular:
+                        return False
+            case HybridChildPullUp():
+                if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
+                    return False
+            case _:
+                return False
+        # The current level is fine, so check any levels above it next.
+        return True if self.parent is None else self.parent.always_exists()
+
+    def contains_correlates(self) -> bool:
+        """
+        TODO
+        """
+        for operation in self.pipeline:
+            for expr in operation.terms.values():
+                if expr.contains_correlates():
+                    return True
+            if (
+                isinstance(operation, HybridFilter)
+                and operation.condition.contains_correlates()
+            ):
+                return True
+        if any(child.subtree.contains_correlates() for child in self.children):
+            return True
+        return self.parent is not None and self.parent.contains_correlates()
+
+    def equalsIgnoringSuccessors(self, other: "HybridTree") -> bool:
+        """
+        Compares two hybrid trees without taking into account their
+        successors.
+
+        Args:
+            `other`: the other HybridTree to compare to.
+
+        Returns:
+            True if the two trees are equal, False otherwise.
+        """
+        successor1: HybridTree | None = self.successor
+        successor2: HybridTree | None = other.successor
+        self._successor = None
+        other._successor = None
+        result: bool = self == other and (
+            self.join_keys,
+            self.general_join_condition,
+        ) == (other.join_keys, other.general_join_condition)
+        self._successor = successor1
+        other._successor = successor2
+        return result
+
+    @staticmethod
+    def identify_children_used(expr: HybridExpr, unused_children: set[int]) -> None:
+        """
+        Find all child indices used in an expression and remove them from
+        a set of indices.
+
+        Args:
+            `expr`: the expression being checked for child reference indices.
+            `unused_children`: the set of all children that are unused. This
+            starts out as the set of all children, and whenever a child
+            reference is found within `expr`, it is removed from the set.
+        """
+        match expr:
+            case HybridChildRefExpr():
+                unused_children.discard(expr.child_idx)
+            case HybridFunctionExpr():
+                for arg in expr.args:
+                    HybridTree.identify_children_used(arg, unused_children)
+            case HybridWindowExpr():
+                for arg in expr.args:
+                    HybridTree.identify_children_used(arg, unused_children)
+                for part_arg in expr.partition_args:
+                    HybridTree.identify_children_used(part_arg, unused_children)
+                for order_arg in expr.order_args:
+                    HybridTree.identify_children_used(order_arg.expr, unused_children)
+            case HybridCorrelExpr():
+                HybridTree.identify_children_used(expr.expr, unused_children)
+
+    @staticmethod
+    def renumber_children_indices(
+        expr: HybridExpr, child_remapping: dict[int, int]
+    ) -> None:
+        """
+        Replaces all child reference indices in a hybrid expression in-place
+        when the children list was shifted, therefore the index-to-child
+        correspondence must be re-numbered.
+
+        Args:
+            `expr`: the expression having its child references modified.
+            `child_remapping`: the mapping of old->new indices for child
+            references.
+        """
+        match expr:
+            case HybridChildRefExpr():
+                assert expr.child_idx in child_remapping
+                expr.child_idx = child_remapping[expr.child_idx]
+            case HybridFunctionExpr():
+                for arg in expr.args:
+                    HybridTree.renumber_children_indices(arg, child_remapping)
+            case HybridWindowExpr():
+                for arg in expr.args:
+                    HybridTree.renumber_children_indices(arg, child_remapping)
+                for part_arg in expr.partition_args:
+                    HybridTree.renumber_children_indices(part_arg, child_remapping)
+                for order_arg in expr.order_args:
+                    HybridTree.renumber_children_indices(
+                        order_arg.expr, child_remapping
+                    )
+            case HybridCorrelExpr():
+                HybridTree.renumber_children_indices(expr.expr, child_remapping)
+
+    def remove_dead_children(self, must_remove: set[int]) -> dict[int, int]:
+        """
+        Deletes any children of a hybrid tree that are no longer referenced
+        after de-correlation.
+
+        Args:
+            `must_remove`: the set of indices of children that must be removed
+            if possible, even if their join type filters the current level.
+
+        Returns:
+            The mapping of children before vs after other children are deleted.
+        """
+        # Identify which children are no longer used
+        children_to_delete: set[int] = set(range(len(self.children)))
+        for operation in self.pipeline:
+            match operation:
+                case HybridChildPullUp():
+                    children_to_delete.discard(operation.child_idx)
+                case HybridFilter():
+                    self.identify_children_used(operation.condition, children_to_delete)
+                case HybridCalculate():
+                    for term in operation.new_expressions.values():
+                        self.identify_children_used(term, children_to_delete)
+                case _:
+                    for term in operation.terms.values():
+                        self.identify_children_used(term, children_to_delete)
+
+        for child_idx in range(len(self.children)):
+            if child_idx in must_remove:
+                continue
+            if (
+                self.children[child_idx].connection_type.is_semi
+                and not self.children[child_idx].subtree.always_exists()
+            ) or self.children[child_idx].connection_type.is_anti:
+                children_to_delete.discard(child_idx)
+
+        if len(children_to_delete) == 0:
+            return {i: i for i in range(len(self.children))}
+
+        # Build a renumbering of the remaining children
+        child_remapping: dict[int, int] = {}
+        for i in range(len(self.children)):
+            if i not in children_to_delete:
+                child_remapping[i] = len(child_remapping)
+
+        # Remove all the unused children (starting from the end)
+        for child_idx in sorted(children_to_delete, reverse=True):
+            self.children.pop(child_idx)
+
+        for operation in self.pipeline:
+            match operation:
+                case HybridChildPullUp():
+                    operation.child_idx = child_remapping[operation.child_idx]
+                case HybridFilter():
+                    self.renumber_children_indices(operation.condition, child_remapping)
+                case HybridCalculate():
+                    for term in operation.new_expressions.values():
+                        self.renumber_children_indices(term, child_remapping)
+                case _:
+                    continue
+
+        return child_remapping
+
 
 class HybridTranslator:
     """
@@ -1491,46 +1854,6 @@ class HybridTranslator:
         # If True, rewrites MEDIAN calls into an average of the 1-2 median rows
         # via window functions, otherwise leaves as-is.
         self.rewrite_median: bool = dialect not in {DatabaseDialect.ANSI}
-
-    @staticmethod
-    def get_join_keys(
-        parent_tree: HybridTree,
-        subcollection_property: SubcollectionRelationshipMetadata,
-        child_node: HybridOperation,
-    ) -> list[tuple[HybridExpr, HybridExpr]]:
-        """
-        Fetches the list of keys used to join a child node relative to its
-        parent node, specifically when the child is a subcollection access.
-
-        Args:
-            `parent_tree`: the HybridTree corresponding to the parent to access
-            from.
-            `subcollection_property`: the metadata for the subcollection
-            access.
-            `child_node`: the HybridOperation node corresponding to the access.
-
-        Returns:
-            The list of tuples expressions used to join the child, expressed in
-            terms of its level, to its parent, where the first tuple element is
-            the parent key and the second one is the child key.
-        """
-        join_keys: list[tuple[HybridExpr, HybridExpr]] = []
-        if isinstance(subcollection_property, SimpleJoinMetadata):
-            # If the subcollection is a simple join property, extract the keys.
-            for lhs_name in subcollection_property.keys:
-                lhs_key: HybridExpr = (
-                    parent_tree.pipeline[-1].terms[lhs_name].make_into_ref(lhs_name)
-                )
-                for rhs_name in subcollection_property.keys[lhs_name]:
-                    rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
-                        rhs_name
-                    )
-                    join_keys.append((lhs_key, rhs_key))
-        elif not isinstance(subcollection_property, CartesianProductMetadata):
-            raise NotImplementedError(
-                f"Unsupported subcollection property type used for accessing a subcollection: {subcollection_property.__class__.__name__}"
-            )
-        return join_keys
 
     @staticmethod
     def get_subcollection_join_keys(
@@ -1806,9 +2129,11 @@ class HybridTranslator:
             # value within this context.
             snapshot: int = self.alias_counter
             self.alias_counter = 0
-            original_correlated_children: set[int] = set(hybrid.correlated_children)
             subtree: HybridTree = self.make_hybrid_tree(
-                child, hybrid, connection_type.is_aggregation
+                child,
+                hybrid,
+                connection_type.is_aggregation
+                or connection_type == ConnectionType.SEMI,
             )
             back_exprs: dict[str, HybridExpr] = {}
             for name in subtree.ancestral_mapping:
@@ -1845,7 +2170,9 @@ class HybridTranslator:
                     ConnectionType.SEMI
                 )
             child_idx_mapping[child_idx] = hybrid.add_child(
-                subtree, connection_type, original_correlated_children
+                subtree,
+                connection_type,
+                max(len(hybrid.pipeline) - 1, 0),
             )
         self.stack.pop()
 
@@ -2271,14 +2598,12 @@ class HybridTranslator:
                 collection, back_expr.term_name, remaining_steps_back
             )
             parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
-        if not isinstance(parent_result, HybridCorrelExpr):
-            parent_tree.correlated_children.add(len(parent_tree.children))
         # Restore parent_tree back onto the stack, since evaluating `back_expr`
         # does not change the program's current placement in the subtrees.
         self.stack.append(parent_tree)
         # Create the correlated reference to the expression with regards to
         # the parent tree, which could also be a correlated expression.
-        return HybridCorrelExpr(parent_tree, parent_result)
+        return HybridCorrelExpr(parent_result)
 
     def add_unique_terms(
         self,
@@ -2337,14 +2662,7 @@ class HybridTranslator:
                     partition_args.append(equivalent_key)
                 else:
                     # Otherwise, create a correlated reference to the term.
-                    if not isinstance(arg, HybridCorrelExpr):
-                        if child_idx is not None:
-                            prev_hybrid.correlated_children.add(child_idx)
-                        else:
-                            prev_hybrid.correlated_children.add(
-                                len(prev_hybrid.children)
-                            )
-                    partition_args.append(HybridCorrelExpr(prev_hybrid, arg))
+                    partition_args.append(HybridCorrelExpr(arg))
             self.stack.append(prev_hybrid)
         else:
             # Otherwise, we have to step back further, so we recursively
@@ -2609,8 +2927,6 @@ class HybridTranslator:
         expr: HybridExpr
         child_ref_mapping: dict[int, int] = {}
         key_exprs: list[HybridExpr] = []
-        join_key_exprs: list[tuple[HybridExpr, HybridExpr]] = []
-        general_join_cond: HybridExpr | None = None
         collection_access: HybridCollectionAccess
         match node:
             case GlobalContext():
@@ -2712,6 +3028,9 @@ class HybridTranslator:
                 successor_hybrid.children[
                     partition_child_idx
                 ].subtree.agg_keys = key_exprs
+                successor_hybrid.children[partition_child_idx].subtree.join_keys = [
+                    (k, k) for k in key_exprs
+                ]
                 return successor_hybrid
             case OrderBy() | TopK():
                 hybrid = self.make_hybrid_tree(
@@ -2744,30 +3063,22 @@ class HybridTranslator:
                             sub_property: SubcollectionRelationshipMetadata = (
                                 node.child_access.subcollection_property
                             )
-                            if isinstance(sub_property, SimpleJoinMetadata):
-                                # For a simple join access, populate the join
-                                # keys of the tree which will be bubbled
-                                # down throughout the entire child tree.
-                                join_key_exprs = HybridTranslator.get_join_keys(
-                                    parent,
-                                    node.child_access.subcollection_property,
-                                    successor_hybrid.pipeline[-1],
-                                )
-                            elif isinstance(sub_property, GeneralJoinMetadata):
+                            if isinstance(sub_property, GeneralJoinMetadata):
                                 # For general join, do the same except with the
                                 # general condition instead of equi-join keys.
                                 assert node.child_access.general_condition is not None
                                 collection_access.general_condition = (
-                                    general_join_cond
-                                ) = self.make_hybrid_expr(
-                                    successor_hybrid,
-                                    node.child_access.general_condition,
-                                    {},
-                                    False,
+                                    self.make_hybrid_expr(
+                                        successor_hybrid,
+                                        node.child_access.general_condition,
+                                        {},
+                                        False,
+                                    )
                                 )
-                            elif isinstance(sub_property, CartesianProductMetadata):
-                                pass
-                            else:
+                            elif not isinstance(
+                                sub_property,
+                                (SimpleJoinMetadata, CartesianProductMetadata),
+                            ):
                                 raise NotImplementedError(
                                     f"Unsupported metadata type for subcollection access: {sub_property.__class__.__name__}"
                                 )
@@ -2779,25 +3090,6 @@ class HybridTranslator:
                             HybridPartitionChild(source.children[0].subtree),
                             node.ancestral_mapping,
                         )
-                        partition_by = (
-                            node.child_access.ancestor_context.starting_predecessor
-                        )
-                        assert isinstance(partition_by, PartitionBy)
-                        for key in partition_by.keys:
-                            rhs_expr: HybridExpr = self.make_hybrid_expr(
-                                successor_hybrid,
-                                Reference(node.child_access, key.expr.term_name),
-                                child_ref_mapping,
-                                False,
-                            )
-                            assert isinstance(
-                                rhs_expr, (HybridRefExpr, HybridBackRefExpr)
-                            )
-                            lhs_expr: HybridExpr = HybridChildRefExpr(
-                                rhs_expr.name, 0, rhs_expr.typ
-                            )
-                            join_key_exprs.append((lhs_expr, rhs_expr))
-
                     case PartitionBy():
                         partition = HybridPartition()
                         successor_hybrid = HybridTree(partition, node.ancestral_mapping)
@@ -2819,55 +3111,664 @@ class HybridTranslator:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
                         )
-                if general_join_cond is None:
-                    # For a simple join, add the join keys to the child
-                    # and make the RHS of those keys the agg keys.
-                    successor_hybrid.agg_keys = [
-                        rhs_key for _, rhs_key in join_key_exprs
-                    ]
-                    successor_hybrid.join_keys = join_key_exprs
-                else:
-                    # For a general join, instead use the general join
-                    # condition. However, if an aggregate is being performed
-                    # on the child, the aggregation keys are the uniqueness
-                    # keys from the lhs of the join condition, which means
-                    # a calculate must be added to the child that accesses
-                    # those keys as correlated references, then uses those
-                    # terms from the calculate in the agg keys.
-                    if is_aggregate:
-                        lhs_unique_keys: dict[str, HybridExpr] = {}
-                        key_exprs = []
-                        back_levels: int = 0
-                        current_level: HybridTree | None = parent
-                        # First, find the uniqueness keys from every level of
-                        # the parent and add them to lhs_unique_keys as a
-                        # correlated reference.
-                        while current_level is not None:
-                            for expr in current_level.pipeline[-1].unique_exprs:
-                                key_name = f"key_{len(lhs_unique_keys)}"
-                                shifted_expr: HybridExpr | None = expr.shift_back(
-                                    back_levels
-                                )
-                                assert shifted_expr is not None
-                                expr = HybridCorrelExpr(parent, shifted_expr)
-                                lhs_unique_keys[key_name] = expr
-                            back_levels += 1
-                            current_level = current_level.parent
-                        # Insert the calculate to access these correlated
-                        # keys, then add references to the new terms to
-                        # the agg keys.
-                        successor_hybrid.pipeline.append(
-                            HybridCalculate(
-                                successor_hybrid.pipeline[0], lhs_unique_keys, []
-                            )
-                        )
-                        for key_name, expr in lhs_unique_keys.items():
-                            key_exprs.append(HybridRefExpr(key_name, expr.typ))
-                        # Mark the parent's connection to this child as
-                        # correlated, and set the agg keys.
-                        parent.correlated_children.add(len(parent.children))
-                        successor_hybrid.agg_keys = key_exprs
-                    successor_hybrid.general_join_condition = general_join_cond
+                (
+                    successor_hybrid._join_keys,
+                    successor_hybrid._agg_keys,
+                    successor_hybrid._general_join_condition,
+                ) = self.extract_link_root_info(
+                    parent, successor_hybrid, is_aggregate, len(parent.children)
+                )
                 return successor_hybrid
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
+
+    supported_syncretize_operators: dict[
+        pydop.PyDoughExpressionOperator,
+        tuple[pydop.PyDoughExpressionOperator, pydop.PyDoughExpressionOperator],
+    ] = {
+        pydop.COUNT: (pydop.COUNT, pydop.SUM),
+        pydop.SUM: (pydop.SUM, pydop.SUM),
+        pydop.MIN: (pydop.MIN, pydop.MIN),
+        pydop.MAX: (pydop.MAX, pydop.MAX),
+        pydop.ANYTHING: (pydop.ANYTHING, pydop.MAX),
+    }
+    """
+    TODO
+    """
+
+    def extract_link_root_info(
+        self, parent: HybridTree, tree: HybridTree, is_agg: bool, child_idx: int
+    ) -> tuple[
+        list[tuple[HybridExpr, HybridExpr]] | None,
+        list[HybridExpr] | None,
+        HybridExpr | None,
+    ]:
+        """
+        TODO
+        """
+        join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
+        agg_keys: list[HybridExpr] | None = None
+        general_join_cond: HybridExpr | None = None
+        operation: HybridOperation = tree.pipeline[0]
+        match operation:
+            case HybridCollectionAccess():
+                if isinstance(operation.collection, TableCollection):
+                    join_keys = []
+                else:
+                    assert isinstance(operation.collection, SubCollection)
+                    sub_property: SubcollectionRelationshipMetadata = (
+                        operation.collection.subcollection_property
+                    )
+                    if isinstance(sub_property, SimpleJoinMetadata):
+                        # For a simple join access, populate the join
+                        # keys of the tree which will be bubbled
+                        # down throughout the entire child tree.
+                        assert parent is not None
+                        join_keys = HybridTranslator.get_subcollection_join_keys(
+                            sub_property,
+                            parent.pipeline[-1],
+                            operation,
+                        )
+                    elif isinstance(sub_property, GeneralJoinMetadata):
+                        general_join_cond = operation.general_condition
+                    else:
+                        join_keys = []
+            case HybridPartitionChild():
+                assert operation.subtree.agg_keys is not None
+                join_keys = []
+                for key in operation.subtree.agg_keys:
+                    join_keys.append((key, key))
+
+            case HybridPartition():
+                join_keys = []
+            case _:
+                raise NotImplementedError(f"{operation.__class__.__name__}")
+        if join_keys is not None:
+            # For a simple join, add the join keys to the child
+            # and make the RHS of those keys the agg keys.
+            agg_keys = [rhs_key for _, rhs_key in join_keys]
+        else:
+            # For a general join, instead use the general join
+            # condition. However, if an aggregate is being performed
+            # on the child, the aggregation keys are the uniqueness
+            # keys from the lhs of the join condition, which means
+            # a calculate must be added to the child that accesses
+            # those keys as correlated references, then uses those
+            # terms from the calculate in the agg keys.
+            if is_agg:
+                lhs_unique_keys: dict[str, HybridExpr] = {}
+                agg_keys = []
+                back_levels: int = 0
+                current_level: HybridTree | None = parent
+                # First, find the uniqueness keys from every level of
+                # the parent and add them to lhs_unique_keys as a
+                # correlated reference.
+                while current_level is not None:
+                    for expr in current_level.pipeline[-1].unique_exprs:
+                        key_name = f"key_{len(lhs_unique_keys)}"
+                        shifted_expr: HybridExpr | None = expr.shift_back(back_levels)
+                        assert shifted_expr is not None
+                        expr = HybridCorrelExpr(shifted_expr)
+                        lhs_unique_keys[key_name] = expr
+                    back_levels += 1
+                    current_level = current_level.parent
+                # Insert the calculate to access these correlated
+                # keys, then add references to the new terms to
+                # the agg keys.
+                new_calc: HybridOperation = HybridCalculate(
+                    tree.pipeline[-1], lhs_unique_keys, []
+                )
+                new_calc.is_hidden = True
+                tree.pipeline.append(new_calc)
+                for key_name, expr in lhs_unique_keys.items():
+                    agg_keys.append(HybridRefExpr(key_name, expr.typ))
+
+        return join_keys, agg_keys, general_join_cond
+
+    def make_extension_child(
+        self, child: HybridTree, levels_up: int, new_base: HybridTree
+    ) -> HybridTree:
+        """
+        TODO
+        """
+        if levels_up <= 0:
+            raise ValueError(f"Cannot make extension child with {levels_up} levels up")
+        if levels_up == 1:
+            assert child.parent is not None
+            child._join_keys, child._agg_keys, child._general_join_condition = (
+                self.extract_link_root_info(
+                    new_base, child, True, len(new_base.children)
+                )
+            )
+            child._parent = None
+            child._successor = None
+        else:
+            assert child.parent is not None
+            parent: HybridTree = self.make_extension_child(
+                child.parent, levels_up - 1, new_base
+            )
+            parent.add_successor(child)
+            child._successor = None
+        # TODO WRITE COMMENT
+        for operation in child.pipeline:
+            for term_name, term in operation.terms.items():
+                operation.terms[term_name] = term.squish_backrefs_into_correl(
+                    levels_up, new_base, len(new_base.children)
+                )
+            if isinstance(operation, HybridFilter):
+                operation.condition = operation.condition.squish_backrefs_into_correl(
+                    levels_up, new_base, len(new_base.children)
+                )
+            if isinstance(operation, HybridCalculate):
+                for term_name, term in operation.new_expressions.items():
+                    operation.new_expressions[term_name] = operation.terms[term_name]
+        return child
+
+    def can_syncretize_subtrees(
+        self, base_child: HybridConnection, extension_child: HybridConnection
+    ) -> tuple[bool, int]:
+        """
+        TODO
+        """
+        prefix_levels_up: int = 0
+        base_subtree: HybridTree = base_child.subtree
+        crawl_subtree: HybridTree = extension_child.subtree
+        while True:
+            if base_subtree.equalsIgnoringSuccessors(crawl_subtree):
+                break
+            if crawl_subtree.parent is None:
+                return False, -1
+            crawl_subtree = crawl_subtree.parent
+            prefix_levels_up += 1
+        return True, prefix_levels_up
+
+    def add_extension_semi_anti_count_filter(
+        self, tree: HybridTree, extension_idx: int, is_semi: bool
+    ) -> None:
+        """
+        TODO
+        """
+        extension_child: HybridConnection = tree.children[extension_idx]
+        agg_call: HybridFunctionExpr = HybridFunctionExpr(
+            pydop.COUNT, [], NumericType()
+        )
+        agg_name: str
+        if agg_call in extension_child.aggs.values():
+            agg_name = extension_child.fetch_agg_name(agg_call)
+        else:
+            agg_name = self.gen_agg_name(extension_child)
+            extension_child.aggs[agg_name] = agg_call
+        agg_ref: HybridExpr = HybridChildRefExpr(agg_name, extension_idx, NumericType())
+        literal_zero: HybridExpr = HybridLiteralExpr(Literal(0, NumericType()))
+        if not is_semi:
+            agg_ref = HybridFunctionExpr(
+                pydop.DEFAULT_TO, [agg_ref, literal_zero], BooleanType()
+            )
+        # Insert the new filter right after the required steps index,
+        # and update other children accordingly.
+        insert_idx: int = extension_child.required_steps + 1
+        tree.pipeline.insert(
+            insert_idx,
+            HybridFilter(
+                tree.pipeline[-1],
+                HybridFunctionExpr(
+                    pydop.GRT if is_semi else pydop.EQU,
+                    [agg_ref, literal_zero],
+                    BooleanType(),
+                ),
+            ),
+        )
+        for child in tree.children:
+            if child.required_steps > insert_idx:
+                child.required_steps += 1
+
+    def syncretize_agg_onto_agg(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
+        new_connection_type: ConnectionType = extension_child.connection_type
+
+        if extension_subtree.always_exists() and new_connection_type not in (
+            ConnectionType.SEMI,
+            ConnectionType.ANTI,
+        ):
+            new_connection_type = new_connection_type.reconcile_connection_types(
+                ConnectionType.SEMI
+            )
+        elif new_connection_type.is_semi or new_connection_type.is_anti:
+            # If the extension child does not always exist but the parent
+            # must not preserve non-matching records, then convert it to a
+            # regular aggregation and add a filter to the parent where COUNT
+            # is > 0, and allow this count to be split by the extension child.
+            # If the extension child is an anti join, do the same but with a
+            # COUNT() == 0 filter.
+            self.add_extension_semi_anti_count_filter(
+                tree, extension_idx, new_connection_type.is_semi
+            )
+            new_connection_type = ConnectionType.AGGREGATION
+
+        # If an aggregation is being added to a SEMI join, switch the SEMI
+        # join to an aggregation-only-match.
+        if base_child.connection_type == ConnectionType.SEMI:
+            base_child.connection_type = ConnectionType.AGGREGATION
+
+        required_steps: int = len(base_subtree.pipeline) - 1
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, required_steps
+        )
+        new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
+
+        idx: int = 0
+        for agg_name, agg in extension_child.aggs.items():
+            extension_op, base_op = self.supported_syncretize_operators[agg.operator]
+
+            # Insert the bottom aggregation call into the extension
+            extension_agg_name: str = self.gen_agg_name(extension_child)
+            extension_agg: HybridFunctionExpr = HybridFunctionExpr(
+                extension_op, agg.args, agg.typ
+            )
+            new_extension_child.aggs[extension_agg_name] = extension_agg
+
+            child_expr: HybridExpr = HybridChildRefExpr(
+                extension_agg_name, new_child_idx, extension_agg.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, idx == 0
+            )
+
+            # Insert the top aggregation call into the base
+            base_agg_name: str = self.gen_agg_name(base_child)
+            base_agg: HybridFunctionExpr = HybridFunctionExpr(
+                base_op, [switch_ref], agg.typ
+            )
+            base_child.aggs[base_agg_name] = base_agg
+
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                agg_name, extension_idx, agg.typ
+            )
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                base_agg_name, base_idx, agg.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+            idx += 1
+
+    def syncretize_agg_onto_singular(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
+        new_connection_type: ConnectionType = extension_child.connection_type
+
+        if (
+            extension_subtree.always_exists()
+            and new_connection_type != ConnectionType.SEMI
+        ):
+            new_connection_type = new_connection_type.reconcile_connection_types(
+                ConnectionType.SEMI
+            )
+        elif new_connection_type.is_semi:
+            # If the extension child does not always exist but the parent
+            # must not preserve non-matching records, then convert the
+            # base child into one that only preserves matches.
+            base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
+        # If an aggregation is being added to a SEMI join, switch the SEMI
+        # join to an aggregation-only-match.
+        if base_child.connection_type == ConnectionType.SEMI:
+            base_child.connection_type = ConnectionType.AGGREGATION
+
+        required_steps: int = len(base_subtree.pipeline) - 1
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, required_steps
+        )
+        new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
+
+        idx: int = 0
+        for agg_name, agg in extension_child.aggs.items():
+            # Insert the aggregation call into the new child
+            new_extension_child.aggs[agg_name] = agg
+
+            child_expr: HybridExpr = HybridChildRefExpr(
+                agg_name, new_child_idx, agg.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, idx == 0
+            )
+            assert isinstance(switch_ref, HybridRefExpr)
+
+            # Make a child reference to the reference to the aggregaiton call
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                agg_name, extension_idx, agg.typ
+            )
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                switch_ref.name, base_idx, agg.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+            idx += 1
+
+    def syncretize_singular_onto_singular(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
+        new_connection_type: ConnectionType = extension_child.connection_type
+
+        if extension_subtree.always_exists():
+            new_connection_type = new_connection_type.reconcile_connection_types(
+                ConnectionType.SEMI
+            )
+
+        # If a singular is being added to a SEMI join, switch the SEMI
+        # join to an singular-only-match.
+        if (
+            base_child.connection_type == ConnectionType.SEMI
+            and extension_child.connection_type != ConnectionType.SEMI
+        ):
+            base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
+
+        required_steps: int = len(base_subtree.pipeline) - 1
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, required_steps
+        )
+        base_subtree.children[new_child_idx]
+
+        # For every term in the extension child, add a child reference to pull
+        # it into the base child. Skip this step if the extension child is just
+        # a pure SEMI/ANTI join.
+        if new_connection_type in (ConnectionType.SEMI, ConnectionType.ANTI):
+            return
+        for idx, term_name in enumerate(sorted(extension_subtree.pipeline[-1].terms)):
+            old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
+            child_expr: HybridExpr = HybridChildRefExpr(
+                term_name, new_child_idx, old_term.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, idx == 0
+            )
+            assert isinstance(switch_ref, HybridRefExpr)
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                term_name, extension_idx, old_term.typ
+            )
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                switch_ref.name, base_idx, old_term.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+
+    def syncretize_singular_onto_agg(
+        self,
+        tree: HybridTree,
+        base_idx: int,
+        extension_idx: int,
+        extension_subtree: HybridTree,
+        remapping: dict[HybridExpr, HybridExpr],
+    ) -> None:
+        """
+        TODO
+        """
+        base_child: HybridConnection = tree.children[base_idx]
+        extension_child: HybridConnection = tree.children[extension_idx]
+        base_subtree: HybridTree = base_child.subtree
+
+        new_connection_type: ConnectionType = extension_child.connection_type
+
+        if extension_subtree.always_exists():
+            new_connection_type = new_connection_type.reconcile_connection_types(
+                ConnectionType.SEMI
+            )
+        elif new_connection_type.is_semi:
+            # If the extension child does not always exist but the parent
+            # must not preserve non-matching records, then convert it to a
+            # regular aggregation and add a filter to the parent where COUNT
+            # is > 0.
+            for term_name in sorted(extension_subtree.pipeline[-1].terms):
+                old_term: HybridExpr = extension_subtree.pipeline[-1].terms[term_name]
+                passthrough_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    pydop.ANYTHING,
+                    [HybridRefExpr(term_name, old_term.typ)],
+                    old_term.typ,
+                )
+                extension_child.aggs[term_name] = passthrough_agg
+            self.add_extension_semi_anti_count_filter(tree, extension_idx, True)
+            extension_child.connection_type = ConnectionType.AGGREGATION
+            self.syncretize_agg_onto_agg(
+                tree,
+                base_idx,
+                extension_idx,
+                extension_subtree,
+                remapping,
+            )
+            return
+
+        required_steps: int = len(base_subtree.pipeline) - 1
+        new_child_idx: int = base_subtree.add_child(
+            extension_subtree, new_connection_type, required_steps
+        )
+        base_subtree.children[new_child_idx]
+
+        for idx, term_name in enumerate(sorted(extension_subtree.pipeline[-1].terms)):
+            old_term = extension_subtree.pipeline[-1].terms[term_name]
+            # Insert a reference to the child into the base
+            child_expr: HybridExpr = HybridChildRefExpr(
+                term_name, new_child_idx, old_term.typ
+            )
+            switch_ref: HybridExpr = self.inject_expression(
+                base_subtree, child_expr, idx == 0
+            )
+
+            # Insert a pass-through aggregation call into the base, but
+            # explicitly use MAX to ensure any null records from the base
+            # are not chosen.
+            base_agg_name: str = self.gen_agg_name(base_child)
+            base_agg: HybridFunctionExpr = HybridFunctionExpr(
+                pydop.MAX, [switch_ref], old_term.typ
+            )
+            base_child.aggs[base_agg_name] = base_agg
+
+            old_child_ref: HybridExpr = HybridChildRefExpr(
+                term_name, extension_idx, old_term.typ
+            )
+            new_child_ref: HybridExpr = HybridChildRefExpr(
+                base_agg_name, base_idx, old_term.typ
+            )
+            remapping[old_child_ref] = new_child_ref
+
+    def syncretize_subtrees(
+        self, tree: HybridTree, base_idx: int, extension_idx: int, extension_height: int
+    ) -> bool:
+        """
+        TODO
+        """
+        remapping: dict[HybridExpr, HybridExpr] = {}
+        base_child: HybridConnection = tree.children[base_idx]
+        base_subtree: HybridTree = base_child.subtree
+        extension_child: HybridConnection = tree.children[extension_idx]
+        extension_subtree: HybridTree = self.make_extension_child(
+            copy.deepcopy(extension_child.subtree), extension_height, base_subtree
+        )
+
+        # ANTI are automatically syncretized since the base not being
+        # present implies the extension is not present, so we can just
+        # have the extension child be pruned without modifying the
+        # base.
+        if (
+            base_child.connection_type.is_anti
+            and extension_child.connection_type.is_anti
+        ):
+            return True
+
+        all_aggs_syncretizable: bool = all(
+            agg.operator in self.supported_syncretize_operators
+            for agg in extension_child.aggs.values()
+        )
+
+        # TODO: support syncretization when the extension is itself
+        # correlated to any of its children
+        if extension_subtree.contains_correlates():
+            return False
+
+        if extension_child.required_steps < base_child.required_steps:
+            if base_subtree.contains_correlates():
+                return False
+            base_child.required_steps = extension_child.required_steps
+
+        match (base_child.connection_type, extension_child.connection_type):
+            case (
+                (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION)
+                | (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION_ONLY_MATCH)
+                | (ConnectionType.AGGREGATION, ConnectionType.SEMI)
+                | (ConnectionType.AGGREGATION, ConnectionType.ANTI)
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.AGGREGATION)
+                | (
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                )
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.SEMI)
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.ANTI)
+                | (ConnectionType.SEMI, ConnectionType.AGGREGATION)
+                | (ConnectionType.SEMI, ConnectionType.AGGREGATION_ONLY_MATCH)
+            ):
+                if not all_aggs_syncretizable:
+                    return False
+                self.syncretize_agg_onto_agg(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                )
+            case (
+                (ConnectionType.SINGULAR, ConnectionType.SINGULAR)
+                | (ConnectionType.SINGULAR, ConnectionType.SINGULAR_ONLY_MATCH)
+                | (ConnectionType.SINGULAR, ConnectionType.SEMI)
+                | (ConnectionType.SINGULAR, ConnectionType.ANTI)
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.SINGULAR)
+                | (
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                )
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.SEMI)
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.ANTI)
+                | (ConnectionType.SEMI, ConnectionType.SINGULAR)
+                | (ConnectionType.SEMI, ConnectionType.SINGULAR_ONLY_MATCH)
+                | (ConnectionType.SEMI, ConnectionType.SEMI)
+            ):
+                self.syncretize_singular_onto_singular(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                )
+            case (
+                (ConnectionType.AGGREGATION, ConnectionType.SINGULAR)
+                | (ConnectionType.AGGREGATION, ConnectionType.SINGULAR_ONLY_MATCH)
+                | (ConnectionType.AGGREGATION_ONLY_MATCH, ConnectionType.SINGULAR)
+                | (
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                )
+            ):
+                self.syncretize_singular_onto_agg(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                )
+            case (
+                (ConnectionType.SINGULAR, ConnectionType.AGGREGATION)
+                | (ConnectionType.SINGULAR, ConnectionType.AGGREGATION_ONLY_MATCH)
+                | (ConnectionType.SINGULAR_ONLY_MATCH, ConnectionType.AGGREGATION)
+                | (
+                    ConnectionType.SINGULAR_ONLY_MATCH,
+                    ConnectionType.AGGREGATION_ONLY_MATCH,
+                )
+            ):
+                self.syncretize_agg_onto_singular(
+                    tree,
+                    base_idx,
+                    extension_idx,
+                    extension_subtree,
+                    remapping,
+                )
+            case _:
+                return False
+
+        for operation in tree.pipeline:
+            operation.replace_expressions(remapping)
+
+        return True
+
+    def syncretize_children(self, tree: HybridTree) -> None:
+        """
+        TODO
+        """
+        if tree.parent is not None:
+            self.syncretize_children(tree.parent)
+        syncretize_options: list[tuple[int, int, int, int]] = []
+        ignore_idx: int = -1
+        if isinstance(tree.pipeline[0], HybridChildPullUp):
+            ignore_idx = tree.pipeline[0].child_idx
+        for base_idx in range(len(tree.children)):
+            for extension_idx in range(len(tree.children)):
+                if extension_idx in (base_idx, ignore_idx):
+                    continue
+                can_syncretize, extension_height = self.can_syncretize_subtrees(
+                    tree.children[base_idx], tree.children[extension_idx]
+                )
+                if can_syncretize:
+                    total_height: int = 1
+                    subtree: HybridTree = tree.children[extension_idx].subtree
+                    while subtree.parent is not None:
+                        subtree = subtree.parent
+                        total_height += 1
+                    syncretize_options.append(
+                        (extension_height, -total_height, extension_idx, base_idx)
+                    )
+        children_to_delete: set[int] = set()
+        if len(syncretize_options) > 0:
+            syncretize_options.sort()
+            for extension_height, _, extension_idx, base_idx in syncretize_options:
+                if (
+                    extension_idx in children_to_delete
+                    or base_idx in children_to_delete
+                ):
+                    continue
+                success: bool = self.syncretize_subtrees(
+                    tree, base_idx, extension_idx, extension_height
+                )
+                if success:
+                    children_to_delete.add(extension_idx)
+            tree.remove_dead_children(children_to_delete)
+        for child in tree.children:
+            self.syncretize_children(child.subtree)  # t
