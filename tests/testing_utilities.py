@@ -1129,42 +1129,6 @@ class PyDoughPandasTest:
         pd.testing.assert_frame_equal(result, refsol)
 
 
-def run_e2e_test(
-    pydough_impl: Callable[[], UnqualifiedNode],
-    refsol: pd.DataFrame,
-    graph: GraphMetadata,
-    columns: dict[str, str] | list[str] | None = None,
-    database: DatabaseContext | None = None,
-    config: PyDoughConfigs | None = None,
-    fix_column_names: bool = False,
-    order_sensitive: bool = False,
-):
-    """
-    TODO
-    """
-    root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph)
-    call_kwargs: dict = {}
-    if graph is not None:
-        call_kwargs["metadata"] = graph
-    if config is not None:
-        call_kwargs["config"] = config
-    if database is not None:
-        call_kwargs["database"] = database
-    if columns is not None:
-        call_kwargs["columns"] = columns
-    result: pd.DataFrame = to_df(root, **call_kwargs)
-    # If the query does not care about column names, update the answer to use
-    # the column names in the refsol.
-    if fix_column_names:
-        assert len(result.columns) == len(refsol.columns)
-        result.columns = refsol.columns
-    # If the query is not order-sensitive, sort the DataFrames before comparison
-    if not order_sensitive:
-        result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
-        refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
-    pd.testing.assert_frame_equal(result, refsol)
-
-
 def run_e2e_error_test(
     pydough_impl: Callable[[], UnqualifiedNode],
     error_message: str,

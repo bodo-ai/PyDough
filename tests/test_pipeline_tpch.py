@@ -6,7 +6,6 @@ from collections.abc import Callable
 
 import pytest
 
-from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
@@ -276,7 +275,6 @@ def pydough_pipeline_tpch_test_data(request) -> PyDoughPandasTest:
 def test_pipeline_until_relational_tpch(
     pydough_pipeline_tpch_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
