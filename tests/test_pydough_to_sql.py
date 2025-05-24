@@ -31,6 +31,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     time_threshold_reached,
     transaction_week_sampler,
     week_offset,
+    window_sliding_frame_relsize,
+    window_sliding_frame_relsum,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -170,6 +172,18 @@ def test_pydough_to_sql_tpch(
             "time_threshold_reached",
             "Broker",
             id="time_threshold_reached",
+        ),
+        pytest.param(
+            window_sliding_frame_relsize,
+            "window_sliding_frame_relsize",
+            "Broker",
+            id="window_sliding_frame_relsize",
+        ),
+        pytest.param(
+            window_sliding_frame_relsum,
+            "window_sliding_frame_relsum",
+            "Broker",
+            id="window_sliding_frame_relsum",
         ),
     ],
 )

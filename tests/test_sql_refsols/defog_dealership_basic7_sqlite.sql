@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(payment_amount) AS agg_0,
+    COUNT() AS agg_1,
     payment_method
   FROM main.payments_received
   GROUP BY

@@ -1,7 +1,7 @@
 WITH _t2 AS (
   SELECT
-    orders.o_orderdate AS order_date,
     orders.o_orderkey AS key,
+    orders.o_orderdate AS order_date,
     orders.o_orderpriority AS order_priority
   FROM tpch.orders AS orders
   WHERE

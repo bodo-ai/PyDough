@@ -681,6 +681,64 @@ def time_threshold_reached():
     )
 
 
+def window_sliding_frame_relsize():
+    return customers.transactions_made.CALCULATE(
+        transaction_id,
+        w1=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(-4, 0)),
+        w2=RELSIZE(
+            by=(date_time.ASC(), transaction_id.ASC()), frame=(-4, 0), per="customers"
+        ),
+        w3=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(0, None)),
+        w4=RELSIZE(
+            by=(date_time.ASC(), transaction_id.ASC()), frame=(0, None), per="customers"
+        ),
+        w5=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(None, -1)),
+        w6=RELSIZE(
+            by=(date_time.ASC(), transaction_id.ASC()),
+            frame=(None, -1),
+            per="customers",
+        ),
+        w7=RELSIZE(by=(date_time.ASC(), transaction_id.ASC()), frame=(-3, 5)),
+        w8=RELSIZE(
+            by=(date_time.ASC(), transaction_id.ASC()), frame=(-3, 5), per="customers"
+        ),
+    ).TOP_K(8, by=date_time.ASC())
+
+
+def window_sliding_frame_relsum():
+    return customers.transactions_made.CALCULATE(
+        transaction_id,
+        w1=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(0, 4)),
+        w2=RELSUM(
+            shares,
+            by=(date_time.ASC(), transaction_id.ASC()),
+            frame=(0, 4),
+            per="customers",
+        ),
+        w3=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(0, None)),
+        w4=RELSUM(
+            shares,
+            by=(date_time.ASC(), transaction_id.ASC()),
+            frame=(0, None),
+            per="customers",
+        ),
+        w5=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(None, 1)),
+        w6=RELSUM(
+            shares,
+            by=(date_time.ASC(), transaction_id.ASC()),
+            frame=(None, 1),
+            per="customers",
+        ),
+        w7=RELSUM(shares, by=(date_time.ASC(), transaction_id.ASC()), frame=(-5, -1)),
+        w8=RELSUM(
+            shares,
+            by=(date_time.ASC(), transaction_id.ASC()),
+            frame=(-5, -1),
+            per="customers",
+        ),
+    ).TOP_K(8, by=date_time.ASC())
+
+
 def supplier_pct_national_qty():
     # Find the 5 African suppliers with the highest percentage of total
     # quantity of product shipped from them out of all suppliers in that nation

@@ -400,7 +400,8 @@ def test_pipeline_until_relational_epoch(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into relational plans.
     """
-    unqualified_impl, file_name, _ = pydough_pipeline_test_data_epoch
+    unqualified_impl, test_name, _ = pydough_pipeline_test_data_epoch
+    file_name: str = f"epoch_{test_name}"
     file_path: str = get_plan_test_filename(file_name)
     graph: GraphMetadata = get_sample_graph("Epoch")
     UnqualifiedRoot(graph)

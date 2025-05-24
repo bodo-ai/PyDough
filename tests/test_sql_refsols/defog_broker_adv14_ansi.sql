@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
-    COUNT(sbdpclose) AS expr_1,
     SUM(sbdpclose) AS expr_0,
+    COUNT(sbdpclose) AS expr_1,
     sbdptickerid AS ticker_id
   FROM main.sbdailyprice
   WHERE

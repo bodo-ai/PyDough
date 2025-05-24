@@ -89,6 +89,10 @@ from .test_pydough_functions.bad_pydough_functions import (
     bad_window_4,
     bad_window_5,
     bad_window_6,
+    bad_window_7,
+    bad_window_8,
+    bad_window_9,
+    bad_window_10,
 )
 
 
@@ -616,13 +620,37 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_5,
-            "The `cumulative` argument to `RELSUM` must be True when the `by` argument is provided",
+            "When the `by` argument to `RELSUM` is provided, either `cumulative=True` or the `frame` argument must be provided",
             id="bad_window_5",
         ),
         pytest.param(
             bad_window_6,
             "The `by` argument to `RELAVG` must be provided when the `cumulative` argument is True",
             id="bad_window_6",
+        ),
+        pytest.param(
+            bad_window_7,
+            "The `by` argument to `RELCOUNT` must be provided when the `frame` argument is provided",
+            id="bad_window_7",
+        ),
+        pytest.param(
+            bad_window_8,
+            "The `cumulative` argument to `RELSIZE` cannot be used with the `frame` argument",
+            id="bad_window_8",
+        ),
+        pytest.param(
+            bad_window_9,
+            re.escape(
+                "Malformed `frame` argument to `RELSUM`: (-10.5, 0) (must be a tuple of two integers or None values)"
+            ),
+            id="bad_window_9",
+        ),
+        pytest.param(
+            bad_window_10,
+            re.escape(
+                "Malformed `frame` argument to `RELSUM`: (0, -1) (lower bound must be less than or equal to upper bound)"
+            ),
+            id="bad_window_10",
         ),
         pytest.param(
             bad_floor,

@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    ANY_VALUE(seasons.s_name) AS season_name,
-    COUNT() AS n_events
+    COUNT() AS n_events,
+    ANY_VALUE(seasons.s_name) AS season_name
   FROM seasons AS seasons
   JOIN events AS events
     ON seasons.s_month1 = EXTRACT(MONTH FROM events.ev_dt)

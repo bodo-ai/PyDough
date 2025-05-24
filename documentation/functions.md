@@ -1086,8 +1086,16 @@ The `RELSUM` function returns the sum of multiple rows of a singular expression 
 
 - `expression`: the singular expression to take the sum of across multiple rows.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
-- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
-- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the sum of all of the data in the context, returns the cumulative sum of all rows up to and including the current row when sorted according to the keys in the `by` argument.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True or `frame` is provided.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the sum of all of the data in the context, returns the cumulative sum of all rows up to and including the current row when sorted according to the keys in the `by` argument. This argument cannot be provided if `frame` is also provided.
+- `frame` (optional): optional argument that, if provided, must be a tuple of two values `(lower, upper)`, where each value is either an integer literal or None. This argument can only be provided if the `by` argument is also provided. If provided, it means the relative sum is performed on a subset of the selected records based on the values of `lower` and `upper` when sorted according to the keys in the `by` argument:
+   - If `lower` is None, then all of the records from the beginning until the records specified by `upper` are included.
+   - If `upper` is None, then all of the records from the records specified by `lower` until the end are included.
+   - If `lower` and `upper` are integers, these integers specify which record they refer to, relative to the current record:
+      - `-n`: `n` **BEFORE** the current record.
+      - 0: the current record.
+      - `+n`: `n` **AFTER** the current record.
+   - For example, `frame=(-10, 3)` would take the sum of the value from the current record, the 10 before it, and the 3 after it.
 
 For example:
 
@@ -1103,6 +1111,10 @@ Nations.customers.CALCULATE(ratio=acctbal / RELSUM(acctbal, per="Nations"))
 # Finds, for each customer, the wealth of that customer combined with all
 # poorer customers.
 Customers.CALCULATE(cumulative_wealth=RELSUM(acctbal, by=acctbal.ASC(), cumulative=True))
+
+# Finds, for each customer's orders, the sum of the total price of that
+# order and the two most recent orders before it.
+Customers.orders.CALCULATE(sliding_sum=RELSUM(total_price, by=order_date.ASC(), per="Customers", frame=(-2, 0)))
 ```
 
 
@@ -1114,8 +1126,16 @@ The `RELAVG` function returns the average of multiple rows of a singular express
 
 - `expression`: the singular expression to take the average of across multiple rows.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
-- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
-- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the average of all of the data in the context, returns the cumulative average of all rows up to and including the current row when sorted according to the keys in the `by` argument.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True or `frame` is provided.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the average of all of the data in the context, returns the cumulative average of all rows up to and including the current row when sorted according to the keys in the `by` argument. This argument cannot be provided if `frame` is also provided.
+- `frame` (optional): optional argument that, if provided, must be a tuple of two values `(lower, upper)`, where each value is either an integer literal or None. This argument can only be provided if the `by` argument is also provided. If provided, it means the relative average is performed on a subset of the selected records based on the values of `lower` and `upper` when sorted according to the keys in the `by` argument:
+   - If `lower` is None, then all of the records from the beginning until the records specified by `upper` are included.
+   - If `upper` is None, then all of the records from the records specified by `lower` until the end are included.
+   - If `lower` and `upper` are integers, these integers specify which record they refer to, relative to the current record:
+      - `-n`: `n` **BEFORE** the current record.
+      - 0: the current record.
+      - `+n`: `n` **AFTER** the current record.
+   - For example, `frame=(1, None)` would take the average of the value from all records after the current record (not including the current record).
 
 ```py
 # Finds all customers whose account balance is above the global average of all
@@ -1129,6 +1149,11 @@ Nations.customers.WHERE(acctbal > RELAVG(acctbal, per="Nations"))
 # Finds the cumulative average of the total price of orders when sorted by
 # order date (breaking ties by the order key).
 Orders.CALCULATE(average_price_so_far=RELAVG(total_price, by=(order_date.ASC(), key.ASC()), cumulative=True))
+
+# For each order, finds the average of the total price of that order and the 5
+# orders before/after it when sorted by order date (breaking ties by the order
+# key).
+Orders.CALCULATE(window_average=RELAVG(total_price, by=(order_date.ASC(), key.ASC()), frame=(-5, 5)))
 ```
 
 
@@ -1140,8 +1165,16 @@ The `RELCOUNT` function returns the number of non-null records in multiple rows 
 
 - `expression`: the singular expression to count the number of non-null entries across multiple rows.
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
-- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
-- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the count of all of the data in the context, returns the cumulative count of all rows up to and including the current row when sorted according to the keys in the `by` argument.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True or `frame` is provided.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the count of all of the data in the context, returns the cumulative count of all rows up to and including the current row when sorted according to the keys in the `by` argument. This argument cannot be provided if `frame` is also provided.
+- `frame` (optional): optional argument that, if provided, must be a tuple of two values `(lower, upper)`, where each value is either an integer literal or None. This argument can only be provided if the `by` argument is also provided. If provided, it means the relative count is performed on a subset of the selected records based on the values of `lower` and `upper` when sorted according to the keys in the `by` argument:
+   - If `lower` is None, then all of the records from the beginning until the records specified by `upper` are included.
+   - If `upper` is None, then all of the records from the records specified by `lower` until the end are included.
+   - If `lower` and `upper` are integers, these integers specify which record they refer to, relative to the current record:
+      - `-n`: `n` **BEFORE** the current record.
+      - 0: the current record.
+      - `+n`: `n` **AFTER** the current record.
+   - For example, `frame=(None, 0)` would take the count of the value from all records before the current record, including the current record (same effect as `cumulative=True`).
 
 
 ```py
@@ -1156,6 +1189,10 @@ Nations.customers.CALCULATE(ratio = acctbal / RELCOUNT(KEEP_IF(acctbal, acctbal 
 # For each customer, count how many customers are poorer than them but are not
 # in debt.
 Customers.CALCULATE(n_poorer_non_debt=RELCOUNT(KEEP_IF(acctbal, acctbal >= 0), by=(acctbal.ASC()), cumulative=True) - (acctbal >= 0))
+
+# Same as previous example, but using frames to exclude the current record
+# instead of subtracting (acctbal >= 0)
+Customers.CALCULATE(n_poorer_non_debt=RELCOUNT(KEEP_IF(acctbal, acctbal >= 0), by=(acctbal.ASC()), frame=(None, -1)))
 ```
 
 
@@ -1163,11 +1200,19 @@ Customers.CALCULATE(n_poorer_non_debt=RELCOUNT(KEEP_IF(acctbal, acctbal >= 0), b
 
 ### RELSIZE
 
-The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection rows per some ancestor collection. The arguments:
+The `RELSIZE` function returns the number of total records, either globally or the number of sub-collection records per some ancestor collection. The arguments:
 
 - `per` (optional): optional argument (default `None`) for the same `per` argument as all other window functions.
-- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True.
-- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the number rows in the context, returns the cumulative number of rows up to and including the current row when sorted according to the keys in the `by` argument.
+- `by` (optional): 1+ collation values, either as a single expression or an iterable of expressions, used to order the records of the current context. Can only be provided if `cumulative` is True or `frame` is provided.
+- `cumulative` (optional): optional argument (default `False`) that can only be `True` if the `by` argument is provided. If `True`, then instead of returning the number records in the context, returns the cumulative number of records up to and including the current row when sorted according to the keys in the `by` argument. This argument cannot be provided if `frame` is also provided.
+- `frame` (optional): optional argument that, if provided, must be a tuple of two values `(lower, upper)`, where each value is either an integer literal or None. This argument can only be provided if the `by` argument is also provided. If provided, it means the relative size is performed on a subset of the selected records based on the values of `lower` and `upper` when sorted according to the keys in the `by` argument:
+   - If `lower` is None, then all of the records from the beginning until the records specified by `upper` are included.
+   - If `upper` is None, then all of the records from the records specified by `lower` until the end are included.
+   - If `lower` and `upper` are integers, these integers specify which record they refer to, relative to the current record:
+      - `-n`: `n` **BEFORE** the current record.
+      - 0: the current record.
+      - `+n`: `n` **AFTER** the current record.
+   - For example, `frame=(-10, -1)` would count how many records are before the current record, capped at 10.
 
 
 ```py
@@ -1181,6 +1226,10 @@ Nations.customers.CALCULATE(ratio = acctbal / RELSIZE(per="Nations"))
 
 # For each customer, returns the number of customers poorer than them.
 Customers.CALCULATE(customers_poorer=RELSIZE(by=(acctbal.ASC()), cumulative=True) - 1)
+
+# For each customer's orders, count how many orders the customer made AFTER the
+# current order.
+Customers.orders.CALCULATE(n_orders_after=RELSIZE(by=(order_date.ASC(), key.ASC()), frame=(1, None)))
 ```
 
 

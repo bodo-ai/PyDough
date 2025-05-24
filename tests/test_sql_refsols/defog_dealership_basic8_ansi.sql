@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(sale_price) AS agg_0,
+    COUNT() AS agg_1,
     car_id
   FROM main.sales
   GROUP BY

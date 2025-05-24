@@ -7,8 +7,8 @@ WITH _s3 AS (
     in_device_id
 ), _t0 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(COALESCE(_s3.agg_0, 0)) AS agg_0,
+    COUNT() AS agg_1,
     products.pr_brand AS brand
   FROM main.devices AS devices
   JOIN main.products AS products
