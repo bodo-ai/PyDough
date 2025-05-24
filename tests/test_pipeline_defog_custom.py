@@ -60,11 +60,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     window_sliding_frame_relsum,
     years_months_days_hours_datediff,
 )
-from tests.testing_utilities import (
-    graph_fetcher,
-)
 
-from .testing_utilities import PyDoughPandasTest, run_e2e_error_test
+from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
 # Helper functions for week calculations

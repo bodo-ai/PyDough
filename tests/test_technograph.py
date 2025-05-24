@@ -26,9 +26,8 @@ from tests.test_pydough_functions.technograph_pydough_functions import (
     year_cumulative_incident_rate_goldcopperstar,
     year_cumulative_incident_rate_overall,
 )
-from tests.testing_utilities import graph_fetcher
 
-from .testing_utilities import PyDoughPandasTest
+from .testing_utilities import PyDoughPandasTest, graph_fetcher
 
 
 @pytest.fixture(
