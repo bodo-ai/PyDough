@@ -363,7 +363,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
     ],
 )
-def pydough_pipeline_test_data_epoch(request) -> PyDoughPandasTest:
+def epoch_pipeline_test_data(request) -> PyDoughPandasTest:
     """
     Test data for e2e tests using epoch test data. Returns an instance of
     PyDoughPandasTest containing information about the test.
@@ -372,7 +372,7 @@ def pydough_pipeline_test_data_epoch(request) -> PyDoughPandasTest:
 
 
 def test_pipeline_until_relational_epoch(
-    pydough_pipeline_test_data_epoch: PyDoughPandasTest,
+    epoch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
@@ -381,14 +381,14 @@ def test_pipeline_until_relational_epoch(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into relational plans.
     """
-    file_path: str = get_plan_test_filename(pydough_pipeline_test_data_epoch.test_name)
-    pydough_pipeline_test_data_epoch.run_relational_test(
+    file_path: str = get_plan_test_filename(epoch_pipeline_test_data.test_name)
+    epoch_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
     )
 
 
 def test_pipeline_until_sql_epoch(
-    pydough_pipeline_test_data_epoch: PyDoughPandasTest,
+    epoch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
@@ -399,9 +399,9 @@ def test_pipeline_until_sql_epoch(
     into SQL text.
     """
     file_path: str = get_sql_test_filename(
-        pydough_pipeline_test_data_epoch.test_name, empty_context_database.dialect
+        epoch_pipeline_test_data.test_name, empty_context_database.dialect
     )
-    pydough_pipeline_test_data_epoch.run_sql_test(
+    epoch_pipeline_test_data.run_sql_test(
         get_sample_graph,
         file_path,
         update_tests,
@@ -411,7 +411,7 @@ def test_pipeline_until_sql_epoch(
 
 @pytest.mark.execute
 def test_pipeline_e2e_epoch(
-    pydough_pipeline_test_data_epoch: PyDoughPandasTest,
+    epoch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_epoch_connection: DatabaseContext,
 ):
@@ -419,7 +419,7 @@ def test_pipeline_e2e_epoch(
     Test executing the the custom queries with the custom epoch dataset against
     the refsol DataFrame.
     """
-    pydough_pipeline_test_data_epoch.run_e2e_test(
+    epoch_pipeline_test_data.run_e2e_test(
         get_sample_graph,
         sqlite_epoch_connection,
     )

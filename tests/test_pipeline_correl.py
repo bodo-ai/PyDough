@@ -772,7 +772,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
     ],
 )
-def pydough_pipeline_correl_test_data(request) -> PyDoughPandasTest:
+def correl_pipeline_test_data(request) -> PyDoughPandasTest:
     """
     Test data for e2e tests for the correlation test queries run on TPC-H data.
     Returns an instance of PyDoughPandasTest containing information about the
@@ -782,7 +782,7 @@ def pydough_pipeline_correl_test_data(request) -> PyDoughPandasTest:
 
 
 def test_pipeline_until_relational_correlated(
-    pydough_pipeline_correl_test_data: PyDoughPandasTest,
+    correl_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
@@ -792,21 +792,19 @@ def test_pipeline_until_relational_correlated(
     qualified DAG version, with the correct string representation. Run on the
     various correlation test queries.
     """
-    file_path: str = get_plan_test_filename(pydough_pipeline_correl_test_data.test_name)
-    pydough_pipeline_correl_test_data.run_relational_test(
+    file_path: str = get_plan_test_filename(correl_pipeline_test_data.test_name)
+    correl_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
     )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_correlated(
-    pydough_pipeline_correl_test_data: PyDoughPandasTest,
+    correl_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
 ):
     """
     Test executing the TPC-H queries from the original code generation.
     """
-    pydough_pipeline_correl_test_data.run_e2e_test(
-        get_sample_graph, sqlite_tpch_db_context
-    )
+    correl_pipeline_test_data.run_e2e_test(get_sample_graph, sqlite_tpch_db_context)

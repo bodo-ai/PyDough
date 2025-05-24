@@ -1360,9 +1360,7 @@ def get_day_of_week(
         ),
     ],
 )
-def custom_defog_test_data(
-    request,
-) -> PyDoughPandasTest:
+def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
     """
     Test data for e2e tests on custom queries using the defog.ai databases.
     Returns an instance of PyDoughPandasTest containing information about the
@@ -1372,7 +1370,7 @@ def custom_defog_test_data(
 
 
 def test_pipeline_until_relational_defog(
-    custom_defog_test_data: PyDoughPandasTest,
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
@@ -1382,13 +1380,15 @@ def test_pipeline_until_relational_defog(
     qualified DAG version, with the correct string representation. Run on
     custom questions using the defog.ai schemas.
     """
-    file_path: str = get_plan_test_filename(custom_defog_test_data.test_name)
-    custom_defog_test_data.run_relational_test(defog_graphs, file_path, update_tests)
+    file_path: str = get_plan_test_filename(defog_custom_pipeline_test_data.test_name)
+    defog_custom_pipeline_test_data.run_relational_test(
+        defog_graphs, file_path, update_tests
+    )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_defog_custom(
-    custom_defog_test_data: PyDoughPandasTest,
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
@@ -1398,7 +1398,7 @@ def test_pipeline_e2e_defog_custom(
     same database connector. Run on custom questions using the defog.ai
     schemas.
     """
-    custom_defog_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection)
+    defog_custom_pipeline_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection)
 
 
 @pytest.mark.parametrize(

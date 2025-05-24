@@ -435,7 +435,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
     ],
 )
-def pydough_pipeline_test_data_technograph(request) -> PyDoughPandasTest:
+def technograph_pipeline_test_data(request) -> PyDoughPandasTest:
     """
     Test data for e2e tests using technograph test data. Returns an
     instance of PyDoughPandasTest containing information about the test.
@@ -444,7 +444,7 @@ def pydough_pipeline_test_data_technograph(request) -> PyDoughPandasTest:
 
 
 def test_pipeline_until_relational_technograph(
-    pydough_pipeline_test_data_technograph: PyDoughPandasTest,
+    technograph_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
@@ -453,16 +453,14 @@ def test_pipeline_until_relational_technograph(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into relational plans.
     """
-    file_path: str = get_plan_test_filename(
-        pydough_pipeline_test_data_technograph.test_name
-    )
-    pydough_pipeline_test_data_technograph.run_relational_test(
+    file_path: str = get_plan_test_filename(technograph_pipeline_test_data.test_name)
+    technograph_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
     )
 
 
 def test_pipeline_until_sql_technograph(
-    pydough_pipeline_test_data_technograph: PyDoughPandasTest,
+    technograph_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
     defog_config: PyDoughConfigs,
@@ -474,17 +472,17 @@ def test_pipeline_until_sql_technograph(
     into SQL text.
     """
     file_path: str = get_sql_test_filename(
-        pydough_pipeline_test_data_technograph.test_name,
+        technograph_pipeline_test_data.test_name,
         empty_context_database.dialect,
     )
-    pydough_pipeline_test_data_technograph.run_sql_test(
+    technograph_pipeline_test_data.run_sql_test(
         get_sample_graph, file_path, update_tests, empty_context_database
     )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_technograph(
-    pydough_pipeline_test_data_technograph: PyDoughPandasTest,
+    technograph_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_technograph_connection: DatabaseContext,
 ):
@@ -492,6 +490,6 @@ def test_pipeline_e2e_technograph(
     Test executing the the custom queries with the custom technograph dataset
     against the refsol DataFrame.
     """
-    pydough_pipeline_test_data_technograph.run_e2e_test(
+    technograph_pipeline_test_data.run_e2e_test(
         get_sample_graph, sqlite_technograph_connection
     )

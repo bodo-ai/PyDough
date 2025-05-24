@@ -264,7 +264,7 @@ from .testing_utilities import PyDoughPandasTest
         ),
     ],
 )
-def pydough_pipeline_tpch_test_data(request) -> PyDoughPandasTest:
+def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
     """
     Test data for e2e tests for the 22 TPC-H queries. Returns an instance of
     PyDoughPandasTest containing information about the test.
@@ -273,7 +273,7 @@ def pydough_pipeline_tpch_test_data(request) -> PyDoughPandasTest:
 
 
 def test_pipeline_until_relational_tpch(
-    pydough_pipeline_tpch_test_data: PyDoughPandasTest,
+    tpch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
@@ -283,14 +283,14 @@ def test_pipeline_until_relational_tpch(
     qualified DAG version, with the correct string representation. Run on the
     22 TPC-H queries.
     """
-    file_path: str = get_plan_test_filename(pydough_pipeline_tpch_test_data.test_name)
-    pydough_pipeline_tpch_test_data.run_relational_test(
+    file_path: str = get_plan_test_filename(tpch_pipeline_test_data.test_name)
+    tpch_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
     )
 
 
 def test_pipeline_until_sql_tpch(
-    pydough_pipeline_tpch_test_data: PyDoughPandasTest,
+    tpch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
@@ -300,23 +300,23 @@ def test_pipeline_until_sql_tpch(
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
     file_path: str = get_sql_test_filename(
-        pydough_pipeline_tpch_test_data.test_name, empty_context_database.dialect
+        tpch_pipeline_test_data.test_name, empty_context_database.dialect
     )
-    pydough_pipeline_tpch_test_data.run_sql_test(
+    tpch_pipeline_test_data.run_sql_test(
         get_sample_graph, file_path, update_tests, empty_context_database
     )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_tpch(
-    pydough_pipeline_tpch_test_data: PyDoughPandasTest,
+    tpch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
 ):
     """
     Test executing the TPC-H queries from the original code generation.
     """
-    pydough_pipeline_tpch_test_data.run_e2e_test(
+    tpch_pipeline_test_data.run_e2e_test(
         get_sample_graph,
         sqlite_tpch_db_context,
     )

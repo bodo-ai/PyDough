@@ -1101,7 +1101,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
     ],
 )
-def defog_test_data(
+def defog_pipeline_test_data(
     request,
 ) -> PyDoughSQLComparisonTest:
     """
@@ -1112,7 +1112,7 @@ def defog_test_data(
 
 
 def test_defog_until_sql(
-    defog_test_data: PyDoughSQLComparisonTest,
+    defog_pipeline_test_data: PyDoughSQLComparisonTest,
     defog_graphs: graph_fetcher,
     empty_context_database: DatabaseContext,
     defog_config: PyDoughConfigs,
@@ -1122,9 +1122,11 @@ def test_defog_until_sql(
     """
     Tests the conversion of the defog analytical questions to SQL.
     """
-    unqualified_impl: Callable[[], UnqualifiedNode] = defog_test_data.pydough_function
-    graph_name: str = defog_test_data.graph_name
-    test_name: str = defog_test_data.test_name
+    unqualified_impl: Callable[[], UnqualifiedNode] = (
+        defog_pipeline_test_data.pydough_function
+    )
+    graph_name: str = defog_pipeline_test_data.graph_name
+    test_name: str = defog_pipeline_test_data.test_name
     file_name: str = f"defog_{test_name}"
     file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
     graph: GraphMetadata = defog_graphs(graph_name)
@@ -1148,7 +1150,7 @@ def test_defog_until_sql(
 
 @pytest.mark.execute
 def test_defog_e2e(
-    defog_test_data: PyDoughSQLComparisonTest,
+    defog_pipeline_test_data: PyDoughSQLComparisonTest,
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
     defog_config: PyDoughConfigs,
@@ -1158,4 +1160,6 @@ def test_defog_e2e(
     comparing against the result of running the reference SQL query text on the
     same database connector. Run on the defog.ai queries.
     """
-    defog_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection, defog_config)
+    defog_pipeline_test_data.run_e2e_test(
+        defog_graphs, sqlite_defog_connection, defog_config
+    )
