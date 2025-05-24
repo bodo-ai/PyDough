@@ -38,7 +38,7 @@ from .testing_utilities import PyDoughPandasTest
                 global_incident_rate,
                 "TechnoGraph",
                 lambda: pd.DataFrame({"ir": [2.41]}),
-                "global_incident_rate",
+                "technograph_global_incident_rate",
             ),
             id="global_incident_rate",
         ),
@@ -57,7 +57,7 @@ from .testing_utilities import PyDoughPandasTest
                         "ir": [2.58, 2.58, 2.23, 2.39],
                     }
                 ),
-                "incident_rate_per_brand",
+                "technograph_incident_rate_per_brand",
             ),
             id="incident_rate_per_brand",
         ),
@@ -91,7 +91,7 @@ from .testing_utilities import PyDoughPandasTest
                         "ir": [15.80, 15.08, 13.19, 12.63, 11.95],
                     }
                 ),
-                "most_unreliable_products",
+                "technograph_most_unreliable_products",
             ),
             id="most_unreliable_products",
         ),
@@ -131,7 +131,7 @@ from .testing_utilities import PyDoughPandasTest
                         ],
                     }
                 ),
-                "incident_rate_by_release_year",
+                "technograph_incident_rate_by_release_year",
             ),
             id="incident_rate_by_release_year",
         ),
@@ -145,7 +145,7 @@ from .testing_utilities import PyDoughPandasTest
                         "ir": [14.0, 19.4, 18.5, 5.0, 14.17, 22.5],
                     }
                 ),
-                "error_rate_sun_set_by_factory_country",
+                "technograph_error_rate_sun_set_by_factory_country",
             ),
             id="error_rate_sun_set_by_factory_country",
         ),
@@ -181,7 +181,7 @@ from .testing_utilities import PyDoughPandasTest
                         ],
                     }
                 ),
-                "error_percentages_sun_set_by_error",
+                "technograph_error_percentages_sun_set_by_error",
             ),
             id="error_percentages_sun_set_by_error",
         ),
@@ -202,7 +202,7 @@ from .testing_utilities import PyDoughPandasTest
                         "ir": [17.0, 15.57, 15.0, 15.0, 14.43],
                     }
                 ),
-                "battery_failure_rates_anomalies",
+                "technograph_battery_failure_rates_anomalies",
             ),
             id="battery_failure_rates_anomalies",
         ),
@@ -218,7 +218,7 @@ from .testing_utilities import PyDoughPandasTest
                         "user_ir": [2.45, 3.20, 2.48, 1.56, 2.09, 1.91],
                     }
                 ),
-                "country_incident_rate_analysis",
+                "technograph_country_incident_rate_analysis",
             ),
             id="country_incident_rate_analysis",
         ),
@@ -278,7 +278,7 @@ from .testing_utilities import PyDoughPandasTest
                         "incidents": [0, 0, 1, 1, 0, 1, 5, 9, 2, 5, 1, 7, 3],
                     }
                 ),
-                "year_cumulative_incident_rate_goldcopperstar",
+                "technograph_year_cumulative_incident_rate_goldcopperstar",
             ),
             id="year_cumulative_incident_rate_goldcopperstar",
         ),
@@ -344,7 +344,7 @@ from .testing_utilities import PyDoughPandasTest
                         ],
                     }
                 ),
-                "year_cumulative_incident_rate_overall",
+                "technograph_year_cumulative_incident_rate_overall",
             ),
             id="year_cumulative_incident_rate_overall",
         ),
@@ -358,7 +358,7 @@ from .testing_utilities import PyDoughPandasTest
                         "n_purchases": [25],
                     }
                 ),
-                "hot_purchase_window",
+                "technograph_hot_purchase_window",
             ),
             id="hot_purchase_window",
         ),
@@ -373,7 +373,7 @@ from .testing_utilities import PyDoughPandasTest
                         "ir": [5.46, 5.27, 4.63, 4.07, 4.02],
                     }
                 ),
-                "country_combination_analysis",
+                "technograph_country_combination_analysis",
             ),
             id="country_combination_analysis",
         ),
@@ -387,7 +387,7 @@ from .testing_utilities import PyDoughPandasTest
                         "n_other_countries": [6] * 6,
                     }
                 ),
-                "country_cartesian_oddball",
+                "technograph_country_cartesian_oddball",
             ),
             id="country_cartesian_oddball",
         ),
@@ -430,7 +430,7 @@ from .testing_utilities import PyDoughPandasTest
                         ],
                     }
                 ),
-                "monthly_incident_rate",
+                "technograph_monthly_incident_rate",
             ),
             id="monthly_incident_rate",
         ),
@@ -455,7 +455,7 @@ def test_pipeline_until_relational_technograph(
     into relational plans.
     """
     file_path: str = get_plan_test_filename(
-        f"technograph_{pydough_pipeline_test_data_technograph.test_name}"
+        pydough_pipeline_test_data_technograph.test_name
     )
     pydough_pipeline_test_data_technograph.run_relational_test(
         get_sample_graph, file_path, update_tests
@@ -475,7 +475,7 @@ def test_pipeline_until_sql_technograph(
     into SQL text.
     """
     file_path: str = get_sql_test_filename(
-        f"technograph_{pydough_pipeline_test_data_technograph.test_name}",
+        pydough_pipeline_test_data_technograph.test_name,
         empty_context_database.dialect,
     )
     pydough_pipeline_test_data_technograph.run_sql_test(
