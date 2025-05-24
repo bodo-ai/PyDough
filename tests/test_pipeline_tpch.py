@@ -4,21 +4,10 @@ Integration tests for the PyDough workflow on the TPC-H queries.
 
 from collections.abc import Callable
 
-import pandas as pd
 import pytest
 
-from pydough import init_pydough_context, to_sql
 from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
-)
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
     tpch_q2_output,
@@ -71,215 +60,221 @@ from tests.testing_utilities import (
     graph_fetcher,
 )
 
-from .testing_utilities import run_e2e_test
+from .testing_utilities import PyDoughPandasTest
 
 
 @pytest.fixture(
     params=[
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q1,
-                "tpch_q1",
+                "TPCH",
                 tpch_q1_output,
+                "tpch_q1",
             ),
             id="tpch_q1",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q2,
-                "tpch_q2",
+                "TPCH",
                 tpch_q2_output,
+                "tpch_q2",
             ),
             id="tpch_q2",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q3,
-                "tpch_q3",
+                "TPCH",
                 tpch_q3_output,
+                "tpch_q3",
             ),
             id="tpch_q3",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q4,
-                "tpch_q4",
+                "TPCH",
                 tpch_q4_output,
+                "tpch_q4",
             ),
             id="tpch_q4",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q5,
-                "tpch_q5",
+                "TPCH",
                 tpch_q5_output,
+                "tpch_q5",
             ),
             id="tpch_q5",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q6,
-                "tpch_q6",
+                "TPCH",
                 tpch_q6_output,
+                "tpch_q6",
             ),
             id="tpch_q6",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q7,
-                "tpch_q7",
+                "TPCH",
                 tpch_q7_output,
+                "tpch_q7",
             ),
             id="tpch_q7",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q8,
-                "tpch_q8",
+                "TPCH",
                 tpch_q8_output,
+                "tpch_q8",
             ),
             id="tpch_q8",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q9,
-                "tpch_q9",
+                "TPCH",
                 tpch_q9_output,
+                "tpch_q9",
             ),
             id="tpch_q9",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q10,
-                "tpch_q10",
+                "TPCH",
                 tpch_q10_output,
+                "tpch_q10",
             ),
             id="tpch_q10",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q11,
-                "tpch_q11",
+                "TPCH",
                 tpch_q11_output,
+                "tpch_q11",
             ),
             id="tpch_q11",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q12,
-                "tpch_q12",
+                "TPCH",
                 tpch_q12_output,
+                "tpch_q12",
             ),
             id="tpch_q12",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q13,
-                "tpch_q13",
+                "TPCH",
                 tpch_q13_output,
+                "tpch_q13",
             ),
             id="tpch_q13",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q14,
-                "tpch_q14",
+                "TPCH",
                 tpch_q14_output,
+                "tpch_q14",
             ),
             id="tpch_q14",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q15,
-                "tpch_q15",
+                "TPCH",
                 tpch_q15_output,
+                "tpch_q15",
             ),
             id="tpch_q15",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q16,
-                "tpch_q16",
+                "TPCH",
                 tpch_q16_output,
+                "tpch_q16",
             ),
             id="tpch_q16",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q17,
-                "tpch_q17",
+                "TPCH",
                 tpch_q17_output,
+                "tpch_q17",
             ),
             id="tpch_q17",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q18,
-                "tpch_q18",
+                "TPCH",
                 tpch_q18_output,
+                "tpch_q18",
             ),
             id="tpch_q18",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q19,
-                "tpch_q19",
+                "TPCH",
                 tpch_q19_output,
+                "tpch_q19",
             ),
             id="tpch_q19",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q20,
-                "tpch_q20",
+                "TPCH",
                 tpch_q20_output,
+                "tpch_q20",
             ),
             id="tpch_q20",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q21,
-                "tpch_q21",
+                "TPCH",
                 tpch_q21_output,
+                "tpch_q21",
             ),
             id="tpch_q21",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 impl_tpch_q22,
-                "tpch_q22",
+                "TPCH",
                 tpch_q22_output,
+                "tpch_q22",
             ),
             id="tpch_q22",
         ),
     ],
 )
-def pydough_pipeline_tpch_test_data(
-    request,
-) -> tuple[
-    Callable[[], UnqualifiedNode],
-    str,
-    Callable[[], pd.DataFrame],
-]:
+def pydough_pipeline_tpch_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for test_pydough_pipeline. Returns a tuple of the following
-    arguments:
-    1. `unqualified_impl`: a function that takes in an unqualified root and
-    creates the unqualified node for the TPCH query.
-    2. `file_name`: the name of the file containing the expected relational
-    plan.
-    3. `answer_impl`: a function that takes in nothing and returns the answer
-    to a TPCH query as a Pandas DataFrame.
+    Test data for e2e tests for the 22 TPC-H queries. Returns an instance of
+    PyDoughPandasTest containing information about the test.
     """
     return request.param
 
 
 def test_pipeline_until_relational_tpch(
-    pydough_pipeline_tpch_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    pydough_pipeline_tpch_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
@@ -290,40 +285,15 @@ def test_pipeline_until_relational_tpch(
     qualified DAG version, with the correct string representation. Run on the
     22 TPC-H queries.
     """
-    # Run the query through the stages from unqualified node to qualified node
-    # to relational tree, and confirm the tree string matches the expected
-    # structure.
-    unqualified_impl, file_name, _ = pydough_pipeline_tpch_test_data
-    file_path: str = get_plan_test_filename(file_name)
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(qualified, PyDoughCollectionQDAG), (
-        "Expected qualified answer to be a collection, not an expression"
+    file_path: str = get_plan_test_filename(pydough_pipeline_tpch_test_data.test_name)
+    pydough_pipeline_tpch_test_data.run_relational_test(
+        get_sample_graph, file_path, update_tests
     )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, None, default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(relational.to_tree_string() + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert relational.to_tree_string() == expected_relational_string.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
-        )
 
 
 def test_pipeline_until_sql_tpch(
-    pydough_pipeline_tpch_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    pydough_pipeline_tpch_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     empty_context_database: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
@@ -331,48 +301,24 @@ def test_pipeline_until_sql_tpch(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
-    # Run the query through the stages from unqualified node to qualified node
-    # to relational tree, and confirm the tree string matches the expected
-    # structure.
-    unqualified_impl, file_name, _ = pydough_pipeline_tpch_test_data
-    file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    sql_text: str = to_sql(
-        unqualified,
-        metadata=graph,
-        database=empty_context_database,
-        config=default_config,
+    file_path: str = get_sql_test_filename(
+        pydough_pipeline_tpch_test_data.test_name, empty_context_database.dialect
     )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(sql_text + "\n")
-    else:
-        with open(file_path) as f:
-            expected_sql_text: str = f.read()
-        assert sql_text == expected_sql_text.strip(), (
-            "Mismatch between SQL text produced expected SQL text"
-        )
+    pydough_pipeline_tpch_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database
+    )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_tpch(
-    pydough_pipeline_tpch_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    pydough_pipeline_tpch_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
-    default_config: PyDoughConfigs,
 ):
     """
     Test executing the TPC-H queries from the original code generation.
     """
-    unqualified_impl, _, answer_impl = pydough_pipeline_tpch_test_data
-    run_e2e_test(
-        unqualified_impl,
-        answer_impl(),
-        get_sample_graph("TPCH"),
-        database=sqlite_tpch_db_context,
+    pydough_pipeline_tpch_test_data.run_e2e_test(
+        get_sample_graph,
+        sqlite_tpch_db_context,
     )
