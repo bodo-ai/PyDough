@@ -9,33 +9,6 @@ import re
 from collections.abc import Callable
 
 import pytest
-from test_pydough_functions.bad_pydough_functions import (
-    bad_bool_1,
-    bad_bool_2,
-    bad_bool_3,
-    bad_ceil,
-    bad_complex,
-    bad_contains,
-    bad_float,
-    bad_floor,
-    bad_index,
-    bad_int,
-    bad_iter,
-    bad_len,
-    bad_nonzero,
-    bad_reversed,
-    bad_setitem,
-    bad_trunc,
-    bad_unsupported_kwarg1,
-    bad_unsupported_kwarg2,
-    bad_unsupported_kwarg3,
-    bad_window_1,
-    bad_window_2,
-    bad_window_3,
-    bad_window_4,
-    bad_window_5,
-    bad_window_6,
-)
 
 import pydough
 from pydough import init_pydough_context
@@ -89,6 +62,34 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q22,
 )
 from tests.testing_utilities import graph_fetcher
+
+from .test_pydough_functions.bad_pydough_functions import (
+    bad_bool_1,
+    bad_bool_2,
+    bad_bool_3,
+    bad_ceil,
+    bad_complex,
+    bad_contains,
+    bad_float,
+    bad_floor,
+    bad_index,
+    bad_int,
+    bad_iter,
+    bad_len,
+    bad_nonzero,
+    bad_reversed,
+    bad_setitem,
+    bad_trunc,
+    bad_unsupported_kwarg1,
+    bad_unsupported_kwarg2,
+    bad_unsupported_kwarg3,
+    bad_window_1,
+    bad_window_2,
+    bad_window_3,
+    bad_window_4,
+    bad_window_5,
+    bad_window_6,
+)
 
 
 @pytest.fixture

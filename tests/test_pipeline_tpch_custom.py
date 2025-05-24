@@ -7,7 +7,6 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from testing_utilities import run_e2e_error_test
 
 from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
@@ -147,6 +146,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
 from tests.testing_utilities import (
     graph_fetcher,
 )
+
+from .testing_utilities import run_e2e_error_test
 
 
 @pytest.fixture(

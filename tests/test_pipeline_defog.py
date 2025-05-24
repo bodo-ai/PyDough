@@ -6,7 +6,15 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from defog_outputs import (
+
+from pydough import init_pydough_context, to_sql
+from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
+from tests.test_pydough_functions.defog_outputs import (
     defog_sql_text_broker_adv1,
     defog_sql_text_broker_adv2,
     defog_sql_text_broker_adv3,
@@ -100,14 +108,6 @@ from defog_outputs import (
     defog_sql_text_ewallet_gen3,
     defog_sql_text_ewallet_gen4,
     defog_sql_text_ewallet_gen5,
-)
-
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import (
-    UnqualifiedNode,
 )
 from tests.test_pydough_functions.defog_test_functions import (
     impl_defog_broker_adv1,
@@ -208,6 +208,8 @@ from tests.testing_utilities import (
     PyDoughSQLComparisonTest,
     graph_fetcher,
 )
+
+from .testing_utilities import run_e2e_test
 
 
 @pytest.mark.parametrize(
@@ -1160,20 +1162,16 @@ def test_defog_e2e(
     same database connector. Run on the defog.ai queries.
     """
     graph: GraphMetadata = defog_graphs(defog_test_data.graph_name)
-    root: UnqualifiedNode = init_pydough_context(graph)(
-        defog_test_data.pydough_function
-    )()
-    result: pd.DataFrame = to_df(
-        root, metadata=graph, database=sqlite_defog_connection, config=defog_config
-    )
     sqlite_query: str = defog_test_data.sql_function()
     refsol: pd.DataFrame = sqlite_defog_connection.connection.execute_query_df(
         sqlite_query
     )
-    assert len(result.columns) == len(refsol.columns)
-    refsol.columns = result.columns
-    # If the query is order-sensitive, don't sort the DataFrames before comparison
-    if not defog_test_data.order_sensitive:
-        result = result.sort_values(by=list(refsol.columns)).reset_index(drop=True)
-        refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
-    pd.testing.assert_frame_equal(result, refsol)
+    run_e2e_test(
+        defog_test_data.pydough_function,
+        refsol,
+        graph,
+        database=sqlite_defog_connection,
+        config=defog_config,
+        fix_column_names=True,
+        order_sensitive=defog_test_data.order_sensitive,
+    )

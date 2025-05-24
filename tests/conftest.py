@@ -10,7 +10,6 @@ from collections.abc import Callable
 from functools import cache
 
 import pytest
-from gen_data.gen_technograph import gen_technograph_records
 
 import pydough
 import pydough.pydough_operators as pydop
@@ -24,6 +23,8 @@ from pydough.database_connectors import (
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.testing_utilities import graph_fetcher
+
+from .gen_data.gen_technograph import gen_technograph_records
 
 
 @pytest.fixture
