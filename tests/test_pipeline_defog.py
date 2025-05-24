@@ -4,7 +4,6 @@ Integration tests for the PyDough workflow on the defog.ai queries.
 
 from collections.abc import Callable
 
-import pandas as pd
 import pytest
 
 from pydough import init_pydough_context, to_sql
@@ -208,8 +207,6 @@ from tests.testing_utilities import (
     PyDoughSQLComparisonTest,
     graph_fetcher,
 )
-
-from .testing_utilities import run_e2e_test
 
 
 @pytest.mark.parametrize(
@@ -1161,17 +1158,4 @@ def test_defog_e2e(
     comparing against the result of running the reference SQL query text on the
     same database connector. Run on the defog.ai queries.
     """
-    graph: GraphMetadata = defog_graphs(defog_test_data.graph_name)
-    sqlite_query: str = defog_test_data.sql_function()
-    refsol: pd.DataFrame = sqlite_defog_connection.connection.execute_query_df(
-        sqlite_query
-    )
-    run_e2e_test(
-        defog_test_data.pydough_function,
-        refsol,
-        graph,
-        database=sqlite_defog_connection,
-        config=defog_config,
-        fix_column_names=True,
-        order_sensitive=defog_test_data.order_sensitive,
-    )
+    defog_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection, defog_config)

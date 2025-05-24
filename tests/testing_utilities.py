@@ -31,10 +31,13 @@ from typing import Any
 import pandas as pd
 import pytest
 
+import pydough
 import pydough.pydough_operators as pydop
-from pydough import init_pydough_context, to_df
+from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
+from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
+from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
@@ -57,11 +60,13 @@ from pydough.relational import (
     ExpressionSortInfo,
     LiteralExpression,
     RelationalExpression,
+    RelationalRoot,
     Scan,
 )
 from pydough.types import PyDoughType, UnknownType
 from pydough.unqualified import (
     UnqualifiedNode,
+    qualify_node,
 )
 
 # Type alias for a function that takes in a string and generates metadata
@@ -899,6 +904,16 @@ def make_relational_ordering(
     return ExpressionSortInfo(expr, ascending, nulls_first)
 
 
+def transform_and_exec_pydough(
+    pydough_impl: Callable[[], UnqualifiedNode],
+    graph: GraphMetadata,
+) -> UnqualifiedNode:
+    """
+    TODO
+    """
+    return init_pydough_context(graph)(pydough_impl)()
+
+
 @dataclass
 class PyDoughSQLComparisonTest:
     """
@@ -910,7 +925,6 @@ class PyDoughSQLComparisonTest:
     pydough_function: Callable[[], UnqualifiedNode]
     """
     Function that returns the PyDough code evaluated by the unit test.
-
     """
 
     graph_name: str
@@ -929,21 +943,190 @@ class PyDoughSQLComparisonTest:
     The name of the unit test
     """
 
+    columns: dict[str, str] | list[str] | None = None
+    """
+    If provided, passed in as the columns argument to the `to_sql` or `to_df`
+    function.
+    """
+
     order_sensitive: bool = False
     """
     If False, the resulting data frames will be sorted so the order
     of the results is not taken into account
     """
 
+    fix_column_names: bool = True
+    """
+    If True, ignore whatever column names are in the output and just use the
+    same column names as in the reference solution.
+    """
 
-def transform_and_exec_pydough(
-    pydough_impl: Callable[[], UnqualifiedNode],
-    graph: GraphMetadata,
-) -> UnqualifiedNode:
+    def run_e2e_test(
+        self,
+        fetcher: graph_fetcher,
+        database: DatabaseContext,
+        config: PyDoughConfigs | None = None,
+    ):
+        """
+        TODO
+        """
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        if self.columns is not None:
+            call_kwargs["columns"] = self.columns
+        result: pd.DataFrame = to_df(root, **call_kwargs)
+        sql_text: str = self.sql_function()
+        refsol: pd.DataFrame = database.connection.execute_query_df(sql_text)
+        # If the query does not care about column names, update the answer to use
+        # the column names in the refsol.
+        if self.fix_column_names:
+            assert len(result.columns) == len(refsol.columns)
+            result.columns = refsol.columns
+        # If the query is not order-sensitive, sort the DataFrames before comparison
+        if not self.order_sensitive:
+            result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
+            refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
+        pd.testing.assert_frame_equal(result, refsol)
+
+
+@dataclass
+class PyDoughPandasTest:
     """
-    TODO
+    The data packet encapsulating the information to run a PyDough e2e test
+    that compares the result against a reference answer derived by running
+    a function that returns a Pandas DataFrame.
     """
-    return init_pydough_context(graph)(pydough_impl)()
+
+    pydough_function: Callable[[], UnqualifiedNode]
+    """
+    Function that returns the PyDough code evaluated by the unit test.
+    """
+
+    graph_name: str
+    """
+    The graph that the PyDough code will use.
+    """
+
+    pd_function: Callable[[], pd.DataFrame]
+    """
+    Function that returns the SQL code that should be executed on the database
+    to derive the reference solution.
+    """
+
+    test_name: str
+    """
+    The name of the unit test
+    """
+
+    columns: dict[str, str] | list[str] | None = None
+    """
+    If provided, passed in as the columns argument to the `to_sql` or `to_df`
+    function.
+    """
+
+    order_sensitive: bool = False
+    """
+    If False, the resulting data frames will be sorted so the order
+    of the results is not taken into account
+    """
+
+    fix_column_names: bool = True
+    """
+    If True, ignore whatever column names are in the output and just use the
+    same column names as in the reference solution.
+    """
+
+    def run_relational_test(
+        self,
+        fetcher: graph_fetcher,
+        file_path: str,
+        update: bool,
+        config: PyDoughConfigs | None = None,
+    ) -> None:
+        """
+        TODO
+        """
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        if config is None:
+            config = pydough.active_session.config
+        qualified: PyDoughQDAG = qualify_node(root, graph, config)
+        assert isinstance(qualified, PyDoughCollectionQDAG), (
+            "Expected qualified answer to be a collection, not an expression"
+        )
+        relational: RelationalRoot = convert_ast_to_relational(
+            qualified, _load_column_selection({"columns": self.columns}), config
+        )
+        if update:
+            with open(file_path, "w") as f:
+                f.write(relational.to_tree_string() + "\n")
+        else:
+            with open(file_path) as f:
+                expected_relational_string: str = f.read()
+            assert relational.to_tree_string() == expected_relational_string.strip(), (
+                "Mismatch between tree string representation of relational node and expected Relational tree string"
+            )
+
+    def run_sql_test(
+        self,
+        fetcher: graph_fetcher,
+        file_path: str,
+        update: bool,
+        database: DatabaseContext,
+        config: PyDoughConfigs | None = None,
+    ) -> None:
+        """
+        TODO
+        """
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        if self.columns is not None:
+            call_kwargs["columns"] = self.columns
+        sql_text: str = to_sql(root, **call_kwargs)
+        if update:
+            with open(file_path, "w") as f:
+                f.write(sql_text + "\n")
+        else:
+            with open(file_path) as f:
+                expected_sql_text: str = f.read()
+            assert sql_text == expected_sql_text.strip(), (
+                "Mismatch between SQL text produced expected SQL text"
+            )
+
+    def run_e2e_test(
+        self,
+        fetcher: graph_fetcher,
+        database: DatabaseContext,
+        config: PyDoughConfigs | None = None,
+    ):
+        """
+        TODO
+        """
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        if self.columns is not None:
+            call_kwargs["columns"] = self.columns
+        result: pd.DataFrame = to_df(root, **call_kwargs)
+        refsol: pd.DataFrame = self.pd_function()
+        # If the query does not care about column names, update the answer to use
+        # the column names in the refsol.
+        if self.fix_column_names:
+            assert len(result.columns) == len(refsol.columns)
+            result.columns = refsol.columns
+        # If the query is not order-sensitive, sort the DataFrames before comparison
+        if not self.order_sensitive:
+            result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
+            refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
+        pd.testing.assert_frame_equal(result, refsol)
 
 
 def run_e2e_test(
@@ -953,7 +1136,7 @@ def run_e2e_test(
     columns: dict[str, str] | list[str] | None = None,
     database: DatabaseContext | None = None,
     config: PyDoughConfigs | None = None,
-    fix_column_names: bool = True,
+    fix_column_names: bool = False,
     order_sensitive: bool = False,
 ):
     """

@@ -7,7 +7,7 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 
-from pydough import init_pydough_context, to_df, to_sql
+from pydough import init_pydough_context, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
@@ -70,6 +70,8 @@ from tests.test_pydough_functions.tpch_test_functions import (
 from tests.testing_utilities import (
     graph_fetcher,
 )
+
+from .testing_utilities import run_e2e_test
 
 
 @pytest.fixture(
@@ -368,9 +370,9 @@ def test_pipeline_e2e_tpch(
     Test executing the TPC-H queries from the original code generation.
     """
     unqualified_impl, _, answer_impl = pydough_pipeline_tpch_test_data
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, metadata=graph, database=sqlite_tpch_db_context, config=default_config
+    run_e2e_test(
+        unqualified_impl,
+        answer_impl(),
+        get_sample_graph("TPCH"),
+        database=sqlite_tpch_db_context,
     )
-    pd.testing.assert_frame_equal(result, answer_impl())
