@@ -4,12 +4,6 @@ how to prune columns from relational expressions.
 """
 
 import pytest
-from test_utils import (
-    build_simple_scan,
-    make_relational_column_reference,
-    make_relational_literal,
-    make_relational_ordering,
-)
 
 from pydough.pydough_operators import (
     ADD,
@@ -29,6 +23,12 @@ from pydough.relational import (
     Scan,
 )
 from pydough.types import BooleanType, NumericType, UnknownType
+from tests.testing_utilities import (
+    build_simple_scan,
+    make_relational_column_reference,
+    make_relational_literal,
+    make_relational_ordering,
+)
 
 
 @pytest.fixture(scope="module")

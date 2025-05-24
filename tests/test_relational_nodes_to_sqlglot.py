@@ -33,12 +33,6 @@ from sqlglot.expressions import (
     Window,
 )
 from sqlglot.expressions import Identifier as Ident
-from test_utils import (
-    build_simple_scan,
-    make_relational_column_reference,
-    make_relational_literal,
-    make_relational_ordering,
-)
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
@@ -73,6 +67,12 @@ from pydough.sqlglot import (
     set_glot_alias,
 )
 from pydough.types import BooleanType, NumericType, StringType
+from tests.testing_utilities import (
+    build_simple_scan,
+    make_relational_column_reference,
+    make_relational_literal,
+    make_relational_ordering,
+)
 
 
 @pytest.fixture(scope="module")

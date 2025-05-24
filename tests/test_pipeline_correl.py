@@ -7,7 +7,9 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from correlated_pydough_functions import (
+
+from pydough.database_connectors import DatabaseContext
+from tests.test_pydough_functions.correlated_pydough_functions import (
     correl_1,
     correl_2,
     correl_3,
@@ -42,32 +44,16 @@ from correlated_pydough_functions import (
     correl_32,
     correl_33,
 )
-from test_utils import (
-    graph_fetcher,
-)
 
-from pydough import init_pydough_context, to_df
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
-from pydough.evaluation.evaluate_unqualified import _load_column_selection
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
-)
+from .testing_utilities import PyDoughPandasTest, graph_fetcher
 
 
 @pytest.fixture(
     params=[
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_1,
-                None,
-                "correl_1",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -80,14 +66,14 @@ from pydough.unqualified import (
                         "n_prefix_nations": [1, 1, 0, 0, 0],
                     }
                 ),
+                "correl_1",
             ),
             id="correl_1",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_2,
-                None,
-                "correl_2",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -116,14 +102,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "correl_2",
             ),
             id="correl_2",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_3,
-                None,
-                "correl_3",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -136,68 +122,68 @@ from pydough.unqualified import (
                         "n_nations": [5, 5, 5, 0, 2],
                     }
                 ),
+                "correl_3",
             ),
             id="correl_3",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_4,
-                None,
-                "correl_4",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["ARGENTINA", "KENYA", "UNITED KINGDOM"],
                     }
                 ),
+                "correl_4",
             ),
             id="correl_4",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_5,
-                None,
-                "correl_5",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "ASIA", "MIDDLE EAST"],
                     }
                 ),
+                "correl_5",
             ),
             id="correl_5",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_6,
-                None,
-                "correl_6",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA"],
                         "n_prefix_nations": [1, 1],
                     }
                 ),
+                "correl_6",
             ),
             id="correl_6",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_7,
-                None,
-                "correl_7",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["ASIA", "EUROPE", "MIDDLE EAST"],
                         "n_prefix_nations": [0] * 3,
                     }
                 ),
+                "correl_7",
             ),
             id="correl_7",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_8,
-                None,
-                "correl_8",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -230,14 +216,14 @@ from pydough.unqualified import (
                         "rname": ["AFRICA", "AMERICA"] + [None] * 23,
                     }
                 ),
+                "correl_8",
             ),
             id="correl_8",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_9,
-                None,
-                "correl_9",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -247,14 +233,14 @@ from pydough.unqualified import (
                         "rname": ["AFRICA", "AMERICA"],
                     }
                 ),
+                "correl_9",
             ),
             id="correl_9",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_10,
-                None,
-                "correl_10",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -285,25 +271,25 @@ from pydough.unqualified import (
                         "rname": [None] * 23,
                     }
                 ),
+                "correl_10",
             ),
             id="correl_10",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_11,
-                None,
-                "correl_11",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {"brand": ["Brand#33", "Brand#43", "Brand#45", "Brand#55"]}
                 ),
+                "correl_11",
             ),
             id="correl_11",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_12,
-                None,
-                "correl_12",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "brand": [
@@ -315,50 +301,50 @@ from pydough.unqualified import (
                         ]
                     }
                 ),
+                "correl_12",
             ),
             id="correl_12",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_13,
-                None,
-                "correl_13",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [1129]}),
+                "correl_13",
             ),
             id="correl_13",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_14,
-                None,
-                "correl_14",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [66]}),
+                "correl_14",
             ),
             id="correl_14",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_15,
-                None,
-                "correl_15",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [61]}),
+                "correl_15",
             ),
             id="correl_15",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_16,
-                None,
-                "correl_16",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [929]}),
+                "correl_16",
             ),
             id="correl_16",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_17,
-                None,
-                "correl_17",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "fullname": [
@@ -390,23 +376,23 @@ from pydough.unqualified import (
                         ]
                     }
                 ),
+                "correl_17",
             ),
             id="correl_17",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_18,
-                None,
-                "correl_18",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [697]}),
+                "correl_18",
             ),
             id="correl_18",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_19,
-                None,
-                "correl_19",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -419,32 +405,32 @@ from pydough.unqualified import (
                         "n_super_cust": [6160, 6142, 6129, 6127, 6117],
                     }
                 ),
+                "correl_19",
             ),
             id="correl_19",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_20,
-                None,
-                "correl_20",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [3002]}),
+                "correl_20",
             ),
             id="correl_20",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_21,
-                None,
-                "correl_21",
+                "TPCH",
                 lambda: pd.DataFrame({"n_sizes": [30]}),
+                "correl_21",
             ),
             id="correl_21",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_22,
-                None,
-                "correl_22",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "container": [
@@ -457,23 +443,23 @@ from pydough.unqualified import (
                         "n_types": [89, 86, 81, 81, 80],
                     }
                 ),
+                "correl_22",
             ),
             id="correl_22",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_23,
-                None,
-                "correl_23",
+                "TPCH",
                 lambda: pd.DataFrame({"n_sizes": [23]}),
+                "correl_23",
             ),
             id="correl_23",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_24,
-                None,
-                "correl_24",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "year": [1992] * 11 + [1993] * 11,
@@ -504,14 +490,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "correl_24",
             ),
             id="correl_24",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_25,
-                None,
-                "correl_25",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "cust_region_name": [
@@ -536,14 +522,14 @@ from pydough.unqualified import (
                         "n_urgent_semi_domestic_rail_orders": [2, 2, 2, 2, 2],
                     }
                 ),
+                "correl_25",
             ),
             id="correl_25",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_26,
-                None,
-                "correl_26",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -556,14 +542,14 @@ from pydough.unqualified import (
                         "n_selected_purchases": [310, 271, 291, 306, 282],
                     }
                 ),
+                "correl_26",
             ),
             id="correl_26",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_27,
-                None,
-                "correl_27",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -576,14 +562,14 @@ from pydough.unqualified import (
                         "n_selected_purchases": [310, 271, 291, 306, 282],
                     }
                 ),
+                "correl_27",
             ),
             id="correl_27",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_28,
-                None,
-                "correl_28",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -596,14 +582,14 @@ from pydough.unqualified import (
                         "n_selected_purchases": [310, 271, 291, 306, 282],
                     }
                 ),
+                "correl_28",
             ),
             id="correl_28",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_29,
-                None,
-                "correl_29",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_key": [1] * 5 + [3] * 5,
@@ -669,14 +655,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "correl_29",
             ),
             id="correl_29",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_30,
-                None,
-                "correl_30",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": ["america"] * 5 + ["europe"] * 5,
@@ -718,14 +704,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "correl_30",
             ),
             id="correl_30",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_31,
-                None,
-                "correl_31",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -751,14 +737,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "correl_31",
             ),
             id="correl_31",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_32,
-                None,
-                "correl_32",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "customer_name": [
@@ -771,52 +757,33 @@ from pydough.unqualified import (
                         "delta": [2.075, 4.1, 4.37, 4.435, 5.025],
                     }
                 ),
+                "correl_32",
             ),
             id="correl_32",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 correl_33,
-                None,
-                "correl_33",
+                "TPCH",
                 lambda: pd.DataFrame({"n": [19330]}),
+                "correl_33",
             ),
             id="correl_33",
         ),
     ],
 )
-def pydough_pipeline_correl_test_data(
-    request,
-) -> tuple[
-    Callable[[], UnqualifiedNode],
-    dict[str, str] | list[str] | None,
-    str,
-    Callable[[], pd.DataFrame],
-]:
+def correl_pipeline_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for `test_pipeline_e2e_correlated`. Returns a tuple of the
-    following arguments:
-    1. `unqualified_impl`: a function that takes in an unqualified root and
-    creates the unqualified node for the TPCH query.
-    2. `columns`: a valid value for the `columns` argument of `to_sql` or
-    `to_df`.
-    3. `file_name`: the name of the file containing the expected relational
-    plan.
-    4. `answer_impl`: a function that takes in nothing and returns the answer
-    to a TPCH query as a Pandas DataFrame.
+    Test data for e2e tests for the correlation test queries run on TPC-H data.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
     """
     return request.param
 
 
 def test_pipeline_until_relational_correlated(
-    pydough_pipeline_correl_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    correl_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -825,50 +792,19 @@ def test_pipeline_until_relational_correlated(
     qualified DAG version, with the correct string representation. Run on the
     various correlation test queries.
     """
-    # Run the query through the stages from unqualified node to qualified node
-    # to relational tree, and confirm the tree string matches the expected
-    # structure.
-    unqualified_impl, columns, file_name, _ = pydough_pipeline_correl_test_data
-    file_path: str = get_plan_test_filename(file_name)
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(qualified, PyDoughCollectionQDAG), (
-        "Expected qualified answer to be a collection, not an expression"
+    file_path: str = get_plan_test_filename(correl_pipeline_test_data.test_name)
+    correl_pipeline_test_data.run_relational_test(
+        get_sample_graph, file_path, update_tests
     )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, _load_column_selection({"columns": columns}), default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(relational.to_tree_string() + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert relational.to_tree_string() == expected_relational_string.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
-        )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_correlated(
-    pydough_pipeline_correl_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    correl_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
 ):
     """
     Test executing the TPC-H queries from the original code generation.
     """
-    unqualified_impl, columns, _, answer_impl = pydough_pipeline_correl_test_data
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
-    )
-    pd.testing.assert_frame_equal(result, answer_impl())
+    correl_pipeline_test_data.run_e2e_test(get_sample_graph, sqlite_tpch_db_context)

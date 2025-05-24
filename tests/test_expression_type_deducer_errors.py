@@ -5,7 +5,6 @@ Error-handling unit tests for the PyDough expression type inference utilities.
 import re
 
 import pytest
-from test_utils import AstNodeTestInfo, LiteralInfo
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
@@ -14,6 +13,7 @@ from pydough.qdag import (
     PyDoughQDAGException,
 )
 from pydough.types import StringType
+from tests.testing_utilities import AstNodeTestInfo, LiteralInfo
 
 
 @pytest.mark.parametrize(
