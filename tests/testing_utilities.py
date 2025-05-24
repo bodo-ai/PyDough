@@ -28,7 +28,12 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+import pytest
+
 import pydough.pydough_operators as pydop
+from pydough import init_pydough_context, to_df
+from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
@@ -928,3 +933,38 @@ class PyDoughSQLComparisonTest:
     If False, the resulting data frames will be sorted so the order
     of the results is not taken into account
     """
+
+
+def transform_and_exec_pydough(
+    pydough_impl: Callable[[], UnqualifiedNode],
+    graph: GraphMetadata,
+) -> UnqualifiedNode:
+    """
+    TODO
+    """
+    return init_pydough_context(graph)(pydough_impl)()
+
+
+def run_e2e_error_test(
+    pydough_impl: Callable[[], UnqualifiedNode],
+    error_message: str,
+    graph: GraphMetadata,
+    columns: dict[str, str] | list[str] | None = None,
+    database: DatabaseContext | None = None,
+    config: PyDoughConfigs | None = None,
+) -> None:
+    """
+    TODO
+    """
+    with pytest.raises(Exception, match=error_message):
+        root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph)
+        call_kwargs: dict = {}
+        if graph is not None:
+            call_kwargs["metadata"] = graph
+        if config is not None:
+            call_kwargs["config"] = config
+        if database is not None:
+            call_kwargs["database"] = database
+        if columns is not None:
+            call_kwargs["columns"] = columns
+        to_df(root, **call_kwargs)

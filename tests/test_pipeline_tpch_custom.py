@@ -7,6 +7,7 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
+from testing_utilities import run_e2e_error_test
 
 from pydough import init_pydough_context, to_df
 from pydough.configs import PyDoughConfigs
@@ -2754,7 +2755,7 @@ def test_pipeline_e2e_tpch_custom(
 
 @pytest.mark.execute
 @pytest.mark.parametrize(
-    "impl, columns, error_msg",
+    "pydough_impl, columns, error_message",
     [
         pytest.param(
             bad_slice_1,
@@ -2873,9 +2874,9 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[[], UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
-    error_msg: str,
+    error_message: str,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
 ):
@@ -2884,6 +2885,10 @@ def test_pipeline_e2e_errors(
     a certain error is raised.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
-    with pytest.raises(Exception, match=error_msg):
-        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
-        to_df(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
+    run_e2e_error_test(
+        pydough_impl,
+        error_message,
+        graph,
+        columns=columns,
+        database=sqlite_tpch_db_context,
+    )

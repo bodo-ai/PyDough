@@ -8,6 +8,7 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
+from testing_utilities import run_e2e_error_test
 
 from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import DayOfWeek, PyDoughConfigs
@@ -1429,7 +1430,7 @@ def test_pipeline_e2e_defog_custom(
 
 
 @pytest.mark.parametrize(
-    "impl, graph_name, error_msg",
+    "pydough_impl, graph_name, error_message",
     [
         pytest.param(
             bad_lpad_1,
@@ -1536,15 +1537,17 @@ def test_pipeline_e2e_defog_custom(
         pytest.param(
             bad_round2,
             "Broker",
-            "Invalid operator invocation 'ROUND(high, -0.5, 2)': Expected between 1 and 2 arguments inclusive, received 3.",
+            re.escape(
+                "Invalid operator invocation 'ROUND(high, -0.5, 2)': Expected between 1 and 2 arguments inclusive, received 3."
+            ),
             id="bad_round2",
         ),
     ],
 )
 def test_defog_e2e_errors(
-    impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[[], UnqualifiedNode],
     graph_name: str,
-    error_msg: str,
+    error_message: str,
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
@@ -1553,9 +1556,9 @@ def test_defog_e2e_errors(
     a certain error is raised for defog database.
     """
     graph: GraphMetadata = defog_graphs(graph_name)
-    with pytest.raises(Exception, match=re.escape(error_msg)):
-        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
-        to_sql(root, metadata=graph, database=sqlite_defog_connection)
+    run_e2e_error_test(
+        pydough_impl, error_message, graph, database=sqlite_defog_connection
+    )
 
 
 @pytest.mark.execute
