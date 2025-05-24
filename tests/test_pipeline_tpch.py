@@ -9,7 +9,20 @@ import pytest
 from test_utils import (
     graph_fetcher,
 )
-from tpch_outputs import (
+
+from pydough import init_pydough_context, to_df, to_sql
+from pydough.configs import PyDoughConfigs
+from pydough.conversion.relational_converter import convert_ast_to_relational
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata import GraphMetadata
+from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
+from pydough.relational import RelationalRoot
+from pydough.unqualified import (
+    UnqualifiedNode,
+    UnqualifiedRoot,
+    qualify_node,
+)
+from tests.test_pydough_functions.tpch_outputs import (
     tpch_q1_output,
     tpch_q2_output,
     tpch_q3_output,
@@ -33,7 +46,7 @@ from tpch_outputs import (
     tpch_q21_output,
     tpch_q22_output,
 )
-from tpch_test_functions import (
+from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q1,
     impl_tpch_q2,
     impl_tpch_q3,
@@ -56,19 +69,6 @@ from tpch_test_functions import (
     impl_tpch_q20,
     impl_tpch_q21,
     impl_tpch_q22,
-)
-
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
 )
 
 

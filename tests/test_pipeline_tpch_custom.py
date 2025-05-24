@@ -7,7 +7,24 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from bad_pydough_functions import (
+from test_utils import (
+    graph_fetcher,
+)
+
+from pydough import init_pydough_context, to_df
+from pydough.configs import PyDoughConfigs
+from pydough.conversion.relational_converter import convert_ast_to_relational
+from pydough.database_connectors import DatabaseContext
+from pydough.evaluation.evaluate_unqualified import _load_column_selection
+from pydough.metadata import GraphMetadata
+from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
+from pydough.relational import RelationalRoot
+from pydough.unqualified import (
+    UnqualifiedNode,
+    UnqualifiedRoot,
+    qualify_node,
+)
+from tests.test_pydough_functions.bad_pydough_functions import (
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -23,7 +40,7 @@ from bad_pydough_functions import (
     bad_slice_13,
     bad_slice_14,
 )
-from common_prefix_pydough_functions import (
+from tests.test_pydough_functions.common_prefix_pydough_functions import (
     common_prefix_a,
     common_prefix_aa,
     common_prefix_ab,
@@ -62,7 +79,7 @@ from common_prefix_pydough_functions import (
     common_prefix_y,
     common_prefix_z,
 )
-from simple_pydough_functions import (
+from tests.test_pydough_functions.simple_pydough_functions import (
     agg_partition,
     avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
@@ -128,23 +145,6 @@ from simple_pydough_functions import (
     wealthiest_supplier,
     year_month_nation_orders,
     yoy_change_in_num_orders,
-)
-from test_utils import (
-    graph_fetcher,
-)
-
-from pydough import init_pydough_context, to_df
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
-from pydough.evaluation.evaluate_unqualified import _load_column_selection
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
 )
 
 

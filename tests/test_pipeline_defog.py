@@ -101,7 +101,19 @@ from defog_outputs import (
     defog_sql_text_ewallet_gen4,
     defog_sql_text_ewallet_gen5,
 )
-from defog_test_functions import (
+from test_utils import (
+    PyDoughSQLComparisonTest,
+    graph_fetcher,
+)
+
+from pydough import init_pydough_context, to_df, to_sql
+from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
+from tests.test_pydough_functions.defog_test_functions import (
     impl_defog_broker_adv1,
     impl_defog_broker_adv2,
     impl_defog_broker_adv3,
@@ -195,18 +207,6 @@ from defog_test_functions import (
     impl_defog_ewallet_gen3,
     impl_defog_ewallet_gen4,
     impl_defog_ewallet_gen5,
-)
-from test_utils import (
-    PyDoughSQLComparisonTest,
-    graph_fetcher,
-)
-
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import (
-    UnqualifiedNode,
 )
 
 

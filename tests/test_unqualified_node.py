@@ -9,7 +9,7 @@ import re
 from collections.abc import Callable
 
 import pytest
-from bad_pydough_functions import (
+from test_pydough_functions.bad_pydough_functions import (
     bad_bool_1,
     bad_bool_2,
     bad_bool_3,
@@ -36,7 +36,17 @@ from bad_pydough_functions import (
     bad_window_5,
     bad_window_6,
 )
-from simple_pydough_functions import (
+from test_utils import graph_fetcher
+
+import pydough
+from pydough import init_pydough_context
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+    UnqualifiedRoot,
+    transform_code,
+)
+from tests.test_pydough_functions.simple_pydough_functions import (
     abs_round_magic_method,
     annotated_assignment,
     args_kwargs,
@@ -55,8 +65,7 @@ from simple_pydough_functions import (
     unpacking_in_iterable,
     with_import_statement,
 )
-from test_utils import graph_fetcher
-from tpch_test_functions import (
+from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q1,
     impl_tpch_q2,
     impl_tpch_q3,
@@ -79,15 +88,6 @@ from tpch_test_functions import (
     impl_tpch_q20,
     impl_tpch_q21,
     impl_tpch_q22,
-)
-
-import pydough
-from pydough import init_pydough_context
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    transform_code,
 )
 
 

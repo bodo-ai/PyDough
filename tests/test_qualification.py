@@ -6,7 +6,19 @@ into qualified DAG nodes.
 from collections.abc import Callable
 
 import pytest
-from simple_pydough_functions import (
+from test_utils import (
+    graph_fetcher,
+)
+
+from pydough import init_pydough_context
+from pydough.configs import PyDoughConfigs
+from pydough.metadata import GraphMetadata
+from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
+from pydough.unqualified import (
+    UnqualifiedNode,
+    qualify_node,
+)
+from tests.test_pydough_functions.simple_pydough_functions import (
     absurd_partition_window_per,
     absurd_window_per,
     customer_most_recent_orders,
@@ -24,10 +36,7 @@ from simple_pydough_functions import (
     supplier_best_part,
     wealthiest_supplier,
 )
-from test_utils import (
-    graph_fetcher,
-)
-from tpch_test_functions import (
+from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q1,
     impl_tpch_q2,
     impl_tpch_q3,
@@ -50,15 +59,6 @@ from tpch_test_functions import (
     impl_tpch_q20,
     impl_tpch_q21,
     impl_tpch_q22,
-)
-
-from pydough import init_pydough_context
-from pydough.configs import PyDoughConfigs
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.unqualified import (
-    UnqualifiedNode,
-    qualify_node,
 )
 
 

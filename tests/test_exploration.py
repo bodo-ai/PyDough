@@ -5,7 +5,12 @@ Unit tests for the PyDough exploration APIs.
 from collections.abc import Callable
 
 import pytest
-from exploration_examples import (
+from test_utils import graph_fetcher
+
+import pydough
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
+from tests.test_pydough_functions.exploration_examples import (
     calc_subcollection_impl,
     contextless_aggfunc_impl,
     contextless_collections_impl,
@@ -38,11 +43,6 @@ from exploration_examples import (
     table_calc_impl,
     top_k_impl,
 )
-from test_utils import graph_fetcher
-
-import pydough
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import UnqualifiedNode
 
 
 @pytest.fixture(

@@ -8,7 +8,24 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from bad_pydough_functions import (
+from test_utils import (
+    graph_fetcher,
+)
+
+from pydough import init_pydough_context, to_df, to_sql
+from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.conversion.relational_converter import convert_ast_to_relational
+from pydough.database_connectors import DatabaseContext
+from pydough.evaluation.evaluate_unqualified import _load_column_selection
+from pydough.metadata import GraphMetadata
+from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
+from pydough.relational import RelationalRoot
+from pydough.unqualified import (
+    UnqualifiedNode,
+    UnqualifiedRoot,
+    qualify_node,
+)
+from tests.test_pydough_functions.bad_pydough_functions import (
     bad_lpad_1,
     bad_lpad_2,
     bad_lpad_3,
@@ -28,7 +45,7 @@ from bad_pydough_functions import (
     bad_rpad_7,
     bad_rpad_8,
 )
-from simple_pydough_functions import (
+from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     exponentiation,
     find,
@@ -49,23 +66,6 @@ from simple_pydough_functions import (
     transaction_week_sampler,
     week_offset,
     years_months_days_hours_datediff,
-)
-from test_utils import (
-    graph_fetcher,
-)
-
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import DayOfWeek, PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
-from pydough.evaluation.evaluate_unqualified import _load_column_selection
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
 )
 
 
