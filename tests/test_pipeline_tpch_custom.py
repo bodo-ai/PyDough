@@ -7,7 +7,13 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from bad_pydough_functions import (
+
+from pydough.database_connectors import DatabaseContext
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
+from tests.test_pydough_functions.bad_pydough_functions import (
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -23,48 +29,11 @@ from bad_pydough_functions import (
     bad_slice_13,
     bad_slice_14,
 )
-from simple_pydough_functions import (
+from tests.test_pydough_functions.simple_pydough_functions import (
     agg_partition,
     avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
-    common_prefix_a,
-    common_prefix_aa,
-    common_prefix_ab,
-    common_prefix_ac,
-    common_prefix_ad,
-    common_prefix_ae,
-    common_prefix_af,
-    common_prefix_ag,
-    common_prefix_ah,
-    common_prefix_ai,
-    common_prefix_aj,
-    common_prefix_ak,
-    common_prefix_b,
-    common_prefix_c,
-    common_prefix_d,
-    common_prefix_e,
-    common_prefix_f,
-    common_prefix_g,
-    common_prefix_h,
-    common_prefix_i,
-    common_prefix_j,
-    common_prefix_k,
-    common_prefix_l,
-    common_prefix_m,
-    common_prefix_n,
-    common_prefix_o,
-    common_prefix_p,
-    common_prefix_q,
-    common_prefix_r,
-    common_prefix_s,
-    common_prefix_t,
-    common_prefix_u,
-    common_prefix_v,
-    common_prefix_w,
-    common_prefix_x,
-    common_prefix_y,
-    common_prefix_z,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -127,58 +96,43 @@ from simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
-from test_utils import (
-    graph_fetcher,
-)
 
-from pydough import init_pydough_context, to_df
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
-from pydough.evaluation.evaluate_unqualified import _load_column_selection
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
-)
+from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
 @pytest.fixture(
     params=[
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_scan_top_five,
-                None,
-                "simple_scan_top_five",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [1, 2, 3, 4, 5],
                     }
                 ),
+                "simple_scan_top_five",
             ),
             id="simple_scan_top_five",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_filter_top_five,
-                ["key"],
-                "simple_filter_top_five",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [5989315, 5935174, 5881093, 5876066, 5866437],
                     }
                 ),
+                "simple_filter_top_five",
+                columns=["key"],
             ),
             id="simple_filter_top_five",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_nations_by_region,
-                None,
-                "rank_nations_by_region",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -211,28 +165,28 @@ from pydough.unqualified import (
                         "rank": [1] * 5 + [6] * 5 + [11] * 5 + [16] * 5 + [21] * 5,
                     }
                 ),
+                "rank_nations_by_region",
             ),
             id="rank_nations_by_region",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_nations_per_region_by_customers,
-                None,
-                "rank_nations_per_region_by_customers",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["KENYA", "CANADA", "INDONESIA", "FRANCE", "JORDAN"],
                         "rank": [1] * 5,
                     }
                 ),
+                "rank_nations_per_region_by_customers",
             ),
             id="rank_nations_per_region_by_customers",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_parts_per_supplier_region_by_size,
-                None,
-                "rank_parts_per_supplier_region_by_size",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "key": [1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4],
@@ -272,14 +226,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "rank_parts_per_supplier_region_by_size",
             ),
             id="rank_parts_per_supplier_region_by_size",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_with_filters_a,
-                None,
-                "rank_with_filters_a",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "n": [
@@ -290,14 +244,14 @@ from pydough.unqualified import (
                         "r": [9, 25, 29],
                     }
                 ),
+                "rank_with_filters_a",
             ),
             id="rank_with_filters_a",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_with_filters_b,
-                None,
-                "rank_with_filters_b",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "n": [
@@ -308,14 +262,14 @@ from pydough.unqualified import (
                         "r": [9, 25, 29],
                     }
                 ),
+                "rank_with_filters_b",
             ),
             id="rank_with_filters_b",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 rank_with_filters_c,
-                {"pname": "name", "psize": "size"},
-                "rank_with_filters_c",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "pname": [
@@ -328,14 +282,15 @@ from pydough.unqualified import (
                         "psize": [46, 47, 48, 49, 50],
                     }
                 ),
+                "rank_with_filters_c",
+                columns={"pname": "name", "psize": "size"},
             ),
             id="rank_with_filters_c",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 percentile_nations,
-                {"name": "name", "p1": "p", "p2": "p"},
-                "percentile_nations",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -369,14 +324,15 @@ from pydough.unqualified import (
                         "p2": [1] * 5 + [2] * 5 + [3] * 5 + [4] * 5 + [5] * 5,
                     }
                 ),
+                "percentile_nations",
+                columns={"name": "name", "p1": "p", "p2": "p"},
             ),
             id="percentile_nations",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 percentile_customers_per_region,
-                None,
-                "percentile_customers_per_region",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -393,14 +349,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "percentile_customers_per_region",
             ),
             id="percentile_customers_per_region",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 regional_suppliers_percentile,
-                ["name"],
-                "regional_suppliers_percentile",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -415,14 +371,15 @@ from pydough.unqualified import (
                         ]
                     }
                 ),
+                "regional_suppliers_percentile",
+                columns=["name"],
             ),
             id="regional_suppliers_percentile",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 function_sampler,
-                None,
-                "function_sampler",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "a": [
@@ -469,14 +426,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "function_sampler",
             ),
             id="function_sampler",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 order_info_per_priority,
-                None,
-                "order_info_per_priority",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_priority": [
@@ -496,14 +453,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "order_info_per_priority",
             ),
             id="order_info_per_priority",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 year_month_nation_orders,
-                None,
-                "year_month_nation_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -518,14 +475,14 @@ from pydough.unqualified import (
                         "n_orders": [198, 194, 188, 186, 185],
                     }
                 ),
+                "year_month_nation_orders",
             ),
             id="year_month_nation_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 datetime_current,
-                None,
-                "datetime_current",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "d1": [f"{pd.Timestamp.now(tz='UTC').year}-05-31"],
@@ -540,14 +497,14 @@ from pydough.unqualified import (
                         ],
                     },
                 ),
+                "datetime_current",
             ),
             id="datetime_current",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 datetime_relative,
-                None,
-                "datetime_relative",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "d1": [
@@ -583,41 +540,37 @@ from pydough.unqualified import (
                         "d6": ["2025-07-26 02:45:25"] * 10,
                     },
                 ),
+                "datetime_relative",
             ),
-            id="datetime_relative_tpch",
+            id="datetime_relative",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 agg_partition,
-                None,
+                "TPCH",
+                lambda: pd.DataFrame({"best_year": [228637]}),
                 "agg_partition",
-                lambda: pd.DataFrame(
-                    {
-                        "best_year": [228637],
-                    }
-                ),
             ),
             id="agg_partition",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 double_partition,
-                None,
-                "double_partition",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "year": [1992, 1993, 1994, 1995, 1996, 1997, 1998],
                         "best_month": [19439, 19319, 19546, 19502, 19724, 19519, 19462],
                     }
                 ),
+                "double_partition",
             ),
             id="double_partition",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 triple_partition,
-                {"region": "supp_region", "avgpct": "avg_percentage"},
-                "triple_partition",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region": [
@@ -636,14 +589,15 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "triple_partition",
+                columns={"region": "supp_region", "avgpct": "avg_percentage"},
             ),
             id="triple_partition",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 first_order_per_customer,
-                None,
-                "first_order_per_customer",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -669,14 +623,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "first_order_per_customer",
             ),
             id="first_order_per_customer",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 prev_next_regions,
-                None,
-                "prev_next_regions",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "two_preceding": [None, None, "AFRICA", "AMERICA", "ASIA"],
@@ -698,14 +652,14 @@ from pydough.unqualified import (
                         "two_following": ["ASIA", "EUROPE", "MIDDLE EAST", None, None],
                     }
                 ),
+                "prev_next_regions",
             ),
             id="prev_next_regions",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 avg_order_diff_per_customer,
-                None,
-                "avg_order_diff_per_customer",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -718,14 +672,14 @@ from pydough.unqualified import (
                         "avg_diff": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
                     }
                 ),
+                "avg_order_diff_per_customer",
             ),
             id="avg_order_diff_per_customer",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 yoy_change_in_num_orders,
-                None,
-                "yoy_change_in_num_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "year": range(1992, 1999),
@@ -749,28 +703,28 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "yoy_change_in_num_orders",
             ),
             id="yoy_change_in_num_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 first_order_in_year,
-                None,
-                "first_order_in_year",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_date": [f"{yr}-01-01" for yr in range(1992, 1999)],
                         "key": [3271, 15233, 290, 14178, 4640, 5895, 20064],
                     }
                 ),
+                "first_order_in_year",
             ),
             id="first_order_in_year",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 customer_largest_order_deltas,
-                None,
-                "customer_largest_order_deltas",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -789,14 +743,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "customer_largest_order_deltas",
             ),
             id="customer_largest_order_deltas",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 suppliers_bal_diffs,
-                None,
-                "suppliers_bal_diffs",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -816,42 +770,42 @@ from pydough.unqualified import (
                         "acctbal_delta": [44.43, 43.25, 43.15, 41.54, 41.48],
                     }
                 ),
+                "suppliers_bal_diffs",
             ),
             id="suppliers_bal_diffs",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 month_year_sliding_windows,
-                None,
-                "month_year_sliding_windows",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "year": [1996] * 6 + [1997] * 4 + [1998] * 4,
                         "month": [1, 3, 5, 8, 10, 12, 3, 5, 7, 10, 1, 3, 5, 7],
                     }
                 ),
+                "month_year_sliding_windows",
             ),
             id="month_year_sliding_windows",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular1,
-                None,
-                "singular1",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
                         "nation_4_name": [None, None, None, None, "EGYPT"],
                     }
                 ),
+                "singular1",
             ),
             id="singular1",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular2,
-                None,
-                "singular2",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -884,14 +838,14 @@ from pydough.unqualified import (
                         "okey": [None] * 15 + [454791] + [None] * 9,
                     }
                 ),
+                "singular2",
             ),
             id="singular2",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular3,
-                None,
-                "singular3",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -903,14 +857,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "singular3",
             ),
             id="singular3",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular4,
-                None,
-                "singular4",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -922,14 +876,14 @@ from pydough.unqualified import (
                         ]
                     }
                 ),
+                "singular4",
             ),
             id="singular4",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular5,
-                None,
-                "singular5",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "container": [
@@ -948,14 +902,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "singular5",
             ),
             id="singular5",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular6,
-                None,
-                "singular6",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -978,14 +932,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "singular6",
             ),
             id="singular6",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 singular7,
-                None,
-                "singular7",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -1005,14 +959,14 @@ from pydough.unqualified import (
                         "n_orders": [8, 7, 7, 7, 7],
                     }
                 ),
+                "singular7",
             ),
             id="singular7",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 parts_quantity_increase_95_96,
-                None,
-                "parts_quantity_increase_95_96",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -1024,37 +978,37 @@ from pydough.unqualified import (
                         "qty_96": [156, 152, 167],
                     }
                 ),
+                "parts_quantity_increase_95_96",
             ),
             id="parts_quantity_increase_95_96",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 avg_gap_prev_urgent_same_clerk,
-                None,
-                "avg_gap_prev_urgent_same_clerk",
+                "TPCH",
                 lambda: pd.DataFrame({"avg_delta": [7.9820674]}),
+                "avg_gap_prev_urgent_same_clerk",
             ),
             id="avg_gap_prev_urgent_same_clerk",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 top_customers_by_orders,
-                None,
-                "top_customers_by_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "customer_key": [3451, 102004, 102022, 79300, 117082],
                         "n_orders": [41, 41, 41, 40, 40],
                     }
                 ),
+                "top_customers_by_orders",
             ),
             id="top_customers_by_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 customer_most_recent_orders,
-                None,
-                "customer_most_recent_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -1065,14 +1019,14 @@ from pydough.unqualified import (
                         "total_recent_value": [1614134.33, 1592016.2, 1565721.92],
                     }
                 ),
+                "customer_most_recent_orders",
             ),
             id="customer_most_recent_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 richest_customer_per_region,
-                None,
-                "richest_customer_per_region",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1099,41 +1053,37 @@ from pydough.unqualified import (
                         "balance": [9999.99, 9999.72, 9998.36, 9999.74, 9998.68],
                     }
                 ),
+                "richest_customer_per_region",
             ),
             id="richest_customer_per_region",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 n_orders_first_day,
-                None,
+                "TPCH",
+                lambda: pd.DataFrame({"n_orders": [621]}),
                 "n_orders_first_day",
-                lambda: pd.DataFrame(
-                    {
-                        "n_orders": [621],
-                    }
-                ),
             ),
             id="n_orders_first_day",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 wealthiest_supplier,
-                None,
-                "wealthiest_supplier",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["Supplier#000009450"],
                         "account_balance": [9999.72],
                     }
                 ),
+                "wealthiest_supplier",
             ),
             id="wealthiest_supplier",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 supplier_best_part,
-                None,
-                "supplier_best_part",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -1150,14 +1100,14 @@ from pydough.unqualified import (
                         "n_shipments": [4, 3, 3],
                     }
                 ),
+                "supplier_best_part",
             ),
             id="supplier_best_part",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 region_orders_from_nations_richest,
-                None,
-                "region_orders_from_nations_richest",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1170,14 +1120,14 @@ from pydough.unqualified import (
                         "n_orders": [74, 19, 62, 73, 41],
                     }
                 ),
+                "region_orders_from_nations_richest",
             ),
             id="region_orders_from_nations_richest",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 regional_first_order_best_line_part,
-                None,
-                "regional_first_order_best_line_part",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1196,14 +1146,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "regional_first_order_best_line_part",
             ),
             id="regional_first_order_best_line_part",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 orders_versus_first_orders,
-                None,
-                "orders_versus_first_orders",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "customer_name": [
@@ -1217,14 +1167,14 @@ from pydough.unqualified import (
                         "days_since_first_order": [2399, 2399, 2398, 2398, 2396],
                     }
                 ),
+                "orders_versus_first_orders",
             ),
             id="orders_versus_first_orders",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 nation_window_aggs,
-                None,
-                "nation_window_aggs",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1250,14 +1200,14 @@ from pydough.unqualified import (
                         "n_nations": [15] * 15,
                     }
                 ),
+                "nation_window_aggs",
             ),
             id="nation_window_aggs",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 region_nation_window_aggs,
-                None,
-                "region_nation_window_aggs",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1287,14 +1237,14 @@ from pydough.unqualified import (
                         "n_nations": [3] * 9 + [4] * 4 + [2] * 2,
                     }
                 ),
+                "region_nation_window_aggs",
             ),
             id="region_nation_window_aggs",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 supplier_pct_national_qty,
-                None,
-                "supplier_pct_national_qty",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
@@ -1327,14 +1277,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "supplier_pct_national_qty",
             ),
             id="supplier_pct_national_qty",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 highest_priority_per_year,
-                None,
-                "highest_priority_per_year",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_year": range(1992, 1999),
@@ -1358,14 +1308,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "highest_priority_per_year",
             ),
             id="highest_priority_per_year",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 nation_best_order,
-                None,
-                "nation_best_order",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1399,14 +1349,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "nation_best_order",
             ),
             id="nation_best_order",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 nation_acctbal_breakdown,
-                None,
-                "nation_acctbal_breakdown",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": [
@@ -1441,14 +1391,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "nation_acctbal_breakdown",
             ),
             id="nation_acctbal_breakdown",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 region_acctbal_breakdown,
-                None,
-                "region_acctbal_breakdown",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1483,14 +1433,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "region_acctbal_breakdown",
             ),
             id="region_acctbal_breakdown",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 global_acctbal_breakdown,
-                None,
-                "global_acctbal_breakdown",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "n_red_acctbal": [13692],
@@ -1500,14 +1450,14 @@ from pydough.unqualified import (
                         "median_overall_acctbal": [4477.3],
                     }
                 ),
+                "global_acctbal_breakdown",
             ),
             id="global_acctbal_breakdown",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_int_float_string_cast,
-                None,
-                "simple_int_float_string_cast",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "i1": [1],
@@ -1534,14 +1484,14 @@ from pydough.unqualified import (
                         "s9": ["abc def"],
                     }
                 ),
+                "simple_int_float_string_cast",
             ),
             id="simple_int_float_string_cast",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 string_format_specifiers_sqlite,
-                None,
-                "string_format_specifiers_sqlite",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "d1": ["15"],
@@ -1569,14 +1519,14 @@ from pydough.unqualified import (
                         "d23": ["07-15-2023"],
                     }
                 ),
+                "string_format_specifiers_sqlite",
             ),
             id="string_format_specifiers_sqlite",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 part_reduced_size,
-                None,
-                "part_reduced_size",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "reduced_size": [2.8, 2.8, 4.0, 4.0, 2.8],
@@ -1600,14 +1550,14 @@ from pydough.unqualified import (
                         "am_pm": ["00:00AM"] * 5,
                     }
                 ),
+                "part_reduced_size",
             ),
             id="part_reduced_size",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_smallest_or_largest,
-                None,
-                "simple_smallest_or_largest",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "s1": [10],
@@ -1630,14 +1580,14 @@ from pydough.unqualified import (
                         "l9": [None],
                     }
                 ),
+                "simple_smallest_or_largest",
             ),
             id="simple_smallest_or_largest",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 avg_acctbal_wo_debt,
-                None,
-                "avg_acctbal_wo_debt",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "region_name": [
@@ -1656,23 +1606,23 @@ from pydough.unqualified import (
                         ],
                     },
                 ),
+                "avg_acctbal_wo_debt",
             ),
             id="avg_acctbal_wo_debt",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 odate_and_rdate_avggap,
-                None,
-                "odate_and_rdate_avggap",
+                "TPCH",
                 lambda: pd.DataFrame({"avg_gap": [50.41427]}),
+                "odate_and_rdate_avggap",
             ),
             id="odate_and_rdate_avggap",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 dumb_aggregation,
-                None,
-                "dumb_aggregation",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "nation_name": ["ALGERIA", "ARGENTINA"],
@@ -1686,14 +1636,14 @@ from pydough.unqualified import (
                         "a8": [0, 1],
                     }
                 ),
+                "dumb_aggregation",
             ),
             id="dumb_aggregation",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_var_std,
-                None,
-                "simple_var_std",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "name": ["ALGERIA", "ARGENTINA"],
@@ -1705,14 +1655,14 @@ from pydough.unqualified import (
                         "pop_std": [3044.339064, 3168.316441],
                     }
                 ),
+                "simple_var_std",
             ),
             id="simple_var_std",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 simple_var_std_with_nulls,
-                None,
-                "simple_var_std_with_nulls",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "var_samp_0_nnull": [None],
@@ -1729,14 +1679,14 @@ from pydough.unqualified import (
                         "std_pop_2_nnull": [3688.235],
                     }
                 ),
+                "simple_var_std_with_nulls",
             ),
             id="simple_var_std_with_nulls",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 quarter_function_test,
-                None,
-                "quarter_function_test",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "_expr0": [1],
@@ -1796,14 +1746,14 @@ from pydough.unqualified import (
                         "q_diff12": [1],
                     }
                 ),
+                "quarter_function_test",
             ),
             id="quarter_function_test",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 order_quarter_test,
-                None,
-                "order_quarter_test",
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "order_date": ["1995-01-01"],
@@ -1819,879 +1769,24 @@ from pydough.unqualified import (
                         "same_quarter_next_year": ["1996-01-01 00:00:00"],
                     }
                 ),
+                "order_quarter_test",
             ),
             id="order_quarter_test",
         ),
-        pytest.param(
-            (
-                common_prefix_a,
-                None,
-                "common_prefix_a",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_nations": [5, 5, 5, 5, 5],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                    }
-                ),
-            ),
-            id="common_prefix_a",
-        ),
-        pytest.param(
-            (
-                common_prefix_b,
-                None,
-                "common_prefix_b",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_nations": [5, 5, 5, 5, 5],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
-                    }
-                ),
-            ),
-            id="common_prefix_b",
-        ),
-        pytest.param(
-            (
-                common_prefix_c,
-                None,
-                "common_prefix_c",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_nations": [5, 5, 5, 5, 5],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
-                        "n_orders": [298994, 299103, 301740, 303286, 296877],
-                        "n_parts": [156400, 162880, 160240, 158960, 161520],
-                    }
-                ),
-            ),
-            id="common_prefix_c",
-        ),
-        pytest.param(
-            (
-                common_prefix_d,
-                None,
-                "common_prefix_d",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_nations": [5, 5, 5, 5, 5],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
-                        "n_orders_94": [45152, 45335, 46008, 46093, 45009],
-                        "n_orders_95": [45822, 45630, 45731, 46197, 45257],
-                        "n_orders_96": [45352, 45549, 45976, 46518, 45231],
-                    }
-                ),
-            ),
-            id="common_prefix_d",
-        ),
-        pytest.param(
-            (
-                common_prefix_e,
-                None,
-                "common_prefix_e",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                        "n_nations": [5, 5, 5, 5, 5],
-                    }
-                ),
-            ),
-            id="common_prefix_e",
-        ),
-        pytest.param(
-            (
-                common_prefix_f,
-                None,
-                "common_prefix_f",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                        "n_nations": [5, 5, 5, 5, 5],
-                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
-                    }
-                ),
-            ),
-            id="common_prefix_f",
-        ),
-        pytest.param(
-            (
-                common_prefix_g,
-                None,
-                "common_prefix_g",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
-                        "n_nations": [5, 5, 5, 5, 5],
-                    }
-                ),
-            ),
-            id="common_prefix_g",
-        ),
-        pytest.param(
-            (
-                common_prefix_h,
-                None,
-                "common_prefix_h",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
-                        "n_nations": [5, 5, 5, 5, 5],
-                        "n_orders": [298994, 299103, 301740, 303286, 296877],
-                        "n_customers": [29764, 29952, 30183, 30197, 29904],
-                        "n_parts": [156400, 162880, 160240, 158960, 161520],
-                        "n_suppliers": [1955, 2036, 2003, 1987, 2019],
-                    }
-                ),
-            ),
-            id="common_prefix_h",
-        ),
-        pytest.param(
-            (
-                common_prefix_i,
-                None,
-                "common_prefix_i",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["FRANCE", "ROMANIA", "RUSSIA", "JORDAN", "CHINA"],
-                        "n_customers": [6100, 6100, 6078, 6033, 6024],
-                        "n_selected_orders": [1, 2, 1, 1, 1],
-                    }
-                ),
-            ),
-            id="common_prefix_i",
-        ),
-        pytest.param(
-            (
-                common_prefix_j,
-                None,
-                "common_prefix_j",
-                lambda: pd.DataFrame(
-                    {
-                        "cust_name": [f"Customer#{i:09}" for i in range(1, 6)],
-                        "nation_name": [
-                            "MOROCCO",
-                            "JORDAN",
-                            "ARGENTINA",
-                            "EGYPT",
-                            "CANADA",
-                        ],
-                        "region_name": [
-                            "AFRICA",
-                            "MIDDLE EAST",
-                            "AMERICA",
-                            "MIDDLE EAST",
-                            "AMERICA",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_j",
-        ),
-        pytest.param(
-            (
-                common_prefix_k,
-                None,
-                "common_prefix_k",
-                lambda: pd.DataFrame(
-                    {
-                        "cust_name": [f"Customer#{i:09}" for i in range(1, 6)],
-                        "region_name": [
-                            "AFRICA",
-                            "MIDDLE EAST",
-                            "AMERICA",
-                            "MIDDLE EAST",
-                            "AMERICA",
-                        ],
-                        "nation_name": [
-                            "MOROCCO",
-                            "JORDAN",
-                            "ARGENTINA",
-                            "EGYPT",
-                            "CANADA",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_k",
-        ),
-        pytest.param(
-            (
-                common_prefix_l,
-                None,
-                "common_prefix_l",
-                lambda: pd.DataFrame(
-                    {
-                        "cust_name": [f"Customer#{i:09}" for i in (11, 15, 18, 20, 26)],
-                        "nation_name": [
-                            "UNITED KINGDOM",
-                            "UNITED KINGDOM",
-                            "FRANCE",
-                            "RUSSIA",
-                            "RUSSIA",
-                        ],
-                        "n_selected_suppliers": [173, 173, 167, 182, 182],
-                        "selected_suppliers_min": [
-                            -898.3,
-                            -898.3,
-                            -993.76,
-                            -878.57,
-                            -878.57,
-                        ],
-                        "selected_suppliers_max": [
-                            9938.53,
-                            9938.53,
-                            9807.46,
-                            9837.53,
-                            9837.53,
-                        ],
-                        "selected_suppliers_avg": [
-                            4496.83,
-                            4496.83,
-                            4725.76,
-                            4943.47,
-                            4943.47,
-                        ],
-                        "selected_suppliers_sum": [
-                            777952.16,
-                            777952.16,
-                            789202.26,
-                            899711.81,
-                            899711.81,
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_l",
-        ),
-        pytest.param(
-            (
-                common_prefix_m,
-                None,
-                "common_prefix_m",
-                lambda: pd.DataFrame(
-                    {
-                        "cust_name": [f"Customer#{i:09}" for i in (11, 15, 18, 20, 26)],
-                        "n_selected_suppliers": [173, 173, 167, 182, 182],
-                        "selected_suppliers_min": [
-                            -898.3,
-                            -898.3,
-                            -993.76,
-                            -878.57,
-                            -878.57,
-                        ],
-                        "selected_suppliers_max": [
-                            9938.53,
-                            9938.53,
-                            9807.46,
-                            9837.53,
-                            9837.53,
-                        ],
-                        "selected_suppliers_avg": [
-                            4496.83,
-                            4496.83,
-                            4725.76,
-                            4943.47,
-                            4943.47,
-                        ],
-                        "selected_suppliers_sum": [
-                            777952.16,
-                            777952.16,
-                            789202.26,
-                            899711.81,
-                            899711.81,
-                        ],
-                        "nation_name": [
-                            "UNITED KINGDOM",
-                            "UNITED KINGDOM",
-                            "FRANCE",
-                            "RUSSIA",
-                            "RUSSIA",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_m",
-        ),
-        pytest.param(
-            (
-                common_prefix_n,
-                None,
-                "common_prefix_n",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [3292610, 927968, 1117219, 3874244, 1069636],
-                        "order_date": [
-                            "1998-07-19",
-                            "1998-07-13",
-                            "1998-07-11",
-                            "1998-07-10",
-                            "1998-06-23",
-                        ],
-                        "n_elements": [5, 4, 7, 7, 5],
-                        "total_retail_price": [
-                            7609.67,
-                            6379.40,
-                            9620.69,
-                            9268.20,
-                            7377.55,
-                        ],
-                        "n_unique_supplier_nations": [4, 3, 6, 6, 4],
-                        "max_supplier_balance": [
-                            8615.81,
-                            8797.73,
-                            9199.28,
-                            9469.81,
-                            7575.13,
-                        ],
-                        "n_small_parts": [1, 0, 2, 4, 1],
-                    }
-                ),
-            ),
-            id="common_prefix_n",
-        ),
-        pytest.param(
-            (
-                common_prefix_o,
-                None,
-                "common_prefix_o",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [435237, 4682917, 4069735, 464226, 791522],
-                        "order_date": [
-                            "1998-06-16",
-                            "1998-06-14",
-                            "1998-04-22",
-                            "1998-01-07",
-                            "1997-10-18",
-                        ],
-                        "n_elements": [7] * 5,
-                        "n_unique_containers": [6] * 5,
-                        "n_unique_supplier_nations": [6, 5, 6, 6, 6],
-                        "max_supplier_balance": [
-                            7205.20,
-                            9487.41,
-                            8471.66,
-                            9852.52,
-                            9182.14,
-                        ],
-                        "n_small_parts": [1, 2, 2, 2, 1],
-                    }
-                ),
-            ),
-            id="common_prefix_o",
-        ),
-        pytest.param(
-            (
-                common_prefix_p,
-                None,
-                "common_prefix_p",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [f"Customer#{i:09}" for i in (140698, 1, 2, 4, 7)],
-                        "n_orders": [5, 2, 4, 3, 5],
-                        "n_parts_ordered": [2, 1, 2, 1, 1],
-                        "n_distinct_parts": [1, 1, 2, 1, 1],
-                    }
-                ),
-            ),
-            id="common_prefix_p",
-        ),
-        pytest.param(
-            (
-                common_prefix_q,
-                None,
-                "common_prefix_q",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [
-                            f"Customer#{i:09}"
-                            for i in (127207, 14839, 18637, 52351, 117196)
-                        ],
-                        "total_spent": [
-                            907224.66,
-                            902286.22,
-                            856788.74,
-                            842691.87,
-                            836571.25,
-                        ],
-                        "line_price": [
-                            86804.77,
-                            83715.40,
-                            69682.50,
-                            71998.67,
-                            93875.18,
-                        ],
-                        "part_name": [
-                            "slate beige orange black burlywood",
-                            "chiffon ivory salmon frosted linen",
-                            "chartreuse cream royal misty cornflower",
-                            "lavender tomato midnight orchid thistle",
-                            "green navy sky blue lemon",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_q",
-        ),
-        pytest.param(
-            (
-                common_prefix_r,
-                None,
-                "common_prefix_r",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [
-                            f"Customer#{i:09}"
-                            for i in (127207, 14839, 18637, 52351, 117196)
-                        ],
-                        "part_name": [
-                            "slate beige orange black burlywood",
-                            "chiffon ivory salmon frosted linen",
-                            "chartreuse cream royal misty cornflower",
-                            "lavender tomato midnight orchid thistle",
-                            "green navy sky blue lemon",
-                        ],
-                        "line_price": [
-                            86804.77,
-                            83715.40,
-                            69682.50,
-                            71998.67,
-                            93875.18,
-                        ],
-                        "total_spent": [
-                            907224.66,
-                            902286.22,
-                            856788.74,
-                            842691.87,
-                            836571.25,
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_r",
-        ),
-        pytest.param(
-            (
-                common_prefix_s,
-                None,
-                "common_prefix_s",
-                lambda: pd.DataFrame(
-                    {
-                        "name": ["Customer#000106507"],
-                        "most_recent_order_date": ["1998-05-25"],
-                        "most_recent_order_total": [7],
-                        "most_recent_order_distinct": [6],
-                    }
-                ),
-            ),
-            id="common_prefix_s",
-        ),
-        pytest.param(
-            (
-                common_prefix_t,
-                None,
-                "common_prefix_t",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [
-                            f"Customer#{i:09}"
-                            for i in (126850, 80485, 86209, 73420, 146809)
-                        ],
-                        "total_qty": [3670, 3439, 3422, 3409, 3409],
-                    }
-                ),
-            ),
-            id="common_prefix_t",
-        ),
-        pytest.param(
-            (
-                common_prefix_u,
-                None,
-                "common_prefix_u",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [
-                            f"Customer#{i:09}"
-                            for i in (111613, 112126, 92282, 69872, 135349)
-                        ],
-                        "total_qty": [169, 162, 151, 150, 136],
-                    }
-                ),
-            ),
-            id="common_prefix_u",
-        ),
-        pytest.param(
-            (
-                common_prefix_v,
-                None,
-                "common_prefix_v",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [f"Customer#{i:09}" for i in (3, 14, 29, 30, 48)],
-                        "region_name": [
-                            "AMERICA",
-                            "AMERICA",
-                            "AFRICA",
-                            "AMERICA",
-                            "AFRICA",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_v",
-        ),
-        pytest.param(
-            (
-                common_prefix_w,
-                None,
-                "common_prefix_w",
-                lambda: pd.DataFrame(
-                    {
-                        "key": [37, 64, 68, 228, 293],
-                        "cust_nation_name": ["ALGERIA"]
-                        + ["ARGENTINA"] * 3
-                        + ["ALGERIA"],
-                    }
-                ),
-            ),
-            id="common_prefix_w",
-        ),
-        pytest.param(
-            (
-                common_prefix_x,
-                None,
-                "common_prefix_x",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [
-                            f"Customer#{i:09}"
-                            for i in (3451, 102004, 102022, 79300, 117082)
-                        ],
-                        "n_orders": [41, 41, 41, 40, 40],
-                    }
-                ),
-            ),
-            id="common_prefix_x",
-        ),
-        pytest.param(
-            (
-                common_prefix_y,
-                None,
-                "common_prefix_y",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [
-                            f"Customer#{i:09}"
-                            for i in (138841, 36091, 54952, 103768, 46081)
-                        ],
-                        "n_orders": [21, 20, 19, 19, 17],
-                    }
-                ),
-            ),
-            id="common_prefix_y",
-        ),
-        pytest.param(
-            (
-                common_prefix_z,
-                None,
-                "common_prefix_z",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [f"Customer#{i:09}" for i in (7, 9, 19, 21, 25)],
-                        "nation_name": ["CHINA", "INDIA"] * 2 + ["JAPAN"],
-                    }
-                ),
-            ),
-            id="common_prefix_z",
-        ),
-        pytest.param(
-            (
-                common_prefix_aa,
-                None,
-                "common_prefix_aa",
-                lambda: pd.DataFrame(
-                    {
-                        "name": [f"Customer#{i:09}" for i in (1, 2, 4, 6, 7)],
-                        "nation_name": [
-                            "MOROCCO",
-                            "JORDAN",
-                            "EGYPT",
-                            "SAUDI ARABIA",
-                            "CHINA",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_aa",
-        ),
-        pytest.param(
-            (
-                common_prefix_ab,
-                None,
-                "common_prefix_ab",
-                lambda: pd.DataFrame({"n": [54318]}),
-            ),
-            id="common_prefix_ab",
-        ),
-        pytest.param(
-            (
-                common_prefix_ac,
-                None,
-                "common_prefix_ac",
-                lambda: pd.DataFrame({"n": [137398]}),
-            ),
-            id="common_prefix_ac",
-        ),
-        pytest.param(
-            (
-                common_prefix_ad,
-                None,
-                "common_prefix_ad",
-                lambda: pd.DataFrame(
-                    {
-                        "supplier_name": [
-                            "Supplier#000004704",
-                            "Supplier#000006661",
-                            "Supplier#000009766",
-                        ],
-                        "part_name": [
-                            "slate rosy misty medium mint",
-                            "goldenrod plum dark aquamarine bisque",
-                            "drab navajo rosy cornflower green",
-                        ],
-                        "part_qty": [9291, 9570, 1002],
-                        "qty_shipped": [4, 38, 31],
-                    }
-                ),
-            ),
-            id="common_prefix_ad",
-        ),
-        pytest.param(
-            (
-                common_prefix_ae,
-                None,
-                "common_prefix_ae",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": [
-                            "CHINA",
-                            "INDIA",
-                            "INDONESIA",
-                            "JAPAN",
-                            "VIETNAM",
-                        ],
-                        "n_customers": [6024, 6042, 6161, 5948, 6008],
-                        "customer_name": [
-                            "Customer#000018193",
-                            "Customer#000052147",
-                            "Customer#000067505",
-                            None,
-                            "Customer#000148697",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_ae",
-        ),
-        pytest.param(
-            (
-                common_prefix_af,
-                None,
-                "common_prefix_af",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": ["CHINA", "INDIA", "INDONESIA", "VIETNAM"],
-                        "n_customers": [6024, 6042, 6161, 6008],
-                        "customer_name": [
-                            "Customer#000018193",
-                            "Customer#000052147",
-                            "Customer#000067505",
-                            "Customer#000148697",
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_af",
-        ),
-        pytest.param(
-            (
-                common_prefix_ag,
-                None,
-                "common_prefix_ag",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": [
-                            "FRANCE",
-                            "GERMANY",
-                            "ROMANIA",
-                            "RUSSIA",
-                            "UNITED KINGDOM",
-                        ],
-                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
-                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
-                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
-                        "total_machine_high_domestic_revenue": [
-                            8595646.38,
-                            8313389.57,
-                            9834510.0,
-                            10473260.03,
-                            8492812.64,
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_ag",
-        ),
-        pytest.param(
-            (
-                common_prefix_ah,
-                None,
-                "common_prefix_ah",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": [
-                            "FRANCE",
-                            "GERMANY",
-                            "ROMANIA",
-                            "RUSSIA",
-                            "UNITED KINGDOM",
-                        ],
-                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
-                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
-                        "total_machine_high_domestic_revenue": [
-                            8595646.38,
-                            8313389.57,
-                            9834510.0,
-                            10473260.03,
-                            8492812.64,
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_ah",
-        ),
-        pytest.param(
-            (
-                common_prefix_ai,
-                None,
-                "common_prefix_ai",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": [
-                            "FRANCE",
-                            "GERMANY",
-                            "ROMANIA",
-                            "RUSSIA",
-                            "UNITED KINGDOM",
-                        ],
-                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
-                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
-                        "total_machine_high_domestic_revenue": [
-                            8595646.38,
-                            8313389.57,
-                            9834510.0,
-                            10473260.03,
-                            8492812.64,
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_ai",
-        ),
-        pytest.param(
-            (
-                common_prefix_aj,
-                None,
-                "common_prefix_aj",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": [
-                            "FRANCE",
-                            "GERMANY",
-                            "ROMANIA",
-                            "RUSSIA",
-                            "UNITED KINGDOM",
-                        ],
-                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
-                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
-                        "total_machine_high_domestic_revenue": [
-                            8595646.38,
-                            8313389.57,
-                            9834510.0,
-                            10473260.03,
-                            8492812.64,
-                        ],
-                    }
-                ),
-            ),
-            id="common_prefix_aj",
-        ),
-        pytest.param(
-            (
-                common_prefix_ak,
-                None,
-                "common_prefix_ak",
-                lambda: pd.DataFrame(
-                    {
-                        "nation_name": [
-                            "FRANCE",
-                            "GERMANY",
-                            "ROMANIA",
-                            "RUSSIA",
-                            "UNITED KINGDOM",
-                        ],
-                        "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
-                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
-                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
-                    }
-                ),
-            ),
-            id="common_prefix_ak",
-        ),
     ],
 )
-def pydough_pipeline_test_data(
-    request,
-) -> tuple[
-    Callable[[], UnqualifiedNode],
-    dict[str, str] | list[str] | None,
-    str,
-    Callable[[], pd.DataFrame],
-]:
+def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for `test_pipeline_e2e_tpch_custom`. Returns a tuple of the
-    following arguments:
-    1. `unqualified_impl`: a function that takes in an unqualified root and
-    creates the unqualified node for the TPCH query.
-    2. `columns`: a valid value for the `columns` argument of `to_sql` or
-    `to_df`.
-    3. `file_name`: the name of the file containing the expected relational
-    plan.
-    4. `answer_impl`: a function that takes in nothing and returns the answer
-    to a TPCH query as a Pandas DataFrame.
+    Test data for e2e tests on custom queries using the TPC-H database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
     """
     return request.param
 
 
 def test_pipeline_until_relational_tpch_custom(
-    pydough_pipeline_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -2700,40 +1795,15 @@ def test_pipeline_until_relational_tpch_custom(
     qualified DAG version, with the correct string representation. Run on
     custom queries with the TPC-H graph.
     """
-    # Run the query through the stages from unqualified node to qualified node
-    # to relational tree, and confirm the tree string matches the expected
-    # structure.
-    unqualified_impl, columns, file_name, _ = pydough_pipeline_test_data
-    file_path: str = get_plan_test_filename(file_name)
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(qualified, PyDoughCollectionQDAG), (
-        "Expected qualified answer to be a collection, not an expression"
+    file_path: str = get_plan_test_filename(tpch_custom_pipeline_test_data.test_name)
+    tpch_custom_pipeline_test_data.run_relational_test(
+        get_sample_graph, file_path, update_tests
     )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, _load_column_selection({"columns": columns}), default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(relational.to_tree_string() + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert relational.to_tree_string() == expected_relational_string.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
-        )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_tpch_custom(
-    pydough_pipeline_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
 ):
@@ -2741,18 +1811,14 @@ def test_pipeline_e2e_tpch_custom(
     Test executing the the custom queries with TPC-H data from the original
     code generation.
     """
-    unqualified_impl, columns, _, answer_impl = pydough_pipeline_test_data
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, columns=columns, metadata=graph, database=sqlite_tpch_db_context
+    tpch_custom_pipeline_test_data.run_e2e_test(
+        get_sample_graph, sqlite_tpch_db_context
     )
-    pd.testing.assert_frame_equal(result, answer_impl())
 
 
 @pytest.mark.execute
 @pytest.mark.parametrize(
-    "impl, columns, error_msg",
+    "pydough_impl, columns, error_message",
     [
         pytest.param(
             bad_slice_1,
@@ -2871,9 +1937,9 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[[], UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
-    error_msg: str,
+    error_message: str,
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
 ):
@@ -2882,6 +1948,10 @@ def test_pipeline_e2e_errors(
     a certain error is raised.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
-    with pytest.raises(Exception, match=error_msg):
-        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
-        to_df(root, columns=columns, metadata=graph, database=sqlite_tpch_db_context)
+    run_e2e_error_test(
+        pydough_impl,
+        error_message,
+        graph,
+        columns=columns,
+        database=sqlite_tpch_db_context,
+    )

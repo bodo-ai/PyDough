@@ -5,7 +5,15 @@ Test that tests the full conversion of a PyDough object to a SQL query.
 from collections.abc import Callable
 
 import pytest
-from simple_pydough_functions import (
+
+from pydough import init_pydough_context, to_sql
+from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
+from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     datediff,
     datetime_sampler,
@@ -23,17 +31,11 @@ from simple_pydough_functions import (
     time_threshold_reached,
     transaction_week_sampler,
     week_offset,
+    window_sliding_frame_relsize,
+    window_sliding_frame_relsum,
 )
-from test_utils import (
+from tests.testing_utilities import (
     graph_fetcher,
-)
-
-from pydough import init_pydough_context, to_sql
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import (
-    UnqualifiedNode,
 )
 
 
@@ -170,6 +172,18 @@ def test_pydough_to_sql_tpch(
             "time_threshold_reached",
             "Broker",
             id="time_threshold_reached",
+        ),
+        pytest.param(
+            window_sliding_frame_relsize,
+            "window_sliding_frame_relsize",
+            "Broker",
+            id="window_sliding_frame_relsize",
+        ),
+        pytest.param(
+            window_sliding_frame_relsum,
+            "window_sliding_frame_relsum",
+            "Broker",
+            id="window_sliding_frame_relsum",
         ),
     ],
 )

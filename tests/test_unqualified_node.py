@@ -9,7 +9,61 @@ import re
 from collections.abc import Callable
 
 import pytest
-from bad_pydough_functions import (
+
+import pydough
+from pydough import init_pydough_context
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+    UnqualifiedRoot,
+    transform_code,
+)
+from tests.test_pydough_functions.simple_pydough_functions import (
+    abs_round_magic_method,
+    annotated_assignment,
+    args_kwargs,
+    class_handling,
+    dict_comp_terms,
+    exception_handling,
+    function_defined_terms,
+    function_defined_terms_with_duplicate_names,
+    generator_comp_terms,
+    lambda_defined_terms,
+    list_comp_terms,
+    loop_generated_terms,
+    nested_unpacking,
+    set_comp_terms,
+    unpacking,
+    unpacking_in_iterable,
+    with_import_statement,
+)
+from tests.test_pydough_functions.tpch_test_functions import (
+    impl_tpch_q1,
+    impl_tpch_q2,
+    impl_tpch_q3,
+    impl_tpch_q4,
+    impl_tpch_q5,
+    impl_tpch_q6,
+    impl_tpch_q7,
+    impl_tpch_q8,
+    impl_tpch_q9,
+    impl_tpch_q10,
+    impl_tpch_q11,
+    impl_tpch_q12,
+    impl_tpch_q13,
+    impl_tpch_q14,
+    impl_tpch_q15,
+    impl_tpch_q16,
+    impl_tpch_q17,
+    impl_tpch_q18,
+    impl_tpch_q19,
+    impl_tpch_q20,
+    impl_tpch_q21,
+    impl_tpch_q22,
+)
+from tests.testing_utilities import graph_fetcher
+
+from .test_pydough_functions.bad_pydough_functions import (
     bad_bool_1,
     bad_bool_2,
     bad_bool_3,
@@ -35,59 +89,10 @@ from bad_pydough_functions import (
     bad_window_4,
     bad_window_5,
     bad_window_6,
-)
-from simple_pydough_functions import (
-    abs_round_magic_method,
-    annotated_assignment,
-    args_kwargs,
-    class_handling,
-    dict_comp_terms,
-    exception_handling,
-    function_defined_terms,
-    function_defined_terms_with_duplicate_names,
-    generator_comp_terms,
-    lambda_defined_terms,
-    list_comp_terms,
-    loop_generated_terms,
-    nested_unpacking,
-    set_comp_terms,
-    unpacking,
-    unpacking_in_iterable,
-    with_import_statement,
-)
-from test_utils import graph_fetcher
-from tpch_test_functions import (
-    impl_tpch_q1,
-    impl_tpch_q2,
-    impl_tpch_q3,
-    impl_tpch_q4,
-    impl_tpch_q5,
-    impl_tpch_q6,
-    impl_tpch_q7,
-    impl_tpch_q8,
-    impl_tpch_q9,
-    impl_tpch_q10,
-    impl_tpch_q11,
-    impl_tpch_q12,
-    impl_tpch_q13,
-    impl_tpch_q14,
-    impl_tpch_q15,
-    impl_tpch_q16,
-    impl_tpch_q17,
-    impl_tpch_q18,
-    impl_tpch_q19,
-    impl_tpch_q20,
-    impl_tpch_q21,
-    impl_tpch_q22,
-)
-
-import pydough
-from pydough import init_pydough_context
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    transform_code,
+    bad_window_7,
+    bad_window_8,
+    bad_window_9,
+    bad_window_10,
 )
 
 
@@ -615,13 +620,37 @@ def test_init_pydough_context(
         ),
         pytest.param(
             bad_window_5,
-            "The `cumulative` argument to `RELSUM` must be True when the `by` argument is provided",
+            "When the `by` argument to `RELSUM` is provided, either `cumulative=True` or the `frame` argument must be provided",
             id="bad_window_5",
         ),
         pytest.param(
             bad_window_6,
             "The `by` argument to `RELAVG` must be provided when the `cumulative` argument is True",
             id="bad_window_6",
+        ),
+        pytest.param(
+            bad_window_7,
+            "The `by` argument to `RELCOUNT` must be provided when the `frame` argument is provided",
+            id="bad_window_7",
+        ),
+        pytest.param(
+            bad_window_8,
+            "The `cumulative` argument to `RELSIZE` cannot be used with the `frame` argument",
+            id="bad_window_8",
+        ),
+        pytest.param(
+            bad_window_9,
+            re.escape(
+                "Malformed `frame` argument to `RELSUM`: (-10.5, 0) (must be a tuple of two integers or None values)"
+            ),
+            id="bad_window_9",
+        ),
+        pytest.param(
+            bad_window_10,
+            re.escape(
+                "Malformed `frame` argument to `RELSUM`: (0, -1) (lower bound must be less than or equal to upper bound)"
+            ),
+            id="bad_window_10",
         ),
         pytest.param(
             bad_floor,

@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    sbcustomer.sbcustemail AS email,
-    sbcustomer.sbcustid AS _id
+    sbcustomer.sbcustid AS _id,
+    sbcustomer.sbcustemail AS email
   FROM main.sbcustomer AS sbcustomer
   WHERE
     sbcustomer.sbcustemail LIKE '%.com'

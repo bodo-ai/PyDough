@@ -20,10 +20,10 @@ WITH _s1 AS (
     ON _s1._id = sbdailyprice.sbdptickerid
 ), _s2 AS (
   SELECT
+    SUM(sbdpclose) AS expr_0,
     COUNT(sbdpclose) AS expr_1,
     MAX(sbdphigh) AS max_high,
     MIN(sbdplow) AS min_low,
-    SUM(sbdpclose) AS expr_0,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM sbdpdate),
@@ -52,10 +52,10 @@ WITH _s1 AS (
     sbdptickerid
 ), _t2 AS (
   SELECT
-    MAX(_s2.max_high) AS max_high,
-    MIN(_s2.min_low) AS min_low,
     SUM(_s2.expr_0) AS expr_0,
     SUM(_s2.expr_1) AS expr_1,
+    MAX(_s2.max_high) AS max_high,
+    MIN(_s2.min_low) AS min_low,
     _s2.month,
     _s3.symbol
   FROM _s2 AS _s2

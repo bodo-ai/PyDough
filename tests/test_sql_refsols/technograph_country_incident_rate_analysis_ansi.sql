@@ -28,8 +28,8 @@ WITH _t3 AS (
     device_id
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_3,
     SUM(_s5.agg_12) AS agg_14,
+    COUNT() AS agg_3,
     devices.de_purchase_country_id AS store_country_id
   FROM main.devices AS devices
   LEFT JOIN _s5 AS _s5

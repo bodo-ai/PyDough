@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    MAX(seasons.s_name) AS season_name,
-    COUNT() AS n_events
+    COUNT() AS n_events,
+    MAX(seasons.s_name) AS season_name
   FROM seasons AS seasons
   JOIN events AS events
     ON seasons.s_month1 = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)

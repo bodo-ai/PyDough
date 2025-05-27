@@ -38,10 +38,10 @@ WITH _s0 AS (
 ), _s16 AS (
   SELECT
     ANY_VALUE(_s0.name) AS agg_1,
-    COUNT() AS agg_3,
     SUM((
       NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
-    )) AS agg_2
+    )) AS agg_2,
+    COUNT() AS agg_3
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.first_month = EXTRACT(MONTH FROM searches.search_ts)
@@ -69,6 +69,27 @@ WITH _s0 AS (
     OR _s15.third_month = EXTRACT(MONTH FROM searches.search_ts)
   GROUP BY
     _s10.name
+<<<<<<< HEAD
+=======
+), _s19 AS (
+  SELECT
+    SUM(_s12.agg_4 = _s17.name) AS agg_0,
+    COUNT() AS agg_1_15,
+    _s12.agg_1
+  FROM _s12 AS _s12
+  JOIN _s5 AS _s13
+    ON _s12.agg_0 = EXTRACT(MONTH FROM _s13.date_time)
+    OR _s12.agg_5 = EXTRACT(MONTH FROM _s13.date_time)
+    OR _s12.agg_6 = EXTRACT(MONTH FROM _s13.date_time)
+  JOIN searches AS searches
+    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(_s13.name), '%')
+  JOIN _s0 AS _s17
+    ON _s17.first_month = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s17.second_month = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s17.third_month = EXTRACT(MONTH FROM searches.search_ts)
+  GROUP BY
+    _s12.agg_1
+>>>>>>> kian/common_prefix_tests
 )
 SELECT
   _s16.agg_1 AS season_name,

@@ -25,8 +25,8 @@ This page document the exact format that the JSON files containing PyDough metad
 The core components of the JSON file structure are as follows:
 
 - Each JSON file for PyDough metadata is a JSON array where each item is a JSON object representing a single knowledge graph.
-- Each knowledge graph object must have a `name` and `version` property, whose values are strings. The `name` property must be a valid Python identifier, and the `version` property can currently only be `V2` (indicating that the `V2` version of metadata should be used, which is the only current version of metadata).
-- Specification for the rest of the fields of the graph object if the version is `V2`:
+- Each knowledge graph object must have a `name` and `version` property, whose values are strings. The `name` property must be a valid Python identifier. The `version` must be set to `V2`—currently the only supported version.
+- Specification for the remaining fields when version is set to V2:
   - `collections` (required): an array of the metadata for each collection in the graph ([see here for more details](#collections))
   - `relationships` (required): an array of the metadata for each relationship in the graph ([see here for more details](#relationships))
   - `additional definitions` (optional): an array of strings where each string is a sentence defining a concept/definition within the semantical context of the graph, such as the vocabulary for a specific kind of analysis and how to compute it in terms of the collections/relationships.
@@ -102,7 +102,7 @@ Example of the structure of the metadata for a simple table collection:
 ## Properties
 
 Every JSON object describing a scalar property of a PyDough collection ahs the following fields:
-- `name` (required): the name of the property, which must be a valid PyDough has and must be unique within the collection (and cannot conflict with the name of a relationship that the colleciton has)
+- `name` (required): the name of the property, which must be a valid PyDough identifier and must be unique within the collection (and cannot conflict with the name of a relationship that the collection has)
 - `type` (required): the type of PyDough collection property (currently only supports `"table column"`)
 - `description` (optional): a semantic description of the property's significance.
 - `sample values` (optional): an array of JSON objects where each value is an example of a value that can be found in the actual data for tha property.
@@ -199,7 +199,7 @@ Example of the structure of the metadata for a simple join property (connects a 
 <!-- TOC --><a name="relationship-type-cartesian-product"></a>
 ### Relationship Type: Cartesian Product
 
-A relationship with this type describes a subcollection of the current collection that is derived from performing an cross-join on two collections (e.g. SELECT ... FROM T1, T2). Relationships of this type are sub-collections of the collection, as opposed to scalar attributes. Relationships of this type have a type string of "cartesian product" and have the following additional key-value pairs in their metadata JSON object:
+A relationship with this type describes a subcollection of the current collection that is derived from performing a cross-join on two collections (e.g. SELECT ... FROM T1, T2). Relationships of this type are sub-collections of the collection, as opposed to scalar attributes. Relationships of this type have a type string of "cartesian product" and have the following additional key-value pairs in their metadata JSON object:
 
 - `parent collection` (required): a string indicating the name of the parent collection that the relationship connects from. This must be the name of one of the collections in the graph.
 - `child collection` (required): a string indicating the name of the child collection that the the relationship maps to. This must be the name of one of the collections in the graph.
@@ -228,8 +228,8 @@ Example of the structure of the metadata for a cartesian product property (conne
 <!-- TOC --><a name="relationship-type-reverse"></a>
 ### Relationship Type: Reverse
 
-A relationship with this type specifies that a relationship should be created by flipping the direction of an existing relationship that was already defined earlier in the `relationships` array. Relationships of this type are sub-collections of the collection, as opposed to scalar attributes. Relationships of this type have a type string of "cartesian product" and have the following additional key-value pairs in their metadata JSON object:
-- `original parent` (required): a string indicating the name of the collection who holds the relationship being reversed (this will be the child of hte new property)
+A relationship with this type specifies that a relationship should be created by flipping the direction of an existing relationship that was already defined earlier in the `relationships` array. Relationships of this type are sub-collections of the collection, as opposed to scalar attributes. Relationships of this type have a type string of "reverse" and have the following additional key-value pairs in their metadata JSON object:
+- `original parent` (required): a string indicating the name of the collection who holds the relationship being reversed (this will be the child of the new property)
 - `original property` (required): a string indicating the name of the relationship property of the parent that is being reversed.
 - `singular` (optional): a boolean that is true if every record from the parent collection (the original child collection) matches onto at least 1 record from the child (the original parent), and false otherwise (default: `true`). This should always be true unless it is possible for the child collection to be empty.
 - `always matches` (optional): a boolean that is true if every record from the parent collection matches onto at least 1 record from the child, and false otherwise (default: `false`).

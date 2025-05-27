@@ -3,14 +3,14 @@ import logging
 from contextlib import redirect_stdout
 
 import pytest
-from tpch_relational_plans import (
-    tpch_query_1_plan,
-)
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.logger import get_logger
 from pydough.sqlglot import execute_df
+from tests.test_pydough_functions.tpch_relational_plans import (
+    tpch_query_1_plan,
+)
 
 pytestmark = [pytest.mark.execute]
 
@@ -185,19 +185,19 @@ def test_execute_df_logging(
  WITH _t0 AS (
   SELECT
     COUNT() AS count_order,
-    SUM(l_discount) AS sum_discount,
     SUM(l_extendedprice) AS sum_base_price,
-    SUM(l_quantity) AS sum_qty,
-    SUM((
-      l_extendedprice * (
-        1 - l_discount
-      )
-    )) AS sum_disc_price,
     SUM(l_extendedprice * (
       1 - l_discount
     ) * (
       1 + l_tax
     )) AS sum_charge,
+    SUM(l_discount) AS sum_discount,
+    SUM((
+      l_extendedprice * (
+        1 - l_discount
+      )
+    )) AS sum_disc_price,
+    SUM(l_quantity) AS sum_qty,
     l_linestatus,
     l_returnflag
   FROM lineitem

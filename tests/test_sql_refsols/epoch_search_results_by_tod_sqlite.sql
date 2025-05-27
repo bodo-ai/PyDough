@@ -1,9 +1,9 @@
 WITH _t1 AS (
   SELECT
-    MAX(times.t_name) AS agg_3,
-    MAX(times.t_start_hour) AS agg_4,
     AVG(searches.search_num_results) AS agg_0,
-    COUNT() AS agg_1
+    COUNT() AS agg_1,
+    MAX(times.t_name) AS agg_3,
+    MAX(times.t_start_hour) AS agg_4
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
@@ -12,11 +12,11 @@ WITH _t1 AS (
     times.t_name
 ), _t0 AS (
   SELECT
-    agg_3 AS tod,
+    ROUND(agg_0, 2) AS avg_results,
     ROUND(CAST((
       100.0 * agg_1
     ) AS REAL) / SUM(agg_1) OVER (), 2) AS pct_searches,
-    ROUND(agg_0, 2) AS avg_results,
+    agg_3 AS tod,
     agg_4
   FROM _t1
 )

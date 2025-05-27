@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    ANY_VALUE(calendar.ca_dt) AS start_of_period,
-    COUNT() AS n_purchases
+    COUNT() AS n_purchases,
+    ANY_VALUE(calendar.ca_dt) AS start_of_period
   FROM main.calendar AS calendar
   JOIN main.calendar AS calendar_2
     ON calendar.ca_dt <= calendar_2.ca_dt

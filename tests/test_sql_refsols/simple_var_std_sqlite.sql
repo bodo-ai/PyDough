@@ -1,5 +1,19 @@
 WITH _s1 AS (
   SELECT
+    POWER(
+      (
+        CAST((
+          SUM((
+            POWER(s_acctbal, 2)
+          )) - (
+            CAST((
+              POWER(SUM(s_acctbal), 2)
+            ) AS REAL) / COUNT(s_acctbal)
+          )
+        ) AS REAL) / COUNT(s_acctbal)
+      ),
+      0.5
+    ) AS pop_std,
     CAST((
       SUM((
         POWER(s_acctbal, 2)
@@ -9,15 +23,22 @@ WITH _s1 AS (
         ) AS REAL) / COUNT(s_acctbal)
       )
     ) AS REAL) / COUNT(s_acctbal) AS pop_var,
-    CAST((
-      SUM((
-        POWER(s_acctbal, 2)
-      )) - (
+    POWER(
+      (
         CAST((
-          POWER(SUM(s_acctbal), 2)
-        ) AS REAL) / COUNT(s_acctbal)
-      )
-    ) AS REAL) / COUNT(s_acctbal) AS var,
+          SUM((
+            POWER(s_acctbal, 2)
+          )) - (
+            CAST((
+              POWER(SUM(s_acctbal), 2)
+            ) AS REAL) / COUNT(s_acctbal)
+          )
+        ) AS REAL) / (
+          COUNT(s_acctbal) - 1
+        )
+      ),
+      0.5
+    ) AS sample_std,
     CAST((
       SUM((
         POWER(s_acctbal, 2)
@@ -42,37 +63,16 @@ WITH _s1 AS (
         ) AS REAL) / COUNT(s_acctbal)
       ),
       0.5
-    ) AS pop_std,
-    POWER(
-      (
-        CAST((
-          SUM((
-            POWER(s_acctbal, 2)
-          )) - (
-            CAST((
-              POWER(SUM(s_acctbal), 2)
-            ) AS REAL) / COUNT(s_acctbal)
-          )
-        ) AS REAL) / COUNT(s_acctbal)
-      ),
-      0.5
     ) AS std,
-    POWER(
-      (
+    CAST((
+      SUM((
+        POWER(s_acctbal, 2)
+      )) - (
         CAST((
-          SUM((
-            POWER(s_acctbal, 2)
-          )) - (
-            CAST((
-              POWER(SUM(s_acctbal), 2)
-            ) AS REAL) / COUNT(s_acctbal)
-          )
-        ) AS REAL) / (
-          COUNT(s_acctbal) - 1
-        )
-      ),
-      0.5
-    ) AS sample_std,
+          POWER(SUM(s_acctbal), 2)
+        ) AS REAL) / COUNT(s_acctbal)
+      )
+    ) AS REAL) / COUNT(s_acctbal) AS var,
     s_nationkey AS nation_key
   FROM tpch.supplier
   GROUP BY

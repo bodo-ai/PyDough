@@ -7,8 +7,8 @@ WITH _s3 AS (
     in_device_id
 ), _s5 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(COALESCE(_s3.agg_0, 0)) AS agg_0,
+    COUNT() AS agg_1,
     devices.de_production_country_id AS factory_country_id
   FROM main.devices AS devices
   JOIN main.products AS products

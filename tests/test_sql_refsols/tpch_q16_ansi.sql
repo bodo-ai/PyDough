@@ -1,9 +1,9 @@
 WITH _t0 AS (
   SELECT
-    COUNT(DISTINCT partsupp.ps_suppkey) AS supplier_count,
     part.p_brand,
     part.p_size,
     part.p_type,
+    COUNT(DISTINCT partsupp.ps_suppkey) AS supplier_count,
     part.p_brand,
     part.p_size,
     part.p_type

@@ -1,0 +1,5 @@
+ROOT(columns=[('era_name', era_name), ('event_name', event_name)], orderings=[(start_year):asc_first])
+ JOIN(conditions=[t0.start_year <= YEAR(t1.date_time) & YEAR(t1.date_time) < t0.end_year], types=['inner'], columns={'era_name': t0.era_name, 'event_name': t1.event_name, 'start_year': t0.start_year}, correl_name='corr1')
+  SCAN(table=ERAS, columns={'end_year': er_end_year, 'era_name': er_name, 'name': er_name, 'start_year': er_start_year})
+  FILTER(condition=RANKING(args=[], partition=[corr1.name], order=[(date_time):asc_last], allow_ties=False) == 1:numeric, columns={'date_time': date_time, 'event_name': name})
+   SCAN(table=EVENTS, columns={'date_time': ev_dt, 'name': ev_name})

@@ -1,13 +1,16 @@
 """
 Integration tests for the PyDough workflow with custom questions on the custom
-Technograph dataset.
+TechnoGraph dataset.
 """
 
 from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from technograph_pydough_functions import (
+
+from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from tests.test_pydough_functions.technograph_pydough_functions import (
     battery_failure_rates_anomalies,
     country_cartesian_oddball,
     country_combination_analysis,
@@ -23,36 +26,25 @@ from technograph_pydough_functions import (
     year_cumulative_incident_rate_goldcopperstar,
     year_cumulative_incident_rate_overall,
 )
-from test_utils import graph_fetcher
 
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
-)
+from .testing_utilities import PyDoughPandasTest, graph_fetcher
 
 
 @pytest.fixture(
     params=[
         pytest.param(
-            (
+            PyDoughPandasTest(
                 global_incident_rate,
-                "global_incident_rate",
+                "TechnoGraph",
                 lambda: pd.DataFrame({"ir": [2.41]}),
+                "technograph_global_incident_rate",
             ),
             id="global_incident_rate",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 incident_rate_per_brand,
-                "incident_rate_per_brand",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "brand": [
@@ -64,13 +56,14 @@ from pydough.unqualified import (
                         "ir": [2.58, 2.58, 2.23, 2.39],
                     }
                 ),
+                "technograph_incident_rate_per_brand",
             ),
             id="incident_rate_per_brand",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 most_unreliable_products,
-                "most_unreliable_products",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "product": [
@@ -97,13 +90,14 @@ from pydough.unqualified import (
                         "ir": [15.80, 15.08, 13.19, 12.63, 11.95],
                     }
                 ),
+                "technograph_most_unreliable_products",
             ),
             id="most_unreliable_products",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 incident_rate_by_release_year,
-                "incident_rate_by_release_year",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "year": [
@@ -136,26 +130,28 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "technograph_incident_rate_by_release_year",
             ),
             id="incident_rate_by_release_year",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 error_rate_sun_set_by_factory_country,
-                "error_rate_sun_set_by_factory_country",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "country": ["CA", "CN", "FR", "JP", "MX", "US"],
                         "ir": [14.0, 19.4, 18.5, 5.0, 14.17, 22.5],
                     }
                 ),
+                "technograph_error_rate_sun_set_by_factory_country",
             ),
             id="error_rate_sun_set_by_factory_country",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 error_percentages_sun_set_by_error,
-                "error_percentages_sun_set_by_error",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "error": [
@@ -184,13 +180,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "technograph_error_percentages_sun_set_by_error",
             ),
             id="error_percentages_sun_set_by_error",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 battery_failure_rates_anomalies,
-                "battery_failure_rates_anomalies",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "country_name": ["MX", "CA", "CA", "MX", "FR"],
@@ -204,13 +201,14 @@ from pydough.unqualified import (
                         "ir": [17.0, 15.57, 15.0, 15.0, 14.43],
                     }
                 ),
+                "technograph_battery_failure_rates_anomalies",
             ),
             id="battery_failure_rates_anomalies",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 country_incident_rate_analysis,
-                "country_incident_rate_analysis",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "country_name": ["CA", "CN", "FR", "JP", "MX", "US"],
@@ -219,13 +217,14 @@ from pydough.unqualified import (
                         "user_ir": [2.45, 3.20, 2.48, 1.56, 2.09, 1.91],
                     }
                 ),
+                "technograph_country_incident_rate_analysis",
             ),
             id="country_incident_rate_analysis",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 year_cumulative_incident_rate_goldcopperstar,
-                "year_cumulative_incident_rate_goldcopperstar",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "years_since_release": range(13),
@@ -278,13 +277,14 @@ from pydough.unqualified import (
                         "incidents": [0, 0, 1, 1, 0, 1, 5, 9, 2, 5, 1, 7, 3],
                     }
                 ),
+                "technograph_year_cumulative_incident_rate_goldcopperstar",
             ),
             id="year_cumulative_incident_rate_goldcopperstar",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 year_cumulative_incident_rate_overall,
-                "year_cumulative_incident_rate_overall",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "yr": range(2014, 2025),
@@ -343,26 +343,28 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "technograph_year_cumulative_incident_rate_overall",
             ),
             id="year_cumulative_incident_rate_overall",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 hot_purchase_window,
-                "hot_purchase_window",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "start_of_period": ["2024-04-30"],
                         "n_purchases": [25],
                     }
                 ),
+                "technograph_hot_purchase_window",
             ),
             id="hot_purchase_window",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 country_combination_analysis,
-                "country_combination_analysis",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "factory_country": ["CN", "CN", "CN", "CA", "MX"],
@@ -370,26 +372,28 @@ from pydough.unqualified import (
                         "ir": [5.46, 5.27, 4.63, 4.07, 4.02],
                     }
                 ),
+                "technograph_country_combination_analysis",
             ),
             id="country_combination_analysis",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 country_cartesian_oddball,
-                "country_cartesian_oddball",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "name": ["CA", "CN", "FR", "JP", "MX", "US"],
                         "n_other_countries": [6] * 6,
                     }
                 ),
+                "technograph_country_cartesian_oddball",
             ),
             id="country_cartesian_oddball",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 monthly_incident_rate,
-                "monthly_incident_rate",
+                "TechnoGraph",
                 lambda: pd.DataFrame(
                     {
                         "month": [
@@ -425,39 +429,23 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "technograph_monthly_incident_rate",
             ),
             id="monthly_incident_rate",
         ),
     ],
 )
-def pydough_pipeline_test_data_technograph(
-    request,
-) -> tuple[
-    Callable[[], UnqualifiedNode],
-    str,
-    Callable[[], pd.DataFrame],
-]:
+def technograph_pipeline_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for e2e tests using technograph test data. Returns a tuple of the
-    following arguments:
-    1. `unqualified_impl`: a function that takes in an unqualified root and
-    creates the unqualified node for the TPCH query.
-    2. `file_name`: the name of the file containing the expected relational
-    plan.
-    3. `answer_impl`: a function that takes in nothing and returns the answer
-    to a TPCH query as a Pandas DataFrame.
+    Test data for e2e tests using technograph test data. Returns an
+    instance of PyDoughPandasTest containing information about the test.
     """
     return request.param
 
 
 def test_pipeline_until_relational_technograph(
-    pydough_pipeline_test_data_technograph: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    technograph_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -465,35 +453,14 @@ def test_pipeline_until_relational_technograph(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into relational plans.
     """
-    unqualified_impl, file_name, _ = pydough_pipeline_test_data_technograph
-    file_path: str = get_plan_test_filename(file_name)
-    graph: GraphMetadata = get_sample_graph("TechnoGraph")
-    UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(qualified, PyDoughCollectionQDAG), (
-        "Expected qualified answer to be a collection, not an expression"
+    file_path: str = get_plan_test_filename(technograph_pipeline_test_data.test_name)
+    technograph_pipeline_test_data.run_relational_test(
+        get_sample_graph, file_path, update_tests
     )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, None, default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(relational.to_tree_string() + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert relational.to_tree_string() == expected_relational_string.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
-        )
 
 
 def test_pipeline_until_sql_technograph(
-    pydough_pipeline_test_data_technograph: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    technograph_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
     defog_config: PyDoughConfigs,
@@ -504,46 +471,25 @@ def test_pipeline_until_sql_technograph(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into SQL text.
     """
-    unqualified_impl, test_name, _ = pydough_pipeline_test_data_technograph
-    file_name: str = f"technograph_{test_name}"
-    file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
-    graph: GraphMetadata = get_sample_graph("TechnoGraph")
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    sql_text: str = to_sql(
-        unqualified,
-        metadata=graph,
-        database=empty_context_database,
-        config=defog_config,
+    file_path: str = get_sql_test_filename(
+        technograph_pipeline_test_data.test_name,
+        empty_context_database.dialect,
     )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(sql_text + "\n")
-    else:
-        with open(file_path) as f:
-            expected_sql_text: str = f.read()
-        assert sql_text == expected_sql_text.strip(), (
-            "Mismatch between SQL text produced expected SQL text"
-        )
+    technograph_pipeline_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database
+    )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_technograph(
-    pydough_pipeline_test_data_technograph: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    technograph_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_technograph_connection: DatabaseContext,
 ):
     """
-    Test executing the the custom queries with the custom epoch dataset against
-    the refsol DataFrame.
+    Test executing the the custom queries with the custom technograph dataset
+    against the refsol DataFrame.
     """
-    unqualified_impl, _, answer_impl = pydough_pipeline_test_data_technograph
-    graph: GraphMetadata = get_sample_graph("TechnoGraph")
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, metadata=graph, database=sqlite_technograph_connection
+    technograph_pipeline_test_data.run_e2e_test(
+        get_sample_graph, sqlite_technograph_connection
     )
-    pd.testing.assert_frame_equal(result, answer_impl())
