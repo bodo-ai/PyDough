@@ -123,12 +123,9 @@ class Decorrelater:
         match expr:
             case HybridCorrelExpr():
                 # TODO ADD COMMENT
-                if isinstance(expr.expr, HybridCorrelExpr):
-                    return expr.expr
-                else:
-                    result: HybridExpr | None = expr.expr.shift_back(child_height)
-                    assert result is not None
-                    return result
+                result: HybridExpr | None = expr.expr.shift_back(child_height)
+                assert result is not None
+                return result
             case HybridFunctionExpr():
                 # For regular functions, recursively transform all of their
                 # arguments.
@@ -391,6 +388,15 @@ class Decorrelater:
             `hybrid`: The hybrid tree to find correlated children in.
         """
         correl_levels: int = 0
+        for operation in hybrid.pipeline:
+            if isinstance(operation, HybridCalculate):
+                for term in operation.new_expressions.values():
+                    correl_levels = max(correl_levels, term.count_correlated_levels())
+            if isinstance(operation, HybridFilter):
+                correl_levels = max(
+                    correl_levels, operation.condition.count_correlated_levels()
+                )
+
         assert correl_levels <= len(self.stack)
         for i in range(-1, -correl_levels - 1, -1):
             self.stack[i].correlated_children.add(self.children_indices[i])
