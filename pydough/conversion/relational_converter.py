@@ -994,7 +994,6 @@ class RelTranslation:
             out_columns[expr] = context.expressions[expr].with_input(None)
         # Populate every expression into the project's columns by translating
         # it relative to the input context.
-        print(node)
         for name in node.new_expressions:
             name = node.renamings.get(name, name)
             hybrid_expr: HybridExpr = node.terms[name]
