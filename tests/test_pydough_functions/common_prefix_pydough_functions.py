@@ -655,3 +655,82 @@ def common_prefix_ak():
         )
         .ORDER_BY(nation_name.ASC())
     )
+
+
+def common_prefix_al():
+    # Select the top 10 customers whose number of orders made is above the
+    # average for all numbers of orders made by any customer in the nation,
+    # and who have made at least one purchase without a discount or tax.
+    # Filter those top 10 to only include customers who have made at least
+    # one purchase of a part with size below 15 (also without tax or discount).
+    # For each remaining customer, list their key, number of orders made, and
+    # number of lineitems without tax/discount made. When choosing the top 10
+    # customers, pick the 10 with the lowest key values.
+    selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    return (
+        nations.customers.CALCULATE(n_orders=COUNT(orders))
+        .WHERE(n_orders > RELAVG(n_orders, per="nations"))
+        .CALCULATE(n_no_tax_discount=COUNT(selected_lines))
+        .WHERE(HAS(selected_lines))
+        .TOP_K(10, by=key.ASC())
+        .WHERE(HAS(selected_lines.part.WHERE(size < 15)))
+        .CALCULATE(cust_key=key, n_orders=n_orders, n_no_tax_discount=n_no_tax_discount)
+    )
+
+
+def common_prefix_am():
+    # Same as common_prefix_al, but pick the top 10 of customers with above
+    # average number of orders per nation before filtering on whether they have
+    # any lineitems without tax/discount.
+    selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    return (
+        nations.customers.CALCULATE(n_orders=COUNT(orders))
+        .WHERE(n_orders > RELAVG(n_orders, per="nations"))
+        .TOP_K(10, by=key.ASC())
+        .WHERE(HAS(selected_lines) & HAS(selected_lines.part.WHERE(size < 15)))
+        .CALCULATE(
+            cust_key=key, n_orders=n_orders, n_no_tax_discount=COUNT(selected_lines)
+        )
+    )
+
+
+def common_prefix_an():
+    # Same as common_prefix_al, but pick the top 50 of customers with any
+    # qualifying lineitems before filtering on whether they have an above
+    # average number of orders.
+    selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    return (
+        nations.customers.WHERE(HAS(selected_lines))
+        .TOP_K(50, by=key.ASC())
+        .WHERE(
+            (COUNT(orders) > RELAVG(COUNT(orders), per="nations"))
+            & HAS(selected_lines.part.WHERE(size < 15))
+        )
+        .CALCULATE(
+            cust_key=key,
+            n_orders=COUNT(orders),
+            n_no_tax_discount=COUNT(selected_lines),
+        )
+    )
+
+
+def common_prefix_ao():
+    # Same as common_prefix_al, but pick the top 50 of customers with any
+    # qualifying part purchases before filtering on whether they have an above
+    # average number of orders. Also filters to only include customers from
+    # france from the BUILDING market segment, and adjust the part filter to
+    # only include parts with size below 5 instead of 15, then at the end
+    # only keep the top 5 remaining customers alphabetically.
+    selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    return (
+        customers.WHERE((nation.name == "FRANCE") & (market_segment == "BUILDING"))
+        .WHERE(HAS(selected_lines.part.WHERE(size < 5)))
+        .TOP_K(50, by=key.ASC())
+        .WHERE((COUNT(orders) > RELAVG(COUNT(orders))) & HAS(selected_lines))
+        .CALCULATE(
+            cust_key=key,
+            n_orders=COUNT(orders),
+            n_no_tax_discount=COUNT(selected_lines),
+        )
+        .TOP_K(5, by=key.ASC())
+    )

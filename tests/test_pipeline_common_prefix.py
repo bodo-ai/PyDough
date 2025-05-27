@@ -22,6 +22,10 @@ from tests.test_pydough_functions.common_prefix_pydough_functions import (
     common_prefix_ai,
     common_prefix_aj,
     common_prefix_ak,
+    common_prefix_al,
+    common_prefix_am,
+    common_prefix_an,
+    common_prefix_ao,
     common_prefix_b,
     common_prefix_c,
     common_prefix_d,
@@ -889,6 +893,66 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "common_prefix_ak",
             ),
             id="common_prefix_ak",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                common_prefix_al,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [14, 28, 49],
+                        "n_orders": [10, 18, 17],
+                        "n_no_tax_discount": [2, 2, 1],
+                    }
+                ),
+                "common_prefix_al",
+            ),
+            id="common_prefix_al",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                common_prefix_am,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [14],
+                        "n_orders": [10],
+                        "n_no_tax_discount": [2],
+                    }
+                ),
+                "common_prefix_am",
+            ),
+            id="common_prefix_am",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                common_prefix_an,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [49, 97, 170],
+                        "n_orders": [17, 27, 14],
+                        "n_no_tax_discount": [1, 5, 3],
+                    }
+                ),
+                "common_prefix_an",
+            ),
+            id="common_prefix_an",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                common_prefix_ao,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [7729, 10243, 22417, 27187, 28195],
+                        "n_orders": [21, 22, 28, 20, 20],
+                        "n_no_tax_discount": [4, 1, 2, 2, 2],
+                    }
+                ),
+                "common_prefix_ao",
+            ),
+            id="common_prefix_ao",
         ),
     ],
 )
