@@ -53,8 +53,8 @@ WITH _s0 AS (
     _s0.name
 ), _s17 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(_s10.season_name = _s15.name) AS agg_0,
+    COUNT() AS agg_1,
     _s10.name
   FROM _s2 AS _s10
   JOIN events AS events
@@ -69,24 +69,6 @@ WITH _s0 AS (
     OR _s15.third_month = EXTRACT(MONTH FROM searches.search_ts)
   GROUP BY
     _s10.name
-), _s19 AS (
-  SELECT
-    SUM(_s12.agg_4 = _s17.name) AS agg_0,
-    COUNT() AS agg_1_15,
-    _s12.agg_1
-  FROM _s12 AS _s12
-  JOIN _s5 AS _s13
-    ON _s12.agg_0 = EXTRACT(MONTH FROM _s13.date_time)
-    OR _s12.agg_5 = EXTRACT(MONTH FROM _s13.date_time)
-    OR _s12.agg_6 = EXTRACT(MONTH FROM _s13.date_time)
-  JOIN searches AS searches
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(_s13.name), '%')
-  JOIN _s0 AS _s17
-    ON _s17.first_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s17.second_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s17.third_month = EXTRACT(MONTH FROM searches.search_ts)
-  GROUP BY
-    _s12.agg_1
 )
 SELECT
   _s16.agg_1 AS season_name,

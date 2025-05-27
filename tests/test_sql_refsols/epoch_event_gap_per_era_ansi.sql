@@ -13,9 +13,9 @@ WITH _t1 AS (
     AND eras.er_start_year <= EXTRACT(YEAR FROM events.ev_dt)
 ), _t0 AS (
   SELECT
-    ANY_VALUE(name) AS era_name,
     ANY_VALUE(start_year) AS agg_3,
-    AVG(day_gap) AS avg_event_gap
+    AVG(day_gap) AS avg_event_gap,
+    ANY_VALUE(name) AS era_name
   FROM _t1
   GROUP BY
     name

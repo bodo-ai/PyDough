@@ -151,6 +151,12 @@ class HybridExpr(ABC):
         """
         return self
 
+    def count_correlated_levels(self) -> int:
+        """
+        TODO
+        """
+        return 0
+
     def contains_correlates(self) -> bool:
         """
         Returns whether this expression contains any correlated references.
@@ -319,6 +325,9 @@ class HybridCorrelExpr(HybridExpr):
     def contains_correlates(self) -> bool:
         return True
 
+    def count_correlated_levels(self) -> int:
+        return 1 + self.expr.count_correlated_levels()
+
 
 class HybridLiteralExpr(HybridExpr):
     """
@@ -411,6 +420,12 @@ class HybridFunctionExpr(HybridExpr):
 
     def contains_correlates(self) -> bool:
         return any(arg.contains_correlates() for arg in self.args)
+
+    def count_correlated_levels(self) -> int:
+        correl_levels: int = 0
+        for arg in self.args:
+            correl_levels = max(correl_levels, arg.count_correlated_levels())
+        return correl_levels
 
 
 class HybridWindowExpr(HybridExpr):
@@ -549,6 +564,16 @@ class HybridWindowExpr(HybridExpr):
                 level_threshold, hybrid, child_idx
             )
         return self
+
+    def count_correlated_levels(self) -> int:
+        correl_levels: int = 0
+        for arg in self.args:
+            correl_levels = max(correl_levels, arg.count_correlated_levels())
+        for part_arg in self.partition_args:
+            correl_levels = max(correl_levels, part_arg.count_correlated_levels())
+        for order_arg in self.order_args:
+            correl_levels = max(correl_levels, order_arg.expr.count_correlated_levels())
+        return correl_levels
 
     def contains_correlates(self) -> bool:
         return (

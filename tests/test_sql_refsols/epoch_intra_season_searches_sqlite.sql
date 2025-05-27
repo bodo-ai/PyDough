@@ -55,19 +55,14 @@ WITH _s0 AS (
     _s0.name
 ), _s17 AS (
   SELECT
-    COUNT() AS agg_1,
     SUM(_s10.season_name = _s15.name) AS agg_0,
+    COUNT() AS agg_1,
     _s10.name
-), _s19 AS (
-  SELECT
-    SUM(_s12.agg_4 = _s17.name) AS agg_0,
-    COUNT() AS agg_1_15,
-    _s12.agg_1
-  FROM _s12 AS _s12
-  JOIN _s5 AS _s13
-    ON _s12.agg_0 = CAST(STRFTIME('%m', _s13.date_time) AS INTEGER)
-    OR _s12.agg_5 = CAST(STRFTIME('%m', _s13.date_time) AS INTEGER)
-    OR _s12.agg_6 = CAST(STRFTIME('%m', _s13.date_time) AS INTEGER)
+  FROM _s2 AS _s10
+  JOIN events AS events
+    ON _s10.first_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
+    OR _s10.second_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
+    OR _s10.third_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
   JOIN searches AS searches
     ON LOWER(searches.search_string) LIKE (
       '%' || LOWER(events.ev_name) || '%'
