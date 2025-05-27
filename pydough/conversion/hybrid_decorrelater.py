@@ -99,7 +99,11 @@ class Decorrelater:
         return new_hybrid, 0
 
     def remove_correl_refs(
-        self, expr: HybridExpr, parent: HybridTree, child_height: int
+        self,
+        expr: HybridExpr,
+        parent: HybridTree,
+        child_height: int,
+        correl_level: int,
     ) -> HybridExpr:
         """
         Recursively & destructively removes correlated references within a
@@ -114,6 +118,10 @@ class Decorrelater:
             hybrid tree that the correlated references is point to. This is
             the number of BACK indices to shift by when replacing the
             correlated reference with a BACK reference.
+            `correl_level`: The level of correlation nesting required for the
+            correlated reference to be removed. This is used to ensure that
+            only references that are at the specified level of correlation
+            are removed, and all others are left intact.
 
         Returns:
             The hybrid expression with all correlated references to `parent`
@@ -123,27 +131,33 @@ class Decorrelater:
         match expr:
             case HybridCorrelExpr():
                 # TODO ADD COMMENT
-                result: HybridExpr | None = expr.expr.shift_back(child_height)
-                assert result is not None
-                return result
+                if expr.count_correlated_levels() >= correl_level:
+                    result: HybridExpr | None = expr.expr.shift_back(child_height)
+                    assert result is not None
+                    return result
+                return expr
             case HybridFunctionExpr():
                 # For regular functions, recursively transform all of their
                 # arguments.
                 for idx, arg in enumerate(expr.args):
-                    expr.args[idx] = self.remove_correl_refs(arg, parent, child_height)
+                    expr.args[idx] = self.remove_correl_refs(
+                        arg, parent, child_height, correl_level
+                    )
                 return expr
             case HybridWindowExpr():
                 # For window functions, recursively transform all of their
                 # arguments, partition keys, and order keys.
                 for idx, arg in enumerate(expr.args):
-                    expr.args[idx] = self.remove_correl_refs(arg, parent, child_height)
+                    expr.args[idx] = self.remove_correl_refs(
+                        arg, parent, child_height, correl_level
+                    )
                 for idx, arg in enumerate(expr.partition_args):
                     expr.partition_args[idx] = self.remove_correl_refs(
-                        arg, parent, child_height
+                        arg, parent, child_height, correl_level
                     )
                 for order_arg in expr.order_args:
                     order_arg.expr = self.remove_correl_refs(
-                        order_arg.expr, parent, child_height
+                        order_arg.expr, parent, child_height, correl_level
                     )
                 return expr
             case (
@@ -167,6 +181,7 @@ class Decorrelater:
         old_parent: HybridTree,
         new_parent: HybridTree,
         child_height: int,
+        correl_level: int,
     ) -> None:
         """
         The recursive procedure to remove correlated references from the
@@ -185,14 +200,22 @@ class Decorrelater:
             `child_height`: The height of the correlated child within the
             hybrid tree that the correlated references is point to. This is
             the number of BACK indices to shift by when replacing the
-            correlated reference with a BACK
+            correlated reference with a BACK.
+            `correl_level`: The level of correlation nesting required for the
+            correlated reference to be removed. This is used to ensure that
+            only references that are at the specified level of correlation
+            nesting are removed, and all others are left intact.
         """
         while level is not None and level is not new_parent:
             # First, recursively remove any targeted correlated references from
             # the children of the current level.
             for child in level.children:
                 self.correl_ref_purge(
-                    child.subtree, old_parent, new_parent, child_height
+                    child.subtree,
+                    old_parent,
+                    new_parent,
+                    child_height,
+                    correl_level + 1,
                 )
             # Then, remove any correlated references from the pipeline
             # operators of the current level. Usually this just means
@@ -203,24 +226,24 @@ class Decorrelater:
             for operation in level.pipeline:
                 for name, expr in operation.terms.items():
                     operation.terms[name] = self.remove_correl_refs(
-                        expr, old_parent, child_height
+                        expr, old_parent, child_height, correl_level
                     )
                 for ordering in operation.orderings:
                     ordering.expr = self.remove_correl_refs(
-                        ordering.expr, old_parent, child_height
+                        ordering.expr, old_parent, child_height, correl_level
                     )
                 for idx, expr in enumerate(operation.unique_exprs):
                     operation.unique_exprs[idx] = self.remove_correl_refs(
-                        expr, old_parent, child_height
+                        expr, old_parent, child_height, correl_level
                     )
                 if isinstance(operation, HybridCalculate):
                     for str, expr in operation.new_expressions.items():
                         operation.new_expressions[str] = self.remove_correl_refs(
-                            expr, old_parent, child_height
+                            expr, old_parent, child_height, correl_level
                         )
                 if isinstance(operation, HybridFilter):
                     operation.condition = self.remove_correl_refs(
-                        operation.condition, old_parent, child_height
+                        operation.condition, old_parent, child_height, correl_level
                     )
             # Repeat the process on the ancestor until either loop guard
             # condition is no longer True.
@@ -265,7 +288,7 @@ class Decorrelater:
         # Link the top level of the child subtree to the new parent.
         new_parent.add_successor(child_root)
         # Replace any correlated references to the original parent with BACK references.
-        self.correl_ref_purge(child.subtree, old_parent, new_parent, child_height)
+        self.correl_ref_purge(child.subtree, old_parent, new_parent, child_height, 1)
         # Update the join keys to join on the unique keys of all the ancestors.
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         additional_levels: int = 0
