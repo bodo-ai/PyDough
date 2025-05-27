@@ -34,6 +34,10 @@ class Decorrelater:
     Class that encapsulates the logic used for de-correlation of hybrid trees.
     """
 
+    def __init__(self) -> None:
+        self.stack: list[HybridTree] = []
+        self.children_indices: list[int] = []
+
     def make_decorrelate_parent(
         self, hybrid: HybridTree, child_idx: int, required_steps: int
     ) -> tuple[HybridTree, int]:
@@ -70,7 +74,9 @@ class Decorrelater:
                     "Malformed hybrid tree: partition data input to a partition node cannot contain a correlated reference to the partition node."
                 )
             result = self.make_decorrelate_parent(
-                hybrid.parent, len(hybrid.parent.children), len(hybrid.pipeline)
+                hybrid.parent,
+                len(hybrid.parent.children) - 1,
+                len(hybrid.parent.pipeline) - 1,
             )
             return result[0], result[1] + 1
         # Temporarily detach the successor of the current level, then create a
@@ -84,7 +90,11 @@ class Decorrelater:
         hybrid._successor = successor
         # Ensure the new parent only includes the children & pipeline operators
         # that is has to.
-        new_hybrid._children = new_hybrid._children[:child_idx]
+        new_hybrid._children = [
+            child
+            for child in new_hybrid.children
+            if child.required_steps < required_steps
+        ]
         new_hybrid._pipeline = new_hybrid._pipeline[: required_steps + 1]
         return new_hybrid, 0
 
@@ -112,17 +122,13 @@ class Decorrelater:
         """
         match expr:
             case HybridCorrelExpr():
-                # If the correlated reference points to the parent, then
-                # replace it with a BACK reference. Otherwise, recursively
-                # transform its input expression in case it contains another
-                # correlated reference.
-                if expr.hybrid is parent:
+                # TODO ADD COMMENT
+                if isinstance(expr.expr, HybridCorrelExpr):
+                    return expr.expr
+                else:
                     result: HybridExpr | None = expr.expr.shift_back(child_height)
                     assert result is not None
                     return result
-                else:
-                    expr.expr = self.remove_correl_refs(expr.expr, parent, child_height)
-                    return expr
             case HybridFunctionExpr():
                 # For regular functions, recursively transform all of their
                 # arguments.
@@ -303,124 +309,9 @@ class Decorrelater:
             )
             for i in range(1, child.required_steps + 1):
                 old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
-            child_idx = self.remove_dead_children(old_parent, child_idx)
+            child_remapping: dict[int, int] = old_parent.remove_dead_children(set())
+            return child_remapping[child_idx]
         return child_idx
-
-    def identify_children_used(
-        self, expr: HybridExpr, unused_children: set[int]
-    ) -> None:
-        """
-        Find all child indices used in an expression and remove them from
-        a set of indices.
-
-        Args:
-            `expr`: the expression being checked for child reference indices.
-            `unused_children`: the set of all children that are unused. This
-            starts out as the set of all children, and whenever a child
-            reference is found within `expr`, it is removed from the set.
-        """
-        match expr:
-            case HybridChildRefExpr():
-                unused_children.discard(expr.child_idx)
-            case HybridFunctionExpr():
-                for arg in expr.args:
-                    self.identify_children_used(arg, unused_children)
-            case HybridWindowExpr():
-                for arg in expr.args:
-                    self.identify_children_used(arg, unused_children)
-                for part_arg in expr.partition_args:
-                    self.identify_children_used(part_arg, unused_children)
-                for order_arg in expr.order_args:
-                    self.identify_children_used(order_arg.expr, unused_children)
-            case HybridCorrelExpr():
-                self.identify_children_used(expr.expr, unused_children)
-
-    def renumber_children_indices(
-        self, expr: HybridExpr, child_remapping: dict[int, int]
-    ) -> None:
-        """
-        Replaces all child reference indices in a hybrid expression in-place
-        when the children list was shifted, therefore the index-to-child
-        correspondence must be re-numbered.
-
-        Args:
-            `expr`: the expression having its child references modified.
-            `child_remapping`: the mapping of old->new indices for child
-            references.
-        """
-        match expr:
-            case HybridChildRefExpr():
-                assert expr.child_idx in child_remapping
-                expr.child_idx = child_remapping[expr.child_idx]
-            case HybridFunctionExpr():
-                for arg in expr.args:
-                    self.renumber_children_indices(arg, child_remapping)
-            case HybridWindowExpr():
-                for arg in expr.args:
-                    self.renumber_children_indices(arg, child_remapping)
-                for part_arg in expr.partition_args:
-                    self.renumber_children_indices(part_arg, child_remapping)
-                for order_arg in expr.order_args:
-                    self.renumber_children_indices(order_arg.expr, child_remapping)
-            case HybridCorrelExpr():
-                self.renumber_children_indices(expr.expr, child_remapping)
-
-    def remove_dead_children(self, hybrid: HybridTree, pullup_child_idx: int) -> int:
-        """
-        Deletes any children of a hybrid tree that are no longer referenced
-        after de-correlation.
-
-        Args:
-            `hybrid`: The hybrid tree to remove unused children from.
-            `pullup_child_idx`: The index of the child that became a pull-up
-            node causing the removal.
-
-        Returns:
-            The index of the child that the pullup operation corresponds to.
-        """
-        # Identify which children are no longer used
-        children_to_delete: set[int] = set(range(len(hybrid.children)))
-        for operation in hybrid.pipeline:
-            match operation:
-                case HybridChildPullUp():
-                    children_to_delete.discard(operation.child_idx)
-                case HybridFilter():
-                    self.identify_children_used(operation.condition, children_to_delete)
-                case HybridCalculate():
-                    for term in operation.new_expressions.values():
-                        self.identify_children_used(term, children_to_delete)
-                case _:
-                    for term in operation.terms.values():
-                        self.identify_children_used(term, children_to_delete)
-        if len(children_to_delete) == 0:
-            return pullup_child_idx
-        # Build a renumbering of the remaining children
-        child_remapping: dict[int, int] = {}
-        for i in range(len(hybrid.children)):
-            if i not in children_to_delete:
-                child_remapping[i] = len(child_remapping)
-        # Remove all the unused children (starting from the end)
-        for child_idx in sorted(children_to_delete, reverse=True):
-            hybrid.children.pop(child_idx)
-        for operation in hybrid.pipeline:
-            match operation:
-                case HybridChildPullUp():
-                    operation.child_idx = child_remapping[operation.child_idx]
-                case HybridFilter():
-                    self.renumber_children_indices(operation.condition, child_remapping)
-                case HybridCalculate():
-                    for term in operation.new_expressions.values():
-                        self.renumber_children_indices(term, child_remapping)
-                case _:
-                    continue
-        # Renumber the correlated children
-        new_correlated_children: set[int] = set()
-        for correlated_idx in hybrid.correlated_children:
-            if correlated_idx in child_remapping:
-                new_correlated_children.add(child_remapping[correlated_idx])
-        hybrid._correlated_children = new_correlated_children
-
-        return child_remapping[pullup_child_idx]
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
         """
@@ -491,6 +382,28 @@ class Decorrelater:
             child.subtree = self.decorrelate_hybrid_tree(child.subtree)
         return hybrid
 
+    def find_correlated_children(self, hybrid: HybridTree) -> None:
+        """
+        Recursively finds all correlated children of a hybrid tree and stores
+        them in the hybrid tree.
+
+        Args:
+            `hybrid`: The hybrid tree to find correlated children in.
+        """
+        correl_levels: int = 0
+        assert correl_levels <= len(self.stack)
+        for i in range(-1, -correl_levels - 1, -1):
+            self.stack[i].correlated_children.add(self.children_indices[i])
+
+        self.stack.append(hybrid)
+        for idx, child in enumerate(hybrid.children):
+            self.children_indices.append(idx)
+            self.find_correlated_children(child.subtree)
+            self.children_indices.pop()
+        self.stack.pop()
+        if hybrid.parent is not None:
+            self.find_correlated_children(hybrid.parent)
+
 
 def run_hybrid_decorrelation(hybrid: HybridTree) -> HybridTree:
     """
@@ -507,4 +420,5 @@ def run_hybrid_decorrelation(hybrid: HybridTree) -> HybridTree:
         references. The transformation is also done in-place.
     """
     decorr: Decorrelater = Decorrelater()
+    decorr.find_correlated_children(hybrid)
     return decorr.decorrelate_hybrid_tree(hybrid)

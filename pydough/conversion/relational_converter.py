@@ -489,7 +489,7 @@ class RelTranslation:
         # Build the corresponding (lhs_key == rhs_key) conditions
         cond_terms: list[RelationalExpression] = []
         if join_keys is not None:
-            for lhs_key, rhs_key in join_keys:
+            for lhs_key, rhs_key in sorted(join_keys, key=repr):
                 lhs_key_column: ColumnReference = lhs_result.expressions[
                     lhs_key
                 ].with_input(input_aliases[0])
@@ -503,6 +503,7 @@ class RelTranslation:
             out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
         elif join_cond is not None:
             # General join case
+            # breakpoint()
             out_rel.conditions[0] = self.build_general_join_condition(
                 join_cond, lhs_result, rhs_result, input_aliases[0], input_aliases[1]
             )
@@ -653,6 +654,14 @@ class RelTranslation:
                     child.subtree, len(child.subtree.pipeline) - 1
                 )
                 self.stack.pop()
+                join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
+                    child.subtree.join_keys
+                )
+                if (
+                    isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
+                    and child_idx == 0
+                ):
+                    join_keys = None
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
@@ -672,7 +681,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            child.subtree.join_keys,
+                            join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
                             True,
@@ -686,7 +695,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            child.subtree.join_keys,
+                            join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
                             True,
@@ -1426,8 +1435,18 @@ def convert_ast_to_relational(
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)
+    # print()
+    # print(hybrid)
+    # breakpoint()
+    # print()
+    # print(hybrid)
+    # breakpoint()
     run_hybrid_decorrelation(hybrid)
     hybrid_translator.run_rewrites(hybrid)
+    hybrid.remove_dead_children(set())
+    # print()
+    # print(hybrid)
+    # breakpoint()
 
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.
