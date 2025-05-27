@@ -69,8 +69,6 @@ WITH _s0 AS (
     OR _s15.third_month = EXTRACT(MONTH FROM searches.search_ts)
   GROUP BY
     _s10.name
-<<<<<<< HEAD
-=======
 ), _s19 AS (
   SELECT
     SUM(_s12.agg_4 = _s17.name) AS agg_0,
@@ -89,7 +87,6 @@ WITH _s0 AS (
     OR _s17.third_month = EXTRACT(MONTH FROM searches.search_ts)
   GROUP BY
     _s12.agg_1
->>>>>>> kian/common_prefix_tests
 )
 SELECT
   _s16.agg_1 AS season_name,
