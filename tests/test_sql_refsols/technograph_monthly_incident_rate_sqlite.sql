@@ -2,20 +2,18 @@ WITH _t3 AS (
   SELECT
     ca_dt AS calendar_day
   FROM main.calendar
-  WHERE
-    CAST(STRFTIME('%Y', ca_dt) AS INTEGER) IN (2020, 2021)
 ), _s6 AS (
   SELECT DISTINCT
     CAST(STRFTIME('%m', calendar_day) AS INTEGER) AS month,
     CAST(STRFTIME('%Y', calendar_day) AS INTEGER) AS year
   FROM _t3
+  WHERE
+    CAST(STRFTIME('%Y', calendar_day) AS INTEGER) IN (2020, 2021)
 ), _t7 AS (
   SELECT
     co_id AS _id,
     co_name AS name
   FROM main.countries
-  WHERE
-    co_name = 'CN'
 ), _s7 AS (
   SELECT
     COUNT() AS agg_0,
@@ -27,7 +25,9 @@ WITH _t3 AS (
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
   JOIN _t7 AS _t7
-    ON _t7._id = devices.de_production_country_id
+    ON _t7._id = devices.de_production_country_id AND _t7.name = 'CN'
+  WHERE
+    CAST(STRFTIME('%Y', _t6.calendar_day) AS INTEGER) IN (2020, 2021)
   GROUP BY
     CAST(STRFTIME('%m', _t6.calendar_day) AS INTEGER),
     CAST(STRFTIME('%Y', _t6.calendar_day) AS INTEGER)
@@ -37,12 +37,14 @@ WITH _t3 AS (
     CAST(STRFTIME('%m', _t10.calendar_day) AS INTEGER) AS month,
     CAST(STRFTIME('%Y', _t10.calendar_day) AS INTEGER) AS year
   FROM _t3 AS _t10
-  JOIN main.calendar AS calendar
-    ON calendar.ca_dt >= DATETIME(_t10.calendar_day, '-6 month')
+  JOIN _t3 AS _s9
+    ON _s9.calendar_day >= DATETIME(_t10.calendar_day, '-6 month')
   JOIN main.devices AS devices
-    ON calendar.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
+    ON _s9.calendar_day = DATE(devices.de_purchase_ts, 'start of day')
   JOIN _t7 AS _t11
-    ON _t11._id = devices.de_production_country_id
+    ON _t11._id = devices.de_production_country_id AND _t11.name = 'CN'
+  WHERE
+    CAST(STRFTIME('%Y', _t10.calendar_day) AS INTEGER) IN (2020, 2021)
   GROUP BY
     CAST(STRFTIME('%m', _t10.calendar_day) AS INTEGER),
     CAST(STRFTIME('%Y', _t10.calendar_day) AS INTEGER)

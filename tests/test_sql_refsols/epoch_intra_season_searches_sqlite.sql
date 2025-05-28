@@ -28,12 +28,11 @@ WITH _s0 AS (
       '%' || LOWER(events.ev_name) || '%'
     )
   JOIN _s0 AS _s7
-    ON _s2.season_name = _s7.name
-    AND (
-      _s7.first_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
-      OR _s7.second_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
-      OR _s7.third_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
-    )
+    ON _s7.first_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
+    OR _s7.second_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
+    OR _s7.third_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
+  WHERE
+    _s2.season_name = _s7.name
   GROUP BY
     _s2.name,
     searches.search_id

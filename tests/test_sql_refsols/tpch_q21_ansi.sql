@@ -9,12 +9,12 @@ WITH _s0 AS (
     nation.n_nationkey AS key,
     nation.n_name AS name
   FROM tpch.nation AS nation
-  WHERE
-    nation.n_name = 'SAUDI ARABIA'
 ), _s1 AS (
   SELECT
     _t2.key AS key
   FROM _t2 AS _t2
+  WHERE
+    _t2.name = 'SAUDI ARABIA'
 ), _s8 AS (
   SELECT
     _s0.key AS key,
@@ -29,25 +29,25 @@ WITH _s0 AS (
     lineitem.l_receiptdate AS receipt_date,
     lineitem.l_suppkey AS supplier_key
   FROM tpch.lineitem AS lineitem
-  WHERE
-    lineitem.l_commitdate < lineitem.l_receiptdate
 ), _s4 AS (
   SELECT
     _t4.supplier_key AS original_key,
     _t4.order_key AS order_key,
     _t4.supplier_key AS supplier_key
   FROM _t4 AS _t4
+  WHERE
+    _t4.commit_date < _t4.receipt_date
 ), _t5 AS (
   SELECT
     orders.o_orderkey AS key,
     orders.o_orderstatus AS order_status
   FROM tpch.orders AS orders
-  WHERE
-    orders.o_orderstatus = 'F'
 ), _s5 AS (
   SELECT
     _t5.key AS key
   FROM _t5 AS _t5
+  WHERE
+    _t5.order_status = 'F'
 ), _s3 AS (
   SELECT
     _s5.key AS key,
@@ -86,7 +86,7 @@ WITH _s0 AS (
     _t7.order_key AS order_key
   FROM _t4 AS _t7
   WHERE
-    _s2.original_key <> _t7.supplier_key
+    _s2.original_key <> _t7.supplier_key AND _t7.commit_date < _t7.receipt_date
 ), _t3 AS (
   SELECT
     _s2.supplier_key AS supplier_key

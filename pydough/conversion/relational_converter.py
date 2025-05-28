@@ -503,7 +503,6 @@ class RelTranslation:
             out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
         elif join_cond is not None:
             # General join case
-            # breakpoint()
             out_rel.conditions[0] = self.build_general_join_condition(
                 join_cond, lhs_result, rhs_result, input_aliases[0], input_aliases[1]
             )

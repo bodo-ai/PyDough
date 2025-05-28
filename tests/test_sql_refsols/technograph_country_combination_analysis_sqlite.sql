@@ -14,10 +14,11 @@ WITH _s7 AS (
   FROM main.countries AS countries
   CROSS JOIN main.countries AS countries_2
   JOIN main.devices AS devices
-    ON countries.co_id = devices.de_production_country_id
-    AND countries_2.co_id = devices.de_purchase_country_id
+    ON countries_2.co_id = devices.de_purchase_country_id
   LEFT JOIN _s7 AS _s7
     ON _s7.device_id = devices.de_id
+  WHERE
+    countries.co_id = devices.de_production_country_id
   GROUP BY
     countries.co_id,
     countries_2.co_id

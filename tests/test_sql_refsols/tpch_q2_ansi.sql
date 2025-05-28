@@ -3,15 +3,13 @@ WITH _t3 AS (
     r_regionkey AS key,
     r_name AS name
   FROM tpch.region
-  WHERE
-    r_name = 'EUROPE'
 ), _s6 AS (
   SELECT
     MIN(partsupp.ps_supplycost) AS best_cost,
     partsupp.ps_partkey AS part_key
   FROM tpch.nation AS nation
   JOIN _t3 AS _t3
-    ON _t3.key = nation.n_regionkey
+    ON _t3.key = nation.n_regionkey AND _t3.name = 'EUROPE'
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
   JOIN tpch.partsupp AS partsupp
@@ -31,7 +29,7 @@ WITH _t3 AS (
     partsupp.ps_supplycost AS supply_cost
   FROM tpch.nation AS nation
   JOIN _t3 AS _t5
-    ON _t5.key = nation.n_regionkey
+    ON _t5.key = nation.n_regionkey AND _t5.name = 'EUROPE'
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
   JOIN tpch.partsupp AS partsupp
@@ -54,7 +52,9 @@ FROM _s6 AS _s6
 JOIN tpch.part AS part
   ON _s6.part_key = part.p_partkey AND part.p_size = 15 AND part.p_type LIKE '%BRASS'
 JOIN _s17 AS _s17
-  ON _s17.key_19 = part.p_partkey AND _s17.supply_cost = _s6.best_cost
+  ON _s17.key_19 = part.p_partkey
+WHERE
+  _s17.supply_cost = _s6.best_cost
 ORDER BY
   s_acctbal DESC,
   n_name,
