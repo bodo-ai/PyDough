@@ -1142,7 +1142,10 @@ class RelTranslation:
         context: TranslationOutput | None
         if preceding_hybrid is None:
             context = None
-        elif isinstance(preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot):
+        elif (
+            isinstance(preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot)
+            and preceding_hybrid[0].parent is None
+        ):
             # If at the true root, set the starting context to just be a dummy
             # VALUES clause.
             context = TranslationOutput(EmptySingleton(), {})
@@ -1214,6 +1217,14 @@ class RelTranslation:
             case HybridNoop():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = context
+            case HybridRoot():
+                assert context is not None, "Malformed HybridTree pattern."
+                new_expressions: dict[HybridExpr, ColumnReference] = {}
+                for expr, column_ref in context.expressions.items():
+                    shifted_expr: HybridExpr | None = expr.shift_back(1)
+                    if shifted_expr is not None:
+                        new_expressions[shifted_expr] = column_ref
+                result = TranslationOutput(context.relational_node, new_expressions)
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"

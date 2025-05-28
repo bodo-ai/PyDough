@@ -2535,7 +2535,15 @@ class HybridTranslator:
         collection_access: HybridCollectionAccess
         match node:
             case GlobalContext():
-                return HybridTree(HybridRoot(), node.ancestral_mapping)
+                if node.ancestor_context is None:
+                    return HybridTree(HybridRoot(), node.ancestral_mapping)
+                else:
+                    hybrid = self.make_hybrid_tree(
+                        node.ancestor_context, parent, is_aggregate
+                    )
+                    successor_hybrid = HybridTree(HybridRoot(), node.ancestral_mapping)
+                    hybrid.add_successor(successor_hybrid)
+                    return successor_hybrid
             case TableCollection() | SubCollection():
                 collection_access = HybridCollectionAccess(node)
                 successor_hybrid = HybridTree(collection_access, node.ancestral_mapping)
@@ -2736,6 +2744,10 @@ class HybridTranslator:
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs
+                    case GlobalContext():
+                        successor_hybrid = HybridTree(
+                            HybridRoot(), node.ancestral_mapping
+                        )
                     case _:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
