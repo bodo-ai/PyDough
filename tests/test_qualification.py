@@ -17,6 +17,8 @@ from simple_pydough_functions import (
     regional_first_order_best_line_part,
     richest_customer_per_region,
     simple_collation,
+    simple_cross_1,
+    simple_cross_4,
     singular1,
     singular2,
     singular3,
@@ -807,6 +809,34 @@ from pydough.unqualified import (
               └─── Calculate[w1=RELSIZE(by=(), levels=2), w2=RELSIZE(by=(), levels=3), w3=RELSIZE(by=(), levels=4), w4=RELSIZE(by=(), levels=5), w5=RELSIZE(by=(), levels=6)]
 """,
             id="absurd_partition_window_per",
+        ),
+        pytest.param(
+            simple_cross_1,
+            """
+──┬─ TPCH
+  ├─── TableCollection[regions]
+  └─┬─ Calculate[r1=name]
+    └─┬─ TPCH
+      ├─── TableCollection[regions]
+      ├─── Calculate[r1=r1, r2=name]
+      └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
+            """,
+            id="simple_cross_1",
+        ),
+        pytest.param(
+            simple_cross_4,
+            """
+──┬─ TPCH
+  ├─── TableCollection[regions]
+  ├─── Calculate[region_name=name]
+  ├─┬─ Calculate[region_name=region_name, n_other_regions=COUNT($1)]
+  │ └─┬─ AccessChild
+  │   └─┬─ TPCH
+  │     ├─── TableCollection[regions]
+  │     └─── Where[(name != region_name) & (SLICE(name, None, 1, None) == SLICE(region_name, None, 1, None))]
+  └─── OrderBy[region_name.ASC(na_pos='first')]
+            """,
+            id="simple_cross_4",
         ),
     ],
 )

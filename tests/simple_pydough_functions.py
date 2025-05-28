@@ -2271,3 +2271,25 @@ def simple_var_std_with_nulls():
         std_pop_1_nnull=STD(first_customers.key_1),
         std_pop_2_nnull=STD(first_customers.key_2),
     )
+
+
+def simple_cross_1():
+    # Every combination of region names
+    return (
+        regions.CALCULATE(r1=name)
+        .CROSS(regions)
+        .CALCULATE(r1, r2=name)
+        .ORDER_BY(r1.ASC(), r2.ASC())
+    )
+
+
+def simple_cross_4():
+    # For each region, count how many OTHER regions have the same first letter as the region
+    other_regions = CROSS(regions).WHERE(
+        (name != region_name) & (name[:1] == region_name[:1])
+    )
+    return (
+        regions.CALCULATE(region_name=name)
+        .CALCULATE(region_name, n_other_regions=COUNT(other_regions))
+        .ORDER_BY(region_name.ASC())
+    )

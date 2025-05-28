@@ -26,9 +26,18 @@ class GlobalContext(PyDoughCollectionQDAG):
     containing all of the collections.
     """
 
-    def __init__(self, graph: GraphMetadata):
+    def __init__(
+        self, graph: GraphMetadata, ancestor: PyDoughCollectionQDAG | None = None
+    ):
+        self._ancestor: PyDoughCollectionQDAG | None = ancestor
         self._graph = graph
         self._collections: dict[str, PyDoughCollectionQDAG] = {}
+        self._ancestral_mapping: dict[str, int] = {}
+        # TODO: Make sure there's no name conflicts
+        if ancestor is not None:
+            self._ancestral_mapping = {
+                name: level + 1 for name, level in ancestor.ancestral_mapping.items()
+            }
         for collection_name in graph.get_collection_names():
             meta = graph.get_collection(collection_name)
             assert isinstance(meta, CollectionMetadata)
@@ -58,7 +67,7 @@ class GlobalContext(PyDoughCollectionQDAG):
 
     @property
     def ancestor_context(self) -> PyDoughCollectionQDAG | None:
-        return None
+        return self._ancestor
 
     @property
     def preceding_context(self) -> PyDoughCollectionQDAG | None:
@@ -71,13 +80,14 @@ class GlobalContext(PyDoughCollectionQDAG):
 
     @property
     def ancestral_mapping(self) -> dict[str, int]:
-        # A global context does not have any ancestral terms
-        return {}
+        return self._ancestral_mapping
 
     @property
     def inherited_downstreamed_terms(self) -> set[str]:
-        # A global context does not have any inherited downstreamed terms
-        return set()
+        if self._ancestor:
+            return self._ancestor.inherited_downstreamed_terms
+        else:
+            return set()
 
     @property
     def all_terms(self) -> set[str]:
@@ -109,6 +119,8 @@ class GlobalContext(PyDoughCollectionQDAG):
         return self.graph.name
 
     def to_string(self) -> str:
+        if self.ancestor_context is not None:
+            return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
         return self.standalone_string
 
     @property
@@ -116,10 +128,27 @@ class GlobalContext(PyDoughCollectionQDAG):
         return self.standalone_string
 
     def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
-        return CollectionTreeForm(self.to_string(), 0)
+        if self.ancestor_context is not None:
+            return CollectionTreeForm(
+                self.tree_item_string,
+                0,
+                has_predecessor=True,
+            )
+        else:
+            return CollectionTreeForm(self.tree_item_string, 0)
 
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
-        return self.to_tree_form_isolated(is_last)
+        if self.ancestor_context is not None:
+            predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(
+                is_last
+            )
+            predecessor.has_children = True
+            tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
+            tree_form.depth = predecessor.depth + 1
+            tree_form.predecessor = predecessor
+            return tree_form
+        else:
+            return self.to_tree_form_isolated(is_last)
 
     def equals(self, other: object) -> bool:
         return isinstance(other, GlobalContext) and self.graph == other.graph
