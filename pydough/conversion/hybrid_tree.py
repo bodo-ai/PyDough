@@ -163,6 +163,12 @@ class HybridExpr(ABC):
         """
         return False
 
+    def contains_window_functions(self) -> bool:
+        """
+        Returns whether this expression contains any window functions.
+        """
+        return False
+
 
 class HybridCollation:
     """
@@ -421,6 +427,9 @@ class HybridFunctionExpr(HybridExpr):
     def contains_correlates(self) -> bool:
         return any(arg.contains_correlates() for arg in self.args)
 
+    def contains_window_functions(self) -> bool:
+        return any(arg.contains_window_functions() for arg in self.args)
+
     def count_correlated_levels(self) -> int:
         correl_levels: int = 0
         for arg in self.args:
@@ -586,6 +595,9 @@ class HybridWindowExpr(HybridExpr):
                 order_arg.expr.contains_correlates() for order_arg in self.order_args
             )
         )
+
+    def contains_window_functions(self) -> bool:
+        return True
 
 
 def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
@@ -1306,6 +1318,9 @@ class HybridConnection:
        used.
     - `required_steps`: an index indicating which step in the pipeline must be
        completed before the child can be defined.
+    - `max_steps`: an optional index indicating the maximum step in the
+       pipeline that the child can be defined at (exclusive). If None, then the
+       child can be defined at any step after `required_steps`.
     - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
     """
@@ -1314,6 +1329,7 @@ class HybridConnection:
     subtree: "HybridTree"
     connection_type: ConnectionType
     required_steps: int
+    max_steps: int | None
     aggs: dict[str, HybridFunctionExpr]
 
     def __eq__(self, other):
@@ -1508,6 +1524,27 @@ class HybridTree:
         """
         self._general_join_condition = condition
 
+    def add_operation(self, operation: HybridOperation) -> None:
+        """
+        TODO
+        """
+        blocking_idx: int = len(self.pipeline)
+        self.pipeline.append(operation)
+        is_blocking_operation: bool = False
+        if isinstance(operation, HybridCalculate):
+            is_blocking_operation = any(
+                term.contains_window_functions()
+                for term in operation.new_expressions.values()
+            )
+        elif isinstance(operation, HybridFilter):
+            is_blocking_operation = operation.condition.contains_window_functions()
+        elif isinstance(operation, HybridLimit):
+            is_blocking_operation = True
+        if is_blocking_operation:
+            for child in self.children:
+                if child.max_steps is None:
+                    child.max_steps = blocking_idx
+
     def add_child(
         self,
         child: "HybridTree",
@@ -1557,6 +1594,21 @@ class HybridTree:
                     )
                 )
             ):
+                # Skip if re-using the child would break the min/max bounds and
+                # have filtering issues.
+                if (
+                    (existing_connection.max_steps is not None)
+                    and (required_steps >= existing_connection.max_steps)
+                    and (
+                        (
+                            connection_type.is_semi
+                            and not child.always_exists()
+                            and not existing_connection.connection_type.is_semi
+                        )
+                        or connection_type.is_anti
+                    )
+                ):
+                    continue
                 connection_type = connection_type.reconcile_connection_types(
                     existing_connection.connection_type
                 )
@@ -1565,7 +1617,7 @@ class HybridTree:
                     existing_connection.subtree.agg_keys = child.agg_keys
                 return idx
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, required_steps, {}
+            self, child, connection_type, required_steps, None, {}
         )
         if not connection_type.is_aggregation:
             child.agg_keys = None
@@ -2026,7 +2078,7 @@ class HybridTranslator:
             hybrid.pipeline[-1].terms[name] = expr
             hybrid.pipeline[-1].new_expressions[name] = expr
         else:
-            hybrid.pipeline.append(
+            hybrid.add_operation(
                 HybridCalculate(
                     hybrid.pipeline[-1],
                     {name: expr},
@@ -2178,7 +2230,7 @@ class HybridTranslator:
                 )
                 back_exprs[name] = hybrid_back_expr
             if len(back_exprs):
-                subtree.pipeline.append(
+                subtree.add_operation(
                     HybridCalculate(
                         subtree.pipeline[-1],
                         back_exprs,
@@ -3006,7 +3058,7 @@ class HybridTranslator:
                         hybrid, node.get_expr(name), child_ref_mapping, False
                     )
                     new_expressions[name] = expr
-                hybrid.pipeline.append(
+                hybrid.add_operation(
                     HybridCalculate(
                         hybrid.pipeline[-1],
                         new_expressions,
@@ -3032,7 +3084,7 @@ class HybridTranslator:
                 expr = self.make_hybrid_expr(
                     hybrid, node.condition, child_ref_mapping, False
                 )
-                hybrid.pipeline.append(HybridFilter(hybrid.pipeline[-1], expr))
+                hybrid.add_operation(HybridFilter(hybrid.pipeline[-1], expr))
                 return hybrid
             case PartitionBy():
                 hybrid = self.make_hybrid_tree(
@@ -3067,11 +3119,11 @@ class HybridTranslator:
                 new_nodes, hybrid_orderings = self.process_hybrid_collations(
                     hybrid, node.collation, child_ref_mapping
                 )
-                hybrid.pipeline.append(
+                hybrid.add_operation(
                     HybridCalculate(hybrid.pipeline[-1], new_nodes, hybrid_orderings)
                 )
                 if isinstance(node, TopK):
-                    hybrid.pipeline.append(
+                    hybrid.add_operation(
                         HybridLimit(hybrid.pipeline[-1], node.records_to_keep)
                     )
                 return hybrid
@@ -3230,7 +3282,7 @@ class HybridTranslator:
                     tree.pipeline[-1], lhs_unique_keys, []
                 )
                 new_calc.is_hidden = True
-                tree.pipeline.append(new_calc)
+                tree.add_operation(new_calc)
                 for key_name, expr in lhs_unique_keys.items():
                     agg_keys.append(HybridRefExpr(key_name, expr.typ))
 

@@ -34,6 +34,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
+    bad_child_reuse_1,
+    bad_child_reuse_2,
+    bad_child_reuse_3,
+    bad_child_reuse_4,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -1772,6 +1776,119 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "order_quarter_test",
             ),
             id="order_quarter_test",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                bad_child_reuse_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [15980, 23828, 61453, 63655, 129934, 144232],
+                        "n_orders": [8, 8, 29, 15, 22, 16],
+                    }
+                ),
+                "bad_child_reuse_1",
+            ),
+            id="bad_child_reuse_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                bad_child_reuse_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [
+                            15980,
+                            23828,
+                            27412,
+                            39133,
+                            61453,
+                            63655,
+                            96205,
+                            129934,
+                            144232,
+                            148504,
+                        ],
+                        "n_orders": [8, 8, 17, 28, 29, 15, 21, 22, 16, 15],
+                        "n_cust": [
+                            5974,
+                            5974,
+                            5983,
+                            5992,
+                            5921,
+                            6100,
+                            6100,
+                            5952,
+                            5908,
+                            5992,
+                        ],
+                    }
+                ),
+                "bad_child_reuse_2",
+            ),
+            id="bad_child_reuse_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                bad_child_reuse_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [
+                            15980,
+                            23828,
+                            27412,
+                            39133,
+                            61453,
+                            63655,
+                            96205,
+                            129934,
+                            144232,
+                            148504,
+                        ],
+                        "n_orders": [8, 8, 17, 28, 29, 15, 21, 22, 16, 15],
+                        "n_cust": [
+                            5974,
+                            5974,
+                            5983,
+                            5992,
+                            5921,
+                            6100,
+                            6100,
+                            5952,
+                            5908,
+                            5992,
+                        ],
+                    }
+                ),
+                "bad_child_reuse_3",
+            ),
+            id="bad_child_reuse_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                bad_child_reuse_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "cust_key": [
+                            15980,
+                            23828,
+                            26876,
+                            68822,
+                            72359,
+                            89900,
+                            100214,
+                            118361,
+                            125284,
+                            138209,
+                        ],
+                        "n_orders": [8, 8, 8, 9, 8, 6, 10, 8, 7, 6],
+                    }
+                ),
+                "bad_child_reuse_4",
+            ),
+            id="bad_child_reuse_4",
         ),
     ],
 )
