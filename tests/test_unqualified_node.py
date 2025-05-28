@@ -315,6 +315,16 @@ answer = _ROOT.nations.CALCULATE(name=_ROOT.name, richest_customer_name=richest_
             "customers.orders.lines.BEST(by=(ship_date.DESC(na_pos='last')), per=False, n_best=5)",
             id="best_multiple",
         ),
+        pytest.param(
+            "answer = _ROOT.regions.CROSS(_ROOT.regions)",
+            "regions.CROSS(regions)",
+            id="cross_simple",
+        ),
+        pytest.param(
+            "answer = _ROOT.customers.CROSS(_ROOT.customers.orders.WHERE(_ROOT.order_priority == '1-URGENT')).TOP_K(5, by=(_ROOT.key.DESC()))",
+            "customers.CROSS(customers.orders.WHERE((order_priority == '1-URGENT'))).TOP_K(5, by=(key.DESC(na_pos='last')))",
+            id="cross_filter",
+        ),
     ],
 )
 def test_unqualified_to_string(
