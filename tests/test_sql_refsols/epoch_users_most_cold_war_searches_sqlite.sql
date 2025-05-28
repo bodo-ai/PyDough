@@ -19,13 +19,13 @@ WITH _s4 AS (
     eras.er_name AS name,
     eras.er_start_year AS start_year
   FROM eras AS eras
-  WHERE
-    eras.er_name = 'Cold War'
 ), _s2 AS (
   SELECT
     _t1.end_year AS end_year,
     _t1.start_year AS start_year
   FROM _t1 AS _t1
+  WHERE
+    _t1.name = 'Cold War'
 ), _s3 AS (
   SELECT
     _s1.name AS name

@@ -13,11 +13,12 @@ WITH _s1 AS (
     ON _s1.part_key = part.p_partkey
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey
-    AND lineitem.l_quantity < (
+  WHERE
+    lineitem.l_quantity < (
       0.2 * _s1.agg_0
     )
-  WHERE
-    part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
+    AND part.p_brand = 'Brand#23'
+    AND part.p_container = 'MED BOX'
 )
 SELECT
   COALESCE(agg_0, 0) / 7.0 AS AVG_YEARLY
