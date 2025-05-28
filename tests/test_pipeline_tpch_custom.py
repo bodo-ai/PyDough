@@ -38,6 +38,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     bad_child_reuse_2,
     bad_child_reuse_3,
     bad_child_reuse_4,
+    bad_child_reuse_5,
     customer_largest_order_deltas,
     customer_most_recent_orders,
     datetime_current,
@@ -1889,6 +1890,17 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "bad_child_reuse_4",
             ),
             id="bad_child_reuse_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                bad_child_reuse_5,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {"key": [2487, 43044, 69321, 76146], "n_orders": [0] * 4}
+                ),
+                "bad_child_reuse_5",
+            ),
+            id="bad_child_reuse_5",
         ),
     ],
 )

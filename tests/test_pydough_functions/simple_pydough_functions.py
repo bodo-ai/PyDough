@@ -906,7 +906,7 @@ def bad_child_reuse_2():
     return (
         nations.customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
         .CALCULATE(cust_key, n_orders, n_cust=RELSIZE(per="nations"))
-        .WHERE(HAS(orders) == 1)
+        .WHERE(HAS(orders))
         .TOP_K(10, by=account_balance.DESC())
     )
 
@@ -917,7 +917,7 @@ def bad_child_reuse_3():
         nations.customers.CALCULATE(
             cust_key=key, n_orders=COUNT(orders), n_cust=RELSIZE(per="nations")
         )
-        .WHERE(HAS(orders) == 1)
+        .WHERE(HAS(orders))
         .TOP_K(10, by=account_balance.DESC())
         .CALCULATE(cust_key, n_orders, n_cust)
     )
@@ -930,9 +930,19 @@ def bad_child_reuse_4():
     # and calculate the number of orders they made.
     return (
         nations.customers.WHERE(COUNT(orders) < RELAVG(COUNT(orders), per="nations"))
-        .WHERE(HAS(orders) == 1)
+        .WHERE(HAS(orders))
         .TOP_K(10, by=account_balance.DESC())
         .CALCULATE(cust_key=key, n_orders=COUNT(orders))
+    )
+
+
+def bad_child_reuse_5():
+    # Compute the top 10 customers by account balance, list their keys and
+    # number of orders, only keep ones that have no orders.
+    return (
+        customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
+        .TOP_K(10, by=account_balance.DESC())
+        .WHERE(HASNOT(orders))
     )
 
 
