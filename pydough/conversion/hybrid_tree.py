@@ -3721,7 +3721,6 @@ class HybridTranslator:
         extension_subtree: HybridTree = self.make_extension_child(
             copy.deepcopy(extension_child.subtree), extension_height, base_subtree
         )
-
         # ANTI are automatically syncretized since the base not being
         # present implies the extension is not present, so we can just
         # have the extension child be pruned without modifying the
@@ -3740,6 +3739,17 @@ class HybridTranslator:
         # TODO: support syncretization when the extension is itself
         # correlated to any of its children
         if extension_subtree.contains_correlates():
+            return False
+
+        # Do not syncretize subtrees if their acceptable step ranges do not
+        # overlap.
+        if (
+            base_child.max_steps is not None
+            and base_child.max_steps <= extension_child.required_steps
+        ) or (
+            extension_child.max_steps is not None
+            and extension_child.max_steps <= base_child.required_steps
+        ):
             return False
 
         if extension_child.required_steps < base_child.required_steps:
