@@ -19,7 +19,6 @@ from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.merge_subqueries import merge_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
-from sqlglot.optimizer.pushdown_predicates import pushdown_predicates
 from sqlglot.optimizer.pushdown_projections import pushdown_projections
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.simplify import simplify
@@ -115,8 +114,9 @@ def apply_sqlglot_optimizer(
     # a many to many left join.
     # glot_expr = unnest_subqueries(glot_expr)
 
+    # TODO: (gh #313) RULE SKIPPED
     # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS.
-    glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
+    # glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
 
     # Removes cross joins if possible and reorder joins based on predicate
     # dependencies.

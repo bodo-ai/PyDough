@@ -1545,6 +1545,37 @@ class HybridTree:
                 if child.max_steps is None:
                     child.max_steps = blocking_idx
 
+    def insert_count_filter(self, child_idx: int) -> None:
+        """
+        TODO
+        """
+        hybrid_call: HybridFunctionExpr = HybridFunctionExpr(
+            pydop.COUNT, [], NumericType()
+        )
+        child_connection: HybridConnection = self.children[child_idx]
+        # If the aggregation already exists in the child, use a child reference
+        # to it.
+        agg_name: str
+        if hybrid_call in child_connection.aggs.values():
+            agg_name = child_connection.fetch_agg_name(hybrid_call)
+        else:
+            # Otherwise, Generate a unique name for the agg call to push into the
+            # child connection.
+            agg_idx: int = 0
+            while True:
+                agg_name = f"agg_{agg_name}"
+                if agg_name not in child_connection.aggs:
+                    break
+                agg_idx += 1
+            child_connection.aggs[agg_name] = hybrid_call
+        result_ref: HybridExpr = HybridChildRefExpr(agg_name, child_idx, NumericType())
+        condition: HybridExpr = HybridFunctionExpr(
+            pydop.GRT,
+            [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
+            BooleanType(),
+        )
+        self.add_operation(HybridFilter(self.pipeline[-1], condition))
+
     def add_child(
         self,
         child: "HybridTree",
@@ -1596,19 +1627,26 @@ class HybridTree:
             ):
                 # Skip if re-using the child would break the min/max bounds and
                 # have filtering issues.
-                if (
-                    (existing_connection.max_steps is not None)
-                    and (required_steps >= existing_connection.max_steps)
-                    and (
-                        (
-                            connection_type.is_semi
-                            and not child.always_exists()
-                            and not existing_connection.connection_type.is_semi
-                        )
-                        or connection_type.is_anti
-                    )
+                if (existing_connection.max_steps is not None) and (
+                    required_steps >= existing_connection.max_steps
                 ):
-                    continue
+                    if connection_type.is_anti:
+                        continue
+                    if connection_type.is_semi:
+                        if not (
+                            child.always_exists()
+                            or existing_connection.connection_type.is_semi
+                        ):
+                            # Special case: if adding a SEMI onto AGGREGATION,
+                            # add a COUNT to the aggregation then add a filter
+                            # to the parent tree on the count being positive.
+                            if (
+                                existing_connection.connection_type
+                                == ConnectionType.AGGREGATION
+                            ):
+                                self.insert_count_filter(idx)
+                                return idx
+                            continue
                 connection_type = connection_type.reconcile_connection_types(
                     existing_connection.connection_type
                 )
@@ -2410,15 +2448,6 @@ class HybridTranslator:
         collection_arg = expr.args[0]
         assert isinstance(collection_arg, ChildReferenceCollection), (
             f"Malformed call to handle_has_hasnot: {expr}"
-        )
-        # Reconcile the existing connection type with either SEMI or ANTI
-        child_idx: int = child_ref_mapping[collection_arg.child_idx]
-        child_connection: HybridConnection = hybrid.children[child_idx]
-        new_conn_type: ConnectionType = (
-            ConnectionType.SEMI if expr.operator == pydop.HAS else ConnectionType.ANTI
-        )
-        child_connection.connection_type = (
-            child_connection.connection_type.reconcile_connection_types(new_conn_type)
         )
         # Since the connection has been mutated to be a semi/anti join, the
         # has / hasnot condition is now known to be true.
