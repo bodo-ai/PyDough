@@ -1316,11 +1316,10 @@ class HybridConnection:
       from the bottom.
     - `connection_type`: an enum indicating which connection type is being
        used.
-    - `required_steps`: an index indicating which step in the pipeline must be
-       completed before the child can be defined.
-    - `max_steps`: an optional index indicating the maximum step in the
-       pipeline that the child can be defined at (exclusive). If None, then the
-       child can be defined at any step after `required_steps`.
+    - `required_steps`: an index indicating the earliest stpe in the pipeline
+       that must be completed before the child is defined.
+    - `max_steps`: a index indicating the maximum step in the pipeline that the
+       child can be defined at (exclusive).
     - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
     """
@@ -1385,6 +1384,7 @@ class HybridTree:
         self._join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         self._general_join_condition: HybridExpr | None = None
         self._correlated_children: set[int] = set()
+        self._blocking_idx: int = 0
         if isinstance(root_operation, HybridPartition):
             self._join_keys = []
 
@@ -1541,9 +1541,7 @@ class HybridTree:
         elif isinstance(operation, HybridLimit):
             is_blocking_operation = True
         if is_blocking_operation:
-            for child in self.children:
-                if child.max_steps is None:
-                    child.max_steps = blocking_idx
+            self._blocking_idx = blocking_idx
 
     def insert_count_filter(self, child_idx: int) -> None:
         """
@@ -3736,11 +3734,6 @@ class HybridTranslator:
             for agg in extension_child.aggs.values()
         )
 
-        # TODO: support syncretization when the extension is itself
-        # correlated to any of its children
-        if extension_subtree.contains_correlates():
-            return False
-
         # Do not syncretize subtrees if their acceptable step ranges do not
         # overlap.
         if (
@@ -3752,10 +3745,20 @@ class HybridTranslator:
         ):
             return False
 
-        if extension_child.required_steps < base_child.required_steps:
-            if base_subtree.contains_correlates():
+        new_required_steps: int = base_child.required_steps
+        new_max_steps: int | None = base_child.max_steps
+        if extension_child.required_steps > new_required_steps:
+            new_required_steps = extension_child.required_steps
+        else:
+            if extension_child.subtree.contains_correlates():
                 return False
-            base_child.required_steps = extension_child.required_steps
+        if extension_child.max_steps is not None and (
+            new_max_steps is None or extension_child.max_steps < new_max_steps
+        ):
+            new_max_steps = extension_child.max_steps
+
+        base_child.required_steps = new_required_steps
+        base_child.max_steps = new_max_steps
 
         match (base_child.connection_type, extension_child.connection_type):
             case (
