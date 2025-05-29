@@ -163,6 +163,13 @@ class HybridExpr(ABC):
         """
         return False
 
+    def get_correlate_names(self, levels: int) -> set[str]:
+        """
+        Returns the set of names of variables that are correlated a certain
+        number of levels within the expression.
+        """
+        return set()
+
     def contains_window_functions(self) -> bool:
         """
         Returns whether this expression contains any window functions.
@@ -334,6 +341,18 @@ class HybridCorrelExpr(HybridExpr):
     def count_correlated_levels(self) -> int:
         return 1 + self.expr.count_correlated_levels()
 
+    def get_correlate_names(self, levels: int) -> set[str]:
+        result: set[str] = set()
+        expr: HybridExpr = self
+        for _ in range(levels):
+            if isinstance(expr, HybridCorrelExpr):
+                expr = expr.expr
+            else:
+                return result
+        if isinstance(expr, HybridRefExpr):
+            result.add(expr.name)
+        return result
+
 
 class HybridLiteralExpr(HybridExpr):
     """
@@ -435,6 +454,12 @@ class HybridFunctionExpr(HybridExpr):
         for arg in self.args:
             correl_levels = max(correl_levels, arg.count_correlated_levels())
         return correl_levels
+
+    def get_correlate_names(self, levels: int) -> set[str]:
+        result: set[str] = set()
+        for arg in self.args:
+            result.update(arg.get_correlate_names(levels))
+        return result
 
 
 class HybridWindowExpr(HybridExpr):
@@ -595,6 +620,16 @@ class HybridWindowExpr(HybridExpr):
                 order_arg.expr.contains_correlates() for order_arg in self.order_args
             )
         )
+
+    def get_correlate_names(self, levels: int) -> set[str]:
+        result: set[str] = set()
+        for arg in self.args:
+            result.update(arg.get_correlate_names(levels))
+        for partition_arg in self.partition_args:
+            result.update(partition_arg.get_correlate_names(levels))
+        for order_arg in self.order_args:
+            result.update(order_arg.expr.get_correlate_names(levels))
+        return result
 
     def contains_window_functions(self) -> bool:
         return True
@@ -1316,11 +1351,10 @@ class HybridConnection:
       from the bottom.
     - `connection_type`: an enum indicating which connection type is being
        used.
-    - `required_steps`: an index indicating which step in the pipeline must be
-       completed before the child can be defined.
-    - `max_steps`: an optional index indicating the maximum step in the
-       pipeline that the child can be defined at (exclusive). If None, then the
-       child can be defined at any step after `required_steps`.
+    - `min_steps`: an index indicating the last step in the pipeline
+       that must be completed before the child can be defined (inclusive).
+    - `max_steps`: a index indicating the maximum step in the pipeline that the
+       child can be defined at (exclusive).
     - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
     """
@@ -1328,8 +1362,8 @@ class HybridConnection:
     parent: "HybridTree"
     subtree: "HybridTree"
     connection_type: ConnectionType
-    required_steps: int
-    max_steps: int | None
+    min_steps: int
+    max_steps: int
     aggs: dict[str, HybridFunctionExpr]
 
     def __eq__(self, other):
@@ -1385,6 +1419,7 @@ class HybridTree:
         self._join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         self._general_join_condition: HybridExpr | None = None
         self._correlated_children: set[int] = set()
+        self._blocking_idx: int = 0
         if isinstance(root_operation, HybridPartition):
             self._join_keys = []
 
@@ -1541,9 +1576,7 @@ class HybridTree:
         elif isinstance(operation, HybridLimit):
             is_blocking_operation = True
         if is_blocking_operation:
-            for child in self.children:
-                if child.max_steps is None:
-                    child.max_steps = blocking_idx
+            self._blocking_idx = blocking_idx
 
     def insert_count_filter(self, child_idx: int) -> None:
         """
@@ -1576,11 +1609,29 @@ class HybridTree:
         )
         self.add_operation(HybridFilter(self.pipeline[-1], condition))
 
+    def get_correlate_names(self, levels: int) -> set[str]:
+        """
+        TODO
+        """
+        result: set[str] = set()
+        for child in self.children:
+            result.update(child.subtree.get_correlate_names(levels + 1))
+        if self.parent is not None:
+            result.update(self.parent.get_correlate_names(levels))
+        for operation in self.pipeline:
+            if isinstance(operation, HybridCalculate):
+                for term in operation.new_expressions.values():
+                    result.update(term.get_correlate_names(levels))
+            elif isinstance(operation, HybridFilter):
+                result.update(operation.condition.get_correlate_names(levels))
+        return result
+
     def add_child(
         self,
         child: "HybridTree",
         connection_type: ConnectionType,
-        required_steps: int,
+        min_steps: int,
+        max_steps: int,
     ) -> int:
         """
         Adds a new child operation to the current level so that operations in
@@ -1591,8 +1642,10 @@ class HybridTree:
             (starting at the bottom of the subtree).
             `connection_type`: enum indicating what kind of connection is to be
             used to link `self` to `child`.
-            `required_steps`: the index of the step in the pipeline that must
+            `min_steps`: the index of the step in the pipeline that must
             be completed before the child can be defined.
+            `max_steps`: the index of the step in the pipeline that the child
+            must be defined before.
 
         Returns:
             The index of the newly inserted child (or the index of an existing
@@ -1627,9 +1680,7 @@ class HybridTree:
             ):
                 # Skip if re-using the child would break the min/max bounds and
                 # have filtering issues.
-                if (existing_connection.max_steps is not None) and (
-                    required_steps >= existing_connection.max_steps
-                ):
+                if min_steps >= existing_connection.max_steps:
                     if connection_type.is_anti:
                         continue
                     if connection_type.is_semi:
@@ -1655,7 +1706,7 @@ class HybridTree:
                     existing_connection.subtree.agg_keys = child.agg_keys
                 return idx
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, required_steps, None, {}
+            self, child, connection_type, min_steps, max_steps, {}
         )
         if not connection_type.is_aggregation:
             child.agg_keys = None
@@ -2284,10 +2335,22 @@ class HybridTranslator:
                 connection_type = connection_type.reconcile_connection_types(
                     ConnectionType.SEMI
                 )
+            min_idx: int = hybrid._blocking_idx
+            correl_names: set[str] = subtree.get_correlate_names(1)
+            if correl_names:
+                for pipeline_idx in range(len(hybrid.pipeline) - 1, min_idx, -1):
+                    operation: HybridOperation = hybrid.pipeline[pipeline_idx]
+                    if isinstance(operation, HybridCalculate) and any(
+                        name in operation.terms for name in correl_names
+                    ):
+                        min_idx = pipeline_idx
+                        break
+                # breakpoint()
             child_idx_mapping[child_idx] = hybrid.add_child(
                 subtree,
                 connection_type,
-                max(len(hybrid.pipeline) - 1, 0),
+                min_idx,
+                len(hybrid.pipeline),
             )
         self.stack.pop()
 

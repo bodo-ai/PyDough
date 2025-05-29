@@ -39,7 +39,7 @@ class Decorrelater:
         self.children_indices: list[int] = []
 
     def make_decorrelate_parent(
-        self, hybrid: HybridTree, child_idx: int, required_steps: int
+        self, hybrid: HybridTree, child_idx: int, min_steps: int
     ) -> tuple[HybridTree, int]:
         """
         Creates a snapshot of the ancestry of the hybrid tree that contains
@@ -51,7 +51,7 @@ class Decorrelater:
             in the de-correlation of a correlated child.
             `child_idx`: The index of the correlated child of hybrid that the
             snapshot is being created to aid in the de-correlation of.
-            `required_steps`: The index of the last pipeline operator that
+            `min_steps`: The index of the last pipeline operator that
             needs to be included in the snapshot in order for the child to be
             derivable.
 
@@ -91,11 +91,9 @@ class Decorrelater:
         # Ensure the new parent only includes the children & pipeline operators
         # that is has to.
         new_hybrid._children = [
-            child
-            for child in new_hybrid.children
-            if child.required_steps < required_steps
+            child for child in new_hybrid.children if child.min_steps < min_steps
         ]
-        new_hybrid._pipeline = new_hybrid._pipeline[: required_steps + 1]
+        new_hybrid._pipeline = new_hybrid._pipeline[: min_steps + 1]
         return new_hybrid, 0
 
     def remove_correl_refs(
@@ -327,7 +325,7 @@ class Decorrelater:
             old_parent.pipeline[0] = HybridChildPullUp(
                 old_parent, child_idx, child_height
             )
-            for i in range(1, child.required_steps + 1):
+            for i in range(1, child.min_steps + 1):
                 old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
             child_remapping: dict[int, int] = old_parent.remove_dead_children(set())
             return child_remapping[child_idx]
@@ -374,7 +372,7 @@ class Decorrelater:
                     new_parent, skipped_levels = self.make_decorrelate_parent(
                         original_parent,
                         child_idx,
-                        hybrid.children[child_idx].required_steps,
+                        hybrid.children[child_idx].min_steps,
                     )
                     child_idx = self.decorrelate_child(
                         hybrid,

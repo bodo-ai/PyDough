@@ -3,36 +3,40 @@ WITH _s2 AS (
     co_id AS _id,
     co_id AS factory_id
   FROM main.countries
+), _s3 AS (
+  SELECT
+    co_id AS _id
+  FROM main.countries
 ), _s9 AS (
   SELECT
     COUNT() AS agg_0,
     _s2._id,
-    countries.co_id AS _id_3
+    _s3._id AS _id_3
   FROM _s2 AS _s2
-  CROSS JOIN main.countries AS countries
+  CROSS JOIN _s3 AS _s3
   JOIN main.devices AS devices
-    ON countries.co_id = devices.de_purchase_country_id
+    ON _s3._id = devices.de_purchase_country_id
   JOIN main.incidents AS incidents
     ON devices.de_id = incidents.in_device_id
   WHERE
     _s2.factory_id = devices.de_production_country_id
   GROUP BY
     _s2._id,
-    countries.co_id
+    _s3._id
 ), _s15 AS (
   SELECT
     COUNT() AS agg_1,
     _s10._id,
-    countries.co_id AS _id_7
+    _s11._id AS _id_7
   FROM _s2 AS _s10
-  CROSS JOIN main.countries AS countries
+  CROSS JOIN _s3 AS _s11
   JOIN main.devices AS devices
-    ON countries.co_id = devices.de_purchase_country_id
+    ON _s11._id = devices.de_purchase_country_id
   WHERE
     _s10.factory_id = devices.de_production_country_id
   GROUP BY
     _s10._id,
-    countries.co_id
+    _s11._id
 )
 SELECT
   countries.co_name AS factory_country,
