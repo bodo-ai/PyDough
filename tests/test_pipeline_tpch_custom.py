@@ -67,6 +67,7 @@ from simple_pydough_functions import (
     regional_suppliers_percentile,
     richest_customer_per_region,
     simple_cross_1,
+    simple_cross_2,
     simple_cross_4,
     simple_filter_top_five,
     simple_int_float_string_cast,
@@ -1672,6 +1673,28 @@ from pydough.unqualified import (
                 ),
             ),
             id="simple_cross_1",
+        ),
+        pytest.param(
+            (
+                simple_cross_2,
+                None,
+                "simple_cross_2",
+                lambda: pd.DataFrame(
+                    {
+                        "r1": ["AFRICA"] * 4
+                        + ["AMERICA"] * 4
+                        + ["ASIA"] * 4
+                        + ["EUROPE"] * 4
+                        + ["MIDDLE EAST"] * 4,
+                        "r2": ["AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"]
+                        + ["AFRICA", "ASIA", "EUROPE", "MIDDLE EAST"]
+                        + ["AFRICA", "AMERICA", "EUROPE", "MIDDLE EAST"]
+                        + ["AFRICA", "AMERICA", "ASIA", "MIDDLE EAST"]
+                        + ["AFRICA", "AMERICA", "ASIA", "EUROPE"],
+                    }
+                ),
+            ),
+            id="simple_cross_2",
         ),
         pytest.param(
             (

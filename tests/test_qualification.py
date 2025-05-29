@@ -18,6 +18,7 @@ from simple_pydough_functions import (
     richest_customer_per_region,
     simple_collation,
     simple_cross_1,
+    simple_cross_2,
     simple_cross_4,
     singular1,
     singular2,
@@ -822,6 +823,20 @@ from pydough.unqualified import (
       └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
             """,
             id="simple_cross_1",
+        ),
+        pytest.param(
+            simple_cross_2,
+            """
+──┬─ TPCH
+  ├─── TableCollection[regions]
+  └─┬─ Calculate[r1=name]
+    └─┬─ TPCH
+      ├─── TableCollection[regions]
+      ├─── Calculate[r1=r1, r2=name]
+      ├─── Where[r1 != r2]
+      └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
+            """,
+            id="simple_cross_2",
         ),
         pytest.param(
             simple_cross_4,

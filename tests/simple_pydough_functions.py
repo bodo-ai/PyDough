@@ -2283,6 +2283,33 @@ def simple_cross_1():
     )
 
 
+def simple_cross_2():
+    # Every combination of region names, excluding cases where the two regions are the same
+    return (
+        regions.CALCULATE(r1=name)
+        .CROSS(regions)
+        .CALCULATE(r1, r2=name)
+        .WHERE(r1 != r2)
+        .ORDER_BY(r1.ASC(), r2.ASC())
+    )
+
+
+def simple_cross_3():
+    # Same as earlier example, but for every combination of nation1 in ASIA and nation2 in AMERICA
+    nation_combinations = (
+        regions.WHERE(name == "ASIA")
+        .nations.CALCULATE(supplier_nation=name)
+        .CROSS(regions.WHERE(name == "AMERICA").nations.CALCULATE(customer_nation=name))
+    )
+    return nation_combinations.CALCULATE(
+        supplier_nation,
+        customer_nation,
+        nation_combinations=COUNT(
+            customers.orders.lines.WHERE(supplier.nation.name == supplier_nation)
+        ),
+    )
+
+
 def simple_cross_4():
     # For each region, count how many OTHER regions have the same first letter as the region
     other_regions = CROSS(regions).WHERE(
@@ -2292,4 +2319,25 @@ def simple_cross_4():
         regions.CALCULATE(region_name=name)
         .CALCULATE(region_name, n_other_regions=COUNT(other_regions))
         .ORDER_BY(region_name.ASC())
+    )
+
+
+def simple_cross_5():
+    # For every combination of part size & order priority, which order priority had the highest quantity of parts of
+    # that size shipped in 1998?
+    sizes = parts.PARTITION(name="sizes", by=size)
+    order_info = (
+        orders.CALCULATE(order_priority)
+        .WHERE(YEAR(order_date == 1998))
+        .lines.CALCULATE(psize=part.size)
+    )
+    best_priority = (
+        CROSS(order_info.PARTITION(name="priorities", by=order_priority))
+        .CALCULATE(total_qty=SUM(lines.psize))
+        .BEST(by=total_qty.DESC(), per="sizes")
+    )
+    return sizes.CALCULATE(
+        size,
+        best_order_priority=best_priority.order_priority,
+        best_order_priority_qty=best_priority.total_qty,
     )
