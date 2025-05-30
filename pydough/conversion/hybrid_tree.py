@@ -1439,20 +1439,27 @@ class HybridTree:
         if isinstance(root_operation, HybridPartition):
             self._join_keys = []
 
-    def __repr__(self):
+    def to_string(self, verbose: bool = False) -> str:
+        """
+        TODO
+        """
         lines = []
         if self.parent is not None:
-            lines.extend(repr(self.parent).splitlines())
+            lines.extend(self.parent.to_string(verbose).splitlines())
         lines.append(
             " -> ".join(
                 repr(operation)
                 for operation in self.pipeline
-                if not operation.is_hidden
+                if (verbose or not operation.is_hidden)
             )
         )
         prefix = " " if self.successor is None else "↓"
         for idx, child in enumerate(self.children):
             lines.append(f"{prefix} child #{idx} ({child.connection_type.name}):")
+            if verbose:
+                lines.append(
+                    f"{prefix}  definition range: ({child.min_steps}, {child.max_steps})"
+                )
             if child.subtree.agg_keys is not None:
                 lines.append(f"{prefix}  aggregate: {child.subtree.agg_keys}")
             if len(child.aggs):
@@ -1465,8 +1472,13 @@ class HybridTree:
                 lines.append(f"{prefix} {line}")
         return "\n".join(lines)
 
+    def __repr__(self):
+        return self.to_string(True)
+
     def __eq__(self, other):
-        return type(self) is type(other) and repr(self) == repr(other)
+        return type(self) is type(other) and self.to_string(False) == other.to_string(
+            False
+        )
 
     @property
     def pipeline(self) -> list[HybridOperation]:
@@ -3466,6 +3478,7 @@ class HybridTranslator:
         """
         if levels_up <= 0:
             raise ValueError(f"Cannot make extension child with {levels_up} levels up")
+        child.squish_backrefs_into_correl(levels_up)
         if levels_up == 1:
             assert child.parent is not None
             child._join_keys, child._agg_keys, child._general_join_condition = (
@@ -3482,7 +3495,6 @@ class HybridTranslator:
             )
             parent.add_successor(child)
             child._successor = None
-        child.squish_backrefs_into_correl(levels_up)
         return child
 
     def can_syncretize_subtrees(
