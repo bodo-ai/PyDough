@@ -155,7 +155,7 @@ class HybridPartitionChild(HybridOperation):
     PARTITION as a child.
     """
 
-    def __init__(self, subtree: HybridTree):
+    def __init__(self, subtree: "HybridTree"):
         self.subtree: HybridTree = subtree
         super().__init__(
             subtree.pipeline[-1].terms,
@@ -272,7 +272,7 @@ class HybridChildPullUp(HybridOperation):
 
     def __init__(
         self,
-        hybrid: HybridTree,
+        hybrid: "HybridTree",
         child_idx: int,
         original_child_height: int,
     ):

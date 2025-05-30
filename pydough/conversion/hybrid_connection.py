@@ -315,8 +315,8 @@ class HybridConnection:
        context of `subtree`.
     """
 
-    parent: HybridTree
-    subtree: HybridTree
+    parent: "HybridTree"
+    subtree: "HybridTree"
     connection_type: ConnectionType
     min_steps: int
     max_steps: int

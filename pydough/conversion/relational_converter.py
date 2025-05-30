@@ -51,34 +51,35 @@ from pydough.types import BooleanType, NumericType, UnknownType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .filter_pushdown import push_filters
+from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_decorrelater import run_hybrid_decorrelation
-from .hybrid_tree import (
-    ConnectionType,
+from .hybrid_expressions import (
     HybridBackRefExpr,
-    HybridCalculate,
-    HybridChildPullUp,
     HybridChildRefExpr,
     HybridCollation,
-    HybridCollectionAccess,
     HybridColumnExpr,
-    HybridConnection,
     HybridCorrelExpr,
     HybridExpr,
-    HybridFilter,
     HybridFunctionExpr,
-    HybridLimit,
     HybridLiteralExpr,
+    HybridRefExpr,
+    HybridSidedRefExpr,
+    HybridWindowExpr,
+)
+from .hybrid_operations import (
+    HybridCalculate,
+    HybridChildPullUp,
+    HybridCollectionAccess,
+    HybridFilter,
+    HybridLimit,
     HybridNoop,
     HybridOperation,
     HybridPartition,
     HybridPartitionChild,
-    HybridRefExpr,
     HybridRoot,
-    HybridSidedRefExpr,
-    HybridTranslator,
-    HybridTree,
-    HybridWindowExpr,
 )
+from .hybrid_translator import HybridTranslator
+from .hybrid_tree import HybridTree
 from .merge_projects import merge_projects
 
 
