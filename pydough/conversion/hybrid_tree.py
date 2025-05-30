@@ -170,6 +170,13 @@ class HybridExpr(ABC):
         """
         return set()
 
+    def has_correlated_window_function(self, levels: int) -> bool:
+        """
+        Returns whether this expression contains any window functions
+        with correlates with at least a certain number of levels.
+        """
+        return False
+
     def contains_window_functions(self) -> bool:
         """
         Returns whether this expression contains any window functions.
@@ -461,6 +468,9 @@ class HybridFunctionExpr(HybridExpr):
             result.update(arg.get_correlate_names(levels))
         return result
 
+    def has_correlated_window_function(self, levels: int) -> bool:
+        return any(arg.has_correlated_window_function(levels) for arg in self.args)
+
 
 class HybridWindowExpr(HybridExpr):
     """
@@ -633,6 +643,21 @@ class HybridWindowExpr(HybridExpr):
 
     def contains_window_functions(self) -> bool:
         return True
+
+    def has_correlated_window_function(self, levels: int) -> bool:
+        if self.count_correlated_levels() >= levels:
+            return True
+        return (
+            any(arg.has_correlated_window_function(levels) for arg in self.args)
+            or any(
+                partition_arg.has_correlated_window_function(levels)
+                for partition_arg in self.partition_args
+            )
+            or any(
+                order_arg.expr.has_correlated_window_function(levels)
+                for order_arg in self.order_args
+            )
+        )
 
 
 def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
@@ -1626,6 +1651,25 @@ class HybridTree:
                 result.update(operation.condition.get_correlate_names(levels))
         return result
 
+    def has_correlated_window_function(self, levels: int) -> bool:
+        """
+        TODO
+        """
+        for operation in self.pipeline:
+            if isinstance(operation, HybridCalculate):
+                for term in operation.new_expressions.values():
+                    if term.has_correlated_window_function(levels):
+                        return True
+            elif isinstance(operation, HybridFilter):
+                if operation.condition.has_correlated_window_function(levels):
+                    return True
+        for child in self.children:
+            if child.subtree.has_correlated_window_function(levels + 1):
+                return True
+        return self.parent is not None and self.parent.has_correlated_window_function(
+            levels
+        )
+
     def add_child(
         self,
         child: "HybridTree",
@@ -2008,9 +2052,17 @@ class HybridTree:
         TODO
         """
         correl_names: set[str] = child_subtree.get_correlate_names(1)
+        has_correlated_window_function: bool = (
+            child_subtree.has_correlated_window_function(1)
+        )
         if correl_names:
             for pipeline_idx in range(len(self.pipeline) - 1, self._blocking_idx, -1):
                 operation: HybridOperation = self.pipeline[pipeline_idx]
+                if (
+                    isinstance(operation, (HybridFilter, HybridLimit))
+                    and has_correlated_window_function
+                ):
+                    return pipeline_idx
                 if isinstance(operation, HybridCalculate) and any(
                     name in operation.terms for name in correl_names
                 ):
