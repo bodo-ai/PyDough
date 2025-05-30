@@ -5,8 +5,6 @@ WITH _t5 AS (
     l_shipdate AS ship_date,
     l_suppkey AS supplier_key
   FROM tpch.lineitem
-  WHERE
-    l_shipdate < '1996-04-01' AND l_shipdate >= '1996-01-01'
 ), _t2 AS (
   SELECT
     SUM(extended_price * (
@@ -14,6 +12,8 @@ WITH _t5 AS (
     )) AS agg_0,
     supplier_key
   FROM _t5
+  WHERE
+    ship_date < '1996-04-01' AND ship_date >= '1996-01-01'
   GROUP BY
     supplier_key
 ), _s2 AS (
@@ -29,6 +29,8 @@ WITH _t5 AS (
     )) AS agg_1,
     supplier_key
   FROM _t5
+  WHERE
+    ship_date < '1996-04-01' AND ship_date >= '1996-01-01'
   GROUP BY
     supplier_key
 )
@@ -41,7 +43,8 @@ SELECT
 FROM _s2 AS _s2
 CROSS JOIN tpch.supplier AS supplier
 JOIN _t6 AS _t6
-  ON _s2.max_revenue = COALESCE(_t6.agg_1, 0)
-  AND _t6.supplier_key = supplier.s_suppkey
+  ON _t6.supplier_key = supplier.s_suppkey
+WHERE
+  _s2.max_revenue = COALESCE(_t6.agg_1, 0)
 ORDER BY
   s_suppkey

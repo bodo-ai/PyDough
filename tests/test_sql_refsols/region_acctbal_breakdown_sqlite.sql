@@ -47,11 +47,11 @@ WITH _t0 AS (
     ON customer.c_nationkey = nation.n_nationkey
 ), _s3 AS (
   SELECT
-    AVG(expr_5) AS median_black_acctbal,
-    AVG(expr_6) AS median_overall_acctbal,
-    AVG(expr_7) AS median_red_acctbal,
-    COUNT(non_negative_acctbal) AS n_black_acctbal,
-    COUNT(negative_acctbal) AS n_red_acctbal,
+    AVG(expr_5) AS agg_0,
+    AVG(expr_6) AS agg_1,
+    AVG(expr_7) AS agg_2,
+    COUNT(non_negative_acctbal) AS agg_3,
+    COUNT(negative_acctbal) AS agg_4,
     region_key
   FROM _t0
   GROUP BY
@@ -59,11 +59,11 @@ WITH _t0 AS (
 )
 SELECT
   region.r_name AS region_name,
-  _s3.n_red_acctbal,
-  _s3.n_black_acctbal,
-  _s3.median_red_acctbal,
-  _s3.median_black_acctbal,
-  _s3.median_overall_acctbal
+  _s3.agg_4 AS n_red_acctbal,
+  _s3.agg_3 AS n_black_acctbal,
+  _s3.agg_2 AS median_red_acctbal,
+  _s3.agg_0 AS median_black_acctbal,
+  _s3.agg_1 AS median_overall_acctbal
 FROM tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.region_key = region.r_regionkey

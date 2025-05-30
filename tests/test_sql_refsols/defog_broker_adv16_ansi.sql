@@ -21,9 +21,11 @@ LEFT JOIN _s1 AS _s1
   ON _s1.ticker_id = sbticker.sbtickerid
 WHERE
   NOT (
-    100.0 * (
-      COALESCE(_s1.agg_0, 0) - COALESCE(_s1.agg_1, 0)
-    )
-  ) / COALESCE(_s1.agg_0, 0) IS NULL
+    (
+      100.0 * (
+        COALESCE(_s1.agg_0, 0) - COALESCE(_s1.agg_1, 0)
+      )
+    ) / COALESCE(_s1.agg_0, 0)
+  ) IS NULL
 ORDER BY
   symbol

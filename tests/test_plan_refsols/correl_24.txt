@@ -1,5 +1,5 @@
-ROOT(columns=[('year', year_7), ('month', month_6), ('n_orders_in_range', n_orders_in_range)], orderings=[(year_7):asc_first, (month_6):asc_first])
- AGGREGATE(keys={'month': month, 'year': year}, aggregations={'month_6': ANYTHING(month), 'n_orders_in_range': COUNT(), 'year_7': ANYTHING(year)})
+ROOT(columns=[('year', year_6), ('month', month_5), ('n_orders_in_range', n_orders_in_range)], orderings=[(year_6):asc_first, (month_5):asc_first])
+ AGGREGATE(keys={'month': month, 'year': year}, aggregations={'month_5': ANYTHING(month), 'n_orders_in_range': COUNT(), 'year_6': ANYTHING(year)})
   FILTER(condition=MONOTONIC(prev_month_avg_price, total_price, curr_month_avg_price) | MONOTONIC(curr_month_avg_price, total_price, prev_month_avg_price), columns={'month': month, 'year': year})
    JOIN(conditions=[t0.month == t1.month & t0.year == t1.year], types=['inner'], columns={'curr_month_avg_price': t0.curr_month_avg_price, 'month': t0.month, 'prev_month_avg_price': t0.prev_month_avg_price, 'total_price': t1.total_price, 'year': t0.year})
     PROJECT(columns={'curr_month_avg_price': agg_0, 'month': month, 'prev_month_avg_price': PREV(args=[agg_0], partition=[], order=[(year):asc_last, (month):asc_last]), 'year': year})

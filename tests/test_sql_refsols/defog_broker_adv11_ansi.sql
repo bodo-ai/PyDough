@@ -3,12 +3,12 @@ WITH _t1 AS (
     sbcustomer.sbcustid AS _id,
     sbcustomer.sbcustemail AS email
   FROM main.sbcustomer AS sbcustomer
-  WHERE
-    sbcustomer.sbcustemail LIKE '%.com'
 ), _s2 AS (
   SELECT
     _t1._id AS _id
   FROM _t1 AS _t1
+  WHERE
+    _t1.email LIKE '%.com'
 ), _s0 AS (
   SELECT
     sbtransaction.sbtxcustid AS customer_id,
@@ -19,12 +19,12 @@ WITH _t1 AS (
     sbticker.sbtickerid AS _id,
     sbticker.sbtickersymbol AS symbol
   FROM main.sbticker AS sbticker
-  WHERE
-    sbticker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
 ), _s1 AS (
   SELECT
     _t2._id AS _id
   FROM _t2 AS _t2
+  WHERE
+    _t2.symbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
 ), _s3 AS (
   SELECT
     _s0.customer_id AS customer_id

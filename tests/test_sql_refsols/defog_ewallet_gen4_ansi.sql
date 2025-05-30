@@ -25,7 +25,9 @@ WITH _t1 AS (
   LEFT JOIN _s3 AS _s3
     ON _s3.merchant_id = merchants.mid
   JOIN main.coupons AS coupons
-    ON _s3.agg_0 = coupons.start_date AND coupons.merchant_id = merchants.mid
+    ON coupons.merchant_id = merchants.mid
+  WHERE
+    _s3.agg_0 = coupons.start_date
   GROUP BY
     merchants.mid
 )
@@ -41,4 +43,5 @@ LEFT JOIN _s7 AS _s7
   ON _s7.mid = merchants.mid
 JOIN _t1 AS _s9
   ON _s9.merchant_id = merchants.mid
-  AND _s9.start_date <= DATE_ADD(CAST(merchants.created_at AS TIMESTAMP), 1, 'YEAR')
+WHERE
+  _s9.start_date <= DATE_ADD(CAST(merchants.created_at AS TIMESTAMP), 1, 'YEAR')

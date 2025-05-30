@@ -15,13 +15,14 @@ WITH _s0 AS (
     _s0.user_id AS user_id
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
-    ON _s0.created_at <= DATE_ADD(CAST(_s1.created_at AS TIMESTAMP), 1, 'YEAR')
-    AND _s0.created_at >= _s1.created_at
-    AND _s0.user_id = _s1.uid
+    ON _s0.user_id = _s1.uid
 ), _s3 AS (
   SELECT
     _t0.user_id AS user_id
   FROM _t0 AS _t0
+  WHERE
+    _t0.created_at <= DATE_ADD(CAST(_t0.created_at_1 AS TIMESTAMP), 1, 'YEAR')
+    AND _t0.created_at >= _t0.created_at_1
 ), _s2 AS (
   SELECT
     users.created_at AS created_at,
