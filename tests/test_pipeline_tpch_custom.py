@@ -8,7 +8,7 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -31,6 +31,9 @@ from tests.test_pydough_functions.bad_pydough_functions import (
 )
 from tests.test_pydough_functions.simple_pydough_functions import (
     agg_partition,
+    aggregation_analytics_1,
+    aggregation_analytics_2,
+    aggregation_analytics_3,
     avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
@@ -1902,6 +1905,66 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="bad_child_reuse_5",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                aggregation_analytics_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_name": [
+                            "ghost cornflower purple chartreuse blue",
+                            "hot maroon purple navajo floral",
+                            "lavender deep powder cream orchid",
+                            "navajo blush honeydew slate forest",
+                            "red almond goldenrod tomato cornsilk",
+                            "linen blanched mint pale blue",
+                            "plum gainsboro ivory pale maroon",
+                            "pale rosy blanched navy black",
+                        ],
+                        "revenue": [0] * 5 + [13407.46, 30806.70, 31277.99],
+                    }
+                ),
+                "aggregation_analytics_1",
+            ),
+            id="aggregation_analytics_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                aggregation_analytics_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_name": [
+                            "sky misty beige azure lace",
+                            "azure pale hot ghost brown",
+                            "magenta red sky honeydew grey",
+                            "lime lemon indian papaya wheat",
+                        ],
+                        "revenue": [1276.69, 11278.96, 24560.16, 35220.91],
+                    }
+                ),
+                "aggregation_analytics_2",
+            ),
+            id="aggregation_analytics_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                aggregation_analytics_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_name": [
+                            "moccasin cornsilk azure royal rose",
+                            "lawn puff chartreuse smoke firebrick",
+                            "lime blush midnight chartreuse grey",
+                        ],
+                        "revenue": [158.72, 163.52, 179.28],
+                    }
+                ),
+                "aggregation_analytics_3",
+            ),
+            id="aggregation_analytics_3",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -1927,6 +1990,28 @@ def test_pipeline_until_relational_tpch_custom(
     file_path: str = get_plan_test_filename(tpch_custom_pipeline_test_data.test_name)
     tpch_custom_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
+    )
+
+
+def test_pipeline_until_sql_tpch_custom(
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+):
+    """
+    Tests the conversion of the custom PyDough queries with the TPC-H dataset
+    into SQL text.
+    """
+    file_path: str = get_sql_test_filename(
+        tpch_custom_pipeline_test_data.test_name, empty_context_database.dialect
+    )
+    tpch_custom_pipeline_test_data.run_sql_test(
+        get_sample_graph,
+        file_path,
+        update_tests,
+        empty_context_database,
     )
 
 
