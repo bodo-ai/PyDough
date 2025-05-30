@@ -128,12 +128,18 @@ class Decorrelater:
         """
         match expr:
             case HybridCorrelExpr():
-                # TODO ADD COMMENT
+                # Unwrap the correlated expression to get the expression it
+                # refers to (and shift it back to account for the fact that
+                # the expression it points to is now above it in the hybrid
+                # tree) but only if the correlated expression has enough
+                # layers of correlation nesting to indicate that it refers to
+                # the level of correlation that we are trying to remove.
                 if expr.count_correlated_levels() >= correl_level:
                     result: HybridExpr | None = expr.expr.shift_back(child_height)
                     assert result is not None
                     return result
-                return expr
+                else:
+                    return expr
             case HybridFunctionExpr():
                 # For regular functions, recursively transform all of their
                 # arguments.
@@ -180,6 +186,7 @@ class Decorrelater:
         new_parent: HybridTree,
         child_height: int,
         correl_level: int,
+        top_level: bool = True,
     ) -> None:
         """
         The recursive procedure to remove correlated references from the
@@ -203,6 +210,8 @@ class Decorrelater:
             correlated reference to be removed. This is used to ensure that
             only references that are at the specified level of correlation
             nesting are removed, and all others are left intact.
+            `top_level`: Whether this is the top level of the hybrid tree that
+            is being de-correlated.
         """
         while level is not None and level is not new_parent:
             # First, recursively remove any targeted correlated references from
@@ -214,6 +223,7 @@ class Decorrelater:
                     new_parent,
                     child_height,
                     correl_level + 1,
+                    top_level=False,
                 )
             # Then, remove any correlated references from the pipeline
             # operators of the current level. Usually this just means
@@ -246,7 +256,8 @@ class Decorrelater:
             # Repeat the process on the ancestor until either loop guard
             # condition is no longer True.
             level = level.parent
-            child_height -= 1
+            if top_level:
+                child_height -= 1
 
     def decorrelate_child(
         self,

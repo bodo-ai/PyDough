@@ -220,7 +220,9 @@ class RelTranslation:
                                 and back_expr.name == expr.name
                             ):
                                 return context.expressions[back_expr]
-                    raise ValueError(f"Context does not contain expression {expr}")
+                    raise ValueError(
+                        f"Context does not contain expression {expr}. Available expressions: {sorted(context.expressions.keys(), key=repr)}"
+                    )
                 return context.expressions[expr]
             case HybridFunctionExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]

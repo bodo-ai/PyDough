@@ -143,9 +143,7 @@ class HybridExpr(ABC):
             return copy.deepcopy(replacements[self])
         return self
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ) -> "HybridExpr":
+    def squish_backrefs_into_correl(self, level_threshold: int | None) -> "HybridExpr":
         """
         TODO
         """
@@ -169,6 +167,13 @@ class HybridExpr(ABC):
         number of levels within the expression.
         """
         return set()
+
+    def has_correlated_window_function(self, levels: int) -> bool:
+        """
+        Returns whether this expression contains any window functions
+        with correlates with at least a certain number of levels.
+        """
+        return False
 
     def contains_window_functions(self) -> bool:
         """
@@ -279,10 +284,8 @@ class HybridBackRefExpr(HybridExpr):
     def shift_back(self, levels: int) -> HybridExpr:
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ):
-        if self.back_idx >= level_threshold:
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
+        if level_threshold is not None and self.back_idx >= level_threshold:
             levels_remaining = self.back_idx - level_threshold
             parent_expr: HybridExpr
             if levels_remaining == 0:
@@ -352,6 +355,9 @@ class HybridCorrelExpr(HybridExpr):
         if isinstance(expr, HybridRefExpr):
             result.add(expr.name)
         return result
+
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
+        return HybridCorrelExpr(self)
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -431,16 +437,12 @@ class HybridFunctionExpr(HybridExpr):
             self.args[idx] = arg.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ):
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
-            )
+            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
         return self
 
     def contains_correlates(self) -> bool:
@@ -460,6 +462,9 @@ class HybridFunctionExpr(HybridExpr):
         for arg in self.args:
             result.update(arg.get_correlate_names(levels))
         return result
+
+    def has_correlated_window_function(self, levels: int) -> bool:
+        return any(arg.has_correlated_window_function(levels) for arg in self.args)
 
 
 class HybridWindowExpr(HybridExpr):
@@ -579,23 +584,19 @@ class HybridWindowExpr(HybridExpr):
             self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ):
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
-            )
+            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
         for idx, part_arg in enumerate(self.partition_args):
             self.partition_args[idx] = part_arg.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
+                level_threshold
             )
         for idx, order_arg in enumerate(self.order_args):
             self.order_args[idx].expr = order_arg.expr.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
+                level_threshold
             )
         return self
 
@@ -633,6 +634,21 @@ class HybridWindowExpr(HybridExpr):
 
     def contains_window_functions(self) -> bool:
         return True
+
+    def has_correlated_window_function(self, levels: int) -> bool:
+        if self.count_correlated_levels() >= levels:
+            return True
+        return (
+            any(arg.has_correlated_window_function(levels) for arg in self.args)
+            or any(
+                partition_arg.has_correlated_window_function(levels)
+                for partition_arg in self.partition_args
+            )
+            or any(
+                order_arg.expr.has_correlated_window_function(levels)
+                for order_arg in self.order_args
+            )
+        )
 
 
 def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
@@ -1423,20 +1439,27 @@ class HybridTree:
         if isinstance(root_operation, HybridPartition):
             self._join_keys = []
 
-    def __repr__(self):
+    def to_string(self, verbose: bool = False) -> str:
+        """
+        TODO
+        """
         lines = []
         if self.parent is not None:
-            lines.extend(repr(self.parent).splitlines())
+            lines.extend(self.parent.to_string(verbose).splitlines())
         lines.append(
             " -> ".join(
                 repr(operation)
                 for operation in self.pipeline
-                if not operation.is_hidden
+                if (verbose or not operation.is_hidden)
             )
         )
         prefix = " " if self.successor is None else "↓"
         for idx, child in enumerate(self.children):
             lines.append(f"{prefix} child #{idx} ({child.connection_type.name}):")
+            if verbose:
+                lines.append(
+                    f"{prefix}  definition range: ({child.min_steps}, {child.max_steps})"
+                )
             if child.subtree.agg_keys is not None:
                 lines.append(f"{prefix}  aggregate: {child.subtree.agg_keys}")
             if len(child.aggs):
@@ -1449,8 +1472,13 @@ class HybridTree:
                 lines.append(f"{prefix} {line}")
         return "\n".join(lines)
 
+    def __repr__(self):
+        return self.to_string(True)
+
     def __eq__(self, other):
-        return type(self) is type(other) and repr(self) == repr(other)
+        return type(self) is type(other) and self.to_string(False) == other.to_string(
+            False
+        )
 
     @property
     def pipeline(self) -> list[HybridOperation]:
@@ -1625,6 +1653,25 @@ class HybridTree:
             elif isinstance(operation, HybridFilter):
                 result.update(operation.condition.get_correlate_names(levels))
         return result
+
+    def has_correlated_window_function(self, levels: int) -> bool:
+        """
+        TODO
+        """
+        for operation in self.pipeline:
+            if isinstance(operation, HybridCalculate):
+                for term in operation.new_expressions.values():
+                    if term.has_correlated_window_function(levels):
+                        return True
+            elif isinstance(operation, HybridFilter):
+                if operation.condition.has_correlated_window_function(levels):
+                    return True
+        for child in self.children:
+            if child.subtree.has_correlated_window_function(levels + 1):
+                return True
+        return self.parent is not None and self.parent.has_correlated_window_function(
+            levels
+        )
 
     def add_child(
         self,
@@ -2003,6 +2050,45 @@ class HybridTree:
 
         return child_remapping
 
+    def get_min_child_idx(self, child_subtree: "HybridTree") -> int:
+        """
+        TODO
+        """
+        correl_names: set[str] = child_subtree.get_correlate_names(1)
+        has_correlated_window_function: bool = (
+            child_subtree.has_correlated_window_function(1)
+        )
+        if correl_names:
+            for pipeline_idx in range(len(self.pipeline) - 1, self._blocking_idx, -1):
+                operation: HybridOperation = self.pipeline[pipeline_idx]
+                if (
+                    isinstance(operation, (HybridFilter, HybridLimit))
+                    and has_correlated_window_function
+                ):
+                    return pipeline_idx
+                if isinstance(operation, HybridCalculate) and any(
+                    name in operation.terms for name in correl_names
+                ):
+                    return pipeline_idx
+        return self._blocking_idx
+
+    def squish_backrefs_into_correl(self, levels_up: int | None):
+        """
+        TODO
+        """
+        for operation in self.pipeline:
+            for term_name, term in operation.terms.items():
+                operation.terms[term_name] = term.squish_backrefs_into_correl(levels_up)
+            if isinstance(operation, HybridFilter):
+                operation.condition = operation.condition.squish_backrefs_into_correl(
+                    levels_up
+                )
+            if isinstance(operation, HybridCalculate):
+                for term_name, term in operation.new_expressions.items():
+                    operation.new_expressions[term_name] = operation.terms[term_name]
+        for child in self.children:
+            child.subtree.squish_backrefs_into_correl(None)
+
 
 class HybridTranslator:
     """
@@ -2335,16 +2421,7 @@ class HybridTranslator:
                 connection_type = connection_type.reconcile_connection_types(
                     ConnectionType.SEMI
                 )
-            min_idx: int = hybrid._blocking_idx
-            correl_names: set[str] = subtree.get_correlate_names(1)
-            if correl_names:
-                for pipeline_idx in range(len(hybrid.pipeline) - 1, min_idx, -1):
-                    operation: HybridOperation = hybrid.pipeline[pipeline_idx]
-                    if isinstance(operation, HybridCalculate) and any(
-                        name in operation.terms for name in correl_names
-                    ):
-                        min_idx = pipeline_idx
-                        break
+            min_idx: int = hybrid.get_min_child_idx(subtree)
             child_idx_mapping[child_idx] = hybrid.add_child(
                 subtree,
                 connection_type,
@@ -3378,3 +3455,30 @@ class HybridTranslator:
                     agg_keys.append(HybridRefExpr(key_name, expr.typ))
 
         return join_keys, agg_keys, general_join_cond
+
+    def make_extension_child(
+        self, child: HybridTree, levels_up: int, new_base: HybridTree
+    ) -> HybridTree:
+        """
+        TODO
+        """
+        if levels_up <= 0:
+            raise ValueError(f"Cannot make extension child with {levels_up} levels up")
+        child.squish_backrefs_into_correl(levels_up)
+        if levels_up == 1:
+            assert child.parent is not None
+            child._join_keys, child._agg_keys, child._general_join_condition = (
+                self.extract_link_root_info(
+                    new_base, child, True, len(new_base.children)
+                )
+            )
+            child._parent = None
+            child._successor = None
+        else:
+            assert child.parent is not None
+            parent: HybridTree = self.make_extension_child(
+                child.parent, levels_up - 1, new_base
+            )
+            parent.add_successor(child)
+            child._successor = None
+        return child
