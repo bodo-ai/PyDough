@@ -31,6 +31,9 @@ from tests.test_pydough_functions.bad_pydough_functions import (
 )
 from tests.test_pydough_functions.simple_pydough_functions import (
     agg_partition,
+    aggregation_analytics_1,
+    aggregation_analytics_2,
+    aggregation_analytics_3,
     avg_acctbal_wo_debt,
     avg_gap_prev_urgent_same_clerk,
     avg_order_diff_per_customer,
@@ -1901,6 +1904,66 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "bad_child_reuse_5",
             ),
             id="bad_child_reuse_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                aggregation_analytics_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_name": [
+                            "ghost cornflower purple chartreuse blue",
+                            "hot maroon purple navajo floral",
+                            "lavender deep powder cream orchid",
+                            "navajo blush honeydew slate forest",
+                            "red almond goldenrod tomato cornsilk",
+                            "linen blanched mint pale blue",
+                            "plum gainsboro ivory pale maroon",
+                            "pale rosy blanched navy black",
+                        ],
+                        "revenue": [0] * 5 + [13407.46, 30806.70, 31277.99],
+                    }
+                ),
+                "aggregation_analytics_1",
+            ),
+            id="aggregation_analytics_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                aggregation_analytics_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_name": [
+                            "sky misty beige azure lace",
+                            "azure pale hot ghost brown",
+                            "magenta red sky honeydew grey",
+                            "lime lemon indian papaya wheat",
+                        ],
+                        "revenue": [1276.69, 11278.96, 24560.16, 35220.91],
+                    }
+                ),
+                "aggregation_analytics_2",
+            ),
+            id="aggregation_analytics_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                aggregation_analytics_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_name": [
+                            "moccasin cornsilk azure royal rose",
+                            "lawn puff chartreuse smoke firebrick",
+                            "lime blush midnight chartreuse grey",
+                        ],
+                        "revenue": [158.72, 163.52, 179.28],
+                    }
+                ),
+                "aggregation_analytics_3",
+            ),
+            id="aggregation_analytics_3",
         ),
     ],
 )

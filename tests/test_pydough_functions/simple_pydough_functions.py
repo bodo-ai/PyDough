@@ -946,6 +946,75 @@ def bad_child_reuse_5():
     )
 
 
+def aggregation_analytics_1():
+    # What 8 large products produced by Supplier#000009450 generated the LEAST
+    # revenue for them in between 1995 and 1996? Include any products the
+    # supplier produces that generated NO revenue for the supplier during that
+    # time period, and break ties alphabetically by part name.
+    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    )
+    return (
+        supply_records.CALCULATE(supply_cost)
+        .WHERE(
+            (supplier.name == "Supplier#000009450") & STARTSWITH(part.container, "LG")
+        )
+        .CALCULATE(
+            part_name=part.name,
+            revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
+        )
+        .TOP_K(8, by=(revenue_generated.ASC(), part_name.ASC()))
+    )
+
+
+def aggregation_analytics_2():
+    # What 4 small products produced by Supplier#000000182 generated the LEAST
+    # revenue for them in between 1995 and 1996? Do NOT include any products
+    # the supplier produces that generated NO revenue for the supplier during
+    # that time period, and break ties alphabetically by part name.
+    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    )
+    return (
+        supply_records.CALCULATE(supply_cost)
+        .WHERE(
+            (supplier.name == "Supplier#000000182")
+            & STARTSWITH(part.container, "SM")
+            & HAS(selected_lines)
+        )
+        .CALCULATE(
+            part_name=part.name,
+            revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
+        )
+        .TOP_K(4, by=(revenue_generated.ASC(), part_name.ASC()))
+    )
+
+
+def aggregation_analytics_3():
+    # What 3 medium products produced by Supplier#000002103 generated the LEAST
+    # revenue per quantity ordered in 1994? Do NOT include any products the
+    # supplier produces that generated NO revenue for the supplier during that
+    # time period, and break ties alphabetically by part name.
+    selected_lines = lines.WHERE(YEAR(order.order_date) == 1994).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    )
+    return (
+        supply_records.CALCULATE(supply_cost)
+        .WHERE(
+            (supplier.name == "Supplier#000000182")
+            & STARTSWITH(part.container, "MED")
+            & HAS(selected_lines)
+        )
+        .CALCULATE(
+            part_name=part.name,
+            revenue_ratio=ROUND(
+                SUM(selected_lines.revenue) / SUM(selected_lines.quantity), 2
+            ),
+        )
+        .TOP_K(3, by=(revenue_ratio.ASC(), part_name.ASC()))
+    )
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
