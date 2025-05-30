@@ -45,6 +45,7 @@ from pydough.qdag import (
 from pydough.types import BooleanType, NumericType
 
 from .hybrid_connection import ConnectionType, HybridConnection
+from .hybrid_decorrelater import HybridDecorrelater
 from .hybrid_expressions import (
     HybridBackRefExpr,
     HybridChildRefExpr,
@@ -1118,6 +1119,93 @@ class HybridTranslator:
             hybrid_orderings.append(new_collation)
         return new_expressions, hybrid_orderings
 
+    def extract_link_root_info(
+        self, parent: HybridTree, tree: HybridTree, is_agg: bool, child_idx: int
+    ) -> tuple[
+        list[tuple[HybridExpr, HybridExpr]] | None,
+        list[HybridExpr] | None,
+        HybridExpr | None,
+    ]:
+        """
+        TODO
+        """
+        join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
+        agg_keys: list[HybridExpr] | None = None
+        general_join_cond: HybridExpr | None = None
+        operation: HybridOperation = tree.pipeline[0]
+        match operation:
+            case HybridCollectionAccess():
+                if isinstance(operation.collection, TableCollection):
+                    join_keys = []
+                else:
+                    assert isinstance(operation.collection, SubCollection)
+                    sub_property: SubcollectionRelationshipMetadata = (
+                        operation.collection.subcollection_property
+                    )
+                    if isinstance(sub_property, SimpleJoinMetadata):
+                        # For a simple join access, populate the join
+                        # keys of the tree which will be bubbled
+                        # down throughout the entire child tree.
+                        assert parent is not None
+                        join_keys = HybridTranslator.get_subcollection_join_keys(
+                            sub_property,
+                            parent.pipeline[-1],
+                            operation,
+                        )
+                    elif isinstance(sub_property, GeneralJoinMetadata):
+                        general_join_cond = operation.general_condition
+                    else:
+                        join_keys = []
+            case HybridPartitionChild():
+                assert operation.subtree.agg_keys is not None
+                join_keys = []
+                for key in operation.subtree.agg_keys:
+                    join_keys.append((key, key))
+
+            case HybridPartition():
+                join_keys = []
+            case _:
+                raise NotImplementedError(f"{operation.__class__.__name__}")
+        if join_keys is not None:
+            # For a simple join, add the join keys to the child
+            # and make the RHS of those keys the agg keys.
+            agg_keys = [rhs_key for _, rhs_key in join_keys]
+        else:
+            # For a general join, instead use the general join
+            # condition. However, if an aggregate is being performed
+            # on the child, the aggregation keys are the uniqueness
+            # keys from the lhs of the join condition, which means
+            # a calculate must be added to the child that accesses
+            # those keys as correlated references, then uses those
+            # terms from the calculate in the agg keys.
+            if is_agg:
+                lhs_unique_keys: dict[str, HybridExpr] = {}
+                agg_keys = []
+                back_levels: int = 0
+                current_level: HybridTree | None = parent
+                # First, find the uniqueness keys from every level of
+                # the parent and add them to lhs_unique_keys as a
+                # correlated reference.
+                while current_level is not None:
+                    for expr in current_level.pipeline[-1].unique_exprs:
+                        key_name = f"key_{len(lhs_unique_keys)}"
+                        expr = HybridCorrelExpr(expr.shift_back(back_levels))
+                        lhs_unique_keys[key_name] = expr
+                    back_levels += 1
+                    current_level = current_level.parent
+                # Insert the calculate to access these correlated
+                # keys, then add references to the new terms to
+                # the agg keys.
+                new_calc: HybridOperation = HybridCalculate(
+                    tree.pipeline[-1], lhs_unique_keys, []
+                )
+                new_calc.is_hidden = True
+                tree.add_operation(new_calc)
+                for key_name, expr in lhs_unique_keys.items():
+                    agg_keys.append(HybridRefExpr(key_name, expr.typ))
+
+        return join_keys, agg_keys, general_join_cond
+
     def make_hybrid_tree(
         self,
         node: PyDoughCollectionQDAG,
@@ -1338,116 +1426,47 @@ class HybridTranslator:
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
 
-    def extract_link_root_info(
-        self, parent: HybridTree, tree: HybridTree, is_agg: bool, child_idx: int
-    ) -> tuple[
-        list[tuple[HybridExpr, HybridExpr]] | None,
-        list[HybridExpr] | None,
-        HybridExpr | None,
-    ]:
+    @staticmethod
+    def run_hybrid_decorrelation(hybrid: "HybridTree") -> "HybridTree":
         """
-        TODO
-        """
-        join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
-        agg_keys: list[HybridExpr] | None = None
-        general_join_cond: HybridExpr | None = None
-        operation: HybridOperation = tree.pipeline[0]
-        match operation:
-            case HybridCollectionAccess():
-                if isinstance(operation.collection, TableCollection):
-                    join_keys = []
-                else:
-                    assert isinstance(operation.collection, SubCollection)
-                    sub_property: SubcollectionRelationshipMetadata = (
-                        operation.collection.subcollection_property
-                    )
-                    if isinstance(sub_property, SimpleJoinMetadata):
-                        # For a simple join access, populate the join
-                        # keys of the tree which will be bubbled
-                        # down throughout the entire child tree.
-                        assert parent is not None
-                        join_keys = HybridTranslator.get_subcollection_join_keys(
-                            sub_property,
-                            parent.pipeline[-1],
-                            operation,
-                        )
-                    elif isinstance(sub_property, GeneralJoinMetadata):
-                        general_join_cond = operation.general_condition
-                    else:
-                        join_keys = []
-            case HybridPartitionChild():
-                assert operation.subtree.agg_keys is not None
-                join_keys = []
-                for key in operation.subtree.agg_keys:
-                    join_keys.append((key, key))
+        Invokes the procedure to remove correlated references from a hybrid tree
+        before relational conversion if those correlated references are invalid
+        (e.g. not from a semi/anti join).
 
-            case HybridPartition():
-                join_keys = []
-            case _:
-                raise NotImplementedError(f"{operation.__class__.__name__}")
-        if join_keys is not None:
-            # For a simple join, add the join keys to the child
-            # and make the RHS of those keys the agg keys.
-            agg_keys = [rhs_key for _, rhs_key in join_keys]
-        else:
-            # For a general join, instead use the general join
-            # condition. However, if an aggregate is being performed
-            # on the child, the aggregation keys are the uniqueness
-            # keys from the lhs of the join condition, which means
-            # a calculate must be added to the child that accesses
-            # those keys as correlated references, then uses those
-            # terms from the calculate in the agg keys.
-            if is_agg:
-                lhs_unique_keys: dict[str, HybridExpr] = {}
-                agg_keys = []
-                back_levels: int = 0
-                current_level: HybridTree | None = parent
-                # First, find the uniqueness keys from every level of
-                # the parent and add them to lhs_unique_keys as a
-                # correlated reference.
-                while current_level is not None:
-                    for expr in current_level.pipeline[-1].unique_exprs:
-                        key_name = f"key_{len(lhs_unique_keys)}"
-                        expr = HybridCorrelExpr(expr.shift_back(back_levels))
-                        lhs_unique_keys[key_name] = expr
-                    back_levels += 1
-                    current_level = current_level.parent
-                # Insert the calculate to access these correlated
-                # keys, then add references to the new terms to
-                # the agg keys.
-                new_calc: HybridOperation = HybridCalculate(
-                    tree.pipeline[-1], lhs_unique_keys, []
-                )
-                new_calc.is_hidden = True
-                tree.add_operation(new_calc)
-                for key_name, expr in lhs_unique_keys.items():
-                    agg_keys.append(HybridRefExpr(key_name, expr.typ))
+        Args:
+            `hybrid`: The hybrid tree to remove correlated references from.
 
-        return join_keys, agg_keys, general_join_cond
+        Returns:
+            The hybrid tree with all invalid correlated references removed as the
+            tree structure is re-written to allow them to be replaced with BACK
+            references. The transformation is also done in-place.
+        """
+        decorr: HybridDecorrelater = HybridDecorrelater()
+        decorr.find_correlated_children(hybrid)
+        return decorr.decorrelate_hybrid_tree(hybrid)
 
-    def make_extension_child(
-        self, child: HybridTree, levels_up: int, new_base: HybridTree
-    ) -> HybridTree:
+    def convert_qdag_to_hybrid(self, node: PyDoughCollectionQDAG) -> HybridTree:
         """
-        TODO
+        Convert a PyDough QDAG node to a hybrid tree, including any necessary
+        transformations such as de-corelation.
+
+        Args:
+            `node`: The PyDoughCollectionQDAG node to convert to a HybridTree.
+
+        Returns:
+            The HybridTree representation of the given QDAG node after
+            transformations.
         """
-        if levels_up <= 0:
-            raise ValueError(f"Cannot make extension child with {levels_up} levels up")
-        child.squish_backrefs_into_correl(levels_up)
-        if levels_up == 1:
-            assert child.parent is not None
-            child._join_keys, child._agg_keys, child._general_join_condition = (
-                self.extract_link_root_info(
-                    new_base, child, True, len(new_base.children)
-                )
-            )
-            child._parent = None
-            child._successor = None
-        else:
-            assert child.parent is not None
-            parent: HybridTree = self.make_extension_child(
-                child.parent, levels_up - 1, new_base
-            )
-            parent.add_successor(child)
-            child._successor = None
-        return child
+        # 1. Run the initial conversion from QDAG to Hybrid
+        hybrid: HybridTree = self.make_hybrid_tree(node, None)
+        # 2. Eject any aggregate inputs from the hybrid tree.
+        self.eject_aggregate_inputs(hybrid)
+        # 3. Run the de-correlation procedure.
+        self.run_hybrid_decorrelation(hybrid)
+        # 4. Run any final rewrites, such as turning MEDIAN into an average of
+        # of the 1-2 median rows, that must happen after de-correlation.
+        self.run_rewrites(hybrid)
+        # 5. Remove any dead children in the hybrid tree that are no longer
+        # being used.
+        hybrid.remove_dead_children(set())
+        return hybrid
