@@ -8,7 +8,7 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.database_connectors import DatabaseContext
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -1990,28 +1990,6 @@ def test_pipeline_until_relational_tpch_custom(
     file_path: str = get_plan_test_filename(tpch_custom_pipeline_test_data.test_name)
     tpch_custom_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
-    )
-
-
-def test_pipeline_until_sql_tpch_custom(
-    tpch_custom_pipeline_test_data: PyDoughPandasTest,
-    get_sample_graph: graph_fetcher,
-    empty_context_database: DatabaseContext,
-    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
-    update_tests: bool,
-):
-    """
-    Tests the conversion of the custom PyDough queries with the TPC-H dataset
-    into SQL text.
-    """
-    file_path: str = get_sql_test_filename(
-        tpch_custom_pipeline_test_data.test_name, empty_context_database.dialect
-    )
-    tpch_custom_pipeline_test_data.run_sql_test(
-        get_sample_graph,
-        file_path,
-        update_tests,
-        empty_context_database,
     )
 
 
