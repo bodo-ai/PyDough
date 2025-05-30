@@ -1,4 +1,10 @@
-WITH _t AS (
+WITH _s2 AS (
+  SELECT DISTINCT
+    p_container AS container
+  FROM tpch.part
+  WHERE
+    p_brand = 'Brand#13'
+), _t AS (
   SELECT
     part.p_container AS container,
     lineitem.l_shipdate AS ship_date,
@@ -10,11 +16,11 @@ WITH _t AS (
     part.p_brand = 'Brand#13'
 )
 SELECT
-  container,
-  ship_date AS highest_price_ship_date
-FROM _t
-WHERE
-  _w = 1
+  _s2.container,
+  _t.ship_date AS highest_price_ship_date
+FROM _s2 AS _s2
+JOIN _t AS _t
+  ON _s2.container = _t.container AND _t._w = 1
 ORDER BY
   highest_price_ship_date,
   container

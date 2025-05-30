@@ -14,15 +14,23 @@ WITH _s3 AS (
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
-  JOIN _s3 AS _s3
+  LEFT JOIN _s3 AS _s3
     ON _s3.customer_key = customer.c_custkey
+), _t1 AS (
+  SELECT
+    account_balance,
+    agg_0,
+    key_2
+  FROM _t
+  WHERE
+    _w > COALESCE(agg_0, 0) AND agg_0 > 0
+  ORDER BY
+    account_balance DESC
+  LIMIT 10
 )
 SELECT
   key_2 AS cust_key,
-  agg_0 AS n_orders
-FROM _t
-WHERE
-  _w > COALESCE(agg_0, 0)
+  COALESCE(agg_0, 0) AS n_orders
+FROM _t1
 ORDER BY
   account_balance DESC
-LIMIT 10

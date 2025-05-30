@@ -5,25 +5,29 @@ WITH _t6 AS (
     l_quantity AS quantity,
     l_shipmode AS ship_mode
   FROM tpch.lineitem
-  WHERE
-    l_shipmode = 'RAIL'
 ), _s0 AS (
   SELECT
     SUM(quantity) AS agg_0,
     order_key,
     part_key
   FROM _t6
+  WHERE
+    ship_mode = 'RAIL'
   GROUP BY
     order_key,
     part_key
+), _t7 AS (
+  SELECT
+    o_orderkey AS key,
+    o_orderdate AS order_date
+  FROM tpch.orders
 ), _t3 AS (
   SELECT
     SUM(_s0.agg_0) AS agg_0,
     _s0.part_key
   FROM _s0 AS _s0
-  JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM orders.o_orderdate) = 1995
-    AND _s0.order_key = orders.o_orderkey
+  JOIN _t7 AS _t7
+    ON EXTRACT(YEAR FROM _t7.order_date) = 1995 AND _s0.order_key = _t7.key
   GROUP BY
     _s0.part_key
 ), _s4 AS (
@@ -32,6 +36,8 @@ WITH _t6 AS (
     order_key,
     part_key
   FROM _t6
+  WHERE
+    ship_mode = 'RAIL'
   GROUP BY
     order_key,
     part_key
@@ -40,9 +46,8 @@ WITH _t6 AS (
     SUM(_s4.agg_1) AS agg_1,
     _s4.part_key
   FROM _s4 AS _s4
-  JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM orders.o_orderdate) = 1996
-    AND _s4.order_key = orders.o_orderkey
+  JOIN _t7 AS _t12
+    ON EXTRACT(YEAR FROM _t12.order_date) = 1996 AND _s4.order_key = _t12.key
   GROUP BY
     _s4.part_key
 )

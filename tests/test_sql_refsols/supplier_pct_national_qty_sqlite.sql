@@ -9,12 +9,12 @@ WITH _s0 AS (
     region.r_regionkey AS key,
     region.r_name AS name
   FROM tpch.region AS region
-  WHERE
-    region.r_name = 'AFRICA'
 ), _s1 AS (
   SELECT
     _t2.key AS key
   FROM _t2 AS _t2
+  WHERE
+    _t2.name = 'AFRICA'
 ), _s2 AS (
   SELECT
     _s0.key AS key,
@@ -36,14 +36,14 @@ WITH _s0 AS (
     supplier.s_name AS name,
     supplier.s_nationkey AS nation_key
   FROM tpch.supplier AS supplier
-  WHERE
-    supplier.s_acctbal >= 0.0 AND supplier.s_comment LIKE '%careful%'
 ), _s3 AS (
   SELECT
     _t3.key AS key,
     _t3.name AS name,
     _t3.nation_key AS nation_key
   FROM _t3 AS _t3
+  WHERE
+    _t3.account_balance >= 0.0 AND _t3.comment LIKE '%careful%'
 ), _s6 AS (
   SELECT
     _s2.key AS key,
@@ -61,15 +61,14 @@ WITH _s0 AS (
     lineitem.l_shipmode AS ship_mode,
     lineitem.l_suppkey AS supplier_key
   FROM tpch.lineitem AS lineitem
-  WHERE
-    CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1995
-    AND lineitem.l_shipmode = 'SHIP'
 ), _t5 AS (
   SELECT
     _t6.part_key AS part_key,
     _t6.quantity AS quantity,
     _t6.supplier_key AS supplier_key
   FROM _t6 AS _t6
+  WHERE
+    CAST(STRFTIME('%Y', _t6.ship_date) AS INTEGER) = 1995 AND _t6.ship_mode = 'SHIP'
 ), _s4 AS (
   SELECT
     SUM(_t5.quantity) AS agg_0,
@@ -85,12 +84,12 @@ WITH _s0 AS (
     part.p_partkey AS key,
     part.p_name AS name
   FROM tpch.part AS part
-  WHERE
-    part.p_container LIKE 'LG%' AND part.p_name LIKE '%tomato%'
 ), _s5 AS (
   SELECT
     _t7.key AS key
   FROM _t7 AS _t7
+  WHERE
+    _t7.container LIKE 'LG%' AND _t7.name LIKE '%tomato%'
 ), _t4 AS (
   SELECT
     _s4.agg_0 AS agg_0,
