@@ -14,7 +14,6 @@ we replace the active session with a new default session.
 
 import pandas as pd
 import pytest
-from simple_pydough_functions import simple_scan
 
 import pydough
 from pydough.configs import ConfigProperty, PyDoughConfigs, PyDoughSession
@@ -26,6 +25,7 @@ from pydough.database_connectors import (
 )
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 from pydough.unqualified import UnqualifiedNode
+from tests.test_pydough_functions.simple_pydough_functions import simple_scan
 
 
 @pytest.mark.parametrize(

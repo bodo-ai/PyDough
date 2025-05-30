@@ -3,14 +3,14 @@ import logging
 from contextlib import redirect_stdout
 
 import pytest
-from tpch_relational_plans import (
-    tpch_query_1_plan,
-)
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.logger import get_logger
 from pydough.sqlglot import execute_df
+from tests.test_pydough_functions.tpch_relational_plans import (
+    tpch_query_1_plan,
+)
 
 pytestmark = [pytest.mark.execute]
 

@@ -5,13 +5,13 @@ Error-handling unit tests for PyDough QDAG nodes for expressions.
 import re
 
 import pytest
-from test_utils import AstNodeTestInfo, FunctionInfo, graph_fetcher
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import (
     AstNodeBuilder,
     PyDoughQDAGException,
 )
+from tests.testing_utilities import AstNodeTestInfo, FunctionInfo, graph_fetcher
 
 
 def test_binop_wrong_num_args(binary_operators: pydop.BinaryOperator) -> None:

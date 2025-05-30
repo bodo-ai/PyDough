@@ -6,7 +6,6 @@ from typing import Any
 
 import pandas as pd
 import pytest
-from test_utils import make_relational_column_reference, make_relational_ordering
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
@@ -28,6 +27,10 @@ from pydough.relational import (
 )
 from pydough.sqlglot import execute_df
 from pydough.types import BooleanType, UnknownType
+from tests.testing_utilities import (
+    make_relational_column_reference,
+    make_relational_ordering,
+)
 
 pytestmark = [pytest.mark.execute]
 

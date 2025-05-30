@@ -3,11 +3,11 @@ Unit tests the PyDough type verifiers.
 """
 
 import pytest
-from test_utils import AstNodeTestInfo, LiteralInfo
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import AstNodeBuilder, PyDoughQDAG
 from pydough.types import NumericType
+from tests.testing_utilities import AstNodeTestInfo, LiteralInfo
 
 
 @pytest.mark.parametrize(
