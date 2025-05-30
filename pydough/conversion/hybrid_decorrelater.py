@@ -135,9 +135,7 @@ class Decorrelater:
                 # layers of correlation nesting to indicate that it refers to
                 # the level of correlation that we are trying to remove.
                 if expr.count_correlated_levels() >= correl_level:
-                    result: HybridExpr | None = expr.expr.shift_back(child_height)
-                    assert result is not None
-                    return result
+                    return expr.expr.shift_back(child_height)
                 else:
                     return expr
             case HybridFunctionExpr():
@@ -309,11 +307,10 @@ class Decorrelater:
                 and child is current_level.children[0]
             )
             for unique_key in sorted(current_level.pipeline[-1].unique_exprs, key=str):
-                lhs_key: HybridExpr | None = unique_key.shift_back(additional_levels)
-                rhs_key: HybridExpr | None = unique_key.shift_back(
+                lhs_key: HybridExpr = unique_key.shift_back(additional_levels)
+                rhs_key: HybridExpr = unique_key.shift_back(
                     additional_levels + child_height - skipped_levels
                 )
-                assert lhs_key is not None and rhs_key is not None
                 if not skip_join:
                     new_join_keys.append((lhs_key, rhs_key))
                 new_agg_keys.append(rhs_key)

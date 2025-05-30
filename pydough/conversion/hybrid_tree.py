@@ -5,28 +5,18 @@ nodes to said hybrid nodes.
 """
 
 __all__ = [
-    "HybridBackRefExpr",
     "HybridCalculate",
-    "HybridChildRefExpr",
-    "HybridCollation",
     "HybridCollectionAccess",
-    "HybridColumnExpr",
-    "HybridExpr",
     "HybridFilter",
-    "HybridFunctionExpr",
     "HybridLimit",
-    "HybridLiteralExpr",
     "HybridOperation",
     "HybridPartition",
     "HybridPartitionChild",
-    "HybridRefExpr",
     "HybridRoot",
     "HybridTranslator",
     "HybridTree",
 ]
 
-import copy
-from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
@@ -70,630 +60,21 @@ from pydough.qdag import (
     WindowCall,
 )
 from pydough.relational import JoinType
-from pydough.types import BooleanType, NumericType, PyDoughType
-
-
-class HybridExpr(ABC):
-    """
-    The base class for expression nodes within a hybrid operation.
-    """
-
-    def __init__(self, typ: PyDoughType):
-        self.typ: PyDoughType = typ
-
-    def __eq__(self, other):
-        return type(self) is type(other) and repr(self) == repr(other)
-
-    def __hash__(self):
-        return hash(repr(self))
-
-    @abstractmethod
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        """
-        Renames references in an expression if contained in a renaming
-        dictionary.
-
-        Args:
-            `renamings`: a dictionary mapping names of any references to the
-            new name that they should adopt.
-
-        Returns:
-            The transformed copy of self, if necessary, otherwise
-            just returns self.
-        """
-
-    @abstractmethod
-    def shift_back(self, levels: int) -> Optional["HybridExpr"]:
-        """
-        Promotes a HybridRefExpr into a HybridBackRefExpr with the specified
-        number of levels, or increases the number of levels of a
-        HybridBackRefExpr by the specified number of levels. Returns None if
-        the expression cannot be shifted back (e.g. a child reference).
-
-        Args:
-            `levels`: the amount of back levels to increase by.
-
-        Returns:
-            The transformed HybridBackRefExpr.
-        """
-
-    def make_into_ref(self, name: str) -> "HybridRefExpr":
-        """
-        Converts a HybridExpr into a reference with the desired name.
-
-        Args:
-            `name`: the name of the desired reference.
-
-        Returns:
-            A HybridRefExpr corresponding to `self` but with the provided name,
-            or just `self` if `self` is already a HybridRefExpr with that name.
-        """
-        if isinstance(self, HybridRefExpr) and self.name == name:
-            return self
-        return HybridRefExpr(name, self.typ)
-
-    def replace_expressions(
-        self,
-        replacements: dict["HybridExpr", "HybridExpr"],
-    ) -> "HybridExpr":
-        """
-        TODO
-        """
-        if self in replacements:
-            return copy.deepcopy(replacements[self])
-        return self
-
-    def squish_backrefs_into_correl(self, level_threshold: int | None) -> "HybridExpr":
-        """
-        TODO
-        """
-        return self
-
-    def count_correlated_levels(self) -> int:
-        """
-        TODO
-        """
-        return 0
-
-    def contains_correlates(self) -> bool:
-        """
-        Returns whether this expression contains any correlated references.
-        """
-        return False
-
-    def get_correlate_names(self, levels: int) -> set[str]:
-        """
-        Returns the set of names of variables that are correlated a certain
-        number of levels within the expression.
-        """
-        return set()
-
-    def has_correlated_window_function(self, levels: int) -> bool:
-        """
-        Returns whether this expression contains any window functions
-        with correlates with at least a certain number of levels.
-        """
-        return False
-
-    def contains_window_functions(self) -> bool:
-        """
-        Returns whether this expression contains any window functions.
-        """
-        return False
-
-
-class HybridCollation:
-    """
-    Class for HybridExpr terms that are another HybridExpr term wrapped in
-    information about how to sort by them.
-    """
-
-    def __init__(self, expr: "HybridExpr", asc: bool, na_first: bool):
-        self.expr: HybridExpr = expr
-        self.asc: bool = asc
-        self.na_first: bool = na_first
-
-    def __repr__(self):
-        suffix: str = (
-            f"{'asc' if self.asc else 'desc'}_{'first' if self.na_first else 'last'}"
-        )
-        return f"({self.expr!r}):{suffix}"
-
-
-class HybridColumnExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are references to a column from a table.
-    """
-
-    def __init__(self, column: ColumnProperty):
-        super().__init__(column.pydough_type)
-        self.column: ColumnProperty = column
-
-    def __repr__(self):
-        return repr(self.column)
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return self
-
-    def shift_back(self, levels: int) -> HybridExpr:
-        return HybridBackRefExpr(self.column.column_property.name, levels, self.typ)
-
-
-class HybridRefExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are references to a term from a preceding
-    HybridOperation.
-    """
-
-    def __init__(self, name: str, typ: PyDoughType):
-        super().__init__(typ)
-        self.name: str = name
-
-    def __repr__(self):
-        return self.name
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        if self.name in renamings:
-            return HybridRefExpr(renamings[self.name], self.typ)
-        return self
-
-    def shift_back(self, levels: int) -> HybridExpr:
-        if levels == 0:
-            return self
-        return HybridBackRefExpr(self.name, levels, self.typ)
-
-
-class HybridChildRefExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are references to a term from a child
-    operation.
-    """
-
-    def __init__(self, name: str, child_idx: int, typ: PyDoughType):
-        super().__init__(typ)
-        self.name: str = name
-        self.child_idx: int = child_idx
-
-    def __repr__(self):
-        return f"${self.child_idx}.{self.name}"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return self
-
-    def shift_back(self, levels: int) -> None:
-        return None
-
-
-class HybridBackRefExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are references to a term from an
-    ancestor operation.
-    """
-
-    def __init__(self, name: str, back_idx: int, typ: PyDoughType):
-        super().__init__(typ)
-        self.name: str = name
-        self.back_idx: int = back_idx
-
-    def __repr__(self):
-        return f"BACK({self.back_idx}).{self.name}"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return self
-
-    def shift_back(self, levels: int) -> HybridExpr:
-        return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
-
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
-        if level_threshold is not None and self.back_idx >= level_threshold:
-            levels_remaining = self.back_idx - level_threshold
-            parent_expr: HybridExpr
-            if levels_remaining == 0:
-                parent_expr = HybridRefExpr(self.name, self.typ)
-            else:
-                parent_expr = HybridBackRefExpr(self.name, levels_remaining, self.typ)
-            return HybridCorrelExpr(parent_expr)
-        else:
-            return self
-
-
-class HybridSidedRefExpr(HybridExpr):
-    """
-    Class for HybridExpr terms inside of a general join condition that point to
-    the parent side of the join (similar to a correlated reference).
-    """
-
-    def __init__(self, name: str, typ: PyDoughType):
-        super().__init__(typ)
-        self.name: str = name
-
-    def __repr__(self):
-        return f"PARENT.{self.name}"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return self
-
-    def shift_back(self, levels: int) -> HybridExpr:
-        return self
-
-
-class HybridCorrelExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are expressions from a parent hybrid tree
-    rather than an ancestor, which requires a correlated reference.
-    """
-
-    def __init__(self, expr: HybridExpr):
-        super().__init__(expr.typ)
-        self.expr: HybridExpr = expr
-
-    def __repr__(self):
-        return f"CORREL({self.expr})"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return self
-
-    def shift_back(self, levels: int) -> HybridExpr:
-        shifted_expr: HybridExpr | None = self.expr.shift_back(levels)
-        assert shifted_expr is not None
-        return HybridCorrelExpr(shifted_expr)
-
-    def contains_correlates(self) -> bool:
-        return True
-
-    def count_correlated_levels(self) -> int:
-        return 1 + self.expr.count_correlated_levels()
-
-    def get_correlate_names(self, levels: int) -> set[str]:
-        result: set[str] = set()
-        expr: HybridExpr = self
-        for _ in range(levels):
-            if isinstance(expr, HybridCorrelExpr):
-                expr = expr.expr
-            else:
-                return result
-        if isinstance(expr, HybridRefExpr):
-            result.add(expr.name)
-        return result
-
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
-        return HybridCorrelExpr(self)
-
-
-class HybridLiteralExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are literals.
-    """
-
-    def __init__(self, literal: Literal):
-        super().__init__(literal.pydough_type)
-        self.literal: Literal = literal
-
-    def __repr__(self):
-        return repr(self.literal)
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        return self
-
-    def shift_back(self, levels: int) -> HybridExpr:
-        return self
-
-
-class HybridFunctionExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are function calls.
-    """
-
-    def __init__(
-        self,
-        operator: pydop.PyDoughExpressionOperator,
-        args: list[HybridExpr],
-        typ: PyDoughType,
-    ):
-        super().__init__(typ)
-        self.operator: pydop.PyDoughExpressionOperator = operator
-        self.args: list[HybridExpr] = args
-
-    def __repr__(self):
-        arg_strings: list[str] = [
-            f"({arg!r})"
-            if isinstance(self.operator, pydop.BinaryOperator)
-            and isinstance(arg, HybridFunctionExpr)
-            and isinstance(arg.operator, pydop.BinaryOperator)
-            else repr(arg)
-            for arg in self.args
-        ]
-        return self.operator.to_string(arg_strings)
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        renamed_args: list[HybridExpr] = [
-            arg.apply_renamings(renamings) for arg in self.args
-        ]
-        if all_same(self.args, renamed_args):
-            return self
-        return HybridFunctionExpr(self.operator, renamed_args, self.typ)
-
-    def shift_back(self, levels: int) -> HybridExpr | None:
-        # Shift all of the inputs to the function. Return None if any of them
-        # cannot be shifted.
-        shifted_args: list[HybridExpr] = []
-        for arg in self.args:
-            shifted_arg: HybridExpr | None = arg.shift_back(levels)
-            if shifted_arg is None:
-                return None
-            shifted_args.append(shifted_arg)
-        return HybridFunctionExpr(self.operator, shifted_args, self.typ)
-
-    def replace_expressions(
-        self,
-        replacements: dict[HybridExpr, HybridExpr],
-    ) -> HybridExpr:
-        """
-        TODO
-        """
-        if self in replacements:
-            return replacements[self]
-        for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.replace_expressions(replacements)
-        return self
-
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
-        """
-        TODO
-        """
-        for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
-        return self
-
-    def contains_correlates(self) -> bool:
-        return any(arg.contains_correlates() for arg in self.args)
-
-    def contains_window_functions(self) -> bool:
-        return any(arg.contains_window_functions() for arg in self.args)
-
-    def count_correlated_levels(self) -> int:
-        correl_levels: int = 0
-        for arg in self.args:
-            correl_levels = max(correl_levels, arg.count_correlated_levels())
-        return correl_levels
-
-    def get_correlate_names(self, levels: int) -> set[str]:
-        result: set[str] = set()
-        for arg in self.args:
-            result.update(arg.get_correlate_names(levels))
-        return result
-
-    def has_correlated_window_function(self, levels: int) -> bool:
-        return any(arg.has_correlated_window_function(levels) for arg in self.args)
-
-
-class HybridWindowExpr(HybridExpr):
-    """
-    Class for HybridExpr terms that are window function calls.
-    """
-
-    def __init__(
-        self,
-        window_func: pydop.ExpressionWindowOperator,
-        args: list[HybridExpr],
-        partition_args: list[HybridExpr],
-        order_args: list[HybridCollation],
-        typ: PyDoughType,
-        kwargs: dict[str, object],
-    ):
-        super().__init__(typ)
-        self.window_func: pydop.ExpressionWindowOperator = window_func
-        self.args: list[HybridExpr] = args
-        self.partition_args: list[HybridExpr] = partition_args
-        self.order_args: list[HybridCollation] = order_args
-        self.kwargs: dict[str, object] = kwargs
-
-    def __repr__(self):
-        args_str = ""
-        args_str += f"by=[{', '.join([str(arg) for arg in self.args])}]"
-        args_str += (
-            f", partition=[{', '.join([str(arg) for arg in self.partition_args])}]"
-        )
-        args_str += f", order=[{', '.join([str(arg) for arg in self.order_args])}]"
-        if "allow_ties" in self.kwargs:
-            args_str += f", allow_ties={self.kwargs['allow_ties']}"
-            if "dense" in self.kwargs:
-                args_str += f", dense={self.kwargs['dense']}"
-        return f"{self.window_func.function_name}({args_str})"
-
-    def apply_renamings(self, renamings: dict[str, str]) -> "HybridExpr":
-        renamed_args: list[HybridExpr] = [
-            arg.apply_renamings(renamings) for arg in self.args
-        ]
-        renamed_partition_args: list[HybridExpr] = [
-            arg.apply_renamings(renamings) for arg in self.partition_args
-        ]
-        renamed_order_args: list[HybridCollation] = []
-        for col_arg in self.order_args:
-            collation_expr: HybridExpr = col_arg.expr
-            renamed_expr: HybridExpr = collation_expr.apply_renamings(renamings)
-            if renamed_expr is collation_expr:
-                renamed_order_args.append(col_arg)
-            else:
-                renamed_order_args.append(
-                    HybridCollation(renamed_expr, col_arg.asc, col_arg.na_first)
-                )
-        if (
-            all_same(self.args, renamed_args)
-            and all_same(self.partition_args, renamed_partition_args)
-            and all_same(
-                [arg.expr for arg in self.order_args],
-                [arg.expr for arg in renamed_order_args],
-            )
-        ):
-            return self
-        return HybridWindowExpr(
-            self.window_func,
-            renamed_args,
-            renamed_partition_args,
-            renamed_order_args,
-            self.typ,
-            self.kwargs,
-        )
-
-    def shift_back(self, levels: int) -> HybridExpr | None:
-        # Shift all of the inputs to the window function (including regular,
-        # partition, and order inputs). Return None if any of them cannot
-        # be shifted.
-        shifted_args: list[HybridExpr] = []
-        shifted_partition_args: list[HybridExpr] = []
-        shifted_order_args: list[HybridCollation] = []
-        shifted_arg: HybridExpr | None
-        for arg in self.args:
-            shifted_arg = arg.shift_back(levels)
-            if shifted_arg is None:
-                return None
-            shifted_args.append(shifted_arg)
-        for arg in self.partition_args:
-            shifted_arg = arg.shift_back(levels)
-            if shifted_arg is None:
-                return None
-            shifted_partition_args.append(shifted_arg)
-        for order_arg in self.order_args:
-            shifted_arg = order_arg.expr.shift_back(levels)
-            if shifted_arg is None:
-                return None
-            shifted_order_args.append(
-                HybridCollation(shifted_arg, order_arg.asc, order_arg.na_first)
-            )
-        return HybridWindowExpr(
-            self.window_func,
-            shifted_args,
-            shifted_partition_args,
-            shifted_order_args,
-            self.typ,
-            self.kwargs,
-        )
-
-    def replace_expressions(
-        self,
-        replacements: dict[HybridExpr, HybridExpr],
-    ) -> HybridExpr:
-        if self in replacements:
-            return replacements[self]
-        for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.replace_expressions(replacements)
-        for idx, part_arg in enumerate(self.partition_args):
-            self.partition_args[idx] = part_arg.replace_expressions(replacements)
-        for idx, order_arg in enumerate(self.order_args):
-            self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
-        return self
-
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
-        """
-        TODO
-        """
-        for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
-        for idx, part_arg in enumerate(self.partition_args):
-            self.partition_args[idx] = part_arg.squish_backrefs_into_correl(
-                level_threshold
-            )
-        for idx, order_arg in enumerate(self.order_args):
-            self.order_args[idx].expr = order_arg.expr.squish_backrefs_into_correl(
-                level_threshold
-            )
-        return self
-
-    def count_correlated_levels(self) -> int:
-        correl_levels: int = 0
-        for arg in self.args:
-            correl_levels = max(correl_levels, arg.count_correlated_levels())
-        for part_arg in self.partition_args:
-            correl_levels = max(correl_levels, part_arg.count_correlated_levels())
-        for order_arg in self.order_args:
-            correl_levels = max(correl_levels, order_arg.expr.count_correlated_levels())
-        return correl_levels
-
-    def contains_correlates(self) -> bool:
-        return (
-            any(arg.contains_correlates() for arg in self.args)
-            or any(
-                partition_arg.contains_correlates()
-                for partition_arg in self.partition_args
-            )
-            or any(
-                order_arg.expr.contains_correlates() for order_arg in self.order_args
-            )
-        )
-
-    def get_correlate_names(self, levels: int) -> set[str]:
-        result: set[str] = set()
-        for arg in self.args:
-            result.update(arg.get_correlate_names(levels))
-        for partition_arg in self.partition_args:
-            result.update(partition_arg.get_correlate_names(levels))
-        for order_arg in self.order_args:
-            result.update(order_arg.expr.get_correlate_names(levels))
-        return result
-
-    def contains_window_functions(self) -> bool:
-        return True
-
-    def has_correlated_window_function(self, levels: int) -> bool:
-        if self.count_correlated_levels() >= levels:
-            return True
-        return (
-            any(arg.has_correlated_window_function(levels) for arg in self.args)
-            or any(
-                partition_arg.has_correlated_window_function(levels)
-                for partition_arg in self.partition_args
-            )
-            or any(
-                order_arg.expr.has_correlated_window_function(levels)
-                for order_arg in self.order_args
-            )
-        )
-
-
-def all_same(exprs: list[HybridExpr], renamed_exprs: list[HybridExpr]) -> bool:
-    """
-    Returns whether two lists of hybrid expressions are identical, down to
-    identity.
-    """
-    return len(exprs) == len(renamed_exprs) and all(
-        expr is renamed_expr for expr, renamed_expr in zip(exprs, renamed_exprs)
-    )
-
-
-def shift_join_condition(expr: HybridExpr) -> HybridExpr:
-    """
-    Shifts an expression used as a general join condition back 1 level, where
-    expressions inside of function calls are also shifted, but expressions
-    inside correlated references are left alone since they refer to the parent.
-    """
-    match expr:
-        case HybridRefExpr() | HybridBackRefExpr():
-            return expr.shift_back(1)
-        case HybridFunctionExpr():
-            return HybridFunctionExpr(
-                expr.operator,
-                [shift_join_condition(arg) for arg in expr.args],
-                expr.typ,
-            )
-        case HybridWindowExpr():
-            return HybridWindowExpr(
-                expr.window_func,
-                [shift_join_condition(arg) for arg in expr.args],
-                [shift_join_condition(arg) for arg in expr.partition_args],
-                [
-                    HybridCollation(
-                        shift_join_condition(order_arg.expr),
-                        order_arg.asc,
-                        order_arg.na_first,
-                    )
-                    for order_arg in expr.order_args
-                ],
-                expr.typ,
-                expr.kwargs,
-            )
-        case _:
-            return expr
+from pydough.types import BooleanType, NumericType
+
+from .hybrid_expressions import (
+    HybridBackRefExpr,
+    HybridChildRefExpr,
+    HybridCollation,
+    HybridColumnExpr,
+    HybridCorrelExpr,
+    HybridExpr,
+    HybridFunctionExpr,
+    HybridLiteralExpr,
+    HybridRefExpr,
+    HybridSidedRefExpr,
+    HybridWindowExpr,
+)
 
 
 class HybridOperation:
@@ -745,6 +126,25 @@ class HybridOperation:
         for term_name, term in self.terms.items():
             new_term: HybridExpr = term.replace_expressions(replacements)
             self.terms[term_name] = new_term
+
+    def get_term_as_ref(self, name: str) -> HybridRefExpr:
+        """
+        Fetches a term from the operation, coercing it to a HybridRefExpr.
+
+        Args:
+            `name`: the name of the desired reference.
+
+        Returns:
+            A HybridRefExpr corresponding to the term with the desired name.
+        """
+        term: HybridExpr | None = self.terms.get(name, None)
+        if term is None:
+            raise ValueError(f"Term not found: {name}")
+        if isinstance(term, HybridRefExpr):
+            return term
+        if isinstance(term, HybridColumnExpr):
+            return HybridRefExpr(name, term.typ)
+        raise ValueError(f"Term is cannot be coerced to a reference: {name}")
 
 
 class HybridRoot(HybridOperation):
@@ -926,11 +326,7 @@ class HybridChildPullUp(HybridOperation):
         renamings: dict[str, str] = current_level.pipeline[-1].renamings
         unique_exprs: list[HybridExpr] = []
         for unique_expr in current_level.pipeline[-1].unique_exprs:
-            new_unique_expr: HybridExpr | None = unique_expr.shift_back(
-                original_child_height
-            )
-            assert new_unique_expr is not None
-            unique_exprs.append(new_unique_expr)
+            unique_exprs.append(unique_expr.shift_back(original_child_height))
 
         # Start by adding terms from the bottom level of the child as child ref
         # expressions accessible from the parent.
@@ -956,10 +352,7 @@ class HybridChildPullUp(HybridOperation):
                 # the levels of the child subtree.
                 current_expr: HybridExpr = HybridRefExpr(
                     term_name, current_terms[term_name].typ
-                )
-                shifted_expr: HybridExpr | None = current_expr.shift_back(extra_height)
-                assert shifted_expr is not None
-                current_expr = shifted_expr
+                ).shift_back(extra_height)
                 back_expr: HybridExpr = HybridBackRefExpr(
                     term_name,
                     original_child_height + extra_height,
@@ -1771,7 +1164,6 @@ class HybridTree:
             raise Exception("Duplicate successor")
         self._successor = successor
         successor._parent = self
-        shifted_expr: HybridExpr | None
         # Shift the aggregation keys and rhs of join keys back by 1 level to
         # account for the fact that the successor must use the same aggregation
         # and join keys as `self`, but they have now become backreferences.
@@ -1779,23 +1171,15 @@ class HybridTree:
         if self.agg_keys is not None:
             successor_agg_keys: list[HybridExpr] = []
             for key in self.agg_keys:
-                shifted_expr = key.shift_back(1)
-                assert shifted_expr is not None
-                successor_agg_keys.append(shifted_expr)
+                successor_agg_keys.append(key.shift_back(1))
             successor.agg_keys = successor_agg_keys
         if self.join_keys is not None:
             successor_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
             for lhs_key, rhs_key in self.join_keys:
-                shifted_expr = rhs_key.shift_back(1)
-                assert shifted_expr is not None
-                successor_join_keys.append((lhs_key, shifted_expr))
+                successor_join_keys.append((lhs_key, rhs_key.shift_back(1)))
             successor.join_keys = successor_join_keys
         if self.general_join_condition is not None:
-            shifted_join_condition: HybridExpr | None = (
-                self.general_join_condition.shift_back(1)
-            )
-            assert shifted_join_condition is not None
-            successor.general_join_condition = shifted_join_condition
+            successor.general_join_condition = self.general_join_condition.shift_back(1)
 
     def always_exists(self) -> bool:
         """
@@ -2133,13 +1517,9 @@ class HybridTranslator:
             # If the subcollection is a simple join property, extract the keys
             # and build the corresponding (lhs_key == rhs_key) conditions
             for lhs_name in subcollection_property.keys:
-                lhs_key: HybridExpr = parent_node.terms[lhs_name].make_into_ref(
-                    lhs_name
-                )
+                lhs_key: HybridExpr = parent_node.get_term_as_ref(lhs_name)
                 for rhs_name in subcollection_property.keys[lhs_name]:
-                    rhs_key: HybridExpr = child_node.terms[rhs_name].make_into_ref(
-                        rhs_name
-                    )
+                    rhs_key: HybridExpr = child_node.get_term_as_ref(rhs_name)
                     join_keys.append((lhs_key, rhs_key))
         elif not isinstance(subcollection_property, CartesianProductMetadata):
             raise NotImplementedError(
@@ -2879,9 +2259,7 @@ class HybridTranslator:
         # reached the targeted ancestor, so we add the unique terms.
         if levels_remaining == 0:
             for unique_term in sorted(hybrid.pipeline[-1].unique_exprs, key=str):
-                shifted_arg: HybridExpr | None = unique_term.shift_back(levels_so_far)
-                assert shifted_arg is not None
-                partition_args.append(shifted_arg)
+                partition_args.append(unique_term.shift_back(levels_so_far))
         elif hybrid.parent is None:
             # If we have not reached the target level yet, but we have reached
             # the top level of the tree, we need to step out of a child subtree
@@ -2900,11 +2278,7 @@ class HybridTranslator:
                 if arg in join_remapping:
                     # Special case: if the uniqueness key is also a join key
                     # from the LHS, use the equivalent key from the RHS.
-                    equivalent_key: HybridExpr | None = join_remapping[arg].shift_back(
-                        levels_so_far
-                    )
-                    assert equivalent_key is not None
-                    partition_args.append(equivalent_key)
+                    partition_args.append(join_remapping[arg].shift_back(levels_so_far))
                 else:
                     # Otherwise, create a correlated reference to the term.
                     partition_args.append(HybridCorrelExpr(arg))
@@ -3437,9 +2811,7 @@ class HybridTranslator:
                 while current_level is not None:
                     for expr in current_level.pipeline[-1].unique_exprs:
                         key_name = f"key_{len(lhs_unique_keys)}"
-                        shifted_expr: HybridExpr | None = expr.shift_back(back_levels)
-                        assert shifted_expr is not None
-                        expr = HybridCorrelExpr(shifted_expr)
+                        expr = HybridCorrelExpr(expr.shift_back(back_levels))
                         lhs_unique_keys[key_name] = expr
                     back_levels += 1
                     current_level = current_level.parent
