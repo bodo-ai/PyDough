@@ -143,9 +143,7 @@ class HybridExpr(ABC):
             return copy.deepcopy(replacements[self])
         return self
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ) -> "HybridExpr":
+    def squish_backrefs_into_correl(self, level_threshold: int | None) -> "HybridExpr":
         """
         TODO
         """
@@ -286,10 +284,8 @@ class HybridBackRefExpr(HybridExpr):
     def shift_back(self, levels: int) -> HybridExpr:
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ):
-        if self.back_idx >= level_threshold:
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
+        if level_threshold is not None and self.back_idx >= level_threshold:
             levels_remaining = self.back_idx - level_threshold
             parent_expr: HybridExpr
             if levels_remaining == 0:
@@ -359,6 +355,9 @@ class HybridCorrelExpr(HybridExpr):
         if isinstance(expr, HybridRefExpr):
             result.add(expr.name)
         return result
+
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
+        return HybridCorrelExpr(self)
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -438,16 +437,12 @@ class HybridFunctionExpr(HybridExpr):
             self.args[idx] = arg.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ):
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
-            )
+            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
         return self
 
     def contains_correlates(self) -> bool:
@@ -589,23 +584,19 @@ class HybridWindowExpr(HybridExpr):
             self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(
-        self, level_threshold: int, hybrid: "HybridTree", child_idx: int
-    ):
+    def squish_backrefs_into_correl(self, level_threshold: int | None):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
-            )
+            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
         for idx, part_arg in enumerate(self.partition_args):
             self.partition_args[idx] = part_arg.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
+                level_threshold
             )
         for idx, order_arg in enumerate(self.order_args):
             self.order_args[idx].expr = order_arg.expr.squish_backrefs_into_correl(
-                level_threshold, hybrid, child_idx
+                level_threshold
             )
         return self
 
@@ -2069,6 +2060,23 @@ class HybridTree:
                     return pipeline_idx
         return self._blocking_idx
 
+    def squish_backrefs_into_correl(self, levels_up: int | None):
+        """
+        TODO
+        """
+        for operation in self.pipeline:
+            for term_name, term in operation.terms.items():
+                operation.terms[term_name] = term.squish_backrefs_into_correl(levels_up)
+            if isinstance(operation, HybridFilter):
+                operation.condition = operation.condition.squish_backrefs_into_correl(
+                    levels_up
+                )
+            if isinstance(operation, HybridCalculate):
+                for term_name, term in operation.new_expressions.items():
+                    operation.new_expressions[term_name] = operation.terms[term_name]
+        for child in self.children:
+            child.subtree.squish_backrefs_into_correl(None)
+
 
 class HybridTranslator:
     """
@@ -3474,19 +3482,7 @@ class HybridTranslator:
             )
             parent.add_successor(child)
             child._successor = None
-        # TODO WRITE COMMENT
-        for operation in child.pipeline:
-            for term_name, term in operation.terms.items():
-                operation.terms[term_name] = term.squish_backrefs_into_correl(
-                    levels_up, new_base, len(new_base.children)
-                )
-            if isinstance(operation, HybridFilter):
-                operation.condition = operation.condition.squish_backrefs_into_correl(
-                    levels_up, new_base, len(new_base.children)
-                )
-            if isinstance(operation, HybridCalculate):
-                for term_name, term in operation.new_expressions.items():
-                    operation.new_expressions[term_name] = operation.terms[term_name]
+        child.squish_backrefs_into_correl(levels_up)
         return child
 
     def can_syncretize_subtrees(
