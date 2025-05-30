@@ -128,7 +128,12 @@ class Decorrelater:
         """
         match expr:
             case HybridCorrelExpr():
-                # TODO ADD COMMENT
+                # Unwrap the correlated expression to get the expression it
+                # refers to (and shift it back to account for the fact that
+                # the expression it points to is now above it in the hybrid
+                # tree) but only if the correlated expression has enough
+                # layers of correlation nesting to indicate that it refers to
+                # the level of correlation that we are trying to remove.
                 if expr.count_correlated_levels() >= correl_level:
                     result: HybridExpr | None = expr.expr.shift_back(child_height)
                     assert result is not None

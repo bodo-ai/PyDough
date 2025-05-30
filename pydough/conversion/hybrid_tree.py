@@ -4023,4 +4023,4 @@ class HybridTranslator:
                     children_to_delete.add(extension_idx)
             tree.remove_dead_children(children_to_delete)
         for child in tree.children:
-            self.syncretize_children(child.subtree)  # t
+            self.syncretize_children(child.subtree)

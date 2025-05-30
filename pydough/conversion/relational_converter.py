@@ -1430,29 +1430,19 @@ def convert_ast_to_relational(
     # Convert the QDAG node to the hybrid form and run a series of
     # transformations:
     # 1. Eject any arguments from the aggregate inputs
-    # 2. Run the de-correlation procedure
-    # 3. Run any final rewrites, such as turning MEDIAN into an average of the
+    # 2. Syncretize any children that have a common prefix tot heir trees,
+    #    so the larger child becomes a child of the smaller child and thus the
+    #    duplicate logic is not computed twice.
+    # 3. Run the de-correlation procedure
+    # 4. Run any final rewrites, such as turning MEDIAN into an average of the
     #    1-2 median rows, that must happen after de-correlation.
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)
-    # print()
-    # print(hybrid)
-    # print([c.min_steps for c in hybrid.children])
-    # print([c.max_steps for c in hybrid.children])
-    # breakpoint()
     hybrid_translator.syncretize_children(hybrid)
-    # print()
-    # print(hybrid)
-    # print([c.min_steps for c in hybrid.children])
-    # print([c.max_steps for c in hybrid.children])
-    # breakpoint()
     run_hybrid_decorrelation(hybrid)
     hybrid_translator.run_rewrites(hybrid)
     hybrid.remove_dead_children(set())
-    # print()
-    # print(hybrid)
-    # breakpoint()
 
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.
