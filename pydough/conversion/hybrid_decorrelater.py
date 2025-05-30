@@ -3,7 +3,7 @@ Logic for applying de-correlation to hybrid trees before relational conversion
 if the correlate is not a semi/anti join.
 """
 
-__all__ = ["run_hybrid_decorrelation"]
+__all__ = ["HybridDecorrelater"]
 
 
 import copy
@@ -30,7 +30,7 @@ from .hybrid_operations import (
 from .hybrid_tree import HybridTree
 
 
-class Decorrelater:
+class HybridDecorrelater:
     """
     Class that encapsulates the logic used for de-correlation of hybrid trees.
     """
@@ -439,22 +439,3 @@ class Decorrelater:
         self.stack.pop()
         if hybrid.parent is not None:
             self.find_correlated_children(hybrid.parent)
-
-
-def run_hybrid_decorrelation(hybrid: HybridTree) -> HybridTree:
-    """
-    Invokes the procedure to remove correlated references from a hybrid tree
-    before relational conversion if those correlated references are invalid
-    (e.g. not from a semi/anti join).
-
-    Args:
-        `hybrid`: The hybrid tree to remove correlated references from.
-
-    Returns:
-        The hybrid tree with all invalid correlated references removed as the
-        tree structure is re-written to allow them to be replaced with BACK
-        references. The transformation is also done in-place.
-    """
-    decorr: Decorrelater = Decorrelater()
-    decorr.find_correlated_children(hybrid)
-    return decorr.decorrelate_hybrid_tree(hybrid)
