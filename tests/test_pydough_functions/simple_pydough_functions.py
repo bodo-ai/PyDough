@@ -888,6 +888,64 @@ def top_customers_by_orders():
     ).TOP_K(5, by=(COUNT(orders).DESC(), customer_key.ASC()))
 
 
+def bad_child_reuse_1():
+    # Compute the top 10 customers by account balance, list their keys and
+    # number of orders, only keep ones that have orders.
+    return (
+        customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
+        .TOP_K(10, by=account_balance.DESC())
+        .WHERE(HAS(orders))
+    )
+
+
+def bad_child_reuse_2():
+    # Compute the top 10 customers by account balance, (after filtering to only
+    # include the customers that have orders). For each, calculate the number
+    # orders the customers made and the total number of customers in the same
+    # nation.
+    return (
+        nations.customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
+        .CALCULATE(cust_key, n_orders, n_cust=RELSIZE(per="nations"))
+        .WHERE(HAS(orders))
+        .TOP_K(10, by=account_balance.DESC())
+    )
+
+
+def bad_child_reuse_3():
+    # Same as bad_child_reuse_2, written slightly differently.
+    return (
+        nations.customers.CALCULATE(
+            cust_key=key, n_orders=COUNT(orders), n_cust=RELSIZE(per="nations")
+        )
+        .WHERE(HAS(orders))
+        .TOP_K(10, by=account_balance.DESC())
+        .CALCULATE(cust_key, n_orders, n_cust)
+    )
+
+
+def bad_child_reuse_4():
+    # For each customer whose number of orders is below the average for
+    # all orders made by customers in the same nation, find the top 10
+    # customers by account balance (only considering customers with orders),
+    # and calculate the number of orders they made.
+    return (
+        nations.customers.WHERE(COUNT(orders) < RELAVG(COUNT(orders), per="nations"))
+        .WHERE(HAS(orders))
+        .TOP_K(10, by=account_balance.DESC())
+        .CALCULATE(cust_key=key, n_orders=COUNT(orders))
+    )
+
+
+def bad_child_reuse_5():
+    # Compute the top 10 customers by account balance, list their keys and
+    # number of orders, only keep ones that have no orders.
+    return (
+        customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
+        .TOP_K(10, by=account_balance.DESC())
+        .WHERE(HASNOT(orders))
+    )
+
+
 def function_sampler():
     # Functions tested:
     # JOIN_STRINGS,
