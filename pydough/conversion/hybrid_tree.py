@@ -2345,7 +2345,6 @@ class HybridTranslator:
                     ):
                         min_idx = pipeline_idx
                         break
-                # breakpoint()
             child_idx_mapping[child_idx] = hybrid.add_child(
                 subtree,
                 connection_type,
