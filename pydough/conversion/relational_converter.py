@@ -51,34 +51,35 @@ from pydough.types import BooleanType, NumericType, UnknownType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .filter_pushdown import push_filters
+from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_decorrelater import run_hybrid_decorrelation
-from .hybrid_tree import (
-    ConnectionType,
+from .hybrid_expressions import (
     HybridBackRefExpr,
-    HybridCalculate,
-    HybridChildPullUp,
     HybridChildRefExpr,
     HybridCollation,
-    HybridCollectionAccess,
     HybridColumnExpr,
-    HybridConnection,
     HybridCorrelExpr,
     HybridExpr,
-    HybridFilter,
     HybridFunctionExpr,
-    HybridLimit,
     HybridLiteralExpr,
+    HybridRefExpr,
+    HybridSidedRefExpr,
+    HybridWindowExpr,
+)
+from .hybrid_operations import (
+    HybridCalculate,
+    HybridChildPullUp,
+    HybridCollectionAccess,
+    HybridFilter,
+    HybridLimit,
     HybridNoop,
     HybridOperation,
     HybridPartition,
     HybridPartitionChild,
-    HybridRefExpr,
     HybridRoot,
-    HybridSidedRefExpr,
-    HybridTranslator,
-    HybridTree,
-    HybridWindowExpr,
 )
+from .hybrid_translator import HybridTranslator
+from .hybrid_tree import HybridTree
 from .merge_projects import merge_projects
 
 
@@ -521,9 +522,7 @@ class RelTranslation:
             existing_ref: ColumnReference = lhs_result.expressions[expr]
             join_columns[existing_ref.name] = existing_ref.with_input(input_aliases[0])
             if child_idx is None:
-                shifted_expr: HybridExpr | None = expr.shift_back(1)
-                if shifted_expr is not None:
-                    out_columns[shifted_expr] = existing_ref
+                out_columns[expr.shift_back(1)] = existing_ref
             else:
                 out_columns[expr] = existing_ref
 
@@ -890,9 +889,7 @@ class RelTranslation:
         # Account for the fact that the PARTITION is stepping down a level,
         # without actually joining.
         for expr, ref in context.expressions.items():
-            shifted_expr: HybridExpr | None = expr.shift_back(1)
-            if shifted_expr is not None:
-                expressions[shifted_expr] = ref
+            expressions[expr.shift_back(1)] = ref
         # Return the input data, which will be wrapped in an aggregation when
         # handle_children is called on the output
         result: TranslationOutput = TranslationOutput(
@@ -1049,9 +1046,7 @@ class RelTranslation:
                 child_output.expressions
             )
             for expr, column_ref in child_output.expressions.items():
-                shifted_expr: HybridExpr | None = expr.shift_back(1)
-                if shifted_expr is not None:
-                    new_expressions[shifted_expr] = column_ref
+                new_expressions[expr.shift_back(1)] = column_ref
             return TranslationOutput(child_output.relational_node, new_expressions)
 
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []

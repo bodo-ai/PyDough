@@ -32,6 +32,7 @@ Hybrid connections represent the relationships between different parts of the hy
 - `subtree`: The `HybridTree` corresponding to the child itself, starting from the bottom.
 - `connection_type`: An enum indicating which connection type is being used.
 - `min_steps`: An index indicating which step in the pipeline must be completed before the child can be defined.
+- `max_steps`: An index indicating which step in the pipeline the child must be defined before.
 - `aggs`: A mapping of aggregation calls made onto expressions relative to the context of `subtree`.
 
 The `ConnectionType` eEnum describes how a hybrid tree is connected to a child tree. It has the following values:
