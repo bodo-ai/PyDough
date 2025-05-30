@@ -11,7 +11,6 @@ ROOT(columns=[('name', name), ('total_spent', total_spent), ('line_price', line_
        JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'expr_6': t1.expr_6, 'extended_price': t0.extended_price, 'key': t0.key})
         FILTER(condition=RANKING(args=[], partition=[customer_key], order=[(extended_price):desc_first, (part_key):asc_last], allow_ties=False) == 1:numeric, columns={'extended_price': extended_price, 'key': key, 'part_key': part_key})
          JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'customer_key': t0.customer_key, 'extended_price': t1.extended_price, 'key': t0.key, 'part_key': t1.part_key})
-          FILTER(condition=YEAR(order_date) == 1998:numeric & order_priority == '1-URGENT':string, columns={'customer_key': customer_key, 'key': key})
-           SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority})
+          SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey})
           SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'order_key': l_orderkey, 'part_key': l_partkey})
         SCAN(table=tpch.PART, columns={'expr_6': p_name, 'key': p_partkey})

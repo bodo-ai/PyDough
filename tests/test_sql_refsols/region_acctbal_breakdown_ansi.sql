@@ -1,10 +1,10 @@
 WITH _s3 AS (
   SELECT
-    MEDIAN(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS median_black_acctbal,
-    MEDIAN(customer.c_acctbal) AS median_overall_acctbal,
-    MEDIAN(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS median_red_acctbal,
-    COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS n_black_acctbal,
-    COUNT(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS n_red_acctbal,
+    MEDIAN(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS agg_0,
+    MEDIAN(customer.c_acctbal) AS agg_1,
+    MEDIAN(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS agg_2,
+    COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS agg_3,
+    COUNT(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS agg_4,
     nation.n_regionkey AS region_key
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
@@ -14,11 +14,11 @@ WITH _s3 AS (
 )
 SELECT
   region.r_name AS region_name,
-  _s3.n_red_acctbal,
-  _s3.n_black_acctbal,
-  _s3.median_red_acctbal,
-  _s3.median_black_acctbal,
-  _s3.median_overall_acctbal
+  _s3.agg_4 AS n_red_acctbal,
+  _s3.agg_3 AS n_black_acctbal,
+  _s3.agg_2 AS median_red_acctbal,
+  _s3.agg_0 AS median_black_acctbal,
+  _s3.agg_1 AS median_overall_acctbal
 FROM tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.region_key = region.r_regionkey

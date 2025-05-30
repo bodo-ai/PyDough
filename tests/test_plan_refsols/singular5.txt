@@ -9,7 +9,6 @@ ROOT(columns=[('container', container), ('highest_price_ship_date', highest_pric
       AGGREGATE(keys={'key': key}, aggregations={'agg_31': ANYTHING(ship_date), 'agg_49': COUNT()})
        FILTER(condition=RANKING(args=[], partition=[container], order=[(extended_price):desc_first, (ship_date):asc_last]) == 1:numeric, columns={'key': key, 'ship_date': ship_date})
         JOIN(conditions=[t0.key == t1.part_key], types=['inner'], columns={'container': t0.container, 'extended_price': t1.extended_price, 'key': t0.key, 'ship_date': t1.ship_date})
-         FILTER(condition=brand == 'Brand#13':string, columns={'container': container, 'key': key})
-          SCAN(table=tpch.PART, columns={'brand': p_brand, 'container': p_container, 'key': p_partkey})
+         SCAN(table=tpch.PART, columns={'container': p_container, 'key': p_partkey})
          FILTER(condition=ship_mode == 'RAIL':string, columns={'extended_price': extended_price, 'part_key': part_key, 'ship_date': ship_date})
           SCAN(table=tpch.LINEITEM, columns={'extended_price': l_extendedprice, 'part_key': l_partkey, 'ship_date': l_shipdate, 'ship_mode': l_shipmode})

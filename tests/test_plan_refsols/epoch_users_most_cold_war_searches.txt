@@ -3,7 +3,7 @@ ROOT(columns=[('user_name', user_name), ('n_cold_war_searches', n_cold_war_searc
   JOIN(conditions=[t0.user_id == t1.user_id], types=['inner'], columns={'n_cold_war_searches': t1.n_cold_war_searches, 'user_name': t0.user_name})
    SCAN(table=USERS, columns={'user_id': user_id, 'user_name': user_name})
    AGGREGATE(keys={'user_id': user_id, 'user_id_3': user_id}, aggregations={'n_cold_war_searches': COUNT()})
-    JOIN(conditions=[CONTAINS(LOWER(t0.search_string), LOWER(t1.name))], types=['semi'], columns={'user_id': t0.user_id}, correl_name='corr1')
+    JOIN(conditions=[CONTAINS(LOWER(t0.search_string), LOWER(t1.name))], types=['semi'], columns={'user_id': t0.user_id}, correl_name='corr2')
      SCAN(table=SEARCHES, columns={'search_string': search_string, 'user_id': search_user_id})
      JOIN(conditions=[t1.start_year <= YEAR(t0.date_time) & YEAR(t0.date_time) < t1.end_year], types=['inner'], columns={'name': t0.name})
       SCAN(table=EVENTS, columns={'date_time': ev_dt, 'name': ev_name})
