@@ -945,9 +945,10 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "cust_key": [7729, 10243, 22417, 27187, 28195],
-                        "n_orders": [21, 22, 28, 20, 20],
-                        "n_no_tax_discount": [4, 1, 2, 2, 2],
+                        "cust_key": [4540],
+                        "n_orders": [19],
+                        "n_no_tax_discount": [2],
+                        "n_part_purchases": [1],
                     }
                 ),
                 "common_prefix_ao",

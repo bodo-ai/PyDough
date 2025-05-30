@@ -715,22 +715,28 @@ def common_prefix_an():
 
 
 def common_prefix_ao():
-    # Same as common_prefix_al, but pick the top 50 of customers with any
+    # Same as common_prefix_al, but pick the top 20 of customers with any
     # qualifying part purchases before filtering on whether they have an above
     # average number of orders. Also filters to only include customers from
     # france from the BUILDING market segment, and adjust the part filter to
     # only include parts with size below 5 instead of 15, then at the end
-    # only keep the top 5 remaining customers alphabetically.
+    # only keep the top 5 remaining customers alphabetically. For the sake of
+    # sanity, pre-trims the french building customers to only the first 35
+    # by key before filtering on whether they have any qualifying part
+    # purchases.
     selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
     return (
         customers.WHERE((nation.name == "FRANCE") & (market_segment == "BUILDING"))
+        .TOP_K(35, by=key.ASC())
         .WHERE(HAS(selected_lines.part.WHERE(size < 5)))
-        .TOP_K(50, by=key.ASC())
+        .CALCULATE(n_part_purchases=COUNT(selected_lines.part.WHERE(size < 5)))
+        .TOP_K(20, by=key.ASC())
         .WHERE((COUNT(orders) > RELAVG(COUNT(orders))) & HAS(selected_lines))
         .CALCULATE(
             cust_key=key,
             n_orders=COUNT(orders),
             n_no_tax_discount=COUNT(selected_lines),
+            n_part_purchases=n_part_purchases,
         )
         .TOP_K(5, by=key.ASC())
     )
