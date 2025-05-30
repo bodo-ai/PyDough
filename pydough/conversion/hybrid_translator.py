@@ -1467,7 +1467,8 @@ class HybridTranslator:
         Returns:
             The HybridTree representation of the given QDAG node after
             transformations.
-        """  # 1. Run the initial conversion from QDAG to Hybrid
+        """
+        # 1. Run the initial conversion from QDAG to Hybrid
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
