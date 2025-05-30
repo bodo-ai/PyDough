@@ -1,6 +1,7 @@
 """
 Definitions of the hybrid expression abstract base class and its concrete
-subclasses. These represent expressions within
+subclasses. These represent expressions within each hybrid operation, such
+as columns or function calls.
 """
 
 __all__ = [
