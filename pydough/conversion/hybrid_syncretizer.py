@@ -64,24 +64,31 @@ class HybridSyncretizer:
         """
         if levels_up <= 0:
             raise ValueError(f"Cannot make extension child with {levels_up} levels up")
-        child.squish_backrefs_into_correl(levels_up)
+
+        # Clone just the current level, detached from any parent or successor.
+        parent: HybridTree | None = child.parent
+        successor: HybridTree | None = child.successor
+        child._parent = None
+        child._successor = None
+        new_child: HybridTree = copy.deepcopy(child)
+        child._parent = parent
+        child._successor = successor
+
         if levels_up == 1:
-            assert child.parent is not None
-            child._join_keys, child._agg_keys, child._general_join_condition = (
-                self.translator.extract_link_root_info(
-                    new_base, child, True, len(new_base.children)
-                )
+            (
+                new_child._join_keys,
+                new_child._agg_keys,
+                new_child._general_join_condition,
+            ) = self.translator.extract_link_root_info(
+                new_base, new_child, True, len(new_base.children)
             )
-            child._parent = None
-            child._successor = None
         else:
-            assert child.parent is not None
-            parent: HybridTree = self.make_extension_child(
-                child.parent, levels_up - 1, new_base
+            assert parent is not None
+            new_parent: HybridTree = self.make_extension_child(
+                parent, levels_up - 1, new_base
             )
-            parent.add_successor(child)
-            child._successor = None
-        return child
+            new_parent.add_successor(new_child)
+        return new_child
 
     def can_syncretize_subtrees(
         self, base_child: HybridConnection, extension_child: HybridConnection
@@ -435,9 +442,6 @@ class HybridSyncretizer:
         base_child: HybridConnection = tree.children[base_idx]
         base_subtree: HybridTree = base_child.subtree
         extension_child: HybridConnection = tree.children[extension_idx]
-        extension_subtree: HybridTree = self.make_extension_child(
-            copy.deepcopy(extension_child.subtree), extension_height, base_subtree
-        )
         # ANTI are automatically syncretized since the base not being
         # present implies the extension is not present, so we can just
         # have the extension child be pruned without modifying the
@@ -478,6 +482,13 @@ class HybridSyncretizer:
 
         base_child.min_steps = new_min_steps
         base_child.max_steps = new_max_steps
+
+        # Build the new subtree for the extension child which will be a child
+        # of the base subtree instead of the parent tree.
+        extension_subtree: HybridTree = self.make_extension_child(
+            extension_child.subtree, extension_height, base_subtree
+        )
+        extension_subtree.squish_backrefs_into_correl(extension_height)
 
         match (base_child.connection_type, extension_child.connection_type):
             case (
