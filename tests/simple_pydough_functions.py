@@ -2284,7 +2284,8 @@ def simple_cross_1():
 
 
 def simple_cross_2():
-    # Every combination of region names, excluding cases where the two regions are the same
+    # Every combination of region names, excluding cases where
+    # the two regions are the same
     return (
         regions.CALCULATE(r1=name)
         .CROSS(regions)
@@ -2295,7 +2296,7 @@ def simple_cross_2():
 
 
 def simple_cross_3():
-    # Same as earlier example, but for every combination of nation1 in ASIA
+    # Same as simple_cross_8, but for every combination of nation1 in ASIA
     # and nation2 in AMERICA in April-1992, only consider orders shipped
     # by "SHIP" mode, only considering customers in debt.
     nation_combinations = (
@@ -2316,7 +2317,8 @@ def simple_cross_3():
 
 
 def simple_cross_4():
-    # For each region, count how many OTHER regions have the same first letter as the region
+    # For each region, count how many OTHER regions
+    # have the same first letter as the region
     other_regions = CROSS(regions).WHERE(
         (name != region_name) & (name[:1] == region_name[:1])
     )
@@ -2392,3 +2394,54 @@ def simple_cross_7():
             )
         ),
     ).TOP_K(5, by=[n_other_orders.DESC(), original_order_key.ASC()])
+
+
+def simple_cross_8():
+    # For every unique combination of region1 & region2, count how many
+    # lineitems shipped in March-1998 and clerk #7
+    # were from a supplier in debt in region1 by a customer in region2 in the
+    # automobile market segment.
+    selected_lineitems = (
+        nations.customers.WHERE(market_segment == "AUTOMOBILE")
+        .orders.WHERE(clerk == "Clerk#000000007")
+        .lines.WHERE(
+            (YEAR(ship_date) == 1998)
+            & (MONTH(ship_date) == 3)
+            & (
+                supplier.WHERE(account_balance < 0).nation.region.name
+                == supplier_region
+            )
+        )
+    )
+    region_combinations = regions.CALCULATE(supplier_region=name).CROSS(
+        regions.CALCULATE(customer_region=name)
+    )
+    return region_combinations.WHERE(HAS(selected_lineitems)).CALCULATE(
+        supplier_region, customer_region, region_combinations=COUNT(selected_lineitems)
+    )
+
+
+def simple_cross_9():
+    # Every combination of different nations from the same region
+    return (
+        regions.CALCULATE(r1=name)
+        .nations.CALCULATE(n1=name)
+        .CROSS(regions.CALCULATE(r2=name).nations)
+        .CALCULATE(n1, n2=name)
+        .WHERE((r1 == r2) & (n1 != n2))
+        .ORDER_BY(n1.ASC(), n2.ASC())
+        .TOP_K(10, by=[n1.ASC(), n2.ASC()])
+    )
+
+
+def simple_cross_10():
+    # For each region, count how many nations in OTHER regions
+    # have the same first letter as the region
+    other_regions = CROSS(regions.CALCULATE(r2=name).nations).WHERE(
+        (r2 != region_name) & (name[:1] == region_name[:1])
+    )
+    return (
+        regions.CALCULATE(region_name=name)
+        .CALCULATE(region_name, n_other_nations=COUNT(other_regions))
+        .ORDER_BY(region_name.ASC())
+    )

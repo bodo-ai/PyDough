@@ -73,6 +73,9 @@ from simple_pydough_functions import (
     simple_cross_5,
     simple_cross_6,
     simple_cross_7,
+    simple_cross_8,
+    simple_cross_9,
+    simple_cross_10,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -1800,6 +1803,68 @@ from pydough.unqualified import (
                 ),
             ),
             id="simple_cross_7",
+        ),
+        # pydough.qdag.errors.PyDoughQDAGException: Unrecognized term of graph 'TPCH': 'region'
+        pytest.param(
+            (
+                simple_cross_8,
+                None,
+                "simple_cross_8",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_region": ["ASIA", "MIDDLE EAST"],
+                        "customer_region": ["AMERICA", "MIDDLE EAST"],
+                        "region_combinations": [1] * 2,
+                    }
+                ),
+            ),
+            id="simple_cross_8",
+        ),
+        pytest.param(
+            (
+                simple_cross_9,
+                None,
+                "simple_cross_9",
+                lambda: pd.DataFrame(
+                    {
+                        # TODO: fix this test
+                        "n1": ["ALGERIA"] * 4 + ["ARGENTINA"] * 4 + ["BRAZIL"] * 2,
+                        "n2": [
+                            "ETHIOPIA",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "ARGENTINA",
+                            "CANADA",
+                        ],
+                    }
+                ),
+            ),
+            id="simple_cross_9",
+        ),
+        pytest.param(
+            (
+                simple_cross_10,
+                None,
+                "simple_cross_10",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_other_nations": [1, 1, 2, 2, 2],
+                    }
+                ),
+            ),
+            id="simple_cross_10",
         ),
         pytest.param(
             (
