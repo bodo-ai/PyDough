@@ -71,6 +71,7 @@ class HybridSyncretizer:
         child._parent = None
         child._successor = None
         new_child: HybridTree = copy.deepcopy(child)
+        new_child.squish_backrefs_into_correl(levels_up)
         child._parent = parent
         child._successor = successor
 
@@ -488,7 +489,7 @@ class HybridSyncretizer:
         extension_subtree: HybridTree = self.make_extension_child(
             extension_child.subtree, extension_height, base_subtree
         )
-        extension_subtree.squish_backrefs_into_correl(extension_height)
+        # extension_subtree.squish_backrefs_into_correl(extension_height)
 
         match (base_child.connection_type, extension_child.connection_type):
             case (
