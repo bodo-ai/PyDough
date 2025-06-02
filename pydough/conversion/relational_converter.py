@@ -1427,9 +1427,10 @@ def convert_ast_to_relational(
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
     hybrid_translator.eject_aggregate_inputs(hybrid)
+    # breakpoint()
     run_hybrid_decorrelation(hybrid)
     hybrid_translator.run_rewrites(hybrid)
-
+    # breakpoint()
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.
     output: TranslationOutput = rel_translator.rel_translation(

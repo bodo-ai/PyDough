@@ -68,7 +68,11 @@ from simple_pydough_functions import (
     richest_customer_per_region,
     simple_cross_1,
     simple_cross_2,
+    simple_cross_3,
     simple_cross_4,
+    simple_cross_5,
+    simple_cross_6,
+    simple_cross_7,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -1698,6 +1702,39 @@ from pydough.unqualified import (
         ),
         pytest.param(
             (
+                simple_cross_3,
+                None,
+                "simple_cross_3",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_nation": ["INDIA"] * 5
+                        + ["INDONESIA"] * 4
+                        + ["JAPAN"] * 3
+                        + ["CHINA"] * 5
+                        + ["VIETNAM"] * 4,
+                        "customer_nation": [
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                        ]
+                        + ["ARGENTINA", "BRAZIL", "CANADA", "PERU"]
+                        + ["CANADA", "PERU", "UNITED STATES"]
+                        + ["ARGENTINA", "BRAZIL", "CANADA", "PERU", "UNITED STATES"]
+                        + ["ARGENTINA", "BRAZIL", "CANADA", "UNITED STATES"],
+                        "nation_combinations": [2, 1, 1, 2, 1]
+                        + [2, 3, 2, 2]
+                        + [2, 1, 2]
+                        + [5, 1, 3, 3, 2]
+                        + [4, 1, 3, 2],
+                    }
+                ),
+            ),
+            id="simple_cross_3",
+        ),
+        pytest.param(
+            (
                 simple_cross_4,
                 None,
                 "simple_cross_4",
@@ -1715,6 +1752,54 @@ from pydough.unqualified import (
                 ),
             ),
             id="simple_cross_4",
+        ),
+        pytest.param(
+            (
+                simple_cross_5,
+                None,
+                "simple_cross_5",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_other_regions": [2, 2, 2, 0, 0],
+                    }
+                ),
+            ),
+            id="simple_cross_5",
+            marks=pytest.mark.skip("TODO: fix decorrelation skip_levels bug"),
+        ),
+        pytest.param(
+            (
+                simple_cross_6,
+                None,
+                "simple_cross_6",
+                lambda: pd.DataFrame(
+                    {
+                        "n_pairs": [22],
+                    }
+                ),
+            ),
+            id="simple_cross_6",
+        ),
+        pytest.param(
+            (
+                simple_cross_7,
+                None,
+                "simple_cross_7",
+                lambda: pd.DataFrame(
+                    {
+                        "original_order_key": [13569, 74754, 112352, 113347, 122566],
+                        "n_other_orders": [1] * 5,
+                    }
+                ),
+            ),
+            id="simple_cross_7",
         ),
         pytest.param(
             (

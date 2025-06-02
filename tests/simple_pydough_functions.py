@@ -2295,19 +2295,24 @@ def simple_cross_2():
 
 
 def simple_cross_3():
-    # Same as earlier example, but for every combination of nation1 in ASIA and nation2 in AMERICA
+    # Same as earlier example, but for every combination of nation1 in ASIA
+    # and nation2 in AMERICA in April-1992, only consider orders shipped
+    # by "SHIP" mode, only considering customers in debt.
     nation_combinations = (
         regions.WHERE(name == "ASIA")
-        .nations.CALCULATE(supplier_nation=name)
+        .nations.CALCULATE(s_key=key, supplier_nation=name)
         .CROSS(regions.WHERE(name == "AMERICA").nations.CALCULATE(customer_nation=name))
+    )
+    selected_purchases = (
+        customers.WHERE(account_balance < 0)
+        .orders.WHERE((YEAR(order_date) == 1992) & (MONTH(order_date) == 4))
+        .lines.WHERE((supplier.nation_key == s_key) & (ship_mode == "SHIP"))
     )
     return nation_combinations.CALCULATE(
         supplier_nation,
         customer_nation,
-        nation_combinations=COUNT(
-            customers.orders.lines.WHERE(supplier.nation.name == supplier_nation)
-        ),
-    )
+        nation_combinations=COUNT(selected_purchases),
+    ).WHERE(HAS(selected_purchases))
 
 
 def simple_cross_4():
@@ -2323,21 +2328,67 @@ def simple_cross_4():
 
 
 def simple_cross_5():
-    # For every combination of part size & order priority, which order priority had the highest quantity of parts of
-    # that size shipped in 1998?
-    sizes = parts.PARTITION(name="sizes", by=size)
+    # For every combination of part size & order priority, which order priority
+    # had the highest quantity of parts of that size shipped in 1998?
+    # Only consider the 5 smallest part sizes.
+    sizes = parts.PARTITION(name="sizes", by=size).CALCULATE(part_size=size)
     order_info = (
         orders.CALCULATE(order_priority)
-        .WHERE(YEAR(order_date == 1998))
-        .lines.CALCULATE(psize=part.size)
+        .WHERE(YEAR(order_date) == 1998)
+        .lines.WHERE(part.size == part_size)
     )
     best_priority = (
         CROSS(order_info.PARTITION(name="priorities", by=order_priority))
-        .CALCULATE(total_qty=SUM(lines.psize))
+        .CALCULATE(total_qty=SUM(lines.quantity))
         .BEST(by=total_qty.DESC(), per="sizes")
     )
     return sizes.CALCULATE(
-        size,
+        part_size,
         best_order_priority=best_priority.order_priority,
         best_order_priority_qty=best_priority.total_qty,
+    ).TOP_K(5, by=size.ASC())
+
+
+def simple_cross_6():
+    # Count how many combinations of 2 DISTINCT orders exist that were from the
+    # same day from the same customer, only considering orders handled
+    # by any of the clerks whose numbers is at least 900.
+    predicates = INTEGER(clerk[6:]) >= 900
+    original_orders = orders.CALCULATE(
+        original_customer_key=customer_key,
+        original_order_key=key,
+        original_order_date=order_date,
+    ).WHERE(predicates)
+    other_orders_by_same_customer_same_date = original_orders.CROSS(
+        orders.WHERE(predicates)
+    ).WHERE(
+        (customer_key == original_customer_key)
+        & (key > original_order_key)
+        & (order_date == original_order_date)
     )
+    return TPCH.CALCULATE(n_pairs=COUNT(other_orders_by_same_customer_same_date))
+
+
+def simple_cross_7():
+    # For every order with status P, count how many DIFFERENT orders with
+    # status "P" were made by the same
+    # customer on the same date, considering only the first 5 orders
+    # with the highest number of other orders, breaking ties by key
+    original_orders = orders.WHERE(order_status == "P").CALCULATE(
+        original_customer_key=customer_key,
+        original_order_key=key,
+        original_order_date=order_date,
+    )
+    return original_orders.CALCULATE(
+        original_order_key,
+        n_other_orders=COUNT(
+            CROSS(
+                orders.WHERE(
+                    (customer_key == original_customer_key)
+                    & (order_status == "P")
+                    & (key > original_order_key)
+                    & (order_date == original_order_date)
+                )
+            )
+        ),
+    ).TOP_K(5, by=[n_other_orders.DESC(), original_order_key.ASC()])

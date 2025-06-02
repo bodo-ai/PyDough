@@ -1222,8 +1222,14 @@ class Qualifier:
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child, is_cross
         )
+        # If parent is a root, then the child is qualified as a child access
+        # example: a.CALCULATE(x=COUNT(CROSS(b)))
+        #
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_child, qualified_parent, is_child, True
+            unqualified_child,
+            qualified_parent,
+            isinstance(unqualified_parent, UnqualifiedRoot),
+            True,
         )
         return qualified_child
 

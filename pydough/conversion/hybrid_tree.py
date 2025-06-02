@@ -2155,11 +2155,19 @@ class HybridTranslator:
             parent_tree.pipeline[0], HybridPartition
         )
         if partition_edge_case:
-            assert parent_tree.parent is not None
+            next_hybrid: HybridTree
+            if parent_tree.parent is not None:
+                # If the parent tree has a parent, then we can step back
+                # into the parent tree's parent, which is the context for
+                # the partition.
+                next_hybrid = parent_tree.parent
+            else:
+                assert len(self.stack) > 0, "Back reference steps too far back"
+                next_hybrid = self.stack[-1]
             # Treat the partition's parent as the context for the back
             # to step into, as opposed to the partition itself (so the back
             # levels are consistent)
-            self.stack.append(parent_tree.parent)
+            self.stack.append(next_hybrid)
             parent_result = self.make_hybrid_correl_expr(
                 back_expr, collection, steps_taken_so_far
             ).expr
