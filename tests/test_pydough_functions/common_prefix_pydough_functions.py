@@ -543,6 +543,7 @@ def common_prefix_ag():
     # that were shipped by a supplier in the same nation, and the total revenue
     # from those line items. The revenue accounts for the discount, and the
     # cost to the supplier. The result is sorted alphabetically by nation name.
+    # Assume such lineitems will always exist for each nation.
     selected_customers = customers.WHERE(market_segment == "MACHINERY")
     selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
     selected_lines = selected_orders.lines.WHERE(
@@ -561,6 +562,7 @@ def common_prefix_ag():
             n_machine_high_domestic_lines=COUNT(selected_lines),
             total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
         )
+        .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
     )
 

@@ -180,6 +180,12 @@ class HybridSyncretizer:
 
         new_connection_type: ConnectionType = extension_child.connection_type
 
+        if new_connection_type.is_semi or extension_subtree.always_exists():
+            base_child.connection_type = (
+                base_child.connection_type.reconcile_connection_types(
+                    ConnectionType.SEMI
+                )
+            )
         if extension_subtree.always_exists() and new_connection_type not in (
             ConnectionType.SEMI,
             ConnectionType.ANTI,
@@ -261,6 +267,12 @@ class HybridSyncretizer:
         base_subtree: HybridTree = base_child.subtree
 
         new_connection_type: ConnectionType = extension_child.connection_type
+        if new_connection_type.is_semi or extension_subtree.always_exists():
+            base_child.connection_type = (
+                base_child.connection_type.reconcile_connection_types(
+                    ConnectionType.SEMI
+                )
+            )
 
         if (
             extension_subtree.always_exists()
@@ -325,6 +337,12 @@ class HybridSyncretizer:
         base_subtree: HybridTree = base_child.subtree
 
         new_connection_type: ConnectionType = extension_child.connection_type
+        if new_connection_type.is_semi or extension_subtree.always_exists():
+            base_child.connection_type = (
+                base_child.connection_type.reconcile_connection_types(
+                    ConnectionType.SEMI
+                )
+            )
 
         if extension_subtree.always_exists():
             new_connection_type = new_connection_type.reconcile_connection_types(
@@ -384,6 +402,12 @@ class HybridSyncretizer:
         base_subtree: HybridTree = base_child.subtree
 
         new_connection_type: ConnectionType = extension_child.connection_type
+        if new_connection_type.is_semi or extension_subtree.always_exists():
+            base_child.connection_type = (
+                base_child.connection_type.reconcile_connection_types(
+                    ConnectionType.SEMI
+                )
+            )
 
         if extension_subtree.always_exists():
             new_connection_type = new_connection_type.reconcile_connection_types(
