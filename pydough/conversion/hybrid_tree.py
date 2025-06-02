@@ -702,21 +702,25 @@ class HybridTree:
                     return pipeline_idx
         return self._blocking_idx
 
-    def squish_backrefs_into_correl(self, levels_up: int | None) -> None:
+    def squish_backrefs_into_correl(
+        self, levels_up: int | None, levels_out: int
+    ) -> None:
         """
         TODO
         """
         for operation in self.pipeline:
             for term_name, term in operation.terms.items():
-                operation.terms[term_name] = term.squish_backrefs_into_correl(levels_up)
+                operation.terms[term_name] = term.squish_backrefs_into_correl(
+                    levels_up, levels_out
+                )
             if isinstance(operation, HybridFilter):
                 operation.condition = operation.condition.squish_backrefs_into_correl(
-                    levels_up
+                    levels_up, levels_out
                 )
             if isinstance(operation, HybridCalculate):
                 for term_name, term in operation.new_expressions.items():
                     operation.new_expressions[term_name] = operation.terms[term_name]
         for child in self.children:
-            child.subtree.squish_backrefs_into_correl(None)
+            child.subtree.squish_backrefs_into_correl(None, levels_out + 1)
         if self.parent is not None:
-            self.parent.squish_backrefs_into_correl(levels_up)
+            self.parent.squish_backrefs_into_correl(levels_up, levels_out)

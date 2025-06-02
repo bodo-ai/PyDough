@@ -92,7 +92,9 @@ class HybridExpr(ABC):
             return copy.deepcopy(replacements[self])
         return self
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None) -> "HybridExpr":
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ) -> "HybridExpr":
         """
         TODO
         """
@@ -231,7 +233,9 @@ class HybridBackRefExpr(HybridExpr):
     def shift_back(self, levels: int, shift_correl: bool = True) -> HybridExpr:
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
         if level_threshold is not None and self.back_idx >= level_threshold:
             levels_remaining = self.back_idx - level_threshold
             parent_expr: HybridExpr
@@ -294,8 +298,13 @@ class HybridCorrelExpr(HybridExpr):
             result.add(expr.name)
         return result
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
-        return HybridCorrelExpr(self)
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
+        if self.count_correlated_levels() >= depth_threshold:
+            return HybridCorrelExpr(self)
+        else:
+            return self
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -366,12 +375,16 @@ class HybridFunctionExpr(HybridExpr):
             self.args[idx] = arg.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, depth_threshold
+            )
         return self
 
     def contains_correlates(self) -> bool:
@@ -505,19 +518,23 @@ class HybridWindowExpr(HybridExpr):
             self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, depth_threshold
+            )
         for idx, part_arg in enumerate(self.partition_args):
             self.partition_args[idx] = part_arg.squish_backrefs_into_correl(
-                level_threshold
+                level_threshold, depth_threshold
             )
         for idx, order_arg in enumerate(self.order_args):
             self.order_args[idx].expr = order_arg.expr.squish_backrefs_into_correl(
-                level_threshold
+                level_threshold, depth_threshold
             )
         return self
 

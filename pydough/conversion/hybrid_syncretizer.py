@@ -36,7 +36,21 @@ if TYPE_CHECKING:
 
 class HybridSyncretizer:
     """
-    TODO
+    Encapsulated logic for syncretizing subtrees of a hybrid tree to avoid
+    duplicate logic being computed more than once. The core idea is as follows:
+    1. For every tree T, find all candidates (base, extension) such that base
+       and extension are children of T and base is a prefix of extension. Add
+       all such candidates to a list.
+    2. Sort the candidates (base, extension) first by the difference in height
+       (so those with a smaller difference are first), then by the total height
+       of extension (so the largest children are fist).
+    3. Iterate through the sorted candidates and attempt to syncretize each
+       pair in order. Each pair will require additional checks at this time
+       since other attempts that occur first may make later attempts invalid
+       (e.g. because base or extension has already been syncretized onto
+       a different child).
+    4. When attempting to syncretize, verify that the following are true:
+        -
     """
 
     supported_syncretize_operators: dict[
@@ -71,7 +85,7 @@ class HybridSyncretizer:
         child._parent = None
         child._successor = None
         new_child: HybridTree = copy.deepcopy(child)
-        new_child.squish_backrefs_into_correl(levels_up)
+        new_child.squish_backrefs_into_correl(levels_up, 1)
         child._parent = parent
         child._successor = successor
 
@@ -443,6 +457,7 @@ class HybridSyncretizer:
         base_child: HybridConnection = tree.children[base_idx]
         base_subtree: HybridTree = base_child.subtree
         extension_child: HybridConnection = tree.children[extension_idx]
+
         # ANTI are automatically syncretized since the base not being
         # present implies the extension is not present, so we can just
         # have the extension child be pruned without modifying the
@@ -461,35 +476,21 @@ class HybridSyncretizer:
         # Do not syncretize subtrees if their acceptable step ranges do not
         # overlap.
         if (
-            base_child.max_steps is not None
-            and base_child.max_steps <= extension_child.min_steps
-        ) or (
-            extension_child.max_steps is not None
-            and extension_child.max_steps <= base_child.min_steps
+            base_child.max_steps <= extension_child.min_steps
+            or extension_child.max_steps <= base_child.min_steps
         ):
             return False
 
-        new_min_steps: int = base_child.min_steps
-        new_max_steps: int | None = base_child.max_steps
-        if extension_child.min_steps > new_min_steps:
-            new_min_steps = extension_child.min_steps
-        else:
-            if extension_child.subtree.contains_correlates():
-                return False
-        if extension_child.max_steps is not None and (
-            new_max_steps is None or extension_child.max_steps < new_max_steps
-        ):
-            new_max_steps = extension_child.max_steps
-
-        base_child.min_steps = new_min_steps
-        base_child.max_steps = new_max_steps
+        # Contract the range of valid definition locations for the base child
+        # to account for any additional restrictions of the extension child.
+        base_child.min_steps = max(base_child.min_steps, extension_child.min_steps)
+        base_child.max_steps = min(base_child.max_steps, extension_child.max_steps)
 
         # Build the new subtree for the extension child which will be a child
         # of the base subtree instead of the parent tree.
         extension_subtree: HybridTree = self.make_extension_child(
             extension_child.subtree, extension_height, base_subtree
         )
-        # extension_subtree.squish_backrefs_into_correl(extension_height)
 
         match (base_child.connection_type, extension_child.connection_type):
             case (
