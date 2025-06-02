@@ -315,3 +315,29 @@ def bad_unsupported_kwarg2():
 def bad_unsupported_kwarg3():
     # Unsupported keyword argument for non keyword operator
     return nations.CALCULATE(sum=SUM(suppliers.account_balance, wrong_kwarg="sample"))
+
+
+def bad_cross_1():
+    # Using `CROSS` with a not a collection
+    return customers.CROSS(42)
+
+
+def bad_cross_2():
+    # Reason it is bad: not a collection
+    return COUNT(customers).CROSS(regions)
+
+
+def bad_cross_3():
+    # Reason it is bad: the RHS isn't valid PyDough code by itself
+    return customers.CROSS(foo)
+
+
+def bad_cross_4():
+    # Reason it is bad: name collision
+    return regions.CALCULATE(customers=COUNT(nations.customers)).CROSS(customers)
+
+
+def bad_cross_5():
+    # Reason it is bad: name collision
+    r = regions.CALCULATE(name)
+    return r.CROSS(r)

@@ -8,6 +8,12 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 from bad_pydough_functions import (
+    bad_cross_1,
+    bad_cross_2,
+    bad_cross_3,
+    # TODO: check if these are still needed
+    # bad_cross_4,
+    # bad_cross_5,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -76,6 +82,7 @@ from simple_pydough_functions import (
     simple_cross_8,
     simple_cross_9,
     simple_cross_10,
+    simple_cross_11,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -1827,7 +1834,6 @@ from pydough.unqualified import (
                 "simple_cross_9",
                 lambda: pd.DataFrame(
                     {
-                        # TODO: fix this test
                         "n1": ["ALGERIA"] * 4 + ["ARGENTINA"] * 4 + ["BRAZIL"] * 2,
                         "n2": [
                             "ETHIOPIA",
@@ -1865,6 +1871,19 @@ from pydough.unqualified import (
                 ),
             ),
             id="simple_cross_10",
+        ),
+        pytest.param(
+            (
+                simple_cross_11,
+                None,
+                "simple_cross_11",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [1] * 10,
+                    }
+                ),
+            ),
+            id="simple_cross_11",
         ),
         pytest.param(
             (
@@ -2210,6 +2229,36 @@ def test_pipeline_e2e_tpch_custom(
             "Duplicate column names found in root.",
             id="bad_columns_5",
         ),
+        pytest.param(
+            bad_cross_1,
+            None,
+            "Cannot qualify int: 42",
+            id="bad_cross_1",
+        ),
+        pytest.param(
+            bad_cross_2,
+            None,
+            "Expected a collection, but received an expression",
+            id="bad_cross_2",
+        ),
+        pytest.param(
+            bad_cross_3,
+            None,
+            "Unrecognized term of graph 'TPCH': 'foo'",
+            id="bad_cross_3",
+        ),
+        # pytest.param(
+        #     bad_cross_4,
+        #     None,
+        #     "XXX",
+        #     id="bad_cross_4",
+        # ),
+        # pytest.param(
+        #     bad_cross_5,
+        #     None,
+        #     "XXX",
+        #     id="bad_cross_5",
+        # ),
     ],
 )
 def test_pipeline_e2e_errors(
