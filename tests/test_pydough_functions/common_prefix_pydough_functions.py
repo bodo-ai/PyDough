@@ -586,6 +586,7 @@ def common_prefix_ah():
             n_machine_high_domestic_lines=COUNT(selected_lines),
             total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
         )
+        .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
     )
 
@@ -609,6 +610,7 @@ def common_prefix_ai():
             n_machine_high_domestic_lines=COUNT(selected_lines),
             total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
         )
+        .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
     )
 
@@ -632,6 +634,7 @@ def common_prefix_aj():
             n_machine_high_orders=COUNT(selected_orders),
             total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
         )
+        .WHERE(HAS(selected_records))
         .ORDER_BY(nation_name.ASC())
     )
 

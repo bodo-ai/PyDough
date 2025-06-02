@@ -32,6 +32,7 @@ from .hybrid_expressions import (
     HybridExpr,
     HybridFunctionExpr,
     HybridLiteralExpr,
+    HybridRefExpr,
     HybridWindowExpr,
 )
 from .hybrid_operations import (
@@ -263,7 +264,7 @@ class HybridTree:
             # child connection.
             agg_idx: int = 0
             while True:
-                agg_name = f"agg_{agg_name}"
+                agg_name = f"agg_{agg_idx}"
                 if agg_name not in child_connection.aggs:
                     break
                 agg_idx += 1
@@ -696,10 +697,12 @@ class HybridTree:
                     and has_correlated_window_function
                 ):
                     return pipeline_idx
-                if isinstance(operation, HybridCalculate) and any(
-                    name in operation.terms for name in correl_names
-                ):
-                    return pipeline_idx
+                if isinstance(operation, HybridCalculate):
+                    for name in correl_names:
+                        if name in operation.new_expressions:
+                            term: HybridExpr = operation.new_expressions[name]
+                            if not isinstance(term, HybridRefExpr) or term.name != name:
+                                return pipeline_idx
         return self._blocking_idx
 
     def squish_backrefs_into_correl(

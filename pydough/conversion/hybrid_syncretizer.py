@@ -628,12 +628,12 @@ class HybridSyncretizer:
                         subtree = subtree.parent
                         total_height += 1
                     syncretize_options.append(
-                        (extension_height, -total_height, extension_idx, base_idx)
+                        (-total_height, extension_height, extension_idx, base_idx)
                     )
         children_to_delete: set[int] = set()
         if len(syncretize_options) > 0:
             syncretize_options.sort()
-            for extension_height, _, extension_idx, base_idx in syncretize_options:
+            for _, extension_height, extension_idx, base_idx in syncretize_options:
                 if (
                     extension_idx in children_to_delete
                     or base_idx in children_to_delete
