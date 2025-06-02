@@ -100,10 +100,11 @@ class HybridTree:
                 lines.append(
                     f"{prefix}  definition range: ({child.min_steps}, {child.max_steps})"
                 )
-            if child.subtree.agg_keys is not None:
-                lines.append(f"{prefix}  aggregate: {child.subtree.agg_keys}")
-            if len(child.aggs):
-                lines.append(f"{prefix}  aggs: {child.aggs}:")
+            if child.connection_type.is_aggregation:
+                if child.subtree.agg_keys is not None:
+                    lines.append(f"{prefix}  aggregate: {child.subtree.agg_keys}")
+                if len(child.aggs):
+                    lines.append(f"{prefix}  aggs: {child.aggs}:")
             if child.subtree.join_keys is not None:
                 lines.append(f"{prefix}  join: {child.subtree.join_keys}")
             if child.subtree.general_join_condition is not None:
@@ -395,8 +396,6 @@ class HybridTree:
         connection: HybridConnection = HybridConnection(
             self, child, connection_type, min_steps, max_steps, {}
         )
-        if not connection_type.is_aggregation:
-            child.agg_keys = None
         self._children.append(connection)
         return len(self.children) - 1
 

@@ -204,6 +204,13 @@ class HybridSyncretizer:
                 tree, extension_idx, new_connection_type.is_semi
             )
             new_connection_type = ConnectionType.AGGREGATION
+        # If an aggregation is being added to a SEMI join, switch the SEMI
+        # join to either a singular-only-match or aggregation-only-match.
+        if base_child.connection_type == ConnectionType.SEMI:
+            if base_subtree.is_singular():
+                base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
+            else:
+                base_child.connection_type = ConnectionType.AGGREGATION_ONLY_MATCH
 
         # If an aggregation is being added to a SEMI join, switch the SEMI
         # join to an aggregation-only-match.
@@ -218,37 +225,90 @@ class HybridSyncretizer:
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
         idx: int = 0
+        old_child_ref: HybridExpr
         for agg_name, agg in extension_child.aggs.items():
-            extension_op, base_op = self.supported_syncretize_operators[agg.operator]
+            # Special Case: decompose AVG into SUM / COUNT
+            if agg.operator == pydop.AVG:
+                # Insert the SUM and COUNT aggregation calls into the extension
+                sum_agg_name: str = self.translator.gen_agg_name(extension_child)
+                count_agg_name: str = self.translator.gen_agg_name(extension_child)
+                sum_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    pydop.SUM, agg.args, agg.typ
+                )
+                count_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    pydop.COUNT, agg.args, agg.typ
+                )
+                new_extension_child.aggs[sum_agg_name] = sum_agg
+                new_extension_child.aggs[count_agg_name] = count_agg
 
-            # Insert the bottom aggregation call into the extension
-            extension_agg_name: str = self.translator.gen_agg_name(extension_child)
-            extension_agg: HybridFunctionExpr = HybridFunctionExpr(
-                extension_op, agg.args, agg.typ
-            )
-            new_extension_child.aggs[extension_agg_name] = extension_agg
+                sum_child_expr: HybridExpr = HybridChildRefExpr(
+                    sum_agg_name, new_child_idx, sum_agg.typ
+                )
+                count_child_expr: HybridExpr = HybridChildRefExpr(
+                    count_agg_name, new_child_idx, count_agg.typ
+                )
+                sum_switch_ref: HybridExpr = self.translator.inject_expression(
+                    base_subtree, sum_child_expr, idx == 0
+                )
+                count_switch_ref: HybridExpr = self.translator.inject_expression(
+                    base_subtree, count_child_expr, False
+                )
 
-            child_expr: HybridExpr = HybridChildRefExpr(
-                extension_agg_name, new_child_idx, extension_agg.typ
-            )
-            switch_ref: HybridExpr = self.translator.inject_expression(
-                base_subtree, child_expr, idx == 0
-            )
+                # Insert the top SUM calls & division into the base
+                base_sum_agg_name: str = self.translator.gen_agg_name(base_child)
+                base_count_agg_name: str = self.translator.gen_agg_name(base_child)
+                base_sum_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    pydop.SUM, [sum_switch_ref], agg.typ
+                )
+                base_count_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    pydop.SUM, [count_switch_ref], agg.typ
+                )
+                base_child.aggs[base_sum_agg_name] = base_sum_agg
+                base_child.aggs[base_count_agg_name] = base_count_agg
 
-            # Insert the top aggregation call into the base
-            base_agg_name: str = self.translator.gen_agg_name(base_child)
-            base_agg: HybridFunctionExpr = HybridFunctionExpr(
-                base_op, [switch_ref], agg.typ
-            )
-            base_child.aggs[base_agg_name] = base_agg
+                old_child_ref = HybridChildRefExpr(agg_name, extension_idx, agg.typ)
+                new_child_sum_ref: HybridExpr = HybridChildRefExpr(
+                    base_sum_agg_name, base_idx, agg.typ
+                )
+                new_child_count_ref: HybridExpr = HybridChildRefExpr(
+                    base_count_agg_name, base_idx, agg.typ
+                )
+                quotient: HybridExpr = HybridFunctionExpr(
+                    pydop.DIV, [new_child_sum_ref, new_child_count_ref], agg.typ
+                )
+                remapping[old_child_ref] = quotient
 
-            old_child_ref: HybridExpr = HybridChildRefExpr(
-                agg_name, extension_idx, agg.typ
-            )
-            new_child_ref: HybridExpr = HybridChildRefExpr(
-                base_agg_name, base_idx, agg.typ
-            )
-            remapping[old_child_ref] = new_child_ref
+            else:
+                extension_op, base_op = self.supported_syncretize_operators[
+                    agg.operator
+                ]
+
+                # Insert the bottom aggregation call into the extension
+                extension_agg_name: str = self.translator.gen_agg_name(extension_child)
+                extension_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    extension_op, agg.args, agg.typ
+                )
+                new_extension_child.aggs[extension_agg_name] = extension_agg
+
+                child_expr: HybridExpr = HybridChildRefExpr(
+                    extension_agg_name, new_child_idx, extension_agg.typ
+                )
+                switch_ref: HybridExpr = self.translator.inject_expression(
+                    base_subtree, child_expr, idx == 0
+                )
+
+                # Insert the top aggregation call into the base
+                base_agg_name: str = self.translator.gen_agg_name(base_child)
+                base_agg: HybridFunctionExpr = HybridFunctionExpr(
+                    base_op, [switch_ref], agg.typ
+                )
+                base_child.aggs[base_agg_name] = base_agg
+
+                old_child_ref = HybridChildRefExpr(agg_name, extension_idx, agg.typ)
+                new_child_ref: HybridExpr = HybridChildRefExpr(
+                    base_agg_name, base_idx, agg.typ
+                )
+                remapping[old_child_ref] = new_child_ref
             idx += 1
 
     def syncretize_agg_onto_singular(
@@ -287,9 +347,12 @@ class HybridSyncretizer:
             # base child into one that only preserves matches.
             base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
         # If an aggregation is being added to a SEMI join, switch the SEMI
-        # join to an aggregation-only-match.
+        # join to either a singular-only-match or aggregation-only-match.
         if base_child.connection_type == ConnectionType.SEMI:
-            base_child.connection_type = ConnectionType.AGGREGATION
+            if base_subtree.is_singular():
+                base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
+            else:
+                base_child.connection_type = ConnectionType.AGGREGATION_ONLY_MATCH
 
         min_steps: int = base_subtree.get_min_child_idx(extension_subtree)
         max_steps: int = len(base_subtree.pipeline)
@@ -348,6 +411,9 @@ class HybridSyncretizer:
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
+
+        elif new_connection_type == ConnectionType.SEMI:
+            new_connection_type = ConnectionType.SINGULAR_ONLY_MATCH
 
         # If a singular is being added to a SEMI join, switch the SEMI
         # join to an singular-only-match.
@@ -494,6 +560,7 @@ class HybridSyncretizer:
 
         all_aggs_syncretizable: bool = all(
             agg.operator in self.supported_syncretize_operators
+            or agg.operator == pydop.AVG
             for agg in extension_child.aggs.values()
         )
 
