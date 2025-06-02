@@ -340,4 +340,31 @@ def bad_cross_4():
 def bad_cross_5():
     # Reason it is bad: name collision
     r = regions.CALCULATE(name)
-    return r.CROSS(r)
+    return r.CROSS(r).CALCULATE(name2=r.name)
+
+
+def bad_cross_6():
+    # Reason it is bad: CROSS unrelated collections
+    return suppliers.CROSS(parts).CALCULATE(
+        sup_name=suppliers.name, part_name=parts.name
+    )
+
+
+def bad_cross_7():
+    # CROSS unused
+    return CROSS(regions)
+
+
+def bad_cross_8():
+    # Output column not available in the CROSSed collection
+    return regions.CALCULATE(r1=name).CROSS(nations).CALCULATE(r_key, r2=name)
+
+
+def bad_cross_9():
+    # Use output of CROSS as an output column
+    return regions.CALCULATE(new_col=CROSS(regions))
+
+
+def bad_cross_10():
+    # Aggregation on Ambiguous column
+    return regions.CROSS(regions).CALCULATE(total=COUNT(name))

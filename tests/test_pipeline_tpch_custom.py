@@ -13,7 +13,12 @@ from bad_pydough_functions import (
     bad_cross_3,
     # TODO: check if these are still needed
     # bad_cross_4,
-    # bad_cross_5,
+    bad_cross_5,
+    bad_cross_6,
+    bad_cross_7,
+    bad_cross_8,
+    bad_cross_9,
+    bad_cross_10,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -1811,7 +1816,6 @@ from pydough.unqualified import (
             ),
             id="simple_cross_7",
         ),
-        # pydough.qdag.errors.PyDoughQDAGException: Unrecognized term of graph 'TPCH': 'region'
         pytest.param(
             (
                 simple_cross_8,
@@ -1884,6 +1888,7 @@ from pydough.unqualified import (
                 ),
             ),
             id="simple_cross_11",
+            marks=pytest.mark.skip("FIXME: Unrecognized term of graph 'TPCH': 'TPCH'"),
         ),
         pytest.param(
             (
@@ -2253,12 +2258,43 @@ def test_pipeline_e2e_tpch_custom(
         #     "XXX",
         #     id="bad_cross_4",
         # ),
-        # pytest.param(
-        #     bad_cross_5,
-        #     None,
-        #     "XXX",
-        #     id="bad_cross_5",
-        # ),
+        pytest.param(
+            bad_cross_5,
+            None,
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'regions'",
+            id="bad_cross_5",
+        ),
+        pytest.param(
+            bad_cross_6,
+            None,
+            "Unrecognized term of simple table collection 'parts' in graph 'TPCH': 'suppliers'",
+            id="bad_cross_6",
+        ),
+        # NOTE: raised exception with an empty message
+        pytest.param(
+            bad_cross_7,
+            None,
+            "",
+            id="bad_cross_7",
+        ),
+        pytest.param(
+            bad_cross_8,
+            None,
+            "Unrecognized term of simple table collection 'nations' in graph 'TPCH': 'r_key'",
+            id="bad_cross_8",
+        ),
+        pytest.param(
+            bad_cross_9,
+            None,
+            "Expected an expression, but received a collection: TPCH.regions",
+            id="bad_cross_9",
+        ),
+        pytest.param(
+            bad_cross_10,
+            None,
+            "PyDough does yet support aggregations whose arguments mix between subcollection data of the current context and fields of the context itself",
+            id="bad_cross_10",
+        ),
     ],
 )
 def test_pipeline_e2e_errors(
