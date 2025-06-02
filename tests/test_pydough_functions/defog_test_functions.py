@@ -1413,11 +1413,7 @@ def impl_defog_ewallet_adv11():
     """
     selected_sessions = sessions.WHERE(
         (session_start >= "2023-06-01") & (session_end < "2023-06-08")
-    ).CALCULATE(
-        duration=DATEDIFF("seconds", session_start, session_end)
-    )  # Pydough cannot convert dates to seconds directly, DATEDIFF
-
-    # Calculate the total session duration for each user and order by the total duration in descending order
+    ).CALCULATE(duration=DATEDIFF("seconds", session_start, session_end))
     return (
         users.WHERE(HAS(selected_sessions))
         .CALCULATE(uid=uid, total_duration=SUM(selected_sessions.duration))
@@ -1462,8 +1458,6 @@ def impl_defog_ewallet_adv14():
     past_month_transactions = transactions.WHERE(
         DATEDIFF("months", created_at, "now") == 1
     )
-
-    successful_transactions = past_month_transactions.WHERE(status == "success")
 
     return Ewallet.CALCULATE(
         SUM(past_month_transactions.status == "success")
@@ -1645,10 +1639,6 @@ def impl_defog_ewallet_basic9():
     sender_type = 0? Return the country, number of distinct users who sent,
     and total transaction amount.
     """
-    transactions_by_sending_users = transactions.WHERE(sender_type == 0).CALCULATE(
-        country=sending_user.country
-    )
-
     return (
         transactions.WHERE(sender_type == 0)
         .CALCULATE(country=sending_user.country)
@@ -1745,10 +1735,9 @@ def impl_defog_ewallet_gen5():
     Which users did not get a notification within the first year of signing up?
     Return their usernames, emails and signup dates.
     """
-    selected_notifs = notifications.WHERE(
-        (created_at >= user.created_at)
-        & (DATETIME(user.created_at, "+1 year") >= created_at)
+    selected_notifications = notifications.WHERE(
+        MONOTONIC(user.created_at, created_at, DATETIME(user.created_at, "+1 year"))
     )
-    return users.WHERE(HASNOT(selected_notifs)).CALCULATE(
+    return users.WHERE(HASNOT(selected_notifications)).CALCULATE(
         username=username, email=email, created_at=created_at
     )
