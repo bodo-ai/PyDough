@@ -368,7 +368,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q2,
-            "nations.CALCULATE(n_name=name).WHERE((region.name == 'EUROPE')).suppliers.CALCULATE(s_acctbal=account_balance, s_name=name, s_address=address, s_phone=phone, s_comment=comment).supply_records.CALCULATE(supply_cost=supply_cost).part.WHERE((ENDSWITH(part_type, 'BRASS') & (size == 15))).PARTITION(name='groups', by=(key)).CALCULATE(best_cost=MIN(part.supply_cost)).part.WHERE((((supply_cost == best_cost) & ENDSWITH(part_type, 'BRASS')) & (size == 15))).CALCULATE(S_ACCTBAL=s_acctbal, S_NAME=s_name, N_NAME=n_name, P_PARTKEY=key, P_MFGR=manufacturer, S_ADDRESS=s_address, S_PHONE=s_phone, S_COMMENT=s_comment).TOP_K(10, by=(S_ACCTBAL.DESC(na_pos='last'), N_NAME.ASC(na_pos='first'), S_NAME.ASC(na_pos='first'), P_PARTKEY.ASC(na_pos='first')))",
+            "parts.WHERE((ENDSWITH(part_type, 'BRASS') & (size == 15))).CALCULATE(P_PARTKEY=key, P_MFGR=manufacturer).supply_records.WHERE((supplier.nation.region.name == 'EUROPE')).BEST(by=(supply_cost.ASC(na_pos='first')), per=True, allow_ties=True).CALCULATE(S_ACCTBAL=supplier.account_balance, S_NAME=supplier.name, N_NAME=supplier.nation.name, P_PARTKEY=P_PARTKEY, P_MFGR=P_MFGR, S_ADDRESS=supplier.address, S_PHONE=supplier.phone, S_COMMENT=supplier.comment).TOP_K(10, by=(S_ACCTBAL.DESC(na_pos='last'), N_NAME.ASC(na_pos='first'), S_NAME.ASC(na_pos='first'), P_PARTKEY.ASC(na_pos='first')))",
             id="tpch_q2",
         ),
         pytest.param(
@@ -393,7 +393,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q7,
-            "lines.CALCULATE(supp_nation=supplier.nation.name, cust_nation=order.customer.nation.name, l_year=YEAR(ship_date), volume=(extended_price * (1 - discount))).WHERE((((ship_date >= datetime.date(1995, 1, 1)) & (ship_date <= datetime.date(1996, 12, 31))) & (((supp_nation == 'FRANCE') & (cust_nation == 'GERMANY')) | ((supp_nation == 'GERMANY') & (cust_nation == 'FRANCE'))))).PARTITION(name='groups', by=(supp_nation, cust_nation, l_year)).CALCULATE(SUPP_NATION=supp_nation, CUST_NATION=cust_nation, L_YEAR=l_year, REVENUE=SUM(lines.volume)).ORDER_BY(SUPP_NATION.ASC(na_pos='first'), CUST_NATION.ASC(na_pos='first'), L_YEAR.ASC(na_pos='first'))",
+            "lines.CALCULATE(supp_nation=supplier.nation.name, cust_nation=order.customer.nation.name, l_year=YEAR(ship_date), volume=(extended_price * (1 - discount))).WHERE((ISIN(YEAR(ship_date), [1995, 1996]) & (((supp_nation == 'FRANCE') & (cust_nation == 'GERMANY')) | ((supp_nation == 'GERMANY') & (cust_nation == 'FRANCE'))))).PARTITION(name='groups', by=(supp_nation, cust_nation, l_year)).CALCULATE(SUPP_NATION=supp_nation, CUST_NATION=cust_nation, L_YEAR=l_year, REVENUE=SUM(lines.volume)).ORDER_BY(SUPP_NATION.ASC(na_pos='first'), CUST_NATION.ASC(na_pos='first'), L_YEAR.ASC(na_pos='first'))",
             id="tpch_q7",
         ),
         pytest.param(

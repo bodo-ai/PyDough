@@ -108,25 +108,22 @@ from tests.testing_utilities import (
             impl_tpch_q2,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='groups', by=key]
-  │ └─┬─ AccessChild
-  │   ├─── TableCollection[nations]
-  │   ├─── Calculate[n_name=name]
-  │   └─┬─ Where[$1.name == 'EUROPE']
-  │     ├─┬─ AccessChild
-  │     │ └─── SubCollection[region]
-  │     ├─── SubCollection[suppliers]
-  │     └─┬─ Calculate[s_acctbal=account_balance, s_name=name, s_address=address, s_phone=phone, s_comment=comment]
-  │       ├─── SubCollection[supply_records]
-  │       └─┬─ Calculate[supply_cost=supply_cost]
-  │         ├─── SubCollection[part]
-  │         └─── Where[ENDSWITH(part_type, 'BRASS') & (size == 15)]
-  └─┬─ Calculate[best_cost=MIN($1.supply_cost)]
-    ├─┬─ AccessChild
-    │ └─── PartitionChild[part]
-    ├─── PartitionChild[part]
-    ├─── Where[(supply_cost == best_cost) & ENDSWITH(part_type, 'BRASS') & (size == 15)]
-    ├─── Calculate[S_ACCTBAL=s_acctbal, S_NAME=s_name, N_NAME=n_name, P_PARTKEY=key, P_MFGR=manufacturer, S_ADDRESS=s_address, S_PHONE=s_phone, S_COMMENT=s_comment]
+  ├─── TableCollection[parts]
+  ├─── Where[ENDSWITH(part_type, 'BRASS') & (size == 15)]
+  └─┬─ Calculate[P_PARTKEY=key, P_MFGR=manufacturer]
+    ├─── SubCollection[supply_records]
+    ├─┬─ Where[$1.name == 'EUROPE']
+    │ └─┬─ AccessChild
+    │   └─┬─ SubCollection[supplier]
+    │     └─┬─ SubCollection[nation]
+    │       └─── SubCollection[region]
+    ├─── Where[RANKING(by=(supply_cost.ASC(na_pos='first')), levels=1, allow_ties=True) == 1]
+    ├─┬─ Calculate[S_ACCTBAL=$1.account_balance, S_NAME=$1.name, N_NAME=$2.name, P_PARTKEY=P_PARTKEY, P_MFGR=P_MFGR, S_ADDRESS=$1.address, S_PHONE=$1.phone, S_COMMENT=$1.comment]
+    │ ├─┬─ AccessChild
+    │ │ └─── SubCollection[supplier]
+    │ └─┬─ AccessChild
+    │   └─┬─ SubCollection[supplier]
+    │     └─── SubCollection[nation]
     └─── TopK[10, S_ACCTBAL.DESC(na_pos='last'), N_NAME.ASC(na_pos='first'), S_NAME.ASC(na_pos='first'), P_PARTKEY.ASC(na_pos='first')]
 """,
             id="tpch_q2",
@@ -231,7 +228,7 @@ from tests.testing_utilities import (
   │   │   └─┬─ SubCollection[order]
   │   │     └─┬─ SubCollection[customer]
   │   │       └─── SubCollection[nation]
-  │   └─── Where[(ship_date >= datetime.date(1995, 1, 1)) & (ship_date <= datetime.date(1996, 12, 31)) & (((supp_nation == 'FRANCE') & (cust_nation == 'GERMANY')) | ((supp_nation == 'GERMANY') & (cust_nation == 'FRANCE')))]
+  │   └─── Where[ISIN(YEAR(ship_date), [1995, 1996]) & (((supp_nation == 'FRANCE') & (cust_nation == 'GERMANY')) | ((supp_nation == 'GERMANY') & (cust_nation == 'FRANCE')))]
   ├─┬─ Calculate[SUPP_NATION=supp_nation, CUST_NATION=cust_nation, L_YEAR=l_year, REVENUE=SUM($1.volume)]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[lines]
