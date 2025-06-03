@@ -1,4 +1,4 @@
-WITH _s6 AS (
+WITH _t4 AS (
   SELECT
     ca_dt AS calendar_day
   FROM main.calendar
@@ -11,7 +11,7 @@ WITH _s6 AS (
   SELECT
     COUNT() AS agg_2,
     _s0.calendar_day
-  FROM _s6 AS _s0
+  FROM _t4 AS _s0
   JOIN main.calendar AS calendar
     ON calendar.ca_dt >= DATE_ADD(CAST(_s0.calendar_day AS TIMESTAMP), -6, 'MONTH')
   JOIN main.devices AS devices
@@ -24,7 +24,7 @@ WITH _s6 AS (
   SELECT
     COUNT() AS agg_5,
     _s8.calendar_day
-  FROM _s6 AS _s8
+  FROM _t4 AS _s8
   JOIN main.incidents AS incidents
     ON _s8.calendar_day = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   JOIN main.devices AS devices
@@ -37,18 +37,18 @@ WITH _s6 AS (
   SELECT
     SUM(_s7.agg_2) AS agg_4,
     SUM(_s15.agg_5) AS agg_7,
-    EXTRACT(MONTH FROM _s6.calendar_day) AS month,
-    EXTRACT(YEAR FROM _s6.calendar_day) AS year
-  FROM _s6 AS _s6
+    EXTRACT(MONTH FROM _t4.calendar_day) AS month,
+    EXTRACT(YEAR FROM _t4.calendar_day) AS year
+  FROM _t4 AS _t4
   LEFT JOIN _s7 AS _s7
-    ON _s6.calendar_day = _s7.calendar_day
+    ON _s7.calendar_day = _t4.calendar_day
   LEFT JOIN _s15 AS _s15
-    ON _s15.calendar_day = _s6.calendar_day
+    ON _s15.calendar_day = _t4.calendar_day
   WHERE
-    EXTRACT(YEAR FROM _s6.calendar_day) IN (2020, 2021)
+    EXTRACT(YEAR FROM _t4.calendar_day) IN (2020, 2021)
   GROUP BY
-    EXTRACT(MONTH FROM _s6.calendar_day),
-    EXTRACT(YEAR FROM _s6.calendar_day)
+    EXTRACT(MONTH FROM _t4.calendar_day),
+    EXTRACT(YEAR FROM _t4.calendar_day)
 )
 SELECT
   CONCAT_WS(

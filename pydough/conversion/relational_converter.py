@@ -647,7 +647,7 @@ class RelTranslation:
                 and hybrid.pipeline[0].child_idx == child_idx
             ):
                 continue
-            if child.min_steps == pipeline_idx:
+            if pipeline_idx == (child.max_steps - 1):
                 self.stack.append(context)
                 child_output = self.rel_translation(
                     child.subtree, len(child.subtree.pipeline) - 1
