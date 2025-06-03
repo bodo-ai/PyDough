@@ -856,8 +856,32 @@ class HybridTranslator:
         # When the number of levels remaining to step back is 0, we have
         # reached the targeted ancestor, so we add the unique terms.
         if levels_remaining == 0:
+            successor_join_mapping: dict[HybridExpr, HybridExpr] = {}
+            if levels_so_far > 0 and hybrid.successor is not None:
+                successor: HybridTree = hybrid.successor
+                if isinstance(
+                    successor.pipeline[0], HybridCollectionAccess
+                ) and isinstance(successor.pipeline[0].collection, SubCollection):
+                    sub_property: SubcollectionRelationshipMetadata = (
+                        successor.pipeline[0].collection.subcollection_property
+                    )
+                    if isinstance(sub_property, SimpleJoinMetadata):
+                        join_keys = HybridTranslator.get_subcollection_join_keys(
+                            sub_property,
+                            hybrid.pipeline[-1],
+                            successor.pipeline[0],
+                        )
+                        for lhs, rhs in join_keys:
+                            successor_join_mapping[lhs] = rhs
             for unique_term in sorted(hybrid.pipeline[-1].unique_exprs, key=str):
-                partition_args.append(unique_term.shift_back(levels_so_far))
+                if unique_term in successor_join_mapping:
+                    partition_args.append(
+                        successor_join_mapping[unique_term].shift_back(
+                            levels_so_far - 1
+                        )
+                    )
+                else:
+                    partition_args.append(unique_term.shift_back(levels_so_far))
         elif hybrid.parent is None:
             # If we have not reached the target level yet, but we have reached
             # the top level of the tree, we need to step out of a child subtree
@@ -1426,12 +1450,11 @@ class HybridTranslator:
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
 
-    @staticmethod
-    def run_hybrid_decorrelation(hybrid: "HybridTree") -> "HybridTree":
+    def run_hybrid_decorrelation(self, hybrid: "HybridTree") -> None:
         """
         Invokes the procedure to remove correlated references from a hybrid tree
         before relational conversion if those correlated references are invalid
-        (e.g. not from a semi/anti join).
+        (e.g. not from a semi/anti join). The transformation is done in-place.
 
         Args:
             `hybrid`: The hybrid tree to remove correlated references from.
@@ -1443,7 +1466,7 @@ class HybridTranslator:
         """
         decorr: HybridDecorrelater = HybridDecorrelater()
         decorr.find_correlated_children(hybrid)
-        return decorr.decorrelate_hybrid_tree(hybrid)
+        decorr.decorrelate_hybrid_tree(hybrid)
 
     def convert_qdag_to_hybrid(self, node: PyDoughCollectionQDAG) -> HybridTree:
         """

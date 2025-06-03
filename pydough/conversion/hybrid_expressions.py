@@ -24,7 +24,7 @@ from pydough.qdag import (
     ColumnProperty,
     Literal,
 )
-from pydough.types import PyDoughType
+from pydough.types import BooleanType, NumericType, PyDoughType
 
 
 class HybridExpr(ABC):
@@ -92,7 +92,9 @@ class HybridExpr(ABC):
             return copy.deepcopy(replacements[self])
         return self
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None) -> "HybridExpr":
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ) -> "HybridExpr":
         """
         TODO
         """
@@ -127,6 +129,12 @@ class HybridExpr(ABC):
     def contains_window_functions(self) -> bool:
         """
         Returns whether this expression contains any window functions.
+        """
+        return False
+
+    def always_true(self) -> bool:
+        """
+        Returns whether this expression always evaluates to True.
         """
         return False
 
@@ -231,7 +239,9 @@ class HybridBackRefExpr(HybridExpr):
     def shift_back(self, levels: int, shift_correl: bool = True) -> HybridExpr:
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
         if level_threshold is not None and self.back_idx >= level_threshold:
             levels_remaining = self.back_idx - level_threshold
             parent_expr: HybridExpr
@@ -294,8 +304,13 @@ class HybridCorrelExpr(HybridExpr):
             result.add(expr.name)
         return result
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
-        return HybridCorrelExpr(self)
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
+        if self.count_correlated_levels() >= depth_threshold:
+            return HybridCorrelExpr(self)
+        else:
+            return self
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -309,6 +324,9 @@ class HybridLiteralExpr(HybridExpr):
 
     def to_string(self):
         return repr(self.literal)
+
+    def always_true(self) -> bool:
+        return isinstance(self.typ, BooleanType) and bool(self.literal.value)
 
 
 class HybridFunctionExpr(HybridExpr):
@@ -366,12 +384,16 @@ class HybridFunctionExpr(HybridExpr):
             self.args[idx] = arg.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, depth_threshold
+            )
         return self
 
     def contains_correlates(self) -> bool:
@@ -394,6 +416,39 @@ class HybridFunctionExpr(HybridExpr):
 
     def has_correlated_window_function(self, levels: int) -> bool:
         return any(arg.has_correlated_window_function(levels) for arg in self.args)
+
+    def always_true(self) -> bool:
+        match self.operator:
+            case pydop.BAN:
+                return all(arg.always_true() for arg in self.args)
+            case pydop.BOR:
+                return any(arg.always_true() for arg in self.args)
+            case pydop.EQU:
+                if len(self.args) != 2:
+                    return False
+                lhs, rhs = self.args
+                lit: HybridLiteralExpr
+                win: HybridWindowExpr
+                if isinstance(lhs, HybridLiteralExpr) and isinstance(
+                    rhs, HybridWindowExpr
+                ):
+                    lit, win = lhs, rhs
+                elif isinstance(rhs, HybridLiteralExpr) and isinstance(
+                    lhs, HybridWindowExpr
+                ):
+                    lit, win = rhs, lhs
+                else:
+                    return False
+                if not (isinstance(lit.typ, NumericType) and lit.literal.value == 1):
+                    return False
+                if win.window_func != pydop.RANKING or len(win.partition_args) == 0:
+                    return False
+                return all(
+                    part_arg.count_correlated_levels() == 0
+                    for part_arg in win.partition_args
+                )
+            case _:
+                return False
 
 
 class HybridWindowExpr(HybridExpr):
@@ -505,19 +560,23 @@ class HybridWindowExpr(HybridExpr):
             self.order_args[idx].expr = order_arg.expr.replace_expressions(replacements)
         return self
 
-    def squish_backrefs_into_correl(self, level_threshold: int | None):
+    def squish_backrefs_into_correl(
+        self, level_threshold: int | None, depth_threshold: int
+    ):
         """
         TODO
         """
         for idx, arg in enumerate(self.args):
-            self.args[idx] = arg.squish_backrefs_into_correl(level_threshold)
+            self.args[idx] = arg.squish_backrefs_into_correl(
+                level_threshold, depth_threshold
+            )
         for idx, part_arg in enumerate(self.partition_args):
             self.partition_args[idx] = part_arg.squish_backrefs_into_correl(
-                level_threshold
+                level_threshold, depth_threshold
             )
         for idx, order_arg in enumerate(self.order_args):
             self.order_args[idx].expr = order_arg.expr.squish_backrefs_into_correl(
-                level_threshold
+                level_threshold, depth_threshold
             )
         return self
 

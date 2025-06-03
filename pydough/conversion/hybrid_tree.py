@@ -32,6 +32,7 @@ from .hybrid_expressions import (
     HybridExpr,
     HybridFunctionExpr,
     HybridLiteralExpr,
+    HybridRefExpr,
     HybridWindowExpr,
 )
 from .hybrid_operations import (
@@ -99,10 +100,11 @@ class HybridTree:
                 lines.append(
                     f"{prefix}  definition range: ({child.min_steps}, {child.max_steps})"
                 )
-            if child.subtree.agg_keys is not None:
-                lines.append(f"{prefix}  aggregate: {child.subtree.agg_keys}")
-            if len(child.aggs):
-                lines.append(f"{prefix}  aggs: {child.aggs}:")
+            if child.connection_type.is_aggregation:
+                if child.subtree.agg_keys is not None:
+                    lines.append(f"{prefix}  aggregate: {child.subtree.agg_keys}")
+                if len(child.aggs):
+                    lines.append(f"{prefix}  aggs: {child.aggs}:")
             if child.subtree.join_keys is not None:
                 lines.append(f"{prefix}  join: {child.subtree.join_keys}")
             if child.subtree.general_join_condition is not None:
@@ -394,8 +396,6 @@ class HybridTree:
         connection: HybridConnection = HybridConnection(
             self, child, connection_type, min_steps, max_steps, {}
         )
-        if not connection_type.is_aggregation:
-            child.agg_keys = None
         self._children.append(connection)
         return len(self.children) - 1
 
@@ -484,14 +484,24 @@ class HybridTree:
             match operation:
                 case HybridCalculate() | HybridNoop() | HybridRoot():
                     continue
-                case HybridFilter() | HybridLimit():
+                case HybridFilter():
+                    if not operation.condition.always_true():
+                        return False
+                case HybridLimit():
                     return False
                 case operation:
                     raise NotImplementedError(
                         f"Invalid intermediary pipeline operation: {operation.__class__.__name__}"
                     )
+
+        for child in self.children:
+            if child.connection_type.is_anti:
+                return False
+            if child.connection_type.is_semi and not child.subtree.always_exists():
+                return False
+
         # The current level is fine, so check any levels above it next.
-        return True if self.parent is None else self.parent.always_exists()
+        return self.parent is None or self.parent.always_exists()
 
     def is_singular(self) -> bool:
         """
@@ -696,25 +706,33 @@ class HybridTree:
                     and has_correlated_window_function
                 ):
                     return pipeline_idx
-                if isinstance(operation, HybridCalculate) and any(
-                    name in operation.terms for name in correl_names
-                ):
-                    return pipeline_idx
+                if isinstance(operation, HybridCalculate):
+                    for name in correl_names:
+                        if name in operation.new_expressions:
+                            term: HybridExpr = operation.new_expressions[name]
+                            if not isinstance(term, HybridRefExpr) or term.name != name:
+                                return pipeline_idx
         return self._blocking_idx
 
-    def squish_backrefs_into_correl(self, levels_up: int | None):
+    def squish_backrefs_into_correl(
+        self, levels_up: int | None, levels_out: int
+    ) -> None:
         """
         TODO
         """
         for operation in self.pipeline:
             for term_name, term in operation.terms.items():
-                operation.terms[term_name] = term.squish_backrefs_into_correl(levels_up)
+                operation.terms[term_name] = term.squish_backrefs_into_correl(
+                    levels_up, levels_out
+                )
             if isinstance(operation, HybridFilter):
                 operation.condition = operation.condition.squish_backrefs_into_correl(
-                    levels_up
+                    levels_up, levels_out
                 )
             if isinstance(operation, HybridCalculate):
                 for term_name, term in operation.new_expressions.items():
                     operation.new_expressions[term_name] = operation.terms[term_name]
         for child in self.children:
-            child.subtree.squish_backrefs_into_correl(None)
+            child.subtree.squish_backrefs_into_correl(None, levels_out + 1)
+        if self.parent is not None:
+            self.parent.squish_backrefs_into_correl(levels_up, levels_out)

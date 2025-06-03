@@ -8,7 +8,7 @@ WITH _t2 AS (
     part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
   QUALIFY
     lineitem.l_quantity < (
-      0.2 * AVG(lineitem.l_quantity) OVER (PARTITION BY part.p_partkey)
+      0.2 * AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey)
     )
 ), _t0 AS (
   SELECT

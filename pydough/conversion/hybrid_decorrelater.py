@@ -363,9 +363,7 @@ class HybridDecorrelater:
         # and transform any of the correlated ones that require decorrelation
         # due to the type of connection.
         child_idx: int = len(hybrid.children) - 1
-        original_parent: HybridTree
-        if len(hybrid.correlated_children) > 0:
-            original_parent = copy.deepcopy(hybrid)
+        original_parent: HybridTree | None = None
         while child_idx >= 0:
             child = hybrid.children[child_idx]
             if child_idx not in hybrid.correlated_children:
@@ -378,6 +376,8 @@ class HybridDecorrelater:
                     | ConnectionType.AGGREGATION
                     | ConnectionType.AGGREGATION_ONLY_MATCH
                 ):
+                    if original_parent is None:
+                        original_parent = copy.deepcopy(hybrid)
                     new_parent, skipped_levels = self.make_decorrelate_parent(
                         original_parent,
                         child_idx,
