@@ -26,6 +26,8 @@ from tests.test_pydough_functions.common_prefix_pydough_functions import (
     common_prefix_am,
     common_prefix_an,
     common_prefix_ao,
+    common_prefix_ap,
+    common_prefix_aq,
     common_prefix_b,
     common_prefix_c,
     common_prefix_d,
@@ -945,14 +947,89 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "cust_key": [7729, 10243, 22417, 27187, 28195],
-                        "n_orders": [21, 22, 28, 20, 20],
-                        "n_no_tax_discount": [4, 1, 2, 2, 2],
+                        "cust_key": [4540],
+                        "n_orders": [19],
+                        "n_no_tax_discount": [2],
+                        "n_part_purchases": [1],
                     }
                 ),
                 "common_prefix_ao",
             ),
             id="common_prefix_ao",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                common_prefix_ap,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_name": [
+                            "beige gainsboro lawn honeydew pink",
+                            "dodger pink blanched lace peru",
+                            "floral beige pink papaya drab",
+                            "ghost pink burnished lace spring",
+                            "red burnished pink khaki misty",
+                            "wheat ghost medium pink mint",
+                        ],
+                        "supplier_name": [
+                            "Supplier#000004129",
+                            "Supplier#000009118",
+                            "Supplier#000000476",
+                            "Supplier#000002386",
+                            "Supplier#000009118",
+                            "Supplier#000008230",
+                        ],
+                        "supplier_quantity": [8815, 8082, 5228, 5916, 9665, 9390],
+                        "supplier_nation": [
+                            "INDONESIA",
+                            "ALGERIA",
+                            "ALGERIA",
+                            "RUSSIA",
+                            "ALGERIA",
+                            "INDONESIA",
+                        ],
+                    }
+                ),
+                "common_prefix_ap",
+            ),
+            id="common_prefix_ap",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                common_prefix_aq,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "nation_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "CHINA",
+                            "FRANCE",
+                            "EGYPT",
+                        ],
+                        "best_supplier": [
+                            f"Supplier#{s:09}" for s in (4637, 4282, 1252, 2302, 6343)
+                        ],
+                        "best_part": [
+                            "floral burlywood red saddle navy",
+                            "lime wheat lace cornflower coral",
+                            "spring tomato dodger ivory magenta",
+                            "metallic medium spring floral sandy",
+                            "dark chocolate white slate red",
+                        ],
+                        "best_quantity": [9976, 9644, 9985, 9975, 9970],
+                    }
+                ),
+                "common_prefix_aq",
+            ),
+            id="common_prefix_aq",
         ),
     ],
 )

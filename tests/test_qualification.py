@@ -158,7 +158,7 @@ from tests.testing_utilities import (
   ├─┬─ Partition[name='priorities', by=order_priority]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[orders]
-  │   └─┬─ Where[(order_date >= datetime.date(1993, 7, 1)) & (order_date < datetime.date(1993, 10, 1)) & HAS($1)]
+  │   └─┬─ Where[(YEAR(order_date) == 1993) & (QUARTER(order_date) == 3) & HAS($1)]
   │     └─┬─ AccessChild
   │       ├─── SubCollection[lines]
   │       └─── Where[commit_date < receipt_date]
@@ -243,27 +243,28 @@ from tests.testing_utilities import (
             impl_tpch_q8,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='years', by=o_year]
+  ├─┬─ Partition[name='years', by=O_YEAR]
   │ └─┬─ AccessChild
-  │   ├─── TableCollection[nations]
-  │   └─┬─ Calculate[nation_name=name]
-  │     └─┬─ SubCollection[suppliers]
-  │       ├─── SubCollection[supply_records]
-  │       └─┬─ Where[$1.part_type == 'ECONOMY ANODIZED STEEL']
-  │         ├─┬─ AccessChild
-  │         │ └─── SubCollection[part]
-  │         ├─── SubCollection[lines]
-  │         └─┬─ Calculate[volume=extended_price * (1 - discount)]
-  │           ├─── SubCollection[order]
-  │           ├─── Calculate[o_year=YEAR(order_date), brazil_volume=IFF(nation_name == 'BRAZIL', volume, 0)]
-  │           └─┬─ Where[(order_date >= datetime.date(1995, 1, 1)) & (order_date <= datetime.date(1996, 12, 31)) & ($1.name == 'AMERICA')]
-  │             └─┬─ AccessChild
-  │               └─┬─ SubCollection[customer]
-  │                 └─┬─ SubCollection[nation]
-  │                   └─── SubCollection[region]
-  └─┬─ Calculate[O_YEAR=o_year, MKT_SHARE=SUM($1.brazil_volume) / SUM($1.volume)]
+  │   ├─── TableCollection[lines]
+  │   ├─┬─ Where[($1.part_type == 'ECONOMY ANODIZED STEEL') & ISIN(YEAR($2.order_date), [1995, 1996]) & ($3.name == 'AMERICA')]
+  │   │ ├─┬─ AccessChild
+  │   │ │ └─── SubCollection[part]
+  │   │ ├─┬─ AccessChild
+  │   │ │ └─── SubCollection[order]
+  │   │ └─┬─ AccessChild
+  │   │   └─┬─ SubCollection[order]
+  │   │     └─┬─ SubCollection[customer]
+  │   │       └─┬─ SubCollection[nation]
+  │   │         └─── SubCollection[region]
+  │   └─┬─ Calculate[O_YEAR=YEAR($1.order_date), volume=extended_price * (1 - discount), brazil_volume=IFF($2.name == 'BRAZIL', extended_price * (1 - discount), 0)]
+  │     ├─┬─ AccessChild
+  │     │ └─── SubCollection[order]
+  │     └─┬─ AccessChild
+  │       └─┬─ SubCollection[supplier]
+  │         └─── SubCollection[nation]
+  └─┬─ Calculate[O_YEAR=O_YEAR, MKT_SHARE=SUM($1.brazil_volume) / SUM($1.volume)]
     └─┬─ AccessChild
-      └─── PartitionChild[order]
+      └─── PartitionChild[lines]
 """,
             id="tpch_q8",
         ),
@@ -273,18 +274,18 @@ from tests.testing_utilities import (
 ──┬─ TPCH
   ├─┬─ Partition[name='groups', by=(nation_name, o_year)]
   │ └─┬─ AccessChild
-  │   ├─── TableCollection[nations]
-  │   └─┬─ Calculate[nation_name=name]
-  │     └─┬─ SubCollection[suppliers]
-  │       ├─── SubCollection[supply_records]
-  │       ├─── Calculate[supply_cost=supply_cost]
-  │       └─┬─ Where[CONTAINS($1.name, 'green')]
-  │         ├─┬─ AccessChild
-  │         │ └─── SubCollection[part]
-  │         ├─── SubCollection[lines]
-  │         └─┬─ Calculate[o_year=YEAR($1.order_date), value=(extended_price * (1 - discount)) - (supply_cost * quantity)]
-  │           └─┬─ AccessChild
-  │             └─── SubCollection[order]
+  │   ├─── TableCollection[lines]
+  │   ├─┬─ Where[CONTAINS($1.name, 'green')]
+  │   │ └─┬─ AccessChild
+  │   │   └─── SubCollection[part]
+  │   └─┬─ Calculate[nation_name=$1.name, o_year=YEAR($2.order_date), value=(extended_price * (1 - discount)) - ($3.supply_cost * quantity)]
+  │     ├─┬─ AccessChild
+  │     │ └─┬─ SubCollection[supplier]
+  │     │   └─── SubCollection[nation]
+  │     ├─┬─ AccessChild
+  │     │ └─── SubCollection[order]
+  │     └─┬─ AccessChild
+  │       └─── SubCollection[part_and_supplier]
   ├─┬─ Calculate[NATION=nation_name, O_YEAR=o_year, AMOUNT=SUM($1.value)]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[lines]
@@ -297,13 +298,12 @@ from tests.testing_utilities import (
             """
 ──┬─ TPCH
   ├─── TableCollection[customers]
-  ├─┬─ Calculate[C_CUSTKEY=key, C_NAME=name, REVENUE=SUM($1.amt), C_ACCTBAL=account_balance, N_NAME=$2.name, C_ADDRESS=address, C_PHONE=phone, C_COMMENT=comment]
+  ├─┬─ Calculate[C_CUSTKEY=key, C_NAME=name, REVENUE=SUM($1.extended_price * (1 - $1.discount)), C_ACCTBAL=account_balance, N_NAME=$2.name, C_ADDRESS=address, C_PHONE=phone, C_COMMENT=comment]
   │ ├─┬─ AccessChild
   │ │ ├─── SubCollection[orders]
-  │ │ └─┬─ Where[(order_date >= datetime.date(1993, 10, 1)) & (order_date < datetime.date(1994, 1, 1))]
+  │ │ └─┬─ Where[(YEAR(order_date) == 1993) & (QUARTER(order_date) == 4)]
   │ │   ├─── SubCollection[lines]
-  │ │   ├─── Where[return_flag == 'R']
-  │ │   └─── Calculate[amt=extended_price * (1 - discount)]
+  │ │   └─── Where[return_flag == 'R']
   │ └─┬─ AccessChild
   │   └─── SubCollection[nation]
   └─── TopK[20, REVENUE.DESC(na_pos='last'), C_CUSTKEY.ASC(na_pos='first')]
@@ -344,8 +344,8 @@ from tests.testing_utilities import (
   ├─┬─ Partition[name='modes', by=ship_mode]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[lines]
-  │   ├─── Where[((ship_mode == 'MAIL') | (ship_mode == 'SHIP')) & (ship_date < commit_date) & (commit_date < receipt_date) & (receipt_date >= datetime.date(1994, 1, 1)) & (receipt_date < datetime.date(1995, 1, 1))]
-  │   └─┬─ Calculate[is_high_priority=($1.order_priority == '1-URGENT') | ($1.order_priority == '2-HIGH')]
+  │   ├─── Where[((ship_mode == 'MAIL') | (ship_mode == 'SHIP')) & (ship_date < commit_date) & (commit_date < receipt_date) & (YEAR(receipt_date) == 1994)]
+  │   └─┬─ Calculate[is_high_priority=ISIN($1.order_priority, ['1-URGENT', '2-HIGH'])]
   │     └─┬─ AccessChild
   │       └─── SubCollection[order]
   ├─┬─ Calculate[L_SHIPMODE=ship_mode, HIGH_LINE_COUNT=SUM($1.is_high_priority), LOW_LINE_COUNT=SUM(NOT($1.is_high_priority))]
@@ -380,7 +380,7 @@ from tests.testing_utilities import (
 └─┬─ Calculate[PROMO_REVENUE=(100.0 * SUM($1.promo_value)) / SUM($1.value)]
   └─┬─ AccessChild
     ├─── TableCollection[lines]
-    ├─── Where[(ship_date >= datetime.date(1995, 9, 1)) & (ship_date < datetime.date(1995, 10, 1))]
+    ├─── Where[(YEAR(ship_date) == 1995) & (MONTH(ship_date) == 9)]
     └─┬─ Calculate[value=extended_price * (1 - discount), promo_value=IFF(STARTSWITH($1.part_type, 'PROMO'), extended_price * (1 - discount), 0)]
       └─┬─ AccessChild
         └─── SubCollection[part]
@@ -403,7 +403,7 @@ from tests.testing_utilities import (
   │     ├─── SubCollection[lines]
   │     └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
   ├─── TableCollection[suppliers]
-  ├─┬─ Where[HAS($1)]
+  ├─┬─ Where[HAS($1) & (SUM($1.extended_price * (1 - $1.discount)) == max_revenue)]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[lines]
   │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
@@ -411,7 +411,6 @@ from tests.testing_utilities import (
   │ └─┬─ AccessChild
   │   ├─── SubCollection[lines]
   │   └─── Where[(ship_date >= datetime.date(1996, 1, 1)) & (ship_date < datetime.date(1996, 4, 1))]
-  ├─── Where[TOTAL_REVENUE == max_revenue]
   └─── OrderBy[S_SUPPKEY.ASC(na_pos='first')]
 """,
             id="tpch_q15",
@@ -420,16 +419,20 @@ from tests.testing_utilities import (
             impl_tpch_q16,
             """
 ──┬─ TPCH
-  ├─┬─ Partition[name='groups', by=(p_brand, p_type, p_size)]
+  ├─┬─ Partition[name='groups', by=(P_BRAND, P_TYPE, P_SIZE)]
   │ └─┬─ AccessChild
-  │   ├─── TableCollection[parts]
-  │   ├─── Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])]
-  │   └─┬─ Calculate[p_brand=brand, p_type=part_type, p_size=size]
-  │     ├─── SubCollection[supply_records]
-  │     └─┬─ Where[NOT(LIKE($1.comment, '%Customer%Complaints%'))]
-  │       └─┬─ AccessChild
-  │         └─── SubCollection[supplier]
-  ├─┬─ Calculate[P_BRAND=p_brand, P_TYPE=p_type, P_SIZE=p_size, SUPPLIER_COUNT=NDISTINCT($1.supplier_key)]
+  │   ├─── TableCollection[supply_records]
+  │   ├─┬─ Where[NOT(LIKE($1.comment, '%Customer%Complaints%')) & HAS($2)]
+  │   │ ├─┬─ AccessChild
+  │   │ │ └─── SubCollection[supplier]
+  │   │ └─┬─ AccessChild
+  │   │   ├─── SubCollection[part]
+  │   │   └─── Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])]
+  │   └─┬─ Calculate[P_BRAND=$1.brand, P_TYPE=$1.part_type, P_SIZE=$1.size]
+  │     └─┬─ AccessChild
+  │       ├─── SubCollection[part]
+  │       └─── Where[(brand != 'BRAND#45') & NOT(STARTSWITH(part_type, 'MEDIUM POLISHED%')) & ISIN(size, [49, 14, 23, 45, 19, 3, 36, 9])]
+  ├─┬─ Calculate[P_BRAND=P_BRAND, P_TYPE=P_TYPE, P_SIZE=P_SIZE, SUPPLIER_COUNT=NDISTINCT($1.supplier_key)]
   │ └─┬─ AccessChild
   │   └─── PartitionChild[supply_records]
   └─── TopK[10, SUPPLIER_COUNT.DESC(na_pos='last'), P_BRAND.ASC(na_pos='first'), P_TYPE.ASC(na_pos='first'), P_SIZE.ASC(na_pos='first')]
@@ -443,12 +446,9 @@ from tests.testing_utilities import (
 └─┬─ Calculate[AVG_YEARLY=SUM($1.extended_price) / 7.0]
   └─┬─ AccessChild
     ├─── TableCollection[parts]
-    ├─── Where[(brand == 'Brand#23') & (container == 'MED BOX')]
-    └─┬─ Calculate[part_avg_quantity=AVG($1.quantity)]
-      ├─┬─ AccessChild
-      │ └─── SubCollection[lines]
+    └─┬─ Where[(brand == 'Brand#23') & (container == 'MED BOX')]
       ├─── SubCollection[lines]
-      └─── Where[quantity < (0.2 * part_avg_quantity)]
+      └─── Where[quantity < (0.2 * RELAVG(quantity, by=(), levels=1))]
 """,
             id="tpch_q17",
         ),
@@ -474,7 +474,7 @@ from tests.testing_utilities import (
 └─┬─ Calculate[REVENUE=SUM($1.extended_price * (1 - $1.discount))]
   └─┬─ AccessChild
     ├─── TableCollection[lines]
-    └─┬─ Where[ISIN(ship_mode, ['AIR', 'AIR REG']) & (ship_instruct == 'DELIVER IN PERSON') & ($1.size >= 1) & (((($1.size <= 5) & (quantity >= 1) & (quantity <= 11) & ISIN($1.container, ['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']) & ($1.brand == 'Brand#12')) | (($1.size <= 10) & (quantity >= 10) & (quantity <= 20) & ISIN($1.container, ['MED BAG', 'MED BOX', 'MED PACK', 'MED PKG']) & ($1.brand == 'Brand#23'))) | (($1.size <= 15) & (quantity >= 20) & (quantity <= 30) & ISIN($1.container, ['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']) & ($1.brand == 'Brand#34')))]
+    └─┬─ Where[ISIN(ship_mode, ['AIR', 'AIR REG']) & (ship_instruct == 'DELIVER IN PERSON') & (((MONOTONIC(1, $1.size, 5) & MONOTONIC(1, quantity, 11) & ISIN($1.container, ['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']) & ($1.brand == 'Brand#12')) | (MONOTONIC(1, $1.size, 10) & MONOTONIC(10, quantity, 20) & ISIN($1.container, ['MED BAG', 'MED BOX', 'MED PACK', 'MED PKG']) & ($1.brand == 'Brand#23'))) | (MONOTONIC(1, $1.size, 15) & MONOTONIC(20, quantity, 30) & ISIN($1.container, ['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']) & ($1.brand == 'Brand#34')))]
       └─┬─ AccessChild
         └─── SubCollection[part]
 """,
@@ -486,17 +486,22 @@ from tests.testing_utilities import (
 ──┬─ TPCH
   ├─── TableCollection[suppliers]
   ├─── Calculate[S_NAME=name, S_ADDRESS=address]
-  ├─┬─ Where[(($1.name == 'CANADA') & COUNT($2)) > 0]
+  ├─┬─ Where[($1.name == 'CANADA') & (COUNT($2) > 0) & HAS($2)]
   │ ├─┬─ AccessChild
   │ │ └─── SubCollection[nation]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[supply_records]
-  │   └─┬─ Calculate[available_quantity=available_quantity]
-  │     ├─── SubCollection[part]
-  │     └─┬─ Where[STARTSWITH(name, 'forest') & (available_quantity > (SUM($1.quantity) * 0.5))]
-  │       └─┬─ AccessChild
-  │         ├─── SubCollection[lines]
-  │         └─── Where[(ship_date >= datetime.date(1994, 1, 1)) & (ship_date < datetime.date(1995, 1, 1))]
+  │   └─┬─ Where[HAS($1) & (available_quantity > (0.5 * SUM($1.part_qty)))]
+  │     └─┬─ AccessChild
+  │       ├─── SubCollection[part]
+  │       ├─┬─ Where[STARTSWITH(name, 'forest') & HAS($1)]
+  │       │ └─┬─ AccessChild
+  │       │   ├─── SubCollection[lines]
+  │       │   └─── Where[YEAR(ship_date) == 1994]
+  │       └─┬─ Calculate[part_qty=SUM($1.quantity)]
+  │         └─┬─ AccessChild
+  │           ├─── SubCollection[lines]
+  │           └─── Where[YEAR(ship_date) == 1994]
   └─── TopK[10, S_NAME.ASC(na_pos='first')]
 """,
             id="tpch_q20",
