@@ -399,7 +399,7 @@ class HybridTranslator:
                 connection_type = connection_type.reconcile_connection_types(
                     ConnectionType.SEMI
                 )
-            min_idx: int = hybrid.get_min_child_idx(subtree)
+            min_idx: int = hybrid.get_min_child_idx(subtree, connection_type)
             child_idx_mapping[child_idx] = hybrid.add_child(
                 subtree,
                 connection_type,
