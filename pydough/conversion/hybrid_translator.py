@@ -1498,12 +1498,7 @@ class HybridTranslator:
         self.eject_aggregate_inputs(hybrid)
         # 3. Syncretize any children of the hybrid tree that share a common
         # prefix, thus eliminating duplicate logic.
-        # print()
-        # print(hybrid)
         self.run_syncretization(hybrid)
-        # print()
-        # print(hybrid)
-        # breakpoint()
         # 4. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
         # 5. Run any final rewrites, such as turning MEDIAN into an average of
