@@ -2,14 +2,14 @@ WITH _s0 AS (
   SELECT
     s_month1 AS first_month,
     s_name AS name,
+    s_name AS season_name,
     s_month2 AS second_month,
     s_month3 AS third_month
   FROM seasons
-), _s2 AS (
+), _s7 AS (
   SELECT
     s_month1 AS first_month,
     s_name AS name,
-    s_name AS season_name,
     s_month2 AS second_month,
     s_month3 AS third_month
   FROM seasons
@@ -18,7 +18,7 @@ WITH _s0 AS (
     COUNT() AS agg_0,
     _s2.name,
     searches.search_id
-  FROM _s2 AS _s2
+  FROM _s0 AS _s2
   JOIN searches AS searches
     ON _s2.first_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
     OR _s2.second_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
@@ -27,7 +27,7 @@ WITH _s0 AS (
     ON LOWER(searches.search_string) LIKE (
       '%' || LOWER(events.ev_name) || '%'
     )
-  JOIN _s0 AS _s7
+  JOIN _s7 AS _s7
     ON _s7.first_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
     OR _s7.second_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
     OR _s7.third_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
@@ -42,7 +42,8 @@ WITH _s0 AS (
     SUM((
       NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
     )) AS agg_2,
-    COUNT() AS agg_3
+    COUNT() AS agg_3,
+    MAX(_s0.season_name) AS agg_4
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.first_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
@@ -57,7 +58,7 @@ WITH _s0 AS (
     SUM(_s10.season_name = _s15.name) AS agg_0,
     COUNT() AS agg_1,
     _s10.name
-  FROM _s2 AS _s10
+  FROM _s0 AS _s10
   JOIN events AS events
     ON _s10.first_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
     OR _s10.second_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
@@ -66,7 +67,7 @@ WITH _s0 AS (
     ON LOWER(searches.search_string) LIKE (
       '%' || LOWER(events.ev_name) || '%'
     )
-  JOIN _s0 AS _s15
+  JOIN _s7 AS _s15
     ON _s15.first_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
     OR _s15.second_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
     OR _s15.third_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
@@ -74,7 +75,7 @@ WITH _s0 AS (
     _s10.name
 )
 SELECT
-  _s16.agg_1 AS season_name,
+  _s16.agg_4 AS season_name,
   ROUND(CAST((
     100.0 * COALESCE(_s16.agg_2, 0)
   ) AS REAL) / _s16.agg_3, 2) AS pct_season_searches,

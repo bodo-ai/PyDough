@@ -263,7 +263,7 @@ class HybridTree:
             # child connection.
             agg_idx: int = 0
             while True:
-                agg_name = f"agg_{agg_name}"
+                agg_name = f"agg_{agg_idx}"
                 if agg_name not in child_connection.aggs:
                     break
                 agg_idx += 1

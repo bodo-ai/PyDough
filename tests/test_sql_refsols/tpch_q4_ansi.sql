@@ -10,8 +10,8 @@ WITH _t2 AS (
     _t2.order_priority AS order_priority
   FROM _t2 AS _t2
   WHERE
-    _t2.order_date < CAST('1993-10-01' AS DATE)
-    AND _t2.order_date >= CAST('1993-07-01' AS DATE)
+    EXTRACT(QUARTER FROM _t2.order_date) = 3
+    AND EXTRACT(YEAR FROM _t2.order_date) = 1993
 ), _t3 AS (
   SELECT
     lineitem.l_commitdate AS commit_date,
