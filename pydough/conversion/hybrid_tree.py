@@ -484,14 +484,24 @@ class HybridTree:
             match operation:
                 case HybridCalculate() | HybridNoop() | HybridRoot():
                     continue
-                case HybridFilter() | HybridLimit():
+                case HybridFilter():
+                    if not operation.condition.always_true():
+                        return False
+                case HybridLimit():
                     return False
                 case operation:
                     raise NotImplementedError(
                         f"Invalid intermediary pipeline operation: {operation.__class__.__name__}"
                     )
+
+        for child in self.children:
+            if child.connection_type.is_anti:
+                return False
+            if child.connection_type.is_semi and not child.subtree.always_exists():
+                return False
+
         # The current level is fine, so check any levels above it next.
-        return True if self.parent is None else self.parent.always_exists()
+        return self.parent is None or self.parent.always_exists()
 
     def is_singular(self) -> bool:
         """

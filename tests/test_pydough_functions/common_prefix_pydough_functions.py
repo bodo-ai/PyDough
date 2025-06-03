@@ -745,3 +745,42 @@ def common_prefix_ao():
         )
         .TOP_K(5, by=key.ASC())
     )
+
+
+def common_prefix_ap():
+    # For every size-10 pink part from brand 32, identify the name of the
+    # supplier with the greatest available quantity of the part, how much of
+    # the part they have, and the nation that supplier is from. Sort the
+    # results alphabetically by part.
+    best_record = supply_records.BEST(by=available_quantity.DESC(), per="parts")
+    return (
+        parts.WHERE(CONTAINS(name, "pink") & (brand == "Brand#32") & (size == 10))
+        .CALCULATE(
+            part_name=name,
+            supplier_name=best_record.supplier.name,
+            supplier_quantity=best_record.available_quantity,
+            supplier_nation=best_record.supplier.nation.name,
+        )
+        .ORDER_BY(part_name.ASC())
+    )
+
+
+def common_prefix_aq():
+    # For every region, identify the nation with the first name alphabetically,
+    # the supplier within that nation with the highest account balance, and the
+    # part with the highest available quantity supplied by that supplier.
+    # Return the region name, nation name, supplier name, part name, and the
+    # quantity of the part supplied by that supplier. Sort the results
+    # alphabetically by region name.
+    best_nation = nations.BEST(by=name.ASC(), per="regions")
+    best_supplier = best_nation.suppliers.BEST(by=account_balance.DESC(), per="nations")
+    best_record = best_supplier.supply_records.BEST(
+        by=available_quantity.DESC(), per="suppliers"
+    )
+    return regions.CALCULATE(
+        region_name=name,
+        nation_name=best_nation.name,
+        best_supplier=best_supplier.name,
+        best_part=best_record.part.name,
+        best_quantity=best_record.available_quantity,
+    ).ORDER_BY(name.ASC())
