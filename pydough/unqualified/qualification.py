@@ -583,6 +583,10 @@ class Qualifier:
         if (
             isinstance(qualified_parent, GlobalContext)
             and name == qualified_parent.graph.name
+        ) or (
+            isinstance(qualified_parent, ChildOperatorChildAccess)
+            and isinstance(qualified_parent.child_access, GlobalContext)
+            and name == qualified_parent.child_access.graph.name
         ):
             # Special case: if the parent is the root context and the child
             # is named after the graph name, return the parent since the

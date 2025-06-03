@@ -33,11 +33,14 @@ class GlobalContext(PyDoughCollectionQDAG):
         self._graph = graph
         self._collections: dict[str, PyDoughCollectionQDAG] = {}
         self._ancestral_mapping: dict[str, int] = {}
-        # TODO: Make sure there's no name conflicts
         if ancestor is not None:
-            self._ancestral_mapping = {
-                name: level + 1 for name, level in ancestor.ancestral_mapping.items()
-            }
+            for name, level in ancestor.ancestral_mapping.items():
+                if name in graph.get_collection_names():
+                    raise PyDoughQDAGException(
+                        f"Name {name!r} conflicts with a collection in the graph {graph.name!r}"
+                    )
+                else:
+                    self._ancestral_mapping[name] = level + 1
         for collection_name in graph.get_collection_names():
             meta = graph.get_collection(collection_name)
             assert isinstance(meta, CollectionMetadata)

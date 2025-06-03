@@ -2447,7 +2447,6 @@ def simple_cross_10():
     )
 
 
-# TODO:FIXME: pydough.qdag.errors.PyDoughQDAGException: Unrecognized term of graph 'TPCH': 'TPCH'
 def simple_cross_11():
     # Count how many orders were made on the first date that orders were made
     # (using CROSS to derive global values)

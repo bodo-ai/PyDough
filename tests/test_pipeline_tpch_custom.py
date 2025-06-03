@@ -11,8 +11,7 @@ from bad_pydough_functions import (
     bad_cross_1,
     bad_cross_2,
     bad_cross_3,
-    # TODO: check if these are still needed
-    # bad_cross_4,
+    bad_cross_4,
     bad_cross_5,
     bad_cross_6,
     bad_cross_7,
@@ -1883,12 +1882,11 @@ from pydough.unqualified import (
                 "simple_cross_11",
                 lambda: pd.DataFrame(
                     {
-                        "n": [1] * 10,
+                        "n": [621],
                     }
                 ),
             ),
             id="simple_cross_11",
-            marks=pytest.mark.skip("FIXME: Unrecognized term of graph 'TPCH': 'TPCH'"),
         ),
         pytest.param(
             (
@@ -2252,12 +2250,12 @@ def test_pipeline_e2e_tpch_custom(
             "Unrecognized term of graph 'TPCH': 'foo'",
             id="bad_cross_3",
         ),
-        # pytest.param(
-        #     bad_cross_4,
-        #     None,
-        #     "XXX",
-        #     id="bad_cross_4",
-        # ),
+        pytest.param(
+            bad_cross_4,
+            None,
+            "Name 'customers' conflicts with a collection in the graph",
+            id="bad_cross_4",
+        ),
         pytest.param(
             bad_cross_5,
             None,
