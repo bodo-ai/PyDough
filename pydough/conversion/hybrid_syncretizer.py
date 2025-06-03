@@ -217,7 +217,9 @@ class HybridSyncretizer:
         if base_child.connection_type == ConnectionType.SEMI:
             base_child.connection_type = ConnectionType.AGGREGATION
 
-        min_steps: int = base_subtree.get_min_child_idx(extension_subtree)
+        min_steps: int = base_subtree.get_min_child_idx(
+            extension_subtree, new_connection_type
+        )
         max_steps: int = len(base_subtree.pipeline)
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, min_steps, max_steps
@@ -354,7 +356,9 @@ class HybridSyncretizer:
             else:
                 base_child.connection_type = ConnectionType.AGGREGATION_ONLY_MATCH
 
-        min_steps: int = base_subtree.get_min_child_idx(extension_subtree)
+        min_steps: int = base_subtree.get_min_child_idx(
+            extension_subtree, new_connection_type
+        )
         max_steps: int = len(base_subtree.pipeline)
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, min_steps, max_steps
@@ -423,7 +427,9 @@ class HybridSyncretizer:
         ):
             base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
 
-        min_steps: int = base_subtree.get_min_child_idx(extension_subtree)
+        min_steps: int = base_subtree.get_min_child_idx(
+            extension_subtree, new_connection_type
+        )
         max_steps: int = len(base_subtree.pipeline)
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, min_steps, max_steps
@@ -503,7 +509,9 @@ class HybridSyncretizer:
             )
             return
 
-        min_steps: int = base_subtree.get_min_child_idx(extension_subtree)
+        min_steps: int = base_subtree.get_min_child_idx(
+            extension_subtree, new_connection_type
+        )
         max_steps: int = len(base_subtree.pipeline)
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, min_steps, max_steps

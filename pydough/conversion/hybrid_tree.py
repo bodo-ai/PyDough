@@ -690,7 +690,9 @@ class HybridTree:
 
         return child_remapping
 
-    def get_min_child_idx(self, child_subtree: "HybridTree") -> int:
+    def get_min_child_idx(
+        self, child_subtree: "HybridTree", connection_type: ConnectionType
+    ) -> int:
         """
         TODO
         """
@@ -698,8 +700,16 @@ class HybridTree:
         has_correlated_window_function: bool = (
             child_subtree.has_correlated_window_function(1)
         )
+        min_idx: int = self._blocking_idx
+        if not (
+            connection_type.is_anti
+            or (connection_type.is_semi and not child_subtree.always_exists())
+        ):
+            # If the connection is not anti or semi, we can use the first
+            # operation in the pipeline as the minimum index.
+            min_idx = 0
         if correl_names:
-            for pipeline_idx in range(len(self.pipeline) - 1, self._blocking_idx, -1):
+            for pipeline_idx in range(len(self.pipeline) - 1, min_idx, -1):
                 operation: HybridOperation = self.pipeline[pipeline_idx]
                 if (
                     isinstance(operation, (HybridFilter, HybridLimit))
@@ -712,7 +722,7 @@ class HybridTree:
                             term: HybridExpr = operation.new_expressions[name]
                             if not isinstance(term, HybridRefExpr) or term.name != name:
                                 return pipeline_idx
-        return self._blocking_idx
+        return min_idx
 
     def squish_backrefs_into_correl(
         self, levels_up: int | None, levels_out: int

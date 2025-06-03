@@ -1,8 +1,13 @@
 WITH _t AS (
   SELECT
+    supplier.s_comment AS comment_8,
+    supplier.s_name AS name_10,
     part.p_mfgr,
     part.p_partkey,
-    partsupp.ps_suppkey AS supplier_key,
+    supplier.s_acctbal AS account_balance,
+    supplier.s_address AS address,
+    nation.n_name AS expr_8,
+    supplier.s_phone AS phone,
     RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost) AS _w
   FROM tpch.part AS part
   JOIN tpch.partsupp AS partsupp
@@ -17,21 +22,17 @@ WITH _t AS (
     part.p_size = 15 AND part.p_type LIKE '%BRASS'
 )
 SELECT
-  supplier.s_acctbal AS S_ACCTBAL,
-  supplier.s_name AS S_NAME,
-  nation.n_name AS N_NAME,
-  _t.p_partkey AS P_PARTKEY,
-  _t.p_mfgr AS P_MFGR,
-  supplier.s_address AS S_ADDRESS,
-  supplier.s_phone AS S_PHONE,
-  supplier.s_comment AS S_COMMENT
-FROM _t AS _t
-JOIN tpch.supplier AS supplier
-  ON _t.supplier_key = supplier.s_suppkey
-JOIN tpch.nation AS nation
-  ON nation.n_nationkey = supplier.s_nationkey
+  account_balance AS S_ACCTBAL,
+  name_10 AS S_NAME,
+  expr_8 AS N_NAME,
+  p_partkey AS P_PARTKEY,
+  p_mfgr AS P_MFGR,
+  address AS S_ADDRESS,
+  phone AS S_PHONE,
+  comment_8 AS S_COMMENT
+FROM _t
 WHERE
-  _t._w = 1
+  _w = 1
 ORDER BY
   s_acctbal DESC,
   n_name,
