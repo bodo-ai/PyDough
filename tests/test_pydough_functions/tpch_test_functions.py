@@ -60,33 +60,19 @@ def impl_tpch_q2():
     PyDough implementation of TPCH Q2, truncated to 10 rows.
     """
     return (
-        nations.CALCULATE(n_name=name)
-        .WHERE(region.name == "EUROPE")
-        .suppliers.CALCULATE(
-            s_acctbal=account_balance,
-            s_name=name,
-            s_address=address,
-            s_phone=phone,
-            s_comment=comment,
-        )
-        .supply_records.CALCULATE(
-            supply_cost=supply_cost,
-        )
-        .part.WHERE(ENDSWITH(part_type, "BRASS") & (size == 15))
-        .PARTITION(name="groups", by=key)
-        .CALCULATE(best_cost=MIN(part.supply_cost))
-        .part.WHERE(
-            (supply_cost == best_cost) & ENDSWITH(part_type, "BRASS") & (size == 15)
-        )
+        parts.WHERE(ENDSWITH(part_type, "BRASS") & (size == 15))
+        .CALCULATE(P_PARTKEY=key, P_MFGR=manufacturer)
+        .supply_records.WHERE(supplier.nation.region.name == "EUROPE")
+        .BEST(by=supply_cost.ASC(), per="parts", allow_ties=True)
         .CALCULATE(
-            S_ACCTBAL=s_acctbal,
-            S_NAME=s_name,
-            N_NAME=n_name,
-            P_PARTKEY=key,
-            P_MFGR=manufacturer,
-            S_ADDRESS=s_address,
-            S_PHONE=s_phone,
-            S_COMMENT=s_comment,
+            S_ACCTBAL=supplier.account_balance,
+            S_NAME=supplier.name,
+            N_NAME=supplier.nation.name,
+            P_PARTKEY=P_PARTKEY,
+            P_MFGR=P_MFGR,
+            S_ADDRESS=supplier.address,
+            S_PHONE=supplier.phone,
+            S_COMMENT=supplier.comment,
         )
         .TOP_K(
             10,
@@ -183,8 +169,7 @@ def impl_tpch_q7():
             volume=extended_price * (1 - discount),
         )
         .WHERE(
-            (ship_date >= datetime.date(1995, 1, 1))
-            & (ship_date <= datetime.date(1996, 12, 31))
+            ISIN(YEAR(ship_date), (1995, 1996))
             & (
                 ((supp_nation == "FRANCE") & (cust_nation == "GERMANY"))
                 | ((supp_nation == "GERMANY") & (cust_nation == "FRANCE"))
@@ -197,11 +182,7 @@ def impl_tpch_q7():
             L_YEAR=l_year,
             REVENUE=SUM(lines.volume),
         )
-        .ORDER_BY(
-            SUPP_NATION.ASC(),
-            CUST_NATION.ASC(),
-            L_YEAR.ASC(),
-        )
+        .ORDER_BY(SUPP_NATION.ASC(), CUST_NATION.ASC(), L_YEAR.ASC())
     )
 
 
@@ -492,10 +473,7 @@ def impl_tpch_q20():
     )
 
     return (
-        suppliers.CALCULATE(
-            S_NAME=name,
-            S_ADDRESS=address,
-        )
+        suppliers.CALCULATE(S_NAME=name, S_ADDRESS=address)
         .WHERE(
             (nation.name == "CANADA")
             & (COUNT(selected_parts_supplied) > 0)

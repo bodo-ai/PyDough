@@ -23,7 +23,8 @@ WITH _s1 AS (
   JOIN _s1 AS _s7
     ON _s7.key = customer.c_nationkey
   WHERE
-    (
+    EXTRACT(YEAR FROM lineitem.l_shipdate) IN (1995, 1996)
+    AND (
       _s1.name = 'FRANCE' OR _s1.name = 'GERMANY'
     )
     AND (
@@ -35,8 +36,6 @@ WITH _s1 AS (
     AND (
       _s7.name = 'FRANCE' OR _s7.name = 'GERMANY'
     )
-    AND lineitem.l_shipdate <= CAST('1996-12-31' AS DATE)
-    AND lineitem.l_shipdate >= CAST('1995-01-01' AS DATE)
   GROUP BY
     _s7.name,
     EXTRACT(YEAR FROM lineitem.l_shipdate),
