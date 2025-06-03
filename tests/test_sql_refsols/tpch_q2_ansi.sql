@@ -1,9 +1,4 @@
-WITH _s2 AS (
-  SELECT
-    s_suppkey AS key,
-    s_nationkey AS nation_key
-  FROM tpch.supplier
-), _t0 AS (
+WITH _t0 AS (
   SELECT
     part.p_mfgr,
     part.p_partkey,
@@ -11,10 +6,10 @@ WITH _s2 AS (
   FROM tpch.part AS part
   JOIN tpch.partsupp AS partsupp
     ON part.p_partkey = partsupp.ps_partkey
-  JOIN _s2 AS _s2
-    ON _s2.key = partsupp.ps_suppkey
+  JOIN tpch.supplier AS supplier
+    ON partsupp.ps_suppkey = supplier.s_suppkey
   JOIN tpch.nation AS nation
-    ON _s2.nation_key = nation.n_nationkey
+    ON nation.n_nationkey = supplier.s_nationkey
   JOIN tpch.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
   WHERE
@@ -34,10 +29,8 @@ SELECT
 FROM _t0 AS _t0
 JOIN tpch.supplier AS supplier
   ON _t0.supplier_key = supplier.s_suppkey
-JOIN _s2 AS _s10
-  ON _s10.key = _t0.supplier_key
 JOIN tpch.nation AS nation
-  ON _s10.nation_key = nation.n_nationkey
+  ON nation.n_nationkey = supplier.s_nationkey
 ORDER BY
   s_acctbal DESC,
   n_name,
