@@ -36,7 +36,7 @@ WITH _s1 AS (
     )
     AND _s9.key = lineitem.l_orderkey
   WHERE
-    lineitem.l_shipdate <= '1996-12-31' AND lineitem.l_shipdate >= '1995-01-01'
+    CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) IN (1995, 1996)
   GROUP BY
     _s9.name_8,
     CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER),
