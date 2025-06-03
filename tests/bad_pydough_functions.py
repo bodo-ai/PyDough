@@ -318,7 +318,7 @@ def bad_unsupported_kwarg3():
 
 
 def bad_cross_1():
-    # Using `CROSS` with a not a collection
+    # Reason it is bad: Using `CROSS` with a not a collection
     return customers.CROSS(42)
 
 
@@ -351,20 +351,20 @@ def bad_cross_6():
 
 
 def bad_cross_7():
-    # CROSS unused
+    # Reason it is bad: CROSS unused
     return CROSS(regions)
 
 
 def bad_cross_8():
-    # Output column not available in the CROSSed collection
+    # Reason it is bad:  Output column not available in the CROSSed collection
     return regions.CALCULATE(r1=name).CROSS(nations).CALCULATE(r_key, r2=name)
 
 
 def bad_cross_9():
-    # Use output of CROSS as an output column
+    # Reason it is bad: Use output of CROSS as an output column
     return regions.CALCULATE(new_col=CROSS(regions))
 
 
 def bad_cross_10():
-    # Aggregation on Ambiguous column
+    # Reason it is bad: Aggregation on Ambiguous column
     return regions.CROSS(regions).CALCULATE(total=COUNT(name))

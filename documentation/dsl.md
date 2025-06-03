@@ -17,8 +17,8 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [TOP_K](#top_k)
    * [PARTITION](#partition)
    * [SINGULAR](#singular)
-   * [NEXT / PREV](#next-prev)
    * [BEST](#best)
+   * [CROSS](#cross)
 - [Induced Properties](#induced-properties)
    * [Induced Scalar Properties](#induced-scalar-properties)
    * [Induced Subcollection Properties](#induced-subcollection-properties)
@@ -1462,6 +1462,52 @@ Addresses.CALCULATE(address_id, oldest_occupant=current_occupants.BEST(by=birth_
 ```py
 %%pydough
 People.packages.BEST(by=order_date.DESC(), per="packages")
+```
+
+<!-- TOC --><a name="cross"></a>
+### CROSS
+
+#TODO: explain
+
+**Good Example #1**: Find all combinations of region names
+
+```py
+%%pydough
+regions.CALCULATE(r1=name).CROSS(regions).CALCULATE(r1, r2=name).ORDER_BY(r1.ASC(), r2.ASC())
+```
+
+**Good Example #2**: Count how many orders were made on the first date that the orders were made.
+
+```py
+%%pydough
+    global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
+    selected_orders = orders.WHERE(
+        order_date == CROSS(global_info).SINGULAR().min_date
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+```
+
+**Bad Example #1**: This is invalid because `42` is not a collection.
+
+```py
+%%pydough
+customers.CROSS(42)
+```
+
+**Bad Example #2**: This is invalid because `customers` output name causes a name collision with collection named `customers`
+
+```py
+%%pydough
+regions.CALCULATE(customers=COUNT(nations.customers)).CROSS(customers)
+```
+
+**Bad Example #3**: This is invalid because there's no relation between `suppliers` and `parts`.
+
+```py
+%%pydough
+suppliers.CROSS(parts).CALCULATE(
+        sup_name=suppliers.name, part_name=parts.name
+)
 ```
 
 <!-- TOC --><a name="induced-properties"></a>

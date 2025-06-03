@@ -2448,8 +2448,8 @@ def simple_cross_10():
 
 
 def simple_cross_11():
-    # Count how many orders were made on the first date that orders were made
-    # (using CROSS to derive global values)
+    # Count how many orders were made on the first date that the orders
+    # were made (using CROSS to derive global values)
     global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
     selected_orders = orders.WHERE(order_date == CROSS(global_info).SINGULAR().min_date)
     return TPCH.CALCULATE(n=COUNT(selected_orders))
