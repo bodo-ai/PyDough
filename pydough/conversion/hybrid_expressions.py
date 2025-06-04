@@ -133,12 +133,6 @@ class HybridExpr(ABC):
         """
         return 0
 
-    def contains_correlates(self) -> bool:
-        """
-        Returns whether this expression contains any correlated references.
-        """
-        return False
-
     def get_correlate_names(self, levels: int) -> set[str]:
         """
         Returns the set of names of variables that are correlated a certain
@@ -156,7 +150,8 @@ class HybridExpr(ABC):
     def has_correlated_window_function(self, levels: int) -> bool:
         """
         Returns whether this expression contains any window functions
-        with correlates with at least a certain number of levels.
+        with correlates with at least a certain number of levels. A window
+        function without any partition arguments is also considered correlated.
 
         Args:
             `levels`: the minimum number of levels of correlated references to
@@ -330,9 +325,6 @@ class HybridCorrelExpr(HybridExpr):
             return HybridCorrelExpr(self.expr.shift_back(levels))
         return self
 
-    def contains_correlates(self) -> bool:
-        return True
-
     def count_correlated_levels(self) -> int:
         return 1 + self.expr.count_correlated_levels()
 
@@ -433,9 +425,6 @@ class HybridFunctionExpr(HybridExpr):
                 level_threshold, depth_threshold
             )
         return self
-
-    def contains_correlates(self) -> bool:
-        return any(arg.contains_correlates() for arg in self.args)
 
     def contains_window_functions(self) -> bool:
         return any(arg.contains_window_functions() for arg in self.args)
@@ -631,18 +620,6 @@ class HybridWindowExpr(HybridExpr):
             correl_levels = max(correl_levels, order_arg.expr.count_correlated_levels())
         return correl_levels
 
-    def contains_correlates(self) -> bool:
-        return (
-            any(arg.contains_correlates() for arg in self.args)
-            or any(
-                partition_arg.contains_correlates()
-                for partition_arg in self.partition_args
-            )
-            or any(
-                order_arg.expr.contains_correlates() for order_arg in self.order_args
-            )
-        )
-
     def get_correlate_names(self, levels: int) -> set[str]:
         result: set[str] = set()
         for arg in self.args:
@@ -660,7 +637,8 @@ class HybridWindowExpr(HybridExpr):
         if self.count_correlated_levels() >= levels:
             return True
         return (
-            any(arg.has_correlated_window_function(levels) for arg in self.args)
+            (len(self.partition_args) == 0)
+            or any(arg.has_correlated_window_function(levels) for arg in self.args)
             or any(
                 partition_arg.has_correlated_window_function(levels)
                 for partition_arg in self.partition_args
