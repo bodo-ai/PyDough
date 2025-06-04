@@ -87,7 +87,12 @@ class HybridOperation:
         replacements: dict[HybridExpr, HybridExpr],
     ) -> None:
         """
-        TODO
+        Replaces expressions within the operation with values from the provided
+        replacement mapping.
+
+        Args:
+            `replacements`: a dictionary mapping expressions that should be
+            replaced to their replacements.
         """
         for term_name, term in self.terms.items():
             new_term: HybridExpr = term.replace_expressions(replacements)
