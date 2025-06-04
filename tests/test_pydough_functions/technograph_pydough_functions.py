@@ -36,9 +36,11 @@ def most_unreliable_products():
 def incident_rate_by_release_year():
     # Return, for each year, the incident rate for products released that year
     return (
-        devices.CALCULATE(year=YEAR(product.release_date))
-        .PARTITION(name="years", by=year)
-        .CALCULATE(year, ir=ROUND(COUNT(devices.incidents) / COUNT(devices), 2))
+        devices.CALCULATE(release_year=YEAR(product.release_date))
+        .PARTITION(name="years", by=release_year)
+        .CALCULATE(
+            year=release_year, ir=ROUND(COUNT(devices.incidents) / COUNT(devices), 2)
+        )
         .ORDER_BY(year.ASC())
     )
 
