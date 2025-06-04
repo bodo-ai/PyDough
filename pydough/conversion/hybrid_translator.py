@@ -250,11 +250,16 @@ class HybridTranslator:
             `hybrid`: the base of the HybridTree to eject the aggregate inputs
             from. The ancestors & children of `hybrid` must also be processed.
         """
+        # Recursively eject inputs from the ancestors & children
         if hybrid.parent is not None:
             self.eject_aggregate_inputs(hybrid.parent)
         for child in hybrid.children:
             self.eject_aggregate_inputs(child.subtree)
             create_new_calc: bool = True
+            # For each child, look through each of its aggregation calls and
+            # see if any of their arguments are not references. If so, eject
+            # those expressions into a calculate in the child subtree, and
+            # replace the argument with a reference to the new expression.
             for agg_name, agg_call in sorted(child.aggs.items()):
                 rewritten: bool = False
                 new_args: list[HybridExpr] = []
@@ -545,31 +550,6 @@ class HybridTranslator:
             or child_connection.connection_type.is_semi
         )
         return self.postprocess_agg_output(count_call, result_ref, joins_can_nullify)
-
-    def handle_has_hasnot(
-        self,
-        hybrid: HybridTree,
-        expr: ExpressionFunctionCall,
-        child_ref_mapping: dict[int, int],
-    ) -> HybridExpr:
-        """
-        Handler function for translating a `HAS` or `HASNOT` expression by
-        mutating the referenced HybridConnection so it enforces that predicate,
-        then returning an expression indicating that the condition has been
-        met.
-        """
-        assert expr.operator in (
-            pydop.HAS,
-            pydop.HASNOT,
-        ), f"Malformed call to handle_has_hasnot: {expr}"
-        assert len(expr.args) == 1, f"Malformed call to handle_has_hasnot: {expr}"
-        collection_arg = expr.args[0]
-        assert isinstance(collection_arg, ChildReferenceCollection), (
-            f"Malformed call to handle_has_hasnot: {expr}"
-        )
-        # Since the connection has been mutated to be a semi/anti join, the
-        # has / hasnot condition is now known to be true.
-        return HybridLiteralExpr(Literal(True, BooleanType()))
 
     def convert_agg_arg(self, expr: HybridExpr, child_indices: set[int]) -> HybridExpr:
         """
@@ -1037,7 +1017,9 @@ class HybridTranslator:
                 ):
                     return self.handle_collection_count(hybrid, expr, child_ref_mapping)
                 elif expr.operator in (pydop.HAS, pydop.HASNOT):
-                    return self.handle_has_hasnot(hybrid, expr, child_ref_mapping)
+                    # Since the connection has been mutated to be a semi/anti join, the
+                    # has / hasnot condition is now known to be true.
+                    return HybridLiteralExpr(Literal(True, BooleanType()))
                 elif any(
                     not isinstance(arg, PyDoughExpressionQDAG) for arg in expr.args
                 ):
@@ -1144,15 +1126,35 @@ class HybridTranslator:
             hybrid_orderings.append(new_collation)
         return new_expressions, hybrid_orderings
 
-    def extract_link_root_info(
-        self, parent: HybridTree, tree: HybridTree, is_agg: bool, child_idx: int
-    ) -> tuple[
-        list[tuple[HybridExpr, HybridExpr]] | None,
-        list[HybridExpr] | None,
-        HybridExpr | None,
-    ]:
+    def define_root_link(
+        self, parent: HybridTree, tree: HybridTree, is_agg: bool
+    ) -> None:
         """
-        TODO
+        Extracts the information required to link a parent hybrid tree to a
+        child hybrid tree, and stores it within the child tree. There are three
+        kinds of information that can be extracted
+        - `join_keys`: a list of tuples of join keys, where each tuple is
+        in the form `(lhs_key, rhs_key)` where `lhs_key` is an expression
+        from `parent`, `rhs_key` is an expression from `tree`, and the
+        condition `lhs_key == rhs_key` must be true when joining parent to
+        tree. This is `None` if the connection between `parent` and
+        `tree` is not an equi-join.
+        - `agg_keys`: a list of expressions from `tree` that should be used to
+        aggregate the child tree before joining it onto the parent tree, if
+        aggregation is required. This is `None` if there is no aggregation.
+        - `general_join_condition`: a hybrid expression used as a filter to
+        decide when records of `parent` and `tree` should be joined.
+        Expressions from the `parent` are wrapped in a HybridSidedRefExpr,
+        while expressions from the child are normal references. This is
+        `None` if the connection between `parent` and `tree` is not a general
+        join.
+
+        Args:
+            `parent`: the parent hybrid tree that `tree` is a child of.
+            `tree`: the hybrid tree whose connection to `parent` is being
+            analyzed.
+            `is_agg`: True if the connection is being analyzed in the context
+            of an aggregation, False otherwise.
         """
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         agg_keys: list[HybridExpr] | None = None
@@ -1161,8 +1163,12 @@ class HybridTranslator:
         match operation:
             case HybridCollectionAccess():
                 if isinstance(operation.collection, TableCollection):
+                    # A table collection does not need to be joined onto its
+                    # parent.
                     join_keys = []
                 else:
+                    # A sub-collection needs to be joined onto its parent using
+                    # the join protocol defined by its metadata.
                     assert isinstance(operation.collection, SubCollection)
                     sub_property: SubcollectionRelationshipMetadata = (
                         operation.collection.subcollection_property
@@ -1178,16 +1184,23 @@ class HybridTranslator:
                             operation,
                         )
                     elif isinstance(sub_property, GeneralJoinMetadata):
+                        # For general join sub-collection accesses, use the
+                        # general join property already stored in the operation.
                         general_join_cond = operation.general_condition
                     else:
+                        # For cartesian product accesses, there is no need for
+                        # join keys since it will be a cross join.
                         join_keys = []
             case HybridPartitionChild():
+                # A partition child is joined onto its parent using the
+                # aggregation keys as join keys.
                 assert operation.subtree.agg_keys is not None
                 join_keys = []
                 for key in operation.subtree.agg_keys:
                     join_keys.append((key, key))
 
             case HybridPartition():
+                # A partition does not need to be joined to its parent
                 join_keys = []
             case _:
                 raise NotImplementedError(f"{operation.__class__.__name__}")
@@ -1229,7 +1242,11 @@ class HybridTranslator:
                 for key_name, expr in lhs_unique_keys.items():
                     agg_keys.append(HybridRefExpr(key_name, expr.typ))
 
-        return join_keys, agg_keys, general_join_cond
+        # Set the join keys, aggregation keys, and general join condition of
+        # the child tree to the defined values.
+        tree._join_keys = join_keys
+        tree._agg_keys = agg_keys
+        tree._general_join_condition = general_join_cond
 
     def make_hybrid_tree(
         self,
@@ -1440,13 +1457,7 @@ class HybridTranslator:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
                         )
-                (
-                    successor_hybrid._join_keys,
-                    successor_hybrid._agg_keys,
-                    successor_hybrid._general_join_condition,
-                ) = self.extract_link_root_info(
-                    parent, successor_hybrid, is_aggregate, len(parent.children)
-                )
+                self.define_root_link(parent, successor_hybrid, is_aggregate)
                 return successor_hybrid
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")

@@ -485,7 +485,7 @@ class HybridTree:
                 case HybridCalculate() | HybridNoop() | HybridRoot():
                     continue
                 case HybridFilter():
-                    if not operation.condition.always_true():
+                    if not operation.condition.condition_maintains_existence():
                         return False
                 case HybridLimit():
                     return False

@@ -86,9 +86,17 @@ class HybridExpr(ABC):
         replacements: dict["HybridExpr", "HybridExpr"],
     ) -> "HybridExpr":
         """
-        TODO
+        Recursively replaces the expression and any sub-expressions within it
+        using the provided replacement mapping. The transformation is also
+        done in-place.
+
+        Args:
+            `replacements`: a dictionary mapping expressions that should be
+            replaced to their replacements.
         """
         if self in replacements:
+            # To avoid aliasing occurrences of the replacement, return a
+            # deep copy of the replacement.
             return copy.deepcopy(replacements[self])
         return self
 
@@ -96,13 +104,32 @@ class HybridExpr(ABC):
         self, level_threshold: int | None, depth_threshold: int
     ) -> "HybridExpr":
         """
-        TODO
+        Recursively transforms the expression to account for a scenario where
+        the hybrid tree containing the expression is moved into a child,
+        meaning that some its back references & correlated references will
+        need to be updated to account for the fact that they point outward
+        one more layer. This transformation is also done in-place.
+
+        Args:
+            `level_threshold`: the number of back levels required for a back
+            reference to be split into a correlated reference. If None, then
+            back references are ignored. This is used so back references are
+            squished into correlated references only if they point to a level
+            of the hybrid tree that is now separated from the current tree due
+            to moving it into a child.
+            `depth_threshold`: the depth of correlated nesting required to
+            warrant wrapping a correlated reference in another correlated
+            reference. This is used so correlated references only gain another
+            layer if they point to a layer that has been moved further away
+            from the expression by separating the containing tree into a child.
         """
         return self
 
     def count_correlated_levels(self) -> int:
         """
-        TODO
+        Counts the maximum number of layers of correlated references within the
+        expression. This is used to determine how many layers outward the
+        expression references.
         """
         return 0
 
@@ -116,6 +143,13 @@ class HybridExpr(ABC):
         """
         Returns the set of names of variables that are correlated a certain
         number of levels within the expression.
+
+        Args:
+            `levels`: the number of levels of correlation to search for.
+
+        Returns:
+            A set of all names of correlated variables that are wrapped in
+            `levels` layers of correlated expressions.
         """
         return set()
 
@@ -123,6 +157,14 @@ class HybridExpr(ABC):
         """
         Returns whether this expression contains any window functions
         with correlates with at least a certain number of levels.
+
+        Args:
+            `levels`: the minimum number of levels of correlated references to
+            search for.
+
+        Returns:
+            True if the expression contains a window function with correlated
+            references with at least `levels` layers, False otherwise.
         """
         return False
 
@@ -132,9 +174,11 @@ class HybridExpr(ABC):
         """
         return False
 
-    def always_true(self) -> bool:
+    def condition_maintains_existence(self) -> bool:
         """
-        Returns whether this expression always evaluates to True.
+        Returns whether this expression, when treated as a filter, is
+        guaranteed to maintain the `always_exists` property of the hybrid
+        tree containing the filter.
         """
         return False
 
@@ -325,7 +369,7 @@ class HybridLiteralExpr(HybridExpr):
     def to_string(self):
         return repr(self.literal)
 
-    def always_true(self) -> bool:
+    def condition_maintains_existence(self) -> bool:
         return isinstance(self.typ, BooleanType) and bool(self.literal.value)
 
 
@@ -375,9 +419,6 @@ class HybridFunctionExpr(HybridExpr):
         self,
         replacements: dict[HybridExpr, HybridExpr],
     ) -> HybridExpr:
-        """
-        TODO
-        """
         if self in replacements:
             return replacements[self]
         for idx, arg in enumerate(self.args):
@@ -387,9 +428,6 @@ class HybridFunctionExpr(HybridExpr):
     def squish_backrefs_into_correl(
         self, level_threshold: int | None, depth_threshold: int
     ):
-        """
-        TODO
-        """
         for idx, arg in enumerate(self.args):
             self.args[idx] = arg.squish_backrefs_into_correl(
                 level_threshold, depth_threshold
@@ -417,13 +455,19 @@ class HybridFunctionExpr(HybridExpr):
     def has_correlated_window_function(self, levels: int) -> bool:
         return any(arg.has_correlated_window_function(levels) for arg in self.args)
 
-    def always_true(self) -> bool:
+    def condition_maintains_existence(self) -> bool:
         match self.operator:
             case pydop.BAN:
-                return all(arg.always_true() for arg in self.args)
+                # An AND expression maintains existence if all of its operands
+                # maintain existence.
+                return all(arg.condition_maintains_existence() for arg in self.args)
             case pydop.BOR:
-                return any(arg.always_true() for arg in self.args)
+                # An OR expression maintains existence if all of its operands
+                # maintain existence.
+                return any(arg.condition_maintains_existence() for arg in self.args)
             case pydop.EQU:
+                # Special case: a RANKING() == 1 filter will maintain existence
+                # if there are no correlated partition arguments.
                 if len(self.args) != 2:
                     return False
                 lhs, rhs = self.args
@@ -563,9 +607,6 @@ class HybridWindowExpr(HybridExpr):
     def squish_backrefs_into_correl(
         self, level_threshold: int | None, depth_threshold: int
     ):
-        """
-        TODO
-        """
         for idx, arg in enumerate(self.args):
             self.args[idx] = arg.squish_backrefs_into_correl(
                 level_threshold, depth_threshold

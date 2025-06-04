@@ -90,13 +90,7 @@ class HybridSyncretizer:
         child._successor = successor
 
         if levels_up == 1:
-            (
-                new_child._join_keys,
-                new_child._agg_keys,
-                new_child._general_join_condition,
-            ) = self.translator.extract_link_root_info(
-                new_base, new_child, True, len(new_base.children)
-            )
+            self.translator.define_root_link(new_base, new_child, True)
         else:
             assert parent is not None
             new_parent: HybridTree = self.make_extension_child(
