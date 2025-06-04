@@ -410,9 +410,6 @@ class HybridSyncretizer:
                 ConnectionType.SEMI
             )
 
-        elif new_connection_type == ConnectionType.SEMI:
-            new_connection_type = ConnectionType.SINGULAR_ONLY_MATCH
-
         # If a singular is being added to a SEMI join, switch the SEMI
         # join to an singular-only-match.
         if (

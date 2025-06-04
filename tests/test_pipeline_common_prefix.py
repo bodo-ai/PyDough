@@ -775,14 +775,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                             "UNITED KINGDOM",
                         ],
                         "n_machine_cust": [1167, 1197, 1273, 1223, 1158],
-                        "n_machine_high_orders": [2282, 2417, 2607, 2526, 2338],
-                        "n_machine_high_domestic_lines": [374, 361, 422, 435, 370],
+                        "n_machine_high_orders": [210, 223, 229, 244, 226],
+                        "n_machine_high_domestic_lines": [24, 28, 39, 31, 45],
                         "total_machine_high_domestic_revenue": [
-                            8595646.38,
-                            8313389.57,
-                            9834510.0,
-                            10473260.03,
-                            8492812.64,
+                            551171.23,
+                            695040.64,
+                            876967.34,
+                            743530.61,
+                            823944.29,
                         ],
                     }
                 ),
@@ -902,9 +902,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "cust_key": [14, 28, 49],
-                        "n_orders": [10, 18, 17],
-                        "n_no_tax_discount": [2, 2, 1],
+                        "cust_key": [28, 49, 64],
+                        "n_orders": [18, 17, 20],
+                        "n_no_tax_discount": [2, 1, 3],
                     }
                 ),
                 "common_prefix_al",
