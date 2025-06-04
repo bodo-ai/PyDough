@@ -552,6 +552,7 @@ class Qualifier:
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection or expression
@@ -649,6 +650,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -691,6 +693,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -766,6 +769,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -817,6 +821,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -988,6 +993,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -1056,7 +1062,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection is being qualified as a cross
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -1124,6 +1130,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified singular node.
@@ -1152,6 +1159,7 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified singular node.
@@ -1220,7 +1228,20 @@ class Qualifier:
         is_child: bool,
         is_cross: bool,
     ) -> PyDoughCollectionQDAG:
-        "TODO: Implement the qualification for UnqualifiedCross nodes."
+        """Qualifies the UnqualifiedCross node into a PyDoughCollectionQDAG
+        by transforming its parent and child nodes into their own
+        qualified collections (Hybrid nodes).
+
+        Args:
+            unqualified (UnqualifiedCross): The unqualified cross node to qualify.
+            context (PyDoughCollectionQDAG): The context in which the qualification is happening.
+            is_child (bool): Whether the node is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+            is_cross (bool): Whether the qualification is for a CROSS JOIN operation.
+
+        Returns:
+            PyDoughCollectionQDAG: The qualified collection node.
+        """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         unqualified_child: UnqualifiedNode = unqualified._parcel[1]
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
@@ -1257,6 +1278,7 @@ class Qualifier:
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified node. The result can be either

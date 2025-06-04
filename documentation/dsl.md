@@ -1467,9 +1467,9 @@ People.packages.BEST(by=order_date.DESC(), per="packages")
 <!-- TOC --><a name="cross"></a>
 ### CROSS
 
-#TODO: explain
+A PyDough operation to perform `CROSS JOIN` operation between two collections. This operation produces the Cartesian product of all rows from the left and right input collections, combining each row from the left with every row from the right. It's typically used when explicit join keys are not required or when generating combinations between the collections.
 
-**Good Example #1**: Find all combinations of region names
+**Good Example #1**: Find all combinations of region names.
 
 ```py
 %%pydough
@@ -1494,7 +1494,7 @@ regions.CALCULATE(r1=name).CROSS(regions).CALCULATE(r1, r2=name).ORDER_BY(r1.ASC
 customers.CROSS(42)
 ```
 
-**Bad Example #2**: This is invalid because `customers` output name causes a name collision with collection named `customers`
+**Bad Example #2**: This is invalid because `customers` output name causes a name collision with collection named `customers`.
 
 ```py
 %%pydough

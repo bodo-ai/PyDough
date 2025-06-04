@@ -2544,11 +2544,16 @@ class HybridTranslator:
         match node:
             case GlobalContext():
                 if node.ancestor_context is None:
+                    # No ancestor context, so this is the root of the hybrid tree.
                     return HybridTree(HybridRoot(), node.ancestral_mapping)
                 else:
+                    # For CROSS operations, need to create a hybrid tree for the
+                    # ancestor context, which is the context of the CROSS.
                     hybrid = self.make_hybrid_tree(
                         node.ancestor_context, parent, is_aggregate
                     )
+                    # Create a new hybrid tree for the current global context, which
+                    # will be the a successor of the hybrid tree for the ancestor context.
                     successor_hybrid = HybridTree(HybridRoot(), node.ancestral_mapping)
                     hybrid.add_successor(successor_hybrid)
                     return successor_hybrid
@@ -2753,6 +2758,9 @@ class HybridTranslator:
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs
                     case GlobalContext():
+                        # This is a special case where the child access
+                        # is a global context, which means that the child is
+                        # a separate top-level computation (hybrid tree).
                         successor_hybrid = HybridTree(
                             HybridRoot(), node.ancestral_mapping
                         )

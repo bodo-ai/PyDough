@@ -37,7 +37,7 @@ class GlobalContext(PyDoughCollectionQDAG):
             for name, level in ancestor.ancestral_mapping.items():
                 if name in graph.get_collection_names():
                     raise PyDoughQDAGException(
-                        f"Name {name!r} conflicts with a collection in the graph {graph.name!r}"
+                        f"Name {name!r} conflicts with a collection name in the graph {graph.name!r}"
                     )
                 else:
                     self._ancestral_mapping[name] = level + 1

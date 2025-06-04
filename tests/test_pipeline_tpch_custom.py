@@ -2253,7 +2253,7 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_4,
             None,
-            "Name 'customers' conflicts with a collection in the graph",
+            "Name 'customers' conflicts with a collection name in the graph",
             id="bad_cross_4",
         ),
         pytest.param(
