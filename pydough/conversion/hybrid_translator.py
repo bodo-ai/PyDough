@@ -69,7 +69,6 @@ from .hybrid_operations import (
     HybridPartitionChild,
     HybridRoot,
 )
-from .hybrid_syncretizer import HybridSyncretizer
 from .hybrid_tree import HybridTree
 
 
@@ -1462,17 +1461,6 @@ class HybridTranslator:
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
 
-    def run_syncretization(self, hybrid: "HybridTree") -> None:
-        """
-        Invokes the procedure to syncretize the children in hte hybrid tree.
-        The transformation is done in-place.
-
-        Args:
-            `hybrid`: The hybrid tree to run syncretization on.
-        """
-        sync: HybridSyncretizer = HybridSyncretizer(self)
-        return sync.syncretize_children(hybrid)
-
     def run_hybrid_decorrelation(self, hybrid: "HybridTree") -> None:
         """
         Invokes the procedure to remove correlated references from a hybrid tree
@@ -1507,15 +1495,12 @@ class HybridTranslator:
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
-        # 3. Syncretize any children of the hybrid tree that share a common
-        # prefix, thus eliminating duplicate logic.
-        self.run_syncretization(hybrid)
-        # 4. Run the de-correlation procedure.
+        # 2. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
-        # 5. Run any final rewrites, such as turning MEDIAN into an average of
+        # 3. Run any final rewrites, such as turning MEDIAN into an average of
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)
-        # 6. Remove any dead children in the hybrid tree that are no longer
+        # 4. Remove any dead children in the hybrid tree that are no longer
         # being used.
         hybrid.remove_dead_children(set())
         return hybrid

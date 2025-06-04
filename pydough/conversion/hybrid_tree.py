@@ -81,11 +81,21 @@ class HybridTree:
 
     def to_string(self, verbose: bool = False) -> str:
         """
-        TODO
+        Converts the hybrid tree to a string representation.
+
+        Args:
+            `verbose`: if True, includes additional information such as
+            definition ranges and not hiding hidden operations. This should
+            be true when printing a hybrid tree for debugging, but false when
+            converting the hybrid tree to a string for the purposes of checking
+            equality.
         """
         lines = []
+        # Obtain the string representation of the parent, if present.
         if self.parent is not None:
             lines.extend(self.parent.to_string(verbose).splitlines())
+        # Add the string representation of the current hybrid tree's pipeline
+        # of operators, ignoring hidden operations if `verbose` is False.'
         lines.append(
             " -> ".join(
                 repr(operation)
@@ -93,6 +103,9 @@ class HybridTree:
                 if (verbose or not operation.is_hidden)
             )
         )
+        # Add the string representation of the current hybrid tree's children,
+        # adding certain extra fields of information depending on what the
+        # child contains and whether verbose is True.
         prefix = " " if self.successor is None else "↓"
         for idx, child in enumerate(self.children):
             lines.append(f"{prefix} child #{idx} ({child.connection_type.name}):")
@@ -109,8 +122,9 @@ class HybridTree:
                 lines.append(f"{prefix}  join: {child.subtree.join_keys}")
             if child.subtree.general_join_condition is not None:
                 lines.append(f"{prefix}  join: {child.subtree.general_join_condition}")
+            lines.append(f"{prefix}  subtree:")
             for line in repr(child.subtree).splitlines():
-                lines.append(f"{prefix} {line}")
+                lines.append(f"{prefix}   {line}")
         return "\n".join(lines)
 
     def __repr__(self):
@@ -230,11 +244,22 @@ class HybridTree:
 
     def add_operation(self, operation: HybridOperation) -> None:
         """
-        TODO
+        Appends a new hybrid operation to the end of the pipeline of the
+        hybrid tree. If the operation is affected by whether a child that
+        filters the current level exists, the blocking index of the tree is
+        updated to the index of the operation in the pipeline since any
+        subsequent child accesses that filter the current level must occur
+        after this operation.
+
+        Args:
+            `operation`: the hybrid operation to be added to the pipeline.
         """
         blocking_idx: int = len(self.pipeline)
         self.pipeline.append(operation)
         is_blocking_operation: bool = False
+        # CALCULATE and FILTER clauses are blocking if they contain window
+        # functions, since their return values may change if rows are filtered
+        # before computing the window function.
         if isinstance(operation, HybridCalculate):
             is_blocking_operation = any(
                 term.contains_window_functions()
@@ -243,13 +268,21 @@ class HybridTree:
         elif isinstance(operation, HybridFilter):
             is_blocking_operation = operation.condition.contains_window_functions()
         elif isinstance(operation, HybridLimit):
+            # LIMIT clauses are always blocking, since filtering before the
+            # limit will change which rows are returned.
             is_blocking_operation = True
         if is_blocking_operation:
             self._blocking_idx = blocking_idx
 
     def insert_count_filter(self, child_idx: int) -> None:
         """
-        TODO
+        Inserts a filter into the hybrid tree that checks whether there is at
+        least one record of a child hybrid tree, e.g. COUNT(*) > 0. This is
+        the logical equivalent of doing a semi-join.
+
+        Args:
+            `child_idx`: the index of the child hybrid tree to insert the
+            COUNT(*) > 0 filter for.
         """
         hybrid_call: HybridFunctionExpr = HybridFunctionExpr(
             pydop.COUNT, [], NumericType()
@@ -280,13 +313,28 @@ class HybridTree:
 
     def get_correlate_names(self, levels: int) -> set[str]:
         """
-        TODO
+        Obtains the set of names of all correlated expressions in the hybrid
+        tree, including its parents and children, that are wrapped in a
+        specific number of levels of correlation.
+
+        Args:
+            `levels`: the exact number of levels of correlation that the names
+            must be wrapped in for them to be included in the result.
+
+        Returns:
+            The set of all names of qualifying correlated expressions.
         """
         result: set[str] = set()
+        # Recursively fetch the names of from the children, adding one to
+        # levels to account for the fact that the subtree is now nested one
+        # level deeper in the hierarchy.
         for child in self.children:
             result.update(child.subtree.get_correlate_names(levels + 1))
+        # Recursively fetch the names of from the parents
         if self.parent is not None:
             result.update(self.parent.get_correlate_names(levels))
+        # Search for any correlated names with the sufficient number of levels
+        # of correlation from the expressions of the current pipeline.
         for operation in self.pipeline:
             if isinstance(operation, HybridCalculate):
                 for term in operation.new_expressions.values():
@@ -297,7 +345,19 @@ class HybridTree:
 
     def has_correlated_window_function(self, levels: int) -> bool:
         """
-        TODO
+        Returns whether the hybrid tree, its children, or its parent
+        contains any window functions containing a partition argument that is
+        wrapped in a certain minimum number of levels of correlation.
+
+        Args:
+            `levels`: the minimum number of levels of correlation that the
+            window function must be wrapped in for its correlations to be
+            considered.
+
+        Returns:
+            True if there is at least one correlated window function in the
+            hybrid tree, its children, or its parent that is wrapped in the
+            specified number of levels of correlation, False otherwise.
         """
         for operation in self.pipeline:
             if isinstance(operation, HybridCalculate):
@@ -505,7 +565,10 @@ class HybridTree:
 
     def is_singular(self) -> bool:
         """
-        TODO
+        Returns whether the hybrid tree is always guaranteed to return a single
+        record with regards to its parent context. This is true if every
+        operation that starts each pipeline in the tree and its parents is an
+        operation that is singular.
         """
         match self.pipeline[0]:
             case HybridCollectionAccess():
@@ -525,23 +588,6 @@ class HybridTree:
                 return False
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.always_exists()
-
-    def contains_correlates(self) -> bool:
-        """
-        TODO
-        """
-        for operation in self.pipeline:
-            for expr in operation.terms.values():
-                if expr.contains_correlates():
-                    return True
-            if (
-                isinstance(operation, HybridFilter)
-                and operation.condition.contains_correlates()
-            ):
-                return True
-        if any(child.subtree.contains_correlates() for child in self.children):
-            return True
-        return self.parent is not None and self.parent.contains_correlates()
 
     def equalsIgnoringSuccessors(self, other: "HybridTree") -> bool:
         """
@@ -694,12 +740,27 @@ class HybridTree:
         self, child_subtree: "HybridTree", connection_type: ConnectionType
     ) -> int:
         """
-        TODO
+        Identifies the minimum index in the pipeline that a child subtree must
+        be defined after, based on whether that index in the pipeline defined
+        terms required for the subtree or if the subtree filters in a way that
+        would affect the results of that operation in the pieeline.
+
+        Args:
+            `child_subtree`: the child hybrid tree that the minimum possible
+            index for is being sought.
+            `connection_type`: the type of connection that the child subtree
+            is being connected with, which may affect the minimum index.
+
+        Returns:
+            The minimum index value.
         """
         correl_names: set[str] = child_subtree.get_correlate_names(1)
         has_correlated_window_function: bool = (
             child_subtree.has_correlated_window_function(1)
         )
+
+        # Start the minimum index at the most recent blocking index value
+        # stored in the hybrid tree.
         min_idx: int = self._blocking_idx
         if not (
             connection_type.is_anti
@@ -708,14 +769,23 @@ class HybridTree:
             # If the connection is not anti or semi, we can use the first
             # operation in the pipeline as the minimum index.
             min_idx = 0
+
+        # Move backwards from the end of the pipeline to the current minimum
+        # index candidate, stopping if an operation is found that requires the
+        # child subtree to be defined before after it due to correlations.
         if correl_names:
             for pipeline_idx in range(len(self.pipeline) - 1, min_idx, -1):
                 operation: HybridOperation = self.pipeline[pipeline_idx]
+                # Filters/limits are blocking if the subtree contains a
+                # correlated window function, since the window function's
+                # outputs will change if it is defined before the filter/limit.
                 if (
                     isinstance(operation, (HybridFilter, HybridLimit))
                     and has_correlated_window_function
                 ):
                     return pipeline_idx
+                # Calculates are blocking if they define a term that is used in
+                # a correlated reference (ignoring redundant x=x definitions).
                 if isinstance(operation, HybridCalculate):
                     for name in correl_names:
                         if name in operation.new_expressions:
@@ -728,7 +798,25 @@ class HybridTree:
         self, levels_up: int | None, levels_out: int
     ) -> None:
         """
-        TODO
+        Transforms the expressions within the hybrid tree and its
+        parents/children to account for the fact that the subtree has been
+        split off from one of its ancestors and moved into a child, thus
+        meaning that back-references to that ancestor & above become correlated
+        references, and any correlated references to above that point must now
+        be wrapped in another correlated reference.
+
+        Args:
+            `level_threshold`: the number of back levels required for a back
+            reference to be split into a correlated reference. If None, then
+            back references are ignored. This is used so back references are
+            squished into correlated references only if they point to a level
+            of the hybrid tree that is now separated from the current tree due
+            to moving it into a child.
+            `depth_threshold`: the depth of correlated nesting required to
+            warrant wrapping a correlated reference in another correlated
+            reference. This is used so correlated references only gain another
+            layer if they point to a layer that has been moved further away
+            from the expression by separating the containing tree into a child.
         """
         for operation in self.pipeline:
             for term_name, term in operation.terms.items():
