@@ -538,19 +538,21 @@ def common_prefix_af():
 
 def common_prefix_ag():
     # For every european nation, count how many customers in that region are in
-    # the machinery market segment, how many orders were made by those
+    # the machinery market segment, how many orders were made in 1998 by those
     # customers had priority 2-HIGH, how many line items were in those orders
     # that were shipped by a supplier in the same nation, and the total revenue
     # from those line items. The revenue accounts for the discount, and the
     # cost to the supplier. The result is sorted alphabetically by nation name.
     # Assume such lineitems will always exist for each nation.
     selected_customers = customers.WHERE(market_segment == "MACHINERY")
-    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
+    selected_orders = selected_customers.orders.WHERE(
+        (order_priority == "2-HIGH") & (YEAR(order_date) == 1998)
+    )
     selected_lines = selected_orders.lines.WHERE(
         supplier.nation.name == nation_name
-    ).CALCULATE(extended_price, discount, quantity)
-    selected_records = selected_lines.part_and_supplier.CALCULATE(
-        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    ).CALCULATE(
+        revenue=extended_price * (1 - discount)
+        - quantity * part_and_supplier.supply_cost
     )
     return (
         nations.WHERE(region.name == "EUROPE")
@@ -560,7 +562,7 @@ def common_prefix_ag():
             n_machine_cust=COUNT(selected_customers),
             n_machine_high_orders=COUNT(selected_orders),
             n_machine_high_domestic_lines=COUNT(selected_lines),
-            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_lines.revenue), 2),
         )
         .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
@@ -672,14 +674,15 @@ def common_prefix_al():
     # number of lineitems without tax/discount made. When choosing the top 10
     # customers, pick the 10 with the lowest key values.
     selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    selected_part_purchase = selected_lines.part.WHERE(size < 15)
     return (
         nations.customers.CALCULATE(n_orders=COUNT(orders))
         .WHERE(n_orders > RELAVG(n_orders, per="nations"))
         .CALCULATE(n_no_tax_discount=COUNT(selected_lines))
         .WHERE(HAS(selected_lines))
         .TOP_K(10, by=key.ASC())
-        .WHERE(HAS(selected_lines.part.WHERE(size < 15)))
         .CALCULATE(cust_key=key, n_orders=n_orders, n_no_tax_discount=n_no_tax_discount)
+        .WHERE(HAS(selected_part_purchase) & (COUNT(selected_part_purchase) > 0))
     )
 
 
@@ -688,11 +691,16 @@ def common_prefix_am():
     # average number of orders per nation before filtering on whether they have
     # any lineitems without tax/discount.
     selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    selected_part_purchase = selected_lines.part.WHERE(size < 15)
     return (
         nations.customers.CALCULATE(n_orders=COUNT(orders))
         .WHERE(n_orders > RELAVG(n_orders, per="nations"))
         .TOP_K(10, by=key.ASC())
-        .WHERE(HAS(selected_lines) & HAS(selected_lines.part.WHERE(size < 15)))
+        .WHERE(
+            HAS(selected_lines)
+            & HAS(selected_part_purchase)
+            & (COUNT(selected_part_purchase) > 0)
+        )
         .CALCULATE(
             cust_key=key, n_orders=n_orders, n_no_tax_discount=COUNT(selected_lines)
         )
@@ -704,12 +712,14 @@ def common_prefix_an():
     # qualifying lineitems before filtering on whether they have an above
     # average number of orders.
     selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    selected_part_purchase = selected_lines.part.WHERE(size < 15)
     return (
         nations.customers.WHERE(HAS(selected_lines))
         .TOP_K(50, by=key.ASC())
         .WHERE(
             (COUNT(orders) > RELAVG(COUNT(orders), per="nations"))
-            & HAS(selected_lines.part.WHERE(size < 15))
+            & HAS(selected_part_purchase)
+            & (COUNT(selected_part_purchase) > 0)
         )
         .CALCULATE(
             cust_key=key,
