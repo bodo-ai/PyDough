@@ -64,7 +64,26 @@ class HybridSyncretizer:
         pydop.ANYTHING: (pydop.ANYTHING, pydop.MAX),
     }
     """
-    TODO
+    A mapping of operators that can be split up into two rounds of aggregation
+    as part of an AGG-AGG syncretization. The key is the aggregation operator
+    being used in the original extension child and the value is a tuple of two
+    operators,  one of which should be used to aggregate the new extension
+    child of the base child, and the other which should eb used to aggregate
+    the first aggregation within the base child.
+
+    For example, if the parent has children C0 and C1, C0 has agg terms
+    {"agg_0": COUNT()}, and C1 has agg terms {"agg_1": COUNT()}, then
+    after syncretization, C0 will have a child with the suffix from C1
+    (lets call this C2) with agg terms {"agg_2": COUNT()}, and C0 will
+    now have the following: {"agg_0": COUNT(), "agg_1": SUM(agg_2)}.
+
+    If an operator is not in this mapping then such a syncretization is not
+    allowed because the aggregation cannot be split up into two rounds. An
+    example of this is computing NDISTINCT or MEDIAN, since there is no
+    aggregation that can be computed on the extension child such that the
+    result can be re-aggregated to obtain the final result. An exception to
+    this rule is AVG, which is specially handled since it can be decomposed
+    into SUM and COUNT, both of which can be split.
     """
 
     def __init__(self, translator: "HybridTranslator") -> None:
@@ -74,7 +93,20 @@ class HybridSyncretizer:
         self, child: HybridTree, levels_up: int, new_base: HybridTree
     ) -> HybridTree:
         """
-        TODO
+        Creates the suffix of the extension child by splitting the subtree at
+        the specified number of levels so its root is now the first level of
+        the extension child that is not in the base child.
+
+        Args:
+            `child`: The extension child being split.
+            `levels_up`: The number of levels above from the current child
+            to split the tree at.
+            `new_base`: The new base tree that the extension child
+            will be a child of.
+
+        Returns:
+            A new HybridTree that is the section of the extension child that
+            will become a child of the new base tree as a child.
         """
         if levels_up <= 0:
             raise ValueError(f"Cannot make extension child with {levels_up} levels up")
@@ -89,9 +121,13 @@ class HybridSyncretizer:
         child._parent = parent
         child._successor = successor
 
+        # If at the level where the split occurs, add root link information to
+        # new_child since it is now the root of the new subtree.
         if levels_up == 1:
             self.translator.define_root_link(new_base, new_child, True)
         else:
+            # Otherwise, recursively transform the parent of the current level,
+            # then link the copy to the result as a successor.
             assert parent is not None
             new_parent: HybridTree = self.make_extension_child(
                 parent, levels_up - 1, new_base
@@ -99,11 +135,29 @@ class HybridSyncretizer:
             new_parent.add_successor(new_child)
         return new_child
 
+    @staticmethod
     def can_syncretize_subtrees(
-        self, base_child: HybridConnection, extension_child: HybridConnection
+        base_child: HybridConnection, extension_child: HybridConnection
     ) -> tuple[bool, int]:
         """
-        TODO
+        Returns whether two children of a hybrid tree form a pair
+        (base, extension) such that the base is a prefix of the extension.
+        Importantly, even if this function returns True, it does not
+        necessarily mean that the two children can or will be syncretized, as
+        there are additional checks that need to be performed based on the
+        connection types of the two children and the aggregation operators, and
+        there may be better combinations of children that can be syncretized
+        onto one another.
+
+        Args:
+            `base_child`: The base child of the pair.
+            `extension_child`: The extension child of the pair.
+
+        Returns:
+            A tuple where the first element is a boolean indicating whether
+            the two children can be potentially syncretized, and the second
+            element is how many additional levels exist in the suffix of the
+            extension child that are not in the base child.
         """
         prefix_levels_up: int = 0
         base_subtree: HybridTree = base_child.subtree
@@ -121,8 +175,26 @@ class HybridSyncretizer:
         self, tree: HybridTree, extension_idx: int, is_semi: bool
     ) -> None:
         """
-        TODO
+        Inserts a filter into the pipeline of the tree containing the base and
+        extension children so that the syncretized pair computes the COUNT of
+        the extension child and the parent can perform a filter on that COUNT
+        (> 0 for SEMI, == 0 for ANTI). This is done when syncretizing a child
+        that only allows matches onto a base child that is an aggregation,
+        since the extension child must not filter rows of the base child lest
+        it tamper with the base child's aggregation results.
+
+        This transformation is done before the syncretization is completed, so
+        the rest of the syncretization logic will deal with the splitting of
+        COUNT into a COUNT and a SUM.
+
+        Args:
+            `tree`: The hybrid tree containing the base and extension children.
+            `extension_idx`: The index of the extension child in the tree.
+            `is_semi`: Whether the inserted filter should emulate a SEMI join
+            (True) or an ANTI join (False).
         """
+
+        # Create the COUNT call and insert it into the extension child.
         extension_child: HybridConnection = tree.children[extension_idx]
         agg_call: HybridFunctionExpr = HybridFunctionExpr(
             pydop.COUNT, [], NumericType()
@@ -133,15 +205,18 @@ class HybridSyncretizer:
         else:
             agg_name = self.translator.gen_agg_name(extension_child)
             extension_child.aggs[agg_name] = agg_call
+
+        # Create the filter condition from the perspective of the parent tree.
         agg_ref: HybridExpr = HybridChildRefExpr(agg_name, extension_idx, NumericType())
         literal_zero: HybridExpr = HybridLiteralExpr(Literal(0, NumericType()))
         if not is_semi:
             agg_ref = HybridFunctionExpr(
                 pydop.DEFAULT_TO, [agg_ref, literal_zero], BooleanType()
             )
-        # Insert the new filter right after the required steps index,
-        # and update other children accordingly.
-        insert_idx: int = extension_child.min_steps + 1
+
+        # Insert the new filter at the location that the semi/anti filter must
+        # be performed before.
+        insert_idx: int = extension_child.max_steps
         tree.pipeline.insert(
             insert_idx,
             HybridFilter(
@@ -153,9 +228,15 @@ class HybridSyncretizer:
                 ),
             ),
         )
+
+        # Shift the min/max steps of all the children to account for the fact
+        # that a new operation has been inserted into the middle of the
+        # pipeline.
         for child in tree.children:
             if child.min_steps > insert_idx:
                 child.min_steps += 1
+            if child.max_steps > insert_idx:
+                child.max_steps += 1
 
     def syncretize_agg_onto_agg(
         self,
