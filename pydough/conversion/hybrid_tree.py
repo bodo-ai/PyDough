@@ -110,6 +110,8 @@ class HybridTree:
         for idx, child in enumerate(self.children):
             lines.append(f"{prefix} child #{idx} ({child.connection_type.name}):")
             if verbose:
+                if idx in self._correlated_children:
+                    lines.append(f"{prefix}  correlated: True")
                 lines.append(
                     f"{prefix}  definition range: ({child.min_steps}, {child.max_steps})"
                 )
@@ -236,7 +238,7 @@ class HybridTree:
         return self._general_join_condition
 
     @general_join_condition.setter
-    def general_join_condition(self, condition: HybridExpr) -> None:
+    def general_join_condition(self, condition: HybridExpr | None) -> None:
         """
         Assigns the general join condition to a hybrid tree.
         """
@@ -484,8 +486,12 @@ class HybridTree:
             for lhs_key, rhs_key in self.join_keys:
                 successor_join_keys.append((lhs_key, rhs_key.shift_back(1)))
             successor.join_keys = successor_join_keys
+        else:
+            successor.join_keys = None
         if self.general_join_condition is not None:
             successor.general_join_condition = self.general_join_condition.shift_back(1)
+        else:
+            successor.general_join_condition = None
 
     def always_exists(self) -> bool:
         """

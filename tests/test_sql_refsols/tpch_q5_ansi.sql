@@ -1,11 +1,12 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
     )) AS agg_0,
-    ANY_VALUE(nation.n_name) AS agg_3,
-    ANY_VALUE(nation.n_regionkey) AS agg_5
+    ANY_VALUE(nation.n_name) AS agg_3
   FROM tpch.nation AS nation
+  JOIN tpch.region AS region
+    ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   JOIN tpch.orders AS orders
@@ -24,10 +25,8 @@ WITH _t0 AS (
     nation.n_nationkey
 )
 SELECT
-  _t0.agg_3 AS N_NAME,
-  COALESCE(_t0.agg_0, 0) AS REVENUE
-FROM _t0 AS _t0
-JOIN tpch.region AS region
-  ON _t0.agg_5 = region.r_regionkey AND region.r_name = 'ASIA'
+  agg_3 AS N_NAME,
+  COALESCE(agg_0, 0) AS REVENUE
+FROM _t1
 ORDER BY
   revenue DESC

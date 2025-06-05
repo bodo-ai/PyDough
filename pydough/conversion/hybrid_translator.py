@@ -1371,12 +1371,11 @@ class HybridTranslator:
                     )
                     partition.add_key(key_name, expr)
                     key_exprs.append(HybridRefExpr(key_name, expr.typ))
-                successor_hybrid.children[
+                partition_child: HybridTree = successor_hybrid.children[
                     partition_child_idx
-                ].subtree.agg_keys = key_exprs
-                successor_hybrid.children[partition_child_idx].subtree.join_keys = [
-                    (k, k) for k in key_exprs
-                ]
+                ].subtree
+                partition_child.agg_keys = key_exprs
+                partition_child.join_keys = [(k, k) for k in key_exprs]
                 return successor_hybrid
             case OrderBy() | TopK():
                 hybrid = self.make_hybrid_tree(

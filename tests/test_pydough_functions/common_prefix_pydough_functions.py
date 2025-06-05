@@ -227,24 +227,23 @@ def common_prefix_m():
 
 
 def common_prefix_n():
-    # For each order handled by clerk 540, get the number of elements in the
-    # order, the total retail price of all parts ordered, the number of
-    # of distinct nation that supplied the orders, the maximum account
-    # balance of any of the order's suppliers, and the number of items in the
-    # order that were for a small part. Only consider orders where there is at
+    # For each order, get the number of elements in the order that were
+    # shipped in 1996, and for those elements the the total retail price of al
+    # parts ordered the number of distinct nation that supplied the orders,
+    # the maximum account balance of any of the order's suppliers, and the
+    # elements that were for a small part. Only consider orders where there is at
     # least one duplicate supplier nation, and pick the five most recent
     # qualifying orders, breaking ties by the key.
-    lines.part.WHERE(STARTSWITH(container, "SM"))
-    selected_orders = orders.WHERE(clerk == "Clerk#000000540")
+    selected_lines = lines.WHERE((YEAR(ship_date) == 1996) & (MONTH(ship_date) == 11))
     return (
-        selected_orders.CALCULATE(
+        orders.CALCULATE(
             key,
             order_date,
-            n_elements=COUNT(lines),
-            total_retail_price=SUM(lines.part.retail_price),
-            n_unique_supplier_nations=NDISTINCT(lines.supplier.nation.name),
-            max_supplier_balance=MAX(lines.supplier.account_balance),
-            n_small_parts=COUNT(lines.part.WHERE(STARTSWITH(container, "SM"))),
+            n_elements=COUNT(selected_lines),
+            total_retail_price=SUM(selected_lines.part.retail_price),
+            n_unique_supplier_nations=NDISTINCT(selected_lines.supplier.nation.name),
+            max_supplier_balance=MAX(selected_lines.supplier.account_balance),
+            n_small_parts=COUNT(selected_lines.part.WHERE(STARTSWITH(container, "SM"))),
         )
         .WHERE(n_elements > n_unique_supplier_nations)
         .TOP_K(5, by=(order_date.DESC(), key.ASC()))
@@ -254,22 +253,20 @@ def common_prefix_n():
 def common_prefix_o():
     # Same as common_prefix_n, but only allowing orders with at least
     # 1 small part
-    small_parts = lines.part.WHERE(STARTSWITH(container, "SM"))
-    selected_orders = orders.WHERE((clerk == "Clerk#000000540") & HAS(small_parts))
+    selected_lines = lines.WHERE((YEAR(ship_date) == 1996) & (MONTH(ship_date) == 11))
+    small_parts = selected_lines.part.WHERE(STARTSWITH(container, "SM"))
     return (
-        selected_orders.CALCULATE(
+        orders.WHERE(HAS(small_parts))
+        .CALCULATE(
             key,
             order_date,
-            n_elements=COUNT(lines),
-            n_unique_containers=NDISTINCT(lines.part.container),
-            n_unique_supplier_nations=NDISTINCT(lines.supplier.nation.name),
-            max_supplier_balance=MAX(lines.supplier.account_balance),
+            n_elements=COUNT(selected_lines),
+            total_retail_price=SUM(selected_lines.part.retail_price),
+            n_unique_supplier_nations=NDISTINCT(selected_lines.supplier.nation.name),
+            max_supplier_balance=MAX(selected_lines.supplier.account_balance),
             n_small_parts=COUNT(small_parts),
         )
-        .WHERE(
-            (n_elements > n_unique_containers)
-            & (n_elements > n_unique_supplier_nations)
-        )
+        .WHERE(n_elements > n_unique_supplier_nations)
         .TOP_K(5, by=(order_date.DESC(), key.ASC()))
     )
 
@@ -540,19 +537,23 @@ def common_prefix_ag():
     # For every european nation, count how many customers in that region are in
     # the machinery market segment, how many orders were made in 1998 by those
     # customers had priority 2-HIGH, how many line items were in those orders
-    # that were shipped by a supplier in the same nation, and the total revenue
-    # from those line items. The revenue accounts for the discount, and the
-    # cost to the supplier. The result is sorted alphabetically by nation name.
-    # Assume such lineitems will always exist for each nation.
+    # that were shipped by a supplier in the same nation via truck, and the
+    # total revenue from those line items. The revenue accounts for the
+    # discount, and the cost to the supplier. The result is sorted
+    # alphabetically by nation name. Assume such lineitems will always exist
+    # for each nation.
     selected_customers = customers.WHERE(market_segment == "MACHINERY")
     selected_orders = selected_customers.orders.WHERE(
         (order_priority == "2-HIGH") & (YEAR(order_date) == 1998)
     )
-    selected_lines = selected_orders.lines.WHERE(
-        supplier.nation.name == nation_name
-    ).CALCULATE(
-        revenue=extended_price * (1 - discount)
-        - quantity * part_and_supplier.supply_cost
+
+    selected_lines = (
+        selected_orders.lines.WHERE(ship_mode == "TRUCK")
+        .WHERE(supplier.nation.name == nation_name)
+        .CALCULATE(
+            revenue=extended_price * (1 - discount)
+            - quantity * part_and_supplier.supply_cost
+        )
     )
     return (
         nations.WHERE(region.name == "EUROPE")
@@ -572,12 +573,17 @@ def common_prefix_ag():
 def common_prefix_ah():
     # Same as common_prefix_ag, but with a different subset of fields.
     selected_customers = customers.WHERE(market_segment == "MACHINERY")
-    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
-    selected_lines = selected_orders.lines.WHERE(
-        supplier.nation.name == nation_name
-    ).CALCULATE(extended_price, discount, quantity)
-    selected_records = selected_lines.part_and_supplier.CALCULATE(
-        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    selected_orders = selected_customers.orders.WHERE(
+        (order_priority == "2-HIGH") & (YEAR(order_date) == 1998)
+    )
+
+    selected_lines = (
+        selected_orders.lines.WHERE(ship_mode == "TRUCK")
+        .WHERE(supplier.nation.name == nation_name)
+        .CALCULATE(
+            revenue=extended_price * (1 - discount)
+            - quantity * part_and_supplier.supply_cost
+        )
     )
     return (
         nations.WHERE(region.name == "EUROPE")
@@ -586,7 +592,7 @@ def common_prefix_ah():
             nation_name,
             n_machine_high_orders=COUNT(selected_orders),
             n_machine_high_domestic_lines=COUNT(selected_lines),
-            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_lines.revenue), 2),
         )
         .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
@@ -596,12 +602,17 @@ def common_prefix_ah():
 def common_prefix_ai():
     # Same as common_prefix_ag, but with a different subset of fields.
     selected_customers = customers.WHERE(market_segment == "MACHINERY")
-    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
-    selected_lines = selected_orders.lines.WHERE(
-        supplier.nation.name == nation_name
-    ).CALCULATE(extended_price, discount, quantity)
-    selected_records = selected_lines.part_and_supplier.CALCULATE(
-        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    selected_orders = selected_customers.orders.WHERE(
+        (order_priority == "2-HIGH") & (YEAR(order_date) == 1998)
+    )
+
+    selected_lines = (
+        selected_orders.lines.WHERE(ship_mode == "TRUCK")
+        .WHERE(supplier.nation.name == nation_name)
+        .CALCULATE(
+            revenue=extended_price * (1 - discount)
+            - quantity * part_and_supplier.supply_cost
+        )
     )
     return (
         nations.WHERE(region.name == "EUROPE")
@@ -610,7 +621,7 @@ def common_prefix_ai():
             nation_name,
             n_machine_cust=COUNT(selected_customers),
             n_machine_high_domestic_lines=COUNT(selected_lines),
-            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_lines.revenue), 2),
         )
         .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
@@ -620,12 +631,16 @@ def common_prefix_ai():
 def common_prefix_aj():
     # Same as common_prefix_ag, but with a different subset of fields.
     selected_customers = customers.WHERE(market_segment == "MACHINERY")
-    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
-    selected_lines = selected_orders.lines.WHERE(
-        supplier.nation.name == nation_name
-    ).CALCULATE(extended_price, discount, quantity)
-    selected_records = selected_lines.part_and_supplier.CALCULATE(
-        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    selected_orders = selected_customers.orders.WHERE(
+        (order_priority == "2-HIGH") & (YEAR(order_date) == 1998)
+    )
+    selected_lines = (
+        selected_orders.lines.WHERE(ship_mode == "TRUCK")
+        .WHERE(supplier.nation.name == nation_name)
+        .CALCULATE(
+            revenue=extended_price * (1 - discount)
+            - quantity * part_and_supplier.supply_cost
+        )
     )
     return (
         nations.WHERE(region.name == "EUROPE")
@@ -634,9 +649,9 @@ def common_prefix_aj():
             nation_name,
             n_machine_cust=COUNT(selected_customers),
             n_machine_high_orders=COUNT(selected_orders),
-            total_machine_high_domestic_revenue=ROUND(SUM(selected_records.revenue), 2),
+            total_machine_high_domestic_revenue=ROUND(SUM(selected_lines.revenue), 2),
         )
-        .WHERE(HAS(selected_records))
+        .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
     )
 
@@ -644,12 +659,16 @@ def common_prefix_aj():
 def common_prefix_ak():
     # Same as common_prefix_ag, but with a different subset of fields.
     selected_customers = customers.WHERE(market_segment == "MACHINERY")
-    selected_orders = selected_customers.orders.WHERE(order_priority == "2-HIGH")
-    selected_lines = selected_orders.lines.WHERE(
-        supplier.nation.name == nation_name
-    ).CALCULATE(extended_price, discount, quantity)
-    selected_lines.part_and_supplier.CALCULATE(
-        revenue=extended_price * (1 - discount) - quantity * supply_cost
+    selected_orders = selected_customers.orders.WHERE(
+        (order_priority == "2-HIGH") & (YEAR(order_date) == 1998)
+    )
+    selected_lines = (
+        selected_orders.lines.WHERE(ship_mode == "TRUCK")
+        .WHERE(supplier.nation.name == nation_name)
+        .CALCULATE(
+            revenue=extended_price * (1 - discount)
+            - quantity * part_and_supplier.supply_cost
+        )
     )
     return (
         nations.WHERE(region.name == "EUROPE")
@@ -660,6 +679,7 @@ def common_prefix_ak():
             n_machine_high_orders=COUNT(selected_orders),
             n_machine_high_domestic_lines=COUNT(selected_lines),
         )
+        .WHERE(HAS(selected_lines))
         .ORDER_BY(nation_name.ASC())
     )
 
