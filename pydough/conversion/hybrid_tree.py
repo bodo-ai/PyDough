@@ -276,15 +276,18 @@ class HybridTree:
         if is_blocking_operation:
             self._blocking_idx = blocking_idx
 
-    def insert_count_filter(self, child_idx: int) -> None:
+    def insert_count_filter(self, child_idx: int, is_semi: bool) -> None:
         """
         Inserts a filter into the hybrid tree that checks whether there is at
-        least one record of a child hybrid tree, e.g. COUNT(*) > 0. This is
-        the logical equivalent of doing a semi-join.
+        least one record of a child hybrid tree (e.g. COUNT(*) > 0) to emulate
+        a SEMI join, or that there are no such records (e.g. COUNT(*) = 0) to
+        emulate an ANTI join.
 
         Args:
             `child_idx`: the index of the child hybrid tree to insert the
             COUNT(*) > 0 filter for.
+            `is_semi`: True if the filter is to be used for a SEMI join, False
+            if it is to be used for an ANTI join.
         """
         hybrid_call: HybridFunctionExpr = HybridFunctionExpr(
             pydop.COUNT, [], NumericType()
@@ -305,9 +308,53 @@ class HybridTree:
                     break
                 agg_idx += 1
             child_connection.aggs[agg_name] = hybrid_call
+        # Generate the comparison to zero based on whether this is a SEMI or
+        # ANTI join.
         result_ref: HybridExpr = HybridChildRefExpr(agg_name, child_idx, NumericType())
         condition: HybridExpr = HybridFunctionExpr(
-            pydop.GRT,
+            pydop.GRT if is_semi else pydop.EQU,
+            [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
+            BooleanType(),
+        )
+        self.add_operation(HybridFilter(self.pipeline[-1], condition))
+
+    def insert_presence_filter(self, child_idx: int, is_semi: bool) -> None:
+        """
+        The exact same idea as `insert_count_filter`, but for singular
+        children without any aggregation. This is done by inserting a dummy
+        value (the literal 1) into the child then checking if, after joining
+        it is present or not.
+
+        Args:
+            `child_idx`: the index of the child hybrid tree to insert the
+            PRESENT(x) filter for.
+            `is_semi`: True if the filter is to be used for a SEMI join (so
+            checks PRESENT(x)), False if it is to be used for an ANTI join (so
+            checks ABSENT(x)).
+        """
+        literal_expr: HybridExpr = HybridLiteralExpr(Literal(1, NumericType()))
+        child_connection: HybridConnection = self.children[child_idx]
+        # Generate a unique name for the dummy expresionn to push into the
+        # child connection.
+        expr_idx: int = 0
+        expr_name: str
+        while True:
+            expr_name = f"expr_{expr_idx}"
+            if expr_name not in child_connection.subtree.pipeline[-1].terms:
+                break
+            expr_idx += 1
+        new_operation: HybridOperation = HybridCalculate(
+            child_connection.subtree.pipeline[-1],
+            {expr_name: literal_expr},
+            child_connection.subtree.pipeline[-1].orderings,
+        )
+        new_operation.is_hidden = True
+        child_connection.subtree.add_operation(new_operation)
+        # Generate the comparison to zero based on whether this is a SEMI or
+        # ANTI join.
+        result_ref: HybridExpr = HybridChildRefExpr(expr_name, child_idx, NumericType())
+        condition: HybridExpr = HybridFunctionExpr(
+            pydop.PRESENT if is_semi else pydop.ABSENT,
             [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
             BooleanType(),
         )
@@ -382,6 +429,7 @@ class HybridTree:
         connection_type: ConnectionType,
         min_steps: int,
         max_steps: int,
+        cannot_filter: bool = False,
     ) -> int:
         """
         Adds a new child operation to the current level so that operations in
@@ -396,11 +444,17 @@ class HybridTree:
             be completed before the child can be defined.
             `max_steps`: the index of the step in the pipeline that the child
             must be defined before.
+            `cannot_filter`: True if it is illegal to insert the child in such
+            a way that it filters the current level. This is used to prevent
+            filters that should occur after a window function from happening
+            before it.
 
         Returns:
             The index of the newly inserted child (or the index of an existing
             child that matches it).
         """
+        is_singular: bool = child.is_singular()
+        always_exists: bool = child.always_exists()
         for idx, existing_connection in enumerate(self.children):
             if (
                 child == existing_connection.subtree
@@ -435,8 +489,7 @@ class HybridTree:
                         continue
                     if connection_type.is_semi:
                         if not (
-                            child.always_exists()
-                            or existing_connection.connection_type.is_semi
+                            always_exists or existing_connection.connection_type.is_semi
                         ):
                             # Special case: if adding a SEMI onto AGGREGATION,
                             # add a COUNT to the aggregation then add a filter
@@ -445,21 +498,55 @@ class HybridTree:
                                 existing_connection.connection_type
                                 == ConnectionType.AGGREGATION
                             ):
-                                self.insert_count_filter(idx)
+                                if is_singular:
+                                    self.insert_presence_filter(
+                                        idx, connection_type.is_semi
+                                    )
+                                else:
+                                    self.insert_count_filter(idx, True)
                                 return idx
                             continue
-                connection_type = connection_type.reconcile_connection_types(
-                    existing_connection.connection_type
-                )
+                if (
+                    cannot_filter
+                    and (
+                        (connection_type.is_semi and not always_exists)
+                        or connection_type.is_anti
+                    )
+                    and not (
+                        existing_connection.connection_type.is_semi
+                        or existing_connection.connection_type.is_anti
+                    )
+                ):
+                    if is_singular:
+                        self.insert_presence_filter(idx, connection_type.is_semi)
+                    else:
+                        self.insert_count_filter(idx, connection_type.is_semi)
+                    connection_type = existing_connection.connection_type
+                else:
+                    connection_type = connection_type.reconcile_connection_types(
+                        existing_connection.connection_type
+                    )
                 existing_connection.connection_type = connection_type
                 if existing_connection.subtree.agg_keys is None:
                     existing_connection.subtree.agg_keys = child.agg_keys
                 return idx
+        new_child_idx = len(self.children)
         connection: HybridConnection = HybridConnection(
             self, child, connection_type, min_steps, max_steps, {}
         )
         self._children.append(connection)
-        return len(self.children) - 1
+        if cannot_filter and (
+            (connection_type.is_semi and not always_exists) or connection_type.is_anti
+        ):
+            use_semi: bool = connection_type.is_semi
+            connection_type = (
+                ConnectionType.SINGULAR if is_singular else ConnectionType.AGGREGATION
+            )
+            if is_singular:
+                self.insert_presence_filter(new_child_idx, use_semi)
+            else:
+                self.insert_count_filter(new_child_idx, use_semi)
+        return new_child_idx
 
     def add_successor(self, successor: "HybridTree") -> None:
         """
