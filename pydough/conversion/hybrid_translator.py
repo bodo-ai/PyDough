@@ -1370,12 +1370,11 @@ class HybridTranslator:
                     )
                     partition.add_key(key_name, expr)
                     key_exprs.append(HybridRefExpr(key_name, expr.typ))
-                successor_hybrid.children[
+                partition_child: HybridTree = successor_hybrid.children[
                     partition_child_idx
-                ].subtree.agg_keys = key_exprs
-                successor_hybrid.children[partition_child_idx].subtree.join_keys = [
-                    (k, k) for k in key_exprs
-                ]
+                ].subtree
+                partition_child.agg_keys = key_exprs
+                partition_child.join_keys = [(k, k) for k in key_exprs]
                 return successor_hybrid
             case OrderBy() | TopK():
                 hybrid = self.make_hybrid_tree(
@@ -1495,12 +1494,12 @@ class HybridTranslator:
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
-        # 2. Run the de-correlation procedure.
+        # 3. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
-        # 3. Run any final rewrites, such as turning MEDIAN into an average of
+        # 4. Run any final rewrites, such as turning MEDIAN into an average of
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)
-        # 4. Remove any dead children in the hybrid tree that are no longer
+        # 5. Remove any dead children in the hybrid tree that are no longer
         # being used.
         hybrid.remove_dead_children(set())
         return hybrid

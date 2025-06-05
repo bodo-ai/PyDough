@@ -30,7 +30,6 @@ from pydough.qdag import (
 
 from .hybrid_connection import HybridConnection
 from .hybrid_expressions import (
-    HybridBackRefExpr,
     HybridChildRefExpr,
     HybridCollation,
     HybridColumnExpr,
@@ -324,11 +323,7 @@ class HybridChildPullUp(HybridOperation):
                 current_expr: HybridExpr = HybridRefExpr(
                     term_name, current_terms[term_name].typ
                 ).shift_back(extra_height)
-                back_expr: HybridExpr = HybridBackRefExpr(
-                    term_name,
-                    original_child_height + extra_height,
-                    current_terms[term_name].typ,
-                )
+                back_expr: HybridExpr = current_expr.shift_back(original_child_height)
                 if self.child.connection_type.is_aggregation:
                     # If aggregating, wrap the backreference in an ANYTHING
                     # call that is added to the agg calls list so it can be

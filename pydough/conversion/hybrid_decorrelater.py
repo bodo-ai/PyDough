@@ -40,8 +40,8 @@ class HybridDecorrelater:
         self.children_indices: list[int] = []
 
     def make_decorrelate_parent(
-        self, hybrid: HybridTree, child_idx: int, min_steps: int
-    ) -> tuple[HybridTree, int]:
+        self, hybrid: HybridTree, child_idx: int, min_steps: int, max_steps: int
+    ) -> tuple[HybridTree, int, int]:
         """
         Creates a snapshot of the ancestry of the hybrid tree that contains
         a correlated child, without any of its children, its descendants, or
@@ -55,6 +55,8 @@ class HybridDecorrelater:
             `min_steps`: The index of the last pipeline operator that
             needs to be included in the snapshot in order for the child to be
             derivable.
+            `max_steps`: The index of the first pipeline operator that cannot
+            occur because it depends on the correlated child.
 
         Returns:
             A tuple where the first entry is a snapshot of `hybrid` and its
@@ -62,7 +64,8 @@ class HybridDecorrelater:
             pipeline operators that occur during or after the derivation of the
             correlated child, or without any of its descendants. The second
             entry is the number of ancestor layers that should be skipped due
-            to the PARTITION edge case.
+            to the PARTITION edge case. The third entry is how many operators
+            in hte pipeline were copied over from the root.
         """
         if isinstance(hybrid.pipeline[0], HybridPartition) and child_idx == 0:
             # Special case: if the correlated child is the data argument of a
@@ -78,8 +81,9 @@ class HybridDecorrelater:
                 hybrid.parent,
                 len(hybrid.parent.children) - 1,
                 len(hybrid.parent.pipeline) - 1,
+                len(hybrid.parent.pipeline),
             )
-            return result[0], result[1] + 1
+            return result[0], result[1] + 1, 1
         # Temporarily detach the successor of the current level, then create a
         # deep copy of the current level (which will include its ancestors),
         # then reattach the successor back to the original. This ensures that
@@ -89,13 +93,22 @@ class HybridDecorrelater:
         hybrid._successor = None
         new_hybrid: HybridTree = copy.deepcopy(hybrid)
         hybrid._successor = successor
-        # Ensure the new parent only includes the children & pipeline operators
-        # that is has to.
-        new_hybrid._children = [
-            child for child in new_hybrid.children if child.min_steps < min_steps
-        ]
-        new_hybrid._pipeline = new_hybrid._pipeline[: min_steps + 1]
-        return new_hybrid, 0
+        # Ensure the new parent only includes the children and pipeline
+        # operators that are required to exist first.
+        new_children: list[HybridConnection] = []
+        original_max_steps: int = max_steps
+        new_correlated_children: set[int] = set()
+        for idx, child in enumerate(new_hybrid.children):
+            if child.min_steps < min_steps and child.max_steps <= original_max_steps:
+                new_children.append(child)
+                if idx in hybrid.correlated_children:
+                    new_correlated_children.add(len(new_children) - 1)
+            else:
+                max_steps = min(max_steps, child.max_steps)
+        new_hybrid._correlated_children = new_correlated_children
+        new_hybrid._children = new_children
+        new_hybrid._pipeline = new_hybrid._pipeline[:max_steps]
+        return new_hybrid, 0, max_steps
 
     def remove_correl_refs(
         self,
@@ -264,6 +277,7 @@ class HybridDecorrelater:
         child_idx: int,
         new_parent: HybridTree,
         skipped_levels: int,
+        preserved_steps: int,
     ) -> int:
         """
         Runs the logic to de-correlate a child of a hybrid tree that contains
@@ -281,6 +295,8 @@ class HybridDecorrelater:
             `new_parent`: The ancestor of `level` that removal should stop at.
             `skipped_levels`: The number of ancestor layers that should be
             ignored when deriving backshifts of join/agg keys.
+            `preserved_steps`: The number of pipeline operators from old parent
+            that were copied over into the new parent.
 
         Returns:
             The index of the child that was de-correlated, which is usually
@@ -297,11 +313,13 @@ class HybridDecorrelater:
         new_parent.add_successor(child_root)
         # Replace any correlated references to the original parent with BACK references.
         self.correl_ref_purge(child.subtree, old_parent, new_parent, child_height, 1)
-        # Update the join keys to join on the unique keys of all the ancestors.
+        # Update the join keys to join on the unique keys of all the ancestors,
+        # and the aggregation keys along with them.
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         additional_levels: int = 0
         current_level: HybridTree | None = old_parent
         new_agg_keys: list[HybridExpr] = []
+        rhs_shift: int = child_height - skipped_levels
         while current_level is not None:
             skip_join: bool = (
                 isinstance(current_level.pipeline[0], HybridPartition)
@@ -309,9 +327,7 @@ class HybridDecorrelater:
             )
             for unique_key in sorted(current_level.pipeline[-1].unique_exprs, key=str):
                 lhs_key: HybridExpr = unique_key.shift_back(additional_levels)
-                rhs_key: HybridExpr = unique_key.shift_back(
-                    additional_levels + child_height - skipped_levels
-                )
+                rhs_key: HybridExpr = lhs_key.shift_back(rhs_shift)
                 if not skip_join:
                     new_join_keys.append((lhs_key, rhs_key))
                 new_agg_keys.append(rhs_key)
@@ -332,12 +348,14 @@ class HybridDecorrelater:
         ):
             old_parent._parent = None
             old_parent.pipeline[0] = HybridChildPullUp(
-                old_parent, child_idx, child_height
+                old_parent, child_idx, child_height - skipped_levels
             )
-            for i in range(1, child.min_steps + 1):
+            for i in range(1, preserved_steps):
                 old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
             child_remapping: dict[int, int] = old_parent.remove_dead_children(set())
-            return child_remapping[child_idx]
+            child_idx = child_remapping[child_idx]
+        # Mark the child as no longer correlated, for printing purposes
+        old_parent.correlated_children.discard(child_idx)
         return child_idx
 
     def decorrelate_hybrid_tree(self, hybrid: HybridTree) -> HybridTree:
@@ -378,16 +396,20 @@ class HybridDecorrelater:
                 ):
                     if original_parent is None:
                         original_parent = copy.deepcopy(hybrid)
-                    new_parent, skipped_levels = self.make_decorrelate_parent(
-                        original_parent,
-                        child_idx,
-                        hybrid.children[child_idx].min_steps,
+                    new_parent, skipped_levels, preserved_steps = (
+                        self.make_decorrelate_parent(
+                            original_parent,
+                            child_idx,
+                            hybrid.children[child_idx].min_steps,
+                            hybrid.children[child_idx].max_steps,
+                        )
                     )
                     child_idx = self.decorrelate_child(
                         hybrid,
                         child_idx,
                         new_parent,
                         skipped_levels,
+                        preserved_steps,
                     )
                 case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
                     raise NotImplementedError(

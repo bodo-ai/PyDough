@@ -318,7 +318,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
             PyDoughPandasTest(
                 correl_14,
                 "TPCH",
-                lambda: pd.DataFrame({"n": [66]}),
+                lambda: pd.DataFrame({"n": [9]}),
                 "correl_14",
             ),
             id="correl_14",
@@ -327,7 +327,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
             PyDoughPandasTest(
                 correl_15,
                 "TPCH",
-                lambda: pd.DataFrame({"n": [61]}),
+                lambda: pd.DataFrame({"n": [7]}),
                 "correl_15",
             ),
             id="correl_15",
