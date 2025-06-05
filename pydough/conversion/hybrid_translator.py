@@ -303,6 +303,29 @@ class HybridTranslator:
                         )
                         create_new_calc = False
 
+    def qdag_expr_contains_window(self, expr: PyDoughExpressionQDAG) -> bool:
+        """
+        Checks if the given QDAG expression contains a window function call.
+
+        Args:
+            `expr`: the QDAG expression to check.
+
+        Returns:
+            True if the expression contains a window function call, False
+            otherwise.
+        """
+        match expr:
+            case WindowCall():
+                return True
+            case ExpressionFunctionCall():
+                return any(
+                    isinstance(arg, PyDoughExpressionQDAG)
+                    and self.qdag_expr_contains_window(arg)
+                    for arg in expr.args
+                )
+            case _:
+                return False
+
     def populate_children(
         self,
         hybrid: HybridTree,
@@ -332,10 +355,14 @@ class HybridTranslator:
             # Infer how the child is used by the current operation based on
             # the expressions that the operator uses.
             reference_types: set[ConnectionType] = set()
+            cannot_filter: bool = False
             match child_operator:
                 case Where():
                     self.identify_connection_types(
                         child_operator.condition, child_idx, reference_types
+                    )
+                    cannot_filter = self.qdag_expr_contains_window(
+                        child_operator.condition
                     )
                 case OrderBy():
                     for col in child_operator.collation:
@@ -410,6 +437,7 @@ class HybridTranslator:
                 connection_type,
                 min_idx,
                 len(hybrid.pipeline),
+                cannot_filter,
             )
         self.stack.pop()
 
@@ -1348,11 +1376,23 @@ class HybridTranslator:
                 hybrid = self.make_hybrid_tree(
                     node.preceding_context, parent, is_aggregate
                 )
+                old_length: int = len(hybrid.pipeline)
                 self.populate_children(hybrid, node, child_ref_mapping)
                 expr = self.make_hybrid_expr(
                     hybrid, node.condition, child_ref_mapping, False
                 )
-                hybrid.add_operation(HybridFilter(hybrid.pipeline[-1], expr))
+                # Special case: if the act of calling populate_children created
+                # more filters, insert the filter before the new filters.
+                if old_length < len(hybrid.pipeline):
+                    new_operations: int = len(hybrid.pipeline) - old_length
+                    prev_op: HybridOperation = hybrid.pipeline[-new_operations - 1]
+                    new_filter = HybridFilter(prev_op, expr)
+                    next_op: HybridOperation = hybrid.pipeline[-new_operations]
+                    assert isinstance(next_op, HybridFilter)
+                    next_op.predecessor = new_filter
+                    hybrid.pipeline.insert(-new_operations, new_filter)
+                else:
+                    hybrid.add_operation(HybridFilter(hybrid.pipeline[-1], expr))
                 return hybrid
             case PartitionBy():
                 hybrid = self.make_hybrid_tree(
