@@ -1,0 +1,8 @@
+ROOT(columns=[('n', agg_0)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+  FILTER(condition=order_date == min_date, columns={})
+   JOIN(conditions=[True:bool], types=['left'], columns={'min_date': t1.min_date, 'order_date': t0.order_date})
+    SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
+    PROJECT(columns={'min_date': agg_0})
+     AGGREGATE(keys={}, aggregations={'agg_0': MIN(order_date)})
+      SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})

@@ -17,6 +17,12 @@ from simple_pydough_functions import (
     regional_first_order_best_line_part,
     richest_customer_per_region,
     simple_collation,
+    simple_cross_1,
+    simple_cross_2,
+    simple_cross_3,
+    simple_cross_4,
+    simple_cross_5,
+    simple_cross_6,
     singular1,
     singular2,
     singular3,
@@ -807,6 +813,129 @@ from pydough.unqualified import (
               └─── Calculate[w1=RELSIZE(by=(), levels=2), w2=RELSIZE(by=(), levels=3), w3=RELSIZE(by=(), levels=4), w4=RELSIZE(by=(), levels=5), w5=RELSIZE(by=(), levels=6)]
 """,
             id="absurd_partition_window_per",
+        ),
+        pytest.param(
+            simple_cross_1,
+            """
+──┬─ TPCH
+  ├─── TableCollection[regions]
+  └─┬─ Calculate[r1=name]
+    └─┬─ TPCH
+      ├─── TableCollection[regions]
+      ├─── Calculate[r1=r1, r2=name]
+      └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
+            """,
+            id="simple_cross_1",
+        ),
+        pytest.param(
+            simple_cross_2,
+            """
+──┬─ TPCH
+  ├─── TableCollection[regions]
+  └─┬─ Calculate[r1=name]
+    └─┬─ TPCH
+      ├─── TableCollection[regions]
+      ├─── Calculate[r1=r1, r2=name]
+      ├─── Where[r1 != r2]
+      └─── OrderBy[r1.ASC(na_pos='first'), r2.ASC(na_pos='first')]
+            """,
+            id="simple_cross_2",
+        ),
+        pytest.param(
+            simple_cross_3,
+            """
+──┬─ TPCH
+  ├─── TableCollection[regions]
+  └─┬─ Where[name == 'ASIA']
+    ├─── SubCollection[nations]
+    └─┬─ Calculate[s_key=key, supplier_nation=name]
+      └─┬─ TPCH
+        ├─── TableCollection[regions]
+        └─┬─ Where[name == 'AMERICA']
+          ├─── SubCollection[nations]
+          ├─── Calculate[customer_nation=name]
+          ├─┬─ Calculate[supplier_nation=supplier_nation, customer_nation=customer_nation, nation_combinations=COUNT($1)]
+          │ └─┬─ AccessChild
+          │   ├─── SubCollection[customers]
+          │   └─┬─ Where[account_balance < 0]
+          │     ├─── SubCollection[orders]
+          │     └─┬─ Where[(YEAR(order_date) == 1992) & (MONTH(order_date) == 4)]
+          │       ├─── SubCollection[lines]
+          │       └─┬─ Where[($1.nation_key == s_key) & (ship_mode == 'SHIP')]
+          │         └─┬─ AccessChild
+          │           └─── SubCollection[supplier]
+          └─┬─ Where[HAS($1)]
+            └─┬─ AccessChild
+              ├─── SubCollection[customers]
+              └─┬─ Where[account_balance < 0]
+                ├─── SubCollection[orders]
+                └─┬─ Where[(YEAR(order_date) == 1992) & (MONTH(order_date) == 4)]
+                  ├─── SubCollection[lines]
+                  └─┬─ Where[($1.nation_key == s_key) & (ship_mode == 'SHIP')]
+                    └─┬─ AccessChild
+                      └─── SubCollection[supplier]            
+            """,
+            id="simple_cross_3",
+        ),
+        pytest.param(
+            simple_cross_4,
+            """
+──┬─ TPCH
+  ├─── TableCollection[regions]
+  ├─── Calculate[region_name=name]
+  ├─┬─ Calculate[region_name=region_name, n_other_regions=COUNT($1)]
+  │ └─┬─ AccessChild
+  │   └─┬─ TPCH
+  │     ├─── TableCollection[regions]
+  │     └─── Where[(name != region_name) & (SLICE(name, None, 1, None) == SLICE(region_name, None, 1, None))]
+  └─── OrderBy[region_name.ASC(na_pos='first')]
+            """,
+            id="simple_cross_4",
+        ),
+        pytest.param(
+            simple_cross_5,
+            """
+──┬─ TPCH
+  ├─┬─ Partition[name='sizes', by=size]
+  │ └─┬─ AccessChild
+  │   └─── TableCollection[parts]
+  ├─── Calculate[part_size=size]
+  ├─┬─ Calculate[part_size=part_size, best_order_priority=$1.order_priority, best_order_priority_qty=$1.total_qty]
+  │ └─┬─ AccessChild
+  │   ├─┬─ Partition[name='priorities', by=order_priority]
+  │   │ └─┬─ AccessChild
+  │   │   └─┬─ TPCH
+  │   │     ├─── TableCollection[orders]
+  │   │     ├─── Calculate[order_priority=order_priority]
+  │   │     └─┬─ Where[YEAR(order_date) == 1998]
+  │   │       ├─── SubCollection[lines]
+  │   │       └─┬─ Where[$1.size == part_size]
+  │   │         └─┬─ AccessChild
+  │   │           └─── SubCollection[part]
+  │   ├─┬─ Calculate[total_qty=SUM($1.quantity)]
+  │   │ └─┬─ AccessChild
+  │   │   └─── PartitionChild[lines]
+  │   ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=1, allow_ties=False) == 1]
+  │   └─── Singular
+  └─── TopK[5, size.ASC(na_pos='first')]
+            """,
+            id="simple_cross_5",
+        ),
+        pytest.param(
+            simple_cross_6,
+            """
+┌─── TPCH
+└─┬─ Calculate[n_pairs=COUNT($1)]
+  └─┬─ AccessChild
+    ├─── TableCollection[orders]
+    ├─── Calculate[original_customer_key=customer_key, original_order_key=key, original_order_date=order_date]
+    └─┬─ Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
+      └─┬─ TPCH
+        ├─── TableCollection[orders]
+        ├─── Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
+        └─── Where[(customer_key == original_customer_key) & (key > original_order_key) & (order_date == original_order_date)]
+  """,
+            id="simple_cross_6",
         ),
     ],
 )
