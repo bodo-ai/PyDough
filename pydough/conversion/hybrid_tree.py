@@ -280,8 +280,8 @@ class HybridTree:
         """
         Inserts a filter into the hybrid tree that checks whether there is at
         least one record of a child hybrid tree (e.g. COUNT(*) > 0) to emulate
-        a SEMI join, or that there are no such records (e.g. COUNT(*) = 0) to
-        emulate an ANTI join.
+        a SEMI join, or that there are no such records (e.g. COUNT(*) IS NULL)
+        to emulate an ANTI join.
 
         Args:
             `child_idx`: the index of the child hybrid tree to insert the
@@ -311,11 +311,19 @@ class HybridTree:
         # Generate the comparison to zero based on whether this is a SEMI or
         # ANTI join.
         result_ref: HybridExpr = HybridChildRefExpr(agg_name, child_idx, NumericType())
-        condition: HybridExpr = HybridFunctionExpr(
-            pydop.GRT if is_semi else pydop.EQU,
-            [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
-            BooleanType(),
-        )
+        condition: HybridExpr
+        if is_semi:
+            condition = HybridFunctionExpr(
+                pydop.GRT,
+                [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
+                BooleanType(),
+            )
+        else:
+            condition = HybridFunctionExpr(
+                pydop.ABSENT,
+                [result_ref],
+                BooleanType(),
+            )
         self.add_operation(HybridFilter(self.pipeline[-1], condition))
 
     def insert_presence_filter(self, child_idx: int, is_semi: bool) -> None:
@@ -355,7 +363,7 @@ class HybridTree:
         result_ref: HybridExpr = HybridChildRefExpr(expr_name, child_idx, NumericType())
         condition: HybridExpr = HybridFunctionExpr(
             pydop.PRESENT if is_semi else pydop.ABSENT,
-            [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
+            [result_ref],
             BooleanType(),
         )
         self.add_operation(HybridFilter(self.pipeline[-1], condition))
@@ -494,18 +502,19 @@ class HybridTree:
                             # Special case: if adding a SEMI onto AGGREGATION,
                             # add a COUNT to the aggregation then add a filter
                             # to the parent tree on the count being positive.
-                            if (
-                                existing_connection.connection_type
-                                == ConnectionType.AGGREGATION
-                            ):
-                                if is_singular:
-                                    self.insert_presence_filter(
-                                        idx, connection_type.is_semi
-                                    )
-                                else:
-                                    self.insert_count_filter(idx, True)
-                                return idx
-                            continue
+                            # If adding a SEMI onto SINGULAR, do the same but
+                            # with a PRESENT filter.
+                            if is_singular:
+                                self.insert_presence_filter(
+                                    idx, connection_type.is_semi
+                                )
+                            else:
+                                self.insert_count_filter(idx, True)
+                            return idx
+                # If combining a semi/anti with an existing non-semi/anti
+                # and filters are banned, keep the existing connection type
+                # and insert a count/presence filter into the tree so that it
+                # occurs after whatever window operation is in play.
                 if (
                     cannot_filter
                     and (
@@ -539,7 +548,7 @@ class HybridTree:
             (connection_type.is_semi and not always_exists) or connection_type.is_anti
         ):
             use_semi: bool = connection_type.is_semi
-            connection_type = (
+            connection.connection_type = (
                 ConnectionType.SINGULAR if is_singular else ConnectionType.AGGREGATION
             )
             if is_singular:
