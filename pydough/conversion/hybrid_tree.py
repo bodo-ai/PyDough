@@ -516,21 +516,28 @@ class HybridTree:
                 # and insert a count/presence filter into the tree so that it
                 # occurs after whatever window operation is in play.
                 if (
-                    cannot_filter
-                    and (
-                        (connection_type.is_semi and not always_exists)
-                        or connection_type.is_anti
-                    )
-                    and not (
-                        existing_connection.connection_type.is_semi
-                        or existing_connection.connection_type.is_anti
-                    )
+                    (connection_type.is_semi and not always_exists)
+                    or connection_type.is_anti
+                ) and not (
+                    existing_connection.connection_type.is_semi
+                    or existing_connection.connection_type.is_anti
                 ):
-                    if is_singular:
-                        self.insert_presence_filter(idx, connection_type.is_semi)
+                    if cannot_filter:
+                        if is_singular:
+                            self.insert_presence_filter(idx, connection_type.is_semi)
+                        else:
+                            self.insert_count_filter(idx, connection_type.is_semi)
+                        connection_type = existing_connection.connection_type
                     else:
-                        self.insert_count_filter(idx, connection_type.is_semi)
-                    connection_type = existing_connection.connection_type
+                        # Same idea but if filtering is allowed, ensure the
+                        # existing connection is updated so it is defined after
+                        # the minimum point that is safe for the new child.
+                        existing_connection.min_steps = max(
+                            existing_connection.min_steps, min_steps
+                        )
+                        connection_type = connection_type.reconcile_connection_types(
+                            existing_connection.connection_type
+                        )
                 else:
                     connection_type = connection_type.reconcile_connection_types(
                         existing_connection.connection_type
