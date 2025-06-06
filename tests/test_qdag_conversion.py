@@ -6,7 +6,16 @@ relational tree.
 from collections.abc import Callable
 
 import pytest
-from test_utils import (
+
+from pydough.configs import PyDoughConfigs
+from pydough.conversion.relational_converter import convert_ast_to_relational
+from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
+from pydough.types import (
+    BooleanType,
+    NumericType,
+    StringType,
+)
+from tests.testing_utilities import (
     BackReferenceExpressionInfo,
     CalculateInfo,
     ChildReferenceCollectionInfo,
@@ -22,15 +31,6 @@ from test_utils import (
     TopKInfo,
     WhereInfo,
     WindowInfo,
-)
-
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
-from pydough.types import (
-    BooleanType,
-    NumericType,
-    StringType,
 )
 
 

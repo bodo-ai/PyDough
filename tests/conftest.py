@@ -10,8 +10,6 @@ from collections.abc import Callable
 from functools import cache
 
 import pytest
-from gen_data.gen_technograph import gen_technograph_records
-from test_utils import graph_fetcher
 
 import pydough
 import pydough.pydough_operators as pydop
@@ -24,6 +22,9 @@ from pydough.database_connectors import (
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
+from tests.testing_utilities import graph_fetcher
+
+from .gen_data.gen_technograph import gen_technograph_records
 
 
 @pytest.fixture
@@ -343,8 +344,8 @@ def sqlite_defog_connection() -> DatabaseContext:
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     # Setup the defog database.
-    subprocess.run("cd tests; bash setup_defog.sh", shell=True)
-    path: str = os.path.join(base_dir, "tests/defog.db")
+    subprocess.run("cd tests/gen_data; bash setup_defog.sh", shell=True)
+    path: str = os.path.join(base_dir, "tests/gen_data/defog.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
@@ -358,9 +359,10 @@ def sqlite_epoch_connection() -> DatabaseContext:
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     # Setup the epoch database.
     subprocess.run(
-        "cd tests; rm -fv epoch.db; sqlite3 epoch.db < init_epoch.sql", shell=True
+        "cd tests; rm -fv gen_data/epoch.db; sqlite3 gen_data/epoch.db < gen_data/init_epoch.sql",
+        shell=True,
     )
-    path: str = os.path.join(base_dir, "tests/epoch.db")
+    path: str = os.path.join(base_dir, "tests/gen_data/epoch.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
@@ -372,11 +374,11 @@ def sqlite_technograph_connection() -> DatabaseContext:
     """
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    path: str = os.path.join(base_dir, "tests/technograph.db")
+    path: str = os.path.join(base_dir, "tests/gen_data/technograph.db")
 
     # Delete the existing database.
     subprocess.run(
-        "cd tests; rm -fv technograph.db; sqlite3 technograph.db < init_technograph.sql",
+        "cd tests; rm -fv gen_data/technograph.db; sqlite3 gen_data/technograph.db < gen_data/init_technograph.sql",
         shell=True,
     )
 

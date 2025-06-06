@@ -4,17 +4,21 @@ Simple tests to run TPC-H queries on SQLite.
 
 import pandas as pd
 import pytest
-from tpch_outputs import tpch_q1_output, tpch_q3_output, tpch_q6_output
-from tpch_relational_plans import (
-    tpch_query_1_plan,
-    tpch_query_3_plan,
-    tpch_query_6_plan,
-)
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext
 from pydough.relational import RelationalRoot
 from pydough.sqlglot import execute_df
+from tests.test_pydough_functions.tpch_outputs import (
+    tpch_q1_output,
+    tpch_q3_output,
+    tpch_q6_output,
+)
+from tests.test_pydough_functions.tpch_relational_plans import (
+    tpch_query_1_plan,
+    tpch_query_3_plan,
+    tpch_query_6_plan,
+)
 
 pytestmark = [pytest.mark.execute]
 

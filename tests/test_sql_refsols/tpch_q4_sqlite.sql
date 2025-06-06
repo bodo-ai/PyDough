@@ -5,7 +5,21 @@ WITH _t2 AS (
     orders.o_orderpriority AS order_priority
   FROM tpch.orders AS orders
   WHERE
-    orders.o_orderdate < '1993-10-01' AND orders.o_orderdate >= '1993-07-01'
+    CASE
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 3
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 1
+      THEN 1
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 6
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 4
+      THEN 2
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 9
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 7
+      THEN 3
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 12
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 10
+      THEN 4
+    END = 3
+    AND CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1993
 ), _s0 AS (
   SELECT
     _t2.key AS key,

@@ -5,8 +5,8 @@ WITH _t2 AS (
     orders.o_orderpriority AS order_priority
   FROM tpch.orders AS orders
   WHERE
-    orders.o_orderdate < CAST('1993-10-01' AS DATE)
-    AND orders.o_orderdate >= CAST('1993-07-01' AS DATE)
+    EXTRACT(QUARTER FROM orders.o_orderdate) = 3
+    AND EXTRACT(YEAR FROM orders.o_orderdate) = 1993
 ), _s0 AS (
   SELECT
     _t2.key AS key,

@@ -36,8 +36,7 @@ WITH _s1 AS (
     )
     AND _s9.key = lineitem.l_orderkey
   WHERE
-    lineitem.l_shipdate <= CAST('1996-12-31' AS DATE)
-    AND lineitem.l_shipdate >= CAST('1995-01-01' AS DATE)
+    EXTRACT(YEAR FROM lineitem.l_shipdate) IN (1995, 1996)
   GROUP BY
     _s9.name_8,
     EXTRACT(YEAR FROM lineitem.l_shipdate),

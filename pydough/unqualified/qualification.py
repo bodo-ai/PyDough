@@ -1170,10 +1170,9 @@ class Qualifier:
                 for _ in range(levels):
                     assert base.ancestor_context is not None
                     base = base.ancestor_context
-                base = base.starting_predecessor
                 relative_ancestor: PyDoughCollectionQDAG = context.starting_predecessor
                 if (
-                    base == relative_ancestor
+                    base.starting_predecessor == relative_ancestor
                     or base.is_singular(relative_ancestor)
                     or relative_ancestor.is_singular(base)
                 ):
