@@ -1,7 +1,7 @@
-WITH _s3 AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
-    seasons.s_name AS name
+    COUNT() AS n_events,
+    ANY_VALUE(seasons.s_name) AS season_name
   FROM seasons AS seasons
   JOIN events AS events
     ON seasons.s_month1 = EXTRACT(MONTH FROM events.ev_dt)
@@ -11,11 +11,9 @@ WITH _s3 AS (
     seasons.s_name
 )
 SELECT
-  seasons.s_name AS season_name,
-  COALESCE(_s3.agg_0, 0) AS n_events
-FROM seasons AS seasons
-LEFT JOIN _s3 AS _s3
-  ON _s3.name = seasons.s_name
+  season_name,
+  n_events
+FROM _t0
 ORDER BY
   n_events DESC,
   season_name

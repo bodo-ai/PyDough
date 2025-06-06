@@ -4,9 +4,8 @@ SELECT
   EXTRACT(MINUTE FROM sbtransaction.sbtxdatetime) AS _expr1,
   EXTRACT(SECOND FROM sbtransaction.sbtxdatetime) AS _expr2
 FROM main.sbtransaction AS sbtransaction
-LEFT JOIN main.sbticker AS sbticker
+JOIN main.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
-WHERE
-  sbticker.sbtickersymbol IN ('AAPL', 'GOOGL', 'NFLX')
+  AND sbticker.sbtickersymbol IN ('AAPL', 'GOOGL', 'NFLX')
 ORDER BY
   transaction_id

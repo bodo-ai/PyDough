@@ -62,17 +62,17 @@ WITH _s1 AS (
 )
 SELECT
   countries.co_name AS country_name,
-  ROUND(CAST(COALESCE(_s3.agg_0, 0) AS REAL) / COALESCE(_s5.agg_1, 0), 2) AS made_ir,
-  ROUND(CAST(COALESCE(_s9.agg_2, 0) AS REAL) / COALESCE(_s11.agg_3, 0), 2) AS sold_ir,
+  ROUND(CAST(COALESCE(_s3.agg_0, 0) AS REAL) / _s5.agg_1, 2) AS made_ir,
+  ROUND(CAST(COALESCE(_s9.agg_2, 0) AS REAL) / _s11.agg_3, 2) AS sold_ir,
   ROUND(CAST(COALESCE(_s17.agg_4, 0) AS REAL) / COALESCE(_s21.agg_5, 0), 2) AS user_ir
 FROM main.countries AS countries
 LEFT JOIN _s3 AS _s3
   ON _s3.factory_country_id = countries.co_id
-LEFT JOIN _s5 AS _s5
+JOIN _s5 AS _s5
   ON _s5.factory_country_id = countries.co_id
 LEFT JOIN _s9 AS _s9
   ON _s9.store_country_id = countries.co_id
-LEFT JOIN _s11 AS _s11
+JOIN _s11 AS _s11
   ON _s11.store_country_id = countries.co_id
 LEFT JOIN _s17 AS _s17
   ON _s17.country_id = countries.co_id

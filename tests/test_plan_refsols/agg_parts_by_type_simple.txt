@@ -1,3 +1,3 @@
-ROOT(columns=[('part_type', part_type), ('num_parts', DEFAULT_TO(agg_1, 0:numeric)), ('avg_price', agg_0)], orderings=[])
- AGGREGATE(keys={'part_type': part_type}, aggregations={'agg_0': AVG(retail_price), 'agg_1': COUNT()})
+ROOT(columns=[('part_type', part_type), ('num_parts', num_parts), ('avg_price', avg_price)], orderings=[])
+ AGGREGATE(keys={'part_type': part_type}, aggregations={'avg_price': AVG(retail_price), 'num_parts': COUNT()})
   SCAN(table=tpch.PART, columns={'part_type': p_type, 'retail_price': p_retailprice})

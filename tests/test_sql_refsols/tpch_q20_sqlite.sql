@@ -27,7 +27,7 @@ SELECT
   supplier.s_name AS S_NAME,
   supplier.s_address AS S_ADDRESS
 FROM tpch.supplier AS supplier
-LEFT JOIN tpch.nation AS nation
+JOIN tpch.nation AS nation
   ON nation.n_nationkey = supplier.s_nationkey
 LEFT JOIN _s7 AS _s7
   ON _s7.supplier_key = supplier.s_suppkey

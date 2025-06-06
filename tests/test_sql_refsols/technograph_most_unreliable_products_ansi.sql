@@ -5,7 +5,7 @@ WITH _s1 AS (
   FROM main.incidents
   GROUP BY
     in_device_id
-), _s3 AS (
+), _t0 AS (
   SELECT
     SUM(COALESCE(_s1.agg_0, 0)) AS agg_0,
     COUNT() AS agg_1,
@@ -20,10 +20,10 @@ SELECT
   products.pr_name AS product,
   products.pr_brand AS product_brand,
   products.pr_type AS product_type,
-  ROUND(COALESCE(_s3.agg_0, 0) / COALESCE(_s3.agg_1, 0), 2) AS ir
+  ROUND(COALESCE(_t0.agg_0, 0) / _t0.agg_1, 2) AS ir
 FROM main.products AS products
-LEFT JOIN _s3 AS _s3
-  ON _s3.product_id = products.pr_id
+JOIN _t0 AS _t0
+  ON _t0.product_id = products.pr_id
 ORDER BY
   ir DESC
 LIMIT 5

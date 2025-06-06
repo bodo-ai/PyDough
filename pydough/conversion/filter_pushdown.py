@@ -114,6 +114,10 @@ def push_filters(
                         remaining_filters,
                         lambda expr: only_references_columns(expr, input_cols[idx]),
                     )
+                # Ensure that if any filter is pushed into an input (besides
+                # the first input) that the join is marked as not prunable.
+                if len(pushable_filters) > 0 and idx > 0:
+                    node._is_prunable = False
                 pushable_filters = {
                     transpose_expression(expr, node.columns)
                     for expr in pushable_filters
