@@ -3,12 +3,12 @@ WITH _t0 AS (
     sbtransaction.sbtxcustid AS customer_id,
     sbtransaction.sbtxtype AS transaction_type
   FROM main.sbtransaction AS sbtransaction
-  WHERE
-    sbtransaction.sbtxtype = 'buy'
 ), _s1 AS (
   SELECT
     _t0.customer_id AS customer_id
   FROM _t0 AS _t0
+  WHERE
+    _t0.transaction_type = 'buy'
 ), _s0 AS (
   SELECT
     sbcustomer.sbcustid AS _id

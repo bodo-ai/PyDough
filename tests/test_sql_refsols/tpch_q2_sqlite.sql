@@ -8,7 +8,7 @@ WITH _s2 AS (
     part.p_mfgr,
     part.p_partkey,
     partsupp.ps_suppkey AS supplier_key,
-    RANK() OVER (PARTITION BY part.p_partkey ORDER BY partsupp.ps_supplycost) AS _w
+    RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost) AS _w
   FROM tpch.part AS part
   JOIN tpch.partsupp AS partsupp
     ON part.p_partkey = partsupp.ps_partkey

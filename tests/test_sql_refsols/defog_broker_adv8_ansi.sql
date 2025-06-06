@@ -4,14 +4,14 @@ WITH _t4 AS (
     sbtransaction.sbtxcustid AS customer_id,
     sbtransaction.sbtxdatetime AS date_time
   FROM main.sbtransaction AS sbtransaction
-  WHERE
-    sbtransaction.sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
-    AND sbtransaction.sbtxdatetime >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
 ), _t3 AS (
   SELECT
     _t4.amount AS amount,
     _t4.customer_id AS customer_id
   FROM _t4 AS _t4
+  WHERE
+    _t4.date_time < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
+    AND _t4.date_time >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
 ), _s0 AS (
   SELECT
     COUNT() AS agg_0,
@@ -25,12 +25,12 @@ WITH _t4 AS (
     sbcustomer.sbcustid AS _id,
     sbcustomer.sbcustcountry AS country
   FROM main.sbcustomer AS sbcustomer
-  WHERE
-    LOWER(sbcustomer.sbcustcountry) = 'usa'
 ), _s1 AS (
   SELECT
     _t5._id AS _id
   FROM _t5 AS _t5
+  WHERE
+    LOWER(_t5.country) = 'usa'
 ), _t2 AS (
   SELECT
     _s0.agg_0 AS agg_0,
