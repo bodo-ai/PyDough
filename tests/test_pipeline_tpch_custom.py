@@ -101,6 +101,16 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     top_customers_by_orders,
     triple_partition,
     wealthiest_supplier,
+    window_filter_order_1,
+    window_filter_order_2,
+    window_filter_order_3,
+    window_filter_order_4,
+    window_filter_order_5,
+    window_filter_order_6,
+    window_filter_order_7,
+    window_filter_order_8,
+    window_filter_order_9,
+    window_filter_order_10,
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
@@ -1288,6 +1298,96 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "supplier_pct_national_qty",
             ),
             id="supplier_pct_national_qty",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_1,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [969]}),
+                "window_filter_order_1",
+            ),
+            id="window_filter_order_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_2,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [969]}),
+                "window_filter_order_2",
+            ),
+            id="window_filter_order_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_3,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [969]}),
+                "window_filter_order_3",
+            ),
+            id="window_filter_order_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_4,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [1936]}),
+                "window_filter_order_4",
+            ),
+            id="window_filter_order_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_5,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [8229]}),
+                "window_filter_order_5",
+            ),
+            id="window_filter_order_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_6,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [8229]}),
+                "window_filter_order_6",
+            ),
+            id="window_filter_order_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_7,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [22984]}),
+                "window_filter_order_7",
+            ),
+            id="window_filter_order_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_8,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [906]}),
+                "window_filter_order_8",
+            ),
+            id="window_filter_order_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_9,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [525]}),
+                "window_filter_order_9",
+            ),
+            id="window_filter_order_9",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                window_filter_order_10,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [0]}),
+                "window_filter_order_10",
+            ),
+            id="window_filter_order_10",
         ),
         pytest.param(
             PyDoughPandasTest(

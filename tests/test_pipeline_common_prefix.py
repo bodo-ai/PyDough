@@ -896,9 +896,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "cust_key": [28, 49, 64],
-                        "n_orders": [18, 17, 20],
-                        "n_no_tax_discount": [2, 1, 3],
+                        "cust_key": [14, 28, 49],
+                        "n_orders": [10, 18, 17],
+                        "n_no_tax_discount": [2, 2, 1],
                     }
                 ),
                 "common_prefix_al",
@@ -926,9 +926,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "cust_key": [49, 97, 170],
-                        "n_orders": [17, 27, 14],
-                        "n_no_tax_discount": [1, 5, 3],
+                        "cust_key": [49, 64, 97, 136, 170, 187, 196],
+                        "n_orders": [17, 20, 27, 21, 14, 23, 25],
+                        "n_no_tax_discount": [1, 3, 5, 1, 3, 1, 2],
                     }
                 ),
                 "common_prefix_an",
