@@ -1451,9 +1451,9 @@ class HybridTree:
                 # exists.
                 if not start_operation.child.subtree.always_exists():
                     return False
-            case HybridPartitionChild():
-                # Stepping into a partition child always has a matching data
-                # record for each parent, by definition.
+            case HybridPartitionChild() | HybridRoot():
+                # Stepping into a partition child or a root always has a
+                # matching data record for each parent, by definition.
                 pass
             case _:
                 raise NotImplementedError(
@@ -1463,7 +1463,7 @@ class HybridTree:
         # there are any operations that could remove a row.
         for operation in self.pipeline[1:]:
             match operation:
-                case HybridCalculate() | HybridNoop() | HybridRoot():
+                case HybridCalculate() | HybridNoop():
                     continue
                 case HybridFilter() | HybridLimit():
                     return False
