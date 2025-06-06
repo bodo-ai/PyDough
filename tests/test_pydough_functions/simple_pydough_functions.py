@@ -770,6 +770,176 @@ def supplier_pct_national_qty():
     )
 
 
+def window_filter_order_1():
+    # Counts how many german customers made at least 1 order in 1992, but
+    # fewer orders in 1992 than the average for all german customers (including
+    # those who did not make any orders in 1992).
+    selected_orders = orders.WHERE(YEAR(order_date) == 1992)
+    selected_customers = customers.WHERE(nation.name == "GERMANY").WHERE(
+        (COUNT(selected_orders) < RELAVG(COUNT(selected_orders))) & HAS(selected_orders)
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_customers))
+
+
+def window_filter_order_2():
+    # Same as window_filter_order_1 but written differnetly.
+    selected_orders = orders.WHERE(YEAR(order_date) == 1992)
+    selected_customers = customers.WHERE(nation.name == "GERMANY").WHERE(
+        HAS(selected_orders) & (COUNT(selected_orders) < RELAVG(COUNT(selected_orders)))
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_customers))
+
+
+def window_filter_order_3():
+    # Same as window_filter_order_1 but written differnetly.
+    selected_orders = orders.WHERE(YEAR(order_date) == 1992)
+    selected_customers = (
+        customers.WHERE(nation.name == "GERMANY")
+        .WHERE(COUNT(selected_orders) < RELAVG(COUNT(selected_orders)))
+        .WHERE(HAS(selected_orders))
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_customers))
+
+
+def window_filter_order_4():
+    # Same as window_filter_order_1 but compares the number of orders
+    # against the average number of orders made only by german customers with
+    # at least one order made in 1992.
+    selected_orders = orders.WHERE(YEAR(order_date) == 1992)
+    selected_customers = (
+        customers.WHERE(nation.name == "GERMANY")
+        .WHERE(HAS(selected_orders))
+        .WHERE(COUNT(selected_orders) < RELAVG(COUNT(selected_orders)))
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_customers))
+
+
+def window_filter_order_5():
+    # Count how many orders were made in 1995 by a customer in the building
+    # market segment where the account balance of the customer is below the
+    # account balance of all customers (treating those not in the building
+    # market segment as having an account balance of 0)
+    selected_customer = customer.WHERE(market_segment == "BUILDING")
+    selected_orders = orders.WHERE(YEAR(order_date) == 1995).WHERE(
+        (
+            selected_customer.account_balance
+            < RELAVG(DEFAULT_TO(selected_customer.account_balance, 0))
+        )
+        & HAS(selected_customer)
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def window_filter_order_6():
+    # Same as window_filter_order_5 but written differnetly.
+    selected_customer = customer.WHERE(market_segment == "BUILDING")
+    selected_orders = (
+        orders.WHERE(YEAR(order_date) == 1995)
+        .WHERE(
+            selected_customer.account_balance
+            < RELAVG(DEFAULT_TO(selected_customer.account_balance, 0))
+        )
+        .WHERE(HAS(selected_customer))
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def window_filter_order_7():
+    # Same as window_filter_order_5 but only compares against the average
+    # account balance of customers in the building market segment.
+    selected_customer = customer.WHERE(market_segment == "BUILDING")
+    selected_orders = (
+        orders.WHERE(YEAR(order_date) == 1995)
+        .WHERE(HAS(selected_customer))
+        .WHERE(
+            selected_customer.account_balance
+            < RELAVG(selected_customer.account_balance)
+        )
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def window_filter_order_8():
+    # Counts how many French customers have no orders made in January of 1995
+    # and have and account balance less than the total number of orders made by
+    # French customers in January of 1998.
+    selected_orders = orders.WHERE(
+        (YEAR(order_date) == 1998) & (MONTH(order_date) == 1)
+    )
+    selected_customers = customers.WHERE((nation.name == "FRANCE")).WHERE(
+        (account_balance < (RELSUM(COUNT(selected_orders)))) & HASNOT(selected_orders)
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_customers))
+
+
+def window_filter_order_9():
+    # Counts how many orders made through clerk #1 have a customer not in the
+    # building market segment, and also a total price below 5% of the average
+    # total of all order total prices from per such customers.
+    selected_custoemrs = customer.WHERE(market_segment == "BUILDING").CALCULATE(
+        total_spent=SUM(orders.total_price)
+    )
+    selected_orders = orders.WHERE(clerk == "Clerk#000000001").WHERE(
+        (total_price < (0.05 * RELAVG(selected_custoemrs.total_spent)))
+        & HASNOT(selected_custoemrs)
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def window_filter_order_10():
+    # Same as window_filter_order_9 but filters to only consider orders without
+    # any such customers before computig the average (a paradox that will
+    # always be False)
+    selected_custoemrs = customer.WHERE(market_segment == "BUILDING").CALCULATE(
+        total_spent=SUM(orders.total_price)
+    )
+    selected_orders = (
+        orders.WHERE(clerk == "Clerk#000000001")
+        .WHERE(HASNOT(selected_custoemrs))
+        .WHERE((total_price < (0.05 * RELAVG(selected_custoemrs.total_spent))))
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+"""
+-- 525
+SELECT COUNT(*)
+FROM (
+    select o_totalprice, marker, AVG(total_spent) OVER () as global_avg
+    from orders
+    left join (
+        select c_custkey, SUM(o_totalprice) as total_spent, 1 as marker
+        from customer
+        inner join orders on c_custkey = o_custkey
+        where c_mktsegment = 'BUILDING'
+        group by c_custkey
+    )
+    on c_custkey = o_custkey
+    WHERE o_clerk = 'Clerk#000000001'
+)
+WHERE marker IS NULL AND o_totalprice < 0.05 * global_avg
+;
+
+-- 525
+SELECT COUNT(*)
+FROM (
+    select o_totalprice, marker, AVG(total_spent) OVER () as global_avg
+    from orders
+    inner join (
+        select c_custkey, SUM(o_totalprice) as total_spent, 1 as marker
+        from customer
+        inner join orders on c_custkey = o_custkey
+        where c_mktsegment = 'BUILDING'
+        group by c_custkey
+    )
+    on c_custkey = o_custkey
+    WHERE o_clerk = 'Clerk#000000001'
+)
+WHERE marker IS NULL AND o_totalprice < 0.05 * global_avg
+;
+"""
+
+
 def highest_priority_per_year():
     # For each year, identify the priority with the highest percentage of
     # made in that year with that priority, listing the year, priority, and

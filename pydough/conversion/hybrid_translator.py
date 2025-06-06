@@ -372,6 +372,7 @@ class HybridTranslator:
                 case Calculate():
                     for expr in child_operator.calc_term_values.values():
                         self.identify_connection_types(expr, child_idx, reference_types)
+                        cannot_filter |= self.qdag_expr_contains_window(expr)
                 case PartitionBy():
                     reference_types.add(ConnectionType.AGGREGATION)
             # Combine the various references to the child to identify the type
