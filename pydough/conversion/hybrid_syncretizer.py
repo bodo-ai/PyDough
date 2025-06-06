@@ -247,7 +247,31 @@ class HybridSyncretizer:
         remapping: dict[HybridExpr, HybridExpr],
     ) -> None:
         """
-        TODO
+        Runs the syncretization logic for two children of a hybrid tree that
+        are confirmed to be syncretizable, where the base child is an
+        aggregation and the extension child is also an aggregation. This is
+        only possible if the aggregations in the extension child can be split
+        into two rounds of aggregation.
+
+        ```
+        # Consider the following example:
+        nations.CALCULATE(x=COUNT(customers), y=COUNT(customers.orders))
+
+        # Can be syncretized into the equivalent of:
+        child = customers.CALCULATE(z=COUNT(orders))
+        nations.CALCULATE(x=COUNT(child), y=SUM(child.z))
+        ```
+
+        Args:
+            `tree`: The hybrid tree containing the base and extension children.
+            `base_idx`: The index of the base child in the tree.
+            `extension_idx`: The index of the extension child in the tree.
+            `extension_subtree`: The newly created suffix subtree of of the
+            extension child that will be inserted as a child of the base.
+            `remapping`: A dictionary that will be populated with references
+            to the new aggregations in the base child, so that any references
+            to the old aggregations in the extension child can be remapped to
+            the new aggregations in the base child.
         """
         base_child: HybridConnection = tree.children[base_idx]
         extension_child: HybridConnection = tree.children[extension_idx]
@@ -261,10 +285,14 @@ class HybridSyncretizer:
                     ConnectionType.SEMI
                 )
             )
+
         if extension_subtree.always_exists() and new_connection_type not in (
             ConnectionType.SEMI,
             ConnectionType.ANTI,
         ):
+            # If the extension child always exists with regards to the base
+            # child, promote it to a SEMI join (unless it already is, or it is
+            # an ANTI).
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
@@ -279,6 +307,7 @@ class HybridSyncretizer:
                 tree, extension_idx, new_connection_type.is_semi
             )
             new_connection_type = ConnectionType.AGGREGATION
+
         # If an aggregation is being added to a SEMI join, switch the SEMI
         # join to either a singular-only-match or aggregation-only-match.
         if base_child.connection_type == ConnectionType.SEMI:
@@ -292,6 +321,7 @@ class HybridSyncretizer:
         if base_child.connection_type == ConnectionType.SEMI:
             base_child.connection_type = ConnectionType.AGGREGATION
 
+        # Insert the new extension child as a child of the base subtree.
         min_steps: int = base_subtree.get_min_child_idx(
             extension_subtree, new_connection_type
         )
@@ -301,6 +331,11 @@ class HybridSyncretizer:
         )
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
+        # Iterate through all the aggregations in the original extension child
+        # and create equivalents by creating a bottom aggregation call in the
+        # extension child, a reference to it in the base child, then a new
+        # aggregation in the base child that aggregates the reference to pass
+        # the combined aggregation result up to the parent.
         idx: int = 0
         old_child_ref: HybridExpr
         for agg_name, agg in extension_child.aggs.items():
@@ -356,6 +391,8 @@ class HybridSyncretizer:
                 remapping[old_child_ref] = quotient
 
             else:
+                # Identify which operators to use for the bottom/top
+                # aggregations.
                 extension_op, base_op = self.supported_syncretize_operators[
                     agg.operator
                 ]
@@ -397,14 +434,42 @@ class HybridSyncretizer:
         remapping: dict[HybridExpr, HybridExpr],
     ) -> None:
         """
-        TODO
+        Runs the syncretization logic for two children of a hybrid tree that
+        are confirmed to be syncretizable, where the base child is singular and
+        the extension child is an an aggregation. This can be done with any
+        aggregation functions since the aggregation can be done per record of
+        the base child which just passes the results up as singular values to
+        the parent.
+
+        ```
+        # Consider the following example:
+        customers.CALCULATE(x=nation.name, y=COUNT(nation.suppliers))
+
+        # Can be syncretized into the equivalent of:
+        child = nation.CALCULATE(z=COUNT(suppliers))
+        customers.CALCULATE(x=child.name, y=child.z)
+        ```
+
+        Args:
+            `tree`: The hybrid tree containing the base and extension children.
+            `base_idx`: The index of the base child in the tree.
+            `extension_idx`: The index of the extension child in the tree.
+            `extension_subtree`: The newly created suffix subtree of of the
+            extension child that will be inserted as a child of the base.
+            `remapping`: A dictionary that will be populated with references
+            to the new terms in the base child, so that any references
+            to the old aggregations in the extension child can be remapped to
+            the new terms in the base child.
         """
         base_child: HybridConnection = tree.children[base_idx]
         extension_child: HybridConnection = tree.children[extension_idx]
         base_subtree: HybridTree = base_child.subtree
 
         new_connection_type: ConnectionType = extension_child.connection_type
-        if new_connection_type.is_semi or extension_subtree.always_exists():
+
+        # If the extension child only preserves matches, promote the base to a
+        # SEMI join.
+        if new_connection_type.is_semi:
             base_child.connection_type = (
                 base_child.connection_type.reconcile_connection_types(
                     ConnectionType.SEMI
@@ -415,6 +480,8 @@ class HybridSyncretizer:
             extension_subtree.always_exists()
             and new_connection_type != ConnectionType.SEMI
         ):
+            # If the extension child always exists with regards to the base,
+            # promote it to a SEMI join (unless it already is).
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
@@ -423,6 +490,7 @@ class HybridSyncretizer:
             # must not preserve non-matching records, then convert the
             # base child into one that only preserves matches.
             base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
+
         # If an aggregation is being added to a SEMI join, switch the SEMI
         # join to either a singular-only-match or aggregation-only-match.
         if base_child.connection_type == ConnectionType.SEMI:
@@ -431,6 +499,7 @@ class HybridSyncretizer:
             else:
                 base_child.connection_type = ConnectionType.AGGREGATION_ONLY_MATCH
 
+        # Insert the new extension child as a child of the base subtree.
         min_steps: int = base_subtree.get_min_child_idx(
             extension_subtree, new_connection_type
         )
@@ -440,6 +509,11 @@ class HybridSyncretizer:
         )
         new_extension_child: HybridConnection = base_subtree.children[new_child_idx]
 
+        # Iterate through all the aggregations in the original extension child.
+        # For each one, copy the aggregation into the new extension child, add
+        # a reference to the agg call to the base child, and map the old child
+        # reference to the old extension child to a new child reference to the
+        # new reference in the base child.
         idx: int = 0
         for agg_name, agg in extension_child.aggs.items():
             # Insert the aggregation call into the new child
@@ -472,26 +546,53 @@ class HybridSyncretizer:
         remapping: dict[HybridExpr, HybridExpr],
     ) -> None:
         """
-        TODO
+        Runs the syncretization logic for two children of a hybrid tree that
+        are confirmed to be syncretizable, where the base child is singular and
+        the extension child is also singular.
+
+        ```
+        # Consider the following example:
+        customers.CALCULATE(x=nation.name, y=nation.region.name)
+
+        # Can be syncretized into the equivalent of:
+        child = nation.CALCULATE(z=region.name)
+        customers.CALCULATE(x=child.name, y=child.z)
+        ```
+
+        Args:
+            `tree`: The hybrid tree containing the base and extension children.
+            `base_idx`: The index of the base child in the tree.
+            `extension_idx`: The index of the extension child in the tree.
+            `extension_subtree`: The newly created suffix subtree of of the
+            extension child that will be inserted as a child of the base.
+            `remapping`: A dictionary that will be populated with references
+            to the new terms in the base child, so that any references
+            to the old terms in the extension child can be remapped to
+            the new terms in the base child.
         """
         base_child: HybridConnection = tree.children[base_idx]
         extension_child: HybridConnection = tree.children[extension_idx]
         base_subtree: HybridTree = base_child.subtree
 
         new_connection_type: ConnectionType = extension_child.connection_type
-        if new_connection_type.is_semi or extension_subtree.always_exists():
+
+        # If the extension child only preserves matches, promote the base to a
+        # SEMI join.
+        if new_connection_type.is_semi:
             base_child.connection_type = (
                 base_child.connection_type.reconcile_connection_types(
                     ConnectionType.SEMI
                 )
             )
 
+        # If the extension child always exists with regards to the base,
+        # promote it to a SEMI join.
         if extension_subtree.always_exists():
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
 
-        # If a singular is being added to a SEMI join, switch the SEMI
+        # If a singular is being added to a pure SEMI join, switch the SEMI
         # join to an singular-only-match.
         if (
             base_child.connection_type == ConnectionType.SEMI
@@ -499,6 +600,7 @@ class HybridSyncretizer:
         ):
             base_child.connection_type = ConnectionType.SINGULAR_ONLY_MATCH
 
+        # Insert the new extension child as a child of the base subtree.
         min_steps: int = base_subtree.get_min_child_idx(
             extension_subtree, new_connection_type
         )
@@ -539,14 +641,40 @@ class HybridSyncretizer:
         remapping: dict[HybridExpr, HybridExpr],
     ) -> None:
         """
-        TODO
+        Runs the syncretization logic for two children of a hybrid tree that
+        are confirmed to be syncretizable, where the base child is an
+        aggregation and the extension child is singular.
+
+        ```
+        # Consider the following example:
+        customers.CALCULATE(x=COUNT(orders), y=orders.lines.BEST(by=order_date.ASC(), per="customers").part.name)
+
+        # Can be syncretized into the equivalent of:
+        child = orders.CALCULATE(z=lines.BEST(by=order_date.ASC(), per="customers").part.name)
+        customers.CALCULATE(x=COUNT(child), y=MAX(child.z))
+        # (MAX will select only the value from the one desired row of `z`, ignoring all NULL rows)
+        ```
+
+        Args:
+            `tree`: The hybrid tree containing the base and extension children.
+            `base_idx`: The index of the base child in the tree.
+            `extension_idx`: The index of the extension child in the tree.
+            `extension_subtree`: The newly created suffix subtree of of the
+            extension child that will be inserted as a child of the base.
+            `remapping`: A dictionary that will be populated with references
+            to the new terms in the base child, so that any references
+            to the old terms in the extension child can be remapped to
+            the new terms in the base child.
         """
         base_child: HybridConnection = tree.children[base_idx]
         extension_child: HybridConnection = tree.children[extension_idx]
         base_subtree: HybridTree = base_child.subtree
 
         new_connection_type: ConnectionType = extension_child.connection_type
-        if new_connection_type.is_semi or extension_subtree.always_exists():
+
+        # If the extension child only preserves matches, promote the base to a
+        # SEMI join.
+        if new_connection_type.is_semi:
             base_child.connection_type = (
                 base_child.connection_type.reconcile_connection_types(
                     ConnectionType.SEMI
@@ -554,6 +682,8 @@ class HybridSyncretizer:
             )
 
         if extension_subtree.always_exists():
+            # If the extension child always exists with regards to the base,
+            # promote it to a SEMI join.
             new_connection_type = new_connection_type.reconcile_connection_types(
                 ConnectionType.SEMI
             )
@@ -581,6 +711,7 @@ class HybridSyncretizer:
             )
             return
 
+        # Insert the new extension child as a child of the base subtree.
         min_steps: int = base_subtree.get_min_child_idx(
             extension_subtree, new_connection_type
         )
@@ -590,6 +721,10 @@ class HybridSyncretizer:
         )
         base_subtree.children[new_child_idx]
 
+        # Iterate through every term in the extension child and add a child
+        # reference to pull it into the base child. Then, add a MAX aggregation
+        # to the base child that references the new reference, thus pulling the
+        # one desired row into the parent tree.
         for idx, term_name in enumerate(sorted(extension_subtree.pipeline[-1].terms)):
             old_term = extension_subtree.pipeline[-1].terms[term_name]
             # Insert a reference to the child into the base
@@ -621,28 +756,41 @@ class HybridSyncretizer:
         self, tree: HybridTree, base_idx: int, extension_idx: int, extension_height: int
     ) -> bool:
         """
-        TODO
+        Runs the main syncretization logic to attempt to combine two children
+        of a hybrid tree, forming a (base, extension) pair, into a single child
+        by splitting the extension child into a subtree using only the suffix
+        that is not present in the base child, which is then added as a child
+        of the base child (instead of the parent tree), whose terms in turn get
+        references by the base child then pulled up into the parent tree. First
+        needs to verify that the two children are syncretizable, then the rest
+        of the logic is dispatched onto helper functions.
+
+        Args:
+            `tree`: The hybrid tree containing the base and extension children.
+            `base_idx`: The index of the base child in the tree.
+            `extension_idx`: The index of the extension child in the tree.
+            `extension_height`: The number of levels of the suffix of the
+            extension that are not in the common prefix with the base child.
+
+        Returns:
+            `True` if the syncretization was successful, `False` otherwise. If
+            successful, the transformation of the base/extension children is
+            done in-place, but the now-dead extension child will still need to
+            be pruned.
         """
         remapping: dict[HybridExpr, HybridExpr] = {}
         base_child: HybridConnection = tree.children[base_idx]
         base_subtree: HybridTree = base_child.subtree
         extension_child: HybridConnection = tree.children[extension_idx]
 
-        # ANTI are automatically syncretized since the base not being
-        # present implies the extension is not present, so we can just
-        # have the extension child be pruned without modifying the
-        # base.
+        # ANTI-ANTI pairs are automatically syncretized since the base not
+        # being present implies the extension is not present, so we can just
+        # have the extension child be pruned without modifying the base.
         if (
             base_child.connection_type.is_anti
             and extension_child.connection_type.is_anti
         ):
             return True
-
-        all_aggs_syncretizable: bool = all(
-            agg.operator in self.supported_syncretize_operators
-            or agg.operator == pydop.AVG
-            for agg in extension_child.aggs.values()
-        )
 
         # Do not syncretize subtrees if their acceptable step ranges do not
         # overlap.
@@ -663,6 +811,9 @@ class HybridSyncretizer:
             extension_child.subtree, extension_height, base_subtree
         )
 
+        # Dispatch onto one of the four main helper procedures based on the
+        # exact combination of connection types, with all other connection
+        # type combinations resulting in a refusal to syncretize.
         match (base_child.connection_type, extension_child.connection_type):
             case (
                 (ConnectionType.AGGREGATION, ConnectionType.AGGREGATION)
@@ -679,7 +830,14 @@ class HybridSyncretizer:
                 | (ConnectionType.SEMI, ConnectionType.AGGREGATION)
                 | (ConnectionType.SEMI, ConnectionType.AGGREGATION_ONLY_MATCH)
             ):
-                if not all_aggs_syncretizable:
+                # If in the AGG-AGG syncretization case, we need to ensure that
+                # all aggregations in the extension child can be split into a
+                # top/bottom aggregation call.
+                if not all(
+                    agg.operator in self.supported_syncretize_operators
+                    or agg.operator == pydop.AVG
+                    for agg in extension_child.aggs.values()
+                ):
                     return False
                 self.syncretize_agg_onto_agg(
                     tree,
@@ -746,6 +904,9 @@ class HybridSyncretizer:
             case _:
                 return False
 
+        # Once the syncretization is complete, all references to the extension
+        # child within the parent tree must be remapped to different references
+        # to the base child.
         for operation in tree.pipeline:
             operation.replace_expressions(remapping)
 
@@ -753,8 +914,16 @@ class HybridSyncretizer:
 
     def syncretize_children(self, tree: HybridTree) -> None:
         """
-        TODO
+        The wrapper logic for the syncretization algorithm that reverses the
+        entire tree, finds potential candidate pairs for syncretization, and
+        runs the main syncretization logic on these pairs. The transformations
+        are done in-place.
+
+        Args:
+            `tree`: The hybrid tree to check for syncretization opportunities,
+            (along with its ancestors ahd children)
         """
+        # First, run syncretization on the parent level, if it exists.
         if tree.parent is not None:
             self.syncretize_children(tree.parent)
         syncretize_options: list[tuple[int, int, int, int]] = []
@@ -777,8 +946,14 @@ class HybridSyncretizer:
                     syncretize_options.append(
                         (-total_height, extension_height, extension_idx, base_idx)
                     )
-        children_to_delete: set[int] = set()
+
+        # If there was at least one syncretization opportunity, then sort them
+        # using the tuple so that largest extension children go first, with
+        # ties broken in favor of the pair with the largest extension child
+        # suffix size going first. When iterating through each pair, attempt to
+        # run syncretization on the duo.
         if len(syncretize_options) > 0:
+            children_to_delete: set[int] = set()
             syncretize_options.sort()
             for _, extension_height, extension_idx, base_idx in syncretize_options:
                 if (
@@ -789,8 +964,18 @@ class HybridSyncretizer:
                 success: bool = self.syncretize_subtrees(
                     tree, base_idx, extension_idx, extension_height
                 )
+                # If the syncretization was successful, then mark the extension
+                # child as dead so that it can be pruned later and will not be
+                # used in any more syncretization attempts (as the base or
+                # child).
                 if success:
                     children_to_delete.add(extension_idx)
+
+            # At the end, delete any extension children that were successfully
+            # syncretized onto a base child.
             tree.remove_dead_children(children_to_delete)
+
+        # Finally, recursively run the syncretization algorithm on each child
+        # of the tree.
         for child in tree.children:
             self.syncretize_children(child.subtree)
