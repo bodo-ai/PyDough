@@ -343,6 +343,50 @@ class BaseTransformBindings:
             args.append(sqlglot_expressions.Literal.string(""))
         return sqlglot_expressions.Anonymous(this="REPLACE", expressions=args)
 
+    def convert_str_count(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """Convert a `STRCOUNT` call expression to a SQLGlot expression.
+
+        Args:
+            args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after they were
+            converted to SQLGlot expressions.
+            types (list[PyDoughType]): The PyDough types of the arguments to `STRCOUNT`.
+
+        Returns:
+            SQLGlotExpression: The SQLGlot expression matching
+            the functionality of `STRCOUNT`.
+            In Python, this is equivalent to `X.count(Y)`.
+        """
+        assert len(args) == 2, "STRCOUNT expects exactly two arguments."
+        # Implementation
+        # (LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
+        string: SQLGlotExpression = args[0]
+        string_to_count: SQLGlotExpression = args[1]
+
+        # Ensure len(string to count) != 0
+        len_string_to_count: SQLGlotExpression = sqlglot_expressions.Length(this=string_to_count)
+
+        if len_string_to_count.this == '0':
+            return sqlglot_expressions.Literal.number(0) # Not sure
+
+        # IDK if I am passing the types correctly
+        replaced_string: SQLGlotExpression = self.convert_replace(
+            [string, string_to_count, sqlglot_expressions.Literal.string('')], 
+            types
+        )
+        # Am I calling the length function correctly? 
+        len_replaced_string: SQLGlotExpression = sqlglot_expressions.Length(this=replaced_string)
+        len_string: SQLGlotExpression = sqlglot_expressions.Length(this=string)
+
+        sqlglot_expressions.Sub(len_string, len_replaced_string)
+
+    #    appearances:SQLGlotExpression = len_string - len_replaced_string / len_string_to_count
+
+        return sqlglot_expressions.Div(sqlglot_expressions.Sub(len_string, len_replaced_string), len_string_to_count)
+
     def convert_startswith(
         self,
         args: list[SQLGlotExpression],
