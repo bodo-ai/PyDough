@@ -5,8 +5,7 @@ WITH _s1 AS (
 ), _s0 AS (
   SELECT
     merchants.mid AS merchant_id,
-    merchants.name AS merchant_name,
-    merchants.mid AS mid
+    merchants.name AS merchant_name
   FROM main.merchants AS merchants
 )
 SELECT
@@ -19,5 +18,5 @@ WHERE
       1 AS "1"
     FROM _s1 AS _s1
     WHERE
-      _s0.mid = _s1.merchant_id
+      _s0.merchant_id = _s1.merchant_id
   )

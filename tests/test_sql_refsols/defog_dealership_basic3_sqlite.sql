@@ -22,7 +22,6 @@ WITH _s0 AS (
     ON _s0._id = _s1.sale_id
 ), _s2 AS (
   SELECT
-    salespersons._id AS _id,
     salespersons._id AS salesperson_id
   FROM main.salespersons AS salespersons
 )
@@ -35,5 +34,5 @@ WHERE
       1 AS "1"
     FROM _s3 AS _s3
     WHERE
-      _s2._id = _s3.salesperson_id
+      _s2.salesperson_id = _s3.salesperson_id
   )

@@ -18,7 +18,6 @@ WITH _t0 AS (
   FROM main.sales AS sales
 ), _s2 AS (
   SELECT
-    cars._id AS _id,
     cars._id AS _id_1,
     cars.make AS make,
     cars.model AS model
@@ -32,7 +31,7 @@ WITH _t0 AS (
     _s1.sale_price AS sale_price
   FROM _s1 AS _s1
   JOIN _s2 AS _s2
-    ON _s1.car_id = _s2._id
+    ON _s1.car_id = _s2._id_1
 )
 SELECT
   _s0.make AS make,

@@ -14,6 +14,7 @@ __all__ = [
     "only_references_columns",
     "partition_expressions",
     "passthrough_column_mapping",
+    "remap_join_condition",
     "transpose_expression",
 ]
 
@@ -326,6 +327,63 @@ def transpose_expression(
                 [
                     ExpressionSortInfo(
                         transpose_expression(order_arg.expr, columns),
+                        order_arg.ascending,
+                        order_arg.nulls_first,
+                    )
+                    for order_arg in expr.order_inputs
+                ],
+                expr.kwargs,
+            )
+        case _:
+            raise NotImplementedError(
+                f"transpose_expression not implemented for {expr.__class__.__name__}"
+            )
+
+
+def remap_join_condition(
+    expr: RelationalExpression,
+    left_columns: dict[str, RelationalExpression],
+    right_columns: dict[str, RelationalExpression],
+    input_names: list[str | None],
+) -> RelationalExpression:
+    """
+    TODO
+    """
+    match expr:
+        case LiteralExpression() | CorrelatedReference():
+            return expr
+        case ColumnReference():
+            if expr.input_name == input_names[0]:
+                return left_columns.get(expr.name, expr)
+            else:
+                assert expr.input_name == input_names[1]
+                return right_columns.get(expr.name, expr)
+        case CallExpression():
+            return CallExpression(
+                expr.op,
+                expr.data_type,
+                [
+                    remap_join_condition(arg, left_columns, right_columns, input_names)
+                    for arg in expr.inputs
+                ],
+            )
+        case WindowCallExpression():
+            return WindowCallExpression(
+                expr.op,
+                expr.data_type,
+                [
+                    remap_join_condition(arg, left_columns, right_columns, input_names)
+                    for arg in expr.inputs
+                ],
+                [
+                    remap_join_condition(arg, left_columns, right_columns, input_names)
+                    for arg in expr.partition_inputs
+                ],
+                [
+                    ExpressionSortInfo(
+                        remap_join_condition(
+                            order_arg.expr, left_columns, right_columns, input_names
+                        ),
                         order_arg.ascending,
                         order_arg.nulls_first,
                     )

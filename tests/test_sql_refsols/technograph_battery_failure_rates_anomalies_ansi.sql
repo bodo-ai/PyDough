@@ -1,12 +1,21 @@
-WITH _s7 AS (
+WITH _s4 AS (
   SELECT
     COUNT() AS agg_0,
-    incidents.in_device_id AS device_id
-  FROM main.incidents AS incidents
-  JOIN main.errors AS errors
-    ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
+    in_device_id AS device_id,
+    in_error_id AS error_id
+  FROM main.incidents
   GROUP BY
-    incidents.in_device_id
+    in_device_id,
+    in_error_id
+), _s7 AS (
+  SELECT
+    SUM(_s4.agg_0) AS agg_0,
+    _s4.device_id
+  FROM _s4 AS _s4
+  JOIN main.errors AS errors
+    ON _s4.error_id = errors.er_id AND errors.er_name = 'Battery Failure'
+  GROUP BY
+    _s4.device_id
 ), _t1 AS (
   SELECT
     SUM(COALESCE(_s7.agg_0, 0)) AS agg_0,

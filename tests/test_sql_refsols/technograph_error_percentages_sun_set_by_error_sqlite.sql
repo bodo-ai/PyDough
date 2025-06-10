@@ -1,14 +1,23 @@
-WITH _s5 AS (
+WITH _s2 AS (
   SELECT
     COUNT() AS agg_0,
-    incidents.in_error_id AS error_id
-  FROM main.incidents AS incidents
+    in_device_id AS device_id,
+    in_error_id AS error_id
+  FROM main.incidents
+  GROUP BY
+    in_device_id,
+    in_error_id
+), _s5 AS (
+  SELECT
+    SUM(_s2.agg_0) AS agg_0,
+    _s2.error_id
+  FROM _s2 AS _s2
   JOIN main.devices AS devices
-    ON devices.de_id = incidents.in_device_id
+    ON _s2.device_id = devices.de_id
   JOIN main.products AS products
     ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
   GROUP BY
-    incidents.in_error_id
+    _s2.error_id
 ), _t0 AS (
   SELECT
     errors.er_name AS error,

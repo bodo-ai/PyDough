@@ -11,7 +11,6 @@ WITH _t0 AS (
     _t0.notification_type = 'transaction'
 ), _s0 AS (
   SELECT
-    users.uid AS uid,
     users.uid AS user_id
   FROM main.users AS users
 )
@@ -24,5 +23,5 @@ WHERE
       1 AS "1"
     FROM _s1 AS _s1
     WHERE
-      _s0.uid = _s1.user_id
+      _s0.user_id = _s1.user_id
   )
