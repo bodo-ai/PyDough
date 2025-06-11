@@ -1,7 +1,7 @@
 ROOT(columns=[('supplier_name', supplier_name), ('part_name', part_name), ('total_quantity', total_quantity), ('n_shipments', n_shipments)], orderings=[(total_quantity):desc_last, (supplier_name):asc_first])
  LIMIT(limit=Literal(value=3, type=NumericType()), columns={'n_shipments': n_shipments, 'part_name': part_name, 'supplier_name': supplier_name, 'total_quantity': total_quantity}, orderings=[(total_quantity):desc_last, (supplier_name):asc_first])
   JOIN(condition=t0.key == t1.supplier_key, type=INNER, cardinality=SINGULAR_FILTER, columns={'n_shipments': t1.n_shipments, 'part_name': t1.part_name, 'supplier_name': t0.supplier_name, 'total_quantity': t1.total_quantity})
-   JOIN(condition=t0.nation_key == t1.key_2_0_1, type=INNER, cardinality=SINGULAR_ACCESS, columns={'key': t0.key, 'supplier_name': t0.supplier_name})
+   JOIN(condition=t0.nation_key == t1.key_2_0_1, type=INNER, cardinality=SINGULAR_FILTER, columns={'key': t0.key, 'supplier_name': t0.supplier_name})
     SCAN(table=tpch.SUPPLIER, columns={'key': s_suppkey, 'nation_key': s_nationkey, 'supplier_name': s_name})
     FILTER(condition=name == 'FRANCE':string, columns={'key_2_0_1': key})
      SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})

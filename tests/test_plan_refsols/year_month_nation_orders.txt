@@ -1,7 +1,7 @@
 ROOT(columns=[('nation_name', nation_name), ('order_year', order_year), ('order_month', order_month), ('n_orders', n_orders)], orderings=[(n_orders):desc_last])
  LIMIT(limit=Literal(value=5, type=NumericType()), columns={'n_orders': n_orders, 'nation_name': nation_name, 'order_month': order_month, 'order_year': order_year}, orderings=[(n_orders):desc_last])
   AGGREGATE(keys={'nation_name': nation_name, 'order_month': order_month, 'order_year': order_year}, aggregations={'n_orders': COUNT()})
-   JOIN(condition=t0.key_5 == t1.customer_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'nation_name': t0.nation_name, 'order_month': t1.order_month, 'order_year': t1.order_year})
+   JOIN(condition=t0.key_5 == t1.customer_key, type=INNER, cardinality=PLURAL_FILTER, columns={'nation_name': t0.nation_name, 'order_month': t1.order_month, 'order_year': t1.order_year})
     JOIN(condition=t0.key_2 == t1.nation_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'key_5': t1.key_5, 'nation_name': t0.nation_name})
      JOIN(condition=t0.key == t1.region_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'key_2': t1.key_2, 'nation_name': t1.nation_name})
       FILTER(condition=ISIN(name, ['ASIA', 'AFRICA']:array[unknown]), columns={'key': key})

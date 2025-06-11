@@ -1,7 +1,7 @@
 ROOT(columns=[('name', name), ('total_qty', total_qty)], orderings=[(total_qty):desc_last, (name):asc_first])
  LIMIT(limit=Literal(value=5, type=NumericType()), columns={'name': name, 'total_qty': total_qty}, orderings=[(total_qty):desc_last, (name):asc_first])
   JOIN(condition=t0.key == t1.customer_key, type=INNER, cardinality=SINGULAR_FILTER, columns={'name': t0.name, 'total_qty': t1.total_qty})
-   JOIN(condition=t0.nation_key == t1.key_2_0_1, type=INNER, cardinality=SINGULAR_ACCESS, columns={'key': t0.key, 'name': t0.name})
+   JOIN(condition=t0.nation_key == t1.key_2_0_1, type=INNER, cardinality=SINGULAR_FILTER, columns={'key': t0.key, 'name': t0.name})
     FILTER(condition=market_segment == 'BUILDING':string, columns={'key': key, 'name': name, 'nation_key': nation_key})
      SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'market_segment': c_mktsegment, 'name': c_name, 'nation_key': c_nationkey})
     FILTER(condition=name == 'INDIA':string, columns={'key_2_0_1': key})

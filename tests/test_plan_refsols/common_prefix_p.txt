@@ -9,7 +9,7 @@ ROOT(columns=[('name', name), ('n_orders', n_orders), ('n_parts_ordered', n_part
        SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'order_priority': o_orderpriority})
    PROJECT(columns={'customer_key': customer_key, 'n_distinct_parts': DEFAULT_TO(agg_0, 0:numeric), 'n_parts_ordered': DEFAULT_TO(agg_2, 0:numeric), 'ordering_3': DEFAULT_TO(agg_0, 0:numeric) / DEFAULT_TO(agg_2, 0:numeric)})
     AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': NDISTINCT(part_key), 'agg_2': COUNT()})
-     JOIN(condition=t0.key == t1.order_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'customer_key': t0.customer_key, 'part_key': t1.part_key})
+     JOIN(condition=t0.key == t1.order_key, type=INNER, cardinality=PLURAL_FILTER, columns={'customer_key': t0.customer_key, 'part_key': t1.part_key})
       FILTER(condition=order_priority == '1-URGENT':string, columns={'customer_key': customer_key, 'key': key})
        SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_priority': o_orderpriority})
       FILTER(condition=tax == 0:numeric, columns={'order_key': order_key, 'part_key': part_key})
