@@ -190,6 +190,8 @@ class BaseTransformBindings:
                 return self.convert_strip(args, types)
             case pydop.REPLACE:
                 return self.convert_replace(args, types)
+            case pydop.STRCOUNT:
+                return self.convert_str_count(args, types)
             case pydop.SIGN:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
@@ -360,32 +362,30 @@ class BaseTransformBindings:
             the functionality of `STRCOUNT`.
             In Python, this is equivalent to `X.count(Y)`.
         """
-        assert len(args) == 2, "STRCOUNT expects exactly two arguments."
-        # Implementation
-        # (LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
+        assert len(args) == 2
+        
         string: SQLGlotExpression = args[0]
-        string_to_count: SQLGlotExpression = args[1]
+        substring_count: SQLGlotExpression = args[1]
 
-        # Ensure len(string to count) != 0
-        len_string_to_count: SQLGlotExpression = sqlglot_expressions.Length(this=string_to_count)
+        string_replaced: SQLGlotExpression = self.convert_replace([string, substring_count], types)
 
-        if len_string_to_count.this == '0':
-            return sqlglot_expressions.Literal.number(0) # Not sure
-
-        # IDK if I am passing the types correctly
-        replaced_string: SQLGlotExpression = self.convert_replace(
-            [string, string_to_count, sqlglot_expressions.Literal.string('')], 
-            types
-        )
-        # Am I calling the length function correctly? 
-        len_replaced_string: SQLGlotExpression = sqlglot_expressions.Length(this=replaced_string)
+        # LENGTHS
         len_string: SQLGlotExpression = sqlglot_expressions.Length(this=string)
+        len_string_replaced: SQLGlotExpression = sqlglot_expressions.Length(this=string_replaced)
+        len_substring_count: SQLGlotExpression = sqlglot_expressions.Length(this=substring_count)
 
-        sqlglot_expressions.Sub(len_string, len_replaced_string)
+        difference: SQLGlotExpression = sqlglot_expressions.Sub(this=len_string, expression=len_string_replaced)
 
-    #    appearances:SQLGlotExpression = len_string - len_replaced_string / len_string_to_count
+        quotient: SQLGlotExpression = sqlglot_expressions.Div(this=difference, expression=len_substring_count)
 
-        return sqlglot_expressions.Div(sqlglot_expressions.Sub(len_string, len_replaced_string), len_string_to_count)
+        casted: SQLGlotExpression = sqlglot_expressions.Cast(this=quotient, to=sqlglot_expressions.DataType.build('BIGINT'))
+
+        answer: SQLGlotExpression = sqlglot_expressions.Case().when(
+            sqlglot_expressions.EQ(this=len_substring_count, expression=sqlglot_expressions.Literal.number(0)), 
+            len_string
+        ).else_(casted)
+
+        return answer
 
     def convert_startswith(
         self,
