@@ -8,7 +8,15 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from bad_pydough_functions import (
+
+from pydough import init_pydough_context, to_df, to_sql
+from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.database_connectors import DatabaseContext
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
+from tests.test_pydough_functions.bad_pydough_functions import (
     bad_lpad_1,
     bad_lpad_2,
     bad_lpad_3,
@@ -28,7 +36,7 @@ from bad_pydough_functions import (
     bad_rpad_7,
     bad_rpad_8,
 )
-from simple_pydough_functions import (
+from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     exponentiation,
     find,
@@ -53,23 +61,8 @@ from simple_pydough_functions import (
     window_sliding_frame_relsum,
     years_months_days_hours_datediff,
 )
-from test_utils import (
-    graph_fetcher,
-)
 
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import DayOfWeek, PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext
-from pydough.evaluation.evaluate_unqualified import _load_column_selection
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
-)
+from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
 # Helper functions for week calculations
@@ -137,23 +130,20 @@ def get_day_of_week(
 @pytest.fixture(
     params=[
         pytest.param(
-            (
+            PyDoughPandasTest(
                 multi_partition_access_1,
-                None,
                 "Broker",
-                "multi_partition_access_1",
                 lambda: pd.DataFrame(
                     {"symbol": ["AAPL", "AMZN", "BRK.B", "FB", "GOOG"]}
                 ),
+                "multi_partition_access_1",
             ),
             id="multi_partition_access_1",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 multi_partition_access_2,
-                None,
                 "Broker",
-                "multi_partition_access_2",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [f"TX{i:03}" for i in (22, 24, 25, 27, 56)],
@@ -177,15 +167,14 @@ def get_day_of_week(
                         "cust_avg_shares": [50.625, 46.25, 40.0, 37.33333, 50.625],
                     }
                 ),
+                "multi_partition_access_2",
             ),
             id="multi_partition_access_2",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 multi_partition_access_3,
-                None,
                 "Broker",
-                "multi_partition_access_3",
                 lambda: pd.DataFrame(
                     {
                         "symbol": [
@@ -214,15 +203,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "multi_partition_access_3",
             ),
             id="multi_partition_access_3",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 multi_partition_access_4,
-                None,
                 "Broker",
-                "multi_partition_access_4",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -231,15 +219,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "multi_partition_access_4",
             ),
             id="multi_partition_access_4",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 multi_partition_access_5,
-                None,
                 "Broker",
-                "multi_partition_access_5",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -271,15 +258,14 @@ def get_day_of_week(
                         "n_type_trans": [29, 27] * 2 + [27] * 15,
                     }
                 ),
+                "multi_partition_access_5",
             ),
             id="multi_partition_access_5",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 multi_partition_access_6,
-                None,
                 "Broker",
-                "multi_partition_access_6",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -305,15 +291,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "multi_partition_access_6",
             ),
             id="multi_partition_access_6",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 cumulative_stock_analysis,
-                None,
                 "Broker",
-                "cumulative_stock_analysis",
                 lambda: pd.DataFrame(
                     {
                         "date_time": [
@@ -498,15 +483,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "cumulative_stock_analysis",
             ),
             id="cumulative_stock_analysis",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 time_threshold_reached,
-                None,
                 "Broker",
-                "time_threshold_reached",
                 lambda: pd.DataFrame(
                     {
                         "date_time": [
@@ -523,15 +507,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "time_threshold_reached",
             ),
             id="time_threshold_reached",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 hour_minute_day,
-                None,
                 "Broker",
-                "hour_minute_day",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -555,15 +538,14 @@ def get_day_of_week(
                         "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                     }
                 ),
+                "hour_minute_day",
             ),
             id="hour_minute_day",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 exponentiation,
-                None,
                 "Broker",
-                "exponentiation",
                 lambda: pd.DataFrame(
                     {
                         "low_square": [
@@ -604,15 +586,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "exponentiation",
             ),
             id="exponentiation",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 years_months_days_hours_datediff,
-                None,
                 "Broker",
-                "years_months_days_hours_datediff",
                 lambda: pd.DataFrame(
                     data={
                         "x": [
@@ -757,15 +738,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "years_months_days_hours_datediff",
             ),
             id="years_months_days_hours_datediff",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 minutes_seconds_datediff,
-                None,
                 "Broker",
-                "minutes_seconds_datediff",
                 lambda: pd.DataFrame(
                     {
                         "x": [
@@ -867,15 +847,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "minutes_seconds_datediff",
             ),
             id="minutes_seconds_datediff",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 padding_functions,
-                None,
                 "Broker",
-                "padding_functions",
                 lambda: pd.DataFrame(
                     {
                         "original_name": [
@@ -919,15 +898,14 @@ def get_day_of_week(
                         lambda s: (" " * 30 + s)[-30:]
                     ),
                 ),
+                "padding_functions",
             ),
             id="padding_functions",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 step_slicing,
-                None,
                 "Broker",
-                "step_slicing",
                 lambda: pd.DataFrame(
                     {
                         "name": [
@@ -998,15 +976,14 @@ def get_day_of_week(
                     wo_step8=lambda x: x["name"].str[-4:-2],
                     wo_step9=lambda x: x["name"].str[2:2],
                 ),
+                "step_slicing",
             ),
             id="step_slicing",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 sign,
-                None,
                 "Broker",
-                "sign",
                 lambda: pd.DataFrame(
                     {
                         "high": [83.0, 83.6, 84.2, 84.8, 85.4],
@@ -1018,15 +995,14 @@ def get_day_of_week(
                     sign_high_neg=-1,
                     sign_high_zero=0,
                 ),
+                "sign",
             ),
             id="sign",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 find,
-                None,
                 "Broker",
-                "find",
                 lambda: pd.DataFrame(
                     {
                         "name": ["Alex Rodriguez"],
@@ -1041,15 +1017,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "find",
             ),
             id="find",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 strip,
-                None,
                 "Broker",
-                "strip",
                 lambda: pd.DataFrame(
                     {
                         "stripped_name": [""],
@@ -1061,16 +1036,14 @@ def get_day_of_week(
                         "stripped_alt_name4": ["Alex Rodriguez"],
                     }
                 ),
+                "strip",
             ),
             id="strip",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 replace,
-                None,
                 "Broker",
-                "replace",
-                # Answer
                 lambda: pd.DataFrame(
                     {
                         "replaced_name": ["Alexander Rodriguez"],
@@ -1092,15 +1065,14 @@ def get_day_of_week(
                         "nested_like_replace": ["abcabcabcabc"],
                     }
                 ),
+                "replace",
             ),
             id="replace",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 week_offset,
-                None,
                 "Broker",
-                "week_offset",
                 lambda: pd.DataFrame(
                     {
                         "date_time": [
@@ -1366,15 +1338,14 @@ def get_day_of_week(
                         ],
                     }
                 ),
+                "week_offset",
             ),
             id="week_offset",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 window_sliding_frame_relsize,
-                None,
                 "Broker",
-                "window_sliding_frame_relsize",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -1390,15 +1361,14 @@ def get_day_of_week(
                         "w8": [3, 3, 3, 2, 2, 2, 2, 5],
                     }
                 ),
+                "window_sliding_frame_relsize",
             ),
             id="window_sliding_frame_relsize",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 window_sliding_frame_relsum,
-                None,
                 "Broker",
-                "window_sliding_frame_relsum",
                 lambda: pd.DataFrame(
                     {
                         "transaction_id": [
@@ -1414,44 +1384,24 @@ def get_day_of_week(
                         "w8": [None, 80, 160, None, 60, None, 5, None],
                     }
                 ),
+                "window_sliding_frame_relsum",
             ),
             id="window_sliding_frame_relsum",
         ),
     ],
 )
-def custom_defog_test_data(
-    request,
-) -> tuple[
-    Callable[[], UnqualifiedNode],
-    dict[str, str] | list[str] | None,
-    str,
-    str,
-    pd.DataFrame,
-]:
+def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for `test_pipeline_e2e_defog_custom`. Returns a tuple of the
-    following arguments:
-    1. `unqualified_impl`: a PyDough implementation function.
-    2. `columns`: the columns to select from the relational plan (optional).
-    3. `graph_name`: the name of the graph from the defog database to use.
-    4. `file_name`: the name of the file containing the expected relational
-    plan.
-    5. `answer_impl`: a function that takes in nothing and returns the answer
-    to a defog query as a Pandas DataFrame.
+    Test data for e2e tests on custom queries using the defog.ai databases.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
     """
     return request.param
 
 
 def test_pipeline_until_relational_defog(
-    custom_defog_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        str,
-        pd.DataFrame,
-    ],
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
-    default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ):
@@ -1460,39 +1410,15 @@ def test_pipeline_until_relational_defog(
     qualified DAG version, with the correct string representation. Run on
     custom questions using the defog.ai schemas.
     """
-    unqualified_impl, columns, graph_name, file_name, _ = custom_defog_test_data
-    graph: GraphMetadata = defog_graphs(graph_name)
-    init_pydough_context(graph)(unqualified_impl)()
-    file_path: str = get_plan_test_filename(file_name)
-    UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(qualified, PyDoughCollectionQDAG), (
-        "Expected qualified answer to be a collection, not an expression"
+    file_path: str = get_plan_test_filename(defog_custom_pipeline_test_data.test_name)
+    defog_custom_pipeline_test_data.run_relational_test(
+        defog_graphs, file_path, update_tests
     )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, _load_column_selection({"columns": columns}), default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(relational.to_tree_string() + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert relational.to_tree_string() == expected_relational_string.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
-        )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_defog_custom(
-    custom_defog_test_data: tuple[
-        Callable[[], UnqualifiedNode],
-        dict[str, str] | list[str] | None,
-        str,
-        str,
-        pd.DataFrame,
-    ],
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
@@ -1502,17 +1428,11 @@ def test_pipeline_e2e_defog_custom(
     same database connector. Run on custom questions using the defog.ai
     schemas.
     """
-    unqualified_impl, columns, graph_name, _, answer_impl = custom_defog_test_data
-    graph: GraphMetadata = defog_graphs(graph_name)
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(
-        root, columns=columns, metadata=graph, database=sqlite_defog_connection
-    )
-    pd.testing.assert_frame_equal(result, answer_impl())
+    defog_custom_pipeline_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection)
 
 
 @pytest.mark.parametrize(
-    "impl, graph_name, error_msg",
+    "pydough_impl, graph_name, error_message",
     [
         pytest.param(
             bad_lpad_1,
@@ -1619,15 +1539,17 @@ def test_pipeline_e2e_defog_custom(
         pytest.param(
             bad_round2,
             "Broker",
-            "Invalid operator invocation 'ROUND(high, -0.5, 2)': Expected between 1 and 2 arguments inclusive, received 3.",
+            re.escape(
+                "Invalid operator invocation 'ROUND(high, -0.5, 2)': Expected between 1 and 2 arguments inclusive, received 3."
+            ),
             id="bad_round2",
         ),
     ],
 )
 def test_defog_e2e_errors(
-    impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[[], UnqualifiedNode],
     graph_name: str,
-    error_msg: str,
+    error_message: str,
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
 ):
@@ -1636,9 +1558,9 @@ def test_defog_e2e_errors(
     a certain error is raised for defog database.
     """
     graph: GraphMetadata = defog_graphs(graph_name)
-    with pytest.raises(Exception, match=re.escape(error_msg)):
-        root: UnqualifiedNode = init_pydough_context(graph)(impl)()
-        to_sql(root, metadata=graph, database=sqlite_defog_connection)
+    run_e2e_error_test(
+        pydough_impl, error_message, graph, database=sqlite_defog_connection
+    )
 
 
 @pytest.mark.execute

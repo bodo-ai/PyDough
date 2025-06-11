@@ -7,9 +7,6 @@ import re
 from collections.abc import Callable
 
 import pytest
-from test_utils import (
-    graph_fetcher,
-)
 
 import pydough
 from pydough.configs import PyDoughConfigs
@@ -18,6 +15,9 @@ from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
     qualify_node,
+)
+from tests.testing_utilities import (
+    graph_fetcher,
 )
 
 

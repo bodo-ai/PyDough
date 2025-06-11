@@ -17,7 +17,21 @@ WITH _s1 AS (
   JOIN _s1 AS _s1
     ON _s1.order_key = orders.o_orderkey
   WHERE
-    orders.o_orderdate < '1994-01-01' AND orders.o_orderdate >= '1993-10-01'
+    CASE
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 3
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 1
+      THEN 1
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 6
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 4
+      THEN 2
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 9
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 7
+      THEN 3
+      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 12
+      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 10
+      THEN 4
+    END = 4
+    AND CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1993
   GROUP BY
     orders.o_custkey
 )

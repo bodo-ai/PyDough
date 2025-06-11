@@ -1,24 +1,4 @@
-WITH _s1 AS (
-  SELECT
-    sbtickerid AS _id,
-    sbtickersymbol AS symbol
-  FROM main.sbticker
-), _s4 AS (
-  SELECT DISTINCT
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM sbdailyprice.sbdpdate),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbdailyprice.sbdpdate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbdailyprice.sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdailyprice.sbdpdate)), -2)
-      END
-    ) AS month,
-    _s1.symbol
-  FROM main.sbdailyprice AS sbdailyprice
-  JOIN _s1 AS _s1
-    ON _s1._id = sbdailyprice.sbdptickerid
-), _s2 AS (
+WITH _s0 AS (
   SELECT
     SUM(sbdpclose) AS expr_0,
     COUNT(sbdpclose) AS expr_1,
@@ -50,36 +30,34 @@ WITH _s1 AS (
       END
     ),
     sbdptickerid
-), _t2 AS (
+), _t1 AS (
   SELECT
-    SUM(_s2.expr_0) AS expr_0,
-    SUM(_s2.expr_1) AS expr_1,
-    MAX(_s2.max_high) AS max_high,
-    MIN(_s2.min_low) AS min_low,
-    _s2.month,
-    _s3.symbol
-  FROM _s2 AS _s2
-  JOIN _s1 AS _s3
-    ON _s2.ticker_id = _s3._id
+    SUM(_s0.expr_0) AS expr_0,
+    SUM(_s0.expr_1) AS expr_1,
+    MAX(_s0.max_high) AS max_high,
+    MIN(_s0.min_low) AS min_low,
+    _s0.month,
+    sbticker.sbtickersymbol AS symbol
+  FROM _s0 AS _s0
+  JOIN main.sbticker AS sbticker
+    ON _s0.ticker_id = sbticker.sbtickerid
   GROUP BY
-    _s2.month,
-    _s3.symbol
+    _s0.month,
+    sbticker.sbtickersymbol
 )
 SELECT
-  _s4.symbol,
-  _s4.month,
-  _t2.expr_0 / _t2.expr_1 AS avg_close,
-  _t2.max_high,
-  _t2.min_low,
+  symbol,
+  month,
+  expr_0 / expr_1 AS avg_close,
+  max_high,
+  min_low,
   (
     (
-      _t2.expr_0 / _t2.expr_1
+      expr_0 / expr_1
     ) - LAG((
-      _t2.expr_0 / _t2.expr_1
-    ), 1) OVER (PARTITION BY _s4.symbol ORDER BY _s4.month NULLS LAST)
+      expr_0 / expr_1
+    ), 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST)
   ) / LAG((
-    _t2.expr_0 / _t2.expr_1
-  ), 1) OVER (PARTITION BY _s4.symbol ORDER BY _s4.month NULLS LAST) AS momc
-FROM _s4 AS _s4
-JOIN _t2 AS _t2
-  ON _s4.month = _t2.month AND _s4.symbol = _t2.symbol
+    expr_0 / expr_1
+  ), 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST) AS momc
+FROM _t1

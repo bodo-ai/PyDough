@@ -8,7 +8,8 @@ import typing as pt
 
 import pandas as pd
 import pytest
-from tpch_outputs import tpch_q6_output
+
+from tests.test_pydough_functions.tpch_outputs import tpch_q6_output
 
 pytestmark = [pytest.mark.execute]
 

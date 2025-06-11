@@ -6,12 +6,12 @@ import ast
 import re
 
 import pytest
-from test_utils import graph_fetcher
 
 from pydough import parse_json_metadata_from_file
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import CollectionMetadata, GraphMetadata, PyDoughMetadataException
 from pydough.unqualified import UnqualifiedNode, qualify_node, transform_code
+from tests.testing_utilities import graph_fetcher
 
 
 def test_missing_collection(get_sample_graph: graph_fetcher) -> None:

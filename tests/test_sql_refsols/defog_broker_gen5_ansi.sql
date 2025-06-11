@@ -3,8 +3,8 @@ SELECT
   AVG(sbtxprice) AS avg_price
 FROM main.sbtransaction
 WHERE
-  sbtxdatetime <= CAST('2023-03-31' AS DATE)
-  AND sbtxdatetime >= CAST('2023-01-01' AS DATE)
+  EXTRACT(QUARTER FROM sbtxdatetime) = 1
+  AND EXTRACT(YEAR FROM sbtxdatetime) = 2023
   AND sbtxstatus = 'success'
 GROUP BY
   DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP))

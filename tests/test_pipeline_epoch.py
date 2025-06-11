@@ -7,7 +7,9 @@ from collections.abc import Callable
 
 import pandas as pd
 import pytest
-from epoch_pydough_functions import (
+
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from tests.test_pydough_functions.epoch_pydough_functions import (
     culture_events_info,
     event_gap_per_era,
     events_per_season,
@@ -24,28 +26,15 @@ from epoch_pydough_functions import (
     unique_users_per_engine,
     users_most_cold_war_searches,
 )
-from test_utils import graph_fetcher
-
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
-from pydough.conversion.relational_converter import convert_ast_to_relational
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
-from pydough.relational import RelationalRoot
-from pydough.unqualified import (
-    UnqualifiedNode,
-    UnqualifiedRoot,
-    qualify_node,
-)
+from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
 
 @pytest.fixture(
     params=[
         pytest.param(
-            (
+            PyDoughPandasTest(
                 first_event_per_era,
-                "first_event_per_era",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "era_name": [
@@ -64,26 +53,28 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "epoch_first_event_per_era",
             ),
             id="first_event_per_era",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 events_per_season,
-                "events_per_season",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "season_name": ["Summer", "Winter", "Spring", "Fall"],
                         "n_events": [48, 48, 45, 36],
                     }
                 ),
+                "epoch_events_per_season",
             ),
             id="events_per_season",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 summer_events_per_type,
-                "summer_events_per_type",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "event_type": [
@@ -98,25 +89,23 @@ from pydough.unqualified import (
                         "n_events": [6, 3, 1, 14, 6, 1, 17],
                     }
                 ),
+                "epoch_summer_events_per_type",
             ),
             id="summer_events_per_type",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 num_predawn_cold_war,
-                "num_predawn_cold_war",
-                lambda: pd.DataFrame(
-                    {
-                        "n_events": [6],
-                    }
-                ),
+                "Epoch",
+                lambda: pd.DataFrame({"n_events": [6]}),
+                "epoch_num_predawn_cold_war",
             ),
             id="num_predawn_cold_war",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 culture_events_info,
-                "culture_events_info",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "event_name": [
@@ -154,13 +143,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "epoch_culture_events_info",
             ),
             id="culture_events_info",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 event_gap_per_era,
-                "event_gap_per_era",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "era_name": [
@@ -179,13 +169,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "epoch_event_gap_per_era",
             ),
             id="event_gap_per_era",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 pct_searches_per_tod,
-                "pct_searches_per_tod",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "tod": [
@@ -204,13 +195,14 @@ from pydough.unqualified import (
                         ],
                     }
                 ),
+                "epoch_pct_searches_per_tod",
             ),
             id="pct_searches_per_tod",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 users_most_cold_war_searches,
-                "users_most_cold_war_searches",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "user_name": [
@@ -221,13 +213,14 @@ from pydough.unqualified import (
                         "n_cold_war_searches": [4, 3, 3],
                     }
                 ),
+                "epoch_users_most_cold_war_searches",
             ),
             id="users_most_cold_war_searches",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 intra_season_searches,
-                "intra_season_searches",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "season_name": [
@@ -240,13 +233,14 @@ from pydough.unqualified import (
                         "pct_event_searches": [9.09, 27.27, 33.33, 55.00],
                     }
                 ),
+                "epoch_intra_season_searches",
             ),
             id="intra_season_searches",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 most_popular_topic_per_region,
-                "most_popular_topic_per_region",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "region": [
@@ -261,13 +255,14 @@ from pydough.unqualified import (
                         "n_searches": [3, 3, 4, 2, 3, 4],
                     }
                 ),
+                "epoch_most_popular_topic_per_region",
             ),
             id="most_popular_topic_per_region",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 most_popular_search_engine_per_tod,
-                "most_popular_search_engine_per_tod",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "tod": ["Afternoon", "Evening", "Morning", "Night", "Pre-Dawn"],
@@ -281,13 +276,14 @@ from pydough.unqualified import (
                         "n_searches": [12, 4, 13, 3, 5],
                     }
                 ),
+                "epoch_most_popular_search_engine_per_tod",
             ),
             id="most_popular_search_engine_per_tod",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 unique_users_per_engine,
-                "unique_users_per_engine",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "engine": [
@@ -305,13 +301,14 @@ from pydough.unqualified import (
                         "n_users": [7, 3, 7, 5, 10, 0, 6, 0, 4, 2],
                     }
                 ),
+                "epoch_unique_users_per_engine",
             ),
             id="unique_users_per_engine",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 overlapping_event_search_other_users_per_user,
-                "overlapping_event_search_other_users_per_user",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "user_name": [
@@ -326,13 +323,14 @@ from pydough.unqualified import (
                         "n_other_users": [7, 3, 3, 3, 2, 2, 2],
                     }
                 ),
+                "epoch_overlapping_event_search_other_users_per_user",
             ),
             id="overlapping_event_search_other_users_per_user",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 overlapping_event_searches_per_user,
-                "overlapping_event_searches_per_user",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "user_name": [
@@ -344,13 +342,14 @@ from pydough.unqualified import (
                         "n_searches": [3, 2, 2, 1],
                     }
                 ),
+                "epoch_overlapping_event_searches_per_user",
             ),
             id="overlapping_event_searches_per_user",
         ),
         pytest.param(
-            (
+            PyDoughPandasTest(
                 search_results_by_tod,
-                "search_results_by_tod",
+                "Epoch",
                 lambda: pd.DataFrame(
                     {
                         "tod": ["Pre-Dawn", "Morning", "Afternoon", "Evening", "Night"],
@@ -358,39 +357,23 @@ from pydough.unqualified import (
                         "avg_results": [1624.88, 2123.93, 2863.45, 1992.93, 1659.18],
                     }
                 ),
+                "epoch_search_results_by_tod",
             ),
             id="search_results_by_tod",
         ),
     ],
 )
-def pydough_pipeline_test_data_epoch(
-    request,
-) -> tuple[
-    Callable[[], UnqualifiedNode],
-    str,
-    Callable[[], pd.DataFrame],
-]:
+def epoch_pipeline_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for e2e tests using epoch test data. Returns a tuple of the
-    following arguments:
-    1. `unqualified_impl`: a function that takes in an unqualified root and
-    creates the unqualified node for the TPCH query.
-    2. `file_name`: the name of the file containing the expected relational
-    plan.
-    3. `answer_impl`: a function that takes in nothing and returns the answer
-    to a TPCH query as a Pandas DataFrame.
+    Test data for e2e tests using epoch test data. Returns an instance of
+    PyDoughPandasTest containing information about the test.
     """
     return request.param
 
 
 def test_pipeline_until_relational_epoch(
-    pydough_pipeline_test_data_epoch: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    epoch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    default_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -398,39 +381,16 @@ def test_pipeline_until_relational_epoch(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into relational plans.
     """
-    unqualified_impl, test_name, _ = pydough_pipeline_test_data_epoch
-    file_name: str = f"epoch_{test_name}"
-    file_path: str = get_plan_test_filename(file_name)
-    graph: GraphMetadata = get_sample_graph("Epoch")
-    UnqualifiedRoot(graph)
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    qualified: PyDoughQDAG = qualify_node(unqualified, graph, default_config)
-    assert isinstance(qualified, PyDoughCollectionQDAG), (
-        "Expected qualified answer to be a collection, not an expression"
+    file_path: str = get_plan_test_filename(epoch_pipeline_test_data.test_name)
+    epoch_pipeline_test_data.run_relational_test(
+        get_sample_graph, file_path, update_tests
     )
-    relational: RelationalRoot = convert_ast_to_relational(
-        qualified, None, default_config
-    )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(relational.to_tree_string() + "\n")
-    else:
-        with open(file_path) as f:
-            expected_relational_string: str = f.read()
-        assert relational.to_tree_string() == expected_relational_string.strip(), (
-            "Mismatch between tree string representation of relational node and expected Relational tree string"
-        )
 
 
 def test_pipeline_until_sql_epoch(
-    pydough_pipeline_test_data_epoch: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    epoch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
-    defog_config: PyDoughConfigs,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ):
@@ -438,35 +398,20 @@ def test_pipeline_until_sql_epoch(
     Tests the conversion of the PyDough queries on the custom epoch dataset
     into SQL text.
     """
-    unqualified_impl, test_name, _ = pydough_pipeline_test_data_epoch
-    file_name: str = f"epoch_{test_name}"
-    file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
-    graph: GraphMetadata = get_sample_graph("Epoch")
-    unqualified: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    sql_text: str = to_sql(
-        unqualified,
-        metadata=graph,
-        database=empty_context_database,
-        config=defog_config,
+    file_path: str = get_sql_test_filename(
+        epoch_pipeline_test_data.test_name, empty_context_database.dialect
     )
-    if update_tests:
-        with open(file_path, "w") as f:
-            f.write(sql_text + "\n")
-    else:
-        with open(file_path) as f:
-            expected_sql_text: str = f.read()
-        assert sql_text == expected_sql_text.strip(), (
-            "Mismatch between SQL text produced expected SQL text"
-        )
+    epoch_pipeline_test_data.run_sql_test(
+        get_sample_graph,
+        file_path,
+        update_tests,
+        empty_context_database,
+    )
 
 
 @pytest.mark.execute
 def test_pipeline_e2e_epoch(
-    pydough_pipeline_test_data_epoch: tuple[
-        Callable[[], UnqualifiedNode],
-        str,
-        Callable[[], pd.DataFrame],
-    ],
+    epoch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     sqlite_epoch_connection: DatabaseContext,
 ):
@@ -474,8 +419,7 @@ def test_pipeline_e2e_epoch(
     Test executing the the custom queries with the custom epoch dataset against
     the refsol DataFrame.
     """
-    unqualified_impl, _, answer_impl = pydough_pipeline_test_data_epoch
-    graph: GraphMetadata = get_sample_graph("Epoch")
-    root: UnqualifiedNode = init_pydough_context(graph)(unqualified_impl)()
-    result: pd.DataFrame = to_df(root, metadata=graph, database=sqlite_epoch_connection)
-    pd.testing.assert_frame_equal(result, answer_impl())
+    epoch_pipeline_test_data.run_e2e_test(
+        get_sample_graph,
+        sqlite_epoch_connection,
+    )

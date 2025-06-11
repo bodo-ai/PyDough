@@ -7,12 +7,6 @@ import sqlite3
 from collections.abc import Callable
 
 import pytest
-from test_utils import (
-    build_simple_scan,
-    make_relational_column_reference,
-    make_relational_literal,
-    make_relational_ordering,
-)
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
@@ -48,6 +42,12 @@ from pydough.relational import (
 )
 from pydough.sqlglot import convert_relation_to_sql
 from pydough.types import BooleanType, NumericType, StringType, UnknownType
+from tests.testing_utilities import (
+    build_simple_scan,
+    make_relational_column_reference,
+    make_relational_literal,
+    make_relational_ordering,
+)
 
 
 @pytest.mark.parametrize(
