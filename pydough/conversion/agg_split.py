@@ -334,7 +334,10 @@ def attempt_join_aggregate_transpose(
     if join.join_type != JoinType.INNER:
         can_push_right = False
 
-    if join.cardinality == JoinCardinality.SINGULAR_FILTER:
+    if (
+        join.cardinality == JoinCardinality.SINGULAR_FILTER
+        or join.cardinality == JoinCardinality.PLURAL_FILTER
+    ):
         can_push_left = False
 
     # If any of the aggregations to either side cannot be pushed down, then
