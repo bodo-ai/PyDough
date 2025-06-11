@@ -4,19 +4,18 @@ WITH _s14 AS (
   FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
-), _s0 AS (
+), _t6 AS (
   SELECT
-    ca_dt AS calendar_day,
-    ca_dt AS key_0
+    ca_dt AS calendar_day
   FROM main.calendar
 ), _s2 AS (
   SELECT
     COUNT() AS agg_3,
     _s0.calendar_day,
     incidents.in_device_id AS device_id
-  FROM _s0 AS _s0
+  FROM _t6 AS _s0
   JOIN main.incidents AS incidents
-    ON _s0.key_0 = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
+    ON _s0.calendar_day = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   GROUP BY
     _s0.calendar_day,
     incidents.in_device_id
@@ -50,9 +49,9 @@ WITH _s14 AS (
     COUNT() AS agg_6,
     _s8.calendar_day,
     devices.de_product_id AS product_id
-  FROM _s0 AS _s8
+  FROM _t6 AS _s8
   JOIN main.devices AS devices
-    ON _s8.key_0 = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
+    ON _s8.calendar_day = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   GROUP BY
     _s8.calendar_day,
     devices.de_product_id
@@ -69,14 +68,14 @@ WITH _s14 AS (
   SELECT
     SUM(_s7.agg_3) AS agg_5,
     SUM(_s13.agg_6) AS agg_8,
-    EXTRACT(YEAR FROM calendar.ca_dt) AS year
-  FROM main.calendar AS calendar
+    EXTRACT(YEAR FROM _t6.calendar_day) AS year
+  FROM _t6 AS _t6
   LEFT JOIN _s7 AS _s7
-    ON _s7.calendar_day = calendar.ca_dt
+    ON _s7.calendar_day = _t6.calendar_day
   LEFT JOIN _s13 AS _s13
-    ON _s13.calendar_day = calendar.ca_dt
+    ON _s13.calendar_day = _t6.calendar_day
   GROUP BY
-    EXTRACT(YEAR FROM calendar.ca_dt)
+    EXTRACT(YEAR FROM _t6.calendar_day)
 ), _t0 AS (
   SELECT
     COALESCE(_s15.agg_8, 0) AS bought,

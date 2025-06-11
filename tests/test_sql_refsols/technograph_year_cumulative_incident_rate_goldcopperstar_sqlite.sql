@@ -4,19 +4,18 @@ WITH _s14 AS (
   FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
-), _s0 AS (
+), _t6 AS (
   SELECT
-    ca_dt AS calendar_day,
-    ca_dt AS key_0
+    ca_dt AS calendar_day
   FROM main.calendar
 ), _s2 AS (
   SELECT
     COUNT() AS agg_3,
     _s0.calendar_day,
     incidents.in_device_id AS device_id
-  FROM _s0 AS _s0
+  FROM _t6 AS _s0
   JOIN main.incidents AS incidents
-    ON _s0.key_0 = DATE(incidents.in_error_report_ts, 'start of day')
+    ON _s0.calendar_day = DATE(incidents.in_error_report_ts, 'start of day')
   GROUP BY
     _s0.calendar_day,
     incidents.in_device_id
@@ -50,9 +49,9 @@ WITH _s14 AS (
     COUNT() AS agg_6,
     _s8.calendar_day,
     devices.de_product_id AS product_id
-  FROM _s0 AS _s8
+  FROM _t6 AS _s8
   JOIN main.devices AS devices
-    ON _s8.key_0 = DATE(devices.de_purchase_ts, 'start of day')
+    ON _s8.calendar_day = DATE(devices.de_purchase_ts, 'start of day')
   GROUP BY
     _s8.calendar_day,
     devices.de_product_id
@@ -69,14 +68,14 @@ WITH _s14 AS (
   SELECT
     SUM(_s7.agg_3) AS agg_5,
     SUM(_s13.agg_6) AS agg_8,
-    CAST(STRFTIME('%Y', calendar.ca_dt) AS INTEGER) AS year
-  FROM main.calendar AS calendar
+    CAST(STRFTIME('%Y', _t6.calendar_day) AS INTEGER) AS year
+  FROM _t6 AS _t6
   LEFT JOIN _s7 AS _s7
-    ON _s7.calendar_day = calendar.ca_dt
+    ON _s7.calendar_day = _t6.calendar_day
   LEFT JOIN _s13 AS _s13
-    ON _s13.calendar_day = calendar.ca_dt
+    ON _s13.calendar_day = _t6.calendar_day
   GROUP BY
-    CAST(STRFTIME('%Y', calendar.ca_dt) AS INTEGER)
+    CAST(STRFTIME('%Y', _t6.calendar_day) AS INTEGER)
 ), _t0 AS (
   SELECT
     COALESCE(_s15.agg_8, 0) AS bought,

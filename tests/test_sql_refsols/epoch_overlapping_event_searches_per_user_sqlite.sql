@@ -1,7 +1,7 @@
 WITH _t2 AS (
   SELECT
     COUNT() AS agg_0,
-    MAX(users.user_id) AS agg_10,
+    MAX(searches.search_user_id) AS agg_10,
     MAX(users.user_name) AS agg_8
   FROM users AS users
   JOIN searches AS searches
@@ -20,7 +20,7 @@ WITH _t2 AS (
     users.user_name <> users_2.user_name
   GROUP BY
     searches.search_id,
-    users.user_id
+    searches.search_user_id
 ), _t0 AS (
   SELECT
     MAX(agg_8) AS agg_2,

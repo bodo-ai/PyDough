@@ -10,7 +10,7 @@ WITH _t1 AS (
   JOIN tpch.customer AS customer
     ON customer.c_custkey = orders.o_custkey AND customer.c_mktsegment = 'BUILDING'
   JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_shipdate > '1995-03-15'
+    ON customer.c_custkey = lineitem.l_orderkey AND lineitem.l_shipdate > '1995-03-15'
   WHERE
     orders.o_orderdate < '1995-03-15'
   GROUP BY

@@ -24,7 +24,6 @@ from pydough.relational import (
 from pydough.relational.rel_util import (
     add_expr_uses,
     contains_window,
-    remap_join_condition,
     transpose_expression,
 )
 
@@ -109,11 +108,18 @@ def project_join_transpose(project: Project) -> RelationalNode:
     finder.reset()
     for cond in join.conditions:
         cond.accept(finder)
-    for input_ref in finder.get_column_references():
+    col_references: set[ColumnReference] = finder.get_column_references()
+    for input_ref in col_references:
         join_input_index = join.default_input_aliases.index(input_ref.input_name)
-        new_input_col_sets[join_input_index][input_ref.name] = ColumnReference(
+        new_ref: RelationalExpression = ColumnReference(
             input_ref.name, input_ref.data_type
         )
+        new_input_col_sets[join_input_index][input_ref.name] = new_ref
+    for name, expr in join.columns.items():
+        if expr in col_references:
+            assert isinstance(expr, ColumnReference)
+            join_input_index = join.default_input_aliases.index(expr.input_name)
+            pushable_columns[join_input_index].append((name, expr))
 
     left_renamings: dict[str, RelationalExpression] = {}
     right_renamings: dict[str, RelationalExpression] = {}
@@ -154,11 +160,11 @@ def project_join_transpose(project: Project) -> RelationalNode:
         if new_input_cols != join_input.columns:
             join.inputs[idx] = Project(join_input, new_input_cols)
 
-    # Replace the original columns with the new columns, and update the join condition
-    for idx, cond in enumerate(join.conditions):
-        join.conditions[idx] = remap_join_condition(
-            cond, left_renamings, right_renamings, join.default_input_aliases
-        )
+    # # Replace the original columns with the new columns, and update the join condition
+    # for idx, cond in enumerate(join.conditions):
+    #     join.conditions[idx] = remap_join_condition(
+    #         cond, left_renamings, right_renamings, join.default_input_aliases
+    #     )
     join._columns = new_columns
     return join
 

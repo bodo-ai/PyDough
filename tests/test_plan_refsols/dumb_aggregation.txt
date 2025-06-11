@@ -1,6 +1,6 @@
 ROOT(columns=[('nation_name', nation_name), ('a1', a1), ('a2', a2), ('a3', a3), ('a4', a4), ('a5', a5), ('a6', a6), ('a7', a7), ('a8', a8)], orderings=[(name):asc_first])
- JOIN(conditions=[t0.region_key == t1.key_1], types=['inner'], columns={'a1': t1.a1, 'a2': t1.a2, 'a3': t1.a3, 'a4': t1.a4, 'a5': t1.a5, 'a6': t1.a6, 'a7': t1.a7, 'a8': t1.a8, 'name': t0.name, 'nation_name': t0.nation_name})
+ JOIN(conditions=[t0.region_key == t1.key], types=['inner'], columns={'a1': t1.a1, 'a2': t1.a2, 'a3': t1.a3, 'a4': t1.a4, 'a5': t1.a5, 'a6': t1.a6, 'a7': t1.a7, 'a8': t1.a8, 'name': t0.name, 'nation_name': t0.nation_name})
   LIMIT(limit=Literal(value=2, type=NumericType()), columns={'name': name, 'nation_name': name, 'region_key': region_key}, orderings=[(name):asc_first])
    SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
-  PROJECT(columns={'a1': name, 'a2': name, 'a3': DEFAULT_TO(key, 0:numeric), 'a4': IFF(PRESENT(KEEP_IF(key, name != 'AMERICA':string)), 1:numeric, 0:numeric), 'a5': 1:numeric, 'a6': key, 'a7': name, 'a8': key, 'key_1': key})
+  PROJECT(columns={'a1': name, 'a2': name, 'a3': DEFAULT_TO(key, 0:numeric), 'a4': IFF(PRESENT(KEEP_IF(key, name != 'AMERICA':string)), 1:numeric, 0:numeric), 'a5': 1:numeric, 'a6': key, 'a7': name, 'a8': key, 'key': key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
