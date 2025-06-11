@@ -13,6 +13,7 @@ import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
+    CartesianProductMetadata,
     GeneralJoinMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
@@ -674,6 +675,12 @@ class RelTranslation:
                         | ConnectionType.SEMI
                         | ConnectionType.ANTI
                     ):
+                        cardinality: JoinCardinality = JoinCardinality.SINGULAR_ACCESS
+                        if child.connection_type.is_anti or (
+                            child.connection_type.is_semi
+                            and not child.subtree.always_exists()
+                        ):
+                            cardinality = JoinCardinality.SINGULAR_FILTER
                         if child.connection_type.is_aggregation:
                             assert child.subtree.agg_keys is not None
                             child_output = self.apply_aggregations(
@@ -683,7 +690,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            JoinCardinality.UNKNOWN,
+                            cardinality,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -698,7 +705,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            JoinCardinality.UNKNOWN,
+                            JoinCardinality.SINGULAR_FILTER,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -814,6 +821,12 @@ class RelTranslation:
         )
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
+        cardinality: JoinCardinality = (
+            JoinCardinality.PLURAL_ACCESS
+            if collection_access.subcollection_property.is_plural
+            else JoinCardinality.SINGULAR_ACCESS
+        )
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         join_cond: HybridExpr | None = None
         match collection_access.subcollection_property:
@@ -827,11 +840,19 @@ class RelTranslation:
                 assert node.general_condition is not None
                 join_cond = node.general_condition
 
+            case CartesianProductMetadata():
+                pass
+
+            case _:
+                raise NotImplementedError(
+                    f"Unsupported subcollection join metadata type: {collection_access.subcollection_property.__class__.__name__}"
+                )
+
         return self.join_outputs(
             context,
             rhs_output,
             JoinType.INNER,
-            JoinCardinality.UNKNOWN,
+            cardinality,
             join_keys,
             join_cond,
             None,
@@ -1063,7 +1084,7 @@ class RelTranslation:
             context,
             child_output,
             JoinType.INNER,
-            JoinCardinality.UNKNOWN,
+            JoinCardinality.PLURAL_ACCESS,
             join_keys,
             None,
             None,
@@ -1196,7 +1217,7 @@ class RelTranslation:
                             context,
                             result,
                             JoinType.INNER,
-                            JoinCardinality.UNKNOWN,
+                            JoinCardinality.PLURAL_ACCESS,
                             join_keys,
                             None,
                             None,

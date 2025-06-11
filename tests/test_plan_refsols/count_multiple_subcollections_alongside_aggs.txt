@@ -1,6 +1,6 @@
 ROOT(columns=[('nation_name', key), ('num_customers', agg_2), ('num_suppliers', agg_3), ('customer_to_supplier_wealth_ratio', DEFAULT_TO(agg_0, 0:numeric) / DEFAULT_TO(agg_1, 0:numeric))], orderings=[])
- JOIN(condition=t0.key == t1.nation_key, type=INNER, columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'agg_2': t0.agg_2, 'agg_3': t1.agg_3, 'key': t0.key})
-  JOIN(condition=t0.key == t1.nation_key, type=INNER, columns={'agg_0': t1.agg_0, 'agg_2': t1.agg_2, 'key': t0.key})
+ JOIN(condition=t0.key == t1.nation_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'agg_0': t0.agg_0, 'agg_1': t1.agg_1, 'agg_2': t0.agg_2, 'agg_3': t1.agg_3, 'key': t0.key})
+  JOIN(condition=t0.key == t1.nation_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'agg_0': t1.agg_0, 'agg_2': t1.agg_2, 'key': t0.key})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey})
    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': SUM(account_balance), 'agg_2': COUNT()})
     SCAN(table=tpch.CUSTOMER, columns={'account_balance': c_acctbal, 'nation_key': c_nationkey})

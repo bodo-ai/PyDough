@@ -1,6 +1,6 @@
 ROOT(columns=[('name', name), ('avg_diff', avg_diff)], orderings=[(avg_diff):desc_last])
  LIMIT(limit=Literal(value=5, type=NumericType()), columns={'avg_diff': avg_diff, 'name': name}, orderings=[(avg_diff):desc_last])
-  JOIN(condition=t0.key == t1.customer_key, type=INNER, columns={'avg_diff': t1.avg_diff, 'name': t0.name})
+  JOIN(condition=t0.key == t1.customer_key, type=INNER, cardinality=SINGULAR_FILTER, columns={'avg_diff': t1.avg_diff, 'name': t0.name})
    SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'name': c_name})
    AGGREGATE(keys={'customer_key': customer_key}, aggregations={'avg_diff': AVG(day_diff)})
     PROJECT(columns={'customer_key': customer_key, 'day_diff': DATEDIFF('days':string, PREV(args=[order_date], partition=[customer_key], order=[(order_date):asc_last]), order_date)})

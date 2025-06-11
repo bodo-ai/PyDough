@@ -1,6 +1,6 @@
 ROOT(columns=[('key', key_9), ('name', name_10), ('address', address), ('nation_key', nation_key), ('phone', phone), ('account_balance', account_balance), ('market_segment', market_segment), ('comment', comment_8)], orderings=[])
- JOIN(condition=t0.key_2 == t1.nation_key, type=INNER, columns={'account_balance': t1.account_balance, 'address': t1.address, 'comment_8': t1.comment_8, 'key_9': t1.key_9, 'market_segment': t1.market_segment, 'name_10': t1.name_10, 'nation_key': t1.nation_key, 'phone': t1.phone})
-  JOIN(condition=t0.key == t1.region_key, type=INNER, columns={'key_2': t1.key_2})
+ JOIN(condition=t0.key_2 == t1.nation_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'account_balance': t1.account_balance, 'address': t1.address, 'comment_8': t1.comment_8, 'key_9': t1.key_9, 'market_segment': t1.market_segment, 'name_10': t1.name_10, 'nation_key': t1.nation_key, 'phone': t1.phone})
+  JOIN(condition=t0.key == t1.region_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'key_2': t1.key_2})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
    SCAN(table=tpch.NATION, columns={'key_2': n_nationkey, 'region_key': n_regionkey})
   SCAN(table=tpch.CUSTOMER, columns={'account_balance': c_acctbal, 'address': c_address, 'comment_8': c_comment, 'key_9': c_custkey, 'market_segment': c_mktsegment, 'name_10': c_name, 'nation_key': c_nationkey, 'phone': c_phone})

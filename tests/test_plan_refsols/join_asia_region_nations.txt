@@ -1,5 +1,5 @@
 ROOT(columns=[('key', key_6), ('region_key', region_key), ('name', name_7), ('comment', comment_5)], orderings=[])
- JOIN(condition=t0.key == t1.region_key, type=INNER, columns={'comment_5': t1.comment_5, 'key_6': t1.key_6, 'name_7': t1.name_7, 'region_key': t1.region_key})
+ JOIN(condition=t0.key == t1.region_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'comment_5': t1.comment_5, 'key_6': t1.key_6, 'name_7': t1.name_7, 'region_key': t1.region_key})
   FILTER(condition=name == 'ASIA':string, columns={'key': key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
   SCAN(table=tpch.NATION, columns={'comment_5': n_comment, 'key_6': n_nationkey, 'name_7': n_name, 'region_key': n_regionkey})

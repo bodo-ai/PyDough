@@ -1,5 +1,5 @@
 ROOT(columns=[('nation_name', nation_name), ('highest_rank', highest_rank)], orderings=[])
- JOIN(condition=t0.key == t1.nation_key, type=INNER, columns={'highest_rank': t1.highest_rank, 'nation_name': t0.nation_name})
+ JOIN(condition=t0.key == t1.nation_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'highest_rank': t1.highest_rank, 'nation_name': t0.nation_name})
   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'nation_name': n_name})
   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'highest_rank': MAX(cust_rank)})
    PROJECT(columns={'cust_rank': RANKING(args=[], partition=[], order=[(account_balance):desc_first], allow_ties=True), 'nation_key': nation_key})

@@ -1,5 +1,5 @@
 ROOT(columns=[('nation_name', nation_name), ('total_bal', total_bal), ('num_bal', num_bal), ('avg_bal', avg_bal), ('min_bal', min_bal), ('max_bal', max_bal), ('num_cust', num_cust)], orderings=[])
- JOIN(condition=t0.key == t1.nation_key, type=INNER, columns={'avg_bal': t1.avg_bal, 'max_bal': t1.max_bal, 'min_bal': t1.min_bal, 'nation_name': t0.nation_name, 'num_bal': t1.num_bal, 'num_cust': t1.num_cust, 'total_bal': t1.total_bal})
+ JOIN(condition=t0.key == t1.nation_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'avg_bal': t1.avg_bal, 'max_bal': t1.max_bal, 'min_bal': t1.min_bal, 'nation_name': t0.nation_name, 'num_bal': t1.num_bal, 'num_cust': t1.num_cust, 'total_bal': t1.total_bal})
   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'nation_name': n_name})
   PROJECT(columns={'avg_bal': DEFAULT_TO(agg_0, 0:numeric), 'max_bal': agg_1, 'min_bal': agg_2, 'nation_key': nation_key, 'num_bal': agg_3, 'num_cust': agg_4, 'total_bal': agg_5})
    AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': AVG(account_balance), 'agg_1': MAX(account_balance), 'agg_2': MIN(account_balance), 'agg_3': COUNT(account_balance), 'agg_4': COUNT(), 'agg_5': SUM(account_balance)})

@@ -1,5 +1,5 @@
 ROOT(columns=[('name', name), ('var', var), ('std', std), ('sample_var', sample_var), ('sample_std', sample_std), ('pop_var', pop_var), ('pop_std', pop_std)], orderings=[])
- JOIN(condition=t0.key == t1.nation_key, type=INNER, columns={'name': t0.name, 'pop_std': t1.pop_std, 'pop_var': t1.pop_var, 'sample_std': t1.sample_std, 'sample_var': t1.sample_var, 'std': t1.std, 'var': t1.var})
+ JOIN(condition=t0.key == t1.nation_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'name': t0.name, 'pop_std': t1.pop_std, 'pop_var': t1.pop_var, 'sample_std': t1.sample_std, 'sample_var': t1.sample_var, 'std': t1.std, 'var': t1.var})
   FILTER(condition=ISIN(name, ['ALGERIA', 'ARGENTINA']:array[unknown]), columns={'key': key, 'name': name})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name})
   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'pop_std': POPULATION_STD(account_balance), 'pop_var': POPULATION_VARIANCE(account_balance), 'sample_std': SAMPLE_STD(account_balance), 'sample_var': SAMPLE_VARIANCE(account_balance), 'std': POPULATION_STD(account_balance), 'var': POPULATION_VARIANCE(account_balance)})

@@ -1,6 +1,6 @@
 ROOT(columns=[('name', name), ('total_recent_value', total_recent_value)], orderings=[(total_recent_value):desc_last])
  LIMIT(limit=Literal(value=3, type=NumericType()), columns={'name': name, 'total_recent_value': total_recent_value}, orderings=[(total_recent_value):desc_last])
-  JOIN(condition=t0.key == t1.customer_key, type=INNER, columns={'name': t0.name, 'total_recent_value': t1.total_recent_value})
+  JOIN(condition=t0.key == t1.customer_key, type=INNER, cardinality=SINGULAR_FILTER, columns={'name': t0.name, 'total_recent_value': t1.total_recent_value})
    SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'name': c_name})
    PROJECT(columns={'customer_key': customer_key, 'total_recent_value': DEFAULT_TO(agg_0, 0:numeric)})
     AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_0': SUM(total_price)})

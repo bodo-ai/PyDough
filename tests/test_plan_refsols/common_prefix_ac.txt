@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  JOIN(condition=t0.customer_key == t1.key, type=ANTI, columns={})
+  JOIN(condition=t0.customer_key == t1.key, type=ANTI, cardinality=SINGULAR_FILTER, columns={})
    SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey})
    FILTER(condition=account_balance > 0.0:numeric, columns={'key': key})
     SCAN(table=tpch.CUSTOMER, columns={'account_balance': c_acctbal, 'key': c_custkey})
