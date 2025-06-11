@@ -294,8 +294,7 @@ def transpose_expression(
         case LiteralExpression() | CorrelatedReference():
             return expr
         case ColumnReference():
-            new_column = columns.get(expr.name)
-            assert new_column is not None
+            new_column = columns[expr.name]
             if (
                 isinstance(new_column, ColumnReference)
                 and new_column.input_name is not None

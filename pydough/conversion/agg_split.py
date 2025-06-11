@@ -320,7 +320,7 @@ def attempt_join_aggregate_transpose(
 
     need_count_aggs: bool = len(count_aggs) > 0
     can_push_left: bool = len(lhs_aggs) > 0 or need_count_aggs
-    can_push_right: bool = len(lhs_aggs) > 0 or need_count_aggs
+    can_push_right: bool = len(rhs_aggs) > 0 or need_count_aggs
     # If the join is not INNER, we cannot push the aggregate down into the
     # right side.
     if join.join_types[0] != JoinType.INNER:
