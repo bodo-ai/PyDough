@@ -1023,7 +1023,21 @@ class PyDoughPandasTest:
     """
     The data packet encapsulating the information to run a PyDough e2e test
     that compares the result against a reference answer derived by running
-    a function that returns a Pandas DataFrame.
+    a function that returns a Pandas DataFrame. The dataclass contains the
+    following fields:
+    - `pydough_function`: the function that returns the PyDough code evaluated
+      by the unit test.
+    - `graph_name`: the name of the graph that the PyDough code will use.
+    - `pd_function`: the function that returns the Pandas DataFrame that should
+      be used as the reference solution.
+    - `test_name`: the name of the unit test.
+    - `columns` (optional): if provided, passed in as the columns argument to
+      the `to_sql` or `to_df` function.
+    - `order_sensitive` (optional): if False, the resulting data frames will be
+      sorted so the order of the results is not taken into account.
+    - `fix_column_names` (optional): if True, ignore whatever column names are
+      in the output and just use the same column names as in the reference
+      solution.
     """
 
     pydough_function: Callable[[], UnqualifiedNode]
