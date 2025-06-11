@@ -8,62 +8,35 @@ WITH _s14 AS (
   SELECT
     ca_dt AS calendar_day
   FROM main.calendar
-), _s2 AS (
-  SELECT
-    COUNT() AS agg_3,
-    _s0.calendar_day,
-    incidents.in_device_id AS device_id
-  FROM _t6 AS _s0
-  JOIN main.incidents AS incidents
-    ON _s0.calendar_day = DATE(incidents.in_error_report_ts, 'start of day')
-  GROUP BY
-    _s0.calendar_day,
-    incidents.in_device_id
-), _s4 AS (
-  SELECT
-    SUM(_s2.agg_3) AS agg_3,
-    _s2.calendar_day,
-    devices.de_product_id AS product_id
-  FROM _s2 AS _s2
-  JOIN main.devices AS devices
-    ON _s2.device_id = devices.de_id
-  GROUP BY
-    _s2.calendar_day,
-    devices.de_product_id
-), _t10 AS (
+), _t8 AS (
   SELECT
     pr_id AS _id,
     pr_name AS name
   FROM main.products
 ), _s7 AS (
   SELECT
-    SUM(_s4.agg_3) AS agg_3,
-    _s4.calendar_day
-  FROM _s4 AS _s4
-  JOIN _t10 AS _t10
-    ON _s4.product_id = _t10._id AND _t10.name = 'GoldCopper-Star'
+    COUNT() AS agg_3,
+    _s0.calendar_day
+  FROM _t6 AS _s0
+  JOIN main.incidents AS incidents
+    ON _s0.calendar_day = DATE(incidents.in_error_report_ts, 'start of day')
+  JOIN main.devices AS devices
+    ON devices.de_id = incidents.in_device_id
+  JOIN _t8 AS _t8
+    ON _t8._id = devices.de_product_id AND _t8.name = 'GoldCopper-Star'
   GROUP BY
-    _s4.calendar_day
-), _s10 AS (
+    _s0.calendar_day
+), _s13 AS (
   SELECT
     COUNT() AS agg_6,
-    _s8.calendar_day,
-    devices.de_product_id AS product_id
+    _s8.calendar_day
   FROM _t6 AS _s8
   JOIN main.devices AS devices
     ON _s8.calendar_day = DATE(devices.de_purchase_ts, 'start of day')
+  JOIN _t8 AS _t10
+    ON _t10._id = devices.de_product_id AND _t10.name = 'GoldCopper-Star'
   GROUP BY
-    _s8.calendar_day,
-    devices.de_product_id
-), _s13 AS (
-  SELECT
-    SUM(_s10.agg_6) AS agg_6,
-    _s10.calendar_day
-  FROM _s10 AS _s10
-  JOIN _t10 AS _t13
-    ON _s10.product_id = _t13._id AND _t13.name = 'GoldCopper-Star'
-  GROUP BY
-    _s10.calendar_day
+    _s8.calendar_day
 ), _s15 AS (
   SELECT
     SUM(_s7.agg_3) AS agg_5,

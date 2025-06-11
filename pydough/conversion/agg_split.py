@@ -14,6 +14,7 @@ from pydough.relational import (
     ColumnReference,
     ColumnReferenceFinder,
     Join,
+    JoinCardinality,
     JoinType,
     LiteralExpression,
     Project,
@@ -332,6 +333,9 @@ def attempt_join_aggregate_transpose(
     # right side.
     if join.join_type != JoinType.INNER:
         can_push_right = False
+
+    if join.cardinality == JoinCardinality.SINGULAR_FILTER:
+        can_push_left = False
 
     # If any of the aggregations to either side cannot be pushed down, then
     # we cannot perform the transpose on that side.
