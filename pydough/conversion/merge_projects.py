@@ -222,8 +222,9 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 # Otherwise, halt the merging process since it is no longer
                 # possible to merge the children of this project into it.
                 break
-    # Final round: if there is a project on top of a scan/aggregate/filter that only does
-    # column pruning/renaming, just push it into the scan
+    # Final round: if there is a project on top of a scan, aggregate, filter,
+    # or limit that only does  column pruning/renaming, just push it into the
+    # node.
     if (
         isinstance(node, Project)
         and isinstance(node.input, (Scan, Aggregate, Filter, Limit))
