@@ -334,11 +334,14 @@ def attempt_join_aggregate_transpose(
     if join.join_type != JoinType.INNER:
         can_push_right = False
 
+    # Optimization: don't push down aggregates into the inputs of a join
+    # if joining first will reduce the number of rows that get aggregated.
     if (
         join.cardinality == JoinCardinality.SINGULAR_FILTER
         or join.cardinality == JoinCardinality.PLURAL_FILTER
     ):
         can_push_left = False
+        can_push_right = False
 
     # If any of the aggregations to either side cannot be pushed down, then
     # we cannot perform the transpose on that side.
