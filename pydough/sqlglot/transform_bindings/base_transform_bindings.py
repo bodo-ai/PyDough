@@ -363,27 +363,46 @@ class BaseTransformBindings:
             In Python, this is equivalent to `X.count(Y)`.
         """
         assert len(args) == 2
-        
+
         string: SQLGlotExpression = args[0]
         substring_count: SQLGlotExpression = args[1]
 
-        string_replaced: SQLGlotExpression = self.convert_replace([string, substring_count], types)
+        string_replaced: SQLGlotExpression = self.convert_replace(
+            [string, substring_count], types
+        )
 
         # LENGTHS
         len_string: SQLGlotExpression = sqlglot_expressions.Length(this=string)
-        len_string_replaced: SQLGlotExpression = sqlglot_expressions.Length(this=string_replaced)
-        len_substring_count: SQLGlotExpression = sqlglot_expressions.Length(this=substring_count)
+        len_string_replaced: SQLGlotExpression = sqlglot_expressions.Length(
+            this=string_replaced
+        )
+        len_substring_count: SQLGlotExpression = sqlglot_expressions.Length(
+            this=substring_count
+        )
 
-        difference: SQLGlotExpression = sqlglot_expressions.Sub(this=len_string, expression=len_string_replaced)
+        difference: SQLGlotExpression = sqlglot_expressions.Sub(
+            this=len_string, expression=len_string_replaced
+        )
 
-        quotient: SQLGlotExpression = sqlglot_expressions.Div(this=difference, expression=len_substring_count)
+        quotient: SQLGlotExpression = sqlglot_expressions.Div(
+            this=difference, expression=len_substring_count
+        )
 
-        casted: SQLGlotExpression = sqlglot_expressions.Cast(this=quotient, to=sqlglot_expressions.DataType.build('BIGINT'))
+        casted: SQLGlotExpression = sqlglot_expressions.Cast(
+            this=quotient, to=sqlglot_expressions.DataType.build("BIGINT")
+        )
 
-        answer: SQLGlotExpression = sqlglot_expressions.Case().when(
-            sqlglot_expressions.EQ(this=len_substring_count, expression=sqlglot_expressions.Literal.number(0)), 
-            len_string
-        ).else_(casted)
+        answer: SQLGlotExpression = (
+            sqlglot_expressions.Case()
+            .when(
+                sqlglot_expressions.EQ(
+                    this=len_substring_count,
+                    expression=sqlglot_expressions.Literal.number(0),
+                ),
+                len_string,
+            )
+            .else_(casted)
+        )
 
         return answer
 
