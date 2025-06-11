@@ -446,7 +446,7 @@ def extract_equijoin_keys(
     assert len(join.inputs) == 2
     lhs_keys: list[ColumnReference] = []
     rhs_keys: list[ColumnReference] = []
-    stack: list[RelationalExpression] = [*join.conditions]
+    stack: list[RelationalExpression] = [join.condition]
     lhs_name: str | None = join.default_input_aliases[0]
     rhs_name: str | None = join.default_input_aliases[1]
     while stack:

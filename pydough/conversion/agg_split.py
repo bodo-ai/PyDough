@@ -214,7 +214,7 @@ def transpose_aggregate_join(
         # and if needed wrap it in a DEFAULT_TO call for COUNT. This is
         # required for left joins, or no-groupby aggregates.
         if agg.op == pydop.COUNT and (
-            join.join_types[0] != JoinType.INNER or len(node.keys) == 0
+            join.join_type != JoinType.INNER or len(node.keys) == 0
         ):
             projection_columns[name] = CallExpression(
                 pydop.DEFAULT_TO,
@@ -330,7 +330,7 @@ def attempt_join_aggregate_transpose(
     can_push_right: bool = len(rhs_aggs) > 0 or need_count_aggs
     # If the join is not INNER, we cannot push the aggregate down into the
     # right side.
-    if join.join_types[0] != JoinType.INNER:
+    if join.join_type != JoinType.INNER:
         can_push_right = False
 
     # If any of the aggregations to either side cannot be pushed down, then
@@ -358,8 +358,7 @@ def attempt_join_aggregate_transpose(
     # the condition are in those lists.
     lhs_keys, rhs_keys = extract_equijoin_keys(join)
     finder.reset()
-    for cond in join.conditions:
-        cond.accept(finder)
+    join.condition.accept(finder)
     condition_cols: set[ColumnReference] = finder.get_column_references()
     if not all(col in lhs_keys or col in rhs_keys for col in condition_cols):
         return node, True

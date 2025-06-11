@@ -348,17 +348,15 @@ def tpch_query_3_plan() -> RelationalRoot:
             ),
         },
         inputs=[orders, customer],
-        conditions=[
-            CallExpression(
-                EQU,
-                BooleanType(),
-                [
-                    make_relational_column_reference("O_CUSTKEY", input_name="t0"),
-                    make_relational_column_reference("C_CUSTKEY", input_name="t1"),
-                ],
-            )
-        ],
-        join_types=[JoinType.INNER],
+        condition=CallExpression(
+            EQU,
+            BooleanType(),
+            [
+                make_relational_column_reference("O_CUSTKEY", input_name="t0"),
+                make_relational_column_reference("C_CUSTKEY", input_name="t1"),
+            ],
+        ),
+        join_type=JoinType.INNER,
     )
 
     lineitem = Project(
@@ -488,21 +486,19 @@ def tpch_query_3_plan() -> RelationalRoot:
                         ),
                     },
                     inputs=[lineitem, customer_orders_join],
-                    conditions=[
-                        CallExpression(
-                            EQU,
-                            BooleanType(),
-                            [
-                                make_relational_column_reference(
-                                    "L_ORDERKEY", input_name="t0"
-                                ),
-                                make_relational_column_reference(
-                                    "O_ORDERKEY", input_name="t1"
-                                ),
-                            ],
-                        )
-                    ],
-                    join_types=[JoinType.INNER],
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference(
+                                "L_ORDERKEY", input_name="t0"
+                            ),
+                            make_relational_column_reference(
+                                "O_ORDERKEY", input_name="t1"
+                            ),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
                 ),
             ),
         ),

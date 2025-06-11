@@ -98,7 +98,7 @@ def push_filters(
             # For each input to the join, push down any filters that only
             # reference columns from that input.
             for idx, child in enumerate(node.inputs):
-                if idx > 0 and node.join_types[idx - 1] == JoinType.LEFT:
+                if idx > 0 and node.join_type == JoinType.LEFT:
                     # If doing a left join, only push filters if they depend
                     # on the input and are false if the input is null. If this
                     # happens, the left join becomes an inner join.
@@ -108,7 +108,7 @@ def push_filters(
                         and false_when_null_columns(expr, input_cols[idx]),
                     )
                     if pushable_filters:
-                        node.join_types[idx - 1] = JoinType.INNER
+                        node.join_type = JoinType.INNER
                 else:
                     pushable_filters, remaining_filters = partition_expressions(
                         remaining_filters,

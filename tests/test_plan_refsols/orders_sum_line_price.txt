@@ -1,5 +1,5 @@
 ROOT(columns=[('okey', okey), ('lsum', lsum)], orderings=[])
- JOIN(conditions=[t0.key == t1.order_key], types=['inner'], columns={'lsum': t1.lsum, 'okey': t0.okey})
+ JOIN(condition=t0.key == t1.order_key, type=INNER, columns={'lsum': t1.lsum, 'okey': t0.okey})
   SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'okey': o_orderkey})
   PROJECT(columns={'lsum': DEFAULT_TO(agg_0, 0:numeric), 'order_key': order_key})
    AGGREGATE(keys={'order_key': order_key}, aggregations={'agg_0': SUM(extended_price)})

@@ -143,7 +143,7 @@ class ColumnPruner:
         if (
             isinstance(output, Join)
             and isinstance(output.inputs[0], EmptySingleton)
-            and output.join_types in ([JoinType.INNER], [JoinType.LEFT])
+            and output.join_type in (JoinType.INNER, JoinType.LEFT)
         ):
             return output.inputs[1], correl_refs
 
@@ -152,8 +152,8 @@ class ColumnPruner:
         # LHS, which is unecessary if no data is being brought). Also do the
         # same for inner joins that meet certain criteria.
         if isinstance(output, Join) and (
-            (output.join_types == [JoinType.LEFT])
-            or (output.join_types == [JoinType.INNER] and output.is_prunable)
+            (output.join_type == JoinType.LEFT)
+            or (output.join_type == JoinType.INNER and output.is_prunable)
         ):
             uses_rhs: bool = False
             for column in output.columns.values():

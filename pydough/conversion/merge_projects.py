@@ -91,10 +91,7 @@ def project_join_transpose(project: Project) -> RelationalNode:
             join_input_index = join_input_indices.pop()
             # If the corresponding join is an inner join, mark the input as
             # pushable into that side.
-            if (
-                join_input_index == 0
-                or join.join_types[join_input_index - 1] == JoinType.INNER
-            ):
+            if join_input_index == 0 or join.join_type == JoinType.INNER:
                 pushable_columns[join_input_index].append((name, expr))
 
     # If not every column can be pushed, abandon the attempt
@@ -107,8 +104,7 @@ def project_join_transpose(project: Project) -> RelationalNode:
         {} for _ in range(len(join.inputs))
     ]
     finder.reset()
-    for cond in join.conditions:
-        cond.accept(finder)
+    join.condition.accept(finder)
     col_references: set[ColumnReference] = finder.get_column_references()
     for input_ref in col_references:
         join_input_index = join.default_input_aliases.index(input_ref.input_name)
@@ -164,10 +160,9 @@ def project_join_transpose(project: Project) -> RelationalNode:
             join.inputs[idx] = Project(join_input, new_input_cols)
 
     # Replace the original columns with the new columns, and update the join condition
-    for idx, cond in enumerate(join.conditions):
-        join.conditions[idx] = remap_join_condition(
-            cond, left_renamings, right_renamings, join.default_input_aliases
-        )
+    join.condition = remap_join_condition(
+        join.condition, left_renamings, right_renamings, join.default_input_aliases
+    )
     join._columns = new_columns
     return join
 

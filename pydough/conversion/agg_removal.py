@@ -95,7 +95,7 @@ def deduce_join_uniqueness(
     lhs_unique, rhs_unique = input_unique_sets
 
     # If doing a semi/anti join, just use the LHS uniqueness.
-    if join.join_types[0] in (JoinType.SEMI, JoinType.ANTI):
+    if join.join_type in (JoinType.SEMI, JoinType.ANTI):
         return bubble_uniqueness(
             lhs_unique, join.columns, join.default_input_aliases[0]
         )

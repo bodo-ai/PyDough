@@ -1,7 +1,7 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
   FILTER(condition=total_price < 0.05:numeric * RELAVG(args=[NULL_1], partition=[], order=[]), columns={})
-   JOIN(conditions=[t0.customer_key == t1.key], types=['anti'], columns={'NULL_1': None:unknown, 'total_price': t0.total_price})
+   JOIN(condition=t0.customer_key == t1.key, type=ANTI, columns={'NULL_1': None:unknown, 'total_price': t0.total_price})
     FILTER(condition=clerk == 'Clerk#000000001':string, columns={'customer_key': customer_key, 'total_price': total_price})
      SCAN(table=tpch.ORDERS, columns={'clerk': o_clerk, 'customer_key': o_custkey, 'total_price': o_totalprice})
     FILTER(condition=market_segment == 'BUILDING':string, columns={'key': key})

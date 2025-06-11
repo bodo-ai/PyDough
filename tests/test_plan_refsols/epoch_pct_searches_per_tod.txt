@@ -1,6 +1,6 @@
 ROOT(columns=[('tod', tod), ('pct_searches', pct_searches)], orderings=[(agg_3):asc_first])
  PROJECT(columns={'agg_3': agg_3, 'pct_searches': ROUND(100.0:numeric * agg_0 / RELSUM(args=[agg_0], partition=[], order=[]), 2:numeric), 'tod': agg_2})
   AGGREGATE(keys={'name': name}, aggregations={'agg_0': COUNT(), 'agg_2': ANYTHING(name), 'agg_3': ANYTHING(start_hour)})
-   JOIN(conditions=[t0.start_hour <= HOUR(t1.ts) & HOUR(t1.ts) < t0.end_hour], types=['inner'], columns={'name': t0.name, 'start_hour': t0.start_hour})
+   JOIN(condition=t0.start_hour <= HOUR(t1.ts) & HOUR(t1.ts) < t0.end_hour, type=INNER, columns={'name': t0.name, 'start_hour': t0.start_hour})
     SCAN(table=TIMES, columns={'end_hour': t_end_hour, 'name': t_name, 'start_hour': t_start_hour})
     SCAN(table=SEARCHES, columns={'ts': search_ts})

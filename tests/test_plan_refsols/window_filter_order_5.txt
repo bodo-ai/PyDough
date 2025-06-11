@@ -1,7 +1,7 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
   FILTER(condition=account_balance < RELAVG(args=[DEFAULT_TO(account_balance, 0:numeric)], partition=[], order=[]) & PRESENT(expr_0), columns={})
-   JOIN(conditions=[t0.customer_key == t1.key], types=['left'], columns={'account_balance': t1.account_balance, 'expr_0': t1.expr_0})
+   JOIN(condition=t0.customer_key == t1.key, type=LEFT, columns={'account_balance': t1.account_balance, 'expr_0': t1.expr_0})
     FILTER(condition=YEAR(order_date) == 1995:numeric, columns={'customer_key': customer_key})
      SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'order_date': o_orderdate})
     PROJECT(columns={'account_balance': account_balance, 'expr_0': 1:numeric, 'key': key})

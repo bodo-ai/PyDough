@@ -1,6 +1,6 @@
 ROOT(columns=[('name', name), ('first_order_date', first_order_date), ('first_order_price', first_order_price)], orderings=[(first_order_price):desc_last])
  LIMIT(limit=Literal(value=5, type=NumericType()), columns={'first_order_date': first_order_date, 'first_order_price': first_order_price, 'name': name}, orderings=[(first_order_price):desc_last])
-  JOIN(conditions=[t0.key == t1.customer_key], types=['inner'], columns={'first_order_date': t1.first_order_date, 'first_order_price': t1.first_order_price, 'name': t0.name})
+  JOIN(condition=t0.key == t1.customer_key, type=INNER, columns={'first_order_date': t1.first_order_date, 'first_order_price': t1.first_order_price, 'name': t0.name})
    FILTER(condition=account_balance >= 9000.0:numeric, columns={'key': key, 'name': name})
     SCAN(table=tpch.CUSTOMER, columns={'account_balance': c_acctbal, 'key': c_custkey, 'name': c_name})
    FILTER(condition=RANKING(args=[], partition=[customer_key], order=[(order_date):asc_last, (key):asc_last]) == 1:numeric, columns={'customer_key': customer_key, 'first_order_date': order_date, 'first_order_price': total_price})

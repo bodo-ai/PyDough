@@ -1,6 +1,6 @@
 ROOT(columns=[('nation_name', name_3), ('name', name_6), ('cust_rank', RANKING(args=[], partition=[region_key], order=[(account_balance):desc_first], allow_ties=True, dense=True))], orderings=[])
- JOIN(conditions=[t0.key_2 == t1.nation_key], types=['inner'], columns={'account_balance': t1.account_balance, 'name_3': t0.name_3, 'name_6': t1.name, 'region_key': t0.region_key})
-  JOIN(conditions=[t0.key == t1.region_key], types=['inner'], columns={'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
+ JOIN(condition=t0.key_2 == t1.nation_key, type=INNER, columns={'account_balance': t1.account_balance, 'name_3': t0.name_3, 'name_6': t1.name, 'region_key': t0.region_key})
+  JOIN(condition=t0.key == t1.region_key, type=INNER, columns={'key_2': t1.key, 'name_3': t1.name, 'region_key': t1.region_key})
    SCAN(table=tpch.REGION, columns={'key': r_regionkey})
    SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
   SCAN(table=tpch.CUSTOMER, columns={'account_balance': c_acctbal, 'name': c_name, 'nation_key': c_nationkey})

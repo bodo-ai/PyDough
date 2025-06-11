@@ -1,6 +1,6 @@
 ROOT(columns=[('era_name', era_name), ('avg_event_gap', avg_event_gap)], orderings=[(agg_3):asc_first])
  AGGREGATE(keys={'name': name}, aggregations={'agg_3': ANYTHING(start_year), 'avg_event_gap': AVG(day_gap), 'era_name': ANYTHING(name)})
   PROJECT(columns={'day_gap': DATEDIFF('days':string, PREV(args=[date_time], partition=[name], order=[(date_time):asc_last]), date_time), 'name': name, 'start_year': start_year})
-   JOIN(conditions=[t0.start_year <= YEAR(t1.date_time) & YEAR(t1.date_time) < t0.end_year], types=['inner'], columns={'date_time': t1.date_time, 'name': t0.name, 'start_year': t0.start_year})
+   JOIN(condition=t0.start_year <= YEAR(t1.date_time) & YEAR(t1.date_time) < t0.end_year, type=INNER, columns={'date_time': t1.date_time, 'name': t0.name, 'start_year': t0.start_year})
     SCAN(table=ERAS, columns={'end_year': er_end_year, 'name': er_name, 'start_year': er_start_year})
     SCAN(table=EVENTS, columns={'date_time': ev_dt})

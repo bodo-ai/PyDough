@@ -1,6 +1,6 @@
 ROOT(columns=[('pname', name), ('psize', size_4)], orderings=[])
  FILTER(condition=RANKING(args=[], partition=[size], order=[(retail_price):desc_first]) == 1:numeric, columns={'name': name, 'size_4': size_3})
-  JOIN(conditions=[t0.size == t1.size_1_0], types=['inner'], columns={'name': t1.name, 'retail_price': t1.retail_price, 'size': t0.size, 'size_3': t1.size_3})
+  JOIN(condition=t0.size == t1.size_1_0, type=INNER, columns={'name': t1.name, 'retail_price': t1.retail_price, 'size': t0.size, 'size_3': t1.size_3})
    LIMIT(limit=Literal(value=5, type=NumericType()), columns={'size': size}, orderings=[(size):desc_last])
     AGGREGATE(keys={'size': size}, aggregations={})
      SCAN(table=tpch.PART, columns={'size': p_size})

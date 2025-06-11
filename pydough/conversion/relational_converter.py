@@ -36,6 +36,7 @@ from pydough.relational import (
     ExpressionSortInfo,
     Filter,
     Join,
+    JoinCardinality,
     JoinType,
     Limit,
     LiteralExpression,
@@ -422,6 +423,7 @@ class RelTranslation:
         lhs_result: TranslationOutput,
         rhs_result: TranslationOutput,
         join_type: JoinType,
+        join_cardinality: JoinCardinality,
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None,
         join_cond: HybridExpr | None,
         child_idx: int | None,
@@ -480,9 +482,10 @@ class RelTranslation:
         # The condition & output columns will be filled in later.
         out_rel: Join = Join(
             [lhs_result.relational_node, rhs_result.relational_node],
-            [LiteralExpression(True, BooleanType())],
-            [join_type],
+            LiteralExpression(True, BooleanType()),
+            join_type,
             join_columns,
+            join_cardinality,
             correl_name=lhs_result.correlated_name,
             is_prunable=is_prunable,
         )
@@ -502,15 +505,15 @@ class RelTranslation:
                     pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
                 )
                 cond_terms.append(cond)
-            out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
+            out_rel.condition = RelationalExpression.form_conjunction(cond_terms)
         elif join_cond is not None:
             # General join case
-            out_rel.conditions[0] = self.build_general_join_condition(
+            out_rel.condition = self.build_general_join_condition(
                 join_cond, lhs_result, rhs_result, input_aliases[0], input_aliases[1]
             )
         else:
             # Cartesian join case
-            out_rel.conditions[0] = LiteralExpression(True, BooleanType())
+            out_rel.condition = LiteralExpression(True, BooleanType())
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
@@ -680,6 +683,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
+                            JoinCardinality.UNKNOWN,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -694,6 +698,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
+                            JoinCardinality.UNKNOWN,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -826,6 +831,7 @@ class RelTranslation:
             context,
             rhs_output,
             JoinType.INNER,
+            JoinCardinality.UNKNOWN,
             join_keys,
             join_cond,
             None,
@@ -1057,6 +1063,7 @@ class RelTranslation:
             context,
             child_output,
             JoinType.INNER,
+            JoinCardinality.UNKNOWN,
             join_keys,
             None,
             None,
@@ -1189,6 +1196,7 @@ class RelTranslation:
                             context,
                             result,
                             JoinType.INNER,
+                            JoinCardinality.UNKNOWN,
                             join_keys,
                             None,
                             None,

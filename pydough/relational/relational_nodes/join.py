@@ -12,12 +12,26 @@ from .abstract_node import RelationalNode
 
 
 class JoinType(Enum):
+    """
+    TODO: add description
+    """
+
     INNER = "inner"
     LEFT = "left"
-    RIGHT = "right"
-    FULL_OUTER = "full outer"
     ANTI = "anti"
     SEMI = "semi"
+
+
+class JoinCardinality(Enum):
+    """
+    TODO: add description
+    """
+
+    SINGULAR_FILTER = 1
+    SINGULAR_ACCESS = 2
+    PLURAL_FILTER = 3
+    PLURAL_ACCESS = 4
+    UNKNOWN = 5
 
 
 class Join(RelationalNode):
@@ -44,27 +58,22 @@ class Join(RelationalNode):
     def __init__(
         self,
         inputs: list[RelationalNode],
-        conditions: list[RelationalExpression],
-        join_types: list[JoinType],
+        condition: RelationalExpression,
+        join_type: JoinType,
         columns: dict[str, RelationalExpression],
+        cardinality: JoinCardinality = JoinCardinality.UNKNOWN,
         correl_name: str | None = None,
         is_prunable: bool = False,
     ) -> None:
         super().__init__(columns)
-        num_inputs = len(inputs)
-        num_conditions = len(conditions)
-        num_join_types = len(join_types)
-        assert (
-            num_inputs >= 2
-            and num_conditions == (num_inputs - 1)
-            and num_conditions == num_join_types
-        ), "Number of inputs, conditions, and join types must be the same"
+        assert len(inputs) == 2, f"Expected 2 inputs, received {len(inputs)}"
         self._inputs = inputs
-        assert all(isinstance(cond.data_type, BooleanType) for cond in conditions), (
+        assert isinstance(condition.data_type, BooleanType), (
             "Join condition must be a boolean type"
         )
-        self._conditions: list[RelationalExpression] = conditions
-        self._join_types: list[JoinType] = join_types
+        self._condition: RelationalExpression = condition
+        self._join_type: JoinType = join_type
+        self._cardinality: JoinCardinality = cardinality
         self._correl_name: str | None = correl_name
         self._is_prunable: bool = is_prunable
 
@@ -77,18 +86,46 @@ class Join(RelationalNode):
         return self._correl_name
 
     @property
-    def conditions(self) -> list[RelationalExpression]:
+    def condition(self) -> RelationalExpression:
         """
-        The conditions for the joins.
+        The condition for the joins.
         """
-        return self._conditions
+        return self._condition
+
+    @condition.setter
+    def condition(self, cond: RelationalExpression) -> None:
+        """
+        The setter for the join condition
+        """
+        self._condition = cond
 
     @property
-    def join_types(self) -> list[JoinType]:
+    def join_type(self) -> JoinType:
         """
-        The types of the joins.
+        The type of the joins.
         """
-        return self._join_types
+        return self._join_type
+
+    @join_type.setter
+    def join_type(self, join_type: JoinType) -> None:
+        """
+        The setter for the join type
+        """
+        self._join_type = join_type
+
+    @property
+    def cardinality(self) -> JoinCardinality:
+        """
+        The type of the joins.
+        """
+        return self._cardinality
+
+    @cardinality.setter
+    def cardinality(self, cardinality: JoinCardinality) -> None:
+        """
+        The setter for the join cardinality.
+        """
+        self._cardinality = cardinality
 
     @property
     def inputs(self) -> list[RelationalNode]:
@@ -118,8 +155,9 @@ class Join(RelationalNode):
     def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Join)
-            and self.conditions == other.conditions
-            and self.join_types == other.join_types
+            and self.condition == other.condition
+            and self.join_type == other.join_type
+            and self.cardinality == other.cardinality
             and self.correl_name == other.correl_name
             and all(
                 self.inputs[i].node_equals(other.inputs[i])
@@ -128,11 +166,15 @@ class Join(RelationalNode):
         )
 
     def to_string(self, compact: bool = False) -> str:
-        conditions: list[str] = [cond.to_string(compact) for cond in self.conditions]
-        correl_suffix = (
+        correl_suffix: str = (
             "" if self.correl_name is None else f", correl_name={self.correl_name!r}"
         )
-        return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
+        cardinality_suffix: str = (
+            ""
+            if self.cardinality == JoinCardinality.UNKNOWN
+            else f", cardinality={self.cardinality.name}"
+        )
+        return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
     def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_join(self)
@@ -144,9 +186,10 @@ class Join(RelationalNode):
     ) -> RelationalNode:
         return Join(
             inputs,
-            self.conditions,
-            self.join_types,
+            self.condition,
+            self.join_type,
             columns,
+            self.cardinality,
             self.correl_name,
             self.is_prunable,
         )

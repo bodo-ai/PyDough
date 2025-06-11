@@ -1,5 +1,5 @@
 ROOT(columns=[('nation_name', nation_name), ('num_customers', num_customers)], orderings=[])
- JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'nation_name': t0.nation_name, 'num_customers': t1.num_customers})
+ JOIN(condition=t0.key == t1.nation_key, type=INNER, columns={'nation_name': t0.nation_name, 'num_customers': t1.num_customers})
   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'nation_name': n_nationkey})
   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'num_customers': COUNT()})
    SCAN(table=tpch.CUSTOMER, columns={'nation_key': c_nationkey})

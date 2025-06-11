@@ -1,5 +1,5 @@
 ROOT(columns=[('transaction_id', transaction_id), ('_expr0', _expr0), ('_expr1', _expr1), ('_expr2', _expr2)], orderings=[(transaction_id):asc_first])
- JOIN(conditions=[t0.ticker_id == t1._id], types=['inner'], columns={'_expr0': t0._expr0, '_expr1': t0._expr1, '_expr2': t0._expr2, 'transaction_id': t0.transaction_id})
+ JOIN(condition=t0.ticker_id == t1._id, type=INNER, columns={'_expr0': t0._expr0, '_expr1': t0._expr1, '_expr2': t0._expr2, 'transaction_id': t0.transaction_id})
   PROJECT(columns={'_expr0': HOUR(date_time), '_expr1': MINUTE(date_time), '_expr2': SECOND(date_time), 'ticker_id': ticker_id, 'transaction_id': transaction_id})
    SCAN(table=main.sbTransaction, columns={'date_time': sbTxDateTime, 'ticker_id': sbTxTickerId, 'transaction_id': sbTxId})
   FILTER(condition=ISIN(symbol, ['AAPL', 'GOOGL', 'NFLX']:array[unknown]), columns={'_id': _id})
