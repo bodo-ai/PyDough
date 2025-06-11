@@ -21,7 +21,7 @@ JOIN seasons AS seasons
   OR seasons.s_month2 = EXTRACT(MONTH FROM _s2.date_time)
   OR seasons.s_month3 = EXTRACT(MONTH FROM _s2.date_time)
 JOIN _s2 AS _s6
-  ON _s2.key = _s6.key
+  ON _s6.key = events.ev_key
 JOIN times AS times
   ON times.t_end_hour > EXTRACT(HOUR FROM _s6.date_time)
   AND times.t_start_hour <= EXTRACT(HOUR FROM _s6.date_time)

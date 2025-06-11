@@ -11,7 +11,8 @@ WITH _t0 AS (
     _t0.receiver_type = 1
 ), _s0 AS (
   SELECT
-    merchants.mid AS merchant
+    merchants.mid AS merchant,
+    merchants.mid AS mid
   FROM main.merchants AS merchants
 )
 SELECT
@@ -23,5 +24,5 @@ WHERE
       1 AS "1"
     FROM _s1 AS _s1
     WHERE
-      _s0.merchant = _s1.receiver_id
+      _s0.mid = _s1.receiver_id
   )

@@ -21,7 +21,7 @@ JOIN seasons AS seasons
   OR seasons.s_month2 = CAST(STRFTIME('%m', _s2.date_time) AS INTEGER)
   OR seasons.s_month3 = CAST(STRFTIME('%m', _s2.date_time) AS INTEGER)
 JOIN _s2 AS _s6
-  ON _s2.key = _s6.key
+  ON _s6.key = events.ev_key
 JOIN times AS times
   ON times.t_end_hour > CAST(STRFTIME('%H', _s6.date_time) AS INTEGER)
   AND times.t_start_hour <= CAST(STRFTIME('%H', _s6.date_time) AS INTEGER)

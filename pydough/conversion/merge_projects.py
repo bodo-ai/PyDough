@@ -24,6 +24,7 @@ from pydough.relational import (
 from pydough.relational.rel_util import (
     add_expr_uses,
     contains_window,
+    remap_join_condition,
     transpose_expression,
 )
 
@@ -119,7 +120,9 @@ def project_join_transpose(project: Project) -> RelationalNode:
         if expr in col_references:
             assert isinstance(expr, ColumnReference)
             join_input_index = join.default_input_aliases.index(expr.input_name)
-            pushable_columns[join_input_index].append((name, expr))
+            pushable_columns[join_input_index].append(
+                (name, ColumnReference(name, expr.data_type))
+            )
 
     left_renamings: dict[str, RelationalExpression] = {}
     right_renamings: dict[str, RelationalExpression] = {}
@@ -160,11 +163,11 @@ def project_join_transpose(project: Project) -> RelationalNode:
         if new_input_cols != join_input.columns:
             join.inputs[idx] = Project(join_input, new_input_cols)
 
-    # # Replace the original columns with the new columns, and update the join condition
-    # for idx, cond in enumerate(join.conditions):
-    #     join.conditions[idx] = remap_join_condition(
-    #         cond, left_renamings, right_renamings, join.default_input_aliases
-    #     )
+    # Replace the original columns with the new columns, and update the join condition
+    for idx, cond in enumerate(join.conditions):
+        join.conditions[idx] = remap_join_condition(
+            cond, left_renamings, right_renamings, join.default_input_aliases
+        )
     join._columns = new_columns
     return join
 

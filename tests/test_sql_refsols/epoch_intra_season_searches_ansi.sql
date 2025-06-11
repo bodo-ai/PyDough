@@ -16,13 +16,13 @@ WITH _s0 AS (
 ), _s9 AS (
   SELECT
     COUNT() AS agg_0,
-    events.ev_name AS name,
+    _s2.name,
     searches.search_id
-  FROM seasons AS seasons
+  FROM _s0 AS _s2
   JOIN searches AS searches
-    ON seasons.s_month1 = EXTRACT(MONTH FROM searches.search_ts)
-    OR seasons.s_month2 = EXTRACT(MONTH FROM searches.search_ts)
-    OR seasons.s_month3 = EXTRACT(MONTH FROM searches.search_ts)
+    ON _s2.first_month = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s2.second_month = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s2.third_month = EXTRACT(MONTH FROM searches.search_ts)
   JOIN events AS events
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
   JOIN _s7 AS _s7
@@ -30,9 +30,9 @@ WITH _s0 AS (
     OR _s7.second_month = EXTRACT(MONTH FROM events.ev_dt)
     OR _s7.third_month = EXTRACT(MONTH FROM events.ev_dt)
   WHERE
-    _s7.name = seasons.s_name
+    _s2.season_name = _s7.name
   GROUP BY
-    events.ev_name,
+    _s2.name,
     searches.search_id
 ), _s16 AS (
   SELECT

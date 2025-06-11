@@ -10,7 +10,7 @@ WITH _t1 AS (
   JOIN tpch.customer AS customer
     ON customer.c_custkey = orders.o_custkey AND customer.c_mktsegment = 'BUILDING'
   JOIN tpch.lineitem AS lineitem
-    ON customer.c_custkey = lineitem.l_orderkey
+    ON lineitem.l_orderkey = orders.o_orderkey
     AND lineitem.l_shipdate > CAST('1995-03-15' AS DATE)
   WHERE
     orders.o_orderdate < CAST('1995-03-15' AS DATE)

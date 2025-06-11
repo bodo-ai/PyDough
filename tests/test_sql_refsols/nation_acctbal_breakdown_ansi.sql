@@ -21,6 +21,6 @@ FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
 JOIN _s3 AS _s3
-  ON _s3.nation_key = region.r_regionkey
+  ON _s3.nation_key = nation.n_nationkey
 ORDER BY
   nation_name

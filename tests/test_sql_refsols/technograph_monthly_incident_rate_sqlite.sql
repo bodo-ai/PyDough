@@ -5,7 +5,7 @@ WITH _t4 AS (
 ), _s4 AS (
   SELECT
     COUNT() AS agg_2,
-    calendar.ca_dt AS calendar_day,
+    _t8.calendar_day,
     devices.de_production_country_id AS factory_country_id
   FROM _t4 AS _t8
   JOIN main.calendar AS calendar
@@ -15,7 +15,7 @@ WITH _t4 AS (
   WHERE
     CAST(STRFTIME('%Y', _t8.calendar_day) AS INTEGER) IN (2020, 2021)
   GROUP BY
-    calendar.ca_dt,
+    _t8.calendar_day,
     devices.de_production_country_id
 ), _t9 AS (
   SELECT
@@ -44,23 +44,15 @@ WITH _t4 AS (
   GROUP BY
     _t13.calendar_day,
     incidents.in_device_id
-), _s10 AS (
-  SELECT DISTINCT
-    de_production_country_id AS factory_country_id
-  FROM main.devices
-), _s13 AS (
-  SELECT
-    _t15._id
-  FROM _s10 AS _s10
-  JOIN _t9 AS _t15
-    ON _s10.factory_country_id = _t15._id AND _t15.name = 'CN'
 ), _s15 AS (
   SELECT
     SUM(_s12.agg_5) AS agg_5,
     _s12.calendar_day
   FROM _s12 AS _s12
-  JOIN _s13 AS _s13
-    ON _s12.device_id = _s13._id
+  JOIN main.devices AS devices
+    ON _s12.device_id = devices.de_id
+  JOIN _t9 AS _t14
+    ON _t14._id = devices.de_production_country_id AND _t14.name = 'CN'
   GROUP BY
     _s12.calendar_day
 ), _t1 AS (

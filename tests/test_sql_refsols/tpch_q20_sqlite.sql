@@ -30,7 +30,7 @@ FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'CANADA' AND nation.n_nationkey = supplier.s_nationkey
 JOIN _t1 AS _t1
-  ON _t1.agg_0 > 0 AND _t1.supplier_key = nation.n_nationkey
+  ON _t1.agg_0 > 0 AND _t1.supplier_key = supplier.s_suppkey
 ORDER BY
   s_name
 LIMIT 10

@@ -7,19 +7,15 @@ WITH _s2 AS (
   GROUP BY
     in_device_id,
     in_error_id
-), _s3 AS (
-  SELECT
-    products.pr_id AS _id
-  FROM main.devices AS devices
-  JOIN main.products AS products
-    ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
 ), _s5 AS (
   SELECT
     SUM(_s2.agg_0) AS agg_0,
     _s2.error_id
   FROM _s2 AS _s2
-  JOIN _s3 AS _s3
-    ON _s2.device_id = _s3._id
+  JOIN main.devices AS devices
+    ON _s2.device_id = devices.de_id
+  JOIN main.products AS products
+    ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
   GROUP BY
     _s2.error_id
 ), _t0 AS (

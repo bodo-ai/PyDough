@@ -1361,31 +1361,35 @@ def optimize_relational_tree(
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
-    print()
-    print(root.to_tree_string())
-    print("#" * 80)
+    # print()
+    # print(root.to_tree_string())
+    # print("#" * 80)
 
     # Step 2: merge adjacent projections, unless it would result in excessive
     # duplicate subexpression computations.
     root = confirm_root(merge_projects(root))
 
-    print()
-    print(root.to_tree_string())
-    print("$" * 80)
+    # print()
+    # print(root.to_tree_string())
+    # print("$" * 80)
 
     # Step 3: split aggregations on top of joins so part of the aggregate
     # happens underneath the join.
     root = confirm_root(split_partial_aggregates(root, configs))
 
-    # Step 4: re-run projection merging.
+    # print()
+    # print(root.to_tree_string())
+    # print("@" * 80)
 
-    print()
-    print(root.to_tree_string())
-    root = confirm_root(merge_projects(root))
-
-    # Step 5: delete aggregations that are inferred to be redundant due to
+    # Step 4: delete aggregations that are inferred to be redundant due to
     # operating on already unique data.
     root = remove_redundant_aggs(root)
+
+    # Step 5: re-run projection merging.
+
+    # print()
+    # print(root.to_tree_string())
+    root = confirm_root(merge_projects(root))
 
     # Step 6: re-run projection merging.
     root = confirm_root(merge_projects(root))

@@ -178,6 +178,13 @@ def transpose_aggregate_join(
         ):
             join_columns_to_prune.add(name)
 
+    # print(node.to_tree_string())
+    # print(agg_side)
+    # print(side_keys)
+    # print(call_names)
+    # print("&"*80)
+    # breakpoint()
+
     # Calculate the aggregate terms to go above vs below the join.
     agg_input: RelationalNode = join.inputs[agg_side]
     top_aggs: dict[str, CallExpression] = {}
@@ -240,9 +247,9 @@ def transpose_aggregate_join(
     # the input.
     input_keys: dict[str, ColumnReference] = {}
     for ref in side_keys:
-        transposed_ref = transpose_expression(ref, join.columns)
-        assert isinstance(transposed_ref, ColumnReference)
-        input_keys[transposed_ref.name] = transposed_ref
+        # transposed_ref = transpose_expression(ref, join.columns)
+        # assert isinstance(transposed_ref, ColumnReference)
+        input_keys[ref.name] = ref.with_input(None)
     for agg_key in node.keys.values():
         transposed_agg_key = transpose_expression(
             agg_key, join.columns, keep_input_names=True
