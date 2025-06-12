@@ -246,12 +246,11 @@ class HybridTree:
 
     def add_operation(self, operation: HybridOperation) -> None:
         """
-        Appends a new hybrid operation to the end of the pipeline of the
-        hybrid tree. If the operation is affected by whether a child that
-        filters the current level exists, the blocking index of the tree is
-        updated to the index of the operation in the pipeline since any
-        subsequent child accesses that filter the current level must occur
-        after this operation.
+        Appends a new hybrid operation to the end of the hybrid tree's pipeline. 
+        If the operation depends on whether a child filters the current level, 
+        the tree's blocking index is updated to this operation's index. 
+        This ensures that any child operations filtering the current level 
+        are executed only after this one.
 
         Args:
             `operation`: the hybrid operation to be added to the pipeline.
@@ -499,11 +498,11 @@ class HybridTree:
                         if not (
                             always_exists or existing_connection.connection_type.is_semi
                         ):
-                            # Special case: if adding a SEMI onto AGGREGATION,
-                            # add a COUNT to the aggregation then add a filter
-                            # to the parent tree on the count being positive.
-                            # If adding a SEMI onto SINGULAR, do the same but
-                            # with a PRESENT filter.
+                            # Special case: When applying a SEMI join:
+                            # - If the child is an AGGREGATION, add a COUNT to the aggregation and 
+                            #   filter in the parent tree to check that the count is greater than zero.
+                            # - If the child is SINGULAR, do the same but
+                            #   use a PRESENT filter to check that a value exists.
                             if is_singular:
                                 self.insert_presence_filter(
                                     idx, connection_type.is_semi

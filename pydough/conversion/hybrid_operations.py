@@ -114,7 +114,7 @@ class HybridOperation:
             return term
         if isinstance(term, HybridColumnExpr):
             return HybridRefExpr(name, term.typ)
-        raise ValueError(f"Term is cannot be coerced to a reference: {name}")
+        raise ValueError(f"Term cannot be coerced to a reference: {name}")
 
 
 class HybridRoot(HybridOperation):

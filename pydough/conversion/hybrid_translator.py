@@ -459,7 +459,7 @@ class HybridTranslator:
             `COUNT` to have their defaults replaced.
 
         Returns:
-            The transformed version of `agg_ref`, if postprocessing is required,
+            The transformed version of `agg_ref`, if postprocessing is required.
         """
         # If doing a SUM or AVG, and the configs are set to default those
         # functions to zero when there are no values, decorate the result
@@ -1035,7 +1035,7 @@ class HybridTranslator:
                     raise NotImplementedError(
                         "PyDough does not yet support calling aggregations inside of aggregations"
                     )
-                # Do special casing for operators that an have collection
+                # Do special casing for operators that can have collection
                 # arguments.
                 # TODO: (gh #148) handle collection-level NDISTINCT
                 if (
@@ -1237,7 +1237,7 @@ class HybridTranslator:
             # and make the RHS of those keys the agg keys.
             agg_keys = [rhs_key for _, rhs_key in join_keys]
         else:
-            # For a general join, instead use the general join
+            # If this is a general join with aggregation, use the general join condition
             # condition. However, if an aggregate is being performed
             # on the child, the aggregation keys are the uniqueness
             # keys from the lhs of the join condition, which means
@@ -1522,7 +1522,7 @@ class HybridTranslator:
     def convert_qdag_to_hybrid(self, node: PyDoughCollectionQDAG) -> HybridTree:
         """
         Convert a PyDough QDAG node to a hybrid tree, including any necessary
-        transformations such as de-corelation.
+        transformations such as de-correlation.
 
         Args:
             `node`: The PyDoughCollectionQDAG node to convert to a HybridTree.

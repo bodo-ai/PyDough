@@ -150,7 +150,7 @@ class HybridExpr(ABC):
     def has_correlated_window_function(self, levels: int) -> bool:
         """
         Returns whether this expression contains any window functions
-        with correlates with at least a certain number of levels. A window
+        that correlates with at least a certain number of levels. A window
         function without any partition arguments is also considered correlated.
 
         Args:
