@@ -1887,6 +1887,41 @@ def replace():
         )
     )
 
+def str_count():
+    return (
+        customers.WHERE(name == "Alex Rodrigez")
+        .CALCULATE(
+            name,
+            char_substring="e",
+            char_substring_2="u",
+            lower_lastname="rodrigez",
+            lastname="Rodrigez",
+            empty_string="",
+            space=" ",
+            special_chars="$@!%",
+            numbers="123",
+        )
+        .CALCULATE( #cases
+            count_letter=STRCOUNT(name, char_substring),
+            not_in_letter=STRCOUNT(name, char_substring_2),
+            count_lastname=STRCOUNT(name, lastname),
+            count_sensitive_lastname=STRCOUNT(name, lower_lastname),
+            count_empty=STRCOUNT(name, empty_string),
+            all_empty=STRCOUNT(empty_string, empty_string),
+            first_empty=STRCOUNT(empty_string, name),
+            count_numbers=STRCOUNT("123456789", numbers),
+            count_char_numbers=STRCOUNT("Alex123Rodrigez12", "12"),
+            no_occurence=STRCOUNT(name, "Luis"),
+            count_spaces=STRCOUNT(name, space),
+            space_arround=STRCOUNT(" Hello world ", space),
+            count_special_chars=STRCOUNT("Hello $@!%", special_chars),
+            no_overlapping=STRCOUNT("aaaa", "aa"),
+            no_overlapping_2=STRCOUNT("ababab", "aba"),
+            entire_string_match=STRCOUNT(name, name),
+            longer_substring=STRCOUNT(lastname, name),
+        )
+    ) # end return
+
 
 def singular1():
     # Singular in CALCULATE & WHERE

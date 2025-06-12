@@ -42,6 +42,7 @@ from simple_pydough_functions import (
     multi_partition_access_6,
     padding_functions,
     replace,
+    str_count,
     sign,
     simple_week_sampler,
     step_slicing,
@@ -1094,6 +1095,37 @@ def get_day_of_week(
                 ),
             ),
             id="replace",
+        ),
+        pytest.param(
+            (
+                str_count,
+                None,
+                "Broker",
+                "str_count",
+                # Answer
+                lambda: pd.DataFrame(
+                    {
+                        "count_letter":[2],
+                        "not_in_letter":[0],
+                        "count_lastname":[1],
+                        "count_sensitive_lastname":[0],
+                        "count_empty":[0],
+                        "all_empty":[0],
+                        "first_empty":[0],
+                        "count_numbers":[1],
+                        "count_char_numbers":[2],
+                        "no_occurence":[0],
+                        "count_spaces":[1],
+                        "space_arround":[3],
+                        "count_special_chars":[1],
+                        "no_overlapping":[2],
+                        "no_overlapping_2":[1],
+                        "entire_string_match":[1],
+                        "longer_substring":[0],
+                    }
+                ),
+            ),
+            id="str_count",
         ),
         pytest.param(
             (
