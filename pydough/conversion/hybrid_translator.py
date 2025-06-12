@@ -1504,7 +1504,7 @@ class HybridTranslator:
 
     def run_syncretization(self, hybrid: "HybridTree") -> None:
         """
-        Invokes the procedure to syncretize the children in hte hybrid tree.
+        Invokes the procedure to syncretize the children in the hybrid tree.
         The transformation is done in-place.
 
         Args:
@@ -1552,7 +1552,7 @@ class HybridTranslator:
         self.run_syncretization(hybrid)
         # 4. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
-        # 5. Run any final rewrites, such as turning MEDIAN into an average of
+        # 5. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)
         # 6. Remove any dead children in the hybrid tree that are no longer

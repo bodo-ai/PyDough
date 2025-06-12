@@ -43,7 +43,7 @@ class HybridSyncretizer:
        all such candidates to a list.
     2. Sort the candidates (base, extension) first by the difference in height
        (so those with a smaller difference are first), then by the total height
-       of extension (so the largest children are fist).
+       of extension (so the largest children are first).
     3. Iterate through the sorted candidates and attempt to syncretize each
        pair in order. Each pair will require additional checks at this time
        since other attempts that occur first may make later attempts invalid
@@ -68,7 +68,7 @@ class HybridSyncretizer:
     as part of an AGG-AGG syncretization. The key is the aggregation operator
     being used in the original extension child and the value is a tuple of two
     operators,  one of which should be used to aggregate the new extension
-    child of the base child, and the other which should eb used to aggregate
+    child of the base child, and the other which should be used to aggregate
     the first aggregation within the base child.
 
     For example, if the parent has children C0 and C1, C0 has agg terms
@@ -141,7 +141,7 @@ class HybridSyncretizer:
     ) -> tuple[bool, int]:
         """
         Returns whether two children of a hybrid tree form a pair
-        (base, extension) such that the base is a prefix of the extension.
+        (base, extension) where the base is a prefix of the extension.
         Importantly, even if this function returns True, it does not
         necessarily mean that the two children can or will be syncretized, as
         there are additional checks that need to be performed based on the
@@ -154,10 +154,11 @@ class HybridSyncretizer:
             `extension_child`: The extension child of the pair.
 
         Returns:
-            A tuple where the first element is a boolean indicating whether
-            the two children can be potentially syncretized, and the second
-            element is how many additional levels exist in the suffix of the
-            extension child that are not in the base child.
+            A tuple where:
+            - The first element is a boolean indicating whether 
+               the two children can be potentially syncretized.
+            - The second element is the number of additional levels in the 
+              suffix of the extension child that are not present in the base child.
         """
         prefix_levels_up: int = 0
         base_subtree: HybridTree = base_child.subtree
@@ -178,7 +179,8 @@ class HybridSyncretizer:
         Inserts a filter into the pipeline of the tree containing the base and
         extension children so that the syncretized pair computes the COUNT of
         the extension child and the parent can perform a filter on that COUNT
-        (> 0 for SEMI, == 0 for ANTI). This is done when syncretizing a child
+        (> 0 for SEMI, == 0 for ANTI). 
+        This is done when syncretizing a child
         that only allows matches onto a base child that is an aggregation,
         since the extension child must not filter rows of the base child lest
         it tamper with the base child's aggregation results.
@@ -190,8 +192,8 @@ class HybridSyncretizer:
         Args:
             `tree`: The hybrid tree containing the base and extension children.
             `extension_idx`: The index of the extension child in the tree.
-            `is_semi`: Whether the inserted filter should emulate a SEMI join
-            (True) or an ANTI join (False).
+            `is_semi`: If True, insert a filter to emulate a SEMI join;
+                               If False, emulates an ANTI join.
         """
 
         # Create the COUNT call and insert it into the extension child.
@@ -214,8 +216,8 @@ class HybridSyncretizer:
                 pydop.DEFAULT_TO, [agg_ref, literal_zero], BooleanType()
             )
 
-        # Insert the new filter at the location that the semi/anti filter must
-        # be performed before.
+        # Insert the new filter at the location before which the semi/anti filter must
+        # be applied
         insert_idx: int = extension_child.max_steps
         tree.pipeline.insert(
             insert_idx,
@@ -229,9 +231,8 @@ class HybridSyncretizer:
             ),
         )
 
-        # Shift the min/max steps of all the children to account for the fact
-        # that a new operation has been inserted into the middle of the
-        # pipeline.
+        # Shift the min/max steps of all the children to account for the
+        # the new operation inserted into the middle of the pipeline
         for child in tree.children:
             if child.min_steps > insert_idx:
                 child.min_steps += 1
@@ -247,11 +248,10 @@ class HybridSyncretizer:
         remapping: dict[HybridExpr, HybridExpr],
     ) -> None:
         """
-        Runs the syncretization logic for two children of a hybrid tree that
-        are confirmed to be syncretizable, where the base child is an
-        aggregation and the extension child is also an aggregation. This is
-        only possible if the aggregations in the extension child can be split
-        into two rounds of aggregation.
+        Runs the syncretization logic between two children of a hybrid tree that
+        are confirmed to be syncretizable, where both the base the extension 
+        child are aggregations. This is only possible when the 
+        extension's aggregations can be split into two rounds of aggregation.
 
         ```
         # Consider the following example:
@@ -266,8 +266,8 @@ class HybridSyncretizer:
             `tree`: The hybrid tree containing the base and extension children.
             `base_idx`: The index of the base child in the tree.
             `extension_idx`: The index of the extension child in the tree.
-            `extension_subtree`: The newly created suffix subtree of of the
-            extension child that will be inserted as a child of the base.
+            `extension_subtree`: The newly created suffix subtree of the
+            extension child that will be inserted as a child of the base subtree.
             `remapping`: A dictionary that will be populated with references
             to the new aggregations in the base child, so that any references
             to the old aggregations in the extension child can be remapped to
@@ -366,7 +366,7 @@ class HybridSyncretizer:
                     base_subtree, count_child_expr, False
                 )
 
-                # Insert the top SUM calls & division into the base
+                # Insert the top SUM calls & division into the base child to compute AVG transformation.
                 base_sum_agg_name: str = self.translator.gen_agg_name(base_child)
                 base_count_agg_name: str = self.translator.gen_agg_name(base_child)
                 base_sum_agg: HybridFunctionExpr = HybridFunctionExpr(
@@ -436,7 +436,7 @@ class HybridSyncretizer:
         """
         Runs the syncretization logic for two children of a hybrid tree that
         are confirmed to be syncretizable, where the base child is singular and
-        the extension child is an an aggregation. This can be done with any
+        the extension child is an aggregation. This can be done with any
         aggregation functions since the aggregation can be done per record of
         the base child which just passes the results up as singular values to
         the parent.
@@ -454,7 +454,7 @@ class HybridSyncretizer:
             `tree`: The hybrid tree containing the base and extension children.
             `base_idx`: The index of the base child in the tree.
             `extension_idx`: The index of the extension child in the tree.
-            `extension_subtree`: The newly created suffix subtree of of the
+            `extension_subtree`: The newly created suffix subtree of the
             extension child that will be inserted as a child of the base.
             `remapping`: A dictionary that will be populated with references
             to the new terms in the base child, so that any references
@@ -527,7 +527,7 @@ class HybridSyncretizer:
             )
             assert isinstance(switch_ref, HybridRefExpr)
 
-            # Make a child reference to the reference to the aggregaiton call
+            # Make a child reference to the reference to the aggregation call
             old_child_ref: HybridExpr = HybridChildRefExpr(
                 agg_name, extension_idx, agg.typ
             )
@@ -563,7 +563,7 @@ class HybridSyncretizer:
             `tree`: The hybrid tree containing the base and extension children.
             `base_idx`: The index of the base child in the tree.
             `extension_idx`: The index of the extension child in the tree.
-            `extension_subtree`: The newly created suffix subtree of of the
+            `extension_subtree`: The newly created suffix subtree of the
             extension child that will be inserted as a child of the base.
             `remapping`: A dictionary that will be populated with references
             to the new terms in the base child, so that any references
@@ -659,7 +659,7 @@ class HybridSyncretizer:
             `tree`: The hybrid tree containing the base and extension children.
             `base_idx`: The index of the base child in the tree.
             `extension_idx`: The index of the extension child in the tree.
-            `extension_subtree`: The newly created suffix subtree of of the
+            `extension_subtree`: The newly created suffix subtree of the
             extension child that will be inserted as a child of the base.
             `remapping`: A dictionary that will be populated with references
             to the new terms in the base child, so that any references
@@ -761,7 +761,7 @@ class HybridSyncretizer:
         by splitting the extension child into a subtree using only the suffix
         that is not present in the base child, which is then added as a child
         of the base child (instead of the parent tree), whose terms in turn get
-        references by the base child then pulled up into the parent tree. First
+        referenced by the base child then pulled up into the parent tree. First
         needs to verify that the two children are syncretizable, then the rest
         of the logic is dispatched onto helper functions.
 
@@ -914,14 +914,14 @@ class HybridSyncretizer:
 
     def syncretize_children(self, tree: HybridTree) -> None:
         """
-        The wrapper logic for the syncretization algorithm that reverses the
+        Entry point for the syncretization algorithm that reverses the
         entire tree, finds potential candidate pairs for syncretization, and
         runs the main syncretization logic on these pairs. The transformations
         are done in-place.
 
         Args:
             `tree`: The hybrid tree to check for syncretization opportunities,
-            (along with its ancestors ahd children)
+            (along with its ancestors and children)
         """
         # First, run syncretization on the parent level, if it exists.
         if tree.parent is not None:
