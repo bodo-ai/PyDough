@@ -155,16 +155,16 @@ class HybridSyncretizer:
 
         Returns:
             A tuple where:
-            - The first element is a boolean indicating whether 
+            - The first element is a boolean indicating whether
                the two children can be potentially syncretized.
-            - The second element is the number of additional levels in the 
+            - The second element is the number of additional levels in the
               suffix of the extension child that are not present in the base child.
         """
         prefix_levels_up: int = 0
         base_subtree: HybridTree = base_child.subtree
         crawl_subtree: HybridTree = extension_child.subtree
         while True:
-            if base_subtree.equalsIgnoringSuccessors(crawl_subtree):
+            if base_subtree.equals_ignoring_successors(crawl_subtree):
                 break
             if crawl_subtree.parent is None:
                 return False, -1
@@ -179,7 +179,7 @@ class HybridSyncretizer:
         Inserts a filter into the pipeline of the tree containing the base and
         extension children so that the syncretized pair computes the COUNT of
         the extension child and the parent can perform a filter on that COUNT
-        (> 0 for SEMI, == 0 for ANTI). 
+        (> 0 for SEMI, == 0 for ANTI).
         This is done when syncretizing a child
         that only allows matches onto a base child that is an aggregation,
         since the extension child must not filter rows of the base child lest
@@ -249,8 +249,8 @@ class HybridSyncretizer:
     ) -> None:
         """
         Runs the syncretization logic between two children of a hybrid tree that
-        are confirmed to be syncretizable, where both the base the extension 
-        child are aggregations. This is only possible when the 
+        are confirmed to be syncretizable, where both the base the extension
+        child are aggregations. This is only possible when the
         extension's aggregations can be split into two rounds of aggregation.
 
         ```
@@ -316,11 +316,6 @@ class HybridSyncretizer:
             else:
                 base_child.connection_type = ConnectionType.AGGREGATION_ONLY_MATCH
 
-        # If an aggregation is being added to a SEMI join, switch the SEMI
-        # join to an aggregation-only-match.
-        if base_child.connection_type == ConnectionType.SEMI:
-            base_child.connection_type = ConnectionType.AGGREGATION
-
         # Insert the new extension child as a child of the base subtree.
         min_steps: int = base_subtree.get_min_child_idx(
             extension_subtree, new_connection_type
@@ -336,7 +331,7 @@ class HybridSyncretizer:
         # extension child, a reference to it in the base child, then a new
         # aggregation in the base child that aggregates the reference to pass
         # the combined aggregation result up to the parent.
-        idx: int = 0
+        is_first: bool = True
         old_child_ref: HybridExpr
         for agg_name, agg in extension_child.aggs.items():
             # Special Case: decompose AVG into SUM / COUNT
@@ -360,7 +355,7 @@ class HybridSyncretizer:
                     count_agg_name, new_child_idx, count_agg.typ
                 )
                 sum_switch_ref: HybridExpr = self.translator.inject_expression(
-                    base_subtree, sum_child_expr, idx == 0
+                    base_subtree, sum_child_expr, is_first
                 )
                 count_switch_ref: HybridExpr = self.translator.inject_expression(
                     base_subtree, count_child_expr, False
@@ -408,7 +403,7 @@ class HybridSyncretizer:
                     extension_agg_name, new_child_idx, extension_agg.typ
                 )
                 switch_ref: HybridExpr = self.translator.inject_expression(
-                    base_subtree, child_expr, idx == 0
+                    base_subtree, child_expr, is_first
                 )
 
                 # Insert the top aggregation call into the base
@@ -423,7 +418,7 @@ class HybridSyncretizer:
                     base_agg_name, base_idx, agg.typ
                 )
                 remapping[old_child_ref] = new_child_ref
-            idx += 1
+            is_first = False
 
     def syncretize_agg_onto_singular(
         self,
@@ -608,7 +603,6 @@ class HybridSyncretizer:
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, min_steps, max_steps
         )
-        base_subtree.children[new_child_idx]
 
         # For every term in the extension child, add a child reference to pull
         # it into the base child. Skip this step if the extension child is just
@@ -719,7 +713,6 @@ class HybridSyncretizer:
         new_child_idx: int = base_subtree.add_child(
             extension_subtree, new_connection_type, min_steps, max_steps
         )
-        base_subtree.children[new_child_idx]
 
         # Iterate through every term in the extension child and add a child
         # reference to pull it into the base child. Then, add a MAX aggregation
@@ -926,10 +919,18 @@ class HybridSyncretizer:
         # First, run syncretization on the parent level, if it exists.
         if tree.parent is not None:
             self.syncretize_children(tree.parent)
-        syncretize_options: list[tuple[int, int, int, int]] = []
+
+        # Store the index of any children that should not be syncretized onto
+        # anything else (-1 if not applicable). This is used so the child used
+        # by a pull up node is not syncretized onto anything else.
         ignore_idx: int = -1
         if isinstance(tree.pipeline[0], HybridChildPullUp):
             ignore_idx = tree.pipeline[0].child_idx
+
+        # Iterate across every combination of (base, extension) and find all
+        # of the candidate pairs that can potentially be syncretized. Store
+        # them in a list of tuples so they can be sorted later.
+        syncretize_options: list[tuple[int, int, int, int]] = []
         for base_idx in range(len(tree.children)):
             for extension_idx in range(len(tree.children)):
                 if extension_idx in (base_idx, ignore_idx):
@@ -961,14 +962,14 @@ class HybridSyncretizer:
                     or base_idx in children_to_delete
                 ):
                     continue
-                success: bool = self.syncretize_subtrees(
-                    tree, base_idx, extension_idx, extension_height
-                )
+
                 # If the syncretization was successful, then mark the extension
                 # child as dead so that it can be pruned later and will not be
                 # used in any more syncretization attempts (as the base or
                 # child).
-                if success:
+                if self.syncretize_subtrees(
+                    tree, base_idx, extension_idx, extension_height
+                ):
                     children_to_delete.add(extension_idx)
 
             # At the end, delete any extension children that were successfully
