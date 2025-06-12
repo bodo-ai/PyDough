@@ -282,14 +282,14 @@ def bad_replace_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
 
 
 def bad_str_count_too_many_args(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Too many arguments to replace
+    # Too many arguments to str_count
     return root.nations.CALCULATE(
         str_count1=root.STRCOUNT(root.name, "a", "b"),
     )
 
 
 def bad_str_count_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Not enough arguments to replace
+    # Not enough arguments to str_count
     return root.nations.CALCULATE(str_count2=root.STRCOUNT(root.name))
 
 

@@ -25,7 +25,8 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [RPAD](#rpad)
    * [FIND](#find)
    * [STRIP](#strip)
-   * [REPLACE] (#replace)
+   * [REPLACE](#replace)
+   * [STRCOUNT](#strcount)
 - [Datetime Functions](#datetime-functions)
    * [DATETIME](#datetime)
    * [YEAR](#year)
@@ -407,13 +408,32 @@ Note: This function is case-sensitive.
 
 ```py
 Customers.CALCULATE(updated_name= REPLACE(name, "xy", "..")) # replaces all `xy` with `..`
-Customers.CALCULATE(updated_name= STRIP(name, "xy")) # removes all `xy` appearances.
+Customers.CALCULATE(updated_name= REPLACE(name, "xy")) # removes all `xy` appearances.
 ```
 
 | **Input String (X)**          | **REPLACE(X, Y, Z)**                    | **Result**          |
 |-------------------------------|---------------------------------------|---------------------|
 | `'1121112111121'`| `REPLACE('1121112111121', '11', '.')`| `'.2.12..21'`    |
 | `'#123112140A'`| `REPLACE('#123112140A', '1')`          | `'#23240A'`          |
+
+<!-- TOC --><a name="strcount"></a>
+
+### STRCOUNT
+
+The `STRCOUNT` function returns how many times in the first argument, the second argument (substring) appears.
+This function requires the two arguments. The Python's function `X.count(Y)` is the equivalent of `STRCOUNT`.
+Note: This function is case-sensitive and if one or both of the arguments are an empty string returns 0.
+
+```py
+Customers.CALCULATE(count_substring= STRCOUNT(name, "e")) # counts how many 'e's are in name
+Customers.CALCULATE(count_substring= STRCOUNT(name, "Alex")) # counts how many 'e's are in name
+Customers.CALCULATE(count_substring= STRCOUNT(name, "")) # returns 0 by default
+```
+
+| **Input String (X)**          | **STRCOUNT(X, Y)**                    | **Result**          |
+|-------------------------------|---------------------------------------|---------------------|
+| `'Alex Rodriguez'`| `STRCOUNT('Alex Rodriguez', 'e')`| `2`    |
+| `'Hello World'`| `STRCOUNT('Hello World', 'll')`          | `1`          |
 
 <!-- TOC --><a name="datetime-functions"></a>
 

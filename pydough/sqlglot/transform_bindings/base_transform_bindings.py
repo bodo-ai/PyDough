@@ -350,7 +350,14 @@ class BaseTransformBindings:
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
-        """Convert a `STRCOUNT` call expression to a SQLGlot expression.
+        """Convert a `STRCOUNT` call expression to a SQLGlot expression. It counts how many times
+        the string Y appears in the string X.
+
+        STRCOUNT(X, Y) =>
+        CASE
+            WHEN LENGTH(Y) = 0 THEN 0
+            ELSE CAST((LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y), AS INTEGER)
+        END
 
         Args:
             args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after they were
@@ -367,31 +374,41 @@ class BaseTransformBindings:
         string: SQLGlotExpression = args[0]
         substring_count: SQLGlotExpression = args[1]
 
+        # eliminate the substring of the string: REPLACE(X, Y, "")
         string_replaced: SQLGlotExpression = self.convert_replace(
             [string, substring_count], types
         )
 
-        # LENGTHS
+        # The length of the first string given: LENGH(X)
         len_string: SQLGlotExpression = sqlglot_expressions.Length(this=string)
+
+        # The length of the replaced string: LENGH(REPLACE(X, Y, ""))
         len_string_replaced: SQLGlotExpression = sqlglot_expressions.Length(
             this=string_replaced
         )
+
+        # The length of the Y string: LENGTH(Y)
         len_substring_count: SQLGlotExpression = sqlglot_expressions.Length(
             this=substring_count
         )
 
+        # The length difference between string X and replaced string: REPLACE(X, Y, "")
         difference: SQLGlotExpression = sqlglot_expressions.Sub(
             this=len_string, expression=len_string_replaced
         )
 
+        # Take in count if LENGH(Y) > 1 dividing the difference by Y's length:
+        # LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
         quotient: SQLGlotExpression = sqlglot_expressions.Div(
             this=difference, expression=len_substring_count
         )
 
+        # Cast to Interger: CAST((LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y), AS INTEGER)
         casted: SQLGlotExpression = sqlglot_expressions.Cast(
             this=quotient, to=sqlglot_expressions.DataType.build("BIGINT")
         )
 
+        # CASE when LENGH(Y) == 0 THEN 0 else casted
         answer: SQLGlotExpression = (
             sqlglot_expressions.Case()
             .when(
