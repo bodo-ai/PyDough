@@ -246,10 +246,10 @@ class HybridTree:
 
     def add_operation(self, operation: HybridOperation) -> None:
         """
-        Appends a new hybrid operation to the end of the hybrid tree's pipeline. 
-        If the operation depends on whether a child filters the current level, 
-        the tree's blocking index is updated to this operation's index. 
-        This ensures that any child operations filtering the current level 
+        Appends a new hybrid operation to the end of the hybrid tree's pipeline.
+        If the operation depends on whether a child filters the current level,
+        the tree's blocking index is updated to this operation's index.
+        This ensures that any child operations filtering the current level
         are executed only after this one.
 
         Args:
@@ -499,7 +499,7 @@ class HybridTree:
                             always_exists or existing_connection.connection_type.is_semi
                         ):
                             # Special case: When applying a SEMI join:
-                            # - If the child is an AGGREGATION, add a COUNT to the aggregation and 
+                            # - If the child is an AGGREGATION, add a COUNT to the aggregation and
                             #   filter in the parent tree to check that the count is greater than zero.
                             # - If the child is SINGULAR, do the same but
                             #   use a PRESENT filter to check that a value exists.
