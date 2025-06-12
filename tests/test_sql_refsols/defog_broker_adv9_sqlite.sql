@@ -53,6 +53,6 @@ WITH _s0 AS (
 )
 SELECT
   week,
-  COALESCE(agg_0, 0) AS num_transactions,
+  agg_0 AS num_transactions,
   COALESCE(agg_1, 0) AS weekend_transactions
 FROM _t0

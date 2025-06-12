@@ -1,7 +1,7 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    AVG(sbtxshares) AS agg_0,
-    COUNT(DISTINCT sbtxcustid) AS agg_1,
+    AVG(sbtxshares) AS avg_shares,
+    COUNT(DISTINCT sbtxcustid) AS num_customers,
     sbtxtype AS transaction_type
   FROM main.sbtransaction
   WHERE
@@ -12,9 +12,9 @@ WITH _t1 AS (
 )
 SELECT
   transaction_type,
-  COALESCE(agg_1, 0) AS num_customers,
-  agg_0 AS avg_shares
-FROM _t1
+  num_customers,
+  avg_shares
+FROM _t0
 ORDER BY
   num_customers DESC
 LIMIT 3

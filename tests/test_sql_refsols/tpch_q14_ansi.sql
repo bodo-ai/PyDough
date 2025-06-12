@@ -13,7 +13,7 @@ WITH _t0 AS (
       1 - lineitem.l_discount
     )) AS agg_1
   FROM tpch.lineitem AS lineitem
-  LEFT JOIN tpch.part AS part
+  JOIN tpch.part AS part
     ON lineitem.l_partkey = part.p_partkey
   WHERE
     lineitem.l_shipdate < CAST('1995-10-01' AS DATE)

@@ -1,12 +1,12 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS num_transactions,
     sbcustomer.sbcuststate AS state,
     sbticker.sbtickertype AS ticker_type
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
     ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
-  LEFT JOIN main.sbticker AS sbticker
+  JOIN main.sbticker AS sbticker
     ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
   GROUP BY
     sbcustomer.sbcuststate,
@@ -15,8 +15,8 @@ WITH _t1 AS (
 SELECT
   state,
   ticker_type,
-  COALESCE(agg_0, 0) AS num_transactions
-FROM _t1
+  num_transactions
+FROM _t0
 ORDER BY
   num_transactions DESC
 LIMIT 5

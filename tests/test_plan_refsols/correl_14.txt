@@ -1,5 +1,5 @@
-ROOT(columns=[('n', agg_0)], orderings=[])
- AGGREGATE(keys={}, aggregations={'agg_0': COUNT()})
+ROOT(columns=[('n', n)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n': COUNT()})
   JOIN(conditions=[t0.key == t1.supplier_key], types=['semi'], columns={}, correl_name='corr3')
    PROJECT(columns={'avg_price': agg_0, 'key': key})
     JOIN(conditions=[t0.key == t1.supplier_key], types=['left'], columns={'agg_0': t1.agg_0, 'key': t0.key})

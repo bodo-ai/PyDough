@@ -1,6 +1,7 @@
 WITH _s0 AS (
   SELECT
     eras.er_end_year AS end_year,
+    eras.er_name AS era_name,
     eras.er_name AS name,
     eras.er_start_year AS start_year
   FROM eras AS eras
@@ -10,6 +11,7 @@ WITH _s0 AS (
   FROM events AS events
 ), _s6 AS (
   SELECT
+    _s0.era_name AS era_name,
     _s0.name AS name,
     _s0.start_year AS start_year
   FROM _s0 AS _s0
@@ -22,12 +24,18 @@ WITH _s0 AS (
         _s0.end_year > CAST(STRFTIME('%Y', _s1.date_time) AS INTEGER)
         AND _s0.start_year <= CAST(STRFTIME('%Y', _s1.date_time) AS INTEGER)
     )
+), _s2 AS (
+  SELECT
+    eras.er_end_year AS end_year,
+    eras.er_name AS name,
+    eras.er_start_year AS start_year
+  FROM eras AS eras
 ), _s4 AS (
   SELECT
     _s2.end_year AS end_year,
     _s2.name AS name,
     _s2.start_year AS start_year
-  FROM _s0 AS _s2
+  FROM _s2 AS _s2
   WHERE
     EXISTS(
       SELECT
@@ -59,23 +67,23 @@ WITH _s0 AS (
   FROM _t2 AS _t2
 ), _s7 AS (
   SELECT
-    AVG(_t1.day_gap) AS agg_0,
+    AVG(_t1.day_gap) AS avg_event_gap,
     _t1.name AS name
   FROM _t1 AS _t1
   GROUP BY
     _t1.name
 ), _t0 AS (
   SELECT
-    _s6.name AS name,
-    _s7.agg_0 AS agg_0,
+    _s7.avg_event_gap AS avg_event_gap,
+    _s6.era_name AS era_name,
     _s6.start_year AS start_year
   FROM _s6 AS _s6
-  LEFT JOIN _s7 AS _s7
+  JOIN _s7 AS _s7
     ON _s6.name = _s7.name
 )
 SELECT
-  _t0.name AS era_name,
-  _t0.agg_0 AS avg_event_gap
+  _t0.era_name AS era_name,
+  _t0.avg_event_gap AS avg_event_gap
 FROM _t0 AS _t0
 ORDER BY
   _t0.start_year

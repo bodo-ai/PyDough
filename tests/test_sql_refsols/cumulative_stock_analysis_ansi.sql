@@ -22,7 +22,7 @@ SELECT
     2
   ) AS rolling_avg_amount
 FROM main.sbtransaction AS sbtransaction
-LEFT JOIN main.sbticker AS sbticker
+JOIN main.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
 WHERE
   EXTRACT(MONTH FROM sbtransaction.sbtxdatetime) = 4
