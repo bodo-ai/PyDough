@@ -1890,13 +1890,13 @@ def replace():
 
 def str_count():
     return (
-        customers.WHERE(name == "Alex Rodrigez")
+        customers.WHERE(name == "Alex Rodriguez")
         .CALCULATE(
             name,
             char_substring="e",
-            char_substring_2="u",
-            lower_lastname="rodrigez",
-            lastname="Rodrigez",
+            char_substring_2="f",
+            lower_lastname="rodriguez",
+            lastname="Rodriguez",
             empty_string="",
             space=" ",
             special_chars="$@!%",

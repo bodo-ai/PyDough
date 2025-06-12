@@ -399,7 +399,7 @@ class BaseTransformBindings:
                     this=len_substring_count,
                     expression=sqlglot_expressions.Literal.number(0),
                 ),
-                len_string,
+                sqlglot_expressions.Literal.number(0),
             )
             .else_(casted)
         )
