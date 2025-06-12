@@ -1887,6 +1887,7 @@ def replace():
         )
     )
 
+
 def str_count():
     return (
         customers.WHERE(name == "Alex Rodrigez")
@@ -1901,7 +1902,7 @@ def str_count():
             special_chars="$@!%",
             numbers="123",
         )
-        .CALCULATE( #cases
+        .CALCULATE(  # cases
             count_letter=STRCOUNT(name, char_substring),
             not_in_letter=STRCOUNT(name, char_substring_2),
             count_lastname=STRCOUNT(name, lastname),
@@ -1920,7 +1921,7 @@ def str_count():
             entire_string_match=STRCOUNT(name, name),
             longer_substring=STRCOUNT(lastname, name),
         )
-    ) # end return
+    )  # end return
 
 
 def singular1():
