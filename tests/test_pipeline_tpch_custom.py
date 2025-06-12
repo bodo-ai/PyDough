@@ -18,6 +18,7 @@ from bad_pydough_functions import (
     bad_cross_8,
     bad_cross_9,
     bad_cross_10,
+    bad_cross_11,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -1786,7 +1787,9 @@ from pydough.unqualified import (
                 ),
             ),
             id="simple_cross_5",
-            marks=pytest.mark.skip("TODO: fix decorrelation skip_levels bug"),
+            marks=pytest.mark.skip(
+                "TODO (gh #361): Add user created collections support to PyDough"
+            ),
         ),
         pytest.param(
             (
@@ -2292,6 +2295,12 @@ def test_pipeline_e2e_tpch_custom(
             None,
             "PyDough does yet support aggregations whose arguments mix between subcollection data of the current context and fields of the context itself",
             id="bad_cross_10",
+        ),
+        pytest.param(
+            bad_cross_11,
+            None,
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'customers'",
+            id="bad_cross_11",
         ),
     ],
 )

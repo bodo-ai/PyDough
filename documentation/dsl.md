@@ -1467,41 +1467,69 @@ People.packages.BEST(by=order_date.DESC(), per="packages")
 <!-- TOC --><a name="cross"></a>
 ### CROSS
 
-A PyDough operation to perform `CROSS JOIN` operation between two collections. This operation produces the Cartesian product of all rows from the left and right input collections, combining each row from the left with every row from the right. It's typically used when explicit join keys are not required or when generating combinations between the collections.
+A PyDough operation that performs a `CROSS JOIN` (cartesian product) between two collections by establishing a sub-collection relationship. In `A.CROSS(B)`, `B` becomes a sub-collection of `A`, meaning for every row in `A`, there is an associated collection of all rows in `B`.
+It's typically used when we need to link two collections using a relationship that doesn't exist in the metadata.
 
-**Good Example #1**: Find all combinations of region names.
-
-```py
-%%pydough
-regions.CALCULATE(r1=name).CROSS(regions).CALCULATE(r1, r2=name).ORDER_BY(r1.ASC(), r2.ASC())
-```
-
-**Good Example #2**: Count how many orders were made on the first date that the orders were made.
+**Good Example #1**: List every combination of two different people who live in the same address.
 
 ```py
 %%pydough
-    global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
-    selected_orders = orders.WHERE(
-        order_date == CROSS(global_info).SINGULAR().min_date
-    )
-    return TPCH.CALCULATE(n=COUNT(selected_orders))
+People.CALCULATE(ssn1=ssn, addr1=current_address_id)
+      .CROSS(People)
+      .WHERE((ssn != ssn1) & (current_address_id == addr1))
 ```
 
-**Bad Example #1**: This is invalid because `42` is not a collection.
+**Good Example #2**: List every combination of two different states.
 
 ```py
 %%pydough
-customers.CROSS(42)
+states = Addresses.PARTITION(name="states", by=state)
+states.CALCULATE(state_1=state).CROSS(states)
+      .CALCULATE(state_1, state_2=state)
 ```
 
-**Bad Example #2**: This is invalid because `customers` output name causes a name collision with collection named `customers`.
+**Good Example #3**: For each person, count how many different people share the same first name. 
 
 ```py
 %%pydough
-regions.CALCULATE(customers=COUNT(nations.customers)).CROSS(customers)
+other_people = CROSS(People).WHERE((orig_first_name == first_name) 
+                                    & (orig_ssn != ssn))
+People.CALCULATE(orig_first_name=first_name, orig_ssn=ssn)
+      .CALCULATE(ssn, COUNT(other_people))
 ```
 
-**Bad Example #3**: This is invalid because there's no relation between `suppliers` and `parts`.
+**Good Example #4**: For every person, count how many addresses are in the same zip code as them, and how many people live in that zip code.
+
+```py
+%%pydough
+addr_in_same_zip = CROSS(Addresses.WHERE(zip_code == original_zip))
+People.CALCULATE(original_zip=current_address.zip_code)
+      .CALCULATE(ssn, n_addr=COUNT(addr_in_same_zip), 
+            n_people=COUNT(addr_in_same_zip.current_occupants))
+```
+
+**Bad Example #1**: This is invalid because `Addresses.state` is not a collection.
+
+```py
+%%pydough
+People.CROSS(Addresses.state)
+```
+
+**Bad Example #2**: This is invalid because `People.ssn` is not a collection.
+
+```py
+%%pydough
+People.ssn.CROSS(Packages)
+```
+
+**Bad Example #3**: This is invalid because `Packages` output name causes a name collision with collection named `Packages`.
+
+```py
+%%pydough
+People.CALCULATE(Packages=COUNT(People.packages)).CROSS(Packages)
+```
+
+**Bad Example #4**: This is invalid because there's no relation between `suppliers` and `parts`.
 
 ```py
 %%pydough

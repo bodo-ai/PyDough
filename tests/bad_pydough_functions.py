@@ -366,5 +366,12 @@ def bad_cross_9():
 
 
 def bad_cross_10():
-    # Reason it is bad: Aggregation on Ambiguous column
+    # Reason it is bad: Aggregating on `name` which is a property of regions
+    # instead of one of its subcollections.
     return regions.CROSS(regions).CALCULATE(total=COUNT(name))
+
+
+def bad_cross_11():
+    # Reason it is bad: `customers` is a sub-collection of `nations`,
+    # not `regions`
+    return nations.CROSS(regions).CALCULATE(n=COUNT(customers))

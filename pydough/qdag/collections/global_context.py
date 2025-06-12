@@ -33,6 +33,10 @@ class GlobalContext(PyDoughCollectionQDAG):
         self._graph = graph
         self._collections: dict[str, PyDoughCollectionQDAG] = {}
         self._ancestral_mapping: dict[str, int] = {}
+        # If this collection has an ancestor, inherit its ancestors
+        # and update depths, to preserve sub-collection context.
+        # This ensures that downstream operations have the correct hierarchy.
+        # Also, check for name conflicts with existing collections
         if ancestor is not None:
             for name, level in ancestor.ancestral_mapping.items():
                 if name in graph.get_collection_names():
