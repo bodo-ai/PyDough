@@ -155,9 +155,9 @@ class HybridSyncretizer:
 
         Returns:
             A tuple where:
-            - The first element is a boolean indicating whether 
+            - The first element is a boolean indicating whether
                the two children can be potentially syncretized.
-            - The second element is the number of additional levels in the 
+            - The second element is the number of additional levels in the
               suffix of the extension child that are not present in the base child.
         """
         prefix_levels_up: int = 0
@@ -179,7 +179,7 @@ class HybridSyncretizer:
         Inserts a filter into the pipeline of the tree containing the base and
         extension children so that the syncretized pair computes the COUNT of
         the extension child and the parent can perform a filter on that COUNT
-        (> 0 for SEMI, == 0 for ANTI). 
+        (> 0 for SEMI, == 0 for ANTI).
         This is done when syncretizing a child
         that only allows matches onto a base child that is an aggregation,
         since the extension child must not filter rows of the base child lest
@@ -249,8 +249,8 @@ class HybridSyncretizer:
     ) -> None:
         """
         Runs the syncretization logic between two children of a hybrid tree that
-        are confirmed to be syncretizable, where both the base the extension 
-        child are aggregations. This is only possible when the 
+        are confirmed to be syncretizable, where both the base the extension
+        child are aggregations. This is only possible when the
         extension's aggregations can be split into two rounds of aggregation.
 
         ```
