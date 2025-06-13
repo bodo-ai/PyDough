@@ -406,17 +406,22 @@ def is_snowflake_env_set() -> bool:
 
 
 @pytest.fixture(scope="session")
-def get_snowflake_connection(db, schema):
+def get_snowflake_connection():
     """
     Returns Snowflake connection for the given database and schema.
-    Args:
-        db (str): The name of the Snowflake database to connect to.
-        schema (str): The name of the schema within the database.
-    Returns:
-        DatabaseConnection : A connection to the Snowflake database.
     """
 
     def _connect(db, schema) -> DatabaseConnection | None:
+        """
+        Connect to a Snowflake database with the given database and schema.
+        Args:
+            db (str): The name of the Snowflake database to connect to.
+            schema (str): The name of the schema within the database.
+
+        Returns:
+            DatabaseConnection | None: A connection to the Snowflake database.
+
+        """
         if not is_snowflake_env_set():
             pytest.skip("Skipping Snowflake tests: environment variables not set.")
             return None
