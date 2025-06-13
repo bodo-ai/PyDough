@@ -1,23 +1,21 @@
-WITH _s1 AS (
+WITH _t AS (
   SELECT
-    AVG(l_quantity) AS agg_0,
-    l_partkey AS part_key
-  FROM tpch.lineitem
-  GROUP BY
-    l_partkey
-), _t0 AS (
-  SELECT
-    SUM(lineitem.l_extendedprice) AS agg_0
+    lineitem.l_extendedprice AS extended_price,
+    lineitem.l_quantity AS quantity,
+    AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey) AS _w
   FROM tpch.part AS part
-  LEFT JOIN _s1 AS _s1
-    ON _s1.part_key = part.p_partkey
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey
-    AND lineitem.l_quantity < (
-      0.2 * _s1.agg_0
-    )
   WHERE
     part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
+), _t0 AS (
+  SELECT
+    SUM(extended_price) AS agg_0
+  FROM _t
+  WHERE
+    quantity < (
+      0.2 * _w
+    )
 )
 SELECT
   CAST(COALESCE(agg_0, 0) AS REAL) / 7.0 AS AVG_YEARLY

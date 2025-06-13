@@ -3,8 +3,8 @@ WITH _t1 AS (
     SUM(sales.sale_price) AS agg_0,
     COUNT(DISTINCT sales.customer_id) AS agg_1,
     customers.state
-  FROM main.customers AS customers
-  JOIN main.sales AS sales
+  FROM main.sales AS sales
+  JOIN main.customers AS customers
     ON customers._id = sales.customer_id
   GROUP BY
     customers.state

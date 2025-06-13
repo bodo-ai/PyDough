@@ -28,7 +28,16 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
+import pandas as pd
+import pytest
+
+import pydough
 import pydough.pydough_operators as pydop
+from pydough import init_pydough_context, to_df, to_sql
+from pydough.configs import PyDoughConfigs
+from pydough.conversion import convert_ast_to_relational
+from pydough.database_connectors import DatabaseContext
+from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
@@ -51,11 +60,13 @@ from pydough.relational import (
     ExpressionSortInfo,
     LiteralExpression,
     RelationalExpression,
+    RelationalRoot,
     Scan,
 )
 from pydough.types import PyDoughType, UnknownType
 from pydough.unqualified import (
     UnqualifiedNode,
+    qualify_node,
 )
 
 # Type alias for a function that takes in a string and generates metadata
@@ -893,6 +904,25 @@ def make_relational_ordering(
     return ExpressionSortInfo(expr, ascending, nulls_first)
 
 
+def transform_and_exec_pydough(
+    pydough_impl: Callable[[], UnqualifiedNode],
+    graph: GraphMetadata,
+) -> UnqualifiedNode:
+    """
+    Obtains the unqualified node from a PyDough function by invoking the
+    decorator to transform it, then calling the transformed function.
+
+    Args:
+        `pydough_impl`: The PyDough function to be transformed and executed.
+        `graph`: The metadata being used.
+
+    Returns:
+        The unqualified node created by running the transformed version of
+        `pydough_impl`.
+    """
+    return init_pydough_context(graph)(pydough_impl)()
+
+
 @dataclass
 class PyDoughSQLComparisonTest:
     """
@@ -904,7 +934,6 @@ class PyDoughSQLComparisonTest:
     pydough_function: Callable[[], UnqualifiedNode]
     """
     Function that returns the PyDough code evaluated by the unit test.
-
     """
 
     graph_name: str
@@ -923,8 +952,313 @@ class PyDoughSQLComparisonTest:
     The name of the unit test
     """
 
+    columns: dict[str, str] | list[str] | None = None
+    """
+    If provided, passed in as the columns argument to the `to_sql` or `to_df`
+    function.
+    """
+
     order_sensitive: bool = False
     """
     If False, the resulting data frames will be sorted so the order
     of the results is not taken into account
     """
+
+    fix_column_names: bool = True
+    """
+    If True, ignore whatever column names are in the output and just use the
+    same column names as in the reference solution.
+    """
+
+    def run_e2e_test(
+        self,
+        fetcher: graph_fetcher,
+        database: DatabaseContext,
+        config: PyDoughConfigs | None = None,
+    ):
+        """
+        Runs an end-to-end test using the data in the SQL comparison test,
+        comparing the result of the PyDough code against the reference solution
+        derived by executing the SQL query.
+
+        Args:
+            `fetcher`: The function that takes in the name of the graph used
+            by the test and fetches the graph metadata.
+            `database`: The database context to use for executing SQL.
+            `config`: The PyDough configuration to use for the test, if any.
+        """
+        # Obtain the graph and the unqualified node
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+
+        # Obtain the DataFrame result from the PyDough code
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        if self.columns is not None:
+            call_kwargs["columns"] = self.columns
+        result: pd.DataFrame = to_df(root, **call_kwargs)
+
+        # Obtain the reference solution by executing the refsol SQL query
+        sql_text: str = self.sql_function()
+        refsol: pd.DataFrame = database.connection.execute_query_df(sql_text)
+
+        # If the query does not care about column names, update the answer to use
+        # the column names in the refsol.
+        if self.fix_column_names:
+            assert len(result.columns) == len(refsol.columns)
+            result.columns = refsol.columns
+
+        # If the query is not order-sensitive, sort the DataFrames before comparison
+        if not self.order_sensitive:
+            result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
+            refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
+
+        # Perform the comparison between the result and the reference solution
+        pd.testing.assert_frame_equal(result, refsol)
+
+
+@dataclass
+class PyDoughPandasTest:
+    """
+    The data packet encapsulating the information to run a PyDough e2e test
+    that compares the result against a reference answer derived by running
+    a function that returns a Pandas DataFrame. The dataclass contains the
+    following fields:
+    - `pydough_function`: the function that returns the PyDough code evaluated
+      by the unit test.
+    - `graph_name`: the name of the graph that the PyDough code will use.
+    - `pd_function`: the function that returns the Pandas DataFrame that should
+      be used as the reference solution.
+    - `test_name`: the name of the unit test.
+    - `columns` (optional): if provided, passed in as the columns argument to
+      the `to_sql` or `to_df` function.
+    - `order_sensitive` (optional): if False, the resulting data frames will be
+      sorted so the order of the results is not taken into account.
+    - `fix_column_names` (optional): if True, ignore whatever column names are
+      in the output and just use the same column names as in the reference
+      solution.
+    """
+
+    pydough_function: Callable[[], UnqualifiedNode]
+    """
+    Function that returns the PyDough code evaluated by the unit test.
+    """
+
+    graph_name: str
+    """
+    The graph that the PyDough code will use.
+    """
+
+    pd_function: Callable[[], pd.DataFrame]
+    """
+    Function that returns the SQL code that should be executed on the database
+    to derive the reference solution.
+    """
+
+    test_name: str
+    """
+    The name of the unit test
+    """
+
+    columns: dict[str, str] | list[str] | None = None
+    """
+    If provided, passed in as the columns argument to the `to_sql` or `to_df`
+    function.
+    """
+
+    order_sensitive: bool = False
+    """
+    If False, the resulting data frames will be sorted so the order
+    of the results is not taken into account
+    """
+
+    fix_column_names: bool = True
+    """
+    If True, ignore whatever column names are in the output and just use the
+    same column names as in the reference solution.
+    """
+
+    def run_relational_test(
+        self,
+        fetcher: graph_fetcher,
+        file_path: str,
+        update: bool,
+        config: PyDoughConfigs | None = None,
+    ) -> None:
+        """
+        Runs a test on the relational plan code generated by the PyDough code,
+        comparing the generated relational plan against the expected SQL stored
+        in the reference file.
+
+        Args:
+            `fetcher`: The function that takes in the name of the graph used
+            by the test and fetches the graph metadata.
+            `file_path`: The path to the file containing the expected SQL text.
+            `update`: If True, updates the file with the generated relational
+            plan text, otherwise compares the generated relational plan text
+            against the expected relational plan text in the file.
+            `config`: The PyDough configuration to use for the test, if any.
+        """
+        # Obtain the graph and the unqualified node
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+
+        # Run the PyDough code through the pipeline up until it is converted to
+        # a relational plan.
+        if config is None:
+            config = pydough.active_session.config
+        qualified: PyDoughQDAG = qualify_node(root, graph, config)
+        assert isinstance(qualified, PyDoughCollectionQDAG), (
+            "Expected qualified answer to be a collection, not an expression"
+        )
+        relational: RelationalRoot = convert_ast_to_relational(
+            qualified, _load_column_selection({"columns": self.columns}), config
+        )
+
+        # Either update the reference solution, or compare the generated
+        # relational plan text against it.
+        if update:
+            with open(file_path, "w") as f:
+                f.write(relational.to_tree_string() + "\n")
+        else:
+            with open(file_path) as f:
+                expected_relational_string: str = f.read()
+            assert relational.to_tree_string() == expected_relational_string.strip(), (
+                "Mismatch between tree string representation of relational node and expected Relational tree string"
+            )
+
+    def run_sql_test(
+        self,
+        fetcher: graph_fetcher,
+        file_path: str,
+        update: bool,
+        database: DatabaseContext,
+        config: PyDoughConfigs | None = None,
+    ) -> None:
+        """
+        Runs a test on the SQL code generated by the PyDough code,
+        comparing the generated SQL against the expected SQL stored in
+        the reference file.
+
+        Args:
+            `fetcher`: The function that takes in the name of the graph used
+            by the test and fetches the graph metadata.
+            `file_path`: The path to the file containing the expected SQL text.
+            `update`: If True, updates the file with the generated SQL text,
+            otherwise compares the generated SQL text against the expected SQL
+            text in the file.
+            `database`: The database context to determine what dialect of SQL
+            to use when generating the SQL test.
+            `config`: The PyDough configuration to use for the test, if any.
+        """
+        # Obtain the graph and the unqualified node
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+
+        # Convert the PyDough code to SQL text
+        call_kwargs: dict = {"metadata": graph, "database": database}
+        if config is not None:
+            call_kwargs["config"] = config
+        if self.columns is not None:
+            call_kwargs["columns"] = self.columns
+        sql_text: str = to_sql(root, **call_kwargs)
+
+        # Either update the reference solution, or compare the generated sql
+        # text against it.
+        if update:
+            with open(file_path, "w") as f:
+                f.write(sql_text + "\n")
+        else:
+            with open(file_path) as f:
+                expected_sql_text: str = f.read()
+            assert sql_text == expected_sql_text.strip(), (
+                "Mismatch between SQL text produced expected SQL text"
+            )
+
+    def run_e2e_test(
+        self,
+        fetcher: graph_fetcher,
+        database: DatabaseContext,
+        config: PyDoughConfigs | None = None,
+        display_sql: bool = False,
+    ):
+        """
+        Runs an end-to-end test using the data in the SQL comparison test,
+        comparing the result of the PyDough code against the reference solution
+        stored in pd_function.
+
+        Args:
+            `fetcher`: The function that takes in the name of the graph used
+            by the test and fetches the graph metadata.
+            `database`: The database context to use for executing SQL.
+            `config`: The PyDough configuration to use for the test, if any.
+            `display_sql`: If True, displays the SQL generated by PyDough.
+        """
+        # Obtain the graph and the unqualified node
+        graph: GraphMetadata = fetcher(self.graph_name)
+        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+
+        # Obtain the DataFrame result from the PyDough code
+        call_kwargs: dict = {
+            "metadata": graph,
+            "database": database,
+            "display_sql": display_sql,
+        }
+        if config is not None:
+            call_kwargs["config"] = config
+        if self.columns is not None:
+            call_kwargs["columns"] = self.columns
+        result: pd.DataFrame = to_df(root, **call_kwargs)
+
+        # Extract the reference solution from the function
+        refsol: pd.DataFrame = self.pd_function()
+
+        # If the query does not care about column names, update the answer to use
+        # the column names in the refsol.
+        if self.fix_column_names:
+            assert len(result.columns) == len(refsol.columns)
+            result.columns = refsol.columns
+
+        # If the query is not order-sensitive, sort the DataFrames before comparison
+        if not self.order_sensitive:
+            result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
+            refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
+
+        # Perform the comparison between the result and the reference solution
+        pd.testing.assert_frame_equal(result, refsol)
+
+
+def run_e2e_error_test(
+    pydough_impl: Callable[[], UnqualifiedNode],
+    error_message: str,
+    graph: GraphMetadata,
+    columns: dict[str, str] | list[str] | None = None,
+    database: DatabaseContext | None = None,
+    config: PyDoughConfigs | None = None,
+) -> None:
+    """
+    Runs an end-to-end test that expects an error to be raised when
+    executing the PyDough code. The error message is checked against the
+    provided `error_message`.
+
+    Args:
+        `pydough_impl`: The PyDough function to be tested.
+        `error_message`: The error message that is expected to be raised.
+        `graph`: The metadata graph to use for the test.
+        `columns`: The columns argument to use for the test, if any.
+        `database`: The database context to use for the test, if any.
+        `config`: The PyDough configuration to use for the test, if any.
+    """
+    with pytest.raises(Exception, match=error_message):
+        root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph)
+        call_kwargs: dict = {}
+        if graph is not None:
+            call_kwargs["metadata"] = graph
+        if config is not None:
+            call_kwargs["config"] = config
+        if database is not None:
+            call_kwargs["database"] = database
+        if columns is not None:
+            call_kwargs["columns"] = columns
+        to_df(root, **call_kwargs)

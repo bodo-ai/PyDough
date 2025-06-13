@@ -4,9 +4,10 @@ WITH _s3 AS (
     sbcustomer.sbcustid AS _id
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
-    ON EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
+    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
+  WHERE
+    EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
     AND EXTRACT(YEAR FROM sbcustomer.sbcustjoindate) = EXTRACT(YEAR FROM sbtransaction.sbtxdatetime)
-    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
     sbcustomer.sbcustid
 )

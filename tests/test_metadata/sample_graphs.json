@@ -715,7 +715,7 @@
         "parent collection": "suppliers",
         "child collection": "supply_records",
         "singular": false,
-        "always matches": false,
+        "always matches": true,
         "keys": {"key": ["supplier_key"]},
         "description": "The records indicating which parts the supplier supplies",
         "synonyms": ["product catalog", "inventory", "components supplied"]

@@ -3,12 +3,6 @@ Unit tests the PyDough Relational tree nodes.
 """
 
 import pytest
-from test_utils import (
-    build_simple_scan,
-    make_relational_column_reference,
-    make_relational_literal,
-    make_relational_ordering,
-)
 
 from pydough.pydough_operators import EQU, LOWER, SUM
 from pydough.relational import (
@@ -27,6 +21,12 @@ from pydough.relational import (
     Scan,
 )
 from pydough.types import BooleanType, NumericType, StringType
+from tests.testing_utilities import (
+    build_simple_scan,
+    make_relational_column_reference,
+    make_relational_literal,
+    make_relational_ordering,
+)
 
 
 def test_scan_inputs() -> None:
