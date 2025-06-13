@@ -1,0 +1,66 @@
+name: Run SF Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  get-msg:
+    name: Get Commit Message
+    runs-on: ubuntu-latest
+    outputs:
+      commitMsg: ${{ steps.get_msg.outputs.commitMsg }}
+    steps:
+      # Fetch the branch for the history only
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: .
+      - name: Get Commit Message
+        id: get_msg
+        run: |
+          set -xe pipefail
+          echo "commitMsg=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
+
+  sf-tests:
+    name: Snowflake Tests (Python ${{ matrix.python-version }})
+    needs: [get-msg]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(needs.get-msg.outputs.commitMsg, '[run sf]')
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    env:
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+      SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Install dependencies
+        run: |
+          pip install snowflake-connector-python
+          #HA: Is this needed?
+          pip install snowflake-sqlalchemy
+          pip install pytest
+
+      - name: Run Snowflake Tests
+        run: |
+          uv run --python ${{ matrix.python-version }} pytest -m snowflake tests/

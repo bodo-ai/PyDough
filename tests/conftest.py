@@ -217,6 +217,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        # pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -389,3 +390,72 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+SF_ENVS = ["SF_USERNAME", "SF_PASSWORD", "SF_ACCOUNT"]
+
+
+def is_snowflake_env_set() -> bool:
+    """
+    Check if the Snowflake environment variables are set.
+
+    Returns:
+        bool: True if all required Snowflake environment variables are set, False otherwise.
+    """
+    return all(os.getenv(env) for env in SF_ENVS)
+
+
+@pytest.fixture(scope="session")
+def get_snowflake_connection():
+    """
+    Returns Snowflake connection for the given database and schema.
+    """
+
+    def _connect(db, schema) -> DatabaseConnection | None:
+        """
+        Connect to a Snowflake database with the given database and schema.
+        Args:
+            db (str): The name of the Snowflake database to connect to.
+            schema (str): The name of the schema within the database.
+
+        Returns:
+            DatabaseConnection | None: A connection to the Snowflake database.
+
+        """
+        if not is_snowflake_env_set():
+            pytest.skip("Skipping Snowflake tests: environment variables not set.")
+            return None
+        try:
+            import snowflake.connector
+        except ImportError:
+            pytest.skip(
+                "Skipping Snowflake tests: snowflake-connector-python not installed."
+            )
+            return None
+
+        connection = snowflake.connector.connect(
+            user=os.getenv("SF_USERNAME"),
+            password=os.getenv("SF_PASSWORD"),
+            account=os.getenv("SF_ACCOUNT"),
+            warehouse="DEMO_WH",
+            database=db,
+            schema=schema,
+        )
+        return DatabaseConnection(connection)
+
+    return _connect
+
+
+@pytest.fixture
+def sf_tpch_db_context(get_snowflake_connection) -> DatabaseContext:
+    """
+    Return a DatabaseContext for the Snowflake TPCH database.
+    """
+    sf_tpch_db = "TPCH"
+    sf_tpch_schema = "PUBLIC"
+    if not is_snowflake_env_set():
+        pytest.skip("Skipping Snowflake tests: environment variables not set.")
+    connection: DatabaseConnection = get_snowflake_connection(
+        sf_tpch_db, sf_tpch_schema
+    )
+    return DatabaseContext(connection, DatabaseDialect.SNOWFLAKE)
