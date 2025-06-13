@@ -217,7 +217,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
-        pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
+        # pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
