@@ -361,9 +361,10 @@ class BaseTransformBindings:
         END
 
         Args:
-            args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after they were
-            converted to SQLGlot expressions.
-            types (list[PyDoughType]): The PyDough types of the arguments to `STRCOUNT`.
+            args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after
+            they were converted to SQLGlot expressions.
+            types (list[PyDoughType]): The PyDough types of the arguments to
+            `STRCOUNT`.
 
         Returns:
             SQLGlotExpression: The SQLGlot expression matching
