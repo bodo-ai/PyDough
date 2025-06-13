@@ -53,6 +53,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     sign,
     simple_week_sampler,
     step_slicing,
+    str_count,
     strip,
     time_threshold_reached,
     transaction_week_sampler,
@@ -1068,6 +1069,36 @@ def get_day_of_week(
                 "replace",
             ),
             id="replace",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                str_count,
+                "Broker",
+                # Answer
+                lambda: pd.DataFrame(
+                    {
+                        "count_letter": [2],
+                        "not_in_letter": [0],
+                        "count_lastname": [1],
+                        "count_sensitive_lastname": [0],
+                        "count_empty": [0],
+                        "all_empty": [0],
+                        "first_empty": [0],
+                        "count_numbers": [1],
+                        "count_char_numbers": [2],
+                        "no_occurence": [0],
+                        "count_spaces": [1],
+                        "space_arround": [3],
+                        "count_special_chars": [1],
+                        "no_overlapping": [2],
+                        "no_overlapping_2": [1],
+                        "entire_string_match": [1],
+                        "longer_substring": [0],
+                    }
+                ),
+                "str_count",
+            ),
+            id="str_count",
         ),
         pytest.param(
             PyDoughPandasTest(

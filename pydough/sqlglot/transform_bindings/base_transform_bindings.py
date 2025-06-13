@@ -190,6 +190,8 @@ class BaseTransformBindings:
                 return self.convert_strip(args, types)
             case pydop.REPLACE:
                 return self.convert_replace(args, types)
+            case pydop.STRCOUNT:
+                return self.convert_str_count(args, types)
             case pydop.SIGN:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
@@ -342,6 +344,88 @@ class BaseTransformBindings:
             # If only two arguments are provided, the third argument is set to an empty string
             args.append(sqlglot_expressions.Literal.string(""))
         return sqlglot_expressions.Anonymous(this="REPLACE", expressions=args)
+
+    def convert_str_count(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """Convert a `STRCOUNT` call expression to a SQLGlot expression.
+        It counts how many times the string Y appears in the string X.
+
+        STRCOUNT(X, Y) =>
+        CASE
+            WHEN LENGTH(Y) = 0 THEN 0
+            ELSE
+            CAST((LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y), AS INTEGER)
+        END
+
+        Args:
+            args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after
+            they were converted to SQLGlot expressions.
+            types (list[PyDoughType]): The PyDough types of the arguments to
+            `STRCOUNT`.
+
+        Returns:
+            SQLGlotExpression: The SQLGlot expression matching
+            the functionality of `STRCOUNT`.
+            In Python, this is equivalent to `X.count(Y)`.
+        """
+        assert len(args) == 2
+
+        string: SQLGlotExpression = args[0]
+        substring_count: SQLGlotExpression = args[1]
+
+        # eliminate the substring of the string: REPLACE(X, Y, "")
+        string_replaced: SQLGlotExpression = self.convert_replace(
+            [string, substring_count], types
+        )
+
+        # The length of the first string given: LENGH(X)
+        len_string: SQLGlotExpression = sqlglot_expressions.Length(this=string)
+
+        # The length of the replaced string: LENGH(REPLACE(X, Y, ""))
+        len_string_replaced: SQLGlotExpression = sqlglot_expressions.Length(
+            this=string_replaced
+        )
+
+        # The length of the Y string: LENGTH(Y)
+        len_substring_count: SQLGlotExpression = sqlglot_expressions.Length(
+            this=substring_count
+        )
+
+        # The length difference between string X and
+        # replaced string: REPLACE(X, Y, "")
+        difference: SQLGlotExpression = sqlglot_expressions.Sub(
+            this=len_string, expression=len_string_replaced
+        )
+
+        # Take in count if LENGH(Y) > 1 dividing the difference by Y's length:
+        # LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
+        quotient: SQLGlotExpression = sqlglot_expressions.Div(
+            this=difference, expression=len_substring_count
+        )
+
+        # Cast to Interger:
+        # CAST((LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y), AS INTEGER)
+        casted: SQLGlotExpression = sqlglot_expressions.Cast(
+            this=quotient, to=sqlglot_expressions.DataType.build("BIGINT")
+        )
+
+        # CASE when LENGH(Y) == 0 THEN 0 else casted
+        answer: SQLGlotExpression = (
+            sqlglot_expressions.Case()
+            .when(
+                sqlglot_expressions.EQ(
+                    this=len_substring_count,
+                    expression=sqlglot_expressions.Literal.number(0),
+                ),
+                sqlglot_expressions.Literal.number(0),
+            )
+            .else_(casted)
+        )
+
+        return answer
 
     def convert_startswith(
         self,
