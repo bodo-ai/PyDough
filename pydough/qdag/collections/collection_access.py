@@ -44,6 +44,9 @@ class CollectionAccess(ChildAccess):
         self._all_property_names: set[str] = set()
         self._calc_property_names: set[str] = set()
         self._calc_property_order: dict[str, int] = {}
+        # Build the current node's ancestral mapping by copying the ancestor's
+        # mapping and incrementing each level by 1 to reflect
+        # the added depth of this node.
         self._ancestral_mapping: dict[str, int] = {
             name: level + 1 for name, level in ancestor.ancestral_mapping.items()
         }
