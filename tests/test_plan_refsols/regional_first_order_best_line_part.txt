@@ -5,7 +5,7 @@ ROOT(columns=[('region_name', name), ('part_name', name_9)], orderings=[(name):a
    FILTER(condition=RANKING(args=[], partition=[region_key], order=[(quantity):desc_first, (line_number):asc_last], allow_ties=False) == 1:numeric, columns={'part_key': part_key, 'region_key': region_key})
     JOIN(condition=t0.key_5 == t1.order_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'line_number': t1.line_number, 'part_key': t1.part_key, 'quantity': t1.quantity, 'region_key': t0.region_key})
      FILTER(condition=RANKING(args=[], partition=[region_key], order=[(order_date):asc_last, (key_5):asc_last], allow_ties=False) == 1:numeric, columns={'key_5': key_5, 'region_key': region_key})
-      JOIN(condition=t0.key_2 == t1.customer_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'key_5': t1.key, 'order_date': t1.order_date, 'region_key': t0.region_key})
+      JOIN(condition=t0.key_2 == t1.customer_key, type=INNER, cardinality=PLURAL_FILTER, columns={'key_5': t1.key, 'order_date': t1.order_date, 'region_key': t0.region_key})
        JOIN(condition=t0.key == t1.nation_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'key_2': t1.key, 'region_key': t0.region_key})
         SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'region_key': n_regionkey})
         SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'nation_key': c_nationkey})

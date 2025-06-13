@@ -19,7 +19,7 @@ ROOT(columns=[('country_name', country_name), ('made_ir', made_ir), ('sold_ir', 
    AGGREGATE(keys={'country_id': country_id}, aggregations={'agg_5': COUNT(), 'agg_8': SUM(expr_7)})
     PROJECT(columns={'country_id': country_id, 'expr_7': agg_6})
      JOIN(condition=t0._id_1 == t1.device_id, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_6': t1.agg_6, 'country_id': t0.country_id})
-      JOIN(condition=t0._id == t1.user_id, type=INNER, cardinality=PLURAL_ACCESS, columns={'_id_1': t1._id, 'country_id': t0.country_id})
+      JOIN(condition=t0._id == t1.user_id, type=INNER, cardinality=PLURAL_FILTER, columns={'_id_1': t1._id, 'country_id': t0.country_id})
        SCAN(table=main.USERS, columns={'_id': us_id, 'country_id': us_country_id})
        SCAN(table=main.DEVICES, columns={'_id': de_id, 'user_id': de_owner_id})
       AGGREGATE(keys={'device_id': device_id}, aggregations={'agg_6': COUNT()})

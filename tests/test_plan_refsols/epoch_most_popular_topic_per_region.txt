@@ -2,7 +2,7 @@ ROOT(columns=[('region', region), ('event_type', event_type), ('n_searches', n_s
  FILTER(condition=RANKING(args=[], partition=[region], order=[(n_searches):desc_first], allow_ties=False) == 1:numeric, columns={'event_type': event_type, 'n_searches': n_searches, 'region': region})
   AGGREGATE(keys={'event_type': event_type, 'region': region}, aggregations={'n_searches': NDISTINCT(search_id)})
    JOIN(condition=t0.user_id == t1.user_id_4_0_1, type=INNER, cardinality=SINGULAR_ACCESS, columns={'event_type': t0.event_type, 'region': t1.region, 'search_id': t0.search_id})
-    JOIN(condition=CONTAINS(LOWER(t1.search_string), LOWER(t0.name)), type=INNER, cardinality=PLURAL_ACCESS, columns={'event_type': t0.event_type, 'search_id': t1.search_id, 'user_id': t1.user_id})
+    JOIN(condition=CONTAINS(LOWER(t1.search_string), LOWER(t0.name)), type=INNER, cardinality=PLURAL_FILTER, columns={'event_type': t0.event_type, 'search_id': t1.search_id, 'user_id': t1.user_id})
      SCAN(table=EVENTS, columns={'event_type': ev_typ, 'name': ev_name})
      SCAN(table=SEARCHES, columns={'search_id': search_id, 'search_string': search_string, 'user_id': search_user_id})
     SCAN(table=USERS, columns={'region': user_region, 'user_id_4_0_1': user_id})

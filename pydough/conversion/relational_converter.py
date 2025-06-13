@@ -821,6 +821,11 @@ class RelTranslation:
             if collection_access.subcollection_property.is_plural
             else JoinCardinality.SINGULAR_ACCESS
         )
+        cardinality = (
+            cardinality
+            if collection_access.subcollection_property.always_matches
+            else cardinality.add_filter()
+        )
 
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         join_cond: HybridExpr | None = None

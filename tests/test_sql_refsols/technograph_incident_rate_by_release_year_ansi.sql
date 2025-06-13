@@ -19,19 +19,15 @@ WITH _s0 AS (
     ON _s0.product_id = _t4._id
   GROUP BY
     EXTRACT(YEAR FROM _t4.release_date)
-), _s5 AS (
-  SELECT DISTINCT
-    in_device_id AS device_id
-  FROM main.incidents
 ), _s7 AS (
   SELECT
-    SUM(1) AS agg_0,
+    COUNT() AS agg_0,
     EXTRACT(YEAR FROM _t6.release_date) AS release_year
   FROM main.devices AS devices
   JOIN _t4 AS _t6
     ON _t6._id = devices.de_product_id
-  JOIN _s5 AS _s5
-    ON _s5.device_id = devices.de_id
+  JOIN main.incidents AS incidents
+    ON devices.de_id = incidents.in_device_id
   GROUP BY
     EXTRACT(YEAR FROM _t6.release_date)
 )

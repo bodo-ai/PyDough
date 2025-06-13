@@ -4,7 +4,7 @@ ROOT(columns=[('customer_name', customer_name), ('order_key', order_key), ('days
    JOIN(condition=t0.customer_key == t1.key, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'customer_name': t1.customer_name, 'key': t0.key, 'order_date': t0.order_date, 'order_date_8': t1.order_date})
     SCAN(table=tpch.ORDERS, columns={'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
     FILTER(condition=RANKING(args=[], partition=[customer_key], order=[(order_date):asc_last, (key_5):asc_last], allow_ties=False) == 1:numeric, columns={'customer_name': customer_name, 'key': key, 'order_date': order_date})
-     JOIN(condition=t0.key == t1.customer_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'customer_key': t1.customer_key, 'customer_name': t0.customer_name, 'key': t0.key, 'key_5': t1.key, 'order_date': t1.order_date})
+     JOIN(condition=t0.key == t1.customer_key, type=INNER, cardinality=PLURAL_FILTER, columns={'customer_key': t1.customer_key, 'customer_name': t0.customer_name, 'key': t0.key, 'key_5': t1.key, 'order_date': t1.order_date})
       JOIN(condition=t0.nation_key == t1.key_2_0, type=INNER, cardinality=SINGULAR_FILTER, columns={'customer_name': t0.customer_name, 'key': t0.key})
        SCAN(table=tpch.CUSTOMER, columns={'customer_name': c_name, 'key': c_custkey, 'nation_key': c_nationkey})
        FILTER(condition=name == 'VIETNAM':string, columns={'key_2_0': key})
