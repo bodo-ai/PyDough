@@ -65,7 +65,7 @@ class HybridDecorrelater:
             correlated child, or without any of its descendants. The second
             entry is the number of ancestor layers that should be skipped due
             to the PARTITION edge case. The third entry is how many operators
-            in hte pipeline were copied over from the root.
+            in the pipeline were copied over from the root.
         """
         if isinstance(hybrid.pipeline[0], HybridPartition) and child_idx == 0:
             # Special case: if the correlated child is the data argument of a
@@ -266,7 +266,9 @@ class HybridDecorrelater:
                         operation.condition, old_parent, child_height, correl_level
                     )
             # Repeat the process on the ancestor until either loop guard
-            # condition is no longer True.
+            # condition is no longer True. Only update the child height if we
+            # are still making steps from the original tree, as opposed to from
+            # inside a nested child.
             level = level.parent
             if top_level:
                 child_height -= 1

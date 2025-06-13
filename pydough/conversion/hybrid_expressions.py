@@ -150,7 +150,7 @@ class HybridExpr(ABC):
     def has_correlated_window_function(self, levels: int) -> bool:
         """
         Returns whether this expression contains any window functions
-        with correlates with at least a certain number of levels. A window
+        that correlates with at least a certain number of levels. A window
         function without any partition arguments is also considered correlated.
 
         Args:
@@ -171,9 +171,8 @@ class HybridExpr(ABC):
 
     def condition_maintains_existence(self) -> bool:
         """
-        Returns whether this expression, when treated as a filter, is
-        guaranteed to maintain the `always_exists` property of the hybrid
-        tree containing the filter.
+        Returns whether this expression preserves the `always_exists` property
+        when used as a filter.
         """
         return False
 

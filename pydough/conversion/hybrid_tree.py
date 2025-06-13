@@ -246,12 +246,11 @@ class HybridTree:
 
     def add_operation(self, operation: HybridOperation) -> None:
         """
-        Appends a new hybrid operation to the end of the pipeline of the
-        hybrid tree. If the operation is affected by whether a child that
-        filters the current level exists, the blocking index of the tree is
-        updated to the index of the operation in the pipeline since any
-        subsequent child accesses that filter the current level must occur
-        after this operation.
+        Appends a new hybrid operation to the end of the hybrid tree's pipeline.
+        If the operation depends on whether a child filters the current level,
+        the tree's blocking index is updated to this operation's index.
+        This ensures that any child operations filtering the current level
+        are executed only after this one.
 
         Args:
             `operation`: the hybrid operation to be added to the pipeline.
@@ -431,6 +430,49 @@ class HybridTree:
             levels
         )
 
+    def is_same_child(self, child_idx: int, new_tree: "HybridTree") -> bool:
+        """
+        Returns whether the hybrid tree specified by `new_tree` is the same as
+        the child specified by `child_idx` in the current hybrid tree, meaning
+        that instead of inserting `new_tree` as a child of self, it is
+        potentially possible to just reuse the existing child.
+
+        Args:
+            `child_idx`: the index of the child in the current hybrid tree.
+            `new_tree`: the new hybrid tree to be compared against the child.
+
+        Returns:
+            True if the child at `child_idx` is the same as `new_tree`, False
+            otherwise.
+        """
+        existing_connection: HybridConnection = self.children[child_idx]
+        return (
+            new_tree == existing_connection.subtree
+            and (new_tree.join_keys, new_tree.general_join_condition)
+            == (
+                existing_connection.subtree.join_keys,
+                existing_connection.subtree.general_join_condition,
+            )
+        ) or (
+            child_idx == 0
+            and isinstance(self.pipeline[0], HybridPartition)
+            and (new_tree.parent is None)
+            and all(
+                operation in existing_connection.subtree.pipeline
+                for operation in new_tree.pipeline[1:]
+            )
+            and all(
+                grandchild in existing_connection.subtree.children
+                for grandchild in new_tree.children
+            )
+            and all(
+                (c1.subtree, c1.connection_type) == (c2.subtree, c2.connection_type)
+                for c1, c2 in zip(
+                    new_tree.children, existing_connection.subtree.children
+                )
+            )
+        )
+
     def add_child(
         self,
         child: "HybridTree",
@@ -464,32 +506,9 @@ class HybridTree:
         is_singular: bool = child.is_singular()
         always_exists: bool = child.always_exists()
         for idx, existing_connection in enumerate(self.children):
-            if (
-                child == existing_connection.subtree
-                and (child.join_keys, child.general_join_condition)
-                == (
-                    existing_connection.subtree.join_keys,
-                    existing_connection.subtree.general_join_condition,
-                )
-            ) or (
-                idx == 0
-                and isinstance(self.pipeline[0], HybridPartition)
-                and (child.parent is None)
-                and all(
-                    operation in existing_connection.subtree.pipeline
-                    for operation in child.pipeline[1:]
-                )
-                and all(
-                    grandchild in existing_connection.subtree.children
-                    for grandchild in child.children
-                )
-                and all(
-                    (c1.subtree, c1.connection_type) == (c2.subtree, c2.connection_type)
-                    for c1, c2 in zip(
-                        child.children, existing_connection.subtree.children
-                    )
-                )
-            ):
+            # Identify whether the child is the same as an existing one, and
+            # therefore the existing one can potentially be reused.
+            if self.is_same_child(idx, child):
                 # Skip if re-using the child would break the min/max bounds and
                 # have filtering issues.
                 if min_steps >= existing_connection.max_steps:
@@ -499,11 +518,13 @@ class HybridTree:
                         if not (
                             always_exists or existing_connection.connection_type.is_semi
                         ):
-                            # Special case: if adding a SEMI onto AGGREGATION,
-                            # add a COUNT to the aggregation then add a filter
-                            # to the parent tree on the count being positive.
-                            # If adding a SEMI onto SINGULAR, do the same but
-                            # with a PRESENT filter.
+                            # Special case: When applying a SEMI join:
+                            # - If the child is an AGGREGATION, add a COUNT to
+                            #   the aggregation and filter in the parent tree
+                            #   to check that the count is greater than zero.
+                            # - If the child is SINGULAR, do the same but
+                            #   use a PRESENT filter to check that a value
+                            #   exists.
                             if is_singular:
                                 self.insert_presence_filter(
                                     idx, connection_type.is_semi
@@ -511,6 +532,7 @@ class HybridTree:
                             else:
                                 self.insert_count_filter(idx, True)
                             return idx
+
                 # If combining a semi/anti with an existing non-semi/anti
                 # and filters are banned, keep the existing connection type
                 # and insert a count/presence filter into the tree so that it
@@ -539,18 +561,28 @@ class HybridTree:
                             existing_connection.connection_type
                         )
                 else:
+                    # Otherwise, reconcile the connection types.
                     connection_type = connection_type.reconcile_connection_types(
                         existing_connection.connection_type
                     )
                 existing_connection.connection_type = connection_type
                 if existing_connection.subtree.agg_keys is None:
                     existing_connection.subtree.agg_keys = child.agg_keys
+
+                # Return the index of the existing child.
                 return idx
+
+        # Create and insert the new child connection.
         new_child_idx = len(self.children)
         connection: HybridConnection = HybridConnection(
             self, child, connection_type, min_steps, max_steps, {}
         )
         self._children.append(connection)
+
+        # If an operation prevents the child's presence from directly
+        # filtering the current level, update its connection type to be either
+        # SINGULAR or AGGREGATION, then insert a similar COUNT(*)/PRESENT
+        # filter into the pipeline.
         if cannot_filter and (
             (connection_type.is_semi and not always_exists) or connection_type.is_anti
         ):
@@ -562,6 +594,8 @@ class HybridTree:
                 self.insert_presence_filter(new_child_idx, use_semi)
             else:
                 self.insert_count_filter(new_child_idx, use_semi)
+
+        # Return the index of the newly created child.
         return new_child_idx
 
     def add_successor(self, successor: "HybridTree") -> None:
