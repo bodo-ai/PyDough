@@ -1083,7 +1083,7 @@ class RelTranslation:
             context,
             child_output,
             JoinType.INNER,
-            JoinCardinality.PLURAL_ACCESS,
+            JoinCardinality.PLURAL_FILTER,
             join_keys,
             None,
             None,
