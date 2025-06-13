@@ -4,9 +4,16 @@ Integration tests for the PyDough workflow on the defog.ai queries.
 
 from collections.abc import Callable
 
-import pandas as pd
 import pytest
-from defog_outputs import (
+
+from pydough import init_pydough_context, to_sql
+from pydough.configs import PyDoughConfigs
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import (
+    UnqualifiedNode,
+)
+from tests.test_pydough_functions.defog_outputs import (
     defog_sql_text_broker_adv1,
     defog_sql_text_broker_adv2,
     defog_sql_text_broker_adv3,
@@ -101,7 +108,7 @@ from defog_outputs import (
     defog_sql_text_ewallet_gen4,
     defog_sql_text_ewallet_gen5,
 )
-from defog_test_functions import (
+from tests.test_pydough_functions.defog_test_functions import (
     impl_defog_broker_adv1,
     impl_defog_broker_adv2,
     impl_defog_broker_adv3,
@@ -196,17 +203,9 @@ from defog_test_functions import (
     impl_defog_ewallet_gen4,
     impl_defog_ewallet_gen5,
 )
-from test_utils import (
+from tests.testing_utilities import (
     PyDoughSQLComparisonTest,
     graph_fetcher,
-)
-
-from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from pydough.metadata import GraphMetadata
-from pydough.unqualified import (
-    UnqualifiedNode,
 )
 
 
@@ -1102,7 +1101,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
         ),
     ],
 )
-def defog_test_data(
+def defog_pipeline_test_data(
     request,
 ) -> PyDoughSQLComparisonTest:
     """
@@ -1113,7 +1112,7 @@ def defog_test_data(
 
 
 def test_defog_until_sql(
-    defog_test_data: PyDoughSQLComparisonTest,
+    defog_pipeline_test_data: PyDoughSQLComparisonTest,
     defog_graphs: graph_fetcher,
     empty_context_database: DatabaseContext,
     defog_config: PyDoughConfigs,
@@ -1123,9 +1122,11 @@ def test_defog_until_sql(
     """
     Tests the conversion of the defog analytical questions to SQL.
     """
-    unqualified_impl: Callable[[], UnqualifiedNode] = defog_test_data.pydough_function
-    graph_name: str = defog_test_data.graph_name
-    test_name: str = defog_test_data.test_name
+    unqualified_impl: Callable[[], UnqualifiedNode] = (
+        defog_pipeline_test_data.pydough_function
+    )
+    graph_name: str = defog_pipeline_test_data.graph_name
+    test_name: str = defog_pipeline_test_data.test_name
     file_name: str = f"defog_{test_name}"
     file_path: str = get_sql_test_filename(file_name, empty_context_database.dialect)
     graph: GraphMetadata = defog_graphs(graph_name)
@@ -1149,7 +1150,7 @@ def test_defog_until_sql(
 
 @pytest.mark.execute
 def test_defog_e2e(
-    defog_test_data: PyDoughSQLComparisonTest,
+    defog_pipeline_test_data: PyDoughSQLComparisonTest,
     defog_graphs: graph_fetcher,
     sqlite_defog_connection: DatabaseContext,
     defog_config: PyDoughConfigs,
@@ -1159,21 +1160,6 @@ def test_defog_e2e(
     comparing against the result of running the reference SQL query text on the
     same database connector. Run on the defog.ai queries.
     """
-    graph: GraphMetadata = defog_graphs(defog_test_data.graph_name)
-    root: UnqualifiedNode = init_pydough_context(graph)(
-        defog_test_data.pydough_function
-    )()
-    result: pd.DataFrame = to_df(
-        root, metadata=graph, database=sqlite_defog_connection, config=defog_config
+    defog_pipeline_test_data.run_e2e_test(
+        defog_graphs, sqlite_defog_connection, defog_config
     )
-    sqlite_query: str = defog_test_data.sql_function()
-    refsol: pd.DataFrame = sqlite_defog_connection.connection.execute_query_df(
-        sqlite_query
-    )
-    assert len(result.columns) == len(refsol.columns)
-    refsol.columns = result.columns
-    # If the query is order-sensitive, don't sort the DataFrames before comparison
-    if not defog_test_data.order_sensitive:
-        result = result.sort_values(by=list(refsol.columns)).reset_index(drop=True)
-        refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
-    pd.testing.assert_frame_equal(result, refsol)

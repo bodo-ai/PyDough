@@ -13,4 +13,4 @@ FROM main.merchants AS merchants
 JOIN _s1 AS _s1
   ON _s1.merchant_id = merchants.mid
 WHERE
-  LOWER(merchants.category) LIKE '%%retail%%' AND merchants.status = 'active'
+  LOWER(merchants.category) LIKE '%retail%' AND merchants.status = 'active'

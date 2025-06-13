@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _t0 AS (
   SELECT
     SUM(sbtxamount) AS agg_0,
     SUM(sbtxtax + sbtxcommission) AS agg_1,
@@ -13,17 +13,11 @@ SELECT
   sbticker.sbtickersymbol AS symbol,
   CAST((
     100.0 * (
-      COALESCE(_s1.agg_0, 0) - COALESCE(_s1.agg_1, 0)
+      COALESCE(_t0.agg_0, 0) - COALESCE(_t0.agg_1, 0)
     )
-  ) AS REAL) / COALESCE(_s1.agg_0, 0) AS SPM
+  ) AS REAL) / COALESCE(_t0.agg_0, 0) AS SPM
 FROM main.sbticker AS sbticker
-LEFT JOIN _s1 AS _s1
-  ON _s1.ticker_id = sbticker.sbtickerid
-WHERE
-  NOT CAST((
-    100.0 * (
-      COALESCE(_s1.agg_0, 0) - COALESCE(_s1.agg_1, 0)
-    )
-  ) AS REAL) / COALESCE(_s1.agg_0, 0) IS NULL
+JOIN _t0 AS _t0
+  ON _t0.ticker_id = sbticker.sbtickerid
 ORDER BY
   symbol
