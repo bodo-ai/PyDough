@@ -101,7 +101,6 @@ class Join(RelationalNode):
         columns: dict[str, RelationalExpression],
         cardinality: JoinCardinality = JoinCardinality.UNKNOWN,
         correl_name: str | None = None,
-        is_prunable: bool = False,
     ) -> None:
         super().__init__(columns)
         assert len(inputs) == 2, f"Expected 2 inputs, received {len(inputs)}"
@@ -113,7 +112,6 @@ class Join(RelationalNode):
         self._join_type: JoinType = join_type
         self._cardinality: JoinCardinality = cardinality
         self._correl_name: str | None = correl_name
-        self._is_prunable: bool = is_prunable
 
     @property
     def correl_name(self) -> str | None:
@@ -181,15 +179,6 @@ class Join(RelationalNode):
         """
         return [f"t{i}" for i in range(len(self.inputs))]
 
-    @property
-    def is_prunable(self) -> bool:
-        """
-        Returns True if the join can be pruned to just return the first input
-        if none of the other inputs are used. This is only applicable for
-        certain join use cases.
-        """
-        return self._is_prunable
-
     def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Join)
@@ -229,5 +218,4 @@ class Join(RelationalNode):
             columns,
             self.cardinality,
             self.correl_name,
-            self.is_prunable,
         )

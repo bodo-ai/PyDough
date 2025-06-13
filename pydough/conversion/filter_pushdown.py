@@ -115,15 +115,13 @@ def push_filters(
                         lambda expr: only_references_columns(expr, input_cols[idx]),
                     )
                 # Ensure that if any filter is pushed into an input (besides
-                # the first input) that the join is marked as not prunable.
+                # the first input) that the join is marked as filtering.
                 if len(pushable_filters) > 0 and idx > 0:
-                    node._is_prunable = False
+                    node.cardinality = node.cardinality.add_filter()
                 pushable_filters = {
                     transpose_expression(expr, node.columns)
                     for expr in pushable_filters
                 }
-                if len(pushable_filters) > 0 and idx > 0:
-                    node.cardinality = node.cardinality.add_filter()
                 node.inputs[idx] = push_filters(child, pushable_filters)
             # Materialize all of the remaining filters.
             return build_filter(node, remaining_filters)
