@@ -11,7 +11,6 @@ from pydough.relational import (
     EmptySingleton,
     Filter,
     Join,
-    JoinCardinality,
     JoinType,
     Limit,
     Project,
@@ -124,10 +123,7 @@ def push_filters(
                     for expr in pushable_filters
                 }
                 if len(pushable_filters) > 0 and idx > 0:
-                    if node.cardinality == JoinCardinality.SINGULAR_ACCESS:
-                        node.cardinality = JoinCardinality.SINGULAR_FILTER
-                    elif node.cardinality == JoinCardinality.PLURAL_ACCESS:
-                        node.cardinality = JoinCardinality.PLURAL_FILTER
+                    node.cardinality = node.cardinality.add_filter()
                 node.inputs[idx] = push_filters(child, pushable_filters)
             # Materialize all of the remaining filters.
             return build_filter(node, remaining_filters)

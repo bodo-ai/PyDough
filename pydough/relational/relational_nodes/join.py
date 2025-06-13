@@ -24,7 +24,9 @@ class JoinType(Enum):
 
 class JoinCardinality(Enum):
     """
-    TODO: add description
+    Enum describing the relationship between the LHS and RHS of a join in terms
+    of whether the LHS matches onto 1 or more rows of the RHS, and whether the
+    join can cause the LHS to be filtered or not.
     """
 
     SINGULAR_FILTER = 1
@@ -32,6 +34,42 @@ class JoinCardinality(Enum):
     PLURAL_FILTER = 3
     PLURAL_ACCESS = 4
     UNKNOWN = 5
+
+    def add_filter(self) -> "JoinCardinality":
+        """
+        Returns a new JoinCardinality referring to the current value but with
+        filtering added.
+        """
+        if self == JoinCardinality.SINGULAR_ACCESS:
+            return JoinCardinality.SINGULAR_FILTER
+        elif self == JoinCardinality.PLURAL_ACCESS:
+            return JoinCardinality.PLURAL_FILTER
+        else:
+            return self
+
+    @property
+    def potentially_filters(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS is
+        potentially filtered by being joined with the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_FILTER,
+            JoinCardinality.PLURAL_FILTER,
+            JoinCardinality.UNKNOWN,
+        )
+
+    @property
+    def potentially_plural(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS can
+        potentially match with multiple records of the RHS.
+        """
+        return self in (
+            JoinCardinality.PLURAL_FILTER,
+            JoinCardinality.PLURAL_ACCESS,
+            JoinCardinality.UNKNOWN,
+        )
 
 
 class Join(RelationalNode):

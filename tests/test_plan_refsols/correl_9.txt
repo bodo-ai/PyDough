@@ -1,5 +1,4 @@
 ROOT(columns=[('name', name), ('rname', rname)], orderings=[(name):asc_first])
- FILTER(condition=SLICE(name_3, None:unknown, 1:numeric, None:unknown) == SLICE(nation_name, None:unknown, 1:numeric, None:unknown), columns={'name': name, 'rname': name_3})
-  JOIN(condition=t0.region_key == t1.key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'name': t0.name, 'name_3': t1.name, 'nation_name': t0.nation_name})
-   SCAN(table=tpch.NATION, columns={'name': n_name, 'nation_name': n_name, 'region_key': n_regionkey})
-   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name})
+ JOIN(condition=t0.region_key == t1.key_2_0 & SLICE(t1.name_3_0, None:unknown, 1:numeric, None:unknown) == SLICE(t0.nation_name, None:unknown, 1:numeric, None:unknown), type=INNER, cardinality=SINGULAR_FILTER, columns={'name': t0.name, 'rname': t1.rname})
+  SCAN(table=tpch.NATION, columns={'name': n_name, 'nation_name': n_name, 'region_key': n_regionkey})
+  SCAN(table=tpch.REGION, columns={'key_2_0': r_regionkey, 'name_3_0': r_name, 'rname': r_name})

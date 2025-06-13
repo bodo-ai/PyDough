@@ -26,11 +26,12 @@ WITH _s0 AS (
   JOIN events AS events
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
   JOIN _s7 AS _s7
-    ON _s7.first_month = EXTRACT(MONTH FROM events.ev_dt)
-    OR _s7.second_month = EXTRACT(MONTH FROM events.ev_dt)
-    OR _s7.third_month = EXTRACT(MONTH FROM events.ev_dt)
-  WHERE
-    _s2.season_name = _s7.name
+    ON _s2.season_name = _s7.name
+    AND (
+      _s7.first_month = EXTRACT(MONTH FROM events.ev_dt)
+      OR _s7.second_month = EXTRACT(MONTH FROM events.ev_dt)
+      OR _s7.third_month = EXTRACT(MONTH FROM events.ev_dt)
+    )
   GROUP BY
     _s2.name,
     searches.search_id

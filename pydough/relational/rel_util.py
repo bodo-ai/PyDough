@@ -36,6 +36,7 @@ from .relational_expressions import (
 from .relational_nodes import (
     Filter,
     Join,
+    JoinType,
     RelationalNode,
 )
 
@@ -256,15 +257,53 @@ def build_filter(
         the set of filters is empty, just returns `node`. Ignores any filter
         condition that is always True.
     """
+    # Remove literal True conditions from the filters, and just return the
+    # input if there are no filters left.
     filters.discard(LiteralExpression(True, BooleanType()))
     condition: RelationalExpression
     if len(filters) == 0:
         return node
-    elif len(filters) == 1:
+
+    # Detect whether the filter can be pushed into a join condition.
+    push_into_join: bool = False
+    if isinstance(node, Join) and node.join_type in (JoinType.INNER, JoinType.SEMI):
+        if all(
+            isinstance(pred, CallExpression)
+            and pred.op == pydop.EQU
+            and not contains_window(pred)
+            for pred in filters
+        ):
+            push_into_join = True
+
+    # Build the new filter condition by forming the conjunction.
+    if len(filters) == 1:
         condition = filters.pop()
     else:
         condition = CallExpression(pydop.BAN, BooleanType(), sorted(filters, key=repr))
 
+    # If the filter can be pushed into a join condition, create the new join
+    # node using the conjunction of the existing condition and the new
+    # condition.
+    if push_into_join:
+        new_join: RelationalNode = node.copy()
+        assert isinstance(new_join, Join)
+        condition = transpose_expression(
+            condition, new_join.columns, keep_input_names=True
+        )
+        if (
+            isinstance(new_join.condition, CallExpression)
+            and new_join.condition.op == pydop.BAN
+        ):
+            new_join.condition.inputs.append(condition)
+        else:
+            new_join.condition = CallExpression(
+                pydop.BAN, BooleanType(), [new_join.condition, condition]
+            )
+        new_join.cardinality = new_join.cardinality.add_filter()
+        return new_join
+
+    # Otherwise, just return a new filter node with the new condition on top
+    # of the existing node.
     return Filter(node, condition, passthrough_column_mapping(node))
 
 

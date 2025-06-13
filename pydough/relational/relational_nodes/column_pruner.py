@@ -153,7 +153,13 @@ class ColumnPruner:
         # same for inner joins that meet certain criteria.
         if isinstance(output, Join) and (
             (output.join_type == JoinType.LEFT)
-            or (output.join_type == JoinType.INNER and output.is_prunable)
+            or (
+                output.join_type == JoinType.INNER
+                and not (
+                    output.cardinality.potentially_filters
+                    or output.cardinality.potentially_plural
+                )
+            )
         ):
             uses_rhs: bool = False
             for column in output.columns.values():
