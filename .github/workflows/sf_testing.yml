@@ -41,9 +41,9 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     env:
-      SNOWFLAKE_USER: ${{ secrets.SF_USERNAME }}
-      SNOWFLAKE_PASSWORD: ${{ secrets.SF_PASSWORD }}
-      SNOWFLAKE_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+      SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
 
     steps:
       - name: Checkout code
