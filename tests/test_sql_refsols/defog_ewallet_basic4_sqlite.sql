@@ -3,12 +3,12 @@ WITH _t0 AS (
     notifications.type AS notification_type,
     notifications.user_id AS user_id
   FROM main.notifications AS notifications
-  WHERE
-    notifications.type = 'transaction'
 ), _s1 AS (
   SELECT
     _t0.user_id AS user_id
   FROM _t0 AS _t0
+  WHERE
+    _t0.notification_type = 'transaction'
 ), _s0 AS (
   SELECT
     users.uid AS uid,

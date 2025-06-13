@@ -5,31 +5,7 @@ WITH _t0 AS (
     )) AS agg_0
   FROM tpch.lineitem AS lineitem
   JOIN tpch.part AS part
-    ON (
-      (
-        lineitem.l_quantity <= 11
-        AND lineitem.l_quantity >= 1
-        AND part.p_brand = 'Brand#12'
-        AND part.p_container IN ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
-        AND part.p_size <= 5
-      )
-      OR (
-        lineitem.l_quantity <= 20
-        AND lineitem.l_quantity >= 10
-        AND part.p_brand = 'Brand#23'
-        AND part.p_container IN ('MED BAG', 'MED BOX', 'MED PACK', 'MED PKG')
-        AND part.p_size <= 10
-      )
-      OR (
-        lineitem.l_quantity <= 30
-        AND lineitem.l_quantity >= 20
-        AND part.p_brand = 'Brand#34'
-        AND part.p_container IN ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
-        AND part.p_size <= 15
-      )
-    )
-    AND lineitem.l_partkey = part.p_partkey
-    AND part.p_size >= 1
+    ON lineitem.l_partkey = part.p_partkey
   WHERE
     (
       (
@@ -38,6 +14,7 @@ WITH _t0 AS (
         AND part.p_brand = 'Brand#12'
         AND part.p_container IN ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
         AND part.p_size <= 5
+        AND part.p_size >= 1
       )
       OR (
         lineitem.l_quantity <= 20
@@ -45,6 +22,7 @@ WITH _t0 AS (
         AND part.p_brand = 'Brand#23'
         AND part.p_container IN ('MED BAG', 'MED BOX', 'MED PACK', 'MED PKG')
         AND part.p_size <= 10
+        AND part.p_size >= 1
       )
       OR (
         lineitem.l_quantity <= 30
@@ -52,6 +30,7 @@ WITH _t0 AS (
         AND part.p_brand = 'Brand#34'
         AND part.p_container IN ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
         AND part.p_size <= 15
+        AND part.p_size >= 1
       )
     )
     AND lineitem.l_shipinstruct = 'DELIVER IN PERSON'

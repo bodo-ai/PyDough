@@ -5,13 +5,6 @@ Unit tests for PyDough QDAG nodes for expressions.
 from datetime import date
 
 import pytest
-from test_utils import (
-    AstNodeTestInfo,
-    ColumnInfo,
-    FunctionInfo,
-    LiteralInfo,
-    graph_fetcher,
-)
 
 from pydough.qdag import (
     AstNodeBuilder,
@@ -27,6 +20,13 @@ from pydough.types import (
     NumericType,
     PyDoughType,
     StringType,
+)
+from tests.testing_utilities import (
+    AstNodeTestInfo,
+    ColumnInfo,
+    FunctionInfo,
+    LiteralInfo,
+    graph_fetcher,
 )
 
 

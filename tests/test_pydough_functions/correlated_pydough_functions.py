@@ -218,19 +218,20 @@ def correl_14():
     # Count how many suppliers sell at least one part where the retail price
     # is less than a 50% markup over the supply cost, and the retail price of
     # the part is below the average for all parts from the supplier. Only
-    # considers suppliers from nations #19, and LG DRUM parts.
+    # considers suppliers from nation #19 with an account balance below 1000,
+    # and LG DRUM parts.
     # (This is multiple correlated SEMI-joins)
     selected_part = part.WHERE(
         (container == "LG DRUM")
         & (retail_price < (supply_cost * 1.5))
-        & (retail_price < avg_price)
+        & (retail_price < supplier_avg_price)
     )
     selected_supply_records = supply_records.CALCULATE(supply_cost).WHERE(
         HAS(selected_part)
     )
-    supplier_info = suppliers.WHERE(nation_key == 19).CALCULATE(
-        avg_price=AVG(supply_records.part.retail_price)
-    )
+    supplier_info = suppliers.WHERE(
+        (nation_key == 19) & (account_balance < 1000)
+    ).CALCULATE(supplier_avg_price=AVG(supply_records.part.retail_price))
     selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
     return TPCH.CALCULATE(n=COUNT(selected_suppliers))
 
@@ -241,7 +242,8 @@ def correl_15():
     # is less than a 50% markup over the supply cost, and the retail price of
     # the part is below the 85% of the average of the retail price for all
     # parts globally and below the average for all parts from the supplier.
-    # Only considers suppliers from nations #19, and LG DRUM parts.
+    # Only considers suppliers from nation #19 with an account balance below
+    # 1000, and LG DRUM parts.
     # (This is multiple correlated SEMI-joins & a correlated aggregate)
     selected_part = part.WHERE(
         (container == "LG DRUM")
@@ -252,9 +254,9 @@ def correl_15():
     selected_supply_records = supply_records.CALCULATE(supply_cost).WHERE(
         HAS(selected_part)
     )
-    supplier_info = suppliers.WHERE(nation_key == 19).CALCULATE(
-        supplier_avg_price=AVG(supply_records.part.retail_price)
-    )
+    supplier_info = suppliers.WHERE(
+        (nation_key == 19) & (account_balance < 1000)
+    ).CALCULATE(supplier_avg_price=AVG(supply_records.part.retail_price))
     selected_suppliers = supplier_info.WHERE(HAS(selected_supply_records))
     global_info = TPCH.CALCULATE(global_avg_price=AVG(parts.retail_price))
     return global_info.CALCULATE(n=COUNT(selected_suppliers))

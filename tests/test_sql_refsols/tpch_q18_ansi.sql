@@ -17,7 +17,9 @@ FROM tpch.orders AS orders
 JOIN tpch.customer AS customer
   ON customer.c_custkey = orders.o_custkey
 JOIN _t0 AS _t0
-  ON NOT _t0.agg_0 IS NULL AND _t0.agg_0 > 300 AND _t0.order_key = orders.o_orderkey
+  ON _t0.order_key = orders.o_orderkey
+WHERE
+  NOT _t0.agg_0 IS NULL AND _t0.agg_0 > 300
 ORDER BY
   o_totalprice DESC,
   o_orderdate

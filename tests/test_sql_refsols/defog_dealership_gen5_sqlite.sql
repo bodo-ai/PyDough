@@ -5,7 +5,8 @@ WITH _t AS (
     RANK() OVER (ORDER BY snapshot_date DESC) AS _w
   FROM main.inventory_snapshots
   WHERE
-    snapshot_date <= '2023-03-31' AND snapshot_date >= '2023-03-01'
+    CAST(STRFTIME('%Y', snapshot_date) AS INTEGER) = 2023
+    AND CAST(STRFTIME('%m', snapshot_date) AS INTEGER) = 3
 )
 SELECT
   cars._id,

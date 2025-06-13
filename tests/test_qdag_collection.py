@@ -3,7 +3,13 @@ Unit tests for PyDough QDAG nodes for collections.
 """
 
 import pytest
-from test_utils import (
+
+from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
+from pydough.types import (
+    NumericType,
+    StringType,
+)
+from tests.testing_utilities import (
     BackReferenceExpressionInfo,
     CalculateInfo,
     ChildReferenceCollectionInfo,
@@ -19,12 +25,6 @@ from test_utils import (
     TopKInfo,
     WhereInfo,
     WindowInfo,
-)
-
-from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
-from pydough.types import (
-    NumericType,
-    StringType,
 )
 
 

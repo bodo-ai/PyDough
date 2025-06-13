@@ -3,7 +3,7 @@ WITH _t0 AS (
     car_id
   FROM main.inventory_snapshots
   WHERE
-    snapshot_date <= '2023-03-31' AND snapshot_date >= '2023-03-01'
+    EXTRACT(MONTH FROM snapshot_date) = 3 AND EXTRACT(YEAR FROM snapshot_date) = 2023
   QUALIFY
     RANK() OVER (ORDER BY snapshot_date DESC NULLS FIRST) = 1 AND is_in_inventory
 )

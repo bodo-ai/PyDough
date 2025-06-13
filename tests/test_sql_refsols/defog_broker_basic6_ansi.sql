@@ -3,12 +3,12 @@ WITH _t0 AS (
     sbdailyprice.sbdpdate AS date,
     sbdailyprice.sbdptickerid AS ticker_id
   FROM main.sbdailyprice AS sbdailyprice
-  WHERE
-    sbdailyprice.sbdpdate >= CAST('2023-04-01' AS DATE)
 ), _s1 AS (
   SELECT
     _t0.ticker_id AS ticker_id
   FROM _t0 AS _t0
+  WHERE
+    _t0.date >= CAST('2023-04-01' AS DATE)
 ), _s0 AS (
   SELECT
     sbticker.sbtickerid AS _id

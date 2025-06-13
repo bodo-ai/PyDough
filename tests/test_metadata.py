@@ -3,7 +3,6 @@ Unit tests for the PyDough metadata module.
 """
 
 import pytest
-from test_utils import graph_fetcher
 
 from pydough.metadata import (
     CollectionMetadata,
@@ -19,6 +18,7 @@ from pydough.types import (
     PyDoughType,
     StringType,
 )
+from tests.testing_utilities import graph_fetcher
 
 
 def test_graph_structure(sample_graphs: GraphMetadata) -> None:

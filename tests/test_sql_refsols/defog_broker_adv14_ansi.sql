@@ -1,4 +1,4 @@
-WITH _s0 AS (
+WITH _s1 AS (
   SELECT
     SUM(sbdpclose) AS expr_0,
     COUNT(sbdpclose) AS expr_1,
@@ -10,12 +10,12 @@ WITH _s0 AS (
     sbdptickerid
 ), _t0 AS (
   SELECT
-    SUM(_s0.expr_0) AS expr_0,
-    SUM(_s0.expr_1) AS expr_1,
+    SUM(_s1.expr_0) AS expr_0,
+    SUM(_s1.expr_1) AS expr_1,
     sbticker.sbtickertype AS ticker_type
-  FROM _s0 AS _s0
-  JOIN main.sbticker AS sbticker
-    ON _s0.ticker_id = sbticker.sbtickerid
+  FROM main.sbticker AS sbticker
+  JOIN _s1 AS _s1
+    ON _s1.ticker_id = sbticker.sbtickerid
   GROUP BY
     sbticker.sbtickertype
 )

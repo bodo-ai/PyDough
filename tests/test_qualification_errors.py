@@ -7,9 +7,6 @@ import re
 from collections.abc import Callable
 
 import pytest
-from test_utils import (
-    graph_fetcher,
-)
 
 import pydough
 from pydough.configs import PyDoughConfigs
@@ -18,6 +15,9 @@ from pydough.unqualified import (
     UnqualifiedNode,
     UnqualifiedRoot,
     qualify_node,
+)
+from tests.testing_utilities import (
+    graph_fetcher,
 )
 
 
@@ -281,6 +281,18 @@ def bad_replace_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
     return root.nations.CALCULATE(replace_name2=root.REPLACE("a"))
 
 
+def bad_str_count_too_many_args(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Too many arguments to str_count
+    return root.nations.CALCULATE(
+        str_count1=root.STRCOUNT(root.name, "a", "b"),
+    )
+
+
+def bad_str_count_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Not enough arguments to str_count
+    return root.nations.CALCULATE(str_count2=root.STRCOUNT(root.name))
+
+
 @pytest.mark.parametrize(
     "impl, error_msg",
     [
@@ -408,6 +420,16 @@ def bad_replace_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_replace_few_args,
             "Expected between 2 and 3 arguments inclusive, received 1",
             id="bad_replace_few_args",
+        ),
+        pytest.param(
+            bad_str_count_too_many_args,
+            "Expected 2 arguments, received 3",
+            id="bad_str_count_too_many_args",
+        ),
+        pytest.param(
+            bad_str_count_few_args,
+            "Expected 2 arguments, received 1",
+            id="bad_str_count_few_args",
         ),
     ],
 )

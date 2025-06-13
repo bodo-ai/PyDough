@@ -85,6 +85,8 @@ These functions must be called on singular data as a function.
 - `STRIP`: returns the first argument with all leading and trailing whitespace removed, including newlines, tabs, and spaces. If the second argument is provided, it is used as the set of characters to remove from the leading and trailing ends of the first argument.
 - `REPLACE`: returns the first argument with all instances of the second argument replaced by the third argument. If the third argument is not provided, all instances of the second argument are removed from the first argument.
 
+- `STRCOUNT`: returns how many times the second argument appears in the first argument. If one or both arguments are an empty string the return would be 0
+
 ##### Datetime Functions
 
 - `DATETIME`: constructs a new datetime, either from an existing one or the current datetime, and augments it by adding/subtracting intervals of time and/or truncating it to various units.
