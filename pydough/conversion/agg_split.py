@@ -167,17 +167,6 @@ def transpose_aggregate_join(
     count_ref: RelationalExpression | None = None
     agg_input_name: str | None = join.default_input_aliases[agg_side]
     need_projection: bool = False
-    # Mark columns from the pushdown side of the join to be pruned, except for
-    # the agg/join keys.
-    join_columns_to_prune: set[str] = set()
-    for name, col in join.columns.items():
-        if (
-            isinstance(col, ColumnReference)
-            and (col.input_name == agg_input_name)
-            and (name not in node.keys)
-            and (col not in side_keys)
-        ):
-            join_columns_to_prune.add(name)
 
     # Calculate the aggregate terms to go above vs below the join.
     agg_input: RelationalNode = join.inputs[agg_side]
@@ -193,7 +182,7 @@ def transpose_aggregate_join(
         # does not collide with an existing used name.
         bottom_name: str = name
         idx: int = 0
-        while bottom_name in join.columns and bottom_name not in join_columns_to_prune:
+        while bottom_name in join.columns:
             bottom_name = f"{name}_{idx}"
             idx += 1
         # Build the aggregation calls for before/after the join, and place them
@@ -226,23 +215,16 @@ def transpose_aggregate_join(
             agg.data_type,
             [transpose_expression(arg, join.columns) for arg in agg.inputs],
         )
-        join_columns_to_prune.discard(bottom_name)
         join.columns[bottom_name] = ColumnReference(
             bottom_name, agg.data_type, agg_input_name
         )
         if agg.op == pydop.COUNT and len(agg.inputs) == 0:
             count_ref = ColumnReference(name, agg.data_type)
 
-    # Remove the columns that are no longer needed from the join.
-    # for name in join_columns_to_prune:
-    #     join.columns.pop(name)
-
     # Derive which columns are used as aggregate keys by
     # the input.
     input_keys: dict[str, ColumnReference] = {}
     for ref in side_keys:
-        # transposed_ref = transpose_expression(ref, join.columns)
-        # assert isinstance(transposed_ref, ColumnReference)
         input_keys[ref.name] = ref.with_input(None)
     for agg_key in node.keys.values():
         transposed_agg_key = transpose_expression(
@@ -398,6 +380,8 @@ def attempt_join_aggregate_transpose(
         )
         rhs_aggs.append(new_agg_name)
 
+    # Loop over both inputs and perform the pushdown into whichever one(s)
+    # will allow an aggregate to be pushed into them.
     count_refs: list[RelationalExpression] = []
     for agg_side in range(2):
         can_push: bool = (can_push_left, can_push_right)[agg_side]
@@ -419,6 +403,9 @@ def attempt_join_aggregate_transpose(
             need_projection = True
         if side_count_ref is not None:
             count_refs.append(side_count_ref)
+
+    # For each COUNT(*) aggregate, replace with the product of the COUNT(*)
+    # calls that were pushed into each side of the join.
     for count_call_name in count_aggs:
         assert len(count_refs) > 1
         product: RelationalExpression = CallExpression(
@@ -427,6 +414,8 @@ def attempt_join_aggregate_transpose(
         projection_columns[count_call_name] = product
         need_projection = True
 
+    # If the node requires projection at the end, create a new Project node on
+    # top of the top aggregate.
     if need_projection:
         return Project(node, projection_columns), True
     else:
