@@ -5,11 +5,11 @@ https://peps.python.org/pep-0249/
 """
 # Copyright (C) 2024 Bodo Inc. All rights reserved.
 
-import sqlite3
 from dataclasses import dataclass
 from enum import Enum
 
 import pandas as pd
+from db_types import DBConnection, DBCursor
 
 __all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
@@ -24,9 +24,9 @@ class DatabaseConnection:
     # Database connection that follows DB API 2.0 specification.
     # sqlite3 contains the connection specification and is packaged
     # with Python.
-    _connection: sqlite3.Connection
+    _connection: DBConnection
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(self, connection: DBConnection) -> None:
         self._connection = connection
 
     def execute_query_df(self, sql: str) -> pd.DataFrame:
@@ -42,30 +42,38 @@ class DatabaseConnection:
         Returns:
             list[pt.Any]: A list of rows returned by the query.
         """
-        cursor: sqlite3.Cursor = self._connection.cursor()
+        cursor: DBCursor = self._connection.cursor()
         try:
             cursor.execute(sql)
-        except sqlite3.OperationalError as e:
+        except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise e
-        column_names: list[str] = [description[0] for description in cursor.description]
-        # No need to close the cursor, as its closed by del.
-        # TODO: (gh #174) Cache the cursor?
-        # TODO: (gh #175) enable typed DataFrames.
-        data = cursor.fetchall()
-        return pd.DataFrame(data, columns=column_names)
+        if "snowflake" in type(self._connection).__module__:
+            # It's a Snowflake connection
+            return cursor.fetch_pandas_all()
+        else:
+            # Assume sqlite3
+            column_names: list[str] = [
+                description[0] for description in cursor.description
+            ]
+            data = cursor.fetchall()
+            # No need to close the cursor, as its closed by del.
+            # TODO: (gh #174) Cache the cursor?
+            # TODO: (gh #175) enable typed DataFrames.
+            return pd.DataFrame(data, columns=column_names)
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
 
     @property
-    def connection(self) -> sqlite3.Connection:
+    def connection(self) -> DBConnection:
         """
         Get the database connection. This API may be removed if all
         the functionality can be encapsulated in the DatabaseConnection.
 
         Returns:
-            sqlite3.Connection: The connection PyDough is managing.
+            Connection: The database connection PyDough is managing.
+                        (SQLite3.Connection or SnowflakeConnection)
         """
         return self._connection
 
@@ -76,6 +84,7 @@ class DatabaseDialect(Enum):
 
     ANSI = "ansi"
     SQLITE = "sqlite"
+    SNOWFLAKE = "snowflake"
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":
@@ -91,6 +100,8 @@ class DatabaseDialect(Enum):
             return DatabaseDialect.ANSI
         elif dialect == "sqlite":
             return DatabaseDialect.SQLITE
+        elif dialect == "snowflake":
+            return DatabaseDialect.SNOWFLAKE
         else:
             raise ValueError(f"Unsupported dialect: {dialect}")
 
