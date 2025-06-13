@@ -2642,3 +2642,185 @@ def simple_var_std_with_nulls():
         std_pop_1_nnull=STD(first_customers.key_1),
         std_pop_2_nnull=STD(first_customers.key_2),
     )
+
+
+def simple_cross_1():
+    # Every combination of region names
+    return (
+        regions.CALCULATE(r1=name)
+        .CROSS(regions)
+        .CALCULATE(r1, r2=name)
+        .ORDER_BY(r1.ASC(), r2.ASC())
+    )
+
+
+def simple_cross_2():
+    # Every combination of region names, excluding cases where
+    # the two regions are the same
+    return (
+        regions.CALCULATE(r1=name)
+        .CROSS(regions)
+        .CALCULATE(r1, r2=name)
+        .WHERE(r1 != r2)
+        .ORDER_BY(r1.ASC(), r2.ASC())
+    )
+
+
+def simple_cross_3():
+    # Same as simple_cross_8, but for every combination of nation1 in ASIA
+    # and nation2 in AMERICA in April-1992, only consider orders shipped
+    # by "SHIP" mode, only considering customers in debt.
+    nation_combinations = (
+        regions.WHERE(name == "ASIA")
+        .nations.CALCULATE(s_key=key, supplier_nation=name)
+        .CROSS(regions.WHERE(name == "AMERICA").nations.CALCULATE(customer_nation=name))
+    )
+    selected_purchases = (
+        customers.WHERE(account_balance < 0)
+        .orders.WHERE((YEAR(order_date) == 1992) & (MONTH(order_date) == 4))
+        .lines.WHERE((supplier.nation_key == s_key) & (ship_mode == "SHIP"))
+    )
+    return nation_combinations.CALCULATE(
+        supplier_nation,
+        customer_nation,
+        nation_combinations=COUNT(selected_purchases),
+    ).WHERE(HAS(selected_purchases))
+
+
+def simple_cross_4():
+    # For each region, count how many OTHER regions
+    # have the same first letter as the region
+    other_regions = CROSS(regions).WHERE(
+        (name != region_name) & (name[:1] == region_name[:1])
+    )
+    return (
+        regions.CALCULATE(region_name=name)
+        .CALCULATE(region_name, n_other_regions=COUNT(other_regions))
+        .ORDER_BY(region_name.ASC())
+    )
+
+
+def simple_cross_5():
+    # For every combination of part size & order priority, which order priority
+    # had the highest quantity of parts of that size shipped in 1998?
+    # Only consider the 5 smallest part sizes.
+    sizes = parts.PARTITION(name="sizes", by=size).CALCULATE(part_size=size)
+    order_info = (
+        orders.CALCULATE(order_priority)
+        .WHERE(YEAR(order_date) == 1998)
+        .lines.WHERE(part.size == part_size)
+    )
+    best_priority = (
+        CROSS(order_info.PARTITION(name="priorities", by=order_priority))
+        .CALCULATE(total_qty=SUM(lines.quantity))
+        .BEST(by=total_qty.DESC(), per="sizes")
+    )
+    return sizes.CALCULATE(
+        part_size,
+        best_order_priority=best_priority.order_priority,
+        best_order_priority_qty=best_priority.total_qty,
+    ).TOP_K(5, by=size.ASC())
+
+
+def simple_cross_6():
+    # Count how many combinations of 2 DISTINCT orders exist that were from the
+    # same day from the same customer, only considering orders handled
+    # by any of the clerks whose numbers is at least 900.
+    predicates = INTEGER(clerk[6:]) >= 900
+    original_orders = orders.CALCULATE(
+        original_customer_key=customer_key,
+        original_order_key=key,
+        original_order_date=order_date,
+    ).WHERE(predicates)
+    other_orders_by_same_customer_same_date = original_orders.CROSS(
+        orders.WHERE(predicates)
+    ).WHERE(
+        (customer_key == original_customer_key)
+        & (key > original_order_key)
+        & (order_date == original_order_date)
+    )
+    return TPCH.CALCULATE(n_pairs=COUNT(other_orders_by_same_customer_same_date))
+
+
+def simple_cross_7():
+    # For every order with status P, count how many DIFFERENT orders with
+    # status "P" were made by the same
+    # customer on the same date, considering only the first 5 orders
+    # with the highest number of other orders, breaking ties by key
+    original_orders = orders.WHERE(order_status == "P").CALCULATE(
+        original_customer_key=customer_key,
+        original_order_key=key,
+        original_order_date=order_date,
+    )
+    return original_orders.CALCULATE(
+        original_order_key,
+        n_other_orders=COUNT(
+            CROSS(
+                orders.WHERE(
+                    (customer_key == original_customer_key)
+                    & (order_status == "P")
+                    & (key > original_order_key)
+                    & (order_date == original_order_date)
+                )
+            )
+        ),
+    ).TOP_K(5, by=[n_other_orders.DESC(), original_order_key.ASC()])
+
+
+def simple_cross_8():
+    # For every unique combination of region1 & region2, count how many
+    # lineitems shipped in March-1998 and clerk #7
+    # were from a supplier in debt in region1 by a customer in region2 in the
+    # automobile market segment.
+    selected_lineitems = (
+        nations.customers.WHERE(market_segment == "AUTOMOBILE")
+        .orders.WHERE(clerk == "Clerk#000000007")
+        .lines.WHERE(
+            (YEAR(ship_date) == 1998)
+            & (MONTH(ship_date) == 3)
+            & (
+                supplier.WHERE(account_balance < 0).nation.region.name
+                == supplier_region
+            )
+        )
+    )
+    region_combinations = regions.CALCULATE(supplier_region=name).CROSS(
+        regions.CALCULATE(customer_region=name)
+    )
+    return region_combinations.WHERE(HAS(selected_lineitems)).CALCULATE(
+        supplier_region, customer_region, region_combinations=COUNT(selected_lineitems)
+    )
+
+
+def simple_cross_9():
+    # Every combination of different nations from the same region
+    return (
+        regions.CALCULATE(r1=name)
+        .nations.CALCULATE(n1=name)
+        .CROSS(regions.CALCULATE(r2=name).nations)
+        .CALCULATE(n1, n2=name)
+        .WHERE((r1 == r2) & (n1 != n2))
+        .ORDER_BY(n1.ASC(), n2.ASC())
+        .TOP_K(10, by=[n1.ASC(), n2.ASC()])
+    )
+
+
+def simple_cross_10():
+    # For each region, count how many nations in OTHER regions
+    # have the same first letter as the region
+    other_regions = CROSS(regions.CALCULATE(r2=name).nations).WHERE(
+        (r2 != region_name) & (name[:1] == region_name[:1])
+    )
+    return (
+        regions.CALCULATE(region_name=name)
+        .CALCULATE(region_name, n_other_nations=COUNT(other_regions))
+        .ORDER_BY(region_name.ASC())
+    )
+
+
+def simple_cross_11():
+    # Count how many orders were made on the first date that the orders
+    # were made (using CROSS to derive global values)
+    global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
+    selected_orders = orders.WHERE(order_date == CROSS(global_info).SINGULAR().min_date)
+    return TPCH.CALCULATE(n=COUNT(selected_orders))

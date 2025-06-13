@@ -1,0 +1,5 @@
+ROOT(columns=[('r1', r1), ('r2', r2)], orderings=[(r1):asc_first, (r2):asc_first])
+ FILTER(condition=r1 != name_3, columns={'r1': r1, 'r2': name_3})
+  JOIN(conditions=[True:bool], types=['inner'], columns={'name_3': t1.name, 'r1': t0.r1})
+   SCAN(table=tpch.REGION, columns={'r1': r_name})
+   SCAN(table=tpch.REGION, columns={'name': r_name})

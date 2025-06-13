@@ -7,6 +7,7 @@ __all__ = [
     "UnqualifiedAccess",
     "UnqualifiedBinaryOperation",
     "UnqualifiedCalculate",
+    "UnqualifiedCross",
     "UnqualifiedLiteral",
     "UnqualifiedNode",
     "UnqualifiedOperation",
@@ -379,6 +380,13 @@ class UnqualifiedNode(ABC):
             return UnqualifiedPartition(self, name, [by])
         else:
             return UnqualifiedPartition(self, name, list(by))
+
+    def CROSS(self, child: "UnqualifiedNode") -> "UnqualifiedCross":
+        """
+        Method used to create a CROSS node, which is a cross product of the
+        current node with the given child node.
+        """
+        return UnqualifiedCross(self, child)
 
     def SINGULAR(self) -> "UnqualifiedSingular":
         """
@@ -770,6 +778,19 @@ class UnqualifiedPartition(UnqualifiedNode):
         )
 
 
+class UnqualifiedCross(UnqualifiedNode):
+    """
+    Implementation of UnqualifiedNode used to refer to a CROSS clause being
+    done onto another UnqualifiedNode.
+    """
+
+    def __init__(self, predecessor: UnqualifiedNode, child: UnqualifiedNode):
+        self._parcel: tuple[UnqualifiedNode, UnqualifiedNode] = (
+            predecessor,
+            child,
+        )
+
+
 class UnqualifiedSingular(UnqualifiedNode):
     """
     Implementation of UnqualifiedNode used to refer to a SINGULAR clause.
@@ -880,6 +901,8 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             if not isinstance(unqualified._parcel[0], UnqualifiedRoot):
                 result = f"{display_raw(unqualified._parcel[0])}.{result}"
             return result
+        case UnqualifiedCross():
+            return f"{display_raw(unqualified._parcel[0])}.CROSS({display_raw(unqualified._parcel[1])})"
         case UnqualifiedSingular():
             return f"{display_raw(unqualified._parcel[0])}.SINGULAR()"
         case UnqualifiedBest():

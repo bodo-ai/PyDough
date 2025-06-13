@@ -1,0 +1,8 @@
+ROOT(columns=[('n_pairs', n_pairs)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_pairs': COUNT()})
+  FILTER(condition=customer_key_3 == original_customer_key & order_date_5 == original_order_date & key_4 > original_order_key, columns={})
+   JOIN(conditions=[True:bool], types=['inner'], columns={'customer_key_3': t1.customer_key, 'key_4': t1.key, 'order_date_5': t1.order_date, 'original_customer_key': t0.original_customer_key, 'original_order_date': t0.original_order_date, 'original_order_key': t0.original_order_key})
+    FILTER(condition=INTEGER(SLICE(clerk, 6:numeric, None:unknown, None:unknown)) >= 900:numeric, columns={'original_customer_key': customer_key, 'original_order_date': order_date, 'original_order_key': key})
+     SCAN(table=tpch.ORDERS, columns={'clerk': o_clerk, 'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})
+    FILTER(condition=INTEGER(SLICE(clerk, 6:numeric, None:unknown, None:unknown)) >= 900:numeric, columns={'customer_key': customer_key, 'key': key, 'order_date': order_date})
+     SCAN(table=tpch.ORDERS, columns={'clerk': o_clerk, 'customer_key': o_custkey, 'key': o_orderkey, 'order_date': o_orderdate})

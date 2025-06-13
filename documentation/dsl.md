@@ -17,8 +17,8 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [TOP_K](#top_k)
    * [PARTITION](#partition)
    * [SINGULAR](#singular)
-   * [NEXT / PREV](#next-prev)
    * [BEST](#best)
+   * [CROSS](#cross)
 - [Induced Properties](#induced-properties)
    * [Induced Scalar Properties](#induced-scalar-properties)
    * [Induced Subcollection Properties](#induced-subcollection-properties)
@@ -1462,6 +1462,78 @@ Addresses.CALCULATE(address_id, oldest_occupant=current_occupants.BEST(by=birth_
 ```py
 %%pydough
 People.packages.BEST(by=order_date.DESC(), per="packages")
+```
+
+<!-- TOC --><a name="cross"></a>
+### CROSS
+
+A PyDough operation that performs a `CROSS JOIN` (cartesian product) between two collections by establishing a sub-collection relationship. In `A.CROSS(B)`, `B` becomes a sub-collection of `A`, meaning for every row in `A`, there is an associated collection of all rows in `B`.
+It's typically used when we need to link two collections using a relationship that doesn't exist in the metadata.
+
+**Good Example #1**: List every combination of two different people who live in the same address.
+
+```py
+%%pydough
+People.CALCULATE(ssn1=ssn, addr1=current_address_id)
+      .CROSS(People)
+      .WHERE((ssn != ssn1) & (current_address_id == addr1))
+```
+
+**Good Example #2**: List every combination of two different states.
+
+```py
+%%pydough
+states = Addresses.PARTITION(name="states", by=state)
+states.CALCULATE(state_1=state).CROSS(states)
+      .CALCULATE(state_1, state_2=state)
+```
+
+**Good Example #3**: For each person, count how many different people share the same first name. 
+
+```py
+%%pydough
+other_people = CROSS(People).WHERE((orig_first_name == first_name) 
+                                    & (orig_ssn != ssn))
+People.CALCULATE(orig_first_name=first_name, orig_ssn=ssn)
+      .CALCULATE(ssn, COUNT(other_people))
+```
+
+**Good Example #4**: For every person, count how many addresses are in the same zip code as them, and how many people live in that zip code.
+
+```py
+%%pydough
+addr_in_same_zip = CROSS(Addresses.WHERE(zip_code == original_zip))
+People.CALCULATE(original_zip=current_address.zip_code)
+      .CALCULATE(ssn, n_addr=COUNT(addr_in_same_zip), 
+            n_people=COUNT(addr_in_same_zip.current_occupants))
+```
+
+**Bad Example #1**: This is invalid because `Addresses.state` is not a collection.
+
+```py
+%%pydough
+People.CROSS(Addresses.state)
+```
+
+**Bad Example #2**: This is invalid because `People.ssn` is not a collection.
+
+```py
+%%pydough
+People.ssn.CROSS(Packages)
+```
+
+**Bad Example #3**: This is invalid because `Packages` output name causes a name collision with collection named `Packages`.
+
+```py
+%%pydough
+People.CALCULATE(Packages=COUNT(People.packages)).CROSS(Packages)
+```
+
+**Bad Example #4**: This is invalid because `current_address` is a property of `People`, not `Addresses`.
+
+```py
+%%pydough
+People.CROSS(Addresses).current_address
 ```
 
 <!-- TOC --><a name="induced-properties"></a>

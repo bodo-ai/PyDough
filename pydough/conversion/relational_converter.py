@@ -1111,6 +1111,28 @@ class RelTranslation:
         # expressions mapping
         return TranslationOutput(child_result.relational_node, new_expressions)
 
+    def translate_hybridroot(self, context: TranslationOutput) -> TranslationOutput:
+        """Converts a HybridRoot node into a relational tree.
+        This method shifts all expressions in the given context back by one level,
+        effectively removing the HybridRoot from the context (re-aligning them to the parent context's scope).
+        This is needed when stepping out of a nested context.
+        The HybridRoot itself does not introduce a new relational operation but serves as a logical boundary.
+        This method prepares the context so that subsequent operations refer to the correct expression depth.
+
+        Args:
+            context (TranslationOutput): The current translation context
+            associated with the HybridRoot. Must not be None.
+
+        Returns:
+            TranslationOutput: The translated output payload.
+        """
+        new_expressions: dict[HybridExpr, ColumnReference] = {}
+        for expr, column_ref in context.expressions.items():
+            shifted_expr: HybridExpr | None = expr.shift_back(1)
+            if shifted_expr is not None:
+                new_expressions[shifted_expr] = column_ref
+        return TranslationOutput(context.relational_node, new_expressions)
+
     def rel_translation(
         self,
         hybrid: HybridTree,
@@ -1155,7 +1177,10 @@ class RelTranslation:
         context: TranslationOutput | None
         if preceding_hybrid is None:
             context = None
-        elif isinstance(preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot):
+        elif (
+            isinstance(preceding_hybrid[0].pipeline[preceding_hybrid[1]], HybridRoot)
+            and preceding_hybrid[0].parent is None
+        ):
             # If at the true root, set the starting context to just be a dummy
             # VALUES clause.
             context = TranslationOutput(EmptySingleton(), {})
@@ -1228,6 +1253,9 @@ class RelTranslation:
             case HybridNoop():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = context
+            case HybridRoot():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.translate_hybridroot(context)
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
