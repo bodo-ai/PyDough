@@ -340,3 +340,9 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             The tree-like string representation of `self`.
         """
         return "\n".join(self.to_tree_form(True).to_string_rows())
+
+    def find_possible_name_matches(self, term_name: str) -> list[str]:
+        """
+        Fill this out later
+        """
+        return []
