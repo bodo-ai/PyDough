@@ -7,9 +7,14 @@ https://peps.python.org/pep-0249/
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 import pandas as pd
-from db_types import DBConnection, DBCursor
+
+from .db_types import DBConnection, DBCursor
+
+if TYPE_CHECKING:
+    import snowflake.connector.cursor
 
 __all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
@@ -48,8 +53,7 @@ class DatabaseConnection:
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise e
-        if "snowflake" in type(self._connection).__module__:
-            # It's a Snowflake connection
+        if isinstance(cursor, snowflake.connector.cursor.SnowflakeCursor):
             return cursor.fetch_pandas_all()
         else:
             # Assume sqlite3
