@@ -10,24 +10,25 @@ on:
       - main
 
 jobs:
+
   get-msg:
+    name: Get Commit Message
     runs-on: ubuntu-latest
     outputs:
-      commitMsg: ${{ steps.get-message.outputs.commitMsg }}
+      commitMsg: ${{ steps.get_msg.outputs.commitMsg }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Get commit message or PR title/body
-        id: get-message
+      # Fetch the branch for the history only
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          sparse-checkout: .
+      - name: Get Commit Message
+        id: get_msg
         run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "commitMsg=${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}" >> $GITHUB_OUTPUT
-          else
-            echo "commitMsg=${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
-          fi
+          set -xe pipefail
+          echo "commitMsg=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
 
-  snowflake-tests:
+  sf-tests:
     name: Snowflake Tests (Python ${{ matrix.python-version }})
     needs: [get-msg]
     if: |
