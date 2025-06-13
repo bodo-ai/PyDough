@@ -13,7 +13,7 @@ from .abstract_node import RelationalNode
 
 class JoinType(Enum):
     """
-    TODO: add description
+    Enum describing the type of join operation.
     """
 
     INNER = "inner"

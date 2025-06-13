@@ -385,7 +385,21 @@ def remap_join_condition(
     input_names: list[str | None],
 ) -> RelationalExpression:
     """
-    TODO
+    Same idea as `transpose_expression`, but for transforming an expression
+    that will be used as the join condition of a join node.
+
+
+    Args:
+        `expr`: The expression to transposed.
+        `left_columns`: The mapping of column names from the lhs to their
+        corresponding expressions.
+        `right_columns`: The mapping of column names from the rhs to their
+        corresponding expressions.
+        `input_names`: The names of the two inputs to the join node.
+
+    Returns:
+        The transposed join condition expression with updated column
+        references.
     """
     match expr:
         case LiteralExpression() | CorrelatedReference():
