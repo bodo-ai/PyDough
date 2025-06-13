@@ -78,6 +78,7 @@ __all__ = [
     "SQRT",
     "STARTSWITH",
     "STD",
+    "STRCOUNT",
     "STRING",
     "STRIP",
     "SUB",
@@ -139,6 +140,9 @@ STRIP = ExpressionFunctionOperator(
 )
 REPLACE = ExpressionFunctionOperator(
     "REPLACE", False, RequireArgRange(2, 3), SelectArgumentType(0)
+)
+STRCOUNT = ExpressionFunctionOperator(
+    "STRCOUNT", False, RequireNumArgs(2), ConstantType(NumericType())
 )
 ENDSWITH = ExpressionFunctionOperator(
     "ENDSWITH", False, RequireNumArgs(2), ConstantType(BooleanType())
