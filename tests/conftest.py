@@ -406,7 +406,7 @@ def is_snowflake_env_set() -> bool:
 
 
 @pytest.fixture(scope="session")
-def get_snowflake_connection(db, schema) -> DatabaseConnection | None:
+def get_snowflake_connection(db, schema):
     """
     Returns Snowflake connection for the given database and schema.
     Args:
@@ -415,18 +415,20 @@ def get_snowflake_connection(db, schema) -> DatabaseConnection | None:
     Returns:
         DatabaseConnection : A connection to the Snowflake database.
     """
-    if not is_snowflake_env_set():
-        pytest.skip("Skipping Snowflake tests: environment variables not set.")
-        return None
-    try:
-        import snowflake.connector
-    except ImportError:
-        pytest.skip(
-            "Skipping Snowflake tests: snowflake-connector-python not installed."
-        )
-        return None
-    connection: snowflake.connector.cursor.SnowflakeCursor = (
-        snowflake.connector.connect(
+
+    def _connect(db, schema) -> DatabaseConnection | None:
+        if not is_snowflake_env_set():
+            pytest.skip("Skipping Snowflake tests: environment variables not set.")
+            return None
+        try:
+            import snowflake.connector
+        except ImportError:
+            pytest.skip(
+                "Skipping Snowflake tests: snowflake-connector-python not installed."
+            )
+            return None
+
+        connection = snowflake.connector.connect(
             user=os.getenv("SF_USERNAME"),
             password=os.getenv("SF_PASSWORD"),
             account=os.getenv("SF_ACCOUNT"),
@@ -434,8 +436,9 @@ def get_snowflake_connection(db, schema) -> DatabaseConnection | None:
             database=db,
             schema=schema,
         )
-    )
-    return DatabaseConnection(connection)
+        return DatabaseConnection(connection)
+
+    return _connect
 
 
 @pytest.fixture
