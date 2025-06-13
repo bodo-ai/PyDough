@@ -1529,13 +1529,11 @@ People.ssn.CROSS(Packages)
 People.CALCULATE(Packages=COUNT(People.packages)).CROSS(Packages)
 ```
 
-**Bad Example #4**: This is invalid because there's no relation between `suppliers` and `parts`.
+**Bad Example #4**: This is invalid because `current_address` is a property of `People`, not `Addresses`.
 
 ```py
 %%pydough
-suppliers.CROSS(parts).CALCULATE(
-        sup_name=suppliers.name, part_name=parts.name
-)
+People.CROSS(Addresses).current_address
 ```
 
 <!-- TOC --><a name="induced-properties"></a>
