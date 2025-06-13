@@ -19,10 +19,8 @@ WITH _t0 AS (
   JOIN tpch.orders AS orders
     ON EXTRACT(YEAR FROM orders.o_orderdate) IN (1995, 1996)
     AND lineitem.l_orderkey = orders.o_orderkey
-  JOIN tpch.orders AS orders_2
-    ON lineitem.l_orderkey = orders_2.o_orderkey
   JOIN tpch.customer AS customer
-    ON customer.c_custkey = orders_2.o_custkey
+    ON customer.c_custkey = orders.o_custkey
   JOIN tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey
   JOIN tpch.region AS region
