@@ -447,7 +447,7 @@ def get_snowflake_connection():
 
 
 @pytest.fixture
-def sf_tpch_db_context() -> DatabaseContext:
+def sf_tpch_db_context(get_snowflake_connection) -> DatabaseContext:
     """
     Return a DatabaseContext for the Snowflake TPCH database.
     """
