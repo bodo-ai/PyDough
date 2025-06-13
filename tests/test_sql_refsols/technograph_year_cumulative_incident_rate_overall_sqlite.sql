@@ -2,60 +2,64 @@ WITH _t5 AS (
   SELECT
     ca_dt AS calendar_day
   FROM main.calendar
-), _s2 AS (
-  SELECT DISTINCT
-    CAST(STRFTIME('%Y', calendar_day) AS INTEGER) AS year
-  FROM _t5
 ), _s3 AS (
   SELECT
-    COUNT() AS agg_0,
-    CAST(STRFTIME('%Y', _t7.calendar_day) AS INTEGER) AS year
-  FROM _t5 AS _t7
+    COUNT() AS agg_2,
+    _s0.calendar_day
+  FROM _t5 AS _s0
   JOIN main.devices AS devices
-    ON _t7.calendar_day = DATE(devices.de_purchase_ts, 'start of day')
+    ON _s0.calendar_day = DATE(devices.de_purchase_ts, 'start of day')
   GROUP BY
-    CAST(STRFTIME('%Y', _t7.calendar_day) AS INTEGER)
+    _s0.calendar_day
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_1,
-    CAST(STRFTIME('%Y', _t9.calendar_day) AS INTEGER) AS year
-  FROM _t5 AS _t9
+    COUNT() AS agg_5,
+    _s4.calendar_day
+  FROM _t5 AS _s4
   JOIN main.incidents AS incidents
-    ON _t9.calendar_day = DATE(incidents.in_error_report_ts, 'start of day')
+    ON _s4.calendar_day = DATE(incidents.in_error_report_ts, 'start of day')
   GROUP BY
-    CAST(STRFTIME('%Y', _t9.calendar_day) AS INTEGER)
+    _s4.calendar_day
+), _t3 AS (
+  SELECT
+    SUM(_s3.agg_2) AS agg_4,
+    SUM(_s7.agg_5) AS agg_7,
+    CAST(STRFTIME('%Y', _t5.calendar_day) AS INTEGER) AS year
+  FROM _t5 AS _t5
+  LEFT JOIN _s3 AS _s3
+    ON _s3.calendar_day = _t5.calendar_day
+  LEFT JOIN _s7 AS _s7
+    ON _s7.calendar_day = _t5.calendar_day
+  GROUP BY
+    CAST(STRFTIME('%Y', _t5.calendar_day) AS INTEGER)
 ), _t0 AS (
   SELECT
-    COALESCE(_s3.agg_0, 0) AS bought,
+    COALESCE(agg_4, 0) AS bought,
     ROUND(
-      CAST(SUM(COALESCE(_s7.agg_1, 0)) OVER (ORDER BY _s2.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(_s3.agg_0, 0)) OVER (ORDER BY _s2.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      CAST(SUM(COALESCE(agg_7, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(agg_4, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       2
     ) AS cum_ir,
-    COALESCE(_s7.agg_1, 0) AS incidents,
+    COALESCE(agg_7, 0) AS incidents,
     ROUND(
       CAST((
         100.0 * (
-          COALESCE(_s3.agg_0, 0) - LAG(COALESCE(_s3.agg_0, 0), 1) OVER (ORDER BY _s2.year)
+          COALESCE(agg_4, 0) - LAG(COALESCE(agg_4, 0), 1) OVER (ORDER BY year)
         )
-      ) AS REAL) / LAG(COALESCE(_s3.agg_0, 0), 1) OVER (ORDER BY _s2.year),
+      ) AS REAL) / LAG(COALESCE(agg_4, 0), 1) OVER (ORDER BY year),
       2
     ) AS pct_bought_change,
     ROUND(
       CAST((
         100.0 * (
-          COALESCE(_s7.agg_1, 0) - LAG(COALESCE(_s7.agg_1, 0), 1) OVER (ORDER BY _s2.year)
+          COALESCE(agg_7, 0) - LAG(COALESCE(agg_7, 0), 1) OVER (ORDER BY year)
         )
-      ) AS REAL) / LAG(COALESCE(_s7.agg_1, 0), 1) OVER (ORDER BY _s2.year),
+      ) AS REAL) / LAG(COALESCE(agg_7, 0), 1) OVER (ORDER BY year),
       2
     ) AS pct_incident_change,
-    _s2.year AS yr
-  FROM _s2 AS _s2
-  LEFT JOIN _s3 AS _s3
-    ON _s2.year = _s3.year
-  LEFT JOIN _s7 AS _s7
-    ON _s2.year = _s7.year
+    year AS yr
+  FROM _t3
   WHERE
-    NOT _s3.agg_0 IS NULL AND _s3.agg_0 > 0
+    NOT agg_4 IS NULL AND agg_4 > 0
 )
 SELECT
   yr,

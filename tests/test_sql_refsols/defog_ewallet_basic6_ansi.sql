@@ -1,6 +1,6 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS count,
     device_type
   FROM main.user_sessions
   GROUP BY
@@ -8,8 +8,8 @@ WITH _t1 AS (
 )
 SELECT
   device_type,
-  COALESCE(agg_0, 0) AS count
-FROM _t1
+  count
+FROM _t0
 ORDER BY
   count DESC
 LIMIT 2

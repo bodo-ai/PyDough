@@ -1,6 +1,6 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT() AS count,
     status
   FROM main.wallet_transactions_daily
   GROUP BY
@@ -8,8 +8,8 @@ WITH _t1 AS (
 )
 SELECT
   status,
-  COALESCE(agg_0, 0) AS count
-FROM _t1
+  count
+FROM _t0
 ORDER BY
   count DESC
 LIMIT 3

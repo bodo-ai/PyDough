@@ -3,12 +3,12 @@ WITH _t0 AS (
     wallet_transactions_daily.receiver_id AS receiver_id,
     wallet_transactions_daily.receiver_type AS receiver_type
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
-  WHERE
-    wallet_transactions_daily.receiver_type = 1
 ), _s1 AS (
   SELECT
     _t0.receiver_id AS receiver_id
   FROM _t0 AS _t0
+  WHERE
+    _t0.receiver_type = 1
 ), _s0 AS (
   SELECT
     merchants.mid AS merchant,

@@ -42,8 +42,8 @@ def events_per_season():
 def summer_events_per_type():
     # Counts how many events happened in the summer for each event type.
     return (
-        seasons.WHERE(name == "Summer")
-        .events.PARTITION(name="types", by=event_type)
+        events.WHERE(season.name == "Summer")
+        .PARTITION(name="types", by=event_type)
         .CALCULATE(event_type, n_events=COUNT(events))
         .ORDER_BY(event_type.ASC())
     )
@@ -52,8 +52,8 @@ def summer_events_per_type():
 def num_predawn_cold_war():
     # Counts how many events happened in the in the pre-dawn hours of the
     # cold war.
-    selected_events = events.WHERE(HAS(time_of_day.WHERE(name == "Pre-Dawn"))).WHERE(
-        HAS(era.WHERE(name == "Cold War"))
+    selected_events = events.WHERE(
+        HAS(time_of_day.WHERE(name == "Pre-Dawn")) & HAS(era.WHERE(name == "Cold War"))
     )
     return Epoch.CALCULATE(n_events=COUNT(selected_events))
 
@@ -124,7 +124,7 @@ def intra_season_searches():
     return (
         seasons.CALCULATE(season_name=name)
         .CALCULATE(
-            season_name=name,
+            season_name,
             pct_season_searches=ROUND(
                 (100.0 * SUM(search_info.is_intra_season)) / COUNT(search_info),
                 2,

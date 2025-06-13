@@ -5,7 +5,9 @@ Error-handling unit tests for PyDough QDAG nodes for collections.
 import re
 
 import pytest
-from test_utils import (
+
+from pydough.qdag import AstNodeBuilder
+from tests.testing_utilities import (
     AstNodeTestInfo,
     BackReferenceExpressionInfo,
     CalculateInfo,
@@ -20,8 +22,6 @@ from test_utils import (
     TopKInfo,
     WhereInfo,
 )
-
-from pydough.qdag import AstNodeBuilder
 
 
 @pytest.mark.parametrize(

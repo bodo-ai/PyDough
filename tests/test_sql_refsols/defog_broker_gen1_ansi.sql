@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    MIN(sbdpclose) AS agg_0,
+    MIN(sbdpclose) AS lowest_price,
     sbdptickerid AS ticker_id
   FROM main.sbdailyprice
   WHERE
@@ -9,7 +9,7 @@ WITH _s0 AS (
     sbdptickerid
 )
 SELECT
-  MIN(_s0.agg_0) AS lowest_price
+  MIN(_s0.lowest_price) AS lowest_price
 FROM _s0 AS _s0
 JOIN main.sbticker AS sbticker
   ON _s0.ticker_id = sbticker.sbtickerid AND sbticker.sbtickersymbol = 'VTI'

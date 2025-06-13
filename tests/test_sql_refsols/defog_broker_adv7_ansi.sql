@@ -44,11 +44,11 @@ WITH _s2 AS (
     ) AS month
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
-    ON EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
-    AND EXTRACT(YEAR FROM sbcustomer.sbcustjoindate) = EXTRACT(YEAR FROM sbtransaction.sbtxdatetime)
-    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
+    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
   WHERE
-    sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
+    EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
+    AND EXTRACT(YEAR FROM sbcustomer.sbcustjoindate) = EXTRACT(YEAR FROM sbtransaction.sbtxdatetime)
+    AND sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND sbcustomer.sbcustjoindate >= DATE_TRUNC('MONTH', DATE_ADD(CURRENT_TIMESTAMP(), -6, 'MONTH'))
   GROUP BY
     CONCAT_WS(
@@ -65,7 +65,7 @@ WITH _s2 AS (
 )
 SELECT
   _s2.month,
-  COALESCE(_s2.agg_1, 0) AS customer_signups,
+  _s2.agg_1 AS customer_signups,
   _s3.agg_0 AS avg_tx_amount
 FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3

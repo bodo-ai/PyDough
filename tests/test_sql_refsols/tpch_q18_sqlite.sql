@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _t0 AS (
   SELECT
     SUM(l_quantity) AS agg_0,
     l_orderkey AS order_key
@@ -12,14 +12,14 @@ SELECT
   orders.o_orderkey AS O_ORDERKEY,
   orders.o_orderdate AS O_ORDERDATE,
   orders.o_totalprice AS O_TOTALPRICE,
-  COALESCE(_s3.agg_0, 0) AS TOTAL_QUANTITY
+  COALESCE(_t0.agg_0, 0) AS TOTAL_QUANTITY
 FROM tpch.orders AS orders
-LEFT JOIN tpch.customer AS customer
+JOIN tpch.customer AS customer
   ON customer.c_custkey = orders.o_custkey
-LEFT JOIN _s3 AS _s3
-  ON _s3.order_key = orders.o_orderkey
+JOIN _t0 AS _t0
+  ON _t0.order_key = orders.o_orderkey
 WHERE
-  NOT _s3.agg_0 IS NULL AND _s3.agg_0 > 300
+  NOT _t0.agg_0 IS NULL AND _t0.agg_0 > 300
 ORDER BY
   o_totalprice DESC,
   o_orderdate

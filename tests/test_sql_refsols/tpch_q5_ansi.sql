@@ -15,7 +15,7 @@ WITH _t1 AS (
     AND orders.o_orderdate >= CAST('1994-01-01' AS DATE)
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey
-  LEFT JOIN tpch.supplier AS supplier
+  JOIN tpch.supplier AS supplier
     ON lineitem.l_suppkey = supplier.s_suppkey
   JOIN tpch.nation AS nation_2
     ON nation_2.n_nationkey = supplier.s_nationkey

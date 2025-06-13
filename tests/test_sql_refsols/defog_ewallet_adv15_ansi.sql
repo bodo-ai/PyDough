@@ -3,7 +3,7 @@ WITH _s3 AS (
     COUNT() AS agg_0,
     coupons.merchant_id
   FROM main.coupons AS coupons
-  LEFT JOIN main.merchants AS merchants
+  JOIN main.merchants AS merchants
     ON coupons.merchant_id = merchants.mid
   WHERE
     DATEDIFF(coupons.created_at, merchants.created_at, MONTH) = 0

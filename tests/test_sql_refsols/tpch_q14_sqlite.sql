@@ -13,10 +13,11 @@ WITH _t0 AS (
       1 - lineitem.l_discount
     )) AS agg_1
   FROM tpch.lineitem AS lineitem
-  LEFT JOIN tpch.part AS part
+  JOIN tpch.part AS part
     ON lineitem.l_partkey = part.p_partkey
   WHERE
-    lineitem.l_shipdate < '1995-10-01' AND lineitem.l_shipdate >= '1995-09-01'
+    CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1995
+    AND CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) = 9
 )
 SELECT
   CAST((

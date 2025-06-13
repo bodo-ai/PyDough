@@ -17,8 +17,8 @@ WITH _s1 AS (
   JOIN _s1 AS _s1
     ON _s1.order_key = orders.o_orderkey
   WHERE
-    orders.o_orderdate < CAST('1994-01-01' AS DATE)
-    AND orders.o_orderdate >= CAST('1993-10-01' AS DATE)
+    EXTRACT(QUARTER FROM orders.o_orderdate) = 4
+    AND EXTRACT(YEAR FROM orders.o_orderdate) = 1993
   GROUP BY
     orders.o_custkey
 )
@@ -34,7 +34,7 @@ SELECT
 FROM tpch.customer AS customer
 LEFT JOIN _s3 AS _s3
   ON _s3.customer_key = customer.c_custkey
-LEFT JOIN tpch.nation AS nation
+JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
   revenue DESC,

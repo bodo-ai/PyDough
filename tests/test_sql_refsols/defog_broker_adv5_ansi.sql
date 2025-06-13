@@ -1,66 +1,63 @@
-WITH _s1 AS (
+WITH _s0 AS (
   SELECT
-    sbtickerid AS _id,
-    sbtickersymbol AS symbol
-  FROM main.sbticker
-), _s4 AS (
-  SELECT DISTINCT
+    SUM(sbdpclose) AS expr_0,
+    COUNT(sbdpclose) AS expr_1,
+    MAX(sbdphigh) AS max_high,
+    MIN(sbdplow) AS min_low,
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbdailyprice.sbdpdate),
+      EXTRACT(YEAR FROM sbdpdate),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbdailyprice.sbdpdate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbdailyprice.sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdailyprice.sbdpdate)), -2)
-      END
-    ) AS month,
-    _s1.symbol
-  FROM main.sbdailyprice AS sbdailyprice
-  LEFT JOIN _s1 AS _s1
-    ON _s1._id = sbdailyprice.sbdptickerid
-), _s5 AS (
-  SELECT
-    AVG(sbdailyprice.sbdpclose) AS agg_0,
-    MAX(sbdailyprice.sbdphigh) AS agg_1,
-    MIN(sbdailyprice.sbdplow) AS agg_2,
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM sbdailyprice.sbdpdate),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbdailyprice.sbdpdate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbdailyprice.sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdailyprice.sbdpdate)), (
+        WHEN LENGTH(EXTRACT(MONTH FROM sbdpdate)) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM sbdpdate), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdpdate)), (
           2 * -1
         ))
       END
     ) AS month,
-    _s3.symbol
-  FROM main.sbdailyprice AS sbdailyprice
-  LEFT JOIN _s1 AS _s3
-    ON _s3._id = sbdailyprice.sbdptickerid
+    sbdptickerid AS ticker_id
+  FROM main.sbdailyprice
   GROUP BY
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbdailyprice.sbdpdate),
+      EXTRACT(YEAR FROM sbdpdate),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbdailyprice.sbdpdate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbdailyprice.sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdailyprice.sbdpdate)), (
+        WHEN LENGTH(EXTRACT(MONTH FROM sbdpdate)) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM sbdpdate), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdpdate)), (
           2 * -1
         ))
       END
     ),
-    _s3.symbol
+    sbdptickerid
+), _t1 AS (
+  SELECT
+    SUM(_s0.expr_0) AS expr_0,
+    SUM(_s0.expr_1) AS expr_1,
+    MAX(_s0.max_high) AS max_high,
+    MIN(_s0.min_low) AS min_low,
+    _s0.month,
+    sbticker.sbtickersymbol AS symbol
+  FROM _s0 AS _s0
+  JOIN main.sbticker AS sbticker
+    ON _s0.ticker_id = sbticker.sbtickerid
+  GROUP BY
+    _s0.month,
+    sbticker.sbtickersymbol
 )
 SELECT
-  _s4.symbol,
-  _s4.month,
-  _s5.agg_0 AS avg_close,
-  _s5.agg_1 AS max_high,
-  _s5.agg_2 AS min_low,
+  symbol,
+  month,
+  expr_0 / expr_1 AS avg_close,
+  max_high,
+  min_low,
   (
-    _s5.agg_0 - LAG(_s5.agg_0, 1) OVER (PARTITION BY _s4.symbol ORDER BY _s4.month NULLS LAST)
-  ) / LAG(_s5.agg_0, 1) OVER (PARTITION BY _s4.symbol ORDER BY _s4.month NULLS LAST) AS momc
-FROM _s4 AS _s4
-LEFT JOIN _s5 AS _s5
-  ON _s4.month = _s5.month AND _s4.symbol = _s5.symbol
+    (
+      expr_0 / expr_1
+    ) - LAG((
+      expr_0 / expr_1
+    ), 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST)
+  ) / LAG((
+    expr_0 / expr_1
+  ), 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST) AS momc
+FROM _t1

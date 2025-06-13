@@ -11,7 +11,7 @@ WITH _s3 AS (
     COUNT() AS agg_1,
     products.pr_brand AS brand
   FROM main.devices AS devices
-  LEFT JOIN main.products AS products
+  JOIN main.products AS products
     ON devices.de_product_id = products.pr_id
   LEFT JOIN _s3 AS _s3
     ON _s3.device_id = devices.de_id
@@ -20,7 +20,7 @@ WITH _s3 AS (
 )
 SELECT
   brand,
-  ROUND(CAST(COALESCE(agg_0, 0) AS REAL) / COALESCE(agg_1, 0), 2) AS ir
+  ROUND(CAST(COALESCE(agg_0, 0) AS REAL) / agg_1, 2) AS ir
 FROM _t0
 ORDER BY
   brand

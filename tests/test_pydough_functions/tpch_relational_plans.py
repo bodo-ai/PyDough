@@ -7,12 +7,6 @@ tests that need to process relational plans.
 from datetime import date
 from decimal import Decimal
 
-from test_utils import (
-    make_relational_column_reference,
-    make_relational_literal,
-    make_relational_ordering,
-)
-
 from pydough.pydough_operators import (
     ADD,
     BAN,
@@ -44,6 +38,11 @@ from pydough.types import (
     NumericType,
     StringType,
     UnknownType,
+)
+from tests.testing_utilities import (
+    make_relational_column_reference,
+    make_relational_literal,
+    make_relational_ordering,
 )
 
 

@@ -44,11 +44,11 @@ WITH _s2 AS (
     ) AS month
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
-    ON CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER)
-    AND CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%m', sbtransaction.sbtxdatetime) AS INTEGER)
-    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
+    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
   WHERE
-    sbcustomer.sbcustjoindate < DATE('now', 'start of month')
+    CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER)
+    AND CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%m', sbtransaction.sbtxdatetime) AS INTEGER)
+    AND sbcustomer.sbcustjoindate < DATE('now', 'start of month')
     AND sbcustomer.sbcustjoindate >= DATE(DATETIME('now', '-6 month'), 'start of month')
   GROUP BY
     CONCAT_WS(
@@ -65,7 +65,7 @@ WITH _s2 AS (
 )
 SELECT
   _s2.month,
-  COALESCE(_s2.agg_1, 0) AS customer_signups,
+  _s2.agg_1 AS customer_signups,
   _s3.agg_0 AS avg_tx_amount
 FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3

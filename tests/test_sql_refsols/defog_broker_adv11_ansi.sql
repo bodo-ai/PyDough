@@ -3,35 +3,34 @@ WITH _t1 AS (
     sbcustomer.sbcustid AS _id,
     sbcustomer.sbcustemail AS email
   FROM main.sbcustomer AS sbcustomer
-  WHERE
-    sbcustomer.sbcustemail LIKE '%.com'
 ), _s2 AS (
   SELECT
     _t1._id AS _id
   FROM _t1 AS _t1
+  WHERE
+    _t1.email LIKE '%.com'
 ), _s0 AS (
   SELECT
     sbtransaction.sbtxcustid AS customer_id,
     sbtransaction.sbtxtickerid AS ticker_id
   FROM main.sbtransaction AS sbtransaction
-), _s1 AS (
+), _t2 AS (
   SELECT
     sbticker.sbtickerid AS _id,
     sbticker.sbtickersymbol AS symbol
   FROM main.sbticker AS sbticker
-), _t2 AS (
+), _s1 AS (
   SELECT
-    _s0.customer_id AS customer_id,
-    _s1.symbol AS symbol
-  FROM _s0 AS _s0
-  LEFT JOIN _s1 AS _s1
-    ON _s0.ticker_id = _s1._id
+    _t2._id AS _id
+  FROM _t2 AS _t2
   WHERE
-    _s1.symbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
+    _t2.symbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
 ), _s3 AS (
   SELECT
-    _t2.customer_id AS customer_id
-  FROM _t2 AS _t2
+    _s0.customer_id AS customer_id
+  FROM _s0 AS _s0
+  JOIN _s1 AS _s1
+    ON _s0.ticker_id = _s1._id
 ), _t0 AS (
   SELECT
     1 AS _
