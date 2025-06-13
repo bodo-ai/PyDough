@@ -14,14 +14,12 @@ WITH _s0 AS (
     inventory_snapshots.is_in_inventory AS is_in_inventory,
     inventory_snapshots.snapshot_date AS snapshot_date
   FROM main.inventory_snapshots AS inventory_snapshots
-  WHERE
-    inventory_snapshots.is_in_inventory = 0
 ), _s2 AS (
   SELECT
     _t0.car_id AS car_id
   FROM _t0 AS _t0
   WHERE
-    _s0.sale_date = _t0.snapshot_date
+    _s0.sale_date = _t0.snapshot_date AND _t0.is_in_inventory = 0
 ), _s3 AS (
   SELECT
     _s1._id AS _id

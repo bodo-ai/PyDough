@@ -8,12 +8,12 @@ WITH _s0 AS (
     payments_received.payment_method AS payment_method,
     payments_received.sale_id AS sale_id
   FROM main.payments_received AS payments_received
-  WHERE
-    payments_received.payment_method = 'cash'
 ), _s1 AS (
   SELECT
     _t0.sale_id AS sale_id
   FROM _t0 AS _t0
+  WHERE
+    _t0.payment_method = 'cash'
 ), _s3 AS (
   SELECT
     _s0.salesperson_id AS salesperson_id

@@ -51,34 +51,34 @@ from pydough.types import BooleanType, NumericType, UnknownType
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
 from .filter_pushdown import push_filters
-from .hybrid_decorrelater import run_hybrid_decorrelation
-from .hybrid_tree import (
-    ConnectionType,
+from .hybrid_connection import ConnectionType, HybridConnection
+from .hybrid_expressions import (
     HybridBackRefExpr,
-    HybridCalculate,
-    HybridChildPullUp,
     HybridChildRefExpr,
     HybridCollation,
-    HybridCollectionAccess,
     HybridColumnExpr,
-    HybridConnection,
     HybridCorrelExpr,
     HybridExpr,
-    HybridFilter,
     HybridFunctionExpr,
-    HybridLimit,
     HybridLiteralExpr,
+    HybridRefExpr,
+    HybridSidedRefExpr,
+    HybridWindowExpr,
+)
+from .hybrid_operations import (
+    HybridCalculate,
+    HybridChildPullUp,
+    HybridCollectionAccess,
+    HybridFilter,
+    HybridLimit,
     HybridNoop,
     HybridOperation,
     HybridPartition,
     HybridPartitionChild,
-    HybridRefExpr,
     HybridRoot,
-    HybridSidedRefExpr,
-    HybridTranslator,
-    HybridTree,
-    HybridWindowExpr,
 )
+from .hybrid_translator import HybridTranslator
+from .hybrid_tree import HybridTree
 from .merge_projects import merge_projects
 
 
@@ -220,7 +220,9 @@ class RelTranslation:
                                 and back_expr.name == expr.name
                             ):
                                 return context.expressions[back_expr]
-                    raise ValueError(f"Context does not contain expression {expr}")
+                    raise ValueError(
+                        f"Context does not contain expression {expr}. Available expressions: {sorted(context.expressions.keys(), key=repr)}"
+                    )
                 return context.expressions[expr]
             case HybridFunctionExpr():
                 inputs = [self.translate_expression(arg, context) for arg in expr.args]
@@ -489,7 +491,7 @@ class RelTranslation:
         # Build the corresponding (lhs_key == rhs_key) conditions
         cond_terms: list[RelationalExpression] = []
         if join_keys is not None:
-            for lhs_key, rhs_key in join_keys:
+            for lhs_key, rhs_key in sorted(join_keys, key=repr):
                 lhs_key_column: ColumnReference = lhs_result.expressions[
                     lhs_key
                 ].with_input(input_aliases[0])
@@ -519,9 +521,7 @@ class RelTranslation:
             existing_ref: ColumnReference = lhs_result.expressions[expr]
             join_columns[existing_ref.name] = existing_ref.with_input(input_aliases[0])
             if child_idx is None:
-                shifted_expr: HybridExpr | None = expr.shift_back(1)
-                if shifted_expr is not None:
-                    out_columns[shifted_expr] = existing_ref
+                out_columns[expr.shift_back(1)] = existing_ref
             else:
                 out_columns[expr] = existing_ref
 
@@ -647,12 +647,20 @@ class RelTranslation:
                 and hybrid.pipeline[0].child_idx == child_idx
             ):
                 continue
-            if child.required_steps == pipeline_idx:
+            if pipeline_idx == (child.max_steps - 1):
                 self.stack.append(context)
                 child_output = self.rel_translation(
                     child.subtree, len(child.subtree.pipeline) - 1
                 )
                 self.stack.pop()
+                join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
+                    child.subtree.join_keys
+                )
+                if (
+                    isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
+                    and child_idx == 0
+                ):
+                    join_keys = None
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
@@ -672,7 +680,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            child.subtree.join_keys,
+                            join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
                             True,
@@ -686,7 +694,7 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
-                            child.subtree.join_keys,
+                            join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
                             True,
@@ -880,9 +888,7 @@ class RelTranslation:
         # Account for the fact that the PARTITION is stepping down a level,
         # without actually joining.
         for expr, ref in context.expressions.items():
-            shifted_expr: HybridExpr | None = expr.shift_back(1)
-            if shifted_expr is not None:
-                expressions[shifted_expr] = ref
+            expressions[expr.shift_back(1)] = ref
         # Return the input data, which will be wrapped in an aggregation when
         # handle_children is called on the output
         result: TranslationOutput = TranslationOutput(
@@ -1039,9 +1045,7 @@ class RelTranslation:
                 child_output.expressions
             )
             for expr, column_ref in child_output.expressions.items():
-                shifted_expr: HybridExpr | None = expr.shift_back(1)
-                if shifted_expr is not None:
-                    new_expressions[shifted_expr] = column_ref
+                new_expressions[expr.shift_back(1)] = column_ref
             return TranslationOutput(child_output.relational_node, new_expressions)
 
         join_keys: list[tuple[HybridExpr, HybridExpr]] = []
@@ -1417,17 +1421,10 @@ def convert_ast_to_relational(
     rel_translator: RelTranslation = RelTranslation()
     node = rel_translator.preprocess_root(node, columns)
 
-    # Convert the QDAG node to the hybrid form and run a series of
-    # transformations:
-    # 1. Eject any arguments from the aggregate inputs
-    # 2. Run the de-correlation procedure
-    # 3. Run any final rewrites, such as turning MEDIAN into an average of the
-    #    1-2 median rows, that must happen after de-correlation.
+    # Convert the QDAG node to a hybrid tree, including any necessary
+    # transformations such as de-correlation.
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
-    hybrid: HybridTree = hybrid_translator.make_hybrid_tree(node, None)
-    hybrid_translator.eject_aggregate_inputs(hybrid)
-    run_hybrid_decorrelation(hybrid)
-    hybrid_translator.run_rewrites(hybrid)
+    hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
 
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.

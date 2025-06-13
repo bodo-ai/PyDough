@@ -4,8 +4,9 @@ WITH _s3 AS (
     coupons.merchant_id
   FROM main.coupons AS coupons
   JOIN main.merchants AS merchants
-    ON DATEDIFF(coupons.created_at, merchants.created_at, MONTH) = 0
-    AND coupons.merchant_id = merchants.mid
+    ON coupons.merchant_id = merchants.mid
+  WHERE
+    DATEDIFF(coupons.created_at, merchants.created_at, MONTH) = 0
   GROUP BY
     coupons.merchant_id
 )

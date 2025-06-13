@@ -2,7 +2,7 @@ WITH _t AS (
   SELECT
     lineitem.l_extendedprice AS extended_price,
     lineitem.l_quantity AS quantity,
-    AVG(lineitem.l_quantity) OVER (PARTITION BY part.p_partkey) AS _w
+    AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey) AS _w
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey

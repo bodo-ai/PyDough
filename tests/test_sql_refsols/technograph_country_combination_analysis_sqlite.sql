@@ -11,10 +11,11 @@ WITH _s2 AS (
   FROM _s2 AS _s2
   CROSS JOIN main.countries AS countries
   JOIN main.devices AS devices
-    ON _s2.factory_id = devices.de_production_country_id
-    AND countries.co_id = devices.de_purchase_country_id
+    ON countries.co_id = devices.de_purchase_country_id
   JOIN main.incidents AS incidents
     ON devices.de_id = incidents.in_device_id
+  WHERE
+    _s2.factory_id = devices.de_production_country_id
   GROUP BY
     _s2._id,
     countries.co_id
@@ -26,8 +27,9 @@ WITH _s2 AS (
   FROM _s2 AS _s10
   CROSS JOIN main.countries AS countries
   JOIN main.devices AS devices
-    ON _s10.factory_id = devices.de_production_country_id
-    AND countries.co_id = devices.de_purchase_country_id
+    ON countries.co_id = devices.de_purchase_country_id
+  WHERE
+    _s10.factory_id = devices.de_production_country_id
   GROUP BY
     _s10._id,
     countries.co_id
