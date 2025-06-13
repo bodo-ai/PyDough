@@ -1235,6 +1235,9 @@ class HybridTranslator:
             case HybridPartition():
                 # A partition does not need to be joined to its parent
                 join_keys = []
+            case HybridRoot():
+                # A root does not need to be joined to its parent
+                join_keys = []
             case _:
                 raise NotImplementedError(f"{operation.__class__.__name__}")
         if join_keys is not None:
