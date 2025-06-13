@@ -7,14 +7,11 @@ https://peps.python.org/pep-0249/
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 
-from .db_types import DBConnection, DBCursor
-
-if TYPE_CHECKING:
-    import snowflake.connector.cursor
+from .db_types import DBConnection, DBCursor, SnowflakeCursor
 
 __all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
@@ -53,7 +50,14 @@ class DatabaseConnection:
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise e
-        if isinstance(cursor, snowflake.connector.cursor.SnowflakeCursor):
+
+        # This is only for MyPy to pass and know about fetch_pandas_all()
+        # NOTE: Code does not run in type checking mode, so we need to
+        # check at run-time if the cursor has the method.
+        if TYPE_CHECKING:
+            _ = cast(SnowflakeCursor, cursor).fetch_pandas_all
+        # At run-time check and run the fetch.
+        if hasattr(cursor, "fetch_pandas_all"):
             return cursor.fetch_pandas_all()
         else:
             # Assume sqlite3
