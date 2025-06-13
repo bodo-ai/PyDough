@@ -27,3 +27,20 @@ if TYPE_CHECKING:
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
+    SnowflakeCursor: TypeAlias = Any
+    SQLiteConn: TypeAlias = Any
+    SQLiteCursor: TypeAlias = Any
+    SnowflakeConn: TypeAlias = Any
+# This allows us to use these type aliases in the rest of the code
+# without worrying about whether the specific database modules are available.
+__all__ = [
+    "DBConnection",
+    "DBCursor",
+    "SQLiteConn",
+    "SQLiteCursor",
+    "SnowflakeConn",
+    "SnowflakeCursor",
+]
+# The type aliases are used to provide a consistent interface for database connections
+# and cursors across different database backends, allowing for easier
+# type hinting and code readability without requiring the actual database modules.
