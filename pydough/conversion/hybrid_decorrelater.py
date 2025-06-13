@@ -266,7 +266,9 @@ class HybridDecorrelater:
                         operation.condition, old_parent, child_height, correl_level
                     )
             # Repeat the process on the ancestor until either loop guard
-            # condition is no longer True.
+            # condition is no longer True. Only update the child height if we
+            # are still making steps from the original tree, as opposed to from
+            # inside a nested child.
             level = level.parent
             if top_level:
                 child_height -= 1

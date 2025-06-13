@@ -136,6 +136,11 @@ class HybridCollectionAccess(HybridOperation):
     """
 
     def __init__(self, collection: CollectionAccess):
+        """
+        Args:
+            `collection`: the QDAG node for the collection access being
+            represented by the hybrid operation.
+        """
         self.collection: CollectionAccess = collection
         terms: dict[str, HybridExpr] = {}
         for name in collection.calc_terms:
@@ -160,6 +165,11 @@ class HybridPartitionChild(HybridOperation):
     """
 
     def __init__(self, subtree: "HybridTree"):
+        """
+        Args:
+            `subtree`: the hybrid tree representing the data originally being
+            partitioned.
+        """
         self.subtree: HybridTree = subtree
         super().__init__(
             subtree.pipeline[-1].terms,
@@ -183,6 +193,15 @@ class HybridCalculate(HybridOperation):
         new_expressions: dict[str, HybridExpr],
         orderings: list[HybridCollation],
     ):
+        """
+        Args:
+            `predecessor`: the HybridOperation that precedes hte new CALCULATE
+            operation in the pipeline.
+            `new_expressions`: a mapping of new expression names to their
+            corresponding expressions.
+            `orderings`: a list of collation expressions that specify the order
+            that a hybrid operation is sorted by.
+        """
         self.predecessor: HybridOperation = predecessor
         terms: dict[str, HybridExpr] = {}
         renamings: dict[str, str] = {}
@@ -245,6 +264,12 @@ class HybridFilter(HybridOperation):
     """
 
     def __init__(self, predecessor: HybridOperation, condition: HybridExpr):
+        """
+        Args:
+            `predecessor`: the HybridOperation that precedes the new FILTER
+            operation in the pipeline.
+            `condition`: the expression that is used to filter the data.
+        """
         super().__init__(
             predecessor.terms,
             predecessor.renamings,
@@ -280,6 +305,15 @@ class HybridChildPullUp(HybridOperation):
         child_idx: int,
         original_child_height: int,
     ):
+        """
+        Args:
+            `hybrid`: the hybrid tree that is being modified by having one of
+            its children pulled up.
+            `child_idx`: the index of the child subtree to pull up, which
+            should refer to a child that was just de-correlated.
+            `original_child_height`: the height of the child subtree in the
+                hybrid tree before it was de-correlated.
+        """
         self.child: HybridConnection = hybrid.children[child_idx]
         self.child_idx: int = child_idx
         self.pullup_remapping: dict[HybridExpr, HybridExpr] = {}
@@ -376,6 +410,11 @@ class HybridNoop(HybridOperation):
     """
 
     def __init__(self, last_operation: HybridOperation):
+        """
+        Args:
+            `last_operation`: the last HybridOperation in the pipeline that
+            the no-op builds on top of.
+        """
         super().__init__(
             last_operation.terms,
             last_operation.renamings,
@@ -423,6 +462,13 @@ class HybridLimit(HybridOperation):
         predecessor: HybridOperation,
         records_to_keep: int,
     ):
+        """
+        Args:
+            `predecessor`: the HybridOperation that precedes the new LIMIT
+            operation in the pipeline.
+            `records_to_keep`: the number of records to keep in the LIMIT
+            operation.
+        """
         super().__init__(
             predecessor.terms,
             predecessor.renamings,

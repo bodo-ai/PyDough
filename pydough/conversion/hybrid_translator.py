@@ -988,7 +988,6 @@ class HybridTranslator:
                 # a child subtree into the parent, a correlated reference is
                 # created.
                 ancestor_tree = hybrid
-                back_idx: int = 0
                 true_steps_back: int = 0
                 # Keep stepping backward until `expr.back_levels` non-hidden
                 # steps have been taken.
@@ -1001,7 +1000,6 @@ class HybridTranslator:
                             expr, collection, true_steps_back
                         )
                     ancestor_tree = ancestor_tree.parent
-                    back_idx += true_steps_back
                     if not ancestor_tree.is_hidden_level:
                         true_steps_back += 1
                 expr_name = ancestor_tree.pipeline[-1].renamings.get(
@@ -1033,7 +1031,7 @@ class HybridTranslator:
             case ExpressionFunctionCall():
                 if expr.operator.is_aggregation and inside_agg:
                     raise NotImplementedError(
-                        "PyDough does not yet support calling aggregations inside of aggregations"
+                        f"PyDough does not yet support calling aggregations inside of aggregations: {expr!r}"
                     )
                 # Do special casing for operators that can have collection
                 # arguments.
@@ -1048,12 +1046,7 @@ class HybridTranslator:
                     # Since the connection has been mutated to be a semi/anti join, the
                     # has / hasnot condition is now known to be true.
                     return HybridLiteralExpr(Literal(True, BooleanType()))
-                elif any(
-                    not isinstance(arg, PyDoughExpressionQDAG) for arg in expr.args
-                ):
-                    raise NotImplementedError(
-                        f"PyDough does not yet support non-expression arguments for aggregation function {expr.operator}"
-                    )
+
                 # For normal operators, translate their expression arguments
                 # normally. If it is a non-aggregation, build the function
                 # call. If it is an aggregation, transform accordingly.
@@ -1062,7 +1055,7 @@ class HybridTranslator:
                 for arg in expr.args:
                     if not isinstance(arg, PyDoughExpressionQDAG):
                         raise NotImplementedError(
-                            f"PyDough does not yet support non-expression arguments for function {expr.operator}"
+                            f"Non-expression argument {arg!r} of type {arg.__class__.__name__} found in operator {expr.operator.function_name!r}"
                         )
                     args.append(
                         self.make_hybrid_expr(
@@ -1120,7 +1113,10 @@ class HybridTranslator:
         collations: list[CollationExpression],
         child_ref_mapping: dict[int, int],
     ) -> tuple[dict[str, HybridExpr], list[HybridCollation]]:
-        """_summary_
+        """
+        Converts a list of CollationExpression objects into a dictionary of
+        new expressions for generating a `CALCULATE` and a list of
+        HybridCollation values.
 
         Args:
             `hybrid` The hybrid tree used to handle ordering expressions.
@@ -1509,11 +1505,6 @@ class HybridTranslator:
 
         Args:
             `hybrid`: The hybrid tree to remove correlated references from.
-
-        Returns:
-            The hybrid tree with all invalid correlated references removed as the
-            tree structure is re-written to allow them to be replaced with BACK
-            references. The transformation is also done in-place.
         """
         decorr: HybridDecorrelater = HybridDecorrelater()
         decorr.find_correlated_children(hybrid)

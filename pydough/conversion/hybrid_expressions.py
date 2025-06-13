@@ -171,9 +171,8 @@ class HybridExpr(ABC):
 
     def condition_maintains_existence(self) -> bool:
         """
-        Returns whether this expression, when treated as a filter, is
-        guaranteed to maintain the `always_exists` property of the hybrid
-        tree containing the filter.
+        Returns whether this expression preserves the `always_exists` property
+        when used as a filter.
         """
         return False
 
