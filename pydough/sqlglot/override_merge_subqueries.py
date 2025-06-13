@@ -9,7 +9,6 @@ from collections import defaultdict
 
 from sqlglot import expressions as exp
 from sqlglot.optimizer.merge_subqueries import (
-    FromOrJoin,
     _merge_expressions,
     _merge_from,
     _merge_hints,
@@ -25,6 +24,7 @@ from sqlglot.optimizer.scope import Scope, traverse_scope
 
 if t.TYPE_CHECKING:
     from sqlglot._typing import E
+    from sqlglot.optimizer.merge_subqueries import FromOrJoin
 
 
 def merge_subqueries(expression: E, leave_tables_isolated: bool = False) -> E:
