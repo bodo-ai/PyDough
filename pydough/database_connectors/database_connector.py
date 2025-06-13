@@ -56,10 +56,10 @@ class DatabaseConnection:
             column_names: list[str] = [
                 description[0] for description in cursor.description
             ]
-            data = cursor.fetchall()
             # No need to close the cursor, as its closed by del.
             # TODO: (gh #174) Cache the cursor?
             # TODO: (gh #175) enable typed DataFrames.
+            data = cursor.fetchall()
             return pd.DataFrame(data, columns=column_names)
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
