@@ -14,6 +14,17 @@ from pydough.unqualified import (
     UnqualifiedNode,
 )
 from tests.test_pydough_functions.bad_pydough_functions import (
+    bad_cross_1,
+    bad_cross_2,
+    bad_cross_3,
+    bad_cross_4,
+    bad_cross_5,
+    bad_cross_6,
+    bad_cross_7,
+    bad_cross_8,
+    bad_cross_9,
+    bad_cross_10,
+    bad_cross_11,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -80,6 +91,17 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     regional_first_order_best_line_part,
     regional_suppliers_percentile,
     richest_customer_per_region,
+    simple_cross_1,
+    simple_cross_2,
+    simple_cross_3,
+    simple_cross_4,
+    simple_cross_5,
+    simple_cross_6,
+    simple_cross_7,
+    simple_cross_8,
+    simple_cross_9,
+    simple_cross_10,
+    simple_cross_11,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -1750,6 +1772,223 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                simple_cross_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "r1": ["AFRICA"] * 5
+                        + ["AMERICA"] * 5
+                        + ["ASIA"] * 5
+                        + ["EUROPE"] * 5
+                        + ["MIDDLE EAST"] * 5,
+                        "r2": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"]
+                        * 5,
+                    }
+                ),
+                "simple_cross_1",
+            ),
+            id="simple_cross_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "r1": ["AFRICA"] * 4
+                        + ["AMERICA"] * 4
+                        + ["ASIA"] * 4
+                        + ["EUROPE"] * 4
+                        + ["MIDDLE EAST"] * 4,
+                        "r2": ["AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"]
+                        + ["AFRICA", "ASIA", "EUROPE", "MIDDLE EAST"]
+                        + ["AFRICA", "AMERICA", "EUROPE", "MIDDLE EAST"]
+                        + ["AFRICA", "AMERICA", "ASIA", "MIDDLE EAST"]
+                        + ["AFRICA", "AMERICA", "ASIA", "EUROPE"],
+                    }
+                ),
+                "simple_cross_2",
+            ),
+            id="simple_cross_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_nation": ["INDIA"] * 5
+                        + ["INDONESIA"] * 4
+                        + ["JAPAN"] * 3
+                        + ["CHINA"] * 5
+                        + ["VIETNAM"] * 4,
+                        "customer_nation": [
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                        ]
+                        + ["ARGENTINA", "BRAZIL", "CANADA", "PERU"]
+                        + ["CANADA", "PERU", "UNITED STATES"]
+                        + ["ARGENTINA", "BRAZIL", "CANADA", "PERU", "UNITED STATES"]
+                        + ["ARGENTINA", "BRAZIL", "CANADA", "UNITED STATES"],
+                        "nation_combinations": [2, 1, 1, 2, 1]
+                        + [2, 3, 2, 2]
+                        + [2, 1, 2]
+                        + [5, 1, 3, 3, 2]
+                        + [4, 1, 3, 2],
+                    }
+                ),
+                "simple_cross_3",
+            ),
+            id="simple_cross_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_other_regions": [2, 2, 2, 0, 0],
+                    }
+                ),
+                "simple_cross_4",
+            ),
+            id="simple_cross_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_5,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_other_regions": [2, 2, 2, 0, 0],
+                    }
+                ),
+                "simple_cross_5",
+            ),
+            id="simple_cross_5",
+            marks=pytest.mark.skip(
+                "TODO (gh #361): Add user created collections support to PyDough"
+            ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_6,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n_pairs": [22],
+                    }
+                ),
+                "simple_cross_6",
+            ),
+            id="simple_cross_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_7,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "original_order_key": [13569, 74754, 112352, 113347, 122566],
+                        "n_other_orders": [1] * 5,
+                    }
+                ),
+                "simple_cross_7",
+            ),
+            id="simple_cross_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_8,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_region": ["ASIA", "MIDDLE EAST"],
+                        "customer_region": ["AMERICA", "MIDDLE EAST"],
+                        "region_combinations": [1] * 2,
+                    }
+                ),
+                "simple_cross_8",
+            ),
+            id="simple_cross_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_9,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n1": ["ALGERIA"] * 4 + ["ARGENTINA"] * 4 + ["BRAZIL"] * 2,
+                        "n2": [
+                            "ETHIOPIA",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "ARGENTINA",
+                            "CANADA",
+                        ],
+                    }
+                ),
+                "simple_cross_9",
+            ),
+            id="simple_cross_9",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_10,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "n_other_nations": [1, 1, 2, 2, 2],
+                    }
+                ),
+                "simple_cross_10",
+            ),
+            id="simple_cross_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_11,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [621],
+                    }
+                ),
+                "simple_cross_11",
+            ),
+            id="simple_cross_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_var_std,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2225,6 +2464,73 @@ def test_pipeline_e2e_tpch_custom(
             ["key", "key"],
             "Duplicate column names found in root.",
             id="bad_columns_5",
+        ),
+        pytest.param(
+            bad_cross_1,
+            None,
+            "Cannot qualify int: 42",
+            id="bad_cross_1",
+        ),
+        pytest.param(
+            bad_cross_2,
+            None,
+            "Expected a collection, but received an expression",
+            id="bad_cross_2",
+        ),
+        pytest.param(
+            bad_cross_3,
+            None,
+            "Unrecognized term of graph 'TPCH': 'foo'",
+            id="bad_cross_3",
+        ),
+        pytest.param(
+            bad_cross_4,
+            None,
+            "Name 'customers' conflicts with a collection name in the graph",
+            id="bad_cross_4",
+        ),
+        pytest.param(
+            bad_cross_5,
+            None,
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'regions'",
+            id="bad_cross_5",
+        ),
+        pytest.param(
+            bad_cross_6,
+            None,
+            "Unrecognized term of simple table collection 'parts' in graph 'TPCH': 'suppliers'",
+            id="bad_cross_6",
+        ),
+        # NOTE: raised exception with an empty message
+        pytest.param(
+            bad_cross_7,
+            None,
+            "",
+            id="bad_cross_7",
+        ),
+        pytest.param(
+            bad_cross_8,
+            None,
+            "Unrecognized term of simple table collection 'nations' in graph 'TPCH': 'r_key'",
+            id="bad_cross_8",
+        ),
+        pytest.param(
+            bad_cross_9,
+            None,
+            "Expected an expression, but received a collection: TPCH.regions",
+            id="bad_cross_9",
+        ),
+        pytest.param(
+            bad_cross_10,
+            None,
+            "PyDough does yet support aggregations whose arguments mix between subcollection data of the current context and fields of the context itself",
+            id="bad_cross_10",
+        ),
+        pytest.param(
+            bad_cross_11,
+            None,
+            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'customers'",
+            id="bad_cross_11",
         ),
     ],
 )

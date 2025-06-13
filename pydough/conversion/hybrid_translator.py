@@ -794,11 +794,19 @@ class HybridTranslator:
             parent_tree.pipeline[0], HybridPartition
         )
         if partition_edge_case:
-            assert parent_tree.parent is not None
+            next_hybrid: HybridTree
+            if parent_tree.parent is not None:
+                # If the parent tree has a parent, then we can step back
+                # into the parent tree's parent, which is the context for
+                # the partition.
+                next_hybrid = parent_tree.parent
+            else:
+                assert len(self.stack) > 0, "Back reference steps too far back"
+                next_hybrid = self.stack[-1]
             # Treat the partition's parent as the context for the back
             # to step into, as opposed to the partition itself (so the back
             # levels are consistent)
-            self.stack.append(parent_tree.parent)
+            self.stack.append(next_hybrid)
             parent_result = self.make_hybrid_correl_expr(
                 back_expr, collection, steps_taken_so_far
             ).expr
@@ -1227,6 +1235,9 @@ class HybridTranslator:
             case HybridPartition():
                 # A partition does not need to be joined to its parent
                 join_keys = []
+            case HybridRoot():
+                # A root does not need to be joined to its parent
+                join_keys = []
             case _:
                 raise NotImplementedError(f"{operation.__class__.__name__}")
         if join_keys is not None:
@@ -1301,7 +1312,20 @@ class HybridTranslator:
         collection_access: HybridCollectionAccess
         match node:
             case GlobalContext():
-                return HybridTree(HybridRoot(), node.ancestral_mapping)
+                if node.ancestor_context is None:
+                    # No ancestor context, so this is the root of the hybrid tree.
+                    return HybridTree(HybridRoot(), node.ancestral_mapping)
+                else:
+                    # For CROSS operations, need to create a hybrid tree for the
+                    # ancestor context, which is the context of the CROSS.
+                    hybrid = self.make_hybrid_tree(
+                        node.ancestor_context, parent, is_aggregate
+                    )
+                    # Create a new hybrid tree for the current global context, which
+                    # will be the a successor of the hybrid tree for the ancestor context.
+                    successor_hybrid = HybridTree(HybridRoot(), node.ancestral_mapping)
+                    hybrid.add_successor(successor_hybrid)
+                    return successor_hybrid
             case TableCollection() | SubCollection():
                 collection_access = HybridCollectionAccess(node)
                 successor_hybrid = HybridTree(collection_access, node.ancestral_mapping)
@@ -1489,6 +1513,13 @@ class HybridTranslator:
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs
+                    case GlobalContext():
+                        # This is a special case where the child access
+                        # is a global context, which means that the child is
+                        # a separate top-level computation (hybrid tree).
+                        successor_hybrid = HybridTree(
+                            HybridRoot(), node.ancestral_mapping
+                        )
                     case _:
                         raise NotImplementedError(
                             f"{node.__class__.__name__} (child is {node.child_access.__class__.__name__})"
