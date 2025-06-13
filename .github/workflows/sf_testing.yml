@@ -1,0 +1,65 @@
+name: Run SF Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  get-msg:
+    runs-on: ubuntu-latest
+    outputs:
+      commitMsg: ${{ steps.get-message.outputs.commitMsg }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get commit message or PR title/body
+        id: get-message
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "commitMsg=${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}" >> $GITHUB_OUTPUT
+          else
+            echo "commitMsg=${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
+          fi
+
+  snowflake-tests:
+    name: Snowflake Tests (Python ${{ matrix.python-version }})
+    needs: [get-msg]
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      contains(needs.get-msg.outputs.commitMsg, '[run sf]')
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+
+    env:
+      SNOWFLAKE_USER: ${{ secrets.SF_USERNAME }}
+      SNOWFLAKE_PASSWORD: ${{ secrets.SF_PASSWORD }}
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Install dependencies
+        run: |
+          pip install snowflake-connector-python
+          #HA: Is this needed?
+          pip install snowflake-sqlalchemy
+          pip install pytest
+
+      - name: Run Snowflake Tests
+        run: |
+          uv run --python ${{ matrix.python-version }} pytest -m snowflake tests/
