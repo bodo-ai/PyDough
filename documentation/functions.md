@@ -421,12 +421,12 @@ Customers.CALCULATE(updated_name= REPLACE(name, "xy")) # removes all `xy` appear
 ### STRCOUNT
 
 The `STRCOUNT` function returns how many times in the first argument, the second argument (substring) appears.
-This function requires the two arguments. The Python's function `X.count(Y)` is the equivalent of `STRCOUNT`.
+This function requires the two arguments, and is equivalent to the Python string method `X.count(Y)`.
 Note: This function is case-sensitive and if one or both of the arguments are an empty string returns 0.
 
 ```py
 Customers.CALCULATE(count_substring= STRCOUNT(name, "e")) # counts how many 'e's are in name
-Customers.CALCULATE(count_substring= STRCOUNT(name, "Alex")) # counts how many 'e's are in name
+Customers.CALCULATE(count_substring= STRCOUNT(name, "Alex")) # counts how many 'Alex's are in name
 Customers.CALCULATE(count_substring= STRCOUNT(name, "")) # returns 0 by default
 ```
 
