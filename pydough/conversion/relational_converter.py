@@ -1383,7 +1383,6 @@ def optimize_relational_tree(
     Returns:
         The optimized relational root.
     """
-
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 

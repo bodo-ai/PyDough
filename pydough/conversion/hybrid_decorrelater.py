@@ -354,7 +354,13 @@ class HybridDecorrelater:
             )
             for i in range(1, preserved_steps):
                 old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
-            child_remapping: dict[int, int] = old_parent.remove_dead_children(set())
+            must_remove: set[int] = set()
+            for idx, other_child in enumerate(old_parent.children):
+                if other_child.max_steps < child.max_steps:
+                    must_remove.add(idx)
+            child_remapping: dict[int, int] = old_parent.remove_dead_children(
+                must_remove
+            )
             child_idx = child_remapping[child_idx]
         # Mark the child as no longer correlated, for printing purposes
         old_parent.correlated_children.discard(child_idx)
