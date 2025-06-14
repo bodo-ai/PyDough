@@ -1,30 +1,20 @@
-WITH _s0 AS (
+WITH _t0 AS (
   SELECT
     COUNT() AS agg_0,
     SUM((
       (
-        DAY_OF_WEEK(created_at) + 6
+        DAY_OF_WEEK(notifications.created_at) + 6
       ) % 7
     ) IN (5, 6)) AS agg_1,
-    user_id,
-    DATE_TRUNC('WEEK', CAST(created_at AS TIMESTAMP)) AS week
-  FROM main.notifications
-  WHERE
-    created_at < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
-    AND created_at >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -3, 'WEEK')
-  GROUP BY
-    user_id,
-    DATE_TRUNC('WEEK', CAST(created_at AS TIMESTAMP))
-), _t0 AS (
-  SELECT
-    SUM(_s0.agg_0) AS agg_0,
-    SUM(_s0.agg_1) AS agg_1,
-    _s0.week
-  FROM _s0 AS _s0
+    DATE_TRUNC('WEEK', CAST(notifications.created_at AS TIMESTAMP)) AS week
+  FROM main.notifications AS notifications
   JOIN main.users AS users
-    ON _s0.user_id = users.uid AND users.country IN ('US', 'CA')
+    ON notifications.user_id = users.uid AND users.country IN ('US', 'CA')
+  WHERE
+    notifications.created_at < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
+    AND notifications.created_at >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -3, 'WEEK')
   GROUP BY
-    _s0.week
+    DATE_TRUNC('WEEK', CAST(notifications.created_at AS TIMESTAMP))
 )
 SELECT
   week,

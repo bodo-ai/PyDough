@@ -24,6 +24,7 @@ from pydough.relational import (
 from pydough.relational.rel_util import (
     add_expr_uses,
     contains_window,
+    remap_join_condition,
     transpose_expression,
 )
 
@@ -90,10 +91,7 @@ def project_join_transpose(project: Project) -> RelationalNode:
             join_input_index = join_input_indices.pop()
             # If the corresponding join is an inner join, mark the input as
             # pushable into that side.
-            if (
-                join_input_index == 0
-                or join.join_types[join_input_index - 1] == JoinType.INNER
-            ):
+            if join_input_index == 0 or join.join_type == JoinType.INNER:
                 pushable_columns[join_input_index].append((name, expr))
 
     # If not every column can be pushed, abandon the attempt
@@ -106,20 +104,33 @@ def project_join_transpose(project: Project) -> RelationalNode:
         {} for _ in range(len(join.inputs))
     ]
     finder.reset()
-    for cond in join.conditions:
-        cond.accept(finder)
-    for input_ref in finder.get_column_references():
+    join.condition.accept(finder)
+    col_references: set[ColumnReference] = finder.get_column_references()
+    for input_ref in col_references:
         join_input_index = join.default_input_aliases.index(input_ref.input_name)
-        new_input_col_sets[join_input_index][input_ref.name] = ColumnReference(
+        new_ref: RelationalExpression = ColumnReference(
             input_ref.name, input_ref.data_type
         )
+        new_input_col_sets[join_input_index][input_ref.name] = new_ref
+    for name, expr in join.columns.items():
+        if expr in col_references:
+            assert isinstance(expr, ColumnReference)
+            join_input_index = join.default_input_aliases.index(expr.input_name)
+            pushable_columns[join_input_index].append(
+                (name, ColumnReference(name, expr.data_type))
+            )
+
+    left_renamings: dict[str, RelationalExpression] = {}
+    right_renamings: dict[str, RelationalExpression] = {}
 
     # The new columns of the join.
     new_columns: dict[str, RelationalExpression] = {}
-
     # For each join input, place all of the columns used from that input into
     # a join.
     for idx, join_input in enumerate(join.inputs):
+        renaming: dict[str, RelationalExpression] = (left_renamings, right_renamings)[
+            idx
+        ]
         input_name: str | None = join.default_input_aliases[idx]
         new_input_cols: dict[str, RelationalExpression] = new_input_col_sets[idx]
         for name, expr in pushable_columns[idx]:
@@ -134,16 +145,24 @@ def project_join_transpose(project: Project) -> RelationalNode:
                 counter += 1
             # Add the expression to the projection for the referenced input,
             # and a reference to the new column in the join's columns.
-            new_input_cols[input_expr_name] = transpose_expression(expr, join.columns)
+            transposed_expr: RelationalExpression = transpose_expression(
+                expr, join.columns
+            )
+            new_input_cols[input_expr_name] = transposed_expr
             new_columns[name] = ColumnReference(
                 input_expr_name, expr.data_type, input_name=input_name
             )
+            if isinstance(transposed_expr, ColumnReference):
+                renaming[transposed_expr.name] = new_columns[name]
         # Create the projection on top of the join's input, unless the
         # projection would be a no-op
         if new_input_cols != join_input.columns:
             join.inputs[idx] = Project(join_input, new_input_cols)
 
-    # Replace the original columns with the new columns.
+    # Replace the original columns with the new columns, and update the join condition
+    join.condition = remap_join_condition(
+        join.condition, left_renamings, right_renamings, join.default_input_aliases
+    )
     join._columns = new_columns
     return join
 

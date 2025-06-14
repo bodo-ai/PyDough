@@ -1,12 +1,19 @@
-WITH _t0 AS (
+WITH _s0 AS (
   SELECT
-    SUM(sales.sale_price) AS agg_0,
-    SUM(cars.cost) AS agg_1
-  FROM main.sales AS sales
-  JOIN main.cars AS cars
-    ON cars._id = sales.car_id
+    SUM(sale_price) AS agg_0,
+    car_id
+  FROM main.sales
   WHERE
-    EXTRACT(YEAR FROM sales.sale_date) = 2023
+    EXTRACT(YEAR FROM sale_date) = 2023
+  GROUP BY
+    car_id
+), _t0 AS (
+  SELECT
+    SUM(_s0.agg_0) AS agg_0,
+    SUM(cars.cost) AS agg_1
+  FROM _s0 AS _s0
+  JOIN main.cars AS cars
+    ON _s0.car_id = cars._id
 )
 SELECT
   (

@@ -1,5 +1,5 @@
 ROOT(columns=[('nation_name', nation_name), ('avg_consumer_value', avg_consumer_value)], orderings=[])
- JOIN(conditions=[t0.key == t1.nation_key], types=['inner'], columns={'avg_consumer_value': t1.avg_consumer_value, 'nation_name': t0.nation_name})
+ JOIN(condition=t0.key == t1.nation_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'avg_consumer_value': t1.avg_consumer_value, 'nation_name': t0.nation_name})
   SCAN(table=tpch.NATION, columns={'key': n_nationkey, 'nation_name': n_nationkey})
   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'avg_consumer_value': MAX(expr_1)})
    PROJECT(columns={'expr_1': IFF(account_balance < 0.0:numeric, 0.0:numeric, account_balance), 'nation_key': nation_key})

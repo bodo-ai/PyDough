@@ -16,7 +16,6 @@ from sqlglot.optimizer.annotate_types import annotate_types
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
-from sqlglot.optimizer.merge_subqueries import merge_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.pushdown_projections import pushdown_projections
@@ -34,6 +33,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
+from .override_merge_subqueries import merge_subqueries
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]

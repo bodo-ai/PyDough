@@ -1,7 +1,7 @@
 ROOT(columns=[('PROMO_REVENUE', 100.0:numeric * DEFAULT_TO(agg_0, 0:numeric) / DEFAULT_TO(agg_1, 0:numeric))], orderings=[])
  AGGREGATE(keys={}, aggregations={'agg_0': SUM(promo_value), 'agg_1': SUM(value)})
   PROJECT(columns={'promo_value': IFF(STARTSWITH(part_type, 'PROMO':string), extended_price * 1:numeric - discount, 0:numeric), 'value': extended_price * 1:numeric - discount})
-   JOIN(conditions=[t0.part_key == t1.key], types=['inner'], columns={'discount': t0.discount, 'extended_price': t0.extended_price, 'part_type': t1.part_type})
+   JOIN(condition=t0.part_key == t1.key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'discount': t0.discount, 'extended_price': t0.extended_price, 'part_type': t1.part_type})
     FILTER(condition=MONTH(ship_date) == 9:numeric & YEAR(ship_date) == 1995:numeric, columns={'discount': discount, 'extended_price': extended_price, 'part_key': part_key})
      SCAN(table=tpch.LINEITEM, columns={'discount': l_discount, 'extended_price': l_extendedprice, 'part_key': l_partkey, 'ship_date': l_shipdate})
     SCAN(table=tpch.PART, columns={'key': p_partkey, 'part_type': p_type})

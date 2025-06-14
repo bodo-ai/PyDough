@@ -4,10 +4,9 @@ WITH _s3 AS (
     sbcustomer.sbcustid AS _id
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
-    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
-  WHERE
-    CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER)
+    ON CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER)
     AND CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%m', sbtransaction.sbtxdatetime) AS INTEGER)
+    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
     sbcustomer.sbcustid
 )

@@ -532,7 +532,6 @@ class HybridTree:
                             else:
                                 self.insert_count_filter(idx, True)
                             return idx
-
                 # If combining a semi/anti with an existing non-semi/anti
                 # and filters are banned, keep the existing connection type
                 # and insert a count/presence filter into the tree so that it

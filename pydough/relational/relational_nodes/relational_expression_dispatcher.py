@@ -52,8 +52,7 @@ class RelationalExpressionDispatcher(RelationalVisitor):
 
     def visit_join(self, join: Join) -> None:
         self.visit_common(join)
-        for cond in join.conditions:
-            cond.accept(self._expr_visitor)
+        join.condition.accept(self._expr_visitor)
 
     def visit_project(self, project: Project) -> None:
         self.visit_common(project)

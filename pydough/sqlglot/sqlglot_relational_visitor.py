@@ -408,23 +408,17 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             inputs[0], column_exprs, alias_map.get(join.default_input_aliases[0], None)
         )
         joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
-        for i in range(1, len(inputs)):
-            subquery: Subquery = Subquery(
-                this=inputs[i],
-                alias=TableAlias(
-                    this=alias_map.get(join.default_input_aliases[i], None)
-                ),
-            )
-            cond: RelationalExpression = (
-                join.conditions[i - 1]
-                .accept_shuttle(self._alias_remover)
-                .accept_shuttle(self._alias_modifier)
-            )
-            cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
-                cond
-            )
-            join_type: str = join.join_types[i - 1].value
-            joins.append((subquery, cond_expr, join_type))
+        assert len(inputs) == 2
+        subquery: Subquery = Subquery(
+            this=inputs[1],
+            alias=TableAlias(this=alias_map.get(join.default_input_aliases[i], None)),
+        )
+        cond: RelationalExpression = join.condition.accept_shuttle(
+            self._alias_remover
+        ).accept_shuttle(self._alias_modifier)
+        cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(cond)
+        join_type: str = join.join_type.value
+        joins.append((subquery, cond_expr, join_type))
         for subquery, cond_expr, join_type in joins:
             query = query.join(subquery, on=cond_expr, join_type=join_type)
             query = eliminate_semi_and_anti_joins(query)

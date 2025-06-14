@@ -1,21 +1,12 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
-    SUM(l_extendedprice * (
-      1 - l_discount
+    SUM(lineitem.l_extendedprice * (
+      1 - lineitem.l_discount
     )) AS agg_0,
-    l_orderkey AS order_key
-  FROM tpch.lineitem
-  WHERE
-    l_returnflag = 'R'
-  GROUP BY
-    l_orderkey
-), _s3 AS (
-  SELECT
-    SUM(_s1.agg_0) AS agg_0,
     orders.o_custkey AS customer_key
   FROM tpch.orders AS orders
-  JOIN _s1 AS _s1
-    ON _s1.order_key = orders.o_orderkey
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
   WHERE
     EXTRACT(QUARTER FROM orders.o_orderdate) = 4
     AND EXTRACT(YEAR FROM orders.o_orderdate) = 1993

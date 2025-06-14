@@ -1241,144 +1241,76 @@ def test_root_duplicate_columns() -> None:
     [
         pytest.param(
             Join(
-                [build_simple_scan(), build_simple_scan()],
-                [
-                    make_relational_literal(True, BooleanType()),
-                ],
-                [JoinType.INNER],
-                {
+                inputs=[build_simple_scan(), build_simple_scan()],
+                condition=make_relational_literal(True, BooleanType()),
+                join_type=JoinType.INNER,
+                columns={
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
                 },
             ),
-            "JOIN(conditions=[Literal(value=True, type=BooleanType())], types=['inner'], columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
+            "JOIN(condition=Literal(value=True, type=BooleanType()), type=INNER, columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
             id="inner_join",
         ),
         pytest.param(
             Join(
-                [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.LEFT],
-                {
+                inputs=[build_simple_scan(), build_simple_scan()],
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                join_type=JoinType.LEFT,
+                columns={
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
                 },
             ),
-            "JOIN(conditions=[Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=a, type=UnknownType()), Column(input=t1, name=a, type=UnknownType())], return_type=BooleanType())], types=['left'], columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
+            "JOIN(condition=Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=a, type=UnknownType()), Column(input=t1, name=a, type=UnknownType())], return_type=BooleanType()), type=LEFT, columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
             id="left_join",
         ),
         pytest.param(
             Join(
-                [build_simple_scan(), build_simple_scan()],
-                [
-                    make_relational_literal(False, BooleanType()),
-                ],
-                [JoinType.RIGHT],
-                {
+                inputs=[build_simple_scan(), build_simple_scan()],
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("b", input_name="t0"),
+                        make_relational_column_reference("b", input_name="t1"),
+                    ],
+                ),
+                join_type=JoinType.ANTI,
+                columns={
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
                 },
             ),
-            "JOIN(conditions=[Literal(value=False, type=BooleanType())], types=['right'], columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
-            id="right_join",
-        ),
-        pytest.param(
-            Join(
-                [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.FULL_OUTER],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t1"),
-                },
-            ),
-            "JOIN(conditions=[Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=b, type=UnknownType()), Column(input=t1, name=b, type=UnknownType())], return_type=BooleanType())], types=['full outer'], columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
-            id="full_outer_join",
-        ),
-        pytest.param(
-            Join(
-                [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.ANTI],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t1"),
-                },
-            ),
-            "JOIN(conditions=[Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=b, type=UnknownType()), Column(input=t1, name=b, type=UnknownType())], return_type=BooleanType())], types=['anti'], columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
+            "JOIN(condition=Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=b, type=UnknownType()), Column(input=t1, name=b, type=UnknownType())], return_type=BooleanType()), type=ANTI, columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
             id="anti_join",
         ),
         pytest.param(
             Join(
-                [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.SEMI],
-                {
+                inputs=[build_simple_scan(), build_simple_scan()],
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("b", input_name="t0"),
+                        make_relational_column_reference("b", input_name="t1"),
+                    ],
+                ),
+                join_type=JoinType.SEMI,
+                columns={
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
                 },
             ),
-            "JOIN(conditions=[Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=b, type=UnknownType()), Column(input=t1, name=b, type=UnknownType())], return_type=BooleanType())], types=['semi'], columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
+            "JOIN(condition=Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=b, type=UnknownType()), Column(input=t1, name=b, type=UnknownType())], return_type=BooleanType()), type=SEMI, columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
             id="semi_join",
-        ),
-        pytest.param(
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    make_relational_literal(True, BooleanType()),
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t2"),
-                        ],
-                    ),
-                ],
-                [JoinType.INNER, JoinType.SEMI],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t1"),
-                },
-            ),
-            "JOIN(conditions=[Literal(value=True, type=BooleanType()), Call(op=BinaryOperator[==], inputs=[Column(input=t0, name=b, type=UnknownType()), Column(input=t2, name=b, type=UnknownType())], return_type=BooleanType())], types=['inner', 'semi'], columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
-            id="multi-join",
         ),
     ],
 )
@@ -1395,17 +1327,15 @@ def test_join_to_string(join: Join, output: str) -> None:
         pytest.param(
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1413,17 +1343,15 @@ def test_join_to_string(join: Join, output: str) -> None:
             ),
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1435,17 +1363,15 @@ def test_join_to_string(join: Join, output: str) -> None:
         pytest.param(
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1453,17 +1379,15 @@ def test_join_to_string(join: Join, output: str) -> None:
             ),
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "c": make_relational_column_reference("b", input_name="t1"),
@@ -1475,17 +1399,15 @@ def test_join_to_string(join: Join, output: str) -> None:
         pytest.param(
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1494,17 +1416,15 @@ def test_join_to_string(join: Join, output: str) -> None:
             Join(
                 [build_simple_scan(), build_simple_scan()],
                 # Note: We don't care that Equals commutes right now.
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t1"),
-                            make_relational_column_reference("a", input_name="t0"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t1"),
+                        make_relational_column_reference("a", input_name="t0"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1516,17 +1436,15 @@ def test_join_to_string(join: Join, output: str) -> None:
         pytest.param(
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1534,17 +1452,15 @@ def test_join_to_string(join: Join, output: str) -> None:
             ),
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.LEFT],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.LEFT,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1556,17 +1472,15 @@ def test_join_to_string(join: Join, output: str) -> None:
         pytest.param(
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1583,17 +1497,15 @@ def test_join_to_string(join: Join, output: str) -> None:
                     ),
                     build_simple_scan(),
                 ],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1605,17 +1517,15 @@ def test_join_to_string(join: Join, output: str) -> None:
         pytest.param(
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1632,17 +1542,15 @@ def test_join_to_string(join: Join, output: str) -> None:
                         },
                     ),
                 ],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1663,17 +1571,15 @@ def test_join_to_string(join: Join, output: str) -> None:
                     ),
                     build_simple_scan(),
                 ],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1690,17 +1596,15 @@ def test_join_to_string(join: Join, output: str) -> None:
                         },
                     ),
                 ],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1712,17 +1616,15 @@ def test_join_to_string(join: Join, output: str) -> None:
         pytest.param(
             Join(
                 [build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                [JoinType.INNER],
+                CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                JoinType.INNER,
                 {
                     "a": make_relational_column_reference("a", input_name="t0"),
                     "b": make_relational_column_reference("b", input_name="t1"),
@@ -1737,184 +1639,6 @@ def test_join_to_string(join: Join, output: str) -> None:
             ),
             False,
             id="different_nodes",
-        ),
-        pytest.param(
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    make_relational_literal(True, BooleanType()),
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t2"),
-                        ],
-                    ),
-                ],
-                [JoinType.INNER, JoinType.SEMI],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t1"),
-                },
-            ),
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    make_relational_literal(True, BooleanType()),
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t2"),
-                        ],
-                    ),
-                ],
-                [JoinType.INNER, JoinType.SEMI],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t1"),
-                },
-            ),
-            True,
-            id="multi-join-equal",
-        ),
-        pytest.param(
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    ),
-                    make_relational_literal(True, BooleanType()),
-                ],
-                [JoinType.SEMI, JoinType.INNER],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t2"),
-                },
-            ),
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    ),
-                    make_relational_literal(False, BooleanType()),
-                ],
-                [JoinType.SEMI, JoinType.INNER],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t2"),
-                },
-            ),
-            False,
-            id="multi-join-swapped-cond",
-        ),
-        pytest.param(
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    ),
-                    make_relational_literal(True, BooleanType()),
-                ],
-                [JoinType.SEMI, JoinType.INNER],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t2"),
-                },
-            ),
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    ),
-                    make_relational_literal(True, BooleanType()),
-                ],
-                [JoinType.SEMI, JoinType.FULL_OUTER],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t2"),
-                },
-            ),
-            False,
-            id="multi-join-swapped-type",
-        ),
-        pytest.param(
-            Join(
-                [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    ),
-                    make_relational_literal(True, BooleanType()),
-                ],
-                [JoinType.SEMI, JoinType.INNER],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t2"),
-                },
-            ),
-            Join(
-                [
-                    build_simple_scan(),
-                    build_simple_scan(),
-                    Scan(
-                        "table2",
-                        {
-                            "a": make_relational_column_reference("a"),
-                            "b": make_relational_column_reference("b"),
-                        },
-                    ),
-                ],
-                [
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("b", input_name="t0"),
-                            make_relational_column_reference("b", input_name="t1"),
-                        ],
-                    ),
-                    make_relational_literal(True, BooleanType()),
-                ],
-                [JoinType.SEMI, JoinType.INNER],
-                {
-                    "a": make_relational_column_reference("a", input_name="t0"),
-                    "b": make_relational_column_reference("b", input_name="t2"),
-                },
-            ),
-            False,
-            id="multi-join-swapped-input",
         ),
     ],
 )
@@ -1935,20 +1659,8 @@ def test_join_requires_boolean_condition() -> None:
     with pytest.raises(AssertionError, match="Join condition must be a boolean type"):
         Join(
             [build_simple_scan(), build_simple_scan()],
-            [make_relational_literal(1, NumericType())],
-            [JoinType.INNER],
-            {
-                "a": make_relational_column_reference("a", input_name="t0"),
-            },
-        )
-    with pytest.raises(AssertionError, match="Join condition must be a boolean type"):
-        Join(
-            [build_simple_scan(), build_simple_scan(), build_simple_scan()],
-            [
-                make_relational_literal(True, BooleanType()),
-                make_relational_literal(1, NumericType()),
-            ],
-            [JoinType.INNER, JoinType.INNER],
+            make_relational_literal(1, NumericType()),
+            JoinType.INNER,
             {
                 "a": make_relational_column_reference("a", input_name="t0"),
             },

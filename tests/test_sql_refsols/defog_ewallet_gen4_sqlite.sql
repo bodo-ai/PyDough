@@ -25,9 +25,7 @@ WITH _t1 AS (
   LEFT JOIN _s3 AS _s3
     ON _s3.merchant_id = merchants.mid
   JOIN main.coupons AS coupons
-    ON coupons.merchant_id = merchants.mid
-  WHERE
-    _s3.agg_0 = coupons.start_date
+    ON _s3.agg_0 = coupons.start_date AND coupons.merchant_id = merchants.mid
   GROUP BY
     merchants.mid
 )
