@@ -8,7 +8,7 @@ ROOT(columns=[('factory_country', factory_country), ('purchase_country', purchas
     AGGREGATE(keys={'_id': _id, '_id_3': _id_3}, aggregations={'agg_1': COUNT(), 'agg_4': SUM(expr_3)})
      PROJECT(columns={'_id': _id, '_id_3': _id_3, 'expr_3': agg_2})
       JOIN(condition=t0._id_5 == t1.device_id, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'_id': t0._id, '_id_3': t0._id_3, 'agg_2': t1.agg_2})
-       JOIN(condition=t0._id_3 == t1.store_country_id & t1.factory_country_id == t0.factory_id, type=INNER, cardinality=PLURAL_FILTER, columns={'_id': t0._id, '_id_3': t0._id_3, '_id_5': t1._id})
+       JOIN(condition=t0._id_3 == t1.store_country_id & t1.factory_country_id == t0.factory_id, type=INNER, cardinality=PLURAL_UNKNOWN, columns={'_id': t0._id, '_id_3': t0._id_3, '_id_5': t1._id})
         JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, columns={'_id': t0._id, '_id_3': t1._id_3, 'factory_id': t0.factory_id})
          SCAN(table=main.COUNTRIES, columns={'_id': co_id, 'factory_id': co_id})
          SCAN(table=main.COUNTRIES, columns={'_id_3': co_id})

@@ -1,5 +1,5 @@
 ROOT(columns=[('key', key_36), ('name', name_37), ('comment', comment_35)], orderings=[])
- JOIN(condition=t0.region_key_30 == t1.key_32_0 & t1.name_33_0 == t0.name, type=INNER, cardinality=SINGULAR_FILTER, columns={'comment_35': t1.comment_35, 'key_36': t1.key_36, 'name_37': t1.name_37})
+ JOIN(condition=t0.region_key_30 == t1.key_32_0 & t1.name_33_0 == t0.name, type=INNER, cardinality=SINGULAR_UNKNOWN, columns={'comment_35': t1.comment_35, 'key_36': t1.key_36, 'name_37': t1.name_37})
   JOIN(condition=t0.nation_key_25 == t1.key_28_0, type=INNER, cardinality=SINGULAR_ACCESS, columns={'name': t0.name, 'region_key_30': t1.region_key_30})
    JOIN(condition=t0.customer_key_12 == t1.key_22_0, type=INNER, cardinality=SINGULAR_ACCESS, columns={'name': t0.name, 'nation_key_25': t1.nation_key_25})
     JOIN(condition=t0.order_key == t1.key_13_0, type=INNER, cardinality=SINGULAR_ACCESS, columns={'customer_key_12': t1.customer_key_12, 'name': t0.name})

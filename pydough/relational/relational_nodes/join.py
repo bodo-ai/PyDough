@@ -26,49 +26,119 @@ class JoinCardinality(Enum):
     """
     Enum describing the relationship between the LHS and RHS of a join in terms
     of whether the LHS matches onto 1 or more rows of the RHS, and whether the
-    join can cause the LHS to be filtered or not.
+    join can cause the LHS to be filtered or not. There are 9 combinations of
+    whether the cardinality is singular/plural/unknown, and whether the join
+    is accessing/filtering/unknown.
     """
 
     SINGULAR_FILTER = 1
     SINGULAR_ACCESS = 2
-    PLURAL_FILTER = 3
-    PLURAL_ACCESS = 4
-    UNKNOWN = 5
+    SINGULAR_UNKNOWN = 3
+    PLURAL_FILTER = 4
+    PLURAL_ACCESS = 5
+    PLURAL_UNKNOWN = 6
+    UNKNOWN_FILTER = 7
+    UNKNOWN_ACCESS = 8
+    UNKNOWN_UNKNOWN = 9
 
     def add_filter(self) -> "JoinCardinality":
         """
         Returns a new JoinCardinality referring to the current value but with
         filtering added.
         """
-        if self == JoinCardinality.SINGULAR_ACCESS:
+        if self in (JoinCardinality.SINGULAR_ACCESS, JoinCardinality.SINGULAR_UNKNOWN):
             return JoinCardinality.SINGULAR_FILTER
-        elif self == JoinCardinality.PLURAL_ACCESS:
+        elif self in (JoinCardinality.PLURAL_ACCESS, JoinCardinality.PLURAL_UNKNOWN):
             return JoinCardinality.PLURAL_FILTER
+        elif self in (JoinCardinality.UNKNOWN_ACCESS, JoinCardinality.UNKNOWN_UNKNOWN):
+            return JoinCardinality.UNKNOWN_FILTER
+        else:
+            return self
+
+    def add_potential_filter(self) -> "JoinCardinality":
+        """
+        Returns a new JoinCardinality referring to the current value but with
+        the possibility of filtering added.
+        """
+        if self == JoinCardinality.SINGULAR_ACCESS:
+            return JoinCardinality.SINGULAR_UNKNOWN
+        elif self == JoinCardinality.PLURAL_ACCESS:
+            return JoinCardinality.PLURAL_UNKNOWN
+        elif self == JoinCardinality.UNKNOWN_ACCESS:
+            return JoinCardinality.UNKNOWN_UNKNOWN
         else:
             return self
 
     @property
-    def potentially_filters(self) -> bool:
+    def accesses(self) -> bool:
         """
         Returns whether this JoinCardinality indicates that the LHS is
-        potentially filtered by being joined with the RHS.
+        NOT filtered by being joined with the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_ACCESS,
+            JoinCardinality.PLURAL_ACCESS,
+            JoinCardinality.UNKNOWN_ACCESS,
+        )
+
+    @property
+    def filters(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS is
+        filtered by being joined with the RHS.
         """
         return self in (
             JoinCardinality.SINGULAR_FILTER,
             JoinCardinality.PLURAL_FILTER,
-            JoinCardinality.UNKNOWN,
+            JoinCardinality.UNKNOWN_FILTER,
         )
 
     @property
-    def potentially_plural(self) -> bool:
+    def unknown_filtering(self) -> bool:
+        """
+        Returns whether this JoinCardinality does no know if the LHS is
+        filtered by being joined with the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_UNKNOWN,
+            JoinCardinality.PLURAL_UNKNOWN,
+            JoinCardinality.UNKNOWN_UNKNOWN,
+        )
+
+    @property
+    def singular(self) -> bool:
         """
         Returns whether this JoinCardinality indicates that the LHS can
-        potentially match with multiple records of the RHS.
+        NOT match with multiple records of the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_FILTER,
+            JoinCardinality.SINGULAR_ACCESS,
+            JoinCardinality.SINGULAR_UNKNOWN,
+        )
+
+    @property
+    def plural(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS can
+        match with multiple records of the RHS.
         """
         return self in (
             JoinCardinality.PLURAL_FILTER,
             JoinCardinality.PLURAL_ACCESS,
-            JoinCardinality.UNKNOWN,
+            JoinCardinality.PLURAL_UNKNOWN,
+        )
+
+    @property
+    def unknown_cardinality(self) -> bool:
+        """
+        Returns whether this JoinCardinality does no know if the LHS can match
+        with multiple records of the RHS.
+        """
+        return self in (
+            JoinCardinality.UNKNOWN_ACCESS,
+            JoinCardinality.UNKNOWN_FILTER,
+            JoinCardinality.UNKNOWN_UNKNOWN,
         )
 
 
@@ -99,7 +169,7 @@ class Join(RelationalNode):
         condition: RelationalExpression,
         join_type: JoinType,
         columns: dict[str, RelationalExpression],
-        cardinality: JoinCardinality = JoinCardinality.UNKNOWN,
+        cardinality: JoinCardinality = JoinCardinality.UNKNOWN_UNKNOWN,
         correl_name: str | None = None,
     ) -> None:
         super().__init__(columns)
@@ -198,7 +268,7 @@ class Join(RelationalNode):
         )
         cardinality_suffix: str = (
             ""
-            if self.cardinality == JoinCardinality.UNKNOWN
+            if self.cardinality == JoinCardinality.UNKNOWN_UNKNOWN
             else f", cardinality={self.cardinality.name}"
         )
         return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"

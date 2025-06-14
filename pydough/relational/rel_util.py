@@ -299,7 +299,7 @@ def build_filter(
             new_join.condition = CallExpression(
                 pydop.BAN, BooleanType(), [new_join.condition, condition]
             )
-        new_join.cardinality = new_join.cardinality.add_filter()
+        new_join.cardinality = new_join.cardinality.add_potential_filter()
         return new_join
 
     # Otherwise, just return a new filter node with the new condition on top

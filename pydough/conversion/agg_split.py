@@ -310,7 +310,7 @@ def attempt_join_aggregate_transpose(
 
     # Optimization: don't push down aggregates into the inputs of a join
     # if joining first will reduce the number of rows that get aggregated.
-    if join.cardinality.potentially_filters:
+    if join.cardinality.filters:
         can_push_left = False
         can_push_right = False
 

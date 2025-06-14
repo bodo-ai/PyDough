@@ -13,7 +13,7 @@ from pydough.relational.relational_expressions import (
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
-from .join import Join, JoinType
+from .join import Join, JoinCardinality, JoinType
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher
 from .relational_root import RelationalRoot
@@ -155,10 +155,7 @@ class ColumnPruner:
             (output.join_type == JoinType.LEFT)
             or (
                 output.join_type == JoinType.INNER
-                and not (
-                    output.cardinality.potentially_filters
-                    or output.cardinality.potentially_plural
-                )
+                and output.cardinality.filters == JoinCardinality.SINGULAR_ACCESS
             )
         ):
             uses_rhs: bool = False

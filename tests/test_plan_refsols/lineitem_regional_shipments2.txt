@@ -1,5 +1,5 @@
 ROOT(columns=[('rname', rname), ('price', price)], orderings=[])
- JOIN(condition=t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key & t0.name_8 == t1.name_15, type=INNER, cardinality=SINGULAR_FILTER, columns={'price': t0.price, 'rname': t0.rname})
+ JOIN(condition=t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key & t0.name_8 == t1.name_15, type=INNER, cardinality=SINGULAR_UNKNOWN, columns={'price': t0.price, 'rname': t0.rname})
   JOIN(condition=t0.order_key == t1.key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'name_8': t1.name_8, 'part_key': t0.part_key, 'price': t0.price, 'rname': t1.rname, 'supplier_key': t0.supplier_key})
    SCAN(table=tpch.LINEITEM, columns={'order_key': l_orderkey, 'part_key': l_partkey, 'price': l_extendedprice, 'supplier_key': l_suppkey})
    JOIN(condition=t0.region_key == t1.key_7_0, type=INNER, cardinality=SINGULAR_ACCESS, columns={'key': t0.key, 'name_8': t1.name_8, 'rname': t1.rname})

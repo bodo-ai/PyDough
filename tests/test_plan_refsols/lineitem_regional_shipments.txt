@@ -1,5 +1,5 @@
 ROOT(columns=[('rname', rname), ('price', price)], orderings=[])
- JOIN(condition=t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key & t0.name == t1.name_16, type=INNER, cardinality=SINGULAR_FILTER, columns={'price': t0.price, 'rname': t0.rname})
+ JOIN(condition=t0.part_key == t1.part_key & t0.supplier_key == t1.supplier_key & t0.name == t1.name_16, type=INNER, cardinality=SINGULAR_UNKNOWN, columns={'price': t0.price, 'rname': t0.rname})
   JOIN(condition=t0.key_8 == t1.order_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'name': t0.name, 'part_key': t1.part_key, 'price': t1.price, 'rname': t0.rname, 'supplier_key': t1.supplier_key})
    JOIN(condition=t0.key_5 == t1.customer_key, type=INNER, cardinality=PLURAL_FILTER, columns={'key_8': t1.key_8, 'name': t0.name, 'rname': t0.rname})
     JOIN(condition=t0.key_2 == t1.nation_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'key_5': t1.key_5, 'name': t0.name, 'rname': t0.rname})
