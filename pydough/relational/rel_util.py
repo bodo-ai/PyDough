@@ -264,7 +264,8 @@ def build_filter(
     if len(filters) == 0:
         return node
 
-    # Detect whether the filter can be pushed into a join condition.
+    # Detect whether the filter can be pushed into a join condition. If so,
+    # combine the (transposed) filters with the existing join condition.
     push_into_join: bool = False
     if isinstance(node, Join) and node.join_type in (JoinType.INNER, JoinType.SEMI):
         if all(
@@ -274,6 +275,12 @@ def build_filter(
             for pred in filters
         ):
             push_into_join = True
+            filters = {
+                transpose_expression(exp, node.columns, keep_input_names=True)
+                for exp in filters
+            }
+            filters.add(node.condition)
+            filters.discard(LiteralExpression(True, BooleanType()))
 
     # Build the new filter condition by forming the conjunction.
     if len(filters) == 1:
@@ -287,18 +294,7 @@ def build_filter(
     if push_into_join:
         new_join: RelationalNode = node.copy()
         assert isinstance(new_join, Join)
-        condition = transpose_expression(
-            condition, new_join.columns, keep_input_names=True
-        )
-        if (
-            isinstance(new_join.condition, CallExpression)
-            and new_join.condition.op == pydop.BAN
-        ):
-            new_join.condition.inputs.append(condition)
-        else:
-            new_join.condition = CallExpression(
-                pydop.BAN, BooleanType(), [new_join.condition, condition]
-            )
+        new_join.condition = condition
         new_join.cardinality = new_join.cardinality.add_potential_filter()
         return new_join
 

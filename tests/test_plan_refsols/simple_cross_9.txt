@@ -2,7 +2,7 @@ ROOT(columns=[('n1', n1), ('n2', n2)], orderings=[(n1):asc_first, (n2):asc_first
  LIMIT(limit=Literal(value=10, type=NumericType()), columns={'n1': n1, 'n2': n2}, orderings=[(n1):asc_first, (n2):asc_first])
   FILTER(condition=n1 != name_9, columns={'n1': n1, 'n2': name_9})
    JOIN(condition=t0.key_5 == t1.region_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'n1': t0.n1, 'name_9': t1.name})
-    JOIN(condition=True:bool & t0.r1 == t1.name_6_0, type=INNER, cardinality=PLURAL_UNKNOWN, columns={'key_5': t1.key_5, 'n1': t0.n1})
+    JOIN(condition=t0.r1 == t1.name_6_0, type=INNER, cardinality=PLURAL_UNKNOWN, columns={'key_5': t1.key_5, 'n1': t0.n1})
      JOIN(condition=t0.key == t1.region_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'n1': t1.n1, 'r1': t0.r1})
       SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'r1': r_name})
       SCAN(table=tpch.NATION, columns={'n1': n_name, 'region_key': n_regionkey})

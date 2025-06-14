@@ -1,5 +1,5 @@
 ROOT(columns=[('S_SUPPKEY', S_SUPPKEY), ('S_NAME', S_NAME), ('S_ADDRESS', S_ADDRESS), ('S_PHONE', S_PHONE), ('TOTAL_REVENUE', TOTAL_REVENUE)], orderings=[(S_SUPPKEY):asc_first])
- JOIN(condition=t0.key == t1.supplier_key & DEFAULT_TO(t1.agg_1, 0:numeric) == t0.max_revenue, type=INNER, cardinality=SINGULAR_FILTER, columns={'S_ADDRESS': t0.S_ADDRESS, 'S_NAME': t0.S_NAME, 'S_PHONE': t0.S_PHONE, 'S_SUPPKEY': t0.S_SUPPKEY, 'TOTAL_REVENUE': t1.TOTAL_REVENUE})
+ JOIN(condition=DEFAULT_TO(t1.agg_1, 0:numeric) == t0.max_revenue & t0.key == t1.supplier_key, type=INNER, cardinality=SINGULAR_FILTER, columns={'S_ADDRESS': t0.S_ADDRESS, 'S_NAME': t0.S_NAME, 'S_PHONE': t0.S_PHONE, 'S_SUPPKEY': t0.S_SUPPKEY, 'TOTAL_REVENUE': t1.TOTAL_REVENUE})
   JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, columns={'S_ADDRESS': t1.S_ADDRESS, 'S_NAME': t1.S_NAME, 'S_PHONE': t1.S_PHONE, 'S_SUPPKEY': t1.S_SUPPKEY, 'key': t1.key, 'max_revenue': t0.max_revenue})
    AGGREGATE(keys={}, aggregations={'max_revenue': MAX(total_revenue)})
     JOIN(condition=t0.key == t1.supplier_key, type=INNER, cardinality=SINGULAR_FILTER, columns={'total_revenue': t1.total_revenue})
