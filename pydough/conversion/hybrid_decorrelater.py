@@ -79,7 +79,7 @@ class HybridDecorrelater:
                 )
             result = self.make_decorrelate_parent(
                 hybrid.parent,
-                len(hybrid.parent.children) - 1,
+                -1,
                 len(hybrid.parent.pipeline) - 1,
                 len(hybrid.parent.pipeline),
             )
@@ -314,7 +314,9 @@ class HybridDecorrelater:
         # Link the top level of the child subtree to the new parent.
         new_parent.add_successor(child_root)
         # Replace any correlated references to the original parent with BACK references.
-        self.correl_ref_purge(child.subtree, old_parent, new_parent, child_height, 1)
+        self.correl_ref_purge(
+            child.subtree, old_parent, new_parent, child_height - skipped_levels, 1
+        )
         # Update the join keys to join on the unique keys of all the ancestors,
         # and the aggregation keys along with them.
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
@@ -323,15 +325,16 @@ class HybridDecorrelater:
         new_agg_keys: list[HybridExpr] = []
         rhs_shift: int = child_height - skipped_levels
         while current_level is not None:
-            skip_join: bool = (
+            partition_edge_case: bool = (
                 isinstance(current_level.pipeline[0], HybridPartition)
-                and child is current_level.children[0]
+                and current_level.children[0] is child
             )
             for unique_key in sorted(current_level.pipeline[-1].unique_exprs, key=str):
                 lhs_key: HybridExpr = unique_key.shift_back(additional_levels)
-                rhs_key: HybridExpr = lhs_key.shift_back(rhs_shift)
-                if not skip_join:
-                    new_join_keys.append((lhs_key, rhs_key))
+                rhs_key: HybridExpr = (
+                    lhs_key if partition_edge_case else lhs_key.shift_back(rhs_shift)
+                )
+                new_join_keys.append((lhs_key, rhs_key))
                 new_agg_keys.append(rhs_key)
             current_level = current_level.parent
             additional_levels += 1

@@ -102,6 +102,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_cross_9,
     simple_cross_10,
     simple_cross_11,
+    simple_cross_12,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -1870,22 +1871,36 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "region_name": [
-                            "AFRICA",
-                            "AMERICA",
-                            "ASIA",
-                            "EUROPE",
-                            "MIDDLE EAST",
+                        "part_size": range(1, 11),
+                        "best_order_priority": [
+                            "4-NOT SPECIFIED",
+                            None,
+                            None,
+                            "1-URGENT",
+                            "3-MEDIUM",
+                            None,
+                            "4-NOT SPECIFIED",
+                            "2-HIGH",
+                            None,
+                            None,
                         ],
-                        "n_other_regions": [2, 2, 2, 0, 0],
+                        "best_order_priority_qty": [
+                            50,
+                            None,
+                            None,
+                            33,
+                            12,
+                            None,
+                            3,
+                            34,
+                            None,
+                            None,
+                        ],
                     }
                 ),
                 "simple_cross_5",
             ),
             id="simple_cross_5",
-            marks=pytest.mark.skip(
-                "TODO (gh #361): Add user created collections support to PyDough"
-            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -1986,6 +2001,31 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_11",
             ),
             id="simple_cross_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_12,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_priorities": ["1-URGENT"] * 5
+                        + ["2-HIGH"] * 5
+                        + ["3-MEDIUM"] * 5
+                        + ["4-NOT SPECIFIED"] * 5
+                        + ["5-LOW"] * 5,
+                        "market_segments": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ]
+                        * 5,
+                    }
+                ),
+                "simple_cross_12",
+            ),
+            id="simple_cross_12",
         ),
         pytest.param(
             PyDoughPandasTest(

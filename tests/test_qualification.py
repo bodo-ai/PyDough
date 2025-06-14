@@ -900,26 +900,27 @@ from tests.testing_utilities import (
 ──┬─ TPCH
   ├─┬─ Partition[name='sizes', by=size]
   │ └─┬─ AccessChild
-  │   └─── TableCollection[parts]
+  │   ├─── TableCollection[parts]
+  │   └─── Where[STARTSWITH(container, 'LG')]
   ├─── Calculate[part_size=size]
-  ├─┬─ Calculate[part_size=part_size, best_order_priority=$1.order_priority, best_order_priority_qty=$1.total_qty]
-  │ └─┬─ AccessChild
-  │   ├─┬─ Partition[name='priorities', by=order_priority]
-  │   │ └─┬─ AccessChild
-  │   │   └─┬─ TPCH
-  │   │     ├─── TableCollection[orders]
-  │   │     ├─── Calculate[order_priority=order_priority]
-  │   │     └─┬─ Where[YEAR(order_date) == 1998]
-  │   │       ├─── SubCollection[lines]
-  │   │       └─┬─ Where[$1.size == part_size]
-  │   │         └─┬─ AccessChild
-  │   │           └─── SubCollection[part]
-  │   ├─┬─ Calculate[total_qty=SUM($1.quantity)]
-  │   │ └─┬─ AccessChild
-  │   │   └─── PartitionChild[lines]
-  │   ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=1, allow_ties=False) == 1]
-  │   └─── Singular
-  └─── TopK[5, size.ASC(na_pos='first')]
+  ├─── TopK[10, size.ASC(na_pos='first')]
+  └─┬─ Calculate[part_size=part_size, best_order_priority=$1.order_priority, best_order_priority_qty=$1.total_qty]
+    └─┬─ AccessChild
+      ├─┬─ Partition[name='priorities', by=order_priority]
+      │ └─┬─ AccessChild
+      │   └─┬─ TPCH
+      │     ├─── TableCollection[orders]
+      │     ├─── Calculate[order_priority=order_priority]
+      │     └─┬─ Where[(YEAR(order_date) == 1998) & (MONTH(order_date) == 1)]
+      │       ├─── SubCollection[lines]
+      │       └─┬─ Where[($1.size == part_size) & (tax == 0) & (discount == 0) & (ship_mode == 'SHIP') & STARTSWITH($1.container, 'LG')]
+      │         └─┬─ AccessChild
+      │           └─── SubCollection[part]
+      ├─┬─ Calculate[total_qty=SUM($1.quantity)]
+      │ └─┬─ AccessChild
+      │   └─── PartitionChild[lines]
+      ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=1, allow_ties=False) == 1]
+      └─── Singular
             """,
             id="simple_cross_5",
         ),

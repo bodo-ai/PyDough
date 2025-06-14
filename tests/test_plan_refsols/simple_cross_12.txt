@@ -1,0 +1,6 @@
+ROOT(columns=[('order_priority', order_priority), ('market_segment', market_segment)], orderings=[(order_priority):asc_first, (market_segment):asc_first])
+ JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, columns={'market_segment': t1.market_segment, 'order_priority': t0.order_priority})
+  AGGREGATE(keys={'order_priority': order_priority}, aggregations={})
+   SCAN(table=tpch.ORDERS, columns={'order_priority': o_orderpriority})
+  AGGREGATE(keys={'market_segment': market_segment}, aggregations={})
+   SCAN(table=tpch.CUSTOMER, columns={'market_segment': c_mktsegment})

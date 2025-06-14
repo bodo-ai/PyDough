@@ -1503,6 +1503,9 @@ class HybridTranslator:
                             successor_hybrid, node.child_access, child_ref_mapping
                         )
                         partition_child_idx = child_ref_mapping[0]
+                        successor_hybrid.children[
+                            partition_child_idx
+                        ].subtree.squish_backrefs_into_correl(None, 1)
                         for key_name in node.calc_terms:
                             key = node.get_expr(key_name)
                             expr = self.make_hybrid_expr(

@@ -2702,13 +2702,25 @@ def simple_cross_4():
 
 def simple_cross_5():
     # For every combination of part size & order priority, which order priority
-    # had the highest quantity of parts of that size shipped in 1998?
-    # Only consider the 5 smallest part sizes.
-    sizes = parts.PARTITION(name="sizes", by=size).CALCULATE(part_size=size)
+    # had the highest quantity of parts of that size shipped in January 1998
+    # without tax or discount and via ship? Only consider the 10 smallest part
+    # sizes, and large parts.
+    sizes = (
+        parts.WHERE(STARTSWITH(container, "LG"))
+        .PARTITION(name="sizes", by=size)
+        .CALCULATE(part_size=size)
+        .TOP_K(10, by=size.ASC())
+    )
     order_info = (
         orders.CALCULATE(order_priority)
-        .WHERE(YEAR(order_date) == 1998)
-        .lines.WHERE(part.size == part_size)
+        .WHERE((YEAR(order_date) == 1998) & (MONTH(order_date) == 1))
+        .lines.WHERE(
+            (part.size == part_size)
+            & (tax == 0)
+            & (discount == 0)
+            & (ship_mode == "SHIP")
+            & STARTSWITH(part.container, "LG")
+        )
     )
     best_priority = (
         CROSS(order_info.PARTITION(name="priorities", by=order_priority))
@@ -2719,7 +2731,7 @@ def simple_cross_5():
         part_size,
         best_order_priority=best_priority.order_priority,
         best_order_priority_qty=best_priority.total_qty,
-    ).TOP_K(5, by=size.ASC())
+    )
 
 
 def simple_cross_6():
@@ -2824,3 +2836,17 @@ def simple_cross_11():
     global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
     selected_orders = orders.WHERE(order_date == CROSS(global_info).SINGULAR().min_date)
     return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def simple_cross_12():
+    # List every combination of order priority and market segment,
+    # alphabetized.
+    priorities = orders.PARTITION(name="priorities", by=order_priority).CALCULATE(
+        order_priority
+    )
+    segments = customers.PARTITION(name="segments", by=market_segment)
+    return (
+        priorities.CROSS(segments)
+        .CALCULATE(order_priority, market_segment)
+        .ORDER_BY(order_priority.ASC(), market_segment.ASC())
+    )
