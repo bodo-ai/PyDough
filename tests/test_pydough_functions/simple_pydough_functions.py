@@ -2704,7 +2704,11 @@ def simple_cross_5():
     # For every combination of part size & order priority, which order priority
     # had the highest quantity of parts of that size shipped in 1998?
     # Only consider the 5 smallest part sizes.
-    sizes = parts.PARTITION(name="sizes", by=size).CALCULATE(part_size=size)
+    sizes = (
+        parts.PARTITION(name="sizes", by=size)
+        .CALCULATE(part_size=size)
+        .TOP_K(5, by=size.ASC())
+    )
     order_info = (
         orders.CALCULATE(order_priority)
         .WHERE(YEAR(order_date) == 1998)
@@ -2719,7 +2723,7 @@ def simple_cross_5():
         part_size,
         best_order_priority=best_priority.order_priority,
         best_order_priority_qty=best_priority.total_qty,
-    ).TOP_K(5, by=size.ASC())
+    )
 
 
 def simple_cross_6():

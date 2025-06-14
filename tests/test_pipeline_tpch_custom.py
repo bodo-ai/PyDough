@@ -1870,22 +1870,20 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "region_name": [
-                            "AFRICA",
-                            "AMERICA",
-                            "ASIA",
-                            "EUROPE",
-                            "MIDDLE EAST",
+                        "part_size": range(1, 6),
+                        "best_order_priority": [
+                            "1-URGENT",
+                            "5-LOW",
+                            "3-MEDIUM",
+                            "5-LOW",
+                            "3-MEDIUM",
                         ],
-                        "n_other_regions": [2, 2, 2, 0, 0],
+                        "best_order_priority_qty": [56592, 56217, 59106, 57861, 56986],
                     }
                 ),
                 "simple_cross_5",
             ),
             id="simple_cross_5",
-            marks=pytest.mark.skip(
-                "TODO (gh #361): Add user created collections support to PyDough"
-            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2343,7 +2341,7 @@ def test_pipeline_e2e_tpch_custom(
     code generation.
     """
     tpch_custom_pipeline_test_data.run_e2e_test(
-        get_sample_graph, sqlite_tpch_db_context
+        get_sample_graph, sqlite_tpch_db_context, display_sql=True
     )
 
 
