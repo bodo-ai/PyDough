@@ -22,6 +22,17 @@ from pydough.relational import (
 from pydough.relational.rel_util import apply_substitution
 
 
+def name_sort_key(name: str) -> tuple[bool, bool, str]:
+    """
+    TODO
+    """
+    return (
+        name.startswith("expr") or name.startswith("agg"),
+        any(char.isdigit() for char in name),
+        name,
+    )
+
+
 def run_column_bubbling(
     node: RelationalNode,
 ) -> tuple[RelationalNode, dict[RelationalExpression, RelationalExpression]]:
@@ -39,20 +50,19 @@ def run_column_bubbling(
     match node:
         case Project() | Filter() | Limit():
             new_input, input_mapping = run_column_bubbling(node.input)
-            for name in sorted(
-                node.columns,
-                key=lambda c: (
-                    c.startswith("expr") or c.startswith("agg"),
-                    any(char.isdigit() for char in c),
-                    c,
-                ),
-            ):
+            for name in sorted(node.columns, key=name_sort_key):
                 old_expr = node.columns[name]
                 new_expr = apply_substitution(old_expr, input_mapping)
                 new_ref = ColumnReference(name, old_expr.data_type)
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
+                    if isinstance(new_expr, ColumnReference) and name_sort_key(
+                        new_expr.name
+                    ) < name_sort_key(name):
+                        new_ref = remapping[new_ref] = ColumnReference(
+                            new_expr.name, new_expr.data_type
+                        )
                     output_columns[name] = new_expr
                     aliases[new_expr] = new_ref
             if isinstance(node, Limit):
