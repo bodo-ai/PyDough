@@ -55,6 +55,18 @@ def run_column_bubbling(
                 else:
                     output_columns[name] = new_expr
                     aliases[new_expr] = new_ref
+            if isinstance(node, Limit):
+                new_orderings: list[ExpressionSortInfo] = []
+                for ordering in node.orderings:
+                    new_expr = apply_substitution(ordering.expr, input_mapping)
+                    if new_expr in aliases:
+                        new_expr = aliases[new_expr]
+                    new_orderings.append(
+                        ExpressionSortInfo(
+                            new_expr, ordering.ascending, ordering.nulls_first
+                        )
+                    )
+                node._orderings = new_orderings
             return node.copy(output_columns, [new_input]), remapping
         case Aggregate():
             new_input, input_mapping = run_column_bubbling(node.input)

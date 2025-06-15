@@ -1,5 +1,5 @@
 ROOT(columns=[('cust_key', cust_key), ('n_orders', n_orders), ('n_no_tax_discount', n_no_tax_discount), ('n_part_purchases', n_part_purchases)], orderings=[(cust_key):asc_first])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'cust_key': cust_key, 'n_no_tax_discount': n_no_tax_discount, 'n_orders': n_orders, 'n_part_purchases': n_part_purchases}, orderings=[(key):asc_first])
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'cust_key': cust_key, 'n_no_tax_discount': n_no_tax_discount, 'n_orders': n_orders, 'n_part_purchases': n_part_purchases}, orderings=[(cust_key):asc_first])
   PROJECT(columns={'cust_key': key, 'n_no_tax_discount': DEFAULT_TO(agg_0, 0:numeric), 'n_orders': DEFAULT_TO(agg_1, 0:numeric), 'n_part_purchases': n_part_purchases})
    FILTER(condition=DEFAULT_TO(agg_1, 0:numeric) > RELAVG(args=[DEFAULT_TO(agg_1, 0:numeric)], partition=[], order=[]) & agg_0 > 0:numeric, columns={'agg_0': agg_0, 'agg_1': agg_1, 'key': key, 'n_part_purchases': n_part_purchases})
     JOIN(condition=t0.key == t1.customer_key, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_0': t1.agg_0, 'agg_1': t0.agg_1, 'key': t0.key, 'n_part_purchases': t0.n_part_purchases})

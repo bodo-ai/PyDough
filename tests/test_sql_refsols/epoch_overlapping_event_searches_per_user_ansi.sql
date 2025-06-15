@@ -1,4 +1,4 @@
-WITH _t3 AS (
+WITH _t2 AS (
   SELECT
     COUNT() AS agg_0,
     ANY_VALUE(users.user_id) AS agg_10,
@@ -17,29 +17,21 @@ WITH _t3 AS (
   GROUP BY
     searches.search_id,
     users.user_id
-), _t1 AS (
+), _t0 AS (
   SELECT
     ANY_VALUE(agg_8) AS agg_2,
     COUNT() AS n_searches
-  FROM _t3
+  FROM _t2
   WHERE
     agg_0 > 0
   GROUP BY
     agg_10
-), _t0 AS (
-  SELECT
-    agg_2 AS user_name,
-    n_searches
-  FROM _t1
-  ORDER BY
-    n_searches DESC,
-    agg_2
-  LIMIT 4
 )
 SELECT
-  user_name,
+  agg_2 AS user_name,
   n_searches
 FROM _t0
 ORDER BY
   n_searches DESC,
   user_name
+LIMIT 4
