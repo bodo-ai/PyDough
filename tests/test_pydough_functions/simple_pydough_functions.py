@@ -2674,6 +2674,7 @@ def deep_best_analysis():
             s_key=best_region_supplier.key,
             p_key=best_region_supplier.p_key,
             p_qty=best_region_supplier.p_qty,
+            cg_key=customers.BEST(by=(account_balance.DESC(), key.ASC())).key,
         )
         .TOP_K(10, by=n_name.ASC())
     )

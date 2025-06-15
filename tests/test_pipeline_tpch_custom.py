@@ -1848,6 +1848,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "s_key": [None] * 7 + [3836] + [None] * 2,
                         "p_key": [None] * 7 + [18833] + [None] * 2,
                         "p_qty": [None] * 7 + [9999] + [None] * 2,
+                        "cg_key": [None] * 10,
                     }
                 ),
                 "deep_best_analysis",

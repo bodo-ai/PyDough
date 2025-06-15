@@ -142,7 +142,7 @@ class Qualifier:
         operation: ExpressionFunctionOperator = unqualified._parcel[0]
         unqualified_operands: list[UnqualifiedNode] = unqualified._parcel[1]
         qualified_operands: list[PyDoughQDAG] = []
-        # Iterate aps every operand to generate its qualified variant.
+        # Iterate across every operand to generate its qualified variant.
         # First, attempt to qualify it as an expression (the common case), but
         # if that fails specifically because the result would be a collection,
         # then attempt to qualify it as a collection.
@@ -1217,6 +1217,9 @@ class Qualifier:
                     or base.is_ancestor(relative_ancestor)
                 ):
                     qualified_child = self.builder.build_singular(qualified_child)
+            else:
+                # Do the same for a GLOBAL best.
+                qualified_child = self.builder.build_singular(qualified_child)
 
         return qualified_child
 
