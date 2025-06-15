@@ -6,8 +6,7 @@ WITH _s1 AS (
 ), _t0 AS (
   SELECT
     MAX(users.user_name) AS agg_2,
-    COUNT(DISTINCT users_2.user_id) AS n_other_users,
-    MAX(users.user_name) AS user_name
+    COUNT(DISTINCT users_2.user_id) AS n_other_users
   FROM users AS users
   JOIN _s1 AS _s1
     ON _s1.user_id = users.user_id
@@ -27,7 +26,7 @@ WITH _s1 AS (
     users.user_id
 )
 SELECT
-  user_name,
+  agg_2 AS user_name,
   n_other_users
 FROM _t0
 ORDER BY

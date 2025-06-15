@@ -10,7 +10,7 @@ WITH _s1 AS (
 ), _t0 AS (
   SELECT
     COUNT() AS custdist,
-    COALESCE(_s1.agg_0, 0) AS c_count
+    COALESCE(_s1.agg_0, 0) AS num_non_special_orders
   FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.customer_key = customer.c_custkey
@@ -18,7 +18,7 @@ WITH _s1 AS (
     COALESCE(_s1.agg_0, 0)
 )
 SELECT
-  c_count AS C_COUNT,
+  num_non_special_orders AS C_COUNT,
   custdist AS CUSTDIST
 FROM _t0
 ORDER BY

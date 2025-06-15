@@ -20,8 +20,7 @@ WITH _t2 AS (
 ), _t0 AS (
   SELECT
     ANY_VALUE(agg_8) AS agg_2,
-    COUNT() AS n_searches,
-    ANY_VALUE(agg_8) AS user_name
+    COUNT() AS n_searches
   FROM _t2
   WHERE
     agg_0 > 0
@@ -29,7 +28,7 @@ WITH _t2 AS (
     agg_10
 )
 SELECT
-  user_name,
+  agg_2 AS user_name,
   n_searches
 FROM _t0
 ORDER BY

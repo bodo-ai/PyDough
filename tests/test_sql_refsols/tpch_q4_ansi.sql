@@ -39,14 +39,14 @@ WITH _t2 AS (
 ), _t0 AS (
   SELECT
     COUNT() AS order_count,
-    _t1.order_priority AS o_orderpriority
+    _t1.order_priority AS order_priority
   FROM _t1 AS _t1
   GROUP BY
     _t1.order_priority
 )
 SELECT
-  _t0.o_orderpriority AS O_ORDERPRIORITY,
+  _t0.order_priority AS O_ORDERPRIORITY,
   _t0.order_count AS ORDER_COUNT
 FROM _t0 AS _t0
 ORDER BY
-  o_orderpriority
+  _t0.order_priority
