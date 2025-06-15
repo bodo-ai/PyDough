@@ -1,5 +1,5 @@
 ROOT(columns=[('key', key_13), ('region', region), ('rank', rank)], orderings=[(key_13):asc_first])
- LIMIT(limit=Literal(value=15, type=NumericType()), columns={'key_13': key_12, 'rank': rank, 'region': region}, orderings=[(key_12):asc_first])
+ LIMIT(limit=Literal(value=15, type=NumericType()), columns={'key_13': key_12, 'rank': rank, 'region': region}, orderings=[(key_13):asc_first])
   PROJECT(columns={'key_12': key_9, 'rank': RANKING(args=[], partition=[region_key], order=[(size):desc_first, (container):desc_first, (part_type):desc_first], allow_ties=True, dense=True), 'region': region_name})
    JOIN(condition=t0.part_key == t1.key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'container': t1.container, 'key_9': t1.key, 'part_type': t1.part_type, 'region_key': t0.region_key, 'region_name': t0.region_name, 'size': t1.size})
     JOIN(condition=t0.key_5 == t1.supplier_key, type=INNER, cardinality=PLURAL_ACCESS, columns={'part_key': t1.part_key, 'region_key': t0.region_key, 'region_name': t0.region_name})
