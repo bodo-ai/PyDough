@@ -18,6 +18,7 @@ from pydough.relational import (
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
+    Scan,
 )
 from pydough.relational.rel_util import apply_substitution
 
@@ -63,8 +64,8 @@ def run_column_bubbling(
                         new_ref = remapping[new_ref] = ColumnReference(
                             new_expr.name, new_expr.data_type
                         )
-                    output_columns[name] = new_expr
                     aliases[new_expr] = new_ref
+                    output_columns[name] = new_expr
             if isinstance(node, Limit):
                 new_orderings: list[ExpressionSortInfo] = []
                 for ordering in node.orderings:
@@ -98,9 +99,24 @@ def run_column_bubbling(
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
-                    new_aggs[name] = new_expr
                     aliases[new_expr] = new_ref
+                    new_aggs[name] = new_expr
             return Aggregate(new_input, new_keys, new_aggs), remapping
+        case Scan():
+            for name in sorted(node.columns, key=name_sort_key):
+                new_expr = node.columns[name]
+                new_ref = ColumnReference(name, new_expr.data_type)
+                if new_expr in aliases:
+                    remapping[new_ref] = aliases[new_expr]
+                else:
+                    if isinstance(new_expr, ColumnReference):
+                        name = new_expr.name
+                        remapping[new_ref] = new_ref = ColumnReference(
+                            new_expr.name, new_expr.data_type
+                        )
+                    aliases[new_expr] = new_ref
+                    output_columns[name] = new_expr
+            return node.copy(output_columns), remapping
         case _:
             return node, remapping
 

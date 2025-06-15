@@ -1,5 +1,5 @@
 ROOT(columns=[('x', x), ('y', y), ('minutes_diff', minutes_diff), ('seconds_diff', seconds_diff)], orderings=[(x):desc_last])
  LIMIT(limit=Literal(value=30, type=NumericType()), columns={'minutes_diff': minutes_diff, 'seconds_diff': seconds_diff, 'x': x, 'y': y}, orderings=[(x):desc_last])
   PROJECT(columns={'minutes_diff': DATEDIFF('m':string, date_time, datetime.datetime(2023, 4, 3, 13, 16, 30):datetime), 'seconds_diff': DATEDIFF('s':string, date_time, datetime.datetime(2023, 4, 3, 13, 16, 30):datetime), 'x': date_time, 'y': datetime.datetime(2023, 4, 3, 13, 16, 30):datetime})
-   FILTER(condition=YEAR(date_time) <= 2024:numeric, columns={'date_time': date_time})
-    SCAN(table=main.sbTransaction, columns={'date_time': sbTxDateTime})
+   FILTER(condition=YEAR(date_time) <= 2024:numeric, columns={'date_time': sbTxDateTime})
+    SCAN(table=main.sbTransaction, columns={'sbTxDateTime': sbTxDateTime})

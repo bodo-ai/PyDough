@@ -1,3 +1,3 @@
 ROOT(columns=[('name', name), ('idx_Alex', FIND(name, 'Alex':string)), ('idx_Rodriguez', FIND(name, 'Rodriguez':string)), ('idx_bob', FIND(name, 'bob':string)), ('idx_e', FIND(name, 'e':string)), ('idx_space', FIND(name, ' ':string)), ('idx_of_R', FIND(name, 'R':string)), ('idx_of_Alex_Rodriguez', FIND(name, 'Alex Rodriguez':string))], orderings=[])
- FILTER(condition=name == 'Alex Rodriguez':string, columns={'name': name})
-  SCAN(table=main.sbCustomer, columns={'name': sbCustName})
+ FILTER(condition=name == 'Alex Rodriguez':string, columns={'name': sbCustName})
+  SCAN(table=main.sbCustomer, columns={'sbCustName': sbCustName})

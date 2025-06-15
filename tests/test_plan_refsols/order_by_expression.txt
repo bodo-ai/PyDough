@@ -1,4 +1,4 @@
 ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(ordering_1):asc_first])
  LIMIT(limit=Literal(value=10, type=NumericType()), columns={'comment': comment, 'key': key, 'name': name, 'ordering_1': ordering_1}, orderings=[(ordering_1):asc_first])
-  PROJECT(columns={'comment': comment, 'key': key, 'name': name, 'ordering_1': LENGTH(name)})
-   SCAN(table=tpch.REGION, columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name})
+  PROJECT(columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name, 'ordering_1': LENGTH(r_name)})
+   SCAN(table=tpch.REGION, columns={'r_comment': r_comment, 'r_name': r_name, 'r_regionkey': r_regionkey})
