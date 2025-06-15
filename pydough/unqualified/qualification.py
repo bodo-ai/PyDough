@@ -1214,9 +1214,12 @@ class Qualifier:
                 if (
                     base.starting_predecessor == relative_ancestor
                     or base.is_singular(relative_ancestor)
-                    or relative_ancestor.is_singular(base)
+                    or base.is_ancestor(relative_ancestor)
                 ):
                     qualified_child = self.builder.build_singular(qualified_child)
+            else:
+                # Do the same for a GLOBAL best.
+                qualified_child = self.builder.build_singular(qualified_child)
 
         return qualified_child
 

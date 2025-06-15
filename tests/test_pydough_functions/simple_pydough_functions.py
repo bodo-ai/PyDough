@@ -2644,6 +2644,42 @@ def simple_var_std_with_nulls():
     )
 
 
+def deep_best_analysis():
+    richest_nation_cust = customers.BEST(
+        by=(account_balance.DESC(), key.ASC()), per="nations"
+    )
+    richest_region_cust = customers.BEST(
+        by=(account_balance.DESC(), key.ASC()), per="regions"
+    )
+    most_avail_region_supply = supply_records.BEST(
+        by=(available_quantity.DESC(), part_key.ASC()), per="regions"
+    )
+    best_region_supplier = (
+        suppliers.WHERE(HAS(most_avail_region_supply))
+        .CALCULATE(
+            p_key=most_avail_region_supply.part_key,
+            p_qty=most_avail_region_supply.available_quantity,
+        )
+        .BEST(by=(p_qty.DESC(), key.ASC()), per="regions")
+    )
+    return (
+        regions.CALCULATE(r_name=name)
+        .nations.WHERE(HAS(richest_nation_cust))
+        .CALCULATE(
+            r_name=r_name,
+            n_name=name,
+            c_key=richest_nation_cust.key,
+            c_bal=richest_nation_cust.account_balance,
+            cr_bal=richest_region_cust.account_balance,
+            s_key=best_region_supplier.key,
+            p_key=best_region_supplier.p_key,
+            p_qty=best_region_supplier.p_qty,
+            cg_key=customers.BEST(by=(account_balance.DESC(), key.ASC())).key,
+        )
+        .TOP_K(10, by=n_name.ASC())
+    )
+
+
 def simple_cross_1():
     # Every combination of region names
     return (
