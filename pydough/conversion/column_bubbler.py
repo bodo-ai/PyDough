@@ -33,14 +33,23 @@ def run_column_bubbling(
     aliases: dict[RelationalExpression, RelationalExpression] = {}
     new_input: RelationalNode
     input_mapping: dict[RelationalExpression, RelationalExpression]
+    old_expr: RelationalExpression
     new_expr: RelationalExpression
     new_ref: RelationalExpression
     match node:
         case Project() | Filter() | Limit():
             new_input, input_mapping = run_column_bubbling(node.input)
-            for name, expr in node.columns.items():
-                new_expr = apply_substitution(expr, input_mapping)
-                new_ref = ColumnReference(name, expr.data_type)
+            for name in sorted(
+                node.columns,
+                key=lambda c: (
+                    c.startswith("expr") or c.startswith("agg"),
+                    any(char.isdigit() for char in c),
+                    c,
+                ),
+            ):
+                old_expr = node.columns[name]
+                new_expr = apply_substitution(old_expr, input_mapping)
+                new_ref = ColumnReference(name, old_expr.data_type)
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
@@ -51,19 +60,19 @@ def run_column_bubbling(
             new_input, input_mapping = run_column_bubbling(node.input)
             new_keys: dict[str, ColumnReference] = {}
             new_aggs: dict[str, CallExpression] = {}
-            for name, expr in node.keys.items():
-                new_expr = apply_substitution(expr, input_mapping)
+            for name, key_expr in node.keys.items():
+                new_expr = apply_substitution(key_expr, input_mapping)
                 assert isinstance(new_expr, ColumnReference)
-                new_ref = ColumnReference(name, expr.data_type)
+                new_ref = ColumnReference(name, key_expr.data_type)
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
                     new_keys[name] = new_expr
                     aliases[new_expr] = new_ref
-            for name, expr in node.aggregations.items():
-                new_expr = apply_substitution(expr, input_mapping)
+            for name, call_expr in node.aggregations.items():
+                new_expr = apply_substitution(call_expr, input_mapping)
                 assert isinstance(new_expr, CallExpression)
-                new_ref = ColumnReference(name, expr.data_type)
+                new_ref = ColumnReference(name, call_expr.data_type)
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
