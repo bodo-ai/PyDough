@@ -1,28 +1,28 @@
 WITH _t2 AS (
   SELECT
-    sbtransaction.sbtxamount AS amount,
-    sbtransaction.sbtxcustid AS customer_id,
-    sbtransaction.sbtxdatetime AS date_time
+    sbtransaction.sbtxamount AS sbtxamount,
+    sbtransaction.sbtxcustid AS sbtxcustid,
+    sbtransaction.sbtxdatetime AS sbtxdatetime
   FROM main.sbtransaction AS sbtransaction
 ), _s0 AS (
   SELECT
-    _t2.amount AS amount,
-    _t2.customer_id AS customer_id
+    _t2.sbtxamount AS amount,
+    _t2.sbtxcustid AS customer_id
   FROM _t2 AS _t2
   WHERE
-    _t2.date_time < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
-    AND _t2.date_time >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
+    _t2.sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
+    AND _t2.sbtxdatetime >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
 ), _t3 AS (
   SELECT
-    sbcustomer.sbcustid AS _id,
-    sbcustomer.sbcustcountry AS country
+    sbcustomer.sbcustcountry AS sbcustcountry,
+    sbcustomer.sbcustid AS sbcustid
   FROM main.sbcustomer AS sbcustomer
 ), _s1 AS (
   SELECT
-    _t3._id AS _id
+    _t3.sbcustid AS _id
   FROM _t3 AS _t3
   WHERE
-    LOWER(_t3.country) = 'usa'
+    LOWER(_t3.sbcustcountry) = 'usa'
 ), _t1 AS (
   SELECT
     _s0.amount AS amount

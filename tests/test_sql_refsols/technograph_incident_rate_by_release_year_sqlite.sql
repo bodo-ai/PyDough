@@ -7,29 +7,29 @@ WITH _s0 AS (
     de_product_id
 ), _t4 AS (
   SELECT
-    pr_id AS _id,
-    pr_release AS release_date
+    pr_id,
+    pr_release
   FROM main.products
 ), _s6 AS (
   SELECT
     SUM(_s0.agg_1) AS agg_1,
-    CAST(STRFTIME('%Y', _t4.release_date) AS INTEGER) AS release_year
+    CAST(STRFTIME('%Y', _t4.pr_release) AS INTEGER) AS release_year
   FROM _s0 AS _s0
   JOIN _t4 AS _t4
-    ON _s0.product_id = _t4._id
+    ON _s0.product_id = _t4.pr_id
   GROUP BY
-    CAST(STRFTIME('%Y', _t4.release_date) AS INTEGER)
+    CAST(STRFTIME('%Y', _t4.pr_release) AS INTEGER)
 ), _s7 AS (
   SELECT
     COUNT() AS agg_0,
-    CAST(STRFTIME('%Y', _t6.release_date) AS INTEGER) AS release_year
+    CAST(STRFTIME('%Y', _t6.pr_release) AS INTEGER) AS release_year
   FROM main.devices AS devices
   JOIN _t4 AS _t6
-    ON _t6._id = devices.de_product_id
+    ON _t6.pr_id = devices.de_product_id
   JOIN main.incidents AS incidents
     ON devices.de_id = incidents.in_device_id
   GROUP BY
-    CAST(STRFTIME('%Y', _t6.release_date) AS INTEGER)
+    CAST(STRFTIME('%Y', _t6.pr_release) AS INTEGER)
 )
 SELECT
   _s6.release_year AS year,

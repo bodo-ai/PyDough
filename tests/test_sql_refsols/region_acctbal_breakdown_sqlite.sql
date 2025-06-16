@@ -1,4 +1,4 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     CASE
       WHEN ABS(
@@ -53,7 +53,7 @@ WITH _t0 AS (
     COUNT(non_negative_acctbal) AS n_black_acctbal,
     COUNT(negative_acctbal) AS n_red_acctbal,
     region_key
-  FROM _t0
+  FROM _t1
   GROUP BY
     region_key
 )

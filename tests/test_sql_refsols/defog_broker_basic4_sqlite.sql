@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
-    COUNT() AS num_transactions,
     sbtxcustid AS customer_id,
+    COUNT() AS num_transactions,
     sbtxtickerid AS ticker_id
   FROM main.sbtransaction
   GROUP BY

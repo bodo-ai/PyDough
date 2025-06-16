@@ -1,5 +1,5 @@
 ROOT(columns=[('name', name), ('n_prefix_nations', n_prefix_nations)], orderings=[])
  AGGREGATE(keys={'key': key}, aggregations={'n_prefix_nations': COUNT(), 'name': ANYTHING(name)})
-  JOIN(condition=SLICE(t1.name, None:unknown, 1:numeric, None:unknown) == SLICE(t0.region_name, None:unknown, 1:numeric, None:unknown) & t0.key == t1.region_key, type=INNER, cardinality=PLURAL_UNKNOWN, columns={'key': t0.key, 'name': t0.name})
-   SCAN(table=tpch.REGION, columns={'key': r_regionkey, 'name': r_name, 'region_name': r_name})
-   SCAN(table=tpch.NATION, columns={'name': n_name, 'region_key': n_regionkey})
+  JOIN(condition=SLICE(t1.n_name, None:unknown, 1:numeric, None:unknown) == SLICE(t0.r_name, None:unknown, 1:numeric, None:unknown) & t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_UNKNOWN, columns={'key': t0.r_regionkey, 'name': t0.r_name})
+   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
+   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})

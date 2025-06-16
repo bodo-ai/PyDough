@@ -1,3 +1,3 @@
 ROOT(columns=[('order_date', order_date), ('key', key)], orderings=[(order_date):asc_first])
- FILTER(condition=ABSENT(PREV(args=[order_date], partition=[], order=[(order_date):asc_last, (key):asc_last])) | YEAR(PREV(args=[order_date], partition=[], order=[(order_date):asc_last, (key):asc_last])) != YEAR(order_date), columns={'key': o_orderkey, 'order_date': o_orderdate})
+ FILTER(condition=ABSENT(PREV(args=[o_orderdate], partition=[], order=[(o_orderdate):asc_last, (o_orderkey):asc_last])) | YEAR(PREV(args=[o_orderdate], partition=[], order=[(o_orderdate):asc_last, (o_orderkey):asc_last])) != YEAR(o_orderdate), columns={'key': o_orderkey, 'order_date': o_orderdate})
   SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey})

@@ -1,14 +1,14 @@
 WITH _t3 AS (
   SELECT
-    in_device_id AS device_id
+    in_device_id
   FROM main.incidents
 ), _s1 AS (
   SELECT
     COUNT() AS agg_9,
-    device_id
+    in_device_id AS device_id
   FROM _t3
   GROUP BY
-    device_id
+    in_device_id
 ), _s3 AS (
   SELECT
     COUNT() AS agg_1,
@@ -22,10 +22,10 @@ WITH _t3 AS (
 ), _s5 AS (
   SELECT
     COUNT() AS agg_12,
-    device_id
+    in_device_id AS device_id
   FROM _t3
   GROUP BY
-    device_id
+    in_device_id
 ), _s7 AS (
   SELECT
     SUM(_s5.agg_12) AS agg_14,
@@ -39,10 +39,10 @@ WITH _t3 AS (
 ), _s11 AS (
   SELECT
     COUNT() AS agg_6,
-    device_id
+    in_device_id AS device_id
   FROM _t3
   GROUP BY
-    device_id
+    in_device_id
 ), _s13 AS (
   SELECT
     COUNT() AS agg_5,

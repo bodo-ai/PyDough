@@ -11,12 +11,11 @@ WITH _t0 AS (
     _t0.receiver_type = 1
 ), _s0 AS (
   SELECT
-    merchants.mid AS merchant,
     merchants.mid AS mid
   FROM main.merchants AS merchants
 )
 SELECT
-  _s0.merchant AS merchant
+  _s0.mid AS merchant
 FROM _s0 AS _s0
 WHERE
   EXISTS(

@@ -1,22 +1,22 @@
 WITH _t4 AS (
   SELECT
-    l_discount AS discount,
-    l_extendedprice AS extended_price,
-    l_shipdate AS ship_date,
-    l_suppkey AS supplier_key
+    l_discount,
+    l_extendedprice,
+    l_shipdate,
+    l_suppkey
   FROM tpch.lineitem
 ), _t1 AS (
   SELECT
-    SUM(extended_price * (
-      1 - discount
+    SUM(l_extendedprice * (
+      1 - l_discount
     )) AS agg_0,
-    supplier_key
+    l_suppkey AS supplier_key
   FROM _t4
   WHERE
-    ship_date < CAST('1996-04-01' AS DATE)
-    AND ship_date >= CAST('1996-01-01' AS DATE)
+    l_shipdate < CAST('1996-04-01' AS DATE)
+    AND l_shipdate >= CAST('1996-01-01' AS DATE)
   GROUP BY
-    supplier_key
+    l_suppkey
 ), _s2 AS (
   SELECT
     MAX(COALESCE(_t1.agg_0, 0)) AS max_revenue
@@ -25,16 +25,16 @@ WITH _t4 AS (
     ON _t1.supplier_key = supplier.s_suppkey
 ), _t5 AS (
   SELECT
-    SUM(extended_price * (
-      1 - discount
+    SUM(l_extendedprice * (
+      1 - l_discount
     )) AS agg_1,
-    supplier_key
+    l_suppkey AS supplier_key
   FROM _t4
   WHERE
-    ship_date < CAST('1996-04-01' AS DATE)
-    AND ship_date >= CAST('1996-01-01' AS DATE)
+    l_shipdate < CAST('1996-04-01' AS DATE)
+    AND l_shipdate >= CAST('1996-01-01' AS DATE)
   GROUP BY
-    supplier_key
+    l_suppkey
 )
 SELECT
   supplier.s_suppkey AS S_SUPPKEY,

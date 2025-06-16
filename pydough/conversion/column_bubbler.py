@@ -13,6 +13,7 @@ from pydough.relational import (
     ColumnReference,
     ExpressionSortInfo,
     Filter,
+    Join,
     Limit,
     Project,
     RelationalExpression,
@@ -48,6 +49,7 @@ def run_column_bubbling(
     old_expr: RelationalExpression
     new_expr: RelationalExpression
     new_ref: RelationalExpression
+    result: RelationalNode
     match node:
         case Project() | Filter() | Limit():
             new_input, input_mapping = run_column_bubbling(node.input)
@@ -78,7 +80,10 @@ def run_column_bubbling(
                         )
                     )
                 node._orderings = new_orderings
-            return node.copy(output_columns, [new_input]), remapping
+            result = node.copy(output_columns, [new_input])
+            if isinstance(result, Filter):
+                result._condition = apply_substitution(result.condition, input_mapping)
+            return result, remapping
         case Aggregate():
             new_input, input_mapping = run_column_bubbling(node.input)
             new_keys: dict[str, ColumnReference] = {}
@@ -117,6 +122,41 @@ def run_column_bubbling(
                     aliases[new_expr] = new_ref
                     output_columns[name] = new_expr
             return node.copy(output_columns), remapping
+        case Join():
+            new_left, left_mapping = run_column_bubbling(node.inputs[0])
+            new_right, right_mapping = run_column_bubbling(node.inputs[1])
+            input_mapping = {}
+            for key, value in left_mapping.items():
+                assert isinstance(key, ColumnReference)
+                assert isinstance(value, ColumnReference)
+                input_mapping[key.with_input(node.default_input_aliases[0])] = (
+                    value.with_input(node.default_input_aliases[0])
+                )
+            for key, value in right_mapping.items():
+                assert isinstance(key, ColumnReference)
+                assert isinstance(value, ColumnReference)
+                input_mapping[key.with_input(node.default_input_aliases[1])] = (
+                    value.with_input(node.default_input_aliases[1])
+                )
+            for name in sorted(node.columns, key=name_sort_key):
+                old_expr = node.columns[name]
+                new_expr = apply_substitution(old_expr, input_mapping)
+                new_ref = ColumnReference(name, old_expr.data_type)
+                if new_expr in aliases:
+                    remapping[new_ref] = aliases[new_expr]
+                else:
+                    if isinstance(new_expr, ColumnReference) and name_sort_key(
+                        new_expr.name
+                    ) < name_sort_key(name):
+                        new_ref = remapping[new_ref] = ColumnReference(
+                            new_expr.name, new_expr.data_type
+                        )
+                    aliases[new_expr] = new_ref
+                    output_columns[name] = new_expr
+            result = node.copy(output_columns, [new_left, new_right])
+            assert isinstance(result, Join)
+            result.condition = apply_substitution(node.condition, input_mapping)
+            return result, remapping
         case _:
             return node, remapping
 

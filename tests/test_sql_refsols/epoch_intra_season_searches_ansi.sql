@@ -1,78 +1,74 @@
 WITH _s0 AS (
   SELECT
-    s_month1 AS first_month,
-    s_name AS name,
-    s_name AS season_name,
-    s_month2 AS second_month,
-    s_month3 AS third_month
+    s_month1,
+    s_month2,
+    s_month3,
+    s_name
   FROM seasons
-), _s7 AS (
+), _s5 AS (
   SELECT
-    s_month1 AS first_month,
-    s_name AS name,
-    s_month2 AS second_month,
-    s_month3 AS third_month
-  FROM seasons
+    ev_dt,
+    ev_name
+  FROM events
 ), _s9 AS (
   SELECT
     COUNT() AS agg_0,
-    _s2.name,
+    _s2.s_name AS name,
     searches.search_id
   FROM _s0 AS _s2
   JOIN searches AS searches
-    ON _s2.first_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s2.second_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s2.third_month = EXTRACT(MONTH FROM searches.search_ts)
-  JOIN events AS events
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
-  JOIN _s7 AS _s7
-    ON _s2.season_name = _s7.name
+    ON _s2.s_month1 = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s2.s_month2 = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s2.s_month3 = EXTRACT(MONTH FROM searches.search_ts)
+  JOIN _s5 AS _s5
+    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(_s5.ev_name), '%')
+  JOIN _s0 AS _s7
+    ON _s2.s_name = _s7.s_name
     AND (
-      _s7.first_month = EXTRACT(MONTH FROM events.ev_dt)
-      OR _s7.second_month = EXTRACT(MONTH FROM events.ev_dt)
-      OR _s7.third_month = EXTRACT(MONTH FROM events.ev_dt)
+      _s7.s_month1 = EXTRACT(MONTH FROM _s5.ev_dt)
+      OR _s7.s_month2 = EXTRACT(MONTH FROM _s5.ev_dt)
+      OR _s7.s_month3 = EXTRACT(MONTH FROM _s5.ev_dt)
     )
   GROUP BY
-    _s2.name,
+    _s2.s_name,
     searches.search_id
 ), _s16 AS (
   SELECT
-    ANY_VALUE(_s0.name) AS agg_1,
+    ANY_VALUE(_s0.s_name) AS agg_1,
     SUM((
       NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
     )) AS agg_2,
-    COUNT() AS agg_3,
-    ANY_VALUE(_s0.season_name) AS agg_4
+    COUNT() AS agg_3
   FROM _s0 AS _s0
   JOIN searches AS searches
-    ON _s0.first_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s0.second_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s0.third_month = EXTRACT(MONTH FROM searches.search_ts)
+    ON _s0.s_month1 = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s0.s_month2 = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s0.s_month3 = EXTRACT(MONTH FROM searches.search_ts)
   LEFT JOIN _s9 AS _s9
-    ON _s0.name = _s9.name AND _s9.search_id = searches.search_id
+    ON _s0.s_name = _s9.name AND _s9.search_id = searches.search_id
   GROUP BY
-    _s0.name
+    _s0.s_name
 ), _s17 AS (
   SELECT
-    SUM(_s10.season_name = _s15.name) AS agg_0,
+    SUM(_s15.s_name = _s10.s_name) AS agg_0,
     COUNT() AS agg_1,
-    _s10.name
+    _s10.s_name AS name
   FROM _s0 AS _s10
-  JOIN events AS events
-    ON _s10.first_month = EXTRACT(MONTH FROM events.ev_dt)
-    OR _s10.second_month = EXTRACT(MONTH FROM events.ev_dt)
-    OR _s10.third_month = EXTRACT(MONTH FROM events.ev_dt)
+  JOIN _s5 AS _s11
+    ON _s10.s_month1 = EXTRACT(MONTH FROM _s11.ev_dt)
+    OR _s10.s_month2 = EXTRACT(MONTH FROM _s11.ev_dt)
+    OR _s10.s_month3 = EXTRACT(MONTH FROM _s11.ev_dt)
   JOIN searches AS searches
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
-  JOIN _s7 AS _s15
-    ON _s15.first_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s15.second_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s15.third_month = EXTRACT(MONTH FROM searches.search_ts)
+    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(_s11.ev_name), '%')
+  JOIN _s0 AS _s15
+    ON _s15.s_month1 = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s15.s_month2 = EXTRACT(MONTH FROM searches.search_ts)
+    OR _s15.s_month3 = EXTRACT(MONTH FROM searches.search_ts)
   GROUP BY
-    _s10.name
+    _s10.s_name
 )
 SELECT
-  _s16.agg_4 AS season_name,
+  _s16.agg_1 AS season_name,
   ROUND((
     100.0 * COALESCE(_s16.agg_2, 0)
   ) / _s16.agg_3, 2) AS pct_season_searches,
