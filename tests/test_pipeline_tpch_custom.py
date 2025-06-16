@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow with custom questions on the TPC-H
 dataset.
 """
 
+import re
 from collections.abc import Callable
 
 import pandas as pd
@@ -14,6 +15,9 @@ from pydough.unqualified import (
     UnqualifiedNode,
 )
 from tests.test_pydough_functions.bad_pydough_functions import (
+    bad_name_1,
+    bad_name_2,
+    bad_name_3,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -2225,6 +2229,30 @@ def test_pipeline_e2e_tpch_custom(
             ["key", "key"],
             "Duplicate column names found in root.",
             id="bad_columns_5",
+        ),
+        pytest.param(
+            bad_name_1,
+            None,
+            re.escape(
+                "Unrecognized term of simple table collection 'customers' in graph 'TPCH': 'c_name'\nDid you mean: name, comment, phone?."
+            ),
+            id="bad_name_1",
+        ),
+        pytest.param(
+            bad_name_2,
+            None,
+            re.escape(
+                "Unrecognized term of graph 'TPCH': 'CUSTS'\nDid you mean: parts, lines, customers, orders?"
+            ),
+            id="bad_name_2",
+        ),
+        pytest.param(
+            bad_name_3,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz'\nDid you mean: fizz, BUZZ, bar?"
+            ),
+            id="bad_name_3",
         ),
     ],
 )

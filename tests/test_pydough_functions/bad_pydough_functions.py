@@ -315,3 +315,15 @@ def bad_unsupported_kwarg2():
 def bad_unsupported_kwarg3():
     # Unsupported keyword argument for non keyword operator
     return nations.CALCULATE(sum=SUM(suppliers.account_balance, wrong_kwarg="sample"))
+
+
+def bad_name_1():
+    return customers.CALCULATE(c_name)
+
+
+def bad_name_2():
+    return TPCH.CUSTS
+
+
+def bad_name_3():
+    return TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4).CALCULATE(fizzbuzz)

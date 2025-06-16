@@ -99,9 +99,17 @@ class GlobalContext(PyDoughCollectionQDAG):
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name not in self.collections:
-            raise PyDoughQDAGException(
+            error_message = (
                 f"Unrecognized term of {self.graph.error_name}: {term_name!r}"
             )
+            suggestions = self.find_possible_name_matches(term_name=term_name)
+            # Check if there are any suggestions to add
+            if suggestions != []:
+                suggestions_str = ", ".join(suggestions)
+                error_message += f" Did you mean: {suggestions_str}?"
+
+            raise PyDoughQDAGException(error_message)
+
         return self.collections[term_name]
 
     @property

@@ -10,6 +10,8 @@ from collections.abc import Iterable
 from functools import cache, cached_property
 from typing import Union
 
+import numpy as np
+
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions.collation_expression import CollationExpression
@@ -343,6 +345,111 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
     def find_possible_name_matches(self, term_name: str) -> list[str]:
         """
-        Fill this out later
+        Finds and returns a list of candidate names that closely match the given
+        name based on minimum edit distance.
+
+        Args:
+            name (str): The name to match against the list of candidates.
+
+        Returns:
+            List[str]: A list of candidate names, based on the closest matches.
         """
-        return []
+
+        terms_distance_list = []
+
+        for term in self.all_terms:
+            # get the minimum edit distance
+            me = self.min_edit_distance(term_name, term)
+            terms_distance_list.append((me, term))
+
+        # sort the list by minimum edit distance
+        sorted_list = sorted(terms_distance_list)
+        if sorted_list == []:
+            return []
+
+        closest_match = sorted_list[0]
+
+        # List with all names that have a me <= closest_match + 2
+        good_matches_1 = []
+        # List with all names that have a me <= closest_match * 1.1
+        good_matches_2 = []
+        # List with all names that are not in the first 3
+        good_matches_3 = [name for _, name in sorted_list[:3]]
+
+        # filtering the result
+        for tuple in sorted_list:
+            # all names that have a me <= closest_match + 2
+            if tuple[0] <= closest_match[0] + 2:
+                good_matches_1.append(tuple[1])
+
+            # all names that have a me <= closest_match * 1.1
+            if tuple[0] <= closest_match[0] * 1.1:
+                good_matches_2.append(tuple[1])
+
+        # returning the larger
+        if len(good_matches_1) >= len(good_matches_2) and len(good_matches_1) >= len(
+            good_matches_3
+        ):
+            return good_matches_1
+
+        elif len(good_matches_2) >= len(good_matches_1) and len(good_matches_2) >= len(
+            good_matches_3
+        ):
+            return good_matches_2
+
+        else:
+            return good_matches_3
+
+    @staticmethod
+    def min_edit_distance(s: str, t: str) -> float:
+        """
+        Computes the minimum edit distance between two strings using the
+        Levenshtein distance algorithm.
+
+        Args:
+            str1 (str): The first string.
+            str2 (str): The second string.
+
+        Returns:
+            float: The minimum edit distance between the two strings.
+        """
+        # Ensures str1 is the shorter string
+        if len(s) > len(t):
+            s, t = t, s
+        m, n = len(s), len(t)
+
+        # Use a 2 x (m + 1) array to represent an n x (m + 1) array since you only
+        # need to consider the previous row to generate the next row, therefore the
+        # same two rows can be recycled
+
+        row, otherRow = 1, 0
+        arr = np.zeros((2, m + 1), dtype=float)
+
+        # MED(X, "") = len(X)
+        arr[0, :] = np.arange(m + 1)
+
+        for i in range(1, n + 1):
+            # MED("", X) = len(X)
+            arr[row, 0] = i
+
+            # Loop over the rest of s to see if it matches with the corresponding
+            # letter of t
+            for j in range(1, m + 1):
+                substitution_cost: float
+
+                if s[j - 1] == t[i - 1]:
+                    substitution_cost = 0.0
+                elif s[j - 1].lower() == t[i - 1].lower():
+                    substitution_cost = 0.1
+                else:
+                    substitution_cost = 1.0
+
+                arr[row, j] = min(
+                    arr[row, j - 1] + 1.0,
+                    arr[otherRow, j] + 1.0,
+                    arr[otherRow, j - 1] + substitution_cost,
+                )
+
+            row, otherRow = otherRow, row
+
+        return arr[n % 2, m]  # Return the last computed row's last element
