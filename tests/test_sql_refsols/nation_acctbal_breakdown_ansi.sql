@@ -23,4 +23,4 @@ JOIN tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.nation_key = nation.n_nationkey
 ORDER BY
-  nation_name
+  nation.n_name

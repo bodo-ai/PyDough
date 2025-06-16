@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    COUNT(DISTINCT searches.search_id) AS n_searches,
     events.ev_typ AS event_type,
+    COUNT(DISTINCT searches.search_id) AS n_searches,
     users.user_region AS region
   FROM events AS events
   JOIN searches AS searches
@@ -13,8 +13,8 @@ WITH _t1 AS (
     users.user_region
 ), _t0 AS (
   SELECT
-    n_searches,
     event_type,
+    n_searches,
     region
   FROM _t1
   QUALIFY

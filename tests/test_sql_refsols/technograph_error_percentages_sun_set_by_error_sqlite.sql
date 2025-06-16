@@ -11,19 +11,19 @@ WITH _s5 AS (
     incidents.in_error_id
 ), _t0 AS (
   SELECT
-    errors.er_name AS error,
     ROUND(
       CAST((
         100.0 * COALESCE(_s5.agg_0, 0)
       ) AS REAL) / SUM(COALESCE(_s5.agg_0, 0)) OVER (),
       2
-    ) AS pct
+    ) AS pct,
+    errors.er_name
   FROM main.errors AS errors
   LEFT JOIN _s5 AS _s5
     ON _s5.error_id = errors.er_id
 )
 SELECT
-  error,
+  er_name AS error,
   pct
 FROM _t0
 ORDER BY

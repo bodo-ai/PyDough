@@ -1,2 +1,2 @@
-ROOT(columns=[('key', key), ('region_key', region_key), ('name', name), ('comment', comment)], orderings=[])
- SCAN(table=tpch.NATION, columns={'comment': n_comment, 'key': n_nationkey, 'name': n_name, 'region_key': n_regionkey})
+ROOT(columns=[('key', n_nationkey), ('region_key', n_regionkey), ('name', n_name), ('comment', n_comment)], orderings=[])
+ SCAN(table=tpch.NATION, columns={'n_comment': n_comment, 'n_name': n_name, 'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})

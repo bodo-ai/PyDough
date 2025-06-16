@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    lineitem.l_extendedprice AS extended_price
+    lineitem.l_extendedprice
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey
@@ -12,7 +12,7 @@ WITH _t2 AS (
     )
 ), _t0 AS (
   SELECT
-    SUM(extended_price) AS agg_0
+    SUM(l_extendedprice) AS agg_0
   FROM _t2
 )
 SELECT

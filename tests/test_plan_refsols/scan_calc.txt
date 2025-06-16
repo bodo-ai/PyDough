@@ -1,2 +1,2 @@
-ROOT(columns=[('region_name', name), ('magic_word', 'foo':string)], orderings=[])
- SCAN(table=tpch.REGION, columns={'name': r_name})
+ROOT(columns=[('region_name', r_name), ('magic_word', 'foo':string)], orderings=[])
+ SCAN(table=tpch.REGION, columns={'r_name': r_name})

@@ -4,14 +4,13 @@ WITH _s1 AS (
   FROM main.coupons AS coupons
 ), _s0 AS (
   SELECT
-    merchants.mid AS merchant_id,
-    merchants.name AS merchant_name,
-    merchants.mid AS mid
+    merchants.mid AS mid,
+    merchants.name AS name
   FROM main.merchants AS merchants
 )
 SELECT
-  _s0.merchant_id AS merchant_id,
-  _s0.merchant_name AS merchant_name
+  _s0.mid AS merchant_id,
+  _s0.name AS merchant_name
 FROM _s0 AS _s0
 WHERE
   NOT EXISTS(

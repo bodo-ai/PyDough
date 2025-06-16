@@ -1,5 +1,6 @@
 WITH _s1 AS (
   SELECT
+    s_nationkey AS nation_key,
     POWER(
       (
         CAST((
@@ -49,39 +50,15 @@ WITH _s1 AS (
       )
     ) AS REAL) / (
       COUNT(s_acctbal) - 1
-    ) AS sample_var,
-    POWER(
-      (
-        CAST((
-          SUM((
-            POWER(s_acctbal, 2)
-          )) - (
-            CAST((
-              POWER(SUM(s_acctbal), 2)
-            ) AS REAL) / COUNT(s_acctbal)
-          )
-        ) AS REAL) / COUNT(s_acctbal)
-      ),
-      0.5
-    ) AS std,
-    CAST((
-      SUM((
-        POWER(s_acctbal, 2)
-      )) - (
-        CAST((
-          POWER(SUM(s_acctbal), 2)
-        ) AS REAL) / COUNT(s_acctbal)
-      )
-    ) AS REAL) / COUNT(s_acctbal) AS var,
-    s_nationkey AS nation_key
+    ) AS sample_var
   FROM tpch.supplier
   GROUP BY
     s_nationkey
 )
 SELECT
   nation.n_name AS name,
-  _s1.var,
-  _s1.std,
+  _s1.pop_var AS var,
+  _s1.pop_std AS std,
   _s1.sample_var,
   _s1.sample_std,
   _s1.pop_var,

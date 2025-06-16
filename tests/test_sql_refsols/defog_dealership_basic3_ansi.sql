@@ -22,12 +22,11 @@ WITH _s0 AS (
     ON _s0._id = _s1.sale_id
 ), _s2 AS (
   SELECT
-    salespersons._id AS _id,
-    salespersons._id AS salesperson_id
+    salespersons._id AS _id
   FROM main.salespersons AS salespersons
 )
 SELECT
-  _s2.salesperson_id AS salesperson_id
+  _s2._id AS salesperson_id
 FROM _s2 AS _s2
 WHERE
   EXISTS(

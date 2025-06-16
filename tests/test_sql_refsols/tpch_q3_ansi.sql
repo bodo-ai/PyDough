@@ -15,8 +15,8 @@ WITH _t1 AS (
   WHERE
     orders.o_orderdate < CAST('1995-03-15' AS DATE)
   GROUP BY
-    orders.o_orderdate,
     lineitem.l_orderkey,
+    orders.o_orderdate,
     orders.o_shippriority
 )
 SELECT
@@ -27,6 +27,6 @@ SELECT
 FROM _t1
 ORDER BY
   revenue DESC,
-  o_orderdate,
-  l_orderkey
+  order_date,
+  order_key
 LIMIT 10
