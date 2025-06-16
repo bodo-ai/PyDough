@@ -281,6 +281,20 @@ def test_malformed_collection_sequences(
             "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz' Did you mean: fizz, BUZZ, bar?",  # <-- The error you expect to be raised from invoking `TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4).fizzbuzz`
             id="global_calc-fizbuzz",
         ),
+        # TESTS
+        # collection.collection.property_last_collection
+        # collection.collection.property_first_collection
+        # collection (doesn't exist)
+        # test same with all uppercase
+        # test same with numbers
+        # test with special characters
+        # test with underscores
+        # test without just one chatacter
+        # test with an extra character
+        # test with a empty string
+        # test with a really large name
+        # test with the combination of to names declared (key, name). keyname
+        # More than one bad name CALCULATE(customer.c_name, customes.bad_key).not_collection
     ],
 )
 def test_collection_name_matching(

@@ -1222,13 +1222,13 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_collections_impl,
                 """
-Unrecognized term of graph 'TPCH': 'line_items'
+Unrecognized term of graph 'TPCH': 'line_items' Did you mean: lines, nations, regions, suppliers?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Unrecognized term of graph 'TPCH': 'line_items'
+Unrecognized term of graph 'TPCH': 'line_items' Did you mean: lines, nations, regions, suppliers?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
@@ -1241,13 +1241,13 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_expr_impl,
                 """
-Unrecognized term of graph 'TPCH': 'name'
+Unrecognized term of graph 'TPCH': 'name' Did you mean: lines, parts, nations, orders?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Unrecognized term of graph 'TPCH': 'name'
+Unrecognized term of graph 'TPCH': 'name' Did you mean: lines, parts, nations, orders?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
