@@ -1,5 +1,5 @@
-ROOT(columns=[('region_name', region_name), ('nation_name', nation_name)], orderings=[(nation_name):asc_last])
- LIMIT(limit=Literal(value=10, type=NumericType()), columns={'nation_name': name_3, 'region_name': name}, orderings=[(nation_name):asc_last])
-  JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'name': t0.r_name, 'name_3': t1.n_name})
+ROOT(columns=[('region_name', name), ('nation_name', n_name)], orderings=[(n_name):asc_last])
+ LIMIT(limit=Literal(value=10, type=NumericType()), columns={'n_name': n_name, 'name': name}, orderings=[(n_name):asc_last])
+  JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'n_name': t1.n_name, 'name': t0.r_name})
    SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
    SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})

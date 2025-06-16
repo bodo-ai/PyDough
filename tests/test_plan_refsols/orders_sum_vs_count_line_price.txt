@@ -1,5 +1,5 @@
-ROOT(columns=[('okey', okey), ('lavg', lavg)], orderings=[])
- JOIN(condition=t0.o_orderkey == t1.order_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'lavg': t1.lavg, 'okey': t0.o_orderkey})
+ROOT(columns=[('okey', o_orderkey), ('lavg', lavg)], orderings=[])
+ JOIN(condition=t0.o_orderkey == t1.order_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'lavg': t1.lavg, 'o_orderkey': t0.o_orderkey})
   SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey})
   PROJECT(columns={'lavg': DEFAULT_TO(agg_0, 0:numeric) / agg_1, 'order_key': order_key})
    AGGREGATE(keys={'order_key': l_orderkey}, aggregations={'agg_0': SUM(l_extendedprice), 'agg_1': COUNT(l_extendedprice)})

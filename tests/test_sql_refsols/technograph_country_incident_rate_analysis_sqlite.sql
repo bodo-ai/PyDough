@@ -69,4 +69,4 @@ JOIN _s7 AS _s7
 LEFT JOIN _s13 AS _s13
   ON _s13.country_id = countries.co_id
 ORDER BY
-  country_name
+  countries.co_name

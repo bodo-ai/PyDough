@@ -4,6 +4,7 @@ WITH _s0 AS (
     COUNT(sbdpclose) AS expr_1,
     MAX(sbdphigh) AS max_high,
     MIN(sbdplow) AS min_low,
+    sbdptickerid AS ticker_id,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', sbdpdate) AS INTEGER),
@@ -14,10 +15,10 @@ WITH _s0 AS (
           2 * -1
         ))
       END
-    ) AS month,
-    sbdptickerid AS ticker_id
+    ) AS month
   FROM main.sbdailyprice
   GROUP BY
+    sbdptickerid,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', sbdpdate) AS INTEGER),
@@ -28,22 +29,21 @@ WITH _s0 AS (
           2 * -1
         ))
       END
-    ),
-    sbdptickerid
+    )
 ), _t1 AS (
   SELECT
     SUM(_s0.expr_0) AS expr_0,
     SUM(_s0.expr_1) AS expr_1,
     MAX(_s0.max_high) AS max_high,
     MIN(_s0.min_low) AS min_low,
-    _s0.month,
-    sbticker.sbtickersymbol AS symbol
+    sbticker.sbtickersymbol AS symbol,
+    _s0.month
   FROM _s0 AS _s0
   JOIN main.sbticker AS sbticker
     ON _s0.ticker_id = sbticker.sbtickerid
   GROUP BY
-    _s0.month,
-    sbticker.sbtickersymbol
+    sbticker.sbtickersymbol,
+    _s0.month
 )
 SELECT
   symbol,

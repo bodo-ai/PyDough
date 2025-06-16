@@ -63,9 +63,11 @@ def run_column_bubbling(
                     if isinstance(new_expr, ColumnReference) and name_sort_key(
                         new_expr.name
                     ) < name_sort_key(name):
-                        new_ref = remapping[new_ref] = ColumnReference(
+                        remapping[new_ref] = ColumnReference(
                             new_expr.name, new_expr.data_type
                         )
+                        new_ref = remapping[new_ref]
+                        name = new_expr.name
                     aliases[new_expr] = new_ref
                     output_columns[name] = new_expr
             if isinstance(node, Limit):
@@ -148,9 +150,11 @@ def run_column_bubbling(
                     if isinstance(new_expr, ColumnReference) and name_sort_key(
                         new_expr.name
                     ) < name_sort_key(name):
-                        new_ref = remapping[new_ref] = ColumnReference(
+                        remapping[new_ref] = ColumnReference(
                             new_expr.name, new_expr.data_type
                         )
+                        new_ref = remapping[new_ref]
+                        name = new_expr.name
                     aliases[new_expr] = new_ref
                     output_columns[name] = new_expr
             result = node.copy(output_columns, [new_left, new_right])

@@ -9,18 +9,18 @@ WITH _s0 AS (
     sbtxtickerid
 ), _s2 AS (
   SELECT
-    SUM(_s0.num_transactions) AS num_transactions_0,
-    _s0.customer_id,
-    sbticker.sbtickertype AS ticker_type
+    SUM(_s0.num_transactions) AS num_transactions,
+    sbticker.sbtickertype AS ticker_type,
+    _s0.customer_id
   FROM _s0 AS _s0
   JOIN main.sbticker AS sbticker
     ON _s0.ticker_id = sbticker.sbtickerid
   GROUP BY
-    _s0.customer_id,
-    sbticker.sbtickertype
+    sbticker.sbtickertype,
+    _s0.customer_id
 ), _t0 AS (
   SELECT
-    SUM(_s2.num_transactions_0) AS num_transactions,
+    SUM(_s2.num_transactions) AS num_transactions,
     sbcustomer.sbcuststate AS state,
     _s2.ticker_type
   FROM _s2 AS _s2

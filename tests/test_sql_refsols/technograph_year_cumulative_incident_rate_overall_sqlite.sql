@@ -56,13 +56,13 @@ WITH _t5 AS (
       ) AS REAL) / LAG(COALESCE(agg_7, 0), 1) OVER (ORDER BY year),
       2
     ) AS pct_incident_change,
-    year AS yr
+    year
   FROM _t3
   WHERE
     NOT agg_4 IS NULL AND agg_4 > 0
 )
 SELECT
-  yr,
+  year AS yr,
   cum_ir,
   pct_bought_change,
   pct_incident_change,
@@ -70,4 +70,4 @@ SELECT
   incidents
 FROM _t0
 ORDER BY
-  yr
+  year

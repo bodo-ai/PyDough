@@ -1,4 +1,4 @@
-ROOT(columns=[('key', key), ('region_key', region_key), ('name', name), ('comment', comment)], orderings=[(name):asc_last, (ordering_0):asc_last])
- JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'comment': t0.n_comment, 'key': t0.n_nationkey, 'name': t0.n_name, 'ordering_0': t1.r_name, 'region_key': t0.n_regionkey})
+ROOT(columns=[('key', key), ('region_key', n_regionkey), ('name', n_name), ('comment', comment)], orderings=[(n_name):asc_last, (r_name):asc_last])
+ JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'comment': t0.n_comment, 'key': t0.n_nationkey, 'n_name': t0.n_name, 'n_regionkey': t0.n_regionkey, 'r_name': t1.r_name})
   SCAN(table=tpch.NATION, columns={'n_comment': n_comment, 'n_name': n_name, 'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})
   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})

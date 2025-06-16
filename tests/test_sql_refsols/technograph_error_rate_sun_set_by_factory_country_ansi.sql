@@ -25,4 +25,4 @@ FROM main.countries AS countries
 LEFT JOIN _s5 AS _s5
   ON _s5.factory_country_id = countries.co_id
 ORDER BY
-  country
+  countries.co_name

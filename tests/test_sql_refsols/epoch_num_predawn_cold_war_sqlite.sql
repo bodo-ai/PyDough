@@ -37,7 +37,7 @@ WITH _s1 AS (
 ), _s3 AS (
   SELECT
     _t2.er_end_year AS end_year,
-    _t2.er_start_year AS start_year
+    _t2.er_start_year AS er_start_year
   FROM _t2 AS _t2
   WHERE
     _t2.er_name = 'Cold War'
@@ -52,7 +52,7 @@ WITH _s1 AS (
       FROM _s3 AS _s3
       WHERE
         _s3.end_year > CAST(STRFTIME('%Y', _s0.date_time) AS INTEGER)
-        AND _s3.start_year <= CAST(STRFTIME('%Y', _s0.date_time) AS INTEGER)
+        AND _s3.er_start_year <= CAST(STRFTIME('%Y', _s0.date_time) AS INTEGER)
     )
 )
 SELECT

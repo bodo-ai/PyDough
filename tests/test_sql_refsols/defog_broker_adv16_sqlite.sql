@@ -20,4 +20,4 @@ FROM main.sbticker AS sbticker
 JOIN _t1 AS _t1
   ON _t1.ticker_id = sbticker.sbtickerid
 ORDER BY
-  symbol
+  sbticker.sbtickersymbol

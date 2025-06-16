@@ -20,8 +20,8 @@ WITH _t1 AS (
   WHERE
     l_shipdate <= CAST('1998-12-01' AS DATE)
   GROUP BY
-    l_returnflag,
-    l_linestatus
+    l_linestatus,
+    l_returnflag
 )
 SELECT
   return_flag AS L_RETURNFLAG,

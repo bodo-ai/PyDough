@@ -24,7 +24,7 @@ WITH _t0 AS (
   FROM main.cars AS cars
 ), _s0 AS (
   SELECT
-    _s2._id AS _id_1,
+    _s2._id AS _id,
     _s2.make AS make,
     _s2.model AS model,
     _s1.sale_date AS sale_date,
@@ -44,7 +44,7 @@ WHERE
       1 AS "1"
     FROM _s3 AS _s3
     WHERE
-      _s0._id_1 = _s3.car_id
+      _s0._id = _s3.car_id
   )
 ORDER BY
   sale_price DESC

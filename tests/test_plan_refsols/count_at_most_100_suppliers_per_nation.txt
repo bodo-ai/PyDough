@@ -1,5 +1,5 @@
-ROOT(columns=[('name', name), ('n_top_suppliers', DEFAULT_TO(agg_0, 0:numeric))], orderings=[])
- JOIN(condition=t0.n_nationkey == t1.nation_key, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_0': t1.agg_0, 'name': t0.n_name})
+ROOT(columns=[('name', n_name), ('n_top_suppliers', DEFAULT_TO(agg_0, 0:numeric))], orderings=[])
+ JOIN(condition=t0.n_nationkey == t1.nation_key, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_0': t1.agg_0, 'n_name': t0.n_name})
   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
   AGGREGATE(keys={'nation_key': nation_key}, aggregations={'agg_0': COUNT(key)})
    LIMIT(limit=Literal(value=100, type=NumericType()), columns={'key': s_suppkey, 'nation_key': s_nationkey}, orderings=[(s_acctbal):asc_last])

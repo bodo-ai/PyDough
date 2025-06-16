@@ -1,12 +1,12 @@
 WITH _t AS (
   SELECT
-    supplier.s_comment AS comment_8,
-    supplier.s_name AS name_10,
     part.p_mfgr,
     part.p_partkey,
     supplier.s_acctbal AS account_balance,
     supplier.s_address AS address,
-    nation.n_name AS expr_8,
+    supplier.s_comment AS comment,
+    nation.n_name,
+    supplier.s_name AS name,
     supplier.s_phone AS phone,
     RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost) AS _w
   FROM tpch.part AS part
@@ -23,13 +23,13 @@ WITH _t AS (
 )
 SELECT
   account_balance AS S_ACCTBAL,
-  name_10 AS S_NAME,
-  expr_8 AS N_NAME,
+  name AS S_NAME,
+  n_name AS N_NAME,
   p_partkey AS P_PARTKEY,
   p_mfgr AS P_MFGR,
   address AS S_ADDRESS,
   phone AS S_PHONE,
-  comment_8 AS S_COMMENT
+  comment AS S_COMMENT
 FROM _t
 WHERE
   _w = 1

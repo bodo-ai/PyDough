@@ -38,4 +38,4 @@ FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7
   ON _s6.release_year = _s7.release_year
 ORDER BY
-  year
+  _s6.release_year
