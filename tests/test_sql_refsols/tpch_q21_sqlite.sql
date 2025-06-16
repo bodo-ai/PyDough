@@ -11,17 +11,17 @@ WITH _s0 AS (
   FROM tpch.nation AS nation
 ), _s1 AS (
   SELECT
-    _t2.n_nationkey AS key
+    _t2.n_nationkey AS n_nationkey
   FROM _t2 AS _t2
   WHERE
     _t2.n_name = 'SAUDI ARABIA'
 ), _s8 AS (
   SELECT
-    _s0.s_suppkey AS key,
-    _s0.s_name AS name
+    _s0.s_name AS s_name,
+    _s0.s_suppkey AS s_suppkey
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
-    ON _s0.s_nationkey = _s1.key
+    ON _s0.s_nationkey = _s1.n_nationkey
 ), _t4 AS (
   SELECT
     lineitem.l_commitdate AS l_commitdate,
@@ -31,8 +31,8 @@ WITH _s0 AS (
   FROM tpch.lineitem AS lineitem
 ), _s4 AS (
   SELECT
-    _t4.l_orderkey AS order_key,
-    _t4.l_suppkey AS original_key
+    _t4.l_orderkey AS l_orderkey,
+    _t4.l_suppkey AS l_suppkey
   FROM _t4 AS _t4
   WHERE
     _t4.l_commitdate < _t4.l_receiptdate
@@ -43,17 +43,17 @@ WITH _s0 AS (
   FROM tpch.orders AS orders
 ), _s5 AS (
   SELECT
-    _t5.o_orderkey AS key
+    _t5.o_orderkey AS o_orderkey
   FROM _t5 AS _t5
   WHERE
     _t5.o_orderstatus = 'F'
 ), _s3 AS (
   SELECT
-    _s5.key AS key,
-    _s4.original_key AS original_key
+    _s4.l_suppkey AS l_suppkey,
+    _s5.o_orderkey AS o_orderkey
   FROM _s4 AS _s4
   JOIN _s5 AS _s5
-    ON _s4.order_key = _s5.key
+    ON _s4.l_orderkey = _s5.o_orderkey
 ), _t6 AS (
   SELECT
     lineitem.l_orderkey AS l_orderkey,
@@ -61,14 +61,14 @@ WITH _s0 AS (
   FROM tpch.lineitem AS lineitem
 ), _s6 AS (
   SELECT
-    _t6.l_orderkey AS order_key
+    _t6.l_orderkey AS l_orderkey
   FROM _t6 AS _t6
   WHERE
-    _s3.original_key <> _t6.l_suppkey
+    _s3.l_suppkey <> _t6.l_suppkey
 ), _s2 AS (
   SELECT
-    _s3.key AS key,
-    _s3.original_key AS original_key
+    _s3.l_suppkey AS l_suppkey,
+    _s3.o_orderkey AS o_orderkey
   FROM _s3 AS _s3
   WHERE
     EXISTS(
@@ -76,17 +76,17 @@ WITH _s0 AS (
         1 AS "1"
       FROM _s6 AS _s6
       WHERE
-        _s3.key = _s6.order_key
+        _s3.o_orderkey = _s6.l_orderkey
     )
 ), _s7 AS (
   SELECT
-    _t7.l_orderkey AS order_key
+    _t7.l_orderkey AS l_orderkey
   FROM _t4 AS _t7
   WHERE
-    _s2.original_key <> _t7.l_suppkey AND _t7.l_commitdate < _t7.l_receiptdate
+    _s2.l_suppkey <> _t7.l_suppkey AND _t7.l_commitdate < _t7.l_receiptdate
 ), _t3 AS (
   SELECT
-    _s2.original_key AS supplier_key
+    _s2.l_suppkey AS l_suppkey
   FROM _s2 AS _s2
   WHERE
     NOT EXISTS(
@@ -94,26 +94,26 @@ WITH _s0 AS (
         1 AS "1"
       FROM _s7 AS _s7
       WHERE
-        _s2.key = _s7.order_key
+        _s2.o_orderkey = _s7.l_orderkey
     )
 ), _s9 AS (
   SELECT
     COUNT() AS agg_0,
-    _t3.supplier_key AS supplier_key
+    _t3.l_suppkey AS supplier_key
   FROM _t3 AS _t3
   GROUP BY
-    _t3.supplier_key
+    _t3.l_suppkey
 ), _t1 AS (
   SELECT
     _s9.agg_0 AS agg_0,
-    _s8.name AS name
+    _s8.s_name AS s_name
   FROM _s8 AS _s8
   LEFT JOIN _s9 AS _s9
-    ON _s8.key = _s9.supplier_key
+    ON _s8.s_suppkey = _s9.supplier_key
 ), _t0 AS (
   SELECT
     COALESCE(_t1.agg_0, 0) AS numwait,
-    _t1.name AS s_name
+    _t1.s_name AS s_name
   FROM _t1 AS _t1
 )
 SELECT

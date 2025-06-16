@@ -670,27 +670,52 @@ def bubble_uniqueness(
 def apply_substitution(
     expr: RelationalExpression,
     substitutions: dict[RelationalExpression, RelationalExpression],
+    correl_substitutions: dict[str, dict[RelationalExpression, RelationalExpression]],
 ) -> RelationalExpression:
     """
     TODO
     """
     if expr in substitutions:
         return substitutions[expr]
+    if isinstance(expr, CorrelatedReference):
+        if expr.correl_name in correl_substitutions:
+            correl_map: dict[RelationalExpression, RelationalExpression] = (
+                correl_substitutions[expr.correl_name]
+            )
+            for key, value in correl_map.items():
+                assert isinstance(key, ColumnReference)
+                assert isinstance(value, ColumnReference)
+                if key.name == expr.name:
+                    return CorrelatedReference(
+                        value.name, expr.correl_name, expr.data_type
+                    )
+        return expr
     if isinstance(expr, CallExpression):
         return CallExpression(
             expr.op,
             expr.data_type,
-            [apply_substitution(arg, substitutions) for arg in expr.inputs],
+            [
+                apply_substitution(arg, substitutions, correl_substitutions)
+                for arg in expr.inputs
+            ],
         )
     if isinstance(expr, WindowCallExpression):
         return WindowCallExpression(
             expr.op,
             expr.data_type,
-            [apply_substitution(arg, substitutions) for arg in expr.inputs],
-            [apply_substitution(arg, substitutions) for arg in expr.partition_inputs],
+            [
+                apply_substitution(arg, substitutions, correl_substitutions)
+                for arg in expr.inputs
+            ],
+            [
+                apply_substitution(arg, substitutions, correl_substitutions)
+                for arg in expr.partition_inputs
+            ],
             [
                 ExpressionSortInfo(
-                    apply_substitution(order_arg.expr, substitutions),
+                    apply_substitution(
+                        order_arg.expr, substitutions, correl_substitutions
+                    ),
                     order_arg.ascending,
                     order_arg.nulls_first,
                 )
