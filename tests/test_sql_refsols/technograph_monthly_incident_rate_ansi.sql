@@ -10,7 +10,7 @@ WITH _t4 AS (
 ), _s7 AS (
   SELECT
     COUNT() AS agg_2,
-    _s1.ca_dt AS calendar_day
+    _t7.ca_dt AS calendar_day
   FROM _t4 AS _t7
   JOIN _t4 AS _s1
     ON _s1.ca_dt >= DATE_ADD(CAST(_t7.ca_dt AS TIMESTAMP), -6, 'MONTH')
@@ -21,7 +21,7 @@ WITH _t4 AS (
   WHERE
     EXTRACT(YEAR FROM _t7.ca_dt) IN (2020, 2021)
   GROUP BY
-    _s1.ca_dt
+    _t7.ca_dt
 ), _s15 AS (
   SELECT
     COUNT() AS agg_5,

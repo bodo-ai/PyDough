@@ -28,7 +28,7 @@ WITH _s0 AS (
   WHERE
     _s0.user_name <> _s7.user_name
   GROUP BY
-    _s7.user_id
+    _s0.user_id
 )
 SELECT
   agg_2 AS user_name,

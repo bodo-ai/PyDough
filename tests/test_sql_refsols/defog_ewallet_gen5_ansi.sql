@@ -1,5 +1,6 @@
 WITH _s0 AS (
   SELECT
+    notifications.created_at AS created_at,
     notifications.user_id AS user_id
   FROM main.notifications AS notifications
 ), _s1 AS (
@@ -9,7 +10,8 @@ WITH _s0 AS (
   FROM main.users AS users
 ), _t0 AS (
   SELECT
-    _s1.created_at AS created_at,
+    _s0.created_at AS created_at,
+    _s1.created_at AS created_at_1,
     _s0.user_id AS user_id
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
@@ -19,8 +21,8 @@ WITH _s0 AS (
     _t0.user_id AS user_id
   FROM _t0 AS _t0
   WHERE
-    _t0.created_at <= DATE_ADD(CAST(_t0.created_at AS TIMESTAMP), 1, 'YEAR')
-    AND _t0.created_at <= _t0.created_at
+    _t0.created_at <= DATE_ADD(CAST(_t0.created_at_1 AS TIMESTAMP), 1, 'YEAR')
+    AND _t0.created_at >= _t0.created_at_1
 ), _s2 AS (
   SELECT
     users.created_at AS created_at,

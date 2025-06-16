@@ -60,9 +60,11 @@ def run_column_bubbling(
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
-                    if isinstance(new_expr, ColumnReference) and name_sort_key(
-                        new_expr.name
-                    ) < name_sort_key(name):
+                    if (
+                        isinstance(new_expr, ColumnReference)
+                        and name_sort_key(new_expr.name) < name_sort_key(name)
+                        and new_expr.name not in output_columns
+                    ):
                         remapping[new_ref] = ColumnReference(
                             new_expr.name, new_expr.data_type
                         )
@@ -147,9 +149,11 @@ def run_column_bubbling(
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
-                    if isinstance(new_expr, ColumnReference) and name_sort_key(
-                        new_expr.name
-                    ) < name_sort_key(name):
+                    if (
+                        isinstance(new_expr, ColumnReference)
+                        and name_sort_key(new_expr.name) < name_sort_key(name)
+                        and new_expr.name not in output_columns
+                    ):
                         remapping[new_ref] = ColumnReference(
                             new_expr.name, new_expr.data_type
                         )

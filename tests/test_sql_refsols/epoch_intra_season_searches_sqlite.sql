@@ -53,6 +53,7 @@ WITH _s0 AS (
 ), _s17 AS (
   SELECT
     SUM(_s15.s_name = _s10.s_name) AS agg_0,
+    COUNT() AS agg_1,
     _s10.s_name AS name
   FROM _s0 AS _s10
   JOIN _s5 AS _s11
@@ -77,7 +78,7 @@ SELECT
   ) AS REAL) / _s16.agg_3, 2) AS pct_season_searches,
   ROUND(CAST((
     100.0 * COALESCE(_s17.agg_0, 0)
-  ) AS REAL) / COALESCE(_s16.agg_1, 0), 2) AS pct_event_searches
+  ) AS REAL) / COALESCE(_s17.agg_1, 0), 2) AS pct_event_searches
 FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17
   ON _s16.agg_1 = _s17.name
