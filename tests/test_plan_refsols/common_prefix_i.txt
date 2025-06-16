@@ -7,6 +7,6 @@ ROOT(columns=[('name', n_name), ('n_customers', n_customers), ('n_selected_order
      AGGREGATE(keys={'nation_key': c_nationkey}, aggregations={'agg_0': COUNT(), 'agg_4': SUM(agg_2)})
       JOIN(condition=t0.c_custkey == t1.customer_key, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_2': t1.agg_2, 'c_nationkey': t0.c_nationkey})
        SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
-       AGGREGATE(keys={'customer_key': customer_key}, aggregations={'agg_2': COUNT()})
-        FILTER(condition=MONTH(o_orderdate) == 12:numeric & YEAR(o_orderdate) == 1992:numeric & o_clerk == 'Clerk#000000272':string, columns={'customer_key': o_custkey})
+       AGGREGATE(keys={'customer_key': o_custkey}, aggregations={'agg_2': COUNT()})
+        FILTER(condition=MONTH(o_orderdate) == 12:numeric & YEAR(o_orderdate) == 1992:numeric & o_clerk == 'Clerk#000000272':string, columns={'o_custkey': o_custkey})
          SCAN(table=tpch.ORDERS, columns={'o_clerk': o_clerk, 'o_custkey': o_custkey, 'o_orderdate': o_orderdate})

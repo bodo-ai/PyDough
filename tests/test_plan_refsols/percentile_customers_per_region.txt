@@ -1,6 +1,6 @@
 ROOT(columns=[('name', c_name)], orderings=[(c_name):asc_first])
- FILTER(condition=PERCENTILE(args=[], partition=[n_regionkey], order=[(account_balance):asc_last]) == 95:numeric & ENDSWITH(c_phone, '00':string), columns={'c_name': c_name})
-  JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'account_balance': t1.c_acctbal, 'c_name': t1.c_name, 'c_phone': t1.c_phone, 'n_regionkey': t0.n_regionkey})
+ FILTER(condition=PERCENTILE(args=[], partition=[n_regionkey], order=[(c_acctbal):asc_last]) == 95:numeric & ENDSWITH(c_phone, '00':string), columns={'c_name': c_name})
+  JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'c_acctbal': t1.c_acctbal, 'c_name': t1.c_name, 'c_phone': t1.c_phone, 'n_regionkey': t0.n_regionkey})
    JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'n_nationkey': t1.n_nationkey, 'n_regionkey': t1.n_regionkey})
     SCAN(table=tpch.REGION, columns={'r_regionkey': r_regionkey})
     SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})

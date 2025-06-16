@@ -34,12 +34,10 @@ WITH _t5 AS (
     EXTRACT(YEAR FROM _t5.ca_dt)
 ), _t0 AS (
   SELECT
-    COALESCE(agg_4, 0) AS bought,
     ROUND(
       SUM(COALESCE(agg_7, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(agg_4, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       2
     ) AS cum_ir,
-    COALESCE(agg_7, 0) AS incidents,
     ROUND(
       (
         100.0 * (
@@ -56,6 +54,8 @@ WITH _t5 AS (
       ) / LAG(COALESCE(agg_7, 0), 1) OVER (ORDER BY year NULLS LAST),
       2
     ) AS pct_incident_change,
+    COALESCE(agg_4, 0) AS n_devices,
+    COALESCE(agg_7, 0) AS n_incidents,
     year
   FROM _t3
   WHERE
@@ -66,8 +66,8 @@ SELECT
   cum_ir,
   pct_bought_change,
   pct_incident_change,
-  bought,
-  incidents
+  n_devices AS bought,
+  n_incidents AS incidents
 FROM _t0
 ORDER BY
   year

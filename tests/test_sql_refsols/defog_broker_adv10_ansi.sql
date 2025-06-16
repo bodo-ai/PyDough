@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
-    COUNT() AS agg_0,
-    sbcustomer.sbcustid AS _id
+    sbcustomer.sbcustid AS _id,
+    COUNT() AS agg_0
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
     ON EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)

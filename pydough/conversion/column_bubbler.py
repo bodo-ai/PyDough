@@ -62,7 +62,7 @@ def run_column_bubbling(
                 else:
                     if (
                         isinstance(new_expr, ColumnReference)
-                        and name_sort_key(new_expr.name) < name_sort_key(name)
+                        and name_sort_key(new_expr.name)[:2] <= name_sort_key(name)[:2]
                         and new_expr.name not in output_columns
                     ):
                         remapping[new_ref] = ColumnReference(
@@ -151,7 +151,7 @@ def run_column_bubbling(
                 else:
                     if (
                         isinstance(new_expr, ColumnReference)
-                        and name_sort_key(new_expr.name) < name_sort_key(name)
+                        and name_sort_key(new_expr.name)[:2] <= name_sort_key(name)[:2]
                         and new_expr.name not in output_columns
                     ):
                         remapping[new_ref] = ColumnReference(

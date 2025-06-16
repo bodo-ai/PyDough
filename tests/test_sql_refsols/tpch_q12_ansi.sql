@@ -22,4 +22,4 @@ SELECT
   COALESCE(agg_1, 0) AS LOW_LINE_COUNT
 FROM _t1
 ORDER BY
-  l_shipmode
+  ship_mode

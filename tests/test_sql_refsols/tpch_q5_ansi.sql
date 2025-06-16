@@ -13,8 +13,8 @@ WITH _s7 AS (
   SELECT
     SUM(_s7.agg_0) AS agg_0,
     ANY_VALUE(nation.n_name) AS agg_3,
-    nation.n_name AS nation_name,
     nation.n_nationkey AS key,
+    nation.n_name AS nation_name,
     _s7.supplier_key
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
@@ -33,8 +33,8 @@ WITH _s7 AS (
     _s7.supplier_key
 ), _s11 AS (
   SELECT
-    supplier.s_suppkey AS key,
-    nation.n_name
+    nation.n_name,
+    supplier.s_suppkey
   FROM tpch.supplier AS supplier
   JOIN tpch.nation AS nation
     ON nation.n_nationkey = supplier.s_nationkey
@@ -44,7 +44,7 @@ WITH _s7 AS (
     ANY_VALUE(_s10.agg_3) AS agg_3
   FROM _s10 AS _s10
   JOIN _s11 AS _s11
-    ON _s10.nation_name = _s11.n_name AND _s10.supplier_key = _s11.key
+    ON _s10.nation_name = _s11.n_name AND _s10.supplier_key = _s11.s_suppkey
   GROUP BY
     _s10.key
 )

@@ -5,7 +5,7 @@ WITH _t1 AS (
   FROM main.sbcustomer AS sbcustomer
 ), _s2 AS (
   SELECT
-    _t1.sbcustid AS _id
+    _t1.sbcustid AS sbcustid
   FROM _t1 AS _t1
   WHERE
     _t1.sbcustemail LIKE '%.com'
@@ -21,16 +21,16 @@ WITH _t1 AS (
   FROM main.sbticker AS sbticker
 ), _s1 AS (
   SELECT
-    _t2.sbtickerid AS _id
+    _t2.sbtickerid AS sbtickerid
   FROM _t2 AS _t2
   WHERE
     _t2.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
 ), _s3 AS (
   SELECT
-    _s0.sbtxcustid AS customer_id
+    _s0.sbtxcustid AS sbtxcustid
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
-    ON _s0.sbtxtickerid = _s1._id
+    ON _s0.sbtxtickerid = _s1.sbtickerid
 ), _t0 AS (
   SELECT
     1 AS _
@@ -41,7 +41,7 @@ WITH _t1 AS (
         1 AS "1"
       FROM _s3 AS _s3
       WHERE
-        _s2._id = _s3.customer_id
+        _s2.sbcustid = _s3.sbtxcustid
     )
 )
 SELECT

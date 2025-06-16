@@ -6,7 +6,7 @@ WITH _t2 AS (
   FROM tpch.orders AS orders
 ), _s0 AS (
   SELECT
-    _t2.o_orderkey AS key,
+    _t2.o_orderkey AS o_orderkey,
     _t2.o_orderpriority AS o_orderpriority
   FROM _t2 AS _t2
   WHERE
@@ -47,7 +47,7 @@ WITH _t2 AS (
         1 AS "1"
       FROM _s1 AS _s1
       WHERE
-        _s0.key = _s1.l_orderkey
+        _s0.o_orderkey = _s1.l_orderkey
     )
 ), _t0 AS (
   SELECT

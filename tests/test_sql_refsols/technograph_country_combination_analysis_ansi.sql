@@ -16,10 +16,10 @@ WITH _s0 AS (
     in_device_id
 ), _s9 AS (
   SELECT
-    _s3.co_id AS _id_3,
+    _s2.co_id AS _id,
     COUNT() AS agg_1,
     SUM(_s7.agg_2) AS agg_4,
-    _s2.co_id AS _id
+    _s3.co_id AS _id_3
   FROM _s2 AS _s2
   CROSS JOIN _s2 AS _s3
   JOIN main.devices AS devices
@@ -28,8 +28,8 @@ WITH _s0 AS (
   LEFT JOIN _s7 AS _s7
     ON _s7.device_id = devices.de_id
   GROUP BY
-    _s3.co_id,
-    _s2.co_id
+    _s2.co_id,
+    _s3.co_id
 )
 SELECT
   _s0.co_name AS factory_country,

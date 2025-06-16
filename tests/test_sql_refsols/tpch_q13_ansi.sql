@@ -23,5 +23,5 @@ SELECT
 FROM _t0
 ORDER BY
   custdist DESC,
-  c_count DESC
+  num_non_special_orders DESC
 LIMIT 10

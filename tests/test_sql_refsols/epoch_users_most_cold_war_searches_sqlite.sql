@@ -21,7 +21,7 @@ WITH _s4 AS (
   FROM eras AS eras
 ), _s2 AS (
   SELECT
-    _t1.er_end_year AS end_year,
+    _t1.er_end_year AS er_end_year,
     _t1.er_start_year AS er_start_year
   FROM _t1 AS _t1
   WHERE
@@ -31,7 +31,7 @@ WITH _s4 AS (
     _s1.ev_name AS ev_name
   FROM _s1 AS _s1
   JOIN _s2 AS _s2
-    ON _s2.end_year > CAST(STRFTIME('%Y', _s1.ev_dt) AS INTEGER)
+    ON _s2.er_end_year > CAST(STRFTIME('%Y', _s1.ev_dt) AS INTEGER)
     AND _s2.er_start_year <= CAST(STRFTIME('%Y', _s1.ev_dt) AS INTEGER)
 ), _t0 AS (
   SELECT

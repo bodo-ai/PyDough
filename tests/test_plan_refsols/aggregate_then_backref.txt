@@ -1,6 +1,6 @@
 ROOT(columns=[('part_key', l_partkey), ('supplier_key', l_suppkey), ('order_key', l_orderkey), ('order_quantity_ratio', l_quantity / total_quantity)], orderings=[])
- JOIN(condition=t0.key == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'l_orderkey': t1.l_orderkey, 'l_partkey': t1.l_partkey, 'l_quantity': t1.l_quantity, 'l_suppkey': t1.l_suppkey, 'total_quantity': t0.total_quantity})
-  JOIN(condition=t0.o_orderkey == t1.order_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'key': t0.o_orderkey, 'total_quantity': t1.total_quantity})
+ JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'l_orderkey': t1.l_orderkey, 'l_partkey': t1.l_partkey, 'l_quantity': t1.l_quantity, 'l_suppkey': t1.l_suppkey, 'total_quantity': t0.total_quantity})
+  JOIN(condition=t0.o_orderkey == t1.order_key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'o_orderkey': t0.o_orderkey, 'total_quantity': t1.total_quantity})
    SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey})
    PROJECT(columns={'order_key': order_key, 'total_quantity': DEFAULT_TO(agg_0, 0:numeric)})
     AGGREGATE(keys={'order_key': l_orderkey}, aggregations={'agg_0': SUM(l_quantity)})

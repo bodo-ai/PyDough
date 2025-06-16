@@ -1,5 +1,5 @@
 ROOT(columns=[('avg_delta', avg_delta)], orderings=[])
  AGGREGATE(keys={}, aggregations={'avg_delta': AVG(delta)})
-  PROJECT(columns={'delta': DATEDIFF('days':string, PREV(args=[o_orderdate], partition=[clerk], order=[(o_orderdate):asc_last]), o_orderdate)})
-   FILTER(condition=o_orderpriority == '1-URGENT':string, columns={'clerk': o_clerk, 'o_orderdate': o_orderdate})
+  PROJECT(columns={'delta': DATEDIFF('days':string, PREV(args=[o_orderdate], partition=[o_clerk], order=[(o_orderdate):asc_last]), o_orderdate)})
+   FILTER(condition=o_orderpriority == '1-URGENT':string, columns={'o_clerk': o_clerk, 'o_orderdate': o_orderdate})
     SCAN(table=tpch.ORDERS, columns={'o_clerk': o_clerk, 'o_orderdate': o_orderdate, 'o_orderpriority': o_orderpriority})

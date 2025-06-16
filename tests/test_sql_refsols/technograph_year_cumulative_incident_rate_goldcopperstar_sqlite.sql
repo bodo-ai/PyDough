@@ -51,12 +51,10 @@ WITH _s14 AS (
     CAST(STRFTIME('%Y', _t6.ca_dt) AS INTEGER)
 ), _t0 AS (
   SELECT
-    COALESCE(_s15.agg_8, 0) AS bought,
     ROUND(
       CAST(SUM(COALESCE(_s15.agg_5, 0)) OVER (ORDER BY _s15.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(_s15.agg_8, 0)) OVER (ORDER BY _s15.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       2
     ) AS cum_ir,
-    COALESCE(_s15.agg_5, 0) AS incidents,
     ROUND(
       CAST((
         100.0 * (
@@ -73,7 +71,9 @@ WITH _s14 AS (
       ) AS REAL) / LAG(COALESCE(_s15.agg_5, 0), 1) OVER (ORDER BY _s15.year),
       2
     ) AS pct_incident_change,
-    _s15.year - CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER) AS years_since_release
+    _s15.year - CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER) AS years_since_release,
+    COALESCE(_s15.agg_8, 0) AS n_devices,
+    COALESCE(_s15.agg_5, 0) AS n_incidents
   FROM _s14 AS _s14
   CROSS JOIN _s15 AS _s15
   WHERE
@@ -84,8 +84,8 @@ SELECT
   cum_ir,
   pct_bought_change,
   pct_incident_change,
-  bought,
-  incidents
+  n_devices AS bought,
+  n_incidents AS incidents
 FROM _t0
 ORDER BY
   years_since_release

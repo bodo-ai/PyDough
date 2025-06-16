@@ -36,5 +36,5 @@ SELECT
   agg_3 AS COUNT_ORDER
 FROM _t1
 ORDER BY
-  l_returnflag,
-  l_linestatus
+  return_flag,
+  status

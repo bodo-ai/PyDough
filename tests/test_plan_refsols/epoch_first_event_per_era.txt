@@ -1,5 +1,5 @@
 ROOT(columns=[('era_name', er_name), ('event_name', ev_name)], orderings=[(er_start_year):asc_first])
- FILTER(condition=RANKING(args=[], partition=[er_name], order=[(date_time):asc_last], allow_ties=False) == 1:numeric, columns={'er_name': er_name, 'er_start_year': er_start_year, 'ev_name': ev_name})
-  JOIN(condition=t0.er_start_year <= YEAR(t1.ev_dt) & YEAR(t1.ev_dt) < t0.er_end_year, type=INNER, cardinality=PLURAL_ACCESS, columns={'date_time': t1.ev_dt, 'er_name': t0.er_name, 'er_start_year': t0.er_start_year, 'ev_name': t1.ev_name})
+ FILTER(condition=RANKING(args=[], partition=[er_name], order=[(ev_dt):asc_last], allow_ties=False) == 1:numeric, columns={'er_name': er_name, 'er_start_year': er_start_year, 'ev_name': ev_name})
+  JOIN(condition=t0.er_start_year <= YEAR(t1.ev_dt) & YEAR(t1.ev_dt) < t0.er_end_year, type=INNER, cardinality=PLURAL_ACCESS, columns={'er_name': t0.er_name, 'er_start_year': t0.er_start_year, 'ev_dt': t1.ev_dt, 'ev_name': t1.ev_name})
    SCAN(table=ERAS, columns={'er_end_year': er_end_year, 'er_name': er_name, 'er_start_year': er_start_year})
    SCAN(table=EVENTS, columns={'ev_dt': ev_dt, 'ev_name': ev_name})

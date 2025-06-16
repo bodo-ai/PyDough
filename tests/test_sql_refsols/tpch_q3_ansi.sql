@@ -27,6 +27,6 @@ SELECT
 FROM _t1
 ORDER BY
   revenue DESC,
-  o_orderdate,
-  l_orderkey
+  order_date,
+  order_key
 LIMIT 10

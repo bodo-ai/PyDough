@@ -5,7 +5,7 @@ WITH _t0 AS (
   FROM main.sbtransaction AS sbtransaction
 ), _s1 AS (
   SELECT
-    _t0.sbtxcustid AS customer_id
+    _t0.sbtxcustid AS sbtxcustid
   FROM _t0 AS _t0
   WHERE
     _t0.sbtxtype = 'buy'
@@ -23,5 +23,5 @@ WHERE
       1 AS "1"
     FROM _s1 AS _s1
     WHERE
-      _s0.sbcustid = _s1.customer_id
+      _s0.sbcustid = _s1.sbtxcustid
   )

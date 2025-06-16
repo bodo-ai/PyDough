@@ -1,3 +1,3 @@
-ROOT(columns=[('key', key), ('name', name), ('comment', comment)], orderings=[(name):asc_last])
- LIMIT(limit=Literal(value=2, type=NumericType()), columns={'comment': r_comment, 'key': r_regionkey, 'name': r_name}, orderings=[(name):asc_last])
+ROOT(columns=[('key', r_regionkey), ('name', r_name), ('comment', r_comment)], orderings=[(r_name):asc_last])
+ LIMIT(limit=Literal(value=2, type=NumericType()), columns={'r_comment': r_comment, 'r_name': r_name, 'r_regionkey': r_regionkey}, orderings=[(r_name):asc_last])
   SCAN(table=tpch.REGION, columns={'r_comment': r_comment, 'r_name': r_name, 'r_regionkey': r_regionkey})

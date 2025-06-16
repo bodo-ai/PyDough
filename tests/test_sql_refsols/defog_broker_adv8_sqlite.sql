@@ -6,8 +6,8 @@ WITH _t2 AS (
   FROM main.sbtransaction AS sbtransaction
 ), _s0 AS (
   SELECT
-    _t2.sbtxamount AS amount,
-    _t2.sbtxcustid AS customer_id
+    _t2.sbtxamount AS sbtxamount,
+    _t2.sbtxcustid AS sbtxcustid
   FROM _t2 AS _t2
   WHERE
     _t2.sbtxdatetime < DATE(
@@ -32,13 +32,13 @@ WITH _t2 AS (
   FROM main.sbcustomer AS sbcustomer
 ), _s1 AS (
   SELECT
-    _t3.sbcustid AS _id
+    _t3.sbcustid AS sbcustid
   FROM _t3 AS _t3
   WHERE
     LOWER(_t3.sbcustcountry) = 'usa'
 ), _t1 AS (
   SELECT
-    _s0.amount AS amount
+    _s0.sbtxamount AS sbtxamount
   FROM _s0 AS _s0
   WHERE
     EXISTS(
@@ -46,12 +46,12 @@ WITH _t2 AS (
         1 AS "1"
       FROM _s1 AS _s1
       WHERE
-        _s0.customer_id = _s1._id
+        _s0.sbtxcustid = _s1.sbcustid
     )
 ), _t0 AS (
   SELECT
     COUNT() AS agg_0,
-    SUM(_t1.amount) AS agg_1
+    SUM(_t1.sbtxamount) AS agg_1
   FROM _t1 AS _t1
 )
 SELECT
