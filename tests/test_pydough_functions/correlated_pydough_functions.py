@@ -268,16 +268,61 @@ def correl_16():
     # of account balance (relative to all other suppliers) as at least one
     # customer's percentile value of account balance relative to all other
     # customers. Percentile should be measured down to increments of 0.01%.
-    # (This is a correlated SEMI-joins)
-    selected_customers = nation.CALCULATE(rname=region.name).customers.WHERE(
+    # (This is a correlated SEMI-joins). Before computing the percentiles of
+    # customers,  filter the suppliers to consider ones in Europe in the
+    # BUILDING market segment.
+    european_nation = nation.WHERE(region.name == "EUROPE")
+    selected_customers = european_nation.customers.WHERE(
+        market_segment == "BUILDING"
+    ).WHERE(
         (PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000) == tile)
-        & (rname == "EUROPE")
     )
-    supplier_info = suppliers.CALCULATE(
+    selected_suppliers = suppliers.CALCULATE(
         tile=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000)
-    )
-    selected_suppliers = supplier_info.WHERE(HAS(selected_customers))
+    ).WHERE(HAS(selected_customers))
     return TPCH.CALCULATE(n=COUNT(selected_suppliers))
+
+
+"""
+-- 242
+select COUNT(distinct s_suppkey)
+FROM (
+    SELECT s_suppkey, s_nationkey, NTILE(10000) OVER (ORDER BY s_acctbal ASC, s_suppkey ASC) AS s_tile
+    from supplier
+) S1
+INNER JOIN (
+    select c_custkey, c_nationkey, NTILE(10000) OVER (ORDER BY c_acctbal ASC, c_custkey ASC) AS c_tile
+    FROM nation
+    INNER JOIN region
+    ON n_regionkey = r_regionkey AND r_name = 'EUROPE'
+    INNER JOIN customer
+    ON c_nationkey = n_nationkey AND c_mktsegment = 'BUILDING'
+) S2
+ON S1.s_nationkey = S2.c_nationkey AND S1.s_tile = S2.c_tile
+;
+
+-- 230
+select COUNT(distinct s_suppkey)
+FROM (
+    select s_suppkey, s_tile, NTILE(10000) OVER (PARTITION BY s_suppkey, s_nationkey ORDER BY c_acctbal ASC, c_custkey ASC) AS c_tile
+    FROM (
+        SELECT s_suppkey, s_nationkey, NTILE(10000) OVER (ORDER BY s_acctbal ASC, s_suppkey ASC) AS s_tile
+        from supplier
+    ) S1
+    INNER JOIN (
+        select c_custkey, c_acctbal, c_nationkey
+        FROM nation
+        INNER JOIN region
+        ON n_regionkey = r_regionkey AND r_name = 'EUROPE'
+        INNER JOIN customer
+        ON c_nationkey = n_nationkey AND c_mktsegment = 'BUILDING'
+    ) S2
+    ON S1.s_nationkey = S2.c_nationkey
+)
+WHERE s_tile = c_tile
+order by 1
+;
+"""
 
 
 def correl_17():
