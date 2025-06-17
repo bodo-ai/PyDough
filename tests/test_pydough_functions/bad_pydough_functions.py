@@ -431,3 +431,63 @@ def bad_name_20():
 
 def bad_name_21():
     return regions.CALCULATE(rname=name, rkey=key, rcomment=comment).nations.RNAME
+
+
+def bad_cross_1():
+    # Reason it is bad: Using `CROSS` with a not a collection
+    return customers.CROSS(42)
+
+
+def bad_cross_2():
+    # Reason it is bad: not a collection
+    return COUNT(customers).CROSS(regions)
+
+
+def bad_cross_3():
+    # Reason it is bad: the RHS isn't valid PyDough code by itself
+    return customers.CROSS(foo)
+
+
+def bad_cross_4():
+    # Reason it is bad: name collision
+    return regions.CALCULATE(customers=COUNT(nations.customers)).CROSS(customers)
+
+
+def bad_cross_5():
+    # Reason it is bad: name collision
+    r = regions.CALCULATE(name)
+    return r.CROSS(r).CALCULATE(name2=r.name)
+
+
+def bad_cross_6():
+    # Reason it is bad: CROSS unrelated collections
+    return suppliers.CROSS(parts).CALCULATE(
+        sup_name=suppliers.name, part_name=parts.name
+    )
+
+
+def bad_cross_7():
+    # Reason it is bad: CROSS unused
+    return CROSS(regions)
+
+
+def bad_cross_8():
+    # Reason it is bad:  Output column not available in the CROSSed collection
+    return regions.CALCULATE(r1=name).CROSS(nations).CALCULATE(r_key, r2=name)
+
+
+def bad_cross_9():
+    # Reason it is bad: Use output of CROSS as an output column
+    return regions.CALCULATE(new_col=CROSS(regions))
+
+
+def bad_cross_10():
+    # Reason it is bad: Aggregating on `name` which is a property of regions
+    # instead of one of its subcollections.
+    return regions.CROSS(regions).CALCULATE(total=COUNT(name))
+
+
+def bad_cross_11():
+    # Reason it is bad: `customers` is a sub-collection of `nations`,
+    # not `regions`
+    return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
