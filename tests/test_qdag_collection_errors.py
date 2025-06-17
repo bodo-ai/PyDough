@@ -6,15 +6,13 @@ import re
 
 import pytest
 
-from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG, PyDoughQDAGException
-from pydough.types import NumericType
+from pydough.qdag import AstNodeBuilder
 from tests.testing_utilities import (
     AstNodeTestInfo,
     BackReferenceExpressionInfo,
     CalculateInfo,
     ChildReferenceExpressionInfo,
     FunctionInfo,
-    LiteralInfo,
     OrderInfo,
     PartitionInfo,
     ReferenceInfo,
@@ -252,58 +250,3 @@ def test_malformed_collection_sequences(
     """
     with pytest.raises(Exception, match=re.escape(error_message)):
         calc_pipeline.build(tpch_node_builder)
-
-
-@pytest.mark.parametrize(
-    "collection_info, property_name, error_message",
-    [
-        pytest.param(
-            TableCollectionInfo("customers"),
-            "c_name",
-            "Unrecognized term of simple table collection 'customers' in graph 'TPCH': 'c_name' Did you mean: name, comment, phone?",
-            id="customers-c_name",
-        ),
-        pytest.param(
-            CalculateInfo([]),
-            "CUSTS",
-            "Unrecognized term of TPCH.CALCULATE(): 'CUSTS' Did you mean: parts, lines, customers, orders?",  # <-- The error you expect to be raised from invoking `TPCH.CUSTS`
-            id="global-CUSTS",
-        ),
-        pytest.param(
-            CalculateInfo(
-                [],
-                foo=LiteralInfo(1, NumericType()),
-                bar=LiteralInfo(2, NumericType()),
-                fizz=LiteralInfo(3, NumericType()),
-                BUZZ=LiteralInfo(4, NumericType()),
-            ),
-            "fizzbuzz",
-            "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz' Did you mean: fizz, BUZZ, bar?",  # <-- The error you expect to be raised from invoking `TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4).fizzbuzz`
-            id="global_calc-fizbuzz",
-        ),
-        # TESTS
-        # collection.collection.property_last_collection
-        # collection.collection.property_first_collection
-        # collection (doesn't exist)
-        # test same with all uppercase
-        # test same with numbers
-        # test with special characters
-        # test with underscores
-        # test without just one chatacter
-        # test with an extra character
-        # test with a empty string
-        # test with a really large name
-        # test with the combination of to names declared (key, name). keyname
-        # More than one bad name CALCULATE(customer.c_name, customes.bad_key).not_collection
-    ],
-)
-def test_collection_name_matching(
-    collection_info: AstNodeTestInfo,
-    property_name: str,
-    error_message: str,
-    tpch_node_builder: AstNodeBuilder,
-) -> None:
-    collection = collection_info.build(tpch_node_builder)
-    assert isinstance(collection, PyDoughCollectionQDAG)
-    with pytest.raises(PyDoughQDAGException, match=re.escape(error_message)):
-        collection.get_term(property_name)

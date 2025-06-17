@@ -188,7 +188,14 @@ class PartitionBy(ChildOperator):
         elif term_name == self.child.name:
             return PartitionChild(self.child, self.child.name, self)
         else:
-            raise PyDoughQDAGException(f"Unrecognized term: {term_name!r}")
+            error_message = f"Unrecognized term of {self}: {term_name!r}"
+            suggestions = self.find_possible_name_matches(term_name=term_name)
+            # Check if there are any suggestions to add
+            if suggestions != []:
+                suggestions_str = ", ".join(suggestions)
+                error_message += f" Did you mean: {suggestions_str}?"
+
+            raise PyDoughQDAGException(error_message)
 
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(is_last)
