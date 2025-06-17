@@ -2686,7 +2686,7 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_5,
             None,
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'regions'",
+            "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions' Did you mean: nations, comment, key?",
             id="bad_cross_5",
         ),
         pytest.param(
