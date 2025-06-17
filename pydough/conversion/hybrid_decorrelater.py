@@ -338,7 +338,11 @@ class HybridDecorrelater:
         child.subtree.join_keys = new_join_keys
         child.subtree.general_join_condition = None
         # If aggregating, update the aggregation keys accordingly.
-        if child.connection_type.is_aggregation:
+        is_faux_agg: bool = (
+            child.connection_type in (ConnectionType.SEMI, ConnectionType.ANTI)
+            and not child.subtree.is_singular()
+        )
+        if child.connection_type.is_aggregation or is_faux_agg:
             child.subtree.agg_keys = new_agg_keys
         # If the child is such that we don't need to keep rows from the parent
         # without a match, replace the parent & its ancestors with a
@@ -348,6 +352,12 @@ class HybridDecorrelater:
         if child.connection_type.is_semi and child_idx == min(
             old_parent.correlated_children
         ):
+            if child.connection_type == ConnectionType.SEMI:
+                child.connection_type = (
+                    ConnectionType.AGGREGATION_ONLY_MATCH
+                    if is_faux_agg
+                    else ConnectionType.SINGULAR_ONLY_MATCH
+                )
             old_parent._parent = None
             old_parent.pipeline[0] = HybridChildPullUp(
                 old_parent, child_idx, child_height - skipped_levels
@@ -392,9 +402,14 @@ class HybridDecorrelater:
             match child.connection_type:
                 case (
                     ConnectionType.SINGULAR
-                    | ConnectionType.SINGULAR_ONLY_MATCH
                     | ConnectionType.AGGREGATION
+                    | ConnectionType.SEMI
                     | ConnectionType.AGGREGATION_ONLY_MATCH
+                    | ConnectionType.SINGULAR_ONLY_MATCH
+                    | ConnectionType.ANTI
+                    | ConnectionType.NO_MATCH_SINGULAR
+                    | ConnectionType.NO_MATCH_AGGREGATION
+                    | ConnectionType.NO_MATCH_NDISTINCT
                 ):
                     if original_parent is None:
                         original_parent = copy.deepcopy(hybrid)
@@ -413,20 +428,14 @@ class HybridDecorrelater:
                         skipped_levels,
                         preserved_steps,
                     )
-                case ConnectionType.NDISTINCT | ConnectionType.NDISTINCT_ONLY_MATCH:
+                case (
+                    ConnectionType.NDISTINCT
+                    | ConnectionType.NDISTINCT_ONLY_MATCH
+                    | ConnectionType.NO_MATCH_SINGULAR
+                ):
                     raise NotImplementedError(
                         f"PyDough does not yet support correlated references with the {child.connection_type.name} pattern."
                     )
-                case (
-                    ConnectionType.SEMI
-                    | ConnectionType.ANTI
-                    | ConnectionType.NO_MATCH_SINGULAR
-                    | ConnectionType.NO_MATCH_AGGREGATION
-                    | ConnectionType.NO_MATCH_NDISTINCT
-                ):
-                    # These patterns do not require decorrelation since they
-                    # are supported via correlated SEMI/ANTI joins.
-                    pass
             child_idx -= 1
         # Iterate across all the children and recursively decorrelate them.
         for child in hybrid.children:
