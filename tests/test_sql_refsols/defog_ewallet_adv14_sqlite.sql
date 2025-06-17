@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     SUM(status = 'success') AS agg_0,
-    COUNT() AS agg_1
+    COUNT(*) AS agg_1
   FROM main.wallet_transactions_daily
   WHERE
     (

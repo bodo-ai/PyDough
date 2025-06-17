@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     ANY_VALUE(users.user_id) AS agg_10,
     ANY_VALUE(users.user_name) AS agg_8
   FROM users AS users
@@ -20,7 +20,7 @@ WITH _t2 AS (
 ), _t0 AS (
   SELECT
     ANY_VALUE(agg_8) AS agg_2,
-    COUNT() AS n_searches,
+    COUNT(*) AS n_searches,
     ANY_VALUE(agg_8) AS user_name
   FROM _t2
   WHERE

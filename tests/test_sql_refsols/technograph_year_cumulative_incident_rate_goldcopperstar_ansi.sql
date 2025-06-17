@@ -15,7 +15,7 @@ WITH _s14 AS (
   FROM main.products
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_3,
+    COUNT(*) AS agg_3,
     _s0.calendar_day
   FROM _t6 AS _s0
   JOIN main.incidents AS incidents
@@ -28,7 +28,7 @@ WITH _s14 AS (
     _s0.calendar_day
 ), _s13 AS (
   SELECT
-    COUNT() AS agg_6,
+    COUNT(*) AS agg_6,
     _s8.calendar_day
   FROM _t6 AS _s8
   JOIN main.devices AS devices

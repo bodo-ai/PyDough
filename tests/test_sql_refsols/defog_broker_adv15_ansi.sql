@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     SUM(sbcuststatus = 'active') AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     sbcustcountry AS country
   FROM main.sbcustomer
   WHERE

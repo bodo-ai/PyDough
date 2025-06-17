@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS n_other_countries
+    COUNT(*) AS n_other_countries
   FROM main.countries
 )
 SELECT

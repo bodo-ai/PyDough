@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS count,
+    COUNT(*) AS count,
     status
   FROM main.wallet_transactions_daily
   GROUP BY

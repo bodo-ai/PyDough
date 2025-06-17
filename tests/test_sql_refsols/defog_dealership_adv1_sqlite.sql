@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM((
       (
         CAST(STRFTIME('%w', payment_date) AS INTEGER) + 6

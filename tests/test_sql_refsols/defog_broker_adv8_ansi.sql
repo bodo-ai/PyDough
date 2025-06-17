@@ -14,7 +14,7 @@ WITH _t4 AS (
     AND _t4.date_time >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
 ), _s0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM(_t3.amount) AS agg_1,
     _t3.customer_id AS customer_id
   FROM _t3 AS _t3

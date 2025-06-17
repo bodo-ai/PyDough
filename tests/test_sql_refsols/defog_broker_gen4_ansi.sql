@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     sbtxcustid AS customer_id
   FROM main.sbtransaction
   WHERE

@@ -1,6 +1,6 @@
 WITH _s3 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     sbcustomer.sbcustid AS _id
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction

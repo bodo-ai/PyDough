@@ -4,7 +4,7 @@ WITH _t5 AS (
   FROM main.calendar
 ), _s3 AS (
   SELECT
-    COUNT() AS agg_2,
+    COUNT(*) AS agg_2,
     _s0.calendar_day
   FROM _t5 AS _s0
   JOIN main.devices AS devices
@@ -13,7 +13,7 @@ WITH _t5 AS (
     _s0.calendar_day
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_5,
+    COUNT(*) AS agg_5,
     _s4.calendar_day
   FROM _t5 AS _s4
   JOIN main.incidents AS incidents
