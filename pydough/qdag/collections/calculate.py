@@ -150,9 +150,9 @@ class Calculate(AugmentingChildOperator):
         if term_name in self.calc_term_values:
             return self.calc_term_values[term_name]
         elif term_name not in self.all_terms:
-            self.name_mismatch_error(term_name)
-        else:
-            return super().get_term(term_name)
+            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
+
+        return super().get_term(term_name)
 
     def calc_kwarg_strings(self, tree_form: bool) -> str:
         """

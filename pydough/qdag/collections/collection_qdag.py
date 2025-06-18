@@ -473,7 +473,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
         return arr[previousRow, m]  # Return the last computed row's last element
 
-    def name_mismatch_error(self, term_name: str) -> None:
+    def name_mismatch_error(self, term_name: str) -> str:
         """
         Raises a name mismatch error with suggestions if possible.
         Args:
@@ -489,4 +489,4 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             error_message += f" Did you mean: {suggestions_str}?"
             re.escape(error_message)
 
-        raise PyDoughQDAGException(error_message)
+        return error_message

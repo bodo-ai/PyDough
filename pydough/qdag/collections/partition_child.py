@@ -8,6 +8,7 @@ __all__ = ["PartitionChild"]
 
 from functools import cache
 
+from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
@@ -104,7 +105,7 @@ class PartitionChild(ChildOperatorChildAccess):
             return Reference(context, term_name)
 
         elif term_name not in self.all_terms:
-            self.name_mismatch_error(term_name)
+            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
 
         return super().get_term(term_name)
 
