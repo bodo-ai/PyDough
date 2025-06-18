@@ -188,7 +188,8 @@ class PartitionBy(ChildOperator):
         elif term_name == self.child.name:
             return PartitionChild(self.child, self.child.name, self)
         else:
-            return self.name_mismatch_error(term_name)
+            self.name_mismatch_error(term_name)
+            return
 
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(is_last)
