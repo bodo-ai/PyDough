@@ -372,10 +372,10 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             name (str): The name to match against the list of candidates.
 
         Returns:
-            List[str]: A list of candidate names, based on the closest matches.
+            list[str]: A list of candidate names, based on the closest matches.
         """
 
-        terms_distance_list: List[Tuple[Union[int, float], str]] = []
+        terms_distance_list: list[tuple[float, str]] = []
 
         for term in self.all_terms:
             # get the minimum edit distance
