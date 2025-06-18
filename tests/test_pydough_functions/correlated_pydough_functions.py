@@ -267,15 +267,20 @@ def correl_16():
     # Count how many european suppliers have the exact same percentile value
     # of account balance (relative to all other suppliers) as at least one
     # customer's percentile value of account balance relative to all other
-    # customers. Percentile should be measured down to increments of 0.01%.
-    # (This is a correlated SEMI-joins). Before computing the percentiles of
-    # customers,  filter the suppliers to consider ones in Europe in the
-    # BUILDING market segment.
+    # customers in the nation, int he same nation as the supplier. Percentile
+    # should be measured down to increments of 0.01%. Only consider European
+    # suppliers/customers, and customers in the building market segment.
+    # (This is a correlated SEMI-joins).
     european_nation = nation.WHERE(region.name == "EUROPE")
     selected_customers = european_nation.customers.WHERE(
         market_segment == "BUILDING"
     ).WHERE(
-        (PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000) == tile)
+        (
+            PERCENTILE(
+                by=(account_balance.ASC(), key.ASC()), n_buckets=10000, per="nation"
+            )
+            == tile
+        )
     )
     selected_suppliers = suppliers.CALCULATE(
         tile=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000)
@@ -284,14 +289,14 @@ def correl_16():
 
 
 """
--- 242
+-- 230
 select COUNT(distinct s_suppkey)
 FROM (
     SELECT s_suppkey, s_nationkey, NTILE(10000) OVER (ORDER BY s_acctbal ASC, s_suppkey ASC) AS s_tile
     from supplier
 ) S1
 INNER JOIN (
-    select c_custkey, c_nationkey, NTILE(10000) OVER (ORDER BY c_acctbal ASC, c_custkey ASC) AS c_tile
+    select c_custkey, c_nationkey, NTILE(10000) OVER (PARTITION BY n_nationkey ORDER BY c_acctbal ASC, c_custkey ASC) AS c_tile
     FROM nation
     INNER JOIN region
     ON n_regionkey = r_regionkey AND r_name = 'EUROPE'
@@ -321,6 +326,26 @@ FROM (
 )
 WHERE s_tile = c_tile
 order by 1
+;
+
+select distinct s_count, c_count_1, c_count_2
+FROM (
+    select s_suppkey, s_count, c_count_1, COUNT(*) OVER (PARTITION BY s_nationkey) AS c_count_2
+    FROM (
+        SELECT s_suppkey, s_nationkey, COUNT(*) OVER () AS s_count
+        from supplier
+    ) S1
+    INNER JOIN (
+        select c_custkey, c_acctbal, c_nationkey, COUNT(*) OVER () AS c_count_1
+        FROM nation
+        INNER JOIN region
+        ON n_regionkey = r_regionkey AND r_name = 'EUROPE'
+        INNER JOIN customer
+        ON c_nationkey = n_nationkey AND c_mktsegment = 'BUILDING'
+    ) S2
+    ON S1.s_nationkey = S2.c_nationkey
+)
+order by 1, 2, 3
 ;
 """
 

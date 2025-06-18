@@ -116,6 +116,7 @@ class HybridDecorrelater:
         parent: HybridTree,
         child_height: int,
         correl_level: int,
+        new_parent_uni_keys: list[HybridExpr],
     ) -> HybridExpr:
         """
         Recursively & destructively removes correlated references within a
@@ -134,6 +135,9 @@ class HybridDecorrelater:
             correlated reference to be removed. This is used to ensure that
             only references that are at the specified level of correlation
             are removed, and all others are left intact.
+            `new_parent_uni_keys`: The unique keys of the new parent with
+            regards to the current level. This is used to augment window calls
+            that require new partition keys to remain correct.
 
         Returns:
             The hybrid expression with all correlated references to `parent`
@@ -157,7 +161,7 @@ class HybridDecorrelater:
                 # arguments.
                 for idx, arg in enumerate(expr.args):
                     expr.args[idx] = self.remove_correl_refs(
-                        arg, parent, child_height, correl_level
+                        arg, parent, child_height, correl_level, new_parent_uni_keys
                     )
                 return expr
             case HybridWindowExpr():
@@ -165,15 +169,31 @@ class HybridDecorrelater:
                 # arguments, partition keys, and order keys.
                 for idx, arg in enumerate(expr.args):
                     expr.args[idx] = self.remove_correl_refs(
-                        arg, parent, child_height, correl_level
+                        arg, parent, child_height, correl_level, new_parent_uni_keys
                     )
+                req_aug: bool = True
                 for idx, arg in enumerate(expr.partition_args):
+                    if (
+                        expr.partition_args[idx].count_correlated_levels()
+                        >= correl_level
+                    ):
+                        req_aug = False
                     expr.partition_args[idx] = self.remove_correl_refs(
-                        arg, parent, child_height, correl_level
+                        arg, parent, child_height, correl_level, new_parent_uni_keys
                     )
                 for order_arg in expr.order_args:
                     order_arg.expr = self.remove_correl_refs(
-                        order_arg.expr, parent, child_height, correl_level
+                        order_arg.expr,
+                        parent,
+                        child_height,
+                        correl_level,
+                        new_parent_uni_keys,
+                    )
+                # Augment the partition arguments, if needed (unless the
+                # partition args already contains correlated references)
+                if req_aug:
+                    expr.partition_args.extend(
+                        [expr.shift_back(child_height) for expr in new_parent_uni_keys]
                     )
                 return expr
             case (
@@ -198,6 +218,7 @@ class HybridDecorrelater:
         new_parent: HybridTree,
         child_height: int,
         correl_level: int,
+        new_parent_uni_keys: list[HybridExpr],
         top_level: bool = True,
     ) -> None:
         """
@@ -222,6 +243,9 @@ class HybridDecorrelater:
             correlated reference to be removed. This is used to ensure that
             only references that are at the specified level of correlation
             nesting are removed, and all others are left intact.
+            `new_parent_uni_keys`: The unique keys of the new parent with
+            regards to the current level. This is used to augment window calls
+            that require new partition keys to remain correct.
             `top_level`: Whether this is the top level of the hybrid tree that
             is being de-correlated.
         """
@@ -235,6 +259,7 @@ class HybridDecorrelater:
                     new_parent,
                     child_height,
                     correl_level + 1,
+                    [],
                     top_level=False,
                 )
             # Then, remove any correlated references from the pipeline
@@ -246,24 +271,38 @@ class HybridDecorrelater:
             for operation in level.pipeline:
                 for name, expr in operation.terms.items():
                     operation.terms[name] = self.remove_correl_refs(
-                        expr, old_parent, child_height, correl_level
+                        expr,
+                        old_parent,
+                        child_height,
+                        correl_level,
+                        new_parent_uni_keys,
                     )
                 for ordering in operation.orderings:
                     ordering.expr = self.remove_correl_refs(
-                        ordering.expr, old_parent, child_height, correl_level
+                        ordering.expr,
+                        old_parent,
+                        child_height,
+                        correl_level,
+                        new_parent_uni_keys,
                     )
                 for idx, expr in enumerate(operation.unique_exprs):
                     operation.unique_exprs[idx] = self.remove_correl_refs(
-                        expr, old_parent, child_height, correl_level
+                        operation.unique_exprs[idx],
+                        old_parent,
+                        child_height,
+                        correl_level,
+                        new_parent_uni_keys,
                     )
                 if isinstance(operation, HybridCalculate):
                     for str, expr in operation.new_expressions.items():
-                        operation.new_expressions[str] = self.remove_correl_refs(
-                            expr, old_parent, child_height, correl_level
-                        )
+                        operation.new_expressions[str] = operation.terms[name]
                 if isinstance(operation, HybridFilter):
                     operation.condition = self.remove_correl_refs(
-                        operation.condition, old_parent, child_height, correl_level
+                        operation.condition,
+                        old_parent,
+                        child_height,
+                        correl_level,
+                        new_parent_uni_keys,
                     )
             # Repeat the process on the ancestor until either loop guard
             # condition is no longer True. Only update the child height if we
@@ -313,13 +352,12 @@ class HybridDecorrelater:
             child_root = child_root.parent
         # Link the top level of the child subtree to the new parent.
         new_parent.add_successor(child_root)
-        # Replace any correlated references to the original parent with BACK references.
-        self.correl_ref_purge(child.subtree, old_parent, new_parent, child_height, 1)
         # Update the join keys to join on the unique keys of all the ancestors,
         # and the aggregation keys along with them.
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         additional_levels: int = 0
         current_level: HybridTree | None = old_parent
+        parent_agg_keys: list[HybridExpr] = []
         new_agg_keys: list[HybridExpr] = []
         rhs_shift: int = child_height - skipped_levels
         while current_level is not None:
@@ -332,11 +370,16 @@ class HybridDecorrelater:
                 rhs_key: HybridExpr = lhs_key.shift_back(rhs_shift)
                 if not skip_join:
                     new_join_keys.append((lhs_key, rhs_key))
+                parent_agg_keys.append(lhs_key)
                 new_agg_keys.append(rhs_key)
             current_level = current_level.parent
             additional_levels += 1
         child.subtree.join_keys = new_join_keys
         child.subtree.general_join_condition = None
+        # Replace any correlated references to the original parent with BACK references.
+        self.correl_ref_purge(
+            child.subtree, old_parent, new_parent, child_height, 1, parent_agg_keys
+        )
         # If aggregating, update the aggregation keys accordingly.
         is_faux_agg: bool = (
             child.connection_type in (ConnectionType.SEMI, ConnectionType.ANTI)
