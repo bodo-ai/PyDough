@@ -9,7 +9,7 @@ import re
 from abc import abstractmethod
 from collections.abc import Iterable
 from functools import cache, cached_property
-from typing import List, Tuple, Union
+from typing import Union
 
 import numpy as np
 
@@ -374,7 +374,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             list[str]: A list of candidate names, based on the closest matches.
         """
 
-        terms_distance_list: List[Tuple[float, str]] = []
+        terms_distance_list: list[tuple[float, str]] = []
 
         for term in self.all_terms:
             # get the minimum edit distance
@@ -396,14 +396,14 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         good_matches_3: list[str] = [name for _, name in sorted_list[:3]]
 
         # filtering the result
-        for tuple in sorted_list:
+        for me, name in sorted_list:
             # all names that have a me <= closest_match + 2
-            if tuple[0] <= closest_match[0] + 2:
-                good_matches_1.append(tuple[1])
+            if me <= closest_match[0] + 2:
+                good_matches_1.append(name)
 
             # all names that have a me <= closest_match * 1.1
-            if tuple[0] <= closest_match[0] * 1.1:
-                good_matches_2.append(tuple[1])
+            if me <= closest_match[0] * 1.1:
+                good_matches_2.append(name)
 
         # returning the larger
         if len(good_matches_1) >= len(good_matches_2) and len(good_matches_1) >= len(
