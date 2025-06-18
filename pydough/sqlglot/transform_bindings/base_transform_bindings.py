@@ -248,7 +248,7 @@ class BaseTransformBindings:
             case pydop.LARGEST:
                 return self.convert_smallest_or_largest(args, types, True)
             case pydop.COUNT:
-                return self.convert_count(args)
+                return self.convert_count(args, types)
             case _:
                 raise NotImplementedError(
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
@@ -1668,15 +1668,19 @@ class BaseTransformBindings:
         elif type == "sample":
             return sqlglot_expressions.Stddev(this=args[0])
 
-    def convert_count(self, args: list[SQLGlotExpression]) -> SQLGlotExpression:
+    def convert_count(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
         """
         Converts a COUNT operation to an equivalent SQLGlot expression.
         Args:
             `args`: The arguments to the COUNT function.
+            `types`: The PyDough types of the arguments to the function call.
         Returns:
             The SQLGlot expression to calculate the count of the argument.
         """
         # If COUNT is called with no arguments, make it COUNT(*).
+        # since only some databases allow calling COUNT with no arguments.
         if len(args) == 0:
             return sqlglot_expressions.Count(this=sqlglot_expressions.Star())
         elif len(args) == 1:
