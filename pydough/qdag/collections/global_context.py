@@ -116,7 +116,7 @@ class GlobalContext(PyDoughCollectionQDAG):
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name not in self.collections:
-            self.name_mismatch_error(term_name)
+            return self.name_mismatch_error(term_name)
         else:
             return self.collections[term_name]
 

@@ -132,7 +132,7 @@ class CollectionAccess(ChildAccess):
             return Reference(context, term_name)
 
         if term_name not in self.all_terms:
-            self.name_mismatch_error(term_name)
+            return self.name_mismatch_error(term_name)
         else:
             return self.get_term_from_property(term_name)
 
