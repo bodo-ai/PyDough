@@ -9,7 +9,7 @@ WITH _t5 AS (
     l_partkey
 ), _t1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     partsupp.ps_suppkey AS supplier_key
   FROM tpch.partsupp AS partsupp
   JOIN tpch.part AS part

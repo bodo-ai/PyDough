@@ -4,14 +4,14 @@ WITH _t3 AS (
   FROM main.incidents
 ), _s1 AS (
   SELECT
-    COUNT() AS agg_9,
+    COUNT(*) AS agg_9,
     device_id
   FROM _t3
   GROUP BY
     device_id
 ), _s3 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     SUM(_s1.agg_9) AS agg_11,
     devices.de_production_country_id AS factory_country_id
   FROM main.devices AS devices
@@ -21,7 +21,7 @@ WITH _t3 AS (
     devices.de_production_country_id
 ), _s5 AS (
   SELECT
-    COUNT() AS agg_12,
+    COUNT(*) AS agg_12,
     device_id
   FROM _t3
   GROUP BY
@@ -29,7 +29,7 @@ WITH _t3 AS (
 ), _s7 AS (
   SELECT
     SUM(_s5.agg_12) AS agg_14,
-    COUNT() AS agg_3,
+    COUNT(*) AS agg_3,
     devices.de_purchase_country_id AS store_country_id
   FROM main.devices AS devices
   LEFT JOIN _s5 AS _s5
@@ -38,14 +38,14 @@ WITH _t3 AS (
     devices.de_purchase_country_id
 ), _s11 AS (
   SELECT
-    COUNT() AS agg_6,
+    COUNT(*) AS agg_6,
     device_id
   FROM _t3
   GROUP BY
     device_id
 ), _s13 AS (
   SELECT
-    COUNT() AS agg_5,
+    COUNT(*) AS agg_5,
     SUM(_s11.agg_6) AS agg_8,
     users.us_country_id AS country_id
   FROM main.users AS users

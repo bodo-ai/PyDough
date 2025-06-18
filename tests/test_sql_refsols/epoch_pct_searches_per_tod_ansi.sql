@@ -1,6 +1,6 @@
 WITH _t1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     ANY_VALUE(times.t_name) AS agg_2,
     ANY_VALUE(times.t_start_hour) AS agg_3
   FROM times AS times

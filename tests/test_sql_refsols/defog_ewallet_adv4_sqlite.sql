@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM(amount) AS agg_1,
     sender_id
   FROM main.wallet_transactions_daily

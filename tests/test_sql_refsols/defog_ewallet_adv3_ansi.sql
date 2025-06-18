@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS total_coupons,
+    COUNT(*) AS total_coupons,
     merchant_id
   FROM main.coupons
   GROUP BY

@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     SUM(amount) AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     receiver_id
   FROM main.wallet_transactions_daily
   WHERE

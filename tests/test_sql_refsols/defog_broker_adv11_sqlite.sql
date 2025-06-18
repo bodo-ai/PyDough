@@ -45,5 +45,5 @@ WITH _t1 AS (
     )
 )
 SELECT
-  COUNT() AS n_customers
+  COUNT(*) AS n_customers
 FROM _t0 AS _t0

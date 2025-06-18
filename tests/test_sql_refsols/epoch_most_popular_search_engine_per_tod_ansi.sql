@@ -1,6 +1,6 @@
 WITH _t1 AS (
   SELECT
-    COUNT() AS n_searches,
+    COUNT(*) AS n_searches,
     searches.search_engine,
     times.t_name AS tod
   FROM times AS times

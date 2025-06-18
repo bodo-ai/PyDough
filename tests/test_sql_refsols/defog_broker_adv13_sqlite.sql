@@ -1,6 +1,6 @@
 SELECT
   sbcustcountry AS cust_country,
-  COUNT() AS TAC
+  COUNT(*) AS TAC
 FROM main.sbcustomer
 WHERE
   sbcustjoindate >= '2023-01-01'

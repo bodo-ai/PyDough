@@ -401,7 +401,7 @@ FROM (
         WHERE name_3 = 'EUROPE'
     )
     LEFT JOIN (
-        SELECT nation_key, COUNT() AS agg_0
+        SELECT nation_key, COUNT(*) AS agg_0
         FROM (
             SELECT c_nationkey AS nation_key
             FROM main.CUSTOMER

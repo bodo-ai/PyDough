@@ -4,7 +4,7 @@ WITH _t3 AS (
   FROM main.calendar
 ), _t0 AS (
   SELECT
-    COUNT() AS n_purchases,
+    COUNT(*) AS n_purchases,
     ANY_VALUE(_t3.calendar_day) AS start_of_period
   FROM _t3 AS _t3
   CROSS JOIN _t3 AS _s1

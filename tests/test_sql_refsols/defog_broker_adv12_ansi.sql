@@ -1,5 +1,5 @@
 SELECT
-  COUNT() AS n_customers
+  COUNT(*) AS n_customers
 FROM main.sbcustomer
 WHERE
   (

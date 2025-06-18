@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS total_transactions,
+    COUNT(*) AS total_transactions,
     sender_id
   FROM main.wallet_transactions_daily
   WHERE

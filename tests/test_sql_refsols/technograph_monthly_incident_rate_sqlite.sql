@@ -9,7 +9,7 @@ WITH _t4 AS (
   FROM main.countries
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_2,
+    COUNT(*) AS agg_2,
     _t7.calendar_day
   FROM _t4 AS _t7
   JOIN main.calendar AS calendar
@@ -24,7 +24,7 @@ WITH _t4 AS (
     _t7.calendar_day
 ), _s15 AS (
   SELECT
-    COUNT() AS agg_5,
+    COUNT(*) AS agg_5,
     _t11.calendar_day
   FROM _t4 AS _t11
   JOIN main.incidents AS incidents
