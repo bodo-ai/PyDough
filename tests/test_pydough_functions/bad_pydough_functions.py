@@ -342,7 +342,7 @@ def bad_name_5():
 
 # collection suppliers doesn't exist
 def bad_name_6():
-    return customers.suppliers.CALCULATE(key)
+    return customers.suppliers
 
 
 # test same with all uppercase
@@ -432,7 +432,59 @@ def bad_name_20():
 def bad_name_21():
     return regions.CALCULATE(rname=name, rkey=key, rcomment=comment).nations.RNAME
 
+def bad_name_22():
+    return (
+        TPCH.CALCULATE(
+            anthro_pomorph_IZATION=1,
+            counte_rintelligence=2,
+            OVERIN_tellectualizers=3,
+            ultra_revolution_aries=4,
+            PROFESSION_alization=5,
+            De_Institutionalizations=6,
+            over_intellect_ualiz_ation=7,
+        ).CALCULATE(Over_Intellectual_Ization)
+    )
 
+def bad_name_23():
+    return(
+        TPCH.CALCULATE(
+            anthro_pomorph_IZATION=1,
+            counte_rintelligence=2,
+            OVERIN_tellectualizers=3,
+            ultra_revolution_aries=4,
+            PROFESSION_alization=5,
+            De_Institutionalizations=6,
+            over_intellect_ualiz_ation=7,
+        ).CALCULATE(paio_eo_aliz_ation)
+    )
+
+def bad_name_24():
+    return (
+        TPCH.CALCULATE(
+            anthro_pomorph_IZATION=1,
+            counte_rintelligence=2,
+            OVERIN_tellectualizers=3,
+            ultra_revolution_aries=4,
+            PROFESSION_alization=5,
+            De_Institutionalizations=6,
+            over_intellect_ualiz_ation=7,
+        ).CALCULATE(_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_)    
+    )
+
+def bad_name_25():
+    return (
+        TPCH.CALCULATE(
+            anthro_pomorph_IZATION=1,
+            counte_rintelligence=2,
+            OVERIN_tellectualizers=3,
+            ultra_revolution_aries=4,
+            PROFESSION_alization=5,
+            De_Institutionalizations=6,
+            over_intellect_ualiz_ation=7,
+        ).CALCULATE(anthropomorphization_and_overintellectualization_and_ultrarevolutionaries)
+    )
+
+# TEST for CROSS
 def bad_cross_1():
     # Reason it is bad: Using `CROSS` with a not a collection
     return customers.CROSS(42)
