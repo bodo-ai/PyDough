@@ -9,12 +9,8 @@ import re
 from abc import abstractmethod
 from collections.abc import Iterable
 from functools import cache, cached_property
-<<<<<<< HEAD
 import re
 from typing import List, Tuple, Union
-=======
-from typing import Union
->>>>>>> df553d443c97e959ae2e264707305e21a6e22f4b
 
 import numpy as np
 
