@@ -327,7 +327,7 @@ class HybridDecorrelater:
         while current_level is not None:
             partition_edge_case: bool = (
                 isinstance(current_level.pipeline[0], HybridPartition)
-                and current_level.children[0] is child
+                and child is current_level.children[0]
             )
             for unique_key in sorted(current_level.pipeline[-1].unique_exprs, key=str):
                 lhs_key: HybridExpr = unique_key.shift_back(additional_levels)
