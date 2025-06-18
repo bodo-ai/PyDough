@@ -9,7 +9,7 @@ import re
 from abc import abstractmethod
 from collections.abc import Iterable
 from functools import cache, cached_property
-from typing import Union
+from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -374,7 +374,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             list[str]: A list of candidate names, based on the closest matches.
         """
 
-        terms_distance_list: list[tuple[float, str]] = []
+        terms_distance_list: List[Tuple[float, str]] = []
 
         for term in self.all_terms:
             # get the minimum edit distance
