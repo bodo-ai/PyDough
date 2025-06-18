@@ -105,15 +105,8 @@ class PartitionChild(ChildOperatorChildAccess):
             return Reference(context, term_name)
 
         elif term_name not in self.all_terms:
-            error_message = f"Unrecognized term of {self.to_string()}: {term_name!r}"
-            suggestions = self.find_possible_name_matches(term_name=term_name)
-            # Check if there are any suggestions to add
-            if suggestions != []:
-                suggestions_str = ", ".join(suggestions)
-                error_message += f" Did you mean: {suggestions_str}?"
-
-            raise PyDoughQDAGException(error_message)
-
+            self.name_mismatch_error(term_name)
+        
         return super().get_term(term_name)
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:

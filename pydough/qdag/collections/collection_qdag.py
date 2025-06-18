@@ -8,7 +8,8 @@ __all__ = ["PyDoughCollectionQDAG"]
 from abc import abstractmethod
 from collections.abc import Iterable
 from functools import cache, cached_property
-from typing import Union
+import re
+from typing import Tuple, Union
 
 import numpy as np
 
@@ -355,14 +356,14 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             List[str]: A list of candidate names, based on the closest matches.
         """
 
-        terms_distance_list = []
+        terms_distance_list: list[Tuple[float, str]] = []
 
         for term in self.all_terms:
             # get the minimum edit distance
             me = self.min_edit_distance(term_name, term)
             terms_distance_list.append((me, term))
 
-        # sort the list by minimum edit distance
+        # sort the list by minimum edit distance break ties by name
         sorted_list = sorted(terms_distance_list)
         if sorted_list == []:
             return []
@@ -370,11 +371,11 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         closest_match = sorted_list[0]
 
         # List with all names that have a me <= closest_match + 2
-        good_matches_1 = []
+        good_matches_1: list[str] = []
         # List with all names that have a me <= closest_match * 1.1
-        good_matches_2 = []
+        good_matches_2: list[str] = []
         # List with all names that are not in the first 3
-        good_matches_3 = [name for _, name in sorted_list[:3]]
+        good_matches_3: list[str] = [name for _, name in sorted_list[:3]]
 
         # filtering the result
         for tuple in sorted_list:
@@ -422,7 +423,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         # need to consider the previous row to generate the next row, therefore the
         # same two rows can be recycled
 
-        row, otherRow = 1, 0
+        row, previousRow = 1, 0
         arr = np.zeros((2, m + 1), dtype=float)
 
         # MED(X, "") = len(X)
@@ -446,10 +447,29 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
                 arr[row, j] = min(
                     arr[row, j - 1] + 1.0,
-                    arr[otherRow, j] + 1.0,
-                    arr[otherRow, j - 1] + substitution_cost,
+                    arr[previousRow, j] + 1.0,
+                    arr[previousRow, j - 1] + substitution_cost,
                 )
 
-            row, otherRow = otherRow, row
+            row, previousRow = previousRow, row
 
-        return arr[n % 2, m]  # Return the last computed row's last element
+        return arr[previousRow, m]  # Return the last computed row's last element
+
+
+    def name_mismatch_error(self, term_name: str) -> None:
+        """
+        Raises a name mismatch error with suggestions if possible.
+        Args:
+            term_name (str): The name of the term that caused the error.
+        """
+
+        error_message: str = f"Unrecognized term of {self.to_string()}: {term_name!r}"
+        suggestions: list[str] = self.find_possible_name_matches(term_name=term_name)
+
+        # Check if there are any suggestions to add
+        if len(suggestions) > 0:
+            suggestions_str: str = ", ".join(suggestions)
+            error_message += f" Did you mean: {suggestions_str}?"
+            re.escape(error_message)
+        
+        raise PyDoughQDAGException(error_message)
