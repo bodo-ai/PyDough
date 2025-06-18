@@ -2737,21 +2737,24 @@ def test_pipeline_e2e_tpch_custom(
                 "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'Over_Intellectual_Ization' Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, De_Institutionalizations?"
             ),
             id="bad_name_22",
-        ),pytest.param(
+        ),
+        pytest.param(
             bad_name_23,
             None,
             re.escape(
                 "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'paio_eo_aliz_ation' Did you mean: PROFESSION_alization, over_intellect_ualiz_ation, anthro_pomorph_IZATION?"
             ),
             id="bad_name_23",
-        ),pytest.param(
+        ),
+        pytest.param(
             bad_name_24,
             None,
             re.escape(
                 "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): '_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_' Did you mean: anthro_pomorph_IZATION, over_intellect_ualiz_ation, De_Institutionalizations?"
             ),
             id="bad_name_24",
-        ),pytest.param(
+        ),
+        pytest.param(
             bad_name_25,
             None,
             re.escape(

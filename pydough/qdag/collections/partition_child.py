@@ -8,7 +8,6 @@ __all__ = ["PartitionChild"]
 
 from functools import cache
 
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
@@ -106,7 +105,7 @@ class PartitionChild(ChildOperatorChildAccess):
 
         elif term_name not in self.all_terms:
             self.name_mismatch_error(term_name)
-        
+
         return super().get_term(term_name)
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
