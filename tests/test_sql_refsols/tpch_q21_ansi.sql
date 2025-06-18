@@ -101,7 +101,7 @@ WITH _s0 AS (
     )
 ), _s9 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     _t3.supplier_key AS supplier_key
   FROM _t3 AS _t3
   GROUP BY

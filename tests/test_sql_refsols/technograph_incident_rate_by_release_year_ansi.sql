@@ -5,7 +5,7 @@ WITH _t3 AS (
   FROM main.products
 ), _s6 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     EXTRACT(YEAR FROM _t3.release_date) AS release_year
   FROM main.devices AS devices
   JOIN _t3 AS _t3
@@ -14,7 +14,7 @@ WITH _t3 AS (
     EXTRACT(YEAR FROM _t3.release_date)
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     EXTRACT(YEAR FROM _t5.release_date) AS release_year
   FROM main.devices AS devices
   JOIN _t3 AS _t5

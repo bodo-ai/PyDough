@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS num_transactions,
+    COUNT(*) AS num_transactions,
     sbcustomer.sbcuststate AS state,
     sbticker.sbtickertype AS ticker_type
   FROM main.sbtransaction AS sbtransaction

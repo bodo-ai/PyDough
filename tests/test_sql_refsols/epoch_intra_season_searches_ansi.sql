@@ -15,7 +15,7 @@ WITH _s0 AS (
   FROM seasons
 ), _s9 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     _s2.name,
     searches.search_id
   FROM _s0 AS _s2
@@ -40,7 +40,7 @@ WITH _s0 AS (
     SUM((
       NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
     )) AS agg_2,
-    COUNT() AS agg_3,
+    COUNT(*) AS agg_3,
     ANY_VALUE(_s0.season_name) AS agg_4
   FROM _s0 AS _s0
   JOIN searches AS searches
@@ -54,7 +54,7 @@ WITH _s0 AS (
 ), _s17 AS (
   SELECT
     SUM(_s10.season_name = _s15.name) AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     _s10.name
   FROM _s0 AS _s10
   JOIN events AS events

@@ -120,6 +120,24 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             for each record of the context, and False otherwise.
         """
 
+    def is_ancestor(self, collection: "PyDoughCollectionQDAG") -> bool:
+        """
+        Returns whether the current collection is an ancestor of the given
+        collection.
+
+        Args:
+            `collection`: the collection that is being checked against.
+
+        Returns:
+            True if the current collection is an ancestor of `collection`,
+            and False otherwise.
+        """
+        if collection.ancestor_context is self:
+            return True
+        if collection.ancestor_context is None:
+            return False
+        return self.is_ancestor(collection.ancestor_context)
+
     @cached_property
     def starting_predecessor(self) -> "PyDoughCollectionQDAG":
         """

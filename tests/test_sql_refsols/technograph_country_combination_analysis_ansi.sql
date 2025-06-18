@@ -1,13 +1,13 @@
 WITH _s7 AS (
   SELECT
-    COUNT() AS agg_2,
+    COUNT(*) AS agg_2,
     in_device_id AS device_id
   FROM main.incidents
   GROUP BY
     in_device_id
 ), _s9 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     SUM(_s7.agg_2) AS agg_4,
     countries.co_id AS _id,
     countries_2.co_id AS _id_3

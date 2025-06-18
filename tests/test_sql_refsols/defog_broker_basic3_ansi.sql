@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM(sbtxamount) AS agg_1,
     sbtxtickerid AS ticker_id
   FROM main.sbtransaction

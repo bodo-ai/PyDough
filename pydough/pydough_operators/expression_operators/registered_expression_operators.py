@@ -170,7 +170,7 @@ SIGN = ExpressionFunctionOperator(
     "SIGN", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 COUNT = ExpressionFunctionOperator(
-    "COUNT", True, AllowAny(), ConstantType(NumericType())
+    "COUNT", True, RequireNumArgs(1), ConstantType(NumericType())
 )
 HAS = ExpressionFunctionOperator(
     "HAS", True, RequireCollection(), ConstantType(BooleanType())

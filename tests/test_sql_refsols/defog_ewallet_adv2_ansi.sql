@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM((
       (
         DAY_OF_WEEK(created_at) + 6

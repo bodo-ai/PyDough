@@ -5,7 +5,7 @@ WITH _t3 AS (
   FROM main.products
 ), _s6 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     CAST(STRFTIME('%Y', _t3.release_date) AS INTEGER) AS release_year
   FROM main.devices AS devices
   JOIN _t3 AS _t3
@@ -14,7 +14,7 @@ WITH _t3 AS (
     CAST(STRFTIME('%Y', _t3.release_date) AS INTEGER)
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     CAST(STRFTIME('%Y', _t5.release_date) AS INTEGER) AS release_year
   FROM main.devices AS devices
   JOIN _t3 AS _t5
