@@ -5,11 +5,16 @@ Base definition of all PyDough QDAG collection types.
 __all__ = ["PyDoughCollectionQDAG"]
 
 
+import re
 from abc import abstractmethod
 from collections.abc import Iterable
 from functools import cache, cached_property
+<<<<<<< HEAD
 import re
 from typing import List, Tuple, Union
+=======
+from typing import Union
+>>>>>>> df553d443c97e959ae2e264707305e21a6e22f4b
 
 import numpy as np
 
@@ -473,7 +478,6 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
         return arr[previousRow, m]  # Return the last computed row's last element
 
-
     def name_mismatch_error(self, term_name: str) -> None:
         """
         Raises a name mismatch error with suggestions if possible.
@@ -489,5 +493,5 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             suggestions_str: str = ", ".join(suggestions)
             error_message += f" Did you mean: {suggestions_str}?"
             re.escape(error_message)
-        
+
         raise PyDoughQDAGException(error_message)
