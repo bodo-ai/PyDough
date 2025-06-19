@@ -2391,12 +2391,12 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "part_name": [
-                            "azure pale hot ghost brown",
                             "sky misty beige azure lace",
+                            "azure pale hot ghost brown",
                             "steel sky lavender green khaki",
                             "lime lemon indian papaya wheat",
                         ],
-                        "revenue": [11278.96, 1276.69, 34936.07, 35220.91],
+                        "revenue": [1276.69, 11278.96, 34936.07, 35220.91],
                     }
                 ),
                 "aggregation_analytics_2",
@@ -2411,11 +2411,11 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "part_name": [
-                            "moccasin cornsilk azure royal rose",
                             "lawn puff chartreuse smoke firebrick",
+                            "moccasin cornsilk azure royal rose",
                             "lime blush midnight chartreuse grey",
                         ],
-                        "revenue": [158.72, 106.53, 179.28],
+                        "revenue": [106.53, 158.72, 179.28],
                     }
                 ),
                 "aggregation_analytics_3",

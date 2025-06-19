@@ -370,7 +370,8 @@ def customer_largest_order_deltas():
     # For each customer, find the highest positive/negative difference in
     # revenue between one of their orders and and the most recent order before
     # it, ignoring their first ever order. Return the 5 customers with the
-    # largest such difference. Only consider customers with orders.
+    # largest such difference. Only consider customers with orders. Only
+    # consider customers in the AUTOMOBILE market segment.
     line_revenue = extended_price * (1 - discount)
     order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
     previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), per="customers")
