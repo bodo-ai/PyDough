@@ -403,9 +403,10 @@ def remap_join_condition(
         case ColumnReference():
             if expr.input_name == input_names[0]:
                 return left_columns.get(expr.name, expr)
-            else:
-                assert expr.input_name == input_names[1]
+            elif expr.input_name == input_names[1]:
                 return right_columns.get(expr.name, expr)
+            else:
+                raise ValueError(f"Unexpected input name: {expr.input_name}")
         case CallExpression():
             return CallExpression(
                 expr.op,

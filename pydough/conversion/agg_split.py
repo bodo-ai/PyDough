@@ -142,7 +142,6 @@ def transpose_aggregate_join(
     call_names: list[str],
     side_keys: list[ColumnReference],
     projection_columns: dict[str, RelationalExpression],
-    needs_count: bool,
 ) -> tuple[bool, RelationalExpression | None]:
     """
     Transposes the aggregate node above the join into two aggregate nodes,
@@ -161,7 +160,12 @@ def transpose_aggregate_join(
         `config`: the current configuration settings.
 
     Returns:
-        The transformed node. The transformation is also done-in-place.
+        Tuple of two values:
+        1. Whether the aggregation transformation will require an additional
+        projection on top of the final aggregate using the values in
+        `projection_columns` (e.g. to wrap COUNT in DEFAULT_TO calls).
+        2. A reference to the COUNT column if one was pushed down with no
+        arguments (i.e. COUNT(*)), otherwise None.
     """
     count_ref: RelationalExpression | None = None
     agg_input_name: str | None = join.default_input_aliases[agg_side]
@@ -393,7 +397,6 @@ def attempt_join_aggregate_transpose(
             side_call_names,
             side_keys,
             projection_columns,
-            need_count_aggs,
         )
         if side_needs_projection:
             need_projection = True
