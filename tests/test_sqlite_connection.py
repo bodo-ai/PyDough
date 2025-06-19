@@ -77,6 +77,7 @@ def test_sqlite_context_invalid_arg() -> None:
         re.escape("Connection() got an unexpected keyword argument 'invalid_kwarg'"),
         re.escape("'invalid_kwarg' is an invalid keyword argument for this function"),
         "invalid_kwarg is an invalid keyword argument",
+        re.escape("'invalid_kwarg' is an invalid keyword argument for Connection()"),
     ]
     error_message = "|".join(error_patterns)
 
