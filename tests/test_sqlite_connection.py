@@ -2,6 +2,9 @@
 Tests support for the DatabaseConnection class using a SQLite database backend.
 """
 
+import re
+import sys
+
 import pandas as pd
 import pytest
 
@@ -71,9 +74,17 @@ def test_sqlite_context_invalid_arg() -> None:
     Test that load_database_context errors if useless
     argument is provided.
     """
+    error1: str = "invalid_kwarg is an invalid keyword argument"
+    error2: str = re.escape(
+        "Connection() got an unexpected keyword argument 'invalid_kwarg'"
+    )
+
+    # Error message changes in Python 3.10
+    error_message: str = error1 if sys.version_info < (3, 10) else error2
+
     with pytest.raises(
         TypeError,
-        match="'invalid_kwarg' is an invalid keyword argument",
+        match=error_message,
     ):
         load_database_context("sqlite", database=":memory:", invalid_kwarg="foo")
 
