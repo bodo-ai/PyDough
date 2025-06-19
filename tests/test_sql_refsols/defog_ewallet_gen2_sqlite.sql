@@ -11,5 +11,4 @@ SELECT
 FROM _s0 AS _s0
 JOIN main.user_setting_snapshot AS user_setting_snapshot
   ON CAST(STRFTIME('%Y', user_setting_snapshot.snapshot_date) AS INTEGER) = 2023
-WHERE
-  _s0.min_date = user_setting_snapshot.snapshot_date
+  AND _s0.min_date = user_setting_snapshot.snapshot_date

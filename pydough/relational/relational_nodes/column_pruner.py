@@ -13,7 +13,7 @@ from pydough.relational.relational_expressions import (
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
-from .join import Join, JoinType
+from .join import Join, JoinCardinality, JoinType
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher
 from .relational_root import RelationalRoot
@@ -143,7 +143,7 @@ class ColumnPruner:
         if (
             isinstance(output, Join)
             and isinstance(output.inputs[0], EmptySingleton)
-            and output.join_types in ([JoinType.INNER], [JoinType.LEFT])
+            and output.join_type in (JoinType.INNER, JoinType.LEFT)
         ):
             return output.inputs[1], correl_refs
 
@@ -152,8 +152,11 @@ class ColumnPruner:
         # LHS, which is unecessary if no data is being brought). Also do the
         # same for inner joins that meet certain criteria.
         if isinstance(output, Join) and (
-            (output.join_types == [JoinType.LEFT])
-            or (output.join_types == [JoinType.INNER] and output.is_prunable)
+            (output.join_type == JoinType.LEFT)
+            or (
+                output.join_type == JoinType.INNER
+                and output.cardinality.filters == JoinCardinality.SINGULAR_ACCESS
+            )
         ):
             uses_rhs: bool = False
             for column in output.columns.values():

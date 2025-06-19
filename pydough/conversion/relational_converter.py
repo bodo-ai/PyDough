@@ -13,6 +13,7 @@ import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
+    CartesianProductMetadata,
     GeneralJoinMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
@@ -36,6 +37,7 @@ from pydough.relational import (
     ExpressionSortInfo,
     Filter,
     Join,
+    JoinCardinality,
     JoinType,
     Limit,
     LiteralExpression,
@@ -422,10 +424,10 @@ class RelTranslation:
         lhs_result: TranslationOutput,
         rhs_result: TranslationOutput,
         join_type: JoinType,
+        join_cardinality: JoinCardinality,
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None,
         join_cond: HybridExpr | None,
         child_idx: int | None,
-        is_prunable: bool,
     ) -> TranslationOutput:
         """
         Handles the joining of a parent context onto a child context.
@@ -437,6 +439,8 @@ class RelTranslation:
             relational structure for the child context.
             `join_type` the type of join to be used to connect `lhs_result`
             onto `rhs_result`.
+            `join_cardinality`: the cardinality of the join to be used to connect
+            `lhs_result` onto `rhs_result`.
             `join_keys`: a list of tuples in the form `(lhs_key, rhs_key)` that
             represent the equi-join keys used for the join from either side.
             This can be None if the `join_cond` is provided instead.
@@ -447,9 +451,6 @@ class RelTranslation:
             down from a parent into its child. If non-none, it means the join
             is being used to bring a child's elements into the same context as
             the parent, and the `child_idx` is the index of that child.
-            `is_prunable`: a boolean indicating whether the join can be pruned
-            if the RHS is not used (only true if the join does not do any
-            filtering or changes in cardinality).
 
         Returns:
             The TranslationOutput payload containing the relational structure
@@ -480,11 +481,11 @@ class RelTranslation:
         # The condition & output columns will be filled in later.
         out_rel: Join = Join(
             [lhs_result.relational_node, rhs_result.relational_node],
-            [LiteralExpression(True, BooleanType())],
-            [join_type],
+            LiteralExpression(True, BooleanType()),
+            join_type,
             join_columns,
+            join_cardinality,
             correl_name=lhs_result.correlated_name,
-            is_prunable=is_prunable,
         )
         input_aliases: list[str | None] = out_rel.default_input_aliases
 
@@ -502,15 +503,15 @@ class RelTranslation:
                     pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
                 )
                 cond_terms.append(cond)
-            out_rel.conditions[0] = RelationalExpression.form_conjunction(cond_terms)
+            out_rel.condition = RelationalExpression.form_conjunction(cond_terms)
         elif join_cond is not None:
             # General join case
-            out_rel.conditions[0] = self.build_general_join_condition(
+            out_rel.condition = self.build_general_join_condition(
                 join_cond, lhs_result, rhs_result, input_aliases[0], input_aliases[1]
             )
         else:
             # Cartesian join case
-            out_rel.conditions[0] = LiteralExpression(True, BooleanType())
+            out_rel.condition = LiteralExpression(True, BooleanType())
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
@@ -671,6 +672,12 @@ class RelTranslation:
                         | ConnectionType.SEMI
                         | ConnectionType.ANTI
                     ):
+                        cardinality: JoinCardinality = JoinCardinality.SINGULAR_ACCESS
+                        if child.connection_type.is_anti or (
+                            child.connection_type.is_semi
+                            and not child.subtree.always_exists()
+                        ):
+                            cardinality = JoinCardinality.SINGULAR_FILTER
                         if child.connection_type.is_aggregation:
                             assert child.subtree.agg_keys is not None
                             child_output = self.apply_aggregations(
@@ -680,10 +687,10 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
+                            cardinality,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
-                            True,
                         )
                     case (
                         ConnectionType.NO_MATCH_SINGULAR
@@ -694,10 +701,10 @@ class RelTranslation:
                             context,
                             child_output,
                             child.connection_type.join_type,
+                            JoinCardinality.SINGULAR_FILTER,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
-                            True,
                         )
                         # Map every child_idx reference from child_output to null
                         null_column: ColumnReference = self.make_null_column(
@@ -809,6 +816,17 @@ class RelTranslation:
         )
         rhs_output: TranslationOutput = self.build_simple_table_scan(node)
 
+        cardinality: JoinCardinality = (
+            JoinCardinality.PLURAL_ACCESS
+            if collection_access.subcollection_property.is_plural
+            else JoinCardinality.SINGULAR_ACCESS
+        )
+        cardinality = (
+            cardinality
+            if collection_access.subcollection_property.always_matches
+            else cardinality.add_filter()
+        )
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         join_cond: HybridExpr | None = None
         match collection_access.subcollection_property:
@@ -822,14 +840,25 @@ class RelTranslation:
                 assert node.general_condition is not None
                 join_cond = node.general_condition
 
+            case CartesianProductMetadata():
+                # If a cartesian product, there are no join keys or general
+                # join conditions, so we fall through with the default values
+                # set above.
+                pass
+
+            case _:
+                raise NotImplementedError(
+                    f"Unsupported subcollection join metadata type: {collection_access.subcollection_property.__class__.__name__}"
+                )
+
         return self.join_outputs(
             context,
             rhs_output,
             JoinType.INNER,
+            cardinality,
             join_keys,
             join_cond,
             None,
-            False,
         )
 
     def translate_child_sub_collection(
@@ -1057,10 +1086,10 @@ class RelTranslation:
             context,
             child_output,
             JoinType.INNER,
+            JoinCardinality.PLURAL_FILTER,
             join_keys,
             None,
             None,
-            False,
         )
         return result
 
@@ -1214,10 +1243,10 @@ class RelTranslation:
                             context,
                             result,
                             JoinType.INNER,
+                            JoinCardinality.PLURAL_ACCESS,
                             join_keys,
                             None,
                             None,
-                            False,
                         )
                 else:
                     # For subcollection accesses, the access is either a step
@@ -1385,7 +1414,6 @@ def optimize_relational_tree(
     Returns:
         The optimized relational root.
     """
-
     # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
@@ -1397,24 +1425,18 @@ def optimize_relational_tree(
     # happens underneath the join.
     root = confirm_root(split_partial_aggregates(root, configs))
 
-    # Step 4: re-run projection merging.
-    root = confirm_root(merge_projects(root))
-
-    # Step 5: delete aggregations that are inferred to be redundant due to
+    # Step 4: delete aggregations that are inferred to be redundant due to
     # operating on already unique data.
     root = remove_redundant_aggs(root)
 
-    # Step 6: re-run projection merging.
+    # Step 5: re-run projection merging.
     root = confirm_root(merge_projects(root))
 
-    # Step 7: prune unused columns
+    # Step 6: prune unused columns.
     root = ColumnPruner().prune_unused_columns(root)
 
-    # Step 3: merge adjacent projections, unless it would result in excessive
-    # duplicate subexpression computations.
-    merged_root = merge_projects(root)
-    assert isinstance(merged_root, RelationalRoot)
-    root = merged_root
+    # Step 7: re-run projection merging.
+    root = confirm_root(merge_projects(root))
 
     return root
 

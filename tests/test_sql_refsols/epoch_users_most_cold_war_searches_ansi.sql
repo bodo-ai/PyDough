@@ -48,7 +48,7 @@ WITH _s4 AS (
 ), _s5 AS (
   SELECT
     COUNT(*) AS n_cold_war_searches,
-    _t0.user_id AS user_id
+    _t0.user_id AS user_id_3_0_1
   FROM _t0 AS _t0
   GROUP BY
     _t0.user_id
@@ -58,7 +58,7 @@ SELECT
   _s5.n_cold_war_searches AS n_cold_war_searches
 FROM _s4 AS _s4
 JOIN _s5 AS _s5
-  ON _s4.user_id = _s5.user_id
+  ON _s4.user_id = _s5.user_id_3_0_1
 ORDER BY
   n_cold_war_searches DESC,
   user_name

@@ -321,17 +321,15 @@ def column_pruner() -> ColumnPruner:
                         "a": make_relational_column_reference("a", input_name="t0"),
                         "b": make_relational_column_reference("b", input_name="t1"),
                     },
-                    join_types=[JoinType.INNER],
-                    conditions=[
-                        CallExpression(
-                            EQU,
-                            BooleanType(),
-                            [
-                                make_relational_column_reference("c", input_name="t1"),
-                                make_relational_column_reference("c", input_name="t0"),
-                            ],
-                        )
-                    ],
+                    join_type=JoinType.INNER,
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("c", input_name="t1"),
+                            make_relational_column_reference("c", input_name="t0"),
+                        ],
+                    ),
                     inputs=[
                         Scan(
                             table_name="table",
@@ -358,17 +356,15 @@ def column_pruner() -> ColumnPruner:
                     columns={
                         "b": make_relational_column_reference("b", input_name="t1")
                     },
-                    join_types=[JoinType.INNER],
-                    conditions=[
-                        CallExpression(
-                            EQU,
-                            BooleanType(),
-                            [
-                                make_relational_column_reference("c", input_name="t1"),
-                                make_relational_column_reference("c", input_name="t0"),
-                            ],
-                        )
-                    ],
+                    join_type=JoinType.INNER,
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("c", input_name="t1"),
+                            make_relational_column_reference("c", input_name="t0"),
+                        ],
+                    ),
                     inputs=[
                         Scan(
                             table_name="table",
