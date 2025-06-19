@@ -80,7 +80,7 @@ def test_sqlite_context_invalid_arg() -> None:
     )
 
     # Error message changes in Python 3.10
-    error_message: str = error1 if sys.version_info < (3, 10) else error2
+    error_message: str = error2 if sys.version_info >= (3, 10) else error1
 
     with pytest.raises(
         TypeError,
