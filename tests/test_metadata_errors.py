@@ -506,7 +506,7 @@ def test_invalid_graphs(
         ),
         pytest.param(
             "parent.sub10",
-            "Malformed general join condition: 'self.j1 == other.k5' (Unrecognized term of simple table collection 'child' in graph 'BAD_JOIN_CONDITIONS': 'k5' Did you mean: k1, k2, k3, k4?)",
+            "Malformed general join condition: 'self.j1 == other.k5' (Unrecognized term of BAD_JOIN_CONDITIONS.parent.sub10: 'k5' Did you mean: k1, k2, k3, k4?)",
             id="wrong_names_1",
         ),
         pytest.param(
