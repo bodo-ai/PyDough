@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS num_sales,
+    COUNT(*) AS num_sales,
     salesperson_id
   FROM main.sales
   WHERE

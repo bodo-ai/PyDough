@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     de_product_id AS product_id
   FROM main.devices
   GROUP BY
@@ -21,7 +21,7 @@ WITH _s0 AS (
     EXTRACT(YEAR FROM _t4.release_date)
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     EXTRACT(YEAR FROM _t6.release_date) AS release_year
   FROM main.devices AS devices
   JOIN _t4 AS _t6

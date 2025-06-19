@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM(wallet_transactions_daily.amount) AS agg_1
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
   JOIN main.users AS users

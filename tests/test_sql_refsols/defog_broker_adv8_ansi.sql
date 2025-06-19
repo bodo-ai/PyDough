@@ -37,7 +37,7 @@ WITH _t2 AS (
     )
 ), _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM(_t1.amount) AS agg_1
   FROM _t1 AS _t1
 )

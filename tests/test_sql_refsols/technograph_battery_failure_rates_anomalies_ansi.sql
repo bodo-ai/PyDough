@@ -1,6 +1,6 @@
 WITH _s7 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     incidents.in_device_id AS device_id
   FROM main.incidents AS incidents
   JOIN main.errors AS errors
@@ -10,7 +10,7 @@ WITH _s7 AS (
 ), _t1 AS (
   SELECT
     SUM(COALESCE(_s7.agg_0, 0)) AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     countries.co_name AS country_name,
     products.pr_name AS product_name
   FROM main.countries AS countries

@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    COUNT() AS num_transactions,
+    COUNT(*) AS num_transactions,
     sbtxcustid AS customer_id,
     sbtxtickerid AS ticker_id
   FROM main.sbtransaction

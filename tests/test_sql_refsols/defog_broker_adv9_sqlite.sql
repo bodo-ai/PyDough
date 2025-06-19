@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM(
       (
         (

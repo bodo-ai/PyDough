@@ -1,10 +1,10 @@
 WITH _s0 AS (
   SELECT
-    COUNT() AS agg_0
+    COUNT(*) AS agg_0
   FROM main.incidents
 ), _s1 AS (
   SELECT
-    COUNT() AS agg_1
+    COUNT(*) AS agg_1
   FROM main.devices
 )
 SELECT

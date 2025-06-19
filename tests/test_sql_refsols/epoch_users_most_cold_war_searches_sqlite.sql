@@ -49,7 +49,7 @@ WITH _s4 AS (
     )
 ), _s5 AS (
   SELECT
-    COUNT() AS n_cold_war_searches,
+    COUNT(*) AS n_cold_war_searches,
     _t0.user_id AS user_id_3_0_1
   FROM _t0 AS _t0
   GROUP BY
