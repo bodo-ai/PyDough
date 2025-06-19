@@ -1120,15 +1120,16 @@ def aggregation_analytics_1():
     # What 8 large products produced by Supplier#000009450 generated the LEAST
     # revenue for them in between 1995 and 1996? Include any products the
     # supplier produces that generated NO revenue for the supplier during that
-    # time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
+    # time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(ISIN(YEAR(ship_date), (1995, 1996))).CALCULATE(
         revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
+        supply_records.WHERE(
             (supplier.name == "Supplier#000009450") & STARTSWITH(part.container, "LG")
         )
+        .CALCULATE(supply_cost)
         .CALCULATE(
             part_name=part.name,
             revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
@@ -1141,17 +1142,17 @@ def aggregation_analytics_2():
     # What 4 small products produced by Supplier#000000182 generated the LEAST
     # revenue for them in between 1995 and 1996? Do NOT include any products
     # the supplier produces that generated NO revenue for the supplier during
-    # that time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
+    # that time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(ISIN(YEAR(ship_date), (1995, 1996))).CALCULATE(
         revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
-            (supplier.name == "Supplier#000000182")
-            & STARTSWITH(part.container, "SM")
-            & HAS(selected_lines)
+        supply_records.WHERE(
+            (supplier.name == "Supplier#000000182") & STARTSWITH(part.container, "SM")
         )
+        .CALCULATE(supply_cost)
+        .WHERE(HAS(selected_lines))
         .CALCULATE(
             part_name=part.name,
             revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
@@ -1164,17 +1165,17 @@ def aggregation_analytics_3():
     # What 3 medium products produced by Supplier#000002103 generated the LEAST
     # revenue per quantity ordered in 1994? Do NOT include any products the
     # supplier produces that generated NO revenue for the supplier during that
-    # time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(YEAR(order.order_date) == 1994).CALCULATE(
+    # time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(YEAR(ship_date) == 1994).CALCULATE(
         revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
-            (supplier.name == "Supplier#000000182")
-            & STARTSWITH(part.container, "MED")
-            & HAS(selected_lines)
+        supply_records.WHERE(
+            (supplier.name == "Supplier#000000182") & STARTSWITH(part.container, "MED")
         )
+        .CALCULATE(supply_cost)
+        .WHERE(HAS(selected_lines))
         .CALCULATE(
             part_name=part.name,
             revenue_ratio=ROUND(
