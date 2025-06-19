@@ -441,7 +441,7 @@ def remap_join_condition(
             )
         case _:
             raise NotImplementedError(
-                f"transpose_expression not implemented for {expr.__class__.__name__}"
+                f"remap_join_condition not implemented for {expr.__class__.__name__}"
             )
 
 
