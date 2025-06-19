@@ -79,7 +79,7 @@ class HybridDecorrelater:
                 )
             result = self.make_decorrelate_parent(
                 hybrid.parent,
-                len(hybrid.parent.children) - 1,
+                -1,
                 len(hybrid.parent.pipeline) - 1,
                 len(hybrid.parent.pipeline),
             )
@@ -361,24 +361,30 @@ class HybridDecorrelater:
         new_agg_keys: list[HybridExpr] = []
         rhs_shift: int = child_height - skipped_levels
         while current_level is not None:
-            skip_join: bool = (
+            partition_edge_case: bool = (
                 isinstance(current_level.pipeline[0], HybridPartition)
                 and child is current_level.children[0]
             )
             for unique_key in sorted(current_level.pipeline[-1].unique_exprs, key=str):
                 lhs_key: HybridExpr = unique_key.shift_back(additional_levels)
-                rhs_key: HybridExpr = lhs_key.shift_back(rhs_shift)
-                if not skip_join:
-                    new_join_keys.append((lhs_key, rhs_key))
-                parent_agg_keys.append(lhs_key)
+                rhs_key: HybridExpr = (
+                    lhs_key if partition_edge_case else lhs_key.shift_back(rhs_shift)
+                )
+                new_join_keys.append((lhs_key, rhs_key))
                 new_agg_keys.append(rhs_key)
+                parent_agg_keys.append(lhs_key)
             current_level = current_level.parent
             additional_levels += 1
         child.subtree.join_keys = new_join_keys
         child.subtree.general_join_condition = None
         # Replace any correlated references to the original parent with BACK references.
         self.correl_ref_purge(
-            child.subtree, old_parent, new_parent, child_height, 1, parent_agg_keys
+            child.subtree,
+            old_parent,
+            new_parent,
+            child_height - skipped_levels,
+            1,
+            parent_agg_keys,
         )
         # If aggregating, update the aggregation keys accordingly.
         is_faux_agg: bool = (
@@ -407,7 +413,13 @@ class HybridDecorrelater:
             )
             for i in range(1, preserved_steps):
                 old_parent.pipeline[i] = HybridNoop(old_parent.pipeline[i - 1])
-            child_remapping: dict[int, int] = old_parent.remove_dead_children(set())
+            must_remove: set[int] = set()
+            for idx, other_child in enumerate(old_parent.children):
+                if other_child.max_steps < child.max_steps:
+                    must_remove.add(idx)
+            child_remapping: dict[int, int] = old_parent.remove_dead_children(
+                must_remove
+            )
             child_idx = child_remapping[child_idx]
         # Mark the child as no longer correlated, for printing purposes
         old_parent.correlated_children.discard(child_idx)

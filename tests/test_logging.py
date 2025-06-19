@@ -184,7 +184,7 @@ def test_execute_df_logging(
 [INFO] pydough.sqlglot.execute_relational: SQL query:
  WITH _t0 AS (
   SELECT
-    COUNT() AS count_order,
+    COUNT(*) AS count_order,
     SUM(l_extendedprice) AS sum_base_price,
     SUM(l_extendedprice * (
       1 - l_discount

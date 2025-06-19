@@ -172,7 +172,7 @@ WITH _s0 AS (
     )
 ), _s13 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     _t3.agg_24 AS agg_24
   FROM _t3 AS _t3
   GROUP BY

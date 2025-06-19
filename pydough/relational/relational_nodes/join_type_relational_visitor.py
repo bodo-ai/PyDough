@@ -43,9 +43,7 @@ class JoinTypeRelationalVisitor(RelationalVisitor):
             join: The join node to visit.
         """
         # Store the join types
-        for join_type in join.join_types:
-            self._join_types.add(join_type)
-
+        self._join_types.add(join.join_type)
         self.visit_inputs(join)
 
     def visit_project(self, project: Project) -> None:

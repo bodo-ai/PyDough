@@ -1,15 +1,20 @@
-WITH _t1 AS (
+WITH _s1 AS (
+  SELECT
+    country,
+    uid
+  FROM main.users
+), _t1 AS (
   SELECT
     SUM(wallet_transactions_daily.amount) AS agg_0,
     COUNT(DISTINCT wallet_transactions_daily.sender_id) AS agg_1,
-    users.country
+    _s1.country
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
-  LEFT JOIN main.users AS users
-    ON users.uid = wallet_transactions_daily.sender_id
+  LEFT JOIN _s1 AS _s1
+    ON _s1.uid = wallet_transactions_daily.sender_id
   WHERE
     wallet_transactions_daily.sender_type = 0
   GROUP BY
-    users.country
+    _s1.country
 )
 SELECT
   country,

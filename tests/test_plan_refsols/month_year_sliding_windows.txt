@@ -1,6 +1,6 @@
 ROOT(columns=[('year', year_9), ('month', month_8)], orderings=[(year_9):asc_first, (month_8):asc_first])
  FILTER(condition=month_total_spent > NEXT(args=[month_total_spent], partition=[], order=[(year_4):asc_last, (month_2):asc_last], default=0.0) & month_total_spent > PREV(args=[month_total_spent], partition=[], order=[(year_4):asc_last, (month_2):asc_last], default=0.0), columns={'month_8': month_2, 'year_9': year_4})
-  JOIN(conditions=[t0.year == t1.year], types=['inner'], columns={'month_2': t1.month, 'month_total_spent': t1.month_total_spent, 'year_4': t1.year})
+  JOIN(condition=t0.year == t1.year, type=INNER, cardinality=PLURAL_FILTER, columns={'month_2': t1.month, 'month_total_spent': t1.month_total_spent, 'year_4': t1.year})
    FILTER(condition=curr_year_total_spent > next_year_total_spent, columns={'year': year})
     PROJECT(columns={'curr_year_total_spent': DEFAULT_TO(agg_0, 0:numeric), 'next_year_total_spent': NEXT(args=[DEFAULT_TO(agg_0, 0:numeric)], partition=[], order=[(year):asc_last], default=0.0), 'year': year})
      AGGREGATE(keys={'year': year}, aggregations={'agg_0': SUM(month_total_spent)})

@@ -957,17 +957,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
         pytest.param(
             Join(
                 inputs=[build_simple_scan(), build_simple_scan()],
-                conditions=[
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                join_types=[JoinType.SEMI],
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                join_type=JoinType.SEMI,
                 columns={
                     "a": make_relational_column_reference("a", input_name="t0"),
                 },
@@ -1016,17 +1014,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
         pytest.param(
             Join(
                 inputs=[build_simple_scan(), build_simple_scan()],
-                conditions=[
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                join_types=[JoinType.ANTI],
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                join_type=JoinType.ANTI,
                 columns={
                     "b": make_relational_column_reference("b", input_name="t1"),
                 },
@@ -1079,21 +1075,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 inputs=[
                     Join(
                         inputs=[build_simple_scan(), build_simple_scan()],
-                        conditions=[
-                            CallExpression(
-                                EQU,
-                                BooleanType(),
-                                [
-                                    make_relational_column_reference(
-                                        "a", input_name="t0"
-                                    ),
-                                    make_relational_column_reference(
-                                        "a", input_name="t1"
-                                    ),
-                                ],
-                            )
-                        ],
-                        join_types=[JoinType.INNER],
+                        condition=CallExpression(
+                            EQU,
+                            BooleanType(),
+                            [
+                                make_relational_column_reference("a", input_name="t0"),
+                                make_relational_column_reference("a", input_name="t1"),
+                            ],
+                        ),
+                        join_type=JoinType.INNER,
                         columns={
                             "a": make_relational_column_reference("a", input_name="t0"),
                             "b": make_relational_column_reference("b", input_name="t1"),
@@ -1101,17 +1091,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     ),
                     build_simple_scan(),
                 ],
-                conditions=[
-                    CallExpression(
-                        EQU,
-                        BooleanType(),
-                        [
-                            make_relational_column_reference("a", input_name="t0"),
-                            make_relational_column_reference("a", input_name="t1"),
-                        ],
-                    )
-                ],
-                join_types=[JoinType.LEFT],
+                condition=CallExpression(
+                    EQU,
+                    BooleanType(),
+                    [
+                        make_relational_column_reference("a", input_name="t0"),
+                        make_relational_column_reference("a", input_name="t1"),
+                    ],
+                ),
+                join_type=JoinType.LEFT,
                 columns={
                     "d": make_relational_column_reference("b", input_name="t0"),
                 },
@@ -1190,17 +1178,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             Filter(
                 input=Join(
                     inputs=[build_simple_scan(), build_simple_scan()],
-                    conditions=[
-                        CallExpression(
-                            EQU,
-                            BooleanType(),
-                            [
-                                make_relational_column_reference("a", input_name="t0"),
-                                make_relational_column_reference("a", input_name="t1"),
-                            ],
-                        )
-                    ],
-                    join_types=[JoinType.INNER],
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a", input_name="t0"),
+                            make_relational_column_reference("a", input_name="t1"),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
                     columns={
                         "a": make_relational_column_reference("a", input_name="t0"),
                         "b": make_relational_column_reference("b", input_name="t1"),
@@ -1552,17 +1538,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             RelationalRoot(
                 Join(
                     inputs=[build_simple_scan(), build_simple_scan()],
-                    conditions=[
-                        CallExpression(
-                            EQU,
-                            BooleanType(),
-                            [
-                                make_relational_column_reference("a", input_name="t0"),
-                                make_relational_column_reference("a", input_name="t1"),
-                            ],
-                        )
-                    ],
-                    join_types=[JoinType.INNER],
+                    condition=CallExpression(
+                        EQU,
+                        BooleanType(),
+                        [
+                            make_relational_column_reference("a", input_name="t0"),
+                            make_relational_column_reference("a", input_name="t1"),
+                        ],
+                    ),
+                    join_type=JoinType.INNER,
                     columns={
                         "a": make_relational_column_reference("a", input_name="t0"),
                         "b": make_relational_column_reference("b", input_name="t1"),

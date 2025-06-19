@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     AVG(searches.search_num_results) AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     MAX(times.t_name) AS agg_3,
     MAX(times.t_start_hour) AS agg_4
   FROM times AS times

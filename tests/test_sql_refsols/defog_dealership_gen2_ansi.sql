@@ -1,5 +1,5 @@
 SELECT
-  COUNT() AS weekend_payments
+  COUNT(*) AS weekend_payments
 FROM main.payments_made
 WHERE
   (

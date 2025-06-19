@@ -57,5 +57,5 @@ WITH _s0 AS (
     )
 )
 SELECT
-  COUNT() AS n_events
+  COUNT(*) AS n_events
 FROM _t0 AS _t0

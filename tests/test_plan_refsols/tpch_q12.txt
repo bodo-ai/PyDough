@@ -1,7 +1,7 @@
 ROOT(columns=[('L_SHIPMODE', L_SHIPMODE), ('HIGH_LINE_COUNT', HIGH_LINE_COUNT), ('LOW_LINE_COUNT', LOW_LINE_COUNT)], orderings=[(L_SHIPMODE):asc_first])
  PROJECT(columns={'HIGH_LINE_COUNT': DEFAULT_TO(agg_0, 0:numeric), 'LOW_LINE_COUNT': DEFAULT_TO(agg_1, 0:numeric), 'L_SHIPMODE': ship_mode})
   AGGREGATE(keys={'ship_mode': ship_mode}, aggregations={'agg_0': SUM(is_high_priority), 'agg_1': SUM(expr_2)})
-   JOIN(conditions=[t0.order_key == t1.key], types=['inner'], columns={'expr_2': t1.expr_2, 'is_high_priority': t1.is_high_priority, 'ship_mode': t0.ship_mode})
+   JOIN(condition=t0.order_key == t1.key, type=INNER, cardinality=SINGULAR_ACCESS, columns={'expr_2': t1.expr_2, 'is_high_priority': t1.is_high_priority, 'ship_mode': t0.ship_mode})
     FILTER(condition=commit_date < receipt_date & ship_date < commit_date & YEAR(receipt_date) == 1994:numeric & ship_mode == 'MAIL':string | ship_mode == 'SHIP':string, columns={'order_key': order_key, 'ship_mode': ship_mode})
      SCAN(table=tpch.LINEITEM, columns={'commit_date': l_commitdate, 'order_key': l_orderkey, 'receipt_date': l_receiptdate, 'ship_date': l_shipdate, 'ship_mode': l_shipmode})
     PROJECT(columns={'expr_2': NOT(ISIN(order_priority, ['1-URGENT', '2-HIGH']:array[unknown])), 'is_high_priority': ISIN(order_priority, ['1-URGENT', '2-HIGH']:array[unknown]), 'key': key})

@@ -12,61 +12,161 @@ from .abstract_node import RelationalNode
 
 
 class JoinType(Enum):
+    """
+    Enum describing the type of join operation.
+    """
+
     INNER = "inner"
     LEFT = "left"
-    RIGHT = "right"
-    FULL_OUTER = "full outer"
     ANTI = "anti"
     SEMI = "semi"
+
+
+class JoinCardinality(Enum):
+    """
+    Enum describing the relationship between the LHS and RHS of a join in terms
+    of whether the LHS matches onto 1 or more rows of the RHS, and whether the
+    join can cause the LHS to be filtered or not. There are 9 combinations of
+    whether the cardinality is singular/plural/unknown, and whether the join
+    is accessing/filtering/unknown.
+    """
+
+    SINGULAR_FILTER = 1
+    SINGULAR_ACCESS = 2
+    SINGULAR_UNKNOWN = 3
+    PLURAL_FILTER = 4
+    PLURAL_ACCESS = 5
+    PLURAL_UNKNOWN = 6
+    UNKNOWN_FILTER = 7
+    UNKNOWN_ACCESS = 8
+    UNKNOWN_UNKNOWN = 9
+
+    def add_filter(self) -> "JoinCardinality":
+        """
+        Returns a new JoinCardinality referring to the current value but with
+        filtering added.
+        """
+        if self in (JoinCardinality.SINGULAR_ACCESS, JoinCardinality.SINGULAR_UNKNOWN):
+            return JoinCardinality.SINGULAR_FILTER
+        elif self in (JoinCardinality.PLURAL_ACCESS, JoinCardinality.PLURAL_UNKNOWN):
+            return JoinCardinality.PLURAL_FILTER
+        elif self in (JoinCardinality.UNKNOWN_ACCESS, JoinCardinality.UNKNOWN_UNKNOWN):
+            return JoinCardinality.UNKNOWN_FILTER
+        else:
+            return self
+
+    def add_potential_filter(self) -> "JoinCardinality":
+        """
+        Returns a new JoinCardinality referring to the current value but with
+        the possibility of filtering added.
+        """
+        if self == JoinCardinality.SINGULAR_ACCESS:
+            return JoinCardinality.SINGULAR_UNKNOWN
+        elif self == JoinCardinality.PLURAL_ACCESS:
+            return JoinCardinality.PLURAL_UNKNOWN
+        elif self == JoinCardinality.UNKNOWN_ACCESS:
+            return JoinCardinality.UNKNOWN_UNKNOWN
+        else:
+            return self
+
+    @property
+    def accesses(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS is
+        NOT filtered by being joined with the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_ACCESS,
+            JoinCardinality.PLURAL_ACCESS,
+            JoinCardinality.UNKNOWN_ACCESS,
+        )
+
+    @property
+    def filters(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS is
+        filtered by being joined with the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_FILTER,
+            JoinCardinality.PLURAL_FILTER,
+            JoinCardinality.UNKNOWN_FILTER,
+        )
+
+    @property
+    def unknown_filtering(self) -> bool:
+        """
+        Returns whether this JoinCardinality does no know if the LHS is
+        filtered by being joined with the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_UNKNOWN,
+            JoinCardinality.PLURAL_UNKNOWN,
+            JoinCardinality.UNKNOWN_UNKNOWN,
+        )
+
+    @property
+    def singular(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS can
+        NOT match with multiple records of the RHS.
+        """
+        return self in (
+            JoinCardinality.SINGULAR_FILTER,
+            JoinCardinality.SINGULAR_ACCESS,
+            JoinCardinality.SINGULAR_UNKNOWN,
+        )
+
+    @property
+    def plural(self) -> bool:
+        """
+        Returns whether this JoinCardinality indicates that the LHS can
+        match with multiple records of the RHS.
+        """
+        return self in (
+            JoinCardinality.PLURAL_FILTER,
+            JoinCardinality.PLURAL_ACCESS,
+            JoinCardinality.PLURAL_UNKNOWN,
+        )
+
+    @property
+    def unknown_cardinality(self) -> bool:
+        """
+        Returns whether this JoinCardinality does no know if the LHS can match
+        with multiple records of the RHS.
+        """
+        return self in (
+            JoinCardinality.UNKNOWN_ACCESS,
+            JoinCardinality.UNKNOWN_FILTER,
+            JoinCardinality.UNKNOWN_UNKNOWN,
+        )
 
 
 class Join(RelationalNode):
     """
     Relational representation of all join operations. This single
-    node can represent multiple joins at once, similar to a multi-join
-    in other systems to enable better lowering and easier translation
-    from earlier stages in the pipeline.
-
-    However, unlike a traditional Multi-Join in most relational algebra
-    implementations, this join does not ensure that joins can be reordered
-    and provides a specific join ordering that is the only guaranteed
-    valid ordering.
-
-    In particular if we have 3 inputs A, B, and C, with join types INNER
-    and SEMI, then the join ordering is treated as:
-
-    (A INNER B) SEMI C
-
-    It should be noted that this isn't necessarily the only valid join ordering,
-    but this node makes no guarantees that the inputs can be reordered.
+    node represents a join between two subtrees.
     """
 
     def __init__(
         self,
         inputs: list[RelationalNode],
-        conditions: list[RelationalExpression],
-        join_types: list[JoinType],
+        condition: RelationalExpression,
+        join_type: JoinType,
         columns: dict[str, RelationalExpression],
+        cardinality: JoinCardinality = JoinCardinality.UNKNOWN_UNKNOWN,
         correl_name: str | None = None,
-        is_prunable: bool = False,
     ) -> None:
         super().__init__(columns)
-        num_inputs = len(inputs)
-        num_conditions = len(conditions)
-        num_join_types = len(join_types)
-        assert (
-            num_inputs >= 2
-            and num_conditions == (num_inputs - 1)
-            and num_conditions == num_join_types
-        ), "Number of inputs, conditions, and join types must be the same"
+        assert len(inputs) == 2, f"Expected 2 inputs, received {len(inputs)}"
         self._inputs = inputs
-        assert all(isinstance(cond.data_type, BooleanType) for cond in conditions), (
+        assert isinstance(condition.data_type, BooleanType), (
             "Join condition must be a boolean type"
         )
-        self._conditions: list[RelationalExpression] = conditions
-        self._join_types: list[JoinType] = join_types
+        self._condition: RelationalExpression = condition
+        self._join_type: JoinType = join_type
+        self._cardinality: JoinCardinality = cardinality
         self._correl_name: str | None = correl_name
-        self._is_prunable: bool = is_prunable
 
     @property
     def correl_name(self) -> str | None:
@@ -77,18 +177,46 @@ class Join(RelationalNode):
         return self._correl_name
 
     @property
-    def conditions(self) -> list[RelationalExpression]:
+    def condition(self) -> RelationalExpression:
         """
-        The conditions for the joins.
+        The condition for the joins.
         """
-        return self._conditions
+        return self._condition
+
+    @condition.setter
+    def condition(self, cond: RelationalExpression) -> None:
+        """
+        The setter for the join condition
+        """
+        self._condition = cond
 
     @property
-    def join_types(self) -> list[JoinType]:
+    def join_type(self) -> JoinType:
         """
-        The types of the joins.
+        The type of the joins.
         """
-        return self._join_types
+        return self._join_type
+
+    @join_type.setter
+    def join_type(self, join_type: JoinType) -> None:
+        """
+        The setter for the join type
+        """
+        self._join_type = join_type
+
+    @property
+    def cardinality(self) -> JoinCardinality:
+        """
+        The type of the joins.
+        """
+        return self._cardinality
+
+    @cardinality.setter
+    def cardinality(self, cardinality: JoinCardinality) -> None:
+        """
+        The setter for the join cardinality.
+        """
+        self._cardinality = cardinality
 
     @property
     def inputs(self) -> list[RelationalNode]:
@@ -106,20 +234,12 @@ class Join(RelationalNode):
         """
         return [f"t{i}" for i in range(len(self.inputs))]
 
-    @property
-    def is_prunable(self) -> bool:
-        """
-        Returns True if the join can be pruned to just return the first input
-        if none of the other inputs are used. This is only applicable for
-        certain join use cases.
-        """
-        return self._is_prunable
-
     def node_equals(self, other: RelationalNode) -> bool:
         return (
             isinstance(other, Join)
-            and self.conditions == other.conditions
-            and self.join_types == other.join_types
+            and self.condition == other.condition
+            and self.join_type == other.join_type
+            and self.cardinality == other.cardinality
             and self.correl_name == other.correl_name
             and all(
                 self.inputs[i].node_equals(other.inputs[i])
@@ -128,11 +248,15 @@ class Join(RelationalNode):
         )
 
     def to_string(self, compact: bool = False) -> str:
-        conditions: list[str] = [cond.to_string(compact) for cond in self.conditions]
-        correl_suffix = (
+        correl_suffix: str = (
             "" if self.correl_name is None else f", correl_name={self.correl_name!r}"
         )
-        return f"JOIN(conditions=[{', '.join(conditions)}], types={[t.value for t in self.join_types]}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
+        cardinality_suffix: str = (
+            ""
+            if self.cardinality == JoinCardinality.UNKNOWN_UNKNOWN
+            else f", cardinality={self.cardinality.name}"
+        )
+        return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
     def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_join(self)
@@ -144,9 +268,9 @@ class Join(RelationalNode):
     ) -> RelationalNode:
         return Join(
             inputs,
-            self.conditions,
-            self.join_types,
+            self.condition,
+            self.join_type,
             columns,
+            self.cardinality,
             self.correl_name,
-            self.is_prunable,
         )

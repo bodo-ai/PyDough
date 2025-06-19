@@ -1,5 +1,5 @@
 SELECT
-  COUNT() AS TSC
+  COUNT(*) AS TSC
 FROM main.sales
 WHERE
   CAST((

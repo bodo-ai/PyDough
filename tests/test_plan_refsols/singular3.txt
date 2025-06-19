@@ -1,5 +1,5 @@
 ROOT(columns=[('name', name)], orderings=[(order_date):asc_last])
- JOIN(conditions=[t0.key == t1.customer_key], types=['left'], columns={'name': t0.name, 'order_date': t1.order_date})
+ JOIN(condition=t0.key == t1.customer_key, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'name': t0.name, 'order_date': t1.order_date})
   LIMIT(limit=Literal(value=5, type=NumericType()), columns={'key': key, 'name': name}, orderings=[(name):asc_first])
    SCAN(table=tpch.CUSTOMER, columns={'key': c_custkey, 'name': c_name})
   FILTER(condition=RANKING(args=[], partition=[customer_key], order=[(total_price):desc_first]) == 1:numeric, columns={'customer_key': customer_key, 'order_date': order_date})

@@ -9,6 +9,7 @@ __all__ = [
     "EmptySingleton",
     "Filter",
     "Join",
+    "JoinCardinality",
     "JoinType",
     "JoinTypeRelationalVisitor",
     "Limit",
@@ -24,7 +25,7 @@ from .aggregate import Aggregate
 from .column_pruner import ColumnPruner
 from .empty_singleton import EmptySingleton
 from .filter import Filter
-from .join import Join, JoinType
+from .join import Join, JoinCardinality, JoinType
 from .join_type_relational_visitor import JoinTypeRelationalVisitor
 from .limit import Limit
 from .project import Project

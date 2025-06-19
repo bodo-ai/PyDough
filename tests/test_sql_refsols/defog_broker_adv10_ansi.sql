@@ -1,13 +1,12 @@
 WITH _s3 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     sbcustomer.sbcustid AS _id
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
-    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
-  WHERE
-    EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
+    ON EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
     AND EXTRACT(YEAR FROM sbcustomer.sbcustjoindate) = EXTRACT(YEAR FROM sbtransaction.sbtxdatetime)
+    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
     sbcustomer.sbcustid
 )

@@ -14,6 +14,7 @@ __all__ = [
     "only_references_columns",
     "partition_expressions",
     "passthrough_column_mapping",
+    "remap_join_condition",
     "transpose_expression",
 ]
 
@@ -35,6 +36,7 @@ from .relational_expressions import (
 from .relational_nodes import (
     Filter,
     Join,
+    JoinType,
     RelationalNode,
 )
 
@@ -255,15 +257,49 @@ def build_filter(
         the set of filters is empty, just returns `node`. Ignores any filter
         condition that is always True.
     """
+    # Remove literal True conditions from the filters, and just return the
+    # input if there are no filters left.
     filters.discard(LiteralExpression(True, BooleanType()))
     condition: RelationalExpression
     if len(filters) == 0:
         return node
-    elif len(filters) == 1:
+
+    # Detect whether the filter can be pushed into a join condition. If so,
+    # combine the (transposed) filters with the existing join condition.
+    push_into_join: bool = False
+    if isinstance(node, Join) and node.join_type in (JoinType.INNER, JoinType.SEMI):
+        if all(
+            isinstance(pred, CallExpression)
+            and pred.op == pydop.EQU
+            and not contains_window(pred)
+            for pred in filters
+        ):
+            push_into_join = True
+            filters = {
+                transpose_expression(exp, node.columns, keep_input_names=True)
+                for exp in filters
+            }
+            filters.add(node.condition)
+            filters.discard(LiteralExpression(True, BooleanType()))
+
+    # Build the new filter condition by forming the conjunction.
+    if len(filters) == 1:
         condition = filters.pop()
     else:
         condition = CallExpression(pydop.BAN, BooleanType(), sorted(filters, key=repr))
 
+    # If the filter can be pushed into a join condition, create the new join
+    # node using the conjunction of the existing condition and the new
+    # condition.
+    if push_into_join:
+        new_join: RelationalNode = node.copy()
+        assert isinstance(new_join, Join)
+        new_join.condition = condition
+        new_join.cardinality = new_join.cardinality.add_potential_filter()
+        return new_join
+
+    # Otherwise, just return a new filter node with the new condition on top
+    # of the existing node.
     return Filter(node, condition, passthrough_column_mapping(node))
 
 
@@ -293,8 +329,7 @@ def transpose_expression(
         case LiteralExpression() | CorrelatedReference():
             return expr
         case ColumnReference():
-            new_column = columns.get(expr.name)
-            assert new_column is not None
+            new_column = columns[expr.name]
             if (
                 isinstance(new_column, ColumnReference)
                 and new_column.input_name is not None
@@ -336,6 +371,78 @@ def transpose_expression(
         case _:
             raise NotImplementedError(
                 f"transpose_expression not implemented for {expr.__class__.__name__}"
+            )
+
+
+def remap_join_condition(
+    expr: RelationalExpression,
+    left_columns: dict[str, RelationalExpression],
+    right_columns: dict[str, RelationalExpression],
+    input_names: list[str | None],
+) -> RelationalExpression:
+    """
+    Same idea as `transpose_expression`, but for transforming an expression
+    that will be used as the join condition of a join node.
+
+
+    Args:
+        `expr`: The expression to transposed.
+        `left_columns`: The mapping of column names from the lhs to their
+        corresponding expressions.
+        `right_columns`: The mapping of column names from the rhs to their
+        corresponding expressions.
+        `input_names`: The names of the two inputs to the join node.
+
+    Returns:
+        The transposed join condition expression with updated column
+        references.
+    """
+    match expr:
+        case LiteralExpression() | CorrelatedReference():
+            return expr
+        case ColumnReference():
+            if expr.input_name == input_names[0]:
+                return left_columns.get(expr.name, expr)
+            elif expr.input_name == input_names[1]:
+                return right_columns.get(expr.name, expr)
+            else:
+                raise ValueError(f"Unexpected input name: {expr.input_name}")
+        case CallExpression():
+            return CallExpression(
+                expr.op,
+                expr.data_type,
+                [
+                    remap_join_condition(arg, left_columns, right_columns, input_names)
+                    for arg in expr.inputs
+                ],
+            )
+        case WindowCallExpression():
+            return WindowCallExpression(
+                expr.op,
+                expr.data_type,
+                [
+                    remap_join_condition(arg, left_columns, right_columns, input_names)
+                    for arg in expr.inputs
+                ],
+                [
+                    remap_join_condition(arg, left_columns, right_columns, input_names)
+                    for arg in expr.partition_inputs
+                ],
+                [
+                    ExpressionSortInfo(
+                        remap_join_condition(
+                            order_arg.expr, left_columns, right_columns, input_names
+                        ),
+                        order_arg.ascending,
+                        order_arg.nulls_first,
+                    )
+                    for order_arg in expr.order_inputs
+                ],
+                expr.kwargs,
+            )
+        case _:
+            raise NotImplementedError(
+                f"remap_join_condition not implemented for {expr.__class__.__name__}"
             )
 
 
@@ -389,7 +496,7 @@ def extract_equijoin_keys(
     assert len(join.inputs) == 2
     lhs_keys: list[ColumnReference] = []
     rhs_keys: list[ColumnReference] = []
-    stack: list[RelationalExpression] = [*join.conditions]
+    stack: list[RelationalExpression] = [join.condition]
     lhs_name: str | None = join.default_input_aliases[0]
     rhs_name: str | None = join.default_input_aliases[1]
     while stack:

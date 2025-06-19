@@ -51,7 +51,7 @@ WITH _t2 AS (
     )
 ), _t0 AS (
   SELECT
-    COUNT() AS order_count,
+    COUNT(*) AS order_count,
     _t1.order_priority AS o_orderpriority
   FROM _t1 AS _t1
   GROUP BY

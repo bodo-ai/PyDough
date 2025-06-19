@@ -12,7 +12,7 @@ WITH _t0 AS (
     searches.search_id
 ), _s5 AS (
   SELECT
-    COUNT() AS n_cold_war_searches,
+    COUNT(*) AS n_cold_war_searches,
     agg_5
   FROM _t0
   GROUP BY

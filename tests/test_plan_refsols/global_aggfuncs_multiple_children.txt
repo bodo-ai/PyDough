@@ -1,6 +1,6 @@
 ROOT(columns=[('num_cust', num_cust), ('num_supp', num_supp), ('num_part', num_part)], orderings=[])
- JOIN(conditions=[True:bool], types=['inner'], columns={'num_cust': t0.num_cust, 'num_part': t1.num_part, 'num_supp': t0.num_supp})
-  JOIN(conditions=[True:bool], types=['inner'], columns={'num_cust': t0.num_cust, 'num_supp': t1.num_supp})
+ JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, columns={'num_cust': t0.num_cust, 'num_part': t1.num_part, 'num_supp': t0.num_supp})
+  JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, columns={'num_cust': t0.num_cust, 'num_supp': t1.num_supp})
    AGGREGATE(keys={}, aggregations={'num_cust': COUNT()})
     SCAN(table=tpch.CUSTOMER, columns={})
    AGGREGATE(keys={}, aggregations={'num_supp': COUNT()})

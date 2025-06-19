@@ -7,14 +7,14 @@ WITH _s0 AS (
     AND c_acctbal > 0.0
 ), _s3 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     o_custkey AS customer_key
   FROM tpch.orders
   GROUP BY
     o_custkey
 ), _t1 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     SUM(customer.c_acctbal) AS agg_2,
     SUBSTRING(customer.c_phone, 1, 2) AS cntry_code
   FROM _s0 AS _s0

@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS num_transactions,
+    COUNT(*) AS num_transactions,
     sbtxstatus AS status
   FROM main.sbtransaction
   GROUP BY

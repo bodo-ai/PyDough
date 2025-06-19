@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM(sale_price) AS agg_1,
     salesperson_id
   FROM main.sales

@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS count,
+    COUNT(*) AS count,
     device_type
   FROM main.user_sessions
   GROUP BY
