@@ -41,14 +41,14 @@ WITH _s14 AS (
   SELECT
     SUM(_s7.agg_3) AS agg_5,
     SUM(_s13.agg_6) AS agg_8,
-    EXTRACT(YEAR FROM _t6.calendar_day) AS year
+    EXTRACT(YEAR FROM CAST(_t6.calendar_day AS DATETIME)) AS year
   FROM _t6 AS _t6
   LEFT JOIN _s7 AS _s7
     ON _s7.calendar_day = _t6.calendar_day
   LEFT JOIN _s13 AS _s13
     ON _s13.calendar_day = _t6.calendar_day
   GROUP BY
-    EXTRACT(YEAR FROM _t6.calendar_day)
+    EXTRACT(YEAR FROM CAST(_t6.calendar_day AS DATETIME))
 ), _t0 AS (
   SELECT
     COALESCE(_s15.agg_8, 0) AS bought,
@@ -73,11 +73,11 @@ WITH _s14 AS (
       ) / LAG(COALESCE(_s15.agg_5, 0), 1) OVER (ORDER BY _s15.year NULLS LAST),
       2
     ) AS pct_incident_change,
-    _s15.year - EXTRACT(YEAR FROM _s14.release_date) AS years_since_release
+    _s15.year - EXTRACT(YEAR FROM CAST(_s14.release_date AS DATETIME)) AS years_since_release
   FROM _s14 AS _s14
   CROSS JOIN _s15 AS _s15
   WHERE
-    _s15.year >= EXTRACT(YEAR FROM _s14.release_date)
+    _s15.year >= EXTRACT(YEAR FROM CAST(_s14.release_date AS DATETIME))
 )
 SELECT
   years_since_release,

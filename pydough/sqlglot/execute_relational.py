@@ -13,6 +13,7 @@ from sqlglot.expressions import Alias, Column, Select, Table
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
+from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
@@ -93,9 +94,6 @@ def apply_sqlglot_optimizer(
     glot_expr = parse_one(glot_expr.sql(dialect), dialect=dialect)
 
     # Apply each rule explicitly with appropriate kwargs
-    # TODO: (gh #313) - Two rules that sqlglot optimizer provides are skipped
-    # (unnest_subqueries and canonicalize). Additionally, the rule
-    # `merge_subqueries` is skipped if the AST has a `semi` or `anti` join.
 
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
     glot_expr = qualify(
@@ -142,11 +140,8 @@ def apply_sqlglot_optimizer(
     # depends on the schema.
     glot_expr = annotate_types(glot_expr, dialect=dialect)
 
-    # TODO: (gh #313) RULE SKIPPED
     # Converts a sql expression into a standard form.
-    # This method relies on annotate_types because many of the
-    # conversions rely on type inference.
-    # glot_expr = canonicalize(glot_expr, dialect=dialect)
+    glot_expr = canonicalize(glot_expr, dialect=dialect)
 
     # Rewrite sqlglot AST to simplify expressions.
     glot_expr = simplify(glot_expr, dialect=dialect)

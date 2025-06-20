@@ -11,7 +11,7 @@ WITH _t3 AS (
   JOIN main.devices AS devices
     ON _s1.calendar_day = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   WHERE
-    EXTRACT(YEAR FROM _t3.calendar_day) = 2024
+    EXTRACT(YEAR FROM CAST(_t3.calendar_day AS DATETIME)) = 2024
     AND _s1.calendar_day < DATE_ADD(CAST(_t3.calendar_day AS TIMESTAMP), 5, 'DAY')
     AND _s1.calendar_day >= _t3.calendar_day
   GROUP BY

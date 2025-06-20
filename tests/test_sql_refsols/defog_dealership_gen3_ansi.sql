@@ -5,7 +5,7 @@ WITH _t0 AS (
     payment_method
   FROM main.payments_received
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), payment_date, WEEK) = 1
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(payment_date AS DATETIME), WEEK) = 1
   GROUP BY
     payment_date,
     payment_method

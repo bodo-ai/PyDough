@@ -19,7 +19,7 @@ WITH _t4 AS (
   JOIN _t8 AS _t8
     ON _t8._id = devices.de_production_country_id AND _t8.name = 'CN'
   WHERE
-    EXTRACT(YEAR FROM _t7.calendar_day) IN (2020, 2021)
+    EXTRACT(YEAR FROM CAST(_t7.calendar_day AS DATETIME)) IN (2020, 2021)
   GROUP BY
     _t7.calendar_day
 ), _s15 AS (
@@ -34,25 +34,25 @@ WITH _t4 AS (
   JOIN _t8 AS _t12
     ON _t12._id = devices.de_production_country_id AND _t12.name = 'CN'
   WHERE
-    EXTRACT(YEAR FROM _t11.calendar_day) IN (2020, 2021)
+    EXTRACT(YEAR FROM CAST(_t11.calendar_day AS DATETIME)) IN (2020, 2021)
   GROUP BY
     _t11.calendar_day
 ), _t1 AS (
   SELECT
     SUM(_s7.agg_2) AS agg_4,
     SUM(_s15.agg_5) AS agg_7,
-    EXTRACT(MONTH FROM _t4.calendar_day) AS month,
-    EXTRACT(YEAR FROM _t4.calendar_day) AS year
+    EXTRACT(MONTH FROM CAST(_t4.calendar_day AS DATETIME)) AS month,
+    EXTRACT(YEAR FROM CAST(_t4.calendar_day AS DATETIME)) AS year
   FROM _t4 AS _t4
   LEFT JOIN _s7 AS _s7
     ON _s7.calendar_day = _t4.calendar_day
   LEFT JOIN _s15 AS _s15
     ON _s15.calendar_day = _t4.calendar_day
   WHERE
-    EXTRACT(YEAR FROM _t4.calendar_day) IN (2020, 2021)
+    EXTRACT(YEAR FROM CAST(_t4.calendar_day AS DATETIME)) IN (2020, 2021)
   GROUP BY
-    EXTRACT(MONTH FROM _t4.calendar_day),
-    EXTRACT(YEAR FROM _t4.calendar_day)
+    EXTRACT(MONTH FROM CAST(_t4.calendar_day AS DATETIME)),
+    EXTRACT(YEAR FROM CAST(_t4.calendar_day AS DATETIME))
 )
 SELECT
   CONCAT_WS(

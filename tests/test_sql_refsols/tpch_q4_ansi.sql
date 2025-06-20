@@ -7,8 +7,8 @@ WITH _t0 AS (
     ON lineitem.l_commitdate < lineitem.l_receiptdate
     AND lineitem.l_orderkey = orders.o_orderkey
   WHERE
-    EXTRACT(QUARTER FROM orders.o_orderdate) = 3
-    AND EXTRACT(YEAR FROM orders.o_orderdate) = 1993
+    EXTRACT(QUARTER FROM CAST(orders.o_orderdate AS DATETIME)) = 3
+    AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
   GROUP BY
     orders.o_orderpriority
 )
