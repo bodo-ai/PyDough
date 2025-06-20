@@ -2,22 +2,22 @@ WITH _t0 AS (
   SELECT
     SUM(
       CASE
-        WHEN part.p_type LIKE 'PROMO%'
-        THEN lineitem.l_extendedprice * (
-          1 - lineitem.l_discount
+        WHEN _s1.p_type LIKE 'PROMO%'
+        THEN _s0.l_extendedprice * (
+          1 - _s0.l_discount
         )
         ELSE 0
       END
     ) AS agg_0,
-    SUM(lineitem.l_extendedprice * (
-      1 - lineitem.l_discount
+    SUM(_s0.l_extendedprice * (
+      1 - _s0.l_discount
     )) AS agg_1
-  FROM tpch.lineitem AS lineitem
-  JOIN tpch.part AS part
-    ON lineitem.l_partkey = part.p_partkey
+  FROM tpch.lineitem AS _s0
+  JOIN tpch.part AS _s1
+    ON _s0.l_partkey = _s1.p_partkey
   WHERE
-    EXTRACT(MONTH FROM lineitem.l_shipdate) = 9
-    AND EXTRACT(YEAR FROM lineitem.l_shipdate) = 1995
+    EXTRACT(MONTH FROM _s0.l_shipdate) = 9
+    AND EXTRACT(YEAR FROM _s0.l_shipdate) = 1995
 )
 SELECT
   (

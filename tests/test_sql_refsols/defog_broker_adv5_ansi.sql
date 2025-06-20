@@ -1,4 +1,4 @@
-WITH _s0 AS (
+WITH _s2 AS (
   SELECT
     SUM(sbdpclose) AS expr_0,
     COUNT(sbdpclose) AS expr_1,
@@ -32,18 +32,18 @@ WITH _s0 AS (
     sbdptickerid
 ), _t1 AS (
   SELECT
-    SUM(_s0.expr_0) AS expr_0,
-    SUM(_s0.expr_1) AS expr_1,
-    MAX(_s0.max_high) AS max_high,
-    MIN(_s0.min_low) AS min_low,
-    _s0.month,
-    sbticker.sbtickersymbol AS symbol
-  FROM _s0 AS _s0
-  JOIN main.sbticker AS sbticker
-    ON _s0.ticker_id = sbticker.sbtickerid
+    SUM(_s2.expr_0) AS expr_0,
+    SUM(_s2.expr_1) AS expr_1,
+    MAX(_s2.max_high) AS max_high,
+    MIN(_s2.min_low) AS min_low,
+    _s2.month,
+    _s1.sbtickersymbol AS symbol
+  FROM _s2 AS _s2
+  JOIN main.sbticker AS _s1
+    ON _s1.sbtickerid = _s2.ticker_id
   GROUP BY
-    _s0.month,
-    sbticker.sbtickersymbol
+    _s2.month,
+    _s1.sbtickersymbol
 )
 SELECT
   symbol,

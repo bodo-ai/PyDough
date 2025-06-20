@@ -1,23 +1,23 @@
-WITH _s5 AS (
+WITH _s9 AS (
   SELECT
     COUNT(*) AS agg_0,
-    incidents.in_error_id AS error_id
-  FROM main.incidents AS incidents
-  JOIN main.devices AS devices
-    ON devices.de_id = incidents.in_device_id
-  JOIN main.products AS products
-    ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
+    _s1.in_error_id AS error_id
+  FROM main.incidents AS _s1
+  JOIN main.devices AS _s2
+    ON _s1.in_device_id = _s2.de_id
+  JOIN main.products AS _s3
+    ON _s2.de_product_id = _s3.pr_id AND _s3.pr_name = 'Sun-Set'
   GROUP BY
-    incidents.in_error_id
+    _s1.in_error_id
 ), _t0 AS (
   SELECT
-    errors.er_name AS error,
+    _s0.er_name AS error,
     ROUND((
-      100.0 * COALESCE(_s5.agg_0, 0)
-    ) / SUM(COALESCE(_s5.agg_0, 0)) OVER (), 2) AS pct
-  FROM main.errors AS errors
-  LEFT JOIN _s5 AS _s5
-    ON _s5.error_id = errors.er_id
+      100.0 * COALESCE(_s9.agg_0, 0)
+    ) / SUM(COALESCE(_s9.agg_0, 0)) OVER (), 2) AS pct
+  FROM main.errors AS _s0
+  LEFT JOIN _s9 AS _s9
+    ON _s0.er_id = _s9.error_id
 )
 SELECT
   error,

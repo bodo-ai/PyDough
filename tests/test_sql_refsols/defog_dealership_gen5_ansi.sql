@@ -8,10 +8,10 @@ WITH _t0 AS (
     RANK() OVER (ORDER BY snapshot_date DESC NULLS FIRST) = 1 AND is_in_inventory
 )
 SELECT
-  cars._id,
-  cars.make,
-  cars.model,
-  cars.year
+  _s1._id,
+  _s1.make,
+  _s1.model,
+  _s1.year
 FROM _t0 AS _t0
-JOIN main.cars AS cars
-  ON _t0.car_id = cars._id
+JOIN main.cars AS _s1
+  ON _s1._id = _t0.car_id

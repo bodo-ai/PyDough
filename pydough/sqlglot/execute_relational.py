@@ -126,10 +126,8 @@ def apply_sqlglot_optimizer(
     # Rewrite derived tables as CTES, deduplicating if possible.
     glot_expr = eliminate_subqueries(glot_expr)
 
-    # TODO: (gh #313) RULE SKIPPED for `semi` and `anti` joins.
-    join_types = JoinTypeRelationalVisitor().get_join_types(relational)
-    if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
-        glot_expr = merge_subqueries(glot_expr)
+    # Merge subqueries into one another if possible.
+    glot_expr = merge_subqueries(glot_expr)
 
     # Remove unused joins from an expression.
     # This only removes joins when we know that the join condition doesn't
@@ -162,6 +160,7 @@ def apply_sqlglot_optimizer(
     # the table alias of the outer query even if it is used in the exists clause.
     # Because, the exists clause is in another "scope" and we are not currently
     # dealing with pan-scope updates.
+    join_types = JoinTypeRelationalVisitor().get_join_types(relational)
     if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
         remove_table_aliases_conditional(glot_expr)
 

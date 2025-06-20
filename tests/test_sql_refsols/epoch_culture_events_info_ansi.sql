@@ -1,32 +1,26 @@
-WITH _s2 AS (
-  SELECT
-    ev_dt AS date_time,
-    ev_key AS key
-  FROM events
-)
 SELECT
-  events.ev_name AS event_name,
-  eras.er_name AS era_name,
-  EXTRACT(YEAR FROM events.ev_dt) AS event_year,
-  seasons.s_name AS season_name,
-  times.t_name AS tod
-FROM events AS events
-JOIN eras AS eras
-  ON eras.er_end_year > EXTRACT(YEAR FROM events.ev_dt)
-  AND eras.er_start_year <= EXTRACT(YEAR FROM events.ev_dt)
-JOIN _s2 AS _s2
-  ON _s2.key = events.ev_key
-JOIN seasons AS seasons
-  ON seasons.s_month1 = EXTRACT(MONTH FROM _s2.date_time)
-  OR seasons.s_month2 = EXTRACT(MONTH FROM _s2.date_time)
-  OR seasons.s_month3 = EXTRACT(MONTH FROM _s2.date_time)
-JOIN _s2 AS _s6
-  ON _s6.key = events.ev_key
-JOIN times AS times
-  ON times.t_end_hour > EXTRACT(HOUR FROM _s6.date_time)
-  AND times.t_start_hour <= EXTRACT(HOUR FROM _s6.date_time)
+  _s0.ev_name AS event_name,
+  _s1.er_name AS era_name,
+  EXTRACT(YEAR FROM _s0.ev_dt) AS event_year,
+  _s5.s_name AS season_name,
+  _s11.t_name AS tod
+FROM events AS _s0
+JOIN eras AS _s1
+  ON _s1.er_end_year > EXTRACT(YEAR FROM _s0.ev_dt)
+  AND _s1.er_start_year <= EXTRACT(YEAR FROM _s0.ev_dt)
+JOIN events AS _s4
+  ON _s0.ev_key = _s4.ev_key
+JOIN seasons AS _s5
+  ON _s5.s_month1 = EXTRACT(MONTH FROM _s4.ev_dt)
+  OR _s5.s_month2 = EXTRACT(MONTH FROM _s4.ev_dt)
+  OR _s5.s_month3 = EXTRACT(MONTH FROM _s4.ev_dt)
+JOIN events AS _s10
+  ON _s0.ev_key = _s10.ev_key
+JOIN times AS _s11
+  ON _s11.t_end_hour > EXTRACT(HOUR FROM _s10.ev_dt)
+  AND _s11.t_start_hour <= EXTRACT(HOUR FROM _s10.ev_dt)
 WHERE
-  events.ev_typ = 'culture'
+  _s0.ev_typ = 'culture'
 ORDER BY
-  events.ev_dt
+  _s0.ev_dt
 LIMIT 6

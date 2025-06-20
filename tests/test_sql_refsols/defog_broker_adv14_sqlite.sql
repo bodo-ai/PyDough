@@ -1,11 +1,11 @@
 SELECT
-  sbticker.sbtickertype AS ticker_type,
-  AVG(sbdailyprice.sbdpclose) AS ACP
-FROM main.sbticker AS sbticker
-JOIN main.sbdailyprice AS sbdailyprice
+  _s0.sbtickertype AS ticker_type,
+  AVG(_s1.sbdpclose) AS ACP
+FROM main.sbticker AS _s0
+JOIN main.sbdailyprice AS _s1
   ON CAST((
-    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sbdailyprice.sbdpdate, 'start of day'))
+    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(_s1.sbdpdate, 'start of day'))
   ) AS INTEGER) <= 7
-  AND sbdailyprice.sbdptickerid = sbticker.sbtickerid
+  AND _s0.sbtickerid = _s1.sbdptickerid
 GROUP BY
-  sbticker.sbtickertype
+  _s0.sbtickertype

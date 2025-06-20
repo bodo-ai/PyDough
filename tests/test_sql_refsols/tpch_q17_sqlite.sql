@@ -1,13 +1,13 @@
 WITH _t AS (
   SELECT
-    lineitem.l_extendedprice AS extended_price,
-    lineitem.l_quantity AS quantity,
-    AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey) AS _w
-  FROM tpch.part AS part
-  JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_partkey = part.p_partkey
+    _s1.l_extendedprice AS extended_price,
+    _s1.l_quantity AS quantity,
+    AVG(_s1.l_quantity) OVER (PARTITION BY _s1.l_partkey) AS _w
+  FROM tpch.part AS _s0
+  JOIN tpch.lineitem AS _s1
+    ON _s0.p_partkey = _s1.l_partkey
   WHERE
-    part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
+    _s0.p_brand = 'Brand#23' AND _s0.p_container = 'MED BOX'
 ), _t0 AS (
   SELECT
     SUM(extended_price) AS agg_0

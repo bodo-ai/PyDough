@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
     COUNT(*) AS agg_0,
     SUM(sbtxamount) AS agg_1,
@@ -8,12 +8,12 @@ WITH _s1 AS (
     sbtxtickerid
 )
 SELECT
-  sbticker.sbtickersymbol AS symbol,
-  COALESCE(_s1.agg_0, 0) AS num_transactions,
-  COALESCE(_s1.agg_1, 0) AS total_amount
-FROM main.sbticker AS sbticker
-LEFT JOIN _s1 AS _s1
-  ON _s1.ticker_id = sbticker.sbtickerid
+  _s0.sbtickersymbol AS symbol,
+  COALESCE(_s3.agg_0, 0) AS num_transactions,
+  COALESCE(_s3.agg_1, 0) AS total_amount
+FROM main.sbticker AS _s0
+LEFT JOIN _s3 AS _s3
+  ON _s0.sbtickerid = _s3.ticker_id
 ORDER BY
   total_amount DESC
 LIMIT 10

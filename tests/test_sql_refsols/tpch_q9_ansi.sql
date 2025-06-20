@@ -1,27 +1,26 @@
 WITH _t1 AS (
   SELECT
     SUM(
-      lineitem.l_extendedprice * (
-        1 - lineitem.l_discount
-      ) - partsupp.ps_supplycost * lineitem.l_quantity
+      _s0.l_extendedprice * (
+        1 - _s0.l_discount
+      ) - _s13.ps_supplycost * _s0.l_quantity
     ) AS agg_0,
-    nation.n_name AS nation_name,
-    EXTRACT(YEAR FROM orders.o_orderdate) AS o_year
-  FROM tpch.lineitem AS lineitem
-  JOIN tpch.part AS part
-    ON lineitem.l_partkey = part.p_partkey AND part.p_name LIKE '%green%'
-  JOIN tpch.supplier AS supplier
-    ON lineitem.l_suppkey = supplier.s_suppkey
-  JOIN tpch.nation AS nation
-    ON nation.n_nationkey = supplier.s_nationkey
-  JOIN tpch.orders AS orders
-    ON lineitem.l_orderkey = orders.o_orderkey
-  JOIN tpch.partsupp AS partsupp
-    ON lineitem.l_partkey = partsupp.ps_partkey
-    AND lineitem.l_suppkey = partsupp.ps_suppkey
+    _s5.n_name AS nation_name,
+    EXTRACT(YEAR FROM _s10.o_orderdate) AS o_year
+  FROM tpch.lineitem AS _s0
+  JOIN tpch.part AS _s1
+    ON _s0.l_partkey = _s1.p_partkey AND _s1.p_name LIKE '%green%'
+  JOIN tpch.supplier AS _s4
+    ON _s0.l_suppkey = _s4.s_suppkey
+  JOIN tpch.nation AS _s5
+    ON _s4.s_nationkey = _s5.n_nationkey
+  JOIN tpch.orders AS _s10
+    ON _s0.l_orderkey = _s10.o_orderkey
+  JOIN tpch.partsupp AS _s13
+    ON _s0.l_partkey = _s13.ps_partkey AND _s0.l_suppkey = _s13.ps_suppkey
   GROUP BY
-    nation.n_name,
-    EXTRACT(YEAR FROM orders.o_orderdate)
+    _s5.n_name,
+    EXTRACT(YEAR FROM _s10.o_orderdate)
 )
 SELECT
   nation_name AS NATION,

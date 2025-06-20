@@ -1,14 +1,14 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS n_events,
-    ANY_VALUE(seasons.s_name) AS season_name
-  FROM seasons AS seasons
-  JOIN events AS events
-    ON seasons.s_month1 = EXTRACT(MONTH FROM events.ev_dt)
-    OR seasons.s_month2 = EXTRACT(MONTH FROM events.ev_dt)
-    OR seasons.s_month3 = EXTRACT(MONTH FROM events.ev_dt)
+    ANY_VALUE(_s0.s_name) AS season_name
+  FROM seasons AS _s0
+  JOIN events AS _s1
+    ON _s0.s_month1 = EXTRACT(MONTH FROM _s1.ev_dt)
+    OR _s0.s_month2 = EXTRACT(MONTH FROM _s1.ev_dt)
+    OR _s0.s_month3 = EXTRACT(MONTH FROM _s1.ev_dt)
   GROUP BY
-    seasons.s_name
+    _s0.s_name
 )
 SELECT
   season_name,

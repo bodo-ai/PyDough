@@ -1,22 +1,22 @@
-WITH _s3 AS (
+WITH _s6 AS (
   SELECT
     COUNT(*) AS agg_0,
-    sbcustomer.sbcustid AS _id
-  FROM main.sbcustomer AS sbcustomer
-  JOIN main.sbtransaction AS sbtransaction
-    ON EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
-    AND EXTRACT(YEAR FROM sbcustomer.sbcustjoindate) = EXTRACT(YEAR FROM sbtransaction.sbtxdatetime)
-    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
+    _s1.sbcustid AS _id
+  FROM main.sbcustomer AS _s1
+  JOIN main.sbtransaction AS _s2
+    ON EXTRACT(MONTH FROM _s1.sbcustjoindate) = EXTRACT(MONTH FROM _s2.sbtxdatetime)
+    AND EXTRACT(YEAR FROM _s1.sbcustjoindate) = EXTRACT(YEAR FROM _s2.sbtxdatetime)
+    AND _s1.sbcustid = _s2.sbtxcustid
   GROUP BY
-    sbcustomer.sbcustid
+    _s1.sbcustid
 )
 SELECT
-  sbcustomer.sbcustid AS _id,
-  sbcustomer.sbcustname AS name,
-  COALESCE(_s3.agg_0, 0) AS num_transactions
-FROM main.sbcustomer AS sbcustomer
-LEFT JOIN _s3 AS _s3
-  ON _s3._id = sbcustomer.sbcustid
+  _s0.sbcustid AS _id,
+  _s0.sbcustname AS name,
+  COALESCE(_s6.agg_0, 0) AS num_transactions
+FROM main.sbcustomer AS _s0
+LEFT JOIN _s6 AS _s6
+  ON _s0.sbcustid = _s6._id
 ORDER BY
   num_transactions DESC
 LIMIT 1

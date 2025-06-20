@@ -10,14 +10,14 @@ WITH _t0 AS (
     sbtxtickerid
 )
 SELECT
-  sbticker.sbtickersymbol AS symbol,
+  _s0.sbtickersymbol AS symbol,
   CAST((
     100.0 * (
       COALESCE(_t0.agg_0, 0) - COALESCE(_t0.agg_1, 0)
     )
   ) AS REAL) / COALESCE(_t0.agg_0, 0) AS SPM
-FROM main.sbticker AS sbticker
+FROM main.sbticker AS _s0
 JOIN _t0 AS _t0
-  ON _t0.ticker_id = sbticker.sbtickerid
+  ON _s0.sbtickerid = _t0.ticker_id
 ORDER BY
   symbol

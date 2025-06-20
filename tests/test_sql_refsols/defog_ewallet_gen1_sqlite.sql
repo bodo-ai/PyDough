@@ -3,23 +3,23 @@ WITH _t0 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (ORDER BY wallet_merchant_balance_daily.balance DESC) - 1.0
+          ROW_NUMBER() OVER (ORDER BY _s0.balance DESC) - 1.0
         ) - (
           CAST((
-            COUNT(wallet_merchant_balance_daily.balance) OVER () - 1.0
+            COUNT(_s0.balance) OVER () - 1.0
           ) AS REAL) / 2.0
         )
       ) < 1.0
-      THEN wallet_merchant_balance_daily.balance
+      THEN _s0.balance
       ELSE NULL
     END AS expr_1
-  FROM main.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
-  JOIN main.merchants AS merchants
-    ON LOWER(merchants.category) LIKE '%retail%'
-    AND merchants.mid = wallet_merchant_balance_daily.merchant_id
-    AND merchants.status = 'active'
+  FROM main.wallet_merchant_balance_daily AS _s0
+  JOIN main.merchants AS _s1
+    ON LOWER(_s1.category) LIKE '%retail%'
+    AND _s0.merchant_id = _s1.mid
+    AND _s1.status = 'active'
   WHERE
-    DATE('now', 'start of day') = DATE(wallet_merchant_balance_daily.updated_at, 'start of day')
+    DATE('now', 'start of day') = DATE(_s0.updated_at, 'start of day')
 )
 SELECT
   AVG(expr_1) AS _expr0

@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
     COUNT(*) AS agg_0,
     sbtxcustid AS customer_id
@@ -11,12 +11,12 @@ WITH _s1 AS (
     sbtxcustid
 )
 SELECT
-  sbcustomer.sbcustid AS _id,
-  sbcustomer.sbcustname AS name,
-  COALESCE(_s1.agg_0, 0) AS num_tx
-FROM main.sbcustomer AS sbcustomer
-LEFT JOIN _s1 AS _s1
-  ON _s1.customer_id = sbcustomer.sbcustid
+  _s0.sbcustid AS _id,
+  _s0.sbcustname AS name,
+  COALESCE(_s3.agg_0, 0) AS num_tx
+FROM main.sbcustomer AS _s0
+LEFT JOIN _s3 AS _s3
+  ON _s0.sbcustid = _s3.customer_id
 ORDER BY
   num_tx DESC
 LIMIT 1

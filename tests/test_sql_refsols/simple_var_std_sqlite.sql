@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
     POWER(
       (
@@ -79,15 +79,15 @@ WITH _s1 AS (
     s_nationkey
 )
 SELECT
-  nation.n_name AS name,
-  _s1.var,
-  _s1.std,
-  _s1.sample_var,
-  _s1.sample_std,
-  _s1.pop_var,
-  _s1.pop_std
-FROM tpch.nation AS nation
-JOIN _s1 AS _s1
-  ON _s1.nation_key = nation.n_nationkey
+  _s0.n_name AS name,
+  _s3.var,
+  _s3.std,
+  _s3.sample_var,
+  _s3.sample_std,
+  _s3.pop_var,
+  _s3.pop_std
+FROM tpch.nation AS _s0
+JOIN _s3 AS _s3
+  ON _s0.n_nationkey = _s3.nation_key
 WHERE
-  nation.n_name IN ('ALGERIA', 'ARGENTINA')
+  _s0.n_name IN ('ALGERIA', 'ARGENTINA')

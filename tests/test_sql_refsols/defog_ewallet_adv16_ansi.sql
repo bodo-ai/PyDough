@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
     COUNT(*) AS total_unread_notifs,
     user_id
@@ -9,10 +9,10 @@ WITH _s1 AS (
     user_id
 )
 SELECT
-  users.username,
-  _s1.total_unread_notifs
-FROM main.users AS users
-JOIN _s1 AS _s1
-  ON _s1.user_id = users.uid
+  _s0.username,
+  _s3.total_unread_notifs
+FROM main.users AS _s0
+JOIN _s3 AS _s3
+  ON _s0.uid = _s3.user_id
 WHERE
-  LOWER(users.country) = 'us'
+  LOWER(_s0.country) = 'us'

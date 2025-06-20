@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
     MAX(sbdphigh) AS agg_0,
     MIN(sbdplow) AS agg_1,
@@ -10,11 +10,11 @@ WITH _s1 AS (
     sbdptickerid
 )
 SELECT
-  sbticker.sbtickersymbol AS symbol,
-  _s1.agg_0 - _s1.agg_1 AS price_change
-FROM main.sbticker AS sbticker
-LEFT JOIN _s1 AS _s1
-  ON _s1.ticker_id = sbticker.sbtickerid
+  _s0.sbtickersymbol AS symbol,
+  _s3.agg_0 - _s3.agg_1 AS price_change
+FROM main.sbticker AS _s0
+LEFT JOIN _s3 AS _s3
+  ON _s0.sbtickerid = _s3.ticker_id
 ORDER BY
   price_change DESC
 LIMIT 3

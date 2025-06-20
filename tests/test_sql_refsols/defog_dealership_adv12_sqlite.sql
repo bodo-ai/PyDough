@@ -1,18 +1,18 @@
 WITH _t0 AS (
   SELECT
-    MAX(cars.make) AS make,
-    MAX(cars.model) AS model,
-    MAX(sales.sale_price) AS sale_price
-  FROM main.sales AS sales
-  JOIN main.cars AS cars
-    ON cars._id = sales.car_id
-  JOIN main.inventory_snapshots AS inventory_snapshots
-    ON cars._id = inventory_snapshots.car_id
-    AND inventory_snapshots.is_in_inventory = 0
-    AND inventory_snapshots.snapshot_date = sales.sale_date
+    MAX(_s1.make) AS make,
+    MAX(_s1.model) AS model,
+    MAX(_s0.sale_price) AS sale_price
+  FROM main.sales AS _s0
+  JOIN main.cars AS _s1
+    ON _s0.car_id = _s1._id
+  JOIN main.inventory_snapshots AS _s4
+    ON _s0.sale_date = _s4.snapshot_date
+    AND _s1._id = _s4.car_id
+    AND _s4.is_in_inventory = 0
   GROUP BY
-    sales._id,
-    cars._id
+    _s0._id,
+    _s1._id
 )
 SELECT
   make,

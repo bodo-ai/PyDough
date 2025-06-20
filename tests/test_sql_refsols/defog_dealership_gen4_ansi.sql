@@ -1,4 +1,4 @@
-WITH _s0 AS (
+WITH _s2 AS (
   SELECT
     SUM(sale_price) AS agg_0,
     customer_id,
@@ -11,15 +11,15 @@ WITH _s0 AS (
     DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP))
 ), _t1 AS (
   SELECT
-    SUM(_s0.agg_0) AS agg_0,
-    customers.state AS customer_state,
-    _s0.quarter
-  FROM _s0 AS _s0
-  JOIN main.customers AS customers
-    ON _s0.customer_id = customers._id
+    SUM(_s2.agg_0) AS agg_0,
+    _s1.state AS customer_state,
+    _s2.quarter
+  FROM _s2 AS _s2
+  JOIN main.customers AS _s1
+    ON _s1._id = _s2.customer_id
   GROUP BY
-    customers.state,
-    _s0.quarter
+    _s1.state,
+    _s2.quarter
 )
 SELECT
   quarter,

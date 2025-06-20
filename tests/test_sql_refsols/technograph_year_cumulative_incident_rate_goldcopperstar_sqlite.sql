@@ -1,83 +1,74 @@
-WITH _s14 AS (
+WITH _s23 AS (
   SELECT
     MAX(pr_release) AS release_date
   FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
-), _t6 AS (
-  SELECT
-    ca_dt AS calendar_day
-  FROM main.calendar
-), _t8 AS (
-  SELECT
-    pr_id AS _id,
-    pr_name AS name
-  FROM main.products
-), _s7 AS (
-  SELECT
-    COUNT(*) AS agg_3,
-    _s0.calendar_day
-  FROM _t6 AS _s0
-  JOIN main.incidents AS incidents
-    ON _s0.calendar_day = DATE(incidents.in_error_report_ts, 'start of day')
-  JOIN main.devices AS devices
-    ON devices.de_id = incidents.in_device_id
-  JOIN _t8 AS _t8
-    ON _t8._id = devices.de_product_id AND _t8.name = 'GoldCopper-Star'
-  GROUP BY
-    _s0.calendar_day
 ), _s13 AS (
   SELECT
-    COUNT(*) AS agg_6,
-    _s8.calendar_day
-  FROM _t6 AS _s8
-  JOIN main.devices AS devices
-    ON _s8.calendar_day = DATE(devices.de_purchase_ts, 'start of day')
-  JOIN _t8 AS _t10
-    ON _t10._id = devices.de_product_id AND _t10.name = 'GoldCopper-Star'
+    COUNT(*) AS agg_3,
+    _s2.ca_dt AS calendar_day
+  FROM main.calendar AS _s2
+  JOIN main.incidents AS _s3
+    ON _s2.ca_dt = DATE(_s3.in_error_report_ts, 'start of day')
+  JOIN main.devices AS _s6
+    ON _s3.in_device_id = _s6.de_id
+  JOIN main.products AS _s9
+    ON _s6.de_product_id = _s9.pr_id AND _s9.pr_name = 'GoldCopper-Star'
   GROUP BY
-    _s8.calendar_day
-), _s15 AS (
+    _s2.ca_dt
+), _s22 AS (
   SELECT
-    SUM(_s7.agg_3) AS agg_5,
-    SUM(_s13.agg_6) AS agg_8,
-    CAST(STRFTIME('%Y', _t6.calendar_day) AS INTEGER) AS year
-  FROM _t6 AS _t6
-  LEFT JOIN _s7 AS _s7
-    ON _s7.calendar_day = _t6.calendar_day
-  LEFT JOIN _s13 AS _s13
-    ON _s13.calendar_day = _t6.calendar_day
+    COUNT(*) AS agg_6,
+    _s14.ca_dt AS calendar_day
+  FROM main.calendar AS _s14
+  JOIN main.devices AS _s15
+    ON _s14.ca_dt = DATE(_s15.de_purchase_ts, 'start of day')
+  JOIN main.products AS _s18
+    ON _s15.de_product_id = _s18.pr_id AND _s18.pr_name = 'GoldCopper-Star'
   GROUP BY
-    CAST(STRFTIME('%Y', _t6.calendar_day) AS INTEGER)
+    _s14.ca_dt
+), _s24 AS (
+  SELECT
+    SUM(_s13.agg_3) AS agg_5,
+    SUM(_s22.agg_6) AS agg_8,
+    CAST(STRFTIME('%Y', _s1.ca_dt) AS INTEGER) AS year
+  FROM main.calendar AS _s1
+  LEFT JOIN _s13 AS _s13
+    ON _s1.ca_dt = _s13.calendar_day
+  LEFT JOIN _s22 AS _s22
+    ON _s1.ca_dt = _s22.calendar_day
+  GROUP BY
+    CAST(STRFTIME('%Y', _s1.ca_dt) AS INTEGER)
 ), _t0 AS (
   SELECT
-    COALESCE(_s15.agg_8, 0) AS bought,
+    COALESCE(_s24.agg_8, 0) AS bought,
     ROUND(
-      CAST(SUM(COALESCE(_s15.agg_5, 0)) OVER (ORDER BY _s15.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(_s15.agg_8, 0)) OVER (ORDER BY _s15.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      CAST(SUM(COALESCE(_s24.agg_5, 0)) OVER (ORDER BY _s24.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(_s24.agg_8, 0)) OVER (ORDER BY _s24.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       2
     ) AS cum_ir,
-    COALESCE(_s15.agg_5, 0) AS incidents,
+    COALESCE(_s24.agg_5, 0) AS incidents,
     ROUND(
       CAST((
         100.0 * (
-          COALESCE(_s15.agg_8, 0) - LAG(COALESCE(_s15.agg_8, 0), 1) OVER (ORDER BY _s15.year)
+          COALESCE(_s24.agg_8, 0) - LAG(COALESCE(_s24.agg_8, 0), 1) OVER (ORDER BY _s24.year)
         )
-      ) AS REAL) / LAG(COALESCE(_s15.agg_8, 0), 1) OVER (ORDER BY _s15.year),
+      ) AS REAL) / LAG(COALESCE(_s24.agg_8, 0), 1) OVER (ORDER BY _s24.year),
       2
     ) AS pct_bought_change,
     ROUND(
       CAST((
         100.0 * (
-          COALESCE(_s15.agg_5, 0) - LAG(COALESCE(_s15.agg_5, 0), 1) OVER (ORDER BY _s15.year)
+          COALESCE(_s24.agg_5, 0) - LAG(COALESCE(_s24.agg_5, 0), 1) OVER (ORDER BY _s24.year)
         )
-      ) AS REAL) / LAG(COALESCE(_s15.agg_5, 0), 1) OVER (ORDER BY _s15.year),
+      ) AS REAL) / LAG(COALESCE(_s24.agg_5, 0), 1) OVER (ORDER BY _s24.year),
       2
     ) AS pct_incident_change,
-    _s15.year - CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER) AS years_since_release
-  FROM _s14 AS _s14
-  CROSS JOIN _s15 AS _s15
+    _s24.year - CAST(STRFTIME('%Y', _s23.release_date) AS INTEGER) AS years_since_release
+  FROM _s23 AS _s23
+  CROSS JOIN _s24 AS _s24
   WHERE
-    _s15.year >= CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER)
+    _s24.year >= CAST(STRFTIME('%Y', _s23.release_date) AS INTEGER)
 )
 SELECT
   years_since_release,

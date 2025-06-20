@@ -1,14 +1,14 @@
 WITH _t2 AS (
   SELECT
-    lineitem.l_extendedprice AS extended_price
-  FROM tpch.part AS part
-  JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_partkey = part.p_partkey
+    _s1.l_extendedprice AS extended_price
+  FROM tpch.part AS _s0
+  JOIN tpch.lineitem AS _s1
+    ON _s0.p_partkey = _s1.l_partkey
   WHERE
-    part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
+    _s0.p_brand = 'Brand#23' AND _s0.p_container = 'MED BOX'
   QUALIFY
-    lineitem.l_quantity < (
-      0.2 * AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey)
+    _s1.l_quantity < (
+      0.2 * AVG(_s1.l_quantity) OVER (PARTITION BY _s1.l_partkey)
     )
 ), _t0 AS (
   SELECT

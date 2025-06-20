@@ -10,10 +10,10 @@ WITH _t0 AS (
     receiver_id
 )
 SELECT
-  merchants.name,
+  _s0.name,
   (
     _t0.agg_0 * 1.0
   ) / _t0.agg_1 AS CPUR
-FROM main.merchants AS merchants
+FROM main.merchants AS _s0
 JOIN _t0 AS _t0
-  ON _t0.receiver_id = merchants.mid
+  ON _s0.mid = _t0.receiver_id

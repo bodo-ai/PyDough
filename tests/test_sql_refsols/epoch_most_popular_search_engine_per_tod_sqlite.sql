@@ -1,15 +1,15 @@
 WITH _t1 AS (
   SELECT
     COUNT(*) AS n_searches,
-    searches.search_engine,
-    times.t_name AS tod
-  FROM times AS times
-  JOIN searches AS searches
-    ON times.t_end_hour > CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
-    AND times.t_start_hour <= CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
+    _s1.search_engine,
+    _s0.t_name AS tod
+  FROM times AS _s0
+  JOIN searches AS _s1
+    ON _s0.t_end_hour > CAST(STRFTIME('%H', _s1.search_ts) AS INTEGER)
+    AND _s0.t_start_hour <= CAST(STRFTIME('%H', _s1.search_ts) AS INTEGER)
   GROUP BY
-    searches.search_engine,
-    times.t_name
+    _s1.search_engine,
+    _s0.t_name
 ), _t AS (
   SELECT
     n_searches,

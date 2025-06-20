@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
     COUNT(txid) AS agg_0,
     SUM(amount) AS agg_1,
@@ -8,12 +8,12 @@ WITH _s1 AS (
     coupon_id
 )
 SELECT
-  coupons.code AS coupon_code,
-  COALESCE(_s1.agg_0, 0) AS redemption_count,
-  COALESCE(_s1.agg_1, 0) AS total_discount
-FROM main.coupons AS coupons
-LEFT JOIN _s1 AS _s1
-  ON _s1.coupon_id = coupons.cid
+  _s0.code AS coupon_code,
+  COALESCE(_s3.agg_0, 0) AS redemption_count,
+  COALESCE(_s3.agg_1, 0) AS total_discount
+FROM main.coupons AS _s0
+LEFT JOIN _s3 AS _s3
+  ON _s0.cid = _s3.coupon_id
 ORDER BY
   redemption_count DESC
 LIMIT 3

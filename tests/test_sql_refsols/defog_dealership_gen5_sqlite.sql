@@ -9,12 +9,12 @@ WITH _t AS (
     AND CAST(STRFTIME('%m', snapshot_date) AS INTEGER) = 3
 )
 SELECT
-  cars._id,
-  cars.make,
-  cars.model,
-  cars.year
+  _s1._id,
+  _s1.make,
+  _s1.model,
+  _s1.year
 FROM _t AS _t
-JOIN main.cars AS cars
-  ON _t.car_id = cars._id
+JOIN main.cars AS _s1
+  ON _s1._id = _t.car_id
 WHERE
   _t._w = 1 AND _t.is_in_inventory

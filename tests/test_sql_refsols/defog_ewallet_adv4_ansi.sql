@@ -1,12 +1,12 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS agg_0,
-    SUM(wallet_transactions_daily.amount) AS agg_1
-  FROM main.wallet_transactions_daily AS wallet_transactions_daily
-  JOIN main.users AS users
-    ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
+    SUM(_s0.amount) AS agg_1
+  FROM main.wallet_transactions_daily AS _s0
+  JOIN main.users AS _s1
+    ON _s0.sender_id = _s1.uid AND _s1.country = 'US'
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), wallet_transactions_daily.created_at, DAY) <= 7
+    DATEDIFF(CURRENT_TIMESTAMP(), _s0.created_at, DAY) <= 7
 )
 SELECT
   agg_0 AS num_transactions,

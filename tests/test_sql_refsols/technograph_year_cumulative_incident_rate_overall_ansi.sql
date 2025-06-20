@@ -1,37 +1,33 @@
-WITH _t5 AS (
-  SELECT
-    ca_dt AS calendar_day
-  FROM main.calendar
-), _s3 AS (
+WITH _s6 AS (
   SELECT
     COUNT(*) AS agg_2,
-    _s0.calendar_day
-  FROM _t5 AS _s0
-  JOIN main.devices AS devices
-    ON _s0.calendar_day = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
+    _s1.ca_dt AS calendar_day
+  FROM main.calendar AS _s1
+  JOIN main.devices AS _s2
+    ON _s1.ca_dt = DATE_TRUNC('DAY', CAST(_s2.de_purchase_ts AS TIMESTAMP))
   GROUP BY
-    _s0.calendar_day
-), _s7 AS (
+    _s1.ca_dt
+), _s12 AS (
   SELECT
     COUNT(*) AS agg_5,
-    _s4.calendar_day
-  FROM _t5 AS _s4
-  JOIN main.incidents AS incidents
-    ON _s4.calendar_day = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
+    _s7.ca_dt AS calendar_day
+  FROM main.calendar AS _s7
+  JOIN main.incidents AS _s8
+    ON _s7.ca_dt = DATE_TRUNC('DAY', CAST(_s8.in_error_report_ts AS TIMESTAMP))
   GROUP BY
-    _s4.calendar_day
+    _s7.ca_dt
 ), _t3 AS (
   SELECT
-    SUM(_s3.agg_2) AS agg_4,
-    SUM(_s7.agg_5) AS agg_7,
-    EXTRACT(YEAR FROM _t5.calendar_day) AS year
-  FROM _t5 AS _t5
-  LEFT JOIN _s3 AS _s3
-    ON _s3.calendar_day = _t5.calendar_day
-  LEFT JOIN _s7 AS _s7
-    ON _s7.calendar_day = _t5.calendar_day
+    SUM(_s6.agg_2) AS agg_4,
+    SUM(_s12.agg_5) AS agg_7,
+    EXTRACT(YEAR FROM _s0.ca_dt) AS year
+  FROM main.calendar AS _s0
+  LEFT JOIN _s6 AS _s6
+    ON _s0.ca_dt = _s6.calendar_day
+  LEFT JOIN _s12 AS _s12
+    ON _s0.ca_dt = _s12.calendar_day
   GROUP BY
-    EXTRACT(YEAR FROM _t5.calendar_day)
+    EXTRACT(YEAR FROM _s0.ca_dt)
 ), _t0 AS (
   SELECT
     COALESCE(agg_4, 0) AS bought,

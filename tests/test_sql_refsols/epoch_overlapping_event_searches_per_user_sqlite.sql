@@ -1,26 +1,26 @@
 WITH _t2 AS (
   SELECT
     COUNT(*) AS agg_0,
-    MAX(users.user_id) AS agg_10,
-    MAX(users.user_name) AS agg_8
-  FROM users AS users
-  JOIN searches AS searches
-    ON searches.search_user_id = users.user_id
-  JOIN events AS events
-    ON LOWER(searches.search_string) LIKE (
-      '%' || LOWER(events.ev_name) || '%'
+    MAX(_s0.user_id) AS agg_10,
+    MAX(_s0.user_name) AS agg_8
+  FROM users AS _s0
+  JOIN searches AS _s1
+    ON _s0.user_id = _s1.search_user_id
+  JOIN events AS _s4
+    ON LOWER(_s1.search_string) LIKE (
+      '%' || LOWER(_s4.ev_name) || '%'
     )
-  JOIN searches AS searches_2
-    ON LOWER(searches_2.search_string) LIKE (
-      '%' || LOWER(events.ev_name) || '%'
+  JOIN searches AS _s7
+    ON LOWER(_s7.search_string) LIKE (
+      '%' || LOWER(_s4.ev_name) || '%'
     )
-  JOIN users AS users_2
-    ON searches_2.search_user_id = users_2.user_id
+  JOIN users AS _s10
+    ON _s10.user_id = _s7.search_user_id
   WHERE
-    users.user_name <> users_2.user_name
+    _s0.user_name <> _s10.user_name
   GROUP BY
-    searches.search_id,
-    users.user_id
+    _s1.search_id,
+    _s0.user_id
 ), _t0 AS (
   SELECT
     MAX(agg_8) AS agg_2,

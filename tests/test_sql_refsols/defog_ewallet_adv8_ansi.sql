@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _s3 AS (
   SELECT
     SUM(amount) AS agg_0,
     receiver_id
@@ -9,11 +9,11 @@ WITH _s1 AS (
     receiver_id
 )
 SELECT
-  merchants.mid AS merchants_id,
-  merchants.name AS merchants_name,
-  merchants.category,
-  COALESCE(_s1.agg_0, 0) AS total_revenue,
-  ROW_NUMBER() OVER (ORDER BY COALESCE(_s1.agg_0, 0) DESC NULLS FIRST) AS mrr
-FROM main.merchants AS merchants
-JOIN _s1 AS _s1
-  ON _s1.receiver_id = merchants.mid
+  _s0.mid AS merchants_id,
+  _s0.name AS merchants_name,
+  _s0.category,
+  COALESCE(_s3.agg_0, 0) AS total_revenue,
+  ROW_NUMBER() OVER (ORDER BY COALESCE(_s3.agg_0, 0) DESC NULLS FIRST) AS mrr
+FROM main.merchants AS _s0
+JOIN _s3 AS _s3
+  ON _s0.mid = _s3.receiver_id

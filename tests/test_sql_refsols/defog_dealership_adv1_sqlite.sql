@@ -4,20 +4,20 @@ WITH _t0 AS (
     SUM(
       (
         (
-          CAST(STRFTIME('%w', payments_received.payment_date) AS INTEGER) + 6
+          CAST(STRFTIME('%w', _s0.payment_date) AS INTEGER) + 6
         ) % 7
       ) IN (5, 6)
     ) AS agg_1,
     DATE(
-      payments_received.payment_date,
+      _s0.payment_date,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(_s0.payment_date)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     ) AS payment_week
-  FROM main.payments_received AS payments_received
-  JOIN main.sales AS sales
-    ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
+  FROM main.payments_received AS _s0
+  JOIN main.sales AS _s1
+    ON _s0.sale_id = _s1._id AND _s1.sale_price > 30000
   WHERE
     CAST(CAST(CAST((
       JULIANDAY(
@@ -34,9 +34,9 @@ WITH _t0 AS (
       ) - JULIANDAY(
         DATE(
           DATE(
-            payments_received.payment_date,
+            _s0.payment_date,
             '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+              CAST(STRFTIME('%w', DATETIME(_s0.payment_date)) AS INTEGER) + 6
             ) % 7 AS TEXT) || ' days',
             'start of day'
           ),
@@ -59,9 +59,9 @@ WITH _t0 AS (
       ) - JULIANDAY(
         DATE(
           DATE(
-            payments_received.payment_date,
+            _s0.payment_date,
             '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+              CAST(STRFTIME('%w', DATETIME(_s0.payment_date)) AS INTEGER) + 6
             ) % 7 AS TEXT) || ' days',
             'start of day'
           ),
@@ -71,9 +71,9 @@ WITH _t0 AS (
     ) AS INTEGER) AS REAL) / 7 AS INTEGER) >= 1
   GROUP BY
     DATE(
-      payments_received.payment_date,
+      _s0.payment_date,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(_s0.payment_date)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
