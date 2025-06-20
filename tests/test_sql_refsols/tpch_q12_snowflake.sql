@@ -7,12 +7,12 @@ WITH _T1 AS (
   JOIN TPCH.ORDERS AS ORDERS
     ON LINEITEM.l_orderkey = ORDERS.o_orderkey
   WHERE
-    DATE_PART(YEAR, LINEITEM.l_receiptdate) = 1994
-    AND LINEITEM.l_commitdate < LINEITEM.l_receiptdate
+    LINEITEM.l_commitdate < LINEITEM.l_receiptdate
     AND LINEITEM.l_commitdate > LINEITEM.l_shipdate
     AND (
       LINEITEM.l_shipmode = 'MAIL' OR LINEITEM.l_shipmode = 'SHIP'
     )
+    AND YEAR(LINEITEM.l_receiptdate) = 1994
   GROUP BY
     LINEITEM.l_shipmode
 )

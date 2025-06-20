@@ -9,7 +9,7 @@ WITH _S1 AS (
       1 - LINEITEM.l_discount
     )) AS AGG_0,
     _S7.NAME AS CUST_NATION,
-    DATE_PART(YEAR, LINEITEM.l_shipdate) AS L_YEAR,
+    YEAR(LINEITEM.l_shipdate) AS L_YEAR,
     _S1.NAME AS SUPP_NATION
   FROM TPCH.LINEITEM AS LINEITEM
   JOIN TPCH.SUPPLIER AS SUPPLIER
@@ -23,7 +23,7 @@ WITH _S1 AS (
   JOIN _S1 AS _S7
     ON CUSTOMER.c_nationkey = _S7.KEY
   WHERE
-    DATE_PART(YEAR, LINEITEM.l_shipdate) IN (1995, 1996)
+    YEAR(LINEITEM.l_shipdate) IN (1995, 1996)
     AND (
       _S1.NAME = 'FRANCE' OR _S1.NAME = 'GERMANY'
     )
@@ -38,7 +38,7 @@ WITH _S1 AS (
     )
   GROUP BY
     _S7.NAME,
-    DATE_PART(YEAR, LINEITEM.l_shipdate),
+    YEAR(LINEITEM.l_shipdate),
     _S1.NAME
 )
 SELECT

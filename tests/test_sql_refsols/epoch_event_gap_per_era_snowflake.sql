@@ -9,8 +9,8 @@ WITH _T1 AS (
     ERAS.er_start_year AS START_YEAR
   FROM ERAS AS ERAS
   JOIN EVENTS AS EVENTS
-    ON ERAS.er_end_year > DATE_PART(YEAR, EVENTS.ev_dt)
-    AND ERAS.er_start_year <= DATE_PART(YEAR, EVENTS.ev_dt)
+    ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
+    AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
 ), _T0 AS (
   SELECT
     ANY_VALUE(START_YEAR) AS AGG_3,

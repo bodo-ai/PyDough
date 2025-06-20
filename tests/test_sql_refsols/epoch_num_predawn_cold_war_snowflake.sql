@@ -1,6 +1,7 @@
-WITH _S1 AS (
+WITH _S0 AS (
   SELECT
-    EVENTS.ev_dt AS DATE_TIME
+    EVENTS.ev_dt AS DATE_TIME,
+    EVENTS.ev_key AS KEY
   FROM EVENTS AS EVENTS
 ), _T1 AS (
   SELECT
@@ -8,26 +9,19 @@ WITH _S1 AS (
     TIMES.t_name AS NAME,
     TIMES.t_start_hour AS START_HOUR
   FROM TIMES AS TIMES
-), _S2 AS (
+), _S1 AS (
   SELECT
     _T1.END_HOUR AS END_HOUR,
     _T1.START_HOUR AS START_HOUR
   FROM _T1 AS _T1
   WHERE
     _T1.NAME = 'Pre-Dawn'
-), _S0 AS (
+), _S4 AS (
   SELECT
-    _S1.DATE_TIME AS DATE_TIME
-  FROM _S1 AS _S1
-  WHERE
-    EXISTS(
-      SELECT
-        1 AS "1"
-      FROM _S2 AS _S2
-      WHERE
-        _S2.END_HOUR > DATE_PART(HOUR, _S1.DATE_TIME)
-        AND _S2.START_HOUR <= DATE_PART(HOUR, _S1.DATE_TIME)
-    )
+    _S0.KEY AS KEY
+  FROM _S0 AS _S0
+  JOIN _S1 AS _S1
+    ON _S1.END_HOUR > HOUR(_S0.DATE_TIME) AND _S1.START_HOUR <= HOUR(_S0.DATE_TIME)
 ), _T2 AS (
   SELECT
     ERAS.er_end_year AS END_YEAR,
@@ -41,18 +35,23 @@ WITH _S1 AS (
   FROM _T2 AS _T2
   WHERE
     _T2.NAME = 'Cold War'
+), _S5 AS (
+  SELECT
+    _S2.KEY AS KEY
+  FROM _S0 AS _S2
+  JOIN _S3 AS _S3
+    ON _S3.END_YEAR > YEAR(_S2.DATE_TIME) AND _S3.START_YEAR <= YEAR(_S2.DATE_TIME)
 ), _T0 AS (
   SELECT
     1 AS _
-  FROM _S0 AS _S0
+  FROM _S4 AS _S4
   WHERE
     EXISTS(
       SELECT
         1 AS "1"
-      FROM _S3 AS _S3
+      FROM _S5 AS _S5
       WHERE
-        _S3.END_YEAR > DATE_PART(YEAR, _S0.DATE_TIME)
-        AND _S3.START_YEAR <= DATE_PART(YEAR, _S0.DATE_TIME)
+        _S4.KEY = _S5.KEY
     )
 )
 SELECT

@@ -4,7 +4,7 @@ WITH _T5 AS (
     l_partkey AS PART_KEY
   FROM TPCH.LINEITEM
   WHERE
-    DATE_PART(YEAR, l_shipdate) = 1994
+    YEAR(l_shipdate) = 1994
   GROUP BY
     l_partkey
 ), _T1 AS (
@@ -13,7 +13,7 @@ WITH _T5 AS (
     PARTSUPP.ps_suppkey AS SUPPLIER_KEY
   FROM TPCH.PARTSUPP AS PARTSUPP
   JOIN TPCH.PART AS PART
-    ON PART.p_name LIKE 'forest%' AND PART.p_partkey = PARTSUPP.ps_partkey
+    ON PART.p_partkey = PARTSUPP.ps_partkey AND STARTSWITH(PART.p_name, 'forest')
   JOIN _T5 AS _T5
     ON PART.p_partkey = _T5.PART_KEY
   WHERE

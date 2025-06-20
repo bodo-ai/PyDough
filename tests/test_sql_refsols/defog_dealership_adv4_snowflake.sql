@@ -22,4 +22,4 @@ FROM MAIN.CARS AS CARS
 LEFT JOIN _S1 AS _S1
   ON CARS._id = _S1.CAR_ID
 WHERE
-  LOWER(CARS.make) LIKE '%toyota%'
+  CONTAINS(LOWER(CARS.make), 'toyota')

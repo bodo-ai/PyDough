@@ -6,10 +6,10 @@ WITH _T1 AS (
       ) - PARTSUPP.ps_supplycost * LINEITEM.l_quantity
     ) AS AGG_0,
     NATION.n_name AS NATION_NAME,
-    DATE_PART(YEAR, ORDERS.o_orderdate) AS O_YEAR
+    YEAR(ORDERS.o_orderdate) AS O_YEAR
   FROM TPCH.LINEITEM AS LINEITEM
   JOIN TPCH.PART AS PART
-    ON LINEITEM.l_partkey = PART.p_partkey AND PART.p_name LIKE '%green%'
+    ON CONTAINS(PART.p_name, 'green') AND LINEITEM.l_partkey = PART.p_partkey
   JOIN TPCH.SUPPLIER AS SUPPLIER
     ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
   JOIN TPCH.NATION AS NATION
@@ -21,7 +21,7 @@ WITH _T1 AS (
     AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
   GROUP BY
     NATION.n_name,
-    DATE_PART(YEAR, ORDERS.o_orderdate)
+    YEAR(ORDERS.o_orderdate)
 )
 SELECT
   NATION_NAME AS NATION,

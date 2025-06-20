@@ -8,7 +8,7 @@ WITH _T1 AS (
     _T1._ID AS _ID
   FROM _T1 AS _T1
   WHERE
-    _T1.EMAIL LIKE '%.com'
+    ENDSWITH(_T1.EMAIL, '.com')
 ), _S0 AS (
   SELECT
     SBTRANSACTION.sbtxcustid AS CUSTOMER_ID,
