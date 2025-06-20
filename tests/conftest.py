@@ -442,8 +442,41 @@ def is_snowflake_env_set() -> bool:
 
 
 @pytest.fixture
-def sf_tpch_db_context() -> DatabaseContext:
+def sf_conn_tpch_db_context() -> DatabaseContext:
     """
+    This fixture is used to connect to the Snowflake TPCH database using
+    a connection object.
+    Return a DatabaseContext for the Snowflake TPCH database.
+    """
+    if not is_snowflake_env_set():
+        pytest.skip("Skipping Snowflake tests: environment variables not set.")
+    import snowflake.connector as sf_connector
+
+    sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
+    sf_tpch_schema = "TPCH_SF1"
+    warehouse = "DEMO_WH"
+    password = os.getenv("SF_PASSWORD")
+    username = os.getenv("SF_USERNAME")
+    account = os.getenv("SF_ACCOUNT")
+    connection: sf_connector.connection.SnowflakeConnection = sf_connector.connect(
+        user=username,
+        password=password,
+        account=account,
+        warehouse=warehouse,
+        database=sf_tpch_db,
+        schema=sf_tpch_schema,
+    )
+    return load_database_context(
+        "snowflake",
+        connection=connection,
+    )
+
+
+@pytest.fixture
+def sf_params_tpch_db_context() -> DatabaseContext:
+    """
+    This fixture is used to connect to the Snowflake TPCH database using
+    parameters instead of a connection object.
     Return a DatabaseContext for the Snowflake TPCH database.
     """
     if not is_snowflake_env_set():

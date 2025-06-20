@@ -62,7 +62,18 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
 def load_snowflake_connection(**kwargs) -> DatabaseConnection:
     """
     Loads a Snowflake database connection.
-    This function should be implemented to handle Snowflake connections.
+    If a connection object is provided in the keyword arguments,
+    it will be used directly. Otherwise, the connection will be created
+    using the provided keyword arguments.
+    Args:
+        **kwargs:
+            The Snowflake connection or its connection parameters.
+            This includes the required parameters for connecting to Snowflake,
+            such as `user`, `password`, and `account`. Optional parameters
+            like `database`, `schema`, and `warehouse` can also be provided.
+    Raises:
+        ImportError: If the Snowflake connector is not installed.
+        ValueError: If required connection parameters are missing.
 
     Returns:
         DatabaseConnection: A database connection object for Snowflake.
@@ -74,6 +85,10 @@ def load_snowflake_connection(**kwargs) -> DatabaseConnection:
             "Snowflake connector is not installed. Please install it with `pip install snowflake-connector-python`."
         )
 
+    connection: snowflake.connector.connection.SnowflakeConnection
+    if connection := kwargs.pop("connection", None):
+        # If a connection object is provided, return it wrapped in DatabaseConnection
+        return DatabaseConnection(connection)
     # Snowflake connection requires specific parameters:
     # user, password, account.
     # Raise an error if any of these are missing.
@@ -87,7 +102,5 @@ def load_snowflake_connection(**kwargs) -> DatabaseConnection:
             + ", ".join(required_keys)
         )
     # Create a Snowflake connection using the provided keyword arguments
-    connection: snowflake.connector.connection.SnowflakeConnection = (
-        snowflake.connector.connect(**kwargs)
-    )
+    connection = snowflake.connector.connect(**kwargs)
     return DatabaseConnection(connection)
