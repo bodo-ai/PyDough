@@ -36,6 +36,7 @@ from pydough.relational.relational_expressions import (
 )
 
 from .override_merge_subqueries import merge_subqueries
+from .override_pushdown_predicates import pushdown_predicates
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
@@ -115,7 +116,7 @@ def apply_sqlglot_optimizer(
     # TODO: (gh #313) RULE SKIPPED - buggy because it pushes filters underneath
     # limit clauses, which is not correct.
     # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS.
-    # glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
+    glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
 
     # Removes cross joins if possible and reorder joins based on predicate
     # dependencies.

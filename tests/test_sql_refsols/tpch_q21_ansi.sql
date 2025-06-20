@@ -6,6 +6,8 @@ WITH _t7 AS (
     l_receiptdate AS receipt_date,
     l_suppkey AS supplier_key
   FROM tpch.lineitem
+  WHERE
+    l_commitdate < l_receiptdate
 ), _t4 AS (
   SELECT
     ANY_VALUE(_t7.line_number) AS agg_13,
@@ -17,9 +19,8 @@ WITH _t7 AS (
   JOIN tpch.orders AS orders
     ON _t7.order_key = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_orderkey = orders.o_orderkey
-  WHERE
-    _t7.commit_date < _t7.receipt_date AND _t7.supplier_key <> lineitem.l_suppkey
+    ON _t7.supplier_key <> lineitem.l_suppkey
+    AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
     orders.o_orderkey,
     _t7.line_number,
@@ -33,10 +34,9 @@ WITH _t7 AS (
   JOIN tpch.orders AS orders
     ON _t9.order_key = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_commitdate < lineitem.l_receiptdate
+    ON _t9.supplier_key <> lineitem.l_suppkey
+    AND lineitem.l_commitdate < lineitem.l_receiptdate
     AND lineitem.l_orderkey = orders.o_orderkey
-  WHERE
-    _t9.commit_date < _t9.receipt_date AND _t9.supplier_key <> lineitem.l_suppkey
 ), _s13 AS (
   SELECT
     COUNT(*) AS agg_0,

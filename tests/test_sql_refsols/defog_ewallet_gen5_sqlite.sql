@@ -3,10 +3,9 @@ WITH _u_0 AS (
     notifications.user_id AS _u_1
   FROM main.notifications AS notifications
   JOIN main.users AS users
-    ON notifications.user_id = users.uid
-  WHERE
-    notifications.created_at <= DATETIME(users.created_at, '1 year')
+    ON notifications.created_at <= DATETIME(users.created_at, '1 year')
     AND notifications.created_at >= users.created_at
+    AND notifications.user_id = users.uid
   GROUP BY
     notifications.user_id
 )
