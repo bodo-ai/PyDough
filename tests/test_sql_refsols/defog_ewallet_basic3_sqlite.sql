@@ -1,11 +1,11 @@
 WITH _u_0 AS (
   SELECT
-    wallet_transactions_daily.receiver_id AS _u_1
-  FROM main.wallet_transactions_daily AS wallet_transactions_daily
+    receiver_id AS _u_1
+  FROM main.wallet_transactions_daily
   WHERE
-    wallet_transactions_daily.receiver_type = 1
+    receiver_type = 1
   GROUP BY
-    wallet_transactions_daily.receiver_id
+    receiver_id
 )
 SELECT
   merchants.mid AS merchant

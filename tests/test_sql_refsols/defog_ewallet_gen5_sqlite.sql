@@ -11,9 +11,9 @@ WITH _u_0 AS (
     notifications.user_id
 )
 SELECT
-  users.username AS username,
-  users.email AS email,
-  users.created_at AS created_at
+  users.username,
+  users.email,
+  users.created_at
 FROM main.users AS users
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = users.uid

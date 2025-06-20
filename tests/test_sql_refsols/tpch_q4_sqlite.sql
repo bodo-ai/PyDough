@@ -1,15 +1,15 @@
 WITH _u_0 AS (
   SELECT
-    lineitem.l_orderkey AS _u_1
-  FROM tpch.lineitem AS lineitem
+    l_orderkey AS _u_1
+  FROM tpch.lineitem
   WHERE
-    lineitem.l_commitdate < lineitem.l_receiptdate
+    l_commitdate < l_receiptdate
   GROUP BY
-    lineitem.l_orderkey
+    l_orderkey
 ), _t0 AS (
   SELECT
     COUNT(*) AS order_count,
-    orders.o_orderpriority AS o_orderpriority
+    orders.o_orderpriority
   FROM tpch.orders AS orders
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = orders.o_orderkey
@@ -34,8 +34,8 @@ WITH _u_0 AS (
     orders.o_orderpriority
 )
 SELECT
-  _t0.o_orderpriority AS O_ORDERPRIORITY,
-  _t0.order_count AS ORDER_COUNT
-FROM _t0 AS _t0
+  o_orderpriority AS O_ORDERPRIORITY,
+  order_count AS ORDER_COUNT
+FROM _t0
 ORDER BY
   o_orderpriority

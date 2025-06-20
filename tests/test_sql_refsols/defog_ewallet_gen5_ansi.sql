@@ -1,7 +1,7 @@
 SELECT
-  users.username AS username,
-  users.email AS email,
-  users.created_at AS created_at
+  users.username,
+  users.email,
+  users.created_at
 FROM main.users AS users
 JOIN main.notifications AS notifications
   ON notifications.user_id = users.uid

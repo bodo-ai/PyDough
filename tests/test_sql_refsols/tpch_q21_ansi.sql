@@ -1,11 +1,11 @@
 WITH _t7 AS (
   SELECT
-    lineitem.l_commitdate AS commit_date,
-    lineitem.l_linenumber AS line_number,
-    lineitem.l_orderkey AS order_key,
-    lineitem.l_receiptdate AS receipt_date,
-    lineitem.l_suppkey AS supplier_key
-  FROM tpch.lineitem AS lineitem
+    l_commitdate AS commit_date,
+    l_linenumber AS line_number,
+    l_orderkey AS order_key,
+    l_receiptdate AS receipt_date,
+    l_suppkey AS supplier_key
+  FROM tpch.lineitem
 ), _t4 AS (
   SELECT
     ANY_VALUE(_t7.line_number) AS agg_13,
@@ -27,8 +27,8 @@ WITH _t7 AS (
 ), _s11 AS (
   SELECT
     orders.o_orderkey AS key,
-    _t9.line_number AS line_number,
-    _t9.order_key AS order_key
+    _t9.line_number,
+    _t9.order_key
   FROM _t7 AS _t9
   JOIN tpch.orders AS orders
     ON _t9.order_key = orders.o_orderkey
@@ -40,7 +40,7 @@ WITH _t7 AS (
 ), _s13 AS (
   SELECT
     COUNT(*) AS agg_0,
-    _t4.agg_24 AS agg_24
+    _t4.agg_24
   FROM _t4 AS _t4
   JOIN _s11 AS _s11
     ON _s11.key = _t4.agg_3

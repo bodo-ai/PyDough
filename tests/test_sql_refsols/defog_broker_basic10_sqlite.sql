@@ -1,9 +1,9 @@
 WITH _u_0 AS (
   SELECT
-    sbdailyprice.sbdptickerid AS _u_1
-  FROM main.sbdailyprice AS sbdailyprice
+    sbdptickerid AS _u_1
+  FROM main.sbdailyprice
   GROUP BY
-    sbdailyprice.sbdptickerid
+    sbdptickerid
 )
 SELECT
   sbticker.sbtickerid AS _id,

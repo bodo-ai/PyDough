@@ -1,11 +1,11 @@
 WITH _u_0 AS (
   SELECT
-    notifications.user_id AS _u_1
-  FROM main.notifications AS notifications
+    user_id AS _u_1
+  FROM main.notifications
   WHERE
-    notifications.type = 'transaction'
+    type = 'transaction'
   GROUP BY
-    notifications.user_id
+    user_id
 )
 SELECT
   users.uid AS user_id

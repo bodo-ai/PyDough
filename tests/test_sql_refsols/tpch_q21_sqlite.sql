@@ -1,11 +1,11 @@
 WITH _t7 AS (
   SELECT
-    lineitem.l_commitdate AS commit_date,
-    lineitem.l_linenumber AS line_number,
-    lineitem.l_orderkey AS order_key,
-    lineitem.l_receiptdate AS receipt_date,
-    lineitem.l_suppkey AS supplier_key
-  FROM tpch.lineitem AS lineitem
+    l_commitdate AS commit_date,
+    l_linenumber AS line_number,
+    l_orderkey AS order_key,
+    l_receiptdate AS receipt_date,
+    l_suppkey AS supplier_key
+  FROM tpch.lineitem
 ), _t4 AS (
   SELECT
     MAX(_t7.line_number) AS agg_13,
@@ -44,7 +44,7 @@ WITH _t7 AS (
 ), _s13 AS (
   SELECT
     COUNT(*) AS agg_0,
-    _t4.agg_24 AS agg_24
+    _t4.agg_24
   FROM _t4 AS _t4
   LEFT JOIN _u_0 AS _u_0
     ON _t4.agg_13 = _u_0._u_1 AND _t4.agg_14 = _u_0._u_2 AND _t4.agg_3 = _u_0._u_3

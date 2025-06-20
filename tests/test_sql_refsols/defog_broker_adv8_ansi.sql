@@ -11,6 +11,6 @@ WITH _t0 AS (
     AND sbtransaction.sbtxdatetime >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -1, 'WEEK')
 )
 SELECT
-  CASE WHEN _t0.agg_0 > 0 THEN _t0.agg_0 ELSE NULL END AS n_transactions,
-  COALESCE(_t0.agg_1, 0) AS total_amount
-FROM _t0 AS _t0
+  CASE WHEN agg_0 > 0 THEN agg_0 ELSE NULL END AS n_transactions,
+  COALESCE(agg_1, 0) AS total_amount
+FROM _t0

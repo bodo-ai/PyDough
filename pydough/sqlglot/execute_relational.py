@@ -30,7 +30,7 @@ from pydough.database_connectors import (
     DatabaseDialect,
 )
 from pydough.logger import get_logger
-from pydough.relational import JoinType, JoinTypeRelationalVisitor, RelationalRoot
+from pydough.relational import RelationalRoot
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
@@ -106,7 +106,6 @@ def apply_sqlglot_optimizer(
     # Rewrite sqlglot AST into conjunctive normal form
     glot_expr = normalize(glot_expr)
 
-    # TODO: (gh #313) RULE SKIPPED
     # Rewrite sqlglot AST to convert some predicates with subqueries into joins.
     # Convert scalar subqueries into cross joins.
     # Convert correlated or vectorized subqueries into a group by so it is not
@@ -152,13 +151,7 @@ def apply_sqlglot_optimizer(
     fix_column_case(glot_expr, relational.ordered_columns)
 
     # Remove table aliases if there is only one Table source in the FROM clause.
-    # Skip for Semi and Anti joins. We do this because this function will remove
-    # the table alias of the outer query even if it is used in the exists clause.
-    # Because, the exists clause is in another "scope" and we are not currently
-    # dealing with pan-scope updates.
-    join_types = JoinTypeRelationalVisitor().get_join_types(relational)
-    if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
-        remove_table_aliases_conditional(glot_expr)
+    remove_table_aliases_conditional(glot_expr)
 
     return glot_expr
 

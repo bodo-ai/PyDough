@@ -1,11 +1,11 @@
 WITH _u_0 AS (
   SELECT
-    sbtransaction.sbtxcustid AS _u_1
-  FROM main.sbtransaction AS sbtransaction
+    sbtxcustid AS _u_1
+  FROM main.sbtransaction
   WHERE
-    sbtransaction.sbtxtype = 'buy'
+    sbtxtype = 'buy'
   GROUP BY
-    sbtransaction.sbtxcustid
+    sbtxcustid
 )
 SELECT
   sbcustomer.sbcustid AS _id

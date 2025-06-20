@@ -1,9 +1,9 @@
 WITH _u_0 AS (
   SELECT
-    coupons.merchant_id AS _u_1
-  FROM main.coupons AS coupons
+    merchant_id AS _u_1
+  FROM main.coupons
   GROUP BY
-    coupons.merchant_id
+    merchant_id
 )
 SELECT
   merchants.mid AS merchant_id,

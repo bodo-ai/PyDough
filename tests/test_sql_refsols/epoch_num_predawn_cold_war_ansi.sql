@@ -1,8 +1,8 @@
 WITH _s0 AS (
   SELECT
-    events.ev_dt AS date_time,
-    events.ev_key AS key
-  FROM events AS events
+    ev_dt AS date_time,
+    ev_key AS key
+  FROM events
 )
 SELECT
   COUNT(*) AS n_events
