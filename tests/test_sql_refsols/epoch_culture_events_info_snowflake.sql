@@ -1,0 +1,32 @@
+WITH _S2 AS (
+  SELECT
+    ev_dt AS DATE_TIME,
+    ev_key AS KEY
+  FROM EVENTS
+)
+SELECT
+  EVENTS.ev_name AS event_name,
+  ERAS.er_name AS era_name,
+  DATE_PART(YEAR, EVENTS.ev_dt) AS event_year,
+  SEASONS.s_name AS season_name,
+  TIMES.t_name AS tod
+FROM EVENTS AS EVENTS
+JOIN ERAS AS ERAS
+  ON ERAS.er_end_year > DATE_PART(YEAR, EVENTS.ev_dt)
+  AND ERAS.er_start_year <= DATE_PART(YEAR, EVENTS.ev_dt)
+JOIN _S2 AS _S2
+  ON EVENTS.ev_key = _S2.KEY
+JOIN SEASONS AS SEASONS
+  ON SEASONS.s_month1 = DATE_PART(MONTH, _S2.DATE_TIME)
+  OR SEASONS.s_month2 = DATE_PART(MONTH, _S2.DATE_TIME)
+  OR SEASONS.s_month3 = DATE_PART(MONTH, _S2.DATE_TIME)
+JOIN _S2 AS _S6
+  ON EVENTS.ev_key = _S6.KEY
+JOIN TIMES AS TIMES
+  ON TIMES.t_end_hour > DATE_PART(HOUR, _S6.DATE_TIME)
+  AND TIMES.t_start_hour <= DATE_PART(HOUR, _S6.DATE_TIME)
+WHERE
+  EVENTS.ev_typ = 'culture'
+ORDER BY
+  EVENTS.ev_dt NULLS FIRST
+LIMIT 6

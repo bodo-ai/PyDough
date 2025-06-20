@@ -1,0 +1,16 @@
+WITH _S1 AS (
+  SELECT
+    COUNT(*) AS TOTAL_COUPONS,
+    merchant_id AS MERCHANT_ID
+  FROM MAIN.COUPONS
+  GROUP BY
+    merchant_id
+)
+SELECT
+  MERCHANTS.name AS merchant_name,
+  _S1.TOTAL_COUPONS AS total_coupons
+FROM MAIN.MERCHANTS AS MERCHANTS
+JOIN _S1 AS _S1
+  ON MERCHANTS.mid = _S1.MERCHANT_ID
+WHERE
+  LOWER(MERCHANTS.category) LIKE '%retail%' AND MERCHANTS.status = 'active'

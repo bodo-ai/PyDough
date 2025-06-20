@@ -1,0 +1,39 @@
+WITH _S0 AS (
+  SELECT
+    AVG(c_acctbal) AS GLOBAL_AVG_BALANCE
+  FROM TPCH.CUSTOMER
+  WHERE
+    c_acctbal > 0.0
+    AND SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+), _S3 AS (
+  SELECT
+    COUNT(*) AS AGG_0,
+    o_custkey AS CUSTOMER_KEY
+  FROM TPCH.ORDERS
+  GROUP BY
+    o_custkey
+), _T1 AS (
+  SELECT
+    COUNT(*) AS AGG_1,
+    SUM(CUSTOMER.c_acctbal) AS AGG_2,
+    SUBSTRING(CUSTOMER.c_phone, 1, 2) AS CNTRY_CODE
+  FROM _S0 AS _S0
+  CROSS JOIN TPCH.CUSTOMER AS CUSTOMER
+  LEFT JOIN _S3 AS _S3
+    ON CUSTOMER.c_custkey = _S3.CUSTOMER_KEY
+  WHERE
+    CUSTOMER.c_acctbal > _S0.GLOBAL_AVG_BALANCE
+    AND SUBSTRING(CUSTOMER.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+    AND (
+      _S3.AGG_0 = 0 OR _S3.AGG_0 IS NULL
+    )
+  GROUP BY
+    SUBSTRING(CUSTOMER.c_phone, 1, 2)
+)
+SELECT
+  CNTRY_CODE,
+  AGG_1 AS NUM_CUSTS,
+  COALESCE(AGG_2, 0) AS TOTACCTBAL
+FROM _T1
+ORDER BY
+  CNTRY_CODE NULLS FIRST

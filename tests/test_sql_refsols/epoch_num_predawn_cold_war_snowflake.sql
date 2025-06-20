@@ -1,0 +1,60 @@
+WITH _S1 AS (
+  SELECT
+    EVENTS.ev_dt AS DATE_TIME
+  FROM EVENTS AS EVENTS
+), _T1 AS (
+  SELECT
+    TIMES.t_end_hour AS END_HOUR,
+    TIMES.t_name AS NAME,
+    TIMES.t_start_hour AS START_HOUR
+  FROM TIMES AS TIMES
+), _S2 AS (
+  SELECT
+    _T1.END_HOUR AS END_HOUR,
+    _T1.START_HOUR AS START_HOUR
+  FROM _T1 AS _T1
+  WHERE
+    _T1.NAME = 'Pre-Dawn'
+), _S0 AS (
+  SELECT
+    _S1.DATE_TIME AS DATE_TIME
+  FROM _S1 AS _S1
+  WHERE
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _S2 AS _S2
+      WHERE
+        _S2.END_HOUR > DATE_PART(HOUR, _S1.DATE_TIME)
+        AND _S2.START_HOUR <= DATE_PART(HOUR, _S1.DATE_TIME)
+    )
+), _T2 AS (
+  SELECT
+    ERAS.er_end_year AS END_YEAR,
+    ERAS.er_name AS NAME,
+    ERAS.er_start_year AS START_YEAR
+  FROM ERAS AS ERAS
+), _S3 AS (
+  SELECT
+    _T2.END_YEAR AS END_YEAR,
+    _T2.START_YEAR AS START_YEAR
+  FROM _T2 AS _T2
+  WHERE
+    _T2.NAME = 'Cold War'
+), _T0 AS (
+  SELECT
+    1 AS _
+  FROM _S0 AS _S0
+  WHERE
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _S3 AS _S3
+      WHERE
+        _S3.END_YEAR > DATE_PART(YEAR, _S0.DATE_TIME)
+        AND _S3.START_YEAR <= DATE_PART(YEAR, _S0.DATE_TIME)
+    )
+)
+SELECT
+  COUNT(*) AS n_events
+FROM _T0 AS _T0

@@ -1,0 +1,20 @@
+WITH _S1 AS (
+  SELECT
+    COUNT(*) AS AGG_0,
+    sbtxtickerid AS TICKER_ID
+  FROM MAIN.SBTRANSACTION
+  WHERE
+    sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -10, CURRENT_TIMESTAMP()))
+    AND sbtxtype = 'buy'
+  GROUP BY
+    sbtxtickerid
+)
+SELECT
+  SBTICKER.sbtickersymbol AS symbol,
+  COALESCE(_S1.AGG_0, 0) AS tx_count
+FROM MAIN.SBTICKER AS SBTICKER
+LEFT JOIN _S1 AS _S1
+  ON SBTICKER.sbtickerid = _S1.TICKER_ID
+ORDER BY
+  TX_COUNT DESC NULLS LAST
+LIMIT 2

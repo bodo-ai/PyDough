@@ -1,0 +1,56 @@
+WITH _S7 AS (
+  SELECT
+    SUM(l_extendedprice * (
+      1 - l_discount
+    )) AS AGG_0,
+    l_orderkey AS ORDER_KEY,
+    l_suppkey AS SUPPLIER_KEY
+  FROM TPCH.LINEITEM
+  GROUP BY
+    l_orderkey,
+    l_suppkey
+), _S10 AS (
+  SELECT
+    SUM(_S7.AGG_0) AS AGG_0,
+    ANY_VALUE(NATION.n_name) AS AGG_3,
+    NATION.n_nationkey AS KEY,
+    NATION.n_name AS NATION_NAME,
+    _S7.SUPPLIER_KEY
+  FROM TPCH.NATION AS NATION
+  JOIN TPCH.REGION AS REGION
+    ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'ASIA'
+  JOIN TPCH.CUSTOMER AS CUSTOMER
+    ON CUSTOMER.c_nationkey = NATION.n_nationkey
+  JOIN TPCH.ORDERS AS ORDERS
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey
+    AND ORDERS.o_orderdate < CAST('1995-01-01' AS DATE)
+    AND ORDERS.o_orderdate >= CAST('1994-01-01' AS DATE)
+  JOIN _S7 AS _S7
+    ON ORDERS.o_orderkey = _S7.ORDER_KEY
+  GROUP BY
+    NATION.n_nationkey,
+    NATION.n_name,
+    _S7.SUPPLIER_KEY
+), _S11 AS (
+  SELECT
+    SUPPLIER.s_suppkey AS KEY,
+    NATION.n_name AS NAME_12
+  FROM TPCH.SUPPLIER AS SUPPLIER
+  JOIN TPCH.NATION AS NATION
+    ON NATION.n_nationkey = SUPPLIER.s_nationkey
+), _T1 AS (
+  SELECT
+    SUM(_S10.AGG_0) AS AGG_0,
+    ANY_VALUE(_S10.AGG_3) AS AGG_3
+  FROM _S10 AS _S10
+  JOIN _S11 AS _S11
+    ON _S10.NATION_NAME = _S11.NAME_12 AND _S10.SUPPLIER_KEY = _S11.KEY
+  GROUP BY
+    _S10.KEY
+)
+SELECT
+  AGG_3 AS N_NAME,
+  COALESCE(AGG_0, 0) AS REVENUE
+FROM _T1
+ORDER BY
+  REVENUE DESC NULLS LAST

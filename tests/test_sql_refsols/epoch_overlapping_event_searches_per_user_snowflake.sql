@@ -1,0 +1,38 @@
+WITH _T2 AS (
+  SELECT
+    COUNT(*) AS AGG_0,
+    ANY_VALUE(USERS.user_id) AS AGG_10,
+    ANY_VALUE(USERS.user_name) AS AGG_8
+  FROM USERS AS USERS
+  JOIN SEARCHES AS SEARCHES
+    ON SEARCHES.search_user_id = USERS.user_id
+  JOIN EVENTS AS EVENTS
+    ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+  JOIN SEARCHES AS SEARCHES_2
+    ON LOWER(SEARCHES_2.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+  JOIN USERS AS USERS_2
+    ON SEARCHES_2.search_user_id = USERS_2.user_id
+  WHERE
+    USERS.user_name <> USERS_2.user_name
+  GROUP BY
+    SEARCHES.search_id,
+    USERS.user_id
+), _T0 AS (
+  SELECT
+    ANY_VALUE(AGG_8) AS AGG_2,
+    COUNT(*) AS N_SEARCHES,
+    ANY_VALUE(AGG_8) AS USER_NAME
+  FROM _T2
+  WHERE
+    AGG_0 > 0
+  GROUP BY
+    AGG_10
+)
+SELECT
+  USER_NAME AS user_name,
+  N_SEARCHES AS n_searches
+FROM _T0
+ORDER BY
+  N_SEARCHES DESC NULLS LAST,
+  AGG_2 NULLS FIRST
+LIMIT 4

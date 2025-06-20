@@ -1,0 +1,15 @@
+SELECT
+  EVENTS.ev_typ AS event_type,
+  COUNT(*) AS n_events
+FROM EVENTS AS EVENTS
+JOIN SEASONS AS SEASONS
+  ON (
+    SEASONS.s_month1 = DATE_PART(MONTH, EVENTS.ev_dt)
+    OR SEASONS.s_month2 = DATE_PART(MONTH, EVENTS.ev_dt)
+    OR SEASONS.s_month3 = DATE_PART(MONTH, EVENTS.ev_dt)
+  )
+  AND SEASONS.s_name = 'Summer'
+GROUP BY
+  EVENTS.ev_typ
+ORDER BY
+  EVENT_TYPE NULLS FIRST

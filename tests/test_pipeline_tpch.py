@@ -320,3 +320,19 @@ def test_pipeline_e2e_tpch(
         get_sample_graph,
         sqlite_tpch_db_context,
     )
+
+
+@pytest.mark.snowflake
+@pytest.mark.execute
+def test_pipeline_e2e_tpch_sf(
+    tpch_pipeline_test_data: PyDoughPandasTest,
+    get_sf_sample_graph: graph_fetcher,
+    sf_tpch_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H queries from the original code generation,
+    with Snowflake as the executing database.
+    """
+    tpch_pipeline_test_data.run_e2e_test(
+        get_sf_sample_graph, sf_tpch_db_context, coerce_types=True
+    )

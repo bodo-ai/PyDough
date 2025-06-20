@@ -7,7 +7,11 @@ import sqlite3
 
 from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDialect
 
-__all__ = ["load_database_context", "load_sqlite_connection"]
+__all__ = [
+    "load_database_context",
+    "load_snowflake_connection",
+    "load_sqlite_connection",
+]
 
 
 def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
@@ -23,13 +27,16 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     Returns:
         DatabaseContext: The database context object.
     """
-    supported_databases = {"sqlite"}
+    supported_databases = {"sqlite", "snowflake"}
     connection: DatabaseConnection
     dialect: DatabaseDialect
     match database_name.lower():
         case "sqlite":
             connection = load_sqlite_connection(**kwargs)
             dialect = DatabaseDialect.SQLITE
+        case "snowflake":
+            connection = load_snowflake_connection(**kwargs)
+            dialect = DatabaseDialect.SNOWFLAKE
         case _:
             raise ValueError(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
@@ -49,4 +56,38 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
     if "database" not in kwargs:
         raise ValueError("SQLite connection requires a database path.")
     connection: sqlite3.Connection = sqlite3.connect(**kwargs)
+    return DatabaseConnection(connection)
+
+
+def load_snowflake_connection(**kwargs) -> DatabaseConnection:
+    """
+    Loads a Snowflake database connection.
+    This function should be implemented to handle Snowflake connections.
+
+    Returns:
+        DatabaseConnection: A database connection object for Snowflake.
+    """
+    try:
+        import snowflake.connector
+    except ImportError:
+        raise ImportError(
+            "Snowflake connector is not installed. Please install it with `pip install snowflake-connector-python`."
+        )
+
+    # Snowflake connection requires specific parameters:
+    # user, password, account.
+    # Raise an error if any of these are missing.
+    # NOTE: database, schema, and warehouse are optional and
+    # will default to the user's settings.
+    # See: https://docs.snowflake.com/en/developer-guide/python-connector/python-connector-api#label-snowflake-connector-methods-connect
+    required_keys = ["user", "password", "account"]
+    if not all(key in kwargs for key in required_keys):
+        raise ValueError(
+            "Snowflake connection requires the following arguments: "
+            + ", ".join(required_keys)
+        )
+    # Create a Snowflake connection using the provided keyword arguments
+    connection: snowflake.connector.connection.SnowflakeConnection = (
+        snowflake.connector.connect(**kwargs)
+    )
     return DatabaseConnection(connection)
