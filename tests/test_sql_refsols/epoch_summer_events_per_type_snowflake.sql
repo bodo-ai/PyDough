@@ -4,9 +4,9 @@ SELECT
 FROM EVENTS AS EVENTS
 JOIN SEASONS AS SEASONS
   ON (
-    SEASONS.s_month1 = DATE_PART(MONTH, EVENTS.ev_dt)
-    OR SEASONS.s_month2 = DATE_PART(MONTH, EVENTS.ev_dt)
-    OR SEASONS.s_month3 = DATE_PART(MONTH, EVENTS.ev_dt)
+    SEASONS.s_month1 = MONTH(EVENTS.ev_dt)
+    OR SEASONS.s_month2 = MONTH(EVENTS.ev_dt)
+    OR SEASONS.s_month3 = MONTH(EVENTS.ev_dt)
   )
   AND SEASONS.s_name = 'Summer'
 GROUP BY

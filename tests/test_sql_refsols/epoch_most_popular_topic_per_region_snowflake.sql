@@ -5,7 +5,7 @@ WITH _T1 AS (
     USERS.user_region AS REGION
   FROM EVENTS AS EVENTS
   JOIN SEARCHES AS SEARCHES
-    ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
   JOIN USERS AS USERS
     ON SEARCHES.search_user_id = USERS.user_id
   GROUP BY

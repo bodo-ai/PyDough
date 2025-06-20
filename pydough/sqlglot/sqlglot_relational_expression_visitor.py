@@ -295,6 +295,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                     this=sqlglot_expressions.convert(dt.isoformat(sep=" ")),
                     to=sqlglot_expressions.DataType.build("TIMESTAMP"),
                 )
+        # TODO: Check Snowflake dialect for similar issues with date/time
         self._stack.append(literal)
 
     def visit_correlated_reference(

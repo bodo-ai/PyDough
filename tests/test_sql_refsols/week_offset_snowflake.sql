@@ -10,4 +10,4 @@ SELECT
   DATEADD(WEEK, 2, DATEADD(YEAR, 1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj8
 FROM MAIN.SBTRANSACTION
 WHERE
-  DATE_PART(DAY, sbtxdatetime) > 1 AND DATE_PART(YEAR, sbtxdatetime) < 2025
+  DAY(sbtxdatetime) > 1 AND YEAR(sbtxdatetime) < 2025

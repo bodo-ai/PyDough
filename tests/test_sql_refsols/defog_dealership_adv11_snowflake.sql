@@ -4,7 +4,7 @@ WITH _S0 AS (
     car_id AS CAR_ID
   FROM MAIN.SALES
   WHERE
-    DATE_PART(YEAR, sale_date) = 2023
+    YEAR(sale_date) = 2023
   GROUP BY
     car_id
 ), _T0 AS (

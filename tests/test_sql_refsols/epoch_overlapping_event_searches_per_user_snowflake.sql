@@ -7,9 +7,9 @@ WITH _T2 AS (
   JOIN SEARCHES AS SEARCHES
     ON SEARCHES.search_user_id = USERS.user_id
   JOIN EVENTS AS EVENTS
-    ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
   JOIN SEARCHES AS SEARCHES_2
-    ON LOWER(SEARCHES_2.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+    ON CONTAINS(LOWER(SEARCHES_2.search_string), LOWER(EVENTS.ev_name))
   JOIN USERS AS USERS_2
     ON SEARCHES_2.search_user_id = USERS_2.user_id
   WHERE

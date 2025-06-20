@@ -2,7 +2,7 @@ WITH _T0 AS (
   SELECT
     SUM(
       IFF(
-        PART.p_type LIKE 'PROMO%',
+        STARTSWITH(PART.p_type, 'PROMO'),
         LINEITEM.l_extendedprice * (
           1 - LINEITEM.l_discount
         ),
@@ -16,8 +16,7 @@ WITH _T0 AS (
   JOIN TPCH.PART AS PART
     ON LINEITEM.l_partkey = PART.p_partkey
   WHERE
-    DATE_PART(MONTH, LINEITEM.l_shipdate) = 9
-    AND DATE_PART(YEAR, LINEITEM.l_shipdate) = 1995
+    MONTH(LINEITEM.l_shipdate) = 9 AND YEAR(LINEITEM.l_shipdate) = 1995
 )
 SELECT
   (

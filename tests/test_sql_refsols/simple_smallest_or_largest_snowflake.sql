@@ -1,21 +1,29 @@
 SELECT
-  10 AS s1,
-  20 AS s2,
-  0 AS s3,
-  -200 AS s4,
-  NULL AS s5,
-  -0.34 AS s6,
-  CAST('2023-01-01 00:00:00' AS TIMESTAMP) AS s7,
-  '' AS s8,
-  NULL AS s9,
-  20 AS l1,
-  20 AS l2,
-  20 AS l3,
-  300 AS l4,
-  NULL AS l5,
-  100.22 AS l6,
-  CAST('2025-01-01 00:00:00' AS TIMESTAMP) AS l7,
-  'alphabet soup' AS l8,
-  NULL AS l9
+  SMALLEST(20, 10) AS s1,
+  SMALLEST(20, 20) AS s2,
+  SMALLEST(20, 10, 0) AS s3,
+  SMALLEST(20, 10, 10, -1, -2, 100, -200) AS s4,
+  SMALLEST(20, 10, NULL, 100, 200) AS s5,
+  SMALLEST(20.22, 10.22, -0.34) AS s6,
+  SMALLEST(
+    CAST('2025-01-01 00:00:00' AS TIMESTAMP),
+    CAST('2024-01-01 00:00:00' AS TIMESTAMP),
+    CAST('2023-01-01 00:00:00' AS TIMESTAMP)
+  ) AS s7,
+  SMALLEST('', 'alphabet soup', 'Hello World') AS s8,
+  SMALLEST(NULL, 'alphabet soup', 'Hello World') AS s9,
+  LARGEST(20, 10) AS l1,
+  LARGEST(20, 20) AS l2,
+  LARGEST(20, 10, 0) AS l3,
+  LARGEST(20, 10, 10, -1, -2, 100, -200, 300) AS l4,
+  LARGEST(20, 10, NULL, 100, 200) AS l5,
+  LARGEST(20.22, 100.22, -0.34) AS l6,
+  LARGEST(
+    CAST('2025-01-01 00:00:00' AS TIMESTAMP),
+    CAST('2024-01-01 00:00:00' AS TIMESTAMP),
+    CAST('2023-01-01 00:00:00' AS TIMESTAMP)
+  ) AS l7,
+  LARGEST('', 'alphabet soup', 'Hello World') AS l8,
+  LARGEST(NULL, 'alphabet soup', 'Hello World') AS l9
 FROM (VALUES
   (NULL)) AS _Q_0(_COL_0)

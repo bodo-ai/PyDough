@@ -18,7 +18,7 @@ WITH _T1 AS (
   JOIN TPCH.REGION AS REGION
     ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'EUROPE'
   WHERE
-    PART.p_size = 15 AND PART.p_type LIKE '%BRASS'
+    ENDSWITH(PART.p_type, 'BRASS') AND PART.p_size = 15
   QUALIFY
     RANK() OVER (PARTITION BY PARTSUPP.ps_partkey ORDER BY PARTSUPP.ps_supplycost) = 1
 )

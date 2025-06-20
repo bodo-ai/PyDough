@@ -4,31 +4,11 @@ WITH _S0 AS (
     COUNT(sbdpclose) AS EXPR_1,
     MAX(sbdphigh) AS MAX_HIGH,
     MIN(sbdplow) AS MIN_LOW,
-    CONCAT_WS(
-      '-',
-      DATE_PART(YEAR, sbdpdate),
-      CASE
-        WHEN LENGTH(DATE_PART(MONTH, sbdpdate)) >= 2
-        THEN SUBSTRING(DATE_PART(MONTH, sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', DATE_PART(MONTH, sbdpdate)), (
-          2 * -1
-        ))
-      END
-    ) AS MONTH,
+    CONCAT_WS('-', YEAR(sbdpdate), LPAD(MONTH(sbdpdate), 2, '0')) AS MONTH,
     sbdptickerid AS TICKER_ID
   FROM MAIN.SBDAILYPRICE
   GROUP BY
-    CONCAT_WS(
-      '-',
-      DATE_PART(YEAR, sbdpdate),
-      CASE
-        WHEN LENGTH(DATE_PART(MONTH, sbdpdate)) >= 2
-        THEN SUBSTRING(DATE_PART(MONTH, sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', DATE_PART(MONTH, sbdpdate)), (
-          2 * -1
-        ))
-      END
-    ),
+    CONCAT_WS('-', YEAR(sbdpdate), LPAD(MONTH(sbdpdate), 2, '0')),
     sbdptickerid
 ), _T1 AS (
   SELECT

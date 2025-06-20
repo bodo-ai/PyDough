@@ -5,8 +5,8 @@ WITH _T1 AS (
     ANY_VALUE(TIMES.t_start_hour) AS AGG_3
   FROM TIMES AS TIMES
   JOIN SEARCHES AS SEARCHES
-    ON TIMES.t_end_hour > DATE_PART(HOUR, SEARCHES.search_ts)
-    AND TIMES.t_start_hour <= DATE_PART(HOUR, SEARCHES.search_ts)
+    ON TIMES.t_end_hour > HOUR(SEARCHES.search_ts)
+    AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
   GROUP BY
     TIMES.t_name
 ), _T0 AS (

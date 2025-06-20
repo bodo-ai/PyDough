@@ -7,7 +7,7 @@ WITH _T2 AS (
     DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) AS TXN_DAY
   FROM MAIN.SBTRANSACTION
   WHERE
-    DATE_PART(YEAR, sbtxdatetime) = 2023
+    YEAR(sbtxdatetime) = 2023
 ), _T0 AS (
   SELECT
     DATE_TIME
