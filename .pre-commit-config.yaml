@@ -6,8 +6,10 @@ repos:
     rev: v0.11.8
     hooks:
       - id: ruff
-        args: [ --fix, --exit-non-zero-on-fix ]
+        language_version: python3.12
+        args: [ --fix, --exit-non-zero-on-fix]
       - id: ruff-format
+        language_version: python3.12
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: 'v1.15.0'
     hooks:
