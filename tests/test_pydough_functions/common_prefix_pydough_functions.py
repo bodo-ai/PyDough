@@ -233,10 +233,11 @@ def common_prefix_n():
     # the maximum account balance of any of the order's suppliers, and the
     # elements that were for a small part. Only consider orders where there is at
     # least one duplicate supplier nation, and pick the five most recent
-    # qualifying orders, breaking ties by the key.
+    # qualifying orders, breaking ties by the key. Only consider orders
     selected_lines = lines.WHERE((YEAR(ship_date) == 1996) & (MONTH(ship_date) == 11))
     return (
-        orders.CALCULATE(
+        orders.WHERE((YEAR(order_date) == 1996) & (QUARTER(order_date) == 4))
+        .CALCULATE(
             key,
             order_date,
             n_elements=COUNT(selected_lines),
@@ -256,7 +257,8 @@ def common_prefix_o():
     selected_lines = lines.WHERE((YEAR(ship_date) == 1996) & (MONTH(ship_date) == 11))
     small_parts = selected_lines.part.WHERE(STARTSWITH(container, "SM"))
     return (
-        orders.WHERE(HAS(small_parts))
+        orders.WHERE((YEAR(order_date) == 1996) & (QUARTER(order_date) == 4))
+        .WHERE(HAS(small_parts))
         .CALCULATE(
             key,
             order_date,
@@ -339,14 +341,17 @@ def common_prefix_s():
     # their most recent order (breaking ties by order key) and how many total
     # vs unique suppliers were in that order. Keep all such customers who had
     # at least one duplicate supplier in their order, sorted by customer name.
-    most_recent_order = orders.BEST(by=(order_date.DESC(), key.ASC()), per="customers")
+    most_recent_order = orders.WHERE(YEAR(order_date) == 1998).BEST(
+        by=(order_date.DESC(), key.ASC()), per="customers"
+    )
+    selected_lines = most_recent_order.lines.WHERE(YEAR(ship_date) == 1998)
     return (
         customers.WHERE((nation.name == "GERMANY") & (market_segment == "AUTOMOBILE"))
         .CALCULATE(
             name,
             most_recent_order_date=most_recent_order.order_date,
-            most_recent_order_total=COUNT(most_recent_order.lines),
-            most_recent_order_distinct=NDISTINCT(most_recent_order.lines.supplier_key),
+            most_recent_order_total=COUNT(selected_lines),
+            most_recent_order_distinct=NDISTINCT(selected_lines.supplier_key),
         )
         .WHERE(most_recent_order_distinct < most_recent_order_total)
         .ORDER_BY(name.ASC())

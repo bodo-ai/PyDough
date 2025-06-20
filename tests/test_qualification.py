@@ -737,9 +737,11 @@ from tests.testing_utilities import (
   │   └─┬─ SubCollection[nations]
   │     └─┬─ SubCollection[customers]
   │       ├─── SubCollection[orders]
+  │       ├─── Where[YEAR(order_date) == 1992]
   │       ├─── Where[RANKING(by=(order_date.ASC(na_pos='first'), key.ASC(na_pos='first')), levels=3, allow_ties=False) == 1]
   │       └─┬─ Singular
   │         ├─── SubCollection[lines]
+  │         ├─── Where[YEAR(ship_date) == 1992]
   │         ├─── Where[RANKING(by=(quantity.DESC(na_pos='last'), line_number.ASC(na_pos='first')), levels=4, allow_ties=False) == 1]
   │         └─┬─ Singular
   │           └─── SubCollection[part]
