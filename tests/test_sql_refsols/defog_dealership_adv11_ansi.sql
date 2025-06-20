@@ -1,4 +1,4 @@
-WITH _s2 AS (
+WITH _s0 AS (
   SELECT
     SUM(sale_price) AS agg_0,
     car_id
@@ -9,11 +9,11 @@ WITH _s2 AS (
     car_id
 ), _t0 AS (
   SELECT
-    SUM(_s2.agg_0) AS agg_0,
-    SUM(_s1.cost) AS agg_1
-  FROM _s2 AS _s2
-  JOIN main.cars AS _s1
-    ON _s1._id = _s2.car_id
+    SUM(_s0.agg_0) AS agg_0,
+    SUM(cars.cost) AS agg_1
+  FROM _s0 AS _s0
+  JOIN main.cars AS cars
+    ON _s0.car_id = cars._id
 )
 SELECT
   (

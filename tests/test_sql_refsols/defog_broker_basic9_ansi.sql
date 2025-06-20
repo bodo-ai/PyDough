@@ -1,6 +1,6 @@
 SELECT
-  _s0.sbcustid AS _id,
-  _s0.sbcustname AS name
-FROM main.sbcustomer AS _s0
-JOIN main.sbtransaction AS _s1
-  ON _s0.sbcustid = _s1.sbtxcustid
+  sbcustomer.sbcustid AS _id,
+  sbcustomer.sbcustname AS name
+FROM main.sbcustomer AS sbcustomer
+JOIN main.sbtransaction AS sbtransaction
+  ON sbcustomer.sbcustid = sbtransaction.sbtxcustid

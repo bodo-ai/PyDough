@@ -1,22 +1,32 @@
-WITH _t1 AS (
+WITH _s0 AS (
   SELECT
-    SUM(_s0.ps_supplycost * _s0.ps_availqty) AS agg_0
-  FROM tpch.partsupp AS _s0
-  JOIN tpch.supplier AS _s1
-    ON _s0.ps_suppkey = _s1.s_suppkey
-  JOIN tpch.nation AS _s2
-    ON _s1.s_nationkey = _s2.n_nationkey AND _s2.n_name = 'GERMANY'
+    s_suppkey AS key,
+    s_nationkey AS nation_key
+  FROM tpch.supplier
+), _t4 AS (
+  SELECT
+    n_nationkey AS key,
+    n_name AS name
+  FROM tpch.nation
+), _t1 AS (
+  SELECT
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS agg_0
+  FROM tpch.partsupp AS partsupp
+  JOIN _s0 AS _s0
+    ON _s0.key = partsupp.ps_suppkey
+  JOIN _t4 AS _t4
+    ON _s0.nation_key = _t4.key AND _t4.name = 'GERMANY'
 ), _t5 AS (
   SELECT
-    SUM(_s7.ps_supplycost * _s7.ps_availqty) AS agg_1,
-    _s7.ps_partkey AS part_key
-  FROM tpch.partsupp AS _s7
-  JOIN tpch.supplier AS _s8
-    ON _s7.ps_suppkey = _s8.s_suppkey
-  JOIN tpch.nation AS _s9
-    ON _s8.s_nationkey = _s9.n_nationkey AND _s9.n_name = 'GERMANY'
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS agg_1,
+    partsupp.ps_partkey AS part_key
+  FROM tpch.partsupp AS partsupp
+  JOIN _s0 AS _s4
+    ON _s4.key = partsupp.ps_suppkey
+  JOIN _t4 AS _t8
+    ON _s4.nation_key = _t8.key AND _t8.name = 'GERMANY'
   GROUP BY
-    _s7.ps_partkey
+    partsupp.ps_partkey
 )
 SELECT
   _t5.part_key AS PS_PARTKEY,

@@ -1,12 +1,15 @@
+WITH _u_0 AS (
+  SELECT
+    sbtransaction.sbtxcustid AS _u_1
+  FROM main.sbtransaction AS sbtransaction
+  GROUP BY
+    sbtransaction.sbtxcustid
+)
 SELECT
-  _s0.sbcustid AS _id,
-  _s0.sbcustname AS name
-FROM main.sbcustomer AS _s0
+  sbcustomer.sbcustid AS _id,
+  sbcustomer.sbcustname AS name
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM main.sbtransaction AS _s1
-    WHERE
-      _s0.sbcustid = _s1.sbtxcustid
-  )
+  _u_0._u_1 IS NULL

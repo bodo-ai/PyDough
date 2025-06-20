@@ -2,35 +2,35 @@ WITH _t0 AS (
   SELECT
     SUM(
       CASE
-        WHEN _s17.n_name = 'BRAZIL'
-        THEN _s0.l_extendedprice * (
-          1 - _s0.l_discount
+        WHEN nation_2.n_name = 'BRAZIL'
+        THEN lineitem.l_extendedprice * (
+          1 - lineitem.l_discount
         )
         ELSE 0
       END
     ) AS agg_0,
-    SUM(_s0.l_extendedprice * (
-      1 - _s0.l_discount
+    SUM(lineitem.l_extendedprice * (
+      1 - lineitem.l_discount
     )) AS agg_1,
-    EXTRACT(YEAR FROM _s4.o_orderdate) AS o_year
-  FROM tpch.lineitem AS _s0
-  JOIN tpch.part AS _s1
-    ON _s0.l_partkey = _s1.p_partkey AND _s1.p_type = 'ECONOMY ANODIZED STEEL'
-  JOIN tpch.orders AS _s4
-    ON EXTRACT(YEAR FROM _s4.o_orderdate) IN (1995, 1996)
-    AND _s0.l_orderkey = _s4.o_orderkey
-  JOIN tpch.customer AS _s5
-    ON _s4.o_custkey = _s5.c_custkey
-  JOIN tpch.nation AS _s6
-    ON _s5.c_nationkey = _s6.n_nationkey
-  JOIN tpch.region AS _s9
-    ON _s6.n_regionkey = _s9.r_regionkey AND _s9.r_name = 'AMERICA'
-  JOIN tpch.supplier AS _s16
-    ON _s0.l_suppkey = _s16.s_suppkey
-  JOIN tpch.nation AS _s17
-    ON _s16.s_nationkey = _s17.n_nationkey
+    EXTRACT(YEAR FROM orders.o_orderdate) AS o_year
+  FROM tpch.lineitem AS lineitem
+  JOIN tpch.part AS part
+    ON lineitem.l_partkey = part.p_partkey AND part.p_type = 'ECONOMY ANODIZED STEEL'
+  JOIN tpch.orders AS orders
+    ON EXTRACT(YEAR FROM orders.o_orderdate) IN (1995, 1996)
+    AND lineitem.l_orderkey = orders.o_orderkey
+  JOIN tpch.customer AS customer
+    ON customer.c_custkey = orders.o_custkey
+  JOIN tpch.nation AS nation
+    ON customer.c_nationkey = nation.n_nationkey
+  JOIN tpch.region AS region
+    ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
+  JOIN tpch.supplier AS supplier
+    ON lineitem.l_suppkey = supplier.s_suppkey
+  JOIN tpch.nation AS nation_2
+    ON nation_2.n_nationkey = supplier.s_nationkey
   GROUP BY
-    EXTRACT(YEAR FROM _s4.o_orderdate)
+    EXTRACT(YEAR FROM orders.o_orderdate)
 )
 SELECT
   o_year AS O_YEAR,

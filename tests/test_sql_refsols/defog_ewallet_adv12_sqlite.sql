@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     SUM(amount) AS agg_0,
     coupon_id
@@ -7,10 +7,10 @@ WITH _s3 AS (
     coupon_id
 )
 SELECT
-  _s0.cid AS coupon_id,
-  COALESCE(_s3.agg_0, 0) AS total_discount
-FROM main.coupons AS _s0
-LEFT JOIN _s3 AS _s3
-  ON _s0.cid = _s3.coupon_id
+  coupons.cid AS coupon_id,
+  COALESCE(_s1.agg_0, 0) AS total_discount
+FROM main.coupons AS coupons
+LEFT JOIN _s1 AS _s1
+  ON _s1.coupon_id = coupons.cid
 WHERE
-  _s0.merchant_id = '1'
+  coupons.merchant_id = '1'

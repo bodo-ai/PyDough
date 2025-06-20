@@ -1,28 +1,28 @@
-WITH _s12 AS (
+WITH _s7 AS (
   SELECT
     COUNT(*) AS agg_0,
-    _s7.in_device_id AS device_id
-  FROM main.incidents AS _s7
-  JOIN main.errors AS _s8
-    ON _s7.in_error_id = _s8.er_id AND _s8.er_name = 'Battery Failure'
+    incidents.in_device_id AS device_id
+  FROM main.incidents AS incidents
+  JOIN main.errors AS errors
+    ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
   GROUP BY
-    _s7.in_device_id
+    incidents.in_device_id
 ), _t1 AS (
   SELECT
-    SUM(COALESCE(_s12.agg_0, 0)) AS agg_0,
+    SUM(COALESCE(_s7.agg_0, 0)) AS agg_0,
     COUNT(*) AS agg_1,
-    _s0.co_name AS country_name,
-    _s4.pr_name AS product_name
-  FROM main.countries AS _s0
-  JOIN main.devices AS _s1
-    ON _s0.co_id = _s1.de_production_country_id
-  JOIN main.products AS _s4
-    ON _s1.de_product_id = _s4.pr_id
-  LEFT JOIN _s12 AS _s12
-    ON _s1.de_id = _s12.device_id
+    countries.co_name AS country_name,
+    products.pr_name AS product_name
+  FROM main.countries AS countries
+  JOIN main.devices AS devices
+    ON countries.co_id = devices.de_production_country_id
+  JOIN main.products AS products
+    ON devices.de_product_id = products.pr_id
+  LEFT JOIN _s7 AS _s7
+    ON _s7.device_id = devices.de_id
   GROUP BY
-    _s0.co_name,
-    _s4.pr_name
+    countries.co_name,
+    products.pr_name
 )
 SELECT
   country_name,

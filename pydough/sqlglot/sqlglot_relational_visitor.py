@@ -9,7 +9,7 @@ from collections import defaultdict
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier, Select, Subquery, Table, TableAlias, values
+from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
@@ -372,10 +372,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             Select()
             .select(*exprs)
             .from_(
-                Table(
-                    this=scan.table_name,
-                    alias=TableAlias(this=self._generate_table_alias()),
-                )
+                # Table(
+                # this=
+                scan.table_name,
+                # alias=TableAlias(this=self._generate_table_alias()),
+                # )
             )
         )
         self._stack.append(query)

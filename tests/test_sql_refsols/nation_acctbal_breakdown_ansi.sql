@@ -1,4 +1,4 @@
-WITH _s6 AS (
+WITH _s3 AS (
   SELECT
     MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS median_black_acctbal,
     MEDIAN(c_acctbal) AS median_overall_acctbal,
@@ -11,16 +11,16 @@ WITH _s6 AS (
     c_nationkey
 )
 SELECT
-  _s0.n_name AS nation_name,
-  _s6.n_red_acctbal,
-  _s6.n_black_acctbal,
-  _s6.median_red_acctbal,
-  _s6.median_black_acctbal,
-  _s6.median_overall_acctbal
-FROM tpch.nation AS _s0
-JOIN tpch.region AS _s1
-  ON _s0.n_regionkey = _s1.r_regionkey AND _s1.r_name = 'AMERICA'
-JOIN _s6 AS _s6
-  ON _s0.n_nationkey = _s6.nation_key
+  nation.n_name AS nation_name,
+  _s3.n_red_acctbal,
+  _s3.n_black_acctbal,
+  _s3.median_red_acctbal,
+  _s3.median_black_acctbal,
+  _s3.median_overall_acctbal
+FROM tpch.nation AS nation
+JOIN tpch.region AS region
+  ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
+JOIN _s3 AS _s3
+  ON _s3.nation_key = nation.n_nationkey
 ORDER BY
   nation_name

@@ -21,6 +21,7 @@ from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.pushdown_projections import pushdown_projections
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.simplify import simplify
+from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
@@ -112,7 +113,7 @@ def apply_sqlglot_optimizer(
     # Convert scalar subqueries into cross joins.
     # Convert correlated or vectorized subqueries into a group by so it is not
     # a many to many left join.
-    # glot_expr = unnest_subqueries(glot_expr)
+    glot_expr = unnest_subqueries(glot_expr)
 
     # TODO: (gh #313) RULE SKIPPED - buggy because it pushes filters underneath
     # limit clauses, which is not correct.

@@ -1,21 +1,22 @@
 WITH _t0 AS (
   SELECT
-    COUNT(DISTINCT _s0.ps_suppkey) AS supplier_count,
-    _s4.p_brand,
-    _s4.p_size,
-    _s4.p_type
-  FROM tpch.partsupp AS _s0
-  JOIN tpch.supplier AS _s1
-    ON NOT _s1.s_comment LIKE '%Customer%Complaints%' AND _s0.ps_suppkey = _s1.s_suppkey
-  JOIN tpch.part AS _s4
-    ON NOT _s4.p_type LIKE 'MEDIUM POLISHED%%'
-    AND _s0.ps_partkey = _s4.p_partkey
-    AND _s4.p_brand <> 'BRAND#45'
-    AND _s4.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
+    COUNT(DISTINCT partsupp.ps_suppkey) AS supplier_count,
+    part.p_brand,
+    part.p_size,
+    part.p_type
+  FROM tpch.partsupp AS partsupp
+  JOIN tpch.supplier AS supplier
+    ON NOT supplier.s_comment LIKE '%Customer%Complaints%'
+    AND partsupp.ps_suppkey = supplier.s_suppkey
+  JOIN tpch.part AS part
+    ON NOT part.p_type LIKE 'MEDIUM POLISHED%%'
+    AND part.p_brand <> 'BRAND#45'
+    AND part.p_partkey = partsupp.ps_partkey
+    AND part.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
   GROUP BY
-    _s4.p_brand,
-    _s4.p_size,
-    _s4.p_type
+    part.p_brand,
+    part.p_size,
+    part.p_type
 )
 SELECT
   p_brand AS P_BRAND,

@@ -1,16 +1,16 @@
 WITH _t1 AS (
   SELECT
     DATEDIFF(
-      _s1.ev_dt,
-      LAG(_s1.ev_dt, 1) OVER (PARTITION BY _s0.er_name ORDER BY _s1.ev_dt NULLS LAST),
+      events.ev_dt,
+      LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt NULLS LAST),
       DAY
     ) AS day_gap,
-    _s0.er_name AS name,
-    _s0.er_start_year AS start_year
-  FROM eras AS _s0
-  JOIN events AS _s1
-    ON _s0.er_end_year > EXTRACT(YEAR FROM _s1.ev_dt)
-    AND _s0.er_start_year <= EXTRACT(YEAR FROM _s1.ev_dt)
+    eras.er_name AS name,
+    eras.er_start_year AS start_year
+  FROM eras AS eras
+  JOIN events AS events
+    ON eras.er_end_year > EXTRACT(YEAR FROM events.ev_dt)
+    AND eras.er_start_year <= EXTRACT(YEAR FROM events.ev_dt)
 ), _t0 AS (
   SELECT
     ANY_VALUE(start_year) AS agg_3,

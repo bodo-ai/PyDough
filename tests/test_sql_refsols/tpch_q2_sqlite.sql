@@ -1,25 +1,25 @@
 WITH _t AS (
   SELECT
-    _s4.s_comment AS comment_8,
-    _s4.s_name AS name_10,
-    _s0.p_mfgr,
-    _s0.p_partkey,
-    _s4.s_acctbal AS account_balance,
-    _s4.s_address AS address,
-    _s5.n_name AS expr_8,
-    _s4.s_phone AS phone,
-    RANK() OVER (PARTITION BY _s1.ps_partkey ORDER BY _s1.ps_supplycost) AS _w
-  FROM tpch.part AS _s0
-  JOIN tpch.partsupp AS _s1
-    ON _s0.p_partkey = _s1.ps_partkey
-  JOIN tpch.supplier AS _s4
-    ON _s1.ps_suppkey = _s4.s_suppkey
-  JOIN tpch.nation AS _s5
-    ON _s4.s_nationkey = _s5.n_nationkey
-  JOIN tpch.region AS _s6
-    ON _s5.n_regionkey = _s6.r_regionkey AND _s6.r_name = 'EUROPE'
+    supplier.s_comment AS comment_8,
+    supplier.s_name AS name_10,
+    part.p_mfgr,
+    part.p_partkey,
+    supplier.s_acctbal AS account_balance,
+    supplier.s_address AS address,
+    nation.n_name AS expr_8,
+    supplier.s_phone AS phone,
+    RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost) AS _w
+  FROM tpch.part AS part
+  JOIN tpch.partsupp AS partsupp
+    ON part.p_partkey = partsupp.ps_partkey
+  JOIN tpch.supplier AS supplier
+    ON partsupp.ps_suppkey = supplier.s_suppkey
+  JOIN tpch.nation AS nation
+    ON nation.n_nationkey = supplier.s_nationkey
+  JOIN tpch.region AS region
+    ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
   WHERE
-    _s0.p_size = 15 AND _s0.p_type LIKE '%BRASS'
+    part.p_size = 15 AND part.p_type LIKE '%BRASS'
 )
 SELECT
   account_balance AS S_ACCTBAL,

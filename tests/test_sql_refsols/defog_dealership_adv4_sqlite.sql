@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     COUNT(*) AS agg_0,
     SUM(sale_price) AS agg_1,
@@ -10,16 +10,16 @@ WITH _s3 AS (
     car_id
 )
 SELECT
-  COALESCE(_s3.agg_0, 0) AS num_sales,
+  COALESCE(_s1.agg_0, 0) AS num_sales,
   CASE
     WHEN (
-      NOT _s3.agg_0 IS NULL AND _s3.agg_0 > 0
+      NOT _s1.agg_0 IS NULL AND _s1.agg_0 > 0
     )
-    THEN COALESCE(_s3.agg_1, 0)
+    THEN COALESCE(_s1.agg_1, 0)
     ELSE NULL
   END AS total_revenue
-FROM main.cars AS _s0
-LEFT JOIN _s3 AS _s3
-  ON _s0._id = _s3.car_id
+FROM main.cars AS cars
+LEFT JOIN _s1 AS _s1
+  ON _s1.car_id = cars._id
 WHERE
-  LOWER(_s0.make) LIKE '%toyota%'
+  LOWER(cars.make) LIKE '%toyota%'

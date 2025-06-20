@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     COUNT(*) AS agg_2,
     SUM(sbtxamount) AS agg_5,
@@ -10,14 +10,14 @@ WITH _s3 AS (
     sbtxcustid
 ), _t0 AS (
   SELECT
-    SUM(_s3.agg_2) AS agg_4,
-    SUM(_s3.agg_5) AS agg_7,
-    _s0.sbcustcountry AS country
-  FROM main.sbcustomer AS _s0
-  LEFT JOIN _s3 AS _s3
-    ON _s0.sbcustid = _s3.customer_id
+    SUM(_s1.agg_2) AS agg_4,
+    SUM(_s1.agg_5) AS agg_7,
+    sbcustomer.sbcustcountry AS country
+  FROM main.sbcustomer AS sbcustomer
+  LEFT JOIN _s1 AS _s1
+    ON _s1.customer_id = sbcustomer.sbcustid
   GROUP BY
-    _s0.sbcustcountry
+    sbcustomer.sbcustcountry
 )
 SELECT
   country,

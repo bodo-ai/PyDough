@@ -1,9 +1,10 @@
 SELECT
-  MIN(_s0.sbdpclose) AS lowest_price
-FROM main.sbdailyprice AS _s0
-JOIN main.sbticker AS _s1
-  ON _s0.sbdptickerid = _s1.sbtickerid AND _s1.sbtickersymbol = 'VTI'
+  MIN(sbdailyprice.sbdpclose) AS lowest_price
+FROM main.sbdailyprice AS sbdailyprice
+JOIN main.sbticker AS sbticker
+  ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
+  AND sbticker.sbtickersymbol = 'VTI'
 WHERE
   CAST((
-    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(_s0.sbdpdate, 'start of day'))
+    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sbdailyprice.sbdpdate, 'start of day'))
   ) AS INTEGER) <= 7

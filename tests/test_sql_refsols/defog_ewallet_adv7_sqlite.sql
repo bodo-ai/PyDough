@@ -6,8 +6,8 @@ WITH _t AS (
   FROM main.user_setting_snapshot
 )
 SELECT
-  _s0.uid,
+  users.uid,
   _t.marketing_opt_in
-FROM main.users AS _s0
+FROM main.users AS users
 JOIN _t AS _t
-  ON _s0.uid = _t.user_id AND _t._w = 1
+  ON _t._w = 1 AND _t.user_id = users.uid

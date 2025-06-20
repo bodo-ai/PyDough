@@ -1,14 +1,17 @@
+WITH _u_0 AS (
+  SELECT
+    sales.car_id AS _u_1
+  FROM main.sales AS sales
+  GROUP BY
+    sales.car_id
+)
 SELECT
-  _s0._id AS _id,
-  _s0.make AS make,
-  _s0.model AS model,
-  _s0.year AS year
-FROM main.cars AS _s0
+  cars._id AS _id,
+  cars.make AS make,
+  cars.model AS model,
+  cars.year AS year
+FROM main.cars AS cars
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = cars._id
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM main.sales AS _s1
-    WHERE
-      _s0._id = _s1.car_id
-  )
+  _u_0._u_1 IS NULL

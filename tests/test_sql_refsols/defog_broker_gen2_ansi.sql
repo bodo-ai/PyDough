@@ -1,6 +1,6 @@
 SELECT
-  COUNT(_s0.sbtxcustid) AS transaction_count
-FROM main.sbtransaction AS _s0
-JOIN main.sbcustomer AS _s1
-  ON _s0.sbtxcustid = _s1.sbcustid
-  AND _s1.sbcustjoindate >= DATE_ADD(CURRENT_TIMESTAMP(), -70, 'DAY')
+  COUNT(sbtransaction.sbtxcustid) AS transaction_count
+FROM main.sbtransaction AS sbtransaction
+JOIN main.sbcustomer AS sbcustomer
+  ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
+  AND sbcustomer.sbcustjoindate >= DATE_ADD(CURRENT_TIMESTAMP(), -70, 'DAY')

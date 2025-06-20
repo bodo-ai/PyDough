@@ -1,5 +1,6 @@
 SELECT
-  _s0.mid AS merchant
-FROM main.merchants AS _s0
-JOIN main.wallet_transactions_daily AS _s1
-  ON _s0.mid = _s1.receiver_id AND _s1.receiver_type = 1
+  merchants.mid AS merchant
+FROM main.merchants AS merchants
+JOIN main.wallet_transactions_daily AS wallet_transactions_daily
+  ON merchants.mid = wallet_transactions_daily.receiver_id
+  AND wallet_transactions_daily.receiver_type = 1

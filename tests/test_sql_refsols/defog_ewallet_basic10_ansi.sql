@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     SUM(amount) AS agg_0,
     COUNT(*) AS agg_1,
@@ -11,12 +11,12 @@ WITH _s3 AS (
     receiver_id
 )
 SELECT
-  _s0.name AS merchant_name,
-  COALESCE(_s3.agg_1, 0) AS total_transactions,
-  COALESCE(_s3.agg_0, 0) AS total_amount
-FROM main.merchants AS _s0
-LEFT JOIN _s3 AS _s3
-  ON _s0.mid = _s3.receiver_id
+  merchants.name AS merchant_name,
+  COALESCE(_s1.agg_1, 0) AS total_transactions,
+  COALESCE(_s1.agg_0, 0) AS total_amount
+FROM main.merchants AS merchants
+LEFT JOIN _s1 AS _s1
+  ON _s1.receiver_id = merchants.mid
 ORDER BY
   total_amount DESC
 LIMIT 2

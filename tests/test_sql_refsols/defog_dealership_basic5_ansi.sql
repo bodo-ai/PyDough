@@ -10,13 +10,13 @@ WITH _t0 AS (
     salesperson_id
 )
 SELECT
-  _s0.first_name,
-  _s0.last_name,
+  salespersons.first_name,
+  salespersons.last_name,
   _t0.agg_1 AS total_sales,
   COALESCE(_t0.agg_0, 0) AS total_revenue
-FROM main.salespersons AS _s0
+FROM main.salespersons AS salespersons
 JOIN _t0 AS _t0
-  ON _s0._id = _t0.salesperson_id
+  ON _t0.salesperson_id = salespersons._id
 ORDER BY
   total_sales DESC
 LIMIT 5

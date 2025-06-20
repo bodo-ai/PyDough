@@ -1,54 +1,66 @@
-WITH _t4 AS (
+WITH _t7 AS (
   SELECT
-    MAX(_s4.l_linenumber) AS agg_13,
-    MAX(_s4.l_orderkey) AS agg_14,
-    MAX(_s4.l_suppkey) AS agg_24,
-    MAX(_s5.o_orderkey) AS agg_3,
-    MAX(_s5.o_orderstatus) AS agg_6
-  FROM tpch.lineitem AS _s4
-  JOIN tpch.orders AS _s5
-    ON _s4.l_orderkey = _s5.o_orderkey
-  JOIN tpch.lineitem AS _s8
-    ON _s5.o_orderkey = _s8.l_orderkey
+    lineitem.l_commitdate AS commit_date,
+    lineitem.l_linenumber AS line_number,
+    lineitem.l_orderkey AS order_key,
+    lineitem.l_receiptdate AS receipt_date,
+    lineitem.l_suppkey AS supplier_key
+  FROM tpch.lineitem AS lineitem
+), _t4 AS (
+  SELECT
+    MAX(_t7.line_number) AS agg_13,
+    MAX(_t7.order_key) AS agg_14,
+    MAX(_t7.supplier_key) AS agg_24,
+    MAX(orders.o_orderkey) AS agg_3,
+    MAX(orders.o_orderstatus) AS agg_6
+  FROM _t7 AS _t7
+  JOIN tpch.orders AS orders
+    ON _t7.order_key = orders.o_orderkey
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_orderkey = orders.o_orderkey
   WHERE
-    _s4.l_commitdate < _s4.l_receiptdate AND _s4.l_suppkey <> _s8.l_suppkey
+    _t7.commit_date < _t7.receipt_date AND _t7.supplier_key <> lineitem.l_suppkey
   GROUP BY
-    _s5.o_orderkey,
-    _s4.l_linenumber,
-    _s4.l_orderkey
-), _s21 AS (
+    orders.o_orderkey,
+    _t7.line_number,
+    _t7.order_key
+), _u_0 AS (
+  SELECT
+    _t9.line_number AS _u_1,
+    _t9.order_key AS _u_2,
+    orders.o_orderkey AS _u_3
+  FROM _t7 AS _t9
+  JOIN tpch.orders AS orders
+    ON _t9.order_key = orders.o_orderkey
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_commitdate < lineitem.l_receiptdate
+    AND lineitem.l_orderkey = orders.o_orderkey
+  WHERE
+    _t9.commit_date < _t9.receipt_date AND _t9.supplier_key <> lineitem.l_suppkey
+  GROUP BY
+    _t9.line_number,
+    _t9.order_key,
+    orders.o_orderkey
+), _s13 AS (
   SELECT
     COUNT(*) AS agg_0,
     _t4.agg_24 AS agg_24
   FROM _t4 AS _t4
+  LEFT JOIN _u_0 AS _u_0
+    ON _t4.agg_13 = _u_0._u_1 AND _t4.agg_14 = _u_0._u_2 AND _t4.agg_3 = _u_0._u_3
   WHERE
-    NOT EXISTS(
-      SELECT
-        1 AS "1"
-      FROM tpch.lineitem AS _s11
-      JOIN tpch.orders AS _s12
-        ON _s11.l_orderkey = _s12.o_orderkey
-      JOIN tpch.lineitem AS _s15
-        ON _s12.o_orderkey = _s15.l_orderkey AND _s15.l_commitdate < _s15.l_receiptdate
-      WHERE
-        _s11.l_commitdate < _s11.l_receiptdate
-        AND _s11.l_linenumber = _t4.agg_13
-        AND _s11.l_orderkey = _t4.agg_14
-        AND _s11.l_suppkey <> _s15.l_suppkey
-        AND _s12.o_orderkey = _t4.agg_3
-    )
-    AND _t4.agg_6 = 'F'
+    _t4.agg_6 = 'F' AND _u_0._u_1 IS NULL
   GROUP BY
     _t4.agg_24
 )
 SELECT
-  _s0.s_name AS S_NAME,
-  COALESCE(_s21.agg_0, 0) AS NUMWAIT
-FROM tpch.supplier AS _s0
-JOIN tpch.nation AS _s1
-  ON _s0.s_nationkey = _s1.n_nationkey AND _s1.n_name = 'SAUDI ARABIA'
-LEFT JOIN _s21 AS _s21
-  ON _s0.s_suppkey = _s21.agg_24
+  supplier.s_name AS S_NAME,
+  COALESCE(_s13.agg_0, 0) AS NUMWAIT
+FROM tpch.supplier AS supplier
+JOIN tpch.nation AS nation
+  ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
+LEFT JOIN _s13 AS _s13
+  ON _s13.agg_24 = supplier.s_suppkey
 ORDER BY
   numwait DESC,
   s_name

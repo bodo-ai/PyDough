@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     COUNT(*) AS total_transactions,
     sender_id
@@ -9,8 +9,8 @@ WITH _s3 AS (
     sender_id
 )
 SELECT
-  _s0.uid AS user_id,
-  _s3.total_transactions
-FROM main.users AS _s0
-JOIN _s3 AS _s3
-  ON _s0.uid = _s3.sender_id
+  users.uid AS user_id,
+  _s1.total_transactions
+FROM main.users AS users
+JOIN _s1 AS _s1
+  ON _s1.sender_id = users.uid

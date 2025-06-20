@@ -1,17 +1,23 @@
 WITH _t0 AS (
   SELECT
-    SUM(IIF(_s1.p_type LIKE 'PROMO%', _s0.l_extendedprice * (
-      1 - _s0.l_discount
-    ), 0)) AS agg_0,
-    SUM(_s0.l_extendedprice * (
-      1 - _s0.l_discount
+    SUM(
+      IIF(
+        part.p_type LIKE 'PROMO%',
+        lineitem.l_extendedprice * (
+          1 - lineitem.l_discount
+        ),
+        0
+      )
+    ) AS agg_0,
+    SUM(lineitem.l_extendedprice * (
+      1 - lineitem.l_discount
     )) AS agg_1
-  FROM tpch.lineitem AS _s0
-  JOIN tpch.part AS _s1
-    ON _s0.l_partkey = _s1.p_partkey
+  FROM tpch.lineitem AS lineitem
+  JOIN tpch.part AS part
+    ON lineitem.l_partkey = part.p_partkey
   WHERE
-    CAST(STRFTIME('%Y', _s0.l_shipdate) AS INTEGER) = 1995
-    AND CAST(STRFTIME('%m', _s0.l_shipdate) AS INTEGER) = 9
+    CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1995
+    AND CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) = 9
 )
 SELECT
   CAST((

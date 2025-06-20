@@ -1,19 +1,19 @@
 WITH _t1 AS (
   SELECT
     CAST((
-      JULIANDAY(DATE(_s1.ev_dt, 'start of day')) - JULIANDAY(
+      JULIANDAY(DATE(events.ev_dt, 'start of day')) - JULIANDAY(
         DATE(
-          LAG(_s1.ev_dt, 1) OVER (PARTITION BY _s0.er_name ORDER BY _s1.ev_dt),
+          LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt),
           'start of day'
         )
       )
     ) AS INTEGER) AS day_gap,
-    _s0.er_name AS name,
-    _s0.er_start_year AS start_year
-  FROM eras AS _s0
-  JOIN events AS _s1
-    ON _s0.er_end_year > CAST(STRFTIME('%Y', _s1.ev_dt) AS INTEGER)
-    AND _s0.er_start_year <= CAST(STRFTIME('%Y', _s1.ev_dt) AS INTEGER)
+    eras.er_name AS name,
+    eras.er_start_year AS start_year
+  FROM eras AS eras
+  JOIN events AS events
+    ON eras.er_end_year > CAST(STRFTIME('%Y', events.ev_dt) AS INTEGER)
+    AND eras.er_start_year <= CAST(STRFTIME('%Y', events.ev_dt) AS INTEGER)
 ), _t0 AS (
   SELECT
     MAX(start_year) AS agg_3,

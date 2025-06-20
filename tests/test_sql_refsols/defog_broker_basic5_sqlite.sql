@@ -1,11 +1,16 @@
+WITH _u_0 AS (
+  SELECT
+    sbtransaction.sbtxcustid AS _u_1
+  FROM main.sbtransaction AS sbtransaction
+  WHERE
+    sbtransaction.sbtxtype = 'buy'
+  GROUP BY
+    sbtransaction.sbtxcustid
+)
 SELECT
-  _s0.sbcustid AS _id
-FROM main.sbcustomer AS _s0
+  sbcustomer.sbcustid AS _id
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE
-  EXISTS(
-    SELECT
-      1 AS "1"
-    FROM main.sbtransaction AS _s1
-    WHERE
-      _s0.sbcustid = _s1.sbtxcustid AND _s1.sbtxtype = 'buy'
-  )
+  NOT _u_0._u_1 IS NULL

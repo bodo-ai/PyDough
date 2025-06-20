@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     SUM(sbtxamount) AS agg_0,
     sbtxcustid AS customer_id
@@ -7,11 +7,11 @@ WITH _s3 AS (
     sbtxcustid
 )
 SELECT
-  _s0.sbcustname AS name,
-  COALESCE(_s3.agg_0, 0) AS total_amount
-FROM main.sbcustomer AS _s0
-LEFT JOIN _s3 AS _s3
-  ON _s0.sbcustid = _s3.customer_id
+  sbcustomer.sbcustname AS name,
+  COALESCE(_s1.agg_0, 0) AS total_amount
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.customer_id = sbcustomer.sbcustid
 ORDER BY
   total_amount DESC
 LIMIT 5

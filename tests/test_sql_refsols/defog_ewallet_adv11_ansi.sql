@@ -9,10 +9,10 @@ WITH _t0 AS (
     user_id
 )
 SELECT
-  _s0.uid,
+  users.uid,
   COALESCE(_t0.agg_0, 0) AS total_duration
-FROM main.users AS _s0
+FROM main.users AS users
 JOIN _t0 AS _t0
-  ON _s0.uid = _t0.user_id
+  ON _t0.user_id = users.uid
 ORDER BY
   total_duration DESC

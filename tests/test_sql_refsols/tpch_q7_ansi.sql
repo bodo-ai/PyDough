@@ -1,40 +1,45 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
-    SUM(_s0.l_extendedprice * (
-      1 - _s0.l_discount
+    n_nationkey AS key,
+    n_name AS name
+  FROM tpch.nation
+), _t1 AS (
+  SELECT
+    SUM(lineitem.l_extendedprice * (
+      1 - lineitem.l_discount
     )) AS agg_0,
-    _s11.n_name AS cust_nation,
-    EXTRACT(YEAR FROM _s0.l_shipdate) AS l_year,
-    _s2.n_name AS supp_nation
-  FROM tpch.lineitem AS _s0
-  JOIN tpch.supplier AS _s1
-    ON _s0.l_suppkey = _s1.s_suppkey
-  JOIN tpch.nation AS _s2
-    ON _s1.s_nationkey = _s2.n_nationkey
-  JOIN tpch.orders AS _s7
-    ON _s0.l_orderkey = _s7.o_orderkey
-  JOIN tpch.customer AS _s8
-    ON _s7.o_custkey = _s8.c_custkey
-  JOIN tpch.nation AS _s11
-    ON _s11.n_nationkey = _s8.c_nationkey
+    _s7.name AS cust_nation,
+    EXTRACT(YEAR FROM lineitem.l_shipdate) AS l_year,
+    _s1.name AS supp_nation
+  FROM tpch.lineitem AS lineitem
+  JOIN tpch.supplier AS supplier
+    ON lineitem.l_suppkey = supplier.s_suppkey
+  JOIN _s1 AS _s1
+    ON _s1.key = supplier.s_nationkey
+  JOIN tpch.orders AS orders
+    ON lineitem.l_orderkey = orders.o_orderkey
+  JOIN tpch.customer AS customer
+    ON customer.c_custkey = orders.o_custkey
+  JOIN _s1 AS _s7
+    ON _s7.key = customer.c_nationkey
   WHERE
-    EXTRACT(YEAR FROM _s0.l_shipdate) IN (1995, 1996)
+    EXTRACT(YEAR FROM lineitem.l_shipdate) IN (1995, 1996)
     AND (
-      _s11.n_name = 'FRANCE' OR _s11.n_name = 'GERMANY'
+      _s1.name = 'FRANCE' OR _s1.name = 'GERMANY'
     )
     AND (
-      _s11.n_name = 'FRANCE' OR _s2.n_name = 'FRANCE'
+      _s1.name = 'FRANCE' OR _s7.name = 'FRANCE'
     )
     AND (
-      _s11.n_name = 'GERMANY' OR _s2.n_name = 'GERMANY'
+      _s1.name = 'GERMANY' OR _s7.name = 'GERMANY'
     )
     AND (
-      _s2.n_name = 'FRANCE' OR _s2.n_name = 'GERMANY'
+      _s7.name = 'FRANCE' OR _s7.name = 'GERMANY'
     )
   GROUP BY
-    _s11.n_name,
-    EXTRACT(YEAR FROM _s0.l_shipdate),
-    _s2.n_name
+    _s7.name,
+    EXTRACT(YEAR FROM lineitem.l_shipdate),
+    _s1.name
 )
 SELECT
   supp_nation AS SUPP_NATION,

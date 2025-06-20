@@ -1,20 +1,20 @@
 WITH _t1 AS (
   SELECT
-    SUM(_s1.o_orderpriority IN ('1-URGENT', '2-HIGH')) AS agg_0,
-    SUM(NOT _s1.o_orderpriority IN ('1-URGENT', '2-HIGH')) AS agg_1,
-    _s0.l_shipmode AS ship_mode
-  FROM tpch.lineitem AS _s0
-  JOIN tpch.orders AS _s1
-    ON _s0.l_orderkey = _s1.o_orderkey
+    SUM(orders.o_orderpriority IN ('1-URGENT', '2-HIGH')) AS agg_0,
+    SUM(NOT orders.o_orderpriority IN ('1-URGENT', '2-HIGH')) AS agg_1,
+    lineitem.l_shipmode AS ship_mode
+  FROM tpch.lineitem AS lineitem
+  JOIN tpch.orders AS orders
+    ON lineitem.l_orderkey = orders.o_orderkey
   WHERE
-    CAST(STRFTIME('%Y', _s0.l_receiptdate) AS INTEGER) = 1994
-    AND _s0.l_commitdate < _s0.l_receiptdate
-    AND _s0.l_commitdate > _s0.l_shipdate
+    CAST(STRFTIME('%Y', lineitem.l_receiptdate) AS INTEGER) = 1994
+    AND lineitem.l_commitdate < lineitem.l_receiptdate
+    AND lineitem.l_commitdate > lineitem.l_shipdate
     AND (
-      _s0.l_shipmode = 'MAIL' OR _s0.l_shipmode = 'SHIP'
+      lineitem.l_shipmode = 'MAIL' OR lineitem.l_shipmode = 'SHIP'
     )
   GROUP BY
-    _s0.l_shipmode
+    lineitem.l_shipmode
 )
 SELECT
   ship_mode AS L_SHIPMODE,

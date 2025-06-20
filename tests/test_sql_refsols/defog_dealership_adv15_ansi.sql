@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     AVG(sale_price) AS agg_0,
     salesperson_id
@@ -7,12 +7,12 @@ WITH _s3 AS (
     salesperson_id
 )
 SELECT
-  _s0.first_name,
-  _s0.last_name,
-  _s3.agg_0 AS ASP
-FROM main.salespersons AS _s0
-LEFT JOIN _s3 AS _s3
-  ON _s0._id = _s3.salesperson_id
+  salespersons.first_name,
+  salespersons.last_name,
+  _s1.agg_0 AS ASP
+FROM main.salespersons AS salespersons
+LEFT JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
   asp DESC
 LIMIT 3

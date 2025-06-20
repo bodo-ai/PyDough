@@ -1,4 +1,4 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     AVG(sale_price) AS agg_0,
     car_id
@@ -7,14 +7,14 @@ WITH _s3 AS (
     car_id
 )
 SELECT
-  _s0.make,
-  _s0.model,
-  _s0.year,
-  _s0.color,
-  _s0.vin_number,
-  _s3.agg_0 AS avg_sale_price
-FROM main.cars AS _s0
-LEFT JOIN _s3 AS _s3
-  ON _s0._id = _s3.car_id
+  cars.make,
+  cars.model,
+  cars.year,
+  cars.color,
+  cars.vin_number,
+  _s1.agg_0 AS avg_sale_price
+FROM main.cars AS cars
+LEFT JOIN _s1 AS _s1
+  ON _s1.car_id = cars._id
 WHERE
-  LOWER(_s0.make) LIKE '%fords%' OR LOWER(_s0.model) LIKE '%mustang%'
+  LOWER(cars.make) LIKE '%fords%' OR LOWER(cars.model) LIKE '%mustang%'

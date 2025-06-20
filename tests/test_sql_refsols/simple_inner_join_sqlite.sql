@@ -1,6 +1,6 @@
 SELECT
-  _s0.a,
-  _s1.b
-FROM table AS _s0
-JOIN table AS _s1
-  ON _s0.a = _s1.a
+  table.a,
+  table_2.b
+FROM table AS table
+JOIN table AS table_2
+  ON table.a = table_2.a

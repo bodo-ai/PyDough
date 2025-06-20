@@ -4,29 +4,30 @@ WITH _t0 AS (
     SUM(
       (
         (
-          CAST(STRFTIME('%w', _s0.sbtxdatetime) AS INTEGER) + 6
+          CAST(STRFTIME('%w', sbtransaction.sbtxdatetime) AS INTEGER) + 6
         ) % 7
       ) IN (5, 6)
     ) AS agg_1,
     DATE(
-      _s0.sbtxdatetime,
+      sbtransaction.sbtxdatetime,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(_s0.sbtxdatetime)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     ) AS week
-  FROM main.sbtransaction AS _s0
-  JOIN main.sbticker AS _s1
-    ON _s0.sbtxtickerid = _s1.sbtickerid AND _s1.sbtickertype = 'stock'
+  FROM main.sbtransaction AS sbtransaction
+  JOIN main.sbticker AS sbticker
+    ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
+    AND sbticker.sbtickertype = 'stock'
   WHERE
-    _s0.sbtxdatetime < DATE(
+    sbtransaction.sbtxdatetime < DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
-    AND _s0.sbtxdatetime >= DATE(
+    AND sbtransaction.sbtxdatetime >= DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
@@ -36,9 +37,9 @@ WITH _t0 AS (
     )
   GROUP BY
     DATE(
-      _s0.sbtxdatetime,
+      sbtransaction.sbtxdatetime,
       '-' || CAST((
-        CAST(STRFTIME('%w', DATETIME(_s0.sbtxdatetime)) AS INTEGER) + 6
+        CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )

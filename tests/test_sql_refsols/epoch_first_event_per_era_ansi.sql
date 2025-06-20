@@ -1,14 +1,14 @@
 WITH _t1 AS (
   SELECT
-    _s0.er_name AS name,
-    _s1.ev_name AS name_1,
-    _s0.er_start_year AS start_year
-  FROM eras AS _s0
-  JOIN events AS _s1
-    ON _s0.er_end_year > EXTRACT(YEAR FROM _s1.ev_dt)
-    AND _s0.er_start_year <= EXTRACT(YEAR FROM _s1.ev_dt)
+    eras.er_name AS name,
+    events.ev_name AS name_1,
+    eras.er_start_year AS start_year
+  FROM eras AS eras
+  JOIN events AS events
+    ON eras.er_end_year > EXTRACT(YEAR FROM events.ev_dt)
+    AND eras.er_start_year <= EXTRACT(YEAR FROM events.ev_dt)
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s0.er_name ORDER BY _s1.ev_dt NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt NULLS LAST) = 1
 )
 SELECT
   name AS era_name,

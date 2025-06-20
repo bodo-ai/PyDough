@@ -6,8 +6,8 @@ WITH _t AS (
   FROM main.wallet_user_balance_daily
 )
 SELECT
-  _s0.uid AS user_id,
+  users.uid AS user_id,
   _t.balance AS latest_balance
-FROM main.users AS _s0
+FROM main.users AS users
 JOIN _t AS _t
-  ON _s0.uid = _t.user_id AND _t._w = 1
+  ON _t._w = 1 AND _t.user_id = users.uid

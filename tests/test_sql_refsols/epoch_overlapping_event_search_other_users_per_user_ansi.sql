@@ -1,21 +1,26 @@
-WITH _t0 AS (
+WITH _s1 AS (
   SELECT
-    ANY_VALUE(_s0.user_name) AS agg_2,
-    COUNT(DISTINCT _s10.user_id) AS n_other_users,
-    ANY_VALUE(_s0.user_name) AS user_name
-  FROM users AS _s0
-  JOIN searches AS _s1
-    ON _s0.user_id = _s1.search_user_id
-  JOIN events AS _s4
-    ON LOWER(_s1.search_string) LIKE CONCAT('%', LOWER(_s4.ev_name), '%')
-  JOIN searches AS _s7
-    ON LOWER(_s7.search_string) LIKE CONCAT('%', LOWER(_s4.ev_name), '%')
-  JOIN users AS _s10
-    ON _s10.user_id = _s7.search_user_id
+    search_string,
+    search_user_id AS user_id
+  FROM searches
+), _t0 AS (
+  SELECT
+    ANY_VALUE(users.user_name) AS agg_2,
+    COUNT(DISTINCT users_2.user_id) AS n_other_users,
+    ANY_VALUE(users.user_name) AS user_name
+  FROM users AS users
+  JOIN _s1 AS _s1
+    ON _s1.user_id = users.user_id
+  JOIN events AS events
+    ON LOWER(_s1.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
+  JOIN _s1 AS _s5
+    ON LOWER(_s5.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
+  JOIN users AS users_2
+    ON _s5.user_id = users_2.user_id
   WHERE
-    _s0.user_name <> _s10.user_name
+    users.user_name <> users_2.user_name
   GROUP BY
-    _s0.user_id
+    users.user_id
 )
 SELECT
   user_name,
