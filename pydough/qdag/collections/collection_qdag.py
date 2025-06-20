@@ -378,13 +378,13 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
         for term in self.all_terms:
             # get the minimum edit distance
-            me = self.min_edit_distance(term_name, term)
+            me: float = self.min_edit_distance(term_name, term)
             terms_distance_list.append((me, term))
 
+        if terms_distance_list == []:
+            return []
         # sort the list by minimum edit distance break ties by name
         sorted_list = sorted(terms_distance_list)
-        if sorted_list == []:
-            return []
 
         closest_match = sorted_list[0]
 
@@ -392,7 +392,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         good_matches_1: list[str] = []
         # List with all names that have a me <= closest_match * 1.1
         good_matches_2: list[str] = []
-        # List with all names that are not in the first 3
+        # List with the top 3 cloest matches (me) breaking ties by name
         good_matches_3: list[str] = [name for _, name in sorted_list[:3]]
 
         # filtering the result
@@ -480,7 +480,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             term_name (str): The name of the term that caused the error.
         """
 
-        error_message: str = f"Unrecognized term of {self.to_string()}: {term_name!r}"
+        error_message: str = f"Unrecognized term of {self.to_string()}: {term_name!r}."
         suggestions: list[str] = self.find_possible_name_matches(term_name=term_name)
 
         # Check if there are any suggestions to add
