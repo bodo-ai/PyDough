@@ -16,9 +16,7 @@ WITH _S0 AS (
   SELECT
     COUNT(*) AS AGG_1,
     SUM(CUSTOMER.c_acctbal) AS AGG_2,
-    SUBSTRING(CUSTOMER.c_phone, 1, (
-      2 - 1
-    ) + 1) AS CNTRY_CODE
+    SUBSTRING(CUSTOMER.c_phone, 1, 2) AS CNTRY_CODE
   FROM _S0 AS _S0
   CROSS JOIN TPCH.CUSTOMER AS CUSTOMER
   LEFT JOIN _S3 AS _S3
@@ -30,9 +28,7 @@ WITH _S0 AS (
       _S3.AGG_0 = 0 OR _S3.AGG_0 IS NULL
     )
   GROUP BY
-    SUBSTRING(CUSTOMER.c_phone, 1, (
-      2 - 1
-    ) + 1)
+    SUBSTRING(CUSTOMER.c_phone, 1, 2)
 )
 SELECT
   CNTRY_CODE,
