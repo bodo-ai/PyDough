@@ -203,10 +203,10 @@ def deduce_join_uniqueness(
         # output uniqueness set by combining their output columns from their
         # singleton uniqueness sets (or ignoring them if there were no columns
         # from that side to begin with)
-        if len(new_lhs_elems) == len(lhs_elem_names) and len(new_rhs_elems) == len(
-            rhs_elem_names
-        ):
-            assert len(new_lhs_elems) <= 1 and len(new_rhs_elems) <= 1
+        # breakpoint()
+        if (len(new_lhs_elems) > 0) == (len(lhs_elem_names) > 0) and (
+            len(new_rhs_elems) > 0
+        ) == (len(rhs_elem_names) > 0):
             new_set: frozenset[str] = frozenset()
             if len(new_lhs_elems) > 0:
                 new_set = new_set.union(new_lhs_elems.pop())
