@@ -368,17 +368,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         # If the subquery has no columns(because of PyDough's column pruning), add a NULL column to make it valid.
         if len(exprs) == 0:
             exprs = [sqlglot_convert((None,))]
-        query: Select = (
-            Select()
-            .select(*exprs)
-            .from_(
-                # Table(
-                # this=
-                scan.table_name,
-                # alias=TableAlias(this=self._generate_table_alias()),
-                # )
-            )
-        )
+        query: Select = Select().select(*exprs).from_(scan.table_name)
         self._stack.append(query)
 
     def visit_join(self, join: Join) -> None:
