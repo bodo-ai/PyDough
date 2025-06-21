@@ -340,7 +340,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "correl_16",
             ),
             id="correl_16",
-            marks=pytest.mark.skip("TODO: fix window squishing in CTE merge step"),
         ),
         pytest.param(
             PyDoughPandasTest(

@@ -113,7 +113,6 @@ def apply_sqlglot_optimizer(
     # a many to many left join.
     glot_expr = unnest_subqueries(glot_expr)
 
-    # TODO: (gh #313) RULE SKIPPED - buggy because it pushes filters underneath
     # limit clauses, which is not correct.
     # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS.
     glot_expr = pushdown_predicates(glot_expr, dialect=dialect)

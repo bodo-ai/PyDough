@@ -203,7 +203,6 @@ def deduce_join_uniqueness(
         # output uniqueness set by combining their output columns from their
         # singleton uniqueness sets (or ignoring them if there were no columns
         # from that side to begin with)
-        # breakpoint()
         if (len(new_lhs_elems) > 0) == (len(lhs_elem_names) > 0) and (
             len(new_rhs_elems) > 0
         ) == (len(rhs_elem_names) > 0):
