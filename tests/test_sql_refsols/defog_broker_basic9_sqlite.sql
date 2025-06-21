@@ -1,22 +1,15 @@
-WITH _s1 AS (
+WITH _u_0 AS (
   SELECT
-    sbtransaction.sbtxcustid AS customer_id
-  FROM main.sbtransaction AS sbtransaction
-), _s0 AS (
-  SELECT
-    sbcustomer.sbcustid AS _id,
-    sbcustomer.sbcustname AS name
-  FROM main.sbcustomer AS sbcustomer
+    sbtxcustid AS _u_1
+  FROM main.sbtransaction
+  GROUP BY
+    sbtxcustid
 )
 SELECT
-  _s0._id AS _id,
-  _s0.name AS name
-FROM _s0 AS _s0
+  sbcustomer.sbcustid AS _id,
+  sbcustomer.sbcustname AS name
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM _s1 AS _s1
-    WHERE
-      _s0._id = _s1.customer_id
-  )
+  _u_0._u_1 IS NULL

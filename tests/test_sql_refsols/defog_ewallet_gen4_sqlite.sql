@@ -41,5 +41,4 @@ LEFT JOIN _s7 AS _s7
   ON _s7.mid = merchants.mid
 JOIN _t1 AS _s9
   ON _s9.merchant_id = merchants.mid
-WHERE
-  _s9.start_date <= DATETIME(merchants.created_at, '1 year')
+  AND _s9.start_date <= DATETIME(merchants.created_at, '1 year')

@@ -16,8 +16,8 @@ WITH _t0 AS (
   JOIN tpch.part AS part
     ON lineitem.l_partkey = part.p_partkey
   WHERE
-    EXTRACT(MONTH FROM lineitem.l_shipdate) = 9
-    AND EXTRACT(YEAR FROM lineitem.l_shipdate) = 1995
+    EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS DATETIME)) = 9
+    AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1995
 )
 SELECT
   (

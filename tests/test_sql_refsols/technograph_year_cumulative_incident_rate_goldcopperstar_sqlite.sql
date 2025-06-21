@@ -13,6 +13,8 @@ WITH _s14 AS (
     pr_id AS _id,
     pr_name AS name
   FROM main.products
+  WHERE
+    pr_name = 'GoldCopper-Star'
 ), _s7 AS (
   SELECT
     COUNT(*) AS agg_3,
@@ -23,7 +25,7 @@ WITH _s14 AS (
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
   JOIN _t8 AS _t8
-    ON _t8._id = devices.de_product_id AND _t8.name = 'GoldCopper-Star'
+    ON _t8._id = devices.de_product_id
   GROUP BY
     _s0.calendar_day
 ), _s13 AS (
@@ -34,7 +36,7 @@ WITH _s14 AS (
   JOIN main.devices AS devices
     ON _s8.calendar_day = DATE(devices.de_purchase_ts, 'start of day')
   JOIN _t8 AS _t10
-    ON _t10._id = devices.de_product_id AND _t10.name = 'GoldCopper-Star'
+    ON _t10._id = devices.de_product_id
   GROUP BY
     _s8.calendar_day
 ), _s15 AS (
@@ -75,9 +77,8 @@ WITH _s14 AS (
     ) AS pct_incident_change,
     _s15.year - CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER) AS years_since_release
   FROM _s14 AS _s14
-  CROSS JOIN _s15 AS _s15
-  WHERE
-    _s15.year >= CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER)
+  JOIN _s15 AS _s15
+    ON _s15.year >= CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER)
 )
 SELECT
   years_since_release,

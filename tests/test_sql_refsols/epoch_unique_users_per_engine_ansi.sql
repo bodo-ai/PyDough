@@ -10,8 +10,8 @@ WITH _s2 AS (
   JOIN users AS users
     ON searches.search_user_id = users.user_id
   WHERE
-    EXTRACT(YEAR FROM searches.search_ts) <= 2019
-    AND EXTRACT(YEAR FROM searches.search_ts) >= 2010
+    EXTRACT(YEAR FROM CAST(searches.search_ts AS DATETIME)) <= 2019
+    AND EXTRACT(YEAR FROM CAST(searches.search_ts AS DATETIME)) >= 2010
   GROUP BY
     searches.search_engine
 )

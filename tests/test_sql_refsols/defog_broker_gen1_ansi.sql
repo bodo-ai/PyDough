@@ -5,4 +5,4 @@ JOIN main.sbticker AS sbticker
   ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
   AND sbticker.sbtickersymbol = 'VTI'
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), sbdailyprice.sbdpdate, DAY) <= 7
+  DATEDIFF(CURRENT_TIMESTAMP(), CAST(sbdailyprice.sbdpdate AS DATETIME), DAY) <= 7

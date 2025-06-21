@@ -5,6 +5,8 @@ WITH _t4 AS (
     l_shipdate AS ship_date,
     l_suppkey AS supplier_key
   FROM tpch.lineitem
+  WHERE
+    l_shipdate < '1996-04-01' AND l_shipdate >= '1996-01-01'
 ), _t1 AS (
   SELECT
     SUM(extended_price * (
@@ -12,8 +14,6 @@ WITH _t4 AS (
     )) AS agg_0,
     supplier_key
   FROM _t4
-  WHERE
-    ship_date < '1996-04-01' AND ship_date >= '1996-01-01'
   GROUP BY
     supplier_key
 ), _s2 AS (
@@ -29,8 +29,6 @@ WITH _t4 AS (
     )) AS agg_1,
     supplier_key
   FROM _t4
-  WHERE
-    ship_date < '1996-04-01' AND ship_date >= '1996-01-01'
   GROUP BY
     supplier_key
 )

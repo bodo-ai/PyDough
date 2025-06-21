@@ -12,12 +12,12 @@ WITH _t0 AS (
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
     )) AS agg_1,
-    EXTRACT(YEAR FROM orders.o_orderdate) AS o_year
+    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) AS o_year
   FROM tpch.lineitem AS lineitem
   JOIN tpch.part AS part
     ON lineitem.l_partkey = part.p_partkey AND part.p_type = 'ECONOMY ANODIZED STEEL'
   JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM orders.o_orderdate) IN (1995, 1996)
+    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) IN (1995, 1996)
     AND lineitem.l_orderkey = orders.o_orderkey
   JOIN tpch.customer AS customer
     ON customer.c_custkey = orders.o_custkey
@@ -30,7 +30,7 @@ WITH _t0 AS (
   JOIN tpch.nation AS nation_2
     ON nation_2.n_nationkey = supplier.s_nationkey
   GROUP BY
-    EXTRACT(YEAR FROM orders.o_orderdate)
+    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME))
 )
 SELECT
   o_year AS O_YEAR,

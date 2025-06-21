@@ -12,8 +12,7 @@ WITH _t2 AS (
     ON LOWER(searches_2.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
   JOIN users AS users_2
     ON searches_2.search_user_id = users_2.user_id
-  WHERE
-    users.user_name <> users_2.user_name
+    AND users.user_name <> users_2.user_name
   GROUP BY
     searches.search_id,
     users.user_id

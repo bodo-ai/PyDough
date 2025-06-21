@@ -13,7 +13,6 @@ from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
-from sqlglot.transforms import eliminate_semi_and_anti_joins
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
@@ -28,6 +27,7 @@ from pydough.relational import (
     ExpressionSortInfo,
     Filter,
     Join,
+    JoinType,
     Limit,
     LiteralExpression,
     Project,
@@ -383,9 +383,15 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         inputs.reverse()
         # Compute a dictionary to find all duplicate names.
         seen_names: dict[str, int] = defaultdict(int)
-        for input in join.inputs:
+        for idx, input in enumerate(join.inputs):
+            occurrences: int = 1
+            if join.join_type in (JoinType.SEMI, JoinType.ANTI):
+                # For SEMI and ANTI joins, we must keep the columns input names
+                # from the left side and treat them as if they appear in the
+                # RHS.
+                occurrences = 2
             for column in input.columns.keys():
-                seen_names[column] += 1
+                seen_names[column] += occurrences
         # Only keep duplicate names.
         kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
@@ -407,7 +413,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         query: Select = self._build_subquery(
             inputs[0], column_exprs, alias_map.get(join.default_input_aliases[0], None)
         )
-        joins: list[tuple[Subquery, SQLGlotExpression, str]] = []
         assert len(inputs) == 2
         subquery: Subquery = Subquery(
             this=inputs[1],
@@ -418,10 +423,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ).accept_shuttle(self._alias_modifier)
         cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(cond)
         join_type: str = join.join_type.value
-        joins.append((subquery, cond_expr, join_type))
-        for subquery, cond_expr, join_type in joins:
-            query = query.join(subquery, on=cond_expr, join_type=join_type)
-            query = eliminate_semi_and_anti_joins(query)
+        query = query.join(subquery, on=cond_expr, join_type=join_type)
         self._stack.append(query)
 
     def visit_project(self, project: Project) -> None:

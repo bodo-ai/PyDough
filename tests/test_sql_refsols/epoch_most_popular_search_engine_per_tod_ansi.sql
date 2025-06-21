@@ -5,8 +5,8 @@ WITH _t1 AS (
     times.t_name AS tod
   FROM times AS times
   JOIN searches AS searches
-    ON times.t_end_hour > EXTRACT(HOUR FROM searches.search_ts)
-    AND times.t_start_hour <= EXTRACT(HOUR FROM searches.search_ts)
+    ON times.t_end_hour > EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
+    AND times.t_start_hour <= EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
   GROUP BY
     searches.search_engine,
     times.t_name

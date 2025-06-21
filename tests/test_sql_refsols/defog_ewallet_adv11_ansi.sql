@@ -1,6 +1,8 @@
 WITH _t0 AS (
   SELECT
-    SUM(DATEDIFF(session_end_ts, session_start_ts, SECOND)) AS agg_0,
+    SUM(
+      DATEDIFF(CAST(session_end_ts AS DATETIME), CAST(session_start_ts AS DATETIME), SECOND)
+    ) AS agg_0,
     user_id
   FROM main.user_sessions
   WHERE

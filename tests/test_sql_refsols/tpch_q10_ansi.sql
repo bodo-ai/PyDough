@@ -8,8 +8,8 @@ WITH _s3 AS (
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
   WHERE
-    EXTRACT(QUARTER FROM orders.o_orderdate) = 4
-    AND EXTRACT(YEAR FROM orders.o_orderdate) = 1993
+    EXTRACT(QUARTER FROM CAST(orders.o_orderdate AS DATETIME)) = 4
+    AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
   GROUP BY
     orders.o_custkey
 )

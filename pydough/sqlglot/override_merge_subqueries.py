@@ -115,5 +115,12 @@ def _mergeable(
     # PYDOUGH CHANGE: avoid merging CTEs when it would break a left join.
     if isinstance(from_or_join, exp.Join) and from_or_join.side not in ("INNER", ""):
         return False
+    # PYDOUGH CHANGE: avoid merging CTEs when the inner scope has a window
+    # expression and the outer scope has a join.
+    if (
+        inner_scope.expression.find(exp.Window)
+        and outer_scope.expression.args.get("joins") is not None
+    ):
+        return False
     # Otherwise, fall back on the original implementation.
     return _old_mergeable(outer_scope, inner_scope, leave_tables_isolated, from_or_join)

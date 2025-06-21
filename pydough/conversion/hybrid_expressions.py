@@ -218,6 +218,8 @@ class HybridColumnExpr(HybridExpr):
         return repr(self.column)
 
     def shift_back(self, levels: int, shift_correl: bool = True) -> HybridExpr:
+        if levels == 0:
+            return self
         return HybridBackRefExpr(self.column.column_property.name, levels, self.typ)
 
 
@@ -275,6 +277,8 @@ class HybridBackRefExpr(HybridExpr):
         return f"BACK({self.back_idx}).{self.name}"
 
     def shift_back(self, levels: int, shift_correl: bool = True) -> HybridExpr:
+        if levels == 0:
+            return self
         return HybridBackRefExpr(self.name, self.back_idx + levels, self.typ)
 
     def squish_backrefs_into_correl(

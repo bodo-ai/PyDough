@@ -4,7 +4,7 @@ WITH _s0 AS (
     car_id
   FROM main.sales
   WHERE
-    EXTRACT(YEAR FROM sale_date) = 2023
+    EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
   GROUP BY
     car_id
 ), _t0 AS (

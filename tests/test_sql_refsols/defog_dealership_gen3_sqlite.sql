@@ -8,24 +8,18 @@ WITH _t0 AS (
     CAST(CAST(CAST((
       JULIANDAY(
         DATE(
-          DATE(
-            DATETIME('now'),
-            '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(DATETIME('now'))) AS INTEGER) + 6
-            ) % 7 AS TEXT) || ' days',
-            'start of day'
-          ),
+          DATETIME('now'),
+          '-' || CAST((
+            CAST(STRFTIME('%w', DATETIME(DATETIME('now'))) AS INTEGER) + 6
+          ) % 7 AS TEXT) || ' days',
           'start of day'
         )
       ) - JULIANDAY(
         DATE(
-          DATE(
-            payment_date,
-            '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(payment_date)) AS INTEGER) + 6
-            ) % 7 AS TEXT) || ' days',
-            'start of day'
-          ),
+          payment_date,
+          '-' || CAST((
+            CAST(STRFTIME('%w', DATETIME(payment_date)) AS INTEGER) + 6
+          ) % 7 AS TEXT) || ' days',
           'start of day'
         )
       )

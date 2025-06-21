@@ -2,11 +2,15 @@ WITH _t4 AS (
   SELECT
     ca_dt AS calendar_day
   FROM main.calendar
+  WHERE
+    CAST(STRFTIME('%Y', ca_dt) AS INTEGER) IN (2020, 2021)
 ), _t8 AS (
   SELECT
     co_id AS _id,
     co_name AS name
   FROM main.countries
+  WHERE
+    co_name = 'CN'
 ), _s7 AS (
   SELECT
     COUNT(*) AS agg_2,
@@ -17,9 +21,7 @@ WITH _t4 AS (
   JOIN main.devices AS devices
     ON calendar.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
   JOIN _t8 AS _t8
-    ON _t8._id = devices.de_production_country_id AND _t8.name = 'CN'
-  WHERE
-    CAST(STRFTIME('%Y', _t7.calendar_day) AS INTEGER) IN (2020, 2021)
+    ON _t8._id = devices.de_production_country_id
   GROUP BY
     _t7.calendar_day
 ), _s15 AS (
@@ -32,9 +34,7 @@ WITH _t4 AS (
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
   JOIN _t8 AS _t12
-    ON _t12._id = devices.de_production_country_id AND _t12.name = 'CN'
-  WHERE
-    CAST(STRFTIME('%Y', _t11.calendar_day) AS INTEGER) IN (2020, 2021)
+    ON _t12._id = devices.de_production_country_id
   GROUP BY
     _t11.calendar_day
 ), _t1 AS (
@@ -48,8 +48,6 @@ WITH _t4 AS (
     ON _s7.calendar_day = _t4.calendar_day
   LEFT JOIN _s15 AS _s15
     ON _s15.calendar_day = _t4.calendar_day
-  WHERE
-    CAST(STRFTIME('%Y', _t4.calendar_day) AS INTEGER) IN (2020, 2021)
   GROUP BY
     CAST(STRFTIME('%m', _t4.calendar_day) AS INTEGER),
     CAST(STRFTIME('%Y', _t4.calendar_day) AS INTEGER)

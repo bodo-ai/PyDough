@@ -18,15 +18,13 @@ WITH _s0 AS (
     SUM(customer.c_acctbal) AS agg_2,
     SUBSTRING(customer.c_phone, 1, 2) AS cntry_code
   FROM _s0 AS _s0
-  CROSS JOIN tpch.customer AS customer
+  JOIN tpch.customer AS customer
+    ON SUBSTRING(customer.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+    AND _s0.global_avg_balance < customer.c_acctbal
   LEFT JOIN _s3 AS _s3
     ON _s3.customer_key = customer.c_custkey
   WHERE
-    SUBSTRING(customer.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
-    AND _s0.global_avg_balance < customer.c_acctbal
-    AND (
-      _s3.agg_0 = 0 OR _s3.agg_0 IS NULL
-    )
+    _s3.agg_0 = 0 OR _s3.agg_0 IS NULL
   GROUP BY
     SUBSTRING(customer.c_phone, 1, 2)
 )

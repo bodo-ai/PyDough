@@ -24,14 +24,14 @@ WITH _t5 AS (
   SELECT
     SUM(_s3.agg_2) AS agg_4,
     SUM(_s7.agg_5) AS agg_7,
-    EXTRACT(YEAR FROM _t5.calendar_day) AS year
+    EXTRACT(YEAR FROM CAST(_t5.calendar_day AS DATETIME)) AS year
   FROM _t5 AS _t5
   LEFT JOIN _s3 AS _s3
     ON _s3.calendar_day = _t5.calendar_day
   LEFT JOIN _s7 AS _s7
     ON _s7.calendar_day = _t5.calendar_day
   GROUP BY
-    EXTRACT(YEAR FROM _t5.calendar_day)
+    EXTRACT(YEAR FROM CAST(_t5.calendar_day AS DATETIME))
 ), _t0 AS (
   SELECT
     COALESCE(agg_4, 0) AS bought,
