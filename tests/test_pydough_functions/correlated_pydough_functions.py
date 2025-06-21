@@ -267,7 +267,7 @@ def correl_16():
     # Count how many european suppliers have the exact same percentile value
     # of account balance (relative to all other suppliers) as at least one
     # customer's percentile value of account balance relative to all other
-    # customers in the nation, int he same nation as the supplier. Percentile
+    # customers in the nation, in the same nation as the supplier. Percentile
     # should be measured down to increments of 0.01%. Only consider European
     # suppliers/customers, and customers in the building market segment.
     # (This is a correlated SEMI-joins).
