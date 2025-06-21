@@ -1,0 +1,31 @@
+WITH _S3 AS (
+  SELECT
+    COUNT(*) AS AGG_0,
+    in_device_id AS DEVICE_ID
+  FROM MAIN.INCIDENTS
+  GROUP BY
+    in_device_id
+), _T0 AS (
+  SELECT
+    SUM(COALESCE(_S3.AGG_0, 0)) AS AGG_0,
+    COUNT(*) AS AGG_1,
+    DEVICES.de_product_id AS PRODUCT_ID
+  FROM MAIN.DEVICES AS DEVICES
+  JOIN MAIN.PRODUCTS AS PRODUCTS
+    ON DEVICES.de_product_id = PRODUCTS.pr_id
+  LEFT JOIN _S3 AS _S3
+    ON DEVICES.de_id = _S3.DEVICE_ID
+  GROUP BY
+    DEVICES.de_product_id
+)
+SELECT
+  PRODUCTS.pr_name AS product,
+  PRODUCTS.pr_brand AS product_brand,
+  PRODUCTS.pr_type AS product_type,
+  ROUND(COALESCE(_T0.AGG_0, 0) / _T0.AGG_1, 2) AS ir
+FROM MAIN.PRODUCTS AS PRODUCTS
+JOIN _T0 AS _T0
+  ON PRODUCTS.pr_id = _T0.PRODUCT_ID
+ORDER BY
+  IR DESC NULLS LAST
+LIMIT 5

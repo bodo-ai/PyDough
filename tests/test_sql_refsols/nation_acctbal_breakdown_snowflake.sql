@@ -1,0 +1,26 @@
+WITH _S3 AS (
+  SELECT
+    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS MEDIAN_BLACK_ACCTBAL,
+    MEDIAN(c_acctbal) AS MEDIAN_OVERALL_ACCTBAL,
+    MEDIAN(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS MEDIAN_RED_ACCTBAL,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS N_BLACK_ACCTBAL,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS N_RED_ACCTBAL,
+    c_nationkey AS NATION_KEY
+  FROM TPCH.CUSTOMER
+  GROUP BY
+    c_nationkey
+)
+SELECT
+  NATION.n_name AS nation_name,
+  _S3.N_RED_ACCTBAL AS n_red_acctbal,
+  _S3.N_BLACK_ACCTBAL AS n_black_acctbal,
+  _S3.MEDIAN_RED_ACCTBAL AS median_red_acctbal,
+  _S3.MEDIAN_BLACK_ACCTBAL AS median_black_acctbal,
+  _S3.MEDIAN_OVERALL_ACCTBAL AS median_overall_acctbal
+FROM TPCH.NATION AS NATION
+JOIN TPCH.REGION AS REGION
+  ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'AMERICA'
+JOIN _S3 AS _S3
+  ON NATION.n_nationkey = _S3.NATION_KEY
+ORDER BY
+  NATION_NAME NULLS FIRST

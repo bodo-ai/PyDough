@@ -1,0 +1,19 @@
+WITH _S1 AS (
+  SELECT
+    COUNT(*) AS AGG_0,
+    SUM(sbtxamount) AS AGG_1,
+    sbtxtickerid AS TICKER_ID
+  FROM MAIN.SBTRANSACTION
+  GROUP BY
+    sbtxtickerid
+)
+SELECT
+  SBTICKER.sbtickersymbol AS symbol,
+  COALESCE(_S1.AGG_0, 0) AS num_transactions,
+  COALESCE(_S1.AGG_1, 0) AS total_amount
+FROM MAIN.SBTICKER AS SBTICKER
+LEFT JOIN _S1 AS _S1
+  ON SBTICKER.sbtickerid = _S1.TICKER_ID
+ORDER BY
+  TOTAL_AMOUNT DESC NULLS LAST
+LIMIT 10

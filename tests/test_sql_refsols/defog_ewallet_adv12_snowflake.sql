@@ -1,0 +1,16 @@
+WITH _S1 AS (
+  SELECT
+    SUM(amount) AS AGG_0,
+    coupon_id AS COUPON_ID
+  FROM MAIN.WALLET_TRANSACTIONS_DAILY
+  GROUP BY
+    coupon_id
+)
+SELECT
+  COUPONS.cid AS coupon_id,
+  COALESCE(_S1.AGG_0, 0) AS total_discount
+FROM MAIN.COUPONS AS COUPONS
+LEFT JOIN _S1 AS _S1
+  ON COUPONS.cid = _S1.COUPON_ID
+WHERE
+  COUPONS.merchant_id = '1'

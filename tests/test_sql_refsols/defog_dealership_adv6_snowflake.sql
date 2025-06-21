@@ -1,0 +1,26 @@
+WITH _T1 AS (
+  SELECT
+    car_id AS CAR_ID
+  FROM MAIN.INVENTORY_SNAPSHOTS
+  QUALIFY
+    NOT is_in_inventory
+    AND ROW_NUMBER() OVER (PARTITION BY car_id ORDER BY snapshot_date DESC) = 1
+), _S3 AS (
+  SELECT
+    MAX(sale_price) AS AGG_0,
+    car_id AS CAR_ID
+  FROM MAIN.SALES
+  GROUP BY
+    car_id
+)
+SELECT
+  CARS.make,
+  CARS.model,
+  _S3.AGG_0 AS highest_sale_price
+FROM MAIN.CARS AS CARS
+JOIN _T1 AS _T1
+  ON CARS._id = _T1.CAR_ID
+LEFT JOIN _S3 AS _S3
+  ON CARS._id = _S3.CAR_ID
+ORDER BY
+  _S3.AGG_0 DESC NULLS LAST

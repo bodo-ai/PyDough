@@ -1,0 +1,17 @@
+WITH _S1 AS (
+  SELECT
+    SUM(sbtxamount) AS AGG_0,
+    COUNT(*) AS AGG_1,
+    sbtxcustid AS CUSTOMER_ID
+  FROM MAIN.SBTRANSACTION
+  GROUP BY
+    sbtxcustid
+)
+SELECT
+  SBCUSTOMER.sbcustname AS name,
+  _S1.AGG_1 AS num_tx,
+  COALESCE(_S1.AGG_0, 0) AS total_amount,
+  RANK() OVER (ORDER BY COALESCE(_S1.AGG_0, 0) DESC) AS cust_rank
+FROM MAIN.SBCUSTOMER AS SBCUSTOMER
+JOIN _S1 AS _S1
+  ON SBCUSTOMER.sbcustid = _S1.CUSTOMER_ID
