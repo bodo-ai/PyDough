@@ -1,13 +1,13 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS num_transactions,
-    sbtxstatus AS status
+    sbtxstatus
   FROM main.sbtransaction
   GROUP BY
     sbtxstatus
 )
 SELECT
-  status,
+  sbtxstatus AS status,
   num_transactions
 FROM _t0
 ORDER BY

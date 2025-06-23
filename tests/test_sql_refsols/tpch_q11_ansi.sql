@@ -20,8 +20,8 @@ WITH _s0 AS (
     ON _s0.s_nationkey = _t4.n_nationkey
 ), _t5 AS (
   SELECT
-    partsupp.ps_partkey AS part_key,
-    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr_2
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr_2,
+    partsupp.ps_partkey
   FROM tpch.partsupp AS partsupp
   JOIN _s0 AS _s4
     ON _s4.s_suppkey = partsupp.ps_suppkey
@@ -31,7 +31,7 @@ WITH _s0 AS (
     partsupp.ps_partkey
 )
 SELECT
-  _t5.part_key AS PS_PARTKEY,
+  _t5.ps_partkey AS PS_PARTKEY,
   COALESCE(_t5.sum_expr_2, 0) AS VALUE
 FROM _t1 AS _t1
 JOIN _t5 AS _t5

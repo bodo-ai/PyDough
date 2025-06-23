@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     AVG(sbtxshares) AS avg_shares,
     COUNT(DISTINCT sbtxcustid) AS num_customers,
-    sbtxtype AS transaction_type
+    sbtxtype
   FROM main.sbtransaction
   WHERE
     sbtxdatetime <= '2023-03-31' AND sbtxdatetime >= '2023-01-01'
@@ -10,7 +10,7 @@ WITH _t0 AS (
     sbtxtype
 )
 SELECT
-  transaction_type,
+  sbtxtype AS transaction_type,
   num_customers,
   avg_shares
 FROM _t0

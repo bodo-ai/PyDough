@@ -50,7 +50,7 @@ WITH _t2 AS (
     AVG(expr_7) AS median_red_acctbal,
     COUNT(non_negative_acctbal) AS n_black_acctbal,
     COUNT(negative_acctbal) AS n_red_acctbal,
-    c_nationkey AS nation_key
+    c_nationkey
   FROM _t2
   GROUP BY
     c_nationkey
@@ -66,6 +66,6 @@ FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
 JOIN _s3 AS _s3
-  ON _s3.nation_key = nation.n_nationkey
+  ON _s3.c_nationkey = nation.n_nationkey
 ORDER BY
   nation.n_name

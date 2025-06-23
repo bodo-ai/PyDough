@@ -52,7 +52,7 @@ WITH _t1 AS (
     AVG(expr_7) AS median_red_acctbal,
     COUNT(non_negative_acctbal) AS n_black_acctbal,
     COUNT(negative_acctbal) AS n_red_acctbal,
-    n_regionkey AS region_key
+    n_regionkey
   FROM _t1
   GROUP BY
     n_regionkey
@@ -66,6 +66,6 @@ SELECT
   _s3.median_overall_acctbal
 FROM tpch.region AS region
 JOIN _s3 AS _s3
-  ON _s3.region_key = region.r_regionkey
+  ON _s3.n_regionkey = region.r_regionkey
 ORDER BY
   region.r_name

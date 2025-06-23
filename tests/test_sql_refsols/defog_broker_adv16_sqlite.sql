@@ -2,7 +2,7 @@ WITH _t1 AS (
   SELECT
     SUM(sbtxtax + sbtxcommission) AS sum_expr_2,
     SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxtickerid AS ticker_id
+    sbtxtickerid
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATETIME('now', '-1 month') AND sbtxtype = 'sell'
@@ -18,6 +18,6 @@ SELECT
   ) AS REAL) / COALESCE(_t1.sum_sbtxamount, 0) AS SPM
 FROM main.sbticker AS sbticker
 JOIN _t1 AS _t1
-  ON _t1.ticker_id = sbticker.sbtickerid
+  ON _t1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
   sbticker.sbtickersymbol

@@ -1,13 +1,13 @@
 WITH _t0 AS (
   SELECT
-    sbcustcountry AS country,
-    COUNT(*) AS num_customers
+    COUNT(*) AS num_customers,
+    sbcustcountry
   FROM main.sbcustomer
   GROUP BY
     sbcustcountry
 )
 SELECT
-  country,
+  sbcustcountry AS country,
   num_customers
 FROM _t0
 ORDER BY

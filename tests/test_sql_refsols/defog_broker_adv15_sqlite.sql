@@ -1,8 +1,8 @@
 WITH _t0 AS (
   SELECT
-    sbcustcountry AS country,
     COUNT(*) AS n_rows,
-    SUM(sbcuststatus = 'active') AS sum_expr_2
+    SUM(sbcuststatus = 'active') AS sum_expr_2,
+    sbcustcountry
   FROM main.sbcustomer
   WHERE
     sbcustjoindate <= '2022-12-31' AND sbcustjoindate >= '2022-01-01'
@@ -10,6 +10,6 @@ WITH _t0 AS (
     sbcustcountry
 )
 SELECT
-  country,
+  sbcustcountry AS country,
   100 * COALESCE(CAST(COALESCE(sum_expr_2, 0) AS REAL) / n_rows, 0.0) AS ar
 FROM _t0

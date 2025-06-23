@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS order_count,
-    orders.o_orderpriority AS order_priority
+    orders.o_orderpriority
   FROM tpch.orders AS orders
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_commitdate < lineitem.l_receiptdate
@@ -13,8 +13,8 @@ WITH _t0 AS (
     orders.o_orderpriority
 )
 SELECT
-  order_priority AS O_ORDERPRIORITY,
+  o_orderpriority AS O_ORDERPRIORITY,
   order_count AS ORDER_COUNT
 FROM _t0
 ORDER BY
-  order_priority
+  o_orderpriority

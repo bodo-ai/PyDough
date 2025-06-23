@@ -1,6 +1,6 @@
 ROOT(columns=[('tod', anything_t_name), ('pct_searches', pct_searches), ('avg_results', avg_results)], orderings=[(anything_t_start_hour):asc_first])
  PROJECT(columns={'anything_t_name': anything_t_name, 'anything_t_start_hour': anything_t_start_hour, 'avg_results': ROUND(avg_search_num_results, 2:numeric), 'pct_searches': ROUND(100.0:numeric * n_rows / RELSUM(args=[n_rows], partition=[], order=[]), 2:numeric)})
-  AGGREGATE(keys={'name': t_name}, aggregations={'anything_t_name': ANYTHING(t_name), 'anything_t_start_hour': ANYTHING(t_start_hour), 'avg_search_num_results': AVG(search_num_results), 'n_rows': COUNT()})
+  AGGREGATE(keys={'t_name': t_name}, aggregations={'anything_t_name': ANYTHING(t_name), 'anything_t_start_hour': ANYTHING(t_start_hour), 'avg_search_num_results': AVG(search_num_results), 'n_rows': COUNT()})
    JOIN(condition=t0.t_start_hour <= HOUR(t1.search_ts) & HOUR(t1.search_ts) < t0.t_end_hour, type=INNER, cardinality=PLURAL_ACCESS, columns={'search_num_results': t1.search_num_results, 't_name': t0.t_name, 't_start_hour': t0.t_start_hour})
     SCAN(table=TIMES, columns={'t_end_hour': t_end_hour, 't_name': t_name, 't_start_hour': t_start_hour})
     SCAN(table=SEARCHES, columns={'search_num_results': search_num_results, 'search_ts': search_ts})

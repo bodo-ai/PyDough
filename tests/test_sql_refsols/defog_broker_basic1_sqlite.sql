@@ -1,8 +1,8 @@
 WITH _s1 AS (
   SELECT
-    sbtxcustid AS customer_id,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbtxamount
+    SUM(sbtxamount) AS sum_sbtxamount,
+    sbtxcustid
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATE(DATETIME('now', '-30 day'), 'start of day')
@@ -10,17 +10,17 @@ WITH _s1 AS (
     sbtxcustid
 ), _t0 AS (
   SELECT
-    sbcustomer.sbcustcountry AS country,
     SUM(_s1.n_rows) AS sum_n_rows,
-    SUM(_s1.sum_sbtxamount) AS sum_sum_sbtxamount
+    SUM(_s1.sum_sbtxamount) AS sum_sum_sbtxamount,
+    sbcustomer.sbcustcountry
   FROM main.sbcustomer AS sbcustomer
   LEFT JOIN _s1 AS _s1
-    ON _s1.customer_id = sbcustomer.sbcustid
+    ON _s1.sbtxcustid = sbcustomer.sbcustid
   GROUP BY
     sbcustomer.sbcustcountry
 )
 SELECT
-  country,
+  sbcustcountry AS country,
   COALESCE(sum_n_rows, 0) AS num_transactions,
   COALESCE(sum_sum_sbtxamount, 0) AS total_amount
 FROM _t0

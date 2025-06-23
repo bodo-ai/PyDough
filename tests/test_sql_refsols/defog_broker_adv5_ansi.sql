@@ -4,7 +4,6 @@ WITH _s0 AS (
     MAX(sbdphigh) AS max_high,
     MIN(sbdplow) AS min_low,
     SUM(sbdpclose) AS sum_sbdpclose,
-    sbdptickerid AS ticker_id,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
@@ -15,10 +14,10 @@ WITH _s0 AS (
           2 * -1
         ))
       END
-    ) AS month
+    ) AS month,
+    sbdptickerid
   FROM main.sbdailyprice
   GROUP BY
-    sbdptickerid,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
@@ -29,24 +28,25 @@ WITH _s0 AS (
           2 * -1
         ))
       END
-    )
+    ),
+    sbdptickerid
 ), _t1 AS (
   SELECT
     MAX(_s0.max_high) AS max_high,
     MIN(_s0.min_low) AS min_low,
     SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
     SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
-    sbticker.sbtickersymbol AS symbol,
-    _s0.month
+    _s0.month,
+    sbticker.sbtickersymbol
   FROM _s0 AS _s0
   JOIN main.sbticker AS sbticker
-    ON _s0.ticker_id = sbticker.sbtickerid
+    ON _s0.sbdptickerid = sbticker.sbtickerid
   GROUP BY
-    sbticker.sbtickersymbol,
-    _s0.month
+    _s0.month,
+    sbticker.sbtickersymbol
 )
 SELECT
-  symbol,
+  sbtickersymbol AS symbol,
   month,
   sum_sum_sbdpclose / sum_count_sbdpclose AS avg_close,
   max_high,
@@ -56,8 +56,8 @@ SELECT
       sum_sum_sbdpclose / sum_count_sbdpclose
     ) - LAG((
       sum_sum_sbdpclose / sum_count_sbdpclose
-    ), 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST)
+    ), 1) OVER (PARTITION BY sbtickersymbol ORDER BY month NULLS LAST)
   ) / LAG((
     sum_sum_sbdpclose / sum_count_sbdpclose
-  ), 1) OVER (PARTITION BY symbol ORDER BY month NULLS LAST) AS momc
+  ), 1) OVER (PARTITION BY sbtickersymbol ORDER BY month NULLS LAST) AS momc
 FROM _t1

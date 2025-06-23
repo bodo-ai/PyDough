@@ -1,10 +1,10 @@
 WITH _s7 AS (
   SELECT
-    l_orderkey AS order_key,
     SUM(l_extendedprice * (
       1 - l_discount
     )) AS sum_value,
-    l_suppkey AS supplier_key
+    l_orderkey,
+    l_suppkey
   FROM tpch.lineitem
   GROUP BY
     l_orderkey,
@@ -12,10 +12,10 @@ WITH _s7 AS (
 ), _s10 AS (
   SELECT
     MAX(nation.n_name) AS anything_n_name,
-    nation.n_nationkey AS key,
-    nation.n_name AS nation_name,
     SUM(_s7.sum_value) AS sum_sum_value,
-    _s7.supplier_key
+    _s7.l_suppkey,
+    nation.n_name,
+    nation.n_nationkey
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'
@@ -26,11 +26,11 @@ WITH _s7 AS (
     AND orders.o_orderdate < '1995-01-01'
     AND orders.o_orderdate >= '1994-01-01'
   JOIN _s7 AS _s7
-    ON _s7.order_key = orders.o_orderkey
+    ON _s7.l_orderkey = orders.o_orderkey
   GROUP BY
+    _s7.l_suppkey,
     nation.n_name,
-    nation.n_nationkey,
-    _s7.supplier_key
+    nation.n_nationkey
 ), _s11 AS (
   SELECT
     nation.n_name,
@@ -44,9 +44,9 @@ WITH _s7 AS (
     SUM(_s10.sum_sum_value) AS sum_sum_sum_value
   FROM _s10 AS _s10
   JOIN _s11 AS _s11
-    ON _s10.nation_name = _s11.n_name AND _s10.supplier_key = _s11.s_suppkey
+    ON _s10.l_suppkey = _s11.s_suppkey AND _s10.n_name = _s11.n_name
   GROUP BY
-    _s10.key
+    _s10.n_nationkey
 )
 SELECT
   anything_anything_n_name AS N_NAME,

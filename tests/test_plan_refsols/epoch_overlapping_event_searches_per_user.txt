@@ -1,6 +1,6 @@
 ROOT(columns=[('user_name', anything_anything_user_name), ('n_searches', n_searches)], orderings=[(n_searches):desc_last, (anything_anything_user_name):asc_first])
  LIMIT(limit=Literal(value=4, type=NumericType()), columns={'anything_anything_user_name': anything_anything_user_name, 'n_searches': n_searches}, orderings=[(n_searches):desc_last, (anything_anything_user_name):asc_first])
-  AGGREGATE(keys={'agg_10': anything_user_id}, aggregations={'anything_anything_user_name': ANYTHING(anything_user_name), 'n_searches': COUNT()})
+  AGGREGATE(keys={'anything_user_id': anything_user_id}, aggregations={'anything_anything_user_name': ANYTHING(anything_user_name), 'n_searches': COUNT()})
    FILTER(condition=n_rows > 0:numeric, columns={'anything_user_id': anything_user_id, 'anything_user_name': anything_user_name})
     AGGREGATE(keys={'search_id': search_id, 'user_id': user_id}, aggregations={'anything_user_id': ANYTHING(user_id), 'anything_user_name': ANYTHING(user_name), 'n_rows': COUNT()})
      FILTER(condition=name_9 != user_name, columns={'search_id': search_id, 'user_id': user_id, 'user_name': user_name})

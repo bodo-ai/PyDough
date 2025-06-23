@@ -1,9 +1,9 @@
 WITH _s3 AS (
   SELECT
-    orders.o_custkey AS customer_key,
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS sum_expr_1
+    )) AS sum_expr_1,
+    orders.o_custkey
   FROM tpch.orders AS orders
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
@@ -37,7 +37,7 @@ SELECT
   customer.c_comment AS C_COMMENT
 FROM tpch.customer AS customer
 LEFT JOIN _s3 AS _s3
-  ON _s3.customer_key = customer.c_custkey
+  ON _s3.o_custkey = customer.c_custkey
 JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY

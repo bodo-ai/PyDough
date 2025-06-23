@@ -13,7 +13,7 @@ WITH _t5 AS (
     SUM(l_extendedprice * (
       1 - l_discount
     )) AS sum_expr_2,
-    l_suppkey AS supplier_key
+    l_suppkey
   FROM _t5
   GROUP BY
     l_suppkey
@@ -22,13 +22,13 @@ WITH _t5 AS (
     MAX(COALESCE(_t2.sum_expr_2, 0)) AS max_revenue
   FROM tpch.supplier AS supplier
   JOIN _t2 AS _t2
-    ON _t2.supplier_key = supplier.s_suppkey
+    ON _t2.l_suppkey = supplier.s_suppkey
 ), _t6 AS (
   SELECT
     SUM(l_extendedprice * (
       1 - l_discount
     )) AS sum_expr_3,
-    l_suppkey AS supplier_key
+    l_suppkey
   FROM _t5
   GROUP BY
     l_suppkey
@@ -43,6 +43,6 @@ FROM _s2 AS _s2
 CROSS JOIN tpch.supplier AS supplier
 JOIN _t6 AS _t6
   ON _s2.max_revenue = COALESCE(_t6.sum_expr_3, 0)
-  AND _t6.supplier_key = supplier.s_suppkey
+  AND _t6.l_suppkey = supplier.s_suppkey
 ORDER BY
   s_suppkey

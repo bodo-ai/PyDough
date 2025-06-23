@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    sbtxcustid AS customer_id,
-    MIN(sbtxdatetime) AS min_sbtxdatetime
+    MIN(sbtxdatetime) AS min_sbtxdatetime,
+    sbtxcustid
   FROM main.sbtransaction
   GROUP BY
     sbtxcustid
@@ -19,4 +19,4 @@ SELECT
   ) AS REAL) / 86400.0 AS DaysFromJoinToFirstTransaction
 FROM main.sbcustomer AS sbcustomer
 JOIN _s1 AS _s1
-  ON _s1.customer_id = sbcustomer.sbcustid
+  ON _s1.sbtxcustid = sbcustomer.sbcustid

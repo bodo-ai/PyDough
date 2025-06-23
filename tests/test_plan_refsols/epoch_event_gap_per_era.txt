@@ -1,5 +1,5 @@
 ROOT(columns=[('era_name', era_name), ('avg_event_gap', avg_event_gap)], orderings=[(anything_er_start_year):asc_first])
- AGGREGATE(keys={'name': er_name}, aggregations={'anything_er_start_year': ANYTHING(er_start_year), 'avg_event_gap': AVG(day_gap), 'era_name': ANYTHING(er_name)})
+ AGGREGATE(keys={'er_name': er_name}, aggregations={'anything_er_start_year': ANYTHING(er_start_year), 'avg_event_gap': AVG(day_gap), 'era_name': ANYTHING(er_name)})
   PROJECT(columns={'day_gap': DATEDIFF('days':string, PREV(args=[ev_dt], partition=[er_name], order=[(ev_dt):asc_last]), ev_dt), 'er_name': er_name, 'er_start_year': er_start_year})
    JOIN(condition=t0.er_start_year <= YEAR(t1.ev_dt) & YEAR(t1.ev_dt) < t0.er_end_year, type=INNER, cardinality=PLURAL_ACCESS, columns={'er_name': t0.er_name, 'er_start_year': t0.er_start_year, 'ev_dt': t1.ev_dt})
     SCAN(table=ERAS, columns={'er_end_year': er_end_year, 'er_name': er_name, 'er_start_year': er_start_year})

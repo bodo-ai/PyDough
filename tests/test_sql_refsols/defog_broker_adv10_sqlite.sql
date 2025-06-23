@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
-    sbcustomer.sbcustid AS _id,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    sbcustomer.sbcustid
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
     ON CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER)
@@ -16,7 +16,7 @@ SELECT
   COALESCE(_s3.n_rows, 0) AS num_transactions
 FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s3 AS _s3
-  ON _s3._id = sbcustomer.sbcustid
+  ON _s3.sbcustid = sbcustomer.sbcustid
 ORDER BY
   num_transactions DESC
 LIMIT 1

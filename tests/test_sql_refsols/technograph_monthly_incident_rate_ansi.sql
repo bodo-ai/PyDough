@@ -13,8 +13,8 @@ WITH _t4 AS (
     co_name = 'CN'
 ), _s7 AS (
   SELECT
-    _t7.ca_dt AS calendar_day,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    _t7.ca_dt
   FROM _t4 AS _t7
   JOIN main.calendar AS calendar
     ON calendar.ca_dt >= DATE_ADD(CAST(_t7.ca_dt AS TIMESTAMP), -6, 'MONTH')
@@ -26,8 +26,8 @@ WITH _t4 AS (
     _t7.ca_dt
 ), _s15 AS (
   SELECT
-    _t11.ca_dt AS calendar_day,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    _t11.ca_dt
   FROM _t4 AS _t11
   JOIN main.incidents AS incidents
     ON _t11.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
@@ -45,9 +45,9 @@ WITH _t4 AS (
     EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME)) AS year
   FROM _t4 AS _t4
   LEFT JOIN _s7 AS _s7
-    ON _s7.calendar_day = _t4.ca_dt
+    ON _s7.ca_dt = _t4.ca_dt
   LEFT JOIN _s15 AS _s15
-    ON _s15.calendar_day = _t4.ca_dt
+    ON _s15.ca_dt = _t4.ca_dt
   GROUP BY
     EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)),
     EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME))

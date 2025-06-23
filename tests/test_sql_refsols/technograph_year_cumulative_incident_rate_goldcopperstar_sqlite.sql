@@ -17,8 +17,8 @@ WITH _s14 AS (
     pr_name = 'GoldCopper-Star'
 ), _s7 AS (
   SELECT
-    _s0.ca_dt AS calendar_day,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    _s0.ca_dt
   FROM _t6 AS _s0
   JOIN main.incidents AS incidents
     ON _s0.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
@@ -30,8 +30,8 @@ WITH _s14 AS (
     _s0.ca_dt
 ), _s13 AS (
   SELECT
-    _s8.ca_dt AS calendar_day,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    _s8.ca_dt
   FROM _t6 AS _s8
   JOIN main.devices AS devices
     ON _s8.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
@@ -46,9 +46,9 @@ WITH _s14 AS (
     CAST(STRFTIME('%Y', _t6.ca_dt) AS INTEGER) AS year
   FROM _t6 AS _t6
   LEFT JOIN _s7 AS _s7
-    ON _s7.calendar_day = _t6.ca_dt
+    ON _s7.ca_dt = _t6.ca_dt
   LEFT JOIN _s13 AS _s13
-    ON _s13.calendar_day = _t6.ca_dt
+    ON _s13.ca_dt = _t6.ca_dt
   GROUP BY
     CAST(STRFTIME('%Y', _t6.ca_dt) AS INTEGER)
 ), _t0 AS (

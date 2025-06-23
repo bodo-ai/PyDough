@@ -65,6 +65,7 @@ def run_column_bubbling(
     new_expr: RelationalExpression
     new_ref: RelationalExpression
     result: RelationalNode
+    alt_ref: ColumnReference
     match node:
         case Project() | Filter() | Limit():
             new_input, input_mapping = run_column_bubbling(node.input, corr_remap)
@@ -119,6 +120,12 @@ def run_column_bubbling(
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
+                    if new_expr.name != name and new_expr.name not in used_names:
+                        used_names.add(new_expr.name)
+                        alt_ref = ColumnReference(new_expr.name, new_expr.data_type)
+                        remapping[new_ref] = alt_ref
+                        new_ref = alt_ref
+                        name = new_expr.name
                     new_keys[name] = new_expr
                     aliases[new_expr] = new_ref
             for name, call_expr in node.aggregations.items():
@@ -132,9 +139,7 @@ def run_column_bubbling(
                         alt_name: str | None = generate_agg_name(new_expr)
                         if alt_name is not None and alt_name not in used_names:
                             used_names.add(alt_name)
-                            alt_ref: ColumnReference = ColumnReference(
-                                alt_name, call_expr.data_type
-                            )
+                            alt_ref = ColumnReference(alt_name, call_expr.data_type)
                             remapping[new_ref] = alt_ref
                             new_ref = alt_ref
                             name = alt_name

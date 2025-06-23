@@ -9,7 +9,7 @@ WITH _u_0 AS (
 ), _t0 AS (
   SELECT
     COUNT(*) AS order_count,
-    orders.o_orderpriority AS order_priority
+    orders.o_orderpriority
   FROM tpch.orders AS orders
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = orders.o_orderkey
@@ -34,8 +34,8 @@ WITH _u_0 AS (
     orders.o_orderpriority
 )
 SELECT
-  order_priority AS O_ORDERPRIORITY,
+  o_orderpriority AS O_ORDERPRIORITY,
   order_count AS ORDER_COUNT
 FROM _t0
 ORDER BY
-  order_priority
+  o_orderpriority

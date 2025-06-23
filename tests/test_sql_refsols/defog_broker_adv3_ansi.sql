@@ -1,8 +1,8 @@
 WITH _s1 AS (
   SELECT
-    sbtxcustid AS customer_id,
     COUNT(*) AS n_rows,
-    SUM(sbtxstatus = 'success') AS sum_expr_2
+    SUM(sbtxstatus = 'success') AS sum_expr_2,
+    sbtxcustid
   FROM main.sbtransaction
   GROUP BY
     sbtxcustid
@@ -14,7 +14,7 @@ SELECT
   ) / COALESCE(_s1.n_rows, 0) AS success_rate
 FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
-  ON _s1.customer_id = sbcustomer.sbcustid
+  ON _s1.sbtxcustid = sbcustomer.sbcustid
 WHERE
   NOT _s1.n_rows IS NULL AND _s1.n_rows >= 5
 ORDER BY

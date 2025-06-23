@@ -9,25 +9,25 @@ WITH _s0 AS (
   GROUP BY
     customer_id,
     DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP))
-), _t1 AS (
+), _t2 AS (
   SELECT
-    customers.state AS customer_state,
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
-    _s0.quarter
+    _s0.quarter,
+    customers.state
   FROM _s0 AS _s0
   JOIN main.customers AS customers
     ON _s0.customer_id = customers._id
   GROUP BY
-    customers.state,
-    _s0.quarter
+    _s0.quarter,
+    customers.state
 )
 SELECT
   quarter,
-  customer_state,
+  state AS customer_state,
   COALESCE(sum_sum_sale_price, 0) AS total_sales
-FROM _t1
+FROM _t2
 WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
   quarter,
-  customer_state
+  state

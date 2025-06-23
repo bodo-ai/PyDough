@@ -4,8 +4,8 @@ WITH _t5 AS (
   FROM main.calendar
 ), _s3 AS (
   SELECT
-    _s0.ca_dt AS calendar_day,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    _s0.ca_dt
   FROM _t5 AS _s0
   JOIN main.devices AS devices
     ON _s0.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
@@ -13,8 +13,8 @@ WITH _t5 AS (
     _s0.ca_dt
 ), _s7 AS (
   SELECT
-    _s4.ca_dt AS calendar_day,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    _s4.ca_dt
   FROM _t5 AS _s4
   JOIN main.incidents AS incidents
     ON _s4.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
@@ -27,9 +27,9 @@ WITH _t5 AS (
     EXTRACT(YEAR FROM CAST(_t5.ca_dt AS DATETIME)) AS year
   FROM _t5 AS _t5
   LEFT JOIN _s3 AS _s3
-    ON _s3.calendar_day = _t5.ca_dt
+    ON _s3.ca_dt = _t5.ca_dt
   LEFT JOIN _s7 AS _s7
-    ON _s7.calendar_day = _t5.ca_dt
+    ON _s7.ca_dt = _t5.ca_dt
   GROUP BY
     EXTRACT(YEAR FROM CAST(_t5.ca_dt AS DATETIME))
 ), _t0 AS (

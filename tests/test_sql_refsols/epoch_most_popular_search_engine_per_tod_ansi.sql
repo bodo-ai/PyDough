@@ -1,28 +1,28 @@
-WITH _t1 AS (
+WITH _t2 AS (
   SELECT
     COUNT(*) AS n_searches,
-    times.t_name AS tod,
-    searches.search_engine
+    searches.search_engine,
+    times.t_name
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
     AND times.t_start_hour <= EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
   GROUP BY
-    times.t_name,
-    searches.search_engine
-), _t0 AS (
+    searches.search_engine,
+    times.t_name
+), _t1 AS (
   SELECT
     n_searches,
-    tod,
-    search_engine
-  FROM _t1
+    search_engine,
+    t_name
+  FROM _t2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY tod ORDER BY n_searches DESC NULLS FIRST, search_engine NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY n_searches DESC NULLS FIRST, search_engine NULLS LAST) = 1
 )
 SELECT
-  tod,
+  t_name AS tod,
   search_engine,
   n_searches
-FROM _t0
+FROM _t1
 ORDER BY
-  tod
+  t_name

@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    sbtxcustid AS customer_id,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    sbtxcustid
   FROM main.sbtransaction
   WHERE
     CAST(sbtxdatetime AS TIMESTAMP) < CAST('2023-04-02' AS DATE)
@@ -16,7 +16,7 @@ SELECT
   COALESCE(_s1.n_rows, 0) AS num_tx
 FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
-  ON _s1.customer_id = sbcustomer.sbcustid
+  ON _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
   num_tx DESC
 LIMIT 1

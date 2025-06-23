@@ -1,8 +1,8 @@
 WITH _t1 AS (
   SELECT
-    events.ev_typ AS event_type,
     COUNT(DISTINCT searches.search_id) AS n_searches,
-    users.user_region AS region
+    events.ev_typ,
+    users.user_region
   FROM events AS events
   JOIN searches AS searches
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
@@ -13,15 +13,15 @@ WITH _t1 AS (
     users.user_region
 ), _t0 AS (
   SELECT
-    event_type,
     n_searches,
-    region
+    ev_typ,
+    user_region
   FROM _t1
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY region ORDER BY n_searches DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY n_searches DESC NULLS FIRST) = 1
 )
 SELECT
-  region,
-  event_type,
+  user_region AS region,
+  ev_typ AS event_type,
   n_searches
 FROM _t0

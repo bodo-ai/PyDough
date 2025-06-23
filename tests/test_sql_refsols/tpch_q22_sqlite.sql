@@ -7,8 +7,8 @@ WITH _s0 AS (
     AND c_acctbal > 0.0
 ), _s3 AS (
   SELECT
-    o_custkey AS customer_key,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    o_custkey
   FROM tpch.orders
   GROUP BY
     o_custkey
@@ -22,7 +22,7 @@ WITH _s0 AS (
     ON SUBSTRING(customer.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
     AND _s0.global_avg_balance < customer.c_acctbal
   LEFT JOIN _s3 AS _s3
-    ON _s3.customer_key = customer.c_custkey
+    ON _s3.o_custkey = customer.c_custkey
   WHERE
     _s3.n_rows = 0 OR _s3.n_rows IS NULL
   GROUP BY

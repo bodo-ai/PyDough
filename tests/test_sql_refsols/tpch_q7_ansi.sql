@@ -19,9 +19,9 @@ WITH _s1 AS (
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
     )) AS sum_volume,
-    _s1.n_name AS supp_nation,
     _s9.n_name AS cust_nation,
-    EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) AS l_year
+    EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) AS l_year,
+    _s1.n_name
   FROM tpch.lineitem AS lineitem
   JOIN tpch.supplier AS supplier
     ON lineitem.l_suppkey = supplier.s_suppkey
@@ -38,17 +38,17 @@ WITH _s1 AS (
   WHERE
     EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) IN (1995, 1996)
   GROUP BY
-    _s1.n_name,
     _s9.n_name,
-    EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME))
+    EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)),
+    _s1.n_name
 )
 SELECT
-  supp_nation AS SUPP_NATION,
+  n_name AS SUPP_NATION,
   cust_nation AS CUST_NATION,
   l_year AS L_YEAR,
   COALESCE(sum_volume, 0) AS REVENUE
 FROM _t1
 ORDER BY
-  supp_nation,
+  n_name,
   cust_nation,
   l_year

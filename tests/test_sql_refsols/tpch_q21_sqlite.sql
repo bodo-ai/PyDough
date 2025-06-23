@@ -42,8 +42,8 @@ WITH _t7 AS (
     orders.o_orderkey
 ), _s13 AS (
   SELECT
-    _t4.anything_l_suppkey AS agg_24,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    _t4.anything_l_suppkey
   FROM _t4 AS _t4
   LEFT JOIN _u_0 AS _u_0
     ON _t4.anything_l_linenumber = _u_0._u_1
@@ -61,7 +61,7 @@ FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
 LEFT JOIN _s13 AS _s13
-  ON _s13.agg_24 = supplier.s_suppkey
+  ON _s13.anything_l_suppkey = supplier.s_suppkey
 ORDER BY
   numwait DESC,
   s_name

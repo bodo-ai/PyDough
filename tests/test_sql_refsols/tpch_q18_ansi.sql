@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    l_orderkey AS order_key,
-    SUM(l_quantity) AS sum_l_quantity
+    SUM(l_quantity) AS sum_l_quantity,
+    l_orderkey
   FROM tpch.lineitem
   GROUP BY
     l_orderkey
@@ -18,7 +18,7 @@ JOIN tpch.customer AS customer
   ON customer.c_custkey = orders.o_custkey
 JOIN _t0 AS _t0
   ON NOT _t0.sum_l_quantity IS NULL
-  AND _t0.order_key = orders.o_orderkey
+  AND _t0.l_orderkey = orders.o_orderkey
   AND _t0.sum_l_quantity > 300
 ORDER BY
   o_totalprice DESC,

@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     COUNT(*) AS n_rows,
-    de_product_id AS product_id
+    de_product_id
   FROM main.devices
   GROUP BY
     de_product_id
@@ -16,7 +16,7 @@ WITH _s0 AS (
     EXTRACT(YEAR FROM CAST(_t4.pr_release AS DATETIME)) AS release_year
   FROM _s0 AS _s0
   JOIN _t4 AS _t4
-    ON _s0.product_id = _t4.pr_id
+    ON _s0.de_product_id = _t4.pr_id
   GROUP BY
     EXTRACT(YEAR FROM CAST(_t4.pr_release AS DATETIME))
 ), _s7 AS (

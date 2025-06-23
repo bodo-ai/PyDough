@@ -1,7 +1,7 @@
 WITH _s5 AS (
   SELECT
-    incidents.in_error_id AS error_id,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    incidents.in_error_id
   FROM main.incidents AS incidents
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
@@ -20,7 +20,7 @@ WITH _s5 AS (
     errors.er_name
   FROM main.errors AS errors
   LEFT JOIN _s5 AS _s5
-    ON _s5.error_id = errors.er_id
+    ON _s5.in_error_id = errors.er_id
 )
 SELECT
   er_name AS error,

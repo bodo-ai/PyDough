@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    events.ev_typ AS event_type,
-    COUNT(*) AS n_events
+    COUNT(*) AS n_events,
+    events.ev_typ
   FROM events AS events
   JOIN seasons AS seasons
     ON (
@@ -14,8 +14,8 @@ WITH _t0 AS (
     events.ev_typ
 )
 SELECT
-  event_type,
+  ev_typ AS event_type,
   n_events
 FROM _t0
 ORDER BY
-  event_type
+  ev_typ

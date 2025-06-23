@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     MAX(sbdphigh) AS max_sbdphigh,
     MIN(sbdplow) AS min_sbdplow,
-    sbdptickerid AS ticker_id
+    sbdptickerid
   FROM main.sbdailyprice
   WHERE
     sbdpdate <= '2023-04-04' AND sbdpdate >= '2023-04-01'
@@ -14,7 +14,7 @@ SELECT
   _s1.max_sbdphigh - _s1.min_sbdplow AS price_change
 FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
-  ON _s1.ticker_id = sbticker.sbtickerid
+  ON _s1.sbdptickerid = sbticker.sbtickerid
 ORDER BY
   price_change DESC
 LIMIT 3

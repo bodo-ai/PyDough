@@ -14,8 +14,8 @@ WITH _t0 AS (
     searches.search_id
 ), _s5 AS (
   SELECT
-    anything_search_user_id AS agg_5,
-    COUNT(*) AS n_cold_war_searches
+    COUNT(*) AS n_cold_war_searches,
+    anything_search_user_id
   FROM _t0
   GROUP BY
     anything_search_user_id
@@ -25,7 +25,7 @@ SELECT
   _s5.n_cold_war_searches
 FROM users AS users
 JOIN _s5 AS _s5
-  ON _s5.agg_5 = users.user_id
+  ON _s5.anything_search_user_id = users.user_id
 ORDER BY
   n_cold_war_searches DESC,
   user_name

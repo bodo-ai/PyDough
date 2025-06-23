@@ -4,8 +4,6 @@ WITH _t1 AS (
     AVG(l_extendedprice) AS avg_l_extendedprice,
     AVG(l_quantity) AS avg_l_quantity,
     COUNT(*) AS n_rows,
-    l_returnflag AS return_flag,
-    l_linestatus AS status,
     SUM(l_extendedprice * (
       1 - l_discount
     ) * (
@@ -15,7 +13,9 @@ WITH _t1 AS (
       1 - l_discount
     )) AS sum_expr_9,
     SUM(l_extendedprice) AS sum_l_extendedprice,
-    SUM(l_quantity) AS sum_l_quantity
+    SUM(l_quantity) AS sum_l_quantity,
+    l_linestatus,
+    l_returnflag
   FROM tpch.lineitem
   WHERE
     l_shipdate <= CAST('1998-12-01' AS DATE)
@@ -24,8 +24,8 @@ WITH _t1 AS (
     l_returnflag
 )
 SELECT
-  return_flag AS L_RETURNFLAG,
-  status AS L_LINESTATUS,
+  l_returnflag AS L_RETURNFLAG,
+  l_linestatus AS L_LINESTATUS,
   COALESCE(sum_l_quantity, 0) AS SUM_QTY,
   COALESCE(sum_l_extendedprice, 0) AS SUM_BASE_PRICE,
   COALESCE(sum_expr_9, 0) AS SUM_DISC_PRICE,
@@ -36,5 +36,5 @@ SELECT
   n_rows AS COUNT_ORDER
 FROM _t1
 ORDER BY
-  return_flag,
-  status
+  l_returnflag,
+  l_linestatus

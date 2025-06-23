@@ -398,7 +398,8 @@ def attempt_join_aggregate_transpose(
             side_keys,
             projection_columns,
         )
-        need_projection |= side_needs_projection
+        if side_needs_projection:
+            need_projection = True
         if side_count_ref is not None:
             count_refs.append(side_count_ref)
 
