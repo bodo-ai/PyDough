@@ -37,34 +37,29 @@ WITH _t4 AS (
     ON _t12.co_id = devices.de_production_country_id
   GROUP BY
     _t11.ca_dt
-), _t0 AS (
-  SELECT
-    ROUND((
-      1000000.0 * COALESCE(SUM(_s15.n_rows), 0)
-    ) / COALESCE(SUM(_s7.n_rows), 0), 2) AS ir,
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME))), (
-          2 * -1
-        ))
-      END
-    ) AS month_0
-  FROM _t4 AS _t4
-  LEFT JOIN _s7 AS _s7
-    ON _s7.ca_dt = _t4.ca_dt
-  LEFT JOIN _s15 AS _s15
-    ON _s15.ca_dt = _t4.ca_dt
-  GROUP BY
-    EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)),
-    EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME))
 )
 SELECT
-  month_0 AS month,
-  ir
-FROM _t0
+  CONCAT_WS(
+    '-',
+    EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME)),
+    CASE
+      WHEN LENGTH(EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME))) >= 2
+      THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)), 1, 2)
+      ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME))), (
+        2 * -1
+      ))
+    END
+  ) AS month,
+  ROUND((
+    1000000.0 * COALESCE(SUM(_s15.n_rows), 0)
+  ) / COALESCE(SUM(_s7.n_rows), 0), 2) AS ir
+FROM _t4 AS _t4
+LEFT JOIN _s7 AS _s7
+  ON _s7.ca_dt = _t4.ca_dt
+LEFT JOIN _s15 AS _s15
+  ON _s15.ca_dt = _t4.ca_dt
+GROUP BY
+  EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)),
+  EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME))
 ORDER BY
   month

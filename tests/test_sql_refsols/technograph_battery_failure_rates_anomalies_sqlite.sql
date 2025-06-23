@@ -7,29 +7,23 @@ WITH _s7 AS (
     ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
   GROUP BY
     incidents.in_device_id
-), _t0 AS (
-  SELECT
-    ROUND(CAST(COALESCE(SUM(COALESCE(_s7.n_rows, 0)), 0) AS REAL) / COUNT(*), 2) AS ir,
-    countries.co_name,
-    products.pr_name
-  FROM main.countries AS countries
-  JOIN main.devices AS devices
-    ON countries.co_id = devices.de_production_country_id
-  JOIN main.products AS products
-    ON devices.de_product_id = products.pr_id
-  LEFT JOIN _s7 AS _s7
-    ON _s7.in_device_id = devices.de_id
-  GROUP BY
-    countries.co_name,
-    products.pr_name
 )
 SELECT
-  co_name AS country_name,
-  pr_name AS product_name,
-  ir
-FROM _t0
+  countries.co_name AS country_name,
+  products.pr_name AS product_name,
+  ROUND(CAST(COALESCE(SUM(COALESCE(_s7.n_rows, 0)), 0) AS REAL) / COUNT(*), 2) AS ir
+FROM main.countries AS countries
+JOIN main.devices AS devices
+  ON countries.co_id = devices.de_production_country_id
+JOIN main.products AS products
+  ON devices.de_product_id = products.pr_id
+LEFT JOIN _s7 AS _s7
+  ON _s7.in_device_id = devices.de_id
+GROUP BY
+  countries.co_name,
+  products.pr_name
 ORDER BY
   ir DESC,
-  pr_name,
-  co_name
+  products.pr_name,
+  countries.co_name
 LIMIT 5

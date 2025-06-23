@@ -20,21 +20,16 @@ WITH _s0 AS (
   GROUP BY
     searches.search_id,
     _s0.user_id
-), _t0 AS (
-  SELECT
-    ANY_VALUE(anything_user_name) AS anything_anything_user_name,
-    COUNT(*) AS n_searches
-  FROM _t2
-  WHERE
-    n_rows > 0
-  GROUP BY
-    anything_user_id
 )
 SELECT
-  anything_anything_user_name AS user_name,
-  n_searches
-FROM _t0
+  ANY_VALUE(anything_user_name) AS user_name,
+  COUNT(*) AS n_searches
+FROM _t2
+WHERE
+  n_rows > 0
+GROUP BY
+  anything_user_id
 ORDER BY
   n_searches DESC,
-  anything_anything_user_name
+  ANY_VALUE(anything_user_name)
 LIMIT 4

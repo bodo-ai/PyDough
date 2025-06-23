@@ -8,15 +8,11 @@ WITH _t AS (
     ON lineitem.l_partkey = part.p_partkey
   WHERE
     part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
-), _t0 AS (
-  SELECT
-    SUM(l_extendedprice) AS sum_l_extendedprice
-  FROM _t
-  WHERE
-    l_quantity < (
-      0.2 * _w
-    )
 )
 SELECT
-  CAST(COALESCE(sum_l_extendedprice, 0) AS REAL) / 7.0 AS AVG_YEARLY
-FROM _t0
+  CAST(COALESCE(SUM(l_extendedprice), 0) AS REAL) / 7.0 AS AVG_YEARLY
+FROM _t
+WHERE
+  l_quantity < (
+    0.2 * _w
+  )

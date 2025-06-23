@@ -38,19 +38,14 @@ WITH _s7 AS (
   FROM tpch.supplier AS supplier
   JOIN tpch.nation AS nation
     ON nation.n_nationkey = supplier.s_nationkey
-), _t0 AS (
-  SELECT
-    COALESCE(SUM(_s10.sum_sum_value), 0) AS revenue,
-    MAX(_s10.anything_n_name) AS anything_anything_n_name
-  FROM _s10 AS _s10
-  JOIN _s11 AS _s11
-    ON _s10.l_suppkey = _s11.s_suppkey AND _s10.n_name = _s11.n_name
-  GROUP BY
-    _s10.n_nationkey
 )
 SELECT
-  anything_anything_n_name AS N_NAME,
-  revenue AS REVENUE
-FROM _t0
+  MAX(_s10.anything_n_name) AS N_NAME,
+  COALESCE(SUM(_s10.sum_sum_value), 0) AS REVENUE
+FROM _s10 AS _s10
+JOIN _s11 AS _s11
+  ON _s10.l_suppkey = _s11.s_suppkey AND _s10.n_name = _s11.n_name
+GROUP BY
+  _s10.n_nationkey
 ORDER BY
   revenue DESC

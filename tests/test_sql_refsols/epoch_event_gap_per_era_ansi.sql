@@ -11,18 +11,12 @@ WITH _t1 AS (
   JOIN events AS events
     ON eras.er_end_year > EXTRACT(YEAR FROM CAST(events.ev_dt AS DATETIME))
     AND eras.er_start_year <= EXTRACT(YEAR FROM CAST(events.ev_dt AS DATETIME))
-), _t0 AS (
-  SELECT
-    ANY_VALUE(er_start_year) AS anything_er_start_year,
-    AVG(day_gap) AS avg_event_gap,
-    ANY_VALUE(er_name) AS era_name
-  FROM _t1
-  GROUP BY
-    er_name
 )
 SELECT
-  era_name,
-  avg_event_gap
-FROM _t0
+  ANY_VALUE(er_name) AS era_name,
+  AVG(day_gap) AS avg_event_gap
+FROM _t1
+GROUP BY
+  er_name
 ORDER BY
-  anything_er_start_year
+  ANY_VALUE(er_start_year)

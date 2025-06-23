@@ -18,23 +18,17 @@ WITH _s0 AS (
   GROUP BY
     sbticker.sbtickertype,
     _s0.sbtxcustid
-), _t0 AS (
-  SELECT
-    SUM(_s2.num_transactions) AS num_transactions,
-    sbcustomer.sbcuststate,
-    _s2.sbtickertype
-  FROM _s2 AS _s2
-  JOIN main.sbcustomer AS sbcustomer
-    ON _s2.sbtxcustid = sbcustomer.sbcustid
-  GROUP BY
-    sbcustomer.sbcuststate,
-    _s2.sbtickertype
 )
 SELECT
-  sbcuststate AS state,
-  sbtickertype AS ticker_type,
-  num_transactions
-FROM _t0
+  sbcustomer.sbcuststate AS state,
+  _s2.sbtickertype AS ticker_type,
+  SUM(_s2.num_transactions) AS num_transactions
+FROM _s2 AS _s2
+JOIN main.sbcustomer AS sbcustomer
+  ON _s2.sbtxcustid = sbcustomer.sbcustid
+GROUP BY
+  sbcustomer.sbcuststate,
+  _s2.sbtickertype
 ORDER BY
   num_transactions DESC
 LIMIT 5

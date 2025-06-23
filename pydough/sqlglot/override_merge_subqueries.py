@@ -125,19 +125,25 @@ def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope):
     """
     TODO
     """
+    with_ctx = outer_scope.expression.args.pop("with", None)
     if not inner_scope.expression.find(exp.AggFunc):
+        outer_scope.expression.args["with"] = with_ctx
         return False
-    if outer_scope.expression.find(exp.AggFunc):
+    elif (
+        outer_scope.expression.find(exp.AggFunc)
+        or outer_scope.expression.find(exp.Join)
+        or (
+            inner_scope.expression.find(exp.Group)
+            and (
+                inner_scope.expression.find(exp.Window)
+                or outer_scope.expression.find(exp.Group)
+                or outer_scope.expression.args.get("where") is not None
+            )
+        )
+    ):
+        outer_scope.expression.args["with"] = with_ctx
         return True
-    if outer_scope.expression.find(exp.Join):
-        return True
-    if inner_scope.expression.find(exp.Group):
-        if (
-            inner_scope.expression.find(exp.Window)
-            or outer_scope.expression.find(exp.Group)
-            or outer_scope.expression.args.get("where") is not None
-        ):
-            return True
+    outer_scope.expression.args["with"] = with_ctx
     return False
 
 

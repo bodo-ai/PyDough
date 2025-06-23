@@ -1,20 +1,14 @@
-WITH _t0 AS (
-  SELECT
-    COUNT(*) AS order_count,
-    orders.o_orderpriority
-  FROM tpch.orders AS orders
-  JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_commitdate < lineitem.l_receiptdate
-    AND lineitem.l_orderkey = orders.o_orderkey
-  WHERE
-    EXTRACT(QUARTER FROM CAST(orders.o_orderdate AS DATETIME)) = 3
-    AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
-  GROUP BY
-    orders.o_orderpriority
-)
 SELECT
-  o_orderpriority AS O_ORDERPRIORITY,
-  order_count AS ORDER_COUNT
-FROM _t0
+  orders.o_orderpriority AS O_ORDERPRIORITY,
+  COUNT(*) AS ORDER_COUNT
+FROM tpch.orders AS orders
+JOIN tpch.lineitem AS lineitem
+  ON lineitem.l_commitdate < lineitem.l_receiptdate
+  AND lineitem.l_orderkey = orders.o_orderkey
+WHERE
+  EXTRACT(QUARTER FROM CAST(orders.o_orderdate AS DATETIME)) = 3
+  AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
+GROUP BY
+  orders.o_orderpriority
 ORDER BY
   o_orderpriority

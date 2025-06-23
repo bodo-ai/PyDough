@@ -10,11 +10,7 @@ WITH _t2 AS (
     lineitem.l_quantity < (
       0.2 * AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey)
     )
-), _t0 AS (
-  SELECT
-    SUM(l_extendedprice) AS sum_l_extendedprice
-  FROM _t2
 )
 SELECT
-  COALESCE(sum_l_extendedprice, 0) / 7.0 AS AVG_YEARLY
-FROM _t0
+  COALESCE(SUM(l_extendedprice), 0) / 7.0 AS AVG_YEARLY
+FROM _t2

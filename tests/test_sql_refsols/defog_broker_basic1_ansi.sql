@@ -8,19 +8,13 @@ WITH _s1 AS (
     sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -30, 'DAY'))
   GROUP BY
     sbtxcustid
-), _t0 AS (
-  SELECT
-    SUM(_s1.n_rows) AS sum_n_rows,
-    SUM(_s1.sum_sbtxamount) AS sum_sum_sbtxamount,
-    sbcustomer.sbcustcountry
-  FROM main.sbcustomer AS sbcustomer
-  LEFT JOIN _s1 AS _s1
-    ON _s1.sbtxcustid = sbcustomer.sbcustid
-  GROUP BY
-    sbcustomer.sbcustcountry
 )
 SELECT
-  sbcustcountry AS country,
-  COALESCE(sum_n_rows, 0) AS num_transactions,
-  COALESCE(sum_sum_sbtxamount, 0) AS total_amount
-FROM _t0
+  sbcustomer.sbcustcountry AS country,
+  COALESCE(SUM(_s1.n_rows), 0) AS num_transactions,
+  COALESCE(SUM(_s1.sum_sbtxamount), 0) AS total_amount
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.sbtxcustid = sbcustomer.sbcustid
+GROUP BY
+  sbcustomer.sbcustcountry

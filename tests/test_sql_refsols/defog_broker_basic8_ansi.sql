@@ -1,15 +1,9 @@
-WITH _t0 AS (
-  SELECT
-    COUNT(*) AS num_customers,
-    sbcustcountry
-  FROM main.sbcustomer
-  GROUP BY
-    sbcustcountry
-)
 SELECT
   sbcustcountry AS country,
-  num_customers
-FROM _t0
+  COUNT(*) AS num_customers
+FROM main.sbcustomer
+GROUP BY
+  sbcustcountry
 ORDER BY
   num_customers DESC
 LIMIT 5

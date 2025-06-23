@@ -14,18 +14,12 @@ WITH _t1 AS (
   JOIN events AS events
     ON eras.er_end_year > CAST(STRFTIME('%Y', events.ev_dt) AS INTEGER)
     AND eras.er_start_year <= CAST(STRFTIME('%Y', events.ev_dt) AS INTEGER)
-), _t0 AS (
-  SELECT
-    MAX(er_start_year) AS anything_er_start_year,
-    AVG(day_gap) AS avg_event_gap,
-    MAX(er_name) AS era_name
-  FROM _t1
-  GROUP BY
-    er_name
 )
 SELECT
-  era_name,
-  avg_event_gap
-FROM _t0
+  MAX(er_name) AS era_name,
+  AVG(day_gap) AS avg_event_gap
+FROM _t1
+GROUP BY
+  er_name
 ORDER BY
-  anything_er_start_year
+  MAX(er_start_year)
