@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     events.ev_typ AS event_type,
-    COUNT(DISTINCT searches.search_id) AS ndistinct_search_id,
+    COUNT(DISTINCT searches.search_id) AS n_searches,
     users.user_region AS region
   FROM events AS events
   JOIN searches AS searches
@@ -14,14 +14,14 @@ WITH _t1 AS (
 ), _t0 AS (
   SELECT
     event_type,
-    ndistinct_search_id,
+    n_searches,
     region
   FROM _t1
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY region ORDER BY ndistinct_search_id DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (PARTITION BY region ORDER BY n_searches DESC NULLS FIRST) = 1
 )
 SELECT
   region,
   event_type,
-  ndistinct_search_id AS n_searches
+  n_searches
 FROM _t0

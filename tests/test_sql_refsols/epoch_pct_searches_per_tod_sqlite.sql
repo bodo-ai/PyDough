@@ -1,8 +1,8 @@
 WITH _t1 AS (
   SELECT
-    COUNT(*) AS agg_0,
     MAX(times.t_name) AS anything_t_name,
-    MAX(times.t_start_hour) AS anything_t_start_hour
+    MAX(times.t_start_hour) AS anything_t_start_hour,
+    COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
@@ -12,8 +12,8 @@ WITH _t1 AS (
 ), _t0 AS (
   SELECT
     ROUND(CAST((
-      100.0 * agg_0
-    ) AS REAL) / SUM(agg_0) OVER (), 2) AS pct_searches,
+      100.0 * n_rows
+    ) AS REAL) / SUM(n_rows) OVER (), 2) AS pct_searches,
     anything_t_name,
     anything_t_start_hour
   FROM _t1

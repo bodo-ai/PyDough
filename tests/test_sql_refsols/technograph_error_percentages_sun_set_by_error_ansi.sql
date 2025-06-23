@@ -1,7 +1,7 @@
 WITH _s5 AS (
   SELECT
-    COUNT(*) AS agg_0,
-    incidents.in_error_id AS error_id
+    incidents.in_error_id AS error_id,
+    COUNT(*) AS n_rows
   FROM main.incidents AS incidents
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
@@ -12,8 +12,8 @@ WITH _s5 AS (
 ), _t0 AS (
   SELECT
     ROUND((
-      100.0 * COALESCE(_s5.agg_0, 0)
-    ) / SUM(COALESCE(_s5.agg_0, 0)) OVER (), 2) AS pct,
+      100.0 * COALESCE(_s5.n_rows, 0)
+    ) / SUM(COALESCE(_s5.n_rows, 0)) OVER (), 2) AS pct,
     errors.er_name
   FROM main.errors AS errors
   LEFT JOIN _s5 AS _s5

@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    MIN(snapshot_date) AS min_snapshot_date
+    MIN(snapshot_date) AS min_date
   FROM main.user_setting_snapshot
   WHERE
     EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
@@ -11,4 +11,4 @@ SELECT
 FROM _s0 AS _s0
 JOIN main.user_setting_snapshot AS user_setting_snapshot
   ON EXTRACT(YEAR FROM CAST(user_setting_snapshot.snapshot_date AS DATETIME)) = 2023
-  AND _s0.min_snapshot_date = user_setting_snapshot.snapshot_date
+  AND _s0.min_date = user_setting_snapshot.snapshot_date

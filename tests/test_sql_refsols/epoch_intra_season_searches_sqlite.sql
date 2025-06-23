@@ -12,7 +12,7 @@ WITH _s0 AS (
   FROM events
 ), _s9 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     _s2.s_name AS name,
     searches.search_id
   FROM _s0 AS _s2
@@ -36,10 +36,10 @@ WITH _s0 AS (
     searches.search_id
 ), _s16 AS (
   SELECT
-    COUNT(*) AS agg_3,
     MAX(_s0.s_name) AS anything_s_name,
+    COUNT(*) AS n_rows,
     SUM((
-      NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
+      NOT _s9.n_rows IS NULL AND _s9.n_rows > 0
     )) AS sum_is_intra_season
   FROM _s0 AS _s0
   JOIN searches AS searches
@@ -52,7 +52,7 @@ WITH _s0 AS (
     _s0.s_name
 ), _s17 AS (
   SELECT
-    COUNT(*) AS agg_1,
+    COUNT(*) AS n_rows,
     _s10.s_name AS name,
     SUM(_s15.s_name = _s10.s_name) AS sum_is_intra_season
   FROM _s0 AS _s10
@@ -75,11 +75,11 @@ SELECT
   _s16.anything_s_name AS season_name,
   ROUND(CAST((
     100.0 * COALESCE(_s16.sum_is_intra_season, 0)
-  ) AS REAL) / _s16.agg_3, 2) AS pct_season_searches,
+  ) AS REAL) / _s16.n_rows, 2) AS pct_season_searches,
   ROUND(
     CAST((
       100.0 * COALESCE(_s17.sum_is_intra_season, 0)
-    ) AS REAL) / COALESCE(_s17.agg_1, 0),
+    ) AS REAL) / COALESCE(_s17.n_rows, 0),
     2
   ) AS pct_event_searches
 FROM _s16 AS _s16

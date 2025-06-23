@@ -1,7 +1,7 @@
 WITH _s7 AS (
   SELECT
-    COUNT(*) AS agg_0,
-    incidents.in_device_id AS device_id
+    incidents.in_device_id AS device_id,
+    COUNT(*) AS n_rows
   FROM main.incidents AS incidents
   JOIN main.errors AS errors
     ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
@@ -9,10 +9,10 @@ WITH _s7 AS (
     incidents.in_device_id
 ), _t1 AS (
   SELECT
-    COUNT(*) AS agg_1,
     countries.co_name AS country_name,
+    COUNT(*) AS n_rows,
     products.pr_name AS product_name,
-    SUM(COALESCE(_s7.agg_0, 0)) AS sum_n_incidents
+    SUM(COALESCE(_s7.n_rows, 0)) AS sum_n_incidents
   FROM main.countries AS countries
   JOIN main.devices AS devices
     ON countries.co_id = devices.de_production_country_id
@@ -27,7 +27,7 @@ WITH _s7 AS (
 SELECT
   country_name,
   product_name,
-  ROUND(COALESCE(sum_n_incidents, 0) / agg_1, 2) AS ir
+  ROUND(COALESCE(sum_n_incidents, 0) / n_rows, 2) AS ir
 FROM _t1
 ORDER BY
   ir DESC,

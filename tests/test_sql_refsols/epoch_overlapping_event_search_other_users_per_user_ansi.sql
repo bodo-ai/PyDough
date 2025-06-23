@@ -11,7 +11,7 @@ WITH _s0 AS (
 ), _t0 AS (
   SELECT
     ANY_VALUE(_s0.user_name) AS anything_user_name,
-    COUNT(DISTINCT _s7.user_id) AS ndistinct_user_id_11
+    COUNT(DISTINCT _s7.user_id) AS n_other_users
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
     ON _s0.user_id = _s1.search_user_id
@@ -26,7 +26,7 @@ WITH _s0 AS (
 )
 SELECT
   anything_user_name AS user_name,
-  ndistinct_user_id_11 AS n_other_users
+  n_other_users
 FROM _t0
 ORDER BY
   n_other_users DESC,

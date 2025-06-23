@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    COUNT(*) AS agg_1,
     sbcustcountry AS country,
+    COUNT(*) AS n_rows,
     SUM(sbcuststatus = 'active') AS sum_expr_2
   FROM main.sbcustomer
   WHERE
@@ -11,5 +11,5 @@ WITH _t0 AS (
 )
 SELECT
   country,
-  100 * COALESCE(COALESCE(sum_expr_2, 0) / agg_1, 0.0) AS ar
+  100 * COALESCE(COALESCE(sum_expr_2, 0) / n_rows, 0.0) AS ar
 FROM _t0

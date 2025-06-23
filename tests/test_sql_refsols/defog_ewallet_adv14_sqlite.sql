@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT(*) AS agg_1,
+    COUNT(*) AS n_rows,
     SUM(status = 'success') AS sum_expr_2
   FROM main.wallet_transactions_daily
   WHERE
@@ -11,5 +11,5 @@ WITH _t0 AS (
     ) = 1
 )
 SELECT
-  CAST(COALESCE(sum_expr_2, 0) AS REAL) / agg_1 AS _expr0
+  CAST(COALESCE(sum_expr_2, 0) AS REAL) / n_rows AS _expr0
 FROM _t0

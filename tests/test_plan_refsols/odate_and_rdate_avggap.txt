@@ -1,5 +1,5 @@
-ROOT(columns=[('avg_gap', avg_day_gap)], orderings=[])
- AGGREGATE(keys={}, aggregations={'avg_day_gap': AVG(day_gap)})
+ROOT(columns=[('avg_gap', avg_gap)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'avg_gap': AVG(day_gap)})
   PROJECT(columns={'day_gap': DATEDIFF('days':string, o_orderdate, SMALLEST(l_commitdate, l_receiptdate))})
    JOIN(condition=t0.l_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'l_commitdate': t0.l_commitdate, 'l_receiptdate': t0.l_receiptdate, 'o_orderdate': t1.o_orderdate})
     FILTER(condition=l_shipmode == 'RAIL':string, columns={'l_commitdate': l_commitdate, 'l_orderkey': l_orderkey, 'l_receiptdate': l_receiptdate})

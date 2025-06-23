@@ -1,8 +1,8 @@
 WITH _s0 AS (
   SELECT
     COUNT(sbdpclose) AS count_sbdpclose,
-    MAX(sbdphigh) AS max_sbdphigh,
-    MIN(sbdplow) AS min_sbdplow,
+    MAX(sbdphigh) AS max_high,
+    MIN(sbdplow) AS min_low,
     SUM(sbdpclose) AS sum_sbdpclose,
     sbdptickerid AS ticker_id,
     CONCAT_WS(
@@ -32,8 +32,8 @@ WITH _s0 AS (
     )
 ), _t1 AS (
   SELECT
-    MAX(_s0.max_sbdphigh) AS max_max_sbdphigh,
-    MIN(_s0.min_sbdplow) AS min_min_sbdplow,
+    MAX(_s0.max_high) AS max_high,
+    MIN(_s0.min_low) AS min_low,
     SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
     SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
     sbticker.sbtickersymbol AS symbol,
@@ -49,8 +49,8 @@ SELECT
   symbol,
   month,
   sum_sum_sbdpclose / sum_count_sbdpclose AS avg_close,
-  max_max_sbdphigh AS max_high,
-  min_min_sbdplow AS min_low,
+  max_high,
+  min_low,
   (
     (
       sum_sum_sbdpclose / sum_count_sbdpclose

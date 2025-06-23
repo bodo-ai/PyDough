@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     sbtxtickerid AS ticker_id
   FROM main.sbtransaction
   WHERE
@@ -11,7 +11,7 @@ WITH _s1 AS (
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
-  COALESCE(_s1.agg_0, 0) AS tx_count
+  COALESCE(_s1.n_rows, 0) AS tx_count
 FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.ticker_id = sbticker.sbtickerid

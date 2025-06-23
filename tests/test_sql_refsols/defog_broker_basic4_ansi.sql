@@ -9,7 +9,7 @@ WITH _s0 AS (
     sbtxtickerid
 ), _s2 AS (
   SELECT
-    SUM(_s0.num_transactions) AS sum_num_transactions,
+    SUM(_s0.num_transactions) AS num_transactions,
     sbticker.sbtickertype AS ticker_type,
     _s0.customer_id
   FROM _s0 AS _s0
@@ -20,8 +20,8 @@ WITH _s0 AS (
     _s0.customer_id
 ), _t0 AS (
   SELECT
+    SUM(_s2.num_transactions) AS num_transactions,
     sbcustomer.sbcuststate AS state,
-    SUM(_s2.sum_num_transactions) AS sum_sum_num_transactions,
     _s2.ticker_type
   FROM _s2 AS _s2
   JOIN main.sbcustomer AS sbcustomer
@@ -33,8 +33,8 @@ WITH _s0 AS (
 SELECT
   state,
   ticker_type,
-  sum_sum_num_transactions AS num_transactions
+  num_transactions
 FROM _t0
 ORDER BY
-  sum_sum_num_transactions DESC
+  num_transactions DESC
 LIMIT 5

@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS agg_0,
     sbtxcustid AS customer_id,
+    COUNT(*) AS n_rows,
     SUM(sbtxstatus = 'success') AS sum_expr_2
   FROM main.sbtransaction
   GROUP BY
@@ -11,11 +11,11 @@ SELECT
   sbcustomer.sbcustname AS name,
   CAST((
     100.0 * COALESCE(_s1.sum_expr_2, 0)
-  ) AS REAL) / COALESCE(_s1.agg_0, 0) AS success_rate
+  ) AS REAL) / COALESCE(_s1.n_rows, 0) AS success_rate
 FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.customer_id = sbcustomer.sbcustid
 WHERE
-  NOT _s1.agg_0 IS NULL AND _s1.agg_0 >= 5
+  NOT _s1.n_rows IS NULL AND _s1.n_rows >= 5
 ORDER BY
   success_rate

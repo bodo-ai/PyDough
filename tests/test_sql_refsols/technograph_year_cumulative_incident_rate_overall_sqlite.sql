@@ -4,8 +4,8 @@ WITH _t5 AS (
   FROM main.calendar
 ), _s3 AS (
   SELECT
-    COUNT(*) AS agg_2,
-    _s0.ca_dt AS calendar_day
+    _s0.ca_dt AS calendar_day,
+    COUNT(*) AS n_rows
   FROM _t5 AS _s0
   JOIN main.devices AS devices
     ON _s0.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
@@ -13,8 +13,8 @@ WITH _t5 AS (
     _s0.ca_dt
 ), _s7 AS (
   SELECT
-    COUNT(*) AS agg_5,
-    _s4.ca_dt AS calendar_day
+    _s4.ca_dt AS calendar_day,
+    COUNT(*) AS n_rows
   FROM _t5 AS _s4
   JOIN main.incidents AS incidents
     ON _s4.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
@@ -22,8 +22,8 @@ WITH _t5 AS (
     _s4.ca_dt
 ), _t3 AS (
   SELECT
-    SUM(_s3.agg_2) AS sum_agg_2,
-    SUM(_s7.agg_5) AS sum_agg_5,
+    SUM(_s3.n_rows) AS sum_expr_3,
+    SUM(_s7.n_rows) AS sum_n_rows,
     CAST(STRFTIME('%Y', _t5.ca_dt) AS INTEGER) AS year
   FROM _t5 AS _t5
   LEFT JOIN _s3 AS _s3
@@ -35,31 +35,31 @@ WITH _t5 AS (
 ), _t0 AS (
   SELECT
     ROUND(
-      CAST(SUM(COALESCE(sum_agg_5, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(sum_agg_2, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      CAST(SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(sum_expr_3, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       2
     ) AS cum_ir,
     ROUND(
       CAST((
         100.0 * (
-          COALESCE(sum_agg_2, 0) - LAG(COALESCE(sum_agg_2, 0), 1) OVER (ORDER BY year)
+          COALESCE(sum_expr_3, 0) - LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year)
         )
-      ) AS REAL) / LAG(COALESCE(sum_agg_2, 0), 1) OVER (ORDER BY year),
+      ) AS REAL) / LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year),
       2
     ) AS pct_bought_change,
     ROUND(
       CAST((
         100.0 * (
-          COALESCE(sum_agg_5, 0) - LAG(COALESCE(sum_agg_5, 0), 1) OVER (ORDER BY year)
+          COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year)
         )
-      ) AS REAL) / LAG(COALESCE(sum_agg_5, 0), 1) OVER (ORDER BY year),
+      ) AS REAL) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year),
       2
     ) AS pct_incident_change,
-    COALESCE(sum_agg_2, 0) AS n_devices,
-    COALESCE(sum_agg_5, 0) AS n_incidents,
+    COALESCE(sum_expr_3, 0) AS n_devices,
+    COALESCE(sum_n_rows, 0) AS n_incidents,
     year
   FROM _t3
   WHERE
-    NOT sum_agg_2 IS NULL AND sum_agg_2 > 0
+    NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
 )
 SELECT
   year AS yr,

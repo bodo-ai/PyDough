@@ -13,8 +13,8 @@ WITH _t4 AS (
     co_name = 'CN'
 ), _s7 AS (
   SELECT
-    COUNT(*) AS agg_2,
-    _t7.ca_dt AS calendar_day
+    _t7.ca_dt AS calendar_day,
+    COUNT(*) AS n_rows
   FROM _t4 AS _t7
   JOIN main.calendar AS calendar
     ON calendar.ca_dt >= DATE_ADD(CAST(_t7.ca_dt AS TIMESTAMP), -6, 'MONTH')
@@ -26,8 +26,8 @@ WITH _t4 AS (
     _t7.ca_dt
 ), _s15 AS (
   SELECT
-    COUNT(*) AS agg_5,
-    _t11.ca_dt AS calendar_day
+    _t11.ca_dt AS calendar_day,
+    COUNT(*) AS n_rows
   FROM _t4 AS _t11
   JOIN main.incidents AS incidents
     ON _t11.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
@@ -39,8 +39,8 @@ WITH _t4 AS (
     _t11.ca_dt
 ), _t1 AS (
   SELECT
-    SUM(_s7.agg_2) AS sum_agg_2,
-    SUM(_s15.agg_5) AS sum_agg_5,
+    SUM(_s7.n_rows) AS sum_expr_3,
+    SUM(_s15.n_rows) AS sum_n_rows,
     EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)) AS month,
     EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME)) AS year
   FROM _t4 AS _t4
@@ -63,8 +63,8 @@ SELECT
     END
   ) AS month,
   ROUND((
-    1000000.0 * COALESCE(sum_agg_5, 0)
-  ) / COALESCE(sum_agg_2, 0), 2) AS ir
+    1000000.0 * COALESCE(sum_n_rows, 0)
+  ) / COALESCE(sum_expr_3, 0), 2) AS ir
 FROM _t1
 ORDER BY
   month

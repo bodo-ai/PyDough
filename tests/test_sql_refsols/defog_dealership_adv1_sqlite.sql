@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     SUM(
       (
         (
@@ -68,6 +68,6 @@ WITH _t0 AS (
 )
 SELECT
   payment_week,
-  agg_0 AS total_payments,
+  n_rows AS total_payments,
   COALESCE(sum_is_weekend, 0) AS weekend_payments
 FROM _t0

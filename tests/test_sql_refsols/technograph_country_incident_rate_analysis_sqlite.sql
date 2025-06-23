@@ -4,16 +4,16 @@ WITH _t3 AS (
   FROM main.incidents
 ), _s1 AS (
   SELECT
-    COUNT(*) AS agg_9,
-    in_device_id AS device_id
+    in_device_id AS device_id,
+    COUNT(*) AS n_rows
   FROM _t3
   GROUP BY
     in_device_id
 ), _s3 AS (
   SELECT
-    COUNT(*) AS agg_1,
     devices.de_production_country_id AS factory_country_id,
-    SUM(_s1.agg_9) AS sum_agg_9
+    COUNT(*) AS n_rows,
+    SUM(_s1.n_rows) AS sum_n_rows
   FROM main.devices AS devices
   LEFT JOIN _s1 AS _s1
     ON _s1.device_id = devices.de_id
@@ -21,16 +21,16 @@ WITH _t3 AS (
     devices.de_production_country_id
 ), _s5 AS (
   SELECT
-    COUNT(*) AS agg_12,
-    in_device_id AS device_id
+    in_device_id AS device_id,
+    COUNT(*) AS n_rows
   FROM _t3
   GROUP BY
     in_device_id
 ), _s7 AS (
   SELECT
-    COUNT(*) AS agg_3,
+    COUNT(*) AS n_rows,
     devices.de_purchase_country_id AS store_country_id,
-    SUM(_s5.agg_12) AS sum_agg_12
+    SUM(_s5.n_rows) AS sum_n_rows
   FROM main.devices AS devices
   LEFT JOIN _s5 AS _s5
     ON _s5.device_id = devices.de_id
@@ -38,16 +38,16 @@ WITH _t3 AS (
     devices.de_purchase_country_id
 ), _s11 AS (
   SELECT
-    COUNT(*) AS agg_6,
-    in_device_id AS device_id
+    in_device_id AS device_id,
+    COUNT(*) AS n_rows
   FROM _t3
   GROUP BY
     in_device_id
 ), _s13 AS (
   SELECT
-    COUNT(*) AS agg_5,
     users.us_country_id AS country_id,
-    SUM(_s11.agg_6) AS sum_agg_6
+    COUNT(*) AS n_rows,
+    SUM(_s11.n_rows) AS sum_n_rows
   FROM main.users AS users
   JOIN main.devices AS devices
     ON devices.de_owner_id = users.us_id
@@ -58,9 +58,9 @@ WITH _t3 AS (
 )
 SELECT
   countries.co_name AS country_name,
-  ROUND(CAST(COALESCE(_s3.sum_agg_9, 0) AS REAL) / _s3.agg_1, 2) AS made_ir,
-  ROUND(CAST(COALESCE(_s7.sum_agg_12, 0) AS REAL) / _s7.agg_3, 2) AS sold_ir,
-  ROUND(CAST(COALESCE(_s13.sum_agg_6, 0) AS REAL) / COALESCE(_s13.agg_5, 0), 2) AS user_ir
+  ROUND(CAST(COALESCE(_s3.sum_n_rows, 0) AS REAL) / _s3.n_rows, 2) AS made_ir,
+  ROUND(CAST(COALESCE(_s7.sum_n_rows, 0) AS REAL) / _s7.n_rows, 2) AS sold_ir,
+  ROUND(CAST(COALESCE(_s13.sum_n_rows, 0) AS REAL) / COALESCE(_s13.n_rows, 0), 2) AS user_ir
 FROM main.countries AS countries
 JOIN _s3 AS _s3
   ON _s3.factory_country_id = countries.co_id

@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     SUM(sale_price) AS sum_sale_price,
     car_id
   FROM main.sales
@@ -10,10 +10,10 @@ WITH _s1 AS (
     car_id
 )
 SELECT
-  COALESCE(_s1.agg_0, 0) AS num_sales,
+  COALESCE(_s1.n_rows, 0) AS num_sales,
   CASE
     WHEN (
-      NOT _s1.agg_0 IS NULL AND _s1.agg_0 > 0
+      NOT _s1.n_rows IS NULL AND _s1.n_rows > 0
     )
     THEN COALESCE(_s1.sum_sale_price, 0)
     ELSE NULL

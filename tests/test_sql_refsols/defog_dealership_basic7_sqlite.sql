@@ -1,6 +1,6 @@
 WITH _t1 AS (
   SELECT
-    COUNT(*) AS agg_1,
+    COUNT(*) AS n_rows,
     SUM(payment_amount) AS sum_payment_amount,
     payment_method
   FROM main.payments_received
@@ -9,7 +9,7 @@ WITH _t1 AS (
 )
 SELECT
   payment_method,
-  agg_1 AS total_payments,
+  n_rows AS total_payments,
   COALESCE(sum_payment_amount, 0) AS total_amount
 FROM _t1
 ORDER BY

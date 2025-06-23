@@ -8,7 +8,7 @@ WITH _u_0 AS (
     sbcustid
 ), _t0 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     SUM(sbtransaction.sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction AS sbtransaction
   LEFT JOIN _u_0 AS _u_0
@@ -32,6 +32,6 @@ WITH _u_0 AS (
     )
 )
 SELECT
-  CASE WHEN agg_0 > 0 THEN agg_0 ELSE NULL END AS n_transactions,
+  CASE WHEN n_rows > 0 THEN n_rows ELSE NULL END AS n_transactions,
   COALESCE(sum_sbtxamount, 0) AS total_amount
 FROM _t0

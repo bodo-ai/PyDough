@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     SUM(wallet_transactions_daily.amount) AS sum_amount
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
   JOIN main.users AS users
@@ -9,6 +9,6 @@ WITH _t0 AS (
     DATEDIFF(CURRENT_TIMESTAMP(), CAST(wallet_transactions_daily.created_at AS DATETIME), DAY) <= 7
 )
 SELECT
-  agg_0 AS num_transactions,
-  CASE WHEN agg_0 > 0 THEN COALESCE(sum_amount, 0) ELSE NULL END AS total_amount
+  n_rows AS num_transactions,
+  CASE WHEN n_rows > 0 THEN COALESCE(sum_amount, 0) ELSE NULL END AS total_amount
 FROM _t0

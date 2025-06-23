@@ -18,7 +18,7 @@ WITH _t5 AS (
     part.p_name LIKE 'forest%'
 ), _t1 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     partsupp.ps_suppkey AS supplier_key
   FROM tpch.partsupp AS partsupp
   JOIN _s5 AS _s5
@@ -36,7 +36,7 @@ FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'CANADA' AND nation.n_nationkey = supplier.s_nationkey
 JOIN _t1 AS _t1
-  ON _t1.agg_0 > 0 AND _t1.supplier_key = supplier.s_suppkey
+  ON _t1.n_rows > 0 AND _t1.supplier_key = supplier.s_suppkey
 ORDER BY
   s_name
 LIMIT 10

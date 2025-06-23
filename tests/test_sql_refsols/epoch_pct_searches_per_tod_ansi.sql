@@ -1,8 +1,8 @@
 WITH _t1 AS (
   SELECT
-    COUNT(*) AS agg_0,
     ANY_VALUE(times.t_name) AS anything_t_name,
-    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour
+    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
+    COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
@@ -12,8 +12,8 @@ WITH _t1 AS (
 ), _t0 AS (
   SELECT
     ROUND((
-      100.0 * agg_0
-    ) / SUM(agg_0) OVER (), 2) AS pct_searches,
+      100.0 * n_rows
+    ) / SUM(n_rows) OVER (), 2) AS pct_searches,
     anything_t_name,
     anything_t_start_hour
   FROM _t1

@@ -1,15 +1,15 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS agg_0,
-    in_device_id AS device_id
+    in_device_id AS device_id,
+    COUNT(*) AS n_rows
   FROM main.incidents
   GROUP BY
     in_device_id
 ), _t0 AS (
   SELECT
-    COUNT(*) AS agg_1,
     products.pr_brand AS brand,
-    SUM(COALESCE(_s3.agg_0, 0)) AS sum_n_incidents
+    COUNT(*) AS n_rows,
+    SUM(COALESCE(_s3.n_rows, 0)) AS sum_n_incidents
   FROM main.devices AS devices
   JOIN main.products AS products
     ON devices.de_product_id = products.pr_id
@@ -20,7 +20,7 @@ WITH _s3 AS (
 )
 SELECT
   brand,
-  ROUND(COALESCE(sum_n_incidents, 0) / agg_1, 2) AS ir
+  ROUND(COALESCE(sum_n_incidents, 0) / n_rows, 2) AS ir
 FROM _t0
 ORDER BY
   brand

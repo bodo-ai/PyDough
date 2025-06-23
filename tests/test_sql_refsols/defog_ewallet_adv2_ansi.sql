@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT(*) AS agg_0,
+    COUNT(*) AS n_rows,
     SUM((
       (
         DAY_OF_WEEK(notifications.created_at) + 6
@@ -18,6 +18,6 @@ WITH _t0 AS (
 )
 SELECT
   week,
-  agg_0 AS num_notifs,
+  n_rows AS num_notifs,
   COALESCE(sum_is_weekend, 0) AS weekend_notifs
 FROM _t0

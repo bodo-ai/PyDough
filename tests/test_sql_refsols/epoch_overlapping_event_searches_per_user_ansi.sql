@@ -5,9 +5,9 @@ WITH _s0 AS (
   FROM users
 ), _t2 AS (
   SELECT
-    COUNT(*) AS agg_0,
     ANY_VALUE(_s0.user_id) AS anything_user_id,
-    ANY_VALUE(_s0.user_name) AS anything_user_name
+    ANY_VALUE(_s0.user_name) AS anything_user_name,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.user_id = searches.search_user_id
@@ -26,7 +26,7 @@ WITH _s0 AS (
     COUNT(*) AS n_searches
   FROM _t2
   WHERE
-    agg_0 > 0
+    n_rows > 0
   GROUP BY
     anything_user_id
 )

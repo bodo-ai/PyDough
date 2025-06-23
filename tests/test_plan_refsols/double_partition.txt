@@ -1,5 +1,5 @@
-ROOT(columns=[('year', year), ('best_month', max_n_orders)], orderings=[])
- AGGREGATE(keys={'year': year}, aggregations={'max_n_orders': MAX(n_orders)})
+ROOT(columns=[('year', year), ('best_month', best_month)], orderings=[])
+ AGGREGATE(keys={'year': year}, aggregations={'best_month': MAX(n_orders)})
   AGGREGATE(keys={'month': month, 'year': year}, aggregations={'n_orders': COUNT()})
    PROJECT(columns={'month': MONTH(o_orderdate), 'year': YEAR(o_orderdate)})
     SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})

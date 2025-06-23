@@ -1,9 +1,9 @@
 WITH _t1 AS (
   SELECT
-    COUNT(*) AS agg_3,
     AVG(l_discount) AS avg_l_discount,
     AVG(l_extendedprice) AS avg_l_extendedprice,
     AVG(l_quantity) AS avg_l_quantity,
+    COUNT(*) AS n_rows,
     l_returnflag AS return_flag,
     l_linestatus AS status,
     SUM(l_extendedprice * (
@@ -33,7 +33,7 @@ SELECT
   avg_l_quantity AS AVG_QTY,
   avg_l_extendedprice AS AVG_PRICE,
   avg_l_discount AS AVG_DISC,
-  agg_3 AS COUNT_ORDER
+  n_rows AS COUNT_ORDER
 FROM _t1
 ORDER BY
   return_flag,

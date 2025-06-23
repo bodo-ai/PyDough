@@ -9,16 +9,16 @@ WITH _s0 AS (
   FROM main.countries
 ), _s7 AS (
   SELECT
-    COUNT(*) AS agg_2,
-    in_device_id AS device_id
+    in_device_id AS device_id,
+    COUNT(*) AS n_rows
   FROM main.incidents
   GROUP BY
     in_device_id
 ), _s9 AS (
   SELECT
     _s2.co_id AS _id,
-    COUNT(*) AS agg_1,
-    SUM(_s7.agg_2) AS sum_agg_2,
+    COUNT(*) AS n_rows,
+    SUM(_s7.n_rows) AS sum_n_rows,
     _s3.co_id AS _id_3
   FROM _s2 AS _s2
   CROSS JOIN _s2 AS _s3
@@ -35,8 +35,8 @@ SELECT
   _s0.co_name AS factory_country,
   _s1.co_name AS purchase_country,
   ROUND((
-    1.0 * COALESCE(_s9.sum_agg_2, 0)
-  ) / COALESCE(_s9.agg_1, 0), 2) AS ir
+    1.0 * COALESCE(_s9.sum_n_rows, 0)
+  ) / COALESCE(_s9.n_rows, 0), 2) AS ir
 FROM _s0 AS _s0
 CROSS JOIN _s0 AS _s1
 LEFT JOIN _s9 AS _s9

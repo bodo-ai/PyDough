@@ -38,8 +38,8 @@ WITH _t7 AS (
     AND lineitem.l_orderkey = orders.o_orderkey
 ), _s13 AS (
   SELECT
-    COUNT(*) AS agg_0,
-    _t4.anything_l_suppkey AS agg_24
+    _t4.anything_l_suppkey AS agg_24,
+    COUNT(*) AS n_rows
   FROM _t4 AS _t4
   JOIN _s11 AS _s11
     ON _s11.l_linenumber = _t4.anything_l_linenumber
@@ -52,7 +52,7 @@ WITH _t7 AS (
 )
 SELECT
   supplier.s_name AS S_NAME,
-  COALESCE(_s13.agg_0, 0) AS NUMWAIT
+  COALESCE(_s13.n_rows, 0) AS NUMWAIT
 FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
