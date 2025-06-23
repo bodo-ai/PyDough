@@ -392,7 +392,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         good_matches_1: list[str] = []
         # List with all names that have a me <= closest_match * 1.1
         good_matches_2: list[str] = []
-        # List with the top 3 cloest matches (me) breaking ties by name
+        # List with the top 3 closest matches (me) breaking ties by name
         good_matches_3: list[str] = [name for _, name in sorted_list[:3]]
 
         # filtering the result
