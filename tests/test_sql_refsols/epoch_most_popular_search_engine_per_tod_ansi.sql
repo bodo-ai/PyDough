@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _t1 AS (
   SELECT
     COUNT(*) AS n_searches,
     searches.search_engine,
@@ -10,14 +10,8 @@ WITH _t2 AS (
   GROUP BY
     searches.search_engine,
     times.t_name
-), _t1 AS (
-  SELECT
-    n_searches,
-    search_engine,
-    t_name
-  FROM _t2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY n_searches DESC NULLS FIRST, search_engine NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY times.t_name ORDER BY COUNT(*) DESC NULLS FIRST, searches.search_engine NULLS LAST) = 1
 )
 SELECT
   t_name AS tod,

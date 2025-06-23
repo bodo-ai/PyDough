@@ -1,7 +1,10 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
-    SUM(sbtxtax + sbtxcommission) AS sum_expr_2,
-    SUM(sbtxamount) AS sum_sbtxamount,
+    (
+      100.0 * (
+        COALESCE(SUM(sbtxamount), 0) - COALESCE(SUM(sbtxtax + sbtxcommission), 0)
+      )
+    ) / COALESCE(SUM(sbtxamount), 0) AS spm,
     sbtxtickerid
   FROM main.sbtransaction
   WHERE
@@ -11,13 +14,9 @@ WITH _t1 AS (
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
-  (
-    100.0 * (
-      COALESCE(_t1.sum_sbtxamount, 0) - COALESCE(_t1.sum_expr_2, 0)
-    )
-  ) / COALESCE(_t1.sum_sbtxamount, 0) AS SPM
+  _s1.spm AS SPM
 FROM main.sbticker AS sbticker
-JOIN _t1 AS _t1
-  ON _t1.sbtxtickerid = sbticker.sbtickerid
+JOIN _s1 AS _s1
+  ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
   sbticker.sbtickersymbol

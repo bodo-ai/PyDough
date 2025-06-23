@@ -1,4 +1,4 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
     COUNT(DISTINCT searches.search_id) AS n_searches,
     events.ev_typ,
@@ -11,14 +11,8 @@ WITH _t1 AS (
   GROUP BY
     events.ev_typ,
     users.user_region
-), _t0 AS (
-  SELECT
-    n_searches,
-    ev_typ,
-    user_region
-  FROM _t1
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY n_searches DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (PARTITION BY users.user_region ORDER BY COUNT(DISTINCT searches.search_id) DESC NULLS FIRST) = 1
 )
 SELECT
   user_region AS region,

@@ -7,10 +7,9 @@ WITH _s7 AS (
     ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
   GROUP BY
     incidents.in_device_id
-), _t1 AS (
+), _t0 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(COALESCE(_s7.n_rows, 0)) AS sum_n_incidents,
+    ROUND(CAST(COALESCE(SUM(COALESCE(_s7.n_rows, 0)), 0) AS REAL) / COUNT(*), 2) AS ir,
     countries.co_name,
     products.pr_name
   FROM main.countries AS countries
@@ -27,8 +26,8 @@ WITH _s7 AS (
 SELECT
   co_name AS country_name,
   pr_name AS product_name,
-  ROUND(CAST(COALESCE(sum_n_incidents, 0) AS REAL) / n_rows, 2) AS ir
-FROM _t1
+  ir
+FROM _t0
 ORDER BY
   ir DESC,
   pr_name,

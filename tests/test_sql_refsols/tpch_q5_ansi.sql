@@ -38,10 +38,10 @@ WITH _s7 AS (
   FROM tpch.supplier AS supplier
   JOIN tpch.nation AS nation
     ON nation.n_nationkey = supplier.s_nationkey
-), _t1 AS (
+), _t0 AS (
   SELECT
-    ANY_VALUE(_s10.anything_n_name) AS anything_anything_n_name,
-    SUM(_s10.sum_sum_value) AS sum_sum_sum_value
+    COALESCE(SUM(_s10.sum_sum_value), 0) AS revenue,
+    ANY_VALUE(_s10.anything_n_name) AS anything_anything_n_name
   FROM _s10 AS _s10
   JOIN _s11 AS _s11
     ON _s10.l_suppkey = _s11.s_suppkey AND _s10.n_name = _s11.n_name
@@ -50,7 +50,7 @@ WITH _s7 AS (
 )
 SELECT
   anything_anything_n_name AS N_NAME,
-  COALESCE(sum_sum_sum_value, 0) AS REVENUE
-FROM _t1
+  revenue AS REVENUE
+FROM _t0
 ORDER BY
   revenue DESC

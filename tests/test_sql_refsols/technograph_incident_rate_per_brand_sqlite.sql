@@ -5,10 +5,9 @@ WITH _s3 AS (
   FROM main.incidents
   GROUP BY
     in_device_id
-), _t1 AS (
+), _t0 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(COALESCE(_s3.n_rows, 0)) AS sum_n_incidents,
+    ROUND(CAST(COALESCE(SUM(COALESCE(_s3.n_rows, 0)), 0) AS REAL) / COUNT(*), 2) AS ir,
     products.pr_brand
   FROM main.devices AS devices
   JOIN main.products AS products
@@ -20,7 +19,7 @@ WITH _s3 AS (
 )
 SELECT
   pr_brand AS brand,
-  ROUND(CAST(COALESCE(sum_n_incidents, 0) AS REAL) / n_rows, 2) AS ir
-FROM _t1
+  ir
+FROM _t0
 ORDER BY
   pr_brand

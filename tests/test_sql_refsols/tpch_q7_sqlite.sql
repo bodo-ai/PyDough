@@ -14,11 +14,11 @@ WITH _s1 AS (
     ON customer.c_custkey = orders.o_custkey
   JOIN _s1 AS _s7
     ON _s7.n_nationkey = customer.c_nationkey
-), _t1 AS (
+), _t0 AS (
   SELECT
-    SUM(lineitem.l_extendedprice * (
+    COALESCE(SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS sum_volume,
+    )), 0) AS revenue,
     _s9.n_name AS cust_nation,
     CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) AS l_year,
     _s1.n_name
@@ -46,8 +46,8 @@ SELECT
   n_name AS SUPP_NATION,
   cust_nation AS CUST_NATION,
   l_year AS L_YEAR,
-  COALESCE(sum_volume, 0) AS REVENUE
-FROM _t1
+  revenue AS REVENUE
+FROM _t0
 ORDER BY
   n_name,
   cust_nation,

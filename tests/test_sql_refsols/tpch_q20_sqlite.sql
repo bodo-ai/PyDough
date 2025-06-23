@@ -1,6 +1,6 @@
-WITH _t5 AS (
+WITH _s3 AS (
   SELECT
-    SUM(l_quantity) AS sum_l_quantity,
+    COALESCE(SUM(l_quantity), 0) AS agg_0,
     l_partkey
   FROM tpch.lineitem
   WHERE
@@ -9,11 +9,11 @@ WITH _t5 AS (
     l_partkey
 ), _s5 AS (
   SELECT
-    COALESCE(_t5.sum_l_quantity, 0) AS agg_0,
+    _s3.agg_0,
     part.p_partkey
   FROM tpch.part AS part
-  JOIN _t5 AS _t5
-    ON _t5.l_partkey = part.p_partkey
+  JOIN _s3 AS _s3
+    ON _s3.l_partkey = part.p_partkey
   WHERE
     part.p_name LIKE 'forest%'
 ), _t1 AS (

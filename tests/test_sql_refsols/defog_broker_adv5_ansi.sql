@@ -30,12 +30,11 @@ WITH _s0 AS (
       END
     ),
     sbdptickerid
-), _t1 AS (
+), _t0 AS (
   SELECT
+    SUM(_s0.sum_sbdpclose) / SUM(_s0.count_sbdpclose) AS avg_close,
     MAX(_s0.max_high) AS max_high,
     MIN(_s0.min_low) AS min_low,
-    SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
-    SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
     _s0.month,
     sbticker.sbtickersymbol
   FROM _s0 AS _s0
@@ -48,16 +47,10 @@ WITH _s0 AS (
 SELECT
   sbtickersymbol AS symbol,
   month,
-  sum_sum_sbdpclose / sum_count_sbdpclose AS avg_close,
+  avg_close,
   max_high,
   min_low,
   (
-    (
-      sum_sum_sbdpclose / sum_count_sbdpclose
-    ) - LAG((
-      sum_sum_sbdpclose / sum_count_sbdpclose
-    ), 1) OVER (PARTITION BY sbtickersymbol ORDER BY month NULLS LAST)
-  ) / LAG((
-    sum_sum_sbdpclose / sum_count_sbdpclose
-  ), 1) OVER (PARTITION BY sbtickersymbol ORDER BY month NULLS LAST) AS momc
-FROM _t1
+    avg_close - LAG(avg_close, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month NULLS LAST)
+  ) / LAG(avg_close, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month NULLS LAST) AS momc
+FROM _t0

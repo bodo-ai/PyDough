@@ -1,7 +1,7 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
+    COALESCE(SUM(payment_amount), 0) AS total_amount,
     COUNT(*) AS n_rows,
-    SUM(payment_amount) AS sum_payment_amount,
     payment_method
   FROM main.payments_received
   GROUP BY
@@ -10,8 +10,8 @@ WITH _t1 AS (
 SELECT
   payment_method,
   n_rows AS total_payments,
-  COALESCE(sum_payment_amount, 0) AS total_amount
-FROM _t1
+  total_amount
+FROM _t0
 ORDER BY
   total_amount DESC
 LIMIT 3

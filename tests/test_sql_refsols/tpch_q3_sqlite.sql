@@ -1,8 +1,8 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    SUM(lineitem.l_extendedprice * (
+    COALESCE(SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS sum_expr_1,
+    )), 0) AS revenue,
     lineitem.l_orderkey,
     orders.o_orderdate,
     orders.o_shippriority
@@ -20,10 +20,10 @@ WITH _t1 AS (
 )
 SELECT
   l_orderkey AS L_ORDERKEY,
-  COALESCE(sum_expr_1, 0) AS REVENUE,
+  revenue AS REVENUE,
   o_orderdate AS O_ORDERDATE,
   o_shippriority AS O_SHIPPRIORITY
-FROM _t1
+FROM _t0
 ORDER BY
   revenue DESC,
   o_orderdate,

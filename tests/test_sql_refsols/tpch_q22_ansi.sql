@@ -12,11 +12,11 @@ WITH _s0 AS (
   FROM tpch.orders
   GROUP BY
     o_custkey
-), _t1 AS (
+), _t0 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(customer.c_acctbal) AS sum_c_acctbal,
-    SUBSTRING(customer.c_phone, 1, 2) AS cntry_code
+    COALESCE(SUM(customer.c_acctbal), 0) AS totacctbal,
+    SUBSTRING(customer.c_phone, 1, 2) AS cntry_code,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s0
   JOIN tpch.customer AS customer
     ON SUBSTRING(customer.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
@@ -31,7 +31,7 @@ WITH _s0 AS (
 SELECT
   cntry_code AS CNTRY_CODE,
   n_rows AS NUM_CUSTS,
-  COALESCE(sum_c_acctbal, 0) AS TOTACCTBAL
-FROM _t1
+  totacctbal AS TOTACCTBAL
+FROM _t0
 ORDER BY
   cntry_code

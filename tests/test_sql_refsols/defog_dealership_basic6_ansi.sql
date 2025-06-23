@@ -1,7 +1,7 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
+    COALESCE(SUM(sales.sale_price), 0) AS total_revenue,
     COUNT(DISTINCT sales.customer_id) AS ndistinct_customer_id,
-    SUM(sales.sale_price) AS sum_sale_price,
     customers.state
   FROM main.sales AS sales
   JOIN main.customers AS customers
@@ -12,8 +12,8 @@ WITH _t1 AS (
 SELECT
   state,
   ndistinct_customer_id AS unique_customers,
-  COALESCE(sum_sale_price, 0) AS total_revenue
-FROM _t1
+  total_revenue
+FROM _t0
 ORDER BY
   total_revenue DESC
 LIMIT 5
