@@ -132,9 +132,8 @@ class CollectionAccess(ChildAccess):
             return Reference(context, term_name)
 
         if term_name not in self.all_terms:
-            raise PyDoughQDAGException(
-                f"Unrecognized term of {self.collection.error_name}: {term_name!r}"
-            )
+            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
+
         return self.get_term_from_property(term_name)
 
     def get_term_from_property(self, term_name: str) -> PyDoughQDAG:

@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow with custom questions on the TPC-H
 dataset.
 """
 
+import re
 from collections.abc import Callable
 
 import pandas as pd
@@ -25,6 +26,31 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_cross_9,
     bad_cross_10,
     bad_cross_11,
+    bad_name_1,
+    bad_name_2,
+    bad_name_3,
+    bad_name_4,
+    bad_name_5,
+    bad_name_6,
+    bad_name_7,
+    bad_name_8,
+    bad_name_9,
+    bad_name_10,
+    bad_name_11,
+    bad_name_12,
+    bad_name_13,
+    bad_name_14,
+    bad_name_15,
+    bad_name_16,
+    bad_name_17,
+    bad_name_18,
+    bad_name_19,
+    bad_name_20,
+    bad_name_21,
+    bad_name_22,
+    bad_name_23,
+    bad_name_24,
+    bad_name_25,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -2571,13 +2597,17 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             simple_scan,
             ["A", "B", "C"],
-            "Unrecognized term of simple table collection 'orders' in graph 'TPCH': 'A'",
+            re.escape(
+                "Unrecognized term of TPCH.orders.CALCULATE(key=key): 'A'. Did you mean: key, clerk, lines?"
+            ),
             id="bad_columns_3",
         ),
         pytest.param(
             simple_scan,
             {"X": "key", "W": "Y"},
-            "Unrecognized term of simple table collection 'orders' in graph 'TPCH': 'Y'",
+            re.escape(
+                "Unrecognized term of TPCH.orders.CALCULATE(key=key): 'Y'. Did you mean: key, clerk, lines?"
+            ),
             id="bad_columns_4",
         ),
         pytest.param(
@@ -2585,6 +2615,206 @@ def test_pipeline_e2e_tpch_custom(
             ["key", "key"],
             "Duplicate column names found in root.",
             id="bad_columns_5",
+        ),
+        pytest.param(
+            bad_name_1,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'c_name'. Did you mean: name, comment, phone?"
+            ),
+            id="bad_name_1",
+        ),
+        pytest.param(
+            bad_name_2,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH: 'CUSTS'. Did you mean: parts, lines, customers, orders?"
+            ),
+            id="bad_name_2",
+        ),
+        pytest.param(
+            bad_name_3,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz'. Did you mean: fizz, BUZZ, bar?"
+            ),
+            id="bad_name_3",
+        ),
+        pytest.param(
+            bad_name_4,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers.orders: 'totalPrice'. Did you mean: total_price, clerk, lines?"
+            ),
+            id="bad_name_4",
+        ),
+        pytest.param(
+            bad_name_5,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers.orders: 'c_name'. Did you mean: clerk, comment, customer, lines, key, order_date?"
+            ),
+            id="bad_name_5",
+        ),
+        pytest.param(
+            bad_name_6,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, address, phone, comment, key, name, nation?"
+            ),
+            id="bad_name_6",
+        ),
+        pytest.param(
+            bad_name_7,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'NAME'. Did you mean: name, key, phone?"
+            ),
+            id="bad_name_7",
+        ),
+        pytest.param(
+            bad_name_8,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'n123ame'. Did you mean: name, nation, phone?"
+            ),
+            id="bad_name_8",
+        ),
+        pytest.param(
+            bad_name_9,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: '__phone__'. Did you mean: phone, nation, address?"
+            ),
+            id="bad_name_9",
+        ),
+        pytest.param(
+            bad_name_10,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'nam'. Did you mean: name, key, nation?"
+            ),
+            id="bad_name_10",
+        ),
+        pytest.param(
+            bad_name_11,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'namex'. Did you mean: name, key, nation?"
+            ),
+            id="bad_name_11",
+        ),
+        pytest.param(
+            bad_name_12,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: '___'. Did you mean: key, name, phone?"
+            ),
+            id="bad_name_12",
+        ),
+        pytest.param(
+            bad_name_13,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, account_balance, nation_key, address?"
+            ),
+            id="bad_name_13",
+        ),
+        pytest.param(
+            bad_name_14,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'keyname'. Did you mean: name, key, phone?"
+            ),
+            id="bad_name_14",
+        ),
+        pytest.param(
+            bad_name_15,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'namekey'. Did you mean: name, key, nation, nation_key?"
+            ),
+            id="bad_name_15",
+        ),
+        pytest.param(
+            bad_name_16,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: comment, name, nation, orders, address, key, phone?"
+            ),
+            id="bad_name_16",
+        ),
+        pytest.param(
+            bad_name_17,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year): 'yrs'. Did you mean: year, orders?"
+            ),
+            id="bad_name_17",
+        ),
+        pytest.param(
+            bad_name_18,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'nords'. Did you mean: n_orders, lines, clerk, key, year?"
+            ),
+            id="bad_name_18",
+        ),
+        pytest.param(
+            bad_name_19,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year): 'order_date'. Did you mean: orders, year?"
+            ),
+            id="bad_name_19",
+        ),
+        pytest.param(
+            bad_name_20,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'orders'. Did you mean: n_orders, clerk, lines?"
+            ),
+            id="bad_name_20",
+        ),
+        pytest.param(
+            bad_name_21,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.regions.CALCULATE(rname=name, rkey=key, rcomment=comment).nations: 'RNAME'. Did you mean: rname, name, rkey?"
+            ),
+            id="bad_name_21",
+        ),
+        pytest.param(
+            bad_name_22,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'Over_Intellectual_Ization'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, De_Institutionalizations?"
+            ),
+            id="bad_name_22",
+        ),
+        pytest.param(
+            bad_name_23,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'paio_eo_aliz_ation'. Did you mean: PROFESSION_alization, over_intellect_ualiz_ation, anthro_pomorph_IZATION?"
+            ),
+            id="bad_name_23",
+        ),
+        pytest.param(
+            bad_name_24,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): '_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_'. Did you mean: anthro_pomorph_IZATION, over_intellect_ualiz_ation, De_Institutionalizations?"
+            ),
+            id="bad_name_24",
+        ),
+        pytest.param(
+            bad_name_25,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'anthropomorphization_and_overintellectualization_and_ultrarevolutionaries'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, anthro_pomorph_IZATION, ultra_revolution_aries, De_Institutionalizations?"
+            ),
+            id="bad_name_25",
         ),
         pytest.param(
             bad_cross_1,
@@ -2601,7 +2831,9 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_3,
             None,
-            "Unrecognized term of graph 'TPCH': 'foo'",
+            re.escape(
+                "Unrecognized term of TPCH.customers.TPCH: 'foo'. Did you mean: lines, parts, nations, orders, regions?"
+            ),
             id="bad_cross_3",
         ),
         pytest.param(
@@ -2613,13 +2845,17 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_5,
             None,
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'regions'",
+            re.escape(
+                "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions'. Did you mean: nations, comment, key?"
+            ),
             id="bad_cross_5",
         ),
         pytest.param(
             bad_cross_6,
             None,
-            "Unrecognized term of simple table collection 'parts' in graph 'TPCH': 'suppliers'",
+            re.escape(
+                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: lines, supply_records, container, size, comment, key, name?"
+            ),
             id="bad_cross_6",
         ),
         # NOTE: raised exception with an empty message
@@ -2632,7 +2868,9 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_8,
             None,
-            "Unrecognized term of simple table collection 'nations' in graph 'TPCH': 'r_key'",
+            re.escape(
+                "Unrecognized term of TPCH.regions.CALCULATE(r1=name).TPCH.nations: 'r_key'. Did you mean: key, name, r1?"
+            ),
             id="bad_cross_8",
         ),
         pytest.param(
@@ -2650,7 +2888,7 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_11,
             None,
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'customers'",
+            "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, nations, key?",
             id="bad_cross_11",
         ),
     ],

@@ -317,6 +317,173 @@ def bad_unsupported_kwarg3():
     return nations.CALCULATE(sum=SUM(suppliers.account_balance, wrong_kwarg="sample"))
 
 
+# Tets for the error messages when accessing a term that does not exist
+def bad_name_1():
+    return customers.CALCULATE(c_name)
+
+
+def bad_name_2():
+    return TPCH.CUSTS
+
+
+def bad_name_3():
+    return TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4).CALCULATE(fizzbuzz)
+
+
+# collection.collection.property_last_collection
+def bad_name_4():
+    return customers.orders.CALCULATE(totalPrice)
+
+
+# collection.collection.property_of_first_collection
+def bad_name_5():
+    return customers.orders.CALCULATE(c_name)
+
+
+# collection suppliers doesn't exist
+def bad_name_6():
+    return customers.suppliers
+
+
+# test same with all uppercase
+def bad_name_7():
+    return customers.CALCULATE(NAME)
+
+
+# test same with numbers
+def bad_name_8():
+    return customers.CALCULATE(n123ame)
+
+
+# test with underscores
+def bad_name_9():
+    return customers.CALCULATE(with_underscores=__phone__)
+
+
+# test without just one chatacter
+def bad_name_10():
+    return customers.CALCULATE(nam)
+
+
+# test with an extra character
+def bad_name_11():
+    return customers.CALCULATE(namex)
+
+
+# test with all underscores
+def bad_name_12():
+    return customers.CALCULATE(c_name=___)
+
+
+# test with a really large name
+def bad_name_13():
+    return customers.CALCULATE(
+        really_long_name=thisisareallylargename_that_exceeds_the_system_limit
+    )
+
+
+# test with the combination of to names declared (key, name). keyname
+def bad_name_14():
+    return customers.CALCULATE(keyname)
+
+
+# test with the combination of to names declared (key, name). same as above
+# but the other way around
+def bad_name_15():
+    return customers.CALCULATE(namekey)
+
+
+# More than one bad name CALCULATE(customer.c_name, customes.bad_key).not_collection
+def bad_name_16():
+    return customers.CALCULATE(name, no_exist).orrders
+
+
+# TEST for PARTITION
+def bad_name_17():
+    return orders.CALCULATE(year=YEAR(order_date)).PARTITION(name="years", by=year).yrs
+
+
+def bad_name_18():
+    return (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="years", by=year)
+        .CALCULATE(n_orders=COUNT(orders))
+        .orders.nords
+    )
+
+
+def bad_name_19():
+    return (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="years", by=year)
+        .order_date
+    )
+
+
+def bad_name_20():
+    return (
+        orders.CALCULATE(year=YEAR(order_date))
+        .PARTITION(name="years", by=year)
+        .CALCULATE(n_orders=COUNT(orders))
+        .orders.orders
+    )
+
+
+def bad_name_21():
+    return regions.CALCULATE(rname=name, rkey=key, rcomment=comment).nations.RNAME
+
+
+def bad_name_22():
+    return TPCH.CALCULATE(
+        anthro_pomorph_IZATION=1,
+        counte_rintelligence=2,
+        OVERIN_tellectualizers=3,
+        ultra_revolution_aries=4,
+        PROFESSION_alization=5,
+        De_Institutionalizations=6,
+        over_intellect_ualiz_ation=7,
+    ).CALCULATE(Over_Intellectual_Ization)
+
+
+def bad_name_23():
+    return TPCH.CALCULATE(
+        anthro_pomorph_IZATION=1,
+        counte_rintelligence=2,
+        OVERIN_tellectualizers=3,
+        ultra_revolution_aries=4,
+        PROFESSION_alization=5,
+        De_Institutionalizations=6,
+        over_intellect_ualiz_ation=7,
+    ).CALCULATE(paio_eo_aliz_ation)
+
+
+def bad_name_24():
+    return TPCH.CALCULATE(
+        anthro_pomorph_IZATION=1,
+        counte_rintelligence=2,
+        OVERIN_tellectualizers=3,
+        ultra_revolution_aries=4,
+        PROFESSION_alization=5,
+        De_Institutionalizations=6,
+        over_intellect_ualiz_ation=7,
+    ).CALCULATE(_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_)
+
+
+def bad_name_25():
+    return TPCH.CALCULATE(
+        anthro_pomorph_IZATION=1,
+        counte_rintelligence=2,
+        OVERIN_tellectualizers=3,
+        ultra_revolution_aries=4,
+        PROFESSION_alization=5,
+        De_Institutionalizations=6,
+        over_intellect_ualiz_ation=7,
+    ).CALCULATE(
+        anthropomorphization_and_overintellectualization_and_ultrarevolutionaries
+    )
+
+
+# TEST for CROSS
 def bad_cross_1():
     # Reason it is bad: Using `CROSS` with a not a collection
     return customers.CROSS(42)

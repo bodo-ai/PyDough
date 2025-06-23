@@ -298,7 +298,7 @@ def bad_str_count_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
     [
         pytest.param(
             bad_pydough_impl_01,
-            "Unrecognized term of simple table collection 'nations' in graph 'TPCH': 'account_balance'",
+            "Unrecognized term of TPCH.nations: 'account_balance'. Did you mean: comment, customers, name, region_key, suppliers, region?",
             id="01",
         ),
         pytest.param(
