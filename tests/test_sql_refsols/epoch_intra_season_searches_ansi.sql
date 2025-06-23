@@ -20,17 +20,17 @@ WITH _s0 AS (
     searches.search_id
   FROM _s0 AS _s2
   JOIN searches AS searches
-    ON _s2.first_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s2.second_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s2.third_month = EXTRACT(MONTH FROM searches.search_ts)
+    ON _s2.first_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
+    OR _s2.second_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
+    OR _s2.third_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
   JOIN events AS events
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
   JOIN _s7 AS _s7
     ON _s2.season_name = _s7.name
     AND (
-      _s7.first_month = EXTRACT(MONTH FROM events.ev_dt)
-      OR _s7.second_month = EXTRACT(MONTH FROM events.ev_dt)
-      OR _s7.third_month = EXTRACT(MONTH FROM events.ev_dt)
+      _s7.first_month = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
+      OR _s7.second_month = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
+      OR _s7.third_month = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
     )
   GROUP BY
     _s2.name,
@@ -45,9 +45,9 @@ WITH _s0 AS (
     ANY_VALUE(_s0.season_name) AS agg_4
   FROM _s0 AS _s0
   JOIN searches AS searches
-    ON _s0.first_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s0.second_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s0.third_month = EXTRACT(MONTH FROM searches.search_ts)
+    ON _s0.first_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
+    OR _s0.second_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
+    OR _s0.third_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
   LEFT JOIN _s9 AS _s9
     ON _s0.name = _s9.name AND _s9.search_id = searches.search_id
   GROUP BY
@@ -59,15 +59,15 @@ WITH _s0 AS (
     _s10.name
   FROM _s0 AS _s10
   JOIN events AS events
-    ON _s10.first_month = EXTRACT(MONTH FROM events.ev_dt)
-    OR _s10.second_month = EXTRACT(MONTH FROM events.ev_dt)
-    OR _s10.third_month = EXTRACT(MONTH FROM events.ev_dt)
+    ON _s10.first_month = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
+    OR _s10.second_month = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
+    OR _s10.third_month = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
   JOIN searches AS searches
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
   JOIN _s7 AS _s15
-    ON _s15.first_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s15.second_month = EXTRACT(MONTH FROM searches.search_ts)
-    OR _s15.third_month = EXTRACT(MONTH FROM searches.search_ts)
+    ON _s15.first_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
+    OR _s15.second_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
+    OR _s15.third_month = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
   GROUP BY
     _s10.name
 )

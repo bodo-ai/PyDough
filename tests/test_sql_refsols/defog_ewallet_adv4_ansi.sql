@@ -6,7 +6,7 @@ WITH _t0 AS (
   JOIN main.users AS users
     ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), wallet_transactions_daily.created_at, DAY) <= 7
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(wallet_transactions_daily.created_at AS DATETIME), DAY) <= 7
 )
 SELECT
   agg_0 AS num_transactions,
