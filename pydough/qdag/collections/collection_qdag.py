@@ -423,7 +423,10 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
     def min_edit_distance(s: str, t: str) -> float:
         """
         Computes the minimum edit distance between two strings using the
-        Levenshtein distance algorithm.
+        Levenshtein distance algorithm. For this implementation the iterative
+        with a 2-row array is used to save memory.
+        Link:
+        https://en.wikipedia.org/wiki/Levenshtein_distance#Iterative_with_two_matrix_rows
 
         Args:
             str1 (str): The first string.
