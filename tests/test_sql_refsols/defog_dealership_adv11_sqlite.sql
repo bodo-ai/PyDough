@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    SUM(sale_price) AS agg_0,
+    SUM(sale_price) AS sum_sale_price,
     car_id
   FROM main.sales
   WHERE
@@ -9,8 +9,8 @@ WITH _s0 AS (
     car_id
 ), _t0 AS (
   SELECT
-    SUM(_s0.agg_0) AS agg_0,
-    SUM(cars.cost) AS agg_1
+    SUM(cars.cost) AS sum_cost,
+    SUM(_s0.sum_sale_price) AS sum_sum_sale_price
   FROM _s0 AS _s0
   JOIN main.cars AS cars
     ON _s0.car_id = cars._id
@@ -18,7 +18,7 @@ WITH _s0 AS (
 SELECT
   (
     CAST((
-      COALESCE(agg_0, 0) - COALESCE(agg_1, 0)
-    ) AS REAL) / COALESCE(agg_1, 0)
+      COALESCE(sum_sum_sale_price, 0) - COALESCE(sum_cost, 0)
+    ) AS REAL) / COALESCE(sum_cost, 0)
   ) * 100 AS GPM
 FROM _t0

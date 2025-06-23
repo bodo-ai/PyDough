@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS agg_0,
-    SUM(wallet_transactions_daily.amount) AS agg_1
+    SUM(wallet_transactions_daily.amount) AS sum_amount
   FROM main.wallet_transactions_daily AS wallet_transactions_daily
   JOIN main.users AS users
     ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
@@ -12,5 +12,5 @@ WITH _t0 AS (
 )
 SELECT
   agg_0 AS num_transactions,
-  CASE WHEN agg_0 > 0 THEN COALESCE(agg_1, 0) ELSE NULL END AS total_amount
+  CASE WHEN agg_0 > 0 THEN COALESCE(sum_amount, 0) ELSE NULL END AS total_amount
 FROM _t0

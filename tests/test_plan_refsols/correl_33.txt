@@ -1,6 +1,6 @@
 ROOT(columns=[('n', agg_1)], orderings=[])
  AGGREGATE(keys={}, aggregations={'agg_1': COUNT()})
-  JOIN(condition=MONTH(t1.o_orderdate) == MONTH(t0.first_order_date) & YEAR(t1.o_orderdate) == YEAR(t0.first_order_date), type=INNER, cardinality=PLURAL_UNKNOWN, columns={})
-   AGGREGATE(keys={}, aggregations={'first_order_date': MIN(o_orderdate)})
+  JOIN(condition=MONTH(t1.o_orderdate) == MONTH(t0.min_o_orderdate) & YEAR(t1.o_orderdate) == YEAR(t0.min_o_orderdate), type=INNER, cardinality=PLURAL_UNKNOWN, columns={})
+   AGGREGATE(keys={}, aggregations={'min_o_orderdate': MIN(o_orderdate)})
     SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})
    SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})

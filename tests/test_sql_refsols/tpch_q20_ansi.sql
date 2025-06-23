@@ -1,7 +1,7 @@
 WITH _t5 AS (
   SELECT
-    SUM(l_quantity) AS agg_0,
-    l_partkey AS part_key
+    l_partkey AS part_key,
+    SUM(l_quantity) AS sum_l_quantity
   FROM tpch.lineitem
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS DATETIME)) = 1994
@@ -9,7 +9,7 @@ WITH _t5 AS (
     l_partkey
 ), _s5 AS (
   SELECT
-    COALESCE(_t5.agg_0, 0) AS agg_0,
+    COALESCE(_t5.sum_l_quantity, 0) AS agg_0,
     part.p_partkey
   FROM tpch.part AS part
   JOIN _t5 AS _t5

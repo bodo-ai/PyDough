@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    SUM(sale_price) AS agg_0,
     COUNT(*) AS agg_1,
+    SUM(sale_price) AS sum_sale_price,
     salesperson_id
   FROM main.sales
   WHERE
@@ -13,7 +13,7 @@ SELECT
   salespersons.first_name,
   salespersons.last_name,
   COALESCE(_s1.agg_1, 0) AS total_sales,
-  COALESCE(_s1.agg_0, 0) AS total_revenue
+  COALESCE(_s1.sum_sale_price, 0) AS total_revenue
 FROM main.salespersons AS salespersons
 LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id

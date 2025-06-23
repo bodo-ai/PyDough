@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     COUNT(*) AS agg_0,
-    SUM(sbtxamount) AS agg_1,
+    SUM(sbtxamount) AS sum_sbtxamount,
     sbtxtickerid AS ticker_id
   FROM main.sbtransaction
   GROUP BY
@@ -10,7 +10,7 @@ WITH _s1 AS (
 SELECT
   sbticker.sbtickersymbol AS symbol,
   COALESCE(_s1.agg_0, 0) AS num_transactions,
-  COALESCE(_s1.agg_1, 0) AS total_amount
+  COALESCE(_s1.sum_sbtxamount, 0) AS total_amount
 FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.ticker_id = sbticker.sbtickerid

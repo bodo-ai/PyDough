@@ -5,6 +5,6 @@ ROOT(columns=[('C_NAME', c_name), ('C_CUSTKEY', c_custkey), ('O_ORDERKEY', o_ord
     JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'c_custkey': t1.c_custkey, 'c_name': t1.c_name, 'o_orderdate': t0.o_orderdate, 'o_orderkey': t0.o_orderkey, 'o_totalprice': t0.o_totalprice})
      SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice})
      SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name})
-    PROJECT(columns={'TOTAL_QUANTITY': DEFAULT_TO(agg_0, 0:numeric), 'order_key': order_key})
-     AGGREGATE(keys={'order_key': l_orderkey}, aggregations={'agg_0': SUM(l_quantity)})
+    PROJECT(columns={'TOTAL_QUANTITY': DEFAULT_TO(sum_l_quantity, 0:numeric), 'order_key': order_key})
+     AGGREGATE(keys={'order_key': l_orderkey}, aggregations={'sum_l_quantity': SUM(l_quantity)})
       SCAN(table=tpch.LINEITEM, columns={'l_orderkey': l_orderkey, 'l_quantity': l_quantity})

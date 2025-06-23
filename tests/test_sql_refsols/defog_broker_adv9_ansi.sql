@@ -5,7 +5,7 @@ WITH _t0 AS (
       (
         DAY_OF_WEEK(sbtransaction.sbtxdatetime) + 6
       ) % 7
-    ) IN (5, 6)) AS agg_1,
+    ) IN (5, 6)) AS sum_is_weekend,
     DATE_TRUNC('WEEK', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) AS week
   FROM main.sbtransaction AS sbtransaction
   JOIN main.sbticker AS sbticker
@@ -20,5 +20,5 @@ WITH _t0 AS (
 SELECT
   week,
   agg_0 AS num_transactions,
-  COALESCE(agg_1, 0) AS weekend_transactions
+  COALESCE(sum_is_weekend, 0) AS weekend_transactions
 FROM _t0

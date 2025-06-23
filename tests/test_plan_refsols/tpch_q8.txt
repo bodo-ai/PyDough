@@ -1,5 +1,5 @@
-ROOT(columns=[('O_YEAR', O_YEAR), ('MKT_SHARE', DEFAULT_TO(agg_0, 0:numeric) / DEFAULT_TO(agg_1, 0:numeric))], orderings=[])
- AGGREGATE(keys={'O_YEAR': O_YEAR}, aggregations={'agg_0': SUM(brazil_volume), 'agg_1': SUM(volume)})
+ROOT(columns=[('O_YEAR', O_YEAR), ('MKT_SHARE', DEFAULT_TO(sum_brazil_volume, 0:numeric) / DEFAULT_TO(sum_volume, 0:numeric))], orderings=[])
+ AGGREGATE(keys={'O_YEAR': O_YEAR}, aggregations={'sum_brazil_volume': SUM(brazil_volume), 'sum_volume': SUM(volume)})
   PROJECT(columns={'O_YEAR': YEAR(o_orderdate), 'brazil_volume': IFF(n_name == 'BRAZIL':string, l_extendedprice * 1:numeric - l_discount, 0:numeric), 'volume': l_extendedprice * 1:numeric - l_discount})
    JOIN(condition=t0.l_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'l_discount': t0.l_discount, 'l_extendedprice': t0.l_extendedprice, 'n_name': t1.n_name, 'o_orderdate': t0.o_orderdate})
     JOIN(condition=t0.l_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'l_discount': t0.l_discount, 'l_extendedprice': t0.l_extendedprice, 'l_suppkey': t0.l_suppkey, 'o_orderdate': t1.o_orderdate})

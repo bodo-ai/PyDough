@@ -22,8 +22,8 @@ WITH _t5 AS (
     _s4.ca_dt
 ), _t3 AS (
   SELECT
-    SUM(_s3.agg_2) AS agg_4,
-    SUM(_s7.agg_5) AS agg_7,
+    SUM(_s3.agg_2) AS sum_agg_2,
+    SUM(_s7.agg_5) AS sum_agg_5,
     EXTRACT(YEAR FROM CAST(_t5.ca_dt AS DATETIME)) AS year
   FROM _t5 AS _t5
   LEFT JOIN _s3 AS _s3
@@ -35,31 +35,31 @@ WITH _t5 AS (
 ), _t0 AS (
   SELECT
     ROUND(
-      SUM(COALESCE(agg_7, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(agg_4, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      SUM(COALESCE(sum_agg_5, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(sum_agg_2, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       2
     ) AS cum_ir,
     ROUND(
       (
         100.0 * (
-          COALESCE(agg_4, 0) - LAG(COALESCE(agg_4, 0), 1) OVER (ORDER BY year NULLS LAST)
+          COALESCE(sum_agg_2, 0) - LAG(COALESCE(sum_agg_2, 0), 1) OVER (ORDER BY year NULLS LAST)
         )
-      ) / LAG(COALESCE(agg_4, 0), 1) OVER (ORDER BY year NULLS LAST),
+      ) / LAG(COALESCE(sum_agg_2, 0), 1) OVER (ORDER BY year NULLS LAST),
       2
     ) AS pct_bought_change,
     ROUND(
       (
         100.0 * (
-          COALESCE(agg_7, 0) - LAG(COALESCE(agg_7, 0), 1) OVER (ORDER BY year NULLS LAST)
+          COALESCE(sum_agg_5, 0) - LAG(COALESCE(sum_agg_5, 0), 1) OVER (ORDER BY year NULLS LAST)
         )
-      ) / LAG(COALESCE(agg_7, 0), 1) OVER (ORDER BY year NULLS LAST),
+      ) / LAG(COALESCE(sum_agg_5, 0), 1) OVER (ORDER BY year NULLS LAST),
       2
     ) AS pct_incident_change,
-    COALESCE(agg_4, 0) AS n_devices,
-    COALESCE(agg_7, 0) AS n_incidents,
+    COALESCE(sum_agg_2, 0) AS n_devices,
+    COALESCE(sum_agg_5, 0) AS n_incidents,
     year
   FROM _t3
   WHERE
-    NOT agg_4 IS NULL AND agg_4 > 0
+    NOT sum_agg_2 IS NULL AND sum_agg_2 > 0
 )
 SELECT
   year AS yr,

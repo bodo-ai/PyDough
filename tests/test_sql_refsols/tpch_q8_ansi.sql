@@ -8,10 +8,10 @@ WITH _t0 AS (
         )
         ELSE 0
       END
-    ) AS agg_0,
+    ) AS sum_brazil_volume,
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS agg_1,
+    )) AS sum_volume,
     EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) AS o_year
   FROM tpch.lineitem AS lineitem
   JOIN tpch.part AS part
@@ -34,5 +34,5 @@ WITH _t0 AS (
 )
 SELECT
   o_year AS O_YEAR,
-  COALESCE(agg_0, 0) / COALESCE(agg_1, 0) AS MKT_SHARE
+  COALESCE(sum_brazil_volume, 0) / COALESCE(sum_volume, 0) AS MKT_SHARE
 FROM _t0

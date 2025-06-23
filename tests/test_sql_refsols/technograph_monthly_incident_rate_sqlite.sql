@@ -39,8 +39,8 @@ WITH _t4 AS (
     _t11.ca_dt
 ), _t1 AS (
   SELECT
-    SUM(_s7.agg_2) AS agg_4,
-    SUM(_s15.agg_5) AS agg_7,
+    SUM(_s7.agg_2) AS sum_agg_2,
+    SUM(_s15.agg_5) AS sum_agg_5,
     CAST(STRFTIME('%m', _t4.ca_dt) AS INTEGER) AS month,
     CAST(STRFTIME('%Y', _t4.ca_dt) AS INTEGER) AS year
   FROM _t4 AS _t4
@@ -63,8 +63,8 @@ SELECT
     END
   ) AS month,
   ROUND(CAST((
-    1000000.0 * COALESCE(agg_7, 0)
-  ) AS REAL) / COALESCE(agg_4, 0), 2) AS ir
+    1000000.0 * COALESCE(sum_agg_5, 0)
+  ) AS REAL) / COALESCE(sum_agg_2, 0), 2) AS ir
 FROM _t1
 ORDER BY
   month

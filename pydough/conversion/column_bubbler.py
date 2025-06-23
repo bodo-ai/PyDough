@@ -35,6 +35,15 @@ def name_sort_key(name: str) -> tuple[bool, bool, str]:
     )
 
 
+def generate_agg_name(agg_expr: CallExpression) -> str | None:
+    """ """
+    if len(agg_expr.inputs) == 1:
+        input_expr = agg_expr.inputs[0]
+        if isinstance(input_expr, ColumnReference):
+            return f"{agg_expr.op.function_name.lower()}_{input_expr.name}"
+    return None
+
+
 def run_column_bubbling(
     node: RelationalNode,
     corr_remap: dict[str, dict[RelationalExpression, RelationalExpression]],
@@ -115,6 +124,15 @@ def run_column_bubbling(
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
+                    alt_name: str | None = generate_agg_name(new_expr)
+                    if alt_name is not None and alt_name not in used_names:
+                        used_names.add(alt_name)
+                        alt_ref: ColumnReference = ColumnReference(
+                            alt_name, call_expr.data_type
+                        )
+                        remapping[new_ref] = alt_ref
+                        new_ref = alt_ref
+                        name = alt_name
                     aliases[new_expr] = new_ref
                     new_aggs[name] = new_expr
             return Aggregate(new_input, new_keys, new_aggs), remapping

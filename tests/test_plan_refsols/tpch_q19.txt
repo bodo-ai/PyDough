@@ -1,5 +1,5 @@
-ROOT(columns=[('REVENUE', DEFAULT_TO(agg_0, 0:numeric))], orderings=[])
- AGGREGATE(keys={}, aggregations={'agg_0': SUM(expr_1)})
+ROOT(columns=[('REVENUE', DEFAULT_TO(sum_expr_1, 0:numeric))], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_expr_1': SUM(expr_1)})
   PROJECT(columns={'expr_1': l_extendedprice * 1:numeric - l_discount})
    FILTER(condition=MONOTONIC(1:numeric, p_size, 5:numeric) & MONOTONIC(1:numeric, l_quantity, 11:numeric) & ISIN(p_container, ['SM CASE', 'SM BOX', 'SM PACK', 'SM PKG']:array[unknown]) & p_brand == 'Brand#12':string | MONOTONIC(1:numeric, p_size, 10:numeric) & MONOTONIC(10:numeric, l_quantity, 20:numeric) & ISIN(p_container, ['MED BAG', 'MED BOX', 'MED PACK', 'MED PKG']:array[unknown]) & p_brand == 'Brand#23':string | MONOTONIC(1:numeric, p_size, 15:numeric) & MONOTONIC(20:numeric, l_quantity, 30:numeric) & ISIN(p_container, ['LG CASE', 'LG BOX', 'LG PACK', 'LG PKG']:array[unknown]) & p_brand == 'Brand#34':string, columns={'l_discount': l_discount, 'l_extendedprice': l_extendedprice})
     JOIN(condition=t0.l_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'l_discount': t0.l_discount, 'l_extendedprice': t0.l_extendedprice, 'l_quantity': t0.l_quantity, 'p_brand': t1.p_brand, 'p_container': t1.p_container, 'p_size': t1.p_size})

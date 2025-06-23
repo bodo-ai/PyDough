@@ -12,9 +12,9 @@ WITH _t2 AS (
     )
 ), _t0 AS (
   SELECT
-    SUM(l_extendedprice) AS agg_0
+    SUM(l_extendedprice) AS sum_l_extendedprice
   FROM _t2
 )
 SELECT
-  COALESCE(agg_0, 0) / 7.0 AS AVG_YEARLY
+  COALESCE(sum_l_extendedprice, 0) / 7.0 AS AVG_YEARLY
 FROM _t0

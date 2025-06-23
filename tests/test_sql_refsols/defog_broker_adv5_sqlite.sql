@@ -1,9 +1,9 @@
 WITH _s0 AS (
   SELECT
-    SUM(sbdpclose) AS expr_0,
-    COUNT(sbdpclose) AS expr_1,
-    MAX(sbdphigh) AS max_high,
-    MIN(sbdplow) AS min_low,
+    COUNT(sbdpclose) AS count_sbdpclose,
+    MAX(sbdphigh) AS max_sbdphigh,
+    MIN(sbdplow) AS min_sbdplow,
+    SUM(sbdpclose) AS sum_sbdpclose,
     sbdptickerid AS ticker_id,
     CONCAT_WS(
       '-',
@@ -32,10 +32,10 @@ WITH _s0 AS (
     )
 ), _t1 AS (
   SELECT
-    SUM(_s0.expr_0) AS expr_0,
-    SUM(_s0.expr_1) AS expr_1,
-    MAX(_s0.max_high) AS max_high,
-    MIN(_s0.min_low) AS min_low,
+    MAX(_s0.max_sbdphigh) AS max_max_sbdphigh,
+    MIN(_s0.min_sbdplow) AS min_min_sbdplow,
+    SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
+    SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
     sbticker.sbtickersymbol AS symbol,
     _s0.month
   FROM _s0 AS _s0
@@ -48,16 +48,16 @@ WITH _s0 AS (
 SELECT
   symbol,
   month,
-  CAST(expr_0 AS REAL) / expr_1 AS avg_close,
-  max_high,
-  min_low,
+  CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose AS avg_close,
+  max_max_sbdphigh AS max_high,
+  min_min_sbdplow AS min_low,
   CAST((
     (
-      CAST(expr_0 AS REAL) / expr_1
+      CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose
     ) - LAG((
-      CAST(expr_0 AS REAL) / expr_1
+      CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose
     ), 1) OVER (PARTITION BY symbol ORDER BY month)
   ) AS REAL) / LAG((
-    CAST(expr_0 AS REAL) / expr_1
+    CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose
   ), 1) OVER (PARTITION BY symbol ORDER BY month) AS momc
 FROM _t1

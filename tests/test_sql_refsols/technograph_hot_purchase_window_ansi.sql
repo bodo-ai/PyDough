@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    COUNT(*) AS n_purchases,
-    ANY_VALUE(calendar.ca_dt) AS start_of_period
+    ANY_VALUE(calendar.ca_dt) AS anything_ca_dt,
+    COUNT(*) AS n_purchases
   FROM main.calendar AS calendar
   JOIN main.calendar AS calendar_2
     ON calendar.ca_dt <= calendar_2.ca_dt
@@ -14,10 +14,10 @@ WITH _t0 AS (
     calendar.ca_dt
 )
 SELECT
-  start_of_period,
+  anything_ca_dt AS start_of_period,
   n_purchases
 FROM _t0
 ORDER BY
   n_purchases DESC,
-  start_of_period
+  anything_ca_dt
 LIMIT 1

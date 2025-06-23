@@ -30,7 +30,7 @@ WITH _s2 AS (
     )
 ), _s3 AS (
   SELECT
-    AVG(sbtransaction.sbtxamount) AS agg_0,
+    AVG(sbtransaction.sbtxamount) AS avg_sbtxamount,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER),
@@ -66,7 +66,7 @@ WITH _s2 AS (
 SELECT
   _s2.month,
   _s2.agg_1 AS customer_signups,
-  _s3.agg_0 AS avg_tx_amount
+  _s3.avg_sbtxamount AS avg_tx_amount
 FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
   ON _s2.month = _s3.month

@@ -13,16 +13,16 @@ WITH _t1 AS (
     AND eras.er_start_year <= EXTRACT(YEAR FROM CAST(events.ev_dt AS DATETIME))
 ), _t0 AS (
   SELECT
-    ANY_VALUE(er_start_year) AS agg_3,
-    AVG(day_gap) AS avg_event_gap,
-    ANY_VALUE(er_name) AS era_name
+    ANY_VALUE(er_name) AS anything_er_name,
+    ANY_VALUE(er_start_year) AS anything_er_start_year,
+    AVG(day_gap) AS avg_day_gap
   FROM _t1
   GROUP BY
     er_name
 )
 SELECT
-  era_name,
-  avg_event_gap
+  anything_er_name AS era_name,
+  avg_day_gap AS avg_event_gap
 FROM _t0
 ORDER BY
-  agg_3
+  anything_er_start_year

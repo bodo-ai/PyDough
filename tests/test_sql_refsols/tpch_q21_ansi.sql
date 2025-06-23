@@ -10,11 +10,11 @@ WITH _t7 AS (
     l_commitdate < l_receiptdate
 ), _t4 AS (
   SELECT
-    ANY_VALUE(_t7.l_linenumber) AS agg_13,
-    ANY_VALUE(_t7.l_orderkey) AS agg_14,
-    ANY_VALUE(_t7.l_suppkey) AS agg_24,
-    ANY_VALUE(orders.o_orderkey) AS agg_3,
-    ANY_VALUE(orders.o_orderstatus) AS agg_6
+    ANY_VALUE(_t7.l_linenumber) AS anything_l_linenumber,
+    ANY_VALUE(_t7.l_orderkey) AS anything_l_orderkey,
+    ANY_VALUE(_t7.l_suppkey) AS anything_l_suppkey,
+    ANY_VALUE(orders.o_orderkey) AS anything_o_orderkey,
+    ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus
   FROM _t7 AS _t7
   JOIN tpch.orders AS orders
     ON _t7.l_orderkey = orders.o_orderkey
@@ -39,16 +39,16 @@ WITH _t7 AS (
 ), _s13 AS (
   SELECT
     COUNT(*) AS agg_0,
-    _t4.agg_24
+    _t4.anything_l_suppkey AS agg_24
   FROM _t4 AS _t4
   JOIN _s11 AS _s11
-    ON _s11.l_linenumber = _t4.agg_13
-    AND _s11.l_orderkey = _t4.agg_14
-    AND _s11.o_orderkey = _t4.agg_3
+    ON _s11.l_linenumber = _t4.anything_l_linenumber
+    AND _s11.l_orderkey = _t4.anything_l_orderkey
+    AND _s11.o_orderkey = _t4.anything_o_orderkey
   WHERE
-    _t4.agg_6 = 'F'
+    _t4.anything_o_orderstatus = 'F'
   GROUP BY
-    _t4.agg_24
+    _t4.anything_l_suppkey
 )
 SELECT
   supplier.s_name AS S_NAME,

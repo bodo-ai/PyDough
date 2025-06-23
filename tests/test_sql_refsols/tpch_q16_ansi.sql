@@ -3,7 +3,7 @@ WITH _t0 AS (
     part.p_brand,
     part.p_size,
     part.p_type,
-    COUNT(DISTINCT partsupp.ps_suppkey) AS supplier_count
+    COUNT(DISTINCT partsupp.ps_suppkey) AS ndistinct_ps_suppkey
   FROM tpch.partsupp AS partsupp
   JOIN tpch.supplier AS supplier
     ON NOT supplier.s_comment LIKE '%Customer%Complaints%'
@@ -22,10 +22,10 @@ SELECT
   p_brand AS P_BRAND,
   p_type AS P_TYPE,
   p_size AS P_SIZE,
-  supplier_count AS SUPPLIER_COUNT
+  ndistinct_ps_suppkey AS SUPPLIER_COUNT
 FROM _t0
 ORDER BY
-  supplier_count DESC,
+  ndistinct_ps_suppkey DESC,
   p_brand,
   p_type,
   p_size

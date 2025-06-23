@@ -1,21 +1,21 @@
 WITH _t1 AS (
   SELECT
-    AVG(l_discount) AS agg_0,
-    AVG(l_extendedprice) AS agg_1,
-    AVG(l_quantity) AS agg_2,
     COUNT(*) AS agg_3,
-    SUM(l_extendedprice) AS agg_4,
+    AVG(l_discount) AS avg_l_discount,
+    AVG(l_extendedprice) AS avg_l_extendedprice,
+    AVG(l_quantity) AS avg_l_quantity,
+    l_returnflag AS return_flag,
+    l_linestatus AS status,
     SUM(l_extendedprice * (
       1 - l_discount
     ) * (
       1 + l_tax
-    )) AS agg_5,
+    )) AS sum_expr_8,
     SUM(l_extendedprice * (
       1 - l_discount
-    )) AS agg_6,
-    SUM(l_quantity) AS agg_7,
-    l_returnflag AS return_flag,
-    l_linestatus AS status
+    )) AS sum_expr_9,
+    SUM(l_extendedprice) AS sum_l_extendedprice,
+    SUM(l_quantity) AS sum_l_quantity
   FROM tpch.lineitem
   WHERE
     l_shipdate <= '1998-12-01'
@@ -26,13 +26,13 @@ WITH _t1 AS (
 SELECT
   return_flag AS L_RETURNFLAG,
   status AS L_LINESTATUS,
-  COALESCE(agg_7, 0) AS SUM_QTY,
-  COALESCE(agg_4, 0) AS SUM_BASE_PRICE,
-  COALESCE(agg_6, 0) AS SUM_DISC_PRICE,
-  COALESCE(agg_5, 0) AS SUM_CHARGE,
-  agg_2 AS AVG_QTY,
-  agg_1 AS AVG_PRICE,
-  agg_0 AS AVG_DISC,
+  COALESCE(sum_l_quantity, 0) AS SUM_QTY,
+  COALESCE(sum_l_extendedprice, 0) AS SUM_BASE_PRICE,
+  COALESCE(sum_expr_9, 0) AS SUM_DISC_PRICE,
+  COALESCE(sum_expr_8, 0) AS SUM_CHARGE,
+  avg_l_quantity AS AVG_QTY,
+  avg_l_extendedprice AS AVG_PRICE,
+  avg_l_discount AS AVG_DISC,
   agg_3 AS COUNT_ORDER
 FROM _t1
 ORDER BY

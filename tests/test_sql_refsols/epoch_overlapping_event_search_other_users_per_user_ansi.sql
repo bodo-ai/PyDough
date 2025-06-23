@@ -10,8 +10,8 @@ WITH _s0 AS (
   FROM searches
 ), _t0 AS (
   SELECT
-    ANY_VALUE(_s0.user_name) AS agg_2,
-    COUNT(DISTINCT _s7.user_id) AS n_other_users
+    ANY_VALUE(_s0.user_name) AS anything_user_name,
+    COUNT(DISTINCT _s7.user_id) AS ndistinct_user_id_11
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
     ON _s0.user_id = _s1.search_user_id
@@ -25,10 +25,10 @@ WITH _s0 AS (
     _s0.user_id
 )
 SELECT
-  agg_2 AS user_name,
-  n_other_users
+  anything_user_name AS user_name,
+  ndistinct_user_id_11 AS n_other_users
 FROM _t0
 ORDER BY
   n_other_users DESC,
-  user_name
+  anything_user_name
 LIMIT 7

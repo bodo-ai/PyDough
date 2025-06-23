@@ -18,7 +18,7 @@ WITH _s1 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS agg_0,
+    )) AS sum_volume,
     _s1.n_name AS supp_nation,
     _s9.n_name AS cust_nation,
     EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) AS l_year
@@ -46,7 +46,7 @@ SELECT
   supp_nation AS SUPP_NATION,
   cust_nation AS CUST_NATION,
   l_year AS L_YEAR,
-  COALESCE(agg_0, 0) AS REVENUE
+  COALESCE(sum_volume, 0) AS REVENUE
 FROM _t1
 ORDER BY
   supp_nation,

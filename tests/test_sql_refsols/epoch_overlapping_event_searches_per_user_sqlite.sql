@@ -6,8 +6,8 @@ WITH _s0 AS (
 ), _t2 AS (
   SELECT
     COUNT(*) AS agg_0,
-    MAX(_s0.user_id) AS agg_10,
-    MAX(_s0.user_name) AS agg_8
+    MAX(_s0.user_id) AS anything_user_id,
+    MAX(_s0.user_name) AS anything_user_name
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.user_id = searches.search_user_id
@@ -26,19 +26,19 @@ WITH _s0 AS (
     _s0.user_id
 ), _t0 AS (
   SELECT
-    MAX(agg_8) AS agg_2,
+    MAX(anything_user_name) AS anything_anything_user_name,
     COUNT(*) AS n_searches
   FROM _t2
   WHERE
     agg_0 > 0
   GROUP BY
-    agg_10
+    anything_user_id
 )
 SELECT
-  agg_2 AS user_name,
+  anything_anything_user_name AS user_name,
   n_searches
 FROM _t0
 ORDER BY
   n_searches DESC,
-  user_name
+  anything_anything_user_name
 LIMIT 4

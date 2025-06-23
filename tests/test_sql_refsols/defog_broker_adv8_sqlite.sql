@@ -9,7 +9,7 @@ WITH _u_0 AS (
 ), _t0 AS (
   SELECT
     COUNT(*) AS agg_0,
-    SUM(sbtransaction.sbtxamount) AS agg_1
+    SUM(sbtransaction.sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction AS sbtransaction
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = sbtransaction.sbtxcustid
@@ -33,5 +33,5 @@ WITH _u_0 AS (
 )
 SELECT
   CASE WHEN agg_0 > 0 THEN agg_0 ELSE NULL END AS n_transactions,
-  COALESCE(agg_1, 0) AS total_amount
+  COALESCE(sum_sbtxamount, 0) AS total_amount
 FROM _t0

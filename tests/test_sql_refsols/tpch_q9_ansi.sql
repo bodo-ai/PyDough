@@ -1,11 +1,11 @@
 WITH _t0 AS (
   SELECT
+    nation.n_name AS nation_name,
     SUM(
       lineitem.l_extendedprice * (
         1 - lineitem.l_discount
       ) - partsupp.ps_supplycost * lineitem.l_quantity
-    ) AS agg_0,
-    nation.n_name AS nation_name,
+    ) AS sum_value,
     EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) AS o_year
   FROM tpch.lineitem AS lineitem
   JOIN tpch.part AS part
@@ -26,7 +26,7 @@ WITH _t0 AS (
 SELECT
   nation_name AS NATION,
   o_year AS O_YEAR,
-  COALESCE(agg_0, 0) AS AMOUNT
+  COALESCE(sum_value, 0) AS AMOUNT
 FROM _t0
 ORDER BY
   nation_name,

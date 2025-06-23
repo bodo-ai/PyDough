@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     SUM(
       DATEDIFF(CAST(session_end_ts AS DATETIME), CAST(session_start_ts AS DATETIME), SECOND)
-    ) AS agg_0,
+    ) AS sum_duration,
     user_id
   FROM main.user_sessions
   WHERE
@@ -12,7 +12,7 @@ WITH _t0 AS (
 )
 SELECT
   users.uid,
-  COALESCE(_t0.agg_0, 0) AS total_duration
+  COALESCE(_t0.sum_duration, 0) AS total_duration
 FROM main.users AS users
 JOIN _t0 AS _t0
   ON _t0.user_id = users.uid

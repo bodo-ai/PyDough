@@ -12,7 +12,7 @@ WITH _s0 AS (
   FROM main.products
 ), _s6 AS (
   SELECT
-    SUM(_s0.agg_1) AS agg_1,
+    SUM(_s0.agg_1) AS sum_agg_1,
     EXTRACT(YEAR FROM CAST(_t4.pr_release AS DATETIME)) AS release_year
   FROM _s0 AS _s0
   JOIN _t4 AS _t4
@@ -33,7 +33,7 @@ WITH _s0 AS (
 )
 SELECT
   _s6.release_year AS year,
-  ROUND(COALESCE(_s7.agg_0, 0) / _s6.agg_1, 2) AS ir
+  ROUND(COALESCE(_s7.agg_0, 0) / _s6.sum_agg_1, 2) AS ir
 FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7
   ON _s6.release_year = _s7.release_year

@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    SUM(l_extendedprice * l_discount) AS agg_0
+    SUM(l_extendedprice * l_discount) AS sum_amt
   FROM tpch.lineitem
   WHERE
     l_discount <= 0.07
@@ -10,5 +10,5 @@ WITH _t0 AS (
     AND l_shipdate >= CAST('1994-01-01' AS DATE)
 )
 SELECT
-  COALESCE(agg_0, 0) AS REVENUE
+  COALESCE(sum_amt, 0) AS REVENUE
 FROM _t0

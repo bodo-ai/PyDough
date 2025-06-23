@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     COUNT(*) AS agg_0,
-    SUM(sale_price) AS agg_1,
+    SUM(sale_price) AS sum_sale_price,
     car_id
   FROM main.sales
   WHERE
@@ -15,7 +15,7 @@ SELECT
     WHEN (
       NOT _s1.agg_0 IS NULL AND _s1.agg_0 > 0
     )
-    THEN COALESCE(_s1.agg_1, 0)
+    THEN COALESCE(_s1.sum_sale_price, 0)
     ELSE NULL
   END AS total_revenue
 FROM main.cars AS cars

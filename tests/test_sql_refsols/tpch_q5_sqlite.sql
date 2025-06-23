@@ -1,9 +1,9 @@
 WITH _s7 AS (
   SELECT
+    l_orderkey AS order_key,
     SUM(l_extendedprice * (
       1 - l_discount
-    )) AS agg_0,
-    l_orderkey AS order_key,
+    )) AS sum_value,
     l_suppkey AS supplier_key
   FROM tpch.lineitem
   GROUP BY
@@ -11,10 +11,10 @@ WITH _s7 AS (
     l_suppkey
 ), _s10 AS (
   SELECT
-    SUM(_s7.agg_0) AS agg_0,
-    MAX(nation.n_name) AS agg_3,
+    MAX(nation.n_name) AS anything_n_name,
     nation.n_nationkey AS key,
     nation.n_name AS nation_name,
+    SUM(_s7.sum_value) AS sum_sum_value,
     _s7.supplier_key
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
@@ -40,8 +40,8 @@ WITH _s7 AS (
     ON nation.n_nationkey = supplier.s_nationkey
 ), _t1 AS (
   SELECT
-    SUM(_s10.agg_0) AS agg_0,
-    MAX(_s10.agg_3) AS agg_3
+    MAX(_s10.anything_n_name) AS anything_anything_n_name,
+    SUM(_s10.sum_sum_value) AS sum_sum_sum_value
   FROM _s10 AS _s10
   JOIN _s11 AS _s11
     ON _s10.nation_name = _s11.n_name AND _s10.supplier_key = _s11.s_suppkey
@@ -49,8 +49,8 @@ WITH _s7 AS (
     _s10.key
 )
 SELECT
-  agg_3 AS N_NAME,
-  COALESCE(agg_0, 0) AS REVENUE
+  anything_anything_n_name AS N_NAME,
+  COALESCE(sum_sum_sum_value, 0) AS REVENUE
 FROM _t1
 ORDER BY
   revenue DESC

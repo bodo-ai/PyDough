@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    MAX(sbdphigh) AS agg_0,
-    MIN(sbdplow) AS agg_1,
+    MAX(sbdphigh) AS max_sbdphigh,
+    MIN(sbdplow) AS min_sbdplow,
     sbdptickerid AS ticker_id
   FROM main.sbdailyprice
   WHERE
@@ -11,7 +11,7 @@ WITH _s1 AS (
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
-  _s1.agg_0 - _s1.agg_1 AS price_change
+  _s1.max_sbdphigh - _s1.min_sbdplow AS price_change
 FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.ticker_id = sbticker.sbtickerid

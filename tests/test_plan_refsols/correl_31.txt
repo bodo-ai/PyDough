@@ -1,5 +1,5 @@
-ROOT(columns=[('nation_name', nation_name), ('mean_rev', mean_rev), ('median_rev', median_rev)], orderings=[(nation_name):asc_first])
- AGGREGATE(keys={'key': n_nationkey}, aggregations={'mean_rev': AVG(revenue), 'median_rev': MEDIAN(revenue), 'nation_name': ANYTHING(n_name)})
+ROOT(columns=[('nation_name', anything_n_name), ('mean_rev', avg_revenue), ('median_rev', median_revenue)], orderings=[(anything_n_name):asc_first])
+ AGGREGATE(keys={'key': n_nationkey}, aggregations={'anything_n_name': ANYTHING(n_name), 'avg_revenue': AVG(revenue), 'median_revenue': MEDIAN(revenue)})
   JOIN(condition=t0.l_suppkey == t1.s_suppkey & t1.s_nationkey == t0.n_nationkey, type=INNER, cardinality=SINGULAR_UNKNOWN, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'revenue': t0.revenue})
    JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_FILTER, columns={'l_suppkey': t1.l_suppkey, 'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'revenue': t1.revenue})
     JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey, 'o_orderkey': t1.o_orderkey})

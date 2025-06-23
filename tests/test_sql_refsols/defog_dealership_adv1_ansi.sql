@@ -5,7 +5,7 @@ WITH _t0 AS (
       (
         DAY_OF_WEEK(payments_received.payment_date) + 6
       ) % 7
-    ) IN (5, 6)) AS agg_1,
+    ) IN (5, 6)) AS sum_is_weekend,
     DATE_TRUNC('WEEK', CAST(payments_received.payment_date AS TIMESTAMP)) AS payment_week
   FROM main.payments_received AS payments_received
   JOIN main.sales AS sales
@@ -19,5 +19,5 @@ WITH _t0 AS (
 SELECT
   payment_week,
   agg_0 AS total_payments,
-  COALESCE(agg_1, 0) AS weekend_payments
+  COALESCE(sum_is_weekend, 0) AS weekend_payments
 FROM _t0

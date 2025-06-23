@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
-    SUM(payment_amount) AS agg_0,
     COUNT(*) AS agg_1,
+    SUM(payment_amount) AS sum_payment_amount,
     payment_method
   FROM main.payments_received
   GROUP BY
@@ -10,7 +10,7 @@ WITH _t1 AS (
 SELECT
   payment_method,
   agg_1 AS total_payments,
-  COALESCE(agg_0, 0) AS total_amount
+  COALESCE(sum_payment_amount, 0) AS total_amount
 FROM _t1
 ORDER BY
   total_amount DESC

@@ -45,11 +45,11 @@ WITH _t2 AS (
   FROM tpch.customer
 ), _s3 AS (
   SELECT
-    AVG(expr_5) AS median_black_acctbal,
-    AVG(expr_6) AS median_overall_acctbal,
-    AVG(expr_7) AS median_red_acctbal,
-    COUNT(non_negative_acctbal) AS n_black_acctbal,
-    COUNT(negative_acctbal) AS n_red_acctbal,
+    AVG(expr_5) AS avg_expr_5,
+    AVG(expr_6) AS avg_expr_6,
+    AVG(expr_7) AS avg_expr_7,
+    COUNT(negative_acctbal) AS count_negative_acctbal,
+    COUNT(non_negative_acctbal) AS count_non_negative_acctbal,
     c_nationkey AS nation_key
   FROM _t2
   GROUP BY
@@ -57,11 +57,11 @@ WITH _t2 AS (
 )
 SELECT
   nation.n_name AS nation_name,
-  _s3.n_red_acctbal,
-  _s3.n_black_acctbal,
-  _s3.median_red_acctbal,
-  _s3.median_black_acctbal,
-  _s3.median_overall_acctbal
+  _s3.count_negative_acctbal AS n_red_acctbal,
+  _s3.count_non_negative_acctbal AS n_black_acctbal,
+  _s3.avg_expr_7 AS median_red_acctbal,
+  _s3.avg_expr_5 AS median_black_acctbal,
+  _s3.avg_expr_6 AS median_overall_acctbal
 FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'

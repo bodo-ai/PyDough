@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS agg_0
+    )) AS sum_expr_1
   FROM tpch.lineitem AS lineitem
   JOIN tpch.part AS part
     ON (
@@ -63,5 +63,5 @@ WITH _t0 AS (
     AND lineitem.l_shipmode IN ('AIR', 'AIR REG')
 )
 SELECT
-  COALESCE(agg_0, 0) AS REVENUE
+  COALESCE(sum_expr_1, 0) AS REVENUE
 FROM _t0

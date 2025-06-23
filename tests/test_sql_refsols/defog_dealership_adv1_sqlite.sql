@@ -7,7 +7,7 @@ WITH _t0 AS (
           CAST(STRFTIME('%w', payments_received.payment_date) AS INTEGER) + 6
         ) % 7
       ) IN (5, 6)
-    ) AS agg_1,
+    ) AS sum_is_weekend,
     DATE(
       payments_received.payment_date,
       '-' || CAST((
@@ -69,5 +69,5 @@ WITH _t0 AS (
 SELECT
   payment_week,
   agg_0 AS total_payments,
-  COALESCE(agg_1, 0) AS weekend_payments
+  COALESCE(sum_is_weekend, 0) AS weekend_payments
 FROM _t0

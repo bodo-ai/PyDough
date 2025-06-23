@@ -1,6 +1,6 @@
 ROOT(columns=[('month', month_0), ('ir', ir)], orderings=[(month):asc_first])
- PROJECT(columns={'ir': ROUND(1000000.0:numeric * DEFAULT_TO(agg_7, 0:numeric) / DEFAULT_TO(agg_4, 0:numeric), 2:numeric), 'month': month, 'month_0': JOIN_STRINGS('-':string, year, LPAD(month, 2:numeric, '0':string))})
-  AGGREGATE(keys={'month': month, 'year': year}, aggregations={'agg_4': SUM(agg_2), 'agg_7': SUM(agg_5)})
+ PROJECT(columns={'ir': ROUND(1000000.0:numeric * DEFAULT_TO(sum_agg_5, 0:numeric) / DEFAULT_TO(sum_agg_2, 0:numeric), 2:numeric), 'month': month, 'month_0': JOIN_STRINGS('-':string, year, LPAD(month, 2:numeric, '0':string))})
+  AGGREGATE(keys={'month': month, 'year': year}, aggregations={'sum_agg_2': SUM(agg_2), 'sum_agg_5': SUM(agg_5)})
    JOIN(condition=t0.ca_dt == t1.calendar_day, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_2': t0.agg_2, 'agg_5': t1.agg_5, 'month': t0.month, 'year': t0.year})
     JOIN(condition=t0.ca_dt == t1.calendar_day, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_2': t1.agg_2, 'ca_dt': t0.ca_dt, 'month': t0.month, 'year': t0.year})
      FILTER(condition=ISIN(year, [2020, 2021]:array[unknown]), columns={'ca_dt': ca_dt, 'month': month, 'year': year})

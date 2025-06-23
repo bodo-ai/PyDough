@@ -7,7 +7,7 @@ WITH _t0 AS (
           CAST(STRFTIME('%w', notifications.created_at) AS INTEGER) + 6
         ) % 7
       ) IN (5, 6)
-    ) AS agg_1,
+    ) AS sum_is_weekend,
     DATE(
       notifications.created_at,
       '-' || CAST((
@@ -46,5 +46,5 @@ WITH _t0 AS (
 SELECT
   week,
   agg_0 AS num_notifs,
-  COALESCE(agg_1, 0) AS weekend_notifs
+  COALESCE(sum_is_weekend, 0) AS weekend_notifs
 FROM _t0

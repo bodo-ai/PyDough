@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     COUNT(*) AS agg_0,
-    SUM(sbtransaction.sbtxamount) AS agg_1
+    SUM(sbtransaction.sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction AS sbtransaction
   JOIN main.sbcustomer AS sbcustomer
     ON LOWER(sbcustomer.sbcustcountry) = 'usa'
@@ -12,5 +12,5 @@ WITH _t0 AS (
 )
 SELECT
   CASE WHEN agg_0 > 0 THEN agg_0 ELSE NULL END AS n_transactions,
-  COALESCE(agg_1, 0) AS total_amount
+  COALESCE(sum_sbtxamount, 0) AS total_amount
 FROM _t0
