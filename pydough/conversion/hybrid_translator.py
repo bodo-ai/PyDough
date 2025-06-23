@@ -793,14 +793,13 @@ class HybridTranslator:
         # The implementation
         # MAX(KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
         data_expr: HybridExpr = expr.args[0]  # Column
-        p: HybridExpr = expr.args[
-            1
-        ]  # quantile percentage (between 0, 1 included) how can I validate that?
+        p: HybridExpr = expr.args[1]  # percentage
         one: HybridExpr = HybridLiteralExpr(Literal(1.0, NumericType()))
 
         assert child_connection.subtree.agg_keys is not None
         partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
         order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
+
         # R
         rank: HybridExpr = HybridWindowExpr(
             pydop.RANKING, [], partition_args, order_args, NumericType(), {}

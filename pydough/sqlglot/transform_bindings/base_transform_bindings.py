@@ -1694,5 +1694,41 @@ class BaseTransformBindings:
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        FILL LATER
+        Converts a PyDough QUANTILE(X, p) function call to a SQLGlot expression
+        representing the SQL standard PERCENTILE_DISC aggregate function.
+
+        This produces an expression equivalent to:
+            PERCENTILE_DISC(p) WITHIN GROUP (ORDER BY X)
+
+        Args:
+            args: A list of two SQLGlot expressions, where args[0] is the column or
+                expression to order by (X), and args[1] is the quantile value (p) between 0 and 1.
+            types: The PyDough types of the arguments.
+
+        Returns:
+            A SQLGlotExpression representing the PERCENTILE_DISC(p) WITHIN GROUP (ORDER BY X)
+            aggregate function.
         """
+
+        assert len(args) == 2
+
+        # validation
+        if not (
+            isinstance(args[1], sqlglot_expressions.Literal)
+            and not args[1].is_string
+            and isinstance(args[1].this, (int, float))
+            and 0.0 <= float(args[1].this) <= 1.0
+        ):
+            raise ValueError(
+                f"QUANTILE expects the second argument to be a numeric literal between 0 and 1, got {args[1]}"
+            )
+
+        within_group_clause: SQLGlotExpression = sqlglot_expressions.Group(
+            expressions=[sqlglot_expressions.Ordered(this=args[0])]
+        )
+
+        percentile_disc_function: SQLGlotExpression = (
+            sqlglot_expressions.PercentileDisc(this=args[1], group=within_group_clause)
+        )
+
+        return percentile_disc_function
