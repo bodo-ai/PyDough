@@ -87,8 +87,9 @@ class HybridTranslator:
         # being derived as the subtree of the last element.
         self.stack: list[HybridTree] = []
         # If True, rewrites MEDIAN calls into an average of the 1-2 median rows
-        # via window functions, otherwise leaves as-is.
-        self.rewrite_median: bool = dialect not in {DatabaseDialect.ANSI}
+        # or rewrites QUANTILE calls to select the first qualifying row,
+        # both derived from window functions, otherwise leaves as-is.
+        self.rewrite_median_quantile: bool = dialect not in {DatabaseDialect.ANSI}
 
     @staticmethod
     def get_subcollection_join_keys(
@@ -282,7 +283,9 @@ class HybridTranslator:
     def run_rewrites(self, hybrid: HybridTree):
         """
         Run any rewrite procedures that must occur after de-correlation, such
-        as converting MEDIAN to an average of the 1-2 median rows.
+        as converting MEDIAN to an average of the 1-2 median rows. Also converting
+        the QUANTILE calls to the appropriate window function calls.
+
 
         Args:
             `hybrid`: the bottom of the hybrid tree to rewrite.
@@ -294,12 +297,17 @@ class HybridTranslator:
             self.run_rewrites(child.subtree)
 
         create_new_calc: bool = True
-        # Rewrite any MEDIAN calls
-        if self.rewrite_median:
+        # Rewrite any MEDIAN and QUANTILE calls
+        if self.rewrite_median_quantile:
             for child in hybrid.children:
                 for agg_name, agg_call in child.aggs.items():
                     if agg_call.operator == pydop.MEDIAN:
                         child.aggs[agg_name] = self.rewrite_median_call(
+                            child, agg_call, create_new_calc
+                        )
+                        create_new_calc = False
+                    if agg_call.operator == pydop.QUANTILE:
+                        child.aggs[agg_name] = self.rewrite_quantile_call(
                             child, agg_call, create_new_calc
                         )
                         create_new_calc = False
@@ -759,6 +767,76 @@ class HybridTranslator:
         )
 
         return avg_call
+
+    def rewrite_quantile_call(
+        self,
+        child_connection: HybridConnection,
+        expr: HybridFunctionExpr,
+        create_new_calc: bool,
+    ) -> HybridFunctionExpr:
+        """
+        FILL LATER
+        """
+        assert expr.operator == pydop.QUANTILE
+
+        # Valid if the value of p is a number between 0 and 1
+        if (
+            not isinstance(expr.args[1], HybridLiteralExpr)
+            or not isinstance(expr.args[1].typ, NumericType)
+            or not isinstance(expr.args[1].literal.value, (int, float))
+            or not (0.0 <= float(expr.args[1].literal.value) <= 1.0)
+        ):
+            raise ValueError(
+                f"Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received {expr.args[1]!r}"
+            )
+
+        # The implementation
+        # MAX(KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
+        data_expr: HybridExpr = expr.args[0]  # Column
+        p: HybridExpr = expr.args[
+            1
+        ]  # quantile percentage (between 0, 1 included) how can I validate that?
+        one: HybridExpr = HybridLiteralExpr(Literal(1.0, NumericType()))
+
+        assert child_connection.subtree.agg_keys is not None
+        partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
+        order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
+        # R
+        rank: HybridExpr = HybridWindowExpr(
+            pydop.RANKING, [], partition_args, order_args, NumericType(), {}
+        )
+        # N
+        rows: HybridExpr = HybridWindowExpr(
+            pydop.RELCOUNT, [data_expr], partition_args, [], NumericType(), {}
+        )
+
+        # (1.0-args[1])
+        sub: HybridExpr = HybridFunctionExpr(pydop.SUB, [one, p], NumericType())
+
+        # (1.0-args[1]) * N
+        product: HybridExpr = HybridFunctionExpr(pydop.MUL, [sub, rows], NumericType())
+
+        # INTEGER((1.0-args[1]) * N)
+        cast_integer: HybridExpr = HybridFunctionExpr(
+            pydop.INTEGER, [product], NumericType()
+        )
+
+        # R > INTEGER((1.0-args[1]) * N)
+        greater: HybridExpr = HybridFunctionExpr(
+            pydop.GRT, [rank, cast_integer], expr.typ
+        )
+
+        # KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
+        keep_largest: HybridExpr = HybridFunctionExpr(
+            pydop.KEEP_IF, [data_expr, greater], data_expr.typ
+        )
+
+        # MAX
+        max_call: HybridFunctionExpr = HybridFunctionExpr(
+            pydop.MAX, [keep_largest], expr.typ
+        )
+
+        return max_call
 
     def make_hybrid_correl_expr(
         self,

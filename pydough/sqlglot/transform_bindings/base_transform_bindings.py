@@ -249,6 +249,8 @@ class BaseTransformBindings:
                 return self.convert_smallest_or_largest(args, types, True)
             case pydop.COUNT:
                 return self.convert_count(args, types)
+            case pydop.QUANTILE:
+                return self.convert_quantile(args, types)
             case _:
                 raise NotImplementedError(
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
@@ -1687,3 +1689,10 @@ class BaseTransformBindings:
             return sqlglot_expressions.Count(this=args[0])
         else:
             raise ValueError(f"COUNT expects 0 or 1 argument, got {len(args)}")
+
+    def convert_quantile(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        FILL LATER
+        """
