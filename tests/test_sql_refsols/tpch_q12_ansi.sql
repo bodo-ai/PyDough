@@ -7,7 +7,7 @@ WITH _t1 AS (
   JOIN tpch.orders AS orders
     ON lineitem.l_orderkey = orders.o_orderkey
   WHERE
-    EXTRACT(YEAR FROM lineitem.l_receiptdate) = 1994
+    EXTRACT(YEAR FROM CAST(lineitem.l_receiptdate AS DATETIME)) = 1994
     AND lineitem.l_commitdate < lineitem.l_receiptdate
     AND lineitem.l_commitdate > lineitem.l_shipdate
     AND (

@@ -1,27 +1,16 @@
-WITH _t0 AS (
+WITH _u_0 AS (
   SELECT
-    sbdailyprice.sbdpdate AS sbdpdate,
-    sbdailyprice.sbdptickerid AS sbdptickerid
-  FROM main.sbdailyprice AS sbdailyprice
-), _s1 AS (
-  SELECT
-    _t0.sbdptickerid AS sbdptickerid
-  FROM _t0 AS _t0
+    sbdptickerid AS _u_1
+  FROM main.sbdailyprice
   WHERE
-    _t0.sbdpdate >= '2023-04-01'
-), _s0 AS (
-  SELECT
-    sbticker.sbtickerid AS sbtickerid
-  FROM main.sbticker AS sbticker
+    sbdpdate >= '2023-04-01'
+  GROUP BY
+    sbdptickerid
 )
 SELECT
-  _s0.sbtickerid AS _id
-FROM _s0 AS _s0
+  sbticker.sbtickerid AS _id
+FROM main.sbticker AS sbticker
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = sbticker.sbtickerid
 WHERE
-  EXISTS(
-    SELECT
-      1 AS "1"
-    FROM _s1 AS _s1
-    WHERE
-      _s0.sbtickerid = _s1.sbdptickerid
-  )
+  NOT _u_0._u_1 IS NULL

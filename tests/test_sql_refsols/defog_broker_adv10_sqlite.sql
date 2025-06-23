@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
     sbcustomer.sbcustid AS _id,
-    COUNT() AS agg_0
+    COUNT(*) AS agg_0
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
     ON CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER) = CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER)

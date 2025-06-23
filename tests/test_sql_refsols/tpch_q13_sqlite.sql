@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     o_custkey AS customer_key
   FROM tpch.orders
   WHERE
@@ -9,7 +9,7 @@ WITH _s1 AS (
     o_custkey
 ), _t0 AS (
   SELECT
-    COUNT() AS custdist,
+    COUNT(*) AS custdist,
     COALESCE(_s1.agg_0, 0) AS num_non_special_orders
   FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1

@@ -1,12 +1,12 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS n_events,
+    COUNT(*) AS n_events,
     ANY_VALUE(seasons.s_name) AS season_name
   FROM seasons AS seasons
   JOIN events AS events
-    ON seasons.s_month1 = EXTRACT(MONTH FROM events.ev_dt)
-    OR seasons.s_month2 = EXTRACT(MONTH FROM events.ev_dt)
-    OR seasons.s_month3 = EXTRACT(MONTH FROM events.ev_dt)
+    ON seasons.s_month1 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
+    OR seasons.s_month2 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
+    OR seasons.s_month3 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
   GROUP BY
     seasons.s_name
 )

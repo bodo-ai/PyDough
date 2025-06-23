@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     sbtxcustid AS customer_id
   FROM main.sbtransaction
   WHERE
-    DATE(sbtxdatetime, 'start of day') = '2023-04-01' AND sbtxtype = 'sell'
+    DATE(sbtxdatetime, 'start of day') = DATE('2023-04-01') AND sbtxtype = 'sell'
   GROUP BY
     sbtxcustid
 )

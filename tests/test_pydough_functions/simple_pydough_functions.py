@@ -328,12 +328,12 @@ def prev_next_regions():
 
 def avg_order_diff_per_customer():
     # Finds the 5 customers with the highest average difference in days between
-    # orders made.
+    # orders made. Only consider Japanese customers and urgent orders.
     prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), per="customers")
-    order_info = orders.CALCULATE(
+    order_info = orders.WHERE(order_priority == "1-URGENT").CALCULATE(
         day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
-    selected_customers = customers.WHERE(HAS(order_info))
+    selected_customers = customers.WHERE(nation.name == "JAPAN").WHERE(HAS(order_info))
     return selected_customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
     )
@@ -357,7 +357,8 @@ def first_order_in_year():
     # (breaking ties by order key).
     previous_order_date = PREV(order_date, by=(order_date.ASC(), key.ASC()))
     return (
-        orders.WHERE(
+        orders.WHERE(MONTH(order_date) == 1)
+        .WHERE(
             ABSENT(previous_order_date)
             | (YEAR(previous_order_date) != YEAR(order_date))
         )
@@ -370,15 +371,24 @@ def customer_largest_order_deltas():
     # For each customer, find the highest positive/negative difference in
     # revenue between one of their orders and and the most recent order before
     # it, ignoring their first ever order. Return the 5 customers with the
-    # largest such difference. Only consider customers with orders.
+    # largest such difference. Only consider customers with orders. Only
+    # consider customers in the AUTOMOBILE market segment, orders made in
+    # 1994, and lineitems shipepd by air also in 1994.
     line_revenue = extended_price * (1 - discount)
-    order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
+    order_revenue = SUM(
+        lines.WHERE((ship_mode == "AIR") & (YEAR(ship_date) == 1994))
+        .CALCULATE(r=line_revenue)
+        .r
+    )
     previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), per="customers")
-    orders_info = orders.WHERE(PRESENT(previous_order_revenue)).CALCULATE(
-        revenue_delta=order_revenue - previous_order_revenue
+    orders_info = (
+        orders.WHERE(YEAR(order_date) == 1994)
+        .WHERE(PRESENT(previous_order_revenue))
+        .CALCULATE(revenue_delta=order_revenue - previous_order_revenue)
     )
     return (
-        customers.CALCULATE(
+        customers.WHERE(market_segment == "AUTOMOBILE")
+        .CALCULATE(
             max_diff=MAX(orders_info.revenue_delta),
             min_diff=MIN(orders_info.revenue_delta),
         )
@@ -407,11 +417,12 @@ def suppliers_bal_diffs():
 
 
 def month_year_sliding_windows():
-    # Finds all months where the total amount spent by customers on orders in
-    # that month was more than the preceding/following month, and the amount
-    # spent in that year was more than the following year.
+    # Finds all months where the total amount spent by customers on urgent
+    # orders in that month was more than the preceding/following month,
+    # and the amount spent in that year was more than the following year.
     ym_groups = (
-        orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
+        orders.WHERE(order_priority == "1-URGENT")
+        .CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
         .PARTITION(
             name="months",
             by=(year, month),
@@ -563,10 +574,10 @@ def regional_first_order_best_line_part():
     # (breaking ties by order key), and the name of the part from that order
     # with the largest quantity shipped, breaking ties by line number within
     # the order.
-    first_order = nations.customers.orders.BEST(
+    first_order = nations.customers.orders.WHERE(YEAR(order_date) == 1992).BEST(
         per="regions", by=(order_date.ASC(), key.ASC())
     )
-    largest_quantity_line = first_order.lines.BEST(
+    largest_quantity_line = first_order.lines.WHERE(YEAR(ship_date) == 1992).BEST(
         per="regions", by=(quantity.DESC(), line_number.ASC())
     )
     return regions.CALCULATE(
@@ -1120,15 +1131,16 @@ def aggregation_analytics_1():
     # What 8 large products produced by Supplier#000009450 generated the LEAST
     # revenue for them in between 1995 and 1996? Include any products the
     # supplier produces that generated NO revenue for the supplier during that
-    # time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
-        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    # time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(ISIN(YEAR(ship_date), (1995, 1996))).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * ps_supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
+        supply_records.WHERE(
             (supplier.name == "Supplier#000009450") & STARTSWITH(part.container, "LG")
         )
+        .CALCULATE(ps_supply_cost=supply_cost)
         .CALCULATE(
             part_name=part.name,
             revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
@@ -1141,17 +1153,17 @@ def aggregation_analytics_2():
     # What 4 small products produced by Supplier#000000182 generated the LEAST
     # revenue for them in between 1995 and 1996? Do NOT include any products
     # the supplier produces that generated NO revenue for the supplier during
-    # that time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
-        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    # that time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(ISIN(YEAR(ship_date), (1995, 1996))).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * ps_supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
-            (supplier.name == "Supplier#000000182")
-            & STARTSWITH(part.container, "SM")
-            & HAS(selected_lines)
+        supply_records.WHERE(
+            (supplier.name == "Supplier#000000182") & STARTSWITH(part.container, "SM")
         )
+        .CALCULATE(ps_supply_cost=supply_cost)
+        .WHERE(HAS(selected_lines))
         .CALCULATE(
             part_name=part.name,
             revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
@@ -1164,17 +1176,17 @@ def aggregation_analytics_3():
     # What 3 medium products produced by Supplier#000002103 generated the LEAST
     # revenue per quantity ordered in 1994? Do NOT include any products the
     # supplier produces that generated NO revenue for the supplier during that
-    # time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(YEAR(order.order_date) == 1994).CALCULATE(
-        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    # time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(YEAR(ship_date) == 1994).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * ps_supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
-            (supplier.name == "Supplier#000000182")
-            & STARTSWITH(part.container, "MED")
-            & HAS(selected_lines)
+        supply_records.WHERE(
+            (supplier.name == "Supplier#000000182") & STARTSWITH(part.container, "MED")
         )
+        .CALCULATE(ps_supply_cost=supply_cost)
+        .WHERE(HAS(selected_lines))
         .CALCULATE(
             part_name=part.name,
             revenue_ratio=ROUND(
@@ -2276,13 +2288,13 @@ def singular5():
     # presented in parts (breaking ties in favor of the smaller ship date).
     # Find the 5 containers with the earliest such date, breaking ties
     # alphabetically. For the purpose of this question, only shipments made by
-    # rail and for parts from Brand#13.
+    # rail without tax and for parts from Brand#13.
     top_containers = parts.WHERE(brand == "Brand#13").PARTITION(
         name="containers",
         by=container,
     )
     highest_price_line = (
-        parts.lines.WHERE(ship_mode == "RAIL")
+        parts.lines.WHERE((ship_mode == "RAIL") & (tax == 0))
         .WHERE(
             RANKING(by=(extended_price.DESC(), ship_date.ASC()), per="containers") == 1
         )
@@ -2323,9 +2335,10 @@ def singular7():
     # purchases) they supplied in 1994 (breaking ties alphabetically by part
     # name)? Include the 5 suppliers with the highest number of purchases along
     # with part name, and number of orders (breaking ties alphabetically by
-    # supplier name).
+    # supplier name). Only consider parts from Brand#13.
     best_part = (
-        supply_records.CALCULATE(
+        supply_records.WHERE(part.brand == "Brand#13")
+        .CALCULATE(
             n_orders=COUNT(lines.WHERE(YEAR(ship_date) == 1994)),
             part_name=part.name,
         )
@@ -2644,6 +2657,42 @@ def simple_var_std_with_nulls():
     )
 
 
+def deep_best_analysis():
+    richest_nation_cust = customers.BEST(
+        by=(account_balance.DESC(), key.ASC()), per="nations"
+    )
+    richest_region_cust = customers.BEST(
+        by=(account_balance.DESC(), key.ASC()), per="regions"
+    )
+    most_avail_region_supply = supply_records.BEST(
+        by=(available_quantity.DESC(), part_key.ASC()), per="regions"
+    )
+    best_region_supplier = (
+        suppliers.WHERE(HAS(most_avail_region_supply))
+        .CALCULATE(
+            p_key=most_avail_region_supply.part_key,
+            p_qty=most_avail_region_supply.available_quantity,
+        )
+        .BEST(by=(p_qty.DESC(), key.ASC()), per="regions")
+    )
+    return (
+        regions.CALCULATE(r_name=name)
+        .nations.WHERE(HAS(richest_nation_cust))
+        .CALCULATE(
+            r_name=r_name,
+            n_name=name,
+            c_key=richest_nation_cust.key,
+            c_bal=richest_nation_cust.account_balance,
+            cr_bal=richest_region_cust.account_balance,
+            s_key=best_region_supplier.key,
+            p_key=best_region_supplier.p_key,
+            p_qty=best_region_supplier.p_qty,
+            cg_key=customers.BEST(by=(account_balance.DESC(), key.ASC())).key,
+        )
+        .TOP_K(10, by=n_name.ASC())
+    )
+
+
 def simple_cross_1():
     # Every combination of region names
     return (
@@ -2702,13 +2751,25 @@ def simple_cross_4():
 
 def simple_cross_5():
     # For every combination of part size & order priority, which order priority
-    # had the highest quantity of parts of that size shipped in 1998?
-    # Only consider the 5 smallest part sizes.
-    sizes = parts.PARTITION(name="sizes", by=size).CALCULATE(part_size=size)
+    # had the highest quantity of parts of that size shipped in January 1998
+    # without tax or discount and via ship? Only consider the 10 smallest part
+    # sizes, and large parts.
+    sizes = (
+        parts.WHERE(STARTSWITH(container, "LG"))
+        .PARTITION(name="sizes", by=size)
+        .CALCULATE(part_size=size)
+        .TOP_K(10, by=size.ASC())
+    )
     order_info = (
         orders.CALCULATE(order_priority)
-        .WHERE(YEAR(order_date) == 1998)
-        .lines.WHERE(part.size == part_size)
+        .WHERE((YEAR(order_date) == 1998) & (MONTH(order_date) == 1))
+        .lines.WHERE(
+            (part.size == part_size)
+            & (tax == 0)
+            & (discount == 0)
+            & (ship_mode == "SHIP")
+            & STARTSWITH(part.container, "LG")
+        )
     )
     best_priority = (
         CROSS(order_info.PARTITION(name="priorities", by=order_priority))
@@ -2719,7 +2780,7 @@ def simple_cross_5():
         part_size,
         best_order_priority=best_priority.order_priority,
         best_order_priority_qty=best_priority.total_qty,
-    ).TOP_K(5, by=size.ASC())
+    )
 
 
 def simple_cross_6():
@@ -2824,3 +2885,17 @@ def simple_cross_11():
     global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
     selected_orders = orders.WHERE(order_date == CROSS(global_info).SINGULAR().min_date)
     return TPCH.CALCULATE(n=COUNT(selected_orders))
+
+
+def simple_cross_12():
+    # List every combination of order priority and market segment,
+    # alphabetized.
+    priorities = orders.PARTITION(name="priorities", by=order_priority).CALCULATE(
+        order_priority
+    )
+    segments = customers.PARTITION(name="segments", by=market_segment)
+    return (
+        priorities.CROSS(segments)
+        .CALCULATE(order_priority, market_segment)
+        .ORDER_BY(order_priority.ASC(), market_segment.ASC())
+    )

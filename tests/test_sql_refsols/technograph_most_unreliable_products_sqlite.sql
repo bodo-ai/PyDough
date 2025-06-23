@@ -1,6 +1,6 @@
 WITH _s3 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     in_device_id AS device_id
   FROM main.incidents
   GROUP BY
@@ -8,7 +8,7 @@ WITH _s3 AS (
 ), _t0 AS (
   SELECT
     SUM(COALESCE(_s3.agg_0, 0)) AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     devices.de_product_id AS product_id
   FROM main.devices AS devices
   JOIN main.products AS products

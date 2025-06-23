@@ -24,9 +24,7 @@ WITH _s0 AS (
       '%' || LOWER(events.ev_name) || '%'
     )
   JOIN _s0 AS _s7
-    ON _s5.search_user_id = _s7.user_id
-  WHERE
-    _s0.user_name <> _s7.user_name
+    ON _s0.user_name <> _s7.user_name AND _s5.search_user_id = _s7.user_id
   GROUP BY
     _s0.user_id
 )

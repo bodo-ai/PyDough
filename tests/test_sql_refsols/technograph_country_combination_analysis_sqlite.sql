@@ -9,7 +9,7 @@ WITH _s0 AS (
   FROM main.countries
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_2,
+    COUNT(*) AS agg_2,
     in_device_id AS device_id
   FROM main.incidents
   GROUP BY
@@ -17,7 +17,7 @@ WITH _s0 AS (
 ), _s9 AS (
   SELECT
     _s2.co_id AS _id,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     SUM(_s7.agg_2) AS agg_4,
     _s3.co_id AS _id_3
   FROM _s2 AS _s2

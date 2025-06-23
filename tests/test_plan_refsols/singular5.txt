@@ -10,5 +10,5 @@ ROOT(columns=[('container', container), ('highest_price_ship_date', highest_pric
        JOIN(condition=t0.p_partkey == t1.l_partkey, type=INNER, cardinality=PLURAL_FILTER, columns={'l_extendedprice': t1.l_extendedprice, 'l_shipdate': t1.l_shipdate, 'p_container': t0.p_container, 'p_partkey': t0.p_partkey})
         FILTER(condition=p_brand == 'Brand#13':string, columns={'p_container': p_container, 'p_partkey': p_partkey})
          SCAN(table=tpch.PART, columns={'p_brand': p_brand, 'p_container': p_container, 'p_partkey': p_partkey})
-        FILTER(condition=l_shipmode == 'RAIL':string, columns={'l_extendedprice': l_extendedprice, 'l_partkey': l_partkey, 'l_shipdate': l_shipdate})
-         SCAN(table=tpch.LINEITEM, columns={'l_extendedprice': l_extendedprice, 'l_partkey': l_partkey, 'l_shipdate': l_shipdate, 'l_shipmode': l_shipmode})
+        FILTER(condition=l_shipmode == 'RAIL':string & l_tax == 0:numeric, columns={'l_extendedprice': l_extendedprice, 'l_partkey': l_partkey, 'l_shipdate': l_shipdate})
+         SCAN(table=tpch.LINEITEM, columns={'l_extendedprice': l_extendedprice, 'l_partkey': l_partkey, 'l_shipdate': l_shipdate, 'l_shipmode': l_shipmode, 'l_tax': l_tax})

@@ -1,6 +1,6 @@
 WITH _s2 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', sbcustjoindate) AS INTEGER),

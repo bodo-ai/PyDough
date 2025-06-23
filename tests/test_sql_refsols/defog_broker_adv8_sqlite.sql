@@ -1,23 +1,28 @@
-WITH _t2 AS (
+WITH _u_0 AS (
   SELECT
-    sbtransaction.sbtxamount AS sbtxamount,
-    sbtransaction.sbtxcustid AS sbtxcustid,
-    sbtransaction.sbtxdatetime AS sbtxdatetime
-  FROM main.sbtransaction AS sbtransaction
-), _s0 AS (
-  SELECT
-    _t2.sbtxamount AS sbtxamount,
-    _t2.sbtxcustid AS sbtxcustid
-  FROM _t2 AS _t2
+    sbcustid AS _u_1
+  FROM main.sbcustomer
   WHERE
-    _t2.sbtxdatetime < DATE(
+    LOWER(sbcustcountry) = 'usa'
+  GROUP BY
+    sbcustid
+), _t0 AS (
+  SELECT
+    COUNT(*) AS agg_0,
+    SUM(sbtransaction.sbtxamount) AS agg_1
+  FROM main.sbtransaction AS sbtransaction
+  LEFT JOIN _u_0 AS _u_0
+    ON _u_0._u_1 = sbtransaction.sbtxcustid
+  WHERE
+    NOT _u_0._u_1 IS NULL
+    AND sbtransaction.sbtxdatetime < DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
       ) % 7 AS TEXT) || ' days',
       'start of day'
     )
-    AND _t2.sbtxdatetime >= DATE(
+    AND sbtransaction.sbtxdatetime >= DATE(
       'now',
       '-' || CAST((
         CAST(STRFTIME('%w', DATETIME('now')) AS INTEGER) + 6
@@ -25,36 +30,8 @@ WITH _t2 AS (
       'start of day',
       '-7 day'
     )
-), _t3 AS (
-  SELECT
-    sbcustomer.sbcustcountry AS sbcustcountry,
-    sbcustomer.sbcustid AS sbcustid
-  FROM main.sbcustomer AS sbcustomer
-), _s1 AS (
-  SELECT
-    _t3.sbcustid AS sbcustid
-  FROM _t3 AS _t3
-  WHERE
-    LOWER(_t3.sbcustcountry) = 'usa'
-), _t1 AS (
-  SELECT
-    _s0.sbtxamount AS sbtxamount
-  FROM _s0 AS _s0
-  WHERE
-    EXISTS(
-      SELECT
-        1 AS "1"
-      FROM _s1 AS _s1
-      WHERE
-        _s0.sbtxcustid = _s1.sbcustid
-    )
-), _t0 AS (
-  SELECT
-    COUNT() AS agg_0,
-    SUM(_t1.sbtxamount) AS agg_1
-  FROM _t1 AS _t1
 )
 SELECT
-  CASE WHEN _t0.agg_0 > 0 THEN _t0.agg_0 ELSE NULL END AS n_transactions,
-  COALESCE(_t0.agg_1, 0) AS total_amount
-FROM _t0 AS _t0
+  CASE WHEN agg_0 > 0 THEN agg_0 ELSE NULL END AS n_transactions,
+  COALESCE(agg_1, 0) AS total_amount
+FROM _t0

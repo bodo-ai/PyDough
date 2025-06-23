@@ -7,7 +7,7 @@ WITH _t3 AS (
     DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) AS txn_day
   FROM main.sbtransaction
   WHERE
-    EXTRACT(YEAR FROM sbtxdatetime) = 2023
+    EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
 ), _t1 AS (
   SELECT
     sbtxdatetime

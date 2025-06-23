@@ -13,9 +13,11 @@ WITH _s14 AS (
     pr_id,
     pr_name
   FROM main.products
+  WHERE
+    pr_name = 'GoldCopper-Star'
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_3,
+    COUNT(*) AS agg_3,
     _s0.ca_dt AS calendar_day
   FROM _t6 AS _s0
   JOIN main.incidents AS incidents
@@ -23,18 +25,18 @@ WITH _s14 AS (
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
   JOIN _t8 AS _t8
-    ON _t8.pr_id = devices.de_product_id AND _t8.pr_name = 'GoldCopper-Star'
+    ON _t8.pr_id = devices.de_product_id
   GROUP BY
     _s0.ca_dt
 ), _s13 AS (
   SELECT
-    COUNT() AS agg_6,
+    COUNT(*) AS agg_6,
     _s8.ca_dt AS calendar_day
   FROM _t6 AS _s8
   JOIN main.devices AS devices
     ON _s8.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
   JOIN _t8 AS _t10
-    ON _t10.pr_id = devices.de_product_id AND _t10.pr_name = 'GoldCopper-Star'
+    ON _t10.pr_id = devices.de_product_id
   GROUP BY
     _s8.ca_dt
 ), _s15 AS (
@@ -75,9 +77,8 @@ WITH _s14 AS (
     COALESCE(_s15.agg_8, 0) AS n_devices,
     COALESCE(_s15.agg_5, 0) AS n_incidents
   FROM _s14 AS _s14
-  CROSS JOIN _s15 AS _s15
-  WHERE
-    _s15.year >= CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER)
+  JOIN _s15 AS _s15
+    ON _s15.year >= CAST(STRFTIME('%Y', _s14.release_date) AS INTEGER)
 )
 SELECT
   years_since_release,

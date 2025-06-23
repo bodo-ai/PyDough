@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     SUM((
       (
         DAY_OF_WEEK(payments_received.payment_date) + 6
@@ -11,8 +11,8 @@ WITH _t0 AS (
   JOIN main.sales AS sales
     ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), payments_received.payment_date, WEEK) <= 8
-    AND DATEDIFF(CURRENT_TIMESTAMP(), payments_received.payment_date, WEEK) >= 1
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME), WEEK) <= 8
+    AND DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME), WEEK) >= 1
   GROUP BY
     DATE_TRUNC('WEEK', CAST(payments_received.payment_date AS TIMESTAMP))
 )

@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     events.ev_typ AS event_type,
-    COUNT() AS n_events
+    COUNT(*) AS n_events
   FROM events AS events
   JOIN seasons AS seasons
     ON (

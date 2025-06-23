@@ -6,7 +6,7 @@ WITH _t0 AS (
       ) - partsupp.ps_supplycost * lineitem.l_quantity
     ) AS agg_0,
     nation.n_name AS nation_name,
-    EXTRACT(YEAR FROM orders.o_orderdate) AS o_year
+    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) AS o_year
   FROM tpch.lineitem AS lineitem
   JOIN tpch.part AS part
     ON lineitem.l_partkey = part.p_partkey AND part.p_name LIKE '%green%'
@@ -21,7 +21,7 @@ WITH _t0 AS (
     AND lineitem.l_suppkey = partsupp.ps_suppkey
   GROUP BY
     nation.n_name,
-    EXTRACT(YEAR FROM orders.o_orderdate)
+    EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME))
 )
 SELECT
   nation_name AS NATION,

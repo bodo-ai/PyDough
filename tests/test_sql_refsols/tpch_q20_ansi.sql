@@ -4,21 +4,27 @@ WITH _t5 AS (
     l_partkey AS part_key
   FROM tpch.lineitem
   WHERE
-    EXTRACT(YEAR FROM l_shipdate) = 1994
+    EXTRACT(YEAR FROM CAST(l_shipdate AS DATETIME)) = 1994
   GROUP BY
     l_partkey
-), _t1 AS (
+), _s5 AS (
   SELECT
-    COUNT() AS agg_0,
-    partsupp.ps_suppkey AS supplier_key
-  FROM tpch.partsupp AS partsupp
-  JOIN tpch.part AS part
-    ON part.p_name LIKE 'forest%' AND part.p_partkey = partsupp.ps_partkey
+    COALESCE(_t5.agg_0, 0) AS agg_0,
+    part.p_partkey
+  FROM tpch.part AS part
   JOIN _t5 AS _t5
     ON _t5.part_key = part.p_partkey
   WHERE
-    partsupp.ps_availqty > (
-      0.5 * COALESCE(COALESCE(_t5.agg_0, 0), 0)
+    part.p_name LIKE 'forest%'
+), _t1 AS (
+  SELECT
+    COUNT(*) AS agg_0,
+    partsupp.ps_suppkey AS supplier_key
+  FROM tpch.partsupp AS partsupp
+  JOIN _s5 AS _s5
+    ON _s5.p_partkey = partsupp.ps_partkey
+    AND partsupp.ps_availqty > (
+      0.5 * COALESCE(_s5.agg_0, 0)
     )
   GROUP BY
     partsupp.ps_suppkey

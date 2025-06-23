@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT() AS total_unread_notifs,
+    COUNT(*) AS total_unread_notifs,
     user_id
   FROM main.notifications
   WHERE

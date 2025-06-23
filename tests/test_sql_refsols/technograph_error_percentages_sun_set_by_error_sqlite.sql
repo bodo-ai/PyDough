@@ -1,6 +1,6 @@
 WITH _s5 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     incidents.in_error_id AS error_id
   FROM main.incidents AS incidents
   JOIN main.devices AS devices

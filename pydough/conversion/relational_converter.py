@@ -842,6 +842,9 @@ class RelTranslation:
                 join_cond = node.general_condition
 
             case CartesianProductMetadata():
+                # If a cartesian product, there are no join keys or general
+                # join conditions, so we fall through with the default values
+                # set above.
                 pass
 
             case _:

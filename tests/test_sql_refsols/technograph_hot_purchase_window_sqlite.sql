@@ -1,15 +1,15 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS n_purchases,
+    COUNT(*) AS n_purchases,
     MAX(calendar.ca_dt) AS start_of_period
   FROM main.calendar AS calendar
-  CROSS JOIN main.calendar AS calendar_2
+  JOIN main.calendar AS calendar_2
+    ON calendar.ca_dt <= calendar_2.ca_dt
+    AND calendar_2.ca_dt < DATETIME(calendar.ca_dt, '5 day')
   JOIN main.devices AS devices
     ON calendar_2.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
   WHERE
     CAST(STRFTIME('%Y', calendar.ca_dt) AS INTEGER) = 2024
-    AND calendar.ca_dt <= calendar_2.ca_dt
-    AND calendar_2.ca_dt < DATETIME(calendar.ca_dt, '5 day')
   GROUP BY
     calendar.ca_dt
 )

@@ -7,7 +7,7 @@ WITH _s1 AS (
     sale_id
 ), _t0 AS (
   SELECT
-    AVG(DATEDIFF(_s1.agg_0, sales.sale_date, DAY)) AS agg_0
+    AVG(DATEDIFF(CAST(_s1.agg_0 AS DATETIME), CAST(sales.sale_date AS DATETIME), DAY)) AS agg_0
   FROM main.sales AS sales
   LEFT JOIN _s1 AS _s1
     ON _s1.sale_id = sales._id

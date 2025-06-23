@@ -267,17 +267,87 @@ def correl_16():
     # Count how many european suppliers have the exact same percentile value
     # of account balance (relative to all other suppliers) as at least one
     # customer's percentile value of account balance relative to all other
-    # customers. Percentile should be measured down to increments of 0.01%.
-    # (This is a correlated SEMI-joins)
-    selected_customers = nation.CALCULATE(rname=region.name).customers.WHERE(
-        (PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000) == tile)
-        & (rname == "EUROPE")
+    # customers in the nation, in the same nation as the supplier. Percentile
+    # should be measured down to increments of 0.01%. Only consider European
+    # suppliers/customers, and customers in the building market segment.
+    # (This is a correlated SEMI-joins).
+    european_nation = nation.WHERE(region.name == "EUROPE")
+    selected_customers = european_nation.customers.WHERE(
+        market_segment == "BUILDING"
+    ).WHERE(
+        (
+            PERCENTILE(
+                by=(account_balance.ASC(), key.ASC()), n_buckets=10000, per="nation"
+            )
+            == tile
+        )
     )
-    supplier_info = suppliers.CALCULATE(
+    selected_suppliers = suppliers.CALCULATE(
         tile=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=10000)
-    )
-    selected_suppliers = supplier_info.WHERE(HAS(selected_customers))
+    ).WHERE(HAS(selected_customers))
     return TPCH.CALCULATE(n=COUNT(selected_suppliers))
+
+
+"""
+-- 230
+select COUNT(distinct s_suppkey)
+FROM (
+    SELECT s_suppkey, s_nationkey, NTILE(10000) OVER (ORDER BY s_acctbal ASC, s_suppkey ASC) AS s_tile
+    from supplier
+) S1
+INNER JOIN (
+    select c_custkey, c_nationkey, NTILE(10000) OVER (PARTITION BY n_nationkey ORDER BY c_acctbal ASC, c_custkey ASC) AS c_tile
+    FROM nation
+    INNER JOIN region
+    ON n_regionkey = r_regionkey AND r_name = 'EUROPE'
+    INNER JOIN customer
+    ON c_nationkey = n_nationkey AND c_mktsegment = 'BUILDING'
+) S2
+ON S1.s_nationkey = S2.c_nationkey AND S1.s_tile = S2.c_tile
+;
+
+-- 230
+select COUNT(distinct s_suppkey)
+FROM (
+    select s_suppkey, s_tile, NTILE(10000) OVER (PARTITION BY s_suppkey, s_nationkey ORDER BY c_acctbal ASC, c_custkey ASC) AS c_tile
+    FROM (
+        SELECT s_suppkey, s_nationkey, NTILE(10000) OVER (ORDER BY s_acctbal ASC, s_suppkey ASC) AS s_tile
+        from supplier
+    ) S1
+    INNER JOIN (
+        select c_custkey, c_acctbal, c_nationkey
+        FROM nation
+        INNER JOIN region
+        ON n_regionkey = r_regionkey AND r_name = 'EUROPE'
+        INNER JOIN customer
+        ON c_nationkey = n_nationkey AND c_mktsegment = 'BUILDING'
+    ) S2
+    ON S1.s_nationkey = S2.c_nationkey
+)
+WHERE s_tile = c_tile
+order by 1
+;
+
+select distinct s_count, c_count_1, c_count_2
+FROM (
+    select s_suppkey, s_count, c_count_1, COUNT(*) OVER (PARTITION BY s_nationkey) AS c_count_2
+    FROM (
+        SELECT s_suppkey, s_nationkey, COUNT(*) OVER () AS s_count
+        from supplier
+    ) S1
+    INNER JOIN (
+        select c_custkey, c_acctbal, c_nationkey, COUNT(*) OVER () AS c_count_1
+        FROM nation
+        INNER JOIN region
+        ON n_regionkey = r_regionkey AND r_name = 'EUROPE'
+        INNER JOIN customer
+        ON c_nationkey = n_nationkey AND c_mktsegment = 'BUILDING'
+    ) S2
+    ON S1.s_nationkey = S2.c_nationkey
+)
+order by 1, 2, 3
+;
+"""
 
 
 def correl_17():
@@ -622,3 +692,24 @@ def correl_33():
             )
         )
     )
+
+
+def correl_34():
+    # Count how many supply records exist that are from an Asian supplier
+    # and have at least 1 lineitem with status F, return flag N, ordered in or
+    # after 1995 from the same nation as the supplier, and either
+    # have a total order price above the global average for all such lineitems
+    # (for all qualifying supply records) or are the only such lineitem
+    # for that supply record.
+    selected_order = order.WHERE(
+        (YEAR(order_date) >= 1995) & (customer.nation.name == supp_nation)
+    ).WHERE((total_price > RELAVG(total_price)) | (RELSIZE(per="supply_records") == 1))
+    selected_lines = lines.WHERE((status == "F") & (return_flag == "N")).WHERE(
+        HAS(selected_order)
+    )
+    selected_records = (
+        supply_records.WHERE((supplier.nation.region.name == "ASIA"))
+        .CALCULATE(supp_nation=supplier.nation.name)
+        .WHERE(HAS(selected_lines))
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_records))

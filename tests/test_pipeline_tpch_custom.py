@@ -57,6 +57,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     customer_most_recent_orders,
     datetime_current,
     datetime_relative,
+    deep_best_analysis,
     double_partition,
     dumb_aggregation,
     first_order_in_year,
@@ -102,6 +103,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_cross_9,
     simple_cross_10,
     simple_cross_11,
+    simple_cross_12,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -703,13 +705,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000075872",
-                            "Customer#000004796",
-                            "Customer#000112880",
-                            "Customer#000041345",
-                            "Customer#000119474",
+                            "Customer#000015038",
+                            "Customer#000026734",
+                            "Customer#000075320",
+                            "Customer#000097888",
+                            "Customer#000102875",
                         ],
-                        "avg_diff": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
+                        "avg_diff": [2361.0, 2260.0, 2309.0, 2269.0, 2309.0],
                     }
                 ),
                 "avg_order_diff_per_customer",
@@ -768,18 +770,18 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000054733",
-                            "Customer#000107128",
-                            "Customer#000019063",
-                            "Customer#000100810",
-                            "Customer#000127003",
+                            "Customer#000046238",
+                            "Customer#000056794",
+                            "Customer#000079627",
+                            "Customer#000085429",
+                            "Customer#000092803",
                         ],
                         "largest_diff": [
-                            454753.9935,
-                            447181.8195,
-                            446706.3978,
-                            443366.9780,
-                            442893.6328,
+                            201862.1534,
+                            208623.953,
+                            201089.5987,
+                            274455.2228,
+                            204431.6412,
                         ],
                     }
                 ),
@@ -820,8 +822,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "year": [1996] * 6 + [1997] * 4 + [1998] * 4,
-                        "month": [1, 3, 5, 8, 10, 12, 3, 5, 7, 10, 1, 3, 5, 7],
+                        "year": [1994] * 5 + [1996] * 4 + [1997] * 2 + [1998] * 4,
+                        "month": [1, 3, 5, 8, 12, 4, 7, 10, 12, 7, 10, 1, 3, 5, 7],
                     }
                 ),
                 "month_year_sliding_windows",
@@ -927,22 +929,23 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "container": [
-                            "MED CAN",
-                            "LG JAR",
                             "LG CASE",
                             "WRAP CAN",
-                            "LG DRUM",
+                            "SM BAG",
+                            "SM PKG",
+                            "LG BOX",
                         ],
                         "highest_price_ship_date": [
-                            "1992-03-09",
-                            "1992-08-02",
                             "1992-08-10",
-                            "1992-11-01",
-                            "1992-11-22",
+                            "1992-08-28",
+                            "1992-09-22",
+                            "1992-10-27",
+                            "1992-10-31",
                         ],
                     }
                 ),
                 "singular5",
+                order_sensitive=True,
             ),
             id="singular5",
         ),
@@ -983,23 +986,24 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
-                            "Supplier#000000687",
-                            "Supplier#000000565",
-                            "Supplier#000000977",
-                            "Supplier#000001251",
-                            "Supplier#000004625",
+                            "Supplier#000008210",
+                            "Supplier#000002891",
+                            "Supplier#000008529",
+                            "Supplier#000009337",
+                            "Supplier#000000114",
                         ],
                         "part_name": [
-                            "peach orange blanched firebrick ghost",
-                            "sienna lime mint frosted beige",
-                            "blanched goldenrod lawn metallic midnight",
-                            "seashell deep almond cyan lemon",
-                            "red ivory indian seashell deep",
+                            "navajo azure ivory rosy gainsboro",
+                            "magenta firebrick puff moccasin drab",
+                            "deep midnight hot white sky",
+                            "cornflower dark steel burlywood salmon",
+                            "smoke navajo spring cream cornflower",
                         ],
-                        "n_orders": [8, 7, 7, 7, 7],
+                        "n_orders": [7, 5, 5, 5, 4],
                     }
                 ),
                 "singular7",
+                order_sensitive=True,
             ),
             id="singular7",
         ),
@@ -1791,6 +1795,72 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                deep_best_analysis,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "r_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                            "MIDDLE EAST",
+                            "AFRICA",
+                            "EUROPE",
+                            "EUROPE",
+                            "ASIA",
+                        ],
+                        "n_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                            "EGYPT",
+                            "ETHIOPIA",
+                            "FRANCE",
+                            "GERMANY",
+                            "INDIA",
+                        ],
+                        "c_key": [
+                            34047,
+                            12437,
+                            43044,
+                            112796,
+                            100214,
+                            115942,
+                            129934,
+                            96205,
+                            144232,
+                            148812,
+                        ],
+                        "c_bal": [
+                            9998.97,
+                            9994.84,
+                            9999.49,
+                            9998.32,
+                            9997.73,
+                            9996.32,
+                            9999.59,
+                            9998.86,
+                            9999.74,
+                            9998.32,
+                        ],
+                        "cr_bal": [None] * 8 + [9999.74, None],
+                        "s_key": [None] * 7 + [3836] + [None] * 2,
+                        "p_key": [None] * 7 + [18833] + [None] * 2,
+                        "p_qty": [None] * 7 + [9999] + [None] * 2,
+                        "cg_key": [None] * 10,
+                    }
+                ),
+                "deep_best_analysis",
+                order_sensitive=True,
+            ),
+            id="deep_best_analysis",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_cross_2,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -1870,22 +1940,36 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "region_name": [
-                            "AFRICA",
-                            "AMERICA",
-                            "ASIA",
-                            "EUROPE",
-                            "MIDDLE EAST",
+                        "part_size": range(1, 11),
+                        "best_order_priority": [
+                            "4-NOT SPECIFIED",
+                            None,
+                            None,
+                            "1-URGENT",
+                            "3-MEDIUM",
+                            None,
+                            "4-NOT SPECIFIED",
+                            "2-HIGH",
+                            None,
+                            None,
                         ],
-                        "n_other_regions": [2, 2, 2, 0, 0],
+                        "best_order_priority_qty": [
+                            50,
+                            None,
+                            None,
+                            33,
+                            12,
+                            None,
+                            3,
+                            34,
+                            None,
+                            None,
+                        ],
                     }
                 ),
                 "simple_cross_5",
             ),
             id="simple_cross_5",
-            marks=pytest.mark.skip(
-                "TODO (gh #361): Add user created collections support to PyDough"
-            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -1986,6 +2070,31 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_11",
             ),
             id="simple_cross_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_12,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_priorities": ["1-URGENT"] * 5
+                        + ["2-HIGH"] * 5
+                        + ["3-MEDIUM"] * 5
+                        + ["4-NOT SPECIFIED"] * 5
+                        + ["5-LOW"] * 5,
+                        "market_segments": [
+                            "AUTOMOBILE",
+                            "BUILDING",
+                            "FURNITURE",
+                            "HOUSEHOLD",
+                            "MACHINERY",
+                        ]
+                        * 5,
+                    }
+                ),
+                "simple_cross_12",
+            ),
+            id="simple_cross_12",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2257,13 +2366,23 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "navajo blush honeydew slate forest",
                             "red almond goldenrod tomato cornsilk",
                             "linen blanched mint pale blue",
-                            "plum gainsboro ivory pale maroon",
+                            "rose sienna maroon cornsilk azure",
                             "pale rosy blanched navy black",
                         ],
-                        "revenue": [0] * 5 + [13407.46, 30806.70, 31277.99],
+                        "revenue": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            15376.45,
+                            24876.23,
+                            31277.99,
+                        ],
                     }
                 ),
                 "aggregation_analytics_1",
+                order_sensitive=True,
             ),
             id="aggregation_analytics_1",
         ),
@@ -2276,13 +2395,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "part_name": [
                             "sky misty beige azure lace",
                             "azure pale hot ghost brown",
-                            "magenta red sky honeydew grey",
+                            "steel sky lavender green khaki",
                             "lime lemon indian papaya wheat",
                         ],
-                        "revenue": [1276.69, 11278.96, 24560.16, 35220.91],
+                        "revenue": [1276.69, 11278.96, 34936.07, 35220.91],
                     }
                 ),
                 "aggregation_analytics_2",
+                order_sensitive=True,
             ),
             id="aggregation_analytics_2",
         ),
@@ -2293,14 +2413,15 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "part_name": [
-                            "moccasin cornsilk azure royal rose",
                             "lawn puff chartreuse smoke firebrick",
+                            "moccasin cornsilk azure royal rose",
                             "lime blush midnight chartreuse grey",
                         ],
-                        "revenue": [158.72, 163.52, 179.28],
+                        "revenue": [106.53, 158.72, 179.28],
                     }
                 ),
                 "aggregation_analytics_3",
+                order_sensitive=True,
             ),
             id="aggregation_analytics_3",
         ),

@@ -4,7 +4,7 @@ WITH _t5 AS (
   FROM main.calendar
 ), _s3 AS (
   SELECT
-    COUNT() AS agg_2,
+    COUNT(*) AS agg_2,
     _s0.ca_dt AS calendar_day
   FROM _t5 AS _s0
   JOIN main.devices AS devices
@@ -13,7 +13,7 @@ WITH _t5 AS (
     _s0.ca_dt
 ), _s7 AS (
   SELECT
-    COUNT() AS agg_5,
+    COUNT(*) AS agg_5,
     _s4.ca_dt AS calendar_day
   FROM _t5 AS _s4
   JOIN main.incidents AS incidents
@@ -24,14 +24,14 @@ WITH _t5 AS (
   SELECT
     SUM(_s3.agg_2) AS agg_4,
     SUM(_s7.agg_5) AS agg_7,
-    EXTRACT(YEAR FROM _t5.ca_dt) AS year
+    EXTRACT(YEAR FROM CAST(_t5.ca_dt AS DATETIME)) AS year
   FROM _t5 AS _t5
   LEFT JOIN _s3 AS _s3
     ON _s3.calendar_day = _t5.ca_dt
   LEFT JOIN _s7 AS _s7
     ON _s7.calendar_day = _t5.ca_dt
   GROUP BY
-    EXTRACT(YEAR FROM _t5.ca_dt)
+    EXTRACT(YEAR FROM CAST(_t5.ca_dt AS DATETIME))
 ), _t0 AS (
   SELECT
     ROUND(

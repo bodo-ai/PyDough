@@ -1,13 +1,13 @@
 WITH _s2 AS (
   SELECT
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbcustjoindate),
+      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbcustjoindate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbcustjoindate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbcustjoindate)), (
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))), (
           2 * -1
         ))
       END
@@ -19,11 +19,11 @@ WITH _s2 AS (
   GROUP BY
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbcustjoindate),
+      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbcustjoindate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbcustjoindate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbcustjoindate)), (
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))), (
           2 * -1
         ))
       END
@@ -33,19 +33,22 @@ WITH _s2 AS (
     AVG(sbtransaction.sbtxamount) AS agg_0,
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbcustomer.sbcustjoindate),
+      EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbcustomer.sbcustjoindate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbcustomer.sbcustjoindate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbcustomer.sbcustjoindate)), (
-          2 * -1
-        ))
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))),
+          (
+            2 * -1
+          )
+        )
       END
     ) AS month
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
-    ON EXTRACT(MONTH FROM sbcustomer.sbcustjoindate) = EXTRACT(MONTH FROM sbtransaction.sbtxdatetime)
-    AND EXTRACT(YEAR FROM sbcustomer.sbcustjoindate) = EXTRACT(YEAR FROM sbtransaction.sbtxdatetime)
+    ON EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbtransaction.sbtxdatetime AS DATETIME))
+    AND EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)) = EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS DATETIME))
     AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   WHERE
     sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
@@ -53,13 +56,16 @@ WITH _s2 AS (
   GROUP BY
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbcustomer.sbcustjoindate),
+      EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbcustomer.sbcustjoindate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbcustomer.sbcustjoindate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbcustomer.sbcustjoindate)), (
-          2 * -1
-        ))
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))),
+          (
+            2 * -1
+          )
+        )
       END
     )
 )

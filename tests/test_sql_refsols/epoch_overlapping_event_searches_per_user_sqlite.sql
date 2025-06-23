@@ -5,7 +5,7 @@ WITH _s0 AS (
   FROM users
 ), _t2 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     MAX(_s0.user_id) AS agg_10,
     MAX(_s0.user_name) AS agg_8
   FROM _s0 AS _s0
@@ -20,16 +20,14 @@ WITH _s0 AS (
       '%' || LOWER(events.ev_name) || '%'
     )
   JOIN _s0 AS _s7
-    ON _s7.user_id = searches_2.search_user_id
-  WHERE
-    _s0.user_name <> _s7.user_name
+    ON _s0.user_name <> _s7.user_name AND _s7.user_id = searches_2.search_user_id
   GROUP BY
     searches.search_id,
     _s0.user_id
 ), _t0 AS (
   SELECT
     MAX(agg_8) AS agg_2,
-    COUNT() AS n_searches
+    COUNT(*) AS n_searches
   FROM _t2
   WHERE
     agg_0 > 0

@@ -7,11 +7,11 @@ WITH _s0 AS (
     sbdptickerid AS ticker_id,
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbdpdate),
+      EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbdpdate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdpdate)), (
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))), (
           2 * -1
         ))
       END
@@ -21,11 +21,11 @@ WITH _s0 AS (
     sbdptickerid,
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM sbdpdate),
+      EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM sbdpdate)) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM sbdpdate), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM sbdpdate)), (
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))), (
           2 * -1
         ))
       END

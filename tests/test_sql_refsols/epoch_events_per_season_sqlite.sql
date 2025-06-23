@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS n_events,
+    COUNT(*) AS n_events,
     MAX(seasons.s_name) AS season_name
   FROM seasons AS seasons
   JOIN events AS events

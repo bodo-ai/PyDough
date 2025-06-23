@@ -145,22 +145,7 @@ class JoinCardinality(Enum):
 class Join(RelationalNode):
     """
     Relational representation of all join operations. This single
-    node can represent multiple joins at once, similar to a multi-join
-    in other systems to enable better lowering and easier translation
-    from earlier stages in the pipeline.
-
-    However, unlike a traditional Multi-Join in most relational algebra
-    implementations, this join does not ensure that joins can be reordered
-    and provides a specific join ordering that is the only guaranteed
-    valid ordering.
-
-    In particular if we have 3 inputs A, B, and C, with join types INNER
-    and SEMI, then the join ordering is treated as:
-
-    (A INNER B) SEMI C
-
-    It should be noted that this isn't necessarily the only valid join ordering,
-    but this node makes no guarantees that the inputs can be reordered.
+    node represents a join between two subtrees.
     """
 
     def __init__(

@@ -1,12 +1,12 @@
 WITH _t1 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     ANY_VALUE(times.t_name) AS agg_2,
     ANY_VALUE(times.t_start_hour) AS agg_3
   FROM times AS times
   JOIN searches AS searches
-    ON times.t_end_hour > EXTRACT(HOUR FROM searches.search_ts)
-    AND times.t_start_hour <= EXTRACT(HOUR FROM searches.search_ts)
+    ON times.t_end_hour > EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
+    AND times.t_start_hour <= EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
   GROUP BY
     times.t_name
 ), _t0 AS (

@@ -20,9 +20,7 @@ WITH _s0 AS (
   JOIN _s1 AS _s5
     ON LOWER(_s5.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
   JOIN _s0 AS _s7
-    ON _s5.search_user_id = _s7.user_id
-  WHERE
-    _s0.user_name <> _s7.user_name
+    ON _s0.user_name <> _s7.user_name AND _s5.search_user_id = _s7.user_id
   GROUP BY
     _s0.user_id
 )

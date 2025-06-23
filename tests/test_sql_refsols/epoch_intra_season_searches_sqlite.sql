@@ -12,7 +12,7 @@ WITH _s0 AS (
   FROM events
 ), _s9 AS (
   SELECT
-    COUNT() AS agg_0,
+    COUNT(*) AS agg_0,
     _s2.s_name AS name,
     searches.search_id
   FROM _s0 AS _s2
@@ -40,7 +40,7 @@ WITH _s0 AS (
     SUM((
       NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
     )) AS agg_2,
-    COUNT() AS agg_3
+    COUNT(*) AS agg_3
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.s_month1 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
@@ -53,7 +53,7 @@ WITH _s0 AS (
 ), _s17 AS (
   SELECT
     SUM(_s15.s_name = _s10.s_name) AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     _s10.s_name AS name
   FROM _s0 AS _s10
   JOIN _s5 AS _s11

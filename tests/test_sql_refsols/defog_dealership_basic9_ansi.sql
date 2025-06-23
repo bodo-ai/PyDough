@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    COUNT() AS total_signups,
+    COUNT(*) AS total_signups,
     state
   FROM main.customers
   GROUP BY

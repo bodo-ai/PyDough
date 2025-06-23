@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     sbcustcountry AS country,
-    COUNT() AS num_customers
+    COUNT(*) AS num_customers
   FROM main.sbcustomer
   GROUP BY
     sbcustcountry

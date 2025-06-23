@@ -1,11 +1,11 @@
 WITH _t0 AS (
   SELECT
     SUM(sale_price) AS agg_0,
-    COUNT() AS agg_1,
+    COUNT(*) AS agg_1,
     salesperson_id
   FROM main.sales
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), sale_date, DAY) <= 30
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(sale_date AS DATETIME), DAY) <= 30
   GROUP BY
     salesperson_id
 )

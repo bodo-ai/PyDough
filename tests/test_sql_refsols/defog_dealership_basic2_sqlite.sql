@@ -1,20 +1,14 @@
-WITH _s1 AS (
+WITH _u_0 AS (
   SELECT
-    sales.customer_id AS customer_id
-  FROM main.sales AS sales
-), _s0 AS (
-  SELECT
-    customers._id AS _id
-  FROM main.customers AS customers
+    customer_id AS _u_1
+  FROM main.sales
+  GROUP BY
+    customer_id
 )
 SELECT
-  _s0._id AS _id
-FROM _s0 AS _s0
+  customers._id
+FROM main.customers AS customers
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = customers._id
 WHERE
-  EXISTS(
-    SELECT
-      1 AS "1"
-    FROM _s1 AS _s1
-    WHERE
-      _s0._id = _s1.customer_id
-  )
+  NOT _u_0._u_1 IS NULL
