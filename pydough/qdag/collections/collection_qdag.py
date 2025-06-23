@@ -384,47 +384,42 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         if terms_distance_list == []:
             return []
         # sort the list by minimum edit distance break ties by name
-        sorted_list = sorted(terms_distance_list)
+        terms_distance_list.sort()
 
-        closest_match = sorted_list[0]
+        closest_match = terms_distance_list[0]
 
         # List with all names that have a me <= closest_match + 2
-        good_matches_1: list[str] = []
+        matches_within_2: list[str] = []
         # List with all names that have a me <= closest_match * 1.1
-        good_matches_2: list[str] = []
+        matches_within_10_pct: list[str] = []
         # List with the top 3 closest matches (me) breaking ties by name
-        good_matches_3: list[str] = [name for _, name in sorted_list[:3]]
+        matches_top_3: list[str] = [name for _, name in terms_distance_list[:3]]
 
         # filtering the result
-        for me, name in sorted_list:
+        for me, name in terms_distance_list:
             # all names that have a me <= closest_match + 2
             if me <= closest_match[0] + 2:
-                good_matches_1.append(name)
+                matches_within_2.append(name)
 
             # all names that have a me <= closest_match * 1.1
             if me <= closest_match[0] * 1.1:
-                good_matches_2.append(name)
+                matches_within_10_pct.append(name)
 
         # returning the larger
-        if len(good_matches_1) >= len(good_matches_2) and len(good_matches_1) >= len(
-            good_matches_3
-        ):
-            return good_matches_1
-
-        elif len(good_matches_2) >= len(good_matches_1) and len(good_matches_2) >= len(
-            good_matches_3
-        ):
-            return good_matches_2
-
-        else:
-            return good_matches_3
+        # using
+        return max(
+            [matches_within_2, matches_within_10_pct, matches_top_3],
+            key=lambda x: (len(x), x),
+        )
 
     @staticmethod
     def min_edit_distance(s: str, t: str) -> float:
         """
         Computes the minimum edit distance between two strings using the
-        Levenshtein distance algorithm. For this implementation the iterative
-        with a 2-row array is used to save memory.
+        Levenshtein distance algorithm. Substituting a character for the same
+        character with different capitalization is considered 10% of the edit
+        cost of replacing it with any other character. For this implementation
+        the iterative with a 2-row array is used to save memory.
         Link:
         https://en.wikipedia.org/wiki/Levenshtein_distance#Iterative_with_two_matrix_rows
 
