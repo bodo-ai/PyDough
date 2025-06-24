@@ -61,6 +61,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [MEDIAN](#median)
    * [MIN](#min)
    * [MAX](#max)
+   * [QUANTILE](#quantile)
    * [ANYTHING](#anything)
    * [COUNT](#count)
    * [NDISTINCT](#ndistinct)
@@ -890,6 +891,34 @@ The `MAX` function returns the largest value from the set of values it is called
 ```py
 Suppliers.CALCULATE(most_expensive_part_supplied = MAX(supply_records.supply_cost))
 ```
+
+<!-- TOC --><a name="quantile"></a>
+
+### QUANTILE
+
+The `QUANTILE` function returns the value at a specified quantile from the set of values it is called on. The quantile value `p` must be a numeric literal between 0 and 1 (inclusive), where `0` returns the minimum, `1` returns the maximum, and `0.5` returns the median.
+
+```py
+# Returns the value at the 90th percentile of supply costs for each supplier
+Suppliers.CALCULATE(ninetieth_percentile_cost = QUANTILE(supply_records.supply_cost, 0.9))
+
+# Returns the median supply cost for each supplier (equivalent to MEDIAN)
+Suppliers.CALCULATE(median_cost = QUANTILE(supply_records.supply_cost, 0.5))
+```
+
+- The first argument is the plural set of values to aggregate.
+- The second argument is the quantile to compute, as a numeric literal between 0 and 1.
+- If the quantile argument is not a valid number between 0 and 1, an error is raised.
+
+> [!NOTE]
+> `QUANTILE(X, 0.5)` is equivalent to `MEDIAN(X)`.  
+> The implementation uses the SQL standard `PERCENTILE_DISC` aggregate function where available.
+
+| **Input** | **Quantile** | **Output** |
+|-----------|-------------|------------|
+| `[1, 2, 3, 4, 5]` | `0.0` | `1` |
+| `[1, 2, 3, 4, 5]` | `0.5` | `3` |
+| `[1, 2, 3, 4, 5]` | `1.0` | `5` |
 
 <!-- TOC --><a name="anything"></a>
 
