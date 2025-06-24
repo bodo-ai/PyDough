@@ -1723,12 +1723,18 @@ class BaseTransformBindings:
                 f"QUANTILE expects the second argument to be a numeric literal between 0 and 1, got {args[1]}"
             )
 
-        within_group_clause: SQLGlotExpression = sqlglot_expressions.Group(
-            expressions=[sqlglot_expressions.Ordered(this=args[0])]
-        )
-
         percentile_disc_function: SQLGlotExpression = (
-            sqlglot_expressions.PercentileDisc(this=args[1], group=within_group_clause)
+            sqlglot_expressions.PercentileDisc(this=args[1])
         )
 
-        return percentile_disc_function
+        ordered_column: SQLGlotExpression = sqlglot_expressions.Ordered(this=args[0])
+
+        order: SQLGlotExpression = sqlglot_expressions.Order(
+            expressions=[ordered_column]
+        )
+
+        within_group_clause: SQLGlotExpression = sqlglot_expressions.WithinGroup(
+            this=percentile_disc_function, expression=order
+        )
+
+        return within_group_clause
