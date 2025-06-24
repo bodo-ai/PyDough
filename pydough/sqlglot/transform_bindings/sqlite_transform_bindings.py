@@ -607,6 +607,8 @@ class SQLiteTransformBindings(BaseTransformBindings):
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         # Formula: CEIL(X) = CAST(x AS INTEGER) + (x > CAST(x AS INTEGER))
+        # It was implemented using CASE because sqlglot.optimizer.simplify get rid of greater_than_expr parentheses
+        # Formula: CEIL(X) = CAST(x AS INTEGER) + CASE WHEN (x > CAST(x AS INTEGER)) THEN 1 ELSE 0 END
         assert len(args) == 1
         # CAST(x AS INTEGER)
         cast_int_expr = sqlglot_expressions.Cast(
@@ -618,22 +620,26 @@ class SQLiteTransformBindings(BaseTransformBindings):
             this=args[0], expression=cast_int_expr.copy(), is_string=False
         )
 
-        # CAST(greater_than_expr AS INTEGER)
-        # Required because sqlglot.optimizer.simplify get rid of greater_than_expr parentheses
-        cast_int_gt_expr = sqlglot_expressions.Cast(
-            this=greater_than_expr, to=sqlglot_expressions.DataType(this="INT")
+        # CASE WHEN (x > CAST(x AS INTEGER)) THEN 1 ELSE 0 END
+        case_expr = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=greater_than_expr, true=sqlglot_expressions.Literal.number(1)
+                )
+            ],
+            default=sqlglot_expressions.Literal.number(0),
         )
 
-        # ADD: (CAST(X) + (x < CAST(X))
-        add_expr = sqlglot_expressions.Add(
-            this=cast_int_expr, expression=cast_int_gt_expr
-        )
+        # ADD: (CAST(X) + CASE expr
+        add_expr = sqlglot_expressions.Add(this=cast_int_expr, expression=case_expr)
         return add_expr
 
     def convert_floor(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         # Formula: FLOOR(X) = CAST(x AS INTEGER) - (x < CAST(x AS INTEGER))
+        # It was implemented using CASE because sqlglot.optimizer.simplify get rid of less_than_expr parentheses
+        # Formula: CEIL(X) = CAST(x AS INTEGER) - CASE WHEN (x < CAST(x AS INTEGER)) THEN 1 ELSE 0 END
         assert len(args) == 1
         # CAST(x AS INTEGER)
         cast_int_expr = sqlglot_expressions.Cast(
@@ -645,14 +651,16 @@ class SQLiteTransformBindings(BaseTransformBindings):
             this=args[0], expression=cast_int_expr.copy(), is_string=False
         )
 
-        # CAST(less_than_expr AS INTEGER)
-        # Required because sqlglot.optimizer.simplify get rid of less_than_expr parentheses
-        cast_int_lt_expr = sqlglot_expressions.Cast(
-            this=less_than_expr, to=sqlglot_expressions.DataType(this="INT")
+        # CASE WHEN (x > CAST(x AS INTEGER)) THEN 1 ELSE 0 END
+        case_expr = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=less_than_expr, true=sqlglot_expressions.Literal.number(1)
+                )
+            ],
+            default=sqlglot_expressions.Literal.number(0),
         )
 
         # SUB: (CAST(X) - (x < CAST(X))
-        sub_expr = sqlglot_expressions.Sub(
-            this=cast_int_expr, expression=cast_int_lt_expr
-        )
+        sub_expr = sqlglot_expressions.Sub(this=cast_int_expr, expression=case_expr)
         return sub_expr
