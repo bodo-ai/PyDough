@@ -86,6 +86,9 @@ def merge_ctes(expression: E, leave_tables_isolated: bool = False) -> E:
                     )
                 )
 
+    # PyDough TODO: account for certain situations where a CTE used more than
+    # once SHOULD be merged (e.g. just a simple scan + select with nothing to
+    # it).
     singular_cte_selections = [v[0] for k, v in cte_selections.items() if len(v) == 1]
     for outer_scope, inner_scope, table in singular_cte_selections:
         from_or_join = table.find_ancestor(exp.From, exp.Join)
@@ -121,30 +124,34 @@ def _merge_groups(outer_scope: Scope, inner_scope: Scope) -> None:
     outer_scope.expression.set("group", inner_scope.expression.args.get("group"))
 
 
-def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope):
+def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope) -> bool:
     """
-    TODO
+    Returns whether the inner scope should not be merge into the outer scope
+    due to a scenario where the inner scope contains aggregations while the
+    outer scope also contains aggregations, joins, or group-by clauses, or
+    the inner scope has a window function, or the outer scope has a join or
+    where clause.
     """
+    # Temporarily remove the "with" context from the outer scope to avoid
+    # using CTEs when considering what the outer scope contains, then restore
+    # it before returning.
     with_ctx = outer_scope.expression.args.pop("with", None)
-    if not inner_scope.expression.find(exp.AggFunc):
-        outer_scope.expression.args["with"] = with_ctx
-        return False
-    elif (
+    result: bool = False
+    if inner_scope.expression.find(exp.AggFunc) and (
         outer_scope.expression.find(exp.AggFunc)
-        or outer_scope.expression.find(exp.Join)
+        or len(outer_scope.expression.args.get("joins", [])) > 0
+        or outer_scope.expression.args.get("where") is not None
         or (
             inner_scope.expression.find(exp.Group)
             and (
                 inner_scope.expression.find(exp.Window)
                 or outer_scope.expression.find(exp.Group)
-                or outer_scope.expression.args.get("where") is not None
             )
         )
     ):
-        outer_scope.expression.args["with"] = with_ctx
-        return True
+        result = True
     outer_scope.expression.args["with"] = with_ctx
-    return False
+    return result
 
 
 def _mergeable(
