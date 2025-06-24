@@ -1,21 +1,17 @@
-WITH _t3 AS (
-  SELECT
-    ca_dt AS calendar_day
-  FROM main.calendar
-), _t0 AS (
+WITH _t0 AS (
   SELECT
     COUNT(*) AS n_purchases,
-    ANY_VALUE(_t3.calendar_day) AS start_of_period
-  FROM _t3 AS _t3
-  CROSS JOIN _t3 AS _s1
+    ANY_VALUE(calendar.ca_dt) AS start_of_period
+  FROM main.calendar AS calendar
+  JOIN main.calendar AS calendar_2
+    ON calendar.ca_dt <= calendar_2.ca_dt
+    AND calendar_2.ca_dt < DATE_ADD(CAST(calendar.ca_dt AS TIMESTAMP), 5, 'DAY')
   JOIN main.devices AS devices
-    ON _s1.calendar_day = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
+    ON calendar_2.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   WHERE
-    EXTRACT(YEAR FROM _t3.calendar_day) = 2024
-    AND _s1.calendar_day < DATE_ADD(CAST(_t3.calendar_day AS TIMESTAMP), 5, 'DAY')
-    AND _s1.calendar_day >= _t3.calendar_day
+    EXTRACT(YEAR FROM CAST(calendar.ca_dt AS DATETIME)) = 2024
   GROUP BY
-    _t3.calendar_day
+    calendar.ca_dt
 )
 SELECT
   start_of_period,

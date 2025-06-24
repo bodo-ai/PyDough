@@ -22,24 +22,18 @@ WITH _t0 AS (
     CAST(CAST(CAST((
       JULIANDAY(
         DATE(
-          DATE(
-            DATETIME('now'),
-            '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(DATETIME('now'))) AS INTEGER) + 6
-            ) % 7 AS TEXT) || ' days',
-            'start of day'
-          ),
+          DATETIME('now'),
+          '-' || CAST((
+            CAST(STRFTIME('%w', DATETIME(DATETIME('now'))) AS INTEGER) + 6
+          ) % 7 AS TEXT) || ' days',
           'start of day'
         )
       ) - JULIANDAY(
         DATE(
-          DATE(
-            payments_received.payment_date,
-            '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
-            ) % 7 AS TEXT) || ' days',
-            'start of day'
-          ),
+          payments_received.payment_date,
+          '-' || CAST((
+            CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+          ) % 7 AS TEXT) || ' days',
           'start of day'
         )
       )
@@ -47,24 +41,18 @@ WITH _t0 AS (
     AND CAST(CAST(CAST((
       JULIANDAY(
         DATE(
-          DATE(
-            DATETIME('now'),
-            '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(DATETIME('now'))) AS INTEGER) + 6
-            ) % 7 AS TEXT) || ' days',
-            'start of day'
-          ),
+          DATETIME('now'),
+          '-' || CAST((
+            CAST(STRFTIME('%w', DATETIME(DATETIME('now'))) AS INTEGER) + 6
+          ) % 7 AS TEXT) || ' days',
           'start of day'
         )
       ) - JULIANDAY(
         DATE(
-          DATE(
-            payments_received.payment_date,
-            '-' || CAST((
-              CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
-            ) % 7 AS TEXT) || ' days',
-            'start of day'
-          ),
+          payments_received.payment_date,
+          '-' || CAST((
+            CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
+          ) % 7 AS TEXT) || ' days',
           'start of day'
         )
       )
