@@ -602,3 +602,57 @@ class SQLiteTransformBindings(BaseTransformBindings):
         return sqlglot_expressions.Pow(
             this=variance, expression=sqlglot_expressions.Literal.number(0.5)
         )
+
+    def convert_ceil(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Formula: CEIL(X) = CAST(x AS INTEGER) + (x > CAST(x AS INTEGER))
+        assert len(args) == 1
+        # CAST(x AS INTEGER)
+        cast_int_expr = sqlglot_expressions.Cast(
+            this=args[0], to=sqlglot_expressions.DataType(this="INT")
+        )
+
+        # x > CAST(x AS INTEGER)
+        greater_than_expr = sqlglot_expressions.GT(
+            this=args[0], expression=cast_int_expr.copy(), is_string=False
+        )
+
+        # CAST(greater_than_expr AS INTEGER)
+        # Required because sqlglot.optimizer.simplify get rid of greater_than_expr parentheses
+        cast_int_gt_expr = sqlglot_expressions.Cast(
+            this=greater_than_expr, to=sqlglot_expressions.DataType(this="INT")
+        )
+
+        # ADD: (CAST(X) + (x < CAST(X))
+        add_expr = sqlglot_expressions.Add(
+            this=cast_int_expr, expression=cast_int_gt_expr
+        )
+        return add_expr
+
+    def convert_floor(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        # Formula: FLOOR(X) = CAST(x AS INTEGER) - (x < CAST(x AS INTEGER))
+        assert len(args) == 1
+        # CAST(x AS INTEGER)
+        cast_int_expr = sqlglot_expressions.Cast(
+            this=args[0], to=sqlglot_expressions.DataType(this="INT")
+        )
+
+        # x < CAST(x AS INTEGER)
+        less_than_expr = sqlglot_expressions.LT(
+            this=args[0], expression=cast_int_expr.copy(), is_string=False
+        )
+
+        # CAST(less_than_expr AS INTEGER)
+        # Required because sqlglot.optimizer.simplify get rid of less_than_expr parentheses
+        cast_int_lt_expr = sqlglot_expressions.Cast(
+            this=less_than_expr, to=sqlglot_expressions.DataType(this="INT")
+        )
+
+        # SUB: (CAST(X) - (x < CAST(X))
+        sub_expr = sqlglot_expressions.Sub(
+            this=cast_int_expr, expression=cast_int_lt_expr
+        )
+        return sub_expr

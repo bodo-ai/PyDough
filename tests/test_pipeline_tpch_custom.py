@@ -88,6 +88,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     dumb_aggregation,
     first_order_in_year,
     first_order_per_customer,
+    floor_and_ceil,
     function_sampler,
     global_acctbal_breakdown,
     highest_priority_per_year,
@@ -546,6 +547,26 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "year_month_nation_orders",
             ),
             id="year_month_nation_orders",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                floor_and_ceil,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "floor_frac": [5],
+                        "ceil_frac": [6],
+                        "floor_frac_neg": [-6],
+                        "ceil_frac_neg": [-5],
+                        "floor_int": [6],
+                        "cell_int": [6],
+                        "floor_int_neg": [-6],
+                        "cell_int_neg": [-6],
+                    }
+                ),
+                "floor_and_ceil",
+            ),
+            id="floor_and_ceil",
         ),
         pytest.param(
             PyDoughPandasTest(

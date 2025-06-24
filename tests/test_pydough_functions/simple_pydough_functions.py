@@ -209,6 +209,19 @@ def rank_c():
     )
 
 
+def floor_and_ceil():
+    return TPCH.CALCULATE(
+        floor_frac=FLOOR(5.6),
+        ceil_frac=CEIL(5.4),
+        floor_frac_neg=FLOOR(-5.4),
+        ceil_frac_neg=CEIL(-5.6),
+        floor_int=FLOOR(6),
+        ceil_int=CEIL(6),
+        floor_int_neg=FLOOR(-6),
+        ceil_int_neg=CEIL(-6),
+    )
+
+
 def rank_nations_by_region():
     return nations.CALCULATE(name, rank=RANKING(by=region.name.ASC(), allow_ties=True))
 
