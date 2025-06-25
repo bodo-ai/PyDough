@@ -30,8 +30,7 @@ WITH _s0 AS (
     customer.c_nationkey
   FROM tpch.customer AS customer
   JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1998
-    AND customer.c_custkey = orders.o_custkey
+    ON customer.c_custkey = orders.o_custkey AND orders.o_clerk = 'Clerk#000000272'
   GROUP BY
     customer.c_nationkey
 )

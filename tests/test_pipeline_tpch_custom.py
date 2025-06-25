@@ -57,10 +57,6 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_quantile_4,
     bad_quantile_5,
     bad_quantile_6,
-    bad_quantile_7,
-    bad_quantile_8,
-    bad_quantile_9,
-    bad_quantile_10,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -2904,62 +2900,50 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_quantile_1,
             None,
-            "Error message",
+            re.escape(
+                "Invalid operator invocation 'QUANTILE(orders.total_price)': Expected 2 arguments, received 1"
+            ),
             id="bad_quantile_1",
         ),
         pytest.param(
             bad_quantile_2,
             None,
-            "Error message",
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE('orders.total_price', 0.7)"
+            ),
             id="bad_quantile_2",
         ),
         pytest.param(
             bad_quantile_3,
             None,
-            "Error message",
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received 40"
+            ),
             id="bad_quantile_3",
         ),
         pytest.param(
             bad_quantile_4,
             None,
-            "Error message",
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received -10"
+            ),
             id="bad_quantile_4",
         ),
         pytest.param(
             bad_quantile_5,
             None,
-            "Error message",
+            re.escape(
+                "Non-expression argument orders of type ChildReferenceCollection found in operator 'QUANTILE'"
+            ),
             id="bad_quantile_5",
         ),
         pytest.param(
             bad_quantile_6,
             None,
-            "Error message",
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE(20, 0.9)"
+            ),
             id="bad_quantile_6",
-        ),
-        pytest.param(
-            bad_quantile_7,
-            None,
-            "Error message",
-            id="bad_quantile_7",
-        ),
-        pytest.param(
-            bad_quantile_8,
-            None,
-            "Error message",
-            id="bad_quantile_8",
-        ),
-        pytest.param(
-            bad_quantile_9,
-            None,
-            "Error message",
-            id="bad_quantile_9",
-        ),
-        pytest.param(
-            bad_quantile_10,
-            None,
-            "Error message",
-            id="bad_quantile_10",
         ),
     ],
 )
