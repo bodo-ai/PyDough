@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    ANY_VALUE(searches.search_user_id) AS agg_5
+    ANY_VALUE(searches.search_user_id) AS anything_search_user_id
   FROM searches AS searches
   JOIN events AS events
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
@@ -13,17 +13,17 @@ WITH _t0 AS (
 ), _s5 AS (
   SELECT
     COUNT(*) AS n_cold_war_searches,
-    agg_5
+    anything_search_user_id
   FROM _t0
   GROUP BY
-    agg_5
+    anything_search_user_id
 )
 SELECT
   users.user_name,
   _s5.n_cold_war_searches
 FROM users AS users
 JOIN _s5 AS _s5
-  ON _s5.agg_5 = users.user_id
+  ON _s5.anything_search_user_id = users.user_id
 ORDER BY
   n_cold_war_searches DESC,
   user_name

@@ -1,8 +1,9 @@
-WITH _t1 AS (
+WITH _t AS (
   SELECT
     COUNT(DISTINCT searches.search_id) AS n_searches,
-    events.ev_typ AS event_type,
-    users.user_region AS region
+    events.ev_typ,
+    users.user_region,
+    ROW_NUMBER() OVER (PARTITION BY users.user_region ORDER BY COUNT(DISTINCT searches.search_id) DESC) AS _w
   FROM events AS events
   JOIN searches AS searches
     ON LOWER(searches.search_string) LIKE (
@@ -13,17 +14,10 @@ WITH _t1 AS (
   GROUP BY
     events.ev_typ,
     users.user_region
-), _t AS (
-  SELECT
-    n_searches,
-    event_type,
-    region,
-    ROW_NUMBER() OVER (PARTITION BY region ORDER BY n_searches DESC) AS _w
-  FROM _t1
 )
 SELECT
-  region,
-  event_type,
+  user_region AS region,
+  ev_typ AS event_type,
   n_searches
 FROM _t
 WHERE

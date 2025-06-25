@@ -1,4 +1,4 @@
-WITH _t1 AS (
+WITH _t2 AS (
   SELECT
     CASE
       WHEN ABS(
@@ -39,7 +39,7 @@ WITH _t1 AS (
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7,
-    c_nationkey AS nation_key,
+    c_nationkey,
     CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END AS negative_acctbal,
     CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END AS non_negative_acctbal
   FROM tpch.customer
@@ -50,10 +50,10 @@ WITH _t1 AS (
     AVG(expr_7) AS median_red_acctbal,
     COUNT(non_negative_acctbal) AS n_black_acctbal,
     COUNT(negative_acctbal) AS n_red_acctbal,
-    nation_key
-  FROM _t1
+    c_nationkey
+  FROM _t2
   GROUP BY
-    nation_key
+    c_nationkey
 )
 SELECT
   nation.n_name AS nation_name,
@@ -66,6 +66,6 @@ FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
 JOIN _s3 AS _s3
-  ON _s3.nation_key = nation.n_nationkey
+  ON _s3.c_nationkey = nation.n_nationkey
 ORDER BY
-  nation_name
+  nation.n_name

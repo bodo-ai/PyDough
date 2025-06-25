@@ -6,7 +6,7 @@ WITH _t AS (
   FROM main.inventory_snapshots
 ), _s3 AS (
   SELECT
-    MAX(sale_price) AS agg_0,
+    MAX(sale_price) AS max_sale_price,
     car_id
   FROM main.sales
   GROUP BY
@@ -15,11 +15,11 @@ WITH _t AS (
 SELECT
   cars.make,
   cars.model,
-  _s3.agg_0 AS highest_sale_price
+  _s3.max_sale_price AS highest_sale_price
 FROM main.cars AS cars
 JOIN _t AS _t
   ON NOT _t.is_in_inventory AND _t._w = 1 AND _t.car_id = cars._id
 LEFT JOIN _s3 AS _s3
   ON _s3.car_id = cars._id
 ORDER BY
-  _s3.agg_0 DESC
+  _s3.max_sale_price DESC
