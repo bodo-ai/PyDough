@@ -1,4 +1,4 @@
 ROOT(columns=[('n_orders', n_orders)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_orders': COUNT()})
-  FILTER(condition=RANKING(args=[], partition=[], order=[(order_date):asc_last], allow_ties=True) == 1:numeric, columns={})
-   SCAN(table=tpch.ORDERS, columns={'order_date': o_orderdate})
+  FILTER(condition=RANKING(args=[], partition=[], order=[(o_orderdate):asc_last], allow_ties=True) == 1:numeric, columns={})
+   SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})

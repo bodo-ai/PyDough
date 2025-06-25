@@ -1,13 +1,13 @@
 WITH _s0 AS (
   SELECT
-    COUNT(*) AS agg_0
+    COUNT(*) AS n_rows
   FROM main.incidents
 ), _s1 AS (
   SELECT
-    COUNT(*) AS agg_1
+    COUNT(*) AS n_rows
   FROM main.devices
 )
 SELECT
-  ROUND(CAST(_s0.agg_0 AS REAL) / _s1.agg_1, 2) AS ir
+  ROUND(CAST(_s0.n_rows AS REAL) / _s1.n_rows, 2) AS ir
 FROM _s0 AS _s0
 CROSS JOIN _s1 AS _s1

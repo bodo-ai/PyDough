@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    lineitem.l_extendedprice AS extended_price
+    lineitem.l_extendedprice
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey
@@ -10,11 +10,7 @@ WITH _t2 AS (
     lineitem.l_quantity < (
       0.2 * AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey)
     )
-), _t0 AS (
-  SELECT
-    SUM(extended_price) AS agg_0
-  FROM _t2
 )
 SELECT
-  COALESCE(agg_0, 0) / 7.0 AS AVG_YEARLY
-FROM _t0
+  COALESCE(SUM(l_extendedprice), 0) / 7.0 AS AVG_YEARLY
+FROM _t2

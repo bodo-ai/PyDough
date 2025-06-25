@@ -1,13 +1,13 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
-    supplier.s_comment AS comment_8,
-    supplier.s_name AS name_10,
+    nation.n_name,
     part.p_mfgr,
     part.p_partkey,
-    supplier.s_acctbal AS account_balance,
-    supplier.s_address AS address,
-    nation.n_name AS expr_8,
-    supplier.s_phone AS phone
+    supplier.s_acctbal,
+    supplier.s_address,
+    supplier.s_comment,
+    supplier.s_name,
+    supplier.s_phone
   FROM tpch.part AS part
   JOIN tpch.partsupp AS partsupp
     ON part.p_partkey = partsupp.ps_partkey
@@ -23,15 +23,15 @@ WITH _t1 AS (
     RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost NULLS LAST) = 1
 )
 SELECT
-  account_balance AS S_ACCTBAL,
-  name_10 AS S_NAME,
-  expr_8 AS N_NAME,
+  s_acctbal AS S_ACCTBAL,
+  s_name AS S_NAME,
+  n_name AS N_NAME,
   p_partkey AS P_PARTKEY,
   p_mfgr AS P_MFGR,
-  address AS S_ADDRESS,
-  phone AS S_PHONE,
-  comment_8 AS S_COMMENT
-FROM _t1
+  s_address AS S_ADDRESS,
+  s_phone AS S_PHONE,
+  s_comment AS S_COMMENT
+FROM _t0
 ORDER BY
   s_acctbal DESC,
   n_name,

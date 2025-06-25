@@ -182,43 +182,31 @@ def test_execute_df_logging(
     captured_output = output_capture.getvalue()
     required_op = """
 [INFO] pydough.sqlglot.execute_relational: SQL query:
- WITH _t0 AS (
-  SELECT
-    COUNT(*) AS count_order,
-    SUM(l_extendedprice) AS sum_base_price,
-    SUM(l_extendedprice * (
-      1 - l_discount
-    ) * (
-      1 + l_tax
-    )) AS sum_charge,
-    SUM(l_discount) AS sum_discount,
-    SUM((
-      l_extendedprice * (
-        1 - l_discount
-      )
-    )) AS sum_disc_price,
-    SUM(l_quantity) AS sum_qty,
-    l_linestatus,
-    l_returnflag
-  FROM lineitem
-  WHERE
-    l_shipdate <= '1998-12-01'
-  GROUP BY
-    l_linestatus,
-    l_returnflag
-)
-SELECT
+ SELECT
   l_returnflag AS L_RETURNFLAG,
   l_linestatus AS L_LINESTATUS,
-  sum_qty AS SUM_QTY,
-  sum_base_price AS SUM_BASE_PRICE,
-  sum_disc_price AS SUM_DISC_PRICE,
-  sum_charge AS SUM_CHARGE,
-  CAST(sum_qty AS REAL) / count_order AS AVG_QTY,
-  CAST(sum_base_price AS REAL) / count_order AS AVG_PRICE,
-  CAST(sum_discount AS REAL) / count_order AS AVG_DISC,
-  count_order AS COUNT_ORDER
-FROM _t0
+  SUM(l_quantity) AS SUM_QTY,
+  SUM(l_extendedprice) AS SUM_BASE_PRICE,
+  SUM((
+    l_extendedprice * (
+      1 - l_discount
+    )
+  )) AS SUM_DISC_PRICE,
+  SUM(l_extendedprice * (
+    1 - l_discount
+  ) * (
+    1 + l_tax
+  )) AS SUM_CHARGE,
+  CAST(SUM(l_quantity) AS REAL) / COUNT(*) AS AVG_QTY,
+  CAST(SUM(l_extendedprice) AS REAL) / COUNT(*) AS AVG_PRICE,
+  CAST(SUM(l_discount) AS REAL) / COUNT(*) AS AVG_DISC,
+  COUNT(*) AS COUNT_ORDER
+FROM lineitem
+WHERE
+  l_shipdate <= '1998-12-01'
+GROUP BY
+  l_linestatus,
+  l_returnflag
 ORDER BY
   l_returnflag,
   l_linestatus

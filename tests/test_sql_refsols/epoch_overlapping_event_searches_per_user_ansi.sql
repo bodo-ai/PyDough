@@ -1,37 +1,35 @@
-WITH _t2 AS (
+WITH _s0 AS (
   SELECT
-    COUNT(*) AS agg_0,
-    ANY_VALUE(users.user_id) AS agg_10,
-    ANY_VALUE(users.user_name) AS agg_8
-  FROM users AS users
+    user_id,
+    user_name
+  FROM users
+), _t2 AS (
+  SELECT
+    ANY_VALUE(_s0.user_id) AS anything_user_id,
+    ANY_VALUE(_s0.user_name) AS anything_user_name,
+    COUNT(*) AS n_rows
+  FROM _s0 AS _s0
   JOIN searches AS searches
-    ON searches.search_user_id = users.user_id
+    ON _s0.user_id = searches.search_user_id
   JOIN events AS events
     ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
   JOIN searches AS searches_2
     ON LOWER(searches_2.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
-  JOIN users AS users_2
-    ON searches_2.search_user_id = users_2.user_id
-    AND users.user_name <> users_2.user_name
+  JOIN _s0 AS _s7
+    ON _s0.user_name <> _s7.user_name AND _s7.user_id = searches_2.search_user_id
   GROUP BY
     searches.search_id,
-    users.user_id
-), _t0 AS (
-  SELECT
-    ANY_VALUE(agg_8) AS agg_2,
-    COUNT(*) AS n_searches,
-    ANY_VALUE(agg_8) AS user_name
-  FROM _t2
-  WHERE
-    agg_0 > 0
-  GROUP BY
-    agg_10
+    _s0.user_id
 )
 SELECT
-  user_name,
-  n_searches
-FROM _t0
+  ANY_VALUE(anything_user_name) AS user_name,
+  COUNT(*) AS n_searches
+FROM _t2
+WHERE
+  n_rows > 0
+GROUP BY
+  anything_user_id
 ORDER BY
   n_searches DESC,
-  agg_2
+  ANY_VALUE(anything_user_name)
 LIMIT 4
