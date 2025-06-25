@@ -606,61 +606,57 @@ class SQLiteTransformBindings(BaseTransformBindings):
     def convert_ceil(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        # Formula: CEIL(X) = CAST(x AS INTEGER) + (x > CAST(x AS INTEGER))
-        # It was implemented using CASE because sqlglot.optimizer.simplify get rid of greater_than_expr parentheses
-        # Formula: CEIL(X) = CAST(x AS INTEGER) + CASE WHEN (x > CAST(x AS INTEGER)) THEN 1 ELSE 0 END
+        # Formula: CEIL(x) = CAST(x AS BIGINT) + (x > CAST(x AS BIGINT))
+        # sqlglot.optimizer.simplify get rid of greater_than_expr parentheses
+        # Implemented using CASE. Formula: CEIL(x) = CAST(x AS BIGINT) +
+        #   CASE WHEN (x > CAST(x AS BIGINT)) THEN 1 ELSE 0 END
         assert len(args) == 1
-        # CAST(x AS INTEGER)
+        # CAST(x AS BIGINT)
         cast_int_expr = sqlglot_expressions.Cast(
-            this=args[0], to=sqlglot_expressions.DataType(this="INT")
+            this=args[0], to=sqlglot_expressions.DataType(this="BIGINT")
         )
 
-        # x > CAST(x AS INTEGER)
+        # x > CAST(x AS BIGINT)
         greater_than_expr = sqlglot_expressions.GT(
             this=args[0], expression=cast_int_expr.copy(), is_string=False
         )
 
-        # CASE WHEN (x > CAST(x AS INTEGER)) THEN 1 ELSE 0 END
-        case_expr = sqlglot_expressions.Case(
-            ifs=[
-                sqlglot_expressions.If(
-                    this=greater_than_expr, true=sqlglot_expressions.Literal.number(1)
-                )
-            ],
-            default=sqlglot_expressions.Literal.number(0),
+        # CASE WHEN (x > CAST(x AS BIGINT)) THEN 1 ELSE 0 END
+        case_expr = (
+            sqlglot_expressions.Case()
+            .when(greater_than_expr, sqlglot_expressions.Literal.number(1))
+            .else_(sqlglot_expressions.Literal.number(0))
         )
 
-        # ADD: (CAST(X) + CASE expr
+        # CAST(X AS BIGINT) + CASE expr
         add_expr = sqlglot_expressions.Add(this=cast_int_expr, expression=case_expr)
         return add_expr
 
     def convert_floor(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        # Formula: FLOOR(X) = CAST(x AS INTEGER) - (x < CAST(x AS INTEGER))
-        # It was implemented using CASE because sqlglot.optimizer.simplify get rid of less_than_expr parentheses
-        # Formula: CEIL(X) = CAST(x AS INTEGER) - CASE WHEN (x < CAST(x AS INTEGER)) THEN 1 ELSE 0 END
+        # Formula: FLOOR(X) = CAST(x AS BIGINT) - (x < CAST(x AS BIGINT))
+        # sqlglot.optimizer.simplify get rid of less_than_expr parentheses
+        # Implemented using CASE. Formula: FLOOR(X) = CAST(x AS BIGINT) -
+        #   CASE WHEN (x < CAST(x AS BIGINT)) THEN 1 ELSE 0 END
         assert len(args) == 1
-        # CAST(x AS INTEGER)
+        # CAST(x AS BIGINT)
         cast_int_expr = sqlglot_expressions.Cast(
-            this=args[0], to=sqlglot_expressions.DataType(this="INT")
+            this=args[0], to=sqlglot_expressions.DataType(this="BIGINT")
         )
 
-        # x < CAST(x AS INTEGER)
+        # x < CAST(x AS BIGINT)
         less_than_expr = sqlglot_expressions.LT(
             this=args[0], expression=cast_int_expr.copy(), is_string=False
         )
 
-        # CASE WHEN (x > CAST(x AS INTEGER)) THEN 1 ELSE 0 END
-        case_expr = sqlglot_expressions.Case(
-            ifs=[
-                sqlglot_expressions.If(
-                    this=less_than_expr, true=sqlglot_expressions.Literal.number(1)
-                )
-            ],
-            default=sqlglot_expressions.Literal.number(0),
+        # CASE WHEN (x > CAST(x AS BIGINT)) THEN 1 ELSE 0 END
+        case_expr = (
+            sqlglot_expressions.Case()
+            .when(less_than_expr, sqlglot_expressions.Literal.number(1))
+            .else_(sqlglot_expressions.Literal.number(0))
         )
 
-        # SUB: (CAST(X) - (x < CAST(X))
+        # CAST(X AS BIGINT) - CASE expr
         sub_expr = sqlglot_expressions.Sub(this=cast_int_expr, expression=case_expr)
         return sub_expr

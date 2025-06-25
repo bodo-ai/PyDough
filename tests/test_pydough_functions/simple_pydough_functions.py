@@ -222,6 +222,15 @@ def floor_and_ceil():
     )
 
 
+def floor_and_ceil_2():
+    return supply_records.CALCULATE(
+        supplier_key=supplier_key,
+        part_key=part_key,
+        complete_parts=FLOOR(available_quantity),
+        total_cost=CEIL(supply_cost * FLOOR(available_quantity)),
+    ).TOP_K(10, by=total_cost.DESC())
+
+
 def rank_nations_by_region():
     return nations.CALCULATE(name, rank=RANKING(by=region.name.ASC(), allow_ties=True))
 

@@ -256,10 +256,10 @@ ROUND = ExpressionFunctionOperator(
     "ROUND", False, RequireArgRange(1, 2), SelectArgumentType(0)
 )
 CEIL = ExpressionFunctionOperator(
-    "CEIL", False, RequireNumArgs(1), SelectArgumentType(0)
+    "CEIL", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 FLOOR = ExpressionFunctionOperator(
-    "FLOOR", False, RequireNumArgs(1), SelectArgumentType(0)
+    "FLOOR", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 MONOTONIC = ExpressionFunctionOperator(
     "MONOTONIC", False, RequireMinArgs(1), ConstantType(BooleanType())

@@ -1228,7 +1228,6 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-
         Creates a SQLGlot expression for `CEIL(X)`.
 
         Args:
@@ -1248,7 +1247,6 @@ class BaseTransformBindings:
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         """
-
         Creates a SQLGlot expression for `FLOOR(X)`.
 
         Args:

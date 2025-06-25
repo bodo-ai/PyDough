@@ -3,9 +3,9 @@ SELECT
   CAST(5.4 AS INTEGER) + CASE WHEN CAST(5.4 AS INTEGER) < 5.4 THEN 1 ELSE 0 END AS ceil_frac,
   CAST(-5.4 AS INTEGER) - CASE WHEN -5.4 < CAST(-5.4 AS INTEGER) THEN 1 ELSE 0 END AS floor_frac_neg,
   CAST(-5.6 AS INTEGER) + CASE WHEN -5.6 > CAST(-5.6 AS INTEGER) THEN 1 ELSE 0 END AS ceil_frac_neg,
-  6 AS floor_int,
-  6 AS ceil_int,
-  -6 AS floor_int_neg,
-  -6 AS ceil_int_neg
+  CAST(6 AS INTEGER) - 0 AS floor_int,
+  CAST(6 AS INTEGER) + 0 AS ceil_int,
+  CAST(-6 AS INTEGER) - 0 AS floor_int_neg,
+  CAST(-6 AS INTEGER) + 0 AS ceil_int_neg
 FROM (VALUES
   (NULL)) AS _q_0

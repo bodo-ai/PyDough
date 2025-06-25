@@ -766,15 +766,14 @@ The `CEIL` function rounds its argument up to the nearest integer. It returns th
 
 ```py
 parts.CALCULATE(ceiled_price = CEIL(retail_price))
-
-Examples:
-
-CEIL(10.2) → 11
-
-CEIL(-3.8) → -3
 ```
+Here are examples on how `CEIL` works:
+| Input | Output |
+|-------|--------|
+| `CEIL(10.2)` | `11` |
+| `CEIL(-3.8)` | `-3` |
 
-Note: CEIL only accepts a single numeric argument and always returns an integer.
+Note: `CEIL` only accepts a single numeric argument and always returns an integer.
 
 ### FLOOR
 
@@ -782,15 +781,15 @@ The `FLOOR` function rounds its argument down to the nearest integer. It returns
 
 ```py
 parts.CALCULATE(floored_price = FLOOR(retail_price))
-
-Examples:
-
-FLOOR(10.9) → 10
-
-FLOOR(-3.2) → -4
 ```
 
-Note: FLOOR only accepts a single numeric argument and always returns an integer.
+Here are examples on how `FLOOR` works:
+| Input | Output |
+|-------|--------|
+| `FLOOR(10.2)` | `10` |
+| `FLOOR(-3.8)` | `-4` |
+
+Note: `FLOOR` only accepts a single numeric argument and always returns an integer.
 
 ### POWER
 
