@@ -1,0 +1,2 @@
+ROOT(columns=[('floor_frac', FLOOR(5.6:numeric)), ('ceil_frac', CEIL(5.4:numeric)), ('floor_frac_neg', FLOOR(-5.4:numeric)), ('ceil_frac_neg', CEIL(-5.6:numeric)), ('floor_int', FLOOR(6:numeric)), ('ceil_int', CEIL(6:numeric)), ('floor_int_neg', FLOOR(-6:numeric)), ('ceil_int_neg', CEIL(-6:numeric))], orderings=[])
+ EMPTYSINGLETON()

@@ -50,6 +50,8 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Numerical Functions](#numerical-functions)
    * [ABS](#abs)
    * [ROUND](#round)
+   * [CEIL](#ceil)
+   * [FLOOR](#floor)
    * [POWER](#power)
    * [SQRT](#sqrt)
    * [SIGN](#sign)
@@ -757,6 +759,37 @@ Parts.CALCULATE(rounded_price = ROUND(retail_price))
 ```
 
 <!-- TOC --><a name="power"></a>
+
+### CEIL
+
+The `CEIL` function rounds its argument up to the nearest integer. It returns the smallest integer value that is greater than or equal to the input. This is equivalent to Python's `math.ceil()` function and corresponds to the SQL `CEIL` or `CEILING` function.
+
+```py
+parts.CALCULATE(ceiled_price = CEIL(retail_price))
+```
+Here are examples on how `CEIL` works:
+| Input | Output |
+|-------|--------|
+| `CEIL(10.2)` | `11` |
+| `CEIL(-3.8)` | `-3` |
+
+Note: `CEIL` only accepts a single numeric argument and always returns an integer.
+
+### FLOOR
+
+The `FLOOR` function rounds its argument down to the nearest integer. It returns the greatest integer value that is less than or equal to the input. This is equivalent to Python's `math.floor()` function and the SQL `FLOOR` function.
+
+```py
+parts.CALCULATE(floored_price = FLOOR(retail_price))
+```
+
+Here are examples on how `FLOOR` works:
+| Input | Output |
+|-------|--------|
+| `FLOOR(10.2)` | `10` |
+| `FLOOR(-3.8)` | `-4` |
+
+Note: `FLOOR` only accepts a single numeric argument and always returns an integer.
 
 ### POWER
 
