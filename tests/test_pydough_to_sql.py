@@ -20,6 +20,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
+    quantile_function_test_1,
+    quantile_function_test_2,
     rank_a,
     rank_b,
     rank_c,
@@ -107,6 +109,12 @@ from tests.testing_utilities import (
             None,
             "simple_var_std",
             id="simple_var_std",
+        ),
+        pytest.param(
+            quantile_function_test_1, None, "quantile_test_1", id="quantile_test_1"
+        ),
+        pytest.param(
+            quantile_function_test_2, None, "quantile_test_2", id="quantile_test_2"
         ),
     ],
 )

@@ -1713,14 +1713,14 @@ class BaseTransformBindings:
         assert len(args) == 2
 
         # validation
-        if not (
-            isinstance(args[1], sqlglot_expressions.Literal)
-            and not args[1].is_string
-            and isinstance(args[1].this, (int, float))
-            and 0.0 <= float(args[1].this) <= 1.0
+        if (
+            not isinstance(args[1], sqlglot_expressions.Literal)
+            or args[1].is_string
+            # or not isinstance(args[1].this, (int, float))
+            or not (0.0 <= float(args[1].this) <= 1.0)
         ):
             raise ValueError(
-                f"QUANTILE expects the second argument to be a numeric literal between 0 and 1, got {args[1]}"
+                f"QUANTILE TEST argument to be a numeric literal between 0 and 1, got {args[1]}"
             )
 
         percentile_disc_function: SQLGlotExpression = (

@@ -2899,3 +2899,20 @@ def simple_cross_12():
         .CALCULATE(order_priority, market_segment)
         .ORDER_BY(order_priority.ASC(), market_segment.ASC())
     )
+
+
+def quantile_function_test_1():
+    return customers.CALCULATE(seventieth_order_price=QUANTILE(orders.total_price, 0.7))
+
+
+def quantile_function_test_2():
+    customers_region = customers.CALCULATE(
+        region_nation=JOIN_STRINGS("-", nation.region.name, nation.name)
+    )
+
+    return customers_region.orders.PARTITION("orders_nation", region_nation).CALCULATE(
+        nation_name=region_nation,
+        order_max=QUANTILE(orders.total_price, 1),
+        order_min=QUANTILE(orders.total_price, 0),
+        order_median=QUANTILE(orders.total_price, 0.5),
+    )

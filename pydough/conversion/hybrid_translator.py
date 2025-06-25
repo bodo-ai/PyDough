@@ -265,7 +265,7 @@ class HybridTranslator:
                 rewritten: bool = False
                 new_args: list[HybridExpr] = []
                 for arg in agg_call.args:
-                    if isinstance(arg, HybridRefExpr):
+                    if isinstance(arg, (HybridRefExpr, HybridLiteralExpr)):
                         new_args.append(arg)
                     else:
                         rewritten = True
@@ -775,7 +775,24 @@ class HybridTranslator:
         create_new_calc: bool,
     ) -> HybridFunctionExpr:
         """
-        FILL LATER
+        Rewrites a QUANTILE aggregation call into an equivalent expression using window functions.
+        This is typically used for dialects that do not natively support the PERCENTILE_DISC
+        aggregate function.
+
+        The rewritten expression selects the value at the specified quantile by:
+        - Ranking the rows within each partition.
+        - Calculating the number of rows (N) in each partition.
+        - Keeping only those rows where the rank is greater than INTEGER((1.0 - p) * N),
+            where p is the quantile argument.
+        - Taking the maximum value among the kept rows.
+
+        Args:
+            child_connection: The HybridConnection containing the aggregate call to QUANTILE.
+            expr: The HybridFunctionExpr representing the QUANTILE aggregation.
+            create_new_calc: If True, injects new expressions into a new CALCULATE operation.
+
+        Returns:
+            A HybridFunctionExpr representing the rewritten aggregation using window functions.
         """
         assert expr.operator == pydop.QUANTILE
 
@@ -790,6 +807,7 @@ class HybridTranslator:
                 f"Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received {expr.args[1]!r}"
             )
 
+        assert len(expr.args) == 2
         # The implementation
         # MAX(KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
         data_expr: HybridExpr = expr.args[0]  # Column
