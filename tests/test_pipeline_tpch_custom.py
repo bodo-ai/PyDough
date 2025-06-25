@@ -51,6 +51,12 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_name_23,
     bad_name_24,
     bad_name_25,
+    bad_quantile_1,
+    bad_quantile_2,
+    bad_quantile_3,
+    bad_quantile_4,
+    bad_quantile_5,
+    bad_quantile_6,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -2890,6 +2896,54 @@ def test_pipeline_e2e_tpch_custom(
             None,
             "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, nations, key?",
             id="bad_cross_11",
+        ),
+        pytest.param(
+            bad_quantile_1,
+            None,
+            re.escape(
+                "Invalid operator invocation 'QUANTILE(orders.total_price)': Expected 2 arguments, received 1"
+            ),
+            id="bad_quantile_1",
+        ),
+        pytest.param(
+            bad_quantile_2,
+            None,
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE('orders.total_price', 0.7)"
+            ),
+            id="bad_quantile_2",
+        ),
+        pytest.param(
+            bad_quantile_3,
+            None,
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received 40"
+            ),
+            id="bad_quantile_3",
+        ),
+        pytest.param(
+            bad_quantile_4,
+            None,
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received -10"
+            ),
+            id="bad_quantile_4",
+        ),
+        pytest.param(
+            bad_quantile_5,
+            None,
+            re.escape(
+                "Non-expression argument orders of type ChildReferenceCollection found in operator 'QUANTILE'"
+            ),
+            id="bad_quantile_5",
+        ),
+        pytest.param(
+            bad_quantile_6,
+            None,
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE(20, 0.9)"
+            ),
+            id="bad_quantile_6",
         ),
     ],
 )

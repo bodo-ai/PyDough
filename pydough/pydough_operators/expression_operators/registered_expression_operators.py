@@ -60,6 +60,7 @@ __all__ = [
     "POWER",
     "PRESENT",
     "PREV",
+    "QUANTILE",
     "QUARTER",
     "RANKING",
     "RELAVG",
@@ -159,6 +160,9 @@ AVG = ExpressionFunctionOperator(
 )
 MEDIAN = ExpressionFunctionOperator(
     "MEDIAN", True, RequireNumArgs(1), ConstantType(NumericType())
+)
+QUANTILE = ExpressionFunctionOperator(
+    "QUANTILE", True, RequireNumArgs(2), ConstantType(NumericType())
 )
 POWER = ExpressionFunctionOperator(
     "POWER", False, RequireNumArgs(2), ConstantType(NumericType())
