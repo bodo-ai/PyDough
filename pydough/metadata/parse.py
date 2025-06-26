@@ -353,7 +353,7 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
             is_aggregation = function_type.startswith("aggregation")
             sql_alias: str = extract_string(
                 udf_definition,
-                "sql alias",
+                "sql function",
                 f"metadata for UDF definitions within {graph.error_name}",
             )
             func = SqlAliasExpressionFunctionOperator(
