@@ -154,6 +154,18 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
             HasPropertyWith("code", is_string).verify(
                 verified_json, "metadata for verified pydough analysis"
             )
+
+    # Add all of the UDF definitions to the graph.
+    if "functions" in graph_json:
+        udf_definitions: list = extract_array(graph_json, "functions", graph.error_name)
+        for udf_definition in udf_definitions:
+            is_json_object.verify(
+                udf_definition,
+                f"metadata for UDF definitions inside {graph.error_name}",
+            )
+            assert isinstance(udf_definition, dict)
+            parse_function_v2(graph, udf_definition)
+
     NoExtraKeys(GraphMetadata.allowed_fields).verify(graph_json, graph.error_name)
     for collection in graph.collections.values():
         assert isinstance(collection, CollectionMetadata)
@@ -299,3 +311,76 @@ def create_reverse_relationship(
         )
     )
     reverse_collection.add_property(reverse_property)
+
+
+def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
+    """
+    Parses the JSON object for a PyDough UDF definition in version 2 of the
+    PyDough metadata format.
+
+    Args:
+        `graph`: the metadata for the graph that the UDF would be added to.
+        The UDF will be added to this graph in-place.
+        `udf_definition`: the JSON object containing the metadata for the UDF.
+
+    Raises:
+        `PyDoughMetadataException`: if the JSON does not meet the necessary
+        structure properties.
+    """
+    from pydough.pydough_operators import (
+        ExpressionFunctionOperator,
+        SqlAliasExpressionFunctionOperator,
+        SqlMacroExpressionFunctionOperator,
+    )
+
+    # Extract the function name and type from the JSON.
+    function_name: str = extract_string(
+        udf_definition,
+        "name",
+        f"metadata for UDF definitions within {graph.error_name}",
+    )
+    function_type: str = extract_string(
+        udf_definition,
+        "type",
+        f"metadata for UDF definitions within {graph.error_name}",
+    ).lower()
+
+    # Create the appropriate function operator based on the type.
+    is_aggregation: bool
+    func: ExpressionFunctionOperator
+    match function_type:
+        case "scalar sql alias" | "aggregation sql alias":
+            is_aggregation = function_type.startswith("aggregation")
+            sql_alias: str = extract_string(
+                udf_definition,
+                "sql alias",
+                f"metadata for UDF definitions within {graph.error_name}",
+            )
+            func = SqlAliasExpressionFunctionOperator(
+                function_name,
+                sql_alias,
+                is_aggregation,
+                udf_definition.get("verifier", None),
+                udf_definition.get("deducer", None),
+                udf_definition.get("description", None),
+            )
+        case "scalar sql macro" | "aggregation sql macro":
+            is_aggregation = function_type.startswith("aggregation")
+            macro_text: str = extract_string(
+                udf_definition,
+                "macro text",
+                f"metadata for UDF definitions within {graph.error_name}",
+            )
+            func = SqlMacroExpressionFunctionOperator(
+                function_name,
+                macro_text,
+                is_aggregation,
+                udf_definition.get("verifier", None),
+                udf_definition.get("deducer", None),
+                udf_definition.get("description", None),
+            )
+        case _:
+            raise PyDoughMetadataException(
+                f"Unrecognized PyDough function type for function {function_name!r}: {function_type!r}"
+            )
+    graph.add_function(function_name, func)

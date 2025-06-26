@@ -9,10 +9,13 @@ __all__ = [
     "RequireMinArgs",
     "RequireNumArgs",
     "TypeVerifier",
+    "build_verifier_from_json",
 ]
 
 from abc import ABC, abstractmethod
 from typing import Any
+
+from pydough.metadata import PyDoughMetadataException
 
 
 class TypeVerifier(ABC):
@@ -175,3 +178,38 @@ class RequireCollection(TypeVerifier):
             else:
                 return False
         return True
+
+
+def build_verifier_from_json(json_data: dict[str, Any] | None) -> TypeVerifier:
+    """
+    Builds a type verifier from a JSON object.
+
+    Args:
+        `json_data`: the JSON object containing the verifier configuration, or
+        None if not provided.
+
+    Returns:
+        An instance of a `TypeVerifier` subclass based on the JSON data.
+    """
+    # If no JSON data is provided, return a verifier that accepts any arguments
+    if json_data is None:
+        return AllowAny()
+
+    if "type" not in json_data:
+        raise PyDoughMetadataException("Missing 'type' field in verifier JSON data")
+
+    match json_data["type"]:
+        case "fixed arguments":
+            if "value" not in json_data:
+                raise PyDoughMetadataException(
+                    "Missing 'value' field in fixed arguments verifier JSON data"
+                )
+            return RequireNumArgs(len(json_data["value"]))
+        case "argument range":
+            if "min" not in json_data or "max" not in json_data:
+                raise PyDoughMetadataException(
+                    "Missing 'min' or 'max' field in argument range verifier JSON data"
+                )
+            return RequireArgRange(json_data["min"], json_data["max"])
+        case other:
+            raise PyDoughMetadataException(f"Unknown verifier type string: {other!r}")

@@ -90,6 +90,8 @@ __all__ = [
     "STRIP",
     "SUB",
     "SUM",
+    "SqlAliasExpressionFunctionOperator",
+    "SqlMacroExpressionFunctionOperator",
     "UPPER",
     "VAR",
     "YEAR",
@@ -185,3 +187,5 @@ from .registered_expression_operators import (
     VAR,
     YEAR,
 )
+from .sql_alias_expression_function_operators import SqlAliasExpressionFunctionOperator
+from .sql_macro_expression_function_operators import SqlMacroExpressionFunctionOperator

@@ -47,6 +47,15 @@ class PyDoughExpressionOperator(PyDoughOperator):
         return self._public
 
     @property
+    def description(self) -> str | None:
+        """
+        An optional description of the operator. This can be used to
+        provide additional context or information about the operator's
+        functionality.
+        """
+        return None
+
+    @property
     @abstractmethod
     def function_name(self) -> str:
         """
