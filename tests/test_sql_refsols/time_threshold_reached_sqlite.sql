@@ -2,7 +2,7 @@ WITH _t3 AS (
   SELECT
     CAST((
       100.0 * SUM(sbtxshares) OVER (PARTITION BY DATE(sbtxdatetime, 'start of day') ORDER BY sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-    ) AS REAL) / SUM(sbtxshares) OVER (PARTITION BY DATE(sbtxdatetime, 'start of day')) AS pct_of_day,
+    ) AS REAL) / SUM(sbtxshares) OVER (PARTITION BY DATE(sbtxdatetime, 'start of day') ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS pct_of_day,
     sbtxdatetime,
     DATE(sbtxdatetime, 'start of day') AS txn_day
   FROM main.sbtransaction

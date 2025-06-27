@@ -6,7 +6,7 @@ WITH _t0 AS (
           ROW_NUMBER() OVER (ORDER BY wallet_merchant_balance_daily.balance DESC) - 1.0
         ) - (
           CAST((
-            COUNT(wallet_merchant_balance_daily.balance) OVER () - 1.0
+            COUNT(wallet_merchant_balance_daily.balance) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) - 1.0
           ) AS REAL) / 2.0
         )
       ) < 1.0

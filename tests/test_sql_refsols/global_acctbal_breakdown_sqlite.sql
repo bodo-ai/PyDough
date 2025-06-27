@@ -6,7 +6,7 @@ WITH _t0 AS (
           ROW_NUMBER() OVER (ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
         ) - (
           CAST((
-            COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER () - 1.0
+            COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) - 1.0
           ) AS REAL) / 2.0
         )
       ) < 1.0
@@ -19,7 +19,7 @@ WITH _t0 AS (
           ROW_NUMBER() OVER (ORDER BY c_acctbal DESC) - 1.0
         ) - (
           CAST((
-            COUNT(c_acctbal) OVER () - 1.0
+            COUNT(c_acctbal) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) - 1.0
           ) AS REAL) / 2.0
         )
       ) < 1.0
@@ -32,7 +32,7 @@ WITH _t0 AS (
           ROW_NUMBER() OVER (ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC) - 1.0
         ) - (
           CAST((
-            COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) OVER () - 1.0
+            COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) - 1.0
           ) AS REAL) / 2.0
         )
       ) < 1.0
