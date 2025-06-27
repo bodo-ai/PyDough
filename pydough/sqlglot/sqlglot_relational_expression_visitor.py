@@ -11,6 +11,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 from sqlglot.expressions import Star as SQLGlotStar
 
+import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
@@ -114,8 +115,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             lower, upper = lower_raw, upper_raw
 
         else:
-            # Otherwise, there is no frame
-            return None
+            # Otherwise, the frame us unbounded preceding to unbounded following
+            lower = upper = None
 
         spec_args: dict[str, str] = {"kind": "ROWS"}
 
@@ -249,6 +250,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "RELSIZE":
                 this = sqlglot_expressions.Count.from_arg_list([SQLGlotStar()])
                 window_spec = self.get_window_spec(window_expression.kwargs)
+            case _ if isinstance(
+                window_expression.op, pydop.SqlWindowAliasExpressionFunctionOperator
+            ):
+                this = sqlglot_expressions.Anonymous(
+                    this=window_expression.op.sql_function_alias, expressions=arg_exprs
+                )
+                if window_expression.op.allows_frame:
+                    window_spec = self.get_window_spec(window_expression.kwargs)
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"

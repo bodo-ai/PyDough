@@ -817,7 +817,7 @@
         "functions": [
             {
                 "name": "FORMAT_DATETIME",
-                "type": "scalar sql alias",
+                "type": "sql alias",
                 "sql function": "STRFTIME",
                 "description": "Formats a datetime value (second argument) into a string based on the format string (first argument). For example, `FORMAT_DATETIME('%Y-%m', d)` converts datetime value `d` into a string with the year followed by the month, separated by a dash.",
                 "input signature": {"type": "fixed arguments", "value": ["string", "datetime"]},
@@ -825,26 +825,85 @@
             },
             {
                 "name": "COMBINE_STRINGS",
-                "type": "aggregation sql alias",
+                "type": "sql alias",
+                "aggregation": true,
                 "sql function": "GROUP_CONCAT",
                 "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimeter (uses ',' if not provided).",
                 "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
                 "output signature": {"type": "constant", "value": "string"}
             },
             {
+                "name": "NVAL",
+                "type": "sql window alias",
+                "sql function": "NTH_VALUE",
+                "requires order": true,
+                "allows frame": true,
+                "description": "Returns the value of the first argument at the Nth row in the window, where N is the second argument. If N is greater than the number of rows in the window, returns NULL.",
+                "input signature": {"type": "fixed arguments", "value": ["unknown", "numeric"]},
+                "output signature": {"type": "select argument", "value": 0}
+            },
+            {
+                "name": "GCAT",
+                "type": "sql window alias",
+                "sql function": "GROUP_CONCAT",
+                "requires order": true,
+                "allows frame": true,
+                "description": "The same as COMBINE_STRINGS, but acts as a window function.",
+                "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
+                "output signature": {"type": "constant", "value": "string"}
+            },
+            {
+                "name": "RELMIN",
+                "type": "sql window alias",
+                "sql function": "MIN",
+                "requires order": true,
+                "allows frame": true,
+                "description": "Obtains the smallest value in the window.",
+                "input signature": {"type": "fixed arguments", "value": ["unknown"]},
+                "output signature": {"type": "select argument", "value": 0}
+            },
+            {
+                "name": "CUMULATIVE_DISTRIBUTION",
+                "type": "sql window alias",
+                "sql function": "CUME_DIST",
+                "requires order": true,
+                "allows frame": false,
+                "description": "Returns the ratio of rows that are less than or equal to the current row versus the total number of rows in the window.",
+                "input signature": {"type": "fixed arguments", "value": []},
+                "output signature": {"type": "constant", "value": "numeric"}
+            },
+            {
                 "name": "POSITIVE",
-                "type": "scalar sql macro",
-                "macro text": "{:1} > 0",
+                "type": "sql macro",
+                "macro text": "{0} > 0",
                 "description": "Returns true if the argument is greater than zero.",
                 "input signature": {"type": "fixed arguments", "value": ["numeric"]},
                 "output signature": {"type": "constant", "value": "bool"}
             },
             {
+                "name": "EPSILON",
+                "type": "sql macro",
+                "macro text": "ABS({0} - {1}) <= {2}",
+                "description": "Returns true if the gap between the first and second argument is at most the third argument.",
+                "input signature": {"type": "fixed arguments", "value": ["numeric", "numeric", "numeric"]},
+                "output signature": {"type": "constant", "value": "bool"}
+            },
+            {
                 "name": "PERCENTAGE",
-                "type": "aggregation sql macro",
-                "macro text": "(100.0 * SUM({:1})) / COUNT(*)",
+                "type": "sql macro",
+                "aggregation": true,
+                "macro text": "(100.0 * SUM({0})) / COUNT(*)",
                 "description": "Returns the percentage of rows where the first argument is True.",
                 "input signature": {"type": "fixed arguments", "value": ["numeric"]},
+                "output signature": {"type": "constant", "value": "numeric"}
+            },
+            {
+                "name": "POPULATION_COVARIANCE",
+                "type": "sql macro",
+                "aggregation": true,
+                "macro text": "(SUM({0} * {1}) - SUM({0}) * SUM({1}) / SUM(CASE WHEN {0} IS NOT NULL AND {1} IS NOT NULL THEN 1 END)) / SUM(CASE WHEN {0} IS NOT NULL AND {1} IS NOT NULL THEN 1 END)",
+                "description": "Returns the population covariance between the first and second argument, which is the average of the product of the deviations of each argument from their respective means.",
+                "input signature": {"type": "fixed arguments", "value": ["numeric", "numeric"]},
                 "output signature": {"type": "constant", "value": "numeric"}
             }
         ]

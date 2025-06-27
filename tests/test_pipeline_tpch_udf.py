@@ -11,7 +11,10 @@ import pytest
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from tests.test_pydough_functions.udf_pydough_functions import (
     sqlite_combine_strings,
+    sqlite_covar_pop,
     sqlite_format_datetime,
+    sqlite_nval,
+    sqlite_percent_epsilon,
     sqlite_percent_positive,
 )
 
@@ -78,6 +81,121 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "sqlite_percent_positive",
             ),
             id="sqlite_percent_positive",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_percent_epsilon,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "pct_e1": [0.0004],
+                        "pct_e10": [0.007],
+                        "pct_e100": [0.0696],
+                        "pct_e1000": [0.7385],
+                        "pct_e10000": [7.3967],
+                    }
+                ),
+                "sqlite_percent_epsilon",
+            ),
+            id="sqlite_percent_epsilon",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_covar_pop,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "cvp_ab_otp": [-0.204, -0.558, -7.817, -0.747, 0.995],
+                    }
+                ),
+                "sqlite_covar_pop",
+            ),
+            id="sqlite_covar_pop",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_nval,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "rname": ["AFRICA"] * 5
+                        + ["AMERICA"] * 5
+                        + ["ASIA"] * 5
+                        + ["EUROPE"] * 5
+                        + ["MIDDLE EAST"] * 5,
+                        "nname": [
+                            "ALGERIA",
+                            "ETHIOPIA",
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            "CHINA",
+                            "INDIA",
+                            "INDONESIA",
+                            "JAPAN",
+                            "VIETNAM",
+                            "FRANCE",
+                            "GERMANY",
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                            "EGYPT",
+                            "IRAN",
+                            "IRAQ",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                        ],
+                        "v1": ["BRAZIL"] * 25,
+                        "v2": ["ALGERIA"] * 5
+                        + ["ARGENTINA"] * 5
+                        + ["CHINA"] * 5
+                        + ["FRANCE"] * 5
+                        + ["EGYPT"] * 5,
+                        "v3": [
+                            "KENYA",
+                            "MOROCCO",
+                            "MOZAMBIQUE",
+                            None,
+                            None,
+                            "CANADA",
+                            "PERU",
+                            "UNITED STATES",
+                            None,
+                            None,
+                            "INDONESIA",
+                            "JAPAN",
+                            "VIETNAM",
+                            None,
+                            None,
+                            "ROMANIA",
+                            "RUSSIA",
+                            "UNITED KINGDOM",
+                            None,
+                            None,
+                            "IRAQ",
+                            "JORDAN",
+                            "SAUDI ARABIA",
+                            None,
+                            None,
+                        ],
+                        "v4": [None] + ["CHINA"] * 4 + [None] * 3 + ["CHINA"] * 17,
+                    }
+                ),
+                "sqlite_nval",
+            ),
+            id="sqlite_nval",
         ),
     ],
 )

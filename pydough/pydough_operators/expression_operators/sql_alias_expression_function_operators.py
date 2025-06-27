@@ -68,7 +68,7 @@ class SqlAliasExpressionFunctionOperator(ExpressionFunctionOperator):
 
     def equals(self, other: object) -> bool:
         return (
-            isinstance(other, ExpressionFunctionOperator)
-            and self.function_name == other.function_name
-            and self.is_aggregation == other.is_aggregation
+            isinstance(other, SqlAliasExpressionFunctionOperator)
+            and self.sql_function_alias == other.sql_function_alias
+            and super().equals(other)
         )

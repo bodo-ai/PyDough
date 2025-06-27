@@ -101,6 +101,7 @@ __all__ = [
     "SelectArgumentType",
     "SqlAliasExpressionFunctionOperator",
     "SqlMacroExpressionFunctionOperator",
+    "SqlWindowAliasExpressionFunctionOperator",
     "TypeVerifier",
     "UPPER",
     "VAR",
@@ -201,6 +202,7 @@ from .expression_operators import (
     PyDoughExpressionOperator,
     SqlAliasExpressionFunctionOperator,
     SqlMacroExpressionFunctionOperator,
+    SqlWindowAliasExpressionFunctionOperator,
 )
 from .operator_registry import builtin_registered_operators, get_operator_by_name
 from .type_inference import (
