@@ -13,12 +13,9 @@ WITH _t1 AS (
 ), _t0 AS (
   SELECT
     ROUND(avg_search_num_results, 2) AS avg_results,
-    ROUND(
-      (
-        100.0 * n_rows
-      ) / SUM(n_rows) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
-      2
-    ) AS pct_searches,
+    ROUND((
+      100.0 * n_rows
+    ) / SUM(n_rows) OVER (), 2) AS pct_searches,
     anything_t_name,
     anything_t_start_hour
   FROM _t1

@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    AVG(o_totalprice) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS global_avg,
+    AVG(o_totalprice) OVER () AS global_avg,
     o_totalprice
   FROM tpch.orders
   WHERE

@@ -269,8 +269,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             window_args["order"] = sqlglot_expressions.Order(
                 this=None, expressions=order_exprs
             )
-        if window_spec is not None:
-            window_args["spec"] = window_spec
+            if window_spec is not None:
+                window_args["spec"] = window_spec
         self._stack.append(sqlglot_expressions.Window(**window_args))
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:

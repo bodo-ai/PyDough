@@ -14,7 +14,7 @@ WITH _s5 AS (
     ROUND(
       CAST((
         100.0 * COALESCE(_s5.n_rows, 0)
-      ) AS REAL) / SUM(COALESCE(_s5.n_rows, 0)) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
+      ) AS REAL) / SUM(COALESCE(_s5.n_rows, 0)) OVER (),
       2
     ) AS pct,
     errors.er_name

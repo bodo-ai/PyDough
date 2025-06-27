@@ -2,7 +2,7 @@ WITH _t AS (
   SELECT
     lineitem.l_extendedprice,
     lineitem.l_quantity,
-    AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS _w
+    AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey) AS _w
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_partkey = part.p_partkey

@@ -11,12 +11,9 @@ WITH _t1 AS (
     times.t_name
 ), _t0 AS (
   SELECT
-    ROUND(
-      CAST((
-        100.0 * n_rows
-      ) AS REAL) / SUM(n_rows) OVER (ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
-      2
-    ) AS pct_searches,
+    ROUND(CAST((
+      100.0 * n_rows
+    ) AS REAL) / SUM(n_rows) OVER (), 2) AS pct_searches,
     anything_t_name,
     anything_t_start_hour
   FROM _t1
