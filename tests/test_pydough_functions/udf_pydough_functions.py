@@ -82,11 +82,15 @@ def sqlite_covar_pop():
 
 
 def sqlite_nval():
-    return regions.nations.CALCULATE(
-        rname=region.name,
-        nname=name,
-        v1=NVAL(name, 3, by=name),
-        v2=NVAL(name, 1, by=name, per="regions"),
-        v3=NVAL(name, 2, by=name, per="regions", frame=(1, None)),
-        v4=NVAL(name, 5, by=name, cumulative=True),
-    ).ORDER_BY(rname.ASC(), nname.ASC())
+    return (
+        regions.CALCULATE(rname=name)
+        .nations.CALCULATE(
+            rname=rname,
+            nname=name,
+            v1=NVAL(name, 3, by=name),
+            v2=NVAL(name, 1, by=name, per="regions"),
+            v3=NVAL(name, 2, by=name, per="regions", frame=(1, None)),
+            v4=NVAL(name, 5, by=name, cumulative=True),
+        )
+        .ORDER_BY(rname.ASC(), nname.ASC())
+    )
