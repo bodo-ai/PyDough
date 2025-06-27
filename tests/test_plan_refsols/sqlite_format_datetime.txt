@@ -1,4 +1,4 @@
 ROOT(columns=[('key', o_orderkey), ('d1', d1), ('d2', d2), ('d3', d3)], orderings=[(o_totalprice):asc_first])
- LIMIT(limit=Literal(value=10, type=NumericType()), columns={'d1': d1, 'd2': d2, 'd3': d3, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice}, orderings=[(o_totalprice):asc_first])
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'d1': d1, 'd2': d2, 'd3': d3, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice}, orderings=[(o_totalprice):asc_first])
   PROJECT(columns={'d1': FORMAT_DATETIME('%d/%m/%Y':string, o_orderdate), 'd2': FORMAT_DATETIME('%Y:%j':string, o_orderdate), 'd3': INTEGER(FORMAT_DATETIME('%s':string, o_orderdate)), 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice})
    SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey, 'o_totalprice': o_totalprice})

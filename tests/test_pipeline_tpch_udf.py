@@ -9,7 +9,11 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from tests.test_pydough_functions.udf_pydough_functions import sqlite_format_datetime
+from tests.test_pydough_functions.udf_pydough_functions import (
+    sqlite_combine_strings,
+    sqlite_format_datetime,
+    sqlite_percent_positive,
+)
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher
 
@@ -43,7 +47,38 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "sqlite_format_datetime",
             ),
             id="sqlite_format_datetime",
-        )
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_combine_strings,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "s1": ["AFRICA,AMERICA,ASIA,EUROPE,MIDDLE EAST"],
+                        "s2": ["AFRICA, AMERICA, ASIA, MIDDLE EAST"],
+                        "s3": ["AABCEEFGIIIIJJKMMPCRSVRUU"],
+                        "s4": ["NOT SPECIFIED <=> MEDIUM <=> URGENT <=> LOW <=> HIGH"],
+                    }
+                ),
+                "sqlite_combine_strings",
+            ),
+            id="sqlite_combine_strings",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_percent_positive,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "pct_cust_positive": [90.8, 90.81, 90.96, 90.97, 90.82],
+                        "pct_supp_positive": [90.49, 91.94, 90.46, 91.04, 91.73],
+                    }
+                ),
+                "sqlite_percent_positive",
+            ),
+            id="sqlite_percent_positive",
+        ),
     ],
 )
 def tpch_sqlite_udf_pipeline_test_data(request) -> PyDoughPandasTest:

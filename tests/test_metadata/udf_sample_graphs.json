@@ -846,14 +846,6 @@
                 "description": "Returns the percentage of rows where the first argument is True.",
                 "input signature": {"type": "fixed arguments", "value": ["numeric"]},
                 "output signature": {"type": "constant", "value": "numeric"}
-            },
-            {
-                "name": "REGR_COUNT",
-                "type": "aggregation sql macro",
-                "macro text": "SUM(CASE WHEN {:1} IS NOT NULL AND {:2} IS NOT NULL THEN 1 END)",
-                "description": "Returns how many rows have a non-null pair of the two arguments.",
-                "input signature": {"type": "fixed arguments", "value": ["any", "any"]},
-                "output signature": {"type": "constant", "value": "numeric"}
             }
         ]
     }
