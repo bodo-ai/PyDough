@@ -1,7 +1,7 @@
 SELECT
   MAX(
     CASE
-      WHEN CAST(0.3 * COUNT(o_totalprice) OVER () AS INTEGER) < ROW_NUMBER() OVER (ORDER BY o_totalprice DESC)
+      WHEN CAST(0.30000000000000004 * COUNT(o_totalprice) OVER () AS INTEGER) < ROW_NUMBER() OVER (ORDER BY o_totalprice DESC)
       THEN o_totalprice
       ELSE NULL
     END

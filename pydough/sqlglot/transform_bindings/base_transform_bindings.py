@@ -1701,22 +1701,23 @@ class BaseTransformBindings:
             PERCENTILE_DISC(p) WITHIN GROUP (ORDER BY X)
 
         Args:
-            args: A list of two SQLGlot expressions, where args[0] is the column or
-                expression to order by (X), and args[1] is the quantile value (p) between 0 and 1.
+            args: A list of two SQLGlot expressions, where args[0] is the column
+            or expression to order by (X), and args[1] is the quantile value (p)
+            between 0 and 1.
             types: The PyDough types of the arguments.
 
         Returns:
-            A SQLGlotExpression representing the PERCENTILE_DISC(p) WITHIN GROUP (ORDER BY X)
+            A SQLGlotExpression representing the PERCENTILE_DISC(p) WITHIN GROUP
+            (ORDER BY X)
             aggregate function.
         """
 
         assert len(args) == 2
 
-        # validation
+        # Validate that the second argument is a number between 0 and 1 (inclusive)
         if (
             not isinstance(args[1], sqlglot_expressions.Literal)
             or args[1].is_string
-            # or not isinstance(args[1].this, (int, float))
             or not (0.0 <= float(args[1].this) <= 1.0)
         ):
             raise ValueError(

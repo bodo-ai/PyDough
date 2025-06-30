@@ -11,81 +11,63 @@ WITH _s0 AS (
   SELECT
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.1
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.9 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_0,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.01
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.99 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_1,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.25
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.75 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_2,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.75
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.25 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_3,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.9
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.09999999999999998 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_4,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.99
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.010000000000000009 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_5,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 1.0
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.0 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_6,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.5
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(0.5 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END
     ) AS agg_7,
     MAX(
       CASE
-        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST((
-          1.0 - 0.0
-        ) * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        WHEN ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC) > CAST(1.0 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
         THEN orders.o_totalprice
         ELSE NULL
       END

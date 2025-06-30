@@ -775,24 +775,29 @@ class HybridTranslator:
         create_new_calc: bool,
     ) -> HybridFunctionExpr:
         """
-        Rewrites a QUANTILE aggregation call into an equivalent expression using window functions.
-        This is typically used for dialects that do not natively support the PERCENTILE_DISC
+        Rewrites a QUANTILE aggregation call into an equivalent expression using
+        window functions.
+        This is typically used for dialects that do not natively support the
+        PERCENTILE_DISC
         aggregate function.
 
         The rewritten expression selects the value at the specified quantile by:
         - Ranking the rows within each partition.
         - Calculating the number of rows (N) in each partition.
-        - Keeping only those rows where the rank is greater than INTEGER((1.0 - p) * N),
-            where p is the quantile argument.
+        - Keeping only those rows where the rank is greater than
+        INTEGER((1.0 - p) * N), where p is the quantile argument.
         - Taking the maximum value among the kept rows.
 
         Args:
-            child_connection: The HybridConnection containing the aggregate call to QUANTILE.
+            child_connection: The HybridConnection containing the aggregate call
+            to QUANTILE.
             expr: The HybridFunctionExpr representing the QUANTILE aggregation.
-            create_new_calc: If True, injects new expressions into a new CALCULATE operation.
+            create_new_calc: If True, injects new expressions into a new CALCULATE
+            operation.
 
         Returns:
-            A HybridFunctionExpr representing the rewritten aggregation using window functions.
+            A HybridFunctionExpr representing the rewritten aggregation using
+            window functions.
         """
         assert expr.operator == pydop.QUANTILE
 
@@ -811,8 +816,7 @@ class HybridTranslator:
         # The implementation
         # MAX(KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
         data_expr: HybridExpr = expr.args[0]  # Column
-        p: HybridExpr = expr.args[1]  # percentage
-        one: HybridExpr = HybridLiteralExpr(Literal(1.0, NumericType()))
+        expr.args[1]  # percentage
 
         assert child_connection.subtree.agg_keys is not None
         partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
@@ -828,7 +832,9 @@ class HybridTranslator:
         )
 
         # (1.0-args[1])
-        sub: HybridExpr = HybridFunctionExpr(pydop.SUB, [one, p], NumericType())
+        sub: HybridExpr = HybridLiteralExpr(
+            Literal(1.0 - float(expr.args[1].literal.value), NumericType())
+        )
 
         # (1.0-args[1]) * N
         product: HybridExpr = HybridFunctionExpr(pydop.MUL, [sub, rows], NumericType())
