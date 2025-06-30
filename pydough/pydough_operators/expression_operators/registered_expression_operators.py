@@ -11,6 +11,7 @@ __all__ = [
     "BAN",
     "BOR",
     "BXR",
+    "CEIL",
     "CONTAINS",
     "COUNT",
     "DATEDIFF",
@@ -24,6 +25,7 @@ __all__ = [
     "EQU",
     "FIND",
     "FLOAT",
+    "FLOOR",
     "GEQ",
     "GRT",
     "HAS",
@@ -252,6 +254,12 @@ PRESENT = ExpressionFunctionOperator(
 )
 ROUND = ExpressionFunctionOperator(
     "ROUND", False, RequireArgRange(1, 2), SelectArgumentType(0)
+)
+CEIL = ExpressionFunctionOperator(
+    "CEIL", False, RequireNumArgs(1), ConstantType(NumericType())
+)
+FLOOR = ExpressionFunctionOperator(
+    "FLOOR", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 MONOTONIC = ExpressionFunctionOperator(
     "MONOTONIC", False, RequireMinArgs(1), ConstantType(BooleanType())

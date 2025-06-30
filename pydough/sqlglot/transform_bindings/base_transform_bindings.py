@@ -195,6 +195,10 @@ class BaseTransformBindings:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
                 return self.convert_round(args, types)
+            case pydop.CEIL:
+                return self.convert_ceil(args, types)
+            case pydop.FLOOR:
+                return self.convert_floor(args, types)
             case pydop.ISIN:
                 return self.convert_isin(args, types)
             case pydop.PRESENT:
@@ -1217,6 +1221,44 @@ class BaseTransformBindings:
             this=args[0],
             decimals=precision_glot,
         )
+
+    def convert_ceil(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `CEIL(X)`.
+
+        Args:
+            `args`: The operands to `CEIL`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `CEIL`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `CEIL`.
+        """
+        assert len(args) == 1
+        return sqlglot_expressions.Ceil(this=args[0], expressions=args)
+
+    def convert_floor(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `FLOOR(X)`.
+
+        Args:
+            `args`: The operands to `FLOOR`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `FLOOR`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `FLOOR`.
+        """
+        assert len(args) == 1
+        return sqlglot_expressions.Floor(this=args[0], expressions=args)
 
     def convert_datediff(
         self,
