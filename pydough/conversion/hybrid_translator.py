@@ -816,7 +816,6 @@ class HybridTranslator:
         # The implementation
         # MAX(KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
         data_expr: HybridExpr = expr.args[0]  # Column
-        expr.args[1]  # percentage
 
         assert child_connection.subtree.agg_keys is not None
         partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
