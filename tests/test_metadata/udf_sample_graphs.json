@@ -856,7 +856,7 @@
                 "name": "RELMIN",
                 "type": "sql window alias",
                 "sql function": "MIN",
-                "requires order": true,
+                "requires order": false,
                 "allows frame": true,
                 "description": "Obtains the smallest value in the window.",
                 "input signature": {"type": "fixed arguments", "value": ["unknown"]},

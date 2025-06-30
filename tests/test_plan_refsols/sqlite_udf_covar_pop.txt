@@ -9,5 +9,5 @@ ROOT(columns=[('region_name', r_name), ('cvp_ab_otp', cvp_ab_otp)], orderings=[(
       FILTER(condition=c_mktsegment == 'BUILDING':string, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
        SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_mktsegment': c_mktsegment, 'c_nationkey': c_nationkey})
      PROJECT(columns={'expr_1': o_totalprice / 1000000.0:numeric, 'o_custkey': o_custkey})
-      FILTER(condition=YEAR(o_orderdate) == 1998:numeric, columns={'o_custkey': o_custkey, 'o_totalprice': o_totalprice})
-       SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_totalprice': o_totalprice})
+      FILTER(condition=YEAR(o_orderdate) == 1998:numeric & o_orderpriority == '2-HIGH':string, columns={'o_custkey': o_custkey, 'o_totalprice': o_totalprice})
+       SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderpriority': o_orderpriority, 'o_totalprice': o_totalprice})

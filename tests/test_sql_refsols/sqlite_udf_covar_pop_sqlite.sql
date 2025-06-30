@@ -30,6 +30,7 @@ WITH _s5 AS (
   JOIN tpch.orders AS orders
     ON CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1998
     AND customer.c_custkey = orders.o_custkey
+    AND orders.o_orderpriority = '2-HIGH'
   GROUP BY
     nation.n_regionkey
 )

@@ -416,8 +416,8 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
             func = SqlWindowAliasExpressionFunctionOperator(
                 function_name,
                 sql_alias,
-                required_order,
                 allows_frame,
+                required_order,
                 verifier,
                 deducer,
                 description,

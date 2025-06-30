@@ -10,12 +10,15 @@ import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from tests.test_pydough_functions.udf_pydough_functions import (
-    sqlite_combine_strings,
-    sqlite_covar_pop,
-    sqlite_format_datetime,
-    sqlite_nval,
-    sqlite_percent_epsilon,
-    sqlite_percent_positive,
+    sqlite_udf_combine_strings,
+    sqlite_udf_covar_pop,
+    sqlite_udf_cumulative_distribution,
+    sqlite_udf_format_datetime,
+    sqlite_udf_gcat,
+    sqlite_udf_nval,
+    sqlite_udf_percent_epsilon,
+    sqlite_udf_percent_positive,
+    sqlite_udf_relmin,
 )
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher
@@ -25,7 +28,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
     params=[
         pytest.param(
             PyDoughPandasTest(
-                sqlite_format_datetime,
+                sqlite_udf_format_datetime,
                 "TPCH_SQLITE_UDFS",
                 lambda: pd.DataFrame(
                     {
@@ -47,13 +50,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                         "d3": [893289600, 703555200, 696816000, 753840000, 758505600],
                     }
                 ),
-                "sqlite_format_datetime",
+                "sqlite_udf_format_datetime",
             ),
-            id="sqlite_format_datetime",
+            id="sqlite_udf_format_datetime",
         ),
         pytest.param(
             PyDoughPandasTest(
-                sqlite_combine_strings,
+                sqlite_udf_combine_strings,
                 "TPCH_SQLITE_UDFS",
                 lambda: pd.DataFrame(
                     {
@@ -63,13 +66,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                         "s4": ["NOT SPECIFIED <=> MEDIUM <=> URGENT <=> LOW <=> HIGH"],
                     }
                 ),
-                "sqlite_combine_strings",
+                "sqlite_udf_combine_strings",
             ),
-            id="sqlite_combine_strings",
+            id="sqlite_udf_combine_strings",
         ),
         pytest.param(
             PyDoughPandasTest(
-                sqlite_percent_positive,
+                sqlite_udf_percent_positive,
                 "TPCH_SQLITE_UDFS",
                 lambda: pd.DataFrame(
                     {
@@ -78,13 +81,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                         "pct_supp_positive": [90.49, 91.94, 90.46, 91.04, 91.73],
                     }
                 ),
-                "sqlite_percent_positive",
+                "sqlite_udf_percent_positive",
             ),
-            id="sqlite_percent_positive",
+            id="sqlite_udf_percent_positive",
         ),
         pytest.param(
             PyDoughPandasTest(
-                sqlite_percent_epsilon,
+                sqlite_udf_percent_epsilon,
                 "TPCH_SQLITE_UDFS",
                 lambda: pd.DataFrame(
                     {
@@ -95,13 +98,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                         "pct_e10000": [7.3967],
                     }
                 ),
-                "sqlite_percent_epsilon",
+                "sqlite_udf_percent_epsilon",
             ),
-            id="sqlite_percent_epsilon",
+            id="sqlite_udf_percent_epsilon",
         ),
         pytest.param(
             PyDoughPandasTest(
-                sqlite_covar_pop,
+                sqlite_udf_covar_pop,
                 "TPCH_SQLITE_UDFS",
                 lambda: pd.DataFrame(
                     {
@@ -112,16 +115,16 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                             "EUROPE",
                             "MIDDLE EAST",
                         ],
-                        "cvp_ab_otp": [-0.204, -0.558, -7.817, -0.747, 0.995],
+                        "cvp_ab_otp": [0.388, -10.511, 1.734, 5.069, -14.71],
                     }
                 ),
-                "sqlite_covar_pop",
+                "sqlite_udf_covar_pop",
             ),
-            id="sqlite_covar_pop",
+            id="sqlite_udf_covar_pop",
         ),
         pytest.param(
             PyDoughPandasTest(
-                sqlite_nval,
+                sqlite_udf_nval,
                 "TPCH_SQLITE_UDFS",
                 lambda: pd.DataFrame(
                     {
@@ -193,9 +196,94 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                         "v4": [None] + ["CHINA"] * 4 + [None] * 3 + ["CHINA"] * 17,
                     }
                 ),
-                "sqlite_nval",
+                "sqlite_udf_nval",
             ),
-            id="sqlite_nval",
+            id="sqlite_udf_nval",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_udf_gcat,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "ASIA",
+                            "EUROPE",
+                            "MIDDLE EAST",
+                        ],
+                        "c1": ["AFRICA-AMERICA-ASIA-EUROPE-MIDDLE EAST"] * 5,
+                        "c2": ["MIDDLE EAST-EUROPE-ASIA-AMERICA-AFRICA"] * 5,
+                        "c3": [
+                            "AFRICA",
+                            "AFRICA-AMERICA",
+                            "AFRICA-AMERICA-ASIA",
+                            "AFRICA-AMERICA-ASIA-EUROPE",
+                            "AFRICA-AMERICA-ASIA-EUROPE-MIDDLE EAST",
+                        ],
+                    }
+                ),
+                "sqlite_udf_gcat",
+            ),
+            id="sqlite_udf_gcat",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_udf_relmin,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "month": list(range(1, 13)),
+                        "n_orders": [
+                            3922,
+                            3585,
+                            3946,
+                            3723,
+                            3900,
+                            3807,
+                            3820,
+                            3950,
+                            3771,
+                            3758,
+                            3804,
+                            3891,
+                        ],
+                        "m1": [3585] * 12,
+                        "m2": [3922] + [3585] * 11,
+                        "m3": [
+                            3585,
+                            3585,
+                            3585,
+                            3723,
+                            3723,
+                            3807,
+                            3807,
+                            3771,
+                            3758,
+                            3758,
+                            3758,
+                            3804,
+                        ],
+                    }
+                ),
+                "sqlite_udf_relmin",
+            ),
+            id="sqlite_udf_relmin",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_udf_cumulative_distribution,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "c": [0.1489, 0.5508, 0.7007, 0.8491, 1.0],
+                        "n": [26652, 71958, 26843, 26582, 27010],
+                    }
+                ),
+                "sqlite_udf_cumulative_distribution",
+            ),
+            id="sqlite_udf_cumulative_distribution",
         ),
     ],
 )
