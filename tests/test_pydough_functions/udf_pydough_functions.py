@@ -1,5 +1,5 @@
 """
-TODO
+PyDough function definitions using user defined functions from the graphs.
 """
 
 # ruff: noqa

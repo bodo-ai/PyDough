@@ -1,5 +1,7 @@
 """
-TODO
+Definition of function operator class for operators that can be created by
+users and are a 1:1 correspondence with a SQL function in the database dialect.
+Only used for scalar & aggregation functions, not window functions.
 """
 
 __all__ = ["SqlAliasExpressionFunctionOperator"]
@@ -17,7 +19,12 @@ from .expression_function_operators import ExpressionFunctionOperator
 
 class SqlAliasExpressionFunctionOperator(ExpressionFunctionOperator):
     """
-    TODO
+    Implementation class for PyDough operators that return an expression and
+    represent a function call that is a 1:1 alias to a function call in the
+    database SQL dialect. For example, a function `FORMAT_DATETIME` could be an
+    alias for the sqlite function `STRFTIME`.
+
+    This is only for scalar or aggregation functions, not window functions.
     """
 
     def __init__(

@@ -1,5 +1,7 @@
 """
-TODO
+Definition of the function operator class for scalar/aggregation operators
+that are defined by a user by providing SQL text that acts as a macro that the
+arguments are injected into.
 """
 
 __all__ = ["SqlMacroExpressionFunctionOperator"]
@@ -17,7 +19,11 @@ from .expression_function_operators import ExpressionFunctionOperator
 
 class SqlMacroExpressionFunctionOperator(ExpressionFunctionOperator):
     """
-    TODO
+    Implementation class for PyDough operators that return an expression
+    and represent a function call but are defined by a user-provided SQL
+    text macro that specifies how the arguments should be injected into
+    the SQL function call. The text should use Python format string style,
+    e.g. "CASE WHEN {0} THEN {1} ELSE {2}".
     """
 
     def __init__(

@@ -1,5 +1,7 @@
 """
-TODO
+Definition of function operator class for operators that can be created by
+users and are a 1:1 correspondence with a SQL window function in the database
+dialect.
 """
 
 __all__ = ["SqlWindowAliasExpressionFunctionOperator"]
@@ -17,7 +19,13 @@ from .expression_window_operators import ExpressionWindowOperator
 
 class SqlWindowAliasExpressionFunctionOperator(ExpressionWindowOperator):
     """
-    TODO
+    Implementation class for PyDough window function operators that are a 1:1
+    alias to a window function call in the database SQL dialect. For example,
+    a function `NVAL` could be an alias for the window function `NTH_VALUE`.
+
+    The arguments in the `OVER` clause are handled by the general PyDough
+    window function operator handling, so this class only deals with the
+    arguments.
     """
 
     def __init__(
