@@ -828,7 +828,7 @@
                 "type": "sql alias",
                 "aggregation": true,
                 "sql function": "GROUP_CONCAT",
-                "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimeter (uses ',' if not provided).",
+                "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).",
                 "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
                 "output signature": {"type": "constant", "value": "string"}
             },

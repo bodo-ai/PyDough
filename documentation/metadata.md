@@ -41,6 +41,7 @@ The core components of the JSON file structure are as follows:
 - Specification for the remaining fields when version is set to V2:
   - `collections` (required): an array of the metadata for each collection in the graph ([see here for more details](#collections))
   - `relationships` (required): an array of the metadata for each relationship in the graph ([see here for more details](#relationships))
+  - `functions` (optional): an array of the metadata for various additional function definitions defined for use within the graph ([see here for more details](#functions))
   - `additional definitions` (optional): an array of strings where each string is a sentence defining a concept/definition within the semantical context of the graph, such as the vocabulary for a specific kind of analysis and how to compute it in terms of the collections/relationships.
   - `verified pydough analysis` (optional): an array of JSON objects where each object represents an instance of a question & answer pair with PyDough using the data from the graph. The object has two fields that are both strings: `question` maps to the question being asked, and `code` is the PyDough code that solves the question using hte graph (can be multiline).
   - `extra semantic info` (optional): an object containing arbitrary additional semantic information about the entire graph (internal use only).
@@ -52,6 +53,7 @@ The core components of the JSON file structure are as follows:
     "version": "V2",
     "collections": [...],
     "relationships": [...],
+    "funcitons": [...],
     "additional definitions": [...]
     "verified pydough analysis": [
       {"question": ..., "code": ...},
@@ -147,7 +149,7 @@ Example of the structure of the metadata for a table column property:
 ## Relationships
 
 Every JSON object describing a relationship between two PyDough collection has the following fields:
-- `name` (required): the name of the relationshp, which must be a valid PyDough identifier and must not overlap with the name of other properties/relationships from the source collection.
+- `name` (required): the name of the relationship, which must be a valid PyDough identifier and must not overlap with the name of other properties/relationships from the source collection.
 - `type` (required): the type of PyDough relationship. The currently supported values are ["simple join"](#relationship-type-simple-join), ["general join"](#relationship-type-general-join), ["cartesian product"](#relationship-type-cartesian-product), ["custom"](#relationship-type-custom) and ["reverse"](#relationship-type-reverse)
 - `description` (optional): a semantic description of the relationship's significance.
 - `synonyms` (optional): a list of strings of alternative names for the relationship, for semantic understanding.
@@ -265,17 +267,78 @@ Example of the structure of the metadata for a reverse (flips the earlier define
 <!-- TOC --><a name="functions"></a>
 ## Functions
 
-TODO
+Every JSON object describing a function has the following fields:
+- `name` (required): the name of the function, which must be a valid PyDough identifier and must not overlap with the name of other collections/properties/relationships/functions within the graph. This name will become reserved like other function names in PyDough (`COUNT`, `LOWER`, etc.)
+- `type` (required): the type of function definition. The currently supported values are ["sql alias"](#function-type-sql-alias), ["sql window alias"](#function-type-sql-window-alias) and ["sql macro"](#function-type-sql-macro).
+- `description` (optional): a semantic description of what the function does significance.
+- `input signature` (optional): a JSON object describing the allowed types of inputs to the function. [See here](#function-verifiers) for the specification of these objects.
+- `input signature` (optional): a JSON object describing the output type of a call to the function. [See here](#function-deducers) for the specification of these objects.
 
 <!-- TOC --><a name="function-type-sql-alias"></a>
 ### Function Type: SQL Alias
 
-TODO
+A function of this type is intended to map to a function in the SQL dialect of the database being used in a 1:1 manner. E.g. if `FOO` in PyDough is an alias for `BAR` in SQL, then `FOO(x, y, z)` becomes `BAR(x, y, z)`. Functions of this type can only be scalar functions or aggregation functions, not window functions. Functions of this type have a type string of "sql alias" and have the following additional key-value pairs in their metadata JSON object:
+
+- `sql function` (required): a string indicating the name of the function in the SQL dialect that calls to this function should correspond to.
+- `aggregation` (optional): a boolean indicating whether the function is an aggregation function, as opposed to a scalar function. The default value is `false` (indicating it is a scalar function).
+
+Example of the structure of the metadata for a SQL Alias function named `DATE_FORMAT` (a 1:1 mapping to the sqlite `STRFTIME` scalar function):
+
+```json
+{
+  "name": "FORMAT_DATETIME",
+  "type": "sql alias",
+  "sql function": "STRFTIME",
+  "description": "Formats a datetime value (second argument) into a string based on the format string (first argument). For example, `FORMAT_DATETIME('%Y-%m', d)` converts datetime value `d` into a string with the year followed by the month, separated by a dash.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
+
+Example of the structure of the metadata for a SQL Alias function named `COMBINE_STRINGS` (a 1:1 mapping to the sqlite `GROUP_CONCAT` aggregation function):
+
+```json
+{
+  "name": "COMBINE_STRINGS",
+  "type": "sql alias",
+  "sql function": "GROUP_CONCAT",
+  "aggregation": true,
+  "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
 
 <!-- TOC --><a name="function-type-sql-window-alias"></a>
 ### Function Type: SQL Window Alias
 
-TODO
+A function of this type is intended to map to a window function in the SQL dialect of the database being used in a 1:1 manner. E.g. if `FOO` in PyDough is an alias for `BAR` in SQL, then `FOO(x, ...)` becomes `BAR(x) OVER (...)`. The `OVER` clause of the window function in SQL is handled by the standard optional keyword arguments to window functions in PyDough (`by`, `per`, `cumulative`, `frame`). Functions of this type have a type string of "sql window alias" and have the following additional key-value pairs in their metadata JSON object:
+
+- `sql function` (required): a string indicating the name of the window function in the SQL dialect that calls to this function should correspond to.
+- `requires order` (optional): a boolean indicating whether the function requires a `by` clause. The default value is `false` (indicating it does not require a `by` clause).
+- `requires order` (optional): a boolean indicating whether the function allows window frames, either via `cumulative=True` or by providing `frame=...`. The default value is `false` (indicating it does not allow window frames).
+
+These optional arguments work together in the following manner:
+
+|  | **requires order: true** | **requires order: false** |
+|---|---|---|
+| **allows frame: true** | The function must always be called with a by clause, but can optionally be called with a cumulative/frame. | The function can be called with or without a by clause, but if it does have a by clause it must have a cumulative/frame. |
+| **allows frame: false** | The function must always be called with a by clause, but it cannot be called with a cumulative/frame. | The function cannot be called with a by clause, nor can it be called with a cumulative/frame. |
+
+Example of the structure of the metadata for a SQL Alias function named `RELMIN` (a 1:1 mapping to the sqlite `MIN` window function):
+
+```json
+{
+  "name": "RELMIN",
+  "type": "sql window alias",
+  "sql function": "MIN",
+  "requires order": false,
+  "allows frame": true,
+  "description": "Obtains the smallest value in the window.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
 
 <!-- TOC --><a name="function-type-sql-macro"></a>
 ### Function Type: SQL Macro
@@ -1174,7 +1237,7 @@ It also includes several function definitions that make sense in the context of 
         "type": "sql alias",
         "aggregation": true,
         "sql function": "GROUP_CONCAT",
-        "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimeter (uses ',' if not provided).",
+        "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).",
         "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
         "output signature": {"type": "constant", "value": "string"}
       },
