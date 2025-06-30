@@ -322,8 +322,8 @@ These optional arguments work together in the following manner:
 
 |  | **requires order: true** | **requires order: false** |
 |---|---|---|
-| **allows frame: true** | The function must always be called with a by clause, but can optionally be called with a cumulative/frame. | The function can be called with or without a by clause, but if it does have a by clause it must have a cumulative/frame. |
-| **allows frame: false** | The function must always be called with a by clause, but it cannot be called with a cumulative/frame. | The function cannot be called with a by clause, nor can it be called with a cumulative/frame. |
+| **allows frame: true** | The function must always be called with a `by` clause, but can optionally be called with a `cumulative`/`frame`. | The function can be called with or without a `by` clause, but if it does have a `by` clause it must have a `cumulative`/`frame`. |
+| **allows frame: false** | The function must always be called with a `by` clause, but it cannot be called with a `cumulative`/`frame`. | The function cannot be called with a `by` clause, nor can it be called with a `cumulative`/`frame`. |
 
 Example of the structure of the metadata for a SQL Alias function named `RELMIN` (a 1:1 mapping to the sqlite `MIN` window function):
 
