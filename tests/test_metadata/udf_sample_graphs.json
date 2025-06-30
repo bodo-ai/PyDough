@@ -900,7 +900,7 @@
                 "name": "PERCENTAGE",
                 "type": "sql macro",
                 "aggregation": true,
-                "macro text": "(100.0 * SUM({0})) / COUNT(*)",
+                "macro text": "(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)",
                 "description": "Returns the percentage of rows where the first argument is True.",
                 "input signature": {"type": "fixed arguments", "value": ["numeric"]},
                 "output signature": {"type": "constant", "value": "numeric"}

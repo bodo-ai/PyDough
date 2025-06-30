@@ -5,9 +5,12 @@ WITH _s0 AS (
   FROM tpch.nation
 ), _s3 AS (
   SELECT
-    ROUND(CAST((
-      100.0 * SUM(customer.c_acctbal > 0)
-    ) AS REAL) / COUNT(*), 2) AS pct_cust_positive,
+    ROUND(
+      CAST((
+        100.0 * SUM(CASE WHEN customer.c_acctbal > 0 THEN 1 END)
+      ) AS REAL) / COUNT(*),
+      2
+    ) AS pct_cust_positive,
     _s0.n_regionkey
   FROM _s0 AS _s0
   JOIN tpch.customer AS customer
@@ -16,9 +19,12 @@ WITH _s0 AS (
     _s0.n_regionkey
 ), _s7 AS (
   SELECT
-    ROUND(CAST((
-      100.0 * SUM(supplier.s_acctbal > 0)
-    ) AS REAL) / COUNT(*), 2) AS pct_supp_positive,
+    ROUND(
+      CAST((
+        100.0 * SUM(CASE WHEN supplier.s_acctbal > 0 THEN 1 END)
+      ) AS REAL) / COUNT(*),
+      2
+    ) AS pct_supp_positive,
     _s4.n_regionkey
   FROM _s0 AS _s4
   JOIN tpch.supplier AS supplier

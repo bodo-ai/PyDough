@@ -9,10 +9,22 @@ This page document the exact format that the JSON files containing PyDough metad
    * [Collection Type: Simple Table](#collection-type-simple-table)
 - [Properties](#properties)
    * [Property Type: Table Column](#property-type-table-column)
-- [Relationship](#relationship)
+- [Relationships](#relationships)
    * [Relationship Type: Simple Join](#relationship-type-simple-join)
    * [Relationship Type: General Join](#relationship-type-general-join)
    * [Relationship Type: Cartesian Product](#relationship-type-cartesian-product)
+   * [Relationship Type: Custom](#relationship-type-custom)
+   * [Relationship Type: Reverse](#relationship-type-reverse)
+- [Functions](#functions)
+   * [Function Type: SQL Alias](#function-type-sql-alias)
+   * [Function Type: SQL Window Alias](#function-type-sql-window-alias)
+   * [Function Type: SQL Macro](#function-type-sql-macro)
+- [Function Verifiers](#function-verifiers)
+  * [Function Verifier Type: Fixed Arguments](#function-verifier-type-fixed-arguments)
+  * [Function Verifier Type: Argument Range](#function-verifier-type-argument-range)
+- [Function Deducers](#function-deducers)
+  * [Function Deducer Type: Constant](#function-deducer-type-constant)
+  * [Function Deducer Type: Select Argument](#function-deducer-type-select-argument)
 - [PyDough Type Strings](#pydough-type-strings)
 - [Metadata Examples](#metadata-examples)
    * [Example: TPC-H](#example-tpch)
@@ -250,6 +262,56 @@ Example of the structure of the metadata for a reverse (flips the earlier define
 }
 ```
 
+<!-- TOC --><a name="functions"></a>
+## Functions
+
+TODO
+
+<!-- TOC --><a name="function-type-sql-alias"></a>
+### Function Type: SQL Alias
+
+TODO
+
+<!-- TOC --><a name="function-type-sql-window-alias"></a>
+### Function Type: SQL Window Alias
+
+TODO
+
+<!-- TOC --><a name="function-type-sql-macro"></a>
+### Function Type: SQL Macro
+
+TODO
+
+<!-- TOC --><a name="function-verifiers"></a>
+## Function Verifiers
+
+TODO
+
+<!-- TOC --><a name="function-verifier-type-fixed-arguments"></a>
+### Function Verifier Type: Fixed Arguments
+
+TODO
+
+<!-- TOC --><a name="function-verifier-type-argument-range"></a>
+### Function Verifier Type: Argument Range
+
+TODO
+
+<!-- TOC --><a name="function-deducers"></a>
+## Function Deducers
+
+TODO
+
+<!-- TOC --><a name="function-deducer-type-constant"></a>
+### Function Deducer Type: Constant
+
+TODO
+
+<!-- TOC --><a name="function-deducer-type-select-argument"></a>
+### Function Deducer Type: Select Argument
+
+TODO
+
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
@@ -273,6 +335,13 @@ The strings used in the type field for certain properties must be one of the fol
 ### Example: TPC-H
 
 This example of a PYDough metadata JSON contains a single knowledge graph for the TPC-H database ([see here for spec details](https://www.tpc.org/TPC_Documents_Current_Versions/pdf/TPC-H_v3.0.1.pdf)).
+
+It also includes several function definitions that make sense in the context of a SQLite Database:
+- `DATE_FORMAT(x, y)` is an alias for `STRFTIME(x, y)`
+- `COMBINE_STRINGS(x, y)` is an alias for `GROUP_CONCAT(x, y)`
+- `RELMIN(x, ...)` is an alias for `MIN(x) OVER (...)`
+- `POSITIVE(x)` is a macro for `x > 0`
+- `PERCENTAGE(x)` is a macro for `(100.0 * SUM(CASE WHEN x THEN 1 END)) / COUNT(*)`
 
 ```json
 [
@@ -1089,6 +1158,52 @@ This example of a PYDough metadata JSON contains a single knowledge graph for th
         "always matches": false,
         "description": "The orders that a customer has placed, each of which contains one or more line items",
         "synonyms": ["transactions", "purchases"]
+      }
+    ],
+    "functions": [
+      {
+        "name": "FORMAT_DATETIME",
+        "type": "sql alias",
+        "sql function": "STRFTIME",
+        "description": "Formats a datetime value (second argument) into a string based on the format string (first argument). For example, `FORMAT_DATETIME('%Y-%m', d)` converts datetime value `d` into a string with the year followed by the month, separated by a dash.",
+        "input signature": {"type": "fixed arguments", "value": ["string", "datetime"]},
+        "output signature": {"type": "constant", "value": "string"}
+      },
+      {
+        "name": "COMBINE_STRINGS",
+        "type": "sql alias",
+        "aggregation": true,
+        "sql function": "GROUP_CONCAT",
+        "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimeter (uses ',' if not provided).",
+        "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
+        "output signature": {"type": "constant", "value": "string"}
+      },
+      {
+        "name": "RELMIN",
+        "type": "sql window alias",
+        "sql function": "MIN",
+        "requires order": false,
+        "allows frame": true,
+        "description": "Obtains the smallest value in the window.",
+        "input signature": {"type": "fixed arguments", "value": ["unknown"]},
+        "output signature": {"type": "select argument", "value": 0}
+      },
+      {
+        "name": "POSITIVE",
+        "type": "sql macro",
+        "macro text": "{0} > 0",
+        "description": "Returns true if the argument is greater than zero.",
+        "input signature": {"type": "fixed arguments", "value": ["numeric"]},
+        "output signature": {"type": "constant", "value": "bool"}
+      },
+      {
+        "name": "PERCENTAGE",
+        "type": "sql macro",
+        "aggregation": true,
+        "macro text": "(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)",
+        "description": "Returns the percentage of rows where the first argument is True.",
+        "input signature": {"type": "fixed arguments", "value": ["numeric"]},
+        "output signature": {"type": "constant", "value": "numeric"}
       }
     ],
     "additional definitions": [
