@@ -253,6 +253,8 @@ class BaseTransformBindings:
                 return self.convert_smallest_or_largest(args, types, True)
             case pydop.COUNT:
                 return self.convert_count(args, types)
+            case pydop.GETPART:
+                return self.convert_get_part(args, types)
             case _:
                 raise NotImplementedError(
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
@@ -1729,3 +1731,245 @@ class BaseTransformBindings:
             return sqlglot_expressions.Count(this=args[0])
         else:
             raise ValueError(f"COUNT expects 0 or 1 argument, got {len(args)}")
+
+    def convert_get_part(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        TODO: DOCSTRING
+        """
+
+        # identifiers
+        split_parts: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="split_parts", quoted=False
+        )
+        part: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="part", quoted=False
+        )
+        params: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="params", quoted=False
+        )
+        part_count: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="part_count", quoted=False
+        )
+        part_index: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="part_index", quoted=False
+        )
+        idx: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="idx", quoted=False
+        )
+        total_parts: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="total_parts", quoted=False
+        )
+        input_identifier: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="input", quoted=False
+        )
+        delim: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="delim", quoted=False
+        )
+        rest: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="rest", quoted=False
+        )
+        original: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="original", quoted=False
+        )
+
+        # Literals
+        literal_0: SQLGlotExpression = sqlglot_expressions.Literal(
+            this=0, is_string=False
+        )
+        literal_1: SQLGlotExpression = sqlglot_expressions.Literal(
+            this=1, is_string=False
+        )
+        literal_empty: SQLGlotExpression = sqlglot_expressions.Literal(
+            this="", is_string=False
+        )
+
+        # columns and tables
+        column_part: SQLGlotExpression = sqlglot_expressions.Column(this=part)
+        column_part_index: SQLGlotExpression = sqlglot_expressions.Column(
+            this=part_index
+        )
+        column_input: SQLGlotExpression = sqlglot_expressions.Column(
+            this=input_identifier
+        )
+        column_delim: SQLGlotExpression = sqlglot_expressions.Column(this=delim)
+        column_rest: SQLGlotExpression = sqlglot_expressions.Column(this=rest)
+        column_original: SQLGlotExpression = sqlglot_expressions.Column(this=original)
+        table_split_parts: SQLGlotExpression = sqlglot_expressions.Table(
+            this=split_parts
+        )
+        table_params: SQLGlotExpression = sqlglot_expressions.Table(this=params)
+        table_part_count: SQLGlotExpression = sqlglot_expressions.Table(this=part_count)
+
+        # CASE
+        if_idx_greater_0: SQLGlotExpression = sqlglot_expressions.If(
+            this=sqlglot_expressions.GT(
+                this=sqlglot_expressions.Column(this=idx, table=params),
+                expression=literal_0,
+            ),
+            true=sqlglot_expressions.Column(this=idx, table=params),
+        )
+
+        if_idx_lower_0: SQLGlotExpression = sqlglot_expressions.If(
+            this=sqlglot_expressions.LT(
+                this=sqlglot_expressions.Column(this=idx, table=params),
+                expression=literal_0,
+            ),
+            true=sqlglot_expressions.Add(
+                this=sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Column(this=total_parts, table=part_count),
+                    expression=sqlglot_expressions.Column(this=idx, table=params),
+                ),
+                expresssion=literal_1,
+            ),
+        )
+
+        case_idx: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[if_idx_greater_0, if_idx_lower_0], default=literal_1
+        )
+
+        # fisrt CTE
+        select_params_table: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[
+                sqlglot_expressions.Alias(
+                    this=sqlglot_expressions.Column(
+                        this=args[0],  # the first string
+                    ),
+                    alias=input_identifier,
+                ),
+                sqlglot_expressions.Alias(
+                    this=args[1],  # the second string, delimiter
+                    alias=delim,
+                ),
+                sqlglot_expressions.Alias(
+                    this=sqlglot_expressions.Neg(
+                        this=args[2],  # the third arg, integer
+                    ),
+                    alias=idx,
+                ),
+            ]
+        )
+
+        # Second CTE
+        sub_union: SQLGlotExpression = sqlglot_expressions.Sub(
+            this=sqlglot_expressions.StrPosition(
+                this=sqlglot_expressions.DPipe(
+                    this=column_input, expression=column_delim, safe=True
+                ),
+                substr=column_delim,
+            ),
+            expression=literal_1,
+        )
+
+        select_union_cte: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[
+                sqlglot_expressions.Alias(this=literal_1, alias=part_index),
+                sqlglot_expressions.Alias(
+                    this=sqlglot_expressions.Substring(
+                        this=column_input, start=literal_1, length=sub_union
+                    ),
+                    alias=part,
+                ),
+                sqlglot_expressions.Alias(
+                    this=sqlglot_expressions.Substring(
+                        this=sqlglot_expressions.DPipe(
+                            this=column_input, expression=column_delim, safe=True
+                        ),
+                        start=sqlglot_expressions.Add(
+                            this=sqlglot_expressions.StrPosition(
+                                this=sqlglot_expressions.DPipe(
+                                    this=column_input,
+                                    expression=column_delim,
+                                    safe=True,
+                                ),
+                                substr=column_delim,
+                            ),
+                            expression=literal_1,
+                        ),
+                    ),
+                    alias=rest,
+                ),
+                sqlglot_expressions.Alias(this=column_input, alias=original),
+                sqlglot_expressions.Column(this=delim),
+            ],
+            from_=sqlglot_expressions.From(table_params),
+        )
+
+        #
+        second_union_select_cte: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[
+                sqlglot_expressions.Add(this=column_part_index, expression=literal_1),
+                sqlglot_expressions.Substring(
+                    this=column_rest,
+                    start=literal_1,
+                    length=sqlglot_expressions.Sub(
+                        this=sqlglot_expressions.StrPosition(
+                            this=column_rest, substr=column_delim
+                        ),
+                        expression=literal_1,
+                    ),
+                ),
+                sqlglot_expressions.Substring(
+                    this=column_rest,
+                    start=sqlglot_expressions.Add(
+                        this=sqlglot_expressions.StrPosition(
+                            this=column_rest,
+                            substr=column_delim,
+                        ),
+                        expression=literal_1,
+                    ),
+                ),
+                column_original,
+                column_delim,
+            ],
+            from_=table_split_parts,
+            where=sqlglot_expressions.Where(
+                this=sqlglot_expressions.NEQ(this=column_rest, expression=literal_empty)
+            ),
+        )
+
+        union_cte: SQLGlotExpression = sqlglot_expressions.Union(
+            this=select_union_cte, distinct=False, expression=second_union_select_cte
+        )
+
+        # Final select
+        result: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[column_part],
+            from_=sqlglot_expressions.From(this=table_split_parts),
+            joins=[
+                sqlglot_expressions.Join(this=table_params),
+                sqlglot_expressions.Join(this=table_part_count),
+            ],
+            where=sqlglot_expressions.Where(
+                this=sqlglot_expressions.EQ(this=column_part_index, expression=case_idx)
+            ),
+            with_=sqlglot_expressions.With(
+                expressions=[
+                    sqlglot_expressions.CTE(  # first CTE
+                        this=select_params_table,
+                        alias=sqlglot_expressions.TableAlias(this=params),
+                    ),
+                    sqlglot_expressions.CTE(
+                        this=union_cte,
+                        alias=sqlglot_expressions.TableAlias(this=split_parts),
+                    ),
+                    sqlglot_expressions.CTE(
+                        this=sqlglot_expressions.Select(
+                            expressions=[
+                                sqlglot_expressions.Alias(
+                                    this=sqlglot_expressions.Count(
+                                        this=sqlglot_expressions.Star(), big_int=True
+                                    ),
+                                    alias=total_parts,
+                                )
+                            ],
+                            from_=table_split_parts,
+                        ),
+                        alias=sqlglot_expressions.TableAlias(this=part_count),
+                    ),
+                ]
+            ),
+        )
+
+        return result
