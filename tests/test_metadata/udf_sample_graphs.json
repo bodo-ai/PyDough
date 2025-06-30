@@ -889,6 +889,14 @@
                 "output signature": {"type": "constant", "value": "bool"}
             },
             {
+                "name": "DECODE3",
+                "type": "sql macro",
+                "macro text": "CASE WHEN {0} = {1} THEN {2} WHEN {0} = {3} THEN {4} WHEN {0} = {5} THEN {6} ELSE {7} END",
+                "description": "Cases on the value of the first argument checking whether it is equal to the second, fourth, or sixth argument, returning the third, fifth, or seventh argument respectively. If none of these match, returns the eighth argument.",
+                "input signature": {"type": "fixed arguments", "value": ["unknown", "unknown", "unknown", "unknown", "unknown", "unknown", "unknown", "unknown"]},
+                "output signature": {"type": "select argument", "value": 1}
+            },
+            {
                 "name": "PERCENTAGE",
                 "type": "sql macro",
                 "aggregation": true,

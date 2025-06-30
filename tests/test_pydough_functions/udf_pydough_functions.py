@@ -134,3 +134,14 @@ def sqlite_udf_cumulative_distribution():
         .CALCULATE(c, n=COUNT(orders))
         .ORDER_BY(c)
     )
+
+
+def sqlite_udf_decode3():
+    return (
+        orders.WHERE(clerk == "Clerk#000000951")
+        .CALCULATE(
+            key,
+            DECODE3(INTEGER(order_priority[:1]), 1, "A", 2, "B", 3, "C", "D"),
+        )
+        .TOP_K(10, by=key.ASC())
+    )

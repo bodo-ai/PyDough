@@ -13,6 +13,7 @@ from tests.test_pydough_functions.udf_pydough_functions import (
     sqlite_udf_combine_strings,
     sqlite_udf_covar_pop,
     sqlite_udf_cumulative_distribution,
+    sqlite_udf_decode3,
     sqlite_udf_format_datetime,
     sqlite_udf_gcat,
     sqlite_udf_nval,
@@ -284,6 +285,31 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "sqlite_udf_cumulative_distribution",
             ),
             id="sqlite_udf_cumulative_distribution",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_udf_decode3,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [
+                            1,
+                            839,
+                            2338,
+                            4579,
+                            8452,
+                            9185,
+                            12163,
+                            13508,
+                            14277,
+                            15073,
+                        ],
+                        "n": ["D", "A", "B", "B", "D", "B", "D", "D", "D", "C"],
+                    }
+                ),
+                "sqlite_udf_decode3",
+            ),
+            id="sqlite_udf_decode3",
         ),
     ],
 )

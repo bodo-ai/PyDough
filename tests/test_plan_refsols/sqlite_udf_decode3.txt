@@ -1,0 +1,5 @@
+ROOT(columns=[('key', o_orderkey), ('_expr0', _expr0)], orderings=[(o_orderkey):asc_first])
+ LIMIT(limit=Literal(value=10, type=NumericType()), columns={'_expr0': _expr0, 'o_orderkey': o_orderkey}, orderings=[(o_orderkey):asc_first])
+  PROJECT(columns={'_expr0': DECODE3(INTEGER(SLICE(o_orderpriority, None:unknown, 1:numeric, None:unknown)), 1:numeric, 'A':string, 2:numeric, 'B':string, 3:numeric, 'C':string, 'D':string), 'o_orderkey': o_orderkey})
+   FILTER(condition=o_clerk == 'Clerk#000000951':string, columns={'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority})
+    SCAN(table=tpch.ORDERS, columns={'o_clerk': o_clerk, 'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority})
