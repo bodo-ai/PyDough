@@ -829,7 +829,7 @@
                 "aggregation": true,
                 "sql function": "GROUP_CONCAT",
                 "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).",
-                "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
+                "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1},
                 "output signature": {"type": "constant", "value": "string"}
             },
             {
@@ -849,7 +849,7 @@
                 "requires order": true,
                 "allows frame": true,
                 "description": "The same as COMBINE_STRINGS, but acts as a window function.",
-                "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
+                "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1},
                 "output signature": {"type": "constant", "value": "string"}
             },
             {
@@ -901,7 +901,7 @@
                 "type": "sql macro",
                 "aggregation": true,
                 "macro text": "(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)",
-                "description": "Returns the percentage of rows where the first argument is True.",
+                "description": "Returns the percentage of rows where the argument is True.",
                 "input signature": {"type": "fixed arguments", "value": ["numeric"]},
                 "output signature": {"type": "constant", "value": "numeric"}
             },

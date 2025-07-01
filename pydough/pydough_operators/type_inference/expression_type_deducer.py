@@ -13,6 +13,11 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from pydough.metadata import PyDoughMetadataException
+from pydough.metadata.errors import (
+    NoExtraKeys,
+    extract_integer,
+    extract_string,
+)
 from pydough.types import PyDoughType, UnknownType
 
 
@@ -98,27 +103,37 @@ def build_deducer_from_json(json_data: dict[str, Any] | None) -> ExpressionTypeD
     if json_data is None:
         return ConstantType(UnknownType())
 
-    if "type" not in json_data:
-        raise PyDoughMetadataException("Missing 'type' field in deducer JSON data")
-
-    data_type: PyDoughType | None
-    match json_data["type"]:
+    # Extract and switch on the deducer type string field.
+    deducer_type: str = extract_string(json_data, "type", "deducer JSON metadata")
+    match deducer_type:
+        # Constant deducer type.
         case "constant":
-            if "value" not in json_data:
-                raise PyDoughMetadataException(
-                    "Missing 'value' field in constant deducer JSON data"
-                )
-            data_type = PyDoughType.parse_from_string(json_data["value"])
+            NoExtraKeys({"type", "value"}).verify(
+                json_data, "constant deducer JSON metadata"
+            )
+            type_string: str = extract_string(
+                json_data, "value", "constant deducer JSON data"
+            )
+            data_type = PyDoughType.parse_from_string(type_string)
             if data_type is None:
                 raise PyDoughMetadataException(
                     f"Invalid type value in constant deducer JSON data: {json_data['value']!r}"
                 )
             return ConstantType(data_type)
+
+        # Select argument deducer type.
         case "select argument":
-            if "value" not in json_data:
+            NoExtraKeys({"type", "value"}).verify(
+                json_data, "select argument JSON metadata"
+            )
+            arg_idx: int = extract_integer(
+                json_data, "value", "select argument deducer JSON data"
+            )
+            if arg_idx <= 0:
                 raise PyDoughMetadataException(
-                    "Missing 'value' field in select argument deducer JSON data"
+                    f"Invalid argument index in select argument deducer JSON data: {arg_idx!r}"
                 )
-            return SelectArgumentType(int(json_data["index"]))
-        case other:
-            raise PyDoughMetadataException(f"Unknown deducer type: {other!r}")
+            return SelectArgumentType(arg_idx - 1)
+
+        case _:
+            raise PyDoughMetadataException(f"Unknown deducer type: {deducer_type!r}")

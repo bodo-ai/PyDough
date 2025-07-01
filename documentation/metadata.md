@@ -325,7 +325,7 @@ These optional arguments work together in the following manner:
 | **allows frame: true** | The function must always be called with a `by` clause, but can optionally be called with a `cumulative`/`frame`. | The function can be called with or without a `by` clause, but if it does have a `by` clause it must have a `cumulative`/`frame`. |
 | **allows frame: false** | The function must always be called with a `by` clause, but it cannot be called with a `cumulative`/`frame`. | The function cannot be called with a `by` clause, nor can it be called with a `cumulative`/`frame`. |
 
-Example of the structure of the metadata for a SQL Alias function named `RELMIN` (a 1:1 mapping to the sqlite `MIN` window function):
+Example of the structure of the metadata for a SQL Window Alias function named `RELMIN` (a 1:1 mapping to the sqlite `MIN` window function):
 
 ```json
 {
@@ -343,38 +343,104 @@ Example of the structure of the metadata for a SQL Alias function named `RELMIN`
 <!-- TOC --><a name="function-type-sql-macro"></a>
 ### Function Type: SQL Macro
 
-TODO
+A function of this type contains a SQL text string that acts as a Python format string to inject the arguments into. E.g. if `FOO` has the macro text `"CASE WHEN {0} > {1} THEN {0} ELSE {1} END"` and it is called with arguments `x` and `y` that become `C1` and `C2` in SQL, it generates the SQL text `CASE WHEN C1 > C2 THEN C1 ELSE C2 END`. Functions of this type can only be scalar functions or aggregation functions, not window functions. Functions of this type have a type string of "sql macro" and have the following additional key-value pairs in their metadata JSON object:
+
+- `macro text` (required): the string that is used as the Python format string to inject the SQL text for the arguments into.
+- `aggregation` (optional): a boolean indicating whether the function is an aggregation function, as opposed to a scalar function. The default value is `false` (indicating it is a scalar function).
+
+Example of the structure of the metadata for a SQL Macro function named `EPSILON` (returns whether the difference between the first two arguments is at most the third argument):
+
+```json
+{
+  "name": "EPSILON",
+  "type": "sql macro",
+  "macro text": "ABS({0} - {1}) <= {2}",
+  "description": "Returns true if the gap between the first and second argument is at most the third argument.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
+
+Example of the structure of the metadata for a SQL Macro function named `PERCENTAGE` (an aggregation that returns the percentage of rows where the argument is True):
+
+```json
+{
+  "name": "PERCENTAGE",
+  "type": "sql macro",
+  "aggregation": true,
+  "macro text": "(100.0 * SUM(CASE WHEN {0} THEN 1 END)) / COUNT(*)",
+  "description": "Returns the percentage of rows where the argument is True.",
+  "input signature": {...},
+  "output signature": {...}
+}
+```
 
 <!-- TOC --><a name="function-verifiers"></a>
 ## Function Verifiers
 
-TODO
+The JSON for a function verifier, used in the `input signature` field of a function definition, specifies the rules for determining whether the function is called on valid vs invalid arguments. If a verifier is not provided, the default assumption is that the function can be called on any arguments.
+
+Each verifier has a mandatory string field `type` specifying what kind of verifier it is. The currently supported values are `"fixed arguments"` and `"argument range"`.
 
 <!-- TOC --><a name="function-verifier-type-fixed-arguments"></a>
 ### Function Verifier Type: Fixed Arguments
 
-TODO
+Function verifiers of this type have a type string of `"fixed arguments"` and correspond to a function that has a specific number of allowed arguments, each with one legal type. A call to the function is considered valid only if it has the same number of arguments specified by the verifier, and they are all the same types as the ones contained in the verifier. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `value` (required): a list of type strings ([see here for more information](#pydough-type-strings)). The length of the list is the number of arguments the function is expected to be called on, and each argument is expected to have the type of the corresponding element in the list. If the type can be anything, use `"unknown"`.
+
+Below are several examples the JSON for such verifiers:
+
+- Accepts no arguments: `{"type": "fixed arguments", "value": []}`
+- Accepts one argument, which must be a string: `{"type": "fixed arguments", "value": ["string"]}`
+- Accepts two arguments, which must both be numbers: `{"type": "fixed arguments", "value": ["numeric", "numeric"]}`
+- Accepts two arguments, the first must be a datetime and the second can be anything: `{"type": "fixed arguments", "value": ["datetime", "unknown"]}`
+
 
 <!-- TOC --><a name="function-verifier-type-argument-range"></a>
 ### Function Verifier Type: Argument Range
 
-TODO
+Function verifiers of this type have a type string of `"argument range"` and work the same as [fixed argument verifiers](#function-verifier-type-fixed-arguments) except it is possible to not include all of the arguments, as long as a minimum number of arguments is provided. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `value` (required): a list of type strings ([see here for more information](#pydough-type-strings)). The length of the list is the maximum number of arguments the function is expected to be called on, and each argument that is provided is expected to have the type of the corresponding element in the list. If the type can be anything, use `"unknown"`.
+- `min` (required): an integer indicating the smallest number of arguments that must be provided.
+
+Below are several examples the JSON for such verifiers:
+
+- Accepts up to two arguments of any type: `{"type": "argument range", "value": ["unknown", "unknown"], "min": 0}`
+- Accepts up to two arguments, the first a string and the second a number, but the first must always be provided: `{"type": "argument range", "value": ["string", "numeric"], "min": 1}`
 
 <!-- TOC --><a name="function-deducers"></a>
 ## Function Deducers
 
-TODO
+The JSON for a function deducer, used in the `output signature` field of a function definition, specifies the rules for determining the output type of a call to the function in terms of its input arguments. If a verifier is not provided, the default assumption is that the function call outputs an expression of type `"unknown"`.
+
+Each deducer has a mandatory string field `type` specifying what kind of verifier it is. The currently supported values are `"constant"` and `"select argument"`.
 
 <!-- TOC --><a name="function-deducer-type-constant"></a>
 ### Function Deducer Type: Constant
 
-TODO
+Function deducers of this type have a type string of `"constant"` and correspond to a function call that always returns the same type. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+
+- `value` (required): a type string ([see here for more information](#pydough-type-strings)) indicating what type the function always returns.
+
+Below are several examples the JSON for such deducers:
+
+- Always returns a string: `{"type": "constant", "value": "string"}`
+- Always returns a datetime: `{"type": "constant", "value": "datetime"}`
+- The return type is unknown: `{"type": "constant", "value": "unknown"}`
 
 <!-- TOC --><a name="function-deducer-type-select-argument"></a>
 ### Function Deducer Type: Select Argument
 
-TODO
+Function deducers of this type have a type string of `"constant"` and correspond to a function call that always returns the same type. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
 
+- `value` (required): a type string ([see here for more information](#pydough-type-strings)) indicating what type the function always returns.
+
+Below are several examples the JSON for such deducers:
+
+- Returns the type of the first argument: `{"type": "select argument", "value": 1}`
+- Returns the type of the second argument: `{"type": "select argument", "value": 2}`
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
@@ -385,9 +451,9 @@ The strings used in the type field for certain properties must be one of the fol
 - `bool`: a boolean.
 - `string`: a string or other bytes-like format (char, varchar, binary, varbinary, etc.).
 - `datetime`: any date/timestamp type, regardless of precision or timezone.
-- `array[t]`: an array of values of type t (where t is another PyDough type). For example: `array[int32]` or `array[array[string]]`.
-- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,numeric]` or `map[string,array[date]]`.
-- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:int32,y:int32]` or `struct[name:string,birthday:datetime,car_accidents:array[struct[ts:timestamp[9],report:string]]`. Each field name must be a valid Python identifier.
+- `array[t]`: an array of values of type t (where t is another PyDough type). For example: `array[numeric]` or `array[array[string]]`.
+- `map[t1,t2]`: a map of values with keys of type type t1 and values of type t2 (where t1 and t2 are also PyDough types). For example: `map[string,numeric]` or `map[string,array[datetime]]`.
+- `struct[field1:t1,field2:t2,...]`: a struct of values with fields named field1, field2, etc. with types t1, t2, etc. (which are also PyDough types). For example: `struct[x:numeric,y:numeric]` or `struct[name:string,birthday:datetime,car_accidents:array[struct[ts:datetime,report:string]]`. Each field name must be a valid Python identifier.
 - `unknown`: an unknown/other type.
 
 <!-- TOC --><a name="metadata-examples"></a>
@@ -1238,7 +1304,7 @@ It also includes several function definitions that make sense in the context of 
         "aggregation": true,
         "sql function": "GROUP_CONCAT",
         "description": "Combines all of by strings in a column (the first argument) by concatenating them, using the second argument as a delimiter (uses ',' if not provided).",
-        "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1, "max": 2},
+        "input signature": {"type": "argument range", "value": ["string", "string"], "min": 1},
         "output signature": {"type": "constant", "value": "string"}
       },
       {
@@ -1249,7 +1315,7 @@ It also includes several function definitions that make sense in the context of 
         "allows frame": true,
         "description": "Obtains the smallest value in the window.",
         "input signature": {"type": "fixed arguments", "value": ["unknown"]},
-        "output signature": {"type": "select argument", "value": 0}
+        "output signature": {"type": "select argument", "value": 1}
       },
       {
         "name": "POSITIVE",

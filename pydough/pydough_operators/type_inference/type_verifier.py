@@ -206,10 +206,14 @@ def build_verifier_from_json(json_data: dict[str, Any] | None) -> TypeVerifier:
                 )
             return RequireNumArgs(len(json_data["value"]))
         case "argument range":
+            if "value" not in json_data:
+                raise PyDoughMetadataException(
+                    "Missing 'value' field in fixed arguments verifier JSON data"
+                )
             if "min" not in json_data or "max" not in json_data:
                 raise PyDoughMetadataException(
                     "Missing 'min' or 'max' field in argument range verifier JSON data"
                 )
-            return RequireArgRange(json_data["min"], json_data["max"])
+            return RequireArgRange(json_data["min"], len(json_data["value"]))
         case other:
             raise PyDoughMetadataException(f"Unknown verifier type string: {other!r}")
