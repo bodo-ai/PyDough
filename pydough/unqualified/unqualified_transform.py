@@ -3,13 +3,15 @@ Logic for transforming raw Python code into PyDough code by replacing undefined
 variables with unqualified nodes by prepending with with `_ROOT.`.
 """
 
-__all__ = ["init_pydough_context", "transform_cell", "transform_code"]
+__all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]
 
 import ast
 import inspect
 import types
 
 from pydough.metadata import GraphMetadata
+
+from .unqualified_node import UnqualifiedNode
 
 
 class AddRootVisitor(ast.NodeTransformer):
@@ -411,6 +413,48 @@ def transform_cell(cell: str, graph_name: str, known_names: set[str]) -> str:
     new_tree = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
     return ast.unparse(new_tree)
+
+
+def from_string(
+    source: str, answer_variable: str = "result", graph: GraphMetadata | None = None
+) -> UnqualifiedNode:
+    import pydough
+
+    # Verify if graph is provided. Otherwise use pydough.active_session.metadata
+    if graph is None:
+        graph = pydough.active_session.metadata
+        if graph is None:
+            raise Exception(
+                "No active graph set in PyDough session."
+                " Please set a graph using"
+                " pydough.active_session.load_metadata_graph(...)"
+            )
+    # Transform PyDough code into valid Python code
+    known_names: set[str] = set()
+    visitor: ast.NodeTransformer = AddRootVisitor("graph", known_names)
+    tree = ast.parse(source)
+    assert isinstance(tree, ast.AST)
+    new_tree = ast.fix_missing_locations(visitor.visit(tree))
+    assert isinstance(new_tree, ast.AST)
+
+    # Execute the transformed PyDough code to get the UnqualifiedNode answer
+    transformed_ast = ast.unparse(new_tree)
+    compile_ast = compile(transformed_ast, filename="<ast>", mode="exec")
+    execution_context = {answer_variable: None, "graph": graph}
+    exec(compile_ast, {}, execution_context)
+
+    # Check if answer_variable exists in execution_context after code execution
+    if answer_variable not in execution_context:
+        raise Exception(
+            f"PyDough code expected to store the answer in a variable named '{answer_variable}'."
+        )
+    ret_val = execution_context[answer_variable]
+    # Check if answer is an UnqualifiedNode
+    if not isinstance(ret_val, UnqualifiedNode):
+        raise Exception(
+            f"PyDough code answer stored in variable named '{answer_variable}' is not an UnqualifiedNode instance."
+        )
+    return ret_val
 
 
 def init_pydough_context(graph: GraphMetadata):
