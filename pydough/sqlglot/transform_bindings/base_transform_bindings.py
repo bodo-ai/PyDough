@@ -1694,10 +1694,31 @@ class BaseTransformBindings:
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         """
-        TODO: DOCSTRING
+        Converts a PyDough GETPART(string, delimiter, index) function call into a SQLGlot expression
+        that extracts the N-th part from a delimited string.
+
+        This function builds a SQL query using common table expressions (CTEs) to:
+        - Split the input string into parts based on the given delimiter.
+        - Count the total number of parts.
+        - Handle both positive and negative indices (negative indices count from the end).
+        - Return the part at the specified index, or an empty string if the index is out of range.
+
+        Args:
+            args: A list of three SQLGlot expressions:
+                - args[0]: The input string to split.
+                - args[1]: The delimiter string.
+                - args[2]: The index of the part to extract (can be negative).
+            types: The PyDough types of the arguments.
+
+        Returns:
+            A SQLGlotExpression representing the SQL logic to extract the specified part from the string.
         """
 
-        # identifiers
+        assert len(args) == 3
+
+        # Validate if the third argument is a integer can be both positive or negative
+
+        # identifiers definitions
         split_parts: SQLGlotExpression = sqlglot_expressions.Identifier(
             this="split_parts", quoted=False
         )
@@ -1732,7 +1753,7 @@ class BaseTransformBindings:
             this="original", quoted=False
         )
 
-        # Literals
+        # Literals definitions
         literal_0: SQLGlotExpression = sqlglot_expressions.Literal(
             this=0, is_string=False
         )
@@ -1740,7 +1761,7 @@ class BaseTransformBindings:
             this=1, is_string=False
         )
         literal_empty: SQLGlotExpression = sqlglot_expressions.Literal(
-            this="", is_string=False
+            this="", is_string=True
         )
 
         # columns and tables
@@ -1759,25 +1780,27 @@ class BaseTransformBindings:
         )
         table_params: SQLGlotExpression = sqlglot_expressions.Table(this=params)
         table_part_count: SQLGlotExpression = sqlglot_expressions.Table(this=part_count)
-
+        column_idx: SQLGlotExpression = sqlglot_expressions.Column(
+            this=idx, table=params
+        )
         # CASE
         if_idx_greater_0: SQLGlotExpression = sqlglot_expressions.If(
             this=sqlglot_expressions.GT(
-                this=sqlglot_expressions.Column(this=idx, table=params),
+                this=column_idx,
                 expression=literal_0,
             ),
-            true=sqlglot_expressions.Column(this=idx, table=params),
+            true=column_idx,
         )
 
         if_idx_lower_0: SQLGlotExpression = sqlglot_expressions.If(
             this=sqlglot_expressions.LT(
-                this=sqlglot_expressions.Column(this=idx, table=params),
+                this=column_idx,
                 expression=literal_0,
             ),
             true=sqlglot_expressions.Add(
                 this=sqlglot_expressions.Add(
                     this=sqlglot_expressions.Column(this=total_parts, table=part_count),
-                    expression=sqlglot_expressions.Column(this=idx, table=params),
+                    expression=column_idx,
                 ),
                 expresssion=literal_1,
             ),
@@ -1801,9 +1824,7 @@ class BaseTransformBindings:
                     alias=delim,
                 ),
                 sqlglot_expressions.Alias(
-                    this=sqlglot_expressions.Neg(
-                        this=args[2],  # the third arg, integer
-                    ),
+                    this=args[2],  # the third arg, integer
                     alias=idx,
                 ),
             ]
@@ -1820,6 +1841,10 @@ class BaseTransformBindings:
             expression=literal_1,
         )
 
+        dpipe: SQLGlotExpression = sqlglot_expressions.DPipe(
+            this=column_input, expression=column_delim, safe=True
+        )
+
         select_union_cte: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
                 sqlglot_expressions.Alias(this=literal_1, alias=part_index),
@@ -1831,16 +1856,10 @@ class BaseTransformBindings:
                 ),
                 sqlglot_expressions.Alias(
                     this=sqlglot_expressions.Substring(
-                        this=sqlglot_expressions.DPipe(
-                            this=column_input, expression=column_delim, safe=True
-                        ),
+                        this=dpipe,
                         start=sqlglot_expressions.Add(
                             this=sqlglot_expressions.StrPosition(
-                                this=sqlglot_expressions.DPipe(
-                                    this=column_input,
-                                    expression=column_delim,
-                                    safe=True,
-                                ),
+                                this=dpipe,
                                 substr=column_delim,
                             ),
                             expression=literal_1,

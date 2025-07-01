@@ -84,8 +84,8 @@ These functions must be called on singular data as a function.
 - `FIND`: returns the index(0-indexed) of the first occurrence of the second argument within the first argument, or -1 if the second argument is not found.
 - `STRIP`: returns the first argument with all leading and trailing whitespace removed, including newlines, tabs, and spaces. If the second argument is provided, it is used as the set of characters to remove from the leading and trailing ends of the first argument.
 - `REPLACE`: returns the first argument with all instances of the second argument replaced by the third argument. If the third argument is not provided, all instances of the second argument are removed from the first argument.
-
 - `STRCOUNT`: returns how many times the second argument appears in the first argument. If one or both arguments are an empty string the return would be 0
+- `GETPART`: extracts the N-th part from a string, splitting it by a specified delimiter. The first argument is the input string, the second argument is the delimiter string, and the third argument is the index of the part to extract (can be positive for counting from the start, or negative for counting from the end; 1-based indexing). If the index is out of range, returns an empty string. If the delimiter is an empty string, an error is raised.
 
 ##### Datetime Functions
 
