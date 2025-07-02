@@ -339,38 +339,34 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
     function_name: str = extract_string(
         udf_definition,
         "name",
-        f"metadata for UDF definitions within {graph.error_name}",
+        f"metadata for UDF definition within {graph.error_name}",
     )
-    function_type: str = extract_string(
-        udf_definition,
-        "type",
-        f"metadata for UDF definitions within {graph.error_name}",
-    ).lower()
+    error_name: str = (
+        f"metadata for definition of UDF {function_name!r} within {graph.error_name}"
+    )
+
+    function_type: str = extract_string(udf_definition, "type", error_name).lower()
 
     # Extract the optional description for the UDF, if it exists.
     description: str | None = None
     if "description" in udf_definition:
-        description = extract_string(
-            udf_definition,
-            "description",
-            f"metadata for UDF definitions within {graph.error_name}",
-        )
+        description = extract_string(udf_definition, "description", error_name)
 
     # Extract the verifier and deducer, if they exist.
     verifier: dict | None = None
     deducer: dict | None = None
-    if "verifier" in udf_definition:
-        verifier = extract_object(
-            udf_definition,
-            "verifier",
-            f"metadata for UDF definitions within {graph.error_name}",
-        )
-    if "deducer" in udf_definition:
-        deducer = extract_object(
-            udf_definition,
-            "deducer",
-            f"metadata for UDF definitions within {graph.error_name}",
-        )
+    if "input signature" in udf_definition:
+        verifier = extract_object(udf_definition, "input signature", error_name)
+    if "output signature" in udf_definition:
+        deducer = extract_object(udf_definition, "output signature", error_name)
+
+    standard_keys: set[str] = {
+        "name",
+        "type",
+        "description",
+        "input signature",
+        "output signature",
+    }
 
     # Create the appropriate function operator based on the type.
     func: ExpressionFunctionOperator
@@ -378,17 +374,12 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
     sql_alias: str
     match function_type:
         case "sql alias":
-            sql_alias = extract_string(
-                udf_definition,
-                "sql function",
-                f"metadata for UDF definitions within {graph.error_name}",
+            NoExtraKeys(standard_keys | {"sql function", "aggregation"}).verify(
+                udf_definition, error_name
             )
+            sql_alias = extract_string(udf_definition, "sql function", error_name)
             if "aggregation" in udf_definition:
-                is_aggregation = extract_bool(
-                    udf_definition,
-                    "aggregation",
-                    f"metadata for UDF definitions within {graph.error_name}",
-                )
+                is_aggregation = extract_bool(udf_definition, "aggregation", error_name)
             func = SqlAliasExpressionFunctionOperator(
                 function_name,
                 sql_alias,
@@ -398,20 +389,15 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
                 description,
             )
         case "sql window alias":
-            sql_alias = extract_string(
-                udf_definition,
-                "sql function",
-                f"metadata for UDF definitions within {graph.error_name}",
-            )
+            NoExtraKeys(
+                standard_keys | {"sql function", "requires order", "allows frame"}
+            ).verify(udf_definition, error_name)
+            sql_alias = extract_string(udf_definition, "sql function", error_name)
             required_order: bool = extract_bool(
-                udf_definition,
-                "requires order",
-                f"metadata for UDF definitions within {graph.error_name}",
+                udf_definition, "requires order", error_name
             )
             allows_frame: bool = extract_bool(
-                udf_definition,
-                "allows frame",
-                f"metadata for UDF definitions within {graph.error_name}",
+                udf_definition, "allows frame", error_name
             )
             func = SqlWindowAliasExpressionFunctionOperator(
                 function_name,
@@ -423,17 +409,12 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
                 description,
             )
         case "sql macro":
-            macro_text: str = extract_string(
-                udf_definition,
-                "macro text",
-                f"metadata for UDF definitions within {graph.error_name}",
+            NoExtraKeys(standard_keys | {"macro text", "aggregation"}).verify(
+                udf_definition, error_name
             )
+            macro_text: str = extract_string(udf_definition, "macro text", error_name)
             if "aggregation" in udf_definition:
-                is_aggregation = extract_bool(
-                    udf_definition,
-                    "aggregation",
-                    f"metadata for UDF definitions within {graph.error_name}",
-                )
+                is_aggregation = extract_bool(udf_definition, "aggregation", error_name)
             func = SqlMacroExpressionFunctionOperator(
                 function_name,
                 macro_text,
@@ -444,6 +425,6 @@ def parse_function_v2(graph: GraphMetadata, udf_definition: dict) -> None:
             )
         case _:
             raise PyDoughMetadataException(
-                f"Unrecognized PyDough function type for function {function_name!r}: {function_type!r}"
+                f"Unrecognized PyDough function type for {error_name}: {function_type!r}"
             )
     graph.add_function(function_name, func)

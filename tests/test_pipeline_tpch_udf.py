@@ -3,12 +3,21 @@ Integration tests for the PyDough workflow with custom questions on the TPC-H
 dataset.
 """
 
+import re
 from collections.abc import Callable
 
 import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
+from tests.test_pydough_functions.bad_pydough_functions import (
+    bad_sqlite_udf_1,
+    bad_sqlite_udf_2,
+    bad_sqlite_udf_3,
+    bad_sqlite_udf_4,
+)
 from tests.test_pydough_functions.udf_pydough_functions import (
     sqlite_udf_combine_strings,
     sqlite_udf_covar_pop,
@@ -22,7 +31,7 @@ from tests.test_pydough_functions.udf_pydough_functions import (
     sqlite_udf_relmin,
 )
 
-from .testing_utilities import PyDoughPandasTest, graph_fetcher
+from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
 @pytest.fixture(
@@ -373,4 +382,45 @@ def test_pipeline_e2e_tpch_sqlite_udf(
     """
     tpch_sqlite_udf_pipeline_test_data.run_e2e_test(
         get_udf_graph, sqlite_tpch_db_context
+    )
+
+
+@pytest.mark.parametrize(
+    "pydough_impl, error_message",
+    [
+        pytest.param(
+            bad_sqlite_udf_1,
+            "Invalid operator invocation \"FORMAT_DATETIME('%Y')\": Expected 2 arguments, received 1",
+            id="bad_sqlite_udf_1",
+        ),
+        pytest.param(
+            bad_sqlite_udf_2,
+            "Invalid operator invocation \"FORMAT_DATETIME('%Y', order_date, 'foo')\": Expected 2 arguments, received 3",
+            id="bad_sqlite_udf_2",
+        ),
+        pytest.param(
+            bad_sqlite_udf_3,
+            "Invalid operator invocation 'GCAT()': Expected between 1 and 2 arguments inclusive, received 0",
+            id="bad_sqlite_udf_3",
+        ),
+        pytest.param(
+            bad_sqlite_udf_4,
+            "Invalid operator invocation \"GCAT(name, ';', 'bar')\": Expected between 1 and 2 arguments inclusive, received 3.",
+            id="bad_sqlite_udf_4",
+        ),
+    ],
+)
+def test_pipeline_tpch_sqlite_udf_errors(
+    pydough_impl: Callable[[], UnqualifiedNode],
+    error_message: str,
+    get_udf_graph: graph_fetcher,
+):
+    """
+    Tests that malformed uses of UDFs raise the expected errors.
+    """
+    graph: GraphMetadata = get_udf_graph("TPCH_SQLITE_UDFS")
+    run_e2e_error_test(
+        pydough_impl,
+        re.escape(error_message),
+        graph,
     )

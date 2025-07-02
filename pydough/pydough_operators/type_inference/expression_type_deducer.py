@@ -131,11 +131,11 @@ def build_deducer_from_json(json_data: dict[str, Any] | None) -> ExpressionTypeD
             arg_idx: int = extract_integer(
                 json_data, "value", "select argument deducer JSON data"
             )
-            if arg_idx <= 0:
+            if arg_idx < 0:
                 raise PyDoughMetadataException(
                     f"Invalid argument index in select argument deducer JSON data: {arg_idx!r}"
                 )
-            return SelectArgumentType(arg_idx - 1)
+            return SelectArgumentType(arg_idx)
 
         case _:
             raise PyDoughMetadataException(f"Unknown deducer type: {deducer_type!r}")

@@ -439,8 +439,8 @@ Function deducers of this type have a type string of `"constant"` and correspond
 
 Below are several examples the JSON for such deducers:
 
-- Returns the type of the first argument: `{"type": "select argument", "value": 1}`
-- Returns the type of the second argument: `{"type": "select argument", "value": 2}`
+- Returns the type of the first argument: `{"type": "select argument", "value": 0}`
+- Returns the type of the second argument: `{"type": "select argument", "value": 1}`
 
 <!-- TOC --><a name="pydough-type-strings"></a>
 ## PyDough Type Strings
@@ -1315,7 +1315,7 @@ It also includes several function definitions that make sense in the context of 
         "allows frame": true,
         "description": "Obtains the smallest value in the window.",
         "input signature": {"type": "fixed arguments", "value": ["unknown"]},
-        "output signature": {"type": "select argument", "value": 1}
+        "output signature": {"type": "select argument", "value": 0}
       },
       {
         "name": "POSITIVE",
