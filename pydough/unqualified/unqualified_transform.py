@@ -418,8 +418,8 @@ def transform_cell(cell: str, graph_name: str, known_names: set[str]) -> str:
 
 def from_string(
     source: str,
-    answer_variable: str = "result",
-    graph: GraphMetadata | None = None,
+    answer_variable: str | None = None,
+    metadata: GraphMetadata | None = None,
     environment: dict[str, Any] | None = None,
 ) -> UnqualifiedNode:
     """
@@ -427,12 +427,12 @@ def from_string(
     on which operations like `explain()`, `to_sql()`, or `to_df()` can be called.
 
     Args:
-        `source` (str): a valid PyDough code string.
-        `answer_variable` (str): The name of the variable that holds the result of the
+        `source`: a valid PyDough code string.
+        `answer_variable`: The name of the variable that holds the result of the
         PyDough code. Defaults to "result".
-        `graph` (Optional[Graph]): The metadata graph to use. If None,
+        `metadata`: The metadata graph to use. If not provided,
         `active_session.metadata` will be used. Defaults to None.
-        `environment` (Optional[dict]): A dictionary of variables that will be available
+        `environment`: A dictionary of variables that will be available
         in the environment where the PyDough code is executed. Defaults to None.
 
     Returns:
@@ -441,9 +441,9 @@ def from_string(
     import pydough
 
     # Verify if graph is provided. Otherwise use pydough.active_session.metadata
-    if graph is None:
-        graph = pydough.active_session.metadata
-        if graph is None:
+    if metadata is None:
+        metadata = pydough.active_session.metadata
+        if metadata is None:
             raise Exception(
                 "No active graph set in PyDough session."
                 " Please set a graph using"
@@ -452,6 +452,10 @@ def from_string(
     # Verify if environment is provided
     if environment is None:
         environment = {}
+
+    # Verify if answer_variable is provided
+    if answer_variable is None:
+        answer_variable = "result"
 
     # Transform PyDough code into valid Python code
     known_names: set[str] = set(environment.keys())
@@ -464,7 +468,7 @@ def from_string(
     # Execute the transformed PyDough code to get the UnqualifiedNode answer
     transformed_ast = ast.unparse(new_tree)
     compile_ast = compile(transformed_ast, filename="<ast>", mode="exec")
-    execution_context: dict[str, Any] = environment | {"graph": graph}
+    execution_context: dict[str, Any] = environment | {"graph": metadata}
     exec(compile_ast, {}, execution_context)
 
     # Check if answer_variable exists in execution_context after code execution
