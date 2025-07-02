@@ -14,7 +14,6 @@ from pydough.metadata import GraphMetadata
 
 from .unqualified_node import UnqualifiedNode
 
-
 class AddRootVisitor(ast.NodeTransformer):
     """
     QDAG visitor class that transforms nodes in the following ways:
