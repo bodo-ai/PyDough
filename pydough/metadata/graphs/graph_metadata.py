@@ -177,6 +177,14 @@ class GraphMetadata(AbstractMetadata):
             into the graph because of a name collision.
         """
         is_valid_name.verify(name, "function name")
+        if name == self.name:
+            raise PyDoughMetadataException(
+                f"Function name {name!r} cannot be the same as the graph name {self.name!r}"
+            )
+        if name in self.get_collection_names():
+            raise PyDoughMetadataException(
+                f"Function name {name!r} cannot be the same as a collection name in {self.error_name}"
+            )
         if name in self.functions:
             raise PyDoughMetadataException(
                 f"Function {name!r} already exists in {self.error_name}"

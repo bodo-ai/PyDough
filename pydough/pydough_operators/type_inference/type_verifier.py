@@ -239,6 +239,15 @@ def build_verifier_from_json(json_data: dict[str, Any] | None) -> TypeVerifier:
             min_args: int = extract_integer(
                 json_data, "min", "argument range verifier JSON data"
             )
+            if min_args < 0:
+                raise PyDoughMetadataException(
+                    f"Invalid minimum argument count in argument range verifier JSON data: {min_args!r}"
+                )
+            if len(type_args) < min_args:
+                raise PyDoughMetadataException(
+                    "Invalid argument range verifier JSON data: "
+                    f"minimum {min_args} is greater than the number of types provided: {len(type_args)}"
+                )
             return RequireArgRange(min_args, len(type_args))
 
         case _:

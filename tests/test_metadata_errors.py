@@ -10,6 +10,7 @@ import pytest
 from pydough import parse_json_metadata_from_file
 from pydough.configs import PyDoughConfigs
 from pydough.metadata import CollectionMetadata, GraphMetadata, PyDoughMetadataException
+from pydough.types.errors import PyDoughTypeException
 from pydough.unqualified import UnqualifiedNode, qualify_node, transform_code
 from tests.testing_utilities import graph_fetcher
 
@@ -445,12 +446,300 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             "Duplicate collections: simple table collection 'parent' in graph 'DUPLICATE_COLLECTION_NAMES' versus simple table collection 'parent' in graph 'DUPLICATE_COLLECTION_NAMES'",
             id="DUPLICATE_COLLECTION_NAMES",
         ),
+        pytest.param(
+            "BAD_FUNCTIONS_LIST",
+            "graph 'BAD_FUNCTIONS_LIST' must be a JSON object containing a field 'functions' and field 'functions' must be a JSON array",
+            id="BAD_FUNCTIONS_LIST",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_MISSING_NAME",
+            "metadata for UDF definition within graph 'BAD_FUNCTION_MISSING_NAME' must be a JSON object containing a field 'name' and field 'name' must be a string",
+            id="BAD_FUNCTION_MISSING_NAME",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_BAD_NAME_1",
+            "metadata for UDF definition within graph 'BAD_FUNCTION_BAD_NAME_1' must be a JSON object containing a field 'name' and field 'name' must be a string",
+            id="BAD_FUNCTION_BAD_NAME_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_BAD_NAME_2",
+            "function name must be a string that is a Python identifier",
+            id="BAD_FUNCTION_BAD_NAME_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_BAD_NAME_3",
+            "Function name 'BAD_FUNCTION_BAD_NAME_3' cannot be the same as the graph name 'BAD_FUNCTION_BAD_NAME_3'",
+            id="BAD_FUNCTION_BAD_NAME_3",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_BAD_NAME_4",
+            "Function name 'regions' cannot be the same as a collection name in graph 'BAD_FUNCTION_BAD_NAME_4'",
+            id="BAD_FUNCTION_BAD_NAME_4",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_DUPLICATE_NAME",
+            "Function 'FOO' already exists in graph 'BAD_FUNCTION_DUPLICATE_NAME'",
+            id="BAD_FUNCTION_DUPLICATE_NAME",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_MISSING_TYPE",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_MISSING_TYPE' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_FUNCTION_MISSING_TYPE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_BAD_TYPE_1",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_BAD_TYPE_1' must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_FUNCTION_BAD_TYPE_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_BAD_TYPE_2",
+            "Unrecognized PyDough function type for metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_BAD_TYPE_2': 'foobar'",
+            id="BAD_FUNCTION_BAD_TYPE_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_ALIAS_MISSING_SQL_FUNCTION",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_ALIAS_MISSING_SQL_FUNCTION' must be a JSON object containing a field 'sql function' and field 'sql function' must be a string",
+            id="BAD_FUNCTION_SQL_ALIAS_MISSING_SQL_FUNCTION",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_ALIAS_BAD_SQL_FUNCTION",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_ALIAS_BAD_SQL_FUNCTION' must be a JSON object containing a field 'sql function' and field 'sql function' must be a string",
+            id="BAD_FUNCTION_SQL_ALIAS_BAD_SQL_FUNCTION",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_ALIAS_BAD_AGGREGATION",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_ALIAS_BAD_AGGREGATION' must be a JSON object containing a field 'aggregation' and field 'aggregation' must be a boolean",
+            id="BAD_FUNCTION_SQL_ALIAS_BAD_AGGREGATION",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_ALIAS_BAD_DESCRIPTION",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_ALIAS_BAD_DESCRIPTION' must be a JSON object containing a field 'description' and field 'description' must be a string",
+            id="BAD_FUNCTION_SQL_ALIAS_BAD_DESCRIPTION",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_ALIAS_EXTRA_FIELD",
+            re.escape(
+                "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_ALIAS_EXTRA_FIELD' must be a JSON object containing no fields except for ['aggregation', 'description', 'input signature', 'name', 'output signature', 'sql function', 'type']"
+            ),
+            id="BAD_FUNCTION_SQL_ALIAS_EXTRA_FIELD",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_WINDOW_ALIAS_MISSING_SQL_FUNCTION",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_WINDOW_ALIAS_MISSING_SQL_FUNCTION' must be a JSON object containing a field 'sql function' and field 'sql function' must be a string",
+            id="BAD_FUNCTION_SQL_WINDOW_ALIAS_MISSING_SQL_FUNCTION",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_SQL_FUNCTION",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_SQL_FUNCTION' must be a JSON object containing a field 'sql function' and field 'sql function' must be a string",
+            id="BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_SQL_FUNCTION",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_REQUIRES_ORDER",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_REQUIRES_ORDER' must be a JSON object containing a field 'requires order' and field 'requires order' must be a boolean",
+            id="BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_REQUIRES_ORDER",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_ALLOWS_FRAME",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_ALLOWS_FRAME' must be a JSON object containing a field 'requires order' and field 'requires order' must be a boolean",
+            id="BAD_FUNCTION_SQL_WINDOW_ALIAS_BAD_ALLOWS_FRAME",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_WINDOW_ALIAS_EXTRA_FIELD",
+            re.escape(
+                "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_SQL_WINDOW_ALIAS_EXTRA_FIELD' must be a JSON object containing no fields except for ['allows frame', 'description', 'input signature', 'name', 'output signature', 'requires order', 'sql function', 'type']"
+            ),
+            id="BAD_FUNCTION_SQL_WINDOW_ALIAS_EXTRA_FIELD",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_MACRO_MISSING_MACRO_TEXT",
+            "metadata for definition of UDF 'POSITIVE' within graph 'BAD_FUNCTION_SQL_MACRO_MISSING_MACRO_TEXT' must be a JSON object containing a field 'macro text' and field 'macro text' must be a string",
+            id="BAD_FUNCTION_SQL_MACRO_MISSING_MACRO_TEXT",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_MACRO_BAD_MACRO_TEXT",
+            "metadata for definition of UDF 'POSITIVE' within graph 'BAD_FUNCTION_SQL_MACRO_BAD_MACRO_TEXT' must be a JSON object containing a field 'macro text' and field 'macro text' must be a string",
+            id="BAD_FUNCTION_SQL_MACRO_BAD_MACRO_TEXT",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_MACRO_BAD_AGGREGATION",
+            "metadata for definition of UDF 'POSITIVE' within graph 'BAD_FUNCTION_SQL_MACRO_BAD_AGGREGATION' must be a JSON object containing a field 'aggregation' and field 'aggregation' must be a boolean",
+            id="BAD_FUNCTION_SQL_MACRO_BAD_AGGREGATION",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SQL_MACRO_EXTRA_FIELD",
+            re.escape(
+                "metadata for definition of UDF 'POSITIVE' within graph 'BAD_FUNCTION_SQL_MACRO_EXTRA_FIELD' must be a JSON object containing no fields except for ['aggregation', 'description', 'input signature', 'macro text', 'name', 'output signature', 'type']"
+            ),
+            id="BAD_FUNCTION_SQL_MACRO_EXTRA_FIELD",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_VERIFIER_TYPE",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_VERIFIER_TYPE' must be a JSON object containing a field 'input signature' and field 'input signature' must be a JSON object",
+            id="BAD_FUNCTION_VERIFIER_TYPE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_VERIFIER_MISSING_TYPE",
+            "verifier JSON metadata must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_FUNCTION_VERIFIER_MISSING_TYPE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_VERIFIER_BAD_TYPE_1",
+            "verifier JSON metadata must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_FUNCTION_VERIFIER_BAD_TYPE_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_VERIFIER_BAD_TYPE_2",
+            "Unknown verifier type string: 'hello world'",
+            id="BAD_FUNCTION_VERIFIER_BAD_TYPE_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_MISSING_VALUE",
+            "fixed arguments verifier JSON data must be a JSON object containing a field 'value' and field 'value' must be a JSON array",
+            id="BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_MISSING_VALUE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_1",
+            "fixed arguments verifier JSON data must be a JSON object containing a field 'value' and field 'value' must be a JSON array",
+            id="BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_2",
+            "Invalid type value in fixed arguments verifier JSON data: 0",
+            id="BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_3",
+            "Unrecognized type string 'foo'",
+            id="BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_BAD_VALUE_3",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_EXTRA_FIELD",
+            re.escape(
+                "fixed arguments verifier JSON metadata must be a JSON object containing no fields except for ['type', 'value']"
+            ),
+            id="BAD_FUNCTION_FIXED_ARGUMENTS_VERIFIER_EXTRA_FIELD",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_MISSING_VALUE",
+            "argument range verifier JSON data must be a JSON object containing a field 'value' and field 'value' must be a JSON array",
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_MISSING_VALUE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_1",
+            "argument range verifier JSON data must be a JSON object containing a field 'value' and field 'value' must be a JSON array",
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_2",
+            re.escape(
+                "Invalid type value in argument range verifier JSON data: ['numeric']"
+            ),
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_3",
+            "Unrecognized type string 'idk'",
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_VALUE_3",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_MISSING_MIN",
+            "argument range verifier JSON data must be a JSON object containing a field 'min' and field 'min' must be a integer",
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_MISSING_MIN",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_1",
+            "argument range verifier JSON data must be a JSON object containing a field 'min' and field 'min' must be a integer",
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_2",
+            "Invalid minimum argument count in argument range verifier JSON data: -1",
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_3",
+            "Invalid argument range verifier JSON data: minimum 3 is greater than the number of types provided: 2",
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_BAD_MIN_3",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_EXTRA_FIELD",
+            re.escape(
+                "argument range verifier JSON metadata must be a JSON object containing no fields except for ['min', 'type', 'value']"
+            ),
+            id="BAD_FUNCTION_ARGUMENT_RANGE_VERIFIER_EXTRA_FIELD",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_DEDUCER_TYPE",
+            "metadata for definition of UDF 'FORMAT_DATETIME' within graph 'BAD_FUNCTION_DEDUCER_TYPE' must be a JSON object containing a field 'output signature' and field 'output signature' must be a JSON object",
+            id="BAD_FUNCTION_DEDUCER_TYPE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_DEDUCER_MISSING_TYPE",
+            "deducer JSON metadata must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_FUNCTION_DEDUCER_MISSING_TYPE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_DEDUCER_BAD_TYPE_1",
+            "deducer JSON metadata must be a JSON object containing a field 'type' and field 'type' must be a string",
+            id="BAD_FUNCTION_DEDUCER_BAD_TYPE_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_DEDUCER_BAD_TYPE_2",
+            "Unknown deducer type: 'buzz'",
+            id="BAD_FUNCTION_DEDUCER_BAD_TYPE_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_CONSTANT_DEDUCER_MISSING_VALUE",
+            "constant deducer JSON data must be a JSON object containing a field 'value' and field 'value' must be a string",
+            id="BAD_FUNCTION_CONSTANT_DEDUCER_MISSING_VALUE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_CONSTANT_DEDUCER_BAD_VALUE_1",
+            "constant deducer JSON data must be a JSON object containing a field 'value' and field 'value' must be a string",
+            id="BAD_FUNCTION_CONSTANT_DEDUCER_BAD_VALUE_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_CONSTANT_DEDUCER_BAD_VALUE_2",
+            "Unrecognized type string 'bad-type'",
+            id="BAD_FUNCTION_CONSTANT_DEDUCER_BAD_VALUE_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_CONSTANT_DEDUCER_EXTRA_FIELD",
+            re.escape(
+                "constant deducer JSON metadata must be a JSON object containing no fields except for ['type', 'value']"
+            ),
+            id="BAD_FUNCTION_CONSTANT_DEDUCER_EXTRA_FIELD",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_MISSING_VALUE",
+            "select argument deducer JSON data must be a JSON object containing a field 'value' and field 'value' must be a integer",
+            id="BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_MISSING_VALUE",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_BAD_VALUE_1",
+            "select argument deducer JSON data must be a JSON object containing a field 'value' and field 'value' must be a integer",
+            id="BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_BAD_VALUE_1",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_BAD_VALUE_2",
+            "Invalid argument index in select argument deducer JSON data: -1",
+            id="BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_BAD_VALUE_2",
+        ),
+        pytest.param(
+            "BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_EXTRA_FIELD",
+            re.escape(
+                "select argument deducer JSON metadata must be a JSON object containing no fields except for ['type', 'value']"
+            ),
+            id="BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_EXTRA_FIELD",
+        ),
     ],
 )
 def test_invalid_graphs(
     invalid_graph_path: str, graph_name: str, error_message: str
 ) -> None:
-    with pytest.raises(PyDoughMetadataException, match=error_message):
+    with pytest.raises(
+        (PyDoughMetadataException, PyDoughTypeException), match=error_message
+    ):
         parse_json_metadata_from_file(
             file_path=invalid_graph_path, graph_name=graph_name
         )
