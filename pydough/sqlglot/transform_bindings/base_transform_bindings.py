@@ -345,12 +345,12 @@ class BaseTransformBindings:
         """Convert a `REPLACE` call expression to a SQLGlot expression.
 
         Args:
-            args (list[SQLGlotExpression]): The operands to `REPLACE`, after they were
+            `args` The operands to `REPLACE`, after they were
             converted to SQLGlot expressions.
-            types (list[PyDoughType]): The PyDough types of the arguments to `REPLACE`.
+            `types` The PyDough types of the arguments to `REPLACE`.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression matching
+            The SQLGlot expression matching
             the functionality of `REPLACE`.
             In Python, this is equivalent to `X.replace(Y, Z)`.
         """
@@ -376,13 +376,13 @@ class BaseTransformBindings:
         END
 
         Args:
-            args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after
+            `args` The operands to `STRCOUNT`, after
             they were converted to SQLGlot expressions.
-            types (list[PyDoughType]): The PyDough types of the arguments to
+            `types` The PyDough types of the arguments to
             `STRCOUNT`.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression matching
+            The SQLGlot expression matching
             the functionality of `STRCOUNT`.
             In Python, this is equivalent to `X.count(Y)`.
         """

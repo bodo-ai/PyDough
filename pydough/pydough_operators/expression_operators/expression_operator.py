@@ -63,7 +63,7 @@ class PyDoughExpressionOperator(PyDoughOperator):
         be used for other components that are function dependent.
 
         Returns:
-            str: The name used for the function.
+            The name used for the function.
         """
 
     @abstractmethod

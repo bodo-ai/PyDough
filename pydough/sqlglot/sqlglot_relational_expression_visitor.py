@@ -90,9 +90,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         - `-N`: `N PRECEDING`
 
         Args:
-            kwargs (dict[str, object]): The keyword arguments to parse, which
-            may include a `frame` argument or a `cumulative` argument. It is
-            assumed the keyword arguments are the correct types/formats.
+            `kwargs`: The keyword arguments to parse, which may include a
+            `frame` argument or a `cumulative` argument. It is assumed the
+            keyword arguments are the correct types/formats.
 
         Returns:
             The window specification if applicable, otherwise None.
@@ -320,10 +320,10 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
         Args:
-            column_reference (ColumnReference): The column reference to generate
-                an identifier for.
+            `column_reference`: The column reference to generate an identifier
+            for.
         Returns:
-            Identifier: The output identifier.
+            The output identifier.
         """
         if column_reference.input_name is not None:
             full_name = f"{column_reference.input_name}.{column_reference.name}"
@@ -342,12 +342,12 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         and assign it the given alias.
 
         Args:
-            expr (RelationalExpression): The relational expression to convert.
-            output_name (str | None): The name to assign to the final SQLGlot expression
+            `expr`: The relational expression to convert.
+            `output_name`: The name to assign to the final SQLGlot expression
                 or None if we should omit any alias.
 
         Returns:
-            SQLGlotExpression: The final SQLGlot expression representing the entire
+            The final SQLGlot expression representing the entire
                 relational tree.
         """
         self.reset()
@@ -360,7 +360,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Interface to get the current SQLGlot expression result based on the current state.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression representing the tree we have already
+            The SQLGlot expression representing the tree we have already
                 visited.
         """
         assert len(self._stack) == 1, "Expected exactly one expression on the stack"
