@@ -17,7 +17,7 @@ def gen_product_info_records(rng: np.random.Generator) -> dict[int, dict]:
     correlation to each other and uneven distributions.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
+        `rng`: A random number generator instance.
 
     Returns:
         dict[int, dict]: A dictionary containing product records, where
@@ -243,15 +243,14 @@ def gen_devices_info_records(
     distributions.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
-        products (dict[int, dict]): A dictionary containing product records.
-        users (dict[int, dict]): A dictionary containing user records.
-        countries (dict[int, str]): A dictionary containing country records.
+        `rng`: A random number generator instance.
+        `products`: A dictionary containing product records.
+        `users`: A dictionary containing user records.
+        `countries`: A dictionary containing country records.
 
     Returns:
-        dict[int, dict]: A dictionary containing device records, where
-        the keys are device IDs and the values are dictionaries with
-        device attributes.
+        A dictionary containing device records, where the keys are device IDs
+        and the values are dictionaries with device attributes.
     """
     country_codes = sorted(countries)
     product_codes = sorted(products)
@@ -426,9 +425,9 @@ def gen_product_country_error_densities(
     are more likely to have errors.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
-        products (dict[int, dict]): A dictionary containing product records.
-        countries (dict[int, str]): A dictionary containing country records.
+        `rng`: A random number generator instance.
+        `products`: A dictionary containing product records.
+        `countries`: A dictionary containing country records.
 
     Returns:
         np.ndarray: A 2D array where each row corresponds to a product and
@@ -567,11 +566,11 @@ def gen_incident_info_records(
     likely to have certain errors instead of others.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
-        products (dict[int, dict]): A dictionary containing product records.
-        countries (dict[int, str]): A dictionary containing country records.
-        errors (dict[int, dict]): A dictionary containing error records.
-        devices (dict[int, dict]): A dictionary containing device records.
+        `rng`: A random number generator instance.
+        `products`: A dictionary containing product records.
+        `countries`: A dictionary containing country records.
+        `errors`: A dictionary containing error records.
+        `devices`: A dictionary containing device records.
 
     Returns:
         dict[int, dict]: A dictionary containing incident records, where

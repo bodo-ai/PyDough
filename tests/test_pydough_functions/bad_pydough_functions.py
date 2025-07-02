@@ -542,3 +542,23 @@ def bad_cross_11():
     # Reason it is bad: `customers` is a sub-collection of `nations`,
     # not `regions`
     return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
+
+
+def bad_sqlite_udf_1():
+    # Calling a UDF that requires 2 arguments with only 1 argument
+    return orders.CALCULATE(x=FORMAT_DATETIME("%Y"))
+
+
+def bad_sqlite_udf_2():
+    # Calling a UDF that requires 2 arguments with 3 arguments
+    return orders.CALCULATE(x=FORMAT_DATETIME("%Y", order_date, "foo"))
+
+
+def bad_sqlite_udf_3():
+    # Calling a UDF that requires 1-2 arguments with 0 arguments
+    return nations.CALCULATE(x=GCAT(by=name.ASC()))
+
+
+def bad_sqlite_udf_4():
+    # Calling a UDF that requires 1-2 arguments with 3 arguments
+    return nations.CALCULATE(x=GCAT(name, ";", "bar", by=name.ASC()))

@@ -52,10 +52,10 @@ class RelationalExpression(ABC):
         after any alterations, for example commuting the inputs.
 
         Args:
-            other (RelationalExpression): The other relational expression to compare against.
+            `other`: The other relational expression to compare against.
 
         Returns:
-            bool: Are the two relational expressions equal.
+            Are the two relational expressions equal.
         """
         return (
             isinstance(other, RelationalExpression)
@@ -71,7 +71,7 @@ class RelationalExpression(ABC):
         Convert the relational expression to a string.
 
         Returns:
-            str: A string representation of the this expression including converting
+            A string representation of the this expression including converting
             any of its inputs to strings.
         """
 
@@ -87,8 +87,7 @@ class RelationalExpression(ABC):
         Visit this relational expression with the provided visitor.
 
         Args:
-            visitor (RelationalExpressionVisitor): The visitor to use to visit
-                this node.
+            `visitor`: The visitor to use to visit this node.
         """
 
     @abstractmethod
@@ -101,10 +100,8 @@ class RelationalExpression(ABC):
         return the new expression.
 
         Args:
-            shuttle (RelationalExpressionShuttle): The shuttle to use to visit
-                this node.
+            `shuttle`: The shuttle to use to visit this node.
 
         Returns:
-            RelationalExpression: The new expression resulting from visiting
-                this node.
+            The new expression resulting from visiting this node.
         """

@@ -40,10 +40,10 @@ class ColumnPruner:
         identity projection.
 
         Args:
-            node (Relational): The node to check for identity projection.
+            `node`: The node to check for identity projection.
 
         Returns:
-            Relational: The new node with the identity projection removed.
+            The new node with the identity projection removed.
         """
         if isinstance(node, Project) and node.is_identity():
             return node.inputs[0]
@@ -57,12 +57,12 @@ class ColumnPruner:
         Prune the columns for a subtree starting at this node.
 
         Args:
-            node (Relational): The node to prune columns from.
-            kept_columns (set[str]): The columns to keep.
+            `node`: The node to prune columns from.
+            `kept_columns`: The columns to keep.
 
         Returns:
-            Relational: The new node with pruned columns. Its input may also
-                be changed if columns were pruned from it.
+            The new node with pruned columns. Its input may also be changed if
+            columns were pruned from it.
         """
         # Prune columns from the node.
         if isinstance(node, Aggregate):
@@ -183,10 +183,10 @@ class ColumnPruner:
         Prune columns that are unused in each relational expression.
 
         Args:
-            root (RelationalRoot): The tree root to prune columns from.
+            `root`: The tree root to prune columns from.
 
         Returns:
-            RelationalRoot: The root after updating all inputs.
+            The root after updating all inputs.
         """
         new_root, _ = self._prune_node_columns(root, set(root.columns.keys()))
         assert isinstance(new_root, RelationalRoot), "Expected a root node."

@@ -55,7 +55,7 @@ def convert_relation_to_sql(
         `dialect`: The dialect to use for the conversion.
 
     Returns:
-        str: The SQL string representing the relational tree.
+        The SQL string representing the relational tree.
     """
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         dialect, config
@@ -257,10 +257,10 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     Convert the given DatabaseDialect to the corresponding SQLGlotDialect.
 
     Args:
-        dialect (DatabaseDialect): The dialect to convert.
+        `dialect` The dialect to convert.
 
     Returns:
-        SQLGlotDialect: The corresponding SQLGlot dialect.
+        The corresponding SQLGlot dialect.
     """
     if dialect == DatabaseDialect.ANSI:
         # Note: ANSI is the base dialect for SQLGlot.

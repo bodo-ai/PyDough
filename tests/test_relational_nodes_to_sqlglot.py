@@ -105,11 +105,11 @@ def mk_literal(value: Any, is_string: bool = False) -> Literal:
     Make a literal expression with the given value.
 
     Args:
-        value (int): The value to use for the literal.
-        is_string (bool): Whether the literal should be a string.
+        `value`: The value to use for the literal.
+        `is_string`: Whether the literal should be a string.
 
     Returns:
-        Literal: The output literal expression.
+        The output literal expression.
     """
     return Literal(this=str(value), is_string=is_string)
 
@@ -121,15 +121,13 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     from clause directly because all clauses must use them.
 
     Args:
-        expressions (list[Expression]): The expressions to add as columns.
-        _from (Expression): The from query that should not already be wrapped
-        in a FROM.
-    Kwargs:
-        **kwargs: Additional keyword arguments that can be accepted
+        `expressions`: The expressions to add as columns.
+        `_from`: The from query that should not already be wrapped in a FROM.
+        `**kwargs`: Additional keyword arguments that can be accepted
             to build the Select object. Examples include 'from',
             and 'where'.
     Returns:
-        Select: The output select statement.
+        The output select statement.
     """
     from_value = _from.input
     from_alias = _from.alias

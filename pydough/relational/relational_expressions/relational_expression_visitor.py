@@ -35,7 +35,7 @@ class RelationalExpressionVisitor(ABC):
         Visit a CallExpression node.
 
         Args:
-            call_expression (CallExpression): The call expression node to visit.
+            `call_expression`: The call expression node to visit.
         """
 
     @abstractmethod
@@ -44,8 +44,7 @@ class RelationalExpressionVisitor(ABC):
         Visit a WindowCallExpression node.
 
         Args:
-            window_expression (WindowCallExpression): The window call
-            expression node to visit.
+            `window_expression`: The window call expression node to visit.
         """
 
     @abstractmethod
@@ -54,7 +53,7 @@ class RelationalExpressionVisitor(ABC):
         Visit a LiteralExpression node.
 
         Args:
-            literal_expression (LiteralExpression): The literal expression node to visit.
+            `literal_expression`: The literal expression node to visit.
         """
 
     @abstractmethod
@@ -63,7 +62,7 @@ class RelationalExpressionVisitor(ABC):
         Visit a ColumnReference node.
 
         Args:
-            column_reference (ColumnReference): The column reference node to visit.
+            `column_reference`: The column reference node to visit.
         """
 
     @abstractmethod
@@ -74,5 +73,5 @@ class RelationalExpressionVisitor(ABC):
         Visit a CorrelatedReference node.
 
         Args:
-            correlated_reference (CorrelatedReference): The correlated reference node to visit.
+            `correlated_reference`: The correlated reference node to visit.
         """

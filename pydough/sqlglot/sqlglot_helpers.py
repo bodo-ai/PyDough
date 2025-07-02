@@ -17,10 +17,10 @@ def get_glot_name(expr: SQLGlotExpression) -> str | None:
     an expression has neither, return None.
 
     Args:
-        expr (SQLGlotExpression): The expression to get the name of.
+        `expr`: The expression to get the name of.
 
     Returns:
-        str | None: The name of the expression or None if no name is found.
+        The name of the expression or None if no name is found.
     """
     if expr.alias:
         return expr.alias
@@ -39,11 +39,11 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
     the original expression.
 
     Args:
-        expr (SQLGlotExpression): The expression to update.
-        alias (str | None): The alias to set.
+        `expr`: The expression to update.
+        `alias`: The alias to set.
 
     Returns:
-        SQLGlotExpression: The updated expression.
+        The updated expression.
     """
     if alias is None:
         return expr
@@ -61,9 +61,9 @@ def unwrap_alias(expr: SQLGlotExpression) -> SQLGlotExpression:
     original expression.
 
     Args:
-        expr (SQLGlotExpression): The expression to unwrap.
+        `expr`: The expression to unwrap.
 
     Returns:
-        SQLGlotExpression: The unwrapped expression.
+        The unwrapped expression.
     """
     return expr.this if isinstance(expr, SQLGlotAlias) else expr
