@@ -16,6 +16,13 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from pydough.metadata import PyDoughMetadataException
+from pydough.metadata.errors import (
+    NoExtraKeys,
+    extract_array,
+    extract_integer,
+    extract_string,
+)
+from pydough.types import parse_type_from_string
 
 
 class TypeVerifier(ABC):
@@ -195,25 +202,46 @@ def build_verifier_from_json(json_data: dict[str, Any] | None) -> TypeVerifier:
     if json_data is None:
         return AllowAny()
 
-    if "type" not in json_data:
-        raise PyDoughMetadataException("Missing 'type' field in verifier JSON data")
+    type_args: list[str]
 
-    match json_data["type"]:
+    # Extract and switch on the verifier type string field.
+    deducer_type: str = extract_string(json_data, "type", "verifier JSON metadata")
+    match deducer_type:
         case "fixed arguments":
-            if "value" not in json_data:
-                raise PyDoughMetadataException(
-                    "Missing 'value' field in fixed arguments verifier JSON data"
-                )
-            return RequireNumArgs(len(json_data["value"]))
+            NoExtraKeys({"type", "value"}).verify(
+                json_data, "fixed arguments verifier JSON metadata"
+            )
+            type_args = extract_array(
+                json_data, "value", "fixed arguments verifier JSON data"
+            )
+            for arg in type_args:
+                if not isinstance(arg, str) or parse_type_from_string(arg) is None:
+                    raise PyDoughMetadataException(
+                        f"Invalid type value in fixed arguments verifier JSON data: {arg!r}"
+                    )
+            return RequireNumArgs(len(type_args))
+
         case "argument range":
-            if "value" not in json_data:
-                raise PyDoughMetadataException(
-                    "Missing 'value' field in fixed arguments verifier JSON data"
-                )
-            if "min" not in json_data or "max" not in json_data:
-                raise PyDoughMetadataException(
-                    "Missing 'min' or 'max' field in argument range verifier JSON data"
-                )
-            return RequireArgRange(json_data["min"], len(json_data["value"]))
-        case other:
-            raise PyDoughMetadataException(f"Unknown verifier type string: {other!r}")
+            NoExtraKeys({"type", "value", "min"}).verify(
+                json_data, "argument range verifier JSON metadata"
+            )
+            type_args = extract_array(
+                json_data, "value", "argument range verifier JSON data"
+            )
+            type_args = extract_array(
+                json_data, "value", "fixed arguments verifier JSON data"
+            )
+            for arg in type_args:
+                if not isinstance(arg, str) or parse_type_from_string(arg) is None:
+                    raise PyDoughMetadataException(
+                        f"Invalid type value in argument range verifier JSON data: {arg!r}"
+                    )
+            min_args: int = extract_integer(
+                json_data, "min", "argument range verifier JSON data"
+            )
+            return RequireArgRange(min_args, len(type_args))
+
+        case _:
+            raise PyDoughMetadataException(
+                f"Unknown verifier type string: {deducer_type!r}"
+            )

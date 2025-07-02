@@ -18,7 +18,7 @@ from pydough.metadata.errors import (
     extract_integer,
     extract_string,
 )
-from pydough.types import PyDoughType, UnknownType
+from pydough.types import PyDoughType, UnknownType, parse_type_from_string
 
 
 class ExpressionTypeDeducer(ABC):
@@ -103,6 +103,8 @@ def build_deducer_from_json(json_data: dict[str, Any] | None) -> ExpressionTypeD
     if json_data is None:
         return ConstantType(UnknownType())
 
+    data_type: PyDoughType | None
+
     # Extract and switch on the deducer type string field.
     deducer_type: str = extract_string(json_data, "type", "deducer JSON metadata")
     match deducer_type:
@@ -114,7 +116,7 @@ def build_deducer_from_json(json_data: dict[str, Any] | None) -> ExpressionTypeD
             type_string: str = extract_string(
                 json_data, "value", "constant deducer JSON data"
             )
-            data_type = PyDoughType.parse_from_string(type_string)
+            data_type = parse_type_from_string(type_string)
             if data_type is None:
                 raise PyDoughMetadataException(
                     f"Invalid type value in constant deducer JSON data: {json_data['value']!r}"
@@ -124,7 +126,7 @@ def build_deducer_from_json(json_data: dict[str, Any] | None) -> ExpressionTypeD
         # Select argument deducer type.
         case "select argument":
             NoExtraKeys({"type", "value"}).verify(
-                json_data, "select argument JSON metadata"
+                json_data, "select argument deducer JSON metadata"
             )
             arg_idx: int = extract_integer(
                 json_data, "value", "select argument deducer JSON data"
