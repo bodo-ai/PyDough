@@ -1,0 +1,111 @@
+"""
+Tests pydough from_string API
+"""
+
+from collections.abc import Callable
+
+import pandas as pd
+import pytest
+
+import pydough
+from pydough.database_connectors import DatabaseContext
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
+from tests.testing_utilities import graph_fetcher
+
+
+@pytest.mark.parametrize(
+    "pydough_code, answer_variable, env, answer",
+    [
+        pytest.param(
+            "result = TPCH.CALCULATE(n_nations=COUNT(nations))",
+            None,
+            None,
+            lambda: pd.DataFrame({"n_nations": [25]}),
+            id="count_nations-no_var-no_env",
+        ),
+        pytest.param(
+            "answer_var = TPCH.CALCULATE(n_nations=COUNT(nations))",
+            "answer_var",
+            None,
+            lambda: pd.DataFrame({"n_nations": [25]}),
+            id="count_nations-with_var-no_env",
+        ),
+        pytest.param(
+            "result = TPCH.CALCULATE(n_custs=COUNT(customers.WHERE(nation.name == selected_nation_name)))",
+            None,
+            {"selected_nation_name": "JAPAN"},
+            lambda: pd.DataFrame({"n_custs": [5948]}),
+            id="count_custs_in_nation-no_var-with_env",
+        ),
+        pytest.param(
+            "automobile_customers=customers.WHERE(market_segment == SEG)\nresult = TPCH.CALCULATE(n_custs=COUNT(automobile_customers))",
+            None,
+            {"SEG": "AUTOMOBILE"},
+            lambda: pd.DataFrame({"n_custs": [29752]}),
+            id="count_custs_in_market-no_var-with_env-intermediate_result",
+        ),
+    ],
+)
+def test_tpch_data_e2e_from_string(
+    pydough_code: str,
+    answer_variable: str,
+    env: dict[str, None],
+    answer: Callable[[], pd.DataFrame],
+    get_sample_graph: graph_fetcher,
+    sqlite_tpch_db_context: DatabaseContext,
+):
+    """Test pydough from_string API"""
+    graph: GraphMetadata = get_sample_graph("TPCH")
+    query: UnqualifiedNode = pydough.from_string(
+        pydough_code, answer_variable, metadata=graph, environment=env
+    )
+    result: pd.DataFrame = pydough.to_df(
+        query, metadata=graph, database=sqlite_tpch_db_context
+    )
+    refsol: pd.DataFrame = answer()
+
+    # Perform the comparison between the result and the reference solution
+    pd.testing.assert_frame_equal(result, refsol)
+
+
+@pytest.mark.parametrize(
+    "pydough_code, answer_variable, env, error_message",
+    [
+        pytest.param(
+            "result2 = TPCH.CALCULATE(n_nations=COUNT(nations))",
+            None,
+            None,
+            "PyDough code expected to store the answer in a variable named 'result'.",
+            id="invalid-from_string-no_var-no_env",
+        ),
+        pytest.param(
+            "answer = TPCH.CALCULATE(n_nations=COUNT(nations))",
+            "answer_var",
+            None,
+            "PyDough code expected to store the answer in a variable named 'answer_var'.",
+            id="invalid-from_string-with_var-no_env",
+        ),
+        pytest.param(
+            "query = TPCH.CALCULATE(n_nations=COUNT(nations))\nresult = selected_nation_name",
+            "result",
+            {"selected_nation_name": "JAPAN"},
+            "PyDough code answer stored in variable named 'result' is not an UnqualifiedNode instance.",
+            id="invalid-from_string-with_var-with_env",
+        ),
+    ],
+)
+def test_invalid_tpch_data_e2e_from_string(
+    pydough_code: str,
+    answer_variable: str,
+    env: dict[str, None],
+    error_message: str,
+    get_sample_graph: graph_fetcher,
+    sqlite_tpch_db_context: DatabaseContext,
+):
+    with pytest.raises(Exception, match=error_message):
+        graph: GraphMetadata = get_sample_graph("TPCH")
+        query: UnqualifiedNode = pydough.from_string(
+            pydough_code, answer_variable, metadata=graph, environment=env
+        )
+        pydough.to_df(query, metadata=graph, database=sqlite_tpch_db_context)
