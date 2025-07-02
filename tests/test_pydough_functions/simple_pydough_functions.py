@@ -2233,6 +2233,48 @@ def str_count():
     )  # end return
 
 
+def get_part_multiple():
+    return (
+        customers.WHERE(name == "Alex Rodriguez")
+        .CALCULATE(
+            fruit_list="apple,banana,orange",
+            color_list="red-green-blue",
+            numbers="one|two|three",
+            one_part="hello",
+            starts_with_delim=",start,middle",
+            ends_with_delim="end,",
+            multiple_delim="alpha,,beta",
+            delim_with_multiple_chars="part1<<<part2<<<part3",
+            all_delimiters="$$$$$$$",
+            text_with_space="this is a test",
+            space_around=" leading , trailing ",
+            empty_string="",
+        )
+        .CALCULATE(
+            test_1=GETPART(fruit_list, ",", 2),  # banana
+            test_2=GETPART(color_list, "-", -1),  # blue
+            test_3=GETPART(numbers, "|", 0),  # Have no idea the result
+            test_4=GETPART(one_part, ",", 1),  # hello
+            test_5=GETPART(starts_with_delim, ",", 1),  # ""
+            test_6=GETPART(ends_with_delim, ",", -1),  # ""
+            test_7=GETPART(multiple_delim, ",", 2),  # ""
+            test_8=GETPART(delim_with_multiple_chars, "<<<", 3),  # part3
+            test_9=GETPART(all_delimiters, "$", 4),  # ""
+            test_10=GETPART(text_with_space, " ", 3),  # a
+            test_11=GETPART(space_around, ",", 1),  # " leading "
+            test_12=GETPART(empty_string, "3", 2),  # ""
+            test_13=GETPART(fruit_list, ",", 4),  # "" (out of range)
+            test_14=GETPART(fruit_list, ",", -4),  # "" (out of range negative)
+        )
+    )
+
+
+def get_part_single():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        last_name=GETPART(name, " ", -1)
+    )
+
+
 def singular1():
     # Singular in CALCULATE & WHERE
     nation_4 = nations.WHERE(key == 4).SINGULAR()

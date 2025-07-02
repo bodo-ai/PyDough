@@ -542,3 +542,53 @@ def bad_cross_11():
     # Reason it is bad: `customers` is a sub-collection of `nations`,
     # not `regions`
     return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
+
+
+# Tests for the GETPART function
+# Missing arguments (all 3 required)
+def bad_get_part_1():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(split_part=GETPART(-1))
+
+
+def bad_get_part_2():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, " ")
+    )
+
+
+def bad_get_part_3():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, -1)
+    )
+
+
+# Wrong argument types, should be (str, str, int)
+def bad_get_part_4():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, " ", "2")
+    )
+
+
+def bad_get_part_5():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, 2, -1)
+    )
+
+
+def bad_get_part_6():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(3, " ", -1)
+    )
+
+
+def bad_get_part_7():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(3, 0, -1)
+    )
+
+
+# Index 0
+def bad_get_part_8():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, " ", 0)
+    )

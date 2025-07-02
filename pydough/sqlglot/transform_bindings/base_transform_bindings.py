@@ -1716,13 +1716,24 @@ class BaseTransformBindings:
 
         assert len(args) == 3
 
-        # Validate if the third argument is a integer can be both positive or negative
+        # Validate argument types
+        if isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_number:
+            raise ValueError(
+                "The first argument to GETPART cannot be an integer literal."
+            )
 
-        # identifiers definitions
-        split_parts: SQLGlotExpression = sqlglot_expressions.Identifier(
-            this="split_parts", quoted=False
-        )
-        part: SQLGlotExpression = sqlglot_expressions.Identifier(
+        if isinstance(args[1], sqlglot_expressions.Literal) and args[1].is_number:
+            raise ValueError(
+                "The second argument to GETPART cannot be an integer literal. (delimiter)"
+            )
+
+        if not (isinstance(args[2], sqlglot_expressions.Literal) and args[2].is_number):
+            raise ValueError(
+                "The third argument to GETPART must be an integer literal (index)."
+            )
+
+        # Identifiers definitions
+        part_identifier: SQLGlotExpression = sqlglot_expressions.Identifier(
             this="part", quoted=False
         )
         params: SQLGlotExpression = sqlglot_expressions.Identifier(
@@ -1754,18 +1765,14 @@ class BaseTransformBindings:
         )
 
         # Literals definitions
-        literal_0: SQLGlotExpression = sqlglot_expressions.Literal(
-            this=0, is_string=False
-        )
-        literal_1: SQLGlotExpression = sqlglot_expressions.Literal(
-            this=1, is_string=False
-        )
-        literal_empty: SQLGlotExpression = sqlglot_expressions.Literal(
-            this="", is_string=True
-        )
+        literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+        literal_1: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
+        literal_empty: SQLGlotExpression = sqlglot_expressions.Literal.string("")
 
-        # columns and tables
-        column_part: SQLGlotExpression = sqlglot_expressions.Column(this=part)
+        # Columns and tables
+        column_part: SQLGlotExpression = sqlglot_expressions.Column(
+            this=part_identifier
+        )
         column_part_index: SQLGlotExpression = sqlglot_expressions.Column(
             this=part_index
         )
@@ -1773,22 +1780,15 @@ class BaseTransformBindings:
             this=input_identifier
         )
         column_delim: SQLGlotExpression = sqlglot_expressions.Column(this=delim)
+
         column_rest: SQLGlotExpression = sqlglot_expressions.Column(this=rest)
         column_original: SQLGlotExpression = sqlglot_expressions.Column(this=original)
-        table_split_parts: SQLGlotExpression = sqlglot_expressions.Table(
-            this=split_parts
-        )
-        table_params: SQLGlotExpression = sqlglot_expressions.Table(this=params)
-        table_part_count: SQLGlotExpression = sqlglot_expressions.Table(this=part_count)
         column_idx: SQLGlotExpression = sqlglot_expressions.Column(
             this=idx, table=params
         )
         # CASE
         if_idx_greater_0: SQLGlotExpression = sqlglot_expressions.If(
-            this=sqlglot_expressions.GT(
-                this=column_idx,
-                expression=literal_0,
-            ),
+            this=sqlglot_expressions.GT(this=column_idx, expression=literal_0),
             true=column_idx,
         )
 
@@ -1802,7 +1802,7 @@ class BaseTransformBindings:
                     this=sqlglot_expressions.Column(this=total_parts, table=part_count),
                     expression=column_idx,
                 ),
-                expresssion=literal_1,
+                expression=literal_1,
             ),
         )
 
@@ -1810,7 +1810,7 @@ class BaseTransformBindings:
             ifs=[if_idx_greater_0, if_idx_lower_0], default=literal_1
         )
 
-        # fisrt CTE
+        # First CTE
         select_params_table: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
                 sqlglot_expressions.Alias(
@@ -1845,14 +1845,14 @@ class BaseTransformBindings:
             this=column_input, expression=column_delim, safe=True
         )
 
-        select_union_cte: SQLGlotExpression = sqlglot_expressions.Select(
+        select_union_params: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
                 sqlglot_expressions.Alias(this=literal_1, alias=part_index),
                 sqlglot_expressions.Alias(
                     this=sqlglot_expressions.Substring(
                         this=column_input, start=literal_1, length=sub_union
                     ),
-                    alias=part,
+                    alias=part_identifier,
                 ),
                 sqlglot_expressions.Alias(
                     this=sqlglot_expressions.Substring(
@@ -1868,13 +1868,13 @@ class BaseTransformBindings:
                     alias=rest,
                 ),
                 sqlglot_expressions.Alias(this=column_input, alias=original),
-                sqlglot_expressions.Column(this=delim),
-            ],
-            from_=sqlglot_expressions.From(table_params),
+                column_delim,
+            ]
         )
+        # Add the from clause
+        select_union_params = select_union_params.from_("params")
 
-        #
-        second_union_select_cte: SQLGlotExpression = sqlglot_expressions.Select(
+        select_union_split_parts: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
                 sqlglot_expressions.Add(this=column_part_index, expression=literal_1),
                 sqlglot_expressions.Substring(
@@ -1900,53 +1900,45 @@ class BaseTransformBindings:
                 column_original,
                 column_delim,
             ],
-            from_=table_split_parts,
-            where=sqlglot_expressions.Where(
-                this=sqlglot_expressions.NEQ(this=column_rest, expression=literal_empty)
-            ),
+        )
+        # Add from clause
+        select_union_split_parts = select_union_split_parts.from_("split_parts").where(
+            sqlglot_expressions.NEQ(this=column_rest, expression=literal_empty)
         )
 
-        union_cte: SQLGlotExpression = sqlglot_expressions.Union(
-            this=select_union_cte, distinct=False, expression=second_union_select_cte
+        union: SQLGlotExpression = sqlglot_expressions.Union(
+            this=select_union_params,
+            distinct=False,
+            expression=select_union_split_parts,
         )
+
+        # Third CTE
+        part_count_select: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[
+                sqlglot_expressions.Alias(
+                    this=sqlglot_expressions.Count(
+                        this=sqlglot_expressions.Star(), big_int=True
+                    ),
+                    alias=total_parts,
+                )
+            ]
+        )
+
+        part_count_select = part_count_select.from_("split_parts")
 
         # Final select
         result: SQLGlotExpression = sqlglot_expressions.Select(
-            expressions=[column_part],
-            from_=sqlglot_expressions.From(this=table_split_parts),
-            joins=[
-                sqlglot_expressions.Join(this=table_params),
-                sqlglot_expressions.Join(this=table_part_count),
-            ],
-            where=sqlglot_expressions.Where(
-                this=sqlglot_expressions.EQ(this=column_part_index, expression=case_idx)
-            ),
-            with_=sqlglot_expressions.With(
-                expressions=[
-                    sqlglot_expressions.CTE(  # first CTE
-                        this=select_params_table,
-                        alias=sqlglot_expressions.TableAlias(this=params),
-                    ),
-                    sqlglot_expressions.CTE(
-                        this=union_cte,
-                        alias=sqlglot_expressions.TableAlias(this=split_parts),
-                    ),
-                    sqlglot_expressions.CTE(
-                        this=sqlglot_expressions.Select(
-                            expressions=[
-                                sqlglot_expressions.Alias(
-                                    this=sqlglot_expressions.Count(
-                                        this=sqlglot_expressions.Star(), big_int=True
-                                    ),
-                                    alias=total_parts,
-                                )
-                            ],
-                            from_=table_split_parts,
-                        ),
-                        alias=sqlglot_expressions.TableAlias(this=part_count),
-                    ),
-                ]
-            ),
+            expressions=[column_part]
         )
+        # Add the from clause
+        result = result.from_("split_parts, params, part_count").where(
+            sqlglot_expressions.EQ(this=column_part_index, expression=case_idx)
+        )
+
+        # Add the with clause
+        result = result.with_("params", select_params_table)
+        result = result.with_("split_parts", union)
+        result = result.with_("part_count", part_count_select)
+        result = sqlglot_expressions.Subquery(this=result)
 
         return result
