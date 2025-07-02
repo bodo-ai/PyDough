@@ -156,11 +156,11 @@ class GraphMetadata(AbstractMetadata):
 
     def get_function(self, function_name: str) -> "ExpressionFunctionOperator":
         """
-        Fetches a specific collection's metadata from within the graph by name.
+        Fetches a specific function's metadata from within the graph by name.
         """
         if function_name not in self.functions:
             raise PyDoughMetadataException(
-                f"{self.error_name} does not have a collection named {function_name!r}"
+                f"{self.error_name} does not have a function named {function_name!r}"
             )
         return self.functions[function_name]
 
