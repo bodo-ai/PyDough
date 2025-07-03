@@ -854,8 +854,11 @@ class HybridTranslator:
         )
 
         # MAX
+        max_input_arg = self.inject_expression(
+            child_connection.subtree, keep_largest, create_new_calc
+        )
         max_call: HybridFunctionExpr = HybridFunctionExpr(
-            pydop.MAX, [keep_largest], expr.typ
+            pydop.MAX, [max_input_arg], expr.typ
         )
 
         return max_call
@@ -1679,10 +1682,7 @@ class HybridTranslator:
         self.run_hybrid_decorrelation(hybrid)
         # 5. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
-        # Then, re-run the ejection step, in case any new aggregates were
-        # created.
         self.run_rewrites(hybrid)
-        self.eject_aggregate_inputs(hybrid)
         # 6. Remove any dead children in the hybrid tree that are no longer
         # being used.
         hybrid.remove_dead_children(set())
