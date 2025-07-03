@@ -3,13 +3,16 @@ Logic for transforming raw Python code into PyDough code by replacing undefined
 variables with unqualified nodes by prepending with with `_ROOT.`.
 """
 
-__all__ = ["init_pydough_context", "transform_cell", "transform_code"]
+__all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]
 
 import ast
 import inspect
 import types
+from typing import Any
 
 from pydough.metadata import GraphMetadata
+
+from .unqualified_node import UnqualifiedNode
 
 
 class AddRootVisitor(ast.NodeTransformer):
@@ -411,6 +414,75 @@ def transform_cell(cell: str, graph_name: str, known_names: set[str]) -> str:
     new_tree = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
     return ast.unparse(new_tree)
+
+
+def from_string(
+    source: str,
+    answer_variable: str | None = None,
+    metadata: GraphMetadata | None = None,
+    environment: dict[str, Any] | None = None,
+) -> UnqualifiedNode:
+    """
+    Parses and transforms a PyDough source string, returning an unqualified node
+    on which operations like `explain()`, `to_sql()`, or `to_df()` can be called.
+
+    Args:
+        `source`: a valid PyDough code string.
+        `answer_variable`: The name of the variable that holds the result of the
+        PyDough code. Defaults to "result".
+        `metadata`: The metadata graph to use. If not provided,
+        `active_session.metadata` will be used. Defaults to None.
+        `environment`: A dictionary of variables that will be available
+        in the environment where the PyDough code is executed. Defaults to None.
+
+    Returns:
+        UnqualifiedNode: An object representing the result of the transformed PyDough code.
+    """
+    import pydough
+
+    # Verify if graph is provided. Otherwise use pydough.active_session.metadata
+    if metadata is None:
+        metadata = pydough.active_session.metadata
+        if metadata is None:
+            raise Exception(
+                "No active graph set in PyDough session."
+                " Please set a graph using"
+                " pydough.active_session.load_metadata_graph(...)"
+            )
+    # Verify if environment is provided
+    if environment is None:
+        environment = {}
+
+    # Verify if answer_variable is provided
+    if answer_variable is None:
+        answer_variable = "result"
+
+    # Transform PyDough code into valid Python code
+    known_names: set[str] = set(environment.keys())
+    visitor: ast.NodeTransformer = AddRootVisitor("graph", known_names)
+    tree = ast.parse(source)
+    assert isinstance(tree, ast.AST)
+    new_tree = ast.fix_missing_locations(visitor.visit(tree))
+    assert isinstance(new_tree, ast.AST)
+
+    # Execute the transformed PyDough code to get the UnqualifiedNode answer
+    transformed_ast = ast.unparse(new_tree)
+    compile_ast = compile(transformed_ast, filename="<ast>", mode="exec")
+    execution_context: dict[str, Any] = environment | {"graph": metadata}
+    exec(compile_ast, {}, execution_context)
+
+    # Check if answer_variable exists in execution_context after code execution
+    if answer_variable not in execution_context:
+        raise Exception(
+            f"PyDough code expected to store the answer in a variable named '{answer_variable}'."
+        )
+    ret_val = execution_context[answer_variable]
+    # Check if answer is an UnqualifiedNode
+    if not isinstance(ret_val, UnqualifiedNode):
+        raise Exception(
+            f"PyDough code answer stored in variable named '{answer_variable}' is not an UnqualifiedNode instance."
+        )
+    return ret_val
 
 
 def init_pydough_context(graph: GraphMetadata):
