@@ -111,6 +111,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     percentile_customers_per_region,
     percentile_nations,
     prev_next_regions,
+    quantile_function_test_1,
+    quantile_function_test_2,
+    quantile_function_test_3,
+    quantile_function_test_4,
     quarter_function_test,
     rank_nations_by_region,
     rank_nations_per_region_by_customers,
@@ -2456,6 +2460,88 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 order_sensitive=True,
             ),
             id="aggregation_analytics_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_1,
+                "TPCH",
+                # Answer
+                lambda: pd.DataFrame({"seventieth_order_price": [0]}),
+                "quantile_function_test_1",
+            ),
+            id="quantile_function_test_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_2,
+                "TPCH",
+                # Answer
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [2],
+                        "nation_name": [0],
+                        "orders_min": [1],
+                        "orders_1_percent": [0],
+                        "orders_10_percent": [0],
+                        "orders_25_percent": [0],
+                        "orders_median": [0],
+                        "orders_75_percent": [1],
+                        "orders_90_percent": [2],
+                        "orders_99_percent": [0],
+                        "orders_max": [1],
+                    }
+                ),
+                "quantile_function_test_2",
+            ),
+            id="quantile_function_test_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_3,
+                "TPCH",
+                # Answer
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [2],
+                        "nation_name": [0],
+                        "orders_min": [1],
+                        "orders_1_percent": [0],
+                        "orders_10_percent": [0],
+                        "orders_25_percent": [0],
+                        "orders_median": [0],
+                        "orders_75_percent": [1],
+                        "orders_90_percent": [2],
+                        "orders_99_percent": [0],
+                        "orders_max": [1],
+                    }
+                ),
+                "quantile_function_test_3",
+            ),
+            id="quantile_function_test_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_4,
+                "TPCH",
+                # Answer
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [2],
+                        "nation_name": [0],
+                        "orders_min": [1],
+                        "orders_1_percent": [0],
+                        "orders_10_percent": [0],
+                        "orders_25_percent": [0],
+                        "orders_median": [0],
+                        "orders_75_percent": [1],
+                        "orders_90_percent": [2],
+                        "orders_99_percent": [0],
+                        "orders_max": [1],
+                    }
+                ),
+                "quantile_function_test_4",
+            ),
+            id="quantile_function_test_4",
         ),
     ],
 )
