@@ -1,0 +1,6 @@
+ROOT(columns=[('seventieth_order_price', seventieth_order_price)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'seventieth_order_price': QUANTILE(o_totalprice, 0.7:numeric)})
+  JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, columns={'o_totalprice': t1.o_totalprice})
+   SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey})
+   FILTER(condition=YEAR(o_orderdate) == 1998:numeric, columns={'o_custkey': o_custkey, 'o_totalprice': o_totalprice})
+    SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_totalprice': o_totalprice})

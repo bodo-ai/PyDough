@@ -542,3 +542,34 @@ def bad_cross_11():
     # Reason it is bad: `customers` is a sub-collection of `nations`,
     # not `regions`
     return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
+
+
+# QUANTILE function's test
+# not arguments
+def bad_quantile_1():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders.total_price))
+
+
+# bad arguments
+def bad_quantile_2():
+    return customers.CALCULATE(bad_quantile=QUANTILE("orders.total_price", 0.7))
+
+
+# p out of range [0-1]
+def bad_quantile_3():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders.total_price, 40))
+
+
+# negative p out of range [0-1]
+def bad_quantile_4():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders.total_price, -10))
+
+
+# collection
+def bad_quantile_5():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders, 0.4))
+
+
+# both numbers
+def bad_quantile_6():
+    return customers.CALCULATE(bad_quantile=QUANTILE(20, 0.9))

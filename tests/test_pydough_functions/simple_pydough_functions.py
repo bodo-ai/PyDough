@@ -2921,3 +2921,65 @@ def simple_cross_12():
         .CALCULATE(order_priority, market_segment)
         .ORDER_BY(order_priority.ASC(), market_segment.ASC())
     )
+
+
+def quantile_function_test_1():
+    selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
+    return TPCH.CALCULATE(
+        seventieth_order_price=QUANTILE(selected_orders.total_price, 0.7)
+    )
+
+
+def quantile_function_test_2():
+    selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
+    return nations.TOP_K(5, by=name.ASC()).CALCULATE(
+        region_name=region.name,
+        nation_name=name,
+        orders_min=QUANTILE(selected_orders.total_price, 0.0),
+        orders_1_percent=QUANTILE(selected_orders.total_price, 0.01),
+        orders_10_percent=QUANTILE(selected_orders.total_price, 0.1),
+        orders_25_percent=QUANTILE(selected_orders.total_price, 0.25),
+        orders_median=QUANTILE(selected_orders.total_price, 0.5),
+        orders_75_percent=QUANTILE(selected_orders.total_price, 0.75),
+        orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
+        orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
+        orders_max=QUANTILE(selected_orders.total_price, 1.0),
+    )
+
+
+def quantile_function_test_3():
+    selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998).CALCULATE(
+        value=KEEP_IF(total_price, order_priority == "1-URGENT")
+    )
+    return nations.TOP_K(5, by=name.ASC()).CALCULATE(
+        region_name=region.name,
+        nation_name=name,
+        orders_min=QUANTILE(selected_orders.total_price, 0.0),
+        orders_1_percent=QUANTILE(selected_orders.total_price, 0.01),
+        orders_10_percent=QUANTILE(selected_orders.total_price, 0.1),
+        orders_25_percent=QUANTILE(selected_orders.total_price, 0.25),
+        orders_median=QUANTILE(selected_orders.total_price, 0.5),
+        orders_75_percent=QUANTILE(selected_orders.total_price, 0.75),
+        orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
+        orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
+        orders_max=QUANTILE(selected_orders.total_price, 1.0),
+    )
+
+
+def quantile_function_test_4():
+    selected_orders = customers.orders.WHERE(clerk == "Clerk#000000272").CALCULATE(
+        value=KEEP_IF(total_price, order_priority == "1-URGENT")
+    )
+    return nations.TOP_K(5, by=name.ASC()).CALCULATE(
+        region_name=region.name,
+        nation_name=name,
+        orders_min=QUANTILE(selected_orders.total_price, 0.0),
+        orders_1_percent=QUANTILE(selected_orders.total_price, 0.01),
+        orders_10_percent=QUANTILE(selected_orders.total_price, 0.1),
+        orders_25_percent=QUANTILE(selected_orders.total_price, 0.25),
+        orders_median=QUANTILE(selected_orders.total_price, 0.5),
+        orders_75_percent=QUANTILE(selected_orders.total_price, 0.75),
+        orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
+        orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
+        orders_max=QUANTILE(selected_orders.total_price, 1.0),
+    )
