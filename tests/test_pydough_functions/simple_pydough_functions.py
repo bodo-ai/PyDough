@@ -2902,7 +2902,10 @@ def simple_cross_12():
 
 
 def quantile_function_test_1():
-    return TPCH.CALCULATE(seventieth_order_price=QUANTILE(orders.total_price, 0.7))
+    selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
+    return TPCH.CALCULATE(
+        seventieth_order_price=QUANTILE(selected_orders.total_price, 0.7)
+    )
 
 
 def quantile_function_test_2():
