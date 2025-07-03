@@ -776,10 +776,8 @@ class HybridTranslator:
     ) -> HybridFunctionExpr:
         """
         Rewrites a QUANTILE aggregation call into an equivalent expression using
-        window functions.
-        This is typically used for dialects that do not natively support the
-        PERCENTILE_DISC
-        aggregate function.
+        window functions. This is typically used for dialects that do not natively
+        support the PERCENTILE_DISCaggregate function.
 
         The rewritten expression selects the value at the specified quantile by:
         - Ranking the rows within each partition.
