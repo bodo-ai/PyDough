@@ -1,22 +1,15 @@
-WITH _S1 AS (
+WITH _u_0 AS (
   SELECT
-    SBDAILYPRICE.sbdptickerid AS TICKER_ID
-  FROM MAIN.SBDAILYPRICE AS SBDAILYPRICE
-), _S0 AS (
-  SELECT
-    SBTICKER.sbtickerid AS _ID,
-    SBTICKER.sbtickersymbol AS SYMBOL
-  FROM MAIN.SBTICKER AS SBTICKER
+    sbdptickerid AS _u_1
+  FROM MAIN.SBDAILYPRICE
+  GROUP BY
+    sbdptickerid
 )
 SELECT
-  _S0._ID AS _id,
-  _S0.SYMBOL AS symbol
-FROM _S0 AS _S0
+  SBTICKER.sbtickerid AS _id,
+  SBTICKER.sbtickersymbol AS symbol
+FROM MAIN.SBTICKER AS SBTICKER
+LEFT JOIN _u_0 AS _u_0
+  ON SBTICKER.sbtickerid = _u_0._u_1
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM _S1 AS _S1
-    WHERE
-      _S0._ID = _S1.TICKER_ID
-  )
+  _u_0._u_1 IS NULL

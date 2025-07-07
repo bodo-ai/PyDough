@@ -4,7 +4,7 @@ WITH _S1 AS (
     salesperson_id AS SALESPERSON_ID
   FROM MAIN.SALES
   WHERE
-    DATEDIFF(DAY, sale_date, CURRENT_TIMESTAMP()) <= 30
+    DATEDIFF(DAY, CAST(sale_date AS DATETIME), CURRENT_TIMESTAMP()) <= 30
   GROUP BY
     salesperson_id
 )

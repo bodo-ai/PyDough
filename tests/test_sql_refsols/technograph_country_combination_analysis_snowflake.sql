@@ -1,37 +1,46 @@
-WITH _S7 AS (
+WITH _S0 AS (
   SELECT
-    COUNT(*) AS AGG_2,
-    in_device_id AS DEVICE_ID
+    co_id AS CO_ID,
+    co_name AS CO_NAME
+  FROM MAIN.COUNTRIES
+), _S2 AS (
+  SELECT
+    co_id AS CO_ID
+  FROM MAIN.COUNTRIES
+), _S7 AS (
+  SELECT
+    COUNT(*) AS N_ROWS,
+    in_device_id AS IN_DEVICE_ID
   FROM MAIN.INCIDENTS
   GROUP BY
     in_device_id
 ), _S9 AS (
   SELECT
-    COUNT(*) AS AGG_1,
-    SUM(_S7.AGG_2) AS AGG_4,
-    COUNTRIES.co_id AS _ID,
-    COUNTRIES_2.co_id AS _ID_3
-  FROM MAIN.COUNTRIES AS COUNTRIES
-  CROSS JOIN MAIN.COUNTRIES AS COUNTRIES_2
+    COUNT(*) AS N_ROWS,
+    SUM(_S7.N_ROWS) AS SUM_N_ROWS,
+    _S3.CO_ID AS _ID_3,
+    _S2.CO_ID
+  FROM _S2 AS _S2
+  CROSS JOIN _S2 AS _S3
   JOIN MAIN.DEVICES AS DEVICES
-    ON COUNTRIES.co_id = DEVICES.de_production_country_id
-    AND COUNTRIES_2.co_id = DEVICES.de_purchase_country_id
+    ON DEVICES.de_production_country_id = _S2.CO_ID
+    AND DEVICES.de_purchase_country_id = _S3.CO_ID
   LEFT JOIN _S7 AS _S7
-    ON DEVICES.de_id = _S7.DEVICE_ID
+    ON DEVICES.de_id = _S7.IN_DEVICE_ID
   GROUP BY
-    COUNTRIES.co_id,
-    COUNTRIES_2.co_id
+    _S3.CO_ID,
+    _S2.CO_ID
 )
 SELECT
-  COUNTRIES.co_name AS factory_country,
-  COUNTRIES_2.co_name AS purchase_country,
+  _S0.CO_NAME AS factory_country,
+  _S1.CO_NAME AS purchase_country,
   ROUND((
-    1.0 * COALESCE(_S9.AGG_4, 0)
-  ) / COALESCE(_S9.AGG_1, 0), 2) AS ir
-FROM MAIN.COUNTRIES AS COUNTRIES
-CROSS JOIN MAIN.COUNTRIES AS COUNTRIES_2
+    1.0 * COALESCE(_S9.SUM_N_ROWS, 0)
+  ) / COALESCE(_S9.N_ROWS, 0), 2) AS ir
+FROM _S0 AS _S0
+CROSS JOIN _S0 AS _S1
 LEFT JOIN _S9 AS _S9
-  ON COUNTRIES.co_id = _S9._ID AND COUNTRIES_2.co_id = _S9._ID_3
+  ON _S0.CO_ID = _S9.CO_ID AND _S1.CO_ID = _S9._ID_3
 ORDER BY
   IR DESC NULLS LAST
 LIMIT 5

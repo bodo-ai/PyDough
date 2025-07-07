@@ -3,7 +3,8 @@ WITH _T0 AS (
     car_id AS CAR_ID
   FROM MAIN.INVENTORY_SNAPSHOTS
   WHERE
-    DATE_PART(MONTH, snapshot_date) = 3 AND DATE_PART(YEAR, snapshot_date) = 2023
+    DATE_PART(MONTH, CAST(snapshot_date AS DATETIME)) = 3
+    AND DATE_PART(YEAR, CAST(snapshot_date AS DATETIME)) = 2023
   QUALIFY
     is_in_inventory AND RANK() OVER (ORDER BY snapshot_date DESC) = 1
 )

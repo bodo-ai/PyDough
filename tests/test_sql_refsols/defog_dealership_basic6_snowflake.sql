@@ -1,19 +1,12 @@
-WITH _T1 AS (
-  SELECT
-    SUM(SALES.sale_price) AS AGG_0,
-    COUNT(DISTINCT SALES.customer_id) AS AGG_1,
-    CUSTOMERS.state AS STATE
-  FROM MAIN.SALES AS SALES
-  JOIN MAIN.CUSTOMERS AS CUSTOMERS
-    ON CUSTOMERS._id = SALES.customer_id
-  GROUP BY
-    CUSTOMERS.state
-)
 SELECT
-  STATE AS state,
-  AGG_1 AS unique_customers,
-  COALESCE(AGG_0, 0) AS total_revenue
-FROM _T1
+  CUSTOMERS.state,
+  COUNT(DISTINCT SALES.customer_id) AS unique_customers,
+  COALESCE(SUM(SALES.sale_price), 0) AS total_revenue
+FROM MAIN.SALES AS SALES
+JOIN MAIN.CUSTOMERS AS CUSTOMERS
+  ON CUSTOMERS._id = SALES.customer_id
+GROUP BY
+  CUSTOMERS.state
 ORDER BY
   TOTAL_REVENUE DESC NULLS LAST
 LIMIT 5

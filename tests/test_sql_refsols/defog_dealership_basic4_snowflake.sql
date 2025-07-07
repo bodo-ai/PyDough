@@ -1,24 +1,16 @@
-WITH _S1 AS (
+WITH _u_0 AS (
   SELECT
-    SALES.salesperson_id AS SALESPERSON_ID
-  FROM MAIN.SALES AS SALES
-), _S0 AS (
-  SELECT
-    SALESPERSONS._id AS _ID,
-    SALESPERSONS.first_name AS FIRST_NAME,
-    SALESPERSONS.last_name AS LAST_NAME
-  FROM MAIN.SALESPERSONS AS SALESPERSONS
+    salesperson_id AS _u_1
+  FROM MAIN.SALES
+  GROUP BY
+    salesperson_id
 )
 SELECT
-  _S0._ID AS _id,
-  _S0.FIRST_NAME AS first_name,
-  _S0.LAST_NAME AS last_name
-FROM _S0 AS _S0
+  SALESPERSONS._id,
+  SALESPERSONS.first_name,
+  SALESPERSONS.last_name
+FROM MAIN.SALESPERSONS AS SALESPERSONS
+LEFT JOIN _u_0 AS _u_0
+  ON SALESPERSONS._id = _u_0._u_1
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM _S1 AS _S1
-    WHERE
-      _S0._ID = _S1.SALESPERSON_ID
-  )
+  _u_0._u_1 IS NULL

@@ -1,25 +1,31 @@
-WITH _T5 AS (
+WITH _S3 AS (
   SELECT
-    SUM(l_quantity) AS AGG_0,
-    l_partkey AS PART_KEY
+    COALESCE(SUM(l_quantity), 0) AS AGG_0,
+    l_partkey AS L_PARTKEY
   FROM TPCH.LINEITEM
   WHERE
-    DATE_PART(YEAR, l_shipdate) = 1994
+    DATE_PART(YEAR, CAST(l_shipdate AS DATETIME)) = 1994
   GROUP BY
     l_partkey
+), _S5 AS (
+  SELECT
+    _S3.AGG_0,
+    PART.p_partkey AS P_PARTKEY
+  FROM TPCH.PART AS PART
+  JOIN _S3 AS _S3
+    ON PART.p_partkey = _S3.L_PARTKEY
+  WHERE
+    PART.p_name LIKE 'forest%'
 ), _T1 AS (
   SELECT
-    COUNT(*) AS AGG_0,
-    PARTSUPP.ps_suppkey AS SUPPLIER_KEY
+    COUNT(*) AS N_ROWS,
+    PARTSUPP.ps_suppkey AS PS_SUPPKEY
   FROM TPCH.PARTSUPP AS PARTSUPP
-  JOIN TPCH.PART AS PART
-    ON PART.p_name LIKE 'forest%' AND PART.p_partkey = PARTSUPP.ps_partkey
-  JOIN _T5 AS _T5
-    ON PART.p_partkey = _T5.PART_KEY
-  WHERE
-    PARTSUPP.ps_availqty > (
-      0.5 * COALESCE(COALESCE(_T5.AGG_0, 0), 0)
+  JOIN _S5 AS _S5
+    ON PARTSUPP.ps_availqty > (
+      0.5 * COALESCE(_S5.AGG_0, 0)
     )
+    AND PARTSUPP.ps_partkey = _S5.P_PARTKEY
   GROUP BY
     PARTSUPP.ps_suppkey
 )
@@ -30,7 +36,7 @@ FROM TPCH.SUPPLIER AS SUPPLIER
 JOIN TPCH.NATION AS NATION
   ON NATION.n_name = 'CANADA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
 JOIN _T1 AS _T1
-  ON SUPPLIER.s_suppkey = _T1.SUPPLIER_KEY AND _T1.AGG_0 > 0
+  ON SUPPLIER.s_suppkey = _T1.PS_SUPPKEY AND _T1.N_ROWS > 0
 ORDER BY
   S_NAME NULLS FIRST
 LIMIT 10

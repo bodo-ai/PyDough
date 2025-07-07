@@ -1,7 +1,7 @@
 WITH _S1 AS (
   SELECT
-    COUNT(txid) AS AGG_0,
-    SUM(amount) AS AGG_1,
+    COUNT(txid) AS COUNT_TXID,
+    SUM(amount) AS SUM_AMOUNT,
     coupon_id AS COUPON_ID
   FROM MAIN.WALLET_TRANSACTIONS_DAILY
   GROUP BY
@@ -9,8 +9,8 @@ WITH _S1 AS (
 )
 SELECT
   COUPONS.code AS coupon_code,
-  COALESCE(_S1.AGG_0, 0) AS redemption_count,
-  COALESCE(_S1.AGG_1, 0) AS total_discount
+  COALESCE(_S1.COUNT_TXID, 0) AS redemption_count,
+  COALESCE(_S1.SUM_AMOUNT, 0) AS total_discount
 FROM MAIN.COUPONS AS COUPONS
 LEFT JOIN _S1 AS _S1
   ON COUPONS.cid = _S1.COUPON_ID

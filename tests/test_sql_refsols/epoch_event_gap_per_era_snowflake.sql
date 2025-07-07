@@ -2,27 +2,21 @@ WITH _T1 AS (
   SELECT
     DATEDIFF(
       DAY,
-      LAG(EVENTS.ev_dt, 1) OVER (PARTITION BY ERAS.er_name ORDER BY EVENTS.ev_dt),
-      EVENTS.ev_dt
+      CAST(LAG(EVENTS.ev_dt, 1) OVER (PARTITION BY ERAS.er_name ORDER BY EVENTS.ev_dt) AS DATETIME),
+      CAST(EVENTS.ev_dt AS DATETIME)
     ) AS DAY_GAP,
-    ERAS.er_name AS NAME,
-    ERAS.er_start_year AS START_YEAR
+    ERAS.er_name AS ER_NAME,
+    ERAS.er_start_year AS ER_START_YEAR
   FROM ERAS AS ERAS
   JOIN EVENTS AS EVENTS
-    ON ERAS.er_end_year > DATE_PART(YEAR, EVENTS.ev_dt)
-    AND ERAS.er_start_year <= DATE_PART(YEAR, EVENTS.ev_dt)
-), _T0 AS (
-  SELECT
-    ANY_VALUE(START_YEAR) AS AGG_3,
-    AVG(DAY_GAP) AS AVG_EVENT_GAP,
-    ANY_VALUE(NAME) AS ERA_NAME
-  FROM _T1
-  GROUP BY
-    NAME
+    ON ERAS.er_end_year > DATE_PART(YEAR, CAST(EVENTS.ev_dt AS DATETIME))
+    AND ERAS.er_start_year <= DATE_PART(YEAR, CAST(EVENTS.ev_dt AS DATETIME))
 )
 SELECT
-  ERA_NAME AS era_name,
-  AVG_EVENT_GAP AS avg_event_gap
-FROM _T0
+  ANY_VALUE(ER_NAME) AS era_name,
+  AVG(DAY_GAP) AS avg_event_gap
+FROM _T1
+GROUP BY
+  ER_NAME
 ORDER BY
-  AGG_3 NULLS FIRST
+  ANY_VALUE(ER_START_YEAR) NULLS FIRST

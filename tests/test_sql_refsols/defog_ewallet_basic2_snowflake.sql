@@ -1,23 +1,15 @@
-WITH _S1 AS (
+WITH _u_0 AS (
   SELECT
-    COUPONS.merchant_id AS MERCHANT_ID
-  FROM MAIN.COUPONS AS COUPONS
-), _S0 AS (
-  SELECT
-    MERCHANTS.mid AS MERCHANT_ID,
-    MERCHANTS.name AS MERCHANT_NAME,
-    MERCHANTS.mid AS MID
-  FROM MAIN.MERCHANTS AS MERCHANTS
+    merchant_id AS _u_1
+  FROM MAIN.COUPONS
+  GROUP BY
+    merchant_id
 )
 SELECT
-  _S0.MERCHANT_ID AS merchant_id,
-  _S0.MERCHANT_NAME AS merchant_name
-FROM _S0 AS _S0
+  MERCHANTS.mid AS merchant_id,
+  MERCHANTS.name AS merchant_name
+FROM MAIN.MERCHANTS AS MERCHANTS
+LEFT JOIN _u_0 AS _u_0
+  ON MERCHANTS.mid = _u_0._u_1
 WHERE
-  NOT EXISTS(
-    SELECT
-      1 AS "1"
-    FROM _S1 AS _S1
-    WHERE
-      _S0.MID = _S1.MERCHANT_ID
-  )
+  _u_0._u_1 IS NULL

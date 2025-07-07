@@ -1,30 +1,22 @@
-WITH _T1 AS (
-  SELECT
-    SUM(LINEITEM.l_extendedprice * (
-      1 - LINEITEM.l_discount
-    )) AS AGG_0,
-    ORDERS.o_orderdate AS ORDER_DATE,
-    LINEITEM.l_orderkey AS ORDER_KEY,
-    ORDERS.o_shippriority AS SHIP_PRIORITY
-  FROM TPCH.ORDERS AS ORDERS
-  JOIN TPCH.CUSTOMER AS CUSTOMER
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey AND CUSTOMER.c_mktsegment = 'BUILDING'
-  JOIN TPCH.LINEITEM AS LINEITEM
-    ON LINEITEM.l_orderkey = ORDERS.o_orderkey
-    AND LINEITEM.l_shipdate > CAST('1995-03-15' AS DATE)
-  WHERE
-    ORDERS.o_orderdate < CAST('1995-03-15' AS DATE)
-  GROUP BY
-    ORDERS.o_orderdate,
-    LINEITEM.l_orderkey,
-    ORDERS.o_shippriority
-)
 SELECT
-  ORDER_KEY AS L_ORDERKEY,
-  COALESCE(AGG_0, 0) AS REVENUE,
-  ORDER_DATE AS O_ORDERDATE,
-  SHIP_PRIORITY AS O_SHIPPRIORITY
-FROM _T1
+  LINEITEM.l_orderkey AS L_ORDERKEY,
+  COALESCE(SUM(LINEITEM.l_extendedprice * (
+    1 - LINEITEM.l_discount
+  )), 0) AS REVENUE,
+  ORDERS.o_orderdate AS O_ORDERDATE,
+  ORDERS.o_shippriority AS O_SHIPPRIORITY
+FROM TPCH.ORDERS AS ORDERS
+JOIN TPCH.CUSTOMER AS CUSTOMER
+  ON CUSTOMER.c_custkey = ORDERS.o_custkey AND CUSTOMER.c_mktsegment = 'BUILDING'
+JOIN TPCH.LINEITEM AS LINEITEM
+  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
+  AND LINEITEM.l_shipdate > CAST('1995-03-15' AS DATE)
+WHERE
+  ORDERS.o_orderdate < CAST('1995-03-15' AS DATE)
+GROUP BY
+  LINEITEM.l_orderkey,
+  ORDERS.o_orderdate,
+  ORDERS.o_shippriority
 ORDER BY
   REVENUE DESC NULLS LAST,
   O_ORDERDATE NULLS FIRST,

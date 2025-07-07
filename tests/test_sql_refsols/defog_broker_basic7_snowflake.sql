@@ -1,15 +1,9 @@
-WITH _T0 AS (
-  SELECT
-    COUNT(*) AS NUM_TRANSACTIONS,
-    sbtxstatus AS STATUS
-  FROM MAIN.SBTRANSACTION
-  GROUP BY
-    sbtxstatus
-)
 SELECT
-  STATUS AS status,
-  NUM_TRANSACTIONS AS num_transactions
-FROM _T0
+  sbtxstatus AS status,
+  COUNT(*) AS num_transactions
+FROM MAIN.SBTRANSACTION
+GROUP BY
+  sbtxstatus
 ORDER BY
   NUM_TRANSACTIONS DESC NULLS LAST
 LIMIT 3

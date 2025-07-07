@@ -1,7 +1,7 @@
 WITH _S5 AS (
   SELECT
-    COUNT(*) AS AGG_0,
-    INCIDENTS.in_error_id AS ERROR_ID
+    COUNT(*) AS N_ROWS,
+    INCIDENTS.in_error_id AS IN_ERROR_ID
   FROM MAIN.INCIDENTS AS INCIDENTS
   JOIN MAIN.DEVICES AS DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
@@ -11,16 +11,16 @@ WITH _S5 AS (
     INCIDENTS.in_error_id
 ), _T0 AS (
   SELECT
-    ERRORS.er_name AS ERROR,
     ROUND((
-      100.0 * COALESCE(_S5.AGG_0, 0)
-    ) / SUM(COALESCE(_S5.AGG_0, 0)) OVER (), 2) AS PCT
+      100.0 * COALESCE(_S5.N_ROWS, 0)
+    ) / SUM(COALESCE(_S5.N_ROWS, 0)) OVER (), 2) AS PCT,
+    ERRORS.er_name AS ER_NAME
   FROM MAIN.ERRORS AS ERRORS
   LEFT JOIN _S5 AS _S5
-    ON ERRORS.er_id = _S5.ERROR_ID
+    ON ERRORS.er_id = _S5.IN_ERROR_ID
 )
 SELECT
-  ERROR AS error,
+  ER_NAME AS error,
   PCT AS pct
 FROM _T0
 ORDER BY

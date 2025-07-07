@@ -1,42 +1,41 @@
 WITH _S0 AS (
   SELECT
-    s_suppkey AS KEY,
-    s_nationkey AS NATION_KEY
+    s_nationkey AS S_NATIONKEY,
+    s_suppkey AS S_SUPPKEY
   FROM TPCH.SUPPLIER
 ), _T4 AS (
   SELECT
-    n_nationkey AS KEY,
-    n_name AS NAME
+    n_name AS N_NAME,
+    n_nationkey AS N_NATIONKEY
   FROM TPCH.NATION
-), _T1 AS (
+  WHERE
+    n_name = 'GERMANY'
+), _S8 AS (
   SELECT
-    SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty) AS AGG_0
+    COALESCE(SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty), 0) * 0.0001 AS MIN_MARKET_SHARE
   FROM TPCH.PARTSUPP AS PARTSUPP
   JOIN _S0 AS _S0
-    ON PARTSUPP.ps_suppkey = _S0.KEY
+    ON PARTSUPP.ps_suppkey = _S0.S_SUPPKEY
   JOIN _T4 AS _T4
-    ON _S0.NATION_KEY = _T4.KEY AND _T4.NAME = 'GERMANY'
-), _T5 AS (
+    ON _S0.S_NATIONKEY = _T4.N_NATIONKEY
+), _S9 AS (
   SELECT
-    SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty) AS AGG_1,
-    PARTSUPP.ps_partkey AS PART_KEY
+    COALESCE(SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty), 0) AS VALUE,
+    PARTSUPP.ps_partkey AS PS_PARTKEY
   FROM TPCH.PARTSUPP AS PARTSUPP
   JOIN _S0 AS _S4
-    ON PARTSUPP.ps_suppkey = _S4.KEY
+    ON PARTSUPP.ps_suppkey = _S4.S_SUPPKEY
   JOIN _T4 AS _T8
-    ON _S4.NATION_KEY = _T8.KEY AND _T8.NAME = 'GERMANY'
+    ON _S4.S_NATIONKEY = _T8.N_NATIONKEY
   GROUP BY
     PARTSUPP.ps_partkey
 )
 SELECT
-  _T5.PART_KEY AS PS_PARTKEY,
-  COALESCE(_T5.AGG_1, 0) AS VALUE
-FROM _T1 AS _T1
-CROSS JOIN _T5 AS _T5
-WHERE
-  (
-    COALESCE(_T1.AGG_0, 0) * 0.0001
-  ) < COALESCE(_T5.AGG_1, 0)
+  _S9.PS_PARTKEY,
+  _S9.VALUE
+FROM _S8 AS _S8
+JOIN _S9 AS _S9
+  ON _S8.MIN_MARKET_SHARE < _S9.VALUE
 ORDER BY
   VALUE DESC NULLS LAST
 LIMIT 10

@@ -1,8 +1,8 @@
 WITH _S1 AS (
   SELECT
-    COUNT(*) AS AGG_0,
-    COUNT_IF(sbtxstatus = 'success') AS AGG_1,
-    sbtxcustid AS CUSTOMER_ID
+    COUNT(*) AS N_ROWS,
+    COUNT_IF(sbtxstatus = 'success') AS SUM_EXPR_2,
+    sbtxcustid AS SBTXCUSTID
   FROM MAIN.SBTRANSACTION
   GROUP BY
     sbtxcustid
@@ -10,12 +10,12 @@ WITH _S1 AS (
 SELECT
   SBCUSTOMER.sbcustname AS name,
   (
-    100.0 * COALESCE(_S1.AGG_1, 0)
-  ) / COALESCE(_S1.AGG_0, 0) AS success_rate
+    100.0 * COALESCE(_S1.SUM_EXPR_2, 0)
+  ) / COALESCE(_S1.N_ROWS, 0) AS success_rate
 FROM MAIN.SBCUSTOMER AS SBCUSTOMER
 LEFT JOIN _S1 AS _S1
-  ON SBCUSTOMER.sbcustid = _S1.CUSTOMER_ID
+  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
 WHERE
-  NOT _S1.AGG_0 IS NULL AND _S1.AGG_0 >= 5
+  NOT _S1.N_ROWS IS NULL AND _S1.N_ROWS >= 5
 ORDER BY
   SUCCESS_RATE NULLS FIRST

@@ -22,4 +22,5 @@ SELECT
   ) % 7 AS dayofweek
 FROM MAIN.SBTRANSACTION
 WHERE
-  DATE_PART(DAY, sbtxdatetime) > 1 AND DATE_PART(YEAR, sbtxdatetime) < 2025
+  DATE_PART(DAY, CAST(sbtxdatetime AS DATETIME)) > 1
+  AND DATE_PART(YEAR, CAST(sbtxdatetime AS DATETIME)) < 2025

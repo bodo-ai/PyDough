@@ -1,7 +1,7 @@
 WITH _S1 AS (
   SELECT
-    COUNT(*) AS AGG_0,
-    SUM(sale_price) AS AGG_1,
+    COUNT(*) AS N_ROWS,
+    SUM(sale_price) AS SUM_SALE_PRICE,
     car_id AS CAR_ID
   FROM MAIN.SALES
   WHERE
@@ -10,12 +10,12 @@ WITH _S1 AS (
     car_id
 )
 SELECT
-  COALESCE(_S1.AGG_0, 0) AS num_sales,
+  COALESCE(_S1.N_ROWS, 0) AS num_sales,
   CASE
     WHEN (
-      NOT _S1.AGG_0 IS NULL AND _S1.AGG_0 > 0
+      NOT _S1.N_ROWS IS NULL AND _S1.N_ROWS > 0
     )
-    THEN COALESCE(_S1.AGG_1, 0)
+    THEN COALESCE(_S1.SUM_SALE_PRICE, 0)
     ELSE NULL
   END AS total_revenue
 FROM MAIN.CARS AS CARS

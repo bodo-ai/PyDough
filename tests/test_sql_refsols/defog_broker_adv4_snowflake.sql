@@ -1,8 +1,8 @@
 WITH _S1 AS (
   SELECT
-    MAX(sbdphigh) AS AGG_0,
-    MIN(sbdplow) AS AGG_1,
-    sbdptickerid AS TICKER_ID
+    MAX(sbdphigh) AS MAX_SBDPHIGH,
+    MIN(sbdplow) AS MIN_SBDPLOW,
+    sbdptickerid AS SBDPTICKERID
   FROM MAIN.SBDAILYPRICE
   WHERE
     sbdpdate <= CAST('2023-04-04' AS DATE) AND sbdpdate >= CAST('2023-04-01' AS DATE)
@@ -11,10 +11,10 @@ WITH _S1 AS (
 )
 SELECT
   SBTICKER.sbtickersymbol AS symbol,
-  _S1.AGG_0 - _S1.AGG_1 AS price_change
+  _S1.MAX_SBDPHIGH - _S1.MIN_SBDPLOW AS price_change
 FROM MAIN.SBTICKER AS SBTICKER
 LEFT JOIN _S1 AS _S1
-  ON SBTICKER.sbtickerid = _S1.TICKER_ID
+  ON SBTICKER.sbtickerid = _S1.SBDPTICKERID
 ORDER BY
   PRICE_CHANGE DESC NULLS LAST
 LIMIT 3

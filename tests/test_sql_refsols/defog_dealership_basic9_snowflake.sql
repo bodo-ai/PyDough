@@ -1,15 +1,9 @@
-WITH _T0 AS (
-  SELECT
-    COUNT(*) AS TOTAL_SIGNUPS,
-    state AS STATE
-  FROM MAIN.CUSTOMERS
-  GROUP BY
-    state
-)
 SELECT
-  STATE AS state,
-  TOTAL_SIGNUPS AS total_signups
-FROM _T0
+  state,
+  COUNT(*) AS total_signups
+FROM MAIN.CUSTOMERS
+GROUP BY
+  state
 ORDER BY
   TOTAL_SIGNUPS DESC NULLS LAST
 LIMIT 2

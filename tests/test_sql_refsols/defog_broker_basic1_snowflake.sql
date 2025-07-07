@@ -1,26 +1,20 @@
 WITH _S1 AS (
   SELECT
-    COUNT(*) AS AGG_2,
-    SUM(sbtxamount) AS AGG_5,
-    sbtxcustid AS CUSTOMER_ID
+    COUNT(*) AS N_ROWS,
+    SUM(sbtxamount) AS SUM_SBTXAMOUNT,
+    sbtxcustid AS SBTXCUSTID
   FROM MAIN.SBTRANSACTION
   WHERE
     sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -30, CURRENT_TIMESTAMP()))
   GROUP BY
     sbtxcustid
-), _T0 AS (
-  SELECT
-    SUM(_S1.AGG_2) AS AGG_4,
-    SUM(_S1.AGG_5) AS AGG_7,
-    SBCUSTOMER.sbcustcountry AS COUNTRY
-  FROM MAIN.SBCUSTOMER AS SBCUSTOMER
-  LEFT JOIN _S1 AS _S1
-    ON SBCUSTOMER.sbcustid = _S1.CUSTOMER_ID
-  GROUP BY
-    SBCUSTOMER.sbcustcountry
 )
 SELECT
-  COUNTRY AS country,
-  COALESCE(AGG_4, 0) AS num_transactions,
-  COALESCE(AGG_7, 0) AS total_amount
-FROM _T0
+  SBCUSTOMER.sbcustcountry AS country,
+  COALESCE(SUM(_S1.N_ROWS), 0) AS num_transactions,
+  COALESCE(SUM(_S1.SUM_SBTXAMOUNT), 0) AS total_amount
+FROM MAIN.SBCUSTOMER AS SBCUSTOMER
+LEFT JOIN _S1 AS _S1
+  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
+GROUP BY
+  SBCUSTOMER.sbcustcountry

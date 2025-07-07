@@ -1,20 +1,14 @@
-WITH _T0 AS (
-  SELECT
-    AVG(sbtxshares) AS AVG_SHARES,
-    COUNT(DISTINCT sbtxcustid) AS NUM_CUSTOMERS,
-    sbtxtype AS TRANSACTION_TYPE
-  FROM MAIN.SBTRANSACTION
-  WHERE
-    sbtxdatetime <= CAST('2023-03-31' AS DATE)
-    AND sbtxdatetime >= CAST('2023-01-01' AS DATE)
-  GROUP BY
-    sbtxtype
-)
 SELECT
-  TRANSACTION_TYPE AS transaction_type,
-  NUM_CUSTOMERS AS num_customers,
-  AVG_SHARES AS avg_shares
-FROM _T0
+  sbtxtype AS transaction_type,
+  COUNT(DISTINCT sbtxcustid) AS num_customers,
+  AVG(sbtxshares) AS avg_shares
+FROM MAIN.SBTRANSACTION
+WHERE
+  sbtxdatetime <= CAST('2023-03-31' AS DATE)
+  AND sbtxdatetime >= CAST('2023-01-01' AS DATE)
+GROUP BY
+  sbtxtype
 ORDER BY
-  NUM_CUSTOMERS DESC NULLS LAST
+  NUM_CUSTOMERS DESC NULLS LAST,
+  sbtxtype NULLS FIRST
 LIMIT 3

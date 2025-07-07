@@ -1,15 +1,9 @@
-WITH _T0 AS (
-  SELECT
-    COUNT(*) AS COUNT,
-    device_type AS DEVICE_TYPE
-  FROM MAIN.USER_SESSIONS
-  GROUP BY
-    device_type
-)
 SELECT
-  DEVICE_TYPE AS device_type,
-  COUNT AS count
-FROM _T0
+  device_type,
+  COUNT(*) AS count
+FROM MAIN.USER_SESSIONS
+GROUP BY
+  device_type
 ORDER BY
   COUNT DESC NULLS LAST
 LIMIT 2

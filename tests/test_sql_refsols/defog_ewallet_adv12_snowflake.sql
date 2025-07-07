@@ -1,6 +1,6 @@
 WITH _S1 AS (
   SELECT
-    SUM(amount) AS AGG_0,
+    SUM(amount) AS SUM_AMOUNT,
     coupon_id AS COUPON_ID
   FROM MAIN.WALLET_TRANSACTIONS_DAILY
   GROUP BY
@@ -8,7 +8,7 @@ WITH _S1 AS (
 )
 SELECT
   COUPONS.cid AS coupon_id,
-  COALESCE(_S1.AGG_0, 0) AS total_discount
+  COALESCE(_S1.SUM_AMOUNT, 0) AS total_discount
 FROM MAIN.COUPONS AS COUPONS
 LEFT JOIN _S1 AS _S1
   ON COUPONS.cid = _S1.COUPON_ID

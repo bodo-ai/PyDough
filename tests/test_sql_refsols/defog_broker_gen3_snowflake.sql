@@ -1,14 +1,18 @@
 WITH _S1 AS (
   SELECT
-    MIN(sbtxdatetime) AS AGG_0,
-    sbtxcustid AS CUSTOMER_ID
+    MIN(sbtxdatetime) AS MIN_SBTXDATETIME,
+    sbtxcustid AS SBTXCUSTID
   FROM MAIN.SBTRANSACTION
   GROUP BY
     sbtxcustid
 )
 SELECT
   SBCUSTOMER.sbcustid AS cust_id,
-  DATEDIFF(SECOND, SBCUSTOMER.sbcustjoindate, _S1.AGG_0) / 86400.0 AS DaysFromJoinToFirstTransaction
+  DATEDIFF(
+    SECOND,
+    CAST(SBCUSTOMER.sbcustjoindate AS DATETIME),
+    CAST(_S1.MIN_SBTXDATETIME AS DATETIME)
+  ) / 86400.0 AS DaysFromJoinToFirstTransaction
 FROM MAIN.SBCUSTOMER AS SBCUSTOMER
 JOIN _S1 AS _S1
-  ON SBCUSTOMER.sbcustid = _S1.CUSTOMER_ID
+  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID

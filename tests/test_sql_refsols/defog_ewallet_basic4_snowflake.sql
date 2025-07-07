@@ -1,28 +1,16 @@
-WITH _T0 AS (
+WITH _u_0 AS (
   SELECT
-    NOTIFICATIONS.type AS NOTIFICATION_TYPE,
-    NOTIFICATIONS.user_id AS USER_ID
-  FROM MAIN.NOTIFICATIONS AS NOTIFICATIONS
-), _S1 AS (
-  SELECT
-    _T0.USER_ID AS USER_ID
-  FROM _T0 AS _T0
+    user_id AS _u_1
+  FROM MAIN.NOTIFICATIONS
   WHERE
-    _T0.NOTIFICATION_TYPE = 'transaction'
-), _S0 AS (
-  SELECT
-    USERS.uid AS UID,
-    USERS.uid AS USER_ID
-  FROM MAIN.USERS AS USERS
+    type = 'transaction'
+  GROUP BY
+    user_id
 )
 SELECT
-  _S0.USER_ID AS user_id
-FROM _S0 AS _S0
+  USERS.uid AS user_id
+FROM MAIN.USERS AS USERS
+LEFT JOIN _u_0 AS _u_0
+  ON USERS.uid = _u_0._u_1
 WHERE
-  EXISTS(
-    SELECT
-      1 AS "1"
-    FROM _S1 AS _S1
-    WHERE
-      _S0.UID = _S1.USER_ID
-  )
+  NOT _u_0._u_1 IS NULL

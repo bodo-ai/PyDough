@@ -1,6 +1,11 @@
-WITH _T0 AS (
+WITH _S1 AS (
   SELECT
-    SUM(DATEDIFF(SECOND, session_start_ts, session_end_ts)) AS AGG_0,
+    COALESCE(
+      SUM(
+        DATEDIFF(SECOND, CAST(session_start_ts AS DATETIME), CAST(session_end_ts AS DATETIME))
+      ),
+      0
+    ) AS TOTAL_DURATION,
     user_id AS USER_ID
   FROM MAIN.USER_SESSIONS
   WHERE
@@ -10,9 +15,9 @@ WITH _T0 AS (
 )
 SELECT
   USERS.uid,
-  COALESCE(_T0.AGG_0, 0) AS total_duration
+  _S1.TOTAL_DURATION AS total_duration
 FROM MAIN.USERS AS USERS
-JOIN _T0 AS _T0
-  ON USERS.uid = _T0.USER_ID
+JOIN _S1 AS _S1
+  ON USERS.uid = _S1.USER_ID
 ORDER BY
   TOTAL_DURATION DESC NULLS LAST

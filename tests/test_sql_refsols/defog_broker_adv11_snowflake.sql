@@ -1,49 +1,17 @@
-WITH _T1 AS (
+WITH _u_0 AS (
   SELECT
-    SBCUSTOMER.sbcustid AS _ID,
-    SBCUSTOMER.sbcustemail AS EMAIL
-  FROM MAIN.SBCUSTOMER AS SBCUSTOMER
-), _S2 AS (
-  SELECT
-    _T1._ID AS _ID
-  FROM _T1 AS _T1
-  WHERE
-    _T1.EMAIL LIKE '%.com'
-), _S0 AS (
-  SELECT
-    SBTRANSACTION.sbtxcustid AS CUSTOMER_ID,
-    SBTRANSACTION.sbtxtickerid AS TICKER_ID
+    SBTRANSACTION.sbtxcustid AS _u_1
   FROM MAIN.SBTRANSACTION AS SBTRANSACTION
-), _T2 AS (
-  SELECT
-    SBTICKER.sbtickerid AS _ID,
-    SBTICKER.sbtickersymbol AS SYMBOL
-  FROM MAIN.SBTICKER AS SBTICKER
-), _S1 AS (
-  SELECT
-    _T2._ID AS _ID
-  FROM _T2 AS _T2
-  WHERE
-    _T2.SYMBOL IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
-), _S3 AS (
-  SELECT
-    _S0.CUSTOMER_ID AS CUSTOMER_ID
-  FROM _S0 AS _S0
-  JOIN _S1 AS _S1
-    ON _S0.TICKER_ID = _S1._ID
-), _T0 AS (
-  SELECT
-    1 AS _
-  FROM _S2 AS _S2
-  WHERE
-    EXISTS(
-      SELECT
-        1 AS "1"
-      FROM _S3 AS _S3
-      WHERE
-        _S2._ID = _S3.CUSTOMER_ID
-    )
+  JOIN MAIN.SBTICKER AS SBTICKER
+    ON SBTICKER.sbtickerid = SBTRANSACTION.sbtxtickerid
+    AND SBTICKER.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
+  GROUP BY
+    SBTRANSACTION.sbtxcustid
 )
 SELECT
   COUNT(*) AS n_customers
-FROM _T0 AS _T0
+FROM MAIN.SBCUSTOMER AS SBCUSTOMER
+LEFT JOIN _u_0 AS _u_0
+  ON SBCUSTOMER.sbcustid = _u_0._u_1
+WHERE
+  NOT _u_0._u_1 IS NULL AND SBCUSTOMER.sbcustemail LIKE '%.com'
