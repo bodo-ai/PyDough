@@ -3,6 +3,29 @@ name: PR Testing
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      py310:
+        description: "Python 3.10"
+        type: boolean
+        default: true
+      py311:
+        description: "Python 3.11"
+        type: boolean
+        default: true
+      py312:
+        description: "Python 3.12"
+        type: boolean
+        default: true
+      run-python:
+        description: "Run Main PyDough Tests"
+        type: boolean
+        required: false
+        default: true
+      run-sf:
+        description: "Run Snowflake Tests"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -26,23 +49,70 @@ jobs:
         run: |
           set -xe pipefail
           echo "commitMsg=$(git log -1 --pretty=format:'%s')" >> $GITHUB_OUTPUT
-
-  run-tests:
-    strategy:
-      matrix:
-        python-version:
-          - "3.10"
-          - "3.11"
-          - "3.12"
-    needs: [get-msg]
-    name: python
+  # Get Python versions from inputs if workflow_dispatch is used
+  # Otherwise, use all versions for pull_request events.
+  get-py-ver-matrix:
+    name: Get Python Version Matrix
     runs-on: ubuntu-latest
+    outputs:
+      # Get the matrix output produced by the step below (set-matrix).
+      # This will be used in the run tests job.
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      # Capture the Python versions selected via dispatch as a JSON array output
+      # For manual runs (workflow_dispatch), it uses the selected
+      # inputs to determine which versions to run.
+      # For other events like pull_request, it defaults to all versions.
+      - name: Set selected Python versions
+        id: set-matrix
+        run: |
+          versions=()
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [ "${{ inputs.py310 }}" == "true" ]; then
+              versions+=("\"3.10\"")
+            fi
+            if [ "${{ inputs.py311 }}" == "true" ]; then
+              versions+=("\"3.11\"")
+            fi
+            if [ "${{ inputs.py312 }}" == "true" ]; then
+              versions+=("\"3.12\"")
+            fi
+          else
+            # For pull_request and other events, use all versions by default
+            versions=( "\"3.10\"" "\"3.11\"" "\"3.12\"" )
+          fi
+          # Join the array elements with commas and wrap in brackets to make valid JSON
+          joined=$(IFS=, ; echo "[${versions[*]}]")
+
+          # Output to GitHub Actions expected format
+          echo "matrix=$joined" >> $GITHUB_OUTPUT
+
+
+
+  run-python-tests:
+    name: Main Python Tests
+    needs: [get-msg, get-py-ver-matrix]
     # https://docs.github.com/en/actions/learn-github-actions/expressions#contains
     # contains is case-insensitive
-    if: contains(needs.get-msg.outputs.commitMsg, '[run ci]')
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run ci]')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.run-python)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ github.event_name == 'workflow_dispatch'
+                        && fromJSON(needs.get-py-ver-matrix.outputs.matrix)
+                        || fromJSON('["3.10", "3.11", "3.12"]') }}
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -54,7 +124,23 @@ jobs:
         run: ./demos/setup_tpch.sh ./tpch.db
 
       - name: Run Ruff
-        run: uv run --python ${{ matrix.python-version }} ruff check .
+        run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run --python ${{ matrix.python-version }} pytest tests/
+        run: uv run pytest tests/ -m "not snowflake" -rs
+
+  run-sf-tests:
+    name: Snowflake Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.run-sf)
+    uses: ./.github/workflows/sf_testing.yml
+    secrets:
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+      SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
