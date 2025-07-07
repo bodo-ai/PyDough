@@ -15,10 +15,8 @@ WITH _S0 AS (
     ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
   JOIN SEARCHES AS SEARCHES_2
     ON CONTAINS(LOWER(SEARCHES_2.search_string), LOWER(EVENTS.ev_name))
-  JOIN USERS AS USERS_2
-    ON SEARCHES_2.search_user_id = USERS_2.user_id
-  WHERE
-    USERS.user_name <> USERS_2.user_name
+  JOIN _S0 AS _S7
+    ON SEARCHES_2.search_user_id = _S7.USER_ID AND _S0.USER_NAME <> _S7.USER_NAME
   GROUP BY
     SEARCHES.search_id,
     _S0.USER_ID

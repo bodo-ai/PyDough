@@ -3,8 +3,9 @@ WITH _S0 AS (
     COUNT(sbdpclose) AS COUNT_SBDPCLOSE,
     MAX(sbdphigh) AS MAX_HIGH,
     MIN(sbdplow) AS MIN_LOW,
+    SUM(sbdpclose) AS SUM_SBDPCLOSE,
     CONCAT_WS('-', YEAR(sbdpdate), LPAD(MONTH(sbdpdate), 2, '0')) AS MONTH,
-    sbdptickerid AS TICKER_ID
+    sbdptickerid AS SBDPTICKERID
   FROM MAIN.SBDAILYPRICE
   GROUP BY
     CONCAT_WS('-', YEAR(sbdpdate), LPAD(MONTH(sbdpdate), 2, '0')),

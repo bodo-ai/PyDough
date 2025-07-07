@@ -7,86 +7,45 @@ WITH _S0 AS (
   ORDER BY
     N_NAME NULLS FIRST
   LIMIT 5
-), _T1 AS (
+), _S5 AS (
   SELECT
-    CASE
-      WHEN CAST(0.99 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_10,
-    CASE
-      WHEN CAST(0.75 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_11,
-    CASE
-      WHEN CAST(0.25 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_12,
-    CASE
-      WHEN CAST(0.09999999999999998 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_13,
-    CASE
-      WHEN CAST(0.010000000000000009 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_14,
-    CASE
-      WHEN CAST(0.0 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_15,
-    CASE
-      WHEN CAST(0.5 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_16,
-    CASE
-      WHEN CAST(1.0 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_17,
-    CASE
-      WHEN CAST(0.9 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC NULLS LAST)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS EXPR_9,
+    PERCENTILE_DISC(0.1) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_0,
+    PERCENTILE_DISC(0.01) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_1,
+    PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_2,
+    PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_3,
+    PERCENTILE_DISC(0.9) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_4,
+    PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_5,
+    PERCENTILE_DISC(1.0) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_6,
+    PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_7,
+    PERCENTILE_DISC(0.0) WITHIN GROUP (ORDER BY
+      ORDERS.o_totalprice) AS AGG_8,
     CUSTOMER.c_nationkey AS C_NATIONKEY
   FROM TPCH.CUSTOMER AS CUSTOMER
   JOIN TPCH.ORDERS AS ORDERS
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey
-    AND DATE_PART(YEAR, CAST(ORDERS.o_orderdate AS DATETIME)) = 1998
-), _S5 AS (
-  SELECT
-    MAX(EXPR_10) AS MAX_EXPR_10,
-    MAX(EXPR_11) AS MAX_EXPR_11,
-    MAX(EXPR_12) AS MAX_EXPR_12,
-    MAX(EXPR_13) AS MAX_EXPR_13,
-    MAX(EXPR_14) AS MAX_EXPR_14,
-    MAX(EXPR_15) AS MAX_EXPR_15,
-    MAX(EXPR_16) AS MAX_EXPR_16,
-    MAX(EXPR_17) AS MAX_EXPR_17,
-    MAX(EXPR_9) AS MAX_EXPR_9,
-    C_NATIONKEY
-  FROM _T1
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey AND YEAR(ORDERS.o_orderdate) = 1998
   GROUP BY
-    C_NATIONKEY
+    CUSTOMER.c_nationkey
 )
 SELECT
   REGION.r_name AS region_name,
   _S0.N_NAME AS nation_name,
-  _S5.MAX_EXPR_17 AS orders_min,
-  _S5.MAX_EXPR_10 AS orders_1_percent,
-  _S5.MAX_EXPR_9 AS orders_10_percent,
-  _S5.MAX_EXPR_11 AS orders_25_percent,
-  _S5.MAX_EXPR_16 AS orders_median,
-  _S5.MAX_EXPR_12 AS orders_75_percent,
-  _S5.MAX_EXPR_13 AS orders_90_percent,
-  _S5.MAX_EXPR_14 AS orders_99_percent,
-  _S5.MAX_EXPR_15 AS orders_max
+  _S5.AGG_8 AS orders_min,
+  _S5.AGG_1 AS orders_1_percent,
+  _S5.AGG_0 AS orders_10_percent,
+  _S5.AGG_2 AS orders_25_percent,
+  _S5.AGG_7 AS orders_median,
+  _S5.AGG_3 AS orders_75_percent,
+  _S5.AGG_4 AS orders_90_percent,
+  _S5.AGG_5 AS orders_99_percent,
+  _S5.AGG_6 AS orders_max
 FROM _S0 AS _S0
 JOIN TPCH.REGION AS REGION
   ON REGION.r_regionkey = _S0.N_REGIONKEY

@@ -5,7 +5,7 @@ WITH _S3 AS (
     MEDIAN(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS MEDIAN_RED_ACCTBAL,
     COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS N_BLACK_ACCTBAL,
     COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS N_RED_ACCTBAL,
-    c_nationkey AS NATION_KEY
+    c_nationkey AS C_NATIONKEY
   FROM TPCH.CUSTOMER
   GROUP BY
     c_nationkey

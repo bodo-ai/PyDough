@@ -15,19 +15,15 @@ WITH _S3 AS (
   JOIN _S3 AS _S3
     ON PART.p_partkey = _S3.L_PARTKEY
   WHERE
-    PART.p_name LIKE 'forest%'
+    STARTSWITH(PART.p_name, 'forest')
 ), _T1 AS (
   SELECT
     COUNT(*) AS N_ROWS,
     PARTSUPP.ps_suppkey AS PS_SUPPKEY
   FROM TPCH.PARTSUPP AS PARTSUPP
-  JOIN TPCH.PART AS PART
-    ON PART.p_partkey = PARTSUPP.ps_partkey AND STARTSWITH(PART.p_name, 'forest')
-  JOIN _T5 AS _T5
-    ON PART.p_partkey = _T5.PART_KEY
-  WHERE
-    PARTSUPP.ps_availqty > (
-      0.5 * COALESCE(COALESCE(_T5.AGG_0, 0), 0)
+  JOIN _S5 AS _S5
+    ON PARTSUPP.ps_availqty > (
+      0.5 * COALESCE(_S5.AGG_0, 0)
     )
     AND PARTSUPP.ps_partkey = _S5.P_PARTKEY
   GROUP BY

@@ -8,7 +8,7 @@ WITH _T3 AS (
   FROM MAIN.SBTRANSACTION
   WHERE
     YEAR(sbtxdatetime) = 2023
-), _T0 AS (
+), _T1 AS (
   SELECT
     SBTXDATETIME
   FROM _T3

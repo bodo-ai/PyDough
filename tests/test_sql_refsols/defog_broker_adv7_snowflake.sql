@@ -1,6 +1,6 @@
 WITH _S2 AS (
   SELECT
-    COUNT(*) AS AGG_1,
+    COUNT(*) AS N_ROWS,
     CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0')) AS MONTH
   FROM MAIN.SBCUSTOMER
   WHERE
@@ -10,7 +10,7 @@ WITH _S2 AS (
     CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0'))
 ), _S3 AS (
   SELECT
-    AVG(SBTRANSACTION.sbtxamount) AS AGG_0,
+    AVG(SBTRANSACTION.sbtxamount) AS AVG_SBTXAMOUNT,
     CONCAT_WS('-', YEAR(SBCUSTOMER.sbcustjoindate), LPAD(MONTH(SBCUSTOMER.sbcustjoindate), 2, '0')) AS MONTH
   FROM MAIN.SBCUSTOMER AS SBCUSTOMER
   JOIN MAIN.SBTRANSACTION AS SBTRANSACTION
