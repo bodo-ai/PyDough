@@ -3,7 +3,36 @@ WITH _u_0 AS (
     l_orderkey AS _u_1
   FROM TPCH.LINEITEM
   WHERE
-    l_commitdate < l_receiptdate
+    QUARTER(_T2.ORDER_DATE) = 3 AND YEAR(_T2.ORDER_DATE) = 1993
+), _T3 AS (
+  SELECT
+    LINEITEM.l_commitdate AS COMMIT_DATE,
+    LINEITEM.l_orderkey AS ORDER_KEY,
+    LINEITEM.l_receiptdate AS RECEIPT_DATE
+  FROM TPCH.LINEITEM AS LINEITEM
+), _S1 AS (
+  SELECT
+    _T3.ORDER_KEY AS ORDER_KEY
+  FROM _T3 AS _T3
+  WHERE
+    _T3.COMMIT_DATE < _T3.RECEIPT_DATE
+), _T1 AS (
+  SELECT
+    _S0.ORDER_PRIORITY AS ORDER_PRIORITY
+  FROM _S0 AS _S0
+  WHERE
+    EXISTS(
+      SELECT
+        1 AS "1"
+      FROM _S1 AS _S1
+      WHERE
+        _S0.KEY = _S1.ORDER_KEY
+    )
+), _T0 AS (
+  SELECT
+    COUNT(*) AS ORDER_COUNT,
+    _T1.ORDER_PRIORITY AS O_ORDERPRIORITY
+  FROM _T1 AS _T1
   GROUP BY
     l_orderkey
 )

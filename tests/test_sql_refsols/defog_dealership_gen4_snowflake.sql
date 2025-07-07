@@ -5,7 +5,7 @@ WITH _S0 AS (
     DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)) AS QUARTER
   FROM MAIN.SALES
   WHERE
-    DATE_PART(YEAR, CAST(sale_date AS DATETIME)) = 2023
+    YEAR(sale_date) = 2023
   GROUP BY
     customer_id,
     DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP))

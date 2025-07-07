@@ -1,59 +1,14 @@
-WITH _T2 AS (
+WITH _S3 AS (
   SELECT
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC NULLS LAST) - 1.0
-        ) - (
-          (
-            COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
-          ) / 2.0
-        )
-      ) < 1.0
-      THEN CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END
-      ELSE NULL
-    END AS EXPR_5,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY c_acctbal DESC NULLS LAST) - 1.0
-        ) - (
-          (
-            COUNT(c_acctbal) OVER (PARTITION BY c_nationkey) - 1.0
-          ) / 2.0
-        )
-      ) < 1.0
-      THEN c_acctbal
-      ELSE NULL
-    END AS EXPR_6,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC NULLS LAST) - 1.0
-        ) - (
-          (
-            COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
-          ) / 2.0
-        )
-      ) < 1.0
-      THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
-      ELSE NULL
-    END AS EXPR_7,
-    c_nationkey AS C_NATIONKEY,
-    CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END AS NEGATIVE_ACCTBAL,
-    CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END AS NON_NEGATIVE_ACCTBAL
+    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS MEDIAN_BLACK_ACCTBAL,
+    MEDIAN(c_acctbal) AS MEDIAN_OVERALL_ACCTBAL,
+    MEDIAN(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS MEDIAN_RED_ACCTBAL,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS N_BLACK_ACCTBAL,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS N_RED_ACCTBAL,
+    c_nationkey AS NATION_KEY
   FROM TPCH.CUSTOMER
-), _S3 AS (
-  SELECT
-    AVG(EXPR_5) AS MEDIAN_BLACK_ACCTBAL,
-    AVG(EXPR_6) AS MEDIAN_OVERALL_ACCTBAL,
-    AVG(EXPR_7) AS MEDIAN_RED_ACCTBAL,
-    COUNT(NON_NEGATIVE_ACCTBAL) AS N_BLACK_ACCTBAL,
-    COUNT(NEGATIVE_ACCTBAL) AS N_RED_ACCTBAL,
-    C_NATIONKEY
-  FROM _T2
   GROUP BY
-    C_NATIONKEY
+    c_nationkey
 )
 SELECT
   NATION.n_name AS nation_name,

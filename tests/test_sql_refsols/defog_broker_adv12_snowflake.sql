@@ -3,6 +3,6 @@ SELECT
 FROM MAIN.SBCUSTOMER
 WHERE
   (
-    LOWER(sbcustname) LIKE '%ez' OR LOWER(sbcustname) LIKE 'j%'
+    ENDSWITH(LOWER(sbcustname), 'ez') OR STARTSWITH(LOWER(sbcustname), 'j')
   )
-  AND LOWER(sbcuststate) LIKE '%a'
+  AND ENDSWITH(LOWER(sbcuststate), 'a')

@@ -7,13 +7,41 @@ WITH _S1 AS (
     n_name = 'FRANCE' OR n_name = 'GERMANY'
 ), _S9 AS (
   SELECT
-    _S7.N_NAME,
-    ORDERS.o_orderkey AS O_ORDERKEY
-  FROM TPCH.ORDERS AS ORDERS
+    SUM(LINEITEM.l_extendedprice * (
+      1 - LINEITEM.l_discount
+    )) AS AGG_0,
+    _S7.NAME AS CUST_NATION,
+    YEAR(LINEITEM.l_shipdate) AS L_YEAR,
+    _S1.NAME AS SUPP_NATION
+  FROM TPCH.LINEITEM AS LINEITEM
+  JOIN TPCH.SUPPLIER AS SUPPLIER
+    ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
+  JOIN _S1 AS _S1
+    ON SUPPLIER.s_nationkey = _S1.KEY
+  JOIN TPCH.ORDERS AS ORDERS
+    ON LINEITEM.l_orderkey = ORDERS.o_orderkey
   JOIN TPCH.CUSTOMER AS CUSTOMER
     ON CUSTOMER.c_custkey = ORDERS.o_custkey
   JOIN _S1 AS _S7
-    ON CUSTOMER.c_nationkey = _S7.N_NATIONKEY
+    ON CUSTOMER.c_nationkey = _S7.KEY
+  WHERE
+    YEAR(LINEITEM.l_shipdate) IN (1995, 1996)
+    AND (
+      _S1.NAME = 'FRANCE' OR _S1.NAME = 'GERMANY'
+    )
+    AND (
+      _S1.NAME = 'FRANCE' OR _S7.NAME = 'FRANCE'
+    )
+    AND (
+      _S1.NAME = 'GERMANY' OR _S7.NAME = 'GERMANY'
+    )
+    AND (
+      _S7.NAME = 'FRANCE' OR _S7.NAME = 'GERMANY'
+    )
+  GROUP BY
+    _S7.NAME,
+    YEAR(LINEITEM.l_shipdate),
+    _S1.NAME
 )
 SELECT
   _S1.N_NAME AS SUPP_NATION,

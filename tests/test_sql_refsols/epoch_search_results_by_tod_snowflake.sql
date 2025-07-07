@@ -6,8 +6,8 @@ WITH _T1 AS (
     COUNT(*) AS N_ROWS
   FROM TIMES AS TIMES
   JOIN SEARCHES AS SEARCHES
-    ON TIMES.t_end_hour > DATE_PART(HOUR, CAST(SEARCHES.search_ts AS DATETIME))
-    AND TIMES.t_start_hour <= DATE_PART(HOUR, CAST(SEARCHES.search_ts AS DATETIME))
+    ON TIMES.t_end_hour > HOUR(SEARCHES.search_ts)
+    AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
   GROUP BY
     TIMES.t_name
 ), _T0 AS (

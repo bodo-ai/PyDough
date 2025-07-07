@@ -9,8 +9,16 @@ WITH _T1 AS (
     ERAS.er_start_year AS ER_START_YEAR
   FROM ERAS AS ERAS
   JOIN EVENTS AS EVENTS
-    ON ERAS.er_end_year > DATE_PART(YEAR, CAST(EVENTS.ev_dt AS DATETIME))
-    AND ERAS.er_start_year <= DATE_PART(YEAR, CAST(EVENTS.ev_dt AS DATETIME))
+    ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
+    AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
+), _T0 AS (
+  SELECT
+    ANY_VALUE(START_YEAR) AS AGG_3,
+    AVG(DAY_GAP) AS AVG_EVENT_GAP,
+    ANY_VALUE(NAME) AS ERA_NAME
+  FROM _T1
+  GROUP BY
+    NAME
 )
 SELECT
   ANY_VALUE(ER_NAME) AS era_name,

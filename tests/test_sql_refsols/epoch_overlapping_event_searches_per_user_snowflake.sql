@@ -12,11 +12,13 @@ WITH _S0 AS (
   JOIN SEARCHES AS SEARCHES
     ON SEARCHES.search_user_id = _S0.USER_ID
   JOIN EVENTS AS EVENTS
-    ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
   JOIN SEARCHES AS SEARCHES_2
-    ON LOWER(SEARCHES_2.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
-  JOIN _S0 AS _S7
-    ON SEARCHES_2.search_user_id = _S7.USER_ID AND _S0.USER_NAME <> _S7.USER_NAME
+    ON CONTAINS(LOWER(SEARCHES_2.search_string), LOWER(EVENTS.ev_name))
+  JOIN USERS AS USERS_2
+    ON SEARCHES_2.search_user_id = USERS_2.user_id
+  WHERE
+    USERS.user_name <> USERS_2.user_name
   GROUP BY
     SEARCHES.search_id,
     _S0.USER_ID
