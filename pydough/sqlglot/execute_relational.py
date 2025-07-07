@@ -14,6 +14,7 @@ from sqlglot.expressions import Alias, Column, Select, Table
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
+from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
@@ -22,6 +23,7 @@ from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.pushdown_projections import pushdown_projections
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.simplify import simplify
+from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
@@ -29,12 +31,13 @@ from pydough.database_connectors import (
     DatabaseDialect,
 )
 from pydough.logger import get_logger
-from pydough.relational import JoinType, JoinTypeRelationalVisitor, RelationalRoot
+from pydough.relational import RelationalRoot
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
 from .override_merge_subqueries import merge_subqueries
+from .override_pushdown_predicates import pushdown_predicates
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
@@ -93,9 +96,6 @@ def apply_sqlglot_optimizer(
     glot_expr = parse_one(glot_expr.sql(dialect), dialect=dialect)
 
     # Apply each rule explicitly with appropriate kwargs
-    # TODO: (gh #313) - Two rules that sqlglot optimizer provides are skipped
-    # (unnest_subqueries and canonicalize). Additionally, the rule
-    # `merge_subqueries` is skipped if the AST has a `semi` or `anti` join.
 
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
     glot_expr = qualify(
@@ -108,17 +108,15 @@ def apply_sqlglot_optimizer(
     # Rewrite sqlglot AST into conjunctive normal form
     glot_expr = normalize(glot_expr)
 
-    # TODO: (gh #313) RULE SKIPPED
     # Rewrite sqlglot AST to convert some predicates with subqueries into joins.
     # Convert scalar subqueries into cross joins.
     # Convert correlated or vectorized subqueries into a group by so it is not
     # a many to many left join.
-    # glot_expr = unnest_subqueries(glot_expr)
+    glot_expr = unnest_subqueries(glot_expr)
 
-    # TODO: (gh #313) RULE SKIPPED - buggy because it pushes filters underneath
     # limit clauses, which is not correct.
     # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS.
-    # glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
+    glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
 
     # Removes cross joins if possible and reorder joins based on predicate
     # dependencies.
@@ -127,10 +125,8 @@ def apply_sqlglot_optimizer(
     # Rewrite derived tables as CTES, deduplicating if possible.
     glot_expr = eliminate_subqueries(glot_expr)
 
-    # TODO: (gh #313) RULE SKIPPED for `semi` and `anti` joins.
-    join_types = JoinTypeRelationalVisitor().get_join_types(relational)
-    if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
-        glot_expr = merge_subqueries(glot_expr)
+    # Merge subqueries into one another if possible.
+    glot_expr = merge_subqueries(glot_expr)
 
     # Remove unused joins from an expression.
     # This only removes joins when we know that the join condition doesn't
@@ -144,11 +140,8 @@ def apply_sqlglot_optimizer(
     # depends on the schema.
     glot_expr = annotate_types(glot_expr, dialect=dialect)
 
-    # TODO: (gh #313) RULE SKIPPED
     # Converts a sql expression into a standard form.
-    # This method relies on annotate_types because many of the
-    # conversions rely on type inference.
-    # glot_expr = canonicalize(glot_expr, dialect=dialect)
+    glot_expr = canonicalize(glot_expr, dialect=dialect)
 
     # Rewrite sqlglot AST to simplify expressions.
     glot_expr = simplify(glot_expr, dialect=dialect)
@@ -159,12 +152,7 @@ def apply_sqlglot_optimizer(
     fix_column_case(glot_expr, relational.ordered_columns)
 
     # Remove table aliases if there is only one Table source in the FROM clause.
-    # Skip for Semi and Anti joins. We do this because this function will remove
-    # the table alias of the outer query even if it is used in the exists clause.
-    # Because, the exists clause is in another "scope" and we are not currently
-    # dealing with pan-scope updates.
-    if JoinType.ANTI not in join_types and JoinType.SEMI not in join_types:
-        remove_table_aliases_conditional(glot_expr)
+    remove_table_aliases_conditional(glot_expr)
 
     return glot_expr
 

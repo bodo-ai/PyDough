@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
-    SUM(amount) AS agg_0,
-    COUNT(*) AS agg_1,
+    COUNT(*) AS n_rows,
+    SUM(amount) AS sum_amount,
     receiver_id
   FROM main.wallet_transactions_daily
   WHERE
@@ -12,8 +12,8 @@ WITH _s1 AS (
 )
 SELECT
   merchants.name AS merchant_name,
-  COALESCE(_s1.agg_1, 0) AS total_transactions,
-  COALESCE(_s1.agg_0, 0) AS total_amount
+  COALESCE(_s1.n_rows, 0) AS total_transactions,
+  COALESCE(_s1.sum_amount, 0) AS total_amount
 FROM main.merchants AS merchants
 LEFT JOIN _s1 AS _s1
   ON _s1.receiver_id = merchants.mid

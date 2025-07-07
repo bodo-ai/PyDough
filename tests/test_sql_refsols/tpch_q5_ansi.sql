@@ -2,20 +2,20 @@ WITH _s7 AS (
   SELECT
     SUM(l_extendedprice * (
       1 - l_discount
-    )) AS agg_0,
-    l_orderkey AS order_key,
-    l_suppkey AS supplier_key
+    )) AS sum_value,
+    l_orderkey,
+    l_suppkey
   FROM tpch.lineitem
   GROUP BY
     l_orderkey,
     l_suppkey
 ), _s10 AS (
   SELECT
-    SUM(_s7.agg_0) AS agg_0,
-    ANY_VALUE(nation.n_name) AS agg_3,
-    nation.n_nationkey AS key,
-    nation.n_name AS nation_name,
-    _s7.supplier_key
+    ANY_VALUE(nation.n_name) AS anything_n_name,
+    SUM(_s7.sum_value) AS sum_sum_value,
+    _s7.l_suppkey,
+    nation.n_name,
+    nation.n_nationkey
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'
@@ -26,31 +26,26 @@ WITH _s7 AS (
     AND orders.o_orderdate < CAST('1995-01-01' AS DATE)
     AND orders.o_orderdate >= CAST('1994-01-01' AS DATE)
   JOIN _s7 AS _s7
-    ON _s7.order_key = orders.o_orderkey
+    ON _s7.l_orderkey = orders.o_orderkey
   GROUP BY
-    nation.n_nationkey,
+    _s7.l_suppkey,
     nation.n_name,
-    _s7.supplier_key
+    nation.n_nationkey
 ), _s11 AS (
   SELECT
-    supplier.s_suppkey AS key,
-    nation.n_name AS name_12
+    nation.n_name,
+    supplier.s_suppkey
   FROM tpch.supplier AS supplier
   JOIN tpch.nation AS nation
     ON nation.n_nationkey = supplier.s_nationkey
-), _t1 AS (
-  SELECT
-    SUM(_s10.agg_0) AS agg_0,
-    ANY_VALUE(_s10.agg_3) AS agg_3
-  FROM _s10 AS _s10
-  JOIN _s11 AS _s11
-    ON _s10.nation_name = _s11.name_12 AND _s10.supplier_key = _s11.key
-  GROUP BY
-    _s10.key
 )
 SELECT
-  agg_3 AS N_NAME,
-  COALESCE(agg_0, 0) AS REVENUE
-FROM _t1
+  ANY_VALUE(_s10.anything_n_name) AS N_NAME,
+  COALESCE(SUM(_s10.sum_sum_value), 0) AS REVENUE
+FROM _s10 AS _s10
+JOIN _s11 AS _s11
+  ON _s10.l_suppkey = _s11.s_suppkey AND _s10.n_name = _s11.n_name
+GROUP BY
+  _s10.n_nationkey
 ORDER BY
   revenue DESC

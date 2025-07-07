@@ -1,7 +1,8 @@
-WITH _t0 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(DISTINCT coupon_id) AS agg_0,
-    COUNT(DISTINCT txid) AS agg_1,
+    (
+      COUNT(DISTINCT coupon_id) * 1.0
+    ) / COUNT(DISTINCT txid) AS cpur,
     receiver_id
   FROM main.wallet_transactions_daily
   WHERE
@@ -11,9 +12,7 @@ WITH _t0 AS (
 )
 SELECT
   merchants.name,
-  (
-    _t0.agg_0 * 1.0
-  ) / _t0.agg_1 AS CPUR
+  _s1.cpur AS CPUR
 FROM main.merchants AS merchants
-JOIN _t0 AS _t0
-  ON _t0.receiver_id = merchants.mid
+JOIN _s1 AS _s1
+  ON _s1.receiver_id = merchants.mid

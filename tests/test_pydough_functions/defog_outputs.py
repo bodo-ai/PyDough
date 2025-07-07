@@ -476,6 +476,8 @@ def defog_sql_text_broker_basic2() -> str:
     2023 and Mar 31, 2023 (inclusive of start and end dates)? Return the
     transaction type, number of distinct customers and average number of
     shares, for the top 3 transaction types by number of customers.
+
+    MODIFICATION: using the transaction type as a tiebreaker.
     """
     return """
     SELECT
@@ -485,7 +487,7 @@ def defog_sql_text_broker_basic2() -> str:
     FROM sbTransaction AS t
     WHERE t.sbTxDateTime BETWEEN '2023-01-01' AND '2023-03-31 23:59:59'
     GROUP BY t.sbTxType
-    ORDER BY CASE WHEN num_customers IS NULL THEN 1 ELSE 0 END DESC, num_customers DESC
+    ORDER BY CASE WHEN num_customers IS NULL THEN 1 ELSE 0 END DESC, num_customers DESC, t.sbTxType ASC
     LIMIT 3
     """
 

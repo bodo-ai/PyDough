@@ -1,4 +1,4 @@
-ROOT(columns=[('region_name', region_name), ('name_length', name_length)], orderings=[(name):asc_last])
- PROJECT(columns={'name': name, 'name_length': LENGTH(name), 'region_name': name})
-  LIMIT(limit=Literal(value=10, type=NumericType()), columns={'name': name}, orderings=[(name):asc_last])
-   SCAN(table=tpch.REGION, columns={'name': r_name})
+ROOT(columns=[('region_name', r_name), ('name_length', name_length)], orderings=[(r_name):asc_last])
+ PROJECT(columns={'name_length': LENGTH(r_name), 'r_name': r_name})
+  LIMIT(limit=Literal(value=10, type=NumericType()), columns={'r_name': r_name}, orderings=[(r_name):asc_last])
+   SCAN(table=tpch.REGION, columns={'r_name': r_name})

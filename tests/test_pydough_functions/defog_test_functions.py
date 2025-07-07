@@ -449,7 +449,7 @@ def impl_defog_broker_basic2():
             num_customers=NDISTINCT(transactions.customer_id),
             avg_shares=AVG(transactions.shares),
         )
-        .TOP_K(3, by=num_customers.DESC())
+        .TOP_K(3, by=(num_customers.DESC(), transaction_type.ASC()))
     )
 
 
@@ -1441,7 +1441,8 @@ def impl_defog_ewallet_adv13():
     total count. TUC = Total number of user sessions in the past month
     """
     selected_sessions = user_sessions.WHERE(
-        session_start >= DATETIME("now", "-1 month", "start of day")
+        (session_start >= DATETIME("now", "-1 month", "start of day"))
+        | (session_end >= DATETIME("now", "-1 month", "start of day"))
     )
 
     return Ewallet.CALCULATE(TUC=COUNT(selected_sessions))

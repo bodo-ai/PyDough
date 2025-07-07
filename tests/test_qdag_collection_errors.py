@@ -29,25 +29,25 @@ from tests.testing_utilities import (
     [
         pytest.param(
             TableCollectionInfo("Rainbows"),
-            "Unrecognized term of graph 'TPCH': 'Rainbows'",
+            "Unrecognized term of TPCH: 'Rainbows'. Did you mean: lines, nations, regions, parts, orders?",
             id="table_dne",
         ),
         pytest.param(
             TableCollectionInfo("regions") ** SubCollectionInfo("postage_stamps"),
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'postage_stamps'",
+            "Unrecognized term of TPCH.regions: 'postage_stamps'. Did you mean: comment, nations, name, key?",
             id="subcollection_dne",
         ),
         pytest.param(
             TableCollectionInfo("regions")
             ** CalculateInfo([], foo=ReferenceInfo("bar")),
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'bar'",
+            "Unrecognized term of TPCH.regions: 'bar'. Did you mean: key, name, nations?",
             id="reference_dne",
         ),
         pytest.param(
             TableCollectionInfo("nations")
             ** SubCollectionInfo("suppliers")
             ** CalculateInfo([], foo=ReferenceInfo("region_key")),
-            "Unrecognized term of simple table collection 'suppliers' in graph 'TPCH': 'region_key'",
+            "Unrecognized term of TPCH.nations.suppliers: 'region_key'. Did you mean: nation_key, key, lines?",
             id="reference_bad_ancestry",
         ),
         pytest.param(
@@ -59,7 +59,7 @@ from tests.testing_utilities import (
         pytest.param(
             TableCollectionInfo("regions")
             ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
-            "Unrecognized term of graph 'TPCH': 'foo'",
+            "Unrecognized term of TPCH: 'foo'. Did you mean: lines, parts, nations, orders, regions?",
             id="back_on_root",
         ),
         pytest.param(
@@ -73,7 +73,7 @@ from tests.testing_utilities import (
             TableCollectionInfo("regions")
             ** SubCollectionInfo("nations")
             ** CalculateInfo([], foo=BackReferenceExpressionInfo("foo", 1)),
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'foo'",
+            "Unrecognized term of TPCH.regions: 'foo'. Did you mean: key, name, comment?",
             id="back_dne",
         ),
         pytest.param(
@@ -86,7 +86,7 @@ from tests.testing_utilities import (
                 [TableCollectionInfo("regions")],
                 foo=ChildReferenceExpressionInfo("bar", 0),
             ),
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'bar'",
+            "Unrecognized term of TPCH.regions: 'bar'. Did you mean: key, name, nations?",
             id="child_expr_dne",
         ),
         pytest.param(

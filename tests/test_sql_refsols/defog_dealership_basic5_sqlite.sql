@@ -1,7 +1,7 @@
-WITH _t0 AS (
+WITH _s1 AS (
   SELECT
-    SUM(sale_price) AS agg_0,
-    COUNT(*) AS agg_1,
+    COALESCE(SUM(sale_price), 0) AS total_revenue,
+    COUNT(*) AS n_rows,
     salesperson_id
   FROM main.sales
   WHERE
@@ -14,11 +14,11 @@ WITH _t0 AS (
 SELECT
   salespersons.first_name,
   salespersons.last_name,
-  _t0.agg_1 AS total_sales,
-  COALESCE(_t0.agg_0, 0) AS total_revenue
+  _s1.n_rows AS total_sales,
+  _s1.total_revenue
 FROM main.salespersons AS salespersons
-JOIN _t0 AS _t0
-  ON _t0.salesperson_id = salespersons._id
+JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  total_sales DESC
+  _s1.n_rows DESC
 LIMIT 5

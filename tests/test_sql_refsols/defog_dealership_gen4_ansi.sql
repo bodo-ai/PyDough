@@ -1,33 +1,33 @@
 WITH _s0 AS (
   SELECT
-    SUM(sale_price) AS agg_0,
+    SUM(sale_price) AS sum_sale_price,
     customer_id,
     DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)) AS quarter
   FROM main.sales
   WHERE
-    EXTRACT(YEAR FROM sale_date) = 2023
+    EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
   GROUP BY
     customer_id,
     DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP))
-), _t1 AS (
+), _t2 AS (
   SELECT
-    SUM(_s0.agg_0) AS agg_0,
-    customers.state AS customer_state,
-    _s0.quarter
+    SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
+    _s0.quarter,
+    customers.state
   FROM _s0 AS _s0
   JOIN main.customers AS customers
     ON _s0.customer_id = customers._id
   GROUP BY
-    customers.state,
-    _s0.quarter
+    _s0.quarter,
+    customers.state
 )
 SELECT
   quarter,
-  customer_state,
-  COALESCE(agg_0, 0) AS total_sales
-FROM _t1
+  state AS customer_state,
+  COALESCE(sum_sum_sale_price, 0) AS total_sales
+FROM _t2
 WHERE
-  NOT agg_0 IS NULL AND agg_0 > 0
+  NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
   quarter,
-  customer_state
+  state

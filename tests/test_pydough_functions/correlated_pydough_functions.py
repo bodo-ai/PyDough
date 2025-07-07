@@ -267,7 +267,7 @@ def correl_16():
     # Count how many european suppliers have the exact same percentile value
     # of account balance (relative to all other suppliers) as at least one
     # customer's percentile value of account balance relative to all other
-    # customers in the nation, int he same nation as the supplier. Percentile
+    # customers in the nation, in the same nation as the supplier. Percentile
     # should be measured down to increments of 0.01%. Only consider European
     # suppliers/customers, and customers in the building market segment.
     # (This is a correlated SEMI-joins).
@@ -692,3 +692,24 @@ def correl_33():
             )
         )
     )
+
+
+def correl_34():
+    # Count how many supply records exist that are from an Asian supplier
+    # and have at least 1 lineitem with status F, return flag N, ordered in or
+    # after 1995 from the same nation as the supplier, and either
+    # have a total order price above the global average for all such lineitems
+    # (for all qualifying supply records) or are the only such lineitem
+    # for that supply record.
+    selected_order = order.WHERE(
+        (YEAR(order_date) >= 1995) & (customer.nation.name == supp_nation)
+    ).WHERE((total_price > RELAVG(total_price)) | (RELSIZE(per="supply_records") == 1))
+    selected_lines = lines.WHERE((status == "F") & (return_flag == "N")).WHERE(
+        HAS(selected_order)
+    )
+    selected_records = (
+        supply_records.WHERE((supplier.nation.region.name == "ASIA"))
+        .CALCULATE(supp_nation=supplier.nation.name)
+        .WHERE(HAS(selected_lines))
+    )
+    return TPCH.CALCULATE(n=COUNT(selected_records))

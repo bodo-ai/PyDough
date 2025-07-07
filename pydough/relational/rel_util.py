@@ -4,6 +4,7 @@ A mixture of utility functions for relational nodes and expressions.
 
 __all__ = [
     "add_expr_uses",
+    "apply_substitution",
     "bubble_uniqueness",
     "build_filter",
     "contains_window",
@@ -665,3 +666,88 @@ def bubble_uniqueness(
                 isomorphisms[name2] = isomorphisms.get(name2, set()).union({name1})
     include_isomorphisms(output_uniqueness, isomorphisms)
     return output_uniqueness
+
+
+def apply_substitution(
+    expr: RelationalExpression,
+    substitutions: dict[RelationalExpression, RelationalExpression],
+    correl_substitutions: dict[str, dict[RelationalExpression, RelationalExpression]],
+) -> RelationalExpression:
+    """
+    Runs a recursive replacement procedure on a relational expression to
+    replace the expression or any of its sub-expressions with corresponding
+    alternatives provided in a mapping of substitutions.
+
+    Args:
+        `expr`: The expression to apply the substitutions to.
+        `substitutions`: A mapping of expressions to their replacements.
+        `correl_substitutions`: A mapping of correlation names from joins to
+        their corresponding substitutions, used for correlated references to
+        see if the corresponding join left hand side it points to has had its
+        columns renamed.
+
+    Returns:
+        The expression with the substitutions applied to it and/or its
+        sub-expressions.
+    """
+    # If the expression is in the substitutions, return the substitution.
+    if expr in substitutions:
+        return substitutions[expr]
+
+    # If the expression is a correlated reference, check if the join it
+    # references has had its left hand side columns renamed, and if so,
+    # return a correlated reference with the updated column name.
+    if isinstance(expr, CorrelatedReference):
+        if expr.correl_name in correl_substitutions:
+            correl_map: dict[RelationalExpression, RelationalExpression] = (
+                correl_substitutions[expr.correl_name]
+            )
+            for key, value in correl_map.items():
+                assert isinstance(key, ColumnReference)
+                assert isinstance(value, ColumnReference)
+                if key.name == expr.name:
+                    return CorrelatedReference(
+                        value.name, expr.correl_name, expr.data_type
+                    )
+        return expr
+
+    # For call expressions, recursively transform the inputs.
+    if isinstance(expr, CallExpression):
+        return CallExpression(
+            expr.op,
+            expr.data_type,
+            [
+                apply_substitution(arg, substitutions, correl_substitutions)
+                for arg in expr.inputs
+            ],
+        )
+
+    # For window call expressions, recursively transform the inputs, partition
+    # inputs, and order inputs.
+    if isinstance(expr, WindowCallExpression):
+        return WindowCallExpression(
+            expr.op,
+            expr.data_type,
+            [
+                apply_substitution(arg, substitutions, correl_substitutions)
+                for arg in expr.inputs
+            ],
+            [
+                apply_substitution(arg, substitutions, correl_substitutions)
+                for arg in expr.partition_inputs
+            ],
+            [
+                ExpressionSortInfo(
+                    apply_substitution(
+                        order_arg.expr, substitutions, correl_substitutions
+                    ),
+                    order_arg.ascending,
+                    order_arg.nulls_first,
+                )
+                for order_arg in expr.order_inputs
+            ],
+            expr.kwargs,
+        )
+
+    # For all other cases, just return the expression as is.
+    return expr

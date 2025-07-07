@@ -209,6 +209,28 @@ def rank_c():
     )
 
 
+def floor_and_ceil():
+    return TPCH.CALCULATE(
+        floor_frac=FLOOR(5.6),
+        ceil_frac=CEIL(5.4),
+        floor_frac_neg=FLOOR(-5.4),
+        ceil_frac_neg=CEIL(-5.6),
+        floor_int=FLOOR(6),
+        ceil_int=CEIL(6),
+        floor_int_neg=FLOOR(-6),
+        ceil_int_neg=CEIL(-6),
+    )
+
+
+def floor_and_ceil_2():
+    return supply_records.CALCULATE(
+        supplier_key=supplier_key,
+        part_key=part_key,
+        complete_parts=FLOOR(available_quantity),
+        total_cost=CEIL(supply_cost * FLOOR(available_quantity)),
+    ).TOP_K(10, by=total_cost.DESC())
+
+
 def rank_nations_by_region():
     return nations.CALCULATE(name, rank=RANKING(by=region.name.ASC(), allow_ties=True))
 
@@ -328,12 +350,12 @@ def prev_next_regions():
 
 def avg_order_diff_per_customer():
     # Finds the 5 customers with the highest average difference in days between
-    # orders made.
+    # orders made. Only consider Japanese customers and urgent orders.
     prev_order_date_by_cust = PREV(order_date, by=order_date.ASC(), per="customers")
-    order_info = orders.CALCULATE(
+    order_info = orders.WHERE(order_priority == "1-URGENT").CALCULATE(
         day_diff=DATEDIFF("days", prev_order_date_by_cust, order_date)
     )
-    selected_customers = customers.WHERE(HAS(order_info))
+    selected_customers = customers.WHERE(nation.name == "JAPAN").WHERE(HAS(order_info))
     return selected_customers.CALCULATE(name, avg_diff=AVG(order_info.day_diff)).TOP_K(
         5, by=avg_diff.DESC()
     )
@@ -357,7 +379,8 @@ def first_order_in_year():
     # (breaking ties by order key).
     previous_order_date = PREV(order_date, by=(order_date.ASC(), key.ASC()))
     return (
-        orders.WHERE(
+        orders.WHERE(MONTH(order_date) == 1)
+        .WHERE(
             ABSENT(previous_order_date)
             | (YEAR(previous_order_date) != YEAR(order_date))
         )
@@ -370,15 +393,24 @@ def customer_largest_order_deltas():
     # For each customer, find the highest positive/negative difference in
     # revenue between one of their orders and and the most recent order before
     # it, ignoring their first ever order. Return the 5 customers with the
-    # largest such difference. Only consider customers with orders.
+    # largest such difference. Only consider customers with orders. Only
+    # consider customers in the AUTOMOBILE market segment, orders made in
+    # 1994, and lineitems shipepd by air also in 1994.
     line_revenue = extended_price * (1 - discount)
-    order_revenue = SUM(lines.CALCULATE(r=line_revenue).r)
+    order_revenue = SUM(
+        lines.WHERE((ship_mode == "AIR") & (YEAR(ship_date) == 1994))
+        .CALCULATE(r=line_revenue)
+        .r
+    )
     previous_order_revenue = PREV(order_revenue, by=order_date.ASC(), per="customers")
-    orders_info = orders.WHERE(PRESENT(previous_order_revenue)).CALCULATE(
-        revenue_delta=order_revenue - previous_order_revenue
+    orders_info = (
+        orders.WHERE(YEAR(order_date) == 1994)
+        .WHERE(PRESENT(previous_order_revenue))
+        .CALCULATE(revenue_delta=order_revenue - previous_order_revenue)
     )
     return (
-        customers.CALCULATE(
+        customers.WHERE(market_segment == "AUTOMOBILE")
+        .CALCULATE(
             max_diff=MAX(orders_info.revenue_delta),
             min_diff=MIN(orders_info.revenue_delta),
         )
@@ -407,11 +439,12 @@ def suppliers_bal_diffs():
 
 
 def month_year_sliding_windows():
-    # Finds all months where the total amount spent by customers on orders in
-    # that month was more than the preceding/following month, and the amount
-    # spent in that year was more than the following year.
+    # Finds all months where the total amount spent by customers on urgent
+    # orders in that month was more than the preceding/following month,
+    # and the amount spent in that year was more than the following year.
     ym_groups = (
-        orders.CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
+        orders.WHERE(order_priority == "1-URGENT")
+        .CALCULATE(year=YEAR(order_date), month=MONTH(order_date))
         .PARTITION(
             name="months",
             by=(year, month),
@@ -563,10 +596,10 @@ def regional_first_order_best_line_part():
     # (breaking ties by order key), and the name of the part from that order
     # with the largest quantity shipped, breaking ties by line number within
     # the order.
-    first_order = nations.customers.orders.BEST(
+    first_order = nations.customers.orders.WHERE(YEAR(order_date) == 1992).BEST(
         per="regions", by=(order_date.ASC(), key.ASC())
     )
-    largest_quantity_line = first_order.lines.BEST(
+    largest_quantity_line = first_order.lines.WHERE(YEAR(ship_date) == 1992).BEST(
         per="regions", by=(quantity.DESC(), line_number.ASC())
     )
     return regions.CALCULATE(
@@ -1120,15 +1153,16 @@ def aggregation_analytics_1():
     # What 8 large products produced by Supplier#000009450 generated the LEAST
     # revenue for them in between 1995 and 1996? Include any products the
     # supplier produces that generated NO revenue for the supplier during that
-    # time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
-        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    # time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(ISIN(YEAR(ship_date), (1995, 1996))).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * ps_supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
+        supply_records.WHERE(
             (supplier.name == "Supplier#000009450") & STARTSWITH(part.container, "LG")
         )
+        .CALCULATE(ps_supply_cost=supply_cost)
         .CALCULATE(
             part_name=part.name,
             revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
@@ -1141,17 +1175,17 @@ def aggregation_analytics_2():
     # What 4 small products produced by Supplier#000000182 generated the LEAST
     # revenue for them in between 1995 and 1996? Do NOT include any products
     # the supplier produces that generated NO revenue for the supplier during
-    # that time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(ISIN(YEAR(order.order_date), (1995, 1996))).CALCULATE(
-        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    # that time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(ISIN(YEAR(ship_date), (1995, 1996))).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * ps_supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
-            (supplier.name == "Supplier#000000182")
-            & STARTSWITH(part.container, "SM")
-            & HAS(selected_lines)
+        supply_records.WHERE(
+            (supplier.name == "Supplier#000000182") & STARTSWITH(part.container, "SM")
         )
+        .CALCULATE(ps_supply_cost=supply_cost)
+        .WHERE(HAS(selected_lines))
         .CALCULATE(
             part_name=part.name,
             revenue_generated=ROUND(SUM(selected_lines.revenue), 2),
@@ -1164,17 +1198,17 @@ def aggregation_analytics_3():
     # What 3 medium products produced by Supplier#000002103 generated the LEAST
     # revenue per quantity ordered in 1994? Do NOT include any products the
     # supplier produces that generated NO revenue for the supplier during that
-    # time period, and break ties alphabetically by part name.
-    selected_lines = lines.WHERE(YEAR(order.order_date) == 1994).CALCULATE(
-        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
+    # time period, and break ties alphabetically by part name. Use the ship
+    # adte to determine which orders are in the time period.
+    selected_lines = lines.WHERE(YEAR(ship_date) == 1994).CALCULATE(
+        revenue=extended_price * (1 - discount) * (1 - tax) - quantity * ps_supply_cost
     )
     return (
-        supply_records.CALCULATE(supply_cost)
-        .WHERE(
-            (supplier.name == "Supplier#000000182")
-            & STARTSWITH(part.container, "MED")
-            & HAS(selected_lines)
+        supply_records.WHERE(
+            (supplier.name == "Supplier#000000182") & STARTSWITH(part.container, "MED")
         )
+        .CALCULATE(ps_supply_cost=supply_cost)
+        .WHERE(HAS(selected_lines))
         .CALCULATE(
             part_name=part.name,
             revenue_ratio=ROUND(
@@ -2276,13 +2310,13 @@ def singular5():
     # presented in parts (breaking ties in favor of the smaller ship date).
     # Find the 5 containers with the earliest such date, breaking ties
     # alphabetically. For the purpose of this question, only shipments made by
-    # rail and for parts from Brand#13.
+    # rail without tax and for parts from Brand#13.
     top_containers = parts.WHERE(brand == "Brand#13").PARTITION(
         name="containers",
         by=container,
     )
     highest_price_line = (
-        parts.lines.WHERE(ship_mode == "RAIL")
+        parts.lines.WHERE((ship_mode == "RAIL") & (tax == 0))
         .WHERE(
             RANKING(by=(extended_price.DESC(), ship_date.ASC()), per="containers") == 1
         )
@@ -2323,9 +2357,10 @@ def singular7():
     # purchases) they supplied in 1994 (breaking ties alphabetically by part
     # name)? Include the 5 suppliers with the highest number of purchases along
     # with part name, and number of orders (breaking ties alphabetically by
-    # supplier name).
+    # supplier name). Only consider parts from Brand#13.
     best_part = (
-        supply_records.CALCULATE(
+        supply_records.WHERE(part.brand == "Brand#13")
+        .CALCULATE(
             n_orders=COUNT(lines.WHERE(YEAR(ship_date) == 1994)),
             part_name=part.name,
         )
@@ -2885,4 +2920,66 @@ def simple_cross_12():
         priorities.CROSS(segments)
         .CALCULATE(order_priority, market_segment)
         .ORDER_BY(order_priority.ASC(), market_segment.ASC())
+    )
+
+
+def quantile_function_test_1():
+    selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
+    return TPCH.CALCULATE(
+        seventieth_order_price=QUANTILE(selected_orders.total_price, 0.7)
+    )
+
+
+def quantile_function_test_2():
+    selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
+    return nations.TOP_K(5, by=name.ASC()).CALCULATE(
+        region_name=region.name,
+        nation_name=name,
+        orders_min=QUANTILE(selected_orders.total_price, 0.0),
+        orders_1_percent=QUANTILE(selected_orders.total_price, 0.01),
+        orders_10_percent=QUANTILE(selected_orders.total_price, 0.1),
+        orders_25_percent=QUANTILE(selected_orders.total_price, 0.25),
+        orders_median=QUANTILE(selected_orders.total_price, 0.5),
+        orders_75_percent=QUANTILE(selected_orders.total_price, 0.75),
+        orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
+        orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
+        orders_max=QUANTILE(selected_orders.total_price, 1.0),
+    )
+
+
+def quantile_function_test_3():
+    selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998).CALCULATE(
+        value=KEEP_IF(total_price, order_priority == "1-URGENT")
+    )
+    return nations.TOP_K(5, by=name.ASC()).CALCULATE(
+        region_name=region.name,
+        nation_name=name,
+        orders_min=QUANTILE(selected_orders.total_price, 0.0),
+        orders_1_percent=QUANTILE(selected_orders.total_price, 0.01),
+        orders_10_percent=QUANTILE(selected_orders.total_price, 0.1),
+        orders_25_percent=QUANTILE(selected_orders.total_price, 0.25),
+        orders_median=QUANTILE(selected_orders.total_price, 0.5),
+        orders_75_percent=QUANTILE(selected_orders.total_price, 0.75),
+        orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
+        orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
+        orders_max=QUANTILE(selected_orders.total_price, 1.0),
+    )
+
+
+def quantile_function_test_4():
+    selected_orders = customers.orders.WHERE(clerk == "Clerk#000000272").CALCULATE(
+        value=KEEP_IF(total_price, order_priority == "1-URGENT")
+    )
+    return nations.TOP_K(5, by=name.ASC()).CALCULATE(
+        region_name=region.name,
+        nation_name=name,
+        orders_min=QUANTILE(selected_orders.total_price, 0.0),
+        orders_1_percent=QUANTILE(selected_orders.total_price, 0.01),
+        orders_10_percent=QUANTILE(selected_orders.total_price, 0.1),
+        orders_25_percent=QUANTILE(selected_orders.total_price, 0.25),
+        orders_median=QUANTILE(selected_orders.total_price, 0.5),
+        orders_75_percent=QUANTILE(selected_orders.total_price, 0.75),
+        orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
+        orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
+        orders_max=QUANTILE(selected_orders.total_price, 1.0),
     )

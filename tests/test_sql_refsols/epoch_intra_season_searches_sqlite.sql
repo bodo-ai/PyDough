@@ -1,90 +1,89 @@
 WITH _s0 AS (
   SELECT
-    s_month1 AS first_month,
-    s_name AS name,
-    s_name AS season_name,
-    s_month2 AS second_month,
-    s_month3 AS third_month
+    s_month1,
+    s_month2,
+    s_month3,
+    s_name
   FROM seasons
-), _s7 AS (
+), _s5 AS (
   SELECT
-    s_month1 AS first_month,
-    s_name AS name,
-    s_month2 AS second_month,
-    s_month3 AS third_month
-  FROM seasons
+    ev_dt,
+    ev_name
+  FROM events
 ), _s9 AS (
   SELECT
-    COUNT(*) AS agg_0,
-    _s2.name,
+    COUNT(*) AS n_rows,
+    _s2.s_name,
     searches.search_id
   FROM _s0 AS _s2
   JOIN searches AS searches
-    ON _s2.first_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
-    OR _s2.second_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
-    OR _s2.third_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
-  JOIN events AS events
+    ON _s2.s_month1 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+    OR _s2.s_month2 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+    OR _s2.s_month3 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+  JOIN _s5 AS _s5
     ON LOWER(searches.search_string) LIKE (
-      '%' || LOWER(events.ev_name) || '%'
+      '%' || LOWER(_s5.ev_name) || '%'
     )
-  JOIN _s7 AS _s7
-    ON _s2.season_name = _s7.name
+  JOIN _s0 AS _s7
+    ON _s2.s_name = _s7.s_name
     AND (
-      _s7.first_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
-      OR _s7.second_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
-      OR _s7.third_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
+      _s7.s_month1 = CAST(STRFTIME('%m', _s5.ev_dt) AS INTEGER)
+      OR _s7.s_month2 = CAST(STRFTIME('%m', _s5.ev_dt) AS INTEGER)
+      OR _s7.s_month3 = CAST(STRFTIME('%m', _s5.ev_dt) AS INTEGER)
     )
   GROUP BY
-    _s2.name,
+    _s2.s_name,
     searches.search_id
 ), _s16 AS (
   SELECT
-    MAX(_s0.name) AS agg_1,
+    MAX(_s0.s_name) AS anything_s_name,
+    COUNT(*) AS n_rows,
     SUM((
-      NOT _s9.agg_0 IS NULL AND _s9.agg_0 > 0
-    )) AS agg_2,
-    COUNT(*) AS agg_3,
-    MAX(_s0.season_name) AS agg_4
+      NOT _s9.n_rows IS NULL AND _s9.n_rows > 0
+    )) AS sum_is_intra_season
   FROM _s0 AS _s0
   JOIN searches AS searches
-    ON _s0.first_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
-    OR _s0.second_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
-    OR _s0.third_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+    ON _s0.s_month1 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+    OR _s0.s_month2 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+    OR _s0.s_month3 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
   LEFT JOIN _s9 AS _s9
-    ON _s0.name = _s9.name AND _s9.search_id = searches.search_id
+    ON _s0.s_name = _s9.s_name AND _s9.search_id = searches.search_id
   GROUP BY
-    _s0.name
+    _s0.s_name
 ), _s17 AS (
   SELECT
-    SUM(_s10.season_name = _s15.name) AS agg_0,
-    COUNT(*) AS agg_1,
-    _s10.name
+    COUNT(*) AS n_rows,
+    SUM(_s15.s_name = _s10.s_name) AS sum_is_intra_season,
+    _s10.s_name
   FROM _s0 AS _s10
-  JOIN events AS events
-    ON _s10.first_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
-    OR _s10.second_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
-    OR _s10.third_month = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
+  JOIN _s5 AS _s11
+    ON _s10.s_month1 = CAST(STRFTIME('%m', _s11.ev_dt) AS INTEGER)
+    OR _s10.s_month2 = CAST(STRFTIME('%m', _s11.ev_dt) AS INTEGER)
+    OR _s10.s_month3 = CAST(STRFTIME('%m', _s11.ev_dt) AS INTEGER)
   JOIN searches AS searches
     ON LOWER(searches.search_string) LIKE (
-      '%' || LOWER(events.ev_name) || '%'
+      '%' || LOWER(_s11.ev_name) || '%'
     )
-  JOIN _s7 AS _s15
-    ON _s15.first_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
-    OR _s15.second_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
-    OR _s15.third_month = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+  JOIN _s0 AS _s15
+    ON _s15.s_month1 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+    OR _s15.s_month2 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
+    OR _s15.s_month3 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
   GROUP BY
-    _s10.name
+    _s10.s_name
 )
 SELECT
-  _s16.agg_4 AS season_name,
+  _s16.anything_s_name AS season_name,
   ROUND(CAST((
-    100.0 * COALESCE(_s16.agg_2, 0)
-  ) AS REAL) / _s16.agg_3, 2) AS pct_season_searches,
-  ROUND(CAST((
-    100.0 * COALESCE(_s17.agg_0, 0)
-  ) AS REAL) / COALESCE(_s17.agg_1, 0), 2) AS pct_event_searches
+    100.0 * COALESCE(_s16.sum_is_intra_season, 0)
+  ) AS REAL) / _s16.n_rows, 2) AS pct_season_searches,
+  ROUND(
+    CAST((
+      100.0 * COALESCE(_s17.sum_is_intra_season, 0)
+    ) AS REAL) / COALESCE(_s17.n_rows, 0),
+    2
+  ) AS pct_event_searches
 FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17
-  ON _s16.agg_1 = _s17.name
+  ON _s16.anything_s_name = _s17.s_name
 ORDER BY
-  season_name
+  _s16.anything_s_name

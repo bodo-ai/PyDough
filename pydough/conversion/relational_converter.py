@@ -52,6 +52,7 @@ from pydough.types import BooleanType, NumericType, UnknownType
 
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
+from .column_bubbler import bubble_column_names
 from .filter_pushdown import push_filters
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
@@ -1435,7 +1436,15 @@ def optimize_relational_tree(
     # Step 6: prune unused columns.
     root = ColumnPruner().prune_unused_columns(root)
 
-    # Step 7: re-run projection merging.
+    # Step 7: bubble up names from the leaf nodes to further encourage simpler
+    # naming without aliases, and also to delete duplicate columns where
+    # possible.
+    root = bubble_column_names(root)
+
+    # Step 8: re-run column pruning.
+    root = ColumnPruner().prune_unused_columns(root)
+
+    # Step 9: re-run projection merging.
     root = confirm_root(merge_projects(root))
 
     return root

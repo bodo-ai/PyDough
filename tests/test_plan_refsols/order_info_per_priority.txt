@@ -1,4 +1,4 @@
-ROOT(columns=[('order_priority', order_priority), ('order_key', order_key), ('order_total_price', order_total_price)], orderings=[(order_priority):asc_first])
- FILTER(condition=RANKING(args=[], partition=[order_priority], order=[(total_price):desc_first]) == 1:numeric, columns={'order_key': key, 'order_priority': order_priority, 'order_total_price': total_price})
-  FILTER(condition=YEAR(order_date) == 1992:numeric, columns={'key': key, 'order_priority': order_priority, 'total_price': total_price})
-   SCAN(table=tpch.ORDERS, columns={'key': o_orderkey, 'order_date': o_orderdate, 'order_priority': o_orderpriority, 'total_price': o_totalprice})
+ROOT(columns=[('order_priority', o_orderpriority), ('order_key', o_orderkey), ('order_total_price', o_totalprice)], orderings=[(o_orderpriority):asc_first])
+ FILTER(condition=RANKING(args=[], partition=[o_orderpriority], order=[(o_totalprice):desc_first]) == 1:numeric, columns={'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority, 'o_totalprice': o_totalprice})
+  FILTER(condition=YEAR(o_orderdate) == 1992:numeric, columns={'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority, 'o_totalprice': o_totalprice})
+   SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority, 'o_totalprice': o_totalprice})

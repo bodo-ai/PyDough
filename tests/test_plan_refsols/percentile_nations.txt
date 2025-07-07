@@ -1,2 +1,2 @@
-ROOT(columns=[('name', name), ('p1', PERCENTILE(args=[], partition=[], order=[(name):asc_last], n_buckets=5)), ('p2', PERCENTILE(args=[], partition=[], order=[(name):asc_last], n_buckets=5))], orderings=[])
- SCAN(table=tpch.NATION, columns={'name': n_name})
+ROOT(columns=[('name', n_name), ('p1', PERCENTILE(args=[], partition=[], order=[(n_name):asc_last], n_buckets=5)), ('p2', PERCENTILE(args=[], partition=[], order=[(n_name):asc_last], n_buckets=5))], orderings=[])
+ SCAN(table=tpch.NATION, columns={'n_name': n_name})

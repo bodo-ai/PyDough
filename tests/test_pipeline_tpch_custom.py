@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow with custom questions on the TPC-H
 dataset.
 """
 
+import re
 from collections.abc import Callable
 
 import pandas as pd
@@ -25,6 +26,37 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_cross_9,
     bad_cross_10,
     bad_cross_11,
+    bad_name_1,
+    bad_name_2,
+    bad_name_3,
+    bad_name_4,
+    bad_name_5,
+    bad_name_6,
+    bad_name_7,
+    bad_name_8,
+    bad_name_9,
+    bad_name_10,
+    bad_name_11,
+    bad_name_12,
+    bad_name_13,
+    bad_name_14,
+    bad_name_15,
+    bad_name_16,
+    bad_name_17,
+    bad_name_18,
+    bad_name_19,
+    bad_name_20,
+    bad_name_21,
+    bad_name_22,
+    bad_name_23,
+    bad_name_24,
+    bad_name_25,
+    bad_quantile_1,
+    bad_quantile_2,
+    bad_quantile_3,
+    bad_quantile_4,
+    bad_quantile_5,
+    bad_quantile_6,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -62,6 +94,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     dumb_aggregation,
     first_order_in_year,
     first_order_per_customer,
+    floor_and_ceil,
+    floor_and_ceil_2,
     function_sampler,
     global_acctbal_breakdown,
     highest_priority_per_year,
@@ -79,6 +113,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     percentile_customers_per_region,
     percentile_nations,
     prev_next_regions,
+    quantile_function_test_1,
+    quantile_function_test_2,
+    quantile_function_test_3,
+    quantile_function_test_4,
     quarter_function_test,
     rank_nations_by_region,
     rank_nations_per_region_by_customers,
@@ -523,6 +561,86 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                floor_and_ceil,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "floor_frac": [5],
+                        "ceil_frac": [6],
+                        "floor_frac_neg": [-6],
+                        "ceil_frac_neg": [-5],
+                        "floor_int": [6],
+                        "ceil_int": [6],
+                        "floor_int_neg": [-6],
+                        "ceil_int_neg": [-6],
+                    }
+                ),
+                "floor_and_ceil",
+            ),
+            id="floor_and_ceil",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                floor_and_ceil_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_key": [
+                            5851,
+                            5991,
+                            7511,
+                            7846,
+                            1186,
+                            8300,
+                            4578,
+                            8755,
+                            1635,
+                            7358,
+                        ],
+                        "part_key": [
+                            185850,
+                            15990,
+                            45006,
+                            137845,
+                            116163,
+                            175782,
+                            117044,
+                            43746,
+                            51634,
+                            87357,
+                        ],
+                        "complete_parts": [
+                            9994,
+                            9997,
+                            9980,
+                            9989,
+                            9984,
+                            9983,
+                            9989,
+                            9970,
+                            9966,
+                            9961,
+                        ],
+                        "total_cost": [
+                            9994000,
+                            9988903,
+                            9979801,
+                            9979211,
+                            9973517,
+                            9967627,
+                            9964028,
+                            9963919,
+                            9963609,
+                            9958411,
+                        ],
+                    }
+                ),
+                "floor_and_ceil_2",
+            ),
+            id="floor_and_ceil_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 datetime_current,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -705,13 +823,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000075872",
-                            "Customer#000004796",
-                            "Customer#000112880",
-                            "Customer#000041345",
-                            "Customer#000119474",
+                            "Customer#000015038",
+                            "Customer#000026734",
+                            "Customer#000075320",
+                            "Customer#000097888",
+                            "Customer#000102875",
                         ],
-                        "avg_diff": [2195.0, 1998.0, 1995.0, 1863.0, 1787.0],
+                        "avg_diff": [2361.0, 2260.0, 2309.0, 2269.0, 2309.0],
                     }
                 ),
                 "avg_order_diff_per_customer",
@@ -770,18 +888,18 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000054733",
-                            "Customer#000107128",
-                            "Customer#000019063",
-                            "Customer#000100810",
-                            "Customer#000127003",
+                            "Customer#000046238",
+                            "Customer#000056794",
+                            "Customer#000079627",
+                            "Customer#000085429",
+                            "Customer#000092803",
                         ],
                         "largest_diff": [
-                            454753.9935,
-                            447181.8195,
-                            446706.3978,
-                            443366.9780,
-                            442893.6328,
+                            201862.1534,
+                            208623.953,
+                            201089.5987,
+                            274455.2228,
+                            204431.6412,
                         ],
                     }
                 ),
@@ -822,8 +940,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "year": [1996] * 6 + [1997] * 4 + [1998] * 4,
-                        "month": [1, 3, 5, 8, 10, 12, 3, 5, 7, 10, 1, 3, 5, 7],
+                        "year": [1994] * 5 + [1996] * 4 + [1997] * 2 + [1998] * 4,
+                        "month": [1, 3, 5, 8, 12, 4, 7, 10, 12, 7, 10, 1, 3, 5, 7],
                     }
                 ),
                 "month_year_sliding_windows",
@@ -929,22 +1047,23 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "container": [
-                            "MED CAN",
-                            "LG JAR",
                             "LG CASE",
                             "WRAP CAN",
-                            "LG DRUM",
+                            "SM BAG",
+                            "SM PKG",
+                            "LG BOX",
                         ],
                         "highest_price_ship_date": [
-                            "1992-03-09",
-                            "1992-08-02",
                             "1992-08-10",
-                            "1992-11-01",
-                            "1992-11-22",
+                            "1992-08-28",
+                            "1992-09-22",
+                            "1992-10-27",
+                            "1992-10-31",
                         ],
                     }
                 ),
                 "singular5",
+                order_sensitive=True,
             ),
             id="singular5",
         ),
@@ -985,23 +1104,24 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
-                            "Supplier#000000687",
-                            "Supplier#000000565",
-                            "Supplier#000000977",
-                            "Supplier#000001251",
-                            "Supplier#000004625",
+                            "Supplier#000008210",
+                            "Supplier#000002891",
+                            "Supplier#000008529",
+                            "Supplier#000009337",
+                            "Supplier#000000114",
                         ],
                         "part_name": [
-                            "peach orange blanched firebrick ghost",
-                            "sienna lime mint frosted beige",
-                            "blanched goldenrod lawn metallic midnight",
-                            "seashell deep almond cyan lemon",
-                            "red ivory indian seashell deep",
+                            "navajo azure ivory rosy gainsboro",
+                            "magenta firebrick puff moccasin drab",
+                            "deep midnight hot white sky",
+                            "cornflower dark steel burlywood salmon",
+                            "smoke navajo spring cream cornflower",
                         ],
-                        "n_orders": [8, 7, 7, 7, 7],
+                        "n_orders": [7, 5, 5, 5, 4],
                     }
                 ),
                 "singular7",
+                order_sensitive=True,
             ),
             id="singular7",
         ),
@@ -2364,13 +2484,23 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "navajo blush honeydew slate forest",
                             "red almond goldenrod tomato cornsilk",
                             "linen blanched mint pale blue",
-                            "plum gainsboro ivory pale maroon",
+                            "rose sienna maroon cornsilk azure",
                             "pale rosy blanched navy black",
                         ],
-                        "revenue": [0] * 5 + [13407.46, 30806.70, 31277.99],
+                        "revenue": [
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            15376.45,
+                            24876.23,
+                            31277.99,
+                        ],
                     }
                 ),
                 "aggregation_analytics_1",
+                order_sensitive=True,
             ),
             id="aggregation_analytics_1",
         ),
@@ -2383,13 +2513,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "part_name": [
                             "sky misty beige azure lace",
                             "azure pale hot ghost brown",
-                            "magenta red sky honeydew grey",
+                            "steel sky lavender green khaki",
                             "lime lemon indian papaya wheat",
                         ],
-                        "revenue": [1276.69, 11278.96, 24560.16, 35220.91],
+                        "revenue": [1276.69, 11278.96, 34936.07, 35220.91],
                     }
                 ),
                 "aggregation_analytics_2",
+                order_sensitive=True,
             ),
             id="aggregation_analytics_2",
         ),
@@ -2400,16 +2531,275 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "part_name": [
-                            "moccasin cornsilk azure royal rose",
                             "lawn puff chartreuse smoke firebrick",
+                            "moccasin cornsilk azure royal rose",
                             "lime blush midnight chartreuse grey",
                         ],
-                        "revenue": [158.72, 163.52, 179.28],
+                        "revenue": [106.53, 158.72, 179.28],
                     }
                 ),
                 "aggregation_analytics_3",
+                order_sensitive=True,
             ),
             id="aggregation_analytics_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_1,
+                "TPCH",
+                lambda: pd.DataFrame({"seventieth_order_price": [200536.2]}),
+                "quantile_function_test_1",
+            ),
+            id="quantile_function_test_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                        ],
+                        "nation_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                        ],
+                        "orders_min": [None, None, None, None, None],
+                        "orders_1_percent": [
+                            5999.3,
+                            7003.64,
+                            5048.08,
+                            4057.84,
+                            5441.97,
+                        ],
+                        "orders_10_percent": [
+                            39638.93,
+                            35979.56,
+                            39705.76,
+                            38877.67,
+                            37364.74,
+                        ],
+                        "orders_25_percent": [
+                            80248.44,
+                            74602.29,
+                            78630.93,
+                            75621.71,
+                            79468.12,
+                        ],
+                        "orders_median": [
+                            145362.1,
+                            140232.54,
+                            143825.37,
+                            143063.83,
+                            145382.11,
+                        ],
+                        "orders_75_percent": [
+                            219335.6,
+                            216272.55,
+                            212565.84,
+                            215758.39,
+                            216461.21,
+                        ],
+                        "orders_90_percent": [
+                            276313.4,
+                            273094.87,
+                            270427.82,
+                            274811.54,
+                            274194.5,
+                        ],
+                        "orders_99_percent": [
+                            363376.69,
+                            359892.4,
+                            360018.62,
+                            359149.24,
+                            358762.01,
+                        ],
+                        "orders_max": [
+                            470709.7,
+                            439803.36,
+                            455713.74,
+                            452718.68,
+                            472728.8,
+                        ],
+                    }
+                ),
+                "quantile_function_test_2",
+            ),
+            id="quantile_function_test_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                        ],
+                        "nation_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                        ],
+                        "orders_min": [None, None, None, None, None],
+                        "orders_1_percent": [
+                            5999.3,
+                            7003.64,
+                            5048.08,
+                            4057.84,
+                            5441.97,
+                        ],
+                        "orders_10_percent": [
+                            39638.93,
+                            35979.56,
+                            39705.76,
+                            38877.67,
+                            37364.74,
+                        ],
+                        "orders_25_percent": [
+                            80248.44,
+                            74602.29,
+                            78630.93,
+                            75621.71,
+                            79468.12,
+                        ],
+                        "orders_median": [
+                            145362.1,
+                            140232.54,
+                            143825.37,
+                            143063.83,
+                            145382.11,
+                        ],
+                        "orders_75_percent": [
+                            219335.6,
+                            216272.55,
+                            212565.84,
+                            215758.39,
+                            216461.21,
+                        ],
+                        "orders_90_percent": [
+                            276313.4,
+                            273094.87,
+                            270427.82,
+                            274811.54,
+                            274194.5,
+                        ],
+                        "orders_99_percent": [
+                            363376.69,
+                            359892.4,
+                            360018.62,
+                            359149.24,
+                            358762.01,
+                        ],
+                        "orders_max": [
+                            470709.7,
+                            439803.36,
+                            455713.74,
+                            452718.68,
+                            472728.8,
+                        ],
+                    }
+                ),
+                "quantile_function_test_3",
+            ),
+            id="quantile_function_test_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                        ],
+                        "nation_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                        ],
+                        "orders_min": [None, None, None, None, None],
+                        "orders_1_percent": [
+                            5390.99,
+                            2622.17,
+                            10183.86,
+                            10722.74,
+                            15050.91,
+                        ],
+                        "orders_10_percent": [
+                            56337.7,
+                            60753.17,
+                            19861.78,
+                            40190.75,
+                            51271.16,
+                        ],
+                        "orders_25_percent": [
+                            93604.69,
+                            106187.25,
+                            76036.8,
+                            65426.56,
+                            85049.94,
+                        ],
+                        "orders_median": [
+                            157615.53,
+                            160145.36,
+                            147766.19,
+                            108165.94,
+                            134156.84,
+                        ],
+                        "orders_75_percent": [
+                            210510.63,
+                            222249.89,
+                            209519.89,
+                            165556.88,
+                            195812.23,
+                        ],
+                        "orders_90_percent": [
+                            282754.57,
+                            298230.29,
+                            263862.04,
+                            230003.53,
+                            252977.53,
+                        ],
+                        "orders_99_percent": [
+                            389176.08,
+                            349270.55,
+                            354968.79,
+                            350760.86,
+                            398201.08,
+                        ],
+                        "orders_max": [
+                            389176.08,
+                            349270.55,
+                            354968.79,
+                            350760.86,
+                            398201.08,
+                        ],
+                    }
+                ),
+                "quantile_function_test_4",
+            ),
+            id="quantile_function_test_4",
         ),
     ],
 )
@@ -2557,13 +2947,17 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             simple_scan,
             ["A", "B", "C"],
-            "Unrecognized term of simple table collection 'orders' in graph 'TPCH': 'A'",
+            re.escape(
+                "Unrecognized term of TPCH.orders.CALCULATE(key=key): 'A'. Did you mean: key, clerk, lines?"
+            ),
             id="bad_columns_3",
         ),
         pytest.param(
             simple_scan,
             {"X": "key", "W": "Y"},
-            "Unrecognized term of simple table collection 'orders' in graph 'TPCH': 'Y'",
+            re.escape(
+                "Unrecognized term of TPCH.orders.CALCULATE(key=key): 'Y'. Did you mean: key, clerk, lines?"
+            ),
             id="bad_columns_4",
         ),
         pytest.param(
@@ -2571,6 +2965,206 @@ def test_pipeline_e2e_tpch_custom(
             ["key", "key"],
             "Duplicate column names found in root.",
             id="bad_columns_5",
+        ),
+        pytest.param(
+            bad_name_1,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'c_name'. Did you mean: name, comment, phone?"
+            ),
+            id="bad_name_1",
+        ),
+        pytest.param(
+            bad_name_2,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH: 'CUSTS'. Did you mean: parts, lines, customers, orders?"
+            ),
+            id="bad_name_2",
+        ),
+        pytest.param(
+            bad_name_3,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz'. Did you mean: fizz, BUZZ, bar?"
+            ),
+            id="bad_name_3",
+        ),
+        pytest.param(
+            bad_name_4,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers.orders: 'totalPrice'. Did you mean: total_price, clerk, lines?"
+            ),
+            id="bad_name_4",
+        ),
+        pytest.param(
+            bad_name_5,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers.orders: 'c_name'. Did you mean: clerk, comment, customer, lines, key, order_date?"
+            ),
+            id="bad_name_5",
+        ),
+        pytest.param(
+            bad_name_6,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, address, phone, comment, key, name, nation?"
+            ),
+            id="bad_name_6",
+        ),
+        pytest.param(
+            bad_name_7,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'NAME'. Did you mean: name, key, phone?"
+            ),
+            id="bad_name_7",
+        ),
+        pytest.param(
+            bad_name_8,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'n123ame'. Did you mean: name, nation, phone?"
+            ),
+            id="bad_name_8",
+        ),
+        pytest.param(
+            bad_name_9,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: '__phone__'. Did you mean: phone, nation, address?"
+            ),
+            id="bad_name_9",
+        ),
+        pytest.param(
+            bad_name_10,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'nam'. Did you mean: name, key, nation?"
+            ),
+            id="bad_name_10",
+        ),
+        pytest.param(
+            bad_name_11,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'namex'. Did you mean: name, key, nation?"
+            ),
+            id="bad_name_11",
+        ),
+        pytest.param(
+            bad_name_12,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: '___'. Did you mean: key, name, phone?"
+            ),
+            id="bad_name_12",
+        ),
+        pytest.param(
+            bad_name_13,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, account_balance, nation_key, address?"
+            ),
+            id="bad_name_13",
+        ),
+        pytest.param(
+            bad_name_14,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'keyname'. Did you mean: name, key, phone?"
+            ),
+            id="bad_name_14",
+        ),
+        pytest.param(
+            bad_name_15,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'namekey'. Did you mean: name, key, nation, nation_key?"
+            ),
+            id="bad_name_15",
+        ),
+        pytest.param(
+            bad_name_16,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: comment, name, nation, orders, address, key, phone?"
+            ),
+            id="bad_name_16",
+        ),
+        pytest.param(
+            bad_name_17,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year): 'yrs'. Did you mean: year, orders?"
+            ),
+            id="bad_name_17",
+        ),
+        pytest.param(
+            bad_name_18,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'nords'. Did you mean: n_orders, lines, clerk, key, year?"
+            ),
+            id="bad_name_18",
+        ),
+        pytest.param(
+            bad_name_19,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year): 'order_date'. Did you mean: orders, year?"
+            ),
+            id="bad_name_19",
+        ),
+        pytest.param(
+            bad_name_20,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'orders'. Did you mean: n_orders, clerk, lines?"
+            ),
+            id="bad_name_20",
+        ),
+        pytest.param(
+            bad_name_21,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.regions.CALCULATE(rname=name, rkey=key, rcomment=comment).nations: 'RNAME'. Did you mean: rname, name, rkey?"
+            ),
+            id="bad_name_21",
+        ),
+        pytest.param(
+            bad_name_22,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'Over_Intellectual_Ization'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, De_Institutionalizations?"
+            ),
+            id="bad_name_22",
+        ),
+        pytest.param(
+            bad_name_23,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'paio_eo_aliz_ation'. Did you mean: PROFESSION_alization, over_intellect_ualiz_ation, anthro_pomorph_IZATION?"
+            ),
+            id="bad_name_23",
+        ),
+        pytest.param(
+            bad_name_24,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): '_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_'. Did you mean: anthro_pomorph_IZATION, over_intellect_ualiz_ation, De_Institutionalizations?"
+            ),
+            id="bad_name_24",
+        ),
+        pytest.param(
+            bad_name_25,
+            None,
+            re.escape(
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'anthropomorphization_and_overintellectualization_and_ultrarevolutionaries'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, anthro_pomorph_IZATION, ultra_revolution_aries, De_Institutionalizations?"
+            ),
+            id="bad_name_25",
         ),
         pytest.param(
             bad_cross_1,
@@ -2587,7 +3181,9 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_3,
             None,
-            "Unrecognized term of graph 'TPCH': 'foo'",
+            re.escape(
+                "Unrecognized term of TPCH.customers.TPCH: 'foo'. Did you mean: lines, parts, nations, orders, regions?"
+            ),
             id="bad_cross_3",
         ),
         pytest.param(
@@ -2599,13 +3195,17 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_5,
             None,
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'regions'",
+            re.escape(
+                "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions'. Did you mean: nations, comment, key?"
+            ),
             id="bad_cross_5",
         ),
         pytest.param(
             bad_cross_6,
             None,
-            "Unrecognized term of simple table collection 'parts' in graph 'TPCH': 'suppliers'",
+            re.escape(
+                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: lines, supply_records, container, size, comment, key, name?"
+            ),
             id="bad_cross_6",
         ),
         # NOTE: raised exception with an empty message
@@ -2618,7 +3218,9 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_8,
             None,
-            "Unrecognized term of simple table collection 'nations' in graph 'TPCH': 'r_key'",
+            re.escape(
+                "Unrecognized term of TPCH.regions.CALCULATE(r1=name).TPCH.nations: 'r_key'. Did you mean: key, name, r1?"
+            ),
             id="bad_cross_8",
         ),
         pytest.param(
@@ -2636,8 +3238,56 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_11,
             None,
-            "Unrecognized term of simple table collection 'regions' in graph 'TPCH': 'customers'",
+            "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, nations, key?",
             id="bad_cross_11",
+        ),
+        pytest.param(
+            bad_quantile_1,
+            None,
+            re.escape(
+                "Invalid operator invocation 'QUANTILE(orders.total_price)': Expected 2 arguments, received 1"
+            ),
+            id="bad_quantile_1",
+        ),
+        pytest.param(
+            bad_quantile_2,
+            None,
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE('orders.total_price', 0.7)"
+            ),
+            id="bad_quantile_2",
+        ),
+        pytest.param(
+            bad_quantile_3,
+            None,
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received 40"
+            ),
+            id="bad_quantile_3",
+        ),
+        pytest.param(
+            bad_quantile_4,
+            None,
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received -10"
+            ),
+            id="bad_quantile_4",
+        ),
+        pytest.param(
+            bad_quantile_5,
+            None,
+            re.escape(
+                "Non-expression argument orders of type ChildReferenceCollection found in operator 'QUANTILE'"
+            ),
+            id="bad_quantile_5",
+        ),
+        pytest.param(
+            bad_quantile_6,
+            None,
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE(20, 0.9)"
+            ),
+            id="bad_quantile_6",
         ),
     ],
 )

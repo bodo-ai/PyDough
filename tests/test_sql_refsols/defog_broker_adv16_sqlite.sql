@@ -1,8 +1,11 @@
-WITH _t0 AS (
+WITH _s1 AS (
   SELECT
-    SUM(sbtxamount) AS agg_0,
-    SUM(sbtxtax + sbtxcommission) AS agg_1,
-    sbtxtickerid AS ticker_id
+    CAST((
+      100.0 * (
+        COALESCE(SUM(sbtxamount), 0) - COALESCE(SUM(sbtxtax + sbtxcommission), 0)
+      )
+    ) AS REAL) / COALESCE(SUM(sbtxamount), 0) AS spm,
+    sbtxtickerid
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATETIME('now', '-1 month') AND sbtxtype = 'sell'
@@ -11,13 +14,9 @@ WITH _t0 AS (
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
-  CAST((
-    100.0 * (
-      COALESCE(_t0.agg_0, 0) - COALESCE(_t0.agg_1, 0)
-    )
-  ) AS REAL) / COALESCE(_t0.agg_0, 0) AS SPM
+  _s1.spm AS SPM
 FROM main.sbticker AS sbticker
-JOIN _t0 AS _t0
-  ON _t0.ticker_id = sbticker.sbtickerid
+JOIN _s1 AS _s1
+  ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  symbol
+  sbticker.sbtickersymbol
