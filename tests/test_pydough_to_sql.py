@@ -14,14 +14,21 @@ from pydough.unqualified import (
     UnqualifiedNode,
 )
 from tests.test_pydough_functions.simple_pydough_functions import (
+    aggregation_functions,
+    arithmetic_and_binary_operators,
+    casting_functions,
+    comparisons_and_logical_operators,
+    conditional_functions,
     cumulative_stock_analysis,
     datediff,
+    datetime_functions,
     datetime_sampler,
     floor_and_ceil,
     floor_and_ceil_2,
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
+    numerical_functions,
     quantile_function_test_1,
     quantile_function_test_2,
     rank_a,
@@ -32,9 +39,12 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_scan,
     simple_smallest_or_largest,
     simple_var_std,
+    string_functions,
     time_threshold_reached,
     transaction_week_sampler,
+    unary_and_slicing_operators,
     week_offset,
+    window_functions,
     window_sliding_frame_relsize,
     window_sliding_frame_relsum,
 )
@@ -129,6 +139,47 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             quantile_function_test_2, None, "quantile_test_2", id="quantile_test_2"
+        ),
+        pytest.param(
+            arithmetic_and_binary_operators,
+            None,
+            "arithmetic_and_binary_operators",
+            id="arithmetic_and_binary_operators",
+        ),
+        pytest.param(
+            comparisons_and_logical_operators,
+            None,
+            "comparisons_and_logical_operators",
+            id="comparisons_and_logical_operators",
+        ),
+        pytest.param(
+            unary_and_slicing_operators,
+            None,
+            "unary_and_slicing_operators",
+            id="unary_and_slicing_operators",
+        ),
+        pytest.param(string_functions, None, "string_functions", id="string_functions"),
+        pytest.param(
+            datetime_functions, None, "datetime_functions", id="datetime_functions"
+        ),
+        pytest.param(
+            conditional_functions,
+            None,
+            "conditional_functions",
+            id="conditional_functions",
+        ),
+        pytest.param(
+            numerical_functions, None, "numerical_functions", id="numerical_functions"
+        ),
+        pytest.param(
+            aggregation_functions,
+            None,
+            "aggregation_functions",
+            id="aggregation_functions",
+        ),
+        pytest.param(window_functions, None, "window_functions", id="window_functions"),
+        pytest.param(
+            casting_functions, None, "casting_functions", id="casting_functions"
         ),
     ],
 )

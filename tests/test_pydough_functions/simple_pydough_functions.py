@@ -2983,3 +2983,202 @@ def quantile_function_test_4():
         orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
         orders_max=QUANTILE(selected_orders.total_price, 1.0),
     )
+
+
+def arithmetic_and_binary_operators():
+    """Test all arithmetic and binary PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return lines.CALCULATE(
+        computed_value=(extended_price * (1 - (discount**2)) + 1.0) / part.retail_price,
+        total=quantity + extended_price,
+        delta=extended_price - quantity,
+        product=quantity * discount,
+        ratio=extended_price / quantity,
+        exponent=discount**2,
+    )
+
+
+def comparisons_and_logical_operators():
+    """Test all comparison and logical PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    is_asian = nation.region.name == "ASIA"
+    is_european = nation.region.name == "EUROPE"
+    in_debt = account_balance < 0
+
+    return customers.CALCULATE(
+        in_debt=in_debt,
+        at_most_12_orders=COUNT(orders) <= 12,
+        is_european=is_european,
+        non_german=nation.name != "GERMANY",
+        non_empty_acct=account_balance > 0,
+        at_least_5_orders=COUNT(orders) >= 5,
+        is_eurasian=is_asian | is_european,
+        is_not_eurasian=~(is_asian | is_european),
+        is_european_in_debt=is_european & in_debt,
+    )
+
+
+def unary_and_slicing_operators():
+    """Test all unary and slicing PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return customers.CALCULATE(
+        country_code=phone[:3],
+        name_without_first_char=name[1:],
+        last_digit=phone[-1:],
+        name_without_start_and_end_char=name[1:-1],
+        phone_without_last_5_chars=phone[:-5],
+        name_second_to_last_char=name[-2:-1],
+        complement_balance=(-account_balance),
+    )
+
+
+def string_functions():
+    """Test all string PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return customers.CALCULATE(
+        lowercase_name=LOWER(name),
+        uppercase_name=UPPER(name),
+        name_length=LENGTH(name),
+        starts_with_A=STARTSWITH(name, "A"),
+        ends_with_z=ENDSWITH(name, "z"),
+        contains_sub=CONTAINS(name, "sub"),
+        matches_like=LIKE(name, "%test%"),
+        joined_string=JOIN_STRINGS("::", name, nation.name),
+        lpad_name=LPAD(name, 20, "*"),
+        rpad_name=RPAD(name, 20, "-"),
+        stripped=STRIP(name),
+        stripped_vowels=STRIP(name, "aeiou"),
+        replaced_name=REPLACE(name, "Corp", "Inc"),
+        removed_substr=REPLACE(name, "Ltd"),
+        count_e=STRCOUNT(name, "e"),
+        idx_Alex=FIND(name, "Alex"),
+        idx_Rodriguez=FIND(name, "Rodriguez"),
+        idx_bob=FIND(name, "bob"),
+        idx_e=FIND(name, "e"),
+        idx_space=FIND(name, " "),
+        idx_of_R=FIND(name, "R"),
+        idx_of_full=FIND(name, "Alex Rodriguez"),
+    )
+
+
+def datetime_functions():
+    """Test all date/time PyDough functions.
+    Main purpose to verify these functions are working as expected with
+        supported SQL dialects.
+    """
+    return orders.CALCULATE(
+        ts_1=DATETIME("now"),
+        ts_2=DATETIME("NoW", "start of month"),
+        ts_3=DATETIME(" CURRENT_DATE ", "12 hours"),
+        ts_4=DATETIME("Current Timestamp", "start of y", "- 1 D"),
+        ts_5=DATETIME("NOW", "  Start  of  Day  "),
+        ts_6=DATETIME("now", "start of quarter", "+1 d"),
+        year=YEAR(order_date),
+        qtr=QUARTER(order_date),
+        month=MONTH(order_date),
+        day=DAY(order_date),
+        hour=HOUR(order_date),
+        minute=MINUTE(order_date),
+        second=SECOND(order_date),
+        seconds_since=DATEDIFF("seconds", order_date, datetime.date(1992, 1, 1)),
+        minutes_since=DATEDIFF("minutes", order_date, datetime.date(1992, 1, 1)),
+        hours_since=DATEDIFF("hours", order_date, datetime.date(1992, 1, 1)),
+        days_since=DATEDIFF("days", order_date, datetime.date(1992, 1, 1)),
+        weeks_since=DATEDIFF("weeks", order_date, datetime.date(1992, 1, 1)),
+        months_since=DATEDIFF("months", order_date, datetime.date(1992, 1, 1)),
+        qtrs_since=DATEDIFF("quarters", order_date, datetime.date(1992, 1, 1)),
+        years_since=DATEDIFF("years", order_date, datetime.date(1992, 1, 1)),
+        day_of_week=DAYOFWEEK(order_date),
+        day_name=DAYNAME(order_date),
+    )
+
+
+def conditional_functions():
+    """Test all conditional PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return customers.CALCULATE(
+        iff_col=IFF(account_balance > 1000, "High", "Low"),
+        isin_col=ISIN(name, ("Alice", "Bob", "Charlie")),
+        default_val=DEFAULT_TO(account_balance, 0.0),
+        has_acct_bal=PRESENT(account_balance),
+        no_acct_bal=ABSENT(account_balance),
+        no_debt_bal=KEEP_IF(account_balance, account_balance > 0),
+    ).WHERE(MONOTONIC(100, account_balance, 1000))
+
+
+def numerical_functions():
+    """Test all numerical PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return customers.CALCULATE(
+        abs_value=ABS(account_balance),
+        round_value=ROUND(account_balance, 2),
+        ceil_value=CEIL(account_balance),
+        floor_value=FLOOR(account_balance),
+        power_value=POWER(account_balance, 2),
+        sqrt_value=SQRT(account_balance),
+        sign_value=SIGN(account_balance),
+        smallest_value=SMALLEST(account_balance, 0),
+        largest_value=LARGEST(account_balance, 0),
+    )
+
+
+def aggregation_functions():
+    """Test all aggregation PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return nations.CALCULATE(
+        sum_value=SUM(customers.account_balance),
+        avg_value=AVG(customers.account_balance),
+        median_value=MEDIAN(customers.account_balance),
+        min_value=MIN(customers.account_balance),
+        max_value=MAX(customers.account_balance),
+        quantile_value=QUANTILE(customers.account_balance, 0.8),
+        anything_value=ANYTHING(customers.account_balance),
+        count_value=COUNT(customers.account_balance),
+        count_distinct_value=NDISTINCT(customers.account_balance),
+        variance_value=VAR(customers.account_balance, type="sample"),
+        stddev_value=STD(customers.account_balance, type="sample"),
+    ).WHERE(HAS(customers) & HASNOT(customers.orders))
+
+
+def window_functions():
+    """Test all window PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return customers.CALCULATE(
+        rank_value=RANKING(by=account_balance.DESC(), allow_ties=True, dense=True),
+        precentile_value=PERCENTILE(by=account_balance.ASC(), n_buckets=10),
+        two_prev_value=PREV(account_balance, n=2, by=account_balance.ASC()),
+        two_next_value=NEXT(account_balance, n=2, by=account_balance.ASC()),
+        relsum_value=RELSUM(account_balance, by=account_balance.ASC(), cumulative=True),
+        relavg_value=account_balance / RELAVG(account_balance),
+        relcount_value=account_balance
+        / RELCOUNT(KEEP_IF(account_balance, account_balance > 0.0)),
+        relsize_value=account_balance / RELSIZE(),
+    )
+
+
+def casting_functions():
+    """Test all casting PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return orders.CALCULATE(
+        cast_to_string=STRING(order_date, "%Y-%m-%d"),
+        cast_to_integer=INTEGER(total_price),
+        cast_to_float=FLOAT(ship_priority),
+    )
