@@ -86,6 +86,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     deep_best_analysis,
     double_partition,
     dumb_aggregation,
+    extract_colors,
     first_order_in_year,
     first_order_per_customer,
     function_sampler,
@@ -1613,6 +1614,25 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "global_acctbal_breakdown",
             ),
             id="global_acctbal_breakdown",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                extract_colors,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 6)),
+                        "c1": ["GOLDENROD", "BLUSH", "SPRING", "CORNFLOWER", "FOREST"],
+                        "c2": ["LAVENDER", "THISTLE", "GREEN", "CHOCOLATE", "BROWN"],
+                        "c3": ["SPRING", "BLUE", "YELLOW", "SMOKE", "CORAL"],
+                        "c4": ["CHOCOLATE", "YELLOW", "PURPLE", "GREEN", "PUFF"],
+                        "c5": ["LACE", "SADDLE", "CORNSILK", "PINK", "CREAM"],
+                        "c6": [None] * 5,
+                    }
+                ),
+                "extract_colors",
+            ),
+            id="extract_colors",
         ),
         pytest.param(
             PyDoughPandasTest(

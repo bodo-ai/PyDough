@@ -20,10 +20,6 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_get_part_1,
     bad_get_part_2,
     bad_get_part_3,
-    bad_get_part_4,
-    bad_get_part_5,
-    bad_get_part_6,
-    bad_get_part_7,
     bad_lpad_1,
     bad_lpad_2,
     bad_lpad_3,
@@ -48,6 +44,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     exponentiation,
     find,
     get_part_multiple,
+    get_part_single,
     hour_minute_day,
     minutes_seconds_datediff,
     multi_partition_access_1,
@@ -1112,28 +1109,26 @@ def get_day_of_week(
             PyDoughPandasTest(
                 get_part_multiple,
                 "Broker",
-                # Answer
                 lambda: pd.DataFrame(
                     {
-                        "test_1": ["banana"],
-                        "test_2": ["blue"],
-                        "test_3": [""],
-                        "test_4": ["hello"],
-                        "test_5": [""],
-                        "test_6": [""],
-                        "test_7": [""],
-                        "test_8": ["part3"],
-                        "test_9": [""],
-                        "test_10": ["a"],
-                        "test_11": [" leading "],
-                        "test_12": [""],
-                        "test_13": [""],
-                        "test_14": [""],
+                        "k": [1, 2, 3, 4],
+                        "p1": ["john", "Smith", None, None],
+                        "p2": ["doe", "Jane", None, None],
+                        "p3": ["john", "smith@email", "com", None],
+                        "p4": ["com", "smith@email", "bob", None],
+                        "p5": ["555", "987", "8135", None],
+                        "p6": ["4567", "987", "555", None],
+                        "p7": ["9", "02", None, None],
+                        "p8": ["01", "1", None, None],
+                        "p9": ["john doe", None, None, None],
+                        "p10": ["john doe", None, None, None],
+                        "p11": ["john doe", None, None, None],
+                        "p12": ["john doe", None, None, None],
                     }
                 ),
-                "get_part",
+                "get_part_multiple",
             ),
-            id="get_part",
+            id="get_part_multiple",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -1454,6 +1449,15 @@ def get_day_of_week(
             ),
             id="window_sliding_frame_relsum",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                get_part_single,
+                "Broker",
+                lambda: pd.DataFrame({"last_name": ["Rodriguez"]}),
+                "get_part_single",
+            ),
+            id="get_part_single",
+        ),
     ],
 )
 def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -1633,34 +1637,6 @@ def test_pipeline_e2e_defog_custom(
                 "Invalid operator invocation 'GETPART(name, -1)': Expected 3 arguments, received 2"
             ),
             id="bad_get_part_3",
-        ),
-        pytest.param(
-            bad_get_part_4,
-            "Broker",
-            re.escape(
-                "The third argument to GETPART must be an integer literal (index)."
-            ),
-            id="bad_get_part_4",
-        ),
-        pytest.param(
-            bad_get_part_5,
-            "Broker",
-            re.escape(
-                "The second argument to GETPART cannot be an integer literal. (delimiter)"
-            ),
-            id="bad_get_part_5",
-        ),
-        pytest.param(
-            bad_get_part_6,
-            "Broker",
-            re.escape("The first argument to GETPART cannot be an integer literal."),
-            id="bad_get_part_6",
-        ),
-        pytest.param(
-            bad_get_part_7,
-            "Broker",
-            re.escape("The first argument to GETPART cannot be an integer literal."),
-            id="bad_get_part_7",
         ),
     ],
 )

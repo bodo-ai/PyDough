@@ -2230,42 +2230,29 @@ def str_count():
             entire_string_match=STRCOUNT(name, name),
             longer_substring=STRCOUNT(lastname, name),
         )
-    )  # end return
+    )
 
 
 def get_part_multiple():
+    k = INTEGER(_id[1:])
     return (
-        customers.WHERE(name == "Alex Rodriguez")
+        customers.WHERE(k <= 4)
         .CALCULATE(
-            fruit_list="apple,banana,orange",
-            color_list="red-green-blue",
-            numbers="one|two|three",
-            one_part="hello",
-            starts_with_delim=",start,middle",
-            ends_with_delim="end,",
-            multiple_delim="alpha,,beta",
-            delim_with_multiple_chars="part1<<<part2<<<part3",
-            all_delimiters="$$$$$$$",
-            text_with_space="this is a test",
-            space_around=" leading , trailing ",
-            empty_string="",
+            k,
+            p1=GETPART(name, " ", k),
+            p2=GETPART(name, " ", -k),
+            p3=GETPART(email, ".", k),
+            p4=GETPART(email, ".", -k),
+            p5=GETPART(phone, "-", k),
+            p6=GETPART(phone, "-", -k),
+            p7=GETPART(postal_code, "00", k),
+            p8=GETPART(postal_code, "00", -k),
+            p9=GETPART(name, "!", k),
+            p10=GETPART(name, "@", -k),
+            p11=GETPART(name, "aa", k),
+            p12=GETPART(name, "#$*", -k),
         )
-        .CALCULATE(
-            test_1=GETPART(fruit_list, ",", 2),  # banana
-            test_2=GETPART(color_list, "-", -1),  # blue
-            test_3=GETPART(numbers, "|", 0),  # Have no idea the result
-            test_4=GETPART(one_part, ",", 1),  # hello
-            test_5=GETPART(starts_with_delim, ",", 1),  # ""
-            test_6=GETPART(ends_with_delim, ",", -1),  # ""
-            test_7=GETPART(multiple_delim, ",", 2),  # ""
-            test_8=GETPART(delim_with_multiple_chars, "<<<", 3),  # part3
-            test_9=GETPART(all_delimiters, "$", 4),  # ""
-            test_10=GETPART(text_with_space, " ", 3),  # a
-            test_11=GETPART(space_around, ",", 1),  # " leading "
-            test_12=GETPART(empty_string, "3", 2),  # ""
-            test_13=GETPART(fruit_list, ",", 4),  # "" (out of range)
-            test_14=GETPART(fruit_list, ",", -4),  # "" (out of range negative)
-        )
+        .ORDER_BY(k.ASC())
     )
 
 
@@ -2273,6 +2260,18 @@ def get_part_single():
     return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
         last_name=GETPART(name, " ", -1)
     )
+
+
+def extract_colors():
+    return parts.CALCULATE(
+        key,
+        c1=UPPER(GETPART(name, " ", 1)),
+        c2=UPPER(GETPART(name, " ", 2)),
+        c3=UPPER(GETPART(name, " ", 3)),
+        c4=UPPER(GETPART(name, " ", 4)),
+        c5=UPPER(GETPART(name, " ", 5)),
+        c6=UPPER(GETPART(name, " ", 6)),
+    ).TOP_K(5, by=key.ASC())
 
 
 def singular1():

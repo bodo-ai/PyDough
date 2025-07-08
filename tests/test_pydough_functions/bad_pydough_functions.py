@@ -562,31 +562,6 @@ def bad_get_part_3():
     )
 
 
-# Wrong argument types, should be (str, str, int)
-def bad_get_part_4():
-    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
-        split_part=GETPART(name, " ", "2")
-    )
-
-
-def bad_get_part_5():
-    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
-        split_part=GETPART(name, 2, -1)
-    )
-
-
-def bad_get_part_6():
-    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
-        split_part=GETPART(3, " ", -1)
-    )
-
-
-def bad_get_part_7():
-    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
-        split_part=GETPART(3, 0, -1)
-    )
-
-
 # Index 0
 def bad_get_part_8():
     return customers.WHERE(name == "Alex Rodriguez").CALCULATE(

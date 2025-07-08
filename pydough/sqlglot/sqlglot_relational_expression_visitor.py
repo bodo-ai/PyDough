@@ -3,8 +3,11 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+__all__ = ["SQLGlotRelationalExpressionVisitor"]
+
 import datetime
 import warnings
+from typing import TYPE_CHECKING
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -27,7 +30,8 @@ from pydough.types import PyDoughType
 from .sqlglot_helpers import set_glot_alias
 from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
-__all__ = ["SQLGlotRelationalExpressionVisitor"]
+if TYPE_CHECKING:
+    from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 
 class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
@@ -41,6 +45,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         dialect: DatabaseDialect,
         correlated_names: dict[str, str],
         config: PyDoughConfigs,
+        relational_visitor: "SQLGlotRelationalVisitor",
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
@@ -48,7 +53,10 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._dialect: DatabaseDialect = dialect
         self._correlated_names: dict[str, str] = correlated_names
         self._config: PyDoughConfigs = config
-        self._bindings: BaseTransformBindings = bindings_from_dialect(dialect, config)
+        self._relational_visitor: SQLGlotRelationalVisitor = relational_visitor
+        self._bindings: BaseTransformBindings = bindings_from_dialect(
+            dialect, config, self._relational_visitor
+        )
 
     def reset(self) -> None:
         """
