@@ -272,7 +272,7 @@ Every JSON object describing a function has the following fields:
 - `type` (required): the type of function definition. The currently supported values are ["sql alias"](#function-type-sql-alias), ["sql window alias"](#function-type-sql-window-alias) and ["sql macro"](#function-type-sql-macro).
 - `description` (optional): a semantic description of what the function does significance.
 - `input signature` (optional): a JSON object describing the allowed types of inputs to the function. [See here](#function-verifiers) for the specification of these objects.
-- `input signature` (optional): a JSON object describing the output type of a call to the function. [See here](#function-deducers) for the specification of these objects.
+- `output signature` (optional): a JSON object describing the output type of a call to the function. [See here](#function-deducers) for the specification of these objects.
 
 <!-- TOC --><a name="function-type-sql-alias"></a>
 ### Function Type: SQL Alias
@@ -282,7 +282,7 @@ A function of this type is intended to map to a function in the SQL dialect of t
 - `sql function` (required): a string indicating the name of the function in the SQL dialect that calls to this function should correspond to.
 - `aggregation` (optional): a boolean indicating whether the function is an aggregation function, as opposed to a scalar function. The default value is `false` (indicating it is a scalar function).
 
-Example of the structure of the metadata for a SQL Alias function named `DATE_FORMAT` (a 1:1 mapping to the sqlite `STRFTIME` scalar function):
+Example of the structure of the metadata for a SQL Alias function named `FORMAT_DATETIME` (a 1:1 mapping to the sqlite `STRFTIME` scalar function):
 
 ```json
 {
@@ -433,9 +433,9 @@ Below are several examples the JSON for such deducers:
 <!-- TOC --><a name="function-deducer-type-select-argument"></a>
 ### Function Deducer Type: Select Argument
 
-Function deducers of this type have a type string of `"constant"` and correspond to a function call that always returns the same type. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
+Function deducers of this type have a type string of `"select argument"` and correspond to a function call that always returns a value of the same type as a specific argument. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
 
-- `value` (required): a type string ([see here for more information](#pydough-type-strings)) indicating what type the function always returns.
+- `value` (required): a non-negative integer indicating which argument to the function call should determine the output type of the function when called.
 
 Below are several examples the JSON for such deducers:
 
