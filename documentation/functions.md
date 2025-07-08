@@ -51,6 +51,8 @@ Below is the list of every function/operator currently supported in PyDough as a
 - [Numerical Functions](#numerical-functions)
    * [ABS](#abs)
    * [ROUND](#round)
+   * [CEIL](#ceil)
+   * [FLOOR](#floor)
    * [POWER](#power)
    * [SQRT](#sqrt)
    * [SIGN](#sign)
@@ -62,6 +64,7 @@ Below is the list of every function/operator currently supported in PyDough as a
    * [MEDIAN](#median)
    * [MIN](#min)
    * [MAX](#max)
+   * [QUANTILE](#quantile)
    * [ANYTHING](#anything)
    * [COUNT](#count)
    * [NDISTINCT](#ndistinct)
@@ -798,6 +801,37 @@ Parts.CALCULATE(rounded_price = ROUND(retail_price))
 
 <!-- TOC --><a name="power"></a>
 
+### CEIL
+
+The `CEIL` function rounds its argument up to the nearest integer. It returns the smallest integer value that is greater than or equal to the input. This is equivalent to Python's `math.ceil()` function and corresponds to the SQL `CEIL` or `CEILING` function.
+
+```py
+parts.CALCULATE(ceiled_price = CEIL(retail_price))
+```
+Here are examples on how `CEIL` works:
+| Input | Output |
+|-------|--------|
+| `CEIL(10.2)` | `11` |
+| `CEIL(-3.8)` | `-3` |
+
+Note: `CEIL` only accepts a single numeric argument and always returns an integer.
+
+### FLOOR
+
+The `FLOOR` function rounds its argument down to the nearest integer. It returns the greatest integer value that is less than or equal to the input. This is equivalent to Python's `math.floor()` function and the SQL `FLOOR` function.
+
+```py
+parts.CALCULATE(floored_price = FLOOR(retail_price))
+```
+
+Here are examples on how `FLOOR` works:
+| Input | Output |
+|-------|--------|
+| `FLOOR(10.2)` | `10` |
+| `FLOOR(-3.8)` | `-4` |
+
+Note: `FLOOR` only accepts a single numeric argument and always returns an integer.
+
 ### POWER
 
 The `POWER` function exponentiates its first argument to the power of its second argument.
@@ -930,6 +964,38 @@ The `MAX` function returns the largest value from the set of values it is called
 ```py
 Suppliers.CALCULATE(most_expensive_part_supplied = MAX(supply_records.supply_cost))
 ```
+
+<!-- TOC --><a name="quantile"></a>
+
+### QUANTILE
+
+The `QUANTILE` function returns the value at a specified quantile from the set of values it is called on, using the `PERCENTILE_DISC` definition. Specifically:
+
+- `QUANTILE(x, p)` returns the **smallest value of `x` such that at least `p` proportion of the non-null rows are less than or equal to it**. This matches the behavior of the SQL standard `PERCENTILE_DISC` aggregate function.
+- The quantile value `p` must be a numeric literal between 0 and 1 (inclusive), where `0` returns the minimum, `1` returns the maximum, and `0.5` returns the 50th percentile.
+- **NULL records are ignored** in the computation.
+
+```py
+# Returns the value at the 90th percentile of supply costs for each supplier
+Suppliers.CALCULATE(ninetieth_percentile_cost = QUANTILE(supply_records.supply_cost, 0.9))
+
+# Returns the median (50th percentile, discrete) supply cost for each supplier
+Suppliers.CALCULATE(median_cost = QUANTILE(supply_records.supply_cost, 0.5))
+```
+
+- The first argument is the plural set of values to aggregate.
+- The second argument is the quantile to compute, as a numeric literal between 0 and 1.
+- If the quantile argument is not a valid number between 0 and 1, an error is raised.
+
+> [!NOTE]
+> `QUANTILE(X, P)` is equivalent to the `PERCENTILE_DISC` SQL Agreggation function.  
+> The implementation uses the SQL standard `PERCENTILE_DISC` aggregate function where available.
+
+| **Input** | **Quantile** | **Output** |
+|-----------|-------------|------------|
+| `[1, 2, 3, 4, 5]` | `0.0` | `1` |
+| `[1, 2, 3, 4, 5]` | `0.5` | `3` |
+| `[1, 2, 3, 4, 5]` | `1.0` | `5` |
 
 <!-- TOC --><a name="anything"></a>
 

@@ -120,6 +120,8 @@ These functions must be called on singular data as a function.
 
 - `ABS`: returns the absolute value of the input.
 - `ROUND`: rounds the first argument to a number of digits equal to the second argument. If second argument is not provided, the first argument is rounded to 0 decimal places.
+- `CEIL`: rounds its argument up to the nearest integer. It returns the smallest integer value that is greater than or equal to the input.
+- `FLOOR`: rounds its argument down to the nearest integer. It returns the greatest integer value that is less than or equal to the input.
 - `POWER`: exponentiates the first argument to the power of second argument.
 - `SQRT`: returns the square root of the input. 
 - `SIGN`: returns the sign of the input. It returns 1 if the input is positive, -1 if the input is negative, and 0 if the input is zero.
@@ -135,8 +137,9 @@ These functions can be called on plural data to aggregate it into a singular exp
 - `SUM`: returns the result of adding all of the non-null values of a plural expression.
 - `AVG`: returns the result of taking the average of the non-null values of a plural expression.
 - `MEDIAN`: returns the result of taking the median of the non-null values of a plural expression.
-- `MIN`: returns the largest out of the non-null values of a plural expression.
-- `MAX`: returns the smallest out of the non-null values of a plural expression.
+- `MIN`: returns the smallest out of the non-null values of a plural expression.
+- `MAX`: returns the largest out of the non-null values of a plural expression.
+- `QUANTILE`: returns the value at a specified quantile from the set of values.
 - `ANYTHING`: returns an arbitrary entry from the values of a plural expression.
 - `COUNT`: counts how many non-null values exist in a plural expression (special: see collection aggregations).
 - `NDISTINCT`: counts how many unique values exist in a plural expression (special: see collection aggregations).

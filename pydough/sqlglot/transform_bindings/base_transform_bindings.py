@@ -200,6 +200,10 @@ class BaseTransformBindings:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
                 return self.convert_round(args, types)
+            case pydop.CEIL:
+                return self.convert_ceil(args, types)
+            case pydop.FLOOR:
+                return self.convert_floor(args, types)
             case pydop.ISIN:
                 return self.convert_isin(args, types)
             case pydop.PRESENT:
@@ -256,6 +260,8 @@ class BaseTransformBindings:
                 return self.convert_count(args, types)
             case pydop.GETPART:
                 return self.convert_get_part(args, types)
+            case pydop.QUANTILE:
+                return self.convert_quantile(args, types)
             case _:
                 raise NotImplementedError(
                     f"Operator '{operator.function_name}' is unsupported with this database dialect."
@@ -1225,6 +1231,44 @@ class BaseTransformBindings:
             decimals=precision_glot,
         )
 
+    def convert_ceil(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `CEIL(X)`.
+
+        Args:
+            `args`: The operands to `CEIL`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `CEIL`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `CEIL`.
+        """
+        assert len(args) == 1
+        return sqlglot_expressions.Ceil(this=args[0], expressions=args)
+
+    def convert_floor(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `FLOOR(X)`.
+
+        Args:
+            `args`: The operands to `FLOOR`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `FLOOR`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `FLOOR`.
+        """
+        assert len(args) == 1
+        return sqlglot_expressions.Floor(this=args[0], expressions=args)
+
     def convert_datediff(
         self,
         args: list[SQLGlotExpression],
@@ -1995,3 +2039,53 @@ class BaseTransformBindings:
         result = sqlglot_expressions.Subquery(this=result)
 
         return result
+
+    def convert_quantile(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a PyDough QUANTILE(X, p) function call to a SQLGlot expression
+        representing the SQL standard PERCENTILE_DISC aggregate function.
+
+        This produces an expression equivalent to:
+            PERCENTILE_DISC(p) WITHIN GROUP (ORDER BY X)
+
+        Args:
+            args: A list of two SQLGlot expressions, where args[0] is the column
+            or expression to order by (X), and args[1] is the quantile value (p)
+            between 0 and 1.
+            types: The PyDough types of the arguments.
+
+        Returns:
+            A SQLGlotExpression representing the PERCENTILE_DISC(p) WITHIN GROUP
+            (ORDER BY X)
+            aggregate function.
+        """
+
+        assert len(args) == 2
+
+        # Validate that the second argument is a number between 0 and 1 (inclusive)
+        if (
+            not isinstance(args[1], sqlglot_expressions.Literal)
+            or args[1].is_string
+            or not (0.0 <= float(args[1].this) <= 1.0)
+        ):
+            raise ValueError(
+                f"QUANTILE TEST argument to be a numeric literal between 0 and 1, got {args[1]}"
+            )
+
+        percentile_disc_function: SQLGlotExpression = (
+            sqlglot_expressions.PercentileDisc(this=args[1])
+        )
+
+        ordered_column: SQLGlotExpression = sqlglot_expressions.Ordered(this=args[0])
+
+        order: SQLGlotExpression = sqlglot_expressions.Order(
+            expressions=[ordered_column]
+        )
+
+        within_group_clause: SQLGlotExpression = sqlglot_expressions.WithinGroup(
+            this=percentile_disc_function, expression=order
+        )
+
+        return within_group_clause
