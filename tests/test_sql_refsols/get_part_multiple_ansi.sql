@@ -9,12 +9,12 @@ WITH _s0 AS (
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -31,19 +31,19 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustemail AS rest,
-    '.' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustname AS rest,
+    ' ' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -62,17 +62,17 @@ WITH _s0 AS (
     '' AS part,
     sbcustemail AS rest,
     '.' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -89,19 +89,19 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustphone AS rest,
-    '-' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustemail AS rest,
+    '.' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -120,17 +120,17 @@ WITH _s0 AS (
     '' AS part,
     sbcustphone AS rest,
     '-' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -147,19 +147,19 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustpostalcode AS rest,
-    '00' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustphone AS rest,
+    '-' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -183,12 +183,12 @@ WITH _s0 AS (
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -207,17 +207,17 @@ WITH _s0 AS (
     '' AS part,
     sbcustpostalcode AS rest,
     '00' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -234,19 +234,19 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustname AS rest,
-    '!' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustpostalcode AS rest,
+    '00' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -259,6 +259,35 @@ WITH _s0 AS (
   SELECT
     COUNT(*) - 1 AS total_parts
   FROM _s22
+), _s24 AS (
+  SELECT
+    0 AS part_index,
+    '' AS part,
+    sbcustname AS rest,
+    '!' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+  UNION ALL
+  SELECT
+    part_index + 1 AS part_index,
+    CASE
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
+      THEN rest
+      ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
+    END AS part,
+    CASE
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
+      THEN ''
+      ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
+    END AS rest,
+    delim,
+    idx
+  FROM _s24
+  WHERE
+    rest <> ''
+), _s25 AS (
+  SELECT
+    COUNT(*) - 1 AS total_parts
+  FROM _s24
 ), _s4 AS (
   SELECT
     0 AS part_index,
@@ -270,12 +299,12 @@ WITH _s0 AS (
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -299,12 +328,12 @@ WITH _s0 AS (
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -322,18 +351,18 @@ WITH _s0 AS (
     0 AS part_index,
     '' AS part,
     sbcustname AS rest,
-    ' ' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    '' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN STR_POSITION(rest, delim) = 0
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
     END AS rest,
@@ -379,7 +408,7 @@ WITH _s0 AS (
           THEN _s11.total_parts + _s10.idx + 1
           ELSE 1
         END
-    ) AS p3,
+    ) AS p2,
     (
       SELECT
         _s12.part
@@ -394,7 +423,7 @@ WITH _s0 AS (
           THEN _s13.total_parts + _s12.idx + 1
           ELSE 1
         END
-    ) AS p4,
+    ) AS p3,
     (
       SELECT
         _s14.part
@@ -409,7 +438,7 @@ WITH _s0 AS (
           THEN _s15.total_parts + _s14.idx + 1
           ELSE 1
         END
-    ) AS p5,
+    ) AS p4,
     (
       SELECT
         _s16.part
@@ -424,7 +453,7 @@ WITH _s0 AS (
           THEN _s17.total_parts + _s16.idx + 1
           ELSE 1
         END
-    ) AS p6,
+    ) AS p5,
     (
       SELECT
         _s18.part
@@ -439,7 +468,7 @@ WITH _s0 AS (
           THEN _s19.total_parts + _s18.idx + 1
           ELSE 1
         END
-    ) AS p7,
+    ) AS p6,
     (
       SELECT
         _s2.part
@@ -469,7 +498,7 @@ WITH _s0 AS (
           THEN _s21.total_parts + _s20.idx + 1
           ELSE 1
         END
-    ) AS p8,
+    ) AS p7,
     (
       SELECT
         _s22.part
@@ -482,6 +511,21 @@ WITH _s0 AS (
           THEN _s22.idx
           WHEN _s22.idx < 0
           THEN _s23.total_parts + _s22.idx + 1
+          ELSE 1
+        END
+    ) AS p8,
+    (
+      SELECT
+        _s24.part
+      FROM _s24 AS _s24
+      CROSS JOIN _s25 AS _s25
+      WHERE
+        _s24.part_index <> 0
+        AND _s24.part_index = CASE
+          WHEN _s24.idx > 0
+          THEN _s24.idx
+          WHEN _s24.idx < 0
+          THEN _s25.total_parts + _s24.idx + 1
           ELSE 1
         END
     ) AS p9,
@@ -529,7 +573,7 @@ WITH _s0 AS (
           THEN _s9.total_parts + _s8.idx + 1
           ELSE 1
         END
-    ) AS p2
+    ) AS p13
   FROM main.sbcustomer
   WHERE
     CAST(SUBSTRING(sbcustid, 2) AS BIGINT) <= 4
@@ -547,7 +591,8 @@ SELECT
   p9,
   p10,
   p11,
-  p12
+  p12,
+  p13
 FROM _t1
 ORDER BY
   CAST(SUBSTRING(sbcustid, 2) AS BIGINT)

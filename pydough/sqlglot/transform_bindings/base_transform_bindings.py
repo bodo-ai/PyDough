@@ -1767,12 +1767,12 @@ class BaseTransformBindings:
                 SELECT
                     part_index + 1 AS part_index,
                     CASE
-                        WHEN INSTR(rest, delim) = 0
+                        WHEN INSTR(rest, delim) = 0 OR delim = ''
                         THEN rest
                         ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
                     END AS part,
                     CASE
-                        WHEN INSTR(rest, delim) = 0
+                        WHEN INSTR(rest, delim) = 0 OR delim = ''
                         THEN ''
                         ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
                     END AS rest,
@@ -1886,11 +1886,15 @@ class BaseTransformBindings:
         )
 
         # CASE
-        #   WHEN INSTR(rest, delim) = 0 THEN rest
+        #   WHEN INSTR(rest, delim) = 0 OR delim = '' THEN rest
         #   ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
         # END
         delim_in_rest: SQLGlotExpression = sqlglot_expressions.StrPosition(
             this=column_rest, substr=delim
+        )
+        delim_cond: SQLGlotExpression = sqlglot_expressions.Or(
+            this=sqlglot_expressions.EQ(this=delim_in_rest, expression=literal_0),
+            expression=sqlglot_expressions.EQ(this=delim, expression=literal_empty),
         )
         new_part: SQLGlotExpression = sqlglot_expressions.Substring(
             this=column_rest,
@@ -1901,16 +1905,11 @@ class BaseTransformBindings:
             ),
         )
         new_part_case: SQLGlotExpression = (
-            sqlglot_expressions.Case()
-            .when(
-                sqlglot_expressions.EQ(this=delim_in_rest, expression=literal_0),
-                column_rest,
-            )
-            .else_(new_part)
+            sqlglot_expressions.Case().when(delim_cond, column_rest).else_(new_part)
         )
 
         # CASE
-        #   WHEN INSTR(rest, delim) = 0 THEN ''
+        #   WHEN INSTR(rest, delim) = 0 OR delim = '' THEN ''
         #   ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - LENGTH(delim))
         # END
         new_rest: SQLGlotExpression = sqlglot_expressions.Substring(
@@ -1924,19 +1923,14 @@ class BaseTransformBindings:
             ),
         )
         new_rest_case: SQLGlotExpression = (
-            sqlglot_expressions.Case()
-            .when(
-                sqlglot_expressions.EQ(this=delim_in_rest, expression=literal_0),
-                literal_empty,
-            )
-            .else_(new_rest)
+            sqlglot_expressions.Case().when(delim_cond, literal_empty).else_(new_rest)
         )
 
         # Second half of the recursive CTE:
         # SELECT
         #   part_index + 1 AS part_index,
-        #   CASE WHEN INSTR(rest, delim) = 0 THEN rest ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1) END AS part,
-        #   CASE WHEN INSTR(rest, delim) = 0 THEN '' ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim)) END AS rest,
+        #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN rest ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1) END AS part,
+        #   CASE WHEN INSTR(rest, delim) = 0 OR delim = '' THEN '' ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim)) END AS rest,
         #   delim,
         #   idx
         # FROM split_parts

@@ -9,12 +9,12 @@ WITH _s0 AS (
   SELECT
     part_index + 1 AS part_index,
     CASE
-      WHEN INSTR(rest, delim) = 0
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
       THEN rest
       ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
     END AS part,
     CASE
-      WHEN INSTR(rest, delim) = 0
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
       THEN ''
       ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
     END AS rest,

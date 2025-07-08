@@ -2273,6 +2273,7 @@ def get_part_multiple():
             p10=GETPART(name, "@", -k),
             p11=GETPART(name, "aa", k),
             p12=GETPART(name, "#$*", -k),
+            p13=GETPART(name, "", k),
         )
         .ORDER_BY(k.ASC())
     )
