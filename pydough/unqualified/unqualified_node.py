@@ -108,7 +108,7 @@ class UnqualifiedNode(ABC):
             super().__setattr__(name, value)
         else:
             # TODO: support using setattr to add/mutate properties.
-            raise AttributeError(
+            raise PyDoughUnqualifiedException(
                 "PyDough objects do not yet support writing properties to them."
             )
 

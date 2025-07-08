@@ -13,6 +13,7 @@ from sqlglot.expressions import Star as SQLGlotStar
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
+from pydough.errors import PyDoughSQLException
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -218,7 +219,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "PREV" | "NEXT":
                 offset = window_expression.kwargs.get("n", 1)
                 if not isinstance(offset, int):
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         f"Invalid 'n' argument to {window_expression.op.function_name}: {offset!r} (expected an integer)"
                     )
                 # By default, we use the LAG function. If doing NEXT, switch
@@ -288,7 +289,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             if isinstance(literal_expression.value, datetime.datetime):
                 dt: datetime.datetime = literal_expression.value
                 if dt.tzinfo is not None:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "PyDough does not yet support datetime values with a timezone"
                     )
                 literal = sqlglot_expressions.Cast(

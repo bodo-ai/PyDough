@@ -37,6 +37,7 @@ from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
+from pydough.errors import PyDoughTestingException
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
@@ -241,7 +242,9 @@ class WindowInfo(AstNodeTestInfo):
             case "RANKING":
                 return f"{self.name}(by=({', '.join(collation_strings)}), levels={self.levels}{kwargs_str})"
             case _:
-                raise Exception(f"Unsupported window function {self.name}")
+                raise PyDoughTestingException(
+                    f"Unsupported window function {self.name}"
+                )
 
     def build(
         self,
@@ -267,7 +270,9 @@ class WindowInfo(AstNodeTestInfo):
                     self.kwargs,
                 )
             case _:
-                raise Exception(f"Unsupported window function {self.name}")
+                raise PyDoughTestingException(
+                    f"Unsupported window function {self.name}"
+                )
 
 
 class ReferenceInfo(AstNodeTestInfo):
@@ -657,7 +662,9 @@ class WhereInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception("Must provide a context when building a WHERE clause.")
+            raise PyDoughTestingException(
+                "Must provide a context when building a WHERE clause."
+            )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
         raw_where: Where = builder.build_where(context, children)
         cond = self.condition.build(builder, context, children)
@@ -689,7 +696,9 @@ class SingularInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception("Must provide a context when building a Singular clause.")
+            raise PyDoughTestingException(
+                "Must provide a context when building a Singular clause."
+            )
         raw_singular: Singular = builder.build_singular(context)
         return raw_singular
 
@@ -727,7 +736,7 @@ class OrderInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception(
+            raise PyDoughTestingException(
                 "Must provide context and children_contexts when building an ORDER BY clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
@@ -776,7 +785,7 @@ class TopKInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception(
+            raise PyDoughTestingException(
                 "Must provide context and children_contexts when building a TOPK clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)

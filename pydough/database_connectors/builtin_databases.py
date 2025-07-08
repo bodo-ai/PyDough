@@ -5,6 +5,8 @@ based on the database type.
 
 import sqlite3
 
+from pydough.errors import PyDoughSessionException
+
 from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDialect
 
 __all__ = ["load_database_context", "load_sqlite_connection"]
@@ -31,7 +33,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
             connection = load_sqlite_connection(**kwargs)
             dialect = DatabaseDialect.SQLITE
         case _:
-            raise ValueError(
+            raise PyDoughSessionException(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
                 "Any other database must be created manually by specifying the connection and dialect."
             )
@@ -47,6 +49,6 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
         DatabaseConnection: A database connection object for SQLite.
     """
     if "database" not in kwargs:
-        raise ValueError("SQLite connection requires a database path.")
+        raise PyDoughSessionException("SQLite connection requires a database path.")
     connection: sqlite3.Connection = sqlite3.connect(**kwargs)
     return DatabaseConnection(connection)

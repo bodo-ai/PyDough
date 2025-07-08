@@ -12,6 +12,10 @@ import pydough
 from pydough.configs import PyDoughConfigs
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
+from pydough.errors import (
+    PyDoughQDAGException,
+    PyDoughSessionException,
+)
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -42,7 +46,7 @@ def _load_session_info(
         metadata = kwargs.pop("metadata")
     else:
         if pydough.active_session.metadata is None:
-            raise ValueError(
+            raise PyDoughSessionException(
                 "Cannot evaluate Pydough without a metadata graph. "
                 "Please call `pydough.active_session.load_metadata_graph()`."
             )
@@ -94,11 +98,11 @@ def _load_column_selection(kwargs: dict[str, object]) -> list[tuple[str, str]] |
             )
             result.append((alias, column))
     else:
-        raise TypeError(
+        raise PyDoughQDAGException(
             f"Expected `columns` argument to be a list or dictionary, found {columns_arg.__class__.__name__}"
         )
     if len(result) == 0:
-        raise ValueError("Column selection must not be empty")
+        raise PyDoughQDAGException("Column selection must not be empty")
     return result
 
 
@@ -124,7 +128,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     graph, config, database = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph, config)
     if not isinstance(qualified, PyDoughCollectionQDAG):
-        raise TypeError(
+        raise PyDoughQDAGException(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(
@@ -157,7 +161,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     graph, config, database = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, graph, config)
     if not isinstance(qualified, PyDoughCollectionQDAG):
-        raise TypeError(
+        raise PyDoughQDAGException(
             f"Final qualified expression must be a collection, found {qualified.__class__.__name__}"
         )
     relational: RelationalRoot = convert_ast_to_relational(

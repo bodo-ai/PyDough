@@ -29,6 +29,7 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
 )
+from pydough.errors import PyDoughSQLException
 from pydough.logger import get_logger
 from pydough.relational import RelationalRoot
 from pydough.relational.relational_expressions import (
@@ -66,10 +67,9 @@ def convert_relation_to_sql(
     try:
         glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
     except SqlglotError as e:
-        print(
-            f"ERROR WHILE OPTIMIZING QUERY:\n{glot_expr.sql(sqlglot_dialect, pretty=True)}"
-        )
-        raise e
+        sql_text: str = glot_expr.sql(sqlglot_dialect, pretty=True)
+        print(f"ERROR WHILE OPTIMIZING QUERY:\n{sql_text}")
+        raise PyDoughSQLException(*e.args)
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
@@ -268,7 +268,7 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     elif dialect == DatabaseDialect.SQLITE:
         return SQLiteDialect()
     else:
-        raise ValueError(f"Unsupported dialect: {dialect}")
+        raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
 def execute_df(
