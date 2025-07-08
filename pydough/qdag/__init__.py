@@ -37,6 +37,8 @@ __all__ = [
     "WindowCall",
 ]
 
+from pydough.errors import PyDoughQDAGException
+
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
     Calculate,
@@ -56,7 +58,6 @@ from .collections import (
     TopK,
     Where,
 )
-from .errors import PyDoughQDAGException
 from .expressions import (
     BackReferenceExpression,
     ChildReferenceExpression,

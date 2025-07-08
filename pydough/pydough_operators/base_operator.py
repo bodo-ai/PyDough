@@ -7,6 +7,8 @@ __all__ = ["PyDoughOperator"]
 from abc import abstractmethod
 from typing import Any
 
+from pydough.errors import PyDoughQDAGException
+
 from .type_inference import TypeVerifier
 
 
@@ -55,7 +57,6 @@ class PyDoughOperator:
             `PyDoughQDAGException` if the operator does not accept the
             provided arguments.
         """
-        from pydough.qdag.errors import PyDoughQDAGException
 
         try:
             self.verifier.accepts(args)

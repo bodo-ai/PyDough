@@ -8,7 +8,7 @@ __all__ = ["PartitionChild"]
 
 from functools import cache
 
-from pydough.qdag.errors import PyDoughQDAGException
+from pydough.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,

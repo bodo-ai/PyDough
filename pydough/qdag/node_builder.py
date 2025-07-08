@@ -4,12 +4,11 @@ Definitions of utilities used to build PyDough QDAG nodes.
 
 __all__ = ["AstNodeBuilder"]
 
-
+from pydough.errors import PyDoughMetadataException, PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
     PropertyMetadata,
-    PyDoughMetadataException,
     TableColumnMetadata,
 )
 from pydough.pydough_operators import (
@@ -33,7 +32,6 @@ from .collections import (
     TopK,
     Where,
 )
-from .errors import PyDoughQDAGException
 from .expressions import (
     BackReferenceExpression,
     ChildReferenceExpression,

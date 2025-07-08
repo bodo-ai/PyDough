@@ -1,5 +1,5 @@
 """
-The definitions of error-handling utilities for the PyDough metadata module.
+The definitions of error-handling utilities used by PyDough
 """
 
 __all__ = [
@@ -13,7 +13,6 @@ __all__ = [
     "OrCondition",
     "PossiblyEmptyListOf",
     "PossiblyEmptyMapOf",
-    "PyDoughMetadataException",
     "PyDoughPredicate",
     "extract_array",
     "extract_bool",
@@ -33,12 +32,7 @@ __all__ = [
 
 from abc import ABC, abstractmethod
 
-
-class PyDoughMetadataException(Exception):
-    """Exception raised when there is an error relating to PyDough metadata, such
-    as an error while parsing/validating the JSON or an ill-formed pattern.
-    """
-
+from .error_types import PyDoughMetadataException
 
 ###############################################################################
 # Predicate Classes

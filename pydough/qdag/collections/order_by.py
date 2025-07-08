@@ -8,7 +8,7 @@ __all__ = ["OrderBy"]
 
 from functools import cache
 
-from pydough.qdag.errors import PyDoughQDAGException
+from pydough.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 

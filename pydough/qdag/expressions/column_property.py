@@ -5,9 +5,9 @@ collection.
 
 __all__ = ["ColumnProperty"]
 
+from pydough.errors import PyDoughQDAGException
 from pydough.metadata.properties import TableColumnMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG

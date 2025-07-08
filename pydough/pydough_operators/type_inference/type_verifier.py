@@ -14,6 +14,8 @@ __all__ = [
 from abc import ABC, abstractmethod
 from typing import Any
 
+from pydough.errors import PyDoughQDAGException
+
 
 class TypeVerifier(ABC):
     """
@@ -71,8 +73,6 @@ class RequireNumArgs(TypeVerifier):
         return self._num_args
 
     def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
-        from pydough.qdag.errors import PyDoughQDAGException
-
         if len(args) != self.num_args:
             if error_on_fail:
                 suffix = "argument" if self._num_args == 1 else "arguments"
@@ -137,8 +137,6 @@ class RequireArgRange(TypeVerifier):
         return self._high_range
 
     def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
-        from pydough.qdag.errors import PyDoughQDAGException
-
         if not (self.low_range <= len(args) <= self.high_range):
             if error_on_fail:
                 raise PyDoughQDAGException(
@@ -157,7 +155,6 @@ class RequireCollection(TypeVerifier):
 
     def accepts(self, args: list[Any], error_on_fail: bool = True) -> bool:
         from pydough.qdag.collections import PyDoughCollectionQDAG
-        from pydough.qdag.errors import PyDoughQDAGException
 
         if len(args) != 1:
             if error_on_fail:

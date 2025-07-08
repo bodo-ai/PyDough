@@ -7,12 +7,12 @@ graph.
 __all__ = ["TableCollection"]
 
 
+from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
 )
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression
 
 from .collection_qdag import PyDoughCollectionQDAG

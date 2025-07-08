@@ -8,6 +8,7 @@ __all__ = ["CollectionAccess"]
 
 from functools import cache
 
+from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
     PropertyMetadata,
@@ -16,7 +17,6 @@ from pydough.metadata import (
 )
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,

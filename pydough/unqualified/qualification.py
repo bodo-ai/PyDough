@@ -9,6 +9,7 @@ from collections.abc import Iterable
 
 import pydough
 from pydough.configs import PyDoughConfigs
+from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GeneralJoinMetadata, GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.pydough_operators.expression_operators import (
@@ -40,7 +41,6 @@ from pydough.qdag import (
 )
 from pydough.types import PyDoughType
 
-from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
     UnqualifiedAccess,
     UnqualifiedBest,

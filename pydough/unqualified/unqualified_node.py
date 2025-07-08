@@ -27,8 +27,9 @@ from datetime import date, datetime
 from typing import Any, Union
 
 import pydough.pydough_operators as pydop
+from pydough.errors import PyDoughUnqualifiedException
+from pydough.errors.error_utils import is_bool, is_integer, is_positive_int, is_string
 from pydough.metadata import GraphMetadata
-from pydough.metadata.errors import is_bool, is_integer, is_positive_int, is_string
 from pydough.pydough_operators import get_operator_by_name
 from pydough.types import (
     ArrayType,
@@ -39,8 +40,6 @@ from pydough.types import (
     StringType,
     UnknownType,
 )
-
-from .errors import PyDoughUnqualifiedException
 
 
 class UnqualifiedNode(ABC):

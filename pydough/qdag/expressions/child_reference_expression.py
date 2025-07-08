@@ -8,9 +8,9 @@ __all__ = ["ChildReferenceExpression"]
 
 from functools import cache
 
+from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 
 from .expression_qdag import PyDoughExpressionQDAG
 from .reference import Reference

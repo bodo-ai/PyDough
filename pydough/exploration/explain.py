@@ -8,6 +8,7 @@ __all__ = ["explain"]
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.errors import PyDoughQDAGException
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
 from pydough.metadata.graphs import GraphMetadata
@@ -33,7 +34,6 @@ from pydough.qdag import (
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
-    PyDoughQDAGException,
     Reference,
     SubCollection,
     TableCollection,

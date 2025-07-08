@@ -6,9 +6,9 @@ in a preceding context.
 __all__ = ["Reference"]
 
 
+from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG
