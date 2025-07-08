@@ -3,6 +3,7 @@ Module for error handling in PyDough.
 """
 
 __all__ = [
+    "PyDoughErrorBuilder",
     "PyDoughException",
     "PyDoughMetadataException",
     "PyDoughQDAGException",
@@ -23,3 +24,4 @@ from .error_types import (
     PyDoughTypeException,
     PyDoughUnqualifiedException,
 )
+from .pydough_error_builder import PyDoughErrorBuilder

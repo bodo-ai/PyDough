@@ -5,7 +5,6 @@ Base definition of all PyDough QDAG collection types.
 __all__ = ["PyDoughCollectionQDAG"]
 
 
-import re
 from abc import abstractmethod
 from collections.abc import Iterable
 from functools import cache, cached_property
@@ -362,16 +361,25 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         """
         return "\n".join(self.to_tree_form(True).to_string_rows())
 
-    def find_possible_name_matches(self, term_name: str) -> list[str]:
+    def find_possible_name_matches(
+        self, term_name: str, atol: int, rtol: float, min_names: int
+    ) -> list[str]:
         """
         Finds and returns a list of candidate names that closely match the given
         name based on minimum edit distance.
 
         Args:
-            name (str): The name to match against the list of candidates.
+            `term_name`: The name to match against the list of candidates.
+            `atol`: The absolute tolerance for the minimum edit distance; any
+            candidate with a minimum edit distance less than or equal to
+            `closest_match + atol` will be included in the results.
+            `rtol`: The relative tolerance for the minimum edit distance; any
+             candidate with a minimum edit distance less than or equal to
+            `closest_match * (1 + rtol)` will be included in the results.
+            `min_names`: The minimum number of names to return.
 
         Returns:
-            list[str]: A list of candidate names, based on the closest matches.
+            A list of candidate names, based on the closest matches.
         """
 
         terms_distance_list: list[tuple[float, str]] = []
@@ -388,27 +396,25 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
         closest_match = terms_distance_list[0]
 
-        # List with all names that have a me <= closest_match + 2
-        matches_within_2: list[str] = []
+        # List with all names that have a me <= closest_match + atol
+        matches_within_atol: list[str] = [
+            name for me, name in terms_distance_list if me <= closest_match[0] + atol
+        ]
+
         # List with all names that have a me <= closest_match * 1.1
-        matches_within_10_pct: list[str] = []
+        matches_within_rtol: list[str] = [
+            name
+            for me, name in terms_distance_list
+            if me <= closest_match[0] * (1 + rtol)
+        ]
+
         # List with the top 3 closest matches (me) breaking ties by name
-        matches_top_3: list[str] = [name for _, name in terms_distance_list[:3]]
+        min_matches: list[str] = [name for _, name in terms_distance_list[:min_names]]
 
-        # filtering the result
-        for me, name in terms_distance_list:
-            # all names that have a me <= closest_match + 2
-            if me <= closest_match[0] + 2:
-                matches_within_2.append(name)
-
-            # all names that have a me <= closest_match * 1.1
-            if me <= closest_match[0] * 1.1:
-                matches_within_10_pct.append(name)
-
-        # returning the larger
-        # using
+        # Return whichever of the three lists is the longest, breaking ties
+        # lexicographically by the names within.
         return max(
-            [matches_within_2, matches_within_10_pct, matches_top_3],
+            [matches_within_atol, matches_within_rtol, min_matches],
             key=lambda x: (len(x), x),
         )
 
@@ -471,20 +477,36 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
         return arr[previousRow, m]  # Return the last computed row's last element
 
-    def name_mismatch_error(self, term_name: str) -> str:
+    def name_mismatch_error(
+        self, term_name: str, atol: int = 2, rtol: float = 0.1, min_names: int = 3
+    ) -> str:
         """
         Raises a name mismatch error with suggestions if possible.
+
         Args:
-            term_name (str): The name of the term that caused the error.
+            `term_name`: The name of the term that caused the error.
+            `atol`: The absolute tolerance for the minimum edit distance when
+            determining whether to include a term as a suggestion; any term
+            names with a minimum edit distance less than or equal to
+            `closest_match + atol` will be included as a suggestion.
+            `rtol`: The relative tolerance for the minimum edit distance when
+            determining whether to include a term as a suggestion; any term
+            names with a minimum edit distance less than or equal to
+            `closest_match * (1 + rtol)` will be included as a suggestion.
+            `min_names`: The minimum number of suggestions to include.
+
+        Returns:
+            A string describing the error, including suggestions if available.
         """
 
         error_message: str = f"Unrecognized term of {self.to_string()}: {term_name!r}."
-        suggestions: list[str] = self.find_possible_name_matches(term_name=term_name)
+        suggestions: list[str] = self.find_possible_name_matches(
+            term_name=term_name, atol=atol, rtol=rtol, min_names=min_names
+        )
 
         # Check if there are any suggestions to add
         if len(suggestions) > 0:
             suggestions_str: str = ", ".join(suggestions)
             error_message += f" Did you mean: {suggestions_str}?"
-            re.escape(error_message)
 
         return error_message

@@ -9,6 +9,7 @@ __all__ = ["Calculate"]
 
 from functools import cache
 
+import pydough
 from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions import (
@@ -147,10 +148,10 @@ class Calculate(AugmentingChildOperator):
         return self.calc_term_indices[expr_name]
 
     def get_term(self, term_name: str) -> PyDoughQDAG:  # type: ignore
+        if term_name not in self.all_terms:
+            raise pydough.active_session.error_builder.term_not_found(self, term_name)
         if term_name in self.calc_term_values:
             return self.calc_term_values[term_name]
-        elif term_name not in self.all_terms:
-            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
 
         return super().get_term(term_name)
 
