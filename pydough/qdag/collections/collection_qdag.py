@@ -12,6 +12,7 @@ from typing import Union
 
 import numpy as np
 
+import pydough
 from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions.collation_expression import CollationExpression
@@ -510,3 +511,20 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             error_message += f" Did you mean: {suggestions_str}?"
 
         return error_message
+
+    def verify_term_exists(self, term_name: str) -> None:
+        """
+        Verifies that a term exists in the collection, and raises an exception
+        if it does not.
+
+        Args:
+            `term_name`: The name of the term to check whether it exists within
+            the collection.
+
+        Raises:
+            `PyDoughException` if the term does not exist in the collection.
+        """
+        if term_name not in self.all_terms:
+            raise pydough.active_session.error_builder.term_not_found(
+                collection=self, term_name=term_name
+            )

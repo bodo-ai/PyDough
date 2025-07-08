@@ -8,7 +8,6 @@ __all__ = ["CollectionAccess"]
 
 from functools import cache
 
-import pydough
 from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
@@ -108,8 +107,7 @@ class CollectionAccess(ChildAccess):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        if term_name not in self.all_terms:
-            raise pydough.active_session.error_builder.term_not_found(self, term_name)
+        self.verify_term_exists(term_name)
 
         # Special handling of terms down-streamed from an ancestor CALCULATE
         # clause.

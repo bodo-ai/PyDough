@@ -7,7 +7,6 @@ graph.
 __all__ = ["TableCollection"]
 
 
-import pydough
 from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
@@ -116,9 +115,7 @@ class GlobalContext(PyDoughCollectionQDAG):
         raise PyDoughQDAGException(f"Cannot call get_expression_position on {self!r}")
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        if term_name not in self.all_terms:
-            raise pydough.active_session.error_builder.term_not_found(self, term_name)
-
+        self.verify_term_exists(term_name)
         return self.collections[term_name]
 
     @property

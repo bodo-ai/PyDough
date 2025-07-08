@@ -9,7 +9,6 @@ __all__ = ["PartitionBy"]
 
 from functools import cache
 
-import pydough
 from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions import (
@@ -183,13 +182,13 @@ class PartitionBy(ChildOperator):
             return BackReferenceExpression(
                 self, term_name, self.ancestral_mapping[term_name]
             )
-        elif term_name in self._key_name_indices:
-            term: PartitionKey = self.keys[self._key_name_indices[term_name]]
-            return term
         elif term_name == self.child.name:
             return PartitionChild(self.child, self.child.name, self)
         else:
-            raise pydough.active_session.error_builder.term_not_found(self, term_name)
+            self.verify_term_exists(term_name)
+            assert term_name in self._key_name_indices
+            term: PartitionKey = self.keys[self._key_name_indices[term_name]]
+            return term
 
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
         predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(is_last)
