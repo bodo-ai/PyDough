@@ -11,6 +11,7 @@ __all__ = [
     "BAN",
     "BOR",
     "BXR",
+    "CEIL",
     "CONTAINS",
     "COUNT",
     "DATEDIFF",
@@ -24,6 +25,7 @@ __all__ = [
     "EQU",
     "FIND",
     "FLOAT",
+    "FLOOR",
     "GEQ",
     "GRT",
     "HAS",
@@ -60,6 +62,7 @@ __all__ = [
     "POWER",
     "PRESENT",
     "PREV",
+    "QUANTILE",
     "QUARTER",
     "RANKING",
     "RELAVG",
@@ -160,6 +163,9 @@ AVG = ExpressionFunctionOperator(
 MEDIAN = ExpressionFunctionOperator(
     "MEDIAN", True, RequireNumArgs(1), ConstantType(NumericType())
 )
+QUANTILE = ExpressionFunctionOperator(
+    "QUANTILE", True, RequireNumArgs(2), ConstantType(NumericType())
+)
 POWER = ExpressionFunctionOperator(
     "POWER", False, RequireNumArgs(2), ConstantType(NumericType())
 )
@@ -252,6 +258,12 @@ PRESENT = ExpressionFunctionOperator(
 )
 ROUND = ExpressionFunctionOperator(
     "ROUND", False, RequireArgRange(1, 2), SelectArgumentType(0)
+)
+CEIL = ExpressionFunctionOperator(
+    "CEIL", False, RequireNumArgs(1), ConstantType(NumericType())
+)
+FLOOR = ExpressionFunctionOperator(
+    "FLOOR", False, RequireNumArgs(1), ConstantType(NumericType())
 )
 MONOTONIC = ExpressionFunctionOperator(
     "MONOTONIC", False, RequireMinArgs(1), ConstantType(BooleanType())

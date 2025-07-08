@@ -483,6 +483,26 @@ def bad_name_25():
     )
 
 
+def bad_sqlite_udf_1():
+    # Calling a UDF that requires 2 arguments with only 1 argument
+    return orders.CALCULATE(x=FORMAT_DATETIME("%Y"))
+
+
+def bad_sqlite_udf_2():
+    # Calling a UDF that requires 2 arguments with 3 arguments
+    return orders.CALCULATE(x=FORMAT_DATETIME("%Y", order_date, "foo"))
+
+
+def bad_sqlite_udf_3():
+    # Calling a UDF that requires 1-2 arguments with 0 arguments
+    return nations.CALCULATE(x=GCAT(by=name.ASC()))
+
+
+def bad_sqlite_udf_4():
+    # Calling a UDF that requires 1-2 arguments with 3 arguments
+    return nations.CALCULATE(x=GCAT(name, ";", "bar", by=name.ASC()))
+
+
 # TEST for CROSS
 def bad_cross_1():
     # Reason it is bad: Using `CROSS` with a not a collection
@@ -544,21 +564,32 @@ def bad_cross_11():
     return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
 
 
-def bad_sqlite_udf_1():
-    # Calling a UDF that requires 2 arguments with only 1 argument
-    return orders.CALCULATE(x=FORMAT_DATETIME("%Y"))
+# QUANTILE function's test
+# not arguments
+def bad_quantile_1():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders.total_price))
 
 
-def bad_sqlite_udf_2():
-    # Calling a UDF that requires 2 arguments with 3 arguments
-    return orders.CALCULATE(x=FORMAT_DATETIME("%Y", order_date, "foo"))
+# bad arguments
+def bad_quantile_2():
+    return customers.CALCULATE(bad_quantile=QUANTILE("orders.total_price", 0.7))
 
 
-def bad_sqlite_udf_3():
-    # Calling a UDF that requires 1-2 arguments with 0 arguments
-    return nations.CALCULATE(x=GCAT(by=name.ASC()))
+# p out of range [0-1]
+def bad_quantile_3():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders.total_price, 40))
 
 
-def bad_sqlite_udf_4():
-    # Calling a UDF that requires 1-2 arguments with 3 arguments
-    return nations.CALCULATE(x=GCAT(name, ";", "bar", by=name.ASC()))
+# negative p out of range [0-1]
+def bad_quantile_4():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders.total_price, -10))
+
+
+# collection
+def bad_quantile_5():
+    return customers.CALCULATE(bad_quantile=QUANTILE(orders, 0.4))
+
+
+# both numbers
+def bad_quantile_6():
+    return customers.CALCULATE(bad_quantile=QUANTILE(20, 0.9))

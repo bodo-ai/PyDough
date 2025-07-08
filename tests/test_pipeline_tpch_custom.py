@@ -51,6 +51,12 @@ from tests.test_pydough_functions.bad_pydough_functions import (
     bad_name_23,
     bad_name_24,
     bad_name_25,
+    bad_quantile_1,
+    bad_quantile_2,
+    bad_quantile_3,
+    bad_quantile_4,
+    bad_quantile_5,
+    bad_quantile_6,
     bad_slice_1,
     bad_slice_2,
     bad_slice_3,
@@ -88,6 +94,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     dumb_aggregation,
     first_order_in_year,
     first_order_per_customer,
+    floor_and_ceil,
+    floor_and_ceil_2,
     function_sampler,
     global_acctbal_breakdown,
     highest_priority_per_year,
@@ -105,6 +113,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     percentile_customers_per_region,
     percentile_nations,
     prev_next_regions,
+    quantile_function_test_1,
+    quantile_function_test_2,
+    quantile_function_test_3,
+    quantile_function_test_4,
     quarter_function_test,
     rank_nations_by_region,
     rank_nations_per_region_by_customers,
@@ -546,6 +558,86 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "year_month_nation_orders",
             ),
             id="year_month_nation_orders",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                floor_and_ceil,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "floor_frac": [5],
+                        "ceil_frac": [6],
+                        "floor_frac_neg": [-6],
+                        "ceil_frac_neg": [-5],
+                        "floor_int": [6],
+                        "ceil_int": [6],
+                        "floor_int_neg": [-6],
+                        "ceil_int_neg": [-6],
+                    }
+                ),
+                "floor_and_ceil",
+            ),
+            id="floor_and_ceil",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                floor_and_ceil_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "supplier_key": [
+                            5851,
+                            5991,
+                            7511,
+                            7846,
+                            1186,
+                            8300,
+                            4578,
+                            8755,
+                            1635,
+                            7358,
+                        ],
+                        "part_key": [
+                            185850,
+                            15990,
+                            45006,
+                            137845,
+                            116163,
+                            175782,
+                            117044,
+                            43746,
+                            51634,
+                            87357,
+                        ],
+                        "complete_parts": [
+                            9994,
+                            9997,
+                            9980,
+                            9989,
+                            9984,
+                            9983,
+                            9989,
+                            9970,
+                            9966,
+                            9961,
+                        ],
+                        "total_cost": [
+                            9994000,
+                            9988903,
+                            9979801,
+                            9979211,
+                            9973517,
+                            9967627,
+                            9964028,
+                            9963919,
+                            9963609,
+                            9958411,
+                        ],
+                    }
+                ),
+                "floor_and_ceil_2",
+            ),
+            id="floor_and_ceil_2",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2451,6 +2543,264 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             ),
             id="aggregation_analytics_3",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_1,
+                "TPCH",
+                lambda: pd.DataFrame({"seventieth_order_price": [200536.2]}),
+                "quantile_function_test_1",
+            ),
+            id="quantile_function_test_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                        ],
+                        "nation_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                        ],
+                        "orders_min": [None, None, None, None, None],
+                        "orders_1_percent": [
+                            5999.3,
+                            7003.64,
+                            5048.08,
+                            4057.84,
+                            5441.97,
+                        ],
+                        "orders_10_percent": [
+                            39638.93,
+                            35979.56,
+                            39705.76,
+                            38877.67,
+                            37364.74,
+                        ],
+                        "orders_25_percent": [
+                            80248.44,
+                            74602.29,
+                            78630.93,
+                            75621.71,
+                            79468.12,
+                        ],
+                        "orders_median": [
+                            145362.1,
+                            140232.54,
+                            143825.37,
+                            143063.83,
+                            145382.11,
+                        ],
+                        "orders_75_percent": [
+                            219335.6,
+                            216272.55,
+                            212565.84,
+                            215758.39,
+                            216461.21,
+                        ],
+                        "orders_90_percent": [
+                            276313.4,
+                            273094.87,
+                            270427.82,
+                            274811.54,
+                            274194.5,
+                        ],
+                        "orders_99_percent": [
+                            363376.69,
+                            359892.4,
+                            360018.62,
+                            359149.24,
+                            358762.01,
+                        ],
+                        "orders_max": [
+                            470709.7,
+                            439803.36,
+                            455713.74,
+                            452718.68,
+                            472728.8,
+                        ],
+                    }
+                ),
+                "quantile_function_test_2",
+            ),
+            id="quantile_function_test_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                        ],
+                        "nation_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                        ],
+                        "orders_min": [None, None, None, None, None],
+                        "orders_1_percent": [
+                            5999.3,
+                            7003.64,
+                            5048.08,
+                            4057.84,
+                            5441.97,
+                        ],
+                        "orders_10_percent": [
+                            39638.93,
+                            35979.56,
+                            39705.76,
+                            38877.67,
+                            37364.74,
+                        ],
+                        "orders_25_percent": [
+                            80248.44,
+                            74602.29,
+                            78630.93,
+                            75621.71,
+                            79468.12,
+                        ],
+                        "orders_median": [
+                            145362.1,
+                            140232.54,
+                            143825.37,
+                            143063.83,
+                            145382.11,
+                        ],
+                        "orders_75_percent": [
+                            219335.6,
+                            216272.55,
+                            212565.84,
+                            215758.39,
+                            216461.21,
+                        ],
+                        "orders_90_percent": [
+                            276313.4,
+                            273094.87,
+                            270427.82,
+                            274811.54,
+                            274194.5,
+                        ],
+                        "orders_99_percent": [
+                            363376.69,
+                            359892.4,
+                            360018.62,
+                            359149.24,
+                            358762.01,
+                        ],
+                        "orders_max": [
+                            470709.7,
+                            439803.36,
+                            455713.74,
+                            452718.68,
+                            472728.8,
+                        ],
+                    }
+                ),
+                "quantile_function_test_3",
+            ),
+            id="quantile_function_test_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                quantile_function_test_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "region_name": [
+                            "AFRICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "AMERICA",
+                            "ASIA",
+                        ],
+                        "nation_name": [
+                            "ALGERIA",
+                            "ARGENTINA",
+                            "BRAZIL",
+                            "CANADA",
+                            "CHINA",
+                        ],
+                        "orders_min": [None, None, None, None, None],
+                        "orders_1_percent": [
+                            5390.99,
+                            2622.17,
+                            10183.86,
+                            10722.74,
+                            15050.91,
+                        ],
+                        "orders_10_percent": [
+                            56337.7,
+                            60753.17,
+                            19861.78,
+                            40190.75,
+                            51271.16,
+                        ],
+                        "orders_25_percent": [
+                            93604.69,
+                            106187.25,
+                            76036.8,
+                            65426.56,
+                            85049.94,
+                        ],
+                        "orders_median": [
+                            157615.53,
+                            160145.36,
+                            147766.19,
+                            108165.94,
+                            134156.84,
+                        ],
+                        "orders_75_percent": [
+                            210510.63,
+                            222249.89,
+                            209519.89,
+                            165556.88,
+                            195812.23,
+                        ],
+                        "orders_90_percent": [
+                            282754.57,
+                            298230.29,
+                            263862.04,
+                            230003.53,
+                            252977.53,
+                        ],
+                        "orders_99_percent": [
+                            389176.08,
+                            349270.55,
+                            354968.79,
+                            350760.86,
+                            398201.08,
+                        ],
+                        "orders_max": [
+                            389176.08,
+                            349270.55,
+                            354968.79,
+                            350760.86,
+                            398201.08,
+                        ],
+                    }
+                ),
+                "quantile_function_test_4",
+            ),
+            id="quantile_function_test_4",
+        ),
     ],
 )
 def tpch_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -2890,6 +3240,54 @@ def test_pipeline_e2e_tpch_custom(
             None,
             "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, nations, key?",
             id="bad_cross_11",
+        ),
+        pytest.param(
+            bad_quantile_1,
+            None,
+            re.escape(
+                "Invalid operator invocation 'QUANTILE(orders.total_price)': Expected 2 arguments, received 1"
+            ),
+            id="bad_quantile_1",
+        ),
+        pytest.param(
+            bad_quantile_2,
+            None,
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE('orders.total_price', 0.7)"
+            ),
+            id="bad_quantile_2",
+        ),
+        pytest.param(
+            bad_quantile_3,
+            None,
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received 40"
+            ),
+            id="bad_quantile_3",
+        ),
+        pytest.param(
+            bad_quantile_4,
+            None,
+            re.escape(
+                "Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received -10"
+            ),
+            id="bad_quantile_4",
+        ),
+        pytest.param(
+            bad_quantile_5,
+            None,
+            re.escape(
+                "Non-expression argument orders of type ChildReferenceCollection found in operator 'QUANTILE'"
+            ),
+            id="bad_quantile_5",
+        ),
+        pytest.param(
+            bad_quantile_6,
+            None,
+            re.escape(
+                "Expected aggregation call to contain references to exactly one child collection, but found 0 in QUANTILE(20, 0.9)"
+            ),
+            id="bad_quantile_6",
         ),
     ],
 )
