@@ -450,7 +450,7 @@ The `GETPART` function extracts the N-th part from a string, splitting it by a s
 - The second argument is the delimiter string.
 - The third argument is the index of the part to extract. This index can be positive (counting from the start, 0-based) or negative (counting from the end, -1 is the last part).
 
-If the index is out of range, `GETPART` returns an empty string. If the delimiter is an empty string, the function raises an error.
+If the index is out of range, `GETPART` returns `None`. If the delimiter is an empty string, the function will not split the input string and the first part will be the entire string.
 
 ```py
 # Extracts the first name from a full name
@@ -466,17 +466,18 @@ Parts.CALCULATE(second_code = GETPART(code, "-", 2))
 | **Input String**      | **Delimiter** | **Index** | **GETPART Result** |
 |---------------------- |-------------- |-----------|--------------------|
 | `"Alex Rodriguez"`    | `" "`         | `1`       | `"Alex"`           |
+| `"Alex Rodriguez"`    | `" "`         | `0`       | `"Alex"`           |
 | `"Alex Rodriguez"`    | `" "`         | `2`       | `"Rodriguez"`      |
 | `"Alex Rodriguez"`    | `" "`         | `-1`      | `"Rodriguez"`      |
+| `"Alex Rodriguez"`    | `""`          | `1`       | `"Alex Rodriguez"` |
 | `"a-b-c-d"`           | `"-"`         | `3`       | `"c"`              |
 | `"a-b-c-d"`           | `"-"`         | `-2`      | `"c"`              |
-| `"a-b-c-d"`           | `"-"`         | `5`       | `""`               |
-| `"a-b-c-d"`           | `"-"`         | `-5`      | `""`               |
+| `"a-b-c-d"`           | `"-"`         | `5`       | `None`             |
+| `"a-b-c-d"`           | `"-"`         | `-5`      | `None`             |
 
 > [!NOTE]
 > - Indexing is one-based from the start and negative indices count from the end.
-> - If the index is out of range, an empty string is returned.
-> - If the delimiter is an empty string, an error is raised.
+> - The 0 index will be treated as 1, returning the first part.
 
 <!-- TOC --><a name="datetime-functions"></a>
 
