@@ -2274,6 +2274,10 @@ def get_part_multiple():
             p11=GETPART(name, "aa", k),
             p12=GETPART(name, "#$*", -k),
             p13=GETPART(name, "", k),
+            p14=GETPART("", " ", k),
+            p15=GETPART(name, " ", 0),
+            p16=GETPART(state, state, 1),
+            p17=GETPART(GETPART(phone, "-", 1), "5", k),
         )
         .ORDER_BY(k.ASC())
     )

@@ -1125,6 +1125,10 @@ def get_day_of_week(
                         "p11": ["john doe", None, None, None],
                         "p12": ["john doe", None, None, None],
                         "p13": ["john doe", None, None, None],
+                        "p14": [None, None, None, None],
+                        "p15": ["john", "Jane", "Bob", "Samantha"],
+                        "p16": ["", "", "", ""],
+                        "p17": ["", "", "", None],
                     }
                 ),
                 "get_part_multiple",

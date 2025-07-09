@@ -31,9 +31,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustname AS rest,
+    '' AS rest,
     ' ' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -60,9 +60,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustemail AS rest,
-    '.' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    sbcustname AS rest,
+    ' ' AS delim,
+    0 AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -89,9 +89,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustemail AS rest,
-    '.' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    sbcuststate AS rest,
+    sbcuststate AS delim,
+    1 AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -120,7 +120,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustphone AS rest,
     '-' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    1 AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -147,9 +147,23 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustphone AS rest,
-    '-' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    (
+      SELECT
+        _s16.part
+      FROM _s16 AS _s16
+      CROSS JOIN _s17 AS _s17
+      WHERE
+        _s16.part_index <> 0
+        AND _s16.part_index = CASE
+          WHEN _s16.idx > 0
+          THEN _s16.idx
+          WHEN _s16.idx < 0
+          THEN _s17.total_parts + _s16.idx + 1
+          ELSE 1
+        END
+    ) AS rest,
+    '5' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -205,9 +219,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustpostalcode AS rest,
-    '00' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    sbcustname AS rest,
+    ' ' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -234,9 +248,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustpostalcode AS rest,
-    '00' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    sbcustemail AS rest,
+    '.' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -263,9 +277,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustname AS rest,
-    '!' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+    sbcustemail AS rest,
+    '.' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -288,6 +302,151 @@ WITH _s0 AS (
   SELECT
     COUNT(*) - 1 AS total_parts
   FROM _s24
+), _s26 AS (
+  SELECT
+    0 AS part_index,
+    '' AS part,
+    sbcustphone AS rest,
+    '-' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+  UNION ALL
+  SELECT
+    part_index + 1 AS part_index,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN rest
+      ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
+    END AS part,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN ''
+      ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
+    END AS rest,
+    delim,
+    idx
+  FROM _s26
+  WHERE
+    rest <> ''
+), _s27 AS (
+  SELECT
+    COUNT(*) - 1 AS total_parts
+  FROM _s26
+), _s28 AS (
+  SELECT
+    0 AS part_index,
+    '' AS part,
+    sbcustphone AS rest,
+    '-' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+  UNION ALL
+  SELECT
+    part_index + 1 AS part_index,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN rest
+      ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
+    END AS part,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN ''
+      ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
+    END AS rest,
+    delim,
+    idx
+  FROM _s28
+  WHERE
+    rest <> ''
+), _s29 AS (
+  SELECT
+    COUNT(*) - 1 AS total_parts
+  FROM _s28
+), _s30 AS (
+  SELECT
+    0 AS part_index,
+    '' AS part,
+    sbcustpostalcode AS rest,
+    '00' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+  UNION ALL
+  SELECT
+    part_index + 1 AS part_index,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN rest
+      ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
+    END AS part,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN ''
+      ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
+    END AS rest,
+    delim,
+    idx
+  FROM _s30
+  WHERE
+    rest <> ''
+), _s31 AS (
+  SELECT
+    COUNT(*) - 1 AS total_parts
+  FROM _s30
+), _s32 AS (
+  SELECT
+    0 AS part_index,
+    '' AS part,
+    sbcustpostalcode AS rest,
+    '00' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+  UNION ALL
+  SELECT
+    part_index + 1 AS part_index,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN rest
+      ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
+    END AS part,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN ''
+      ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
+    END AS rest,
+    delim,
+    idx
+  FROM _s32
+  WHERE
+    rest <> ''
+), _s33 AS (
+  SELECT
+    COUNT(*) - 1 AS total_parts
+  FROM _s32
+), _s34 AS (
+  SELECT
+    0 AS part_index,
+    '' AS part,
+    sbcustname AS rest,
+    '!' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS INTEGER) AS idx
+  UNION ALL
+  SELECT
+    part_index + 1 AS part_index,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN rest
+      ELSE SUBSTRING(rest, 1, INSTR(rest, delim) - 1)
+    END AS part,
+    CASE
+      WHEN INSTR(rest, delim) = 0 OR delim = ''
+      THEN ''
+      ELSE SUBSTRING(rest, INSTR(rest, delim) + LENGTH(delim))
+    END AS rest,
+    delim,
+    idx
+  FROM _s34
+  WHERE
+    rest <> ''
+), _s35 AS (
+  SELECT
+    COUNT(*) - 1 AS total_parts
+  FROM _s34
 ), _s4 AS (
   SELECT
     0 AS part_index,
@@ -408,7 +567,7 @@ WITH _s0 AS (
           THEN _s11.total_parts + _s10.idx + 1
           ELSE 1
         END
-    ) AS p2,
+    ) AS p14,
     (
       SELECT
         _s12.part
@@ -423,7 +582,7 @@ WITH _s0 AS (
           THEN _s13.total_parts + _s12.idx + 1
           ELSE 1
         END
-    ) AS p3,
+    ) AS p15,
     (
       SELECT
         _s14.part
@@ -438,22 +597,7 @@ WITH _s0 AS (
           THEN _s15.total_parts + _s14.idx + 1
           ELSE 1
         END
-    ) AS p4,
-    (
-      SELECT
-        _s16.part
-      FROM _s16 AS _s16
-      CROSS JOIN _s17 AS _s17
-      WHERE
-        _s16.part_index <> 0
-        AND _s16.part_index = CASE
-          WHEN _s16.idx > 0
-          THEN _s16.idx
-          WHEN _s16.idx < 0
-          THEN _s17.total_parts + _s16.idx + 1
-          ELSE 1
-        END
-    ) AS p5,
+    ) AS p16,
     (
       SELECT
         _s18.part
@@ -468,7 +612,7 @@ WITH _s0 AS (
           THEN _s19.total_parts + _s18.idx + 1
           ELSE 1
         END
-    ) AS p6,
+    ) AS p17,
     (
       SELECT
         _s2.part
@@ -498,7 +642,7 @@ WITH _s0 AS (
           THEN _s21.total_parts + _s20.idx + 1
           ELSE 1
         END
-    ) AS p7,
+    ) AS p2,
     (
       SELECT
         _s22.part
@@ -513,7 +657,7 @@ WITH _s0 AS (
           THEN _s23.total_parts + _s22.idx + 1
           ELSE 1
         END
-    ) AS p8,
+    ) AS p3,
     (
       SELECT
         _s24.part
@@ -526,6 +670,81 @@ WITH _s0 AS (
           THEN _s24.idx
           WHEN _s24.idx < 0
           THEN _s25.total_parts + _s24.idx + 1
+          ELSE 1
+        END
+    ) AS p4,
+    (
+      SELECT
+        _s26.part
+      FROM _s26 AS _s26
+      CROSS JOIN _s27 AS _s27
+      WHERE
+        _s26.part_index <> 0
+        AND _s26.part_index = CASE
+          WHEN _s26.idx > 0
+          THEN _s26.idx
+          WHEN _s26.idx < 0
+          THEN _s27.total_parts + _s26.idx + 1
+          ELSE 1
+        END
+    ) AS p5,
+    (
+      SELECT
+        _s28.part
+      FROM _s28 AS _s28
+      CROSS JOIN _s29 AS _s29
+      WHERE
+        _s28.part_index <> 0
+        AND _s28.part_index = CASE
+          WHEN _s28.idx > 0
+          THEN _s28.idx
+          WHEN _s28.idx < 0
+          THEN _s29.total_parts + _s28.idx + 1
+          ELSE 1
+        END
+    ) AS p6,
+    (
+      SELECT
+        _s30.part
+      FROM _s30 AS _s30
+      CROSS JOIN _s31 AS _s31
+      WHERE
+        _s30.part_index <> 0
+        AND _s30.part_index = CASE
+          WHEN _s30.idx > 0
+          THEN _s30.idx
+          WHEN _s30.idx < 0
+          THEN _s31.total_parts + _s30.idx + 1
+          ELSE 1
+        END
+    ) AS p7,
+    (
+      SELECT
+        _s32.part
+      FROM _s32 AS _s32
+      CROSS JOIN _s33 AS _s33
+      WHERE
+        _s32.part_index <> 0
+        AND _s32.part_index = CASE
+          WHEN _s32.idx > 0
+          THEN _s32.idx
+          WHEN _s32.idx < 0
+          THEN _s33.total_parts + _s32.idx + 1
+          ELSE 1
+        END
+    ) AS p8,
+    (
+      SELECT
+        _s34.part
+      FROM _s34 AS _s34
+      CROSS JOIN _s35 AS _s35
+      WHERE
+        _s34.part_index <> 0
+        AND _s34.part_index = CASE
+          WHEN _s34.idx > 0
+          THEN _s34.idx
+          WHEN _s34.idx < 0
+          THEN _s35.total_parts + _s34.idx + 1
           ELSE 1
         END
     ) AS p9,
@@ -592,7 +811,11 @@ SELECT
   p10,
   p11,
   p12,
-  p13
+  p13,
+  p14,
+  p15,
+  p16,
+  p17
 FROM _t1
 ORDER BY
   CAST(SUBSTRING(sbcustid, 2) AS INTEGER)
