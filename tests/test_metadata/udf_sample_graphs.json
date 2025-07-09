@@ -824,6 +824,13 @@
                 "output signature": {"type": "constant", "value": "string"}
             },
             {
+              "name": "FORMAT_DATETIME_VARIADIC",
+              "type": "sql alias",
+              "aggregation": false,
+              "sql function": "STRFTIME",
+              "description": "The same as FORMAT_DATETIME, but allows for a variable number of arguments; all arguments after the first two are sqlite modifier strings, e.g. 'start of day'."
+            },
+            {
                 "name": "COMBINE_STRINGS",
                 "type": "sql alias",
                 "aggregation": true,

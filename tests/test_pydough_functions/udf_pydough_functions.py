@@ -13,11 +13,16 @@ def sqlite_udf_format_datetime():
     # 2. The order date formatted as "dd/mm/yyyy"
     # 3. The order date formatted as "yyyy:ddd" (where ddd is the day of the year)
     # 4. The unix timestamp (in seconds) of the order date
+    # 5. The date 39 days later, truncated to the start of the month as an integer in the
+    #    form as YYYYMMDD
     return orders.CALCULATE(
         key,
         d1=FORMAT_DATETIME("%d/%m/%Y", order_date),
         d2=FORMAT_DATETIME("%Y:%j", order_date),
         d3=INTEGER(FORMAT_DATETIME("%s", order_date)),
+        d4=INTEGER(
+            FORMAT_DATETIME_VARIADIC("%Y%m%d", order_date, "+39 days", "start of month")
+        ),
     ).TOP_K(5, by=total_price.ASC())
 
 

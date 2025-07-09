@@ -60,6 +60,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "1994:014",
                         ],
                         "d3": [893289600, 703555200, 696816000, 753840000, 758505600],
+                        "d4": [19980601, 19920501, 19920301, 19931201, 19940201],
                     }
                 ),
                 "sqlite_udf_format_datetime",
