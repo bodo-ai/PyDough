@@ -1,4 +1,4 @@
-WITH _t5 AS (
+WITH _t6 AS (
   SELECT
     ca_dt
   FROM main.calendar
@@ -6,7 +6,7 @@ WITH _t5 AS (
   SELECT
     COUNT(*) AS n_rows,
     _s0.ca_dt
-  FROM _t5 AS _s0
+  FROM _t6 AS _s0
   JOIN main.devices AS devices
     ON _s0.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   GROUP BY
@@ -15,23 +15,23 @@ WITH _t5 AS (
   SELECT
     COUNT(*) AS n_rows,
     _s4.ca_dt
-  FROM _t5 AS _s4
+  FROM _t6 AS _s4
   JOIN main.incidents AS incidents
     ON _s4.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   GROUP BY
     _s4.ca_dt
-), _t3 AS (
+), _t4 AS (
   SELECT
     SUM(_s3.n_rows) AS sum_expr_3,
     SUM(_s7.n_rows) AS sum_n_rows,
-    EXTRACT(YEAR FROM CAST(_t5.ca_dt AS DATETIME)) AS year
-  FROM _t5 AS _t5
+    EXTRACT(YEAR FROM CAST(_t6.ca_dt AS DATETIME)) AS year
+  FROM _t6 AS _t6
   LEFT JOIN _s3 AS _s3
-    ON _s3.ca_dt = _t5.ca_dt
+    ON _s3.ca_dt = _t6.ca_dt
   LEFT JOIN _s7 AS _s7
-    ON _s7.ca_dt = _t5.ca_dt
+    ON _s7.ca_dt = _t6.ca_dt
   GROUP BY
-    EXTRACT(YEAR FROM CAST(_t5.ca_dt AS DATETIME))
+    EXTRACT(YEAR FROM CAST(_t6.ca_dt AS DATETIME))
 ), _t0 AS (
   SELECT
     ROUND(
@@ -57,7 +57,7 @@ WITH _t5 AS (
     COALESCE(sum_expr_3, 0) AS n_devices,
     COALESCE(sum_n_rows, 0) AS n_incidents,
     year
-  FROM _t3
+  FROM _t4
   WHERE
     NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
 )

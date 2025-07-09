@@ -8,18 +8,14 @@ __all__ = ["pullup_projections"]
 
 
 from pydough.relational import (
-    CallExpression,
     ColumnReference,
-    CorrelatedReference,
     Filter,
     Join,
     JoinType,
-    LiteralExpression,
     Project,
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
-    WindowCallExpression,
 )
 from pydough.relational.rel_util import apply_substitution, contains_window
 from pydough.relational.relational_expressions.column_reference_finder import (
@@ -39,19 +35,34 @@ def pull_non_columns(node: RelationalNode) -> RelationalNode:
 
     for name, expr in node.columns.items():
         new_node_columns[name] = expr
-        match expr:
-            case ColumnReference() | CorrelatedReference():
-                new_project_columns[name] = ColumnReference(name, expr.data_type)
-            case LiteralExpression() | CallExpression() | WindowCallExpression():
-                new_project_columns[name] = expr
-                needs_pull = True
-            case _:
-                raise NotImplementedError(
-                    f"Unsupported expression type {expr.__class__.__name__} in `pull_non_columns` columns."
-                )
+        if isinstance(expr, ColumnReference):
+            new_project_columns[name] = ColumnReference(name, expr.data_type)
+        else:
+            new_project_columns[name] = expr
+            needs_pull = True
 
     if not needs_pull:
         return node
+
+    existing_vals: set[RelationalExpression] = set(new_node_columns.values())
+    substitutions: dict[RelationalExpression, RelationalExpression] = {}
+    for input_idx in range(len(node.inputs)):
+        input_node: RelationalNode = node.inputs[input_idx]
+        for name, expr in input_node.columns.items():
+            ref_expr: ColumnReference = ColumnReference(
+                name, expr.data_type, input_name=node.default_input_aliases[input_idx]
+            )
+            if expr not in existing_vals:
+                new_name: str = name
+                idx: int = 0
+                while new_name in new_node_columns:
+                    idx += 1
+                    new_name = f"{name}_{idx}"
+                new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
+                new_node_columns[new_name] = ref_expr
+                substitutions[ref_expr] = new_ref
+    for name, expr in new_project_columns.items():
+        new_project_columns[name] = apply_substitution(expr, substitutions, {})
 
     new_input: RelationalNode = node.copy(columns=new_node_columns)
     return Project(input=new_input, columns=new_project_columns)
@@ -79,6 +90,11 @@ def pull_project_into_filter(node: Filter) -> None:
     node.condition.accept(finder)
     condition_cols: set[ColumnReference] = finder.get_column_references()
     condition_names: set[str] = {col.name for col in condition_cols}
+    finder.reset()
+    for expr in node.columns.values():
+        expr.accept(finder)
+    output_cols: set[ColumnReference] = finder.get_column_references()
+    output_names: set[str] = {col.name for col in output_cols}
 
     ref_expr: ColumnReference
     new_ref: ColumnReference
@@ -104,25 +120,23 @@ def pull_project_into_filter(node: Filter) -> None:
 
     node._input = project.copy(columns=new_project_columns)
 
-    cond_contains_window: bool = contains_window(node.condition)
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
-    existing_outputs: set[RelationalExpression] = set(node.columns.values())
-    new_filter_columns: dict[str, RelationalExpression] = {}
     for name, expr in project.columns.items():
         ref_expr = ColumnReference(name, expr.data_type)
-        new_filter_columns[name] = expr
         new_expr: RelationalExpression = apply_substitution(
             expr, transfer_substitutions, {}
         )
-        expr_contains_window: bool = contains_window(new_expr)
-        if not (cond_contains_window and expr_contains_window):
-            if name in condition_names:
-                if ref_expr not in existing_outputs:
-                    substitutions[ref_expr] = new_expr
-            elif not expr_contains_window:
-                new_filter_columns[name] = new_expr
+        if (not contains_window(new_expr)) and (
+            (name in condition_names) != (name in output_names)
+        ):
+            substitutions[ref_expr] = apply_substitution(
+                expr, transfer_substitutions, {}
+            )
     node._condition = apply_substitution(node.condition, substitutions, {})
-    # node._columns = new_filter_columns
+    node._columns = {
+        name: apply_substitution(expr, substitutions, {})
+        for name, expr in node.columns.items()
+    }
 
 
 def pullup_projections(node: RelationalNode) -> RelationalNode:
