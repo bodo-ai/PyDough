@@ -83,6 +83,7 @@ from .hybrid_operations import (
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
 from .merge_projects import merge_projects
+from .projection_pullup import pullup_projections
 
 
 @dataclass
@@ -1433,7 +1434,7 @@ def optimize_relational_tree(
     # Step 5: re-run projection merging.
     root = confirm_root(merge_projects(root))
 
-    # Step 6: prune unused columns.
+    # Step 6: re-run column pruning.
     root = ColumnPruner().prune_unused_columns(root)
 
     # Step 7: bubble up names from the leaf nodes to further encourage simpler
@@ -1441,23 +1442,8 @@ def optimize_relational_tree(
     # possible.
     root = bubble_column_names(root)
 
-    # Step 8: re-run column pruning.
-    root = ColumnPruner().prune_unused_columns(root)
-
-    # Step 9: re-run projection merging.
-    root = confirm_root(merge_projects(root))
-
-    """
-    # Step 6: bubble up names from the leaf nodes to further encourage simpler
-    # naming without aliases, and also to delete duplicate columns where
-    # possible.
-    root = bubble_column_names(root)
-
-    # Step 7: run projection pullup.
+    # Step 8: run projection pullup.
     root = confirm_root(pullup_projections(root))
-
-    # Step 8: prune unused columns.
-    root = ColumnPruner().prune_unused_columns(root)
 
     # Step 9: re-run filter pushdown
     root._input = push_filters(root.input, set())
@@ -1467,7 +1453,6 @@ def optimize_relational_tree(
 
     # Step 11: re-run column pruning.
     root = ColumnPruner().prune_unused_columns(root)
-    """
 
     return root
 

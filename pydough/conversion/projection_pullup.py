@@ -10,6 +10,7 @@ __all__ = ["pullup_projections"]
 from pydough.relational import (
     CallExpression,
     ColumnReference,
+    CorrelatedReference,
     Filter,
     Join,
     JoinType,
@@ -18,6 +19,7 @@ from pydough.relational import (
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
+    WindowCallExpression,
 )
 from pydough.relational.rel_util import apply_substitution, contains_window
 from pydough.relational.relational_expressions.column_reference_finder import (
@@ -38,14 +40,14 @@ def pull_non_columns(node: RelationalNode) -> RelationalNode:
     for name, expr in node.columns.items():
         new_node_columns[name] = expr
         match expr:
-            case ColumnReference():
+            case ColumnReference() | CorrelatedReference():
                 new_project_columns[name] = ColumnReference(name, expr.data_type)
-            case LiteralExpression() | CallExpression():
+            case LiteralExpression() | CallExpression() | WindowCallExpression():
                 new_project_columns[name] = expr
                 needs_pull = True
             case _:
                 raise NotImplementedError(
-                    f"Unsupported expression type {expr.__class__.__name__} in join columns."
+                    f"Unsupported expression type {expr.__class__.__name__} in `pull_non_columns` columns."
                 )
 
     if not needs_pull:
@@ -112,14 +114,15 @@ def pull_project_into_filter(node: Filter) -> None:
         new_expr: RelationalExpression = apply_substitution(
             expr, transfer_substitutions, {}
         )
-        if not (cond_contains_window and contains_window(new_expr)):
+        expr_contains_window: bool = contains_window(new_expr)
+        if not (cond_contains_window and expr_contains_window):
             if name in condition_names:
                 if ref_expr not in existing_outputs:
                     substitutions[ref_expr] = new_expr
-            else:
+            elif not expr_contains_window:
                 new_filter_columns[name] = new_expr
     node._condition = apply_substitution(node.condition, substitutions, {})
-    node._columns = new_filter_columns
+    # node._columns = new_filter_columns
 
 
 def pullup_projections(node: RelationalNode) -> RelationalNode:
@@ -137,7 +140,7 @@ def pullup_projections(node: RelationalNode) -> RelationalNode:
                 pull_project_into_join(node, 1)
             return pull_non_columns(node)
         case Filter():
-            # pull_project_into_filter(node)
+            pull_project_into_filter(node)
             return pull_non_columns(node)
         case _:
             return node
