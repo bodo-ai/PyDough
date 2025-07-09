@@ -354,7 +354,7 @@ Example of the structure of the metadata for a SQL Macro function named `EPSILON
 {
   "name": "EPSILON",
   "type": "sql macro",
-  "macro text": "ABS({0} - {1}) <= {2}",
+  "macro text": "ABS({1} - {0}) <= {2}",
   "description": "Returns true if the gap between the first and second argument is at most the third argument.",
   "input signature": {...},
   "output signature": {...}

@@ -20,11 +20,13 @@ from tests.test_pydough_functions.bad_pydough_functions import (
 )
 from tests.test_pydough_functions.udf_pydough_functions import (
     sqlite_udf_combine_strings,
+    sqlite_udf_count_epsilon,
     sqlite_udf_covar_pop,
     sqlite_udf_cumulative_distribution,
     sqlite_udf_decode3,
     sqlite_udf_format_datetime,
     sqlite_udf_gcat,
+    sqlite_udf_nested,
     sqlite_udf_nval,
     sqlite_udf_percent_epsilon,
     sqlite_udf_percent_positive,
@@ -94,6 +96,29 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "sqlite_udf_percent_positive",
             ),
             id="sqlite_udf_percent_positive",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_udf_count_epsilon,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "n_cust": [2436, 2495, 2471, 2473, 2356],
+                    }
+                ),
+                "sqlite_udf_count_epsilon",
+            ),
+            id="sqlite_udf_count_epsilon",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                sqlite_udf_nested,
+                "TPCH_SQLITE_UDFS",
+                lambda: pd.DataFrame({"p": [19.21]}),
+                "sqlite_udf_nested",
+            ),
+            id="sqlite_udf_nested",
         ),
         pytest.param(
             PyDoughPandasTest(
