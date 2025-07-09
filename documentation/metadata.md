@@ -270,7 +270,7 @@ Example of the structure of the metadata for a reverse (flips the earlier define
 Every JSON object describing a function has the following fields:
 - `name` (required): the name of the function, which must be a valid PyDough identifier and must not overlap with the name of other collections/properties/relationships/functions within the graph. This name will become reserved like other function names in PyDough (`COUNT`, `LOWER`, etc.)
 - `type` (required): the type of function definition. The currently supported values are ["sql alias"](#function-type-sql-alias), ["sql window alias"](#function-type-sql-window-alias) and ["sql macro"](#function-type-sql-macro).
-- `description` (optional): a semantic description of what the function does significance.
+- `description` (optional): a semantic description of what the function does.
 - `input signature` (optional): a JSON object describing the allowed types of inputs to the function. [See here](#function-verifiers) for the specification of these objects.
 - `output signature` (optional): a JSON object describing the output type of a call to the function. [See here](#function-deducers) for the specification of these objects.
 
@@ -279,7 +279,7 @@ Every JSON object describing a function has the following fields:
 
 A function of this type is intended to map to a function in the SQL dialect of the database being used in a 1:1 manner. E.g. if `FOO` in PyDough is an alias for `BAR` in SQL, then `FOO(x, y, z)` becomes `BAR(x, y, z)`. Functions of this type can only be scalar functions or aggregation functions, not window functions. Functions of this type have a type string of "sql alias" and have the following additional key-value pairs in their metadata JSON object:
 
-- `sql function` (required): a string indicating the name of the function in the SQL dialect that calls to this function should correspond to.
+- `sql function` (required): a string indicating the name of the function in the SQL dialect this function corresponds to.
 - `aggregation` (optional): a boolean indicating whether the function is an aggregation function, as opposed to a scalar function. The default value is `false` (indicating it is a scalar function).
 
 Example of the structure of the metadata for a SQL Alias function named `FORMAT_DATETIME` (a 1:1 mapping to the sqlite `STRFTIME` scalar function):
@@ -314,7 +314,7 @@ Example of the structure of the metadata for a SQL Alias function named `COMBINE
 
 A function of this type is intended to map to a window function in the SQL dialect of the database being used in a 1:1 manner. E.g. if `FOO` in PyDough is an alias for `BAR` in SQL, then `FOO(x, ...)` becomes `BAR(x) OVER (...)`. The `OVER` clause of the window function in SQL is handled by the standard optional keyword arguments to window functions in PyDough (`by`, `per`, `cumulative`, `frame`). Functions of this type have a type string of "sql window alias" and have the following additional key-value pairs in their metadata JSON object:
 
-- `sql function` (required): a string indicating the name of the window function in the SQL dialect that calls to this function should correspond to.
+- `sql function` (required): a string indicating the name of the window function in the SQL dialect that this function corresponds to.
 - `requires order` (optional): a boolean indicating whether the function requires a `by` clause. The default value is `false` (indicating it does not require a `by` clause).
 - `requires order` (optional): a boolean indicating whether the function allows window frames, either via `cumulative=True` or by providing `frame=...`. The default value is `false` (indicating it does not allow window frames).
 
@@ -343,9 +343,9 @@ Example of the structure of the metadata for a SQL Window Alias function named `
 <!-- TOC --><a name="function-type-sql-macro"></a>
 ### Function Type: SQL Macro
 
-A function of this type contains a SQL text string that acts as a Python format string to inject the arguments into. E.g. if `FOO` has the macro text `"CASE WHEN {0} > {1} THEN {0} ELSE {1} END"` and it is called with arguments `x` and `y` that become `C1` and `C2` in SQL, it generates the SQL text `CASE WHEN C1 > C2 THEN C1 ELSE C2 END`. Functions of this type can only be scalar functions or aggregation functions, not window functions. Functions of this type have a type string of "sql macro" and have the following additional key-value pairs in their metadata JSON object:
+A function of this type contains a SQL expression using a Python-style format string, where arguments are injected into the string by position. E.g. if `FOO` has the macro text `"CASE WHEN {0} > {1} THEN {0} ELSE {1} END"` and it is called with arguments `x` and `y` that become `C1` and `C2` in SQL, it generates the SQL text `CASE WHEN C1 > C2 THEN C1 ELSE C2 END`. SQL Macro functions can only be scalar functions or aggregation functions, not window functions. They have a type string of "sql macro" and have the following additional key-value pairs in their metadata JSON object:
 
-- `macro text` (required): the string that is used as the Python format string to inject the SQL text for the arguments into.
+- `macro text` (required): the Python format string used to inject the SQL text of the arguments.
 - `aggregation` (optional): a boolean indicating whether the function is an aggregation function, as opposed to a scalar function. The default value is `false` (indicating it is a scalar function).
 
 Example of the structure of the metadata for a SQL Macro function named `EPSILON` (returns whether the difference between the first two arguments is at most the third argument):
@@ -435,7 +435,7 @@ Below are several examples the JSON for such deducers:
 
 Function deducers of this type have a type string of `"select argument"` and correspond to a function call that always returns a value of the same type as a specific argument. Verifiers of this type have the following additional key-value pairs in their metadata JSON object:
 
-- `value` (required): a non-negative integer indicating which argument to the function call should determine the output type of the function when called.
+- `value` (required): a non-negative integer indicating which input argument to the function call should determine the output type of the function when called.
 
 Below are several examples the JSON for such deducers:
 

@@ -115,7 +115,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             lower, upper = lower_raw, upper_raw
 
         else:
-            # Otherwise, the frame us unbounded preceding to unbounded following
+            # Otherwise, the frame is from unbounded preceding to unbounded following.
             lower = upper = None
 
         spec_args: dict[str, str] = {"kind": "ROWS"}
