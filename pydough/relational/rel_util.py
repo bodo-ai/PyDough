@@ -306,6 +306,8 @@ def build_filter(
         assert isinstance(new_join, Join)
         new_join.condition = condition
         new_join.cardinality = new_join.cardinality.add_potential_filter()
+        if columns is not None:
+            return Project(new_join, columns)
         return new_join
 
     # Otherwise, just return a new filter node with the new condition on top
