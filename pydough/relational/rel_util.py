@@ -38,6 +38,7 @@ from .relational_nodes import (
     Filter,
     Join,
     JoinType,
+    Project,
     RelationalNode,
 )
 
@@ -244,7 +245,9 @@ def passthrough_column_mapping(node: RelationalNode) -> dict[str, RelationalExpr
 
 
 def build_filter(
-    node: RelationalNode, filters: set[RelationalExpression]
+    node: RelationalNode,
+    filters: set[RelationalExpression],
+    columns: dict[str, RelationalExpression] | None = None,
 ) -> RelationalNode:
     """
     Build a filter node with the given filters on top of an input node.
@@ -252,6 +255,9 @@ def build_filter(
     Args:
         `node`: The input node to build the filter on top of.
         `filters`: The set of filters to apply.
+        `columns`: An optional mapping of the column mapping to use on the
+        built filter node. If not provided, uses the passthrough column mapping
+        of `node`.
 
     Returns:
         A filter node with the given filters applied on top of `node`. If
@@ -263,6 +269,9 @@ def build_filter(
     filters.discard(LiteralExpression(True, BooleanType()))
     condition: RelationalExpression
     if len(filters) == 0:
+        # If columns was provided, use it to create a Project node
+        if columns is not None:
+            return Project(node, columns)
         return node
 
     # Detect whether the filter can be pushed into a join condition. If so,
@@ -301,7 +310,9 @@ def build_filter(
 
     # Otherwise, just return a new filter node with the new condition on top
     # of the existing node.
-    return Filter(node, condition, passthrough_column_mapping(node))
+    if columns is None:
+        columns = passthrough_column_mapping(node)
+    return Filter(node, condition, columns)
 
 
 def transpose_expression(

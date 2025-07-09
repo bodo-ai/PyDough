@@ -267,12 +267,15 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
     return node
 
 
-def merge_projects(node: RelationalNode) -> RelationalNode:
+def merge_projects(
+    node: RelationalNode, push_into_joins: bool = True
+) -> RelationalNode:
     """
     Merge adjacent projections when beneficial.
 
     Args:
         `node`: The current node of the relational tree.
+        `push_into_joins`: If True, push projections into joins when possible.
 
     Returns:
         The transformed version of `node` with adjacent projections merged
@@ -281,11 +284,13 @@ def merge_projects(node: RelationalNode) -> RelationalNode:
     """
     # If there is a project on top of a join, attempt to push it down into the
     # inputs of the join.
-    if isinstance(node, Project) and isinstance(node.input, Join):
+    if isinstance(node, Project) and isinstance(node.input, Join) and push_into_joins:
         node = project_join_transpose(node)
 
     # Recursively invoke the procedure on all inputs to the node.
-    node = node.copy(inputs=[merge_projects(input) for input in node.inputs])
+    node = node.copy(
+        inputs=[merge_projects(input, push_into_joins) for input in node.inputs]
+    )
 
     # Invoke the main merging step if the current node is a root/projection,
     # potentially multiple times if the projection below it that gets deleted

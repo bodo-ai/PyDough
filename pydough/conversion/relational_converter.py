@@ -1447,6 +1447,28 @@ def optimize_relational_tree(
     # Step 9: re-run projection merging.
     root = confirm_root(merge_projects(root))
 
+    """
+    # Step 6: bubble up names from the leaf nodes to further encourage simpler
+    # naming without aliases, and also to delete duplicate columns where
+    # possible.
+    root = bubble_column_names(root)
+
+    # Step 7: run projection pullup.
+    root = confirm_root(pullup_projections(root))
+
+    # Step 8: prune unused columns.
+    root = ColumnPruner().prune_unused_columns(root)
+
+    # Step 9: re-run filter pushdown
+    root._input = push_filters(root.input, set())
+
+    # Step 10: re-run projection merging, without pushing into joins.
+    root = confirm_root(merge_projects(root, push_into_joins=False))
+
+    # Step 11: re-run column pruning.
+    root = ColumnPruner().prune_unused_columns(root)
+    """
+
     return root
 
 
