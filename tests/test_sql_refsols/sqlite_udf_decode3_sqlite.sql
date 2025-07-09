@@ -8,7 +8,7 @@ SELECT
     WHEN CAST(SUBSTRING(o_orderpriority, 1, 1) AS INTEGER) = 3
     THEN 'C'
     ELSE 'D'
-  END AS _expr0
+  END AS val
 FROM tpch.orders
 WHERE
   o_clerk = 'Clerk#000000951'

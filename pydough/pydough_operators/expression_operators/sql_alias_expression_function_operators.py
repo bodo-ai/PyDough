@@ -8,6 +8,8 @@ __all__ = ["SqlAliasExpressionFunctionOperator"]
 
 
 from pydough.pydough_operators.type_inference import (
+    ExpressionTypeDeducer,
+    TypeVerifier,
     build_deducer_from_json,
     build_verifier_from_json,
 )
@@ -34,10 +36,11 @@ class SqlAliasExpressionFunctionOperator(ExpressionFunctionOperator):
         deducer_json: dict | None,
         description: str | None,
     ):
-        build_verifier_from_json(verifier_json)
-        build_deducer_from_json(deducer_json)
+        verifier: TypeVerifier = build_verifier_from_json(verifier_json)
+        deducer: ExpressionTypeDeducer = build_deducer_from_json(deducer_json)
         self._sql_function_alias: str = sql_function_alias
         self._description: str | None = description
+        super().__init__(function_name, is_aggregation, verifier, deducer, True)
 
     @property
     def sql_function_alias(self) -> str:
