@@ -1,0 +1,42 @@
+WITH _S3 AS (
+  SELECT
+    COALESCE(SUM(l_quantity), 0) AS AGG_0,
+    l_partkey AS L_PARTKEY
+  FROM TPCH.LINEITEM
+  WHERE
+    YEAR(l_shipdate) = 1994
+  GROUP BY
+    l_partkey
+), _S5 AS (
+  SELECT
+    _S3.AGG_0,
+    PART.p_partkey AS P_PARTKEY
+  FROM TPCH.PART AS PART
+  JOIN _S3 AS _S3
+    ON PART.p_partkey = _S3.L_PARTKEY
+  WHERE
+    STARTSWITH(PART.p_name, 'forest')
+), _T1 AS (
+  SELECT
+    COUNT(*) AS N_ROWS,
+    PARTSUPP.ps_suppkey AS PS_SUPPKEY
+  FROM TPCH.PARTSUPP AS PARTSUPP
+  JOIN _S5 AS _S5
+    ON PARTSUPP.ps_availqty > (
+      0.5 * COALESCE(_S5.AGG_0, 0)
+    )
+    AND PARTSUPP.ps_partkey = _S5.P_PARTKEY
+  GROUP BY
+    PARTSUPP.ps_suppkey
+)
+SELECT
+  SUPPLIER.s_name AS S_NAME,
+  SUPPLIER.s_address AS S_ADDRESS
+FROM TPCH.SUPPLIER AS SUPPLIER
+JOIN TPCH.NATION AS NATION
+  ON NATION.n_name = 'CANADA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
+JOIN _T1 AS _T1
+  ON SUPPLIER.s_suppkey = _T1.PS_SUPPKEY AND _T1.N_ROWS > 0
+ORDER BY
+  S_NAME NULLS FIRST
+LIMIT 10

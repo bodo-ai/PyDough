@@ -1,0 +1,18 @@
+WITH _S1 AS (
+  SELECT
+    (
+      COUNT(DISTINCT coupon_id) * 1.0
+    ) / COUNT(DISTINCT txid) AS CPUR,
+    receiver_id AS RECEIVER_ID
+  FROM MAIN.WALLET_TRANSACTIONS_DAILY
+  WHERE
+    status = 'success'
+  GROUP BY
+    receiver_id
+)
+SELECT
+  MERCHANTS.name,
+  _S1.CPUR
+FROM MAIN.MERCHANTS AS MERCHANTS
+JOIN _S1 AS _S1
+  ON MERCHANTS.mid = _S1.RECEIVER_ID

@@ -1,0 +1,9 @@
+SELECT
+  sbtxstatus AS status,
+  COUNT(*) AS num_transactions
+FROM MAIN.SBTRANSACTION
+GROUP BY
+  sbtxstatus
+ORDER BY
+  NUM_TRANSACTIONS DESC NULLS LAST
+LIMIT 3

@@ -1,0 +1,22 @@
+WITH _T1 AS (
+  SELECT
+    DATEDIFF(
+      DAY,
+      CAST(LAG(EVENTS.ev_dt, 1) OVER (PARTITION BY ERAS.er_name ORDER BY EVENTS.ev_dt) AS DATETIME),
+      CAST(EVENTS.ev_dt AS DATETIME)
+    ) AS DAY_GAP,
+    ERAS.er_name AS ER_NAME,
+    ERAS.er_start_year AS ER_START_YEAR
+  FROM ERAS AS ERAS
+  JOIN EVENTS AS EVENTS
+    ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
+    AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
+)
+SELECT
+  ANY_VALUE(ER_NAME) AS era_name,
+  AVG(DAY_GAP) AS avg_event_gap
+FROM _T1
+GROUP BY
+  ER_NAME
+ORDER BY
+  ANY_VALUE(ER_START_YEAR) NULLS FIRST
