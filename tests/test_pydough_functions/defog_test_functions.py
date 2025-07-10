@@ -579,7 +579,9 @@ def impl_defog_broker_gen2():
     Return the number of transactions by users who joined in the past 70
     days.
     """
-    selected_tx = transactions.WHERE(customer.join_date >= DATETIME("now", "-70 days"))
+    selected_tx = transactions.WHERE(
+        customer.join_date >= DATETIME("now", "-70 days", "start of day")
+    )
 
     return Broker.CALCULATE(transaction_count=COUNT(selected_tx.customer_id))
 
