@@ -3,6 +3,7 @@ Tests pydough from_string API
 """
 
 from collections.abc import Callable
+from typing import Any
 
 import pandas as pd
 import pytest
@@ -50,7 +51,7 @@ from tests.testing_utilities import graph_fetcher
 def test_tpch_data_e2e_from_string(
     pydough_code: str,
     answer_variable: str,
-    env: dict[str, None],
+    env: dict[str, Any],
     answer: Callable[[], pd.DataFrame],
     get_sample_graph: graph_fetcher,
     sqlite_tpch_db_context: DatabaseContext,
@@ -98,14 +99,13 @@ def test_tpch_data_e2e_from_string(
 def test_invalid_tpch_data_e2e_from_string(
     pydough_code: str,
     answer_variable: str,
-    env: dict[str, None],
+    env: dict[str, Any],
     error_message: str,
     get_sample_graph: graph_fetcher,
-    sqlite_tpch_db_context: DatabaseContext,
 ):
     with pytest.raises(Exception, match=error_message):
         graph: GraphMetadata = get_sample_graph("TPCH")
         query: UnqualifiedNode = pydough.from_string(
             pydough_code, answer_variable, metadata=graph, environment=env
         )
-        pydough.to_df(query, metadata=graph, database=sqlite_tpch_db_context)
+        pydough.to_sql(query, metadata=graph)
