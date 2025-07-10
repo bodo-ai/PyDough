@@ -1,106 +1,50 @@
 SELECT
-  DATETIME('now') AS ts_1,
-  DATE('now', 'start of month') AS ts_2,
-  DATETIME('now', '12 hour') AS ts_3,
-  DATE('now', 'start of year', '-1 day') AS ts_4,
-  DATE('now', 'start of day') AS ts_5,
-  DATE(
-    'now',
-    'start of month',
-    '-' || CAST((
-      (
-        CAST(STRFTIME('%m', DATETIME('now')) AS INTEGER) - 1
-      ) % 3
-    ) AS TEXT) || ' months',
-    '1 day'
-  ) AS ts_6,
-  CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year,
-  CASE
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 3
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 1
-    THEN 1
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 6
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 4
-    THEN 2
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 9
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 7
-    THEN 3
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 12
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 10
-    THEN 4
-  END AS qtr,
-  CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month,
-  CAST(STRFTIME('%d', o_orderdate) AS INTEGER) AS day,
-  CAST(STRFTIME('%H', o_orderdate) AS INTEGER) AS hour,
-  CAST(STRFTIME('%M', o_orderdate) AS INTEGER) AS minute,
-  CAST(STRFTIME('%S', o_orderdate) AS INTEGER) AS second,
-  (
-    (
-      CAST((
-        JULIANDAY(DATE('1992-01-01', 'start of day')) - JULIANDAY(DATE(o_orderdate, 'start of day'))
-      ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%H', o_orderdate) AS INTEGER)
-    ) * 60 + CAST(STRFTIME('%M', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%M', o_orderdate) AS INTEGER)
-  ) * 60 + CAST(STRFTIME('%S', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%S', o_orderdate) AS INTEGER) AS seconds_since,
-  (
-    CAST((
-      JULIANDAY(DATE('1992-01-01', 'start of day')) - JULIANDAY(DATE(o_orderdate, 'start of day'))
-    ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%H', o_orderdate) AS INTEGER)
-  ) * 60 + CAST(STRFTIME('%M', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%M', o_orderdate) AS INTEGER) AS minutes_since,
+  DATETIME('now') AS ts_now_1,
+  DATE('now', 'start of day') AS ts_now_2,
+  DATE('now', 'start of month') AS ts_now_3,
+  DATETIME('now', '1 hour') AS ts_now_4,
+  DATE('2025-01-01 00:00:00', 'start of month') AS ts_now_5,
+  DATETIME('1995-10-10 00:00:00', '-2 day') AS ts_now_6,
+  CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year_col,
+  CAST(STRFTIME('%Y', '2020-05-01 00:00:00') AS INTEGER) AS year_py,
+  CAST(STRFTIME('%Y', '1995-10-10 00:00:00') AS INTEGER) AS year_pd,
+  CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month_col,
+  CAST(STRFTIME('%m', DATETIME('2025-02-25')) AS INTEGER) AS month_str,
+  CAST(STRFTIME('%m', '1992-01-01 12:30:45') AS INTEGER) AS month_dt,
+  CAST(STRFTIME('%d', o_orderdate) AS INTEGER) AS day_col,
+  CAST(STRFTIME('%d', DATETIME('1996-11-25 10:45:00')) AS INTEGER) AS day_str,
+  CAST(STRFTIME('%H', DATETIME('1995-12-01 23:59:59')) AS INTEGER) AS hour_str,
+  CAST(STRFTIME('%M', DATETIME('1995-12-01 23:59:59')) AS INTEGER) AS minute_str,
+  CAST(STRFTIME('%S', '1992-01-01 00:00:59') AS INTEGER) AS second_ts,
   CAST((
-    JULIANDAY(DATE('1992-01-01', 'start of day')) - JULIANDAY(DATE(o_orderdate, 'start of day'))
-  ) AS INTEGER) * 24 + CAST(STRFTIME('%H', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%H', o_orderdate) AS INTEGER) AS hours_since,
+    JULIANDAY(DATE(DATETIME('1992-01-01'), 'start of day')) - JULIANDAY(DATE(o_orderdate, 'start of day'))
+  ) AS INTEGER) AS dd_col_str,
   CAST((
-    JULIANDAY(DATE('1992-01-01', 'start of day')) - JULIANDAY(DATE(o_orderdate, 'start of day'))
-  ) AS INTEGER) AS days_since,
+    JULIANDAY(DATE(o_orderdate, 'start of day')) - JULIANDAY(DATE(DATETIME('1992-01-01'), 'start of day'))
+  ) AS INTEGER) AS dd_str_col,
+  (
+    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) - CAST(STRFTIME('%Y', '1995-10-10 00:00:00') AS INTEGER)
+  ) * 12 + CAST(STRFTIME('%m', o_orderdate) AS INTEGER) - CAST(STRFTIME('%m', '1995-10-10 00:00:00') AS INTEGER) AS dd_pd_col,
+  CAST(STRFTIME('%Y', '1992-01-01 12:30:45') AS INTEGER) - CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS dd_col_dt,
   CAST(CAST(CAST((
     JULIANDAY(
       DATE(
-        '1992-01-01',
-        '-' || CAST(CAST(STRFTIME('%w', DATETIME('1992-01-01')) AS INTEGER) AS TEXT) || ' days',
+        '1992-01-01 12:30:45',
+        '-' || CAST(CAST(STRFTIME('%w', DATETIME('1992-01-01 12:30:45')) AS INTEGER) AS TEXT) || ' days',
         'start of day'
       )
     ) - JULIANDAY(
       DATE(
-        o_orderdate,
-        '-' || CAST(CAST(STRFTIME('%w', DATETIME(o_orderdate)) AS INTEGER) AS TEXT) || ' days',
+        DATETIME('1992-01-01'),
+        '-' || CAST(CAST(STRFTIME('%w', DATETIME(DATETIME('1992-01-01'))) AS INTEGER) AS TEXT) || ' days',
         'start of day'
       )
     )
-  ) AS INTEGER) AS REAL) / 7 AS INTEGER) AS weeks_since,
-  (
-    CAST(STRFTIME('%Y', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%Y', o_orderdate) AS INTEGER)
-  ) * 12 + CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS months_since,
-  (
-    CAST(STRFTIME('%Y', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%Y', o_orderdate) AS INTEGER)
-  ) * 4 + CASE
-    WHEN CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) <= 3
-    AND CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) >= 1
-    THEN 1
-    WHEN CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) <= 6
-    AND CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) >= 4
-    THEN 2
-    WHEN CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) <= 9
-    AND CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) >= 7
-    THEN 3
-    WHEN CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) <= 12
-    AND CAST(STRFTIME('%m', '1992-01-01') AS INTEGER) >= 10
-    THEN 4
-  END - CASE
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 3
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 1
-    THEN 1
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 6
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 4
-    THEN 2
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 9
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 7
-    THEN 3
-    WHEN CAST(STRFTIME('%m', o_orderdate) AS INTEGER) <= 12
-    AND CAST(STRFTIME('%m', o_orderdate) AS INTEGER) >= 10
-    THEN 4
-  END AS qtrs_since,
-  CAST(STRFTIME('%Y', '1992-01-01') AS INTEGER) - CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS years_since,
-  CAST(STRFTIME('%w', o_orderdate) AS INTEGER) AS day_of_week,
+  ) AS INTEGER) AS REAL) / 7 AS INTEGER) AS dd_dt_str,
+  CAST(STRFTIME('%w', o_orderdate) AS INTEGER) AS dow_col,
+  CAST(STRFTIME('%w', DATETIME('1992-07-01')) AS INTEGER) AS dow_str,
+  CAST(STRFTIME('%w', '1992-01-01 12:30:45') AS INTEGER) AS dow_dt,
+  CAST(STRFTIME('%w', '1995-10-10 00:00:00') AS INTEGER) AS dow_pd,
   CASE
     WHEN CAST(STRFTIME('%w', o_orderdate) AS INTEGER) = 0
     THEN 'Sunday'
@@ -116,5 +60,37 @@ SELECT
     THEN 'Friday'
     WHEN CAST(STRFTIME('%w', o_orderdate) AS INTEGER) = 6
     THEN 'Saturday'
-  END AS day_name
+  END AS dayname_col,
+  CASE
+    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 0
+    THEN 'Sunday'
+    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 1
+    THEN 'Monday'
+    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 2
+    THEN 'Tuesday'
+    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 3
+    THEN 'Wednesday'
+    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 4
+    THEN 'Thursday'
+    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 5
+    THEN 'Friday'
+    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 6
+    THEN 'Saturday'
+  END AS dayname_str,
+  CASE
+    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 0
+    THEN 'Sunday'
+    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 1
+    THEN 'Monday'
+    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 2
+    THEN 'Tuesday'
+    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 3
+    THEN 'Wednesday'
+    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 4
+    THEN 'Thursday'
+    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 5
+    THEN 'Friday'
+    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 6
+    THEN 'Saturday'
+  END AS dayname_dt
 FROM tpch.orders

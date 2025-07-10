@@ -13,22 +13,27 @@ from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
 )
-from tests.test_pydough_functions.simple_pydough_functions import (
+from tests.test_pydough_functions.all_pydough_functions_dialects import (
     aggregation_functions,
     arithmetic_and_binary_operators,
     casting_functions,
     comparisons_and_logical_operators,
     conditional_functions,
+    datetime_functions,
+    numerical_functions,
+    string_functions,
+    unary_and_slicing_operators,
+    window_functions,
+)
+from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     datediff,
-    datetime_functions,
     datetime_sampler,
     floor_and_ceil,
     floor_and_ceil_2,
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
-    numerical_functions,
     quantile_function_test_1,
     quantile_function_test_2,
     rank_a,
@@ -39,12 +44,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_scan,
     simple_smallest_or_largest,
     simple_var_std,
-    string_functions,
     time_threshold_reached,
     transaction_week_sampler,
-    unary_and_slicing_operators,
     week_offset,
-    window_functions,
     window_sliding_frame_relsize,
     window_sliding_frame_relsum,
 )

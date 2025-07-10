@@ -60,5 +60,5 @@ SELECT
       ) END
     END
   ) AS name_second_to_last_char,
-  0 - c_acctbal AS complement_balance
+  c_acctbal >= 0 AS is_not_in_debt
 FROM tpch.customer

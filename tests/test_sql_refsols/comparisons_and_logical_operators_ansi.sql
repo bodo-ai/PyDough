@@ -14,7 +14,6 @@ SELECT
   customer.c_acctbal > 0 AS non_empty_acct,
   NOT _s1.n_rows IS NULL AND _s1.n_rows >= 5 AS at_least_5_orders,
   region.r_name = 'ASIA' OR region.r_name = 'EUROPE' AS is_eurasian,
-  region.r_name <> 'ASIA' OR region.r_name = 'EUROPE' AS is_not_eurasian,
   customer.c_acctbal < 0 AND region.r_name = 'EUROPE' AS is_european_in_debt
 FROM tpch.customer AS customer
 LEFT JOIN _s1 AS _s1
