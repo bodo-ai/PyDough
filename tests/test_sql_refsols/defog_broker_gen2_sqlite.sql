@@ -3,4 +3,4 @@ SELECT
 FROM main.sbtransaction AS sbtransaction
 JOIN main.sbcustomer AS sbcustomer
   ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
-  AND sbcustomer.sbcustjoindate >= DATETIME('now', '-70 day')
+  AND sbcustomer.sbcustjoindate >= DATE(DATETIME('now', '-70 day'), 'start of day')
