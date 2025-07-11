@@ -92,6 +92,8 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
             "MySQL connection requires the following arguments: "
             + ", ".join(required_keys)
         )
-    # Create a Snowflake connection using the provided keyword arguments
+    # Lets make more robust add a timeout and limited numbers of tries, error for that
+    # Create a MySQL connection using the provided keyword arguments
     connection = mysql.connector.connect(**kwargs)
+
     return DatabaseConnection(connection)

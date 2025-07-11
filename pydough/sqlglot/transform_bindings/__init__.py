@@ -3,12 +3,18 @@ Submodule of the sqlglot module dedicated to the logic that transforms
 invocations of PyDough function operators into SQLGlot function calls.
 """
 
-__all__ = ["BaseTransformBindings", "SQLiteTransformBindings", "bindings_from_dialect"]
+__all__ = [
+    "BaseTransformBindings",
+    "MySQLTransformBindings",
+    "SQLiteTransformBindings",
+    "bindings_from_dialect",
+]
 
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 
 from .base_transform_bindings import BaseTransformBindings
+from .mysql_transform_bindings import MySQLTransformBindings
 from .sqlite_transform_bindings import SQLiteTransformBindings
 
 
@@ -32,5 +38,7 @@ def bindings_from_dialect(
             return BaseTransformBindings(configs)
         case DatabaseDialect.SQLITE:
             return SQLiteTransformBindings(configs)
+        case DatabaseDialect.MYSQL:
+            return MySQLTransformBindings(configs)
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
