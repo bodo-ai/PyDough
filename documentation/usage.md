@@ -351,7 +351,7 @@ pydough.active_session.database = education_context
 shakespeare_context  = pydough.active_session.load_database("sqlite", database="db_files/education.db")
 ```
 
-Notice that both APIs `load_database_context` and `sesion.load_database` take in the name of the databse type first and all the connection keyword arguments, and also return the context object.
+Notice that both APIs `load_database_context` and `sesion.load_database` take in the name of the database type first and all the connection keyword arguments, and also return the context object.
 
 It is important to ensure that the correct database context is being used for several reasons:
 - It controls what SQL dialect is used when translating from PyDough to SQL.
