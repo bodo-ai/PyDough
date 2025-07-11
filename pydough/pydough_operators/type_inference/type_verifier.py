@@ -189,7 +189,9 @@ class RequireCollection(TypeVerifier):
 
 def build_verifier_from_json(json_data: dict[str, Any] | None) -> TypeVerifier:
     """
-    Builds a type verifier from a JSON object.
+    Builds a type verifier from a JSON object. Note: verifiers currently only
+    deal with the number of types, rather than the actual types of the
+    arguments, since the PyDough type system is not yet fully implemented.
 
     Args:
         `json_data`: the JSON object containing the verifier configuration, or
