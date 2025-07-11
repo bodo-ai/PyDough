@@ -2276,8 +2276,9 @@ def get_part_multiple():
             p13=GETPART(name, "", k),
             p14=GETPART("", " ", k),
             p15=GETPART(name, " ", 0),
-            p16=GETPART(state, state, 1),
+            p16=GETPART(state, state, k),
             p17=GETPART(GETPART(phone, "-", 1), "5", k),
+            p18=GETPART(postal_code, "0", k),
         )
         .ORDER_BY(k.ASC())
     )

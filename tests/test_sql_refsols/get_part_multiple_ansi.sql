@@ -91,7 +91,7 @@ WITH _s0 AS (
     '' AS part,
     sbcuststate AS rest,
     sbcuststate AS delim,
-    1 AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -219,9 +219,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustname AS rest,
-    ' ' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustpostalcode AS rest,
+    '0' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -248,9 +248,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustemail AS rest,
-    '.' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustname AS rest,
+    ' ' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -279,7 +279,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustemail AS rest,
     '.' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -306,9 +306,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustphone AS rest,
-    '-' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustemail AS rest,
+    '.' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -337,7 +337,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustphone AS rest,
     '-' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -364,9 +364,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustpostalcode AS rest,
-    '00' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustphone AS rest,
+    '-' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -395,7 +395,7 @@ WITH _s0 AS (
     '' AS part,
     sbcustpostalcode AS rest,
     '00' AS delim,
-    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -422,9 +422,9 @@ WITH _s0 AS (
   SELECT
     0 AS part_index,
     '' AS part,
-    sbcustname AS rest,
-    '!' AS delim,
-    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+    sbcustpostalcode AS rest,
+    '00' AS delim,
+    0 - CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
   UNION ALL
   SELECT
     part_index + 1 AS part_index,
@@ -447,6 +447,35 @@ WITH _s0 AS (
   SELECT
     COUNT(*) - 1 AS total_parts
   FROM _s34
+), _s36 AS (
+  SELECT
+    0 AS part_index,
+    '' AS part,
+    sbcustname AS rest,
+    '!' AS delim,
+    CAST(SUBSTRING(sbcustid, 2) AS BIGINT) AS idx
+  UNION ALL
+  SELECT
+    part_index + 1 AS part_index,
+    CASE
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
+      THEN rest
+      ELSE SUBSTRING(rest, 1, STR_POSITION(rest, delim) - 1)
+    END AS part,
+    CASE
+      WHEN STR_POSITION(rest, delim) = 0 OR delim = ''
+      THEN ''
+      ELSE SUBSTRING(rest, STR_POSITION(rest, delim) + LENGTH(delim))
+    END AS rest,
+    delim,
+    idx
+  FROM _s36
+  WHERE
+    rest <> ''
+), _s37 AS (
+  SELECT
+    COUNT(*) - 1 AS total_parts
+  FROM _s36
 ), _s4 AS (
   SELECT
     0 AS part_index,
@@ -642,7 +671,7 @@ WITH _s0 AS (
           THEN _s21.total_parts + _s20.idx + 1
           ELSE 1
         END
-    ) AS p2,
+    ) AS p18,
     (
       SELECT
         _s22.part
@@ -657,7 +686,7 @@ WITH _s0 AS (
           THEN _s23.total_parts + _s22.idx + 1
           ELSE 1
         END
-    ) AS p3,
+    ) AS p2,
     (
       SELECT
         _s24.part
@@ -672,7 +701,7 @@ WITH _s0 AS (
           THEN _s25.total_parts + _s24.idx + 1
           ELSE 1
         END
-    ) AS p4,
+    ) AS p3,
     (
       SELECT
         _s26.part
@@ -687,7 +716,7 @@ WITH _s0 AS (
           THEN _s27.total_parts + _s26.idx + 1
           ELSE 1
         END
-    ) AS p5,
+    ) AS p4,
     (
       SELECT
         _s28.part
@@ -702,7 +731,7 @@ WITH _s0 AS (
           THEN _s29.total_parts + _s28.idx + 1
           ELSE 1
         END
-    ) AS p6,
+    ) AS p5,
     (
       SELECT
         _s30.part
@@ -717,7 +746,7 @@ WITH _s0 AS (
           THEN _s31.total_parts + _s30.idx + 1
           ELSE 1
         END
-    ) AS p7,
+    ) AS p6,
     (
       SELECT
         _s32.part
@@ -732,7 +761,7 @@ WITH _s0 AS (
           THEN _s33.total_parts + _s32.idx + 1
           ELSE 1
         END
-    ) AS p8,
+    ) AS p7,
     (
       SELECT
         _s34.part
@@ -745,6 +774,21 @@ WITH _s0 AS (
           THEN _s34.idx
           WHEN _s34.idx < 0
           THEN _s35.total_parts + _s34.idx + 1
+          ELSE 1
+        END
+    ) AS p8,
+    (
+      SELECT
+        _s36.part
+      FROM _s36 AS _s36
+      CROSS JOIN _s37 AS _s37
+      WHERE
+        _s36.part_index <> 0
+        AND _s36.part_index = CASE
+          WHEN _s36.idx > 0
+          THEN _s36.idx
+          WHEN _s36.idx < 0
+          THEN _s37.total_parts + _s36.idx + 1
           ELSE 1
         END
     ) AS p9,
@@ -815,7 +859,8 @@ SELECT
   p14,
   p15,
   p16,
-  p17
+  p17,
+  p18
 FROM _t1
 ORDER BY
   CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
