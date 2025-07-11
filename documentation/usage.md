@@ -478,7 +478,7 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
 
 <!-- TOC --><a name="pydoughfrom_string"></a>
-### `pydoughfrom_string`
+### `pydough.from_string`
 The `from_string` API parses a PyDough source code text string and and transforms it into a PyDough collection on which operations like `explain()`, `to_sql()`, or `to_df()` can be called. The first argument is the source code string. It can be a single pydough command or a multi-line pydough code with intermediate results stored in variables. 
 
 The second argument is the name of the variable that stores the final result of pydough code, for further operations. The API will return the unqualified node containing this final result of the pydough code. If the second argument is not provided, the result will be expected to be in a variable called `result`.
@@ -487,7 +487,7 @@ The third argument is optional and corresponds to the pydough graph metadata tha
 
 An optional fourth argument allows to specify additional environment context for the pydough code. This environment context will be the local namespace for the executed code. If provided, it should be a dictionary.
 
-Below are examples of using `pydough.from_string`, and examples of the SQL hat could be potentially generated from calling `pydough.to_sql` on the output.
+Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output.
 
 ```py
 import pydough
