@@ -17,7 +17,11 @@ from pydough.relational import (
     RelationalNode,
     RelationalRoot,
 )
-from pydough.relational.rel_util import apply_substitution, contains_window
+from pydough.relational.rel_util import (
+    add_input_name,
+    apply_substitution,
+    contains_window,
+)
 from pydough.relational.relational_expressions.column_reference_finder import (
     ColumnReferenceFinder,
 )
@@ -31,11 +35,15 @@ def widen_columns(
     """
     TODO
     """
-    existing_vals: set[RelationalExpression] = set(node.columns.values())
+    existing_vals: dict[RelationalExpression, RelationalExpression] = {
+        expr: ColumnReference(name, expr.data_type)
+        for name, expr in node.columns.items()
+    }
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
     for input_idx in range(len(node.inputs)):
         input_node: RelationalNode = node.inputs[input_idx]
         for name, expr in input_node.columns.items():
+            expr = add_input_name(expr, node.default_input_aliases[input_idx])
             ref_expr: ColumnReference = ColumnReference(
                 name, expr.data_type, input_name=node.default_input_aliases[input_idx]
             )
@@ -47,8 +55,11 @@ def widen_columns(
                     new_name = f"{name}_{idx}"
                 new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
                 node.columns[new_name] = ref_expr
+                existing_vals[expr] = ref_expr
                 substitutions[ref_expr] = new_ref
-    return substitutions
+            else:
+                substitutions[ref_expr] = existing_vals[expr]
+    return {k: v for k, v in substitutions.items() if k != v}
 
 
 def pull_non_columns(node: RelationalNode) -> RelationalNode:
@@ -71,6 +82,7 @@ def pull_non_columns(node: RelationalNode) -> RelationalNode:
     substitutions: dict[RelationalExpression, RelationalExpression] = widen_columns(
         node
     )
+    substitutions = {k: add_input_name(v, None) for k, v in substitutions.items()}
     for name, expr in new_project_columns.items():
         new_project_columns[name] = apply_substitution(expr, substitutions, {})
 
@@ -83,6 +95,45 @@ def pull_project_into_join(node: Join, input_index: int) -> None:
     """
     if not isinstance(node.inputs[input_index], Project):
         return
+
+    project = node.inputs[input_index]
+    assert isinstance(project, Project)
+
+    input_name: str | None = node.default_input_aliases[input_index]
+
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    finder.reset()
+    node.condition.accept(finder)
+    condition_cols: set[ColumnReference] = finder.get_column_references()
+    condition_names: set[str] = {col.name for col in condition_cols}
+    finder.reset()
+    for expr in node.columns.values():
+        expr.accept(finder)
+    output_cols: set[ColumnReference] = finder.get_column_references()
+    output_names: set[str] = {col.name for col in output_cols}
+
+    transfer_substitutions: dict[RelationalExpression, RelationalExpression] = (
+        widen_columns(project)
+    )
+
+    substitutions: dict[RelationalExpression, RelationalExpression] = {}
+    for name, expr in project.columns.items():
+        new_expr: RelationalExpression = add_input_name(
+            apply_substitution(expr, transfer_substitutions, {}), input_name
+        )
+        if (not contains_window(new_expr)) and (
+            (name in condition_names) != (name in output_names)
+        ):
+            ref_expr: ColumnReference = ColumnReference(
+                name, expr.data_type, input_name=input_name
+            )
+            substitutions[ref_expr] = new_expr
+
+    node._condition = apply_substitution(node.condition, substitutions, {})
+    node._columns = {
+        name: apply_substitution(expr, substitutions, {})
+        for name, expr in node.columns.items()
+    }
 
 
 def pull_project_into_filter(node: Filter) -> None:
@@ -117,9 +168,7 @@ def pull_project_into_filter(node: Filter) -> None:
             (name in condition_names) != (name in output_names)
         ):
             ref_expr: ColumnReference = ColumnReference(name, expr.data_type)
-            substitutions[ref_expr] = apply_substitution(
-                expr, transfer_substitutions, {}
-            )
+            substitutions[ref_expr] = new_expr
     node._condition = apply_substitution(node.condition, substitutions, {})
     node._columns = {
         name: apply_substitution(expr, substitutions, {})

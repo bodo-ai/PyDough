@@ -4,7 +4,7 @@ WITH _s14 AS (
   FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
-), _t6 AS (
+), _s6 AS (
   SELECT
     ca_dt
   FROM main.calendar
@@ -19,7 +19,7 @@ WITH _s14 AS (
   SELECT
     COUNT(*) AS n_rows,
     _s0.ca_dt
-  FROM _t6 AS _s0
+  FROM _s6 AS _s0
   JOIN main.incidents AS incidents
     ON _s0.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   JOIN main.devices AS devices
@@ -32,7 +32,7 @@ WITH _s14 AS (
   SELECT
     COUNT(*) AS n_rows,
     _s8.ca_dt
-  FROM _t6 AS _s8
+  FROM _s6 AS _s8
   JOIN main.devices AS devices
     ON _s8.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   JOIN _t8 AS _t10
@@ -43,14 +43,14 @@ WITH _s14 AS (
   SELECT
     SUM(_s7.n_rows) AS sum_expr_4,
     SUM(_s13.n_rows) AS sum_n_rows,
-    EXTRACT(YEAR FROM CAST(_t6.ca_dt AS DATETIME)) AS year
-  FROM _t6 AS _t6
+    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS DATETIME)) AS year
+  FROM _s6 AS _s6
   LEFT JOIN _s7 AS _s7
-    ON _s7.ca_dt = _t6.ca_dt
+    ON _s6.ca_dt = _s7.ca_dt
   LEFT JOIN _s13 AS _s13
-    ON _s13.ca_dt = _t6.ca_dt
+    ON _s13.ca_dt = _s6.ca_dt
   GROUP BY
-    EXTRACT(YEAR FROM CAST(_t6.ca_dt AS DATETIME))
+    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS DATETIME))
 ), _t0 AS (
   SELECT
     ROUND(

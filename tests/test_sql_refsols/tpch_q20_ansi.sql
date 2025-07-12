@@ -1,6 +1,6 @@
 WITH _s3 AS (
   SELECT
-    COALESCE(SUM(l_quantity), 0) AS part_qty,
+    SUM(l_quantity) AS sum_l_quantity,
     l_partkey
   FROM tpch.lineitem
   WHERE
@@ -10,7 +10,7 @@ WITH _s3 AS (
 ), _s5 AS (
   SELECT
     part.p_partkey,
-    _s3.part_qty
+    _s3.sum_l_quantity
   FROM tpch.part AS part
   JOIN _s3 AS _s3
     ON _s3.l_partkey = part.p_partkey
@@ -24,7 +24,7 @@ WITH _s3 AS (
   JOIN _s5 AS _s5
     ON _s5.p_partkey = partsupp.ps_partkey
     AND partsupp.ps_availqty > (
-      0.5 * COALESCE(_s5.part_qty, 0)
+      0.5 * COALESCE(COALESCE(_s5.sum_l_quantity, 0), 0)
     )
   GROUP BY
     partsupp.ps_suppkey

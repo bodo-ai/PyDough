@@ -4,6 +4,7 @@ A mixture of utility functions for relational nodes and expressions.
 
 __all__ = [
     "add_expr_uses",
+    "add_input_name",
     "apply_substitution",
     "bubble_uniqueness",
     "build_filter",
@@ -754,6 +755,54 @@ def apply_substitution(
                     apply_substitution(
                         order_arg.expr, substitutions, correl_substitutions
                     ),
+                    order_arg.ascending,
+                    order_arg.nulls_first,
+                )
+                for order_arg in expr.order_inputs
+            ],
+            expr.kwargs,
+        )
+
+    # For all other cases, just return the expression as is.
+    return expr
+
+
+def add_input_name(
+    expr: RelationalExpression, input_name: str | None
+) -> RelationalExpression:
+    """
+    Adds an input name to all column references inside the given expression.
+
+    Args:
+        `expr`: The expression to add the input name to its contents.
+        `input_name`: The input name to add.
+
+    Returns:
+        The expression with the input name added to all contents, if
+        applicable.
+    """
+    if isinstance(expr, ColumnReference):
+        return expr.with_input(input_name)
+
+    # For call expressions, recursively transform the inputs.
+    if isinstance(expr, CallExpression):
+        return CallExpression(
+            expr.op,
+            expr.data_type,
+            [add_input_name(arg, input_name) for arg in expr.inputs],
+        )
+
+    # For window call expressions, recursively transform the inputs, partition
+    # inputs, and order inputs.
+    if isinstance(expr, WindowCallExpression):
+        return WindowCallExpression(
+            expr.op,
+            expr.data_type,
+            [add_input_name(arg, input_name) for arg in expr.inputs],
+            [add_input_name(arg, input_name) for arg in expr.partition_inputs],
+            [
+                ExpressionSortInfo(
+                    add_input_name(order_arg.expr, input_name),
                     order_arg.ascending,
                     order_arg.nulls_first,
                 )
