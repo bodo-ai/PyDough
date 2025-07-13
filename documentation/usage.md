@@ -500,7 +500,7 @@ The first argument `source` is the source code string. It can be a single pydoug
 
 Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output. All these examples use the database tcph that can be downloaded running the following command from the root directory of PyDough: `bash demos/setup_tpch.sh tpch.db`
  
-Python code using `pydough.from_string` to generate SQL to get the count of customers in market segment AUTOMOBILE. The result will be returned in a variable named pydough_query:
+Python code using `pydough.from_string` to generate SQL to get the count of customers in the market segment AUTOMOBILE. The result will be returned in a variable named `pydough_query` instead of the default `result`, and the market segment AUTOMOBILE is passed in an environment variable `SEG`.:
 ```py
 import pydough
 
@@ -509,10 +509,10 @@ import pydough
 graph = pydough.active_session.load_metadata_graph("demos/metadata/tpch_demo_graph.json", "TPCH")
 pydough.active_session.connect_database("sqlite", database="tpch.db")
 
-# Example of a simple pydough code snippet that uses variables provided in the
-# environment context. This query gets the list of customers from the AUTOMOBILE
-# market segment. For this, a SEG variable is passed in the environment with a
-# value of "AUTOMOBILE"
+# Example of a simple pydough code snippet that uses variables provided in 
+# the environment context. This query gets the count of customers from the 
+# AUTOMOBILE market segment. For this, a SEG variable is passed in the 
+# environment with a value of "AUTOMOBILE"
 pydough_code = "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
 # Transform the pydough code and get the result from pydough_query
 query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG":"AUTOMOBILE"})
@@ -588,14 +588,14 @@ WITH _s7 AS (
 )
 SELECT
   supplier.s_name AS name,
-  ROUND(COALESCE(_s7.sum_rev, 0), 2) AS revenue96
+  ROUND(COALESCE(_s7.sum_rev, 0), 2) AS revenue_year
 FROM main.supplier AS supplier
 JOIN main.nation AS nation
   ON nation.n_name = 'JAPAN' AND nation.n_nationkey = supplier.s_nationkey
 LEFT JOIN _s7 AS _s7
   ON _s7.ps_suppkey = supplier.s_suppkey
 ORDER BY
-  revenue96 DESC
+  revenue_year DESC
 LIMIT 5
 ```
 
