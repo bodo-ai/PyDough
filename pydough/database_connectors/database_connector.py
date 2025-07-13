@@ -6,13 +6,14 @@ https://peps.python.org/pep-0249/
 
 __all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
-import sqlite3
 from dataclasses import dataclass
 from enum import Enum
 
 import pandas as pd
 
 from pydough.errors import PyDoughSessionException, PyDoughSQLException
+
+from .db_types import DBConnection, DBCursor
 
 
 class DatabaseConnection:
@@ -25,9 +26,9 @@ class DatabaseConnection:
     # Database connection that follows DB API 2.0 specification.
     # sqlite3 contains the connection specification and is packaged
     # with Python.
-    _connection: sqlite3.Connection
+    _connection: DBConnection
 
-    def __init__(self, connection: sqlite3.Connection) -> None:
+    def __init__(self, connection: DBConnection) -> None:
         self._connection = connection
 
     def execute_query_df(self, sql: str) -> pd.DataFrame:
@@ -38,15 +39,15 @@ class DatabaseConnection:
         types are in scope and how we need to test them.
 
         Args:
-            sql (str): The SQL query to execute.
+            `sql`: The SQL query to execute.
 
         Returns:
             list[pt.Any]: A list of rows returned by the query.
         """
-        cursor: sqlite3.Cursor = self._connection.cursor()
+        cursor: DBCursor = self._connection.cursor()
         try:
             cursor.execute(sql)
-        except sqlite3.OperationalError as e:
+        except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise PyDoughSQLException(*e.args) from e
         column_names: list[str] = [description[0] for description in cursor.description]
@@ -60,13 +61,13 @@ class DatabaseConnection:
     # how this will be available at a user API level.
 
     @property
-    def connection(self) -> sqlite3.Connection:
+    def connection(self) -> DBConnection:
         """
         Get the database connection. This API may be removed if all
         the functionality can be encapsulated in the DatabaseConnection.
 
         Returns:
-            sqlite3.Connection: The connection PyDough is managing.
+            The database connection PyDough is managing.
         """
         return self._connection
 
@@ -83,10 +84,10 @@ class DatabaseDialect(Enum):
         """Convert a string to a DatabaseDialect enum.
 
         Args:
-            dialect (str): The string representation of the dialect.
+            `dialect`: The string representation of the dialect.
 
         Returns:
-            DatabaseDialect: The dialect enum.
+            The dialect enum.
         """
         if dialect == "ansi":
             return DatabaseDialect.ANSI

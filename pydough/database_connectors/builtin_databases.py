@@ -17,13 +17,13 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     Load the database context with the appropriate connection and dialect.
 
     Args:
-        database (str): The name of the database to connect to.
-        **kwargs: Additional keyword arguments to pass to the connection.
+        `database`: The name of the database to connect to.
+        `**kwargs`: Additional keyword arguments to pass to the connection.
             All arguments must be accepted using the supported connect API
             for the dialect.
 
     Returns:
-        DatabaseContext: The database context object.
+        The database context object.
     """
     supported_databases = {"sqlite"}
     connection: DatabaseConnection
@@ -46,7 +46,7 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
     around the DB 2.0 connect API.
 
     Returns:
-        DatabaseConnection: A database connection object for SQLite.
+        A database connection object for SQLite.
     """
     if "database" not in kwargs:
         raise PyDoughSessionException("SQLite connection requires a database path.")

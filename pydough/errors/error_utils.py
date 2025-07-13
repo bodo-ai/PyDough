@@ -16,6 +16,7 @@ __all__ = [
     "PyDoughPredicate",
     "extract_array",
     "extract_bool",
+    "extract_integer",
     "extract_object",
     "extract_string",
     "is_bool",
@@ -366,6 +367,31 @@ def extract_bool(json_obj: dict, key_name: str, obj_name: str) -> bool:
     HasPropertyWith(key_name, is_bool).verify(json_obj, obj_name)
     value = json_obj[key_name]
     assert isinstance(value, bool)
+    return value
+
+
+def extract_integer(json_obj: dict, key_name: str, obj_name: str) -> int:
+    """
+    Extracts an integer field from a JSON object, returning the integer field
+    and verifying that the field exists and is well formed.
+
+    Args:
+        `json_obj`: the JSON object to extract the string from.
+        `key_name`: the name of the key in the JSON object that
+        contains the string.
+        `obj_name`: the name of the object being extracted from, to be used
+        in error messages.
+
+    Returns:
+        The integer value of the field.
+
+    Raises:
+        `PyDoughMetadataException` if the JSON object does not contain a key
+        with the name `key_name`, or if the value of the key is not an integer.
+    """
+    HasPropertyWith(key_name, is_integer).verify(json_obj, obj_name)
+    value = json_obj[key_name]
+    assert isinstance(value, int)
     return value
 
 

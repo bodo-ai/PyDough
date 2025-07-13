@@ -453,11 +453,17 @@ class UnqualifiedRoot(UnqualifiedNode):
                 operator_name
                 for operator_name, operator in pydop.builtin_registered_operators().items()
                 if not isinstance(operator, pydop.BinaryOperator)
-            },
+            }
+            | set(graph.get_function_names()),
         )
 
     def __getattribute__(self, name: str) -> Any:
         if name in super(UnqualifiedNode, self).__getattribute__("_parcel")[1]:
+            graph: GraphMetadata = super(UnqualifiedNode, self).__getattribute__(
+                "_parcel"
+            )[0]
+            if name in graph.get_function_names():
+                return UnqualifiedOperator(name, graph.get_function(name))
             return UnqualifiedOperator(name)
         else:
             return super().__getattribute__(name)
@@ -548,7 +554,7 @@ def get_by_arg(
     if has_by:
         # Verify the arguments are well formed when by is provided.
         if window_operator.allows_frame:
-            if not (is_cumulative or is_frame):
+            if not (is_cumulative or is_frame or window_operator.requires_order):
                 raise PyDoughUnqualifiedException(
                     f"When the `by` argument to `{window_operator.function_name}` is provided, either `cumulative=True` or the `frame` argument must be provided"
                 )
@@ -587,8 +593,13 @@ class UnqualifiedOperator(UnqualifiedNode):
     yet to be called.
     """
 
-    def __init__(self, name: str):
-        self._parcel: tuple[str] = (name,)
+    def __init__(
+        self, name: str, operator: pydop.ExpressionFunctionOperator | None = None
+    ):
+        self._parcel: tuple[str, pydop.ExpressionFunctionOperator | None] = (
+            name,
+            operator,
+        )
 
     def __call__(self, *args, **kwargs):
         per: str | None = None
@@ -623,7 +634,13 @@ class UnqualifiedOperator(UnqualifiedNode):
                 window_operator = pydop.RELSIZE
             case func_str:
                 is_window = False
-                operator = get_operator_by_name(func_str, **kwargs)
+                if self._parcel[1] is None:
+                    operator = get_operator_by_name(func_str, **kwargs)
+                else:
+                    operator = self._parcel[1]
+                if isinstance(operator, pydop.ExpressionWindowOperator):
+                    window_operator = operator
+                    is_window = True
         if is_window:
             by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
             if "per" in kwargs:

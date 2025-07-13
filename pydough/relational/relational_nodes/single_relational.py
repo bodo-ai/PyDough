@@ -36,10 +36,10 @@ class SingleRelational(RelationalNode):
         duplicating equality logic shared across relational nodes.
 
         Args:
-            other (Relational): The other relational node to compare against.
+            `other`: The other relational node to compare against.
 
         Returns:
-            bool: Are the two relational nodes equal.
+           Whether the two relational nodes equal.
         """
         # TODO: (gh #171) Do we need a fast path for caching the inputs?
         return isinstance(other, SingleRelational) and self.input.equals(other.input)

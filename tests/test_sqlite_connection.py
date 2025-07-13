@@ -18,10 +18,8 @@ from pydough.errors import PyDoughSessionException
 
 def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
     """
-    Test that the DatabaseConnection can execute a query on the SQLite database.
-
-    Args:
-        sqlite_people_jobs (DatabaseConnection): The DatabaseConnection object to test.
+    Test that the DatabaseConnection can execute a query on the SQLite
+    database.
     """
     query: str = """
         SELECT PEOPLE.person_id, COUNT(*) as num_entries FROM PEOPLE

@@ -111,15 +111,15 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     Convert the given unqualified tree to a SQL string.
 
     Args:
-        node (UnqualifiedNode): The node to convert to SQL.
-        **kwargs: Additional arguments to pass to the conversion for testing.
+        `node`: The node to convert to SQL.
+        `**kwargs`: Additional arguments to pass to the conversion for testing.
             From a user perspective these values should always be derived from
             the active session, but to allow a simple + extensible testing
             infrastructure in the future, any of these can be passed in using
             the name of the field in session.py.
 
     Returns:
-        str: The SQL string corresponding to the unqualified query.
+        The SQL string corresponding to the unqualified query.
     """
     graph: GraphMetadata
     config: PyDoughConfigs
@@ -143,15 +143,15 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     DataFrame.
 
     Args:
-        node (UnqualifiedNode): The node to convert to a DataFrame.
-        **kwargs: Additional arguments to pass to the conversion for testing.
+        `node`: The node to convert to a DataFrame.
+        `**kwargs`: Additional arguments to pass to the conversion for testing.
             From a user perspective these values should always be derived from
             the active session, but to allow a simple + extensible testing
             infrastructure in the future, any of these can be passed in using
             the name of the field in session.py.
 
     Returns:
-        pd.DataFrame: The DataFrame corresponding to the unqualified query.
+        The DataFrame corresponding to the unqualified query.
     """
     graph: GraphMetadata
     config: PyDoughConfigs

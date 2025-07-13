@@ -8,6 +8,7 @@ __all__ = ["BaseTransformBindings"]
 import re
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot import parse_one
 from sqlglot.expressions import Concat
 from sqlglot.expressions import Expression as SQLGlotExpression
 
@@ -161,6 +162,19 @@ class BaseTransformBindings:
                 # Build the expressions on the left since the operator is left-associative.
                 output_expr = func(this=output_expr, expression=apply_parens(arg))
             return output_expr
+        if isinstance(operator, pydop.SqlAliasExpressionFunctionOperator):
+            # For user defined operators that are a 1:1 alias of a function in
+            # the SQL dialect, map to a call of the corresponding function.
+            return sqlglot_expressions.Anonymous(
+                this=operator.sql_function_alias, expressions=args
+            )
+        if isinstance(operator, pydop.SqlMacroExpressionFunctionOperator):
+            # For user defined operators that are a macro for SQL text, convert
+            # the arguments to SQL text strings then inject them into the macro
+            # as a format string, then re-parse it.
+            arg_strings: list[str] = [arg.sql() for arg in args]
+            combined_string: str = operator.macro_text.format(*arg_strings)
+            return parse_one(combined_string)
         match operator:
             case pydop.NOT:
                 return sqlglot_expressions.Not(this=args[0])
@@ -338,12 +352,12 @@ class BaseTransformBindings:
         """Convert a `REPLACE` call expression to a SQLGlot expression.
 
         Args:
-            args (list[SQLGlotExpression]): The operands to `REPLACE`, after they were
+            `args` The operands to `REPLACE`, after they were
             converted to SQLGlot expressions.
-            types (list[PyDoughType]): The PyDough types of the arguments to `REPLACE`.
+            `types` The PyDough types of the arguments to `REPLACE`.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression matching
+            The SQLGlot expression matching
             the functionality of `REPLACE`.
             In Python, this is equivalent to `X.replace(Y, Z)`.
         """
@@ -369,13 +383,13 @@ class BaseTransformBindings:
         END
 
         Args:
-            args (list[SQLGlotExpression]): The operands to `STRCOUNT`, after
+            `args` The operands to `STRCOUNT`, after
             they were converted to SQLGlot expressions.
-            types (list[PyDoughType]): The PyDough types of the arguments to
+            `types` The PyDough types of the arguments to
             `STRCOUNT`.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression matching
+            The SQLGlot expression matching
             the functionality of `STRCOUNT`.
             In Python, this is equivalent to `X.count(Y)`.
         """
