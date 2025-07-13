@@ -35,7 +35,9 @@ SELECT
   COALESCE(_s9.sum_expr_2, 0) AS VALUE
 FROM _s8 AS _s8
 JOIN _s9 AS _s9
-  ON COALESCE(_s8.sum_metric, 0) * 0.0001 < COALESCE(_s9.sum_expr_2, 0)
+  ON (
+    COALESCE(_s8.sum_metric, 0) * 0.0001
+  ) < COALESCE(_s9.sum_expr_2, 0)
 ORDER BY
   value DESC
 LIMIT 10

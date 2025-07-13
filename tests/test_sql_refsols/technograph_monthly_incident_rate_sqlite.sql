@@ -1,4 +1,4 @@
-WITH _t3 AS (
+WITH _t4 AS (
   SELECT
     ca_dt
   FROM main.calendar
@@ -15,7 +15,7 @@ WITH _t3 AS (
   SELECT
     COUNT(*) AS n_rows,
     _t6.ca_dt
-  FROM _t3 AS _t6
+  FROM _t4 AS _t6
   JOIN main.calendar AS calendar
     ON calendar.ca_dt >= DATETIME(_t6.ca_dt, '-6 month')
   JOIN main.devices AS devices
@@ -27,25 +27,25 @@ WITH _t3 AS (
 ), _s15 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _t10.ca_dt
-  FROM _t3 AS _t10
+    _t9.ca_dt
+  FROM _t4 AS _t9
   JOIN main.incidents AS incidents
-    ON _t10.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
+    ON _t9.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
-  JOIN _t7 AS _t11
-    ON _t11.co_id = devices.de_production_country_id
+  JOIN _t7 AS _t10
+    ON _t10.co_id = devices.de_production_country_id
   GROUP BY
-    _t10.ca_dt
+    _t9.ca_dt
 )
 SELECT
   CONCAT_WS(
     '-',
-    CAST(STRFTIME('%Y', _t3.ca_dt) AS INTEGER),
+    CAST(STRFTIME('%Y', _t4.ca_dt) AS INTEGER),
     CASE
-      WHEN LENGTH(CAST(STRFTIME('%m', _t3.ca_dt) AS INTEGER)) >= 2
-      THEN SUBSTRING(CAST(STRFTIME('%m', _t3.ca_dt) AS INTEGER), 1, 2)
-      ELSE SUBSTRING('00' || CAST(STRFTIME('%m', _t3.ca_dt) AS INTEGER), (
+      WHEN LENGTH(CAST(STRFTIME('%m', _t4.ca_dt) AS INTEGER)) >= 2
+      THEN SUBSTRING(CAST(STRFTIME('%m', _t4.ca_dt) AS INTEGER), 1, 2)
+      ELSE SUBSTRING('00' || CAST(STRFTIME('%m', _t4.ca_dt) AS INTEGER), (
         2 * -1
       ))
     END
@@ -56,13 +56,13 @@ SELECT
     ) AS REAL) / COALESCE(SUM(_s7.n_rows), 0),
     2
   ) AS ir
-FROM _t3 AS _t3
+FROM _t4 AS _t4
 LEFT JOIN _s7 AS _s7
-  ON _s7.ca_dt = _t3.ca_dt
+  ON _s7.ca_dt = _t4.ca_dt
 LEFT JOIN _s15 AS _s15
-  ON _s15.ca_dt = _t3.ca_dt
+  ON _s15.ca_dt = _t4.ca_dt
 GROUP BY
-  CAST(STRFTIME('%m', _t3.ca_dt) AS INTEGER),
-  CAST(STRFTIME('%Y', _t3.ca_dt) AS INTEGER)
+  CAST(STRFTIME('%m', _t4.ca_dt) AS INTEGER),
+  CAST(STRFTIME('%Y', _t4.ca_dt) AS INTEGER)
 ORDER BY
   month

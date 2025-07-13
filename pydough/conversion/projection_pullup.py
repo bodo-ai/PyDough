@@ -243,6 +243,9 @@ def pullup_projections(node: RelationalNode) -> RelationalNode:
             if node.join_type == JoinType.INNER:
                 pull_project_into_join(node, 1)
             return pull_non_columns(node)
+        case Filter():
+            pull_project_into_filter(node)
+            return pull_non_columns(node)
         case Limit():
             pull_project_into_limit(node)
             return pull_non_columns(node)

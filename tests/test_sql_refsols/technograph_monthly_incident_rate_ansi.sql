@@ -1,4 +1,4 @@
-WITH _t3 AS (
+WITH _t4 AS (
   SELECT
     ca_dt
   FROM main.calendar
@@ -15,7 +15,7 @@ WITH _t3 AS (
   SELECT
     COUNT(*) AS n_rows,
     _t6.ca_dt
-  FROM _t3 AS _t6
+  FROM _t4 AS _t6
   JOIN main.calendar AS calendar
     ON calendar.ca_dt >= DATE_ADD(CAST(_t6.ca_dt AS TIMESTAMP), -6, 'MONTH')
   JOIN main.devices AS devices
@@ -27,25 +27,25 @@ WITH _t3 AS (
 ), _s15 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _t10.ca_dt
-  FROM _t3 AS _t10
+    _t9.ca_dt
+  FROM _t4 AS _t9
   JOIN main.incidents AS incidents
-    ON _t10.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
+    ON _t9.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
-  JOIN _t7 AS _t11
-    ON _t11.co_id = devices.de_production_country_id
+  JOIN _t7 AS _t10
+    ON _t10.co_id = devices.de_production_country_id
   GROUP BY
-    _t10.ca_dt
+    _t9.ca_dt
 )
 SELECT
   CONCAT_WS(
     '-',
-    EXTRACT(YEAR FROM CAST(_t3.ca_dt AS DATETIME)),
+    EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME)),
     CASE
-      WHEN LENGTH(EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME))) >= 2
-      THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME)), 1, 2)
-      ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME))), (
+      WHEN LENGTH(EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME))) >= 2
+      THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)), 1, 2)
+      ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME))), (
         2 * -1
       ))
     END
@@ -53,13 +53,13 @@ SELECT
   ROUND((
     1000000.0 * COALESCE(SUM(_s15.n_rows), 0)
   ) / COALESCE(SUM(_s7.n_rows), 0), 2) AS ir
-FROM _t3 AS _t3
+FROM _t4 AS _t4
 LEFT JOIN _s7 AS _s7
-  ON _s7.ca_dt = _t3.ca_dt
+  ON _s7.ca_dt = _t4.ca_dt
 LEFT JOIN _s15 AS _s15
-  ON _s15.ca_dt = _t3.ca_dt
+  ON _s15.ca_dt = _t4.ca_dt
 GROUP BY
-  EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME)),
-  EXTRACT(YEAR FROM CAST(_t3.ca_dt AS DATETIME))
+  EXTRACT(MONTH FROM CAST(_t4.ca_dt AS DATETIME)),
+  EXTRACT(YEAR FROM CAST(_t4.ca_dt AS DATETIME))
 ORDER BY
   month
