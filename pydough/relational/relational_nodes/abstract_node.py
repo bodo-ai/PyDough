@@ -65,10 +65,10 @@ class RelationalNode(ABC):
         logic shared across relational nodes.
 
         Args:
-            other (Relational): The other relational node to compare against.
+            `other`: The other relational node to compare against.
 
         Returns:
-            bool: Are the two relational nodes equal.
+            Are the two relational nodes equal.
         """
 
     def equals(self, other: "RelationalNode") -> bool:
@@ -77,10 +77,10 @@ class RelationalNode(ABC):
         including column ordering.
 
         Args:
-            other (Relational): The other relational node to compare against.
+            `other`: The other relational node to compare against.
 
         Returns:
-            bool: Are the two relational nodes equal.
+            Are the two relational nodes equal.
         """
         return self.node_equals(other) and self.columns == other.columns
 
@@ -109,7 +109,7 @@ class RelationalNode(ABC):
             purposes of conversion to a tree string.
 
         Returns:
-            str: A string representation of the relational tree
+            A string representation of the relational tree
             with this node at the root.
         """
 
@@ -122,7 +122,7 @@ class RelationalNode(ABC):
         of the node.
 
         Returns:
-            str: A string representation of the relational tree
+            A string representation of the relational tree
             with this node at the root.
         """
         from .tree_string_visitor import TreeStringVisitor
@@ -137,7 +137,7 @@ class RelationalNode(ABC):
         Accept a visitor to traverse the relational tree.
 
         Args:
-            visitor (RelationalVisitor): The visitor to traverse the tree.
+            `visitor`: The visitor to traverse the tree.
         """
 
     @abstractmethod
@@ -153,12 +153,11 @@ class RelationalNode(ABC):
         this directly.
 
         Args:
-            columns (dict[str, RelationalExpression]): The columns
-                to copy.
-            inputs (list[RelationalNode]): The inputs to copy.
+            `columns` The columns to use in the copied node.
+            `inputs`: The inputs for the copied node.
 
         Returns:
-            Relational: The copied relational node.
+            The copied relational node.
         """
 
     def copy(
@@ -173,12 +172,11 @@ class RelationalNode(ABC):
         will grab those fields from the current node.
 
         Args:
-            columns (dict[str, RelationalExpression] | None): The
-                columns to copy.
-            inputs (list[RelationalNode] | None): The inputs to copy.
+            `columns`: The columns to copy.
+            `inputs`: The inputs to copy.
 
         Returns:
-            Relational: The copied relational node.
+            The copied relational node.
         """
         columns = self.columns if columns is None else columns
         inputs = self.inputs if inputs is None else inputs
