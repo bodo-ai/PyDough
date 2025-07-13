@@ -1143,19 +1143,22 @@ class RelTranslation:
         return TranslationOutput(child_result.relational_node, new_expressions)
 
     def translate_hybridroot(self, context: TranslationOutput) -> TranslationOutput:
-        """Converts a HybridRoot node into a relational tree.
-        This method shifts all expressions in the given context back by one level,
-        effectively removing the HybridRoot from the context (re-aligning them to the parent context's scope).
-        This is needed when stepping out of a nested context.
-        The HybridRoot itself does not introduce a new relational operation but serves as a logical boundary.
-        This method prepares the context so that subsequent operations refer to the correct expression depth.
+        """
+        Converts a HybridRoot node into a relational tree. This method shifts
+        all expressions in the given context back by one level, effectively
+        removing the HybridRoot from the context (re-aligning them to the
+        parent context's scope). This is needed when stepping out of a nested
+        context. The HybridRoot itself does not introduce a new relational
+        operation but serves as a logical boundary. This method prepares the
+        context so that subsequent operations refer to the correct expression
+        depth.
 
         Args:
-            context (TranslationOutput): The current translation context
-            associated with the HybridRoot. Must not be None.
+            `context`: The current translation context associated with the
+            HybridRoot. Must not be None.
 
         Returns:
-            TranslationOutput: The translated output payload.
+            The translated output payload.
         """
         new_expressions: dict[HybridExpr, ColumnReference] = {}
         for expr, column_ref in context.expressions.items():
@@ -1325,14 +1328,12 @@ def make_relational_ordering(
     Converts a list of collation expressions into a list of ExpressionSortInfo.
 
     Args:
-        collation (list[CollationExpression]): The list of collation
-            expressions to convert.
-        expressions (dict[HybridExpr, ColumnReference]): The dictionary of
-            expressions to use for the relational ordering.
+        `collation`: The list of collation expressions to convert.
+        `expressions`: The dictionary of expressions to use for the relational
+        ordering.
 
     Returns:
-        list[ExpressionSortInfo]: The ordering expressions converted into
-        ExpressionSortInfo.
+        The ordering expressions converted into `ExpressionSortInfo`.
     """
     orderings: list[ExpressionSortInfo] = []
     for col_expr in collation:
