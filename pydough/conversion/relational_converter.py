@@ -588,7 +588,7 @@ class RelTranslation:
             ConnectionType.NO_MATCH_AGGREGATION,
         )
         out_columns: dict[HybridExpr, ColumnReference] = {}
-        keys: dict[str, ColumnReference] = {}
+        keys: dict[str, RelationalExpression] = {}
         aggregations: dict[str, CallExpression] = {}
         used_names: set[str] = set()
         # First, propagate all key columns into the output, and add them to

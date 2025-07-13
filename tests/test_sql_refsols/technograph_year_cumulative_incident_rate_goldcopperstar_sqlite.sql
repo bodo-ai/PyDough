@@ -8,7 +8,7 @@ WITH _s14 AS (
   SELECT
     ca_dt
   FROM main.calendar
-), _t7 AS (
+), _t6 AS (
   SELECT
     pr_id,
     pr_name
@@ -24,8 +24,8 @@ WITH _s14 AS (
     ON _s0.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
-  JOIN _t7 AS _t7
-    ON _t7.pr_id = devices.de_product_id
+  JOIN _t6 AS _t6
+    ON _t6.pr_id = devices.de_product_id
   GROUP BY
     _s0.ca_dt
 ), _s13 AS (
@@ -35,8 +35,8 @@ WITH _s14 AS (
   FROM _s6 AS _s8
   JOIN main.devices AS devices
     ON _s8.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
-  JOIN _t7 AS _t9
-    ON _t9.pr_id = devices.de_product_id
+  JOIN _t6 AS _t8
+    ON _t8.pr_id = devices.de_product_id
   GROUP BY
     _s8.ca_dt
 ), _s15 AS (

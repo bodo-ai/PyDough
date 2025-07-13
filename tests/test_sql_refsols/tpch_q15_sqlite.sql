@@ -1,4 +1,4 @@
-WITH _t5 AS (
+WITH _t3 AS (
   SELECT
     l_discount,
     l_extendedprice,
@@ -13,7 +13,7 @@ WITH _t5 AS (
       1 - l_discount
     )) AS sum_expr_2,
     l_suppkey
-  FROM _t5
+  FROM _t3
   GROUP BY
     l_suppkey
 ), _s2 AS (
@@ -28,7 +28,7 @@ WITH _t5 AS (
       1 - l_discount
     )) AS sum_expr_3,
     l_suppkey
-  FROM _t5
+  FROM _t3
   GROUP BY
     l_suppkey
 )

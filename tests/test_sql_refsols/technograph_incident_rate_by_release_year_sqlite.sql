@@ -12,8 +12,8 @@ WITH _s0 AS (
   FROM main.products
 ), _s6 AS (
   SELECT
-    SUM(_s0.n_rows) AS sum_n_rows,
-    CAST(STRFTIME('%Y', _s1.pr_release) AS INTEGER) AS release_year
+    CAST(STRFTIME('%Y', _s1.pr_release) AS INTEGER) AS release_year,
+    SUM(_s0.n_rows) AS sum_n_rows
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
     ON _s0.de_product_id = _s1.pr_id

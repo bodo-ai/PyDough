@@ -1,6 +1,6 @@
 ROOT(columns=[('month', JOIN_STRINGS('-':string, year, LPAD(month, 2:numeric, '0':string))), ('ir', ROUND(1000000.0:numeric * DEFAULT_TO(sum_n_rows, 0:numeric) / DEFAULT_TO(sum_expr_3, 0:numeric), 2:numeric))], orderings=[(month):asc_first])
- AGGREGATE(keys={'month': month, 'year': year}, aggregations={'sum_expr_3': SUM(n_rows_1), 'sum_n_rows': SUM(n_rows)})
-  PROJECT(columns={'month': MONTH(ca_dt), 'n_rows': n_rows, 'n_rows_1': n_rows_1, 'year': year})
+ AGGREGATE(keys={'month': MONTH(ca_dt), 'year': year}, aggregations={'sum_expr_3': SUM(n_rows_1_1), 'sum_n_rows': SUM(n_rows)})
+  PROJECT(columns={'ca_dt': ca_dt, 'n_rows': n_rows, 'n_rows_1_1': n_rows_1, 'year': year})
    JOIN(condition=t0.ca_dt == t1.ca_dt, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'ca_dt': t0.ca_dt, 'n_rows': t1.n_rows, 'n_rows_1': t0.n_rows, 'year': t0.year})
     JOIN(condition=t0.ca_dt == t1.ca_dt, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'ca_dt': t0.ca_dt, 'n_rows': t1.n_rows, 'year': t0.year})
      FILTER(condition=ISIN(year, [2020, 2021]:array[unknown]), columns={'ca_dt': ca_dt, 'year': year})

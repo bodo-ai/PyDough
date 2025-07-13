@@ -188,16 +188,19 @@ def run_column_bubbling(
             # For aggregate, do the same as projection but run separately for
             # keys and aggregations.
             new_input, input_mapping = run_column_bubbling(node.input, corr_remap)
-            new_keys: dict[str, ColumnReference] = {}
+            new_keys: dict[str, RelationalExpression] = {}
             new_aggs: dict[str, CallExpression] = {}
             for name, key_expr in node.keys.items():
                 new_expr = apply_substitution(key_expr, input_mapping, corr_remap)
-                assert isinstance(new_expr, ColumnReference)
                 new_ref = ColumnReference(name, key_expr.data_type)
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
-                    if new_expr.name != name and new_expr.name not in used_names:
+                    if (
+                        isinstance(new_expr, ColumnReference)
+                        and new_expr.name != name
+                        and new_expr.name not in used_names
+                    ):
                         used_names.add(new_expr.name)
                         alt_ref = ColumnReference(new_expr.name, new_expr.data_type)
                         remapping[new_ref] = alt_ref

@@ -8,6 +8,8 @@ __all__ = ["pullup_projections"]
 
 
 from pydough.relational import (
+    Aggregate,
+    CallExpression,
     ColumnReference,
     ExpressionSortInfo,
     Filter,
@@ -229,6 +231,55 @@ def pull_project_into_limit(node: Limit) -> None:
     ]
 
 
+def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
+    """
+    TODO
+    """
+    if not isinstance(node.input, Project):
+        return node
+
+    project: Project = node.input
+
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    finder.reset()
+    for key_expr in node.aggregations.values():
+        key_expr.accept(finder)
+    agg_cols: set[ColumnReference] = finder.get_column_references()
+    agg_names: set[str] = {col.name for col in agg_cols}
+    finder.reset()
+    for agg_expr in node.keys.values():
+        agg_expr.accept(finder)
+    key_cols: set[ColumnReference] = finder.get_column_references()
+    key_names: set[str] = {col.name for col in key_cols}
+
+    transfer_substitutions: dict[RelationalExpression, RelationalExpression] = (
+        widen_columns(project)
+    )
+    substitutions: dict[RelationalExpression, RelationalExpression] = {}
+    new_expr: RelationalExpression
+    for name, expr in project.columns.items():
+        new_expr = apply_substitution(expr, transfer_substitutions, {})
+        if (not contains_window(new_expr)) and (
+            (name in agg_names) != (name in key_names)
+        ):
+            ref_expr: ColumnReference = ColumnReference(name, expr.data_type)
+            substitutions[ref_expr] = new_expr
+    new_keys: dict[str, RelationalExpression] = {
+        name: apply_substitution(expr, substitutions, {})
+        for name, expr in node.keys.items()
+    }
+    new_aggs: dict[str, CallExpression] = {}
+    for name, expr in node.aggregations.items():
+        new_expr = apply_substitution(expr, substitutions, {})
+        assert isinstance(new_expr, CallExpression)
+        new_aggs[name] = new_expr
+    return Aggregate(
+        input=node.input,
+        keys=new_keys,
+        aggregations=new_aggs,
+    )
+
+
 def pullup_projections(node: RelationalNode) -> RelationalNode:
     """
     TODO
@@ -249,5 +300,7 @@ def pullup_projections(node: RelationalNode) -> RelationalNode:
         case Limit():
             pull_project_into_limit(node)
             return pull_non_columns(node)
+        case Aggregate():
+            return pull_project_into_aggregate(node)
         case _:
             return node

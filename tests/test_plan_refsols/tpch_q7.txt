@@ -1,6 +1,6 @@
 ROOT(columns=[('SUPP_NATION', n_name), ('CUST_NATION', cust_nation), ('L_YEAR', l_year), ('REVENUE', DEFAULT_TO(sum_volume, 0:numeric))], orderings=[(n_name):asc_first, (cust_nation):asc_first, (l_year):asc_first])
- AGGREGATE(keys={'cust_nation': cust_nation, 'l_year': l_year, 'n_name': n_name}, aggregations={'sum_volume': SUM(volume)})
-  PROJECT(columns={'cust_nation': name_8, 'l_year': YEAR(l_shipdate), 'n_name': n_name, 'volume': l_extendedprice * 1:numeric - l_discount})
+ AGGREGATE(keys={'cust_nation': cust_nation, 'l_year': YEAR(l_shipdate), 'n_name': n_name}, aggregations={'sum_volume': SUM(l_extendedprice * 1:numeric - l_discount)})
+  PROJECT(columns={'cust_nation': name_8, 'l_discount': l_discount, 'l_extendedprice': l_extendedprice, 'l_shipdate': l_shipdate, 'n_name': n_name})
    FILTER(condition=n_name == 'FRANCE':string & name_8 == 'GERMANY':string | n_name == 'GERMANY':string & name_8 == 'FRANCE':string, columns={'l_discount': l_discount, 'l_extendedprice': l_extendedprice, 'l_shipdate': l_shipdate, 'n_name': n_name, 'name_8': name_8})
     JOIN(condition=t0.l_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'l_discount': t0.l_discount, 'l_extendedprice': t0.l_extendedprice, 'l_shipdate': t0.l_shipdate, 'n_name': t0.n_name, 'name_8': t1.n_name})
      JOIN(condition=t0.l_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'l_discount': t0.l_discount, 'l_extendedprice': t0.l_extendedprice, 'l_orderkey': t0.l_orderkey, 'l_shipdate': t0.l_shipdate, 'n_name': t1.n_name})

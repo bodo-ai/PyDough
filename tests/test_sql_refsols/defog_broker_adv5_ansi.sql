@@ -3,7 +3,6 @@ WITH _s0 AS (
     COUNT(sbdpclose) AS count_sbdpclose,
     MAX(sbdphigh) AS max_high,
     MIN(sbdplow) AS min_low,
-    SUM(sbdpclose) AS sum_sbdpclose,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
@@ -15,6 +14,7 @@ WITH _s0 AS (
         ))
       END
     ) AS month,
+    SUM(sbdpclose) AS sum_sbdpclose,
     sbdptickerid
   FROM main.sbdailyprice
   GROUP BY

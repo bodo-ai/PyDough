@@ -1,7 +1,5 @@
 WITH _s0 AS (
   SELECT
-    SUM(sale_price) AS sum_sale_price,
-    customer_id,
     DATE(
       sale_date,
       'start of month',
@@ -10,12 +8,13 @@ WITH _s0 AS (
           CAST(STRFTIME('%m', DATETIME(sale_date)) AS INTEGER) - 1
         ) % 3
       ) AS TEXT) || ' months'
-    ) AS quarter
+    ) AS quarter,
+    SUM(sale_price) AS sum_sale_price,
+    customer_id
   FROM main.sales
   WHERE
     CAST(STRFTIME('%Y', sale_date) AS INTEGER) = 2023
   GROUP BY
-    customer_id,
     DATE(
       sale_date,
       'start of month',
@@ -24,7 +23,8 @@ WITH _s0 AS (
           CAST(STRFTIME('%m', DATETIME(sale_date)) AS INTEGER) - 1
         ) % 3
       ) AS TEXT) || ' months'
-    )
+    ),
+    customer_id
 ), _t2 AS (
   SELECT
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price,

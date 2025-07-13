@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _t1 AS (
   SELECT
     AVG(o_totalprice) OVER () AS global_avg,
     o_totalprice
@@ -37,4 +37,4 @@ SELECT
     ) AS REAL) / COUNT(*),
     4
   ) AS pct_e10000
-FROM _t2
+FROM _t1
