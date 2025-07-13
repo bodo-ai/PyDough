@@ -6,22 +6,14 @@ WITH _s1 AS (
   FROM main.sbtransaction
   GROUP BY
     sbtxtickerid
-), _t0 AS (
-  SELECT
-    _s1.n_rows,
-    sbticker.sbtickersymbol,
-    COALESCE(_s1.sum_sbtxamount, 0) AS total_amount
-  FROM main.sbticker AS sbticker
-  LEFT JOIN _s1 AS _s1
-    ON _s1.sbtxtickerid = sbticker.sbtickerid
-  ORDER BY
-    total_amount DESC
-  LIMIT 10
 )
 SELECT
-  sbtickersymbol AS symbol,
-  COALESCE(n_rows, 0) AS num_transactions,
-  total_amount
-FROM _t0
+  sbticker.sbtickersymbol AS symbol,
+  COALESCE(_s1.n_rows, 0) AS num_transactions,
+  COALESCE(_s1.sum_sbtxamount, 0) AS total_amount
+FROM main.sbticker AS sbticker
+LEFT JOIN _s1 AS _s1
+  ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  total_amount DESC
+  COALESCE(_s1.sum_sbtxamount, 0) DESC
+LIMIT 10

@@ -1,3 +1,2 @@
-ROOT(columns=[('high', sbDpHigh), ('high_neg', -1:numeric * sbDpHigh), ('high_zero', 0:numeric * sbDpHigh), ('sign_high', SIGN(sbDpHigh)), ('sign_high_neg', SIGN(-1:numeric * sbDpHigh)), ('sign_high_zero', SIGN(0:numeric * sbDpHigh))], orderings=[(sbDpHigh):asc_first])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'sbDpHigh': sbDpHigh}, orderings=[(sbDpHigh):asc_first])
-  SCAN(table=main.sbDailyPrice, columns={'sbDpHigh': sbDpHigh})
+ROOT(columns=[('high', sbDpHigh), ('high_neg', -1:numeric * sbDpHigh), ('high_zero', 0:numeric * sbDpHigh), ('sign_high', SIGN(sbDpHigh)), ('sign_high_neg', SIGN(-1:numeric * sbDpHigh)), ('sign_high_zero', SIGN(0:numeric * sbDpHigh))], orderings=[(sbDpHigh):asc_first], limit=5:numeric)
+ SCAN(table=main.sbDailyPrice, columns={'sbDpHigh': sbDpHigh})

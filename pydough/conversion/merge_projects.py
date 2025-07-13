@@ -229,7 +229,7 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 and any(contains_window(expr) for expr in node.columns.values())
             ):
                 # Replace all column references in the root's columns with
-                # the expressions from the child projection..
+                # the expressions from the child projection.
                 for idx, (name, expr) in enumerate(node.ordered_columns):
                     new_expr = transpose_expression(expr, child_project.columns)
                     node.columns[name] = new_expr
@@ -290,6 +290,30 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 if key_name not in keys_used:
                     new_columns[key_name] = node.input.columns[key_name]
         return node.input.copy(columns=new_columns)
+    # Alternatively: if the node is a root and it is on top of a limit, try to
+    # suck the limit into the root.
+    if isinstance(node, RelationalRoot) and isinstance(node.input, Limit):
+        new_orderings: list[ExpressionSortInfo] = [
+            ExpressionSortInfo(
+                transpose_expression(ordering.expr, node.input.columns),
+                ordering.ascending,
+                ordering.nulls_first,
+            )
+            for ordering in node.orderings
+        ]
+        if node.input.orderings == new_orderings:
+            # If the orderings are the same, pull in the limit into the root.
+            # Replace all column references in the root's columns with
+            # the expressions from the child projection.
+            for idx, (name, expr) in enumerate(node.ordered_columns):
+                new_expr = transpose_expression(expr, node.input.columns)
+                node.columns[name] = new_expr
+                node.ordered_columns[idx] = (name, new_expr)
+            node._orderings = new_orderings
+            node._limit = node.input.limit
+            # Delete the child projection from the tree, replacing it
+            # with its input.
+            node._input = node.input.input
     return node
 
 

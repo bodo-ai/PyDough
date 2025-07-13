@@ -565,6 +565,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             query = self._build_subquery(input_expr, exprs, sort=False)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
+        if root.limit is not None:
+            limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+                root.limit
+            )
+            query = query.limit(limit_expr)
         self._stack.append(query)
 
     def relational_to_sqlglot(self, root: RelationalRoot) -> SQLGlotExpression:

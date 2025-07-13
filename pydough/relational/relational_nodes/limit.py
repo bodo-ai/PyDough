@@ -66,7 +66,7 @@ class Limit(SingleRelational):
         orderings: list[str] = [
             ordering.to_string(compact) for ordering in self.orderings
         ]
-        return f"LIMIT(limit={self.limit}, columns={self.make_column_string(self.columns, compact)}, orderings=[{', '.join(orderings)}])"
+        return f"LIMIT(limit={self.limit.to_string(compact)}, columns={self.make_column_string(self.columns, compact)}, orderings=[{', '.join(orderings)}])"
 
     def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         return visitor.visit_limit(self)

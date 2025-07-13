@@ -1,3 +1,3 @@
 ROOT(columns=[('d1', DATETIME(o_orderdate, 'Start of Year':string)), ('d2', DATETIME(o_orderdate, 'START OF MONTHS':string)), ('d3', DATETIME(o_orderdate, '-11 years':string, '+9 months':string, ' - 7 DaYs ':string, '+5 h':string, '-3 minutes':string, '+1 second':string)), ('d4', DATETIME(Timestamp('2025-07-04 12:58:45'):datetime, 'start of hour':string)), ('d5', DATETIME(Timestamp('2025-07-04 12:58:45'):datetime, 'start of minute':string)), ('d6', DATETIME(Timestamp('2025-07-14 12:58:45'):datetime, '+ 1000000 seconds':string))], orderings=[(o_orderdate):asc_first])
- LIMIT(limit=Literal(value=10, type=NumericType()), columns={'o_orderdate': o_orderdate}, orderings=[(o_custkey):asc_first, (o_orderdate):asc_first])
+ LIMIT(limit=10:numeric, columns={'o_orderdate': o_orderdate}, orderings=[(o_custkey):asc_first, (o_orderdate):asc_first])
   SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate})

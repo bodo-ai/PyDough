@@ -1,14 +1,3 @@
-WITH _t0 AS (
-  SELECT
-    o_orderkey,
-    o_orderpriority
-  FROM tpch.orders
-  WHERE
-    o_clerk = 'Clerk#000000951'
-  ORDER BY
-    o_orderkey
-  LIMIT 10
-)
 SELECT
   o_orderkey AS key,
   CASE
@@ -20,6 +9,9 @@ SELECT
     THEN 'C'
     ELSE 'D'
   END AS val
-FROM _t0
+FROM tpch.orders
+WHERE
+  o_clerk = 'Clerk#000000951'
 ORDER BY
   o_orderkey
+LIMIT 10

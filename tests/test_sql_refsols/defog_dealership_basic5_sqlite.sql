@@ -10,24 +10,15 @@ WITH _s1 AS (
     ) AS INTEGER) <= 30
   GROUP BY
     salesperson_id
-), _t0 AS (
-  SELECT
-    salespersons.first_name,
-    salespersons.last_name,
-    _s1.n_rows,
-    _s1.sum_sale_price
-  FROM main.salespersons AS salespersons
-  JOIN _s1 AS _s1
-    ON _s1.salesperson_id = salespersons._id
-  ORDER BY
-    n_rows DESC
-  LIMIT 5
 )
 SELECT
-  first_name,
-  last_name,
-  n_rows AS total_sales,
-  COALESCE(sum_sale_price, 0) AS total_revenue
-FROM _t0
+  salespersons.first_name,
+  salespersons.last_name,
+  _s1.n_rows AS total_sales,
+  COALESCE(_s1.sum_sale_price, 0) AS total_revenue
+FROM main.salespersons AS salespersons
+JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  n_rows DESC
+  _s1.n_rows DESC
+LIMIT 5

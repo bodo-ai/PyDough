@@ -333,4 +333,4 @@ def bubble_column_names(root: RelationalRoot) -> RelationalRoot:
                     ordering.nulls_first,
                 )
             )
-    return RelationalRoot(new_input, new_ordered_columns, new_orderings)
+    return RelationalRoot(new_input, new_ordered_columns, new_orderings, root.limit)

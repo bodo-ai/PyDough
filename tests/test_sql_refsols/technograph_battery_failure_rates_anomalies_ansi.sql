@@ -23,7 +23,7 @@ GROUP BY
   countries.co_name,
   products.pr_name
 ORDER BY
-  ir DESC,
+  ROUND(COALESCE(SUM(COALESCE(_s7.n_rows, 0)), 0) / COUNT(*), 2) DESC,
   products.pr_name,
   countries.co_name
 LIMIT 5

@@ -27,5 +27,5 @@ FROM main.products AS products
 JOIN _s5 AS _s5
   ON _s5.de_product_id = products.pr_id
 ORDER BY
-  ir DESC
+  ROUND(CAST(COALESCE(_s5.sum_n_incidents, 0) AS REAL) / _s5.n_rows, 2) DESC
 LIMIT 5

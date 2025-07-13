@@ -1,24 +1,16 @@
-WITH _t0 AS (
-  SELECT
-    sbtxdatetime,
-    DATEDIFF(CAST('2025-05-02 11:00:00' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), YEAR) AS years_diff
-  FROM main.sbtransaction
-  WHERE
-    EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025
-  ORDER BY
-    years_diff
-  LIMIT 30
-)
 SELECT
   sbtxdatetime AS x,
   CAST('2025-05-02 11:00:00' AS TIMESTAMP) AS y1,
   CAST('2023-04-03 13:16:30' AS TIMESTAMP) AS y,
-  years_diff,
+  DATEDIFF(CAST('2025-05-02 11:00:00' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), YEAR) AS years_diff,
   DATEDIFF(CAST('2025-05-02 11:00:00' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), MONTH) AS months_diff,
   DATEDIFF(CAST('2025-05-02 11:00:00' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), DAY) AS days_diff,
   DATEDIFF(CAST('2025-05-02 11:00:00' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), HOUR) AS hours_diff,
   DATEDIFF(CAST('2023-04-03 13:16:30' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), MINUTE) AS minutes_diff,
   DATEDIFF(CAST('2023-04-03 13:16:30' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), SECOND) AS seconds_diff
-FROM _t0
+FROM main.sbtransaction
+WHERE
+  EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025
 ORDER BY
-  years_diff
+  DATEDIFF(CAST('2025-05-02 11:00:00' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), YEAR)
+LIMIT 30
