@@ -12,6 +12,7 @@ from typing import Any
 
 from pydough.metadata import GraphMetadata
 
+from .errors import PyDoughUnqualifiedException
 from .unqualified_node import UnqualifiedNode
 
 
@@ -444,7 +445,7 @@ def from_string(
     if metadata is None:
         metadata = pydough.active_session.metadata
         if metadata is None:
-            raise Exception(
+            raise ValueError(
                 "No active graph set in PyDough session."
                 " Please set a graph using"
                 " pydough.active_session.load_metadata_graph(...)"
@@ -466,21 +467,24 @@ def from_string(
     assert isinstance(new_tree, ast.AST)
 
     # Execute the transformed PyDough code to get the UnqualifiedNode answer
-    transformed_ast = ast.unparse(new_tree)
-    compile_ast = compile(transformed_ast, filename="<ast>", mode="exec")
+    transformed_code: str = ast.unparse(new_tree)
+    try:
+        compile_ast = compile(transformed_code, filename="<ast>", mode="exec")
+    except SyntaxError as e:
+        raise ValueError(f"Syntax error in transformed PyDough code: {str(e)}") from e
     execution_context: dict[str, Any] = environment | {"graph": metadata}
     exec(compile_ast, {}, execution_context)
 
     # Check if answer_variable exists in execution_context after code execution
     if answer_variable not in execution_context:
-        raise Exception(
+        raise PyDoughUnqualifiedException(
             f"PyDough code expected to store the answer in a variable named '{answer_variable}'."
         )
     ret_val = execution_context[answer_variable]
     # Check if answer is an UnqualifiedNode
     if not isinstance(ret_val, UnqualifiedNode):
-        raise Exception(
-            f"PyDough code answer stored in variable named '{answer_variable}' is not an UnqualifiedNode instance."
+        raise PyDoughUnqualifiedException(
+            f"Expected variable {answer_variable!r} in the text to store PyDough code, instead found {ret_val.__class__.__name__!r}."
         )
     return ret_val
 

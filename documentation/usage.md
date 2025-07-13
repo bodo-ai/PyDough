@@ -479,20 +479,33 @@ See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more insta
 
 <!-- TOC --><a name="pydoughfrom_string"></a>
 ### `pydough.from_string`
-The `from_string` API parses a PyDough source code text string and and transforms it into a PyDough collection on which operations like `explain()`, `to_sql()`, or `to_df()` can be called. The first argument is the source code string. It can be a single pydough command or a multi-line pydough code with intermediate results stored in variables. 
 
-The second argument is the name of the variable that stores the final result of pydough code, for further operations. The API will return the unqualified node containing this final result of the pydough code. If the second argument is not provided, the result will be expected to be in a variable called `result`.
+The `from_string` API parses a PyDough source code string and transforms it into a PyDough collection. You can then perform operations like `explain()`, `to_sql()`, or `to_df()` on the result.
 
-The third argument is optional and corresponds to the pydough graph metadata that needs to be used for the transformation. If not provided, `active_session.metadata` will be used.
+#### Syntax
+```python
+def from_string(
+    source: str,
+    answer_variable: str | None = None,
+    metadata: GraphMetadata | None = None,
+    environment: dict[str, Any] | None = None,
+) -> UnqualifiedNode:
+```
 
-An optional fourth argument allows to specify additional environment context for the pydough code. This environment context will be the local namespace for the executed code. If provided, it should be a dictionary.
+The first argument `source` is the source code string. It can be a single pydough command or a multi-line pydough code with intermediate results stored in variables. It can optionally take in the following keyword arguments:
 
-Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output.
+- `answer_variable`: The name of the variable that stores the final result of the PyDough code. If not provided, the API expects the final result to be in a variable named `result`. The API returns a PyDough collection holding this value. It is assumed that the PyDough code string includes a variable definition where the name of the variable is the same as `answer_variable` and the value is valid PyDough code; if not it raises an exception.
+- `metadata`: The PyDough knowledge graph to use for the transformation. If omitted, `active_session.metadata` is used.
+- `environment`: A dictionary representing additional environment context. This serves as the local namespace where the PyDough code will be executed.
 
+Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output. All these examples use the database tcph that can be downloaded running the following command from the root directory of PyDough: `bash demos/setup_tpch.sh tpch.db`
+ 
+Python code using `pydough.from_string` to generate SQL to get the count of customers in market segment AUTOMOBILE. The result will be returned in a variable named pydough_query:
 ```py
 import pydough
 
 # Setup demo metadata
+# You need to download tcph database using setup_tpch.sh. Check demos/README.md
 graph = pydough.active_session.load_metadata_graph("demos/metadata/tpch_demo_graph.json", "TPCH")
 pydough.active_session.connect_database("sqlite", database="tpch.db")
 
@@ -500,13 +513,14 @@ pydough.active_session.connect_database("sqlite", database="tpch.db")
 # environment context. This query gets the list of customers from the AUTOMOBILE
 # market segment. For this, a SEG variable is passed in the environment with a
 # value of "AUTOMOBILE"
-pydough_code = "result = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
-# Transform the pydough code and get the UnqualifiedNode with the result
-query = pydough.from_string(pydough_code, "result", graph, {"SEG":"AUTOMOBILE"})
+pydough_code = "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
+# Transform the pydough code and get the result from pydough_query
+query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG":"AUTOMOBILE"})
 sql = pydough.to_sql(query)
 print(sql)
 ```
 
+The output for `print(sql)` is the following SQL query:
 ```sql
 SELECT
   COUNT(*) AS n
@@ -515,6 +529,7 @@ WHERE
   c_mktsegment = 'AUTOMOBILE'
 ```
 
+Python code to generate SQL to get the top 5 suppliers with the highest revenue. The code snippet uses variables provided in the environment context to filter by nation, ship mode and year:
 ```py
 # Example of a multi-line pydough code snippet that uses intermetiate results to
 # build the final query. For this query we set 3 environment variables: 
@@ -537,17 +552,18 @@ lines_96 = selected_records.lines.WHERE((YEAR(ship_date) == REQUESTED_SHIP_YEAR)
 
 # For each supplier, list their name & selected revenue from REQUESTED_SHIP_YEAR
 selected_suppliers = suppliers.WHERE(nation.name == TARGET_NATION)
-supplier_info = selected_suppliers.CALCULATE(name, revenue96=ROUND(SUM(lines_96.rev), 2))
+supplier_info = selected_suppliers.CALCULATE(name, revenue_year=ROUND(SUM(lines_96.rev), 2))
 
-# Pick the 5 suppliers with the highest from REQUESTED_SHIP_YEAR
-result = supplier_info.TOP_K(5, by=revenue96.DESC())
+# Pick the 5 suppliers with the highest revenue from REQUESTED_SHIP_YEAR
+result = supplier_info.TOP_K(5, by=revenue_year.DESC())
 """
-# Transform the pydough code and get the UnqualifiedNode with the result
+# Transform the pydough code and get the result from result
 query = pydough.from_string(pydough_code, environment=env)
 sql = pydough.to_sql(query)
 print(sql)
 ```
 
+The output for `print(sql)` is the following SQL query:
 ```sql
 WITH _s7 AS (
   SELECT
@@ -583,6 +599,7 @@ ORDER BY
 LIMIT 5
 ```
 
+One more example of Python code to generate an SQL query. This time, we will use the 'datetime.date' passed in the environment.
 ```py
 # For every customer, how many urgent orders have they made in year 1996 with a 
 # total price over 100000, and what is the sum of the total prices of all such 
@@ -607,12 +624,13 @@ result = (
 )
 """
 
-# Transform the pydough code and get the UnqualifiedNode with the result
+# Transform the pydough code and get the result from result
 query = pydough.from_string(pydough_code, environment=env)
 sql = pydough.to_sql(query)
 print(sql)
 ```
 
+The output for `print(sql)` is the following SQL query:
 ```sql
 WITH _s1 AS (
   SELECT

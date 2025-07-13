@@ -2,6 +2,7 @@
 Tests pydough from_string API
 """
 
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -78,21 +79,30 @@ def test_tpch_data_e2e_from_string(
             None,
             None,
             "PyDough code expected to store the answer in a variable named 'result'.",
-            id="invalid-from_string-no_var-no_env",
+            id="invalid_variable_never_defined",
         ),
         pytest.param(
-            "answer = TPCH.CALCULATE(n_nations=COUNT(nations))",
-            "answer_var",
+            "result = TPCH.CALCULATE(n_nations=COUNT(nations))",
+            "answer",
             None,
-            "PyDough code expected to store the answer in a variable named 'answer_var'.",
-            id="invalid-from_string-with_var-no_env",
+            "PyDough code expected to store the answer in a variable named 'answer'.",
+            id="invalid_variable_wrong_name",
         ),
         pytest.param(
             "query = TPCH.CALCULATE(n_nations=COUNT(nations))\nresult = selected_nation_name",
             "result",
             {"selected_nation_name": "JAPAN"},
-            "PyDough code answer stored in variable named 'result' is not an UnqualifiedNode instance.",
-            id="invalid-from_string-with_var-with_env",
+            "Expected variable 'result' in the text to store PyDough code, instead found 'str'.",
+            id="invalid_pydough_result_type",
+        ),
+        pytest.param(
+            "result = nations.CALCULATE(n_nations=COUNT())",
+            None,
+            None,
+            re.escape(
+                "Invalid operator invocation 'COUNT()': Expected 1 argument, received 0"
+            ),
+            id="invalid_pydough_code",
         ),
     ],
 )
