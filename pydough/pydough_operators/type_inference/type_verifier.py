@@ -15,10 +15,9 @@ __all__ = [
 from abc import ABC, abstractmethod
 from typing import Any
 
-from pydough.errors import PyDoughQDAGException
+from pydough.errors import PyDoughMetadataException, PyDoughQDAGException
 from pydough.errors.error_utils import (
     NoExtraKeys,
-    PyDoughMetadataException,
     extract_array,
     extract_integer,
     extract_string,
