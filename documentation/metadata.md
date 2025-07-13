@@ -316,7 +316,7 @@ A function of this type is intended to map to a window function in the SQL diale
 
 - `sql function` (required): a string indicating the name of the window function in the SQL dialect that this function corresponds to.
 - `requires order` (optional): a boolean indicating whether the function requires a `by` clause. The default value is `false` (indicating it does not require a `by` clause).
-- `requires order` (optional): a boolean indicating whether the function allows window frames, either via `cumulative=True` or by providing `frame=...`. The default value is `false` (indicating it does not allow window frames).
+- `allows frame` (optional): a boolean indicating whether the function allows window frames, either via `cumulative=True` or by providing `frame=...`. The default value is `false` (indicating it does not allow window frames).
 
 These optional arguments work together in the following manner:
 
