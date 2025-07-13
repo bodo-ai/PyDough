@@ -4,7 +4,7 @@ WITH _t5 AS (
   FROM main.calendar
   WHERE
     CAST(STRFTIME('%Y', ca_dt) AS INTEGER) IN (2020, 2021)
-), _t7 AS (
+), _t8 AS (
   SELECT
     co_id,
     co_name
@@ -14,29 +14,29 @@ WITH _t5 AS (
 ), _s7 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _s0.ca_dt
-  FROM _t5 AS _s0
+    _t7.ca_dt
+  FROM _t5 AS _t7
   JOIN main.calendar AS calendar
-    ON calendar.ca_dt >= DATETIME(_s0.ca_dt, '-6 month')
+    ON calendar.ca_dt >= DATETIME(_t7.ca_dt, '-6 month')
   JOIN main.devices AS devices
     ON calendar.ca_dt = DATE(devices.de_purchase_ts, 'start of day')
-  JOIN _t7 AS _t7
-    ON _t7.co_id = devices.de_production_country_id
+  JOIN _t8 AS _t8
+    ON _t8.co_id = devices.de_production_country_id
   GROUP BY
-    _s0.ca_dt
+    _t7.ca_dt
 ), _s15 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _s8.ca_dt
-  FROM _t5 AS _s8
+    _t10.ca_dt
+  FROM _t5 AS _t10
   JOIN main.incidents AS incidents
-    ON _s8.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
+    ON _t10.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
-  JOIN _t7 AS _t9
-    ON _t9.co_id = devices.de_production_country_id
+  JOIN _t8 AS _t11
+    ON _t11.co_id = devices.de_production_country_id
   GROUP BY
-    _s8.ca_dt
+    _t10.ca_dt
 )
 SELECT
   CONCAT_WS(

@@ -41,11 +41,13 @@ def widen_columns(
     }
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
     for input_idx in range(len(node.inputs)):
+        input_alias: str | None = node.default_input_aliases[input_idx]
         input_node: RelationalNode = node.inputs[input_idx]
         for name, expr in input_node.columns.items():
-            expr = add_input_name(expr, node.default_input_aliases[input_idx])
+            if isinstance(node, Join):
+                expr = add_input_name(expr, input_alias)
             ref_expr: ColumnReference = ColumnReference(
-                name, expr.data_type, input_name=node.default_input_aliases[input_idx]
+                name, expr.data_type, input_name=input_alias
             )
             if expr not in existing_vals:
                 new_name: str = name

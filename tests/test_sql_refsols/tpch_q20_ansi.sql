@@ -9,7 +9,7 @@ WITH _s3 AS (
     l_partkey
 ), _s5 AS (
   SELECT
-    part.p_partkey,
+    part.p_partkey AS p_partkey_1,
     _s3.sum_l_quantity
   FROM tpch.part AS part
   JOIN _s3 AS _s3
@@ -22,7 +22,7 @@ WITH _s3 AS (
     partsupp.ps_suppkey
   FROM tpch.partsupp AS partsupp
   JOIN _s5 AS _s5
-    ON _s5.p_partkey = partsupp.ps_partkey
+    ON _s5.p_partkey_1 = partsupp.ps_partkey
     AND partsupp.ps_availqty > (
       0.5 * COALESCE(COALESCE(_s5.sum_l_quantity, 0), 0)
     )
