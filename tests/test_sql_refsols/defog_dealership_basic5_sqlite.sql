@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows_1,
+    COUNT(*) AS n_rows,
     SUM(sale_price) AS sum_sale_price,
     salesperson_id
   FROM main.sales
@@ -12,9 +12,9 @@ WITH _s1 AS (
     salesperson_id
 ), _t0 AS (
   SELECT
-    salespersons.first_name AS first_name_1,
-    salespersons.last_name AS last_name_1,
-    _s1.n_rows_1 AS n_rows,
+    salespersons.first_name,
+    salespersons.last_name,
+    _s1.n_rows,
     _s1.sum_sale_price
   FROM main.salespersons AS salespersons
   JOIN _s1 AS _s1
@@ -24,8 +24,8 @@ WITH _s1 AS (
   LIMIT 5
 )
 SELECT
-  first_name_1 AS first_name,
-  last_name_1 AS last_name,
+  first_name,
+  last_name,
   n_rows AS total_sales,
   COALESCE(sum_sale_price, 0) AS total_revenue
 FROM _t0

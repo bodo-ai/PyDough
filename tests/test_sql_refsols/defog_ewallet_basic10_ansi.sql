@@ -11,20 +11,20 @@ WITH _s1 AS (
     receiver_id
 ), _t0 AS (
   SELECT
-    merchants.name AS name_1,
-    COALESCE(_s1.sum_amount, 0) AS total_amount_1,
-    _s1.n_rows
+    _s1.n_rows,
+    merchants.name,
+    COALESCE(_s1.sum_amount, 0) AS total_amount
   FROM main.merchants AS merchants
   LEFT JOIN _s1 AS _s1
     ON _s1.receiver_id = merchants.mid
   ORDER BY
-    COALESCE(_s1.sum_amount, 0) DESC
+    total_amount DESC
   LIMIT 2
 )
 SELECT
-  name_1 AS merchant_name,
+  name AS merchant_name,
   COALESCE(n_rows, 0) AS total_transactions,
-  total_amount_1 AS total_amount
+  total_amount
 FROM _t0
 ORDER BY
-  total_amount_1 DESC
+  total_amount DESC

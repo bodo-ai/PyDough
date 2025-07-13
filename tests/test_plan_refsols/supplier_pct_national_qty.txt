@@ -1,5 +1,5 @@
-ROOT(columns=[('supplier_name', s_name_1), ('nation_name', n_name_1), ('supplier_quantity', DEFAULT_TO(sum_l_quantity, 0:numeric)), ('national_qty_pct', national_qty_pct_1)], orderings=[(national_qty_pct_1):desc_last])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'n_name_1': n_name, 'national_qty_pct_1': national_qty_pct, 's_name_1': s_name, 'sum_l_quantity': sum_l_quantity}, orderings=[(national_qty_pct):desc_last])
+ROOT(columns=[('supplier_name', s_name), ('nation_name', n_name), ('supplier_quantity', DEFAULT_TO(sum_l_quantity, 0:numeric)), ('national_qty_pct', national_qty_pct)], orderings=[(national_qty_pct):desc_last])
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'n_name': n_name, 'national_qty_pct': national_qty_pct, 's_name': s_name, 'sum_l_quantity': sum_l_quantity}, orderings=[(national_qty_pct):desc_last])
   PROJECT(columns={'n_name': n_name, 'national_qty_pct': 100.0:numeric * DEFAULT_TO(sum_l_quantity, 0:numeric) / RELSUM(args=[DEFAULT_TO(sum_l_quantity, 0:numeric)], partition=[s_nationkey], order=[]), 's_name': s_name, 'sum_l_quantity': sum_l_quantity})
    JOIN(condition=t0.s_suppkey == t1.l_suppkey, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'n_name': t0.n_name, 's_name': t0.s_name, 's_nationkey': t0.s_nationkey, 'sum_l_quantity': t1.sum_l_quantity})
     JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=PLURAL_FILTER, columns={'n_name': t0.n_name, 's_name': t1.s_name, 's_nationkey': t1.s_nationkey, 's_suppkey': t1.s_suppkey})

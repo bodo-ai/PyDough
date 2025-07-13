@@ -8,20 +8,20 @@ WITH _s1 AS (
     coupon_id
 ), _t0 AS (
   SELECT
-    coupons.code AS code_1,
-    COALESCE(_s1.count_txid, 0) AS redemption_count_1,
+    coupons.code,
+    COALESCE(_s1.count_txid, 0) AS redemption_count,
     _s1.sum_amount
   FROM main.coupons AS coupons
   LEFT JOIN _s1 AS _s1
     ON _s1.coupon_id = coupons.cid
   ORDER BY
-    COALESCE(_s1.count_txid, 0) DESC
+    redemption_count DESC
   LIMIT 3
 )
 SELECT
-  code_1 AS coupon_code,
-  redemption_count_1 AS redemption_count,
+  code AS coupon_code,
+  redemption_count,
   COALESCE(sum_amount, 0) AS total_discount
 FROM _t0
 ORDER BY
-  redemption_count_1 DESC
+  redemption_count DESC

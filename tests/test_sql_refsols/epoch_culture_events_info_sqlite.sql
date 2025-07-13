@@ -5,11 +5,11 @@ WITH _s2 AS (
   FROM events
 ), _t0 AS (
   SELECT
-    eras.er_name AS er_name_1,
-    events.ev_name AS ev_name_1,
-    seasons.s_name AS s_name_1,
-    times.t_name AS t_name_1,
-    events.ev_dt
+    eras.er_name,
+    events.ev_dt,
+    events.ev_name,
+    seasons.s_name,
+    times.t_name
   FROM events AS events
   JOIN eras AS eras
     ON eras.er_end_year > CAST(STRFTIME('%Y', events.ev_dt) AS INTEGER)
@@ -32,11 +32,11 @@ WITH _s2 AS (
   LIMIT 6
 )
 SELECT
-  ev_name_1 AS event_name,
-  er_name_1 AS era_name,
+  ev_name AS event_name,
+  er_name AS era_name,
   CAST(STRFTIME('%Y', ev_dt) AS INTEGER) AS event_year,
-  s_name_1 AS season_name,
-  t_name_1 AS tod
+  s_name AS season_name,
+  t_name AS tod
 FROM _t0
 ORDER BY
   ev_dt

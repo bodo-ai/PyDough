@@ -1,6 +1,6 @@
 ROOT(columns=[('name', c_name), ('largest_diff', largest_diff)], orderings=[(largest_diff):desc_last])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'c_name': c_name_1, 'largest_diff': largest_diff}, orderings=[(largest_diff):desc_last])
-  PROJECT(columns={'c_name_1': c_name, 'largest_diff': IFF(ABS(min_diff) > max_diff, min_diff, max_diff)})
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'c_name': c_name, 'largest_diff': largest_diff}, orderings=[(largest_diff):desc_last])
+  PROJECT(columns={'c_name': c_name, 'largest_diff': IFF(ABS(min_diff) > max_diff, min_diff, max_diff)})
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'c_name': t0.c_name, 'max_diff': t1.max_diff, 'min_diff': t1.min_diff})
     FILTER(condition=c_mktsegment == 'AUTOMOBILE':string, columns={'c_custkey': c_custkey, 'c_name': c_name})
      SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_mktsegment': c_mktsegment, 'c_name': c_name})

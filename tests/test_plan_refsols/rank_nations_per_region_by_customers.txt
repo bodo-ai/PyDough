@@ -1,6 +1,6 @@
 ROOT(columns=[('name', n_name), ('rank', rank)], orderings=[(rank):asc_first])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'n_name': n_name_1, 'rank': rank}, orderings=[(rank):asc_first])
-  PROJECT(columns={'n_name_1': n_name, 'rank': RANKING(args=[], partition=[n_regionkey], order=[(n_rows):desc_first])})
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'n_name': n_name, 'rank': rank}, orderings=[(rank):asc_first])
+  PROJECT(columns={'n_name': n_name, 'rank': RANKING(args=[], partition=[n_regionkey], order=[(n_rows):desc_first])})
    JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'n_name': t0.n_name, 'n_regionkey': t0.n_regionkey, 'n_rows': t1.n_rows})
     JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'n_name': t1.n_name, 'n_nationkey': t1.n_nationkey, 'n_regionkey': t1.n_regionkey})
      SCAN(table=tpch.REGION, columns={'r_regionkey': r_regionkey})

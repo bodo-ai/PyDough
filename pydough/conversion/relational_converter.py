@@ -1456,6 +1456,9 @@ def optimize_relational_tree(
     # Step 10: re-run projection merging, without pushing into joins.
     root = confirm_root(merge_projects(root, push_into_joins=False))
 
+    # Step 8: re-run column bubbling
+    root = bubble_column_names(root)
+
     # Step 11: re-run column pruning.
     root = ColumnPruner().prune_unused_columns(root)
 
