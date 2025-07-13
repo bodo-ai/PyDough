@@ -7,6 +7,7 @@ aggregations.
 __all__ = ["pullup_projections"]
 
 
+import pydough.pydough_operators as pydop
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -16,6 +17,7 @@ from pydough.relational import (
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     RelationalExpression,
     RelationalNode,
@@ -29,6 +31,7 @@ from pydough.relational.rel_util import (
 from pydough.relational.relational_expressions.column_reference_finder import (
     ColumnReferenceFinder,
 )
+from pydough.types import NumericType
 
 from .merge_projects import merge_adjacent_projects
 
@@ -272,12 +275,33 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
     for name, expr in node.aggregations.items():
         new_expr = apply_substitution(expr, substitutions, {})
         assert isinstance(new_expr, CallExpression)
-        new_aggs[name] = new_expr
+        new_aggs[name] = simplify_agg(new_expr)
     return Aggregate(
         input=node.input,
         keys=new_keys,
         aggregations=new_aggs,
     )
+
+
+def simplify_agg(agg: CallExpression) -> CallExpression:
+    """
+    TODO
+    """
+    arg: RelationalExpression
+    if agg.op == pydop.SUM:
+        arg = agg.inputs[0]
+        if (
+            isinstance(arg, LiteralExpression)
+            and isinstance(arg.data_type, NumericType)
+            and arg.value == 1
+        ):
+            return CallExpression(
+                op=pydop.COUNT,
+                return_type=agg.data_type,
+                inputs=[],
+            )
+    # In all other cases, we just return the aggregation as is.
+    return agg
 
 
 def pullup_projections(node: RelationalNode) -> RelationalNode:
