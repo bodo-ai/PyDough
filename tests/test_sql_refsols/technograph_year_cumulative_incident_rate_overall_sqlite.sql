@@ -20,7 +20,7 @@ WITH _s2 AS (
     ON _s4.ca_dt = DATE(incidents.in_error_report_ts, 'start of day')
   GROUP BY
     _s4.ca_dt
-), _t4 AS (
+), _t2 AS (
   SELECT
     SUM(_s3.n_rows) AS sum_expr_3,
     SUM(_s7.n_rows) AS sum_n_rows,
@@ -32,42 +32,33 @@ WITH _s2 AS (
     ON _s2.ca_dt = _s7.ca_dt
   GROUP BY
     CAST(STRFTIME('%Y', _s2.ca_dt) AS INTEGER)
-), _t0 AS (
-  SELECT
-    ROUND(
-      CAST(SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(sum_expr_3, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
-      2
-    ) AS cum_ir,
-    ROUND(
-      CAST((
-        100.0 * (
-          COALESCE(sum_expr_3, 0) - LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year)
-        )
-      ) AS REAL) / LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year),
-      2
-    ) AS pct_bought_change,
-    ROUND(
-      CAST((
-        100.0 * (
-          COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year)
-        )
-      ) AS REAL) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year),
-      2
-    ) AS pct_incident_change,
-    COALESCE(sum_expr_3, 0) AS n_devices,
-    COALESCE(sum_n_rows, 0) AS n_incidents,
-    year
-  FROM _t4
-  WHERE
-    NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
 )
 SELECT
   year AS yr,
-  cum_ir,
-  pct_bought_change,
-  pct_incident_change,
-  n_devices AS bought,
-  n_incidents AS incidents
-FROM _t0
+  ROUND(
+    CAST(SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(sum_expr_3, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    2
+  ) AS cum_ir,
+  ROUND(
+    CAST((
+      100.0 * (
+        COALESCE(sum_expr_3, 0) - LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year)
+      )
+    ) AS REAL) / LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year),
+    2
+  ) AS pct_bought_change,
+  ROUND(
+    CAST((
+      100.0 * (
+        COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year)
+      )
+    ) AS REAL) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year),
+    2
+  ) AS pct_incident_change,
+  COALESCE(sum_expr_3, 0) AS bought,
+  COALESCE(sum_n_rows, 0) AS incidents
+FROM _t2
+WHERE
+  NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
 ORDER BY
   year

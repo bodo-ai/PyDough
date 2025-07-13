@@ -1,6 +1,6 @@
 ROOT(columns=[('name', n_name), ('suppliers_in_black', suppliers_in_black), ('total_suppliers', total_suppliers)], orderings=[])
- FILTER(condition=suppliers_in_black > 0.5:numeric * total_suppliers, columns={'n_name': n_name_1, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
-  PROJECT(columns={'n_name_1': n_name, 'suppliers_in_black': DEFAULT_TO(count_s_suppkey, 0:numeric), 'total_suppliers': total_suppliers})
+ FILTER(condition=suppliers_in_black > 0.5:numeric * total_suppliers, columns={'n_name': n_name, 'suppliers_in_black': suppliers_in_black, 'total_suppliers': total_suppliers})
+  PROJECT(columns={'n_name': n_name, 'suppliers_in_black': DEFAULT_TO(count_s_suppkey, 0:numeric), 'total_suppliers': total_suppliers})
    JOIN(condition=t0.n_nationkey_1 == t1.s_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'count_s_suppkey': t0.count_s_suppkey, 'n_name': t0.n_name_1, 'total_suppliers': t1.total_suppliers})
     PROJECT(columns={'count_s_suppkey': count_s_suppkey, 'n_name_1': n_name, 'n_nationkey_1': n_nationkey})
      JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'count_s_suppkey': t1.count_s_suppkey, 'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey})

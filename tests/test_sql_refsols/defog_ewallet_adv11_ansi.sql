@@ -17,4 +17,4 @@ FROM main.users AS users
 JOIN _s1 AS _s1
   ON _s1.user_id = users.uid
 ORDER BY
-  total_duration DESC
+  COALESCE(_s1.sum_duration, 0) DESC

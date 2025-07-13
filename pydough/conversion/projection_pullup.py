@@ -9,9 +9,11 @@ __all__ = ["pullup_projections"]
 
 from pydough.relational import (
     ColumnReference,
+    ExpressionSortInfo,
     Filter,
     Join,
     JoinType,
+    Limit,
     Project,
     RelationalExpression,
     RelationalNode,
@@ -178,6 +180,55 @@ def pull_project_into_filter(node: Filter) -> None:
     }
 
 
+def pull_project_into_limit(node: Limit) -> None:
+    """
+    TODO
+    """
+    if not isinstance(node.input, Project):
+        return
+
+    project: Project = node.input
+
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    finder.reset()
+    for expr in node.columns.values():
+        expr.accept(finder)
+    output_cols: set[ColumnReference] = finder.get_column_references()
+    output_names: set[str] = {col.name for col in output_cols}
+
+    finder.reset()
+    for order_expr in node.orderings:
+        order_expr.expr.accept(finder)
+    order_cols: set[ColumnReference] = finder.get_column_references()
+    order_names: set[str] = {col.name for col in order_cols}
+
+    transfer_substitutions: dict[RelationalExpression, RelationalExpression] = (
+        widen_columns(project)
+    )
+    substitutions: dict[RelationalExpression, RelationalExpression] = {}
+    for name, expr in project.columns.items():
+        new_expr: RelationalExpression = apply_substitution(
+            expr, transfer_substitutions, {}
+        )
+        if (not contains_window(new_expr)) and (
+            (name in output_names) != (name in order_names)
+        ):
+            ref_expr: ColumnReference = ColumnReference(name, expr.data_type)
+            substitutions[ref_expr] = new_expr
+    node._columns = {
+        name: apply_substitution(expr, substitutions, {})
+        for name, expr in node.columns.items()
+    }
+    node._orderings = [
+        ExpressionSortInfo(
+            apply_substitution(order_expr.expr, substitutions, {}),
+            order_expr.ascending,
+            order_expr.nulls_first,
+        )
+        for order_expr in node.orderings
+    ]
+
+
 def pullup_projections(node: RelationalNode) -> RelationalNode:
     """
     TODO
@@ -192,8 +243,8 @@ def pullup_projections(node: RelationalNode) -> RelationalNode:
             if node.join_type == JoinType.INNER:
                 pull_project_into_join(node, 1)
             return pull_non_columns(node)
-        case Filter():
-            pull_project_into_filter(node)
+        case Limit():
+            pull_project_into_limit(node)
             return pull_non_columns(node)
         case _:
             return node

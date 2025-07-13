@@ -1,6 +1,6 @@
 ROOT(columns=[('product', pr_name), ('product_brand', pr_brand), ('product_type', pr_type), ('ir', ir)], orderings=[(ir):desc_last])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'ir': ir, 'pr_brand': pr_brand, 'pr_name': pr_name, 'pr_type': pr_type}, orderings=[(ir):desc_last])
-  PROJECT(columns={'ir': ROUND(DEFAULT_TO(sum_n_incidents, 0:numeric) / n_rows, 2:numeric), 'pr_brand': pr_brand, 'pr_name': pr_name, 'pr_type': pr_type})
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'ir': ir, 'pr_brand': pr_brand_1, 'pr_name': pr_name_1, 'pr_type': pr_type_1}, orderings=[(ir):desc_last])
+  PROJECT(columns={'ir': ROUND(DEFAULT_TO(sum_n_incidents, 0:numeric) / n_rows, 2:numeric), 'pr_brand_1': pr_brand, 'pr_name_1': pr_name, 'pr_type_1': pr_type})
    JOIN(condition=t0.pr_id == t1.de_product_id, type=INNER, cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'pr_brand': t0.pr_brand, 'pr_name': t0.pr_name, 'pr_type': t0.pr_type, 'sum_n_incidents': t1.sum_n_incidents})
     SCAN(table=main.PRODUCTS, columns={'pr_brand': pr_brand, 'pr_id': pr_id, 'pr_name': pr_name, 'pr_type': pr_type})
     AGGREGATE(keys={'de_product_id': de_product_id}, aggregations={'n_rows': COUNT(), 'sum_n_incidents': SUM(n_incidents)})

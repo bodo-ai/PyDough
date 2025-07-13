@@ -1,4 +1,4 @@
-ROOT(columns=[('supplier_key', ps_suppkey), ('part_key', ps_partkey), ('complete_parts', complete_parts), ('total_cost', total_cost)], orderings=[(total_cost):desc_last])
- LIMIT(limit=Literal(value=10, type=NumericType()), columns={'complete_parts': complete_parts, 'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey, 'total_cost': total_cost}, orderings=[(total_cost):desc_last])
-  PROJECT(columns={'complete_parts': FLOOR(ps_availqty), 'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey, 'total_cost': CEIL(ps_supplycost * FLOOR(ps_availqty))})
+ROOT(columns=[('supplier_key', ps_suppkey), ('part_key', ps_partkey), ('complete_parts', FLOOR(ps_availqty)), ('total_cost', total_cost_1)], orderings=[(total_cost_1):desc_last])
+ LIMIT(limit=Literal(value=10, type=NumericType()), columns={'ps_availqty': ps_availqty, 'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey, 'total_cost_1': total_cost}, orderings=[(total_cost):desc_last])
+  PROJECT(columns={'ps_availqty': ps_availqty, 'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey, 'total_cost': CEIL(ps_supplycost * FLOOR(ps_availqty))})
    SCAN(table=tpch.PARTSUPP, columns={'ps_availqty': ps_availqty, 'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey, 'ps_supplycost': ps_supplycost})

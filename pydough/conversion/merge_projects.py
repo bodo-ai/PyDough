@@ -189,18 +189,44 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
     while isinstance(node.input, Project):
         child_project: Project = node.input
         if isinstance(node, RelationalRoot):
-            # The columns of the projection can be sucked into the root
-            # above it if they are all pass-through/renamings, or if there
-            # is no convolution created (only allowed if there are no
-            # ordering expressions).
-            if all(
-                isinstance(expr, ColumnReference)
-                for expr in child_project.columns.values()
-            ) or (
-                len(node.orderings) == 0
-                and merging_doesnt_create_convolution(
-                    node.columns, child_project.columns
-                )
+            # # The columns of the projection can be sucked into the root
+            # # above it if they are all pass-through/renamings, or if there
+            # # is no convolution created (only allowed if there are no
+            # # ordering expressions).
+            # if all(
+            #     isinstance(expr, ColumnReference)
+            #     for expr in child_project.columns.values()
+            # ) or (
+            #     len(node.orderings) == 0
+            #     and merging_doesnt_create_convolution(
+            #         node.columns, child_project.columns
+            #     )
+            # ):
+            #     # Replace all column references in the root's columns with
+            #     # the expressions from the child projection..
+            #     for idx, (name, expr) in enumerate(node.ordered_columns):
+            #         new_expr = transpose_expression(expr, child_project.columns)
+            #         node.columns[name] = new_expr
+            #         node.ordered_columns[idx] = (name, new_expr)
+            #     # Do the same with the sort expressions.
+            #     for idx, sort_info in enumerate(node.orderings):
+            #         new_expr = transpose_expression(
+            #             sort_info.expr, child_project.columns
+            #         )
+            #         node.orderings[idx] = ExpressionSortInfo(
+            #             new_expr, sort_info.ascending, sort_info.nulls_first
+            #         )
+            #     # Delete the child projection from the tree, replacing it
+            #     # with its input.
+            #     node._input = child_project.input
+            # else:
+            #     # Otherwise, halt the merging process since it is no longer
+            #     # possible to merge the children of this root into it.
+            #     break
+            # TODO: ADD COMMENTS
+            if not (
+                any(contains_window(expr) for expr in child_project.columns.values())
+                and any(contains_window(expr) for expr in node.columns.values())
             ):
                 # Replace all column references in the root's columns with
                 # the expressions from the child projection..
