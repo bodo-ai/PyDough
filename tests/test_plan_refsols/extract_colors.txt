@@ -1,0 +1,4 @@
+ROOT(columns=[('key', p_partkey), ('c1', c1), ('c2', c2), ('c3', c3), ('c4', c4), ('c5', c5), ('c6', c6)], orderings=[(p_partkey):asc_first])
+ LIMIT(limit=Literal(value=5, type=NumericType()), columns={'c1': c1, 'c2': c2, 'c3': c3, 'c4': c4, 'c5': c5, 'c6': c6, 'p_partkey': p_partkey}, orderings=[(p_partkey):asc_first])
+  PROJECT(columns={'c1': UPPER(GETPART(p_name, ' ':string, 1:numeric)), 'c2': UPPER(GETPART(p_name, ' ':string, 2:numeric)), 'c3': UPPER(GETPART(p_name, ' ':string, 3:numeric)), 'c4': UPPER(GETPART(p_name, ' ':string, 4:numeric)), 'c5': UPPER(GETPART(p_name, ' ':string, 5:numeric)), 'c6': UPPER(GETPART(p_name, ' ':string, 6:numeric)), 'p_partkey': p_partkey})
+   SCAN(table=tpch.PART, columns={'p_name': p_name, 'p_partkey': p_partkey})

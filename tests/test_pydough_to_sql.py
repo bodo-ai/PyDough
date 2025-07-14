@@ -29,8 +29,11 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     datediff,
     datetime_sampler,
+    extract_colors,
     floor_and_ceil,
     floor_and_ceil_2,
+    get_part_multiple,
+    get_part_single,
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
@@ -135,6 +138,12 @@ from tests.testing_utilities import (
             None,
             "simple_var_std",
             id="simple_var_std",
+        ),
+        pytest.param(
+            extract_colors,
+            None,
+            "extract_colors",
+            id="extract_colors",
         ),
         pytest.param(
             quantile_function_test_1, None, "quantile_test_1", id="quantile_test_1"
@@ -259,6 +268,12 @@ def test_pydough_to_sql_tpch(
             "window_sliding_frame_relsum",
             "Broker",
             id="window_sliding_frame_relsum",
+        ),
+        pytest.param(
+            get_part_single, "get_part_single", "Broker", id="get_part_single"
+        ),
+        pytest.param(
+            get_part_multiple, "get_part_multiple", "Broker", id="get_part_multiple"
         ),
     ],
 )
