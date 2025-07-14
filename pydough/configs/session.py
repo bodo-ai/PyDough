@@ -54,7 +54,7 @@ class PyDoughSession:
         Get the active metadata graph.
 
         Returns:
-            GraphMetadata: The active metadata graph.
+            The active metadata graph.
         """
         return self._metadata
 
@@ -64,7 +64,7 @@ class PyDoughSession:
         Set the active metadata graph.
 
         Args:
-            graph (GraphMetadata | None): The metadata graph to set.
+            graph: The metadata graph to set.
         """
         self._metadata = graph
 
@@ -74,7 +74,7 @@ class PyDoughSession:
         Get the active PyDough configuration.
 
         Returns:
-            PyDoughConfigs: The active PyDough configuration.
+            The active PyDough configuration.
         """
         return self._config
 
@@ -84,7 +84,7 @@ class PyDoughSession:
         Set the active PyDough configuration.
 
         Args:
-            config (PyDoughConfigs): The PyDough configuration to set.
+            `config`: The PyDough configuration to set.
         """
         self._config = config
 
@@ -94,7 +94,7 @@ class PyDoughSession:
         Get the active database context.
 
         Returns:
-            DatabaseContext: The active database context.
+            The active database context.
         """
         return self._database
 
@@ -104,7 +104,7 @@ class PyDoughSession:
         Set the active database context.
 
         Args:
-            context (DatabaseContext): The database context to set.
+            `context`: The database context to set.
         """
         self._database = context
 
@@ -114,13 +114,13 @@ class PyDoughSession:
         the corresponding context in case the user wants/needs to modify it.
 
         Args:
-            database_name (str): The name of the database to connect to.
+            `database_name`: The name of the database to connect to.
             **kwargs: Additional keyword arguments to pass to the connection.
                 All arguments must be accepted using the supported connect API
                 for the dialect. Most likely the database path will be required.
 
         Returns:
-            DatabaseContext: The newly created database context.
+            The newly created database context.
         """
         context: DatabaseContext = load_database_context(database_name, **kwargs)
         self.database = context
@@ -135,13 +135,13 @@ class PyDoughSession:
         property directly later.
 
         Args:
-            graph_path (str): The path to load the graph. At this time this must be on
+            `graph_path`: The path to load the graph. At this time this must be on
                 the user's local file system.
-            graph_name (str): The name under which to load the graph from the file. This
+            `graph_name`: The name under which to load the graph from the file. This
                 is to allow loading multiple graphs from the same json file.
 
         Returns:
-            GraphMetadata: The loaded metadata graph.
+            The loaded metadata graph.
         """
         graph: GraphMetadata = parse_json_metadata_from_file(graph_path, graph_name)
         self.metadata = graph

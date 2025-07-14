@@ -1235,14 +1235,14 @@ class Qualifier:
         qualified collections (Hybrid nodes).
 
         Args:
-            unqualified (UnqualifiedCross): The unqualified cross node to qualify.
-            context (PyDoughCollectionQDAG): The context in which the qualification is happening.
-            is_child (bool): Whether the node is being qualified as a child
+            `unqualified`: The unqualified cross node to qualify.
+            `context`: The context in which the qualification is happening.
+            `is_child`: Whether the node is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            is_cross (bool): Whether the qualification is for a CROSS JOIN operation.
+            `is_cross`: Whether the qualification is for a CROSS JOIN operation.
 
         Returns:
-            PyDoughCollectionQDAG: The qualified collection node.
+            The qualified collection node.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         unqualified_child: UnqualifiedNode = unqualified._parcel[1]
