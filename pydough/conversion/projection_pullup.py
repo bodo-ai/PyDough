@@ -27,6 +27,7 @@ from pydough.relational.rel_util import (
     add_input_name,
     apply_substitution,
     contains_window,
+    transpose_expression,
 )
 from pydough.relational.relational_expressions.column_reference_finder import (
     ColumnReferenceFinder,
@@ -304,6 +305,75 @@ def simplify_agg(agg: CallExpression) -> CallExpression:
     return agg
 
 
+def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
+    """
+    TODO
+    """
+    if not isinstance(node.input, Aggregate):
+        return node
+
+    input_agg: Aggregate = node.input
+
+    top_keys: set[RelationalExpression] = {
+        transpose_expression(expr, input_agg.columns) for expr in node.keys.values()
+    }
+    bottom_keys: set[RelationalExpression] = set(input_agg.keys.values())
+
+    # print()
+    # print("Top keys:")
+    # for key in top_keys:
+    #     print(f"  {key.to_string(True)}")
+    # print("Bottom keys:")
+    # for key in bottom_keys:
+    #     print(f"  {key.to_string(True)}")
+
+    if len(top_keys - bottom_keys) > 0:
+        return node
+
+    bottom_only_keys: set[RelationalExpression] = bottom_keys - top_keys
+
+    new_keys: dict[str, RelationalExpression] = {
+        name: transpose_expression(expr, input_agg.columns)
+        for name, expr in node.keys.items()
+    }
+    new_aggs: dict[str, CallExpression] = {}
+    input_expr: RelationalExpression
+    for agg_name, agg_expr in node.aggregations.items():
+        match agg_expr.op:
+            case pydop.COUNT if len(agg_expr.inputs) == 0:
+                if len(bottom_only_keys) == 0:
+                    new_aggs[agg_name] = CallExpression(
+                        op=pydop.ANYTHING,
+                        return_type=agg_expr.data_type,
+                        inputs=[LiteralExpression(1, agg_expr.data_type)],
+                    )
+                elif len(bottom_only_keys) == 1:
+                    new_aggs[agg_name] = CallExpression(
+                        op=pydop.NDISTINCT,
+                        return_type=agg_expr.data_type,
+                        inputs=[next(iter(bottom_only_keys))],
+                    )
+                else:
+                    return node
+            case pydop.SUM:
+                input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
+                if isinstance(input_expr, CallExpression) and input_expr.op in (
+                    pydop.SUM,
+                    pydop.COUNT,
+                ):
+                    new_aggs[agg_name] = input_expr
+                else:
+                    return node
+            case _:
+                return node
+
+    return Aggregate(
+        input=input_agg.input,
+        keys=new_keys,
+        aggregations=new_aggs,
+    )
+
+
 def pullup_projections(node: RelationalNode) -> RelationalNode:
     """
     TODO
@@ -325,6 +395,7 @@ def pullup_projections(node: RelationalNode) -> RelationalNode:
             pull_project_into_limit(node)
             return pull_non_columns(node)
         case Aggregate():
+            node = merge_adjacent_aggregations(node)
             return pull_project_into_aggregate(node)
         case _:
             return node

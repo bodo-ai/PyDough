@@ -20,6 +20,5 @@ ROOT(columns=[('name', r_name), ('n_nations', n_nations), ('n_customers', sum_n_
         AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})
          FILTER(condition=YEAR(o_orderdate) == 1996:numeric, columns={'o_custkey': o_custkey})
           SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate})
-     AGGREGATE(keys={'s_nationkey': s_nationkey}, aggregations={'sum_n_rows': SUM(n_rows)})
-      AGGREGATE(keys={'s_nationkey': s_nationkey}, aggregations={'n_rows': COUNT()})
-       SCAN(table=tpch.SUPPLIER, columns={'s_nationkey': s_nationkey})
+     AGGREGATE(keys={'s_nationkey': s_nationkey}, aggregations={'sum_n_rows': COUNT()})
+      SCAN(table=tpch.SUPPLIER, columns={'s_nationkey': s_nationkey})
