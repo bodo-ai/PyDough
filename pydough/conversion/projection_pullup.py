@@ -364,6 +364,15 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
                     new_aggs[agg_name] = input_expr
                 else:
                     return node
+            case pydop.MIN | pydop.MAX | pydop.ANYTHING:
+                input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
+                if (
+                    isinstance(input_expr, CallExpression)
+                    and input_expr.op == agg_expr.op
+                ):
+                    new_aggs[agg_name] = input_expr
+                else:
+                    return node
             case _:
                 return node
 
