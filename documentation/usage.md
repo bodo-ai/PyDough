@@ -13,12 +13,13 @@ This document describes how to set up & interact with PyDough. For instructions 
 - [Evaluation APIs](#evaluation-apis)
    * [`pydough.to_sql`](#pydoughto_sql)
    * [`pydough.to_df`](#pydoughto_df)
+- [Transformation APIs](#transformation-apis)
    * [`pydough.from_string`](#pydoughfrom_string)
 - [Exploration APIs](#exploration-apis)
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
    * [`pydough.explain_term`](#pydoughexplain_term)
-- [Logging] (#logging)
+- [Logging](#logging)
 
 <!-- TOC end -->
 
@@ -476,6 +477,11 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 </div>
 
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
+
+<!-- TOC --><a name="evaluation-apis"></a>
+## Transformation APIs
+
+This sections describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
 
 <!-- TOC --><a name="pydoughfrom_string"></a>
 ### `pydough.from_string`
@@ -1063,6 +1069,8 @@ This term is singular with regards to the collection, meaning it can be placed i
 For example, the following is valid:
   TPCH.nations.WHERE(region.name == 'EUROPE').CALCULATE(AVG(customers.acctbal))
 ```
+
+<!-- TOC --><a name="logging"></a>
 ## Logging
 
 Logging is enabled and set to INFO level by default. We can change the log level by setting the environment variable `PYDOUGH_LOG_LEVEL` to the standard levels: DEBUG, INFO, WARNING, ERROR, CRITICAL.
