@@ -501,17 +501,16 @@ def from_string(
 The first argument `source` is the source code string. It can be a single pydough command or a multi-line pydough code with intermediate results stored in variables. It can optionally take in the following keyword arguments:
 
 - `answer_variable`: The name of the variable that stores the final result of the PyDough code. If not provided, the API expects the final result to be in a variable named `result`. The API returns a PyDough collection holding this value. It is assumed that the PyDough code string includes a variable definition where the name of the variable is the same as `answer_variable` and the value is valid PyDough code; if not it raises an exception.
-- `metadata`: The PyDough knowledge graph to use for the transformation. If omitted, `active_session.metadata` is used.
+- `metadata`: The PyDough knowledge graph to use for the transformation. If omitted, `pydough.active_session.metadata` is used.
 - `environment`: A dictionary representing additional environment context. This serves as the local namespace where the PyDough code will be executed.
 
-Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output. All these examples use the database tcph that can be downloaded running the following command from the root directory of PyDough: `bash demos/setup_tpch.sh tpch.db`
+Below are examples of using `pydough.from_string`, and examples of the SQL that could be potentially generated from calling `pydough.to_sql` on the output. All these examples use the TPC-H dataset that can be downloaded [here](https://github.com/lovasoa/TPCH-sqlite/releases) with the [graph used in the demos directory](../demos/metadata/tpch_demo_graph.json).
  
-Python code using `pydough.from_string` to generate SQL to get the count of customers in the market segment AUTOMOBILE. The result will be returned in a variable named `pydough_query` instead of the default `result`, and the market segment AUTOMOBILE is passed in an environment variable `SEG`.:
+This first example is of Python code using `pydough.from_string` to generate SQL to get the count of customers in the market segment `"AUTOMOBILE"`. The result will be returned in a variable named `pydough_query` instead of the default `result`, and the market segment `"AUTOMOBILE"` is passed in an environment variable `SEG`.:
 ```py
 import pydough
 
-# Setup demo metadata
-# You need to download tcph database using setup_tpch.sh. Check demos/README.md
+# Setup demo metadata. Make sure you have the TPC-H dataset downloaded locally.
 graph = pydough.active_session.load_metadata_graph("demos/metadata/tpch_demo_graph.json", "TPCH")
 pydough.active_session.connect_database("sqlite", database="tpch.db")
 
@@ -523,10 +522,9 @@ pydough_code = "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_se
 # Transform the pydough code and get the result from pydough_query
 query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG":"AUTOMOBILE"})
 sql = pydough.to_sql(query)
-print(sql)
 ```
 
-The output for `print(sql)` is the following SQL query:
+The value of `sql` is the following SQL query text as a Python string:
 ```sql
 SELECT
   COUNT(*) AS n
@@ -535,7 +533,7 @@ WHERE
   c_mktsegment = 'AUTOMOBILE'
 ```
 
-Python code to generate SQL to get the top 5 suppliers with the highest revenue. The code snippet uses variables provided in the environment context to filter by nation, ship mode and year:
+This next example is of Python code to generate SQL to get the top 5 suppliers with the highest revenue. The code snippet uses variables provided in the environment context to filter by nation, ship mode and year (`TARGET_NATION`, `DESIRED_SHIP_MODE` and `REQUESTED_SHIP_YEAR`):
 ```py
 # Example of a multi-line pydough code snippet that uses intermetiate results to
 # build the final query. For this query we set 3 environment variables: 
@@ -566,10 +564,9 @@ result = supplier_info.TOP_K(5, by=revenue_year.DESC())
 # Transform the pydough code and get the result from result
 query = pydough.from_string(pydough_code, environment=env)
 sql = pydough.to_sql(query)
-print(sql)
 ```
 
-The output for `print(sql)` is the following SQL query:
+The value of `sql` is the following SQL query text as a Python string:
 ```sql
 WITH _s7 AS (
   SELECT
@@ -605,7 +602,7 @@ ORDER BY
 LIMIT 5
 ```
 
-One more example of Python code to generate an SQL query. This time, we will use the 'datetime.date' passed in the environment.
+This final example is of Python code to generate an SQL query, using 'datetime.date' passed in through the environment.
 ```py
 # For every customer, how many urgent orders have they made in year 1996 with a 
 # total price over 100000, and what is the sum of the total prices of all such 
@@ -633,10 +630,9 @@ result = (
 # Transform the pydough code and get the result from result
 query = pydough.from_string(pydough_code, environment=env)
 sql = pydough.to_sql(query)
-print(sql)
 ```
 
-The output for `print(sql)` is the following SQL query:
+The value of `sql` is the following SQL query text as a Python string:
 ```sql
 WITH _s1 AS (
   SELECT

@@ -425,19 +425,23 @@ def from_string(
 ) -> UnqualifiedNode:
     """
     Parses and transforms a PyDough source string, returning an unqualified node
-    on which operations like `explain()`, `to_sql()`, or `to_df()` can be called.
+    on which operations like `explain()`, `to_sql()`, or `to_df()` can be
+    called.
 
     Args:
-        `source`: a valid PyDough code string.
+        `source`: a valid PyDough code string that will be executed to define
+        the PyDough code.
         `answer_variable`: The name of the variable that holds the result of the
-        PyDough code. Defaults to "result".
+        PyDough code. If not provided, assumes the answer is `result`.
         `metadata`: The metadata graph to use. If not provided,
-        `active_session.metadata` will be used. Defaults to None.
+        `active_session.metadata` will be used.
         `environment`: A dictionary of variables that will be available
-        in the environment where the PyDough code is executed. Defaults to None.
+        in the environment where the PyDough code is executed. If not provided,
+        uses an empty dictionary.
 
     Returns:
-        UnqualifiedNode: An object representing the result of the transformed PyDough code.
+        A PyDough UnualifiedNode object representing the result of the
+        transformed PyDough code.
     """
     import pydough
 
@@ -471,7 +475,7 @@ def from_string(
     try:
         compile_ast = compile(transformed_code, filename="<ast>", mode="exec")
     except SyntaxError as e:
-        raise ValueError(f"Syntax error in transformed PyDough code: {str(e)}") from e
+        raise ValueError(f"Syntax error in transformed PyDough code:\n{str(e)}") from e
     execution_context: dict[str, Any] = environment | {"graph": metadata}
     exec(compile_ast, {}, execution_context)
 
