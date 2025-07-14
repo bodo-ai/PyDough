@@ -12,6 +12,7 @@ __all__ = [
     "get_logger",
     "init_pydough_context",
     "parse_json_metadata_from_file",
+    "range_collection",
     "to_df",
     "to_sql",
 ]
@@ -22,6 +23,7 @@ from .exploration import explain, explain_structure, explain_term
 from .logger import get_logger
 from .metadata import parse_json_metadata_from_file
 from .unqualified import display_raw, from_string, init_pydough_context
+from .qdag.collections import range_collection
 
 # Create a default session for the user to interact with.
 # In most situations users will just use this session and

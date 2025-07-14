@@ -18,6 +18,11 @@ from pydough.pydough_operators import (
     PyDoughOperator,
     builtin_registered_operators,
 )
+from pydough.qdag.collections.range_collection import RangeGeneratedCollection
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
+)
+from pydough.qdag.collections.user_collections import PyDoughUserGeneratedCollection
 from pydough.types import PyDoughType
 
 from .abstract_pydough_qdag import PyDoughQDAG
@@ -393,3 +398,37 @@ class AstNodeBuilder:
             The newly created PyDough SINGULAR instance.
         """
         return Singular(preceding_context)
+
+    def build_generated_collection(
+        self,
+        preceding_context: PyDoughCollectionQDAG,
+        name: str,
+        column_name: list[str],
+        args: list[PyDoughQDAG],
+    ) -> PyDoughUserGeneratedCollectionQDag:
+        """
+        Creates a new user-defined collection.
+
+        Args:
+            `name`: the name of the collection.
+            `column_name`: the name of the column that will hold the integer values.
+            `args`: the arguments that define the collection, such as a range of
+            integers or a dataframe.
+
+        Returns:
+            The newly created user-defined collection.
+        """
+        # TODO: case range vs. dataframe
+        if len(args) != 3:
+            raise PyDoughQDAGException(
+                f"Expected 3 arguments for range collection, got {len(args)}"
+            )
+        collection: PyDoughUserGeneratedCollection = RangeGeneratedCollection(
+            name, column_name[0], args[0], args[1], args[2]
+        )
+        collection_qdag: PyDoughUserGeneratedCollectionQDag = (
+            PyDoughUserGeneratedCollectionQDag(
+                ancestor=preceding_context, collection=collection
+            )
+        )
+        return collection_qdag

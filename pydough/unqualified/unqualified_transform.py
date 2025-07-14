@@ -1,6 +1,6 @@
 """
 Logic for transforming raw Python code into PyDough code by replacing undefined
-variables with unqualified nodes by prepending with with `_ROOT.`.
+variables with unqualified nodes by prepending it with `_ROOT.`.
 """
 
 __all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]

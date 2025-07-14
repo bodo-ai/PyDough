@@ -38,6 +38,9 @@ from pydough.qdag import (
     Where,
     WindowCall,
 )
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
+)
 from pydough.types import PyDoughType
 
 from .errors import PyDoughUnqualifiedException
@@ -48,6 +51,7 @@ from .unqualified_node import (
     UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedCross,
+    UnqualifiedGeneratedCollection,
     UnqualifiedLiteral,
     UnqualifiedNode,
     UnqualifiedOperation,
@@ -1261,6 +1265,48 @@ class Qualifier:
         )
         return qualified_child
 
+    def qualify_generated_collection(
+        self,
+        unqualified: UnqualifiedGeneratedCollection,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+        is_cross: bool,
+    ) -> PyDoughUserGeneratedCollectionQDag:
+        """
+        Transforms an `UnqualifiedGeneratedCollection` into a PyDoughCollectionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedGeneratedCollection instance to be transformed.
+            `context`: the collection QDAG whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
+
+        Returns:
+            The PyDough QDAG object for the qualified collection node.
+
+        """
+        qualified_args: list[PyDoughQDAG] = []
+
+        # TODO: how to handle dataframe case.
+        for arg in unqualified._parcel[2]:
+            assert isinstance(arg, UnqualifiedNode)
+            qualified_arg: PyDoughQDAG = self.qualify_node(
+                arg, context, [], is_child, is_cross
+            )
+            qualified_args.append(qualified_arg)
+
+        generated_collection_qdag: PyDoughUserGeneratedCollectionQDag = (
+            self.builder.build_generated_collection(
+                context,
+                unqualified._parcel[0],
+                unqualified._parcel[1],
+                qualified_args,
+            )
+        )
+        return generated_collection_qdag  # .collection
+
     def qualify_node(
         self,
         unqualified: UnqualifiedNode,
@@ -1333,6 +1379,10 @@ class Qualifier:
                 answer = self.qualify_best(unqualified, context, is_child, is_cross)
             case UnqualifiedCross():
                 answer = self.qualify_cross(unqualified, context, is_child, is_cross)
+            case UnqualifiedGeneratedCollection():
+                answer = self.qualify_generated_collection(
+                    unqualified, context, is_child, is_cross
+                )
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"

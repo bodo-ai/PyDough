@@ -8,6 +8,7 @@ __all__ = [
     "UnqualifiedBinaryOperation",
     "UnqualifiedCalculate",
     "UnqualifiedCross",
+    "UnqualifiedGeneratedCollection",
     "UnqualifiedLiteral",
     "UnqualifiedNode",
     "UnqualifiedOperation",
@@ -438,6 +439,24 @@ class UnqualifiedNode(ABC):
 
         return UnqualifiedBest(self, by, per, allow_ties, n_best)
 
+    def range_collection(
+        self,
+        name: str,
+        column: list[str],
+        start: int,
+        stop: int,
+        step: int,
+    ) -> "UnqualifiedGeneratedCollection":
+        """
+        Method used to create a user-generated range collection node.
+        """
+        range_args: list[UnqualifiedNode] = [
+            self.coerce_to_unqualified(start),
+            self.coerce_to_unqualified(stop),
+            self.coerce_to_unqualified(step),
+        ]
+        return UnqualifiedGeneratedCollection(name, column, range_args)
+
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -835,6 +854,17 @@ class UnqualifiedBest(UnqualifiedNode):
         ] = (data, by, per, allow_ties, n_best)
 
 
+class UnqualifiedGeneratedCollection(UnqualifiedNode):
+    """Represents a user-generated collection of values."""
+
+    def __init__(self, name: str, column: list[str], args: list[UnqualifiedNode]):
+        self._parcel: tuple[str, list[str], list[UnqualifiedNode]] = (
+            name,
+            column,
+            [UnqualifiedLiteral(arg, NumericType()) for arg in args],
+        )
+
+
 def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     Prints an unqualified node in a human-readable manner that shows its
@@ -931,6 +961,16 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 result += ", allow_ties=True"
             if unqualified._parcel[4] > 1:
                 result += f", n_best={unqualified._parcel[4]}"
+            return result + ")"
+        case UnqualifiedGeneratedCollection():
+            result = "generated_collection("
+            result += f"name={unqualified._parcel[1]!r}, "
+            result += f"columns=[{', '.join(display_raw(column) for column in unqualified._parcel[2])}],"
+            result += (
+                f"data=({', '.join(display_raw(arg) for arg in unqualified._parcel[3])})"
+                if unqualified._parcel[3:]
+                else ""
+            )
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(
