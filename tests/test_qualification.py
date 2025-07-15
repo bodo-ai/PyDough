@@ -63,6 +63,9 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_range,
+)
 from tests.testing_utilities import (
     graph_fetcher,
 )
@@ -941,6 +944,12 @@ from tests.testing_utilities import (
         └─── Where[(customer_key == original_customer_key) & (key > original_order_key) & (order_date == original_order_date)]
   """,
             id="simple_cross_6",
+        ),
+        pytest.param(
+            simple_range,
+            """
+            """,
+            id="simple_range",
         ),
     ],
 )

@@ -450,11 +450,12 @@ class UnqualifiedNode(ABC):
         """
         Method used to create a user-generated range collection node.
         """
-        range_args: list[UnqualifiedNode] = [
-            self.coerce_to_unqualified(start),
-            self.coerce_to_unqualified(stop),
-            self.coerce_to_unqualified(step),
-        ]
+        # range_args: list[UnqualifiedNode] = [
+        #     self.coerce_to_unqualified(start),
+        #     self.coerce_to_unqualified(stop),
+        #     self.coerce_to_unqualified(step),
+        # ]
+        range_args: list[int] = [start, stop, step]
         return UnqualifiedGeneratedCollection(name, column, range_args)
 
 
@@ -857,11 +858,12 @@ class UnqualifiedBest(UnqualifiedNode):
 class UnqualifiedGeneratedCollection(UnqualifiedNode):
     """Represents a user-generated collection of values."""
 
-    def __init__(self, name: str, column: list[str], args: list[UnqualifiedNode]):
-        self._parcel: tuple[str, list[str], list[UnqualifiedNode]] = (
+    def __init__(self, name: str, column: list[str], args: list[int]):
+        self._parcel: tuple[str, list[str], list[int]] = (
             name,
             column,
-            [UnqualifiedLiteral(arg, NumericType()) for arg in args],
+            # [UnqualifiedLiteral(arg, NumericType()) for arg in args],
+            args,
         )
 
 
@@ -964,10 +966,10 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             return result + ")"
         case UnqualifiedGeneratedCollection():
             result = "generated_collection("
-            result += f"name={unqualified._parcel[1]!r}, "
-            result += f"columns=[{', '.join(display_raw(column) for column in unqualified._parcel[2])}],"
+            result += f"name={unqualified._parcel[0]!r}, "
+            result += f"columns=[{', '.join(unqualified._parcel[1])}],"
             result += (
-                f"data=({', '.join(display_raw(arg) for arg in unqualified._parcel[3])})"
+                f"data=({', '.join(unqualified._parcel[2])})"
                 if unqualified._parcel[3:]
                 else ""
             )

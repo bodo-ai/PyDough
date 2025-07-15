@@ -404,7 +404,7 @@ class AstNodeBuilder:
         preceding_context: PyDoughCollectionQDAG,
         name: str,
         column_name: list[str],
-        args: list[PyDoughQDAG],
+        args: list[int],
     ) -> PyDoughUserGeneratedCollectionQDag:
         """
         Creates a new user-defined collection.

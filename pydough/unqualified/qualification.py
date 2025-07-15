@@ -1287,22 +1287,22 @@ class Qualifier:
             The PyDough QDAG object for the qualified collection node.
 
         """
-        qualified_args: list[PyDoughQDAG] = []
+        # qualified_args: list[PyDoughQDAG] = []
 
-        # TODO: how to handle dataframe case.
-        for arg in unqualified._parcel[2]:
-            assert isinstance(arg, UnqualifiedNode)
-            qualified_arg: PyDoughQDAG = self.qualify_node(
-                arg, context, [], is_child, is_cross
-            )
-            qualified_args.append(qualified_arg)
+        # # TODO: how to handle dataframe case.
+        # for arg in unqualified._parcel[2]:
+        #     assert isinstance(arg, UnqualifiedNode)
+        #     qualified_arg: PyDoughQDAG = self.qualify_node(
+        #         arg, context, [], is_child, is_cross
+        #     )
+        #     qualified_args.append(qualified_arg)
 
         generated_collection_qdag: PyDoughUserGeneratedCollectionQDag = (
             self.builder.build_generated_collection(
                 context,
                 unqualified._parcel[0],
                 unqualified._parcel[1],
-                qualified_args,
+                unqualified._parcel[2],
             )
         )
         return generated_collection_qdag  # .collection
