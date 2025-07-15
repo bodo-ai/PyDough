@@ -102,7 +102,6 @@ def udf_graph_path() -> str:
     return f"{os.path.dirname(__file__)}/test_metadata/udf_sample_graphs.json"
 
 
-
 @pytest.fixture(scope="session")
 def invalid_graph_path() -> str:
     """
@@ -165,7 +164,7 @@ def get_mysql_sample_graph(
     A function that takes in the name of a graph from the supported sample
     MySQL graph names and returns the metadata for that PyDough graph.
     """
-    
+
     if name not in valid_sample_graph_names:
         raise Exception(f"Unrecognized graph name '{name}'")
     return pydough.parse_json_metadata_from_file(
@@ -173,6 +172,7 @@ def get_mysql_sample_graph(
     )
 
     return impl
+
 
 @pytest.fixture(scope="session")
 def get_udf_graph(
