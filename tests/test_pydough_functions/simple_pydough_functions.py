@@ -2983,3 +2983,108 @@ def quantile_function_test_4():
         orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
         orders_max=QUANTILE(selected_orders.total_price, 1.0),
     )
+
+
+def agg_simplification_1():
+    # TODO
+    kwargs = {}
+    args = [
+        tickers.one,
+        tickers.two,
+        tickers.negative_one,
+        tickers.negative_three,
+        tickers.zero,
+        tickers.half,
+        tickers.null,
+        tickers.aug_exchange,
+    ]
+    functions = [
+        ("su", SUM),
+        ("co", COUNT),
+        ("nd", NDISTINCT),
+        ("av", AVG),
+        ("mi", MIN),
+        ("ma", MAX),
+        ("an", ANYTHING),
+        ("me", MEDIAN),
+    ]
+    for prefix, func in functions:
+        for idx, arg in enumerate(args):
+            kwargs[f"{prefix}{idx + 1}"] = func(arg)
+    for idx, arg in enumerate(args):
+        kwargs[f"qu{idx + 1}"] = QUANTILE(arg, (idx + 1) / 10)
+    return (
+        tickers.CALCULATE(
+            aug_exchange=LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))
+        )
+        .CALCULATE(
+            one=1,
+            two=2,
+            negative_one=-1,
+            negative_three=-3,
+            zero=0,
+            half=0.5,
+            null=None,
+        )
+        .PARTITION(name="exchanges", by=aug_exchange)
+        .CALCULATE(
+            aug_exchange,
+            **kwargs,
+        )
+        .ORDER_BY(aug_exchange.ASC())
+    )
+
+
+"""
+SELECT
+    LENGTH(NULLIF(sbTickerExchange, 'NYSE Arca')) AS aug_exchange,
+    COUNT(*)
+from main.sbticker
+GROUP BY 1
+ORDER BY 1
+;
+
+|3
+NASDAQ|10
+NYSE|4
+Vanguard|4
+[None, 4, 6, 8]
+[3, 10, 4, 4]
+"""
+
+
+def agg_simplification_2():
+    # TODO
+    return (
+        customers.PARTITION(name="cities", by=(city, state))
+        .CALCULATE(
+            n=COUNT(customers),
+            nj=COUNT(KEEP_IF(customers.name, STARTSWITH(LOWER(customers.name), "j"))),
+            sz=SUM(INTEGER(customers.postal_code)),
+            minp=MIN(customers.phone),
+            maxp=MAX(customers.phone),
+            anys=ANYTHING(LOWER(customers.state)),
+        )
+        .PARTITION(name="states", by=state)
+        .CALCULATE(
+            state,
+            a1=COUNT(cities),
+            a2=SUM(cities.n),
+            a3=SUM(cities.nj),
+            a4=SUM(cities.sz),
+            a5=MIN(cities.minp),
+            a6=MAX(cities.maxp),
+            a7=MIN(cities.anys),
+            a8=MAX(cities.anys),
+            a9=ANYTHING(cities.anys),
+        )
+        .ORDER_BY(state.ASC())
+    )
+
+
+"""
+SELECT sbCustState, sbCustCity, COUNT(*), COUNT(CASE WHEN LOWER(sbCustName) LIKE 'j%' THEN 1 END), SUM(CAST(sbCustPostalCode AS INTEGER)), MIN(sbCustPhone), MAX(sbCustPhone), MAX(LOWER(sbCustState))
+FROM main.sbcustomer
+GROUP BY 1, 2
+ORDER BY 1, 2;
+"""

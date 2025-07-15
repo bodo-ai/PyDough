@@ -32,7 +32,7 @@ from pydough.relational.rel_util import (
 from pydough.relational.relational_expressions.column_reference_finder import (
     ColumnReferenceFinder,
 )
-from pydough.types import NumericType
+from pydough.types import BooleanType, NumericType
 
 from .merge_projects import merge_adjacent_projects
 
@@ -96,7 +96,7 @@ def pull_non_columns(node: RelationalNode) -> RelationalNode:
     for name, expr in new_project_columns.items():
         new_project_columns[name] = apply_substitution(expr, substitutions, {})
 
-    return Project(input=node, columns=new_project_columns)
+    return merge_adjacent_projects(Project(input=node, columns=new_project_columns))
 
 
 def pull_project_into_join(node: Join, input_index: int) -> None:
@@ -290,7 +290,7 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
         keys=new_keys,
         aggregations=new_aggs,
     )
-    return Project(input=agg, columns=new_columns)
+    return merge_adjacent_projects(Project(input=agg, columns=new_columns))
 
 
 def simplify_agg(
@@ -304,25 +304,138 @@ def simplify_agg(
     }
     out_ref: RelationalExpression = ColumnReference(name, agg.data_type)
     arg: RelationalExpression
-    if agg.op in (pydop.SUM, pydop.COUNT) and len(agg.inputs) == 1:
-        arg = agg.inputs[0]
-        if isinstance(arg, LiteralExpression) and isinstance(
-            arg.data_type, NumericType
-        ):
-            if (agg.op == pydop.SUM and arg.value == 1) or (
-                agg.op == pydop.COUNT and arg.value is not None
-            ):
-                return out_ref, CallExpression(
-                    op=pydop.COUNT,
-                    return_type=agg.data_type,
-                    inputs=[],
-                )
 
-    # If the aggregation is on a key, we can just return the key.
-    if agg.op in (pydop.SUM, pydop.MIN, pydop.MAX, pydop.ANYTHING):
+    zero_expr: RelationalExpression = LiteralExpression(0, agg.data_type)
+    one_expr: RelationalExpression = LiteralExpression(1, agg.data_type)
+    count_star: CallExpression = CallExpression(
+        op=pydop.COUNT,
+        return_type=NumericType(),
+        inputs=[],
+    )
+
+    # Can optimize SUM, COUNT and NDISTINCT aggregations on literals.
+    if (
+        agg.op in (pydop.SUM, pydop.COUNT, pydop.NDISTINCT)
+        and len(agg.inputs) == 1
+        and isinstance(agg.inputs[0], LiteralExpression)
+    ):
+        arg = agg.inputs[0]
+        if agg.op == pydop.SUM and (
+            isinstance(arg.data_type, NumericType) or arg.value is None
+        ):
+            # SUM(NULL) -> NULL
+            if arg.value is None:
+                return arg, None
+
+            # SUM(0) -> 0
+            elif arg.value == 0:
+                return zero_expr, None
+
+            # SUM(1) -> COUNT(*)
+            # SUM(n) = COUNT(*) * n
+            elif arg.value != 1:
+                out_ref = CallExpression(
+                    op=pydop.MUL,
+                    return_type=agg.data_type,
+                    inputs=[out_ref, LiteralExpression(arg.value, agg.data_type)],
+                )
+            return out_ref, count_star
+
+        elif agg.op == pydop.COUNT:
+            # COUNT(NULL) -> 0
+            if arg.value is None:
+                return zero_expr, None
+
+            # COUNT(n) -> COUNT(*)
+            else:
+                return out_ref, count_star
+
+        elif agg.op == pydop.NDISTINCT:
+            # NDISTINCT(NULL) -> 0
+            # NDISTINCT(n) -> 1
+            return zero_expr if arg.value is None else one_expr, None
+
+    # SUM(DEFAULT_TO(x, 0)) -> DEFAULT_TO(SUM(x), 0)
+    if (
+        agg.op == pydop.SUM
+        and len(agg.inputs) == 1
+        and isinstance(agg.inputs[0], CallExpression)
+    ):
+        if (
+            agg.inputs[0].op == pydop.DEFAULT_TO
+            and isinstance(agg.inputs[0].inputs[1], LiteralExpression)
+            and isinstance(agg.inputs[0].inputs[1].data_type, NumericType)
+            and agg.inputs[0].inputs[1].value == 0
+        ):
+            return CallExpression(
+                pydop.DEFAULT_TO, agg.data_type, [out_ref, zero_expr]
+            ), CallExpression(pydop.SUM, agg.data_type, [agg.inputs[0].inputs[0]])
+
+    # If the aggregation is on a key, we can just use the key.
+    if (
+        agg.op
+        in (
+            pydop.SUM,
+            pydop.MIN,
+            pydop.MAX,
+            pydop.ANYTHING,
+            pydop.AVG,
+            pydop.QUANTILE,
+            pydop.MEDIAN,
+            pydop.COUNT,
+            pydop.NDISTINCT,
+        )
+        and len(agg.inputs) == 1
+    ):
         arg = agg.inputs[0]
         if arg in reverse_keys:
-            return ColumnReference(reverse_keys[arg], agg.data_type), None
+            key_ref: RelationalExpression = ColumnReference(
+                reverse_keys[arg], agg.data_type
+            )
+
+            # COUNT(key) -> COUNT(*) * INTEGER(PRESENT(key))
+            if agg.op == pydop.COUNT:
+                return CallExpression(
+                    pydop.MUL,
+                    agg.data_type,
+                    [
+                        out_ref,
+                        CallExpression(
+                            pydop.INTEGER,
+                            NumericType(),
+                            [CallExpression(pydop.PRESENT, BooleanType(), [key_ref])],
+                        ),
+                    ],
+                ), count_star
+
+            # NDISTINCT(key) -> INTEGER(PRESENT(key))
+            if agg.op == pydop.NDISTINCT:
+                return CallExpression(
+                    pydop.INTEGER,
+                    NumericType(),
+                    [CallExpression(pydop.PRESENT, BooleanType(), [key_ref])],
+                ), None
+
+            # Otherwise, FUNC(key) -> key
+            return key_ref, None
+
+    # If running a selection aggregation on a literal, can just return the
+    # input.
+    if (
+        agg.op
+        in (
+            pydop.MIN,
+            pydop.MAX,
+            pydop.ANYTHING,
+            pydop.AVG,
+            pydop.MEDIAN,
+            pydop.QUANTILE,
+        )
+        and len(agg.inputs) >= 1
+    ):
+        arg = agg.inputs[0]
+        if isinstance(arg, LiteralExpression):
+            return arg, None
 
     # In all other cases, we just return the aggregation as is.
     return out_ref, agg
@@ -356,41 +469,67 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
     for agg_name, agg_expr in node.aggregations.items():
         match agg_expr.op:
             case pydop.COUNT if len(agg_expr.inputs) == 0:
+                # top_keys: {x, y}
+                # bottom_keys: {x, y}
+                # COUNT(*) -> ANYTHING(1)
                 if len(bottom_only_keys) == 0:
                     new_aggs[agg_name] = CallExpression(
                         op=pydop.ANYTHING,
                         return_type=agg_expr.data_type,
                         inputs=[LiteralExpression(1, agg_expr.data_type)],
                     )
+
+                # top_keys: {x, y}
+                # bottom_keys: {x, y, z}
+                # COUNT(*) -> NDISTINCT(z)
                 elif len(bottom_only_keys) == 1:
                     new_aggs[agg_name] = CallExpression(
                         op=pydop.NDISTINCT,
                         return_type=agg_expr.data_type,
                         inputs=[next(iter(bottom_only_keys))],
                     )
+
+                # Otherwise, the merge fails.
                 else:
                     return node
+
             case pydop.SUM:
+                # SUM(SUM(x)) -> SUM(x)
+                # SUM(COUNT(x)) -> COUNT(x)
                 input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
                 if isinstance(input_expr, CallExpression) and input_expr.op in (
                     pydop.SUM,
                     pydop.COUNT,
                 ):
                     new_aggs[agg_name] = input_expr
+
+                # Otherwise, the merge fails.
                 else:
                     return node
+
             case pydop.MIN | pydop.MAX | pydop.ANYTHING:
+                # MIN(MIN(x)) -> MIN(x)
+                # MIN(ANYTHING(x)) -> MIN(x)
+                # MAX(MAX(x)) -> MAX(x)
+                # MAX(ANYTHING(x)) -> MAX(x)
+                # ANYTHING(ANYTHING(x)) -> ANYTHING(x)
                 input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
-                if (
-                    isinstance(input_expr, CallExpression)
-                    and input_expr.op == agg_expr.op
+                if isinstance(input_expr, CallExpression) and input_expr.op in (
+                    agg_expr.op,
+                    pydop.ANYTHING,
                 ):
                     new_aggs[agg_name] = input_expr
+
+                # Otherwise, the merge fails.
                 else:
                     return node
+
+            # Otherwise, the merge fails.
             case _:
                 return node
 
+    # If none of the aggregations caused a merge failure, we can return a new
+    # Aggregate node using the top keys and the merged aggregation calls.
     return Aggregate(
         input=input_agg.input,
         keys=new_keys,
