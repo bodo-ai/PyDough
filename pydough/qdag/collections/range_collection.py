@@ -28,7 +28,12 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
         end: int,
         step: int,
     ) -> None:
-        super().__init__(name=name, columns=[column_name])
+        super().__init__(
+            name=name,
+            columns=[
+                column_name,
+            ],
+        )
         self.start = start
         self.end = end
         self.step = step

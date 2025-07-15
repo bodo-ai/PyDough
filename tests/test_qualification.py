@@ -64,7 +64,8 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q22,
 )
 from tests.test_pydough_functions.user_collections import (
-    simple_range,
+    simple_range_1,
+    simple_range_2,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -946,10 +947,17 @@ from tests.testing_utilities import (
             id="simple_cross_6",
         ),
         pytest.param(
-            simple_range,
+            simple_range_1,
+            """
+  UserGeneratedCollection[simple_range: value]
+            """,
+            id="simple_range_1",
+        ),
+        pytest.param(
+            simple_range_2,
             """
             """,
-            id="simple_range",
+            id="simple_range_2",
         ),
     ],
 )

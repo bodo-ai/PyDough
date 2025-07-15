@@ -35,8 +35,28 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         """
         return PyDoughUserGeneratedCollectionQDag(new_ancestor, self._collection)
 
+    def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
+        # if self.ancestor_context is not None:
+        #     return CollectionTreeForm(
+        #         self.tree_item_string,
+        #         0,
+        #         has_predecessor=True,
+        #     )
+        # else:
+        return CollectionTreeForm(self.tree_item_string, 0)
+
     def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
-        raise NotImplementedError
+        # if self.ancestor_context is not None:
+        #     predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(
+        #         is_last
+        #     )
+        #     predecessor.has_children = True
+        #     tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
+        #     tree_form.depth = predecessor.depth + 1
+        #     tree_form.predecessor = predecessor
+        #     return tree_form
+        # else:
+        return self.to_tree_form_isolated(is_last)
 
     @property
     def collection(self) -> PyDoughUserGeneratedCollection:
@@ -102,7 +122,7 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         Returns a string representation of the collection in a standalone form.
         This is used for debugging and logging purposes.
         """
-        return f"UserGeneratedCollection({self.name}, {', '.join(self.collection.columns)})"
+        return f"UserGeneratedCollection[{self.name}, {', '.join(self.collection.columns)}]"
 
     @property
     def key(self) -> str:
@@ -114,4 +134,4 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
 
     @property
     def tree_item_string(self) -> str:
-        return f"UserGeneratedCollection({self.name})"
+        return f"UserGeneratedCollection[{self.name}: {', '.join(self.collection.columns)}]"

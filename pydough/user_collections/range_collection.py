@@ -5,10 +5,12 @@ a way to create a collection of integer ranges over a specified column in PyDoug
 
 __all__ = ["range_collection"]
 
-from pydough.qdag.collections.range_collection import RangeGeneratedCollection
+from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
 
 
-def range_collection(name: str, column: str, *args: int) -> RangeGeneratedCollection:
+def range_collection(
+    name: str, column: str, *args: int
+) -> UnqualifiedGeneratedCollection:
     """
     Creates a collection of integer ranges over a specified column.
 
@@ -63,10 +65,18 @@ def range_collection(name: str, column: str, *args: int) -> RangeGeneratedCollec
     if step <= 0:
         raise ValueError(f"Expected 'step' to be a positive integer, got {step}")
 
-    return RangeGeneratedCollection(
-        name=name,
-        column_name=column,
-        start=start,
-        end=end,
-        step=step,
+    # return RangeGeneratedCollection(
+    #     name=name,
+    #     column_name=column,
+    #     start=start,
+    #     end=end,
+    #     step=step,
+    # )
+    range_args = [start, end, step]
+    return UnqualifiedGeneratedCollection(
+        name,
+        [
+            column,
+        ],
+        range_args,
     )
