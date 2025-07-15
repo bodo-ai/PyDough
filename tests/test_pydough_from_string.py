@@ -2,6 +2,7 @@
 Tests pydough from_string API
 """
 
+import datetime
 import re
 from collections.abc import Callable
 from typing import Any
@@ -46,6 +47,15 @@ from tests.testing_utilities import graph_fetcher
             {"SEG": "AUTOMOBILE"},
             lambda: pd.DataFrame({"n_custs": [29752]}),
             id="count_custs_in_market-no_var-with_env-intermediate_result",
+        ),
+        pytest.param(
+            "result = customers.CALCULATE(cust_name=name).orders.WHERE((order_date >= date(YEAR, 1, 1)) & (order_date < date(YEAR + 1, 1, 1))).TOP_K(1, by=total_price.DESC()).CALCULATE(cust_name=cust_name, total=total_price)",
+            None,
+            {"date": datetime.date, "YEAR": 1996},
+            lambda: pd.DataFrame(
+                {"cust_name": ["Customer#000066790"], "total": [515531.82]}
+            ),
+            id="customer_with_greater_order_by_year",
         ),
     ],
 )
@@ -103,6 +113,15 @@ def test_tpch_data_e2e_from_string(
                 "Invalid operator invocation 'COUNT()': Expected 1 argument, received 0"
             ),
             id="invalid_pydough_code",
+        ),
+        pytest.param(
+            "result = TPCH.CALCULATE(n_nations=COUNT(nations)",
+            None,
+            None,
+            re.escape(
+                "Syntax error in source PyDough code:\n'(' was never closed (<unknown>, line 1)"
+            ),
+            id="invalid_python_code",
         ),
     ],
 )

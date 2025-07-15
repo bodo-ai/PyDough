@@ -465,7 +465,10 @@ def from_string(
     # Transform PyDough code into valid Python code
     known_names: set[str] = set(environment.keys())
     visitor: ast.NodeTransformer = AddRootVisitor("graph", known_names)
-    tree: ast.AST = ast.parse(source)
+    try:
+        tree: ast.AST = ast.parse(source)
+    except SyntaxError as e:
+        raise ValueError(f"Syntax error in source PyDough code:\n{str(e)}") from e
     assert isinstance(tree, ast.AST)
     new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
