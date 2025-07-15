@@ -514,10 +514,7 @@ import pydough
 graph = pydough.active_session.load_metadata_graph("demos/metadata/tpch_demo_graph.json", "TPCH")
 pydough.active_session.connect_database("sqlite", database="tpch.db")
 
-# Example of a simple pydough code snippet that uses variables provided in 
-# the environment context. This query gets the count of customers from the 
-# AUTOMOBILE market segment. For this, a SEG variable is passed in the 
-# environment with a value of "AUTOMOBILE"
+# Example of a single line pydough code snippet
 pydough_code = "pydough_query = TPCH.CALCULATE(n=COUNT(customers.WHERE(market_segment == SEG)))"
 # Transform the pydough code and get the result from pydough_query
 query = pydough.from_string(pydough_code, "pydough_query", graph, {"SEG":"AUTOMOBILE"})
@@ -535,10 +532,7 @@ WHERE
 
 This next example is of Python code to generate SQL to get the top 5 suppliers with the highest revenue. The code snippet uses variables provided in the environment context to filter by nation, ship mode and year (`TARGET_NATION`, `DESIRED_SHIP_MODE` and `REQUESTED_SHIP_YEAR`):
 ```py
-# Example of a multi-line pydough code snippet that uses intermetiate results to
-# build the final query. For this query we set 3 environment variables: 
-# TARGET_NATION, DESIRED_SHIP_MODE and REQUESTED_SHIP_YEAR. These variables are
-# used in the Pydough source code.
+# Example of a multi-line pydough code snippet with intermetiate results
 nation_name = "JAPAN"
 ship_mode = "TRUCK"
 ship_year = 1996
