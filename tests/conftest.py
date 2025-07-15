@@ -95,6 +95,15 @@ def mysql_sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def udf_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the UDF graphs.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/udf_sample_graphs.json"
+
+
+
+@pytest.fixture(scope="session")
 def invalid_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the invalid graphs.
@@ -108,6 +117,14 @@ def valid_sample_graph_names() -> set[str]:
     Set of valid names to use to access a sample graph.
     """
     return {"TPCH", "Empty", "Epoch", "TechnoGraph"}
+
+
+@pytest.fixture(scope="session")
+def valid_udf_graph_names() -> set[str]:
+    """
+    Set of valid names to use to access a UDF graph.
+    """
+    return {"TPCH_SQLITE_UDFS"}
 
 
 @pytest.fixture(params=["TPCH", "Empty", "Epoch"])
@@ -148,13 +165,30 @@ def get_mysql_sample_graph(
     A function that takes in the name of a graph from the supported sample
     MySQL graph names and returns the metadata for that PyDough graph.
     """
+    
+    if name not in valid_sample_graph_names:
+        raise Exception(f"Unrecognized graph name '{name}'")
+    return pydough.parse_json_metadata_from_file(
+        file_path=mysql_sample_graph_path, graph_name=name
+    )
+
+    return impl
+
+@pytest.fixture(scope="session")
+def get_udf_graph(
+    udf_graph_path: str, valid_udf_graph_names: set[str]
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported UDF
+    graph names and returns the metadata for that PyDough graph.
+    """
 
     @cache
     def impl(name: str) -> GraphMetadata:
-        if name not in valid_sample_graph_names:
+        if name not in valid_udf_graph_names:
             raise Exception(f"Unrecognized graph name '{name}'")
         return pydough.parse_json_metadata_from_file(
-            file_path=mysql_sample_graph_path, graph_name=name
+            file_path=udf_graph_path, graph_name=name
         )
 
     return impl

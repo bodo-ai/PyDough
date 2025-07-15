@@ -32,9 +32,10 @@ class RelationalExpressionShuttle(ABC):
         the modified children.
 
         Args:
-            call_expression (CallExpression): The call expression node to visit.
+            `call_expression`: The call expression node to visit.
+
         Returns:
-            RelationalExpression: The new node resulting from visiting this node.
+            The new node resulting from visiting this node.
         """
         from .call_expression import CallExpression
 
@@ -71,9 +72,10 @@ class RelationalExpressionShuttle(ABC):
         Visit a LiteralExpression node.
 
         Args:
-            literal_expression (LiteralExpression): The literal expression node to visit.
+            `literal_expression` : The literal expression node to visit.
+
         Returns:
-            RelationalExpression: The new node resulting from visiting this node.
+            The new node resulting from visiting this node.
         """
 
     @abstractmethod
@@ -84,9 +86,10 @@ class RelationalExpressionShuttle(ABC):
         Visit a ColumnReference node.
 
         Args:
-            column_reference (ColumnReference): The column reference node to visit.
+            `column_reference`: The column reference node to visit.
+
         Returns:
-            RelationalExpression: The new node resulting from visiting this node.
+           The new node resulting from visiting this node.
         """
 
     @abstractmethod
@@ -97,7 +100,8 @@ class RelationalExpressionShuttle(ABC):
         Visit a CorrelatedReference node.
 
         Args:
-            correlated_reference (CorrelatedReference): The correlated reference node to visit.
+            `correlated_reference`: The correlated reference node to visit.
+
         Returns:
-            RelationalExpression: The new node resulting from visiting this node.
+            The new node resulting from visiting this node.
         """

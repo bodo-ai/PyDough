@@ -17,12 +17,11 @@ def gen_product_info_records(rng: np.random.Generator) -> dict[int, dict]:
     correlation to each other and uneven distributions.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
+        `rng`: A random number generator instance.
 
     Returns:
-        dict[int, dict]: A dictionary containing product records, where
-        the keys are product IDs and the values are dictionaries with
-        product attributes.
+        A dictionary containing product records, where the keys are product
+        IDs and the values are dictionaries with product attributes.
     """
     # Build the product records with each product having a unique ID and
     # building a random name, choosing a brand/type with some correlation,
@@ -243,15 +242,14 @@ def gen_devices_info_records(
     distributions.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
-        products (dict[int, dict]): A dictionary containing product records.
-        users (dict[int, dict]): A dictionary containing user records.
-        countries (dict[int, str]): A dictionary containing country records.
+        `rng`: A random number generator instance.
+        `products`: A dictionary containing product records.
+        `users`: A dictionary containing user records.
+        `countries`: A dictionary containing country records.
 
     Returns:
-        dict[int, dict]: A dictionary containing device records, where
-        the keys are device IDs and the values are dictionaries with
-        device attributes.
+        A dictionary containing device records, where the keys are device IDs
+        and the values are dictionaries with device attributes.
     """
     country_codes = sorted(countries)
     product_codes = sorted(products)
@@ -426,15 +424,15 @@ def gen_product_country_error_densities(
     are more likely to have errors.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
-        products (dict[int, dict]): A dictionary containing product records.
-        countries (dict[int, str]): A dictionary containing country records.
+        `rng`: A random number generator instance.
+        `products`: A dictionary containing product records.
+        `countries`: A dictionary containing country records.
 
     Returns:
-        np.ndarray: A 2D array where each row corresponds to a product and
-        each column corresponds to a country. The values in the array
-        represent the probability density of an error occurring for that
-        product in that country.
+        A 2D array where each row corresponds to a product and each column
+        corresponds to a country. The values in the array represent the
+        probability density of an error occurring for that product in that
+        country.
     """
     product_codes = sorted(products)
 
@@ -567,16 +565,15 @@ def gen_incident_info_records(
     likely to have certain errors instead of others.
 
     Args:
-        rng (np.random.Generator): A random number generator instance.
-        products (dict[int, dict]): A dictionary containing product records.
-        countries (dict[int, str]): A dictionary containing country records.
-        errors (dict[int, dict]): A dictionary containing error records.
-        devices (dict[int, dict]): A dictionary containing device records.
+        `rng`: A random number generator instance.
+        `products`: A dictionary containing product records.
+        `countries`: A dictionary containing country records.
+        `errors`: A dictionary containing error records.
+        `devices`: A dictionary containing device records.
 
     Returns:
-        dict[int, dict]: A dictionary containing incident records, where
-        the keys are incident IDs and the values are dictionaries with
-        incident attributes.
+        A dictionary containing incident records, where the keys are incident
+        IDs and the values are dictionaries with incident attributes.
     """
     pr_codes = sorted(products)
     co_codes = sorted(countries)

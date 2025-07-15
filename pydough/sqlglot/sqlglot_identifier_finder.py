@@ -14,9 +14,9 @@ def _visit_expression(expr: SQLGlotExpression, identifiers: set[Identifier]) -> 
     Visits a SQLGlotExpression to try find any identifiers.
 
     Args:
-        expr (SQLGlotExpression): An expression.
-        identifiers (set[Identifier]): The set of identifiers
-            that have been encountered so far.
+        `expr`: An expression.
+        `identifiers`: The set of identifiers that have been encountered so
+        far.
     """
     if isinstance(expr, Identifier):
         identifiers.add(expr)
@@ -35,11 +35,10 @@ def find_identifiers(expr: SQLGlotExpression) -> set[Identifier]:
     Find all the unique identifiers in a SQLGlot expression.
 
     Args:
-        expr (SQLGlotExpression): The SQLGlotExpression to search
+        `expr`: The SQLGlotExpression to search
 
     Returns:
-        set[Identifier]: The set of unique identifiers found in the
-            expression.
+        The set of unique identifiers found in the expression.
     """
     output: set[Identifier] = set()
     _visit_expression(expr, output)
@@ -51,12 +50,11 @@ def find_identifiers_in_list(exprs: list[SQLGlotExpression]) -> set[Identifier]:
     Find all unique identifiers in a list of SQLGlot expressions.
 
     Args:
-        exprs (list[SQLGlotExpression]): A list of SQLGlot expressions
+        `exprs`: A list of SQLGlot expressions
             to search.
 
     Returns:
-        set[Identifier]: The set of unique identifiers found in the
-            expressions.
+        The set of unique identifiers found in the expressions.
     """
     output: set[Identifier] = set()
     for expr in exprs:

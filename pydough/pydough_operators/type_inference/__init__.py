@@ -14,12 +14,15 @@ __all__ = [
     "RequireNumArgs",
     "SelectArgumentType",
     "TypeVerifier",
+    "build_deducer_from_json",
+    "build_verifier_from_json",
 ]
 
 from .expression_type_deducer import (
     ConstantType,
     ExpressionTypeDeducer,
     SelectArgumentType,
+    build_deducer_from_json,
 )
 from .type_verifier import (
     AllowAny,
@@ -28,4 +31,5 @@ from .type_verifier import (
     RequireMinArgs,
     RequireNumArgs,
     TypeVerifier,
+    build_verifier_from_json,
 )
