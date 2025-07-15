@@ -19,9 +19,6 @@ class MySQLTransformBindings(BaseTransformBindings):
     """
 
     PYDOP_TO_MYSQL_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
-        pydop.STARTSWITH: "LOCATE",
-        pydop.ENDSWITH: "LOCATE",
-        pydop.CONTAINS: "LOCATE",
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
         pydop.SIGN: "SIGN",
@@ -38,7 +35,7 @@ class MySQLTransformBindings(BaseTransformBindings):
     }
 
     """
-    Mapping of PyDough operators to equivalent Snowflake SQL function names
+    Mapping of PyDough operators to equivalent MySQL function names
     These are used to generate anonymous function calls in SQLGlot
     """
 
@@ -48,9 +45,6 @@ class MySQLTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
-        # match operator:
-        #     case pydop.SUM:
-        #         return self.convert_sum(args, types)
         if operator in self.PYDOP_TO_MYSQL_FUNC:
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_MYSQL_FUNC[operator], expressions=args

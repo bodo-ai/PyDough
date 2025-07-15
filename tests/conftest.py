@@ -19,6 +19,7 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
+    load_database_context,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
@@ -85,6 +86,15 @@ def sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def mysql_sample_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the MySQL sample graphs.
+    It is the same as the sample graph path
+    """
+    return sample_graph_path()
+
+
+@pytest.fixture(scope="session")
 def invalid_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the invalid graphs.
@@ -124,6 +134,27 @@ def get_sample_graph(
             raise Exception(f"Unrecognized graph name '{name}'")
         return pydough.parse_json_metadata_from_file(
             file_path=sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_mysql_sample_graph(
+    mysql_sample_graph_path: str,
+    valid_sample_graph_names: set[str],
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported sample
+    MySQL graph names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=mysql_sample_graph_path, graph_name=name
         )
 
     return impl
@@ -204,6 +235,7 @@ def binary_operators(request) -> pydop.BinaryOperator:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        pytest.param(DatabaseDialect.MYSQL, id="mysql"),
     ]
 )
 def sqlite_dialects(request) -> DatabaseDialect:
@@ -389,3 +421,75 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD", "MYSQL_DB", "MYSQL_HOST"]
+
+"""
+    MySQL environment variables required for connection.
+    MYSQL_USERNAME: The username for MySQL.
+    MYSQL_PASSWORD: The password for MySQL.
+    MYSQL_DB: The database name for MySQL.
+    MYSQL_HOST: The host ip for MySQL.
+"""
+
+
+def is_mysql_env_set() -> bool:
+    """
+    Check if the MySQL environment variables are set.
+    Returns:
+        bool: True if all required MySQL environment variables are set, False otherwise.
+    """
+    return all(os.getenv(env) for env in MYSQL_ENVS)
+
+
+@pytest.fixture
+def mysql_conn_tpch_db_context() -> DatabaseContext:
+    """
+    This fixture is used to connect to the MySQL TPCH database using
+    a connection object.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+    if not is_mysql_env_set():
+        pytest.skip("Skipping MySQL tests: environment variables not set.")
+    import mysql.connector as mysql_connector
+
+    mysql_username = os.getenv("MYSQL_USERNAME")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_tpch_db = os.getenv("MYSQL_DB")
+    mysql_host = os.getenv("MYSQL_HOST")
+
+    connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
+        user=mysql_username,
+        password=mysql_password,
+        host=mysql_host,
+        database=mysql_tpch_db,
+    )
+    return load_database_context(
+        "mysql",
+        connection=connection,
+    )
+
+
+@pytest.fixture
+def mysql_params_tpch_db_context() -> DatabaseContext:
+    """
+    This fixture is used to connect to the MySQL TPCH database using
+    parameters instead of a connection object.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+    if not is_mysql_env_set():
+        pytest.skip("Skipping MySQL tests: environment variables not set.")
+
+    mysql_tpch_db = os.getenv("MYSQL_DB")
+    mysql_host = os.getenv("MYSQL_HOST")
+    mysql_username = os.getenv("MYSQL_USERNAME")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+
+    return load_database_context(
+        "mysql",
+        user=mysql_username,
+        password=mysql_password,
+        host=mysql_host,
+        database=mysql_tpch_db,
+    )

@@ -61,7 +61,11 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
 
 def load_mysql_connection(**kwargs) -> DatabaseConnection:
     """
-    TODO IMPLEMENTATION + DOCSTRING
+    Loads a MySQL database connection. This is done by providing a wrapper
+    around the DB 2.0 connect API.
+
+    Returns:
+        A database connection object for MySQL.
     """
 
     try:
