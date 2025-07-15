@@ -65,7 +65,9 @@ table_collection = builder.build_child_access("Nations", global_context_node)
 
 # Build a reference node
 # Equivalent PyDough code: `TPCH.Nations.name`
-reference_node = builder.build_reference(table_collection, "name")
+ref_name = "name"
+pydough_type = table_collection.get_expr(ref_name).pydough_type
+reference_node = builder.build_reference(ref_name, pydough_type)
 
 # Build an expression function call node
 # Equivalent PyDough code: `LOWER(TPCH.Nations.name)`
@@ -99,7 +101,10 @@ regions_collection = builder.build_child_access("Regions", global_context_node)
 # Access nations sub-collection
 nations_sub_collection = builder.build_child_access("nations", regions_collection)
 # Create WHERE(key == 4) condition
-key_ref = builder.build_reference(nations_sub_collection, "key")
+
+ref_name = "key"
+pydough_type = nations_sub_collection.get_expr(ref_name).pydough_type
+key_ref = builder.build_reference(ref_name, pydough_type)
 literal_4 = builder.build_literal(4, NumericType())
 condition = builder.build_expression_function_call("EQU", [key_ref, literal_4])
 # Build WHERE node with condition
@@ -108,7 +113,9 @@ where_node = where_node.with_condition(condition)
 # Create SINGULAR node from filtered result
 singular_node = builder.build_singular(where_node)
 # Build reference node for name
-reference_node = builder.build_reference(singular_node, "name")
+ref_name = "name"
+pydough_type = singular_node.get_expr(ref_name).pydough_type
+reference_node = builder.build_reference(ref_name, pydough_type)
 # Build CALCULATE node with calculated term
 calculate_node = builder.build_calc(regions_collection, [nations_sub_collection])
 calculate_node = calculate_node.with_terms([("n_4_nation", reference_node)])
@@ -130,7 +137,9 @@ top_k_node = top_k_node.with_collation([collation_expression])
 # Build a PARTITION BY node
 # Equivalent PyDough code: `TPCH.PARTITION(Parts, name="p", by=part_type)`
 part_collection = builder.build_child_access("Parts", global_context_node)
-partition_key = builder.build_reference(part_collection, "part_type")
+ref_name = "part_type"
+pydough_type = part_collection.get_expr(ref_name).pydough_type
+partition_key = builder.build_reference(ref_name, pydough_type)
 partition_by_node = builder.build_partition(part_collection, child_collection, "p")
 partition_by_node = partition_by_node.with_keys([partition_key])
 

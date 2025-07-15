@@ -29,10 +29,25 @@ class ChildReferenceExpression(Reference):
         self._child_idx: int = child_idx
         self._term_name: str = term_name
         self._expression: PyDoughExpressionQDAG = self._collection.get_expr(term_name)
+        self._term_type = self._expression.pydough_type
         if not self.expression.is_singular(collection.starting_predecessor):
             raise PyDoughQDAGException(
                 f"Cannot reference plural expression {self.expression} from {self.collection}"
             )
+
+    @property
+    def collection(self) -> PyDoughCollectionQDAG:
+        """
+        The collection that the Reference term comes from.
+        """
+        return self._collection
+
+    @property
+    def expression(self) -> PyDoughExpressionQDAG:
+        """
+        The expression that the ChildReferenceExpression refers to.
+        """
+        return self._expression
 
     @property
     def child_idx(self) -> int:
