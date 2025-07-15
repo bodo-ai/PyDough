@@ -1443,12 +1443,10 @@ def optimize_relational_tree(
     # possible.
     root = bubble_column_names(root)
 
-    # Step 8: run projection pullup.
-    # print()
-    # print(root.to_tree_string())
-    root = confirm_root(pullup_projections(root))
-    # print()
-    # print(root.to_tree_string())
+    # Step 8: run projection pullup followed by column pruning 2x.
+    for _ in range(2):
+        root = confirm_root(pullup_projections(root))
+        root = ColumnPruner().prune_unused_columns(root)
 
     # Step 9: re-run filter pushdown
     root._input = push_filters(root.input, set())

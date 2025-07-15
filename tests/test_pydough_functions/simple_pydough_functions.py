@@ -2986,7 +2986,11 @@ def quantile_function_test_4():
 
 
 def agg_simplification_1():
-    # TODO
+    # Partition the tickers on the value
+    # `LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))`, then for every
+    # combination of 1, 2, -1, -3, 0, 0.5, null, and the partition key, call
+    # the aggregation functions SUM, COUNT, NDISTINCT, AVG, MIN, MAX,
+    # ANYTHING, and MEDIAN, and QUANTILE on each of the inputs.
     kwargs = {}
     args = [
         tickers.one,
@@ -3035,26 +3039,16 @@ def agg_simplification_1():
     )
 
 
-"""
-SELECT
-    LENGTH(NULLIF(sbTickerExchange, 'NYSE Arca')) AS aug_exchange,
-    COUNT(*)
-from main.sbticker
-GROUP BY 1
-ORDER BY 1
-;
-
-|3
-NASDAQ|10
-NYSE|4
-Vanguard|4
-[None, 4, 6, 8]
-[3, 10, 4, 4]
-"""
-
-
 def agg_simplification_2():
-    # TODO
+    # Partition the customers by city/state then by state to compute the
+    # following aggregations per-state:
+    # 1. Number of cities pers state
+    # 2. Total number of customers per state
+    # 3. Total postal code sum per state
+    # 4. Total number of customers with names starting with "j" per state
+    # 5. Minimum phone number per state
+    # 6. Maximum phone number per state
+    # 7-9: Convoluted ways to pass around the lowercase state name
     return (
         customers.PARTITION(name="cities", by=(city, state))
         .CALCULATE(
@@ -3080,11 +3074,3 @@ def agg_simplification_2():
         )
         .ORDER_BY(state.ASC())
     )
-
-
-"""
-SELECT sbCustState, sbCustCity, COUNT(*), COUNT(CASE WHEN LOWER(sbCustName) LIKE 'j%' THEN 1 END), SUM(CAST(sbCustPostalCode AS INTEGER)), MIN(sbCustPhone), MAX(sbCustPhone), MAX(LOWER(sbCustState))
-FROM main.sbcustomer
-GROUP BY 1, 2
-ORDER BY 1, 2;
-"""
