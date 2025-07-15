@@ -268,41 +268,64 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
         ):
             ref_expr: ColumnReference = ColumnReference(name, expr.data_type)
             substitutions[ref_expr] = new_expr
+    new_columns: dict[str, RelationalExpression] = {
+        name: ColumnReference(name, expr.data_type) for name, expr in node.keys.items()
+    }
     new_keys: dict[str, RelationalExpression] = {
         name: apply_substitution(expr, substitutions, {})
         for name, expr in node.keys.items()
     }
     new_aggs: dict[str, CallExpression] = {}
+    out_expr: RelationalExpression
+    new_agg_expr: CallExpression | None
     for name, expr in node.aggregations.items():
         new_expr = apply_substitution(expr, substitutions, {})
         assert isinstance(new_expr, CallExpression)
-        new_aggs[name] = simplify_agg(new_expr)
-    return Aggregate(
+        out_expr, new_agg_expr = simplify_agg(new_keys, new_expr, name)
+        new_columns[name] = out_expr
+        if new_agg_expr is not None:
+            new_aggs[name] = new_agg_expr
+    agg: Aggregate = Aggregate(
         input=node.input,
         keys=new_keys,
         aggregations=new_aggs,
     )
+    return Project(input=agg, columns=new_columns)
 
 
-def simplify_agg(agg: CallExpression) -> CallExpression:
+def simplify_agg(
+    keys: dict[str, RelationalExpression], agg: CallExpression, name: str
+) -> tuple[RelationalExpression, CallExpression | None]:
     """
     TODO
     """
+    reverse_keys: dict[RelationalExpression, str] = {
+        expr: name for name, expr in keys.items()
+    }
+    out_ref: RelationalExpression = ColumnReference(name, agg.data_type)
     arg: RelationalExpression
-    if agg.op == pydop.SUM:
+    if agg.op in (pydop.SUM, pydop.COUNT) and len(agg.inputs) == 1:
         arg = agg.inputs[0]
-        if (
-            isinstance(arg, LiteralExpression)
-            and isinstance(arg.data_type, NumericType)
-            and arg.value == 1
+        if isinstance(arg, LiteralExpression) and isinstance(
+            arg.data_type, NumericType
         ):
-            return CallExpression(
-                op=pydop.COUNT,
-                return_type=agg.data_type,
-                inputs=[],
-            )
+            if (agg.op == pydop.SUM and arg.value == 1) or (
+                agg.op == pydop.COUNT and arg.value is not None
+            ):
+                return out_ref, CallExpression(
+                    op=pydop.COUNT,
+                    return_type=agg.data_type,
+                    inputs=[],
+                )
+
+    # If the aggregation is on a key, we can just return the key.
+    if agg.op in (pydop.SUM, pydop.MIN, pydop.MAX, pydop.ANYTHING):
+        arg = agg.inputs[0]
+        if arg in reverse_keys:
+            return ColumnReference(reverse_keys[arg], agg.data_type), None
+
     # In all other cases, we just return the aggregation as is.
-    return agg
+    return out_ref, agg
 
 
 def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
@@ -318,14 +341,6 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
         transpose_expression(expr, input_agg.columns) for expr in node.keys.values()
     }
     bottom_keys: set[RelationalExpression] = set(input_agg.keys.values())
-
-    # print()
-    # print("Top keys:")
-    # for key in top_keys:
-    #     print(f"  {key.to_string(True)}")
-    # print("Bottom keys:")
-    # for key in bottom_keys:
-    #     print(f"  {key.to_string(True)}")
 
     if len(top_keys - bottom_keys) > 0:
         return node
