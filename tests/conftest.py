@@ -165,11 +165,13 @@ def get_mysql_sample_graph(
     MySQL graph names and returns the metadata for that PyDough graph.
     """
 
-    if name not in valid_sample_graph_names:
-        raise Exception(f"Unrecognized graph name '{name}'")
-    return pydough.parse_json_metadata_from_file(
-        file_path=mysql_sample_graph_path, graph_name=name
-    )
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=mysql_sample_graph_path, graph_name=name
+        )
 
     return impl
 
