@@ -40,6 +40,7 @@ from pydough.types import (
     StringType,
     UnknownType,
 )
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .errors import PyDoughUnqualifiedException
 
@@ -839,12 +840,8 @@ class UnqualifiedBest(UnqualifiedNode):
 class UnqualifiedGeneratedCollection(UnqualifiedNode):
     """Represents a user-generated collection of values."""
 
-    def __init__(self, name: str, column: list[str], args: list[int]):
-        self._parcel: tuple[str, list[str], list[int]] = (
-            name,
-            column,
-            args,
-        )
+    def __init__(self, user_collection: PyDoughUserGeneratedCollection):
+        self._parcel: tuple[PyDoughUserGeneratedCollection] = (user_collection,)
 
 
 def display_raw(unqualified: UnqualifiedNode) -> str:
@@ -946,13 +943,9 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             return result + ")"
         case UnqualifiedGeneratedCollection():
             result = "generated_collection("
-            result += f"name={unqualified._parcel[0]!r}, "
-            result += f"columns=[{', '.join(unqualified._parcel[1])}],"
-            result += (
-                f"data=({', '.join(unqualified._parcel[2])})"
-                if unqualified._parcel[3:]
-                else ""
-            )
+            result += f"name={unqualified._parcel[0].name!r}, "
+            result += f"columns=[{', '.join(unqualified._parcel[0].columns)}],"
+            result += f"data={unqualified._parcel[0].data}"
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(

@@ -4,6 +4,7 @@ collection of the current context.
 """
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 from pydough.types.pydough_type import PyDoughType
 
@@ -50,6 +51,11 @@ class PyDoughUserGeneratedCollection(ABC):
     @abstractmethod
     def column_names_and_types(self) -> list[tuple[str, PyDoughType]]:
         """Return column names and their types."""
+
+    @property
+    @abstractmethod
+    def data(self) -> Any:
+        """Return information about data in the collection."""
 
     @abstractmethod
     def always_non_empty(self) -> bool:

@@ -22,7 +22,6 @@ from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
 from pydough.types import PyDoughType
-from pydough.user_collections.range_collection import RangeGeneratedCollection
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .abstract_pydough_qdag import PyDoughQDAG
@@ -402,9 +401,7 @@ class AstNodeBuilder:
     def build_generated_collection(
         self,
         preceding_context: PyDoughCollectionQDAG,
-        name: str,
-        column_name: list[str],
-        args: list[int],
+        user_collection: PyDoughUserGeneratedCollection,
     ) -> PyDoughUserGeneratedCollectionQDag:
         """
         Creates a new user-defined collection.
@@ -418,17 +415,9 @@ class AstNodeBuilder:
         Returns:
             The newly created user-defined collection.
         """
-        # TODO: case range vs. dataframe
-        if len(args) != 3:
-            raise PyDoughQDAGException(
-                f"Expected 3 arguments for range collection, got {len(args)}"
-            )
-        collection: PyDoughUserGeneratedCollection = RangeGeneratedCollection(
-            name, column_name[0], args[0], args[1], args[2]
-        )
         collection_qdag: PyDoughUserGeneratedCollectionQDag = (
             PyDoughUserGeneratedCollectionQDag(
-                ancestor=preceding_context, collection=collection
+                ancestor=preceding_context, collection=user_collection
             )
         )
         return collection_qdag
