@@ -41,22 +41,46 @@ def widen_columns(
     node: RelationalNode,
 ) -> dict[RelationalExpression, RelationalExpression]:
     """
-    TODO
+    Modifies a relational node in-place to ensure every column in the node's
+    inputs is also present in the node's output columns. Returns a substitution
+    mapping such that any expression pulled into the parent of the node can be
+    transformed to point to the node's output columns.
+
+    Args:
+        `node`: The relational node to "widen" by adding more columns to.
+
+    Returns:
+        A mapping that can be used for substitution if expressions from the
+        node are pulled up into the parent of the node.
     """
+    # The substitution mapping that will be built by the functiona nd returned
+    # to the calling site.
+    substitutions: dict[RelationalExpression, RelationalExpression] = {}
+
+    # Mapping of every expression in the node's columns to a reference to the
+    # column of the node that points to it. This is used to keep track of which
+    # expressions are already present in the node's columns versus the ones that
+    # should be added to un-prune the node.
     existing_vals: dict[RelationalExpression, RelationalExpression] = {
         expr: ColumnReference(name, expr.data_type)
         for name, expr in node.columns.items()
     }
-    substitutions: dict[RelationalExpression, RelationalExpression] = {}
+
+    # Pull all the columns from each input to the node into the node's output
+    # columns if they are not already in the node's output columns.
     for input_idx in range(len(node.inputs)):
         input_alias: str | None = node.default_input_aliases[input_idx]
         input_node: RelationalNode = node.inputs[input_idx]
         for name, expr in input_node.columns.items():
+            # If the current node is a Join, add input names to the expression.
             if isinstance(node, Join):
                 expr = add_input_name(expr, input_alias)
             ref_expr: ColumnReference = ColumnReference(
                 name, expr.data_type, input_name=input_alias
             )
+            # If the expression is not already in the node's columns, then
+            # inject it so the node can use it later if a pull-up occurs that
+            # would need to reference this expression.
             if expr not in existing_vals:
                 new_name: str = name
                 idx: int = 0
@@ -69,16 +93,35 @@ def widen_columns(
                 substitutions[ref_expr] = new_ref
             else:
                 substitutions[ref_expr] = existing_vals[expr]
+
+    # Return the substitution mapping, without any no-op substitutions
     return {k: v for k, v in substitutions.items() if k != v}
 
 
-def pull_non_columns(node: RelationalNode) -> RelationalNode:
+def pull_non_columns(node: Join | Filter | Limit) -> RelationalNode:
     """
-    TODO
+    Pulls up non-column expressions from the output columns of a Join, Filter,
+    or Limit node into a parent projection.
+
+    Args:
+        `node`: The Join, Filter, or Limit node to pull up non-column expressions
+            from.
+
+    Returns:
+        Either the original node if this rewrite is not applicable, or a
+        project node that contains the non-column expressions pulled up from
+        the output columns of the node, pointing to `node` as its input.
     """
+    # The columns that will be used in the parent projection.
     new_project_columns: dict[str, RelationalExpression] = {}
+
+    # A boolean to indicate if any columns were pulled besides no-ops. If this
+    # never becomes true, then we skip the rewrite and return the original.
     needs_pull: bool = False
 
+    # Iterate through the columns of the node and check if they are column
+    # references or not. If they are not, then we need to pull them up into
+    # the parent projection.
     for name, expr in node.columns.items():
         if isinstance(expr, ColumnReference):
             new_project_columns[name] = ColumnReference(name, expr.data_type)
@@ -86,59 +129,144 @@ def pull_non_columns(node: RelationalNode) -> RelationalNode:
             new_project_columns[name] = expr
             needs_pull = True
 
+    # Skip the rewrite if no columns were pulled up.
     if not needs_pull:
         return node
 
+    # Ensure every column in the node's inputs is also present in the output
+    # columns of the node. This will ensure that any function calls that are
+    # pulled into a parent projection can have their inputs substituted with
+    # references to the node's output columns. Ensure the substitutions do not
+    # have any input names in the values.
     substitutions: dict[RelationalExpression, RelationalExpression] = widen_columns(
         node
     )
     substitutions = {k: add_input_name(v, None) for k, v in substitutions.items()}
+
+    # Create the columns of the new projection by applying the substitutions
+    # to the expressions pulled up earlier.
     for name, expr in new_project_columns.items():
         new_project_columns[name] = apply_substitution(expr, substitutions, {})
 
-    return merge_adjacent_projects(Project(input=node, columns=new_project_columns))
+    # Build the new project node pointing to the input but with the new columns.
+    return Project(input=node, columns=new_project_columns)
 
 
-def pull_project_into_join(node: Join, input_index: int) -> None:
+def pull_project_helper(
+    columns: dict[str, RelationalExpression],
+    conditions: list[RelationalExpression],
+    ordering: list[ExpressionSortInfo],
+    project: Project,
+    input_name: str | None,
+) -> dict[RelationalExpression, RelationalExpression]:
     """
-    TODO
+    Main helper utility for pulling up columns from a Project node into a
+    a parent Filter/Join/Limit node. This function modifies the input project
+    in-place to ensure every column in the project's inputs is available
+    to the parent node, and returns a mapping of expressions that can be used
+    to substitute the columns in the parent node's output columns or conditions.
+
+    Args:
+        `columns`: The columns of the parent node that the expressions from the
+            project node can be pulled into.
+        `conditions`: The condition of the parent node that the expressions
+            from the project node can be pulled into. This is a list so that
+            nodes without a condition can pass it in as empty.
+        `ordering`: The orderings of the parent node that the expressions from
+            the project node can be pulled into. This is a list so that nodes
+            without orderings can pass it in as empty.
+        `project`: The Project node to pull columns from.
+        `input_name`: The name of the input to the parent node that the project
+            node is connected to. This is used to add input names to the
+            expressions pulled from the project node when dealing with joins.
+
+    Returns:
+        A mapping of expressions that can be used to substitute the columns in
+        the parent node's output columns or conditions. This mapping will
+        ensure columns are only pulled up if they do not contain window
+        functions, and they are not simultaneously used in the parent's output
+        while also being used in the condition or orderings.
     """
-    if not isinstance(node.inputs[input_index], Project):
-        return
-
-    project = node.inputs[input_index]
-    assert isinstance(project, Project)
-
-    input_name: str | None = node.default_input_aliases[input_index]
-
-    finder: ColumnReferenceFinder = ColumnReferenceFinder()
-    finder.reset()
-    node.condition.accept(finder)
-    condition_cols: set[ColumnReference] = finder.get_column_references()
-    condition_names: set[str] = {col.name for col in condition_cols}
-    finder.reset()
-    for expr in node.columns.values():
-        expr.accept(finder)
-    output_cols: set[ColumnReference] = finder.get_column_references()
-    output_names: set[str] = {col.name for col in output_cols}
-
+    # Ensure every column in the project's inputs is also present in the output
+    # columns of the project. This will ensure that any function calls that are
+    # pulled into the parent can have their inputs substituted with references
+    # to columns from the project.
     transfer_substitutions: dict[RelationalExpression, RelationalExpression] = (
         widen_columns(project)
     )
 
+    # Identify which columns from the project node are used in the condition
+    # or orderings, versus those used in the output columns of the parent.
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+
+    # First, the columns used in the output columns of the parent.
+    finder.reset()
+    for expr in columns.values():
+        expr.accept(finder)
+    output_cols: set[ColumnReference] = finder.get_column_references()
+    output_names: set[str] = {col.name for col in output_cols}
+
+    # Next the columns used in the condition or orderings
+    finder.reset()
+    for cond in conditions:
+        cond.accept(finder)
+    for order_expr in ordering:
+        order_expr.expr.accept(finder)
+    used_cols: set[ColumnReference] = finder.get_column_references()
+    used_names: set[str] = {col.name for col in used_cols}
+
+    # Iterate through the columns of the project to see which ones can be
+    # pulled up into the parent's output columns vs condition/orderings,
+    # adding them to a substitutions mapping that will be used to apply the
+    # transformations.
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
     for name, expr in project.columns.items():
         new_expr: RelationalExpression = add_input_name(
             apply_substitution(expr, transfer_substitutions, {}), input_name
         )
         if (not contains_window(new_expr)) and (
-            (name in condition_names) != (name in output_names)
+            (name in used_names) != (name in output_names)
         ):
             ref_expr: ColumnReference = ColumnReference(
                 name, expr.data_type, input_name=input_name
             )
             substitutions[ref_expr] = new_expr
+    return substitutions
 
+
+def pull_project_into_join(node: Join, input_index: int) -> None:
+    """
+    Attempts to pull columns from a Project node that is an input to a Join
+    into the output columns of the Join node, and into its join condition.
+    This transformation is done in-place.
+
+    Args:
+        `node`: The Join node to pull the Project columns into.
+        `input_index`: The index of the input to the Join node that should have
+        its columns pulled up, if it is a project node.
+    """
+
+    # Skip if the input at the specified input is not a Project node.
+    if not isinstance(node.inputs[input_index], Project):
+        return
+    project = node.inputs[input_index]
+    assert isinstance(project, Project)
+
+    # Invoke the common helper for Join/Filter/Limit to identify which columns
+    # from the project can be pulled up into the join's output columns or
+    # condition, and modifies the project node in-place to ensure every
+    # column in the project's inputs is available to the current node.
+    substitutions: dict[RelationalExpression, RelationalExpression] = (
+        pull_project_helper(
+            node.columns,
+            [node.condition],
+            [],
+            project,
+            node.default_input_aliases[input_index],
+        )
+    )
+
+    # Apply the substitutions to the join's condition and output columns.
     node._condition = apply_substitution(node.condition, substitutions, {})
     node._columns = {
         name: apply_substitution(expr, substitutions, {})
@@ -148,37 +276,27 @@ def pull_project_into_join(node: Join, input_index: int) -> None:
 
 def pull_project_into_filter(node: Filter) -> None:
     """
-    TODO
+    Attempts to pull columns from a Project node that is an input to a Filter
+    into the output columns of the Filter node, and into the filter condition.
+    This transformation is done in-place.
+
+    Args:
+        `node`: The Filter node to pull the Project columns into.
     """
+
+    # Skip if the filter's input is not a Project node.
     if not isinstance(node.input, Project):
         return
 
-    project: Project = node.input
-
-    finder: ColumnReferenceFinder = ColumnReferenceFinder()
-    finder.reset()
-    node.condition.accept(finder)
-    condition_cols: set[ColumnReference] = finder.get_column_references()
-    condition_names: set[str] = {col.name for col in condition_cols}
-    finder.reset()
-    for expr in node.columns.values():
-        expr.accept(finder)
-    output_cols: set[ColumnReference] = finder.get_column_references()
-    output_names: set[str] = {col.name for col in output_cols}
-
-    transfer_substitutions: dict[RelationalExpression, RelationalExpression] = (
-        widen_columns(project)
+    # Invoke the common helper for Join/Filter/Limit to identify which columns
+    # from the project can be pulled up into the filter's output columns or
+    # condition, and modifies the project node in-place to ensure every
+    # column in the project's inputs is available to the current node.
+    substitutions: dict[RelationalExpression, RelationalExpression] = (
+        pull_project_helper(node.columns, [node.condition], [], node.input, None)
     )
-    substitutions: dict[RelationalExpression, RelationalExpression] = {}
-    for name, expr in project.columns.items():
-        new_expr: RelationalExpression = apply_substitution(
-            expr, transfer_substitutions, {}
-        )
-        if (not contains_window(new_expr)) and (
-            (name in condition_names) != (name in output_names)
-        ):
-            ref_expr: ColumnReference = ColumnReference(name, expr.data_type)
-            substitutions[ref_expr] = new_expr
+
+    # Apply the substitutions to the filter's condition and output columns.
     node._condition = apply_substitution(node.condition, substitutions, {})
     node._columns = {
         name: apply_substitution(expr, substitutions, {})
@@ -188,39 +306,27 @@ def pull_project_into_filter(node: Filter) -> None:
 
 def pull_project_into_limit(node: Limit) -> None:
     """
-    TODO
+    Attempts to pull columns from a Project node that is an input to a Limit
+    into the output columns of the Limit node, and into the ordering
+    expressions. This transformation is done in-place.
+
+    Args:
+        `node`: The Limit node to pull the Project columns into.
     """
+
+    # Skip if the limit's input is not a Project node.
     if not isinstance(node.input, Project):
         return
 
-    project: Project = node.input
-
-    finder: ColumnReferenceFinder = ColumnReferenceFinder()
-    finder.reset()
-    for expr in node.columns.values():
-        expr.accept(finder)
-    output_cols: set[ColumnReference] = finder.get_column_references()
-    output_names: set[str] = {col.name for col in output_cols}
-
-    finder.reset()
-    for order_expr in node.orderings:
-        order_expr.expr.accept(finder)
-    order_cols: set[ColumnReference] = finder.get_column_references()
-    order_names: set[str] = {col.name for col in order_cols}
-
-    transfer_substitutions: dict[RelationalExpression, RelationalExpression] = (
-        widen_columns(project)
+    # Invoke the common helper for Join/Filter/Limit to identify which columns
+    # from the project can be pulled up into the limit's output columns or
+    # orderings, and modifies the project node in-place to ensure every
+    # column in the project's inputs is available to the current node.
+    substitutions: dict[RelationalExpression, RelationalExpression] = (
+        pull_project_helper(node.columns, [], node.orderings, node.input, None)
     )
-    substitutions: dict[RelationalExpression, RelationalExpression] = {}
-    for name, expr in project.columns.items():
-        new_expr: RelationalExpression = apply_substitution(
-            expr, transfer_substitutions, {}
-        )
-        if (not contains_window(new_expr)) and (
-            (name in output_names) != (name in order_names)
-        ):
-            ref_expr: ColumnReference = ColumnReference(name, expr.data_type)
-            substitutions[ref_expr] = new_expr
+
+    # Apply the substitutions to the limit's orderings and output columns.
     node._columns = {
         name: apply_substitution(expr, substitutions, {})
         for name, expr in node.columns.items()
