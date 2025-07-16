@@ -39,7 +39,7 @@ from pydough.relational import (
 )
 
 from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
-from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
+from .sqlglot_identifier_finder import find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
 __all__ = ["SQLGlotRelationalVisitor"]
@@ -457,23 +457,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             # QUALIFY.
             query = self._build_subquery(query, exprs)
         else:
-            # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
-            if (
-                "group" in input_expr.args
-                or "distinct" in input_expr.args
-                or "where" in input_expr.args
-                or "qualify" in input_expr.args
-                or "order" in input_expr.args
-                or "limit" in input_expr.args
-            ):
-                # Check if we already have a where clause or limit. We
-                # cannot merge these yet.
-                # TODO: (gh #151) Consider allowing combining where if
-                # limit isn't present?
-                query = self._build_subquery(input_expr, exprs)
-            else:
-                # Try merge the column sections
-                query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
+            query = self._build_subquery(input_expr, exprs)
             query = query.where(cond)
         self._stack.append(query)
 
@@ -583,6 +567,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             query = self._build_subquery(input_expr, exprs, sort=False)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
+        if root.limit is not None:
+            limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+                root.limit
+            )
+            query = query.limit(limit_expr)
         self._stack.append(query)
 
     def relational_to_sqlglot(self, root: RelationalRoot) -> SQLGlotExpression:

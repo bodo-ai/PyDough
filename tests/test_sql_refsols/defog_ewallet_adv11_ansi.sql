@@ -1,11 +1,8 @@
 WITH _s1 AS (
   SELECT
-    COALESCE(
-      SUM(
-        DATEDIFF(CAST(session_end_ts AS DATETIME), CAST(session_start_ts AS DATETIME), SECOND)
-      ),
-      0
-    ) AS total_duration,
+    SUM(
+      DATEDIFF(CAST(session_end_ts AS DATETIME), CAST(session_start_ts AS DATETIME), SECOND)
+    ) AS sum_duration,
     user_id
   FROM main.user_sessions
   WHERE
@@ -15,9 +12,9 @@ WITH _s1 AS (
 )
 SELECT
   users.uid,
-  _s1.total_duration
+  COALESCE(_s1.sum_duration, 0) AS total_duration
 FROM main.users AS users
 JOIN _s1 AS _s1
   ON _s1.user_id = users.uid
 ORDER BY
-  total_duration DESC
+  COALESCE(_s1.sum_duration, 0) DESC

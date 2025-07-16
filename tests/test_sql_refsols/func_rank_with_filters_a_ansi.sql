@@ -1,16 +1,14 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     RANK() OVER (ORDER BY a) AS r,
     a,
     b
   FROM table
-  WHERE
-    b = 0
 )
 SELECT
   a,
   b,
   r
-FROM _t0
+FROM _t1
 WHERE
-  r >= 3
+  b = 0 AND r >= 3

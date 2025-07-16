@@ -8,5 +8,5 @@ JOIN main.customers AS customers
 GROUP BY
   customers.state
 ORDER BY
-  total_revenue DESC
+  COALESCE(SUM(sales.sale_price), 0) DESC
 LIMIT 5

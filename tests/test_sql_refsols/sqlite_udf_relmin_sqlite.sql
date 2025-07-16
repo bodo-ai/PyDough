@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month
+    CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month,
+    COUNT(*) AS n_rows
   FROM tpch.orders
   WHERE
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) = 1994

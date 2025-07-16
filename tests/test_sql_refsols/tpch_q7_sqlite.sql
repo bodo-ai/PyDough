@@ -38,8 +38,8 @@ JOIN _s9 AS _s9
 WHERE
   CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) IN (1995, 1996)
 GROUP BY
-  _s9.n_name,
   CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER),
+  _s9.n_name,
   _s1.n_name
 ORDER BY
   _s1.n_name,

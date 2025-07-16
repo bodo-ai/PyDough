@@ -42,5 +42,7 @@ CROSS JOIN _s0 AS _s1
 LEFT JOIN _s9 AS _s9
   ON _s0.co_id = _s9.co_id AND _s1.co_id = _s9._id_3
 ORDER BY
-  ir DESC
+  ROUND(CAST((
+    1.0 * COALESCE(_s9.sum_n_rows, 0)
+  ) AS REAL) / COALESCE(_s9.n_rows, 0), 2) DESC
 LIMIT 5

@@ -34,11 +34,11 @@ WITH _s0 AS (
     searches.search_id
 ), _s16 AS (
   SELECT
-    ANY_VALUE(_s0.s_name) AS anything_s_name,
     COUNT(*) AS n_rows,
     SUM((
       NOT _s9.n_rows IS NULL AND _s9.n_rows > 0
-    )) AS sum_is_intra_season
+    )) AS sum_is_intra_season,
+    _s0.s_name
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.s_month1 = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
@@ -68,7 +68,7 @@ WITH _s0 AS (
     _s10.s_name
 )
 SELECT
-  _s16.anything_s_name AS season_name,
+  _s16.s_name AS season_name,
   ROUND((
     100.0 * COALESCE(_s16.sum_is_intra_season, 0)
   ) / _s16.n_rows, 2) AS pct_season_searches,
@@ -77,6 +77,6 @@ SELECT
   ) / COALESCE(_s17.n_rows, 0), 2) AS pct_event_searches
 FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17
-  ON _s16.anything_s_name = _s17.s_name
+  ON _s16.s_name = _s17.s_name
 ORDER BY
-  _s16.anything_s_name
+  _s16.s_name

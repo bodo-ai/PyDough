@@ -6,7 +6,7 @@ WITH _s1 AS (
   FROM tpch.orders
   GROUP BY
     o_custkey
-), _t3 AS (
+), _t2 AS (
   SELECT
     MIN(customer.c_acctbal) OVER () AS min_bal,
     customer.c_acctbal,
@@ -37,6 +37,6 @@ SELECT
     ) AS REAL) / COUNT(*),
     2
   ) AS p
-FROM _t3
+FROM _t2
 WHERE
   n_rows > 0

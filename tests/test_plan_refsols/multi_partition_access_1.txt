@@ -1,3 +1,2 @@
-ROOT(columns=[('symbol', sbTickerSymbol)], orderings=[(sbTickerSymbol):asc_first])
- LIMIT(limit=Literal(value=5, type=NumericType()), columns={'sbTickerSymbol': sbTickerSymbol}, orderings=[(sbTickerSymbol):asc_first])
-  SCAN(table=main.sbTicker, columns={'sbTickerSymbol': sbTickerSymbol})
+ROOT(columns=[('symbol', sbTickerSymbol)], orderings=[(sbTickerSymbol):asc_first], limit=5:numeric)
+ SCAN(table=main.sbTicker, columns={'sbTickerSymbol': sbTickerSymbol})

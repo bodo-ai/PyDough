@@ -48,17 +48,21 @@ def push_filters(
     """
     remaining_filters: set[RelationalExpression]
     pushable_filters: set[RelationalExpression]
+    new_input: RelationalNode
     match node:
         case Filter():
             # Add all of the conditions from the filters pushed down this far
             # with the filters from the current node. If there is a window
             # function, materialize all of them at this point, otherwise push
             # all of them further.
+            filters = {transpose_expression(expr, node.columns) for expr in filters}
             filters.update(get_conjunctions(node.condition))
             if contains_window(node.condition):
-                return build_filter(push_filters(node.input, set()), filters)
+                remaining_filters, pushable_filters = filters, set()
             else:
-                return push_filters(node.input, filters)
+                remaining_filters, pushable_filters = set(), filters
+            new_input = push_filters(node.input, pushable_filters)
+            return build_filter(new_input, remaining_filters, columns=node.columns)
         case Project():
             if any(contains_window(expr) for expr in node.columns.values()):
                 # If there is a window function, materialize all filters at

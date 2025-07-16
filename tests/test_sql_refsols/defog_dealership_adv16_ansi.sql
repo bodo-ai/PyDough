@@ -15,5 +15,5 @@ FROM main.salespersons AS salespersons
 LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  total DESC
+  COALESCE(_s1.sum_sale_price, 0) DESC
 LIMIT 5

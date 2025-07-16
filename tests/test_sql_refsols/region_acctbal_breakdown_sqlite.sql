@@ -39,9 +39,8 @@ WITH _t1 AS (
       THEN CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7,
-    nation.n_regionkey,
-    CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END AS negative_acctbal,
-    CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END AS non_negative_acctbal
+    customer.c_acctbal,
+    nation.n_regionkey
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
@@ -50,8 +49,8 @@ WITH _t1 AS (
     AVG(expr_5) AS median_black_acctbal,
     AVG(expr_6) AS median_overall_acctbal,
     AVG(expr_7) AS median_red_acctbal,
-    COUNT(non_negative_acctbal) AS n_black_acctbal,
-    COUNT(negative_acctbal) AS n_red_acctbal,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS n_black_acctbal,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS n_red_acctbal,
     n_regionkey
   FROM _t1
   GROUP BY

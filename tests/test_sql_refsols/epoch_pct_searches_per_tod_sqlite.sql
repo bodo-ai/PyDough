@@ -1,4 +1,4 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
     MAX(times.t_name) AS anything_t_name,
     MAX(times.t_start_hour) AS anything_t_start_hour,
@@ -9,18 +9,12 @@ WITH _t1 AS (
     AND times.t_start_hour <= CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
   GROUP BY
     times.t_name
-), _t0 AS (
-  SELECT
-    ROUND(CAST((
-      100.0 * n_rows
-    ) AS REAL) / SUM(n_rows) OVER (), 2) AS pct_searches,
-    anything_t_name,
-    anything_t_start_hour
-  FROM _t1
 )
 SELECT
   anything_t_name AS tod,
-  pct_searches
+  ROUND(CAST((
+    100.0 * n_rows
+  ) AS REAL) / SUM(n_rows) OVER (), 2) AS pct_searches
 FROM _t0
 ORDER BY
   anything_t_start_hour

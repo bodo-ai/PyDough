@@ -1,24 +1,16 @@
 WITH _s5 AS (
   SELECT
     CAST((
-      SUM(customer.c_acctbal * (
-        CAST(orders.o_totalprice AS REAL) / 1000000.0
-      )) - CAST(SUM(customer.c_acctbal) * SUM((
-        CAST(orders.o_totalprice AS REAL) / 1000000.0
-      )) AS REAL) / SUM(
+      SUM(CAST(customer.c_acctbal * orders.o_totalprice AS REAL) / 1000000.0) - CAST(SUM(customer.c_acctbal) * SUM(CAST(orders.o_totalprice AS REAL) / 1000000.0) AS REAL) / SUM(
         CASE
-          WHEN NOT (
-            CAST(orders.o_totalprice AS REAL) / 1000000.0
-          ) IS NULL
+          WHEN NOT CAST(orders.o_totalprice AS REAL) / 1000000.0 IS NULL
           AND NOT customer.c_acctbal IS NULL
           THEN 1
         END
       )
     ) AS REAL) / SUM(
       CASE
-        WHEN NOT (
-          CAST(orders.o_totalprice AS REAL) / 1000000.0
-        ) IS NULL
+        WHEN NOT CAST(orders.o_totalprice AS REAL) / 1000000.0 IS NULL
         AND NOT customer.c_acctbal IS NULL
         THEN 1
       END

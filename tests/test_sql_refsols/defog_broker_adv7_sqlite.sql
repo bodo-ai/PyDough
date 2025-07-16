@@ -1,6 +1,5 @@
 WITH _s2 AS (
   SELECT
-    COUNT(*) AS n_rows,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', sbcustjoindate) AS INTEGER),
@@ -11,7 +10,8 @@ WITH _s2 AS (
           2 * -1
         ))
       END
-    ) AS month
+    ) AS month,
+    COUNT(*) AS n_rows
   FROM main.sbcustomer
   WHERE
     sbcustjoindate < DATE('now', 'start of month')
