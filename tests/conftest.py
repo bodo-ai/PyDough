@@ -430,7 +430,9 @@ def sqlite_technograph_connection() -> DatabaseContext:
 @pytest.fixture(scope="session")
 def get_pagerank_graph() -> graph_fetcher:
     """
-    A function that returns the graph used for PageRank calculations.
+    A function that returns the graph used for PageRank calculations. The same
+    graph is used for all PageRank tests, but different databases are used that
+    adhere to the same table schema setup that the graph invokes.
     """
 
     @cache
@@ -447,11 +449,18 @@ def get_pagerank_graph() -> graph_fetcher:
 def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
     """
     Returns the SQLITE database contexts for the various pagerank database.
+    This is returned as a dictionary mapping the name of the database to the
+    DatabaseContext for that database, all of which adhere to the same
+    schema structure assumed by the PAGERANK graph.
     """
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
 
-    # Outputs verfied via https://pagerank-visualizer.netlify.app/
+    # The configurations for the pagerank databases. Each tuple contains:
+    # - The name of the database.
+    # - The number of nodes n in the graph.
+    # - The edges in the graph as a list of tuples (src, dst), assuming the
+    #   nodes are numbered from 1 to n.
     pagerank_configs = [
         ("PAGERANK_A", 4, [(1, 2), (2, 1), (2, 3), (3, 4), (4, 1), (4, 2)]),
         ("PAGERANK_B", 5, [(1, 2), (2, 1), (2, 5), (3, 2), (4, 2), (4, 5), (5, 3)]),
@@ -506,9 +515,10 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
         ),
     ]
 
-    # Setup the pagerank databases.
+    # Setup each of the the pagerank databases using the configurations.
     result: dict[str, DatabaseContext] = {}
     for name, nodes, vertices in pagerank_configs:
+        # Create the database and ensure it is empty.
         subprocess.run(
             f"cd tests; rm -fv gen_data/{name.lower()}.db; sqlite3 gen_data/{name.lower()}.db < gen_data/init_pagerank.sql",
             shell=True,
@@ -516,15 +526,16 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
         path: str = os.path.join(base_dir, f"tests/gen_data/{name.lower()}.db")
         connection: sqlite3.Connection = sqlite3.connect(path)
         cursor: sqlite3.Cursor = connection.cursor()
+
+        # For every node, insert an entry into the SITES table.
         for site in range(nodes):
             cursor.execute(
                 "INSERT INTO SITES VALUES (?, ?)",
                 (site + 1, f"SITE {chr(ord('A') + site)}"),
             )
-            cursor.execute(
-                "INSERT INTO LINKS VALUES (?, ?)",
-                (site + 1, site + 1),
-            )
+
+        # For every edge, insert an entry into the LINKS table. Keep track of
+        # the nodes that have no incoming or outgoing links.
         no_incoming: set[int] = set(range(1, nodes + 1))
         no_outgoing: set[int] = set(range(1, nodes + 1))
         for src, dst in vertices:
@@ -534,18 +545,28 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "INSERT INTO LINKS VALUES (?, ?)",
                 (src, dst),
             )
+
+        # If there are no outgoing links for a site, insert a NULL link for it,
+        # indicating that the site links to ALL sites.
         for site in no_outgoing:
             cursor.execute(
                 "INSERT INTO LINKS VALUES (?, ?)",
                 (site, None),
             )
+
+        # IF there are no nodes without outgoing links, then for each node
+        # without incoming links, insert a dummy link to itself.
         if len(no_outgoing) == 0:
             for site in no_incoming:
                 cursor.execute(
                     "INSERT INTO LINKS VALUES (?, ?)",
                     (site, site),
                 )
+
+        # Commit the changes, close the cursor, and store the context in the
+        # result dictionary.
         cursor.connection.commit()
+        cursor.close()
         result[name] = DatabaseContext(
             DatabaseConnection(connection), DatabaseDialect.SQLITE
         )

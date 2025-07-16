@@ -228,7 +228,8 @@ def test_pipeline_until_sql_pagerank(
     update_tests: bool,
 ) -> None:
     """
-    Verifies the generated SQL for the pagerank tests.
+    Verifies the generated SQL for the pagerank tests. The outputs were
+    generated using this website: https://pagerank-visualizer.netlify.app/.
     """
     ctx: DatabaseContext = sqlite_pagerank_db_contexts[
         pagerank_pipeline_test_data.graph_name

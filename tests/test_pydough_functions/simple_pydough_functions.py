@@ -3048,15 +3048,31 @@ def pagerank(n_iters):
       the source & target key are the same, which should be ignored in the
       PageRank calculation.
     """
+
+    # The dampening factor
     d = 0.85
+
+    # The expression used to determine the number of sites the graph links to,
+    # accounting for sites without links (which implicitly link to everything)
+    # and sites with a dummy link to themselves (which should be ignored).
     n_out_expr = SUM(
         outgoing_links.CALCULATE(
             n_target=IFF(ABSENT(target_key), n, INTEGER((source_key != target_key)))
         ).n_target
     )
+
+    # The seed value for the PageRank computation, which is evenly distributed.
+    # Also computes the number of sites in the graph, which is used downstream.
     source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n, n_out=n_out_expr)
+
+    # Repeats the following procedure for n_iters iterations to build the next
+    # generation of PageRank values from the current generation.
     for i in range(n_iters):
         group_name = f"s{i}"
+        # For each site, find all sites that it links to and accumulate the
+        # PageRank values from the current site (divided by the # of links) in
+        # those linked sites, while also considering the damping factor. Calls
+        # .BEST() to ensure each site is included exactly once at the end.
         source = (
             source.outgoing_links.CALCULATE(
                 consider_link=INTEGER(ABSENT(target_key) | (source_key != target_key))
@@ -3069,6 +3085,9 @@ def pagerank(n_iters):
             )
             .BEST(per=group_name, by=key.ASC())
         )
+        # Unless we are done, re-derive `n_out` for the current node.
         if i < n_iters - 1:
             source = source.CALCULATE(n_out=n_out_expr)
+
+    # Output the final PageRank values, rounded to 5 decimal places,
     return source.CALCULATE(key, page_rank=ROUND(page_rank, 5)).ORDER_BY(key.ASC())
