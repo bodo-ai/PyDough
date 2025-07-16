@@ -525,18 +525,26 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 "INSERT INTO LINKS VALUES (?, ?)",
                 (site + 1, site + 1),
             )
-        no_links: set[int] = set(range(1, nodes + 1))
+        no_incoming: set[int] = set(range(1, nodes + 1))
+        no_outgoing: set[int] = set(range(1, nodes + 1))
         for src, dst in vertices:
-            no_links.discard(src)
+            no_outgoing.discard(src)
+            no_incoming.discard(dst)
             cursor.execute(
                 "INSERT INTO LINKS VALUES (?, ?)",
                 (src, dst),
             )
-        for site in no_links:
+        for site in no_outgoing:
             cursor.execute(
                 "INSERT INTO LINKS VALUES (?, ?)",
                 (site, None),
             )
+        if len(no_outgoing) == 0:
+            for site in no_incoming:
+                cursor.execute(
+                    "INSERT INTO LINKS VALUES (?, ?)",
+                    (site, site),
+                )
         cursor.connection.commit()
         result[name] = DatabaseContext(
             DatabaseConnection(connection), DatabaseDialect.SQLITE

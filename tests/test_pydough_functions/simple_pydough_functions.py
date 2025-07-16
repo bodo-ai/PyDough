@@ -3033,6 +3033,21 @@ def quantile_function_test_4():
 
 
 def pagerank(n_iters):
+    """
+    Computes the PageRank computation on the PAGERANK graph, starting with the
+    base page_rank values with an even distribution of 1.0 / n, where n is the
+    number of sites in the graph, then iteratively updates the page_rank values
+    based on the outgoing links and the damping factor d. Repeats the process
+    for n_iters iterations, returning the final page_rank values for each site,
+    rounded to 5 decimal places. Makes the following assumptions:
+
+    - If a site has no outgoing links, then it has a single entry in
+      `outgoing_links` where `target_key` is null.
+    - If there is a site with no incoming links, and there are no sites w/o
+      any outgoing links, the site w/o the incoming link has a dummy link where
+      the source & target key are the same, which should be ignored in the
+      PageRank calculation.
+    """
     d = 0.85
     n_out_expr = SUM(
         outgoing_links.CALCULATE(
