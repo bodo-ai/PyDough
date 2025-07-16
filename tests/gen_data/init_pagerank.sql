@@ -5,7 +5,7 @@
 -- 2. If there are no websites without any outgoing links, then any websites
 --    without incoming links have a dummy self-link for simplicity, which
 --    should not be counted in the PageRank calculation (but is required for
--- joins to work).
+--    joins to work).
 
 CREATE TABLE SITES (
   s_key INTEGER NOT NULL,
