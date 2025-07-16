@@ -85,7 +85,7 @@ class AugmentingChildOperator(ChildOperator):
             term = term.clone_with_parent(self)
         elif isinstance(term, PyDoughExpressionQDAG):
             typ = self.preceding_context.get_expr(term_name).pydough_type
-            term = Reference(term_name, typ)
+            term = Reference(self.preceding_context, term_name, typ)
         return term
 
     @cache

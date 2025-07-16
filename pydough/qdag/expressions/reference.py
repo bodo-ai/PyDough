@@ -7,6 +7,7 @@ __all__ = ["Reference"]
 
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
+from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG
@@ -18,9 +19,19 @@ class Reference(PyDoughExpressionQDAG):
     a preceding collection.
     """
 
-    def __init__(self, term_name: str, term_type: PyDoughType):
+    def __init__(
+        self, collection: PyDoughCollectionQDAG, term_name: str, term_type: PyDoughType
+    ):
+        self._collection: PyDoughCollectionQDAG = collection
         self._term_name: str = term_name
         self._term_type: PyDoughType = term_type
+
+    @property
+    def collection(self) -> PyDoughCollectionQDAG:
+        """
+        The collection that the Reference term comes from.
+        """
+        return self._collection
 
     @property
     def term_name(self) -> str:
@@ -51,5 +62,6 @@ class Reference(PyDoughExpressionQDAG):
         return (
             isinstance(other, Reference)
             and self.term_name == other.term_name
+            and self.collection.equals(other.collection)
             and self.pydough_type == other.pydough_type
         )

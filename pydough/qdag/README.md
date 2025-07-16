@@ -67,7 +67,7 @@ table_collection = builder.build_child_access("Nations", global_context_node)
 # Equivalent PyDough code: `TPCH.Nations.name`
 ref_name = "name"
 pydough_type = table_collection.get_expr(ref_name).pydough_type
-reference_node = builder.build_reference(ref_name, pydough_type)
+reference_node = builder.build_reference(table_collection, ref_name, pydough_type)
 
 # Build an expression function call node
 # Equivalent PyDough code: `LOWER(TPCH.Nations.name)`
@@ -104,7 +104,7 @@ nations_sub_collection = builder.build_child_access("nations", regions_collectio
 
 ref_name = "key"
 pydough_type = nations_sub_collection.get_expr(ref_name).pydough_type
-key_ref = builder.build_reference(ref_name, pydough_type)
+key_ref = builder.build_reference(nations_sub_collection, ref_name, pydough_type)
 literal_4 = builder.build_literal(4, NumericType())
 condition = builder.build_expression_function_call("EQU", [key_ref, literal_4])
 # Build WHERE node with condition
@@ -115,7 +115,7 @@ singular_node = builder.build_singular(where_node)
 # Build reference node for name
 ref_name = "name"
 pydough_type = singular_node.get_expr(ref_name).pydough_type
-reference_node = builder.build_reference(ref_name, pydough_type)
+reference_node = builder.build_reference(singular_node, ref_name, pydough_type)
 # Build CALCULATE node with calculated term
 calculate_node = builder.build_calc(regions_collection, [nations_sub_collection])
 calculate_node = calculate_node.with_terms([("n_4_nation", reference_node)])
@@ -139,7 +139,7 @@ top_k_node = top_k_node.with_collation([collation_expression])
 part_collection = builder.build_child_access("Parts", global_context_node)
 ref_name = "part_type"
 pydough_type = part_collection.get_expr(ref_name).pydough_type
-partition_key = builder.build_reference(ref_name, pydough_type)
+partition_key = builder.build_reference(part_collection, ref_name, pydough_type)
 partition_by_node = builder.build_partition(part_collection, child_collection, "p")
 partition_by_node = partition_by_node.with_keys([partition_key])
 

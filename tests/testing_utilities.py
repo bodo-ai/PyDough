@@ -293,7 +293,7 @@ class ReferenceInfo(AstNodeTestInfo):
             "Cannot call .build() on ReferenceInfo without providing a context"
         )
         typ: PyDoughType = context.get_expr(self.name).pydough_type
-        return builder.build_reference(self.name, typ)
+        return builder.build_reference(context, self.name, typ)
 
 
 class BackReferenceExpressionInfo(AstNodeTestInfo):

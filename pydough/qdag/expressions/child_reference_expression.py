@@ -36,13 +36,6 @@ class ChildReferenceExpression(Reference):
             )
 
     @property
-    def collection(self) -> PyDoughCollectionQDAG:
-        """
-        The collection that the Reference term comes from.
-        """
-        return self._collection
-
-    @property
     def expression(self) -> PyDoughExpressionQDAG:
         """
         The expression that the ChildReferenceExpression refers to.

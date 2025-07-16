@@ -102,7 +102,9 @@ class PartitionChild(ChildOperatorChildAccess):
                 else:
                     assert context.ancestor_context is not None
                     context = context.ancestor_context
-            return Reference(term_name, context.get_expr(term_name).pydough_type)
+            return Reference(
+                context, term_name, context.get_expr(term_name).pydough_type
+            )
 
         elif term_name not in self.all_terms:
             raise PyDoughQDAGException(self.name_mismatch_error(term_name))

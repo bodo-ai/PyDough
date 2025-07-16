@@ -41,13 +41,6 @@ class BackReferenceExpression(Reference):
         self._term_type = self._expression.pydough_type
 
     @property
-    def collection(self) -> PyDoughCollectionQDAG:
-        """
-        The collection that the Reference term comes from.
-        """
-        return self._collection
-
-    @property
     def expression(self) -> PyDoughExpressionQDAG:
         """
         The expression that the ChildReferenceExpression refers to.

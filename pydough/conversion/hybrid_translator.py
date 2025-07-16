@@ -1118,26 +1118,22 @@ class HybridTranslator:
                 return HybridBackRefExpr(expr_name, expr.back_levels, expr.pydough_type)
             case Reference():
                 if hybrid.ancestral_mapping.get(expr.term_name, 0) > 0:
-                    # HA: FIXME: raise error for now.
-                    raise NotImplementedError(
-                        "Unable to resolve collection context for Reference. "
+                    collection = expr.collection
+                    while (
+                        isinstance(collection, PartitionChild)
+                        and expr.term_name in collection.child_access.ancestral_mapping
+                    ):
+                        collection = collection.child_access
+                    return self.make_hybrid_expr(
+                        hybrid,
+                        BackReferenceExpression(
+                            collection,
+                            expr.term_name,
+                            hybrid.ancestral_mapping[expr.term_name],
+                        ),
+                        child_ref_mapping,
+                        inside_agg,
                     )
-                    # collection = expr.collection
-                    # while (
-                    #     isinstance(collection, PartitionChild)
-                    #     and expr.term_name in collection.child_access.ancestral_mapping
-                    # ):
-                    #     collection = collection.child_access
-                    # return self.make_hybrid_expr(
-                    #     hybrid,
-                    #     BackReferenceExpression(
-                    #         collection,
-                    #         expr.term_name,
-                    #         hybrid.ancestral_mapping[expr.term_name],
-                    #     ),
-                    #     child_ref_mapping,
-                    #     inside_agg,
-                    # )
                 expr_name = hybrid.pipeline[-1].renamings.get(
                     expr.term_name, expr.term_name
                 )

@@ -155,11 +155,14 @@ class AstNodeBuilder:
             window_operator, qualified_args, collation_args, levels, kwargs
         )
 
-    def build_reference(self, name: str, typ: PyDoughType) -> Reference:
+    def build_reference(
+        self, collection: PyDoughCollectionQDAG, name: str, typ: PyDoughType
+    ) -> Reference:
         """
         Creates a new reference to an expression in the collection.
 
         Args:
+            `collection`: the collection that the reference comes from.
             `name`: the name of the expression being referenced.
             `typ`: the PyDough type of the expression being referenced.
 
@@ -170,7 +173,7 @@ class AstNodeBuilder:
             `PyDoughQDAGException`: if `name` does not refer to an expression in
             the collection.
         """
-        return Reference(name, typ)
+        return Reference(collection, name, typ)
 
     def build_child_reference_expression(
         self,

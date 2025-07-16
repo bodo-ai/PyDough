@@ -1320,12 +1320,12 @@ class RelTranslation:
         if output_cols is None:
             for name in node.calc_terms:
                 name_typ: PyDoughType = node.get_expr(name).pydough_type
-                final_terms.append((name, Reference(name, name_typ)))
+                final_terms.append((name, Reference(node, name, name_typ)))
             final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
         else:
             for _, column in output_cols:
                 column_typ: PyDoughType = node.get_expr(column).pydough_type
-                final_terms.append((column, Reference(column, column_typ)))
+                final_terms.append((column, Reference(node, column, column_typ)))
         children: list[PyDoughCollectionQDAG] = []
         final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
         return final_calc
