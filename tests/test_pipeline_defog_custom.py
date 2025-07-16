@@ -17,6 +17,9 @@ from pydough.unqualified import (
     UnqualifiedNode,
 )
 from tests.test_pydough_functions.bad_pydough_functions import (
+    bad_get_part_1,
+    bad_get_part_2,
+    bad_get_part_3,
     bad_lpad_1,
     bad_lpad_2,
     bad_lpad_3,
@@ -42,6 +45,8 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     cumulative_stock_analysis,
     exponentiation,
     find,
+    get_part_multiple,
+    get_part_single,
     hour_minute_day,
     minutes_seconds_datediff,
     multi_partition_access_1,
@@ -1104,6 +1109,37 @@ def get_day_of_week(
         ),
         pytest.param(
             PyDoughPandasTest(
+                get_part_multiple,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [1, 2, 3, 4],
+                        "p1": ["john", "Smith", None, None],
+                        "p2": ["doe", "Jane", None, None],
+                        "p3": ["john", "smith@email", "com", None],
+                        "p4": ["com", "smith@email", "bob", None],
+                        "p5": ["555", "987", "8135", None],
+                        "p6": ["4567", "987", "555", None],
+                        "p7": ["9", "02", None, None],
+                        "p8": ["01", "1", None, None],
+                        "p9": ["john doe", None, None, None],
+                        "p10": ["john doe", None, None, None],
+                        "p11": ["john doe", None, None, None],
+                        "p12": ["john doe", None, None, None],
+                        "p13": ["john doe", None, None, None],
+                        "p14": [None, None, None, None],
+                        "p15": ["john", "Jane", "Bob", "Samantha"],
+                        "p16": ["", None, None, None],
+                        "p17": ["", "", "", None],
+                        "p18": ["9", "", "", None],
+                    }
+                ),
+                "get_part_multiple",
+            ),
+            id="get_part_multiple",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 week_offset,
                 "Broker",
                 lambda: pd.DataFrame(
@@ -1542,6 +1578,15 @@ def get_day_of_week(
             ),
             id="agg_simplification_2",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                get_part_single,
+                "Broker",
+                lambda: pd.DataFrame({"last_name": ["Rodriguez"]}),
+                "get_part_single",
+            ),
+            id="get_part_single",
+        ),
     ],
 )
 def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -1697,6 +1742,30 @@ def test_pipeline_e2e_defog_custom(
                 "Invalid operator invocation 'ROUND(high, -0.5, 2)': Expected between 1 and 2 arguments inclusive, received 3."
             ),
             id="bad_round2",
+        ),
+        pytest.param(
+            bad_get_part_1,
+            "Broker",
+            re.escape(
+                "Invalid operator invocation 'GETPART(-1)': Expected 3 arguments, received 1"
+            ),
+            id="bad_get_part_1",
+        ),
+        pytest.param(
+            bad_get_part_2,
+            "Broker",
+            re.escape(
+                "Invalid operator invocation \"GETPART(name, ' ')\": Expected 3 arguments, received 2"
+            ),
+            id="bad_get_part_2",
+        ),
+        pytest.param(
+            bad_get_part_3,
+            "Broker",
+            re.escape(
+                "Invalid operator invocation 'GETPART(name, -1)': Expected 3 arguments, received 2"
+            ),
+            id="bad_get_part_3",
         ),
     ],
 )

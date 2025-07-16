@@ -2252,7 +2252,54 @@ def str_count():
             entire_string_match=STRCOUNT(name, name),
             longer_substring=STRCOUNT(lastname, name),
         )
-    )  # end return
+    )
+
+
+def get_part_multiple():
+    k = INTEGER(_id[1:])
+    return (
+        customers.WHERE(k <= 4)
+        .CALCULATE(
+            k,
+            p1=GETPART(name, " ", k),
+            p2=GETPART(name, " ", -k),
+            p3=GETPART(email, ".", k),
+            p4=GETPART(email, ".", -k),
+            p5=GETPART(phone, "-", k),
+            p6=GETPART(phone, "-", -k),
+            p7=GETPART(postal_code, "00", k),
+            p8=GETPART(postal_code, "00", -k),
+            p9=GETPART(name, "!", k),
+            p10=GETPART(name, "@", -k),
+            p11=GETPART(name, "aa", k),
+            p12=GETPART(name, "#$*", -k),
+            p13=GETPART(name, "", k),
+            p14=GETPART("", " ", k),
+            p15=GETPART(name, " ", 0),
+            p16=GETPART(state, state, k),
+            p17=GETPART(GETPART(phone, "-", 1), "5", k),
+            p18=GETPART(postal_code, "0", k),
+        )
+        .ORDER_BY(k.ASC())
+    )
+
+
+def get_part_single():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        last_name=GETPART(name, " ", -1)
+    )
+
+
+def extract_colors():
+    return parts.CALCULATE(
+        key,
+        c1=UPPER(GETPART(name, " ", 1)),
+        c2=UPPER(GETPART(name, " ", 2)),
+        c3=UPPER(GETPART(name, " ", 3)),
+        c4=UPPER(GETPART(name, " ", 4)),
+        c5=UPPER(GETPART(name, " ", 5)),
+        c6=UPPER(GETPART(name, " ", 6)),
+    ).TOP_K(5, by=key.ASC())
 
 
 def singular1():

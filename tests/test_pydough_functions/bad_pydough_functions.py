@@ -564,6 +564,24 @@ def bad_cross_11():
     return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
 
 
+# Tests for the GETPART function
+# Missing arguments (all 3 required)
+def bad_get_part_1():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(split_part=GETPART(-1))
+
+
+def bad_get_part_2():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, " ")
+    )
+
+
+def bad_get_part_3():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, -1)
+    )
+
+
 # QUANTILE function's test
 # not arguments
 def bad_quantile_1():
