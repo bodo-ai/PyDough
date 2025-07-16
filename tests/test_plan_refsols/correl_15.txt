@@ -1,5 +1,5 @@
-ROOT(columns=[('n', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+ROOT(columns=[('n', n)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n': COUNT()})
   AGGREGATE(keys={'s_suppkey': s_suppkey}, aggregations={})
    FILTER(condition=p_retailprice < global_avg_price * 0.85:numeric & p_retailprice < ps_supplycost * 1.5:numeric & p_retailprice < supplier_avg_price, columns={'s_suppkey': s_suppkey})
     JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'global_avg_price': t0.global_avg_price, 'p_retailprice': t1.p_retailprice, 'ps_supplycost': t0.ps_supplycost, 's_suppkey': t0.s_suppkey, 'supplier_avg_price': t0.supplier_avg_price})

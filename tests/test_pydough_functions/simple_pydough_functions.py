@@ -3030,3 +3030,30 @@ def quantile_function_test_4():
         orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
         orders_max=QUANTILE(selected_orders.total_price, 1.0),
     )
+
+
+def pagerank(n_iters):
+    d = 0.85
+    n_out_expr = SUM(
+        outgoing_links.CALCULATE(
+            n_target=IFF(ABSENT(target_key), n, INTEGER((source_key != target_key)))
+        ).n_target
+    )
+    source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n, n_out=n_out_expr)
+    for i in range(n_iters):
+        group_name = f"s{i}"
+        source = (
+            source.outgoing_links.CALCULATE(
+                consider_link=INTEGER(ABSENT(target_key) | (source_key != target_key))
+            )
+            .target_site.PARTITION(name=group_name, by=key)
+            .target_site.CALCULATE(
+                n,
+                page_rank=(1.0 - d) / n
+                + d * RELSUM(consider_link * page_rank / n_out, per=group_name),
+            )
+            .BEST(per=group_name, by=key.ASC())
+        )
+        if i < n_iters - 1:
+            source = source.CALCULATE(n_out=n_out_expr)
+    return source.CALCULATE(key, page_rank=ROUND(page_rank, 5)).ORDER_BY(key.ASC())

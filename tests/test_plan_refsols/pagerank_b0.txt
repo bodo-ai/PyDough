@@ -1,0 +1,7 @@
+ROOT(columns=[('key', anything_s_key), ('page_rank', page_rank_0)], orderings=[(anything_s_key):asc_first])
+ PROJECT(columns={'anything_s_key': anything_s_key, 'page_rank_0': ROUND(1.0:numeric / anything_agg_2, 5:numeric)})
+  AGGREGATE(keys={'s_key': s_key}, aggregations={'anything_agg_2': ANYTHING(agg_2), 'anything_s_key': ANYTHING(s_key)})
+   JOIN(condition=t0.s_key == t1.l_source, type=INNER, cardinality=PLURAL_ACCESS, columns={'agg_2': t0.agg_2, 's_key': t0.s_key})
+    PROJECT(columns={'agg_2': RELSIZE(args=[], partition=[], order=[]), 's_key': s_key})
+     SCAN(table=main.SITES, columns={'s_key': s_key})
+    SCAN(table=main.LINKS, columns={'l_source': l_source})

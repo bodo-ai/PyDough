@@ -195,7 +195,7 @@ from tests.testing_utilities import (
     ],
 )
 def test_pydough_to_sql_tpch(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     test_name: str,
     get_sample_graph: graph_fetcher,
@@ -278,7 +278,7 @@ def test_pydough_to_sql_tpch(
     ],
 )
 def test_pydough_to_sql_defog(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     test_name: str,
     graph_name: str,
     defog_graphs: graph_fetcher,

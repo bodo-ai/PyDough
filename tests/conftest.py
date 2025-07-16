@@ -425,3 +425,120 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture(scope="session")
+def get_pagerank_graph() -> graph_fetcher:
+    """
+    A function that returns the graph used for PageRank calculations.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=f"{os.path.dirname(__file__)}/test_metadata/pagerank_graphs.json",
+            graph_name="PAGERANK",
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
+    """
+    Returns the SQLITE database contexts for the various pagerank database.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+
+    # Outputs verfied via https://pagerank-visualizer.netlify.app/
+    pagerank_configs = [
+        ("PAGERANK_A", 4, [(1, 2), (2, 1), (2, 3), (3, 4), (4, 1), (4, 2)]),
+        ("PAGERANK_B", 5, [(1, 2), (2, 1), (2, 5), (3, 2), (4, 2), (4, 5), (5, 3)]),
+        (
+            "PAGERANK_C",
+            8,
+            [
+                (1, 2),
+                (1, 6),
+                (2, 1),
+                (2, 5),
+                (2, 6),
+                (3, 2),
+                (4, 2),
+                (4, 5),
+                (5, 3),
+                (7, 8),
+                (8, 7),
+            ],
+        ),
+        (
+            "PAGERANK_D",
+            16,
+            [
+                (1, 2),
+                (1, 3),
+                (1, 4),
+                (1, 5),
+                (2, 1),
+                (2, 5),
+                (3, 2),
+                (4, 2),
+                (4, 5),
+                (4, 11),
+                (5, 3),
+                (5, 11),
+                (5, 14),
+                (5, 16),
+                (6, 7),
+                (7, 8),
+                (8, 6),
+                (8, 7),
+                (9, 2),
+                (9, 10),
+                (11, 12),
+                (12, 13),
+                (12, 14),
+                (13, 4),
+                (13, 5),
+                (15, 2),
+            ],
+        ),
+    ]
+
+    # Setup the pagerank databases.
+    result: dict[str, DatabaseContext] = {}
+    for name, nodes, vertices in pagerank_configs:
+        subprocess.run(
+            f"cd tests; rm -fv gen_data/{name.lower()}.db; sqlite3 gen_data/{name.lower()}.db < gen_data/init_pagerank.sql",
+            shell=True,
+        )
+        path: str = os.path.join(base_dir, f"tests/gen_data/{name.lower()}.db")
+        connection: sqlite3.Connection = sqlite3.connect(path)
+        cursor: sqlite3.Cursor = connection.cursor()
+        for site in range(nodes):
+            cursor.execute(
+                "INSERT INTO SITES VALUES (?, ?)",
+                (site + 1, f"SITE {chr(ord('A') + site)}"),
+            )
+            cursor.execute(
+                "INSERT INTO LINKS VALUES (?, ?)",
+                (site + 1, site + 1),
+            )
+        no_links: set[int] = set(range(1, nodes + 1))
+        for src, dst in vertices:
+            no_links.discard(src)
+            cursor.execute(
+                "INSERT INTO LINKS VALUES (?, ?)",
+                (src, dst),
+            )
+        for site in no_links:
+            cursor.execute(
+                "INSERT INTO LINKS VALUES (?, ?)",
+                (site, None),
+            )
+        cursor.connection.commit()
+        result[name] = DatabaseContext(
+            DatabaseConnection(connection), DatabaseDialect.SQLITE
+        )
+    return result

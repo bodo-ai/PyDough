@@ -1647,7 +1647,7 @@ def test_pipeline_e2e_defog_custom(
     ],
 )
 def test_defog_e2e_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     graph_name: str,
     error_message: str,
     defog_graphs: graph_fetcher,
