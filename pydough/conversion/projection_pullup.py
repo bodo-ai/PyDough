@@ -53,7 +53,7 @@ def widen_columns(
         A mapping that can be used for substitution if expressions from the
         node are pulled up into the parent of the node.
     """
-    # The substitution mapping that will be built by the functiona nd returned
+    # The substitution mapping that will be built by the functions and returned
     # to the calling site.
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
 
@@ -153,28 +153,24 @@ def pull_non_columns(node: Join | Filter | Limit) -> RelationalNode:
 
 
 def pull_project_helper(
-    columns: dict[str, RelationalExpression],
-    conditions: list[RelationalExpression],
-    ordering: list[ExpressionSortInfo],
+    output_columns: dict[str, RelationalExpression],
+    used_columns: set[RelationalExpression],
     project: Project,
     input_name: str | None,
 ) -> dict[RelationalExpression, RelationalExpression]:
     """
     Main helper utility for pulling up columns from a Project node into a
-    a parent Filter/Join/Limit node. This function modifies the input project
-    in-place to ensure every column in the project's inputs is available
+    a parent Filter/Join/Limit/Aggregate node. This function modifies the input
+    project in-place to ensure every column in the project's inputs is available
     to the parent node, and returns a mapping of expressions that can be used
     to substitute the columns in the parent node's output columns or conditions.
 
     Args:
-        `columns`: The columns of the parent node that the expressions from the
-            project node can be pulled into.
-        `conditions`: The condition of the parent node that the expressions
-            from the project node can be pulled into. This is a list so that
-            nodes without a condition can pass it in as empty.
-        `ordering`: The orderings of the parent node that the expressions from
-            the project node can be pulled into. This is a list so that nodes
-            without orderings can pass it in as empty.
+        `output_columns`: The columns of the parent node that the expressions
+            from the project node can be pulled into.
+        `used_columns`: The set of expressions indicating invocations of the
+            columns from the project in the parent node, e.g. as a filter
+            or join condition, limit ordering, or aggregation key.
         `project`: The Project node to pull columns from.
         `input_name`: The name of the input to the parent node that the project
             node is connected to. This is used to add input names to the
@@ -201,17 +197,15 @@ def pull_project_helper(
 
     # First, the columns used in the output columns of the parent.
     finder.reset()
-    for expr in columns.values():
+    for expr in output_columns.values():
         expr.accept(finder)
     output_cols: set[ColumnReference] = finder.get_column_references()
     output_names: set[str] = {col.name for col in output_cols}
 
-    # Next the columns used in the condition or orderings
+    # Next the columns that are utilized by the node.
     finder.reset()
-    for cond in conditions:
-        cond.accept(finder)
-    for order_expr in ordering:
-        order_expr.expr.accept(finder)
+    for expr in used_columns:
+        expr.accept(finder)
     used_cols: set[ColumnReference] = finder.get_column_references()
     used_names: set[str] = {col.name for col in used_cols}
 
@@ -252,15 +246,14 @@ def pull_project_into_join(node: Join, input_index: int) -> None:
     project = node.inputs[input_index]
     assert isinstance(project, Project)
 
-    # Invoke the common helper for Join/Filter/Limit to identify which columns
-    # from the project can be pulled up into the join's output columns or
-    # condition, and modifies the project node in-place to ensure every
-    # column in the project's inputs is available to the current node.
+    # Invoke the common helper for Join/Filter/Limit/Aggregate to identify
+    # which columns from the project can be pulled up into the join's output
+    # columns or condition, and modifies the project node in-place to ensure
+    # every column in the project's inputs is available to the current node.
     substitutions: dict[RelationalExpression, RelationalExpression] = (
         pull_project_helper(
             node.columns,
-            [node.condition],
-            [],
+            {node.condition},
             project,
             node.default_input_aliases[input_index],
         )
@@ -288,12 +281,12 @@ def pull_project_into_filter(node: Filter) -> None:
     if not isinstance(node.input, Project):
         return
 
-    # Invoke the common helper for Join/Filter/Limit to identify which columns
-    # from the project can be pulled up into the filter's output columns or
-    # condition, and modifies the project node in-place to ensure every
-    # column in the project's inputs is available to the current node.
+    # Invoke the common helper for Join/Filter/Limit/Aggregate to identify
+    # which columns from the project can be pulled up into the filter's output
+    # columns or condition, and modifies the project node in-place to ensure
+    # every column in the project's inputs is available to the current node.
     substitutions: dict[RelationalExpression, RelationalExpression] = (
-        pull_project_helper(node.columns, [node.condition], [], node.input, None)
+        pull_project_helper(node.columns, {node.condition}, node.input, None)
     )
 
     # Apply the substitutions to the filter's condition and output columns.
@@ -318,12 +311,17 @@ def pull_project_into_limit(node: Limit) -> None:
     if not isinstance(node.input, Project):
         return
 
-    # Invoke the common helper for Join/Filter/Limit to identify which columns
-    # from the project can be pulled up into the limit's output columns or
-    # orderings, and modifies the project node in-place to ensure every
-    # column in the project's inputs is available to the current node.
+    # Invoke the common helper for Join/Filter/Limit/Aggregate to identify
+    # which columns from the project can be pulled up into the limit's output
+    # columns or orderings, and modifies the project node in-place to ensure
+    # every column in the project's inputs is available to the current node.
     substitutions: dict[RelationalExpression, RelationalExpression] = (
-        pull_project_helper(node.columns, [], node.orderings, node.input, None)
+        pull_project_helper(
+            node.columns,
+            {order_expr.expr for order_expr in node.orderings},
+            node.input,
+            None,
+        )
     )
 
     # Apply the substitutions to the limit's orderings and output columns.
@@ -341,76 +339,46 @@ def pull_project_into_limit(node: Limit) -> None:
     ]
 
 
-def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
-    """
-    TODO
-    """
-    if not isinstance(node.input, Project):
-        return node
-
-    project: Project = node.input
-
-    finder: ColumnReferenceFinder = ColumnReferenceFinder()
-    finder.reset()
-    for key_expr in node.aggregations.values():
-        key_expr.accept(finder)
-    agg_cols: set[ColumnReference] = finder.get_column_references()
-    agg_names: set[str] = {col.name for col in agg_cols}
-    finder.reset()
-    for agg_expr in node.keys.values():
-        agg_expr.accept(finder)
-    key_cols: set[ColumnReference] = finder.get_column_references()
-    key_names: set[str] = {col.name for col in key_cols}
-
-    transfer_substitutions: dict[RelationalExpression, RelationalExpression] = (
-        widen_columns(project)
-    )
-    substitutions: dict[RelationalExpression, RelationalExpression] = {}
-    new_expr: RelationalExpression
-    for name, expr in project.columns.items():
-        new_expr = apply_substitution(expr, transfer_substitutions, {})
-        if (not contains_window(new_expr)) and (
-            (name in agg_names) != (name in key_names)
-        ):
-            ref_expr: ColumnReference = ColumnReference(name, expr.data_type)
-            substitutions[ref_expr] = new_expr
-    new_columns: dict[str, RelationalExpression] = {
-        name: ColumnReference(name, expr.data_type) for name, expr in node.keys.items()
-    }
-    new_keys: dict[str, RelationalExpression] = {
-        name: apply_substitution(expr, substitutions, {})
-        for name, expr in node.keys.items()
-    }
-    new_aggs: dict[str, CallExpression] = {}
-    out_expr: RelationalExpression
-    new_agg_expr: CallExpression | None
-    for name, expr in node.aggregations.items():
-        new_expr = apply_substitution(expr, substitutions, {})
-        assert isinstance(new_expr, CallExpression)
-        out_expr, new_agg_expr = simplify_agg(new_keys, new_expr, name)
-        new_columns[name] = out_expr
-        if new_agg_expr is not None:
-            new_aggs[name] = new_agg_expr
-    agg: Aggregate = Aggregate(
-        input=node.input,
-        keys=new_keys,
-        aggregations=new_aggs,
-    )
-    return merge_adjacent_projects(Project(input=agg, columns=new_columns))
-
-
 def simplify_agg(
     keys: dict[str, RelationalExpression], agg: CallExpression, name: str
 ) -> tuple[RelationalExpression, CallExpression | None]:
     """
-    TODO
+    Simplifies an aggregation call by checking if the combination of the
+    function versus its inputs can be rewritten in another form. The rewrite
+    allows expressions to be done after aggregation since there will be a
+    parent projection on top of the aggregate.
+
+    Args:
+        `keys`: The keys of the aggregation, used for simplifications when an
+            aggregation function is called on a key.
+        `agg`: The aggregation call to simplify.
+        `name`: The name of the aggregation, used to build a reference in the
+            parent project node to the output of the aggregation.
+
+    Returns:
+        A tuple containing two terms:
+        - The first term is the output expression that should be used in the
+          parent project node to refer to the final result of the aggregation
+          after any post-processing is done. This may contain a reference to
+          column `name` of the aggregation.
+        - The second term is the aggregation call that should be referred to
+          by the parent project when deriving the final answer. If this is
+          `None`, then the output expression can be derived entirely in the
+          project and does not require an aggregation call.
     """
+    arg: RelationalExpression
+
+    # Build a mapping from every key expression to its name.
     reverse_keys: dict[RelationalExpression, str] = {
         expr: name for name, expr in keys.items()
     }
-    out_ref: RelationalExpression = ColumnReference(name, agg.data_type)
-    arg: RelationalExpression
 
+    # Commonly used terms:
+    # - Reference to the output of the aggregation
+    # - Literal 0
+    # - Literal 1
+    # - COUNT(*) call
+    out_ref: RelationalExpression = ColumnReference(name, agg.data_type)
     zero_expr: RelationalExpression = LiteralExpression(0, agg.data_type)
     one_expr: RelationalExpression = LiteralExpression(1, agg.data_type)
     count_star: CallExpression = CallExpression(
@@ -466,18 +434,16 @@ def simplify_agg(
         agg.op == pydop.SUM
         and len(agg.inputs) == 1
         and isinstance(agg.inputs[0], CallExpression)
+        and agg.inputs[0].op == pydop.DEFAULT_TO
+        and isinstance(agg.inputs[0].inputs[1], LiteralExpression)
+        and isinstance(agg.inputs[0].inputs[1].data_type, NumericType)
+        and agg.inputs[0].inputs[1].value == 0
     ):
-        if (
-            agg.inputs[0].op == pydop.DEFAULT_TO
-            and isinstance(agg.inputs[0].inputs[1], LiteralExpression)
-            and isinstance(agg.inputs[0].inputs[1].data_type, NumericType)
-            and agg.inputs[0].inputs[1].value == 0
-        ):
-            return CallExpression(
-                pydop.DEFAULT_TO, agg.data_type, [out_ref, zero_expr]
-            ), CallExpression(pydop.SUM, agg.data_type, [agg.inputs[0].inputs[0]])
+        return CallExpression(
+            pydop.DEFAULT_TO, agg.data_type, [out_ref, zero_expr]
+        ), CallExpression(pydop.SUM, agg.data_type, [agg.inputs[0].inputs[0]])
 
-    # If the aggregation is on a key, we can just use the key.
+    # For many aggregations, if the argument is a key, we can just use the key.
     if (
         agg.op
         in (
@@ -495,6 +461,7 @@ def simplify_agg(
     ):
         arg = agg.inputs[0]
         if arg in reverse_keys:
+            # Reference to the key from the perspective of the project.
             key_ref: RelationalExpression = ColumnReference(
                 reverse_keys[arg], agg.data_type
             )
@@ -547,29 +514,117 @@ def simplify_agg(
     return out_ref, agg
 
 
+def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
+    """
+    Attempts to pull columns from a Project node that is an input to an
+    Aggregate into the inputs of the aggregation calls of the Aggregate, and
+    into the grouping keys. Additionally, simplifies the aggregation calls when
+    possible. This transformation is done in-place.
+
+    Args:
+        `node`: The Filter node to pull the Project columns into.
+    """
+    if not isinstance(node.input, Project):
+        return node
+
+    # Invoke the common helper for Join/Filter/Limit/Aggregate to identify
+    # which columns from the project can be pulled up into the aggregation's
+    # keys or used as inputs to its aggregation calls, and modifies the project
+    # node in-place to ensure every column in the project's inputs is available
+    # to the current node.
+    substitutions: dict[RelationalExpression, RelationalExpression] = (
+        pull_project_helper(
+            dict(node.aggregations.items()), set(node.keys.values()), node.input, None
+        )
+    )
+
+    # Build up the columns of a new project that points to all of the output
+    # columns of the aggregate. Start with just the keys, since the aggs will
+    # be added later.
+    new_columns: dict[str, RelationalExpression] = {
+        name: ColumnReference(name, expr.data_type) for name, expr in node.keys.items()
+    }
+
+    # Apply the substitutions to the keys and aggregations of the aggregate.
+    new_keys: dict[str, RelationalExpression] = {
+        name: apply_substitution(expr, substitutions, {})
+        for name, expr in node.keys.items()
+    }
+
+    # Apply the substitutions to the aggregation calls of the aggregate,
+    # then try to simplify them, before updating the `new_columns`.
+    new_aggs: dict[str, CallExpression] = {}
+    out_expr: RelationalExpression
+    new_agg_expr: CallExpression | None
+    for name, expr in node.aggregations.items():
+        new_expr = apply_substitution(expr, substitutions, {})
+        assert isinstance(new_expr, CallExpression)
+        # Simplify agg returns the value used in the project to store the
+        # answer, and the aggregation value used to derive it (if needed). If
+        # the aggregation value is None, then it means the aggregation was
+        # simplified in a way that could be derived entirely in the project.
+        # Otherwise, the aggregation value is referenced in the project via
+        # a reference to `name`.
+        out_expr, new_agg_expr = simplify_agg(new_keys, new_expr, name)
+        new_columns[name] = out_expr
+        if new_agg_expr is not None:
+            new_aggs[name] = new_agg_expr
+
+    # Build the new aggregation with the new keys/aggs, then wrap the new
+    # project around it. The new project is required in case `simplify_agg`
+    # returned any `output_expr` values that post-process the aggregation
+    # results, e.g. replacing `SUM(3)` with `3 * COUNT(*)`, or `MIN(key)` with
+    # `key`.
+    agg: Aggregate = Aggregate(
+        input=node.input,
+        keys=new_keys,
+        aggregations=new_aggs,
+    )
+    return merge_adjacent_projects(Project(input=agg, columns=new_columns))
+
+
 def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
     """
-    TODO
+    Attempts to merge two adjacent Aggregate nodes into a single Aggregate
+    node.
+
+    Args:
+        `node`: The Aggregate node to merge with its input.
+
+    Returns:
+        Either the original node if the merge is not applicable, or a new
+        Aggregate node that uses the keys of the top aggregate node, but
+        modifies the aggregations to not require the original input round of
+        aggregation.
     """
+
+    # Skip if the input to the node is not an Aggregate.
     if not isinstance(node.input, Aggregate):
         return node
 
     input_agg: Aggregate = node.input
 
+    # Identify all of the keys in the top vs bottom aggregations, transposing
+    # the top keys so they can be expressed in the same terms as the bottom
+    # keys.
     top_keys: set[RelationalExpression] = {
         transpose_expression(expr, input_agg.columns) for expr in node.keys.values()
     }
     bottom_keys: set[RelationalExpression] = set(input_agg.keys.values())
 
+    # If there are any top keys that are not present in the bottom keys,
+    # then the merge fails.
     if len(top_keys - bottom_keys) > 0:
         return node
 
+    # Identify any bottom keys that are not present in the top keys. This is
+    # needed for situations with COUNT(*) in the top aggregation.
     bottom_only_keys: set[RelationalExpression] = bottom_keys - top_keys
 
-    new_keys: dict[str, RelationalExpression] = {
-        name: transpose_expression(expr, input_agg.columns)
-        for name, expr in node.keys.items()
-    }
+    # Iterate across all of the aggregations in the top Aggregate node and
+    # transform each of them, building the result in `new_aggs`. If any of them
+    # cannot be transformed, then the merge fails and we return the original
+    # node.
     new_aggs: dict[str, CallExpression] = {}
     input_expr: RelationalExpression
     for agg_name, agg_expr in node.aggregations.items():
@@ -636,6 +691,10 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
 
     # If none of the aggregations caused a merge failure, we can return a new
     # Aggregate node using the top keys and the merged aggregation calls.
+    new_keys: dict[str, RelationalExpression] = {
+        name: transpose_expression(expr, input_agg.columns)
+        for name, expr in node.keys.items()
+    }
     return Aggregate(
         input=input_agg.input,
         keys=new_keys,
@@ -645,26 +704,56 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
 
 def pullup_projections(node: RelationalNode) -> RelationalNode:
     """
-    TODO
+    The main recursive procedure done to perform projection pull-up.
+
+    Args:
+        `node`: The relational node to pull projections up from.
+
+    Returns:
+        The transformed node with projections pulled up on it and all of its
+        descendants.
     """
     # Recursively invoke the procedure on all inputs to the node.
     node = node.copy(inputs=[pullup_projections(input) for input in node.inputs])
+
+    # Transform the current node versus its inputs depending on the type of
+    # node it is.
     match node:
+        # For Root/Project, attempt to squish with the child node, if possible.
         case RelationalRoot() | Project():
             return merge_adjacent_projects(node)
+
+        # For Join nodes, pull projections from the left input (also the right
+        # for INNER joins), then eject the non-column expressions
+        # into a parent projection.
         case Join():
             pull_project_into_join(node, 0)
             if node.join_type == JoinType.INNER:
                 pull_project_into_join(node, 1)
             return pull_non_columns(node)
+
+        # For Filter nodes, pull projections into the filter's condition and
+        # output columns, then eject the non-column expressions into a parent
+        # projection.
         case Filter():
             pull_project_into_filter(node)
             return pull_non_columns(node)
+
+        # For Limit nodes, pull projections into the limit's orderings and
+        # output columns, then eject the non-column expressions into a parent
+        # projection.
         case Limit():
             pull_project_into_limit(node)
             return pull_non_columns(node)
+
+        # For Aggregate nodes, pull projections into the aggregation keys and
+        # aggregations (also simplifying aggregate calls when possible), then
+        # merge adjacent aggregations if possible.
         case Aggregate():
             node = merge_adjacent_aggregations(node)
             return pull_project_into_aggregate(node)
+
+        # For all other nodes, just returned the node as-is since its inputs
+        # have already been transformed.
         case _:
             return node
