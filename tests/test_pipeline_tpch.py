@@ -320,3 +320,38 @@ def test_pipeline_e2e_tpch(
         get_sample_graph,
         sqlite_tpch_db_context,
     )
+
+
+@pytest.mark.mysql
+@pytest.mark.execute
+def test_pipeline_e2e_mysql_conn(
+    tpch_pipeline_test_data: PyDoughPandasTest,
+    get_mysql_sample_graph: graph_fetcher,
+    mysql_conn_tpch_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H queries from the original code generation on MySQL.
+    """
+    tpch_pipeline_test_data.run_e2e_test(
+        get_mysql_sample_graph,
+        mysql_conn_tpch_db_context,
+        coerce_types=True,
+    )
+
+
+@pytest.mark.mysql
+@pytest.mark.execute
+def test_pipeline_e2e_mysql_params(
+    tpch_pipeline_test_data: PyDoughPandasTest,
+    get_mysql_sample_graph: graph_fetcher,
+    mysql_params_tpch_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H queries from the original code generation,
+    with MySQL as the executing database.
+    Using the  `user`, `password`, `database`, and `host`
+    as keyword arguments to the DatabaseContext.
+    """
+    tpch_pipeline_test_data.run_e2e_test(
+        get_mysql_sample_graph, mysql_params_tpch_db_context, coerce_types=True
+    )

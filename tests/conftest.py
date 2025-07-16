@@ -91,7 +91,7 @@ def mysql_sample_graph_path() -> str:
     Tuple of the path to the JSON file containing the MySQL sample graphs.
     It is the same as the sample graph path
     """
-    return sample_graph_path()
+    return f"{os.path.dirname(__file__)}/test_metadata/sample_graphs.json"
 
 
 @pytest.fixture(scope="session")
@@ -285,6 +285,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        pytest.param(DatabaseDialect.MYSQL, id="mysql"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -472,11 +473,11 @@ MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD", "MYSQL_DB", "MYSQL_HOST"]
 
 def is_mysql_env_set() -> bool:
     """
-    Check if the MySQL environment variables are set.
+    Check if the MySQL environment variables are set. Allowing empty strings.
     Returns:
         bool: True if all required MySQL environment variables are set, False otherwise.
     """
-    return all(os.getenv(env) for env in MYSQL_ENVS)
+    return all(os.getenv(env) is not None for env in MYSQL_ENVS)
 
 
 @pytest.fixture
