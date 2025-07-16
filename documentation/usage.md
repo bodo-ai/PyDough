@@ -546,11 +546,11 @@ selected_records = supply_records.WHERE(STARTSWITH(part.name, "coral")).CALCULAT
 line_revenue = extended_price * (1 - discount) * (1 - tax) - quantity * supply_cost
 
 # The lineitem purchases for each record that were ordered in REQUESTED_SHIP_YEAR and shipped via DESIRED_SHIP_MODE
-lines_96 = selected_records.lines.WHERE((YEAR(ship_date) == REQUESTED_SHIP_YEAR) & (ship_mode == DESIRED_SHIP_MODE)).CALCULATE(rev=line_revenue)
+lines_year = selected_records.lines.WHERE((YEAR(ship_date) == REQUESTED_SHIP_YEAR) & (ship_mode == DESIRED_SHIP_MODE)).CALCULATE(rev=line_revenue)
 
 # For each supplier, list their name & selected revenue from REQUESTED_SHIP_YEAR
-selected_suppliers = suppliers.WHERE(nation.name == TARGET_NATION)
-supplier_info = selected_suppliers.CALCULATE(name, revenue_year=ROUND(SUM(lines_96.rev), 2))
+selected_suppliers = suppliers.WHERE((nation.name == TARGET_NATION) & HAS(lines_year))
+supplier_info = selected_suppliers.CALCULATE(name, revenue_year=ROUND(SUM(lines_year.rev), 2))
 
 # Pick the 5 suppliers with the highest revenue from REQUESTED_SHIP_YEAR
 result = supplier_info.TOP_K(5, by=revenue_year.DESC())
@@ -564,13 +564,19 @@ The value of `sql` is the following SQL query text as a Python string:
 ```sql
 WITH _s7 AS (
   SELECT
-    SUM(
-      lineitem.l_extendedprice * (
-        1 - lineitem.l_discount
-      ) * (
-        1 - lineitem.l_tax
-      ) - lineitem.l_quantity * partsupp.ps_supplycost
-    ) AS sum_rev,
+    ROUND(
+      COALESCE(
+        SUM(
+          lineitem.l_extendedprice * (
+            1 - lineitem.l_discount
+          ) * (
+            1 - lineitem.l_tax
+          ) - lineitem.l_quantity * partsupp.ps_supplycost
+        ),
+        0
+      ),
+      2
+    ) AS revenue_year,
     partsupp.ps_suppkey
   FROM main.partsupp AS partsupp
   JOIN main.part AS part
@@ -585,11 +591,11 @@ WITH _s7 AS (
 )
 SELECT
   supplier.s_name AS name,
-  ROUND(COALESCE(_s7.sum_rev, 0), 2) AS revenue_year
+  _s7.revenue_year
 FROM main.supplier AS supplier
 JOIN main.nation AS nation
   ON nation.n_name = 'JAPAN' AND nation.n_nationkey = supplier.s_nationkey
-LEFT JOIN _s7 AS _s7
+JOIN _s7 AS _s7
   ON _s7.ps_suppkey = supplier.s_suppkey
 ORDER BY
   revenue_year DESC
