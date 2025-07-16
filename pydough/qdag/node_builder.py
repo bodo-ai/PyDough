@@ -18,12 +18,12 @@ from pydough.pydough_operators import (
     PyDoughOperator,
     builtin_registered_operators,
 )
-from pydough.qdag.collections.range_collection import RangeGeneratedCollection
 from pydough.qdag.collections.user_collection_qdag import (
     PyDoughUserGeneratedCollectionQDag,
 )
-from pydough.qdag.collections.user_collections import PyDoughUserGeneratedCollection
 from pydough.types import PyDoughType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (

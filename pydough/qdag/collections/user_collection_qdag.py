@@ -1,15 +1,16 @@
+from functools import cache
+
 from pydough.qdag import PyDoughCollectionQDAG
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
-from pydough.qdag.expressions.collation_expression import CollationExpression
+from pydough.qdag.expressions.back_reference_expression import BackReferenceExpression
 from pydough.qdag.expressions.reference import Reference
+from pydough.types import NumericType
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .child_access import ChildAccess
-from .collection_tree_form import CollectionTreeForm
-from .user_collections import PyDoughUserGeneratedCollection
 
 
-# or should it be CollectionAccess?
 class PyDoughUserGeneratedCollectionQDag(ChildAccess):
     def __init__(
         self,
@@ -19,6 +20,9 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         assert ancestor is not None
         super().__init__(ancestor)
         self._collection = collection
+        self._ancestral_mapping: dict[str, int] = {
+            name: level + 1 for name, level in ancestor.ancestral_mapping.items()
+        }
 
     def clone_with_parent(
         self, new_ancestor: PyDoughCollectionQDAG
@@ -35,29 +39,6 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         """
         return PyDoughUserGeneratedCollectionQDag(new_ancestor, self._collection)
 
-    def to_tree_form_isolated(self, is_last: bool) -> CollectionTreeForm:
-        # if self.ancestor_context is not None:
-        #     return CollectionTreeForm(
-        #         self.tree_item_string,
-        #         0,
-        #         has_predecessor=True,
-        #     )
-        # else:
-        return CollectionTreeForm(self.tree_item_string, 0)
-
-    def to_tree_form(self, is_last: bool) -> CollectionTreeForm:
-        # if self.ancestor_context is not None:
-        #     predecessor: CollectionTreeForm = self.ancestor_context.to_tree_form(
-        #         is_last
-        #     )
-        #     predecessor.has_children = True
-        #     tree_form: CollectionTreeForm = self.to_tree_form_isolated(is_last)
-        #     tree_form.depth = predecessor.depth + 1
-        #     tree_form.predecessor = predecessor
-        #     return tree_form
-        # else:
-        return self.to_tree_form_isolated(is_last)
-
     @property
     def collection(self) -> PyDoughUserGeneratedCollection:
         """
@@ -71,16 +52,48 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         return self.collection.name
 
     @property
-    def preceding_context(self) -> PyDoughCollectionQDAG | None:
-        return None
-
-    @property
-    def ordering(self) -> list[CollationExpression] | None:
-        return None
-
-    @property
     def calc_terms(self) -> set[str]:
         return set(self.collection.columns)
+
+    @property
+    def ancestral_mapping(self) -> dict[str, int]:
+        return self._ancestral_mapping
+
+    @property
+    def inherited_downstreamed_terms(self) -> set[str]:
+        return self.ancestor_context.inherited_downstreamed_terms
+
+    @cache
+    def get_term(self, term_name: str) -> PyDoughQDAG:
+        # Special handling of terms down-streamed
+        if term_name in self.ancestral_mapping:
+            # Verify that the ancestor name is not also a name in the current
+            # context.
+            if term_name in self.calc_terms:
+                raise PyDoughQDAGException(
+                    f"Cannot have term name {term_name!r} used in an ancestor of collection {self!r}"
+                )
+            # Create a back-reference to the ancestor term.
+            return BackReferenceExpression(
+                self, term_name, self.ancestral_mapping[term_name]
+            )
+
+        if term_name in self.inherited_downstreamed_terms:
+            context: PyDoughCollectionQDAG = self
+            while term_name not in context.all_terms:
+                if context is self:
+                    context = self.ancestor_context
+                else:
+                    assert context.ancestor_context is not None
+                    context = context.ancestor_context
+            return Reference(
+                context, term_name, context.get_expr(term_name).pydough_type
+            )
+
+        if term_name not in self.all_terms:
+            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
+
+        return Reference(self, term_name, NumericType())
 
     @property
     def all_terms(self) -> set[str]:
@@ -89,28 +102,15 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         """
         return self.calc_terms
 
-    @property
-    def ancestral_mapping(self) -> dict[str, int]:
-        return self._ancestor.ancestral_mapping
-
-    @property
-    def inherited_downstreamed_terms(self) -> set[str]:
-        if self._ancestor:
-            return self._ancestor.inherited_downstreamed_terms
-        else:
-            return set()
-
     def is_singular(self, context: "PyDoughCollectionQDAG") -> bool:
         return False
 
-    def get_term(self, term_name: str) -> PyDoughQDAG:
-        if term_name not in self.collection.columns:
-            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
-
-        return Reference(self._ancestor, term_name)
-
     def get_expression_position(self, expr_name: str) -> int:
-        raise PyDoughQDAGException(f"Cannot call get_expression_position on {self!r}")
+        if expr_name not in self.calc_terms:
+            raise PyDoughQDAGException(
+                f"Unrecognized User Collection term: {expr_name!r}"
+            )
+        return self.collection.get_expression_position(expr_name)
 
     @property
     def unique_terms(self) -> list[str]:
@@ -122,16 +122,15 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         Returns a string representation of the collection in a standalone form.
         This is used for debugging and logging purposes.
         """
-        return f"UserGeneratedCollection[{self.name}, {', '.join(self.collection.columns)}]"
+        return self.to_string()
 
     @property
     def key(self) -> str:
         return f"USER_GENERATED_COLLECTION-{self.name}"
 
     def to_string(self) -> str:
-        # Stringify as "name(column_name)
-        return f"{self.name}({', '.join(self.collection.columns)})"
+        return self.collection.to_string()
 
     @property
     def tree_item_string(self) -> str:
-        return f"UserGeneratedCollection[{self.name}: {', '.join(self.collection.columns)}]"
+        return self.to_string()

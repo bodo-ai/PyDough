@@ -439,25 +439,6 @@ class UnqualifiedNode(ABC):
 
         return UnqualifiedBest(self, by, per, allow_ties, n_best)
 
-    def range_collection(
-        self,
-        name: str,
-        column: list[str],
-        start: int,
-        stop: int,
-        step: int,
-    ) -> "UnqualifiedGeneratedCollection":
-        """
-        Method used to create a user-generated range collection node.
-        """
-        # range_args: list[UnqualifiedNode] = [
-        #     self.coerce_to_unqualified(start),
-        #     self.coerce_to_unqualified(stop),
-        #     self.coerce_to_unqualified(step),
-        # ]
-        range_args: list[int] = [start, stop, step]
-        return UnqualifiedGeneratedCollection(name, column, range_args)
-
 
 class UnqualifiedRoot(UnqualifiedNode):
     """
@@ -862,7 +843,6 @@ class UnqualifiedGeneratedCollection(UnqualifiedNode):
         self._parcel: tuple[str, list[str], list[int]] = (
             name,
             column,
-            # [UnqualifiedLiteral(arg, NumericType()) for arg in args],
             args,
         )
 

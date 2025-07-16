@@ -19,14 +19,13 @@ class PyDoughUserGeneratedCollection(ABC):
     the actual behavior and properties of the collection.
     """
 
-    def __init__(self, name: str, columns: list[str]) -> None:
+    def __init__(self, name: str, columns: list[str], types: list[PyDoughType]) -> None:
         self._name = name
         self._columns = columns
+        self._types = types
 
     def __eq__(self, other) -> bool:
-        return isinstance(other, PyDoughUserGeneratedCollection) and repr(self) == repr(
-            other
-        )
+        return self.equals(other)
 
     def __repr__(self) -> str:
         return self.to_string()
@@ -53,9 +52,27 @@ class PyDoughUserGeneratedCollection(ABC):
         """Return column names and their types."""
 
     @abstractmethod
-    def is_empty(self) -> bool:
-        """Check if the collection is empty."""
+    def always_non_empty(self) -> bool:
+        """Check if the collection is always non-empty."""
 
     @abstractmethod
     def to_string(self) -> str:
         """Return a string representation of the collection."""
+
+    @abstractmethod
+    def equals(self, other) -> bool:
+        """
+        Check if this collection is equal to another collection.
+        Two collections are considered equal if they have the same name and columns.
+        """
+
+    def get_expression_position(self, expr_name: str) -> int:
+        """
+        Get the position of an expression in the collection.
+        This is used to determine the order of expressions in the collection.
+        """
+        if expr_name not in self.columns:
+            raise ValueError(
+                f"Expression {expr_name!r} not found in collection {self.name!r}"
+            )
+        return self.columns.index(expr_name)

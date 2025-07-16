@@ -1,82 +1,90 @@
+"""A user-defined collection of integers in a specified range.
+Usage:
+`pydough.range_collection(name, column, *args)`
+    args: start, end, step
+
+This module defines a collection that generates integers from `start` to `end`
+with a specified `step`. The user must specify the name of the collection and the
+name of the column that will hold the integer values.
 """
-Implementation of the `pydough.range_collection` function, which provides
-a way to create a collection of integer ranges over a specified column in PyDough.
-"""
 
-__all__ = ["range_collection"]
+from pydough.types import NumericType
+from pydough.types.pydough_type import PyDoughType
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
-from pydough.unqualified.unqualified_node import UnqualifiedGeneratedCollection
+all = ["RangeGeneratedCollection"]
 
 
-def range_collection(
-    name: str, column: str, *args: int
-) -> UnqualifiedGeneratedCollection:
-    """
-    Creates a collection of integer ranges over a specified column.
+class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
+    """Integer range-based collection."""
 
-    Args:
-        `name` : The name of the collection.
-        `column` : The column to create ranges for.
-        `*args` : Variable length arguments that specify the range parameters.
-        Supported formats:
-            - `range_collection(end)`: generates a range from 0 to `end-1`
-                                        with a step of 1.
-            - `range_collection(start, end)`: generates a range from `start`
-                                        to `end-1` with a step of 1.
-            - `range_collection(start, end, step)`: generates a range from
-                                    `start` to `end-1` with the specified step.
-    Returns:
-        A collection of integer ranges.
-    """
-    if not isinstance(name, str):
-        raise TypeError(f"Expected 'name' to be a string, got {type(name).__name__}")
-    if not isinstance(column, str):
-        raise TypeError(
-            f"Expected 'column' to be a string, got {type(column).__name__}"
+    def __init__(
+        self,
+        name: str,
+        column_name: str,
+        start: int | None,
+        end: int | None,
+        step: int | None,
+    ) -> None:
+        super().__init__(
+            name=name,
+            columns=[
+                column_name,
+            ],
+            types=[NumericType()],
         )
-    if len(args) == 1:
-        end = args[0]
-        start = 0
-        step = 1
-    elif len(args) == 2:
-        start, end = args
-        step = 1
-    elif len(args) == 3:
-        start, end, step = args
-    else:
-        raise ValueError(f"Expected 1 to 3 arguments, got {len(args)}")
-    if not isinstance(start, int):
-        raise TypeError(
-            f"Expected 'start' to be an integer, got {type(start).__name__}"
-        )
-    if not isinstance(end, int):
-        raise TypeError(f"Expected 'end' to be an integer, got {type(end).__name__}")
-    if not isinstance(step, int):
-        raise TypeError(f"Expected 'step' to be an integer, got {type(step).__name__}")
-    if start >= end:
-        raise ValueError(f"Expected 'start' ({start}) to be less than 'end' ({end})")
-    if step == 0:
-        raise ValueError("Expected 'step' to be a non-zero integer")
-    if start < 0:
-        raise ValueError(f"Expected 'start' to be a non-negative integer, got {start}")
-    if end < 0:
-        raise ValueError(f"Expected 'end' to be a non-negative integer, got {end}")
-    # TODO: support negative step values
-    if step <= 0:
-        raise ValueError(f"Expected 'step' to be a positive integer, got {step}")
+        self._start = start if start is not None else 0
+        self._end = end if end is not None else 0
+        self._step = step if step is not None else 1
+        self._range = range(self._start, self._end, self._step)
 
-    # return RangeGeneratedCollection(
-    #     name=name,
-    #     column_name=column,
-    #     start=start,
-    #     end=end,
-    #     step=step,
-    # )
-    range_args = [start, end, step]
-    return UnqualifiedGeneratedCollection(
-        name,
-        [
-            column,
-        ],
-        range_args,
-    )
+    @property
+    def start(self) -> int | None:
+        """Return the start of the range."""
+        return self._start
+
+    @property
+    def end(self) -> int | None:
+        """Return the end of the range."""
+        return self._end
+
+    @property
+    def step(self) -> int | None:
+        """Return the step of the range."""
+        return self._step
+
+    @property
+    def range(self) -> range:
+        """Return the range object representing the collection."""
+        return self._range
+
+    @property
+    def column_names_and_types(self) -> list[tuple[str, PyDoughType]]:
+        return [(self.columns[0], NumericType())]
+
+    def __len__(self) -> int:
+        if self.start is None or self.end is None or self.step is None:
+            return 0
+        elif self.start >= self.end:
+            return 0
+        else:
+            return (self.end - self.start + self.step - 1) // self.step
+
+    def always_non_empty(self) -> bool:
+        """Check if the range collection is always non-empty."""
+        return len(self) > 0
+
+    def to_string(self) -> str:
+        """Return a string representation of the range collection."""
+        return f"RangeCollection({self.name}!r, {self.columns[0]}={self.range})"
+
+    def equals(self, other) -> bool:
+        if not isinstance(other, RangeGeneratedCollection):
+            return False
+        return (
+            self.name == other.name
+            and self.columns == other.columns
+            and self.start == other.start
+            and self.end == other.end
+            and self.step == other.step
+        )
