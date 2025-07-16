@@ -3062,32 +3062,35 @@ def pagerank(n_iters):
     )
 
     # The seed value for the PageRank computation, which is evenly distributed.
-    # Also computes the number of sites in the graph, which is used downstream.
+    # Also computes the number of sites in the graph & the number of sites each
+    # site links to, which are both used downstream.
     source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n, n_out=n_out_expr)
 
     # Repeats the following procedure for n_iters iterations to build the next
     # generation of PageRank values from the current generation.
     for i in range(n_iters):
-        group_name = f"s{i}"
         # For each site, find all sites that it links to and accumulate the
         # PageRank values from the current site (divided by the # of links) in
-        # those linked sites, while also considering the damping factor. Calls
-        # .BEST() to ensure each site is included exactly once at the end.
+        # those linked sites, while also considering the damping factor. Uses
+        # RELSUM after partitioning on the destination site to perform the
+        # accumulation, then filters to only keep the one row of the
+        # destination site that came from the self-link. This ensures that each
+        # site is included once after each iteration, and the `n_out` value for
+        # that site is daisy-chained to the next iteration.
         source = (
             source.outgoing_links.CALCULATE(
-                consider_link=INTEGER(ABSENT(target_key) | (source_key != target_key))
+                dummy_link=PRESENT(target_key) & (source_key == target_key),
+                consider_link=INTEGER(ABSENT(target_key) | (source_key != target_key)),
             )
-            .target_site.PARTITION(name=group_name, by=key)
+            .target_site.PARTITION(name=f"s{i}", by=key)
             .target_site.CALCULATE(
                 n,
+                n_out,
                 page_rank=(1.0 - d) / n
-                + d * RELSUM(consider_link * page_rank / n_out, per=group_name),
+                + d * RELSUM(consider_link * page_rank / n_out, per=f"s{i}"),
             )
-            .BEST(per=group_name, by=key.ASC())
+            .WHERE(dummy_link)
         )
-        # Unless we are done, re-derive `n_out` for the current node.
-        if i < n_iters - 1:
-            source = source.CALCULATE(n_out=n_out_expr)
 
     # Output the final PageRank values, rounded to 5 decimal places,
     return source.CALCULATE(key, page_rank=ROUND(page_rank, 5)).ORDER_BY(key.ASC())

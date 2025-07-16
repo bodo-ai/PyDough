@@ -2,10 +2,8 @@
 -- web sites and links between them. The following assumptions are made:
 -- 1. Websites without any outgoing links have an edge (key, NULL) in the LINKS
 --    table, to denote that the page implicitly links to all other pages.
--- 2. If there are no websites without any outgoing links, then any websites
---    without incoming links have a dummy self-link for simplicity, which
---    should not be counted in the PageRank calculation (but is required for
---    joins to work).
+-- 2. Every website has a self-link (key, key) in the LINKS table, which should
+--    be ignored in PageRank calculations.
 
 CREATE TABLE SITES (
   s_key INTEGER NOT NULL,

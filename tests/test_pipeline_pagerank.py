@@ -131,6 +131,31 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
         pytest.param(
             PyDoughPandasTest(
                 pagerank,
+                "PAGERANK_C",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3, 4, 5, 6, 7, 8],
+                        "page_rank": [
+                            0.08996,
+                            0.19353,
+                            0.11764,
+                            0.03252,
+                            0.10377,
+                            0.12682,
+                            0.16788,
+                            0.16788,
+                        ],
+                    }
+                ),
+                "pagerank_c4",
+                order_sensitive=True,
+                args=[4],
+            ),
+            id="pagerank_c4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                pagerank,
                 "PAGERANK_D",
                 lambda: pd.DataFrame(
                     {

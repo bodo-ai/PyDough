@@ -535,12 +535,10 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
             )
 
         # For every edge, insert an entry into the LINKS table. Keep track of
-        # the nodes that have no incoming or outgoing links.
-        no_incoming: set[int] = set(range(1, nodes + 1))
+        # the nodes that have no outgoing links.
         no_outgoing: set[int] = set(range(1, nodes + 1))
         for src, dst in vertices:
             no_outgoing.discard(src)
-            no_incoming.discard(dst)
             cursor.execute(
                 "INSERT INTO LINKS VALUES (?, ?)",
                 (src, dst),
@@ -554,14 +552,12 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 (site, None),
             )
 
-        # IF there are no nodes without outgoing links, then for each node
-        # without incoming links, insert a dummy link to itself.
-        if len(no_outgoing) == 0:
-            for site in no_incoming:
-                cursor.execute(
-                    "INSERT INTO LINKS VALUES (?, ?)",
-                    (site, site),
-                )
+        # Insert a dummy self-link for every site.
+        for site in range(1, nodes + 1):
+            cursor.execute(
+                "INSERT INTO LINKS VALUES (?, ?)",
+                (site, site),
+            )
 
         # Commit the changes, close the cursor, and store the context in the
         # result dictionary.

@@ -1,4 +1,4 @@
-WITH _t14 AS (
+WITH _t9 AS (
   SELECT
     s_key
   FROM main.sites
@@ -6,7 +6,7 @@ WITH _t14 AS (
   SELECT
     COUNT(*) OVER () AS n,
     s_key
-  FROM _t14
+  FROM _t9
 ), _s1 AS (
   SELECT
     l_source,
@@ -26,74 +26,48 @@ WITH _t14 AS (
     ON _s0.s_key = _s1.l_source
   GROUP BY
     _s0.s_key
-), _t9 AS (
+), _t4 AS (
   SELECT
     (
       CAST(0.15000000000000002 AS REAL) / _s2.anything_n
     ) + 0.85 * SUM(
       CAST((
-        CAST(_t15.l_source <> _t15.l_target OR _t15.l_target IS NULL AS INTEGER) * _s2.page_rank
+        CAST(_t10.l_source <> _t10.l_target OR _t10.l_target IS NULL AS INTEGER) * _s2.page_rank
       ) AS REAL) / _s2.n_out
     ) OVER (PARTITION BY _s5.s_key) AS page_rank_0,
     _s2.anything_n,
+    NOT _t10.l_target IS NULL AND _t10.l_source = _t10.l_target AS dummy_link,
+    _s2.n_out,
     _s5.s_key
   FROM _s2 AS _s2
-  JOIN _s1 AS _t15
-    ON _s2.anything_s_key = _t15.l_source
-  JOIN _t14 AS _s5
-    ON _s5.s_key = _t15.l_target OR _t15.l_target IS NULL
-), _t AS (
-  SELECT
-    page_rank_0,
-    anything_n,
-    s_key,
-    ROW_NUMBER() OVER (PARTITION BY s_key ORDER BY s_key) AS _w
-  FROM _t9
-), _s8 AS (
-  SELECT
-    COALESCE(
-      SUM(
-        IIF(_s7.l_target IS NULL, _t.anything_n, CAST(_s7.l_source <> _s7.l_target AS INTEGER))
-      ),
-      0
-    ) AS n_out,
-    MAX(_t.page_rank_0) AS page_rank,
-    MAX(_t.anything_n) AS anything_anything_n,
-    MAX(_t.s_key) AS anything_s_key
-  FROM _t AS _t
-  JOIN _s1 AS _s7
-    ON _s7.l_source = _t.s_key
-  WHERE
-    _t._w = 1
-  GROUP BY
-    _t.s_key
-), _t3 AS (
+  JOIN _s1 AS _t10
+    ON _s2.anything_s_key = _t10.l_source
+  JOIN _t9 AS _s5
+    ON _s5.s_key = _t10.l_target OR _t10.l_target IS NULL
+), _t2 AS (
   SELECT
     (
-      CAST(0.15000000000000002 AS REAL) / _s8.anything_anything_n
+      CAST(0.15000000000000002 AS REAL) / _t4.anything_n
     ) + 0.85 * SUM(
       CAST((
-        CAST(_t16.l_source <> _t16.l_target OR _t16.l_target IS NULL AS INTEGER) * _s8.page_rank
-      ) AS REAL) / _s8.n_out
-    ) OVER (PARTITION BY _s11.s_key) AS page_rank_0,
-    _s11.s_key
-  FROM _s8 AS _s8
-  JOIN _s1 AS _t16
-    ON _s8.anything_s_key = _t16.l_source
-  JOIN _t14 AS _s11
-    ON _s11.s_key = _t16.l_target OR _t16.l_target IS NULL
-), _t_2 AS (
-  SELECT
-    page_rank_0,
-    s_key,
-    ROW_NUMBER() OVER (PARTITION BY s_key ORDER BY s_key) AS _w
-  FROM _t3
+        CAST(_t11.l_source <> _t11.l_target OR _t11.l_target IS NULL AS INTEGER) * _t4.page_rank_0
+      ) AS REAL) / _t4.n_out
+    ) OVER (PARTITION BY _s9.s_key) AS page_rank_0_20,
+    NOT _t11.l_target IS NULL AND _t11.l_source = _t11.l_target AS dummy_link_18,
+    _s9.s_key
+  FROM _t4 AS _t4
+  JOIN _s1 AS _t11
+    ON _t11.l_source = _t4.s_key
+  JOIN _t9 AS _s9
+    ON _s9.s_key = _t11.l_target OR _t11.l_target IS NULL
+  WHERE
+    _t4.dummy_link
 )
 SELECT
   s_key AS key,
-  ROUND(page_rank_0, 5) AS page_rank
-FROM _t_2
+  ROUND(page_rank_0_20, 5) AS page_rank
+FROM _t2
 WHERE
-  _w = 1
+  dummy_link_18
 ORDER BY
   s_key
