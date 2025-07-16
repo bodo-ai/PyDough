@@ -949,13 +949,17 @@ from tests.testing_utilities import (
         pytest.param(
             simple_range_1,
             """
-  UserGeneratedCollection[simple_range: value]
+──┬─ TPCH
+  └─── RangeCollection(simple_range!r, value=range(0, 10))
             """,
             id="simple_range_1",
         ),
         pytest.param(
             simple_range_2,
             """
+──┬─ TPCH
+  ├─── RangeCollection(simple_range!r, value=range(0, 10))
+  └─── OrderBy[value.ASC(na_pos='first')]
             """,
             id="simple_range_2",
         ),
