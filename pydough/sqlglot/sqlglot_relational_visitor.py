@@ -79,7 +79,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._dialect: DatabaseDialect = dialect
         self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(dialect, self._correlated_names, config)
+            SQLGlotRelationalExpressionVisitor(
+                dialect, self._correlated_names, config, self
+            )
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()

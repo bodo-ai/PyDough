@@ -1,0 +1,3 @@
+ROOT(columns=[('last_name', GETPART(sbCustName, ' ':string, -1:numeric))], orderings=[])
+ FILTER(condition=sbCustName == 'Alex Rodriguez':string, columns={'sbCustName': sbCustName})
+  SCAN(table=main.sbCustomer, columns={'sbCustName': sbCustName})

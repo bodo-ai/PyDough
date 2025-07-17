@@ -9,7 +9,7 @@ from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
-from sqlglot.expressions import Alias, Column, Select, Table
+from sqlglot.expressions import Alias, Column, Select, Table, With
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
@@ -19,7 +19,6 @@ from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
-from sqlglot.optimizer.pushdown_projections import pushdown_projections
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.simplify import simplify
 from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
@@ -38,6 +37,7 @@ from pydough.relational.relational_expressions import (
 
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
+from .override_pushdown_projections import pushdown_projections
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
@@ -98,7 +98,11 @@ def apply_sqlglot_optimizer(
 
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
     glot_expr = qualify(
-        glot_expr, dialect=dialect, quote_identifiers=False, isolate_tables=True
+        glot_expr,
+        dialect=dialect,
+        quote_identifiers=False,
+        isolate_tables=True,
+        validate_qualify_columns=False,
     )
 
     # Rewrite sqlglot AST to remove unused columns projections.
@@ -111,14 +115,16 @@ def apply_sqlglot_optimizer(
     # Convert scalar subqueries into cross joins.
     # Convert correlated or vectorized subqueries into a group by so it is not
     # a many to many left join.
-    glot_expr = unnest_subqueries(glot_expr)
+    # PyDough skips this step if there are any recursive CTEs in the query, due
+    # to flaws in how SQLGlot handles such subqueries.
+    if not any(e.args.get("recursive") for e in glot_expr.find_all(With)):
+        glot_expr = unnest_subqueries(glot_expr)
 
     # limit clauses, which is not correct.
     # Rewrite sqlglot AST to pushdown predicates in FROMS and JOINS.
     glot_expr = pushdown_predicates(glot_expr, dialect=dialect)
 
     # Removes cross joins if possible and reorder joins based on predicate
-    # dependencies.
     glot_expr = optimize_joins(glot_expr)
 
     # Rewrite derived tables as CTES, deduplicating if possible.

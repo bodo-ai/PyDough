@@ -19,6 +19,7 @@ __all__ = [
     "UnqualifiedWhere",
     "UnqualifiedWindow",
     "display_raw",
+    "from_string",
     "init_pydough_context",
     "qualify_node",
     "qualify_term",
@@ -42,4 +43,9 @@ from .unqualified_node import (
     UnqualifiedWindow,
     display_raw,
 )
-from .unqualified_transform import init_pydough_context, transform_cell, transform_code
+from .unqualified_transform import (
+    from_string,
+    init_pydough_context,
+    transform_cell,
+    transform_code,
+)
