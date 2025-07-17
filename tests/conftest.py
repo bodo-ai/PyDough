@@ -513,6 +513,8 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
                 (15, 2),
             ],
         ),
+        ("PAGERANK_E", 5, [(i, j) for i in range(1, 6) for j in range(1, 6) if i != j]),
+        ("PAGERANK_F", 100, []),
     ]
 
     # Setup each of the the pagerank databases using the configurations.

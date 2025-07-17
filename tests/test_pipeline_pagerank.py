@@ -219,6 +219,38 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
             ),
             id="pagerank_d5",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                pagerank,
+                "PAGERANK_E",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 2, 3, 4, 5],
+                        "page_rank": [0.2] * 5,
+                    }
+                ),
+                "pagerank_e1",
+                order_sensitive=True,
+                args=[1],
+            ),
+            id="pagerank_e1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                pagerank,
+                "PAGERANK_F",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 101)),
+                        "page_rank": [0.01] * 100,
+                    }
+                ),
+                "pagerank_f2",
+                order_sensitive=True,
+                args=[2],
+            ),
+            id="pagerank_f2",
+        ),
     ],
 )
 def pagerank_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -238,7 +270,13 @@ def test_pipeline_until_relational_pagerank(
 ) -> None:
     """
     Verifies the generated relational plans for the pagerank tests.
+    Only runs the tests with the `PAGERANK_A`/`PAGERANK_C` graphs,
+    since the others are essentially duplicates of the plans.
     """
+    if pagerank_pipeline_test_data.graph_name not in ("PAGERANK_A", "PAGERANK_C"):
+        pytest.skip(
+            "Skipping relational plan test for graphs other than PAGERANK_A or PAGERANK_C"
+        )
     file_path: str = get_plan_test_filename(pagerank_pipeline_test_data.test_name)
     pagerank_pipeline_test_data.run_relational_test(
         get_pagerank_graph, file_path, update_tests
@@ -253,9 +291,14 @@ def test_pipeline_until_sql_pagerank(
     update_tests: bool,
 ) -> None:
     """
-    Verifies the generated SQL for the pagerank tests. The outputs were
-    generated using this website: https://pagerank-visualizer.netlify.app/.
+    Verifies the generated SQL for the pagerank tests. Only runs the tests with
+    the `PAGERANK_A`/`PAGE_RANK_C` graphs, since the others are essentially
+    duplicates of the generated SQL.
     """
+    if pagerank_pipeline_test_data.graph_name not in ("PAGERANK_A", "PAGERANK_C"):
+        pytest.skip(
+            "Skipping sql query test for graphs other than PAGERANK_A or PAGERANK_C"
+        )
     ctx: DatabaseContext = sqlite_pagerank_db_contexts[
         pagerank_pipeline_test_data.graph_name
     ]
@@ -274,7 +317,8 @@ def test_pipeline_e2e_pagerank(
     sqlite_pagerank_db_contexts: dict[str, DatabaseContext],
 ):
     """
-    Verifies the final output answer for the pagerank tests.
+    Verifies the final output answer for the pagerank tests. The outputs were
+    generated using this website: https://pagerank-visualizer.netlify.app/.
     """
     pagerank_pipeline_test_data.run_e2e_test(
         get_pagerank_graph,
