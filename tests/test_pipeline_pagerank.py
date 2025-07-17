@@ -91,6 +91,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                     }
                 ),
                 "pagerank_b0",
+                skip_relational=True,
+                skip_sql=True,
                 order_sensitive=True,
                 args=[0],
             ),
@@ -107,6 +109,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                     }
                 ),
                 "pagerank_b1",
+                skip_relational=True,
+                skip_sql=True,
                 order_sensitive=True,
                 args=[1],
             ),
@@ -181,6 +185,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                     }
                 ),
                 "pagerank_d1",
+                skip_relational=True,
+                skip_sql=True,
                 order_sensitive=True,
                 args=[1],
             ),
@@ -230,6 +236,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                     }
                 ),
                 "pagerank_e1",
+                skip_relational=True,
+                skip_sql=True,
                 order_sensitive=True,
                 args=[1],
             ),
@@ -246,6 +254,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                     }
                 ),
                 "pagerank_f2",
+                skip_relational=True,
+                skip_sql=True,
                 order_sensitive=True,
                 args=[2],
             ),
@@ -270,13 +280,7 @@ def test_pipeline_until_relational_pagerank(
 ) -> None:
     """
     Verifies the generated relational plans for the pagerank tests.
-    Only runs the tests with the `PAGERANK_A`/`PAGERANK_C` graphs,
-    since the others are essentially duplicates of the plans.
     """
-    if pagerank_pipeline_test_data.graph_name not in ("PAGERANK_A", "PAGERANK_C"):
-        pytest.skip(
-            "Skipping relational plan test for graphs other than PAGERANK_A or PAGERANK_C"
-        )
     file_path: str = get_plan_test_filename(pagerank_pipeline_test_data.test_name)
     pagerank_pipeline_test_data.run_relational_test(
         get_pagerank_graph, file_path, update_tests
@@ -291,14 +295,8 @@ def test_pipeline_until_sql_pagerank(
     update_tests: bool,
 ) -> None:
     """
-    Verifies the generated SQL for the pagerank tests. Only runs the tests with
-    the `PAGERANK_A`/`PAGE_RANK_C` graphs, since the others are essentially
-    duplicates of the generated SQL.
+    Verifies the generated SQL for the pagerank tests.
     """
-    if pagerank_pipeline_test_data.graph_name not in ("PAGERANK_A", "PAGERANK_C"):
-        pytest.skip(
-            "Skipping sql query test for graphs other than PAGERANK_A or PAGERANK_C"
-        )
     ctx: DatabaseContext = sqlite_pagerank_db_contexts[
         pagerank_pipeline_test_data.graph_name
     ]

@@ -1043,6 +1043,10 @@ class PyDoughPandasTest:
       in the output and just use the same column names as in the reference
       solution.
     - `args` (optional): additional arguments to pass to the PyDough function.
+    - `skip_relational`: (optional): if True, does not run the test as part of
+       relational plan testing. Default is False.
+    - `skip_sql`: (optional): if True, does not run the test as part of SQL
+       testing. Default is False.
     """
 
     pydough_function: Callable[..., UnqualifiedNode]
@@ -1090,6 +1094,16 @@ class PyDoughPandasTest:
     executing it. If None, no additional arguments are passed.
     """
 
+    skip_relational: bool = False
+    """
+    If True, does not run the test as part of relational plan testing.
+    """
+
+    skip_sql: bool = False
+    """
+    If True, does not run the test as part of SQL testing.
+    """
+
     def run_relational_test(
         self,
         fetcher: graph_fetcher,
@@ -1111,6 +1125,10 @@ class PyDoughPandasTest:
             against the expected relational plan text in the file.
             `config`: The PyDough configuration to use for the test, if any.
         """
+        # Skip if indicated.
+        if self.skip_relational:
+            pytest.skip(f"Skipping relational plan test for {self.test_name!r}")
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
         root: UnqualifiedNode = transform_and_exec_pydough(
@@ -1165,6 +1183,10 @@ class PyDoughPandasTest:
             to use when generating the SQL test.
             `config`: The PyDough configuration to use for the test, if any.
         """
+        # Skip if indicated.
+        if self.skip_sql:
+            pytest.skip(f"Skipping SQL text test for {self.test_name!r}")
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
         root: UnqualifiedNode = transform_and_exec_pydough(
