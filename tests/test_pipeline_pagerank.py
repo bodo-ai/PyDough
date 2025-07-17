@@ -261,6 +261,101 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
             ),
             id="pagerank_f2",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                pagerank,
+                "PAGERANK_G",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 1001)),
+                        "page_rank": [0.02471]
+                        + [0.03806] * 9
+                        + [
+                            0.00225
+                            if i % 10 == 0
+                            else (0.00234 if len(set(str(i))) == 1 else 0.00205)
+                            for i in range(10, 100)
+                        ]
+                        + [0.00049] * 900,
+                    }
+                ),
+                "pagerank_g5",
+                skip_relational=True,
+                skip_sql=True,
+                order_sensitive=True,
+                args=[5],
+            ),
+            id="pagerank_g5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                pagerank,
+                "PAGERANK_H",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 51)),
+                        "page_rank": [
+                            0.07399,
+                            0.03496,
+                            0.0178,
+                            0.01513,
+                            0.02271,
+                            0.01277,
+                            0.02365,
+                            0.01234,
+                            0.01065,
+                            0.01941,
+                            0.01044,
+                            0.01207,
+                            0.00915,
+                            0.00958,
+                            0.01116,
+                            0.01242,
+                            0.00911,
+                            0.00929,
+                            0.00993,
+                            0.01019,
+                            0.01077,
+                            0.01195,
+                            0.01426,
+                            0.01403,
+                            0.02148,
+                            0.01121,
+                            0.01154,
+                            0.0119,
+                            0.01227,
+                            0.01273,
+                            0.01313,
+                            0.01369,
+                            0.0142,
+                            0.01482,
+                            0.01551,
+                            0.01628,
+                            0.01694,
+                            0.01804,
+                            0.01914,
+                            0.0204,
+                            0.02152,
+                            0.02352,
+                            0.02499,
+                            0.02791,
+                            0.03029,
+                            0.0331,
+                            0.03748,
+                            0.04604,
+                            0.04977,
+                            0.06437,
+                        ],
+                    }
+                ),
+                "pagerank_h3",
+                skip_relational=True,
+                skip_sql=True,
+                order_sensitive=True,
+                args=[3],
+            ),
+            id="pagerank_h3",
+        ),
     ],
 )
 def pagerank_pipeline_test_data(request) -> PyDoughPandasTest:
