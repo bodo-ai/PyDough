@@ -15,8 +15,13 @@ if TYPE_CHECKING:
     # without requiring these modules at runtime unless they are actually used.
     import sqlite3
 
+    import mysql.connector
+    import mysql.connector.cursor
+
     SQLiteConn: TypeAlias = sqlite3.Connection
     SQLiteCursor: TypeAlias = sqlite3.Cursor
+    MySQLConn: TypeAlias = mysql.connector.MySQLConnection
+    MySQLCursor: TypeAlias = mysql.connector.cursor.MySQLCursor
 
     # TBD: Placeholder lines to add other dialects.
     # 1. Replace with actual dialect module
@@ -27,13 +32,15 @@ if TYPE_CHECKING:
     # Dialect1_Cursor: TypeAlias = dialect1_module.Cursor
 
     # 4. Define the type aliases for database connections and cursors
-    DBConnection: TypeAlias = SQLiteConn  # | Dialect1_Conn
-    DBCursor: TypeAlias = SQLiteCursor  # | Dialect1_Cursor
+    DBConnection: TypeAlias = SQLiteConn | MySQLConn  # | Dialect1_Conn
+    DBCursor: TypeAlias = SQLiteCursor | MySQLCursor  # | Dialect1_Cursor
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
     SQLiteConn: TypeAlias = Any
     SQLiteCursor: TypeAlias = Any
+    MySQLConn: TypeAlias = Any
+    MySQLCursor: TypeAlias = Any
     # Dialect1_Conn: TypeAlias = Any
     # Dialect1_Cursor: TypeAlias = Any
 
@@ -42,6 +49,8 @@ else:
 __all__ = [
     "DBConnection",
     "DBCursor",
+    "MySQLConn",
+    "MySQLCursor",
     "SQLiteConn",
     "SQLiteCursor",
     # "Dialect1_Conn",

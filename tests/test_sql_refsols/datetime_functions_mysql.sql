@@ -1,0 +1,42 @@
+SELECT
+  CURRENT_TIMESTAMP() AS ts_now_1,
+  DATE(CURRENT_TIMESTAMP()) AS ts_now_2,
+  STR_TO_DATE(
+    CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
+    '%Y %c %e'
+  ) AS ts_now_3,
+  DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '1' HOUR) AS ts_now_4,
+  STR_TO_DATE(
+    CONCAT(
+      YEAR(CAST('2025-01-01 00:00:00' AS DATETIME)),
+      ' ',
+      MONTH(CAST('2025-01-01 00:00:00' AS DATETIME)),
+      ' 1'
+    ),
+    '%Y %c %e'
+  ) AS ts_now_5,
+  CAST('1995-10-08 00:00:00' AS DATETIME) AS ts_now_6,
+  YEAR(o_orderdate) AS year_col,
+  YEAR(CAST('2020-05-01 00:00:00' AS DATETIME)) AS year_py,
+  YEAR(CAST('1995-10-10 00:00:00' AS DATETIME)) AS year_pd,
+  MONTH(o_orderdate) AS month_col,
+  MONTH(CAST('2025-02-25' AS DATE)) AS month_str,
+  MONTH(CAST('1992-01-01 12:30:45' AS DATETIME)) AS month_dt,
+  DAY(o_orderdate) AS day_col,
+  DAY('1996-11-25 10:45:00') AS day_str,
+  HOUR('1995-12-01 23:59:59') AS hour_str,
+  MINUTE('1995-12-01 23:59:59') AS minute_str,
+  SECOND(CAST('1992-01-01 00:00:59' AS DATETIME)) AS second_ts,
+  DATEDIFF(CAST('1992-01-01' AS DATETIME), CAST(o_orderdate AS DATETIME)) AS dd_col_str,
+  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1992-01-01' AS DATETIME)) AS dd_str_col,
+  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1995-10-10 00:00:00' AS DATETIME)) AS dd_pd_col,
+  DATEDIFF(CAST('1992-01-01 12:30:45' AS DATETIME), CAST(o_orderdate AS DATETIME)) AS dd_col_dt,
+  DATEDIFF(CAST('1992-01-01 12:30:45' AS DATETIME), CAST('1992-01-01' AS DATETIME)) AS dd_dt_str,
+  DAYOFWEEK(o_orderdate) AS dow_col,
+  DAYOFWEEK(CAST('1992-07-01' AS DATE)) AS dow_str,
+  DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) AS dow_dt,
+  DAYOFWEEK(CAST('1995-10-10 00:00:00' AS DATETIME)) AS dow_pd,
+  DAYNAME(o_orderdate) AS dayname_col,
+  DAYNAME('1995-06-30') AS dayname_str,
+  DAYNAME(CAST('1993-08-15 00:00:00' AS DATETIME)) AS dayname_dt
+FROM tpch.ORDERS

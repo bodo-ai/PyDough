@@ -1,0 +1,13 @@
+SELECT
+  ANY_VALUE(SEASONS.s_name) AS season_name,
+  COUNT(*) AS n_events
+FROM SEASONS AS SEASONS
+JOIN EVENTS AS EVENTS
+  ON SEASONS.s_month1 = MONTH(EVENTS.ev_dt)
+  OR SEASONS.s_month2 = MONTH(EVENTS.ev_dt)
+  OR SEASONS.s_month3 = MONTH(EVENTS.ev_dt)
+GROUP BY
+  SEASONS.s_name
+ORDER BY
+  n_events DESC,
+  season_name
