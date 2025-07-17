@@ -339,10 +339,31 @@ def test_pipeline_e2e_mysql_conn(
     )
 
 
+@pytest.fixture(
+    params=[
+        pytest.param(
+            PyDoughPandasTest(
+                impl_tpch_q16,
+                "TPCH",
+                tpch_q16_output,
+                "tpch_q16_params",
+            ),
+            id="tpch_q16_params",
+        ),
+    ],
+)
+def mysql_params_data(request) -> PyDoughPandasTest:
+    """
+    Test data for e2e tests for the 22 TPC-H queries. Returns an instance of
+    PyDoughPandasTest containing information about the test.
+    """
+    return request.param
+
+
 @pytest.mark.mysql
 @pytest.mark.execute
 def test_pipeline_e2e_mysql_params(
-    tpch_pipeline_test_data: PyDoughPandasTest,
+    mysql_params_data: PyDoughPandasTest,
     get_mysql_sample_graph: graph_fetcher,
     mysql_params_tpch_db_context: DatabaseContext,
 ):
@@ -352,6 +373,6 @@ def test_pipeline_e2e_mysql_params(
     Using the  `user`, `password`, `database`, and `host`
     as keyword arguments to the DatabaseContext.
     """
-    tpch_pipeline_test_data.run_e2e_test(
+    mysql_params_data.run_e2e_test(
         get_mysql_sample_graph, mysql_params_tpch_db_context, coerce_types=True
     )
