@@ -9,8 +9,8 @@ import pytest
 
 from pydough import parse_json_metadata_from_file
 from pydough.configs import PyDoughConfigs
-from pydough.metadata import CollectionMetadata, GraphMetadata, PyDoughMetadataException
-from pydough.types.errors import PyDoughTypeException
+from pydough.errors import PyDoughMetadataException, PyDoughTypeException
+from pydough.metadata import CollectionMetadata, GraphMetadata
 from pydough.unqualified import UnqualifiedNode, qualify_node, transform_code
 from tests.testing_utilities import graph_fetcher
 

@@ -6,6 +6,8 @@ __all__ = ["builtin_registered_operators", "get_operator_by_name"]
 
 import inspect
 
+from pydough.errors import PyDoughUnqualifiedException
+
 from .base_operator import PyDoughOperator
 from .expression_operators import (
     ExpressionFunctionOperator,
@@ -52,7 +54,6 @@ def get_operator_by_name(name: str, **kwargs) -> ExpressionFunctionOperator:
             keyword arguments, or if keyword arguments are provided for an
             operator that does not support them.
     """
-    from pydough.unqualified import PyDoughUnqualifiedException
 
     # Find the operator directly using inspect
     for op_name, obj in inspect.getmembers(REP):

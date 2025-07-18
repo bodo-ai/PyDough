@@ -143,6 +143,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_cross_10,
     simple_cross_11,
     simple_cross_12,
+    simple_cross_13,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -2233,6 +2234,15 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_12",
             ),
             id="simple_cross_12",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_13,
+                "TPCH",
+                lambda: pd.DataFrame({"n1": [142], "n2": [8]}),
+                "simple_cross_13",
+            ),
+            id="simple_cross_13",
         ),
         pytest.param(
             PyDoughPandasTest(

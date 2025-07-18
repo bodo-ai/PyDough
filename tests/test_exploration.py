@@ -1161,7 +1161,7 @@ PyDough collection representing the following logic:
     ├─┬─ Partition[name='part_types', by=part_type]
     │ └─┬─ AccessChild
     │   └─── TableCollection[parts]
-    ├─┬─ Calculate[part_type=part_type, avg_price=AVG($1.retail_price)]
+    ├─┬─ Calculate[avg_price=AVG($1.retail_price)]
     │ └─┬─ AccessChild
     │   └─── PartitionChild[parts]
     └─┬─ Where[avg_price >= 27.5]
