@@ -9,7 +9,6 @@ __all__ = ["PartitionBy"]
 
 from functools import cache
 
-from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions import (
     BackReferenceExpression,
@@ -34,49 +33,28 @@ class PartitionBy(ChildOperator):
         ancestor: PyDoughCollectionQDAG,
         child: PyDoughCollectionQDAG,
         name: str,
+        keys: list[ChildReferenceExpression],
     ):
         super().__init__([child])
         self._ancestor_context: PyDoughCollectionQDAG = ancestor
         self._child: PyDoughCollectionQDAG = child
         self._name: str = name
-        self._keys: list[PartitionKey] | None = None
         self._key_name_indices: dict[str, int] = {}
         self._ancestral_mapping: dict[str, int] = {
             name: level + 1 for name, level in ancestor.ancestral_mapping.items()
         }
         self._calc_terms: set[str] = set()
         self._all_terms: set[str] = set(self.ancestral_mapping) | {self.child.name}
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    def with_keys(self, keys: list[ChildReferenceExpression]) -> "PartitionBy":
-        """
-        Specifies the references to the keys that should be used to partition
-        the child node.
-
-        Args:
-            `keys`: the list of references to the keys to partition on.
-
-        Returns:
-            The mutated PARTITION BY node (which has also been modified in-place).
-
-        Raises:
-            `PyDoughQDAGException` if the keys have already been added to
-            the PARTITION BY node.
-        """
-        if self._keys is not None:
-            raise PyDoughQDAGException(
-                "Cannot call `with_keys` more than once per PARTITION BY node"
-            )
         self._keys = [PartitionKey(self, key) for key in keys]
         for idx, ref in enumerate(keys):
             self._key_name_indices[ref.term_name] = idx
             self._calc_terms.add(ref.term_name)
         self.all_terms.update(self._calc_terms)
         self.verify_singular_terms(self._keys)
-        return self
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def ancestor_context(self) -> PyDoughCollectionQDAG:
@@ -91,10 +69,6 @@ class PartitionBy(ChildOperator):
         """
         The partitioning keys for the PARTITION BY clause.
         """
-        if self._keys is None:
-            raise PyDoughQDAGException(
-                "Cannot access `keys` of an PARTITION BY node before calling `with_keys`"
-            )
         return self._keys
 
     @property
@@ -103,10 +77,6 @@ class PartitionBy(ChildOperator):
         The names of the partitioning keys for the PARTITION BY clause and the
         index they have in a CALCULATE.
         """
-        if self._keys is None:
-            raise PyDoughQDAGException(
-                "Cannot access `keys` of an PARTITION BY node before calling `with_keys`"
-            )
         return self._key_name_indices
 
     @property
@@ -199,8 +169,4 @@ class PartitionBy(ChildOperator):
         return tree_form
 
     def equals(self, other: object) -> bool:
-        if self._keys is None:
-            raise PyDoughQDAGException(
-                "Cannot invoke `equals` before calling `with_keys`"
-            )
         return isinstance(other, PartitionBy) and self._keys == other._keys

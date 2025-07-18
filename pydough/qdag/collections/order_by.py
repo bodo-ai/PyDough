@@ -8,7 +8,6 @@ __all__ = ["OrderBy"]
 
 from functools import cache
 
-from pydough.errors import PyDoughQDAGException
 from pydough.qdag.expressions import CollationExpression
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
@@ -25,33 +24,9 @@ class OrderBy(AugmentingChildOperator):
         self,
         predecessor: PyDoughCollectionQDAG,
         children: list[PyDoughCollectionQDAG],
+        collation: list[CollationExpression],
     ):
         super().__init__(predecessor, children)
-        self._collation: list[CollationExpression] | None = None
-
-    def with_collation(self, collation: list[CollationExpression]) -> "OrderBy":
-        """
-        Specifies the expressions that are used to do the ordering in an
-        ORDERBY node returning the mutated ORDERBY node afterwards. This is
-        called after the ORDERBY node is created so that the terms can be
-        expressions that reference child nodes of the ORDERBY. However, this
-        must be called on the ORDERBY node before any properties are accessed
-        by `calc_terms`, `all_terms`, `to_string`, etc.
-
-        Args:
-            `collation`: the list of collation nodes to order by.
-
-        Returns:
-            The mutated ORDERBY node (which has also been modified in-place).
-
-        Raises:
-            `PyDoughQDAGException` if the condition has already been added to
-            the WHERE node.
-        """
-        if self._collation is not None:
-            raise PyDoughQDAGException(
-                "Cannot call `with_collation` more than once per ORDERBY node"
-            )
         self._collation = [
             CollationExpression(
                 has_hasnot_rewrite(col.expr, False), col.asc, col.na_last
@@ -59,17 +34,12 @@ class OrderBy(AugmentingChildOperator):
             for col in collation
         ]
         self.verify_singular_terms(self._collation)
-        return self
 
     @property
     def collation(self) -> list[CollationExpression]:
         """
         The ordering keys for the ORDERBY clause.
         """
-        if self._collation is None:
-            raise PyDoughQDAGException(
-                "Cannot access `collation` of an ORDERBY node before calling `with_collation`"
-            )
         return self._collation
 
     @property

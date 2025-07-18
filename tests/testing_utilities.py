@@ -43,18 +43,13 @@ from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
     AstNodeBuilder,
-    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
-    OrderBy,
-    PartitionBy,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Singular,
-    TopK,
-    Where,
 )
 from pydough.relational import (
     ColumnReference,
@@ -630,13 +625,12 @@ class CalculateInfo(ChildOperatorInfo):
             builder,
             context,
         )
-        raw_calc: Calculate = builder.build_calculate(context, children)
         args: list[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             args.append((name, expr))
-        return raw_calc.with_terms(args)
+        return builder.build_calculate(context, children, args)
 
 
 class WhereInfo(ChildOperatorInfo):
@@ -666,10 +660,9 @@ class WhereInfo(ChildOperatorInfo):
                 "Must provide a context when building a WHERE clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_where: Where = builder.build_where(context, children)
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionQDAG)
-        return raw_where.with_condition(cond)
+        return builder.build_where(context, children, cond)
 
 
 class SingularInfo(ChildOperatorInfo):
@@ -740,13 +733,12 @@ class OrderInfo(ChildOperatorInfo):
                 "Must provide context and children_contexts when building an ORDER BY clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_order: OrderBy = builder.build_order(context, children)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
-        return raw_order.with_collation(collation)
+        return builder.build_order(context, children, collation)
 
 
 class TopKInfo(ChildOperatorInfo):
@@ -789,13 +781,12 @@ class TopKInfo(ChildOperatorInfo):
                 "Must provide context and children_contexts when building a TOPK clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_top_k: TopK = builder.build_top_k(context, children, self.records_to_keep)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
-        return raw_top_k.with_collation(collation)
+        return builder.build_top_k(context, children, self.records_to_keep, collation)
 
 
 class PartitionInfo(ChildOperatorInfo):
@@ -830,15 +821,12 @@ class PartitionInfo(ChildOperatorInfo):
             context = builder.build_global_context()
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
         assert len(children) == 1
-        raw_partition: PartitionBy = builder.build_partition(
-            context, children[0], self.name
-        )
         keys: list[ChildReferenceExpression] = []
         for info in self.keys:
             expr = info.build(builder, context, children)
             assert isinstance(expr, ChildReferenceExpression)
             keys.append(expr)
-        return raw_partition.with_keys(keys)
+        return builder.build_partition(context, children[0], self.name, keys)
 
 
 def make_relational_column_reference(

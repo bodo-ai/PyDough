@@ -269,6 +269,30 @@ def bad_pydough_impl_23(root: UnqualifiedNode) -> UnqualifiedNode:
     )
 
 
+def bad_pydough_impl_24(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Conflict between `name` of nations vs customers
+    return root.nations.CALCULATE(root.name).customers.CALCULATE(root.name)
+
+
+def bad_pydough_impl_25(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Conflict between `name` of regions vs customers
+    return root.regions.CALCULATE(root.name).nations.customers.CALCULATE(root.name)
+
+
+def bad_pydough_impl_26(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Conflict between `n` of partition vs orders
+    return (
+        root.orders.PARTITION("priorities", by=root.order_priority)
+        .CALCULATE(key=root.COUNT(root.orders))
+        .orders.CALCULATE(root.key)
+    )
+
+
+def bad_pydough_impl_27(root: UnqualifiedNode) -> UnqualifiedNode:
+    # Treating CROSS as singular
+    return root.regions.CALCULATE(n1=root.name, n2=root.CROSS(root.regions).name)
+
+
 def bad_replace_too_many_args(root: UnqualifiedNode) -> UnqualifiedNode:
     # Too many arguments to replace
     return root.nations.CALCULATE(
@@ -410,6 +434,26 @@ def bad_str_count_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
             bad_pydough_impl_23,
             "PyDough nodes POPULATION_STD is not callable. Did you mean to use a function?",
             id="23",
+        ),
+        pytest.param(
+            bad_pydough_impl_24,
+            "Unclear whether 'name' refers to a term of the current context or ancestor of collection TPCH.nations.CALCULATE(name=name).customers",
+            id="24",
+        ),
+        pytest.param(
+            bad_pydough_impl_25,
+            "Unclear whether 'name' refers to a term of the current context or ancestor of collection TPCH.regions.CALCULATE(name=name).nations.customers",
+            id="25",
+        ),
+        pytest.param(
+            bad_pydough_impl_26,
+            "Unclear whether 'key' refers to a term of the current context or ancestor of collection TPCH.Partition(orders, name='priorities', by=order_priority).CALCULATE(key=COUNT(orders)).orders",
+            id="26",
+        ),
+        pytest.param(
+            bad_pydough_impl_27,
+            "Expected all terms in CALCULATE(n1=name, n2=TPCH.regions.name) to be singular, but encountered a plural expression: TPCH.regions.name",
+            id="27",
         ),
         pytest.param(
             bad_replace_too_many_args,

@@ -8,6 +8,7 @@ __all__ = ["PartitionChild"]
 
 from functools import cache
 
+import pydough
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
@@ -90,7 +91,15 @@ class PartitionChild(ChildOperatorChildAccess):
     @cache
     def get_term(self, term_name: str):
         self.verify_term_exists(term_name)
+        # Special handling of terms down-streamed from an ancestor of the
+        # partition child.
         if term_name in self.ancestral_mapping:
+            # Verify that the ancestor name is not also a name in the current
+            # context.
+            if term_name in self.calc_terms:
+                raise pydough.active_session.error_builder.down_streaming_conflict(
+                    collection=self, term_name=term_name
+                )
             return BackReferenceExpression(
                 self, term_name, self.ancestral_mapping[term_name]
             )

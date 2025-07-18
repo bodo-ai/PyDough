@@ -19,7 +19,6 @@ from pydough.pydough_operators.expression_operators import (
 )
 from pydough.qdag import (
     AstNodeBuilder,
-    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
@@ -27,7 +26,6 @@ from pydough.qdag import (
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
-    OrderBy,
     PartitionBy,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
@@ -35,8 +33,6 @@ from pydough.qdag import (
     Reference,
     SidedReference,
     SubCollection,
-    TopK,
-    Where,
     WindowCall,
 )
 from pydough.types import PyDoughType
@@ -673,8 +669,7 @@ class Qualifier:
             qualified_term = self.qualify_expression(term, qualified_parent, children)
             qualified_terms.append((name, qualified_term))
         # Use the qualified children & terms to create a new CALCULATE node.
-        calculate: Calculate = self.builder.build_calculate(qualified_parent, children)
-        return calculate.with_terms(qualified_terms)
+        return self.builder.build_calculate(qualified_parent, children, qualified_terms)
 
     def qualify_where(
         self,
@@ -715,8 +710,7 @@ class Qualifier:
             unqualified_cond, qualified_parent, children
         )
         # Use the qualified children & condition to create a new WHERE node.
-        where: Where = self.builder.build_where(qualified_parent, children)
-        return where.with_condition(qualified_cond)
+        return self.builder.build_where(qualified_parent, children, qualified_cond)
 
     def _expressions_to_collations(
         self, terms: Iterable[UnqualifiedNode] | list[UnqualifiedNode]
@@ -801,8 +795,9 @@ class Qualifier:
             raise PyDoughUnqualifiedException(
                 "ORDER BY requires a 'by' clause to be specified."
             )
-        orderby: OrderBy = self.builder.build_order(qualified_parent, children)
-        return orderby.with_collation(qualified_collations)
+        return self.builder.build_order(
+            qualified_parent, children, qualified_collations
+        )
 
     def qualify_top_k(
         self,
@@ -858,10 +853,9 @@ class Qualifier:
                 "TopK requires a 'by' clause to be specified."
             )
         # Use the qualified children & collation to create a new TOP K node.
-        topk: TopK = self.builder.build_top_k(
-            qualified_parent, children, records_to_keep
+        return self.builder.build_top_k(
+            qualified_parent, children, records_to_keep, qualified_collations
         )
-        return topk.with_collation(qualified_collations)
 
     def split_partition_ancestry(
         self, node: UnqualifiedNode, partition_ancestor: str | None = None
@@ -1036,9 +1030,8 @@ class Qualifier:
             child_references.append(child_ref)
         # Use the qualified child & keys to create a new PARTITION node.
         partition: PartitionBy = self.builder.build_partition(
-            qualified_parent, qualified_child, child_name
+            qualified_parent, qualified_child, child_name, child_references
         )
-        partition = partition.with_keys(child_references)
         # Special case: if accessing as a child, wrap in a
         # ChildOperatorChildAccess term.
         if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
@@ -1076,9 +1069,7 @@ class Qualifier:
             unqualified, context, [], is_child, is_cross
         )
         if not isinstance(answer, PyDoughCollectionQDAG):
-            raise PyDoughUnqualifiedException(
-                f"Expected a collection, but received an expression: {answer}"
-            )
+            raise pydough.active_session.error_builder.expected_collection(answer)
         return answer
 
     def qualify_expression(
@@ -1109,9 +1100,7 @@ class Qualifier:
             unqualified, context, children, True, False
         )
         if not isinstance(answer, PyDoughExpressionQDAG):
-            raise PyDoughUnqualifiedException(
-                f"Expected an expression, but received a collection: {answer}"
-            )
+            raise pydough.active_session.error_builder.expected_expression(answer)
         return answer
 
     def qualify_singular(
@@ -1193,8 +1182,8 @@ class Qualifier:
 
         # Build the final expanded window-based filter
         qualified_child: PyDoughCollectionQDAG = self.builder.build_where(
-            qualified_parent, children
-        ).with_condition(qualified_cond)
+            qualified_parent, children, qualified_cond
+        )
 
         # Extract the `levels` argument from the condition
         assert isinstance(qualified_cond, ExpressionFunctionCall)

@@ -6,7 +6,6 @@ __all__ = ["BinOp", "BinaryOperator"]
 
 from enum import Enum
 
-from pydough.errors import PyDoughQDAGException
 from pydough.pydough_operators.type_inference import (
     ExpressionTypeDeducer,
     TypeVerifier,
@@ -44,7 +43,7 @@ class BinOp(Enum):
         for op in BinOp.__members__.values():
             if s == op.value:
                 return op
-        raise PyDoughQDAGException(f"Unrecognized operation: {s!r}")
+        raise ValueError(f"Unrecognized operation: {s!r}")
 
 
 BinOp.__members__.items()

@@ -2970,6 +2970,17 @@ def simple_cross_12():
     )
 
 
+def simple_cross_13():
+    # Strange way to count how many customers have the an account balance
+    # within 10 of the global minimum, and how many suppliers have an account
+    # balance within 10 of the global maximum.
+    glob1 = TPCH.CALCULATE(min_balance=MIN(customers.account_balance))
+    cust = customers.WHERE(account_balance <= (CROSS(glob1).min_balance + 10.0))
+    glob2 = TPCH.CALCULATE(max_balance=MAX(suppliers.account_balance))
+    supp = suppliers.WHERE(account_balance >= (CROSS(glob2).max_balance - 10.0))
+    return TPCH.CALCULATE(n1=COUNT(cust), n2=COUNT(supp))
+
+
 def quantile_function_test_1():
     selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
     return TPCH.CALCULATE(

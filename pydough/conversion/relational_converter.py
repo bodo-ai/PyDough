@@ -1315,8 +1315,7 @@ class RelTranslation:
             for _, column in output_cols:
                 final_terms.append((column, Reference(node, column)))
         children: list[PyDoughCollectionQDAG] = []
-        final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
-        return final_calc
+        return Calculate(node, children, final_terms)
 
 
 def make_relational_ordering(

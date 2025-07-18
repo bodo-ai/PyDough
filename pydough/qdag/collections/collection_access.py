@@ -8,6 +8,7 @@ __all__ = ["CollectionAccess"]
 
 from functools import cache
 
+import pydough
 from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
@@ -115,8 +116,8 @@ class CollectionAccess(ChildAccess):
             # Verify that the ancestor name is not also a name in the current
             # context.
             if term_name in self.calc_terms:
-                raise PyDoughQDAGException(
-                    f"Cannot have term name {term_name!r} used in an ancestor of collection {self!r}"
+                raise pydough.active_session.error_builder.down_streaming_conflict(
+                    collection=self, term_name=term_name
                 )
             # Create a back-reference to the ancestor term.
             return BackReferenceExpression(
@@ -148,7 +149,7 @@ class CollectionAccess(ChildAccess):
         elif isinstance(property, TableColumnMetadata):
             return ColumnProperty(property)
         else:
-            raise PyDoughQDAGException(
+            raise NotImplementedError(
                 f"Unsupported property type for collection access: {property.__class__.name}"
             )
 

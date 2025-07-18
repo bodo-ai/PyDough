@@ -6,7 +6,6 @@ in a preceding context.
 __all__ = ["SidedReference"]
 
 
-from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
 from pydough.types import PyDoughType
@@ -34,10 +33,7 @@ class SidedReference(PyDoughExpressionQDAG):
         else:
             base_collection = collection.starting_predecessor
         self._expression: PyDoughExpressionQDAG = base_collection.get_expr(term_name)
-        if not self.expression.is_singular(collection.starting_predecessor):
-            raise PyDoughQDAGException(
-                f"Cannot reference plural expression {self.expression} from {self.collection}"
-            )
+        collection.starting_predecessor.verify_singular_terms([self.expression])
         self._is_parent: bool = is_parent
 
     @property

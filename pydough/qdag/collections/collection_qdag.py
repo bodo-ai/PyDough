@@ -13,7 +13,6 @@ from typing import Union
 import numpy as np
 
 import pydough
-from pydough.errors import PyDoughQDAGException
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions.collation_expression import CollationExpression
 from pydough.qdag.expressions.expression_qdag import PyDoughExpressionQDAG
@@ -172,8 +171,8 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         relative_context: PyDoughCollectionQDAG = self.starting_predecessor
         for expr in exprs:
             if not expr.is_singular(relative_context):
-                raise PyDoughQDAGException(
-                    f"Expected all terms in {self.standalone_string} to be singular, but encountered a plural expression: {expr.to_string()}"
+                raise pydough.active_session.error_builder.cardinality_error(
+                    collection=self, expr=expr
                 )
 
     @abstractmethod
@@ -224,9 +223,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         """
         term = self.get_term(term_name)
         if not isinstance(term, PyDoughExpressionQDAG):
-            raise PyDoughQDAGException(
-                f"Property {term_name!r} of {self} is not an expression"
-            )
+            raise pydough.active_session.error_builder.expected_expression(term)
         return term
 
     def get_collection(self, term_name: str) -> "PyDoughCollectionQDAG":
@@ -243,9 +240,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         """
         term = self.get_term(term_name)
         if not isinstance(term, PyDoughCollectionQDAG):
-            raise PyDoughQDAGException(
-                f"Property {term_name!r} of {self} is not a collection"
-            )
+            raise pydough.active_session.error_builder.expected_collection(term)
         return term
 
     @property

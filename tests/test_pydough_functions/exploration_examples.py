@@ -106,10 +106,7 @@ def partition_impl() -> UnqualifiedNode:
 def partition_child_impl() -> UnqualifiedNode:
     return (
         parts.PARTITION(name="part_types", by=part_type)
-        .CALCULATE(
-            part_type,
-            avg_price=AVG(parts.retail_price),
-        )
+        .CALCULATE(avg_price=AVG(parts.retail_price))
         .WHERE(avg_price >= 27.5)
         .parts
     )
