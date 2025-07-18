@@ -3064,7 +3064,10 @@ def pagerank(n_iters):
     # The seed value for the PageRank computation, which is evenly distributed.
     # Also computes the number of sites in the graph & the number of sites each
     # site links to, which are both used downstream.
-    source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n, n_out=n_out_expr)
+    source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n)
+
+    if n_iters > 0:
+        source = source.CALCULATE(n_out=n_out_expr, damp_modifier=0.15 / n)
 
     # Repeats the following procedure for n_iters iterations to build the next
     # generation of PageRank values from the current generation.
@@ -3084,9 +3087,9 @@ def pagerank(n_iters):
             )
             .target_site.PARTITION(name=f"s{i}", by=key)
             .target_site.CALCULATE(
-                n,
+                damp_modifier,
                 n_out,
-                page_rank=(1.0 - d) / n
+                page_rank=damp_modifier
                 + d * RELSUM(consider_link * page_rank / n_out, per=f"s{i}"),
             )
             .WHERE(dummy_link)

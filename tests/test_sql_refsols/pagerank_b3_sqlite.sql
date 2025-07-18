@@ -5,6 +5,7 @@ WITH _t11 AS (
 ), _s0 AS (
   SELECT
     COUNT(*) OVER () AS n,
+    CAST(1.0 AS REAL) / COUNT(*) OVER () AS page_rank,
     s_key
   FROM _t11
 ), _s1 AS (
@@ -14,12 +15,12 @@ WITH _t11 AS (
   FROM main.links
 ), _s2 AS (
   SELECT
+    CAST(0.15 AS REAL) / MAX(_s0.n) AS damp_modifier,
     COALESCE(
       SUM(IIF(_s1.l_target IS NULL, _s0.n, CAST(_s1.l_source <> _s1.l_target AS INTEGER))),
       0
     ) AS n_out,
-    CAST(1.0 AS REAL) / MAX(_s0.n) AS page_rank,
-    MAX(_s0.n) AS anything_n,
+    MAX(_s0.page_rank) AS anything_page_rank,
     MAX(_s0.s_key) AS anything_s_key
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
@@ -28,14 +29,12 @@ WITH _t11 AS (
     _s0.s_key
 ), _t6 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _s2.anything_n
-    ) + 0.85 * SUM(
+    _s2.damp_modifier + 0.85 * SUM(
       CAST((
-        CAST(_t12.l_source <> _t12.l_target OR _t12.l_target IS NULL AS INTEGER) * _s2.page_rank
+        CAST(_t12.l_source <> _t12.l_target OR _t12.l_target IS NULL AS INTEGER) * _s2.anything_page_rank
       ) AS REAL) / _s2.n_out
     ) OVER (PARTITION BY _s5.s_key) AS page_rank_0,
-    _s2.anything_n,
+    _s2.damp_modifier,
     NOT _t12.l_target IS NULL AND _t12.l_source = _t12.l_target AS dummy_link,
     _s2.n_out,
     _s5.s_key
@@ -46,14 +45,12 @@ WITH _t11 AS (
     ON _s5.s_key = _t12.l_target OR _t12.l_target IS NULL
 ), _t4 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t6.anything_n
-    ) + 0.85 * SUM(
+    _t6.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t13.l_source <> _t13.l_target OR _t13.l_target IS NULL AS INTEGER) * _t6.page_rank_0
       ) AS REAL) / _t6.n_out
     ) OVER (PARTITION BY _s9.s_key) AS page_rank_0_48,
-    _t6.anything_n,
+    _t6.damp_modifier,
     NOT _t13.l_target IS NULL AND _t13.l_source = _t13.l_target AS dummy_link_46,
     _t6.n_out,
     _s9.s_key
@@ -66,9 +63,7 @@ WITH _t11 AS (
     _t6.dummy_link
 ), _t2 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t4.anything_n
-    ) + 0.85 * SUM(
+    _t4.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t14.l_source <> _t14.l_target OR _t14.l_target IS NULL AS INTEGER) * _t4.page_rank_0_48
       ) AS REAL) / _t4.n_out

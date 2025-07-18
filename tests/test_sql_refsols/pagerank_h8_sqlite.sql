@@ -5,6 +5,7 @@ WITH _t21 AS (
 ), _s0 AS (
   SELECT
     COUNT(*) OVER () AS n,
+    CAST(1.0 AS REAL) / COUNT(*) OVER () AS page_rank,
     s_key
   FROM _t21
 ), _s1 AS (
@@ -14,12 +15,12 @@ WITH _t21 AS (
   FROM main.links
 ), _s2 AS (
   SELECT
+    CAST(0.15 AS REAL) / MAX(_s0.n) AS damp_modifier,
     COALESCE(
       SUM(IIF(_s1.l_target IS NULL, _s0.n, CAST(_s1.l_source <> _s1.l_target AS INTEGER))),
       0
     ) AS n_out,
-    CAST(1.0 AS REAL) / MAX(_s0.n) AS page_rank,
-    MAX(_s0.n) AS anything_n,
+    MAX(_s0.page_rank) AS anything_page_rank,
     MAX(_s0.s_key) AS anything_s_key
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
@@ -28,14 +29,12 @@ WITH _t21 AS (
     _s0.s_key
 ), _t16 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _s2.anything_n
-    ) + 0.85 * SUM(
+    _s2.damp_modifier + 0.85 * SUM(
       CAST((
-        CAST(_t22.l_source <> _t22.l_target OR _t22.l_target IS NULL AS INTEGER) * _s2.page_rank
+        CAST(_t22.l_source <> _t22.l_target OR _t22.l_target IS NULL AS INTEGER) * _s2.anything_page_rank
       ) AS REAL) / _s2.n_out
     ) OVER (PARTITION BY _s5.s_key) AS page_rank_0,
-    _s2.anything_n,
+    _s2.damp_modifier,
     NOT _t22.l_target IS NULL AND _t22.l_source = _t22.l_target AS dummy_link,
     _s2.n_out,
     _s5.s_key
@@ -46,14 +45,12 @@ WITH _t21 AS (
     ON _s5.s_key = _t22.l_target OR _t22.l_target IS NULL
 ), _t14 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t16.anything_n
-    ) + 0.85 * SUM(
+    _t16.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t23.l_source <> _t23.l_target OR _t23.l_target IS NULL AS INTEGER) * _t16.page_rank_0
       ) AS REAL) / _t16.n_out
     ) OVER (PARTITION BY _s9.s_key) AS page_rank_0_2354,
-    _t16.anything_n,
+    _t16.damp_modifier,
     NOT _t23.l_target IS NULL AND _t23.l_source = _t23.l_target AS dummy_link_2352,
     _t16.n_out,
     _s9.s_key
@@ -66,14 +63,12 @@ WITH _t21 AS (
     _t16.dummy_link
 ), _t12 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t14.anything_n
-    ) + 0.85 * SUM(
+    _t14.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t24.l_source <> _t24.l_target OR _t24.l_target IS NULL AS INTEGER) * _t14.page_rank_0_2354
       ) AS REAL) / _t14.n_out
     ) OVER (PARTITION BY _s13.s_key) AS page_rank_0_2364,
-    _t14.anything_n,
+    _t14.damp_modifier,
     NOT _t24.l_target IS NULL AND _t24.l_source = _t24.l_target AS dummy_link_2362,
     _t14.n_out,
     _s13.s_key
@@ -86,14 +81,12 @@ WITH _t21 AS (
     _t14.dummy_link_2352
 ), _t10 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t12.anything_n
-    ) + 0.85 * SUM(
+    _t12.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t25.l_source <> _t25.l_target OR _t25.l_target IS NULL AS INTEGER) * _t12.page_rank_0_2364
       ) AS REAL) / _t12.n_out
     ) OVER (PARTITION BY _s17.s_key) AS page_rank_0_2374,
-    _t12.anything_n,
+    _t12.damp_modifier,
     NOT _t25.l_target IS NULL AND _t25.l_source = _t25.l_target AS dummy_link_2372,
     _t12.n_out,
     _s17.s_key
@@ -106,14 +99,12 @@ WITH _t21 AS (
     _t12.dummy_link_2362
 ), _t8 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t10.anything_n
-    ) + 0.85 * SUM(
+    _t10.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t26.l_source <> _t26.l_target OR _t26.l_target IS NULL AS INTEGER) * _t10.page_rank_0_2374
       ) AS REAL) / _t10.n_out
     ) OVER (PARTITION BY _s21.s_key) AS page_rank_0_2384,
-    _t10.anything_n,
+    _t10.damp_modifier,
     NOT _t26.l_target IS NULL AND _t26.l_source = _t26.l_target AS dummy_link_2382,
     _t10.n_out,
     _s21.s_key
@@ -126,14 +117,12 @@ WITH _t21 AS (
     _t10.dummy_link_2372
 ), _t6 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t8.anything_n
-    ) + 0.85 * SUM(
+    _t8.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t27.l_source <> _t27.l_target OR _t27.l_target IS NULL AS INTEGER) * _t8.page_rank_0_2384
       ) AS REAL) / _t8.n_out
     ) OVER (PARTITION BY _s25.s_key) AS page_rank_0_2394,
-    _t8.anything_n,
+    _t8.damp_modifier,
     NOT _t27.l_target IS NULL AND _t27.l_source = _t27.l_target AS dummy_link_2392,
     _t8.n_out,
     _s25.s_key
@@ -146,14 +135,12 @@ WITH _t21 AS (
     _t8.dummy_link_2382
 ), _t4 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t6.anything_n
-    ) + 0.85 * SUM(
+    _t6.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t28.l_source <> _t28.l_target OR _t28.l_target IS NULL AS INTEGER) * _t6.page_rank_0_2394
       ) AS REAL) / _t6.n_out
     ) OVER (PARTITION BY _s29.s_key) AS page_rank_0_2404,
-    _t6.anything_n,
+    _t6.damp_modifier,
     NOT _t28.l_target IS NULL AND _t28.l_source = _t28.l_target AS dummy_link_2402,
     _t6.n_out,
     _s29.s_key
@@ -166,9 +153,7 @@ WITH _t21 AS (
     _t6.dummy_link_2392
 ), _t2 AS (
   SELECT
-    (
-      CAST(0.15000000000000002 AS REAL) / _t4.anything_n
-    ) + 0.85 * SUM(
+    _t4.damp_modifier + 0.85 * SUM(
       CAST((
         CAST(_t29.l_source <> _t29.l_target OR _t29.l_target IS NULL AS INTEGER) * _t4.page_rank_0_2404
       ) AS REAL) / _t4.n_out
