@@ -1127,7 +1127,7 @@ class PyDoughPandasTest:
         """
         # Skip if indicated.
         if self.skip_relational:
-            pytest.skip(f"Skipping relational plan test for {self.test_name!r}")
+            pytest.skip(f"Skipping relational plan test for {self.test_name}")
 
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
@@ -1185,7 +1185,7 @@ class PyDoughPandasTest:
         """
         # Skip if indicated.
         if self.skip_sql:
-            pytest.skip(f"Skipping SQL text test for {self.test_name!r}")
+            pytest.skip(f"Skipping SQL text test for {self.test_name}")
 
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)

@@ -24,6 +24,7 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.testing_utilities import graph_fetcher
 
+from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
 
 
@@ -456,90 +457,9 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
 
-    # The configurations for the pagerank databases. Each tuple contains:
-    # - The name of the database.
-    # - The number of nodes n in the graph.
-    # - The edges in the graph as a list of tuples (src, dst), assuming the
-    #   nodes are numbered from 1 to n.
-    pagerank_configs = [
-        ("PAGERANK_A", 4, [(1, 2), (2, 1), (2, 3), (3, 4), (4, 1), (4, 2)]),
-        ("PAGERANK_B", 5, [(1, 2), (2, 1), (2, 5), (3, 2), (4, 2), (4, 5), (5, 3)]),
-        (
-            "PAGERANK_C",
-            8,
-            [
-                (1, 2),
-                (1, 6),
-                (2, 1),
-                (2, 5),
-                (2, 6),
-                (3, 2),
-                (4, 2),
-                (4, 5),
-                (5, 3),
-                (7, 8),
-                (8, 7),
-            ],
-        ),
-        (
-            "PAGERANK_D",
-            16,
-            [
-                (1, 2),
-                (1, 3),
-                (1, 4),
-                (1, 5),
-                (2, 1),
-                (2, 5),
-                (3, 2),
-                (4, 2),
-                (4, 5),
-                (4, 11),
-                (5, 3),
-                (5, 11),
-                (5, 14),
-                (5, 16),
-                (6, 7),
-                (7, 8),
-                (8, 6),
-                (8, 7),
-                (9, 2),
-                (9, 10),
-                (11, 12),
-                (12, 13),
-                (12, 14),
-                (13, 4),
-                (13, 5),
-                (15, 2),
-            ],
-        ),
-        ("PAGERANK_E", 5, [(i, j) for i in range(1, 6) for j in range(1, 6) if i != j]),
-        ("PAGERANK_F", 100, []),
-        (
-            "PAGERANK_G",
-            1000,
-            [
-                (j + 1, i + 1)
-                for i in range(1000)
-                for j in range(i + 1, 1000)
-                if str(i) in str(j)
-            ],
-        ),
-        (
-            "PAGERANK_H",
-            50,
-            [
-                (i, j)
-                for i in range(1, 51)
-                for j in range(1, 51)
-                if i != j and (i < j or i % j == 0)
-            ],
-        ),
-    ]
-
     # Setup each of the the pagerank databases using the configurations.
     result: dict[str, DatabaseContext] = {}
-    for name, nodes, vertices in pagerank_configs:
+    for name, nodes, edges in pagerank_configs():
         # Create the database and ensure it is empty.
         subprocess.run(
             f"cd tests; rm -fv gen_data/{name.lower()}.db; sqlite3 gen_data/{name.lower()}.db < gen_data/init_pagerank.sql",
@@ -547,44 +467,10 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
         )
         path: str = os.path.join(base_dir, f"tests/gen_data/{name.lower()}.db")
         connection: sqlite3.Connection = sqlite3.connect(path)
-        cursor: sqlite3.Cursor = connection.cursor()
 
-        # For every node, insert an entry into the SITES table.
-        for site in range(nodes):
-            cursor.execute(
-                "INSERT INTO SITES VALUES (?, ?)",
-                (site + 1, f"SITE {chr(ord('A') + site)}"),
-            )
-
-        # For every edge, insert an entry into the LINKS table. Keep track of
-        # the nodes that have no outgoing links.
-        no_outgoing: set[int] = set(range(1, nodes + 1))
-        for src, dst in vertices:
-            no_outgoing.discard(src)
-            cursor.execute(
-                "INSERT INTO LINKS VALUES (?, ?)",
-                (src, dst),
-            )
-
-        # If there are no outgoing links for a site, insert a NULL link for it,
-        # indicating that the site links to ALL sites.
-        for site in no_outgoing:
-            cursor.execute(
-                "INSERT INTO LINKS VALUES (?, ?)",
-                (site, None),
-            )
-
-        # Insert a dummy self-link for every site.
-        for site in range(1, nodes + 1):
-            cursor.execute(
-                "INSERT INTO LINKS VALUES (?, ?)",
-                (site, site),
-            )
-
-        # Commit the changes, close the cursor, and store the context in the
-        # result dictionary.
-        cursor.connection.commit()
-        cursor.close()
+        # Fill the tables of the database using the nodes/edges, then store the
+        # database context in the result.
+        gen_pagerank_records(connection, nodes, edges)
         result[name] = DatabaseContext(
             DatabaseConnection(connection), DatabaseDialect.SQLITE
         )
