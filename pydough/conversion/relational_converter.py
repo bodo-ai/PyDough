@@ -84,6 +84,7 @@ from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
+from .relational_simplification import simplify_expressions
 
 
 @dataclass
@@ -1446,6 +1447,7 @@ def optimize_relational_tree(
     # Step 8: run projection pullup followed by column pruning 2x.
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
+        simplify_expressions(root)
         root = ColumnPruner().prune_unused_columns(root)
 
     # Step 9: re-run filter pushdown
