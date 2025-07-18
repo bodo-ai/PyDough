@@ -4,7 +4,6 @@ unqualified nodes into qualified DAG nodes.
 """
 
 import re
-from collections.abc import Callable
 
 import pytest
 
@@ -13,7 +12,6 @@ from pydough.configs import PyDoughConfigs
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
-    UnqualifiedRoot,
     qualify_node,
 )
 from tests.testing_utilities import (
@@ -21,477 +19,186 @@ from tests.testing_utilities import (
 )
 
 
-def bad_pydough_impl_01(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.nations.CALCULATE(nation_name=name, total_balance=SUM(account_balance))
-    ```
-    The problem: there is no property `account_balance` to be accessed from nations.
-    """
-    return root.nations.CALCULATE(
-        nation_name=root.name, total_balance=root.SUM(root.account_balance)
-    )
-
-
-def bad_pydough_impl_02(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.nations.CALCULATE(nation_name=FIZZBUZZ(name))
-    ```
-    The problem: there is no function named FIZZBUZZ, so this looks like a
-    CALCULATE being done onto a subcollection, which cannot be used as an
-    expression inside a CALCULATE.
-    """
-    return root.nations.CALCULATE(nation_name=root.FIZZBUZZ(root.name))
-
-
-def bad_pydough_impl_03(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.nations.CALCULATE(y=suppliers.CALCULATE(x=COUNT(supply_records)).x)
-    ```
-    The problem: `suppliers.CALCULATE(x=COUNT(supply_records))` is plural with regards
-    to nations, so accessing its `x` property is still plural, therefore it
-    cannot be used as a term inside a CALCULATE from the context of nations.
-    """
-    return root.nations.CALCULATE(
-        y=root.suppliers.CALCULATE(x=root.COUNT(root.supply_records)).x
-    )
-
-
-def bad_pydough_impl_04(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.nations.name.hello
-    ```
-    The problem: nations.name is an expression, so invoking `.hello` on it is
-    not valid.
-    """
-    return root.nations.name.hello
-
-
-def bad_pydough_impl_05(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.Customer(r=nation.region)
-    ```
-    The problem: nation.region is a collection, therefore cannot be used as
-    an expression in a CALCULATE.
-    """
-    return root.customers.CALCULATE(r=root.nation.region)
-
-
-def bad_pydough_impl_06(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.suppliers.supply_records.CALCULATE(o=lines.order.order_date)
-    ```
-    The problem: lines is plural with regards to supply_records, therefore
-    lines.order.order_date is also plural and it cannot be used in a CALCULATE
-    in the context of supply_records.
-    """
-    return root.suppliers.supply_records.CALCULATE(o=root.lines.order.order_date)
-
-
-def bad_pydough_impl_07(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.lines.CALCULATE(v=MUL(extended_price, SUB(1, discount)))
-    ```
-    The problem: there is no function named MUL or SUB, so this looks like a
-    CALCULATE operation on a subcollection, which cannot be used as an
-    expression inside of a CALCULATE.
-    """
-    return root.lines.CALCULATE(
-        v=root.MUL(root.extended_price, root.SUB(1, root.discount))
-    )
-
-
-def bad_pydough_impl_08(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    TPCH.lines.tax = 0
-    TPCH.lines.CALCULATE(value=extended_price * tax)
-    ```
-    The problem: writing to an unqualified node is not yet supported.
-    """
-    root.lines.tax = 0
-    return root.lines.CALCULATE(value=root.extended_price * root.tax)
-
-
-def bad_pydough_impl_09(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    best_customer = nations.customers.BEST(per='nations', by=account_balance.DESC())
-    regions.CALCULATE(n=best_customer.name)
-    ```
-    The problem: The cardinality is off since even though the `BEST` ensures
-    the customers are singular with regards to the nation, the nations are
-    still plural with regards to the region.
-    """
-    best_customer = root.nations.customers.BEST(
-        per="nations", by=root.account_balance.DESC()
-    )
-    return root.regions.CALCULATE(n=best_customer.name)
-
-
-def bad_pydough_impl_10(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    best_customer = nations.customers.BEST(per='regions', by=account_balance.DESC(), allow_ties=True)
-    regions.CALCULATE(n=best_customer.name)
-    ```
-    The problem: the presence of `allow_ties=True` means that the `BEST`
-    operator does not guarantee `nations.customers` is plural with regards to
-    `regions`.
-    """
-    best_customer = root.nations.customers.BEST(
-        per="regions", by=root.account_balance.DESC(), allow_ties=True
-    )
-    return root.regions.CALCULATE(n=best_customer.name)
-
-
-def bad_pydough_impl_11(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    best_customer = nations.customers.BEST(per='regions', by=account_balance.DESC(), n_best=3)
-    regions.CALCULATE(n=best_customer.name)
-    ```
-    The problem: the presence of `n_best=3` means that the `BEST` operator
-    does not guarantee `nations.customers` is plural with regards to `regions`.
-    """
-    best_customer = root.nations.customers.BEST(
-        per="regions", by=root.account_balance.DESC(), allow_ties=True
-    )
-    return root.regions.CALCULATE(n=best_customer.name)
-
-
-def bad_pydough_impl_12(root: UnqualifiedNode) -> UnqualifiedNode:
-    """
-    Creates an UnqualifiedNode for the following invalid PyDough snippet:
-    ```
-    regions.nations.customers.BEST(per='regions', by=account_balance.DESC(), n_best=3, allow_ties=True)
-    ```
-    The problem: cannot simultaneously use `n_best=3` and `allow_ties=True`.
-    """
-    return root.regions.nations.customers.BEST(
-        per="regions", by=root.account_balance.DESC(), n_best=3, allow_ties=True
-    )
-
-
-def bad_pydough_impl_13(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Non-existent per name
-    return root.customers.orders.CALCULATE(root.RANKING(by=root.key.ASC(), per="custs"))
-
-
-def bad_pydough_impl_14(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Bad index of valid per name
-    return root.customers.orders.CALCULATE(
-        root.RANKING(by=root.key.ASC(), per="customers:2")
-    )
-
-
-def bad_pydough_impl_15(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Ambiguous per name
-    return root.customers.orders.customer.orders.lines.CALCULATE(
-        root.RANKING(by=root.extended_price.DESC(), per="orders")
-    )
-
-
-def bad_pydough_impl_16(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Malformed per name
-    return root.customers.orders.CALCULATE(
-        root.RANKING(by=root.key.ASC(), per="customers:k")
-    )
-
-
-def bad_pydough_impl_17(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Malformed per name
-    return root.customers.orders.CALCULATE(
-        root.RANKING(by=root.key.ASC(), per="customers:1:2")
-    )
-
-
-def bad_pydough_impl_18(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Malformed per name
-    return root.customers.orders.CALCULATE(
-        root.RANKING(by=root.key.ASC(), per="customers:")
-    )
-
-
-def bad_pydough_impl_19(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Malformed per name
-    return root.customers.orders.CALCULATE(
-        root.RANKING(by=root.key.ASC(), per="customers:0")
-    )
-
-
-def bad_pydough_impl_20(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Internal function name
-    return root.Nations.CALCULATE(
-        name=root.name,
-        var=root.SAMPLE_VAR(root.suppliers.account_balance),
-    )
-
-
-def bad_pydough_impl_21(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Internal function name
-    return root.Nations.CALCULATE(
-        name=root.name,
-        var=root.SAMPLE_VARIANCE(root.suppliers.account_balance),
-    )
-
-
-def bad_pydough_impl_22(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Internal function name
-    return root.Nations.CALCULATE(
-        name=root.name,
-        var=root.SAMPLE_STD(root.suppliers.account_balance),
-    )
-
-
-def bad_pydough_impl_23(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Internal function name
-    return root.Nations.CALCULATE(
-        name=root.name,
-        std=root.POPULATION_STD(root.suppliers.account_balance),
-    )
-
-
-def bad_pydough_impl_24(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Conflict between `name` of nations vs customers
-    return root.nations.CALCULATE(root.name).customers.CALCULATE(root.name)
-
-
-def bad_pydough_impl_25(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Conflict between `name` of regions vs customers
-    return root.regions.CALCULATE(root.name).nations.customers.CALCULATE(root.name)
-
-
-def bad_pydough_impl_26(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Conflict between `n` of partition vs orders
-    return (
-        root.orders.PARTITION("priorities", by=root.order_priority)
-        .CALCULATE(key=root.COUNT(root.orders))
-        .orders.CALCULATE(root.key)
-    )
-
-
-def bad_pydough_impl_27(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Treating CROSS as singular
-    return root.regions.CALCULATE(n1=root.name, n2=root.CROSS(root.regions).name)
-
-
-def bad_replace_too_many_args(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Too many arguments to replace
-    return root.nations.CALCULATE(
-        replace_name1=root.REPLACE(root.name, "a", "b", "c"),
-    )
-
-
-def bad_replace_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Not enough arguments to replace
-    return root.nations.CALCULATE(replace_name2=root.REPLACE("a"))
-
-
-def bad_str_count_too_many_args(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Too many arguments to str_count
-    return root.nations.CALCULATE(
-        str_count1=root.STRCOUNT(root.name, "a", "b"),
-    )
-
-
-def bad_str_count_few_args(root: UnqualifiedNode) -> UnqualifiedNode:
-    # Not enough arguments to str_count
-    return root.nations.CALCULATE(str_count2=root.STRCOUNT(root.name))
-
-
 @pytest.mark.parametrize(
-    "impl, error_msg",
+    "pydough_text, error_msg",
     [
         pytest.param(
-            bad_pydough_impl_01,
+            "result = nations.CALCULATE(nation_name=name, total_balance=SUM(account_balance))",
             "Unrecognized term of TPCH.nations: 'account_balance'. Did you mean: comment, customers, name, region_key, suppliers, region?",
-            id="01",
+            id="bad_name",
         ),
         pytest.param(
-            bad_pydough_impl_02,
+            "result = nations.CALCULATE(nation_name=FIZZBUZZ(name))",
             "PyDough nodes FIZZBUZZ is not callable. Did you mean to use a function?",
-            id="02",
+            id="non_function",
         ),
         pytest.param(
-            bad_pydough_impl_03,
+            "result = nations.CALCULATE(y=suppliers.CALCULATE(x=COUNT(supply_records)).x)",
             "Expected all terms in CALCULATE(y=suppliers.CALCULATE(x=COUNT(supply_records)).x) to be singular, but encountered a plural expression: suppliers.CALCULATE(x=COUNT(supply_records)).x",
-            id="03",
+            id="bad_plural_1",
         ),
         pytest.param(
-            bad_pydough_impl_04,
+            "result = TPCH.nations.name.hello",
             "Expected a collection, but received an expression: TPCH.nations.name",
-            id="04",
+            id="expression_instead_of_collection",
         ),
         pytest.param(
-            bad_pydough_impl_05,
+            "result = customers.CALCULATE(r=nation.region)",
             "Expected an expression, but received a collection: nation.region",
-            id="05",
+            id="collection_instead_of_expression",
         ),
         pytest.param(
-            bad_pydough_impl_06,
+            "result = suppliers.supply_records.CALCULATE(o=lines.order.order_date)",
             "Expected all terms in CALCULATE(o=lines.order.order_date) to be singular, but encountered a plural expression: lines.order.order_date",
-            id="06",
+            id="bad_plural_2",
         ),
         pytest.param(
-            bad_pydough_impl_07,
+            "lines.CALCULATE(v=MUL(extended_price, SUB(1, discount)))",
             "PyDough nodes SUB is not callable. Did you mean to use a function?",
-            id="07",
+            id="binop_function_call",
         ),
         pytest.param(
-            bad_pydough_impl_08,
+            "TPCH.lines.tax = 0",
             "PyDough objects do not yet support writing properties to them.",
-            id="08",
+            id="setattr",
         ),
         pytest.param(
-            bad_pydough_impl_09,
+            "best_customer = nations.customers.BEST(per='nations', by=account_balance.DESC())\n"
+            "result = regions.CALCULATE(n=best_customer.name)",
             "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1, allow_ties=False) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=1, allow_ties=False) == 1).name",
-            id="09",
+            id="bad_best_1",
         ),
         pytest.param(
-            bad_pydough_impl_10,
+            "best_customer = nations.customers.BEST(per='regions', by=account_balance.DESC(), allow_ties=True)\n"
+            "result = regions.CALCULATE(n=best_customer.name)",
             "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name",
-            id="10",
+            id="bad_best_2",
         ),
         pytest.param(
-            bad_pydough_impl_11,
-            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=2, allow_ties=True) == 1).name",
-            id="11",
+            "best_customer = nations.customers.BEST(per='regions', by=account_balance.DESC(), n_best=3)\n"
+            "result = regions.CALCULATE(n=best_customer.name)",
+            "Expected all terms in CALCULATE(n=nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=2, allow_ties=False) <= 3).name) to be singular, but encountered a plural expression: nations.customers.WHERE(RANKING(by=(account_balance.DESC(na_pos='last')), levels=2, allow_ties=False) <= 3).name",
+            id="bad_best_3",
         ),
         pytest.param(
-            bad_pydough_impl_12,
+            "result = regions.nations.customers.BEST(per='regions', by=account_balance.DESC(), n_best=3, allow_ties=True)",
             "Cannot allow ties when multiple best values are requested",
-            id="12",
+            id="bad_best_4",
         ),
         pytest.param(
-            bad_pydough_impl_13,
+            "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='custs'))",
             "Per string refers to unrecognized ancestor 'custs' of TPCH.customers.orders",
-            id="13",
+            id="bad_per_1",
         ),
         pytest.param(
-            bad_pydough_impl_14,
+            "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:2'))",
             "Per string 'customers:2' invalid as there are not 2 ancestors of the current context with name 'customers'.",
-            id="14",
+            id="bad_per_2",
         ),
         pytest.param(
-            bad_pydough_impl_15,
+            "result = customers.orders.customer.orders.lines.CALCULATE(RANKING(by=extended_price.DESC(), per='orders'))",
             "Per string 'orders' is ambiguous for TPCH.customers.orders.customer.orders.lines. Use the form 'orders:index' to disambiguate, where 'orders:1' refers to the most recent ancestor.",
-            id="15",
+            id="bad_per_3",
         ),
         pytest.param(
-            bad_pydough_impl_16,
+            "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:k'))",
             "Malformed per string: 'customers:k' (expected the index after ':' to be a positive integer)",
-            id="16",
+            id="bad_per_4",
         ),
         pytest.param(
-            bad_pydough_impl_17,
+            "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:1:2'))",
             "Malformed per string: 'customers:1:2' (expected 0 or 1 ':', found 2)",
-            id="17",
+            id="bad_per_5",
         ),
         pytest.param(
-            bad_pydough_impl_18,
+            "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:'))",
             "Malformed per string: 'customers:' (expected the index after ':' to be a positive integer)",
-            id="18",
+            id="bad_per_6",
         ),
         pytest.param(
-            bad_pydough_impl_19,
+            "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:0'))",
             "Malformed per string: 'customers:0' (expected the index after ':' to be a positive integer)",
-            id="19",
+            id="bad_per_7",
         ),
         pytest.param(
-            bad_pydough_impl_20,
+            "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",
             "PyDough nodes SAMPLE_VAR is not callable. Did you mean to use a function?",
-            id="20",
+            id="kwargfunc_1",
         ),
         pytest.param(
-            bad_pydough_impl_21,
+            "result = nations.CALCULATE(name=name, var=SAMPLE_VARIANCE(suppliers.account_balance))",
             "PyDough nodes SAMPLE_VARIANCE is not callable. Did you mean to use a function?",
-            id="21",
+            id="kwargfunc_2",
         ),
         pytest.param(
-            bad_pydough_impl_22,
+            "result = nations.CALCULATE(name=name, var=SAMPLE_STD(suppliers.account_balance))",
             "PyDough nodes SAMPLE_STD is not callable. Did you mean to use a function?",
-            id="22",
+            id="kwargfunc_3",
         ),
         pytest.param(
-            bad_pydough_impl_23,
+            "result = nations.CALCULATE(name=name, std=POPULATION_STD(suppliers.account_balance))",
             "PyDough nodes POPULATION_STD is not callable. Did you mean to use a function?",
-            id="23",
+            id="kwargfunc_4",
         ),
         pytest.param(
-            bad_pydough_impl_24,
+            "result = nations.CALCULATE(name).customers.CALCULATE(name)",
             "Unclear whether 'name' refers to a term of the current context or ancestor of collection TPCH.nations.CALCULATE(name=name).customers",
-            id="24",
+            id="downstream_1",
         ),
         pytest.param(
-            bad_pydough_impl_25,
+            "result = regions.CALCULATE(name).nations.customers.CALCULATE(name)",
             "Unclear whether 'name' refers to a term of the current context or ancestor of collection TPCH.regions.CALCULATE(name=name).nations.customers",
-            id="25",
+            id="downstream_2",
         ),
         pytest.param(
-            bad_pydough_impl_26,
+            "result = orders.PARTITION(name='priorities', by=order_priority).CALCULATE(key=COUNT(orders)).orders.CALCULATE(key)",
             "Unclear whether 'key' refers to a term of the current context or ancestor of collection TPCH.Partition(orders, name='priorities', by=order_priority).CALCULATE(key=COUNT(orders)).orders",
-            id="26",
+            id="downstream_3",
         ),
         pytest.param(
-            bad_pydough_impl_27,
+            "result = regions.CALCULATE(n1=name, n2=CROSS(regions).name)",
             "Expected all terms in CALCULATE(n1=name, n2=TPCH.regions.name) to be singular, but encountered a plural expression: TPCH.regions.name",
-            id="27",
+            id="plural_cross",
         ),
         pytest.param(
-            bad_replace_too_many_args,
+            "result = nations.CALCULATE(replace_name1=REPLACE(name, 'a', 'b', 'c'))",
             "Expected between 2 and 3 arguments inclusive, received 4",
             id="bad_replace_too_many_args",
         ),
         pytest.param(
-            bad_replace_few_args,
+            "result = nations.CALCULATE(replace_name2=REPLACE('a'))",
             "Expected between 2 and 3 arguments inclusive, received 1",
             id="bad_replace_few_args",
         ),
         pytest.param(
-            bad_str_count_too_many_args,
+            "result = nations.CALCULATE(str_count1=STRCOUNT(name, 'a', 'b'))",
             "Expected 2 arguments, received 3",
             id="bad_str_count_too_many_args",
         ),
         pytest.param(
-            bad_str_count_few_args,
+            "result = nations.CALCULATE(str_count2=STRCOUNT(name))",
             "Expected 2 arguments, received 1",
             id="bad_str_count_few_args",
         ),
     ],
 )
 def test_qualify_error(
-    impl: Callable[[UnqualifiedNode], UnqualifiedNode],
+    pydough_text: str,
     error_msg: str,
     get_sample_graph: graph_fetcher,
 ) -> None:
     """
-    Tests that strings representing the setup of PyDough unqualified objects
-    (with unknown variables already pre-pended with `_ROOT.`) are correctly
-    transformed into UnqualifiedNode objects with an expected string
-    representation. Each `pydough_str` should be called with `exec` to define
-    a variable `answer` that is an `UnqualifiedNode` instance.
+    Tests that the qualification process correctly raises the expected error
+    messages when the PyDough text is invalid. Takes in the PyDough text and
+    converts it to unqualified nodes with `from_string`, then qualifies it to
+    ensure that the error is raised as expected. The PyDough text can be 1 or
+    multiple lines, but must end with storing the answers in a variable
+    called `result`.
     """
     graph: GraphMetadata = get_sample_graph("TPCH")
-    root: UnqualifiedNode = UnqualifiedRoot(graph)
     default_config: PyDoughConfigs = pydough.active_session.config
     with pytest.raises(Exception, match=re.escape(error_msg)):
-        unqualified: UnqualifiedNode = impl(root)
+        unqualified: UnqualifiedNode = pydough.from_string(
+            pydough_text, answer_variable="result", metadata=graph
+        )
         qualify_node(unqualified, graph, default_config)
