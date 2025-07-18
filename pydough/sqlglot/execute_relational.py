@@ -23,12 +23,12 @@ from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.simplify import simplify
 from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
 
+import pydough
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
 )
-from pydough.errors import PyDoughSQLException
 from pydough.logger import get_logger
 from pydough.relational import RelationalRoot
 from pydough.relational.relational_expressions import (
@@ -69,7 +69,9 @@ def convert_relation_to_sql(
     except SqlglotError as e:
         sql_text: str = glot_expr.sql(sqlglot_dialect, pretty=True)
         print(f"ERROR WHILE OPTIMIZING QUERY:\n{sql_text}")
-        raise PyDoughSQLException(*e.args)
+        raise pydough.active_session.error_builder.sql_runtime_failure(
+            sql_text, e, False
+        ) from e
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)

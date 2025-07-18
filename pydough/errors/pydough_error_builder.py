@@ -4,11 +4,12 @@ Definition of the base class for creating exceptions in PyDough.
 
 from typing import TYPE_CHECKING
 
-from pydough.errors import PyDoughException, PyDoughQDAGException
+from pydough.errors import PyDoughException, PyDoughQDAGException, PyDoughSQLException
 
 if TYPE_CHECKING:
     from pydough.pydough_operators import PyDoughOperator
     from pydough.qdag import PyDoughCollectionQDAG, PyDoughExpressionQDAG
+    from pydough.relational import CallExpression
 
 
 class PyDoughErrorBuilder:
@@ -182,3 +183,50 @@ class PyDoughErrorBuilder:
             return PyDoughQDAGException(
                 f"Expected `columns` argument to be a list or dictionary, found {columns.__class__.__name__}"
             )
+
+    def sql_runtime_failure(
+        self, sql: str, error: Exception, execute: bool
+    ) -> PyDoughException:
+        """
+        Creates an exception for when a SQL query fails to execute at runtime
+        or optimization.
+
+        Args:
+            `sql`: The SQL query that failed.
+            `error`: The exception raised during the SQL execution or
+            optimization.
+            `execute`: Whether the failure occurred during execution (True) or
+            optimization (False).
+
+        Returns:
+            An exception indicating the SQL runtime/optimization failure.
+        """
+        if execute:
+            return PyDoughSQLException(
+                "SQL query execution failed. Please check the query syntax and database connection:\n"
+                f"{sql}\nError: {error}"
+            )
+        else:
+            return PyDoughSQLException(
+                "SQL query optimization failed. Please check the query syntax:\n"
+                f"{sql}\nError: {error}"
+            )
+
+    def sql_call_conversion_error(
+        self, call: "CallExpression", error: Exception
+    ) -> PyDoughException:
+        """
+        Creates an exception for when the conversion of a call expression from
+        Relational to SQL fails.
+
+        Args:
+            `call`: The relational function call expression that
+            failed to convert.
+            `error`: The exception raised during the conversion.
+
+        Returns:
+            An exception indicating the SQL call conversion failure.
+        """
+        return PyDoughQDAGException(
+            f"Failed to convert expression {call.to_string(True)} to SQL: {error}"
+        )

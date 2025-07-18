@@ -14,6 +14,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 from sqlglot.expressions import Star as SQLGlotStar
 
+import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
@@ -76,9 +77,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         input_types: list[PyDoughType] = [
             arg.data_type for arg in call_expression.inputs
         ]
-        output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
-            call_expression.op, input_exprs, input_types
-        )
+        try:
+            output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
+                call_expression.op, input_exprs, input_types
+            )
+        except Exception as e:
+            raise pydough.active_session.error_builder.sql_call_conversion_error(
+                call_expression, e
+            )
         self._stack.append(output_expr)
 
     @staticmethod

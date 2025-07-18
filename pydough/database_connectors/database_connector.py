@@ -11,7 +11,8 @@ from enum import Enum
 
 import pandas as pd
 
-from pydough.errors import PyDoughSessionException, PyDoughSQLException
+import pydough
+from pydough.errors import PyDoughSessionException
 
 from .db_types import DBConnection, DBCursor
 
@@ -49,7 +50,9 @@ class DatabaseConnection:
             cursor.execute(sql)
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
-            raise PyDoughSQLException(*e.args) from e
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                sql, e, True
+            ) from e
         column_names: list[str] = [description[0] for description in cursor.description]
         # No need to close the cursor, as its closed by del.
         # TODO: (gh #174) Cache the cursor?
