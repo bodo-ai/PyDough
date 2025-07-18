@@ -16,6 +16,7 @@ implementations in the SQL generation layer.
 
 import pandas as pd
 import datetime
+import pydough
 
 
 def arithmetic_and_binary_operators():
@@ -228,3 +229,15 @@ def casting_functions():
         cast_to_integer=INTEGER(total_price),
         cast_to_float=FLOAT(ship_priority),
     )
+
+
+def range_functions():
+    """Test all range PyDough functions.
+    Main purpose to verify these functions are working as expected with
+    supported SQL dialects.
+    """
+    return pydough.range_collection(
+        "simple_range",
+        "value",
+        10,  # end value
+    ).ORDER_BY(value.DESC())  # Order by descending value

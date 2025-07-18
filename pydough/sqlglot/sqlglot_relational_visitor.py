@@ -615,9 +615,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             rows = [(None,)]
 
         # Step 2: Build VALUES expression WITHOUT column names
-        values_expr = values(
-            values=rows, alias=generated_table.name, columns=column_names
-        )
+        values_expr = values(values=rows, alias=generated_table.name)
 
         # Step 3: Create a SELECT statement from the VALUES expression
         # and alias the values column (named "column1" in SQLite) to the first column name.

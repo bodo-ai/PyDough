@@ -53,6 +53,11 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     window_sliding_frame_relsize,
     window_sliding_frame_relsum,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+    simple_range_3,
+)
 from tests.testing_utilities import (
     graph_fetcher,
 )
@@ -192,6 +197,9 @@ from tests.testing_utilities import (
         pytest.param(
             casting_functions, None, "casting_functions", id="casting_functions"
         ),
+        pytest.param(simple_range_1, None, "simple_range_1", id="simple_range_1"),
+        pytest.param(simple_range_2, None, "simple_range_2", id="simple_range_2"),
+        pytest.param(simple_range_3, None, "simple_range_3", id="simple_range_3"),
     ],
 )
 def test_pydough_to_sql_tpch(

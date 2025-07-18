@@ -58,8 +58,12 @@ class PyDoughUserGeneratedCollection(ABC):
         """Return information about data in the collection."""
 
     @abstractmethod
-    def always_non_empty(self) -> bool:
+    def always_exists(self) -> bool:
         """Check if the collection is always non-empty."""
+
+    @abstractmethod
+    def is_singular(self) -> bool:
+        """Returns True if the collection is guaranteed to contain at most one row."""
 
     @abstractmethod
     def to_string(self) -> str:

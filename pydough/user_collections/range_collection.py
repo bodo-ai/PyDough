@@ -70,14 +70,13 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
         return self.range
 
     def __len__(self) -> int:
-        if self.start is None or self.end is None or self.step is None:
-            return 0
-        elif self.start >= self.end:
-            return 0
-        else:
-            return (self.end - self.start + self.step - 1) // self.step
+        return len(self._range)
 
-    def always_non_empty(self) -> bool:
+    def is_singular(self) -> bool:
+        """Returns True if the collection is guaranteed to contain at most one row."""
+        return len(self) <= 1
+
+    def always_exists(self) -> bool:
         """Check if the range collection is always non-empty."""
         return len(self) > 0
 

@@ -678,8 +678,7 @@ class HybridTree:
                 # record for each parent, by definition.
                 pass
             case HybridUserGeneratedCollection():
-                # User-generated collections are always guaranteed to exist.
-                pass
+                return start_operation.user_collection.collection.always_exists()
             case _:
                 raise NotImplementedError(
                     f"Invalid start of pipeline: {start_operation.__class__.__name__}"
@@ -730,11 +729,8 @@ class HybridTree:
             case HybridChildPullUp():
                 if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
                     return False
-            # HA TODO: confirm is that right?
             case HybridUserGeneratedCollection():
-                # User-generated collections are always guaranteed to be
-                # singular.
-                pass
+                return self.pipeline[0].user_collection.collection.is_singular()
             case _:
                 return False
         # The current level is fine, so check any levels above it next.

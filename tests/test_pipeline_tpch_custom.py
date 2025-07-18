@@ -177,7 +177,11 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
-from tests.test_pydough_functions.user_collections import simple_range_1, simple_range_2
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+    simple_range_3,
+)
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
@@ -2839,6 +2843,62 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_range_2",
             ),
             id="simple_range_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_size": [
+                            1,
+                            6,
+                            11,
+                            16,
+                            21,
+                            26,
+                            31,
+                            36,
+                            41,
+                            46,
+                            51,
+                            56,
+                            61,
+                            66,
+                            71,
+                            76,
+                            81,
+                            86,
+                            91,
+                            96,
+                        ],
+                        "n_parts": [
+                            228,
+                            225,
+                            206,
+                            234,
+                            228,
+                            221,
+                            231,
+                            208,
+                            245,
+                            226,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    }
+                ),
+                "simple_range_3",
+            ),
+            id="simple_range_3",
         ),
     ],
 )

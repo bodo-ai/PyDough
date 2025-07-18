@@ -503,7 +503,11 @@ class HybridUserGeneratedCollection(HybridOperation):
         terms: dict[str, HybridExpr] = {}
         for name, typ in user_collection.collection.column_names_and_types:
             terms[name] = HybridRefExpr(name, typ)
-        super().__init__(terms, {}, [], [])
+        unique_exprs: list[HybridExpr] = []
+        for name in sorted(self.user_collection.unique_terms, key=str):
+            expr: PyDoughExpressionQDAG = self.user_collection.get_expr(name)
+            unique_exprs.append(HybridRefExpr(name, expr.pydough_type))
+        super().__init__(terms, {}, [], unique_exprs)
 
     @property
     def user_collection(self) -> PyDoughUserGeneratedCollectionQDag:
