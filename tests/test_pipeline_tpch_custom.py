@@ -177,6 +177,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
+from tests.test_pydough_functions.user_collections import simple_range_1, simple_range_2
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
@@ -2820,6 +2821,24 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "quantile_function_test_4",
             ),
             id="quantile_function_test_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_1,
+                "TPCH",
+                lambda: pd.DataFrame({"value": range(10)}),
+                "simple_range_1",
+            ),
+            id="simple_range_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_2,
+                "TPCH",
+                lambda: pd.DataFrame({"value": range(9, -1, -1)}),
+                "simple_range_2",
+            ),
+            id="simple_range_2",
         ),
     ],
 )

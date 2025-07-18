@@ -16,6 +16,7 @@ __all__ = [
     "HybridPartition",
     "HybridPartitionChild",
     "HybridRoot",
+    "HybridUserGeneratedCollection",
 ]
 
 
@@ -26,6 +27,9 @@ from pydough.qdag import (
     CollectionAccess,
     ColumnProperty,
     PyDoughExpressionQDAG,
+)
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
 )
 
 from .hybrid_connection import HybridConnection
@@ -483,3 +487,30 @@ class HybridLimit(HybridOperation):
 
     def search_term_definition(self, name: str) -> HybridExpr | None:
         return self.predecessor.search_term_definition(name)
+
+
+class HybridUserGeneratedCollection(HybridOperation):
+    """
+    Class for HybridOperation corresponding to a user-generated collection.
+    """
+
+    def __init__(self, user_collection: PyDoughUserGeneratedCollectionQDag):
+        """
+        Args:
+            `collection`: the QDAG node for the user-generated collection.
+        """
+        self._user_collection: PyDoughUserGeneratedCollectionQDag = user_collection
+        terms: dict[str, HybridExpr] = {}
+        for name, typ in user_collection.collection.column_names_and_types:
+            terms[name] = HybridRefExpr(name, typ)
+        super().__init__(terms, {}, [], [])
+
+    @property
+    def user_collection(self) -> PyDoughUserGeneratedCollectionQDag:
+        """
+        The user-generated collection that this hybrid operation represents.
+        """
+        return self._user_collection
+
+    def __repr__(self):
+        return f"USER_GEN_COLLECTION[{self.user_collection.name}]"

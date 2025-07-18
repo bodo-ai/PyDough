@@ -22,4 +22,4 @@ def simple_range_2():
         "simple_range",
         "value",
         10,  # end value
-    ).ORDER_BY(value.ASC())
+    ).ORDER_BY(value.DESC())

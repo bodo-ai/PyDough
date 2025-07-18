@@ -407,10 +407,9 @@ class AstNodeBuilder:
         Creates a new user-defined collection.
 
         Args:
-            `name`: the name of the collection.
-            `column_name`: the name of the column that will hold the integer values.
-            `args`: the arguments that define the collection, such as a range of
-            integers or a dataframe.
+            `preceding_context`: the preceding collection that the
+            user-defined collection is based on.
+            `user_collection`: the user-defined collection to be created.
 
         Returns:
             The newly created user-defined collection.

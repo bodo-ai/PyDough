@@ -118,3 +118,12 @@ class RelationalVisitor(ABC):
         Args:
             `root`: The root node to visit.
         """
+
+    @abstractmethod
+    def visit_generated_table(self, generated_table) -> None:
+        """
+        Visit a GeneratedTable node.
+
+        Args:
+            `generated_table`: The generated table node to visit.
+        """
