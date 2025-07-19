@@ -57,6 +57,10 @@ from tests.test_pydough_functions.user_collections import (
     simple_range_1,
     simple_range_2,
     simple_range_3,
+    simple_range_4,
+    simple_range_5,
+    user_range_collection_1,
+    user_range_collection_2,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -200,6 +204,24 @@ from tests.testing_utilities import (
         pytest.param(simple_range_1, None, "simple_range_1", id="simple_range_1"),
         pytest.param(simple_range_2, None, "simple_range_2", id="simple_range_2"),
         pytest.param(simple_range_3, None, "simple_range_3", id="simple_range_3"),
+        pytest.param(simple_range_4, None, "simple_range_4", id="simple_range_4"),
+        pytest.param(simple_range_5, None, "simple_range_5", id="simple_range_5"),
+        pytest.param(
+            user_range_collection_1,
+            None,
+            "user_range_collection_1",
+            id="user_range_collection_1",
+        ),
+        # TODO: FIXME
+        pytest.param(
+            user_range_collection_2,
+            None,
+            "user_range_collection_2",
+            id="user_range_collection_2",
+            marks=pytest.mark.skip(
+                "ValueError: Context does not contain expression BACK(1).x. Available expressions: [y]"
+            ),
+        ),
     ],
 )
 def test_pydough_to_sql_tpch(

@@ -181,6 +181,9 @@ from tests.test_pydough_functions.user_collections import (
     simple_range_1,
     simple_range_2,
     simple_range_3,
+    simple_range_4,
+    simple_range_5,
+    user_range_collection_1,
 )
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
@@ -2848,6 +2851,36 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             PyDoughPandasTest(
                 simple_range_3,
                 "TPCH",
+                lambda: pd.DataFrame({"foo": range(15, 20)}),
+                "simple_range_3",
+            ),
+            id="simple_range_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_4,
+                "TPCH",
+                lambda: pd.DataFrame({"foo": range(10, 0, -1)}),
+                "simple_range_4",
+            ),
+            id="simple_range_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_5,
+                "TPCH",
+                # TODO: even though generated SQL has CAST(NULL AS INT) AS x
+                # it returns x as object datatype.
+                # using `x: range(-1)` returns int64 so temp. using dtype=object
+                lambda: pd.DataFrame({"x": pd.Series(range(-1), dtype="object")}),
+                "simple_range_5",
+            ),
+            id="simple_range_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_1,
+                "TPCH",
                 lambda: pd.DataFrame(
                     {
                         "part_size": [
@@ -2896,9 +2929,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         ],
                     }
                 ),
-                "simple_range_3",
+                "user_range_collection_1",
             ),
-            id="simple_range_3",
+            id="user_range_collection_1",
         ),
     ],
 )

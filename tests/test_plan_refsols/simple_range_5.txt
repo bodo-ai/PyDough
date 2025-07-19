@@ -1,0 +1,2 @@
+ROOT(columns=[('x', x)], orderings=[])
+ GENERATED_TABLE(table=T3, columns={'x': x})

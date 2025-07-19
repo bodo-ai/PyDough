@@ -36,13 +36,10 @@ def range_collection(
             f"Expected 'column' to be a string, got {type(column).__name__}"
         )
     r = range(*args)
-    start, end, step = r.start, r.stop, r.step
     range_collection = RangeGeneratedCollection(
         name=name,
         column_name=column,
-        start=start,
-        end=end,
-        step=step,
+        range=r,
     )
 
     return UnqualifiedGeneratedCollection(range_collection)

@@ -24,9 +24,7 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
         self,
         name: str,
         column_name: str,
-        start: int | None,
-        end: int | None,
-        step: int | None,
+        range: range,
     ) -> None:
         super().__init__(
             name=name,
@@ -35,10 +33,10 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
             ],
             types=[NumericType()],
         )
-        self._start = start if start is not None else 0
-        self._end = end if end is not None else 0
-        self._step = step if step is not None else 1
-        self._range = range(self._start, self._end, self._step)
+        self._range = range
+        self._start = self._range.start
+        self._end = self._range.stop
+        self._step = self._range.step
 
     @property
     def start(self) -> int | None:

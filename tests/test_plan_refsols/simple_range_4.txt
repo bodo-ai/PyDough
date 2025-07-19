@@ -1,0 +1,2 @@
+ROOT(columns=[('N', N)], orderings=[(N):asc_first])
+ GENERATED_TABLE(table=T2, columns={'N': N})

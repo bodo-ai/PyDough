@@ -612,24 +612,37 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
 
         # Handle empty range by injecting a single NULL row
         if not rows:
-            rows = [(None,)]
+            from sqlglot import exp
 
-        # Step 2: Build VALUES expression WITHOUT column names
-        values_expr = values(values=rows, alias=generated_table.name)
+            query = (
+                Select()
+                .select(
+                    SQLGlotAlias(
+                        this=exp.Cast(
+                            this=exp.Null(), to=exp.DataType.build("INTEGER")
+                        ),
+                        alias=Identifier(this=column_names[0]),
+                    )
+                )
+                .where(exp.false())
+            )
+        else:
+            # Step 2: Build VALUES expression WITHOUT column names
+            values_expr = values(values=rows, alias=generated_table.name)
 
-        # Step 3: Create a SELECT statement from the VALUES expression
-        # and alias the values column (named "column1" in SQLite) to the first column name.
-        # TODO: Handle other dialects that may not use "column1" as the default name.
-        query = (
-            Select()
-            .from_(values_expr)
-            .select(
-                SQLGlotAlias(
-                    this=SQLGlotColumn(this=Identifier(this="column1")),
-                    alias=Identifier(this=column_names[0]),
+            # Step 3: Create a SELECT statement from the VALUES expression
+            # and alias the values column (named "column1" in SQLite) to the first column name.
+            # TODO: Handle other dialects that may not use "column1" as the default name.
+            query = (
+                Select()
+                .from_(values_expr)
+                .select(
+                    SQLGlotAlias(
+                        this=SQLGlotColumn(this=Identifier(this="column1")),
+                        alias=Identifier(this=column_names[0]),
+                    )
                 )
             )
-        )
 
         # Step 4: Append to stack
         self._stack.append(query)
