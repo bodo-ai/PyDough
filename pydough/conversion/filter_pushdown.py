@@ -10,6 +10,7 @@ from pydough.relational import (
     ColumnReference,
     EmptySingleton,
     Filter,
+    GeneratedTable,
     Join,
     JoinType,
     Limit,
@@ -143,7 +144,7 @@ def push_filters(
             # be transposed beneath a limit without changing its output.
             node._input = push_filters(node.input, set())
             return build_filter(node, filters)
-        case EmptySingleton() | Scan():
+        case EmptySingleton() | Scan() | GeneratedTable():
             # For remaining nodes, materialize all of the remaining filters.
             return build_filter(node, filters)
         case _:
