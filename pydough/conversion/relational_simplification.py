@@ -108,10 +108,8 @@ def simplify_function_call(
         case pydop.COUNT | pydop.NDISTINCT:
             output_predicates.add(LogicalPredicate.NOT_NULL)
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-            if (
-                len(expr.inputs) == 1
-                and LogicalPredicate.NOT_NULL in arg_predicates[0]
-                and not no_group_aggregate
+            if not no_group_aggregate and (
+                len(expr.inputs) == 0 or LogicalPredicate.NOT_NULL in arg_predicates[0]
             ):
                 output_predicates.add(LogicalPredicate.POSITIVE)
         case (
@@ -158,19 +156,36 @@ def simplify_function_call(
             | pydop.BAN
             | pydop.BOR
             | pydop.BXR
-            | pydop.EQU
-            | pydop.NEQ
-            | pydop.GEQ
-            | pydop.GRT
-            | pydop.LET
-            | pydop.LEQ
             | pydop.STARTSWITH
             | pydop.ENDSWITH
             | pydop.CONTAINS
             | pydop.LIKE
             | pydop.SQRT
+            | pydop.MONOTONIC
         ):
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.EQU | pydop.NEQ | pydop.GEQ | pydop.GRT | pydop.LET | pydop.LEQ:
+            match (expr.op, expr.inputs[1]):
+                case (pydop.GRT, LiteralExpression()) if (
+                    expr.inputs[1].value == 0
+                    and LogicalPredicate.POSITIVE in arg_predicates[0]
+                ):
+                    output_expr = LiteralExpression(True, expr.data_type)
+                    output_predicates.add(LogicalPredicate.NOT_NULL)
+                    output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+                case (pydop.GEQ, LiteralExpression()) if (
+                    expr.inputs[1].value == 0
+                    and LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]
+                ):
+                    output_expr = LiteralExpression(True, expr.data_type)
+                    output_predicates.add(LogicalPredicate.NOT_NULL)
+                    output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+                case _:
+                    pass
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+
         case pydop.PRESENT:
             if LogicalPredicate.NOT_NULL in arg_predicates[0]:
                 output_expr = LiteralExpression(True, expr.data_type)
@@ -189,6 +204,32 @@ def simplify_window_call(
     TODO
     """
     output_predicates: set[LogicalPredicate] = set()
+    no_frame: bool = not (
+        expr.kwargs.get("cumulative", False) or "frame" in expr.kwargs
+    )
+    match expr.op:
+        case pydop.RANKING | pydop.PERCENTILE:
+            output_predicates.add(LogicalPredicate.NOT_NULL)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            output_predicates.add(LogicalPredicate.POSITIVE)
+        case pydop.RELSUM | pydop.RELAVG:
+            if LogicalPredicate.NOT_NULL in arg_predicates[0] and no_frame:
+                output_predicates.add(LogicalPredicate.NOT_NULL)
+            if LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]:
+                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            if LogicalPredicate.POSITIVE in arg_predicates[0] and no_frame:
+                output_predicates.add(LogicalPredicate.POSITIVE)
+        case pydop.RELSIZE:
+            if no_frame:
+                output_predicates.add(LogicalPredicate.NOT_NULL)
+                output_predicates.add(LogicalPredicate.POSITIVE)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.RELCOUNT:
+            if no_frame:
+                output_predicates.add(LogicalPredicate.NOT_NULL)
+                if LogicalPredicate.NOT_NULL in arg_predicates[0]:
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
     return expr, output_predicates
 
 
@@ -367,6 +408,7 @@ def simplify_expressions(
                         and expr.input_name != node.default_input_aliases[0]
                     ):
                         preds.discard(LogicalPredicate.NOT_NULL)
+                        preds.discard(LogicalPredicate.POSITIVE)
         case Aggregate():
             for name, expr in node.keys.items():
                 ref_expr = ColumnReference(name, expr.data_type)
