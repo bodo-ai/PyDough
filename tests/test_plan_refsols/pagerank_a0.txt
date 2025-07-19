@@ -1,3 +1,2 @@
-ROOT(columns=[('key', s_key), ('page_rank', page_rank_0)], orderings=[(s_key):asc_first])
- PROJECT(columns={'page_rank_0': ROUND(1.0:numeric / RELSIZE(args=[], partition=[], order=[]), 5:numeric), 's_key': s_key})
-  SCAN(table=main.SITES, columns={'s_key': s_key})
+ROOT(columns=[('key', s_key), ('page_rank', ROUND(1.0:numeric / RELSIZE(args=[], partition=[], order=[]), 5:numeric))], orderings=[(s_key):asc_first])
+ SCAN(table=main.SITES, columns={'s_key': s_key})

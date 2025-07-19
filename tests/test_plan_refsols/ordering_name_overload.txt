@@ -1,3 +1,2 @@
-ROOT(columns=[('ordering_0', n_comment), ('ordering_1', n_name), ('ordering_2', n_nationkey), ('ordering_3', n_comment), ('ordering_4', n_nationkey), ('ordering_5', n_name), ('ordering_6', ordering_3), ('ordering_7', ordering_4), ('ordering_8', ordering_5)], orderings=[(ordering_3):asc_last, (ordering_4):desc_last, (ordering_5):asc_first])
- PROJECT(columns={'n_comment': n_comment, 'n_name': n_name, 'n_nationkey': n_nationkey, 'ordering_3': LOWER(n_name), 'ordering_4': ABS(n_nationkey), 'ordering_5': LENGTH(n_comment)})
-  SCAN(table=tpch.NATION, columns={'n_comment': n_comment, 'n_name': n_name, 'n_nationkey': n_nationkey})
+ROOT(columns=[('ordering_0', n_comment), ('ordering_1', n_name), ('ordering_2', n_nationkey), ('ordering_3', n_comment), ('ordering_4', n_nationkey), ('ordering_5', n_name), ('ordering_6', LOWER(n_name)), ('ordering_7', ABS(n_nationkey)), ('ordering_8', LENGTH(n_comment))], orderings=[(LOWER(n_name)):asc_last, (ABS(n_nationkey)):desc_last, (LENGTH(n_comment)):asc_first])
+ SCAN(table=tpch.NATION, columns={'n_comment': n_comment, 'n_name': n_name, 'n_nationkey': n_nationkey})

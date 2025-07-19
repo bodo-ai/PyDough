@@ -83,6 +83,7 @@ from .hybrid_operations import (
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
 from .merge_projects import merge_projects
+from .projection_pullup import pullup_projections
 
 
 @dataclass
@@ -587,7 +588,7 @@ class RelTranslation:
             ConnectionType.NO_MATCH_AGGREGATION,
         )
         out_columns: dict[HybridExpr, ColumnReference] = {}
-        keys: dict[str, ColumnReference] = {}
+        keys: dict[str, RelationalExpression] = {}
         aggregations: dict[str, CallExpression] = {}
         used_names: set[str] = set()
         # First, propagate all key columns into the output, and add them to
@@ -1438,7 +1439,7 @@ def optimize_relational_tree(
     # Step 5: re-run projection merging.
     root = confirm_root(merge_projects(root))
 
-    # Step 6: prune unused columns.
+    # Step 6: re-run column pruning.
     root = ColumnPruner().prune_unused_columns(root)
 
     # Step 7: bubble up names from the leaf nodes to further encourage simpler
@@ -1446,11 +1447,22 @@ def optimize_relational_tree(
     # possible.
     root = bubble_column_names(root)
 
-    # Step 8: re-run column pruning.
-    root = ColumnPruner().prune_unused_columns(root)
+    # Step 8: run projection pullup followed by column pruning 2x.
+    for _ in range(2):
+        root = confirm_root(pullup_projections(root))
+        root = ColumnPruner().prune_unused_columns(root)
 
-    # Step 9: re-run projection merging.
-    root = confirm_root(merge_projects(root))
+    # Step 9: re-run filter pushdown
+    root._input = push_filters(root.input, set())
+
+    # Step 10: re-run projection merging, without pushing into joins.
+    root = confirm_root(merge_projects(root, push_into_joins=False))
+
+    # Step 11: re-run column bubbling
+    root = bubble_column_names(root)
+
+    # Step 12: re-run column pruning.
+    root = ColumnPruner().prune_unused_columns(root)
 
     return root
 

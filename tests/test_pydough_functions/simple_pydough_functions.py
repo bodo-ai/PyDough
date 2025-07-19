@@ -3097,3 +3097,94 @@ def pagerank(n_iters):
 
     # Output the final PageRank values, rounded to 5 decimal places,
     return source.CALCULATE(key, page_rank=ROUND(page_rank, 5)).ORDER_BY(key.ASC())
+
+
+def agg_simplification_1():
+    # Partition the tickers on the value
+    # `LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))`, then for every
+    # combination of 1, 2, -1, -3, 0, 0.5, null, and the partition key, call
+    # the aggregation functions SUM, COUNT, NDISTINCT, AVG, MIN, MAX,
+    # ANYTHING, and MEDIAN, and QUANTILE on each of the inputs.
+    kwargs = {}
+    args = [
+        tickers.one,
+        tickers.two,
+        tickers.negative_one,
+        tickers.negative_three,
+        tickers.zero,
+        tickers.half,
+        tickers.null,
+        tickers.aug_exchange,
+    ]
+    functions = [
+        ("su", SUM),
+        ("co", COUNT),
+        ("nd", NDISTINCT),
+        ("av", AVG),
+        ("mi", MIN),
+        ("ma", MAX),
+        ("an", ANYTHING),
+        ("me", MEDIAN),
+    ]
+    for prefix, func in functions:
+        for idx, arg in enumerate(args):
+            kwargs[f"{prefix}{idx + 1}"] = func(arg)
+    for idx, arg in enumerate(args):
+        kwargs[f"qu{idx + 1}"] = QUANTILE(arg, (idx + 1) / 10)
+    return (
+        tickers.CALCULATE(
+            aug_exchange=LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))
+        )
+        .CALCULATE(
+            one=1,
+            two=2,
+            negative_one=-1,
+            negative_three=-3,
+            zero=0,
+            half=0.5,
+            null=None,
+        )
+        .PARTITION(name="exchanges", by=aug_exchange)
+        .CALCULATE(
+            aug_exchange,
+            **kwargs,
+        )
+        .ORDER_BY(aug_exchange.ASC())
+    )
+
+
+def agg_simplification_2():
+    # Partition the customers by city/state then by state to compute the
+    # following aggregations per-state:
+    # 1. Number of cities pers state
+    # 2. Total number of customers per state
+    # 3. Total postal code sum per state
+    # 4. Total number of customers with names starting with "j" per state
+    # 5. Minimum phone number per state
+    # 6. Maximum phone number per state
+    # 7-9: Convoluted ways to pass around the lowercase state name
+    return (
+        customers.PARTITION(name="cities", by=(city, state))
+        .CALCULATE(
+            n=COUNT(customers),
+            nj=COUNT(KEEP_IF(customers.name, STARTSWITH(LOWER(customers.name), "j"))),
+            sz=SUM(INTEGER(customers.postal_code)),
+            minp=MIN(customers.phone),
+            maxp=MAX(customers.phone),
+            anys=ANYTHING(LOWER(customers.state)),
+        )
+        .PARTITION(name="states", by=state)
+        .CALCULATE(
+            state,
+            a1=COUNT(cities),
+            a2=SUM(cities.n),
+            a3=SUM(cities.nj),
+            a4=SUM(cities.sz),
+            a5=MIN(cities.minp),
+            a6=MAX(cities.maxp),
+            a7=MIN(cities.anys),
+            a8=MAX(cities.anys),
+            a9=ANYTHING(cities.anys),
+        )
+        .ORDER_BY(state.ASC())
+    )

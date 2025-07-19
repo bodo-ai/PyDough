@@ -1,14 +1,14 @@
 WITH _s0 AS (
   SELECT
+    DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)) AS quarter,
     SUM(sale_price) AS sum_sale_price,
-    customer_id,
-    DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)) AS quarter
+    customer_id
   FROM main.sales
   WHERE
     EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
   GROUP BY
-    customer_id,
-    DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP))
+    DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)),
+    customer_id
 ), _t2 AS (
   SELECT
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
