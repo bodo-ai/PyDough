@@ -59,7 +59,7 @@ def simplify_function_call(
             if (
                 len(expr.inputs) == 1
                 and LogicalPredicate.NOT_NULL in arg_predicates[0]
-                and no_group_aggregate
+                and not no_group_aggregate
             ):
                 output_predicates.add(LogicalPredicate.POSITIVE)
         case (
@@ -72,12 +72,16 @@ def simplify_function_call(
             | pydop.QUANTILE
         ):
             for predicate in [
-                LogicalPredicate.NOT_NULL,
                 LogicalPredicate.NOT_NEGATIVE,
                 LogicalPredicate.POSITIVE,
             ]:
                 if predicate in arg_predicates[0]:
                     output_predicates.add(predicate)
+            if (
+                LogicalPredicate.NOT_NULL in arg_predicates[0]
+                and not no_group_aggregate
+            ):
+                output_predicates.add(LogicalPredicate.NOT_NULL)
         case pydop.DEFAULT_TO:
             if LogicalPredicate.NOT_NULL in arg_predicates[0]:
                 output_expr = expr.inputs[0]
