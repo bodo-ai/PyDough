@@ -154,11 +154,11 @@ WITH _t1 AS (
 SELECT
   LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS aug_exchange,
   COUNT(*) AS su1,
-  COALESCE(COUNT(*) * 2, 0) AS su2,
-  COALESCE(COUNT(*) * -1, 0) AS su3,
-  COALESCE(COUNT(*) * -3, 0) AS su4,
+  COUNT(*) * 2 AS su2,
+  COUNT(*) * -1 AS su3,
+  COUNT(*) * -3 AS su4,
   0 AS su5,
-  COALESCE(COUNT(*) * 0.5, 0) AS su6,
+  COUNT(*) * 0.5 AS su6,
   COALESCE(NULL, 0) AS su7,
   COALESCE(
     LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END),

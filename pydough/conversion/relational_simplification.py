@@ -42,6 +42,55 @@ class LogicalPredicate(Enum):
     POSITIVE = "POSITIVE"
 
 
+NULL_PROPAGATING_OPS: set[pydop.PyDoughOperator] = {
+    pydop.ADD,
+    pydop.SUB,
+    pydop.MUL,
+    pydop.BAN,
+    pydop.BOR,
+    pydop.NOT,
+    pydop.LOWER,
+    pydop.UPPER,
+    pydop.LENGTH,
+    pydop.STRIP,
+    pydop.REPLACE,
+    pydop.FIND,
+    pydop.ABS,
+    pydop.CEIL,
+    pydop.FLOOR,
+    pydop.ROUND,
+    pydop.EQU,
+    pydop.NEQ,
+    pydop.GEQ,
+    pydop.GRT,
+    pydop.LET,
+    pydop.LEQ,
+    pydop.BXR,
+    pydop.STARTSWITH,
+    pydop.ENDSWITH,
+    pydop.CONTAINS,
+    pydop.LIKE,
+    pydop.SIGN,
+    pydop.SMALLEST,
+    pydop.LARGEST,
+    pydop.IFF,
+    pydop.YEAR,
+    pydop.MONTH,
+    pydop.DAY,
+    pydop.HOUR,
+    pydop.MINUTE,
+    pydop.SECOND,
+    pydop.DATEDIFF,
+    pydop.DAYNAME,
+    pydop.DAYOFWEEK,
+    pydop.SLICE,
+    pydop.LPAD,
+    pydop.RPAD,
+    pydop.MONOTONIC,
+    pydop.JOIN_STRINGS,
+}
+
+
 def simplify_function_call(
     expr: CallExpression,
     arg_predicates: list[set[LogicalPredicate]],
@@ -52,6 +101,9 @@ def simplify_function_call(
     """
     output_expr: RelationalExpression = expr
     output_predicates: set[LogicalPredicate] = set()
+    if expr.op in NULL_PROPAGATING_OPS:
+        if all(LogicalPredicate.NOT_NULL in preds for preds in arg_predicates):
+            output_predicates.add(LogicalPredicate.NOT_NULL)
     match expr.op:
         case pydop.COUNT | pydop.NDISTINCT:
             output_predicates.add(LogicalPredicate.NOT_NULL)
@@ -92,6 +144,40 @@ def simplify_function_call(
                 for pred in arg_predicates[0]:
                     if all(pred in preds for preds in arg_predicates):
                         output_predicates.add(pred)
+        case pydop.ABS:
+            if (
+                LogicalPredicate.POSITIVE in arg_predicates[0]
+                or LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]
+            ):
+                output_expr = expr.inputs[0]
+                output_predicates = arg_predicates[0]
+            else:
+                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case (
+            pydop.LENGTH
+            | pydop.BAN
+            | pydop.BOR
+            | pydop.BXR
+            | pydop.EQU
+            | pydop.NEQ
+            | pydop.GEQ
+            | pydop.GRT
+            | pydop.LET
+            | pydop.LEQ
+            | pydop.STARTSWITH
+            | pydop.ENDSWITH
+            | pydop.CONTAINS
+            | pydop.LIKE
+            | pydop.SQRT
+        ):
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.PRESENT:
+            if LogicalPredicate.NOT_NULL in arg_predicates[0]:
+                output_expr = LiteralExpression(True, expr.data_type)
+            output_predicates.add(LogicalPredicate.NOT_NULL)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.ABSENT:
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
     return output_expr, output_predicates
 
 
