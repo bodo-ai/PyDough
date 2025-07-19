@@ -22,10 +22,10 @@ SELECT
   products.pr_name AS product,
   products.pr_brand AS product_brand,
   products.pr_type AS product_type,
-  ROUND(COALESCE(COALESCE(_s5.sum_n_incidents, 0), 0) / _s5.n_rows, 2) AS ir
+  ROUND(COALESCE(_s5.sum_n_incidents, 0) / _s5.n_rows, 2) AS ir
 FROM main.products AS products
 JOIN _s5 AS _s5
   ON _s5.de_product_id = products.pr_id
 ORDER BY
-  ROUND(COALESCE(COALESCE(_s5.sum_n_incidents, 0), 0) / _s5.n_rows, 2) DESC
+  ROUND(COALESCE(_s5.sum_n_incidents, 0) / _s5.n_rows, 2) DESC
 LIMIT 5
