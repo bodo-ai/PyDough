@@ -7,6 +7,7 @@ __all__ = ["simplify_expressions"]
 
 from enum import Enum
 
+import pydough.pydough_operators as pydop
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -15,6 +16,7 @@ from pydough.relational import (
     ExpressionSortInfo,
     Filter,
     Join,
+    JoinType,
     Limit,
     LiteralExpression,
     Project,
@@ -40,9 +42,91 @@ class LogicalPredicate(Enum):
     POSITIVE = "POSITIVE"
 
 
+def simplify_function_call(
+    expr: CallExpression,
+    arg_predicates: list[set[LogicalPredicate]],
+    no_group_aggregate: bool,
+) -> tuple[RelationalExpression, set[LogicalPredicate]]:
+    """
+    TODO
+    """
+    output_expr: RelationalExpression = expr
+    output_predicates: set[LogicalPredicate] = set()
+    match expr.op:
+        case pydop.COUNT | pydop.NDISTINCT:
+            output_predicates.add(LogicalPredicate.NOT_NULL)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            if (
+                len(expr.inputs) == 1
+                and LogicalPredicate.NOT_NULL in arg_predicates[0]
+                and no_group_aggregate
+            ):
+                output_predicates.add(LogicalPredicate.POSITIVE)
+        case (
+            pydop.SUM
+            | pydop.AVG
+            | pydop.MIN
+            | pydop.MAX
+            | pydop.ANYTHING
+            | pydop.MEDIAN
+            | pydop.QUANTILE
+        ):
+            for predicate in [
+                LogicalPredicate.NOT_NULL,
+                LogicalPredicate.NOT_NEGATIVE,
+                LogicalPredicate.POSITIVE,
+            ]:
+                if predicate in arg_predicates[0]:
+                    output_predicates.add(predicate)
+        case pydop.DEFAULT_TO:
+            if LogicalPredicate.NOT_NULL in arg_predicates[0]:
+                output_expr = expr.inputs[0]
+                output_predicates = arg_predicates[0]
+            else:
+                if any(LogicalPredicate.NOT_NULL in preds for preds in arg_predicates):
+                    output_predicates.add(LogicalPredicate.NOT_NULL)
+                for pred in arg_predicates[0]:
+                    if all(pred in preds for preds in arg_predicates):
+                        output_predicates.add(pred)
+    return output_expr, output_predicates
+
+
+def simplify_window_call(
+    expr: WindowCallExpression,
+    arg_predicates: list[set[LogicalPredicate]],
+) -> tuple[RelationalExpression, set[LogicalPredicate]]:
+    """
+    TODO
+    """
+    output_predicates: set[LogicalPredicate] = set()
+    return expr, output_predicates
+
+
+def infer_literal_predicates(expr: LiteralExpression) -> set[LogicalPredicate]:
+    """
+    Infers logical predicates from a literal expression.
+
+    Args:
+        `expr`: The literal expression to infer predicates from.
+
+    Returns:
+        A set of logical predicates inferred from the literal.
+    """
+    output_predicates: set[LogicalPredicate] = set()
+    if expr.value is not None:
+        output_predicates.add(LogicalPredicate.NOT_NULL)
+        if isinstance(expr.value, (int, float)):
+            if expr.value >= 0:
+                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                if expr.value > 0:
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+    return output_predicates
+
+
 def run_simplification(
     expr: RelationalExpression,
     input_predicates: dict[RelationalExpression, set[LogicalPredicate]],
+    no_group_aggregate: bool,
 ) -> tuple[RelationalExpression, set[LogicalPredicate]]:
     """
     Runs the simplification on a single expression, applying any predicates
@@ -53,6 +137,9 @@ def run_simplification(
         `expr`: The expression to simplify.
         `input_predicates`: A dictionary mapping input columns to the set of
         predicates that are true for the column.
+        `no_group_aggregate`: A boolean indicating whether the expression is
+        part of an aggregate operation w/o keys, which affects how predicates
+        are inferred.
 
     Returns:
         The simplified expression and a set of predicates that apply to the
@@ -63,27 +150,29 @@ def run_simplification(
     new_orders: list[ExpressionSortInfo]
     arg_predicates: list[set[LogicalPredicate]]
     output_predicates: set[LogicalPredicate] = set()
+    requires_rewrite: bool = False
 
     if isinstance(expr, LiteralExpression):
-        if expr.value is not None:
-            output_predicates.add(LogicalPredicate.NOT_NULL)
-            if isinstance(expr.value, (int, float)):
-                if expr.value >= 0:
-                    output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-                    if expr.value > 0:
-                        output_predicates.add(LogicalPredicate.POSITIVE)
+        output_predicates = infer_literal_predicates(expr)
 
     if isinstance(expr, ColumnReference):
-        output_predicates.update(input_predicates.get(expr, set()))
+        output_predicates = input_predicates.get(expr, set())
 
     if isinstance(expr, CallExpression):
         new_args = []
         arg_predicates = []
         for arg in expr.inputs:
-            new_arg, new_preds = run_simplification(arg, input_predicates)
+            new_arg, new_preds = run_simplification(
+                arg, input_predicates, no_group_aggregate
+            )
+            requires_rewrite |= new_arg is not arg
             new_args.append(new_arg)
             arg_predicates.append(new_preds)
-        expr = CallExpression(expr.op, expr.data_type, new_args)
+        if requires_rewrite:
+            expr = CallExpression(expr.op, expr.data_type, new_args)
+        expr, output_predicates = simplify_function_call(
+            expr, arg_predicates, no_group_aggregate
+        )
 
     if isinstance(expr, WindowCallExpression):
         new_args = []
@@ -91,25 +180,37 @@ def run_simplification(
         new_orders = []
         arg_predicates = []
         for arg in expr.inputs:
-            new_arg, new_preds = run_simplification(arg, input_predicates)
+            new_arg, new_preds = run_simplification(
+                arg, input_predicates, no_group_aggregate
+            )
+            requires_rewrite |= new_arg is not arg
             new_args.append(new_arg)
             arg_predicates.append(new_preds)
         for partition in expr.partition_inputs:
-            new_partition, _ = run_simplification(partition, input_predicates)
+            new_partition, _ = run_simplification(
+                partition, input_predicates, no_group_aggregate
+            )
+            requires_rewrite |= new_partition is not partition
             new_partitions.append(new_partition)
         for order in expr.order_inputs:
-            new_order, _ = run_simplification(order.expr, input_predicates)
+            new_order, _ = run_simplification(
+                order.expr, input_predicates, no_group_aggregate
+            )
+            requires_rewrite |= new_order is not order.expr
             new_orders.append(
                 ExpressionSortInfo(new_order, order.ascending, order.nulls_first)
             )
-        expr = WindowCallExpression(
-            expr.op,
-            expr.data_type,
-            new_args,
-            new_partitions,
-            new_orders,
-            expr.kwargs,
-        )
+        if requires_rewrite:
+            expr = WindowCallExpression(
+                expr.op,
+                expr.data_type,
+                new_args,
+                new_partitions,
+                new_orders,
+                expr.kwargs,
+            )
+        expr, output_predicates = simplify_window_call(expr, arg_predicates)
+
     return expr, output_predicates
 
 
@@ -150,16 +251,16 @@ def simplify_expressions(
             for name, expr in node.columns.items():
                 ref_expr = ColumnReference(name, expr.data_type)
                 node.columns[name], output_predicates[ref_expr] = run_simplification(
-                    expr, input_predicates
+                    expr, input_predicates, False
                 )
             if isinstance(node, (Filter, Join)):
-                node._condition = run_simplification(node.condition, input_predicates)[
-                    0
-                ]
+                node._condition = run_simplification(
+                    node.condition, input_predicates, False
+                )[0]
             if isinstance(node, (RelationalRoot, Limit)):
                 node._orderings = [
                     ExpressionSortInfo(
-                        run_simplification(order_expr.expr, input_predicates)[0],
+                        run_simplification(order_expr.expr, input_predicates, False)[0],
                         order_expr.ascending,
                         order_expr.nulls_first,
                     )
@@ -169,17 +270,24 @@ def simplify_expressions(
                 node._ordered_columns = [
                     (name, node.columns[name]) for name, _ in node.ordered_columns
                 ]
+            if isinstance(node, Join) and node.join_type != JoinType.INNER:
+                for expr, preds in output_predicates.items():
+                    if (
+                        isinstance(expr, ColumnReference)
+                        and expr.input_name != node.default_input_aliases[0]
+                    ):
+                        preds.discard(LogicalPredicate.NOT_NULL)
         case Aggregate():
             for name, expr in node.keys.items():
                 ref_expr = ColumnReference(name, expr.data_type)
                 node.keys[name], output_predicates[ref_expr] = run_simplification(
-                    expr, input_predicates
+                    expr, input_predicates, False
                 )
                 node.columns[name] = node.keys[name]
             for name, expr in node.aggregations.items():
                 ref_expr = ColumnReference(name, expr.data_type)
                 new_agg, output_predicates[ref_expr] = run_simplification(
-                    expr, input_predicates
+                    expr, input_predicates, len(node.keys) == 0
                 )
                 assert isinstance(new_agg, CallExpression)
                 node.aggregations[name] = new_agg

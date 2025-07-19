@@ -24,7 +24,7 @@ WITH _s3 AS (
   JOIN _s5 AS _s5
     ON _s5.p_partkey = partsupp.ps_partkey
     AND partsupp.ps_availqty > (
-      0.5 * COALESCE(COALESCE(_s5.sum_l_quantity, 0), 0)
+      0.5 * COALESCE(_s5.sum_l_quantity, 0)
     )
   GROUP BY
     partsupp.ps_suppkey

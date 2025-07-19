@@ -1,4 +1,4 @@
-ROOT(columns=[('cust_key', c_custkey), ('n_orders', n_orders), ('n_no_tax_discount', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(c_custkey):asc_first])
+ROOT(columns=[('cust_key', c_custkey), ('n_orders', n_orders), ('n_no_tax_discount', n_rows)], orderings=[(c_custkey):asc_first])
  JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey, 'n_orders': t0.n_orders, 'n_rows': t0.n_rows})
   LIMIT(limit=10:numeric, columns={'c_custkey': c_custkey, 'n_orders': n_orders, 'n_rows': n_rows}, orderings=[(c_custkey):asc_first])
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey, 'n_orders': t0.n_orders, 'n_rows': t1.n_rows})
