@@ -193,6 +193,38 @@ def simplify_function_call(
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
         case pydop.ABSENT:
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.IFF:
+            if isinstance(expr.inputs[0], LiteralExpression):
+                if bool(expr.inputs[0].value):
+                    output_expr = expr.inputs[1]
+                    output_predicates = arg_predicates[1]
+                else:
+                    output_expr = expr.inputs[2]
+                    output_predicates = arg_predicates[2]
+            elif (
+                LogicalPredicate.POSITIVE in arg_predicates[0]
+                and LogicalPredicate.NOT_NULL in arg_predicates[0]
+            ):
+                output_expr = expr.inputs[1]
+                output_predicates = arg_predicates[1]
+            else:
+                output_predicates = arg_predicates[1] & arg_predicates[2]
+        case pydop.KEEP_IF:
+            if isinstance(expr.inputs[1], LiteralExpression):
+                if bool(expr.inputs[1].value):
+                    output_expr = expr.inputs[0]
+                    output_predicates = arg_predicates[0]
+                else:
+                    output_expr = LiteralExpression(None, expr.data_type)
+                    output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            elif (
+                LogicalPredicate.POSITIVE in arg_predicates[1]
+                and LogicalPredicate.NOT_NULL in arg_predicates[1]
+            ):
+                output_expr = expr.inputs[0]
+                output_predicates = arg_predicates[0]
+            elif LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]:
+                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
     return output_expr, output_predicates
 
 
