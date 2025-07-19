@@ -437,7 +437,7 @@ def test_pipeline_e2e_tpch_sqlite_udf(
     ],
 )
 def test_pipeline_tpch_sqlite_udf_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     error_message: str,
     get_udf_graph: graph_fetcher,
 ):

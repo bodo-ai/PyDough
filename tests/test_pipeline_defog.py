@@ -1122,7 +1122,7 @@ def test_defog_until_sql(
     """
     Tests the conversion of the defog analytical questions to SQL.
     """
-    unqualified_impl: Callable[[], UnqualifiedNode] = (
+    unqualified_impl: Callable[..., UnqualifiedNode] = (
         defog_pipeline_test_data.pydough_function
     )
     graph_name: str = defog_pipeline_test_data.graph_name

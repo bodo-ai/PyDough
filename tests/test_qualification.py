@@ -945,7 +945,7 @@ from tests.testing_utilities import (
     ],
 )
 def test_qualify_node_to_ast_string(
-    impl: Callable[[], UnqualifiedNode],
+    impl: Callable[..., UnqualifiedNode],
     answer_tree_str: str,
     get_sample_graph: graph_fetcher,
     default_config: PyDoughConfigs,
@@ -1047,7 +1047,7 @@ def test_qualify_node_to_ast_string(
     ],
 )
 def test_qualify_node_collation(
-    impl: Callable[[], UnqualifiedNode],
+    impl: Callable[..., UnqualifiedNode],
     answer_tree_str: str,
     collation_default_asc: bool,
     propagate_collation: bool,

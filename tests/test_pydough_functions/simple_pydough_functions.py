@@ -3032,6 +3032,73 @@ def quantile_function_test_4():
     )
 
 
+def pagerank(n_iters):
+    """
+    Computes the PageRank computation on the PAGERANK graph, starting with the
+    base page_rank values with an even distribution of 1.0 / n, where n is the
+    number of sites in the graph, then iteratively updates the page_rank values
+    based on the outgoing links and the damping factor d. Repeats the process
+    for n_iters iterations, returning the final page_rank values for each site,
+    rounded to 5 decimal places. Makes the following assumptions:
+
+    - If a site has no outgoing links, then it has a single entry in
+      `outgoing_links` where `target_key` is null.
+    - If there is a site with no incoming links, and there are no sites w/o
+      any outgoing links, the site w/o the incoming link has a dummy link where
+      the source & target key are the same, which should be ignored in the
+      PageRank calculation.
+    """
+
+    # The dampening factor
+    d = 0.85
+
+    # The expression used to determine the number of sites the graph links to,
+    # accounting for sites without links (which implicitly link to everything)
+    # and sites with a dummy link to themselves (which should be ignored).
+    n_out_expr = SUM(
+        outgoing_links.CALCULATE(
+            n_target=IFF(ABSENT(target_key), n, INTEGER((source_key != target_key)))
+        ).n_target
+    )
+
+    # The seed value for the PageRank computation, which is evenly distributed.
+    # Also computes the number of sites in the graph & the number of sites each
+    # site links to, which are both used downstream.
+    source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n)
+
+    if n_iters > 0:
+        source = source.CALCULATE(n_out=n_out_expr, damp_modifier=0.15 / n)
+
+    # Repeats the following procedure for n_iters iterations to build the next
+    # generation of PageRank values from the current generation.
+    for i in range(n_iters):
+        # For each site, find all sites that it links to and accumulate the
+        # PageRank values from the current site (divided by the # of links) in
+        # those linked sites, while also considering the damping factor. Uses
+        # RELSUM after partitioning on the destination site to perform the
+        # accumulation, then filters to only keep the one row of the
+        # destination site that came from the self-link. This ensures that each
+        # site is included once after each iteration, and the `n_out` value for
+        # that site is daisy-chained to the next iteration.
+        source = (
+            source.outgoing_links.CALCULATE(
+                dummy_link=PRESENT(target_key) & (source_key == target_key),
+                consider_link=INTEGER(ABSENT(target_key) | (source_key != target_key)),
+            )
+            .target_site.PARTITION(name=f"s{i}", by=key)
+            .target_site.CALCULATE(
+                damp_modifier,
+                n_out,
+                page_rank=damp_modifier
+                + d * RELSUM(consider_link * page_rank / n_out, per=f"s{i}"),
+            )
+            .WHERE(dummy_link)
+        )
+
+    # Output the final PageRank values, rounded to 5 decimal places,
+    return source.CALCULATE(key, page_rank=ROUND(page_rank, 5)).ORDER_BY(key.ASC())
+
+
 def agg_simplification_1():
     # Partition the tickers on the value
     # `LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))`, then for every

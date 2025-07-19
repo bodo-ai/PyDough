@@ -294,8 +294,8 @@ class HybridDecorrelater:
                         new_parent_uni_keys,
                     )
                 if isinstance(operation, HybridCalculate):
-                    for str, expr in operation.new_expressions.items():
-                        operation.new_expressions[str] = operation.terms[name]
+                    for name, expr in operation.new_expressions.items():
+                        operation.new_expressions[name] = operation.terms[name]
                 if isinstance(operation, HybridFilter):
                     operation.condition = self.remove_correl_refs(
                         operation.condition,
