@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pydough.pydough_operators import PyDoughOperator
     from pydough.qdag import PyDoughCollectionQDAG, PyDoughExpressionQDAG
     from pydough.relational import CallExpression
-    from pydough.unqualified import UnqualifiedNode
+    from pydough.unqualified import UnqualifiedNode, UnqualifiedWindow
 
 
 class PyDoughErrorBuilder:
@@ -290,3 +290,55 @@ class PyDoughErrorBuilder:
         else:
             error_message += " Did you mean to use a function?"
         return PyDoughUnqualifiedException(error_message)
+
+    def bad_window_per(
+        self,
+        per: str,
+        ancestral_names: list[str],
+        context: "PyDoughCollectionQDAG",
+        window: "UnqualifiedWindow",
+    ) -> PyDoughException:
+        """
+        Creates an exception for when the `per` string in a window is malformed.
+
+        Args:
+            `per`: The per string that caused the error.
+            `ancestral_names`: The names of the ancestors in the context.
+            `context`: The collection context where the error occurred.
+            `window`: The unqualified window that contains the per string.
+
+        Returns:
+            An exception indicating the malformed per string.
+        """
+        ancestor_name: str
+        ancestor_idx: int | None = None
+        msg: str | None = None
+        components: list[str] = per.split(":")
+
+        # Extract the name/idx components of `per=name:idx`, identifying an
+        # error if not in that format.
+        if len(components) <= 2:
+            if len(components) == 1:
+                ancestor_name = components[0]
+                ancestor_idx = None
+            elif len(components) == 2:
+                ancestor_name = components[0]
+                if not components[1].isdigit() or int(components[1]) <= 0:
+                    msg = "expected the index after ':' to be a positive integer"
+                else:
+                    ancestor_idx = int(components[1])
+            # If an error was not found yet, figure out what is wrong with
+            # `name` or `idx`.
+            if msg is None:
+                if ancestor_name not in ancestral_names:
+                    msg = f"unrecognized ancestor {ancestor_name!r}"
+                elif ancestor_idx is None and ancestral_names.count(ancestor_name) > 1:
+                    msg = f"per-string {ancestor_name!r} is ambiguous in this context; use the form '{ancestor_name}:index' to disambiguate, where '{ancestor_name}:1' refers to the most recent ancestor"
+                else:
+                    msg = f"there are not {ancestor_idx} ancestors of the current context with name {ancestor_name!r}"
+        else:
+            msg = f"expected 0 or 1 ':', found {len(components) - 1})"
+
+        return PyDoughUnqualifiedException(
+            f"Error while parsing 'per' string of {window} in context {context} ({msg})"
+        )

@@ -208,6 +208,59 @@ class Qualifier:
             operator, [qualified_lhs, qualified_rhs]
         )
 
+    def extract_window_per_args(
+        self,
+        per: str,
+        ancestral_names: list[str],
+        context: PyDoughCollectionQDAG,
+        window: UnqualifiedWindow,
+    ) -> tuple[str, int | None]:
+        ancestor_name: str
+        ancestor_idx: int | None
+        # Break down the per string into its components, which is either
+        # `[name]`, or `[name, index]`, where `index` must be a positive
+        # integer.
+        components: list[str] = per.split(":")
+        if len(components) == 1:
+            ancestor_name = components[0]
+            ancestor_idx = None
+        elif len(components) == 2:
+            ancestor_name = components[0]
+            if not components[1].isdigit():
+                raise pydough.active_session.error_builder.bad_window_per(
+                    per, ancestral_names, context, window
+                )
+            ancestor_idx = int(components[1])
+            if ancestor_idx <= 0:
+                raise pydough.active_session.error_builder.bad_window_per(
+                    per, ancestral_names, context, window
+                )
+        else:
+            raise pydough.active_session.error_builder.bad_window_per(
+                per, ancestral_names, context, window
+            )
+        # Verify that `name` corresponds to one of the ancestors of the
+        # current context.
+        if ancestor_name not in ancestral_names:
+            raise pydough.active_session.error_builder.bad_window_per(
+                per, ancestral_names, context, window
+            )
+        # Verify that `name` is only present exactly one time in the
+        # ancestors of the current context, unless an index was provided.
+        if ancestor_idx is None:
+            if ancestral_names.count(ancestor_name) > 1:
+                # TODO: potentially add a default value of 1?
+                raise pydough.active_session.error_builder.bad_window_per(
+                    per, ancestral_names, context, window
+                )
+        elif ancestral_names.count(ancestor_name) < ancestor_idx:
+            # If an index was provided, ensure that there are that many
+            # ancestors with that name.
+            raise pydough.active_session.error_builder.bad_window_per(
+                per, ancestral_names, context, window
+            )
+        return ancestor_name, ancestor_idx
+
     def qualify_window(
         self,
         unqualified: UnqualifiedWindow,
@@ -259,51 +312,9 @@ class Qualifier:
         # the number of ancestor levels to go up to).
         if per is not None:
             ancestral_names: list[str] = context.get_ancestral_names()
-            ancestor_name: str
-            ancestor_idx: int | None
-            # Break down the per string into its components, which is either
-            # `[name]`, or `[name, index]`, where `index` must be a positive
-            # integer.
-            components: list[str] = per.split(":")
-            if len(components) == 1:
-                ancestor_name = components[0]
-                ancestor_idx = None
-            elif len(components) == 2:
-                ancestor_name = components[0]
-                if not components[1].isdigit():
-                    raise PyDoughUnqualifiedException(
-                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
-                    )
-                ancestor_idx = int(components[1])
-                if ancestor_idx <= 0:
-                    raise PyDoughUnqualifiedException(
-                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
-                    )
-            else:
-                raise PyDoughUnqualifiedException(
-                    f"Malformed per string: {per!r} (expected 0 or 1 ':', found {len(components) - 1})"
-                )
-            # Verify that `name` corresponds to one of the ancestors of the
-            # current context.
-            if ancestor_name not in ancestral_names:
-                raise PyDoughUnqualifiedException(
-                    f"Per string refers to unrecognized ancestor {ancestor_name!r} of {context!r}"
-                )
-            # Verify that `name` is only present exactly one time in the
-            # ancestors of the current context, unless an index was provided.
-            if ancestor_idx is None:
-                if ancestral_names.count(ancestor_name) > 1:
-                    # TODO: potentially add a default value of 1?
-                    raise PyDoughUnqualifiedException(
-                        f"Per string {per!r} is ambiguous for {context!r}. Use the form '{per}:index' to disambiguate, where '{per}:1' refers to the most recent ancestor."
-                    )
-            elif ancestral_names.count(ancestor_name) < ancestor_idx:
-                # If an index was provided, ensure that there are that many
-                # ancestors with that name.
-                raise PyDoughUnqualifiedException(
-                    f"Per string {per!r} invalid as there are not {ancestor_idx} ancestors of the current context with name {ancestor_name!r}."
-                )
-
+            ancestor_name, ancestor_idx = self.extract_window_per_args(
+                per, ancestral_names, context, unqualified
+            )
             # Find how many levels upward need to be traversed to find the
             # targeted ancestor by finding the nth ancestor matching the
             # name, at the end of the ancestral_names.

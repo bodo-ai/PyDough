@@ -87,38 +87,43 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='custs'))",
-            "Per string refers to unrecognized ancestor 'custs' of TPCH.customers.orders",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='custs') in context TPCH.customers.orders (unrecognized ancestor 'custs')",
             id="bad_per_1",
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:2'))",
-            "Per string 'customers:2' invalid as there are not 2 ancestors of the current context with name 'customers'.",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='customers:2') in context TPCH.customers.orders (there are not 2 ancestors of the current context with name 'customers')",
             id="bad_per_2",
         ),
         pytest.param(
             "result = customers.orders.customer.orders.lines.CALCULATE(RANKING(by=extended_price.DESC(), per='orders'))",
-            "Per string 'orders' is ambiguous for TPCH.customers.orders.customer.orders.lines. Use the form 'orders:index' to disambiguate, where 'orders:1' refers to the most recent ancestor.",
+            "Error while parsing 'per' string of RANKING(by=(extended_price.DESC(na_pos='last'), per='orders') in context TPCH.customers.orders.customer.orders.lines (per-string 'orders' is ambiguous in this context; use the form 'orders:index' to disambiguate, where 'orders:1' refers to the most recent ancestor)",
             id="bad_per_3",
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:k'))",
-            "Malformed per string: 'customers:k' (expected the index after ':' to be a positive integer)",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='customers:k') in context TPCH.customers.orders (expected the index after ':' to be a positive integer)",
             id="bad_per_4",
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:1:2'))",
-            "Malformed per string: 'customers:1:2' (expected 0 or 1 ':', found 2)",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='customers:1:2') in context TPCH.customers.orders (expected 0 or 1 ':', found 2))",
             id="bad_per_5",
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:'))",
-            "Malformed per string: 'customers:' (expected the index after ':' to be a positive integer)",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='customers:') in context TPCH.customers.orders (expected the index after ':' to be a positive integer)",
             id="bad_per_6",
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='customers:0'))",
-            "Malformed per string: 'customers:0' (expected the index after ':' to be a positive integer)",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='customers:0') in context TPCH.customers.orders (expected the index after ':' to be a positive integer)",
             id="bad_per_7",
+        ),
+        pytest.param(
+            "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per=-1))",
+            "`per` argument must be a string",
+            id="bad_per_8",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",
