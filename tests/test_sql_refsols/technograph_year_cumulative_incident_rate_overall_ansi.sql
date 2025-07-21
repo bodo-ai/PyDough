@@ -20,7 +20,7 @@ WITH _s2 AS (
     ON _s4.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   GROUP BY
     _s4.ca_dt
-), _t2 AS (
+), _t1 AS (
   SELECT
     SUM(_s3.n_rows) AS sum_expr_3,
     SUM(_s7.n_rows) AS sum_n_rows,
@@ -57,7 +57,7 @@ SELECT
   ) AS pct_incident_change,
   COALESCE(sum_expr_3, 0) AS bought,
   COALESCE(sum_n_rows, 0) AS incidents
-FROM _t2
+FROM _t1
 WHERE
   NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
 ORDER BY
