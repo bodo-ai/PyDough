@@ -415,7 +415,7 @@ def test_pipeline_e2e_tpch_sqlite_udf(
         ),
         pytest.param(
             # Calling a UDF that requires 2 arguments with 3 arguments
-            "result = orders.CALCULATE(x=FORMAT_DATETIME('%Y' order_date, 'foo'))",
+            "result = orders.CALCULATE(x=FORMAT_DATETIME('%Y', order_date, 'foo'))",
             "Invalid operator invocation \"FORMAT_DATETIME('%Y', order_date, 'foo')\": Expected 2 arguments, received 3",
             id="bad_sqlite_udf_2",
         ),
@@ -433,8 +433,8 @@ def test_pipeline_e2e_tpch_sqlite_udf(
         ),
         pytest.param(
             # Calling a UDF function that doesn't exist
-            "result = order.CALCULATE(x=fmtdate('%Y', order_date))",
-            "Invalid operator invocation \"GCAT(name, ';', 'bar')\": Expected between 1 and 2 arguments inclusive, received 3.",
+            "result = order.CALCULATE(x=FORMATDATETIME('%Y', order_date))",
+            "PyDough object FORMATDATETIME is not callable. Did you mean: FORMAT_DATETIME, DATETIME, FLOAT?",
             id="bad_sqlite_udf_5",
         ),
     ],

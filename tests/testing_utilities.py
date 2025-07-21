@@ -1297,9 +1297,6 @@ def run_e2e_error_test(
         `config`: The PyDough configuration to use for the test, if any.
     """
     with pytest.raises(Exception, match=error_message):
-        assert not isinstance(pydough_impl, str), (
-            "Expected pydough_impl to be a callable, not a string"
-        )
         root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph, None)
         call_kwargs: dict = {}
         if graph is not None:
