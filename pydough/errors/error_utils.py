@@ -19,6 +19,7 @@ __all__ = [
     "extract_integer",
     "extract_object",
     "extract_string",
+    "find_possible_name_matches",
     "is_bool",
     "is_integer",
     "is_json_array",
@@ -32,6 +33,8 @@ __all__ = [
 
 
 from abc import ABC, abstractmethod
+
+import numpy as np
 
 from .error_types import PyDoughMetadataException
 
@@ -443,3 +446,124 @@ def extract_object(json_obj: dict, key_name: str, obj_name: str) -> dict:
     value = json_obj[key_name]
     assert isinstance(value, dict)
     return value
+
+
+###############################################################################
+# Name Suggestion Utilities
+###############################################################################
+
+
+def min_edit_distance(s: str, t: str) -> float:
+    """
+    Computes the minimum edit distance between two strings using the
+    Levenshtein distance algorithm. Substituting a character for the same
+    character with different capitalization is considered 10% of the edit
+    cost of replacing it with any other character. For this implementation
+    the iterative with a 2-row array is used to save memory.
+    Link:
+    https://en.wikipedia.org/wiki/Levenshtein_distance#Iterative_with_two_matrix_rows
+
+    Args:
+        `s`: The first string.
+        `t`: The second string.
+
+    Returns:
+        The minimum edit distance between the two strings.
+    """
+    # Ensures str1 is the shorter string
+    if len(s) > len(t):
+        s, t = t, s
+    m, n = len(s), len(t)
+
+    # Use a 2 x (m + 1) array to represent an n x (m + 1) array since you only
+    # need to consider the previous row to generate the next row, therefore the
+    # same two rows can be recycled
+
+    row, previousRow = 1, 0
+    arr = np.zeros((2, m + 1), dtype=float)
+
+    # MED(X, "") = len(X)
+    arr[0, :] = np.arange(m + 1)
+
+    for i in range(1, n + 1):
+        # MED("", X) = len(X)
+        arr[row, 0] = i
+
+        # Loop over the rest of s to see if it matches with the corresponding
+        # letter of t
+        for j in range(1, m + 1):
+            substitution_cost: float
+
+            if s[j - 1] == t[i - 1]:
+                substitution_cost = 0.0
+            elif s[j - 1].lower() == t[i - 1].lower():
+                substitution_cost = 0.1
+            else:
+                substitution_cost = 1.0
+
+            arr[row, j] = min(
+                arr[row, j - 1] + 1.0,
+                arr[previousRow, j] + 1.0,
+                arr[previousRow, j - 1] + substitution_cost,
+            )
+
+        row, previousRow = previousRow, row
+
+    return arr[previousRow, m]  # Return the last computed row's last element
+
+
+def find_possible_name_matches(
+    term_name: str, candidates: set[str], atol: int, rtol: float, min_names: int
+) -> list[str]:
+    """
+    Finds and returns a list of candidate names that closely match the
+    given name based on minimum edit distance.
+
+    Args:
+        `term_name`: The name to match against the list of candidates.
+        `candidates`: A set of candidate names to search for matches.
+        `atol`: The absolute tolerance for the minimum edit distance; any
+        candidate with a minimum edit distance less than or equal to
+        `closest_match + atol` will be included in the results.
+        `rtol`: The relative tolerance for the minimum edit distance; any
+            candidate with a minimum edit distance less than or equal to
+        `closest_match * (1 + rtol)` will be included in the results.
+        `min_names`: The minimum number of names to return.
+
+    Returns:
+        A list of candidate names, based on the closest matches.
+    """
+
+    terms_distance_list: list[tuple[float, str]] = []
+
+    for term in candidates:
+        # get the minimum edit distance
+        me: float = min_edit_distance(term_name, term)
+        terms_distance_list.append((me, term))
+
+    if terms_distance_list == []:
+        return []
+    # sort the list by minimum edit distance break ties by name
+    terms_distance_list.sort()
+
+    closest_match = terms_distance_list[0]
+
+    # List with all names that have a me <= closest_match + atol
+    matches_within_atol: list[str] = [
+        name for me, name in terms_distance_list if me <= closest_match[0] + atol
+    ]
+
+    # List with all names that have a me <= closest_match * 1.1
+    matches_within_rtol: list[str] = [
+        name for me, name in terms_distance_list if me <= closest_match[0] * (1 + rtol)
+    ]
+
+    # List with the top 3 closest matches (me) breaking ties by name
+    min_matches: list[str] = [name for _, name in terms_distance_list[:min_names]]
+
+    # Return whichever of the three lists is the longest, breaking ties
+    # lexicographically by the names within.
+    return max(
+        [matches_within_atol, matches_within_rtol, min_matches],
+        key=lambda x: (len(x), x),
+    )

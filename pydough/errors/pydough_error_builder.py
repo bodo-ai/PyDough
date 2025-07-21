@@ -4,12 +4,19 @@ Definition of the base class for creating exceptions in PyDough.
 
 from typing import TYPE_CHECKING
 
-from pydough.errors import PyDoughException, PyDoughQDAGException, PyDoughSQLException
+from pydough.errors import (
+    PyDoughException,
+    PyDoughQDAGException,
+    PyDoughSQLException,
+    PyDoughUnqualifiedException,
+)
+from pydough.errors.error_utils import find_possible_name_matches
 
 if TYPE_CHECKING:
     from pydough.pydough_operators import PyDoughOperator
     from pydough.qdag import PyDoughCollectionQDAG, PyDoughExpressionQDAG
     from pydough.relational import CallExpression
+    from pydough.unqualified import UnqualifiedNode
 
 
 class PyDoughErrorBuilder:
@@ -230,3 +237,43 @@ class PyDoughErrorBuilder:
         return PyDoughQDAGException(
             f"Failed to convert expression {call.to_string(True)} to SQL: {error}"
         )
+
+    def undefined_function_call(
+        self, node: "UnqualifiedNode", *args, **kwargs
+    ) -> PyDoughException:
+        """
+        Creates an exception for when a function call is made on an unqualified
+        node that is not callable.
+
+        Args:
+            `node`: The unqualified node that was called as if it were a
+            function.
+            `*args`: Positional arguments passed to the call.
+            `**kwargs`: Keyword arguments passed to the call.
+
+        Returns:
+            An exception indicating that the node is not callable.
+        """
+        from pydough.unqualified import UnqualifiedAccess, UnqualifiedRoot
+
+        error_message: str = f"PyDough object {node!r} is not callable."
+        # If in the form root.XXX, then it is possible that XXXX is a typo of
+        # a function name.
+        if isinstance(node, UnqualifiedAccess) and isinstance(
+            node._parcel[0], UnqualifiedRoot
+        ):
+            suggestions: list[str] = find_possible_name_matches(
+                term_name=node._parcel[1],
+                candidates=set(node._parcel[0]._parcel[1]),
+                atol=1,
+                rtol=0.1,
+                min_names=3,
+            )
+
+            # Check if there are any suggestions to add
+            if len(suggestions) > 0:
+                suggestions_str: str = ", ".join(suggestions)
+                error_message += f" Did you mean: {suggestions_str}?"
+        else:
+            error_message += " Did you mean to use a function?"
+        return PyDoughUnqualifiedException(error_message)

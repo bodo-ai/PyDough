@@ -29,7 +29,7 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "result = nations.CALCULATE(nation_name=FIZZBUZZ(name))",
-            "PyDough nodes FIZZBUZZ is not callable. Did you mean to use a function?",
+            "PyDough object FIZZBUZZ is not callable. Did you mean: FIND, MINUTE, ABS, COUNT, FLOAT, FLOOR, HOUR, IFF, INTEGER, ISIN, LIKE, MIN, RELCOUNT, RELSIZE, RELSUM, ROUND, SIGN, STRCOUNT, SUM?",
             id="non_function",
         ),
         pytest.param(
@@ -54,7 +54,7 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "lines.CALCULATE(v=MUL(extended_price, SUB(1, discount)))",
-            "PyDough nodes SUB is not callable. Did you mean to use a function?",
+            "PyDough object SUB is not callable. Did you mean: SUM, STD, ABS?",
             id="binop_function_call",
         ),
         pytest.param(
@@ -122,22 +122,22 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",
-            "PyDough nodes SAMPLE_VAR is not callable. Did you mean to use a function?",
+            "PyDough object SAMPLE_VAR is not callable. Did you mean: MEDIAN, PREV, SMALLEST, UPPER, VAR, YEAR, ABSENT, AVG, DATEDIFF, DATETIME, FLOAT, FLOOR, GETPART, INTEGER, KEEP_IF, LARGEST, LENGTH, LOWER, LPAD, MAX, POWER, PRESENT, QUARTER, RELAVG, REPLACE, RPAD, SECOND, SLICE, SUM?",
             id="kwargfunc_1",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VARIANCE(suppliers.account_balance))",
-            "PyDough nodes SAMPLE_VARIANCE is not callable. Did you mean to use a function?",
+            "PyDough object SAMPLE_VARIANCE is not callable. Did you mean: MEDIAN, REPLACE, SLICE, DATETIME, JOIN_STRINGS, STRING?",
             id="kwargfunc_2",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_STD(suppliers.account_balance))",
-            "PyDough nodes SAMPLE_STD is not callable. Did you mean to use a function?",
+            "PyDough object SAMPLE_STD is not callable. Did you mean: SMALLEST, LARGEST, ABSENT?",
             id="kwargfunc_3",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, std=POPULATION_STD(suppliers.account_balance))",
-            "PyDough nodes POPULATION_STD is not callable. Did you mean to use a function?",
+            "PyDough object POPULATION_STD is not callable. Did you mean: CONTAINS, COUNT, DEFAULT_TO, JOIN_STRINGS, LARGEST, MONOTONIC, NDISTINCT, ROUND?",
             id="kwargfunc_4",
         ),
         pytest.param(

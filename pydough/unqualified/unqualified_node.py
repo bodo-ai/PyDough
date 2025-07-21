@@ -26,6 +26,7 @@ from collections.abc import Iterable
 from datetime import date, datetime
 from typing import Any, Union
 
+import pydough
 import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.errors.error_utils import is_bool, is_integer, is_positive_int, is_string
@@ -131,8 +132,8 @@ class UnqualifiedNode(ABC):
             )
 
     def __call__(self, *args, **kwargs):
-        raise PyDoughUnqualifiedException(
-            f"PyDough nodes {self!r} is not callable. Did you mean to use a function?"
+        raise pydough.active_session.error_builder.undefined_function_call(
+            self, *args, **kwargs
         )
 
     def __bool__(self):
