@@ -179,8 +179,6 @@ def simplify_function_call(
                 output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
         case (
             pydop.LENGTH
-            | pydop.BAN
-            | pydop.BOR
             | pydop.BXR
             | pydop.STARTSWITH
             | pydop.ENDSWITH
@@ -189,6 +187,30 @@ def simplify_function_call(
             | pydop.SQRT
             | pydop.MONOTONIC
         ):
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.BAN:
+            if any(
+                isinstance(arg, LiteralExpression) and arg.value in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(False, expr.data_type)
+            if all(
+                isinstance(arg, LiteralExpression) and arg.value not in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(True, expr.data_type)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.BOR:
+            if any(
+                isinstance(arg, LiteralExpression) and arg.value not in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(True, expr.data_type)
+            if all(
+                isinstance(arg, LiteralExpression) and arg.value in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(False, expr.data_type)
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
         case pydop.EQU | pydop.NEQ | pydop.GEQ | pydop.GRT | pydop.LET | pydop.LEQ:
             match (expr.inputs[0], expr.op, expr.inputs[1]):
