@@ -180,6 +180,11 @@ from tests.testing_utilities import (
             "Expected 2 arguments, received 1",
             id="bad_str_count_few_args",
         ),
+        pytest.param(
+            "result = TPCH.CALCULATE(x=COUNT(TPCH.nations) / COUNT(TPCH.regions))",
+            "Unrecognized term of TPCH: 'TPCH'. Did you mean: lines, parts, orders, nations, regions?",
+            id="double_graph",
+        ),
     ],
 )
 def test_qualify_error(

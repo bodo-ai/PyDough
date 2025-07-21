@@ -580,6 +580,7 @@ class Qualifier:
         if (
             isinstance(qualified_parent, GlobalContext)
             and name == qualified_parent.graph.name
+            and not is_child
         ) or (
             isinstance(qualified_parent, ChildOperatorChildAccess)
             and isinstance(qualified_parent.child_access, GlobalContext)
@@ -1007,7 +1008,7 @@ class Qualifier:
             unqualified_parent, None
         )
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, True, is_cross
+            unqualified_parent, context, False, is_cross
         )
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child, qualified_parent, True, is_cross
