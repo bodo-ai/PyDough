@@ -177,16 +177,136 @@ def simplify_function_call(
                 output_predicates = arg_predicates[0]
             else:
                 output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-        case (
-            pydop.LENGTH
-            | pydop.BXR
-            | pydop.STARTSWITH
-            | pydop.ENDSWITH
-            | pydop.CONTAINS
-            | pydop.LIKE
-            | pydop.SQRT
-            | pydop.MONOTONIC
-        ):
+        case pydop.LENGTH:
+            if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
+                expr.inputs[0].value, str
+            ):
+                str_len: int = len(expr.inputs[0].value)
+                output_expr = LiteralExpression(str_len, expr.data_type)
+                if str_len > 0:
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.LOWER:
+            if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
+                expr.inputs[0].value, str
+            ):
+                output_expr = LiteralExpression(
+                    expr.inputs[0].value.lower(), expr.data_type
+                )
+        case pydop.UPPER:
+            if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
+                expr.inputs[0].value, str
+            ):
+                output_expr = LiteralExpression(
+                    expr.inputs[0].value.upper(), expr.data_type
+                )
+        case pydop.STARTSWITH:
+            if (
+                isinstance(expr.inputs[0], LiteralExpression)
+                and isinstance(expr.inputs[0].value, str)
+                and isinstance(expr.inputs[1], LiteralExpression)
+                and isinstance(expr.inputs[1].value, str)
+            ):
+                output_expr = LiteralExpression(
+                    expr.inputs[0].value.startswith(expr.inputs[1].value),
+                    expr.data_type,
+                )
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.ENDSWITH:
+            if (
+                isinstance(expr.inputs[0], LiteralExpression)
+                and isinstance(expr.inputs[0].value, str)
+                and isinstance(expr.inputs[1], LiteralExpression)
+                and isinstance(expr.inputs[1].value, str)
+            ):
+                output_expr = LiteralExpression(
+                    expr.inputs[0].value.endswith(expr.inputs[1].value), expr.data_type
+                )
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.CONTAINS:
+            if (
+                isinstance(expr.inputs[0], LiteralExpression)
+                and isinstance(expr.inputs[0].value, str)
+                and isinstance(expr.inputs[1], LiteralExpression)
+                and isinstance(expr.inputs[1].value, str)
+            ):
+                output_expr = LiteralExpression(
+                    expr.inputs[1].value in expr.inputs[0].value, expr.data_type
+                )
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.SQRT:
+            if (
+                isinstance(expr.inputs[0], LiteralExpression)
+                and isinstance(expr.inputs[0].value, (int, float))
+                and expr.inputs[0].value >= 0
+            ):
+                sqrt_value: float = expr.inputs[0].value ** 0.5
+                output_expr = LiteralExpression(sqrt_value, expr.data_type)
+                if sqrt_value > 0:
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.MONOTONIC:
+            v0: int | float | None = None
+            v1: int | float | None = None
+            v2: int | float | None = None
+            monotonic_result: bool
+            if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
+                expr.inputs[0].value, (int, float)
+            ):
+                v0 = expr.inputs[0].value
+            if isinstance(expr.inputs[1], LiteralExpression) and isinstance(
+                expr.inputs[1].value, (int, float)
+            ):
+                v1 = expr.inputs[1].value
+            if isinstance(expr.inputs[2], LiteralExpression) and isinstance(
+                expr.inputs[2].value, (int, float)
+            ):
+                v2 = expr.inputs[2].value
+            if v0 is not None and v1 is not None and v2 is not None:
+                monotonic_result = (v0 <= v1) and (v1 <= v2)
+                output_expr = LiteralExpression(monotonic_result, expr.data_type)
+                if monotonic_result:
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+            elif v0 is not None and v1 is not None:
+                if v0 <= v1:
+                    output_expr = CallExpression(
+                        pydop.LEQ, expr.data_type, expr.inputs[1:]
+                    )
+                else:
+                    output_expr = LiteralExpression(False, expr.data_type)
+            elif v1 is not None and v2 is not None:
+                if v1 <= v2:
+                    output_expr = CallExpression(
+                        pydop.LEQ, expr.data_type, expr.inputs[:2]
+                    )
+                else:
+                    output_expr = LiteralExpression(False, expr.data_type)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.BXR | pydop.LIKE:
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.BAN:
+            if any(
+                isinstance(arg, LiteralExpression) and arg.value in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(False, expr.data_type)
+            if all(
+                isinstance(arg, LiteralExpression) and arg.value not in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(True, expr.data_type)
+            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+        case pydop.BOR:
+            if any(
+                isinstance(arg, LiteralExpression) and arg.value not in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(True, expr.data_type)
+            if all(
+                isinstance(arg, LiteralExpression) and arg.value in [0, False, None]
+                for arg in expr.inputs
+            ):
+                output_expr = LiteralExpression(False, expr.data_type)
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
         case pydop.BAN:
             if any(
@@ -243,21 +363,21 @@ def simplify_function_call(
                         case (x, y, pydop.NEQ):
                             output_expr = LiteralExpression(x != y, expr.data_type)
                         case (x, y, pydop.LET) if isinstance(
-                            x, (int, float)
-                        ) and isinstance(y, (int, float)):
-                            output_expr = LiteralExpression(x < y, expr.data_type)
+                            x, (int, float, str, bool)
+                        ) and isinstance(y, (int, float, str, bool)):
+                            output_expr = LiteralExpression(x < y, expr.data_type)  # type: ignore
                         case (x, y, pydop.LEQ) if isinstance(
-                            x, (int, float)
-                        ) and isinstance(y, (int, float)):
-                            output_expr = LiteralExpression(x <= y, expr.data_type)
+                            x, (int, float, str, bool)
+                        ) and isinstance(y, (int, float, str, bool)):
+                            output_expr = LiteralExpression(x <= y, expr.data_type)  # type: ignore
                         case (x, y, pydop.GRT) if isinstance(
-                            x, (int, float)
-                        ) and isinstance(y, (int, float)):
-                            output_expr = LiteralExpression(x > y, expr.data_type)
+                            x, (int, float, str, bool)
+                        ) and isinstance(y, (int, float, str, bool)):
+                            output_expr = LiteralExpression(x > y, expr.data_type)  # type: ignore
                         case (x, y, pydop.GEQ) if isinstance(
-                            x, (int, float)
-                        ) and isinstance(y, (int, float)):
-                            output_expr = LiteralExpression(x >= y, expr.data_type)
+                            x, (int, float, str, bool)
+                        ) and isinstance(y, (int, float, str, bool)):
+                            output_expr = LiteralExpression(x >= y, expr.data_type)  # type: ignore
 
                 case _:
                     pass

@@ -1,10 +1,10 @@
-WITH _t3 AS (
+WITH _t2 AS (
   SELECT
     ca_dt
   FROM main.calendar
   WHERE
     EXTRACT(YEAR FROM CAST(ca_dt AS DATETIME)) IN (2020, 2021)
-), _t6 AS (
+), _t5 AS (
   SELECT
     co_id,
     co_name
@@ -14,38 +14,38 @@ WITH _t3 AS (
 ), _s7 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _t5.ca_dt
-  FROM _t3 AS _t5
+    _t4.ca_dt
+  FROM _t2 AS _t4
   JOIN main.calendar AS calendar
-    ON calendar.ca_dt >= DATE_ADD(CAST(_t5.ca_dt AS TIMESTAMP), -6, 'MONTH')
+    ON calendar.ca_dt >= DATE_ADD(CAST(_t4.ca_dt AS TIMESTAMP), -6, 'MONTH')
   JOIN main.devices AS devices
     ON calendar.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
-  JOIN _t6 AS _t6
-    ON _t6.co_id = devices.de_production_country_id
+  JOIN _t5 AS _t5
+    ON _t5.co_id = devices.de_production_country_id
   GROUP BY
-    _t5.ca_dt
+    _t4.ca_dt
 ), _s15 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _t8.ca_dt
-  FROM _t3 AS _t8
+    _t7.ca_dt
+  FROM _t2 AS _t7
   JOIN main.incidents AS incidents
-    ON _t8.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
+    ON _t7.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   JOIN main.devices AS devices
     ON devices.de_id = incidents.in_device_id
-  JOIN _t6 AS _t9
-    ON _t9.co_id = devices.de_production_country_id
+  JOIN _t5 AS _t8
+    ON _t8.co_id = devices.de_production_country_id
   GROUP BY
-    _t8.ca_dt
+    _t7.ca_dt
 )
 SELECT
   CONCAT_WS(
     '-',
-    EXTRACT(YEAR FROM CAST(_t3.ca_dt AS DATETIME)),
+    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)),
     CASE
-      WHEN LENGTH(EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME))) >= 2
-      THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME)), 1, 2)
-      ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME))), (
+      WHEN LENGTH(EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME))) >= 2
+      THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)), 1, 2)
+      ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME))), (
         2 * -1
       ))
     END
@@ -53,13 +53,13 @@ SELECT
   ROUND((
     1000000.0 * COALESCE(SUM(_s15.n_rows), 0)
   ) / COALESCE(SUM(_s7.n_rows), 0), 2) AS ir
-FROM _t3 AS _t3
+FROM _t2 AS _t2
 LEFT JOIN _s7 AS _s7
-  ON _s7.ca_dt = _t3.ca_dt
+  ON _s7.ca_dt = _t2.ca_dt
 LEFT JOIN _s15 AS _s15
-  ON _s15.ca_dt = _t3.ca_dt
+  ON _s15.ca_dt = _t2.ca_dt
 GROUP BY
-  EXTRACT(MONTH FROM CAST(_t3.ca_dt AS DATETIME)),
-  EXTRACT(YEAR FROM CAST(_t3.ca_dt AS DATETIME))
+  EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)),
+  EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME))
 ORDER BY
   month

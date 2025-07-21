@@ -29,9 +29,6 @@ from pydough.relational.rel_util import (
     contains_window,
     transpose_expression,
 )
-from pydough.relational.relational_expressions.column_reference_finder import (
-    ColumnReferenceFinder,
-)
 from pydough.types import BooleanType, NumericType
 
 from .merge_projects import merge_adjacent_projects
@@ -153,8 +150,6 @@ def pull_non_columns(node: Join | Filter | Limit) -> RelationalNode:
 
 
 def pull_project_helper(
-    output_columns: dict[str, RelationalExpression],
-    used_columns: set[RelationalExpression],
     project: Project,
     input_name: str | None,
 ) -> dict[RelationalExpression, RelationalExpression]:
@@ -166,11 +161,6 @@ def pull_project_helper(
     to substitute the columns in the parent node's output columns or conditions.
 
     Args:
-        `output_columns`: The columns of the parent node that the expressions
-            from the project node can be pulled into.
-        `used_columns`: The set of expressions indicating invocations of the
-            columns from the project in the parent node, e.g. as a filter
-            or join condition, limit ordering, or aggregation key.
         `project`: The Project node to pull columns from.
         `input_name`: The name of the input to the parent node that the project
             node is connected to. This is used to add input names to the
@@ -180,8 +170,7 @@ def pull_project_helper(
         A mapping of expressions that can be used to substitute the columns in
         the parent node's output columns or conditions. This mapping will
         ensure columns are only pulled up if they do not contain window
-        functions, and they are not simultaneously used in the parent's output
-        while also being used in the condition or orderings.
+        functions.
     """
     # Ensure every column in the project's inputs is also present in the output
     # columns of the project. This will ensure that any function calls that are
@@ -191,36 +180,15 @@ def pull_project_helper(
         widen_columns(project)
     )
 
-    # Identify which columns from the project node are used in the condition
-    # or orderings, versus those used in the output columns of the parent.
-    finder: ColumnReferenceFinder = ColumnReferenceFinder()
-
-    # First, the columns used in the output columns of the parent.
-    finder.reset()
-    for expr in output_columns.values():
-        expr.accept(finder)
-    output_cols: set[ColumnReference] = finder.get_column_references()
-    output_names: set[str] = {col.name for col in output_cols}
-
-    # Next the columns that are utilized by the node.
-    finder.reset()
-    for expr in used_columns:
-        expr.accept(finder)
-    used_cols: set[ColumnReference] = finder.get_column_references()
-    used_names: set[str] = {col.name for col in used_cols}
-
     # Iterate through the columns of the project to see which ones can be
-    # pulled up into the parent's output columns vs condition/orderings,
-    # adding them to a substitutions mapping that will be used to apply the
-    # transformations.
+    # pulled up into the parent, dding them to a substitutions mapping that
+    # will be used to apply the transformations.
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
     for name, expr in project.columns.items():
         new_expr: RelationalExpression = add_input_name(
             apply_substitution(expr, transfer_substitutions, {}), input_name
         )
-        if (not contains_window(new_expr)) and (
-            (name in used_names) != (name in output_names)
-        ):
+        if not contains_window(new_expr):
             ref_expr: ColumnReference = ColumnReference(
                 name, expr.data_type, input_name=input_name
             )
@@ -251,12 +219,7 @@ def pull_project_into_join(node: Join, input_index: int) -> None:
     # columns or condition, and modifies the project node in-place to ensure
     # every column in the project's inputs is available to the current node.
     substitutions: dict[RelationalExpression, RelationalExpression] = (
-        pull_project_helper(
-            node.columns,
-            {node.condition},
-            project,
-            node.default_input_aliases[input_index],
-        )
+        pull_project_helper(project, node.default_input_aliases[input_index])
     )
 
     # Apply the substitutions to the join's condition and output columns.
@@ -286,7 +249,7 @@ def pull_project_into_filter(node: Filter) -> None:
     # columns or condition, and modifies the project node in-place to ensure
     # every column in the project's inputs is available to the current node.
     substitutions: dict[RelationalExpression, RelationalExpression] = (
-        pull_project_helper(node.columns, {node.condition}, node.input, None)
+        pull_project_helper(node.input, None)
     )
 
     # Apply the substitutions to the filter's condition and output columns.
@@ -316,12 +279,7 @@ def pull_project_into_limit(node: Limit) -> None:
     # columns or orderings, and modifies the project node in-place to ensure
     # every column in the project's inputs is available to the current node.
     substitutions: dict[RelationalExpression, RelationalExpression] = (
-        pull_project_helper(
-            node.columns,
-            {order_expr.expr for order_expr in node.orderings},
-            node.input,
-            None,
-        )
+        pull_project_helper(node.input, None)
     )
 
     # Apply the substitutions to the limit's orderings and output columns.
@@ -533,9 +491,7 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
     # node in-place to ensure every column in the project's inputs is available
     # to the current node.
     substitutions: dict[RelationalExpression, RelationalExpression] = (
-        pull_project_helper(
-            dict(node.aggregations.items()), set(node.keys.values()), node.input, None
-        )
+        pull_project_helper(node.input, None)
     )
 
     # Build up the columns of a new project that points to all of the output
