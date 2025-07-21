@@ -54,6 +54,15 @@ null_propagating_operators = {
     pydop.STARTSWITH,
     pydop.ENDSWITH,
     pydop.CONTAINS,
+    pydop.REPLACE,
+    pydop.FIND,
+    pydop.GETPART,
+    pydop.LPAD,
+    pydop.RPAD,
+    pydop.STRCOUNT,
+    pydop.INTEGER,
+    pydop.FLOAT,
+    pydop.STRING,
     pydop.LIKE,
     pydop.LOWER,
     pydop.UPPER,
@@ -72,10 +81,21 @@ null_propagating_operators = {
     pydop.SUB,
     pydop.MUL,
     pydop.DIV,
+    pydop.ABS,
+    pydop.FLOOR,
+    pydop.LARGEST,
+    pydop.SMALLEST,
+    pydop.CEIL,
+    pydop.MONOTONIC,
+    pydop.POW,
+    pydop.POWER,
+    pydop.SQRT,
+    pydop.ROUND,
+    pydop.SLICE,
 }
 """
 A set of operators with the property that the output is null if any of the
-inputs are null.
+column inputs are null.
 """
 
 
