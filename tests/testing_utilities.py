@@ -1226,7 +1226,7 @@ class PyDoughPandasTest:
 
 
 def run_e2e_error_test(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[[], UnqualifiedNode] | str,
     error_message: str,
     graph: GraphMetadata,
     columns: dict[str, str] | list[str] | None = None,
@@ -1239,7 +1239,8 @@ def run_e2e_error_test(
     provided `error_message`.
 
     Args:
-        `pydough_impl`: The PyDough function to be tested.
+        `pydough_impl`: The PyDough function to be tested, or the string that
+        should be evaluated to obtain the PyDough code.
         `error_message`: The error message that is expected to be raised.
         `graph`: The metadata graph to use for the test.
         `columns`: The columns argument to use for the test, if any.
@@ -1247,6 +1248,7 @@ def run_e2e_error_test(
         `config`: The PyDough configuration to use for the test, if any.
     """
     with pytest.raises(Exception, match=error_message):
+        assert not isinstance(pydough_impl, str)
         root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph)
         call_kwargs: dict = {}
         if graph is not None:
