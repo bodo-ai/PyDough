@@ -29,6 +29,25 @@ from pydough.relational.rel_util import (
 )
 
 
+def apply_filter_left_join_transform(
+    join: Join, filters: set[RelationalExpression], rhs_cols: set[str]
+) -> Join:
+    """
+    TODO
+    """
+    if join.join_type != JoinType.LEFT:
+        return join
+
+    for cond in filters:
+        if false_when_null_columns(cond, rhs_cols):
+            # If the filters are false when the right-hand side is null, then
+            # the left join becomes an inner join.
+            join.join_type = JoinType.INNER
+            return join
+
+    return join
+
+
 def push_filters(
     node: RelationalNode, filters: set[RelationalExpression]
 ) -> RelationalNode:
@@ -99,6 +118,10 @@ def push_filters(
                 input_name: str | None = expr.input_name
                 input_idx = node.default_input_aliases.index(input_name)
                 input_cols[input_idx].add(name)
+            # First pre-process to account for transformations that can be
+            # done due to the presence of filters above a join or with its
+            # join conditions.
+            node = apply_filter_left_join_transform(node, filters, input_cols[1])
             # For each input to the join, push down any filters that only
             # reference columns from that input.
             for idx, child in enumerate(node.inputs):
