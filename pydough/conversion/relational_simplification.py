@@ -153,6 +153,12 @@ def simplify_function_call(
                 ):
                     output_predicates.add(LogicalPredicate.NOT_NULL)
         case pydop.DEFAULT_TO:
+            if (
+                isinstance(expr.inputs[0], LiteralExpression)
+                and expr.inputs[0].value is None
+            ):
+                output_expr = expr.inputs[1]
+                output_predicates = arg_predicates[1]
             if LogicalPredicate.NOT_NULL in arg_predicates[0]:
                 output_expr = expr.inputs[0]
                 output_predicates = arg_predicates[0]
@@ -185,8 +191,8 @@ def simplify_function_call(
         ):
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
         case pydop.EQU | pydop.NEQ | pydop.GEQ | pydop.GRT | pydop.LET | pydop.LEQ:
-            match (expr.op, expr.inputs[1]):
-                case (pydop.GRT, LiteralExpression()) if (
+            match (expr.inputs[0], expr.op, expr.inputs[1]):
+                case (_, pydop.GRT, LiteralExpression()) if (
                     expr.inputs[1].value == 0
                     and LogicalPredicate.POSITIVE in arg_predicates[0]
                 ):
@@ -194,7 +200,7 @@ def simplify_function_call(
                     output_predicates.add(LogicalPredicate.NOT_NULL)
                     output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
                     output_predicates.add(LogicalPredicate.POSITIVE)
-                case (pydop.GEQ, LiteralExpression()) if (
+                case (_, pydop.GEQ, LiteralExpression()) if (
                     expr.inputs[1].value == 0
                     and LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]
                 ):
@@ -202,6 +208,35 @@ def simplify_function_call(
                     output_predicates.add(LogicalPredicate.NOT_NULL)
                     output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
                     output_predicates.add(LogicalPredicate.POSITIVE)
+                case (LiteralExpression(), _, LiteralExpression()):
+                    match (
+                        expr.inputs[0].value,
+                        expr.inputs[1].value,
+                        expr.op,
+                    ):
+                        case (None, _, _) | (_, None, _):
+                            output_expr = LiteralExpression(None, expr.data_type)
+                        case (x, y, pydop.EQU):
+                            output_expr = LiteralExpression(x == y, expr.data_type)
+                        case (x, y, pydop.NEQ):
+                            output_expr = LiteralExpression(x != y, expr.data_type)
+                        case (x, y, pydop.LET) if isinstance(
+                            x, (int, float)
+                        ) and isinstance(y, (int, float)):
+                            output_expr = LiteralExpression(x < y, expr.data_type)
+                        case (x, y, pydop.LEQ) if isinstance(
+                            x, (int, float)
+                        ) and isinstance(y, (int, float)):
+                            output_expr = LiteralExpression(x <= y, expr.data_type)
+                        case (x, y, pydop.GRT) if isinstance(
+                            x, (int, float)
+                        ) and isinstance(y, (int, float)):
+                            output_expr = LiteralExpression(x > y, expr.data_type)
+                        case (x, y, pydop.GEQ) if isinstance(
+                            x, (int, float)
+                        ) and isinstance(y, (int, float)):
+                            output_expr = LiteralExpression(x >= y, expr.data_type)
+
                 case _:
                     pass
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)

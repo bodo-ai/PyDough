@@ -6,7 +6,7 @@ SELECT
   COUNT(*) * -3 AS su4,
   0 AS su5,
   COUNT(*) * 0.5 AS su6,
-  COALESCE(NULL, 0) AS su7,
+  0 AS su7,
   COALESCE(
     LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END),
     0

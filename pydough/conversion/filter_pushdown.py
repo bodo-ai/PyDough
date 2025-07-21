@@ -5,14 +5,17 @@ Logic used to transpose filters lower into relational trees.
 __all__ = ["push_filters"]
 
 
+import pydough.pydough_operators as pydop
 from pydough.relational import (
     Aggregate,
+    CallExpression,
     ColumnReference,
     EmptySingleton,
     Filter,
     Join,
     JoinType,
     Limit,
+    LiteralExpression,
     Project,
     RelationalExpression,
     RelationalNode,
@@ -28,6 +31,41 @@ from pydough.relational.rel_util import (
     transpose_expression,
 )
 
+from .relational_simplification import run_simplification
+
+
+def is_present_filter(expr: RelationalExpression, column_names: set[str]):
+    """
+    TODO
+    """
+    return (
+        isinstance(expr, CallExpression)
+        and expr.op == pydop.PRESENT
+        and isinstance(expr.inputs[0], ColumnReference)
+        and expr.inputs[0].name in column_names
+    )
+
+
+def replace_with_null(expr: RelationalExpression, null_column_names: set[str]):
+    """
+    TODO
+    """
+    match expr:
+        case ColumnReference():
+            if expr.name in null_column_names:
+                return LiteralExpression(None, expr.data_type)
+            return expr
+        case CallExpression():
+            return CallExpression(
+                expr.op,
+                return_type=expr.data_type,
+                inputs=[
+                    replace_with_null(arg, null_column_names) for arg in expr.inputs
+                ],
+            )
+        case _:
+            return expr
+
 
 def apply_filter_left_join_transform(
     join: Join, filters: set[RelationalExpression], rhs_cols: set[str]
@@ -39,7 +77,13 @@ def apply_filter_left_join_transform(
         return join
 
     for cond in filters:
-        if false_when_null_columns(cond, rhs_cols):
+        with_nulls: RelationalExpression = replace_with_null(cond, rhs_cols)
+        with_nulls, _ = run_simplification(with_nulls, {}, False)
+        if isinstance(with_nulls, LiteralExpression) and with_nulls.value in [
+            False,
+            0,
+            None,
+        ]:
             # If the filters are false when the right-hand side is null, then
             # the left join becomes an inner join.
             join.join_type = JoinType.INNER
