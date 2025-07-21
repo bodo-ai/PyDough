@@ -3323,7 +3323,7 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     error_message: str,
     get_sample_graph: graph_fetcher,

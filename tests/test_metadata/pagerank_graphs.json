@@ -1,0 +1,64 @@
+[
+    {
+        "name": "PAGERANK",
+        "version": "V2",
+        "collections": [
+            {
+                "name": "sites",
+                "type": "simple table",
+                "table path": "main.SITES",
+                "unique properties": ["key"],
+                "properties": [
+                    {"name": "key", "type": "table column", "column name": "s_key", "data type": "numeric"},
+                    {"name": "name", "type": "table column", "column name": "s_name", "data type": "string"}
+                ]
+            },
+            {
+                "name": "links",
+                "type": "simple table",
+                "table path": "main.LINKS",
+                "unique properties": [["source_key", "target_key"]],
+                "properties": [
+                    {"name": "source_key", "type": "table column", "column name": "l_source", "data type": "numeric"},
+                    {"name": "target_key", "type": "table column", "column name": "l_target", "data type": "numeric"}
+                ]
+            }
+        ],
+        "relationships": [
+            {
+              "type": "simple join",
+              "name": "outgoing_links",
+              "parent collection": "sites",
+              "child collection": "links",
+              "singular": false,
+              "always matches": true,
+              "keys": {"key": ["source_key"]}
+            },
+            {
+                "type": "reverse",
+                "name": "source_site",
+                "original parent": "sites",
+                "original property": "outgoing_links",
+                "singular": true,
+                "always matches": true
+            },
+            {
+                "type": "general join",
+                "name": "incoming_links",
+                "parent collection": "sites",
+                "child collection": "links",
+                "singular": false,
+                "always matches": true,
+                "condition": "ABSENT(other.target_key) | (self.key == other.target_key)"
+            },
+            {
+                "type": "reverse",
+                "name": "target_site",
+                "original parent": "sites",
+                "original property": "incoming_links",
+                "singular": false,
+                "always matches": true
+            }
+        ]
+    }
+]

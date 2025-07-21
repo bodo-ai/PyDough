@@ -188,22 +188,15 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
     # no longer a projection.
     while isinstance(node.input, Project):
         child_project: Project = node.input
-        if isinstance(node, RelationalRoot):
-            # The columns of the projection can be sucked into the root
-            # above it if they are all pass-through/renamings, or if there
-            # is no convolution created (only allowed if there are no
-            # ordering expressions).
-            if all(
-                isinstance(expr, ColumnReference)
-                for expr in child_project.columns.values()
-            ) or (
-                len(node.orderings) == 0
-                and merging_doesnt_create_convolution(
-                    node.columns, child_project.columns
-                )
-            ):
+        # The columns of the projection can be sucked into the parent
+        # above it unless there is a window function in both.
+        if not (
+            any(contains_window(expr) for expr in child_project.columns.values())
+            and any(contains_window(expr) for expr in node.columns.values())
+        ):
+            if isinstance(node, RelationalRoot):
                 # Replace all column references in the root's columns with
-                # the expressions from the child projection..
+                # the expressions from the child projection.
                 for idx, (name, expr) in enumerate(node.ordered_columns):
                     new_expr = transpose_expression(expr, child_project.columns)
                     node.columns[name] = new_expr
@@ -219,28 +212,18 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 # Delete the child projection from the tree, replacing it
                 # with its input.
                 node._input = child_project.input
-            else:
-                # Otherwise, halt the merging process since it is no longer
-                # possible to merge the children of this root into it.
-                break
-        elif isinstance(node, Project):
-            # The columns of the projection can be sucked into the
-            # projection above it if they are all pass-through/renamings
-            # or if there is no convolution created.
-            if all(
-                isinstance(expr, ColumnReference)
-                for expr in child_project.columns.values()
-            ) or merging_doesnt_create_convolution(node.columns, child_project.columns):
+                continue
+            elif isinstance(node, Project):
                 for name, expr in node.columns.items():
                     new_expr = transpose_expression(expr, child_project.columns)
                     node.columns[name] = new_expr
                 # Delete the child projection from the tree, replacing it
                 # with its input.
                 node._input = child_project.input
-            else:
-                # Otherwise, halt the merging process since it is no longer
-                # possible to merge the children of this project into it.
-                break
+                continue
+        # Otherwise, halt the merging process since it is no longer
+        # possible to merge the children of this project into it.
+        break
     # Final round: if there is a project on top of a scan, aggregate, filter,
     # or limit that only does  column pruning/renaming, just push it into the
     # node.
@@ -264,15 +247,42 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 if key_name not in keys_used:
                     new_columns[key_name] = node.input.columns[key_name]
         return node.input.copy(columns=new_columns)
+    # Alternatively: if the node is a root and it is on top of a limit, try to
+    # suck the limit into the root.
+    if isinstance(node, RelationalRoot) and isinstance(node.input, Limit):
+        new_orderings: list[ExpressionSortInfo] = [
+            ExpressionSortInfo(
+                transpose_expression(ordering.expr, node.input.columns),
+                ordering.ascending,
+                ordering.nulls_first,
+            )
+            for ordering in node.orderings
+        ]
+        if node.input.orderings == new_orderings:
+            # If the orderings are the same, pull in the limit into the root.
+            # Replace all column references in the root's columns with
+            # the expressions from the child projection.
+            for idx, (name, expr) in enumerate(node.ordered_columns):
+                new_expr = transpose_expression(expr, node.input.columns)
+                node.columns[name] = new_expr
+                node.ordered_columns[idx] = (name, new_expr)
+            node._orderings = new_orderings
+            node._limit = node.input.limit
+            # Delete the child projection from the tree, replacing it
+            # with its input.
+            node._input = node.input.input
     return node
 
 
-def merge_projects(node: RelationalNode) -> RelationalNode:
+def merge_projects(
+    node: RelationalNode, push_into_joins: bool = True
+) -> RelationalNode:
     """
     Merge adjacent projections when beneficial.
 
     Args:
         `node`: The current node of the relational tree.
+        `push_into_joins`: If True, push projections into joins when possible.
 
     Returns:
         The transformed version of `node` with adjacent projections merged
@@ -281,11 +291,13 @@ def merge_projects(node: RelationalNode) -> RelationalNode:
     """
     # If there is a project on top of a join, attempt to push it down into the
     # inputs of the join.
-    if isinstance(node, Project) and isinstance(node.input, Join):
+    if isinstance(node, Project) and isinstance(node.input, Join) and push_into_joins:
         node = project_join_transpose(node)
 
     # Recursively invoke the procedure on all inputs to the node.
-    node = node.copy(inputs=[merge_projects(input) for input in node.inputs])
+    node = node.copy(
+        inputs=[merge_projects(input, push_into_joins) for input in node.inputs]
+    )
 
     # Invoke the main merging step if the current node is a root/projection,
     # potentially multiple times if the projection below it that gets deleted

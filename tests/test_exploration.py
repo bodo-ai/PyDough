@@ -1289,7 +1289,7 @@ Did you mean to use pydough.explain_term?
 )
 def unqualified_exploration_test_data(
     request,
-) -> tuple[str, Callable[[], UnqualifiedNode], str, str]:
+) -> tuple[str, Callable[..., UnqualifiedNode], str, str]:
     """
     Testing data used for test_unqualified_node_exploration. Returns a tuple of
     the graph name to use, a function that takes in a graph and returns the
@@ -1298,7 +1298,7 @@ def unqualified_exploration_test_data(
     without verbose mode.
     """
     graph_name: str = request.param[0]
-    test_impl: Callable[[], UnqualifiedNode] = request.param[1]
+    test_impl: Callable[..., UnqualifiedNode] = request.param[1]
     verbose_refsol: str = request.param[2]
     non_verbose_refsol: str = request.param[3]
     return graph_name, test_impl, verbose_refsol.strip(), non_verbose_refsol.strip()
@@ -1313,7 +1313,7 @@ def unqualified_exploration_test_data(
 )
 def test_unqualified_node_exploration(
     unqualified_exploration_test_data: tuple[
-        str, Callable[[], UnqualifiedNode], str, str
+        str, Callable[..., UnqualifiedNode], str, str
     ],
     verbose: bool,
     get_sample_graph: graph_fetcher,

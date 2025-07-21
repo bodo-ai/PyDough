@@ -106,7 +106,10 @@ class PartitionChild(ChildOperatorChildAccess):
         if term_name in self.inherited_downstreamed_terms:
             context: PyDoughCollectionQDAG = self.child_access
             while term_name not in context.all_terms:
-                if context is self.child_access:
+                if (
+                    context is self.child_access
+                    and term_name in self.ancestor_context.inherited_downstreamed_terms
+                ):
                     context = self.ancestor_context
                 else:
                     assert context.ancestor_context is not None
