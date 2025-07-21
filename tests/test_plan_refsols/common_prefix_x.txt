@@ -1,4 +1,4 @@
-ROOT(columns=[('name', c_name), ('n_orders', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(DEFAULT_TO(n_rows, 0:numeric)):desc_last, (c_name):asc_first], limit=5:numeric)
+ROOT(columns=[('name', c_name), ('n_orders', n_rows)], orderings=[(n_rows):desc_last, (c_name):asc_first], limit=5:numeric)
  JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'c_name': t0.c_name, 'n_rows': t1.n_rows})
   SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name})
   FILTER(condition=sum_n_rows > 0:numeric, columns={'n_rows': n_rows, 'o_custkey': o_custkey})

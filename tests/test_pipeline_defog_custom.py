@@ -11,7 +11,7 @@ import pytest
 
 from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import DayOfWeek, PyDoughConfigs
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -145,6 +145,7 @@ def get_day_of_week(
                     {"symbol": ["AAPL", "AMZN", "BRK.B", "FB", "GOOG"]}
                 ),
                 "multi_partition_access_1",
+                skip_sql=True,
             ),
             id="multi_partition_access_1",
         ),
@@ -176,6 +177,7 @@ def get_day_of_week(
                     }
                 ),
                 "multi_partition_access_2",
+                skip_sql=True,
             ),
             id="multi_partition_access_2",
         ),
@@ -212,6 +214,7 @@ def get_day_of_week(
                     }
                 ),
                 "multi_partition_access_3",
+                skip_sql=True,
             ),
             id="multi_partition_access_3",
         ),
@@ -228,6 +231,7 @@ def get_day_of_week(
                     }
                 ),
                 "multi_partition_access_4",
+                skip_sql=True,
             ),
             id="multi_partition_access_4",
         ),
@@ -267,6 +271,7 @@ def get_day_of_week(
                     }
                 ),
                 "multi_partition_access_5",
+                skip_sql=True,
             ),
             id="multi_partition_access_5",
         ),
@@ -300,6 +305,7 @@ def get_day_of_week(
                     }
                 ),
                 "multi_partition_access_6",
+                skip_sql=True,
             ),
             id="multi_partition_access_6",
         ),
@@ -492,6 +498,7 @@ def get_day_of_week(
                     }
                 ),
                 "cumulative_stock_analysis",
+                skip_sql=True,
             ),
             id="cumulative_stock_analysis",
         ),
@@ -516,6 +523,7 @@ def get_day_of_week(
                     }
                 ),
                 "time_threshold_reached",
+                skip_sql=True,
             ),
             id="time_threshold_reached",
         ),
@@ -547,6 +555,7 @@ def get_day_of_week(
                     }
                 ),
                 "hour_minute_day",
+                skip_sql=True,
             ),
             id="hour_minute_day",
         ),
@@ -595,6 +604,7 @@ def get_day_of_week(
                     }
                 ),
                 "exponentiation",
+                skip_sql=True,
             ),
             id="exponentiation",
         ),
@@ -747,6 +757,7 @@ def get_day_of_week(
                     }
                 ),
                 "years_months_days_hours_datediff",
+                skip_sql=True,
             ),
             id="years_months_days_hours_datediff",
         ),
@@ -856,6 +867,7 @@ def get_day_of_week(
                     }
                 ),
                 "minutes_seconds_datediff",
+                skip_sql=True,
             ),
             id="minutes_seconds_datediff",
         ),
@@ -907,6 +919,7 @@ def get_day_of_week(
                     ),
                 ),
                 "padding_functions",
+                skip_sql=True,
             ),
             id="padding_functions",
         ),
@@ -985,6 +998,7 @@ def get_day_of_week(
                     wo_step9=lambda x: x["name"].str[2:2],
                 ),
                 "step_slicing",
+                skip_sql=True,
             ),
             id="step_slicing",
         ),
@@ -1004,6 +1018,7 @@ def get_day_of_week(
                     sign_high_zero=0,
                 ),
                 "sign",
+                skip_sql=True,
             ),
             id="sign",
         ),
@@ -1026,6 +1041,7 @@ def get_day_of_week(
                     }
                 ),
                 "find",
+                skip_sql=True,
             ),
             id="find",
         ),
@@ -1045,6 +1061,7 @@ def get_day_of_week(
                     }
                 ),
                 "strip",
+                skip_sql=True,
             ),
             id="strip",
         ),
@@ -1074,6 +1091,7 @@ def get_day_of_week(
                     }
                 ),
                 "replace",
+                skip_sql=True,
             ),
             id="replace",
         ),
@@ -1104,6 +1122,7 @@ def get_day_of_week(
                     }
                 ),
                 "str_count",
+                skip_sql=True,
             ),
             id="str_count",
         ),
@@ -1135,6 +1154,7 @@ def get_day_of_week(
                     }
                 ),
                 "get_part_multiple",
+                skip_sql=True,
             ),
             id="get_part_multiple",
         ),
@@ -1408,6 +1428,7 @@ def get_day_of_week(
                     }
                 ),
                 "week_offset",
+                skip_sql=True,
             ),
             id="week_offset",
         ),
@@ -1431,6 +1452,7 @@ def get_day_of_week(
                     }
                 ),
                 "window_sliding_frame_relsize",
+                skip_sql=True,
             ),
             id="window_sliding_frame_relsize",
         ),
@@ -1454,6 +1476,7 @@ def get_day_of_week(
                     }
                 ),
                 "window_sliding_frame_relsum",
+                skip_sql=True,
             ),
             id="window_sliding_frame_relsum",
         ),
@@ -1587,6 +1610,67 @@ def get_day_of_week(
             ),
             id="get_part_single",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = Broker.CALCULATE("
+                " s00 = ABS(13),"  # -> 13
+                " s01 = ABS(0),"  # -> 0
+                " s02 = ABS(COUNT(customers)),"  # -> COUNT(customers)
+                " s03 = ABS(COUNT(customers) + 5),"  # -> COUNT(customers) + 5
+                " s04 = ABS(COUNT(customers) * 2),"  # -> COUNT(customers) * 2
+                " s05 = ABS(COUNT(customers) / 8.0),"  # -> COUNT(customers) / 8.0
+                " s06 = DEFAULT_TO(10, 0),"  # -> 10
+                " s07 = DEFAULT_TO(COUNT(customers), 0),"  # -> COUNT(customers)
+                " s08 = DEFAULT_TO(ABS(COUNT(customers) - 25), 0),"  # -> ABS(COUNT(customers) - 25)
+                " s09 = DEFAULT_TO(COUNT(customers) + 1, 0),"  # -> COUNT(customers) + 1
+                " s10 = DEFAULT_TO(COUNT(customers) - 3, 0),"  # -> COUNT(customers) - 3
+                " s11 = DEFAULT_TO(COUNT(customers) * -1, 0),"  # -> COUNT(customers) * -1
+                " s12 = DEFAULT_TO(COUNT(customers) / 2.5, 0),"  # -> COUNT(customers) / 2.5
+                " s13 = DEFAULT_TO(COUNT(customers) > 10, False),"  # -> COUNT(customers) > 10
+                " s14 = DEFAULT_TO(COUNT(customers) >= 10, False),"  # -> COUNT(customers) >= 10
+                " s15 = DEFAULT_TO(COUNT(customers) == 20, False),"  # -> COUNT(customers) == 10
+                " s16 = DEFAULT_TO(COUNT(customers) != 25, False),"  # -> COUNT(customers) != 20
+                " s17 = DEFAULT_TO(COUNT(customers) < 25, False),"  # -> COUNT(customers) < 25
+                " s18 = DEFAULT_TO(COUNT(customers) <= 25, False),"  # -> COUNT(customers) <= 25
+                " s19 = COUNT(DEFAULT_TO(customers.name, '')),"  # -> COUNT(customers)
+                " s20 = ABS(DEFAULT_TO(AVG(ABS(DEFAULT_TO(LENGTH(customers.name), 0))), 0)),"  # -> AVG(DEFAULT_TO(LENGTH(customers.name), ''))
+                " s21 = PRESENT(COUNT(customers)),"  # -> True
+                " s22 = PRESENT(1) >= 0,"  # -> True
+                " s23 = ABSENT(1) >= 0,"  # -> True
+                ")",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "s00": [13],
+                        "s01": [0],
+                        "s02": [20],
+                        "s03": [25],
+                        "s04": [40],
+                        "s05": [2.5],
+                        "s06": [10],
+                        "s07": [20],
+                        "s08": [5],
+                        "s09": [21],
+                        "s10": [17],
+                        "s11": [-20],
+                        "s12": [8.0],
+                        "s13": [1],
+                        "s14": [1],
+                        "s15": [1],
+                        "s16": [1],
+                        "s17": [1],
+                        "s18": [1],
+                        "s19": [20],
+                        "s20": [12.3],
+                        "s21": [1],
+                        "s22": [1],
+                        "s23": [1],
+                    }
+                ),
+                "simplification_1",
+            ),
+            id="simplification_1",
+        ),
     ],
 )
 def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -1598,7 +1682,7 @@ def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
-def test_pipeline_until_relational_defog(
+def test_pipeline_until_relational_defog_custom(
     defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
@@ -1612,6 +1696,30 @@ def test_pipeline_until_relational_defog(
     file_path: str = get_plan_test_filename(defog_custom_pipeline_test_data.test_name)
     defog_custom_pipeline_test_data.run_relational_test(
         defog_graphs, file_path, update_tests
+    )
+
+
+def test_pipeline_until_sql_defog_custom(
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
+    defog_graphs: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    defog_config: PyDoughConfigs,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+):
+    """
+    Tests that the PyDough queries from `defog_custom_pipeline_test_data`
+    generate correct SQL text.
+    """
+    file_path: str = get_sql_test_filename(
+        defog_custom_pipeline_test_data.test_name, empty_context_database.dialect
+    )
+    defog_custom_pipeline_test_data.run_sql_test(
+        defog_graphs,
+        file_path,
+        update_tests,
+        empty_context_database,
+        config=defog_config,
     )
 
 
