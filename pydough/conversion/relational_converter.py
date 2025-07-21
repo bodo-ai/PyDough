@@ -1448,22 +1448,24 @@ def optimize_relational_tree(
     # possible.
     root = bubble_column_names(root)
 
-    # Step 8: run projection pullup followed by column pruning 2x.
+    # Step 8: the following pipeline twice:
+    # A: projection pullup
+    # B: simplification
+    # C: filter pushdown
+    # D: column pruning
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
         simplify_expressions(root)
+        root._input = push_filters(root.input, set())
         root = ColumnPruner().prune_unused_columns(root)
 
-    # Step 9: re-run filter pushdown
-    root._input = push_filters(root.input, set())
-
-    # Step 10: re-run projection merging, without pushing into joins.
+    # Step 9: re-run projection merging, without pushing into joins.
     root = confirm_root(merge_projects(root, push_into_joins=False))
 
-    # Step 11: re-run column bubbling
+    # Step 10: re-run column bubbling
     root = bubble_column_names(root)
 
-    # Step 12: re-run column pruning.
+    # Step 11: re-run column pruning.
     root = ColumnPruner().prune_unused_columns(root)
 
     return root
