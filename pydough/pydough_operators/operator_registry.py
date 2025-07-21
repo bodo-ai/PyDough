@@ -11,7 +11,6 @@ from pydough.errors import PyDoughUnqualifiedException
 from .base_operator import PyDoughOperator
 from .expression_operators import (
     ExpressionFunctionOperator,
-    KeywordBranchingExpressionFunctionOperator,
 )
 from .expression_operators import registered_expression_operators as REP
 
@@ -58,27 +57,6 @@ def get_operator_by_name(name: str, **kwargs) -> ExpressionFunctionOperator:
     # Find the operator directly using inspect
     for op_name, obj in inspect.getmembers(REP):
         if op_name == name and op_name in REP.__all__ and obj.public:
-            operator = obj
-            break
+            return obj
     else:
         raise PyDoughUnqualifiedException(f"Operator {name} not found.")
-
-    # Check if this is a keyword branching operator
-    if isinstance(operator, KeywordBranchingExpressionFunctionOperator):
-        # Find the matching implementation based on kwargs
-        impl: ExpressionFunctionOperator | None = operator.find_matching_implementation(
-            kwargs
-        )
-        if impl is None:
-            kwarg_str = ", ".join(f"{k}={v!r}" for k, v in kwargs.items())
-            raise PyDoughUnqualifiedException(
-                f"No matching implementation found for {name}({kwarg_str})."
-            )
-        return impl
-    elif len(kwargs) > 0:
-        raise PyDoughUnqualifiedException(
-            f"PyDough function call {name} does not support "
-            "keyword arguments at this time."
-        )
-
-    return operator

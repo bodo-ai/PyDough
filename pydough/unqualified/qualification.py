@@ -8,12 +8,11 @@ __all__ = ["qualify_node"]
 from collections.abc import Iterable
 
 import pydough
+import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GeneralJoinMetadata, GraphMetadata
-from pydough.pydough_operators import get_operator_by_name
 from pydough.pydough_operators.expression_operators import (
-    BinOp,
     ExpressionFunctionOperator,
     ExpressionWindowOperator,
 )
@@ -195,10 +194,7 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        # Iterate across all the values of the BinOp enum to figure out which
-        # one correctly matches the BinOp specified by the operator.
-        operation: str = BinOp.from_string(unqualified._parcel[0]).name
-        operator = get_operator_by_name(operation)
+        operator: pydop.BinaryOperator = unqualified._parcel[0]
         # Independently qualify the LHS and RHS arguments
         unqualified_lhs: UnqualifiedNode = unqualified._parcel[1]
         unqualified_rhs: UnqualifiedNode = unqualified._parcel[2]
@@ -439,7 +435,6 @@ class Qualifier:
             The PyDough QDAG object for the qualified expression node for
             `condition`.
         """
-        operation: str | None = None
         raw_term: PyDoughQDAG
         term: PyDoughExpressionQDAG
         term_name: str
@@ -452,8 +447,7 @@ class Qualifier:
                 # qualification of binary operators except with using
                 # `qualify_join_condition` on the inputs instead of
                 # `qualify_expression`.
-                operation = BinOp.from_string(condition._parcel[0]).name
-                operator = get_operator_by_name(operation)
+                binop: pydop.BinaryOperator = condition._parcel[0]
                 qualified_lhs: PyDoughExpressionQDAG = self.qualify_join_condition(
                     condition._parcel[1], access, self_name, other_name
                 )
@@ -461,14 +455,14 @@ class Qualifier:
                     condition._parcel[2], access, self_name, other_name
                 )
                 return self.builder.build_expression_function_call(
-                    operator, [qualified_lhs, qualified_rhs]
+                    binop, [qualified_lhs, qualified_rhs]
                 )
             case UnqualifiedOperation():
                 # For function calls, invoke the same logic as for normal
                 # qualification of function calls except with using
                 # `qualify_join_condition` on the inputs instead of
                 # `qualify_expression`.
-                operator = condition._parcel[0]
+                operator: pydop.PyDoughExpressionOperator = condition._parcel[0]
                 unqualified_operands: list[UnqualifiedNode] = condition._parcel[1]
                 qualified_operands: list[PyDoughQDAG] = []
                 for node in unqualified_operands:
@@ -1172,7 +1166,7 @@ class Qualifier:
         kwargs: dict[str, object] = {"by": by, "allow_ties": allow_ties}
         if per:
             kwargs["per"] = per
-        rank: UnqualifiedNode = UnqualifiedOperator("RANKING")(**kwargs)
+        rank: UnqualifiedNode = UnqualifiedOperator(pydop.RANKING)(**kwargs)
         unqualified_cond: UnqualifiedNode = (
             (rank == n_best) if n_best == 1 else (rank <= n_best)
         )

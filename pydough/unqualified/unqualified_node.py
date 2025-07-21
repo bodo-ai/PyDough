@@ -30,7 +30,6 @@ import pydough.pydough_operators as pydop
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.errors.error_utils import is_bool, is_integer, is_positive_int, is_string
 from pydough.metadata import GraphMetadata
-from pydough.pydough_operators import get_operator_by_name
 from pydough.types import (
     ArrayType,
     BooleanType,
@@ -125,8 +124,7 @@ class UnqualifiedNode(ABC):
                         "PyDough objects are currently not supported to be used as indices in Python slices."
                     )
                 args.append(coerced_elem)
-            operator = get_operator_by_name("SLICE")
-            return UnqualifiedOperation(operator, args)
+            return UnqualifiedOperation(pydop.SLICE, args)
         else:
             raise PyDoughUnqualifiedException(
                 f"Cannot index into PyDough object {self} with {key!r}"
@@ -144,99 +142,99 @@ class UnqualifiedNode(ABC):
 
     def __add__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("+", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.ADD, self, other_unqualified)
 
     def __radd__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("+", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.ADD, other_unqualified, self)
 
     def __sub__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("-", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.SUB, self, other_unqualified)
 
     def __rsub__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("-", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.SUB, other_unqualified, self)
 
     def __mul__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("*", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.MUL, self, other_unqualified)
 
     def __rmul__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("*", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.MUL, other_unqualified, self)
 
     def __truediv__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("/", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.DIV, self, other_unqualified)
 
     def __rtruediv__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("/", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.DIV, other_unqualified, self)
 
     def __pow__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("**", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.POW, self, other_unqualified)
 
     def __rpow__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("**", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.POW, other_unqualified, self)
 
     def __mod__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("%", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.MOD, self, other_unqualified)
 
     def __rmod__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("%", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.MOD, other_unqualified, self)
 
     def __eq__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("==", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.EQU, self, other_unqualified)
 
     def __ne__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("!=", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.NEQ, self, other_unqualified)
 
     def __lt__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("<", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.LET, self, other_unqualified)
 
     def __le__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("<=", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.LEQ, self, other_unqualified)
 
     def __gt__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation(">", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.GRT, self, other_unqualified)
 
     def __ge__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation(">=", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.GEQ, self, other_unqualified)
 
     def __and__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("&", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.BAN, self, other_unqualified)
 
     def __rand__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("&", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.BAN, other_unqualified, self)
 
     def __or__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("|", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.BOR, self, other_unqualified)
 
     def __ror__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("|", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.BOR, other_unqualified, self)
 
     def __xor__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("^", self, other_unqualified)
+        return UnqualifiedBinaryOperation(pydop.BXR, self, other_unqualified)
 
     def __rxor__(self, other: object):
         other_unqualified: UnqualifiedNode = self.coerce_to_unqualified(other)
-        return UnqualifiedBinaryOperation("^", other_unqualified, self)
+        return UnqualifiedBinaryOperation(pydop.BXR, other_unqualified, self)
 
     def __pos__(self):
         return self
@@ -245,8 +243,7 @@ class UnqualifiedNode(ABC):
         return 0 - self
 
     def __invert__(self):
-        operator = get_operator_by_name("NOT")
-        return UnqualifiedOperation(operator, [self])
+        return UnqualifiedOperation(pydop.NOT, [self])
 
     def CALCULATE(self, *args, **kwargs: dict[str, object]):
         calc_args: list[tuple[str, UnqualifiedNode]] = []
@@ -268,15 +265,13 @@ class UnqualifiedNode(ABC):
         return UnqualifiedCalculate(self, calc_args)
 
     def __abs__(self):
-        operator = get_operator_by_name("ABS")
-        return UnqualifiedOperation(operator, [self])
+        return UnqualifiedOperation(pydop.ABS, [self])
 
     def __round__(self, n=None):
         if n is None:
             n = 0
         n_unqualified = self.coerce_to_unqualified(n)
-        operator = get_operator_by_name("ROUND")
-        return UnqualifiedOperation(operator, [self, n_unqualified])
+        return UnqualifiedOperation(pydop.ROUND, [self, n_unqualified])
 
     def __floor__(self):
         raise PyDoughUnqualifiedException(
@@ -447,24 +442,23 @@ class UnqualifiedRoot(UnqualifiedNode):
     """
 
     def __init__(self, graph: GraphMetadata):
-        self._parcel: tuple[GraphMetadata, set[str]] = (
+        func_map: dict[str, pydop.PyDoughOperator] = {}
+        for operator_name, operator in pydop.builtin_registered_operators().items():
+            if not isinstance(operator, pydop.BinaryOperator):
+                func_map[operator_name] = operator
+        for operator_name in graph.get_function_names():
+            func_map[operator_name] = graph.get_function(operator_name)
+        self._parcel: tuple[GraphMetadata, dict[str, pydop.PyDoughOperator]] = (
             graph,
-            {
-                operator_name
-                for operator_name, operator in pydop.builtin_registered_operators().items()
-                if not isinstance(operator, pydop.BinaryOperator)
-            }
-            | set(graph.get_function_names()),
+            func_map,
         )
 
     def __getattribute__(self, name: str) -> Any:
-        if name in super(UnqualifiedNode, self).__getattribute__("_parcel")[1]:
-            graph: GraphMetadata = super(UnqualifiedNode, self).__getattribute__(
-                "_parcel"
-            )[0]
-            if name in graph.get_function_names():
-                return UnqualifiedOperator(name, graph.get_function(name))
-            return UnqualifiedOperator(name)
+        func_map: dict[str, pydop.PyDoughOperator] = super(
+            UnqualifiedNode, self
+        ).__getattribute__("_parcel")[1]
+        if name in func_map:
+            return UnqualifiedOperator(func_map[name])
         else:
             return super().__getattribute__(name)
 
@@ -593,68 +587,21 @@ class UnqualifiedOperator(UnqualifiedNode):
     yet to be called.
     """
 
-    def __init__(
-        self, name: str, operator: pydop.ExpressionFunctionOperator | None = None
-    ):
-        self._parcel: tuple[str, pydop.ExpressionFunctionOperator | None] = (
-            name,
-            operator,
-        )
+    def __init__(self, operator: pydop.PyDoughOperator):
+        self._parcel: tuple[pydop.PyDoughOperator] = (operator,)
 
     def __call__(self, *args, **kwargs):
-        per: str | None = None
-        window_operator: pydop.ExpressionWindowOperator
-        is_window: bool = True
-        operands: list[UnqualifiedNode] = []
-        func_str: str = self._parcel[0]
-        for arg in args:
-            operands.append(self.coerce_to_unqualified(arg))
-        match func_str:
-            case "PERCENTILE":
-                window_operator = pydop.PERCENTILE
-                is_positive_int.verify(
-                    kwargs.get("n_buckets", 100), "`n_buckets` argument"
-                )
-            case "RANKING":
-                window_operator = pydop.RANKING
-                is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
-                is_bool.verify(kwargs.get("dense", False), "`dense` argument")
-            case "PREV" | "NEXT":
-                window_operator = pydop.PREV if func_str == "PREV" else pydop.NEXT
-                is_integer.verify(kwargs.get("n", 1), "`n` argument")
-                if len(args) > 1:
-                    is_integer.verify(args[1], "`n` argument")
-            case "RELSUM":
-                window_operator = pydop.RELSUM
-            case "RELAVG":
-                window_operator = pydop.RELAVG
-            case "RELCOUNT":
-                window_operator = pydop.RELCOUNT
-            case "RELSIZE":
-                window_operator = pydop.RELSIZE
-            case func_str:
-                is_window = False
-                if self._parcel[1] is None:
-                    operator = get_operator_by_name(func_str, **kwargs)
-                else:
-                    operator = self._parcel[1]
-                if isinstance(operator, pydop.ExpressionWindowOperator):
-                    window_operator = operator
-                    is_window = True
-        if is_window:
-            by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, window_operator)
-            if "per" in kwargs:
-                per_arg = kwargs.pop("per")
-                is_string.verify(per_arg, "`per` argument")
-                per = per_arg
-            return UnqualifiedWindow(
-                window_operator,
-                operands,
-                by,
-                per,
-                kwargs,
+        operands: list[UnqualifiedNode] = [
+            self.coerce_to_unqualified(arg) for arg in args
+        ]
+        if isinstance(self._parcel[0], pydop.ExpressionWindowOperator):
+            return call_window_operator(self._parcel[0], operands, **kwargs)
+        elif isinstance(self._parcel[0], pydop.ExpressionFunctionOperator):
+            return call_function_operator(self._parcel[0], operands, **kwargs)
+        else:
+            raise NotImplementedError(
+                f"Unsupported operator type: {self._parcel[0].__class__.__name__}"
             )
-        return UnqualifiedOperation(operator, operands)
 
 
 class UnqualifiedOperation(UnqualifiedNode):
@@ -701,8 +648,10 @@ class UnqualifiedBinaryOperation(UnqualifiedNode):
     Variant of UnqualifiedOperation specifically for builtin Python binops.
     """
 
-    def __init__(self, operator: str, lhs: UnqualifiedNode, rhs: UnqualifiedNode):
-        self._parcel: tuple[str, UnqualifiedNode, UnqualifiedNode] = (
+    def __init__(
+        self, operator: pydop.BinaryOperator, lhs: UnqualifiedNode, rhs: UnqualifiedNode
+    ):
+        self._parcel: tuple[pydop.BinaryOperator, UnqualifiedNode, UnqualifiedNode] = (
             operator,
             lhs,
             rhs,
@@ -868,7 +817,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 case _:
                     return repr(literal_value)
         case UnqualifiedOperator():
-            return unqualified._parcel[0]
+            return repr(unqualified._parcel[0])
         case UnqualifiedOperation():
             operands_str = ", ".join(
                 [display_raw(operand) for operand in unqualified._parcel[1]]
@@ -885,7 +834,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 operands_str += f", {kwarg}={val!r}"
             return f"{unqualified._parcel[0].function_name}({operands_str})"
         case UnqualifiedBinaryOperation():
-            return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0]} {display_raw(unqualified._parcel[2])})"
+            return f"({display_raw(unqualified._parcel[1])} {unqualified._parcel[0].binop.value} {display_raw(unqualified._parcel[2])})"
         case UnqualifiedCollation():
             method: str = "ASC" if unqualified._parcel[1] else "DESC"
             pos: str = "'last'" if unqualified._parcel[2] else "'first'"
@@ -935,3 +884,67 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             raise PyDoughUnqualifiedException(
                 f"Unsupported unqualified node: {unqualified.__class__.__name__}"
             )
+
+
+def call_function_operator(
+    operator: pydop.ExpressionFunctionOperator,
+    operands: list[UnqualifiedNode],
+    **kwargs,
+) -> UnqualifiedNode:
+    """
+    TODO
+    """
+
+    # Check if this is a keyword branching operator
+    if isinstance(operator, pydop.KeywordBranchingExpressionFunctionOperator):
+        # Find the matching implementation based on kwargs
+        impl: pydop.ExpressionFunctionOperator | None = (
+            operator.find_matching_implementation(kwargs)
+        )
+        if impl is None:
+            kwarg_str = ", ".join(f"{k}={v!r}" for k, v in kwargs.items())
+            raise PyDoughUnqualifiedException(
+                f"No matching implementation found for {operator.function_name}({kwarg_str})."
+            )
+        operator = impl
+
+    # Otherwise, verify there are no keyword arguments
+    elif len(kwargs) > 0:
+        raise PyDoughUnqualifiedException(
+            f"PyDough function {operator.function_name} does not support "
+            "keyword arguments at this time."
+        )
+
+    return UnqualifiedOperation(operator, operands)
+
+
+def call_window_operator(
+    operator: pydop.ExpressionWindowOperator, operands: list[UnqualifiedNode], **kwargs
+) -> UnqualifiedNode:
+    """
+    TODO
+    """
+    match operator:
+        case pydop.PERCENTILE:
+            is_positive_int.verify(kwargs.get("n_buckets", 100), "`n_buckets` argument")
+        case pydop.RANKING:
+            is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
+            is_bool.verify(kwargs.get("dense", False), "`dense` argument")
+        case pydop.PREV | pydop.NEXT:
+            is_integer.verify(kwargs.get("n", 1), "`n` argument")
+            if len(operands) > 1:
+                is_integer.verify(operands[1], "`n` argument")
+
+    by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, operator)
+    per: str | None = None
+    if "per" in kwargs:
+        per_arg = kwargs.pop("per")
+        is_string.verify(per_arg, "`per` argument")
+        per = per_arg
+    return UnqualifiedWindow(
+        operator,
+        operands,
+        by,
+        per,
+        kwargs,
+    )
