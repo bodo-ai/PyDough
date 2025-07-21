@@ -1,0 +1,16 @@
+SELECT
+  sbtxdatetime AS x,
+  CAST('2025-05-02 11:00:00' AS DATETIME) AS y1,
+  CAST('2023-04-03 13:16:30' AS DATETIME) AS y,
+  DATEDIFF(CAST('2025-05-02 11:00:00' AS DATETIME), CAST(sbtxdatetime AS DATETIME)) AS years_diff,
+  DATEDIFF(CAST('2025-05-02 11:00:00' AS DATETIME), CAST(sbtxdatetime AS DATETIME)) AS months_diff,
+  DATEDIFF(CAST('2025-05-02 11:00:00' AS DATETIME), CAST(sbtxdatetime AS DATETIME)) AS days_diff,
+  DATEDIFF(CAST('2025-05-02 11:00:00' AS DATETIME), CAST(sbtxdatetime AS DATETIME)) AS hours_diff,
+  DATEDIFF(CAST('2023-04-03 13:16:30' AS DATETIME), CAST(sbtxdatetime AS DATETIME)) AS minutes_diff,
+  DATEDIFF(CAST('2023-04-03 13:16:30' AS DATETIME), CAST(sbtxdatetime AS DATETIME)) AS seconds_diff
+FROM main.sbTransaction
+WHERE
+  YEAR(sbtxdatetime) < 2025
+ORDER BY
+  years_diff
+LIMIT 30
