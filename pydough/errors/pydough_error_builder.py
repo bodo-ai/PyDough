@@ -42,7 +42,16 @@ class PyDoughErrorBuilder:
             An exception indicating that the term was not found.
         """
         return PyDoughQDAGException(
-            collection.name_mismatch_error(term_name, atol=2, rtol=0.1, min_names=3)
+            collection.name_mismatch_error(
+                term_name,
+                atol=2,
+                rtol=0.1,
+                min_names=3,
+                insert_cost=0.5,
+                delete_cost=1.0,
+                substitution_cost=1.0,
+                capital_cost=0.1,
+            )
         )
 
     def down_streaming_conflict(
@@ -265,9 +274,13 @@ class PyDoughErrorBuilder:
             suggestions: list[str] = find_possible_name_matches(
                 term_name=node._parcel[1],
                 candidates=set(node._parcel[0]._parcel[1]),
-                atol=1,
+                atol=2,
                 rtol=0.1,
                 min_names=3,
+                insert_cost=0.5,
+                delete_cost=1.0,
+                substitution_cost=1.0,
+                capital_cost=0.1,
             )
 
             # Check if there are any suggestions to add

@@ -24,12 +24,12 @@ from tests.testing_utilities import (
     [
         pytest.param(
             "result = nations.CALCULATE(nation_name=name, total_balance=SUM(account_balance))",
-            "Unrecognized term of TPCH.nations: 'account_balance'. Did you mean: comment, customers, name, region_key, suppliers, region?",
+            "Unrecognized term of TPCH.nations: 'account_balance'. Did you mean: name, comment, key, region, customers, region_key?",
             id="bad_name",
         ),
         pytest.param(
             "result = nations.CALCULATE(nation_name=FIZZBUZZ(name))",
-            "PyDough object FIZZBUZZ is not callable. Did you mean: FIND, MINUTE, ABS, COUNT, FLOAT, FLOOR, HOUR, IFF, INTEGER, ISIN, LIKE, MIN, RELCOUNT, RELSIZE, RELSUM, ROUND, SIGN, STRCOUNT, SUM?",
+            "PyDough object FIZZBUZZ is not callable. Did you mean: FIND, ABS, MIN, SUM, HOUR, IFF, LIKE, MINUTE, SIGN, AVG, CEIL, COUNT, DAY, FLOAT, FLOOR, HAS, ISIN, MAX, NOT, ROUND, STD, VAR, LPAD, NEXT, PREV, RELSUM, RPAD, SLICE, SQRT, YEAR?",
             id="non_function",
         ),
         pytest.param(
@@ -54,7 +54,7 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "lines.CALCULATE(v=MUL(extended_price, SUB(1, discount)))",
-            "PyDough object SUB is not callable. Did you mean: SUM, STD, ABS?",
+            "PyDough object SUB is not callable. Did you mean: SUM, STD, ABS, AVG, DAY, HAS, HOUR, IFF, ISIN, MAX, MIN, NOT, SIGN, SQRT, VAR?",
             id="binop_function_call",
         ),
         pytest.param(
@@ -122,22 +122,22 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",
-            "PyDough object SAMPLE_VAR is not callable. Did you mean: MEDIAN, PREV, SMALLEST, UPPER, VAR, YEAR, ABSENT, AVG, DATEDIFF, DATETIME, FLOAT, FLOOR, GETPART, INTEGER, KEEP_IF, LARGEST, LENGTH, LOWER, LPAD, MAX, POWER, PRESENT, QUARTER, RELAVG, REPLACE, RPAD, SECOND, SLICE, SUM?",
+            "PyDough object SAMPLE_VAR is not callable. Did you mean: YEAR, SUM, UPPER, VAR, AVG, LPAD, PREV, RPAD, DAY, FLOAT, FLOOR, HAS, LOWER, MAX, POWER, SLICE, SMALLEST, SQRT, STD, ABS, CEIL, GETPART, HOUR, LIKE, MEDIAN, NEXT, QUARTER, RELAVG, REPLACE, SECOND, SIGN, STRIP?",
             id="kwargfunc_1",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VARIANCE(suppliers.account_balance))",
-            "PyDough object SAMPLE_VARIANCE is not callable. Did you mean: MEDIAN, REPLACE, SLICE, DATETIME, JOIN_STRINGS, STRING?",
+            "PyDough object SAMPLE_VARIANCE is not callable. Did you mean: SLICE, REPLACE, MEDIAN, SIGN, STRING, YEAR, ISIN, MIN, STRIP, SUM, UPPER, VAR?",
             id="kwargfunc_2",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_STD(suppliers.account_balance))",
-            "PyDough object SAMPLE_STD is not callable. Did you mean: SMALLEST, LARGEST, ABSENT?",
+            "PyDough object SAMPLE_STD is not callable. Did you mean: SMALLEST, STD, HAS, LARGEST, SUM, ABS, LPAD, NEXT, RPAD, SECOND, SQRT, ABSENT, DAY, FLOAT, MAX, NOT, SLICE, UPPER, VAR?",
             id="kwargfunc_3",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, std=POPULATION_STD(suppliers.account_balance))",
-            "PyDough object POPULATION_STD is not callable. Did you mean: CONTAINS, COUNT, DEFAULT_TO, JOIN_STRINGS, LARGEST, MONOTONIC, NDISTINCT, ROUND?",
+            "COUNT, ROUND, CONTAINS, FIND, LPAD, RPAD, FLOAT, HAS, MIN, MONTH, NOT, STD, HASNOT, HOUR, ISIN, MINUTE, SECOND, SIGN, ABS, DAY, DEFAULT_TO, FLOOR, LARGEST, MAX, MONOTONIC, NDISTINCT, POWER, PRESENT, QUANTILE, RELCOUNT, REPLACE, SLICE, STRING, SUM, VAR?",
             id="kwargfunc_4",
         ),
         pytest.param(

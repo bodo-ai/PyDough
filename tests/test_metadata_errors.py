@@ -765,7 +765,7 @@ def test_invalid_graphs(
         ),
         pytest.param(
             "parent.sub4",
-            "Malformed general join condition: 'is_prime(self.j1) != is_prime(self.j2)' (PyDough object is_prime is not callable. Did you mean: DATETIME, SLICE, ISIN, STRING, STRIP, DAYNAME, KEEP_IF, LIKE, QUANTILE, RELSIZE, REPLACE, SIGN, SUM, PREV, SQRT?)",
+            "Malformed general join condition: 'is_prime(self.j1) != is_prime(self.j2)' (PyDough object is_prime is not callable. Did you mean: ISIN, LIKE, SUM, SLICE, STRIP, IFF, MIN, VAR, PREV, SIGN, SQRT, STRING, ABS, CEIL, FIND, HAS, HOUR, LPAD, RPAD, STD, YEAR, UPPER, DATETIME?)",
             id="bad_syntax_3",
         ),
         pytest.param(

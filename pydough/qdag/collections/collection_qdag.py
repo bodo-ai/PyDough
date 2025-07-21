@@ -357,7 +357,15 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         return "\n".join(self.to_tree_form(True).to_string_rows())
 
     def name_mismatch_error(
-        self, term_name: str, atol: int = 2, rtol: float = 0.1, min_names: int = 3
+        self,
+        term_name: str,
+        atol: int = 2,
+        rtol: float = 0.1,
+        min_names: int = 3,
+        insert_cost: float = 1.0,
+        delete_cost: float = 1.0,
+        substitution_cost: float = 1.0,
+        capital_cost: float = 0.1,
     ) -> str:
         """
         Raises a name mismatch error with suggestions if possible.
@@ -373,6 +381,13 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             names with a minimum edit distance less than or equal to
             `closest_match * (1 + rtol)` will be included as a suggestion.
             `min_names`: The minimum number of suggestions to include.
+            `insert_cost`: The cost of inserting a character into the first
+            string.
+            `delete_cost`: The cost of deleting a character from the first
+            string.
+            `substitution_cost`: The cost of substituting a character.
+            `capital_cost`: The cost of substituting a character with the same
+            character with different capitalization.
 
         Returns:
             A string describing the error, including suggestions if available.
@@ -385,6 +400,10 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             atol=atol,
             rtol=rtol,
             min_names=min_names,
+            insert_cost=insert_cost,
+            delete_cost=delete_cost,
+            substitution_cost=substitution_cost,
+            capital_cost=capital_cost,
         )
 
         # Check if there are any suggestions to add

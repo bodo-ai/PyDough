@@ -453,7 +453,14 @@ def extract_object(json_obj: dict, key_name: str, obj_name: str) -> dict:
 ###############################################################################
 
 
-def min_edit_distance(s: str, t: str) -> float:
+def min_edit_distance(
+    s: str,
+    t: str,
+    insert_cost: float,
+    delete_cost: float,
+    substitution_cost: float,
+    capital_cost: float,
+) -> float:
     """
     Computes the minimum edit distance between two strings using the
     Levenshtein distance algorithm. Substituting a character for the same
@@ -466,13 +473,15 @@ def min_edit_distance(s: str, t: str) -> float:
     Args:
         `s`: The first string.
         `t`: The second string.
+        `insert_cost`: The cost of inserting a character into the first string.
+        `delete_cost`: The cost of deleting a character from the first string.
+        `substitution_cost`: The cost of substituting a character.
+        `capital_cost`: The cost of substituting a character with the same
+        character with different capitalization.
 
     Returns:
         The minimum edit distance between the two strings.
     """
-    # Ensures str1 is the shorter string
-    if len(s) > len(t):
-        s, t = t, s
     m, n = len(s), len(t)
 
     # Use a 2 x (m + 1) array to represent an n x (m + 1) array since you only
@@ -492,19 +501,19 @@ def min_edit_distance(s: str, t: str) -> float:
         # Loop over the rest of s to see if it matches with the corresponding
         # letter of t
         for j in range(1, m + 1):
-            substitution_cost: float
+            sub_cost: float
 
             if s[j - 1] == t[i - 1]:
-                substitution_cost = 0.0
+                sub_cost = 0.0
             elif s[j - 1].lower() == t[i - 1].lower():
-                substitution_cost = 0.1
+                sub_cost = capital_cost
             else:
-                substitution_cost = 1.0
+                sub_cost = substitution_cost
 
             arr[row, j] = min(
-                arr[row, j - 1] + 1.0,
-                arr[previousRow, j] + 1.0,
-                arr[previousRow, j - 1] + substitution_cost,
+                arr[row, j - 1] + insert_cost,
+                arr[previousRow, j] + delete_cost,
+                arr[previousRow, j - 1] + sub_cost,
             )
 
         row, previousRow = previousRow, row
@@ -513,7 +522,15 @@ def min_edit_distance(s: str, t: str) -> float:
 
 
 def find_possible_name_matches(
-    term_name: str, candidates: set[str], atol: int, rtol: float, min_names: int
+    term_name: str,
+    candidates: set[str],
+    atol: int,
+    rtol: float,
+    min_names: int,
+    insert_cost: float,
+    delete_cost: float,
+    substitution_cost: float,
+    capital_cost: float,
 ) -> list[str]:
     """
     Finds and returns a list of candidate names that closely match the
@@ -529,6 +546,11 @@ def find_possible_name_matches(
             candidate with a minimum edit distance less than or equal to
         `closest_match * (1 + rtol)` will be included in the results.
         `min_names`: The minimum number of names to return.
+        `insert_cost`: The cost of inserting a character into the first string.
+        `delete_cost`: The cost of deleting a character from the first string.
+        `substitution_cost`: The cost of substituting a character.
+        `capital_cost`: The cost of substituting a character with the same
+        character with different capitalization.
 
     Returns:
         A list of candidate names, based on the closest matches.
@@ -538,7 +560,9 @@ def find_possible_name_matches(
 
     for term in candidates:
         # get the minimum edit distance
-        me: float = min_edit_distance(term_name, term)
+        me: float = min_edit_distance(
+            term_name, term, insert_cost, delete_cost, substitution_cost, capital_cost
+        )
         terms_distance_list.append((me, term))
 
     if terms_distance_list == []:
