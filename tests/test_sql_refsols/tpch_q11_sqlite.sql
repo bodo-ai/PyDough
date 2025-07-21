@@ -39,5 +39,5 @@ JOIN _s9 AS _s9
     COALESCE(_s8.sum_metric, 0) * 0.0001
   ) < COALESCE(_s9.sum_expr_2, 0)
 ORDER BY
-  value DESC
+  COALESCE(_s9.sum_expr_2, 0) DESC
 LIMIT 10
