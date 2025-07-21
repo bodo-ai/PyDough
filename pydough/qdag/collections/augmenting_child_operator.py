@@ -87,7 +87,6 @@ class AugmentingChildOperator(ChildOperator):
             term = Reference(self.preceding_context, term_name)
         return term
 
-    @cache
     def to_string(self) -> str:
         return f"{self.preceding_context.to_string()}.{self.standalone_string}"
 

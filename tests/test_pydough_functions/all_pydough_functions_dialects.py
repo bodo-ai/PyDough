@@ -186,8 +186,10 @@ def aggregation_functions():
         anything_value=ANYTHING(customers.account_balance),
         count_value=COUNT(customers.account_balance),
         count_distinct_value=NDISTINCT(customers.account_balance),
-        variance_value=VAR(customers.account_balance, type="sample"),
-        stddev_value=STD(customers.account_balance, type="sample"),
+        variance_s_value=VAR(customers.account_balance, type="sample"),
+        variance_p_value=VAR(customers.account_balance, type="population"),
+        stddev_s_value=STD(customers.account_balance, type="sample"),
+        stddev_p_value=STD(customers.account_balance, type="population"),
     ).WHERE(HAS(customers) & HASNOT(customers.orders))
 
 

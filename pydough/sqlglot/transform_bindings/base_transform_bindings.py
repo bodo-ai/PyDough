@@ -231,9 +231,9 @@ class BaseTransformBindings:
                 return self.convert_monotonic(args, types)
             case pydop.SQRT:
                 return self.convert_sqrt(args, types)
-            case pydop.POPULATION_VARIANCE:
+            case pydop.POPULATION_VAR:
                 return self.convert_variance(args, types, "population")
-            case pydop.SAMPLE_VARIANCE:
+            case pydop.SAMPLE_VAR:
                 return self.convert_variance(args, types, "sample")
             case pydop.POPULATION_STD:
                 return self.convert_std(args, types, "population")

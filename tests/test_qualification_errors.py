@@ -126,8 +126,8 @@ from tests.testing_utilities import (
             id="kwargfunc_1",
         ),
         pytest.param(
-            "result = nations.CALCULATE(name=name, var=SAMPLE_VARIANCE(suppliers.account_balance))",
-            "PyDough object SAMPLE_VARIANCE is not callable. Did you mean: SLICE, REPLACE, MEDIAN, SIGN, STRING, YEAR, ISIN, MIN, STRIP, SUM, UPPER, VAR?",
+            "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",
+            "PyDough object SAMPLE_VAR is not callable. Did you mean: YEAR, SUM, UPPER, VAR, AVG, LPAD, PREV, RPAD, DAY, FLOAT, FLOOR, HAS, LOWER, MAX, POWER, SLICE, SMALLEST, SQRT, STD, ABS, CEIL, GETPART, HOUR, LIKE, MEDIAN, NEXT, QUARTER, RELAVG, REPLACE, SECOND, SIGN, STRIP?",
             id="kwargfunc_2",
         ),
         pytest.param(
