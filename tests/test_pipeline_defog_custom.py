@@ -1587,6 +1587,67 @@ def get_day_of_week(
             ),
             id="get_part_single",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = Broker.CALCULATE("
+                " s00 = ABS(13),"  # -> 13
+                " s01 = ABS(0),"  # -> 0
+                " s02 = ABS(COUNT(customers)),"  # -> COUNT(customers)
+                " s03 = ABS(COUNT(customers) + 5),"  # -> COUNT(customers) + 5
+                " s04 = ABS(COUNT(customers) * 2),"  # -> COUNT(customers) * 2
+                " s05 = ABS(COUNT(customers) / 8.0),"  # -> COUNT(customers) / 8.0
+                " s06 = DEFAULT_TO(10, 0),"  # -> 10
+                " s07 = DEFAULT_TO(COUNT(customers), 0),"  # -> COUNT(customers)
+                " s08 = DEFAULT_TO(ABS(COUNT(customers) - 25), 0),"  # -> ABS(COUNT(customers) - 25)
+                " s09 = DEFAULT_TO(COUNT(customers) + 1, 0),"  # -> COUNT(customers) + 1
+                " s10 = DEFAULT_TO(COUNT(customers) - 3, 0),"  # -> COUNT(customers) - 3
+                " s11 = DEFAULT_TO(COUNT(customers) * -1, 0),"  # -> COUNT(customers) * -1
+                " s12 = DEFAULT_TO(COUNT(customers) / 2.5, 0),"  # -> COUNT(customers) / 2.5
+                " s13 = DEFAULT_TO(COUNT(customers) > 10, False),"  # -> COUNT(customers) > 10
+                " s14 = DEFAULT_TO(COUNT(customers) >= 10, False),"  # -> COUNT(customers) >= 10
+                " s15 = DEFAULT_TO(COUNT(customers) == 20, False),"  # -> COUNT(customers) == 10
+                " s16 = DEFAULT_TO(COUNT(customers) != 25, False),"  # -> COUNT(customers) != 20
+                " s17 = DEFAULT_TO(COUNT(customers) < 25, False),"  # -> COUNT(customers) < 25
+                " s18 = DEFAULT_TO(COUNT(customers) <= 25, False),"  # -> COUNT(customers) <= 25
+                " s19 = COUNT(DEFAULT_TO(customers.name, '')),"  # -> COUNT(customers)
+                " s20 = ABS(DEFAULT_TO(AVG(ABS(DEFAULT_TO(LENGTH(customers.name), 0))), 0)),"  # -> AVG(DEFAULT_TO(LENGTH(customers.name), ''))
+                " s21 = PRESENT(COUNT(customers)),"  # -> True
+                " s22 = PRESENT(1) >= 0,"  # -> True
+                " s23 = ABSENT(1) >= 0,"  # -> True
+                ")",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "s00": [13],
+                        "s01": [0],
+                        "s02": [20],
+                        "s03": [25],
+                        "s04": [40],
+                        "s05": [2.5],
+                        "s06": [10],
+                        "s07": [20],
+                        "s08": [5],
+                        "s09": [21],
+                        "s10": [17],
+                        "s11": [-20],
+                        "s12": [8.0],
+                        "s13": [1],
+                        "s14": [1],
+                        "s15": [1],
+                        "s16": [1],
+                        "s17": [1],
+                        "s18": [1],
+                        "s19": [20],
+                        "s20": [12.3],
+                        "s21": [1],
+                        "s22": [1],
+                        "s23": [1],
+                    }
+                ),
+                "simplification_1",
+            ),
+            id="simplification_1",
+        ),
     ],
 )
 def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:

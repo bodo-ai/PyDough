@@ -108,10 +108,19 @@ def simplify_function_call(
         case pydop.COUNT | pydop.NDISTINCT:
             output_predicates.add(LogicalPredicate.NOT_NULL)
             output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-            if not no_group_aggregate and (
-                len(expr.inputs) == 0 or LogicalPredicate.NOT_NULL in arg_predicates[0]
+            if not no_group_aggregate:
+                if (
+                    len(expr.inputs) == 0
+                    or LogicalPredicate.NOT_NULL in arg_predicates[0]
+                ):
+                    output_predicates.add(LogicalPredicate.POSITIVE)
+            elif (
+                expr.op == pydop.COUNT
+                and len(expr.inputs) == 1
+                and LogicalPredicate.NOT_NULL in arg_predicates[0]
             ):
                 output_predicates.add(LogicalPredicate.POSITIVE)
+                output_expr = CallExpression(pydop.COUNT, expr.data_type, [])
         case (
             pydop.SUM
             | pydop.AVG
@@ -132,6 +141,17 @@ def simplify_function_call(
                 and not no_group_aggregate
             ):
                 output_predicates.add(LogicalPredicate.NOT_NULL)
+        case pydop.ADD | pydop.MUL | pydop.DIV:
+            for predicate in [LogicalPredicate.NOT_NEGATIVE, LogicalPredicate.POSITIVE]:
+                if all(predicate in preds for preds in arg_predicates):
+                    output_predicates.add(predicate)
+            if expr.op == pydop.DIV:
+                if (
+                    LogicalPredicate.NOT_NULL in arg_predicates[0]
+                    and LogicalPredicate.NOT_NULL in arg_predicates[1]
+                    and LogicalPredicate.POSITIVE in arg_predicates[1]
+                ):
+                    output_predicates.add(LogicalPredicate.NOT_NULL)
         case pydop.DEFAULT_TO:
             if LogicalPredicate.NOT_NULL in arg_predicates[0]:
                 output_expr = expr.inputs[0]
