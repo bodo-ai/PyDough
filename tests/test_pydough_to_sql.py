@@ -53,6 +53,17 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     window_sliding_frame_relsize,
     window_sliding_frame_relsum,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+    simple_range_3,
+    simple_range_4,
+    simple_range_5,
+    user_range_collection_1,
+    user_range_collection_2,
+    user_range_collection_3,
+    user_range_collection_4,
+)
 from tests.testing_utilities import (
     graph_fetcher,
 )
@@ -191,6 +202,35 @@ from tests.testing_utilities import (
         pytest.param(window_functions, None, "window_functions", id="window_functions"),
         pytest.param(
             casting_functions, None, "casting_functions", id="casting_functions"
+        ),
+        pytest.param(simple_range_1, None, "simple_range_1", id="simple_range_1"),
+        pytest.param(simple_range_2, None, "simple_range_2", id="simple_range_2"),
+        pytest.param(simple_range_3, None, "simple_range_3", id="simple_range_3"),
+        pytest.param(simple_range_4, None, "simple_range_4", id="simple_range_4"),
+        pytest.param(simple_range_5, None, "simple_range_5", id="simple_range_5"),
+        pytest.param(
+            user_range_collection_1,
+            None,
+            "user_range_collection_1",
+            id="user_range_collection_1",
+        ),
+        pytest.param(
+            user_range_collection_2,
+            None,
+            "user_range_collection_2",
+            id="user_range_collection_2",
+        ),
+        pytest.param(
+            user_range_collection_3,
+            None,
+            "user_range_collection_3",
+            id="user_range_collection_3",
+        ),
+        pytest.param(
+            user_range_collection_4,
+            None,
+            "user_range_collection_4",
+            id="user_range_collection_4",
         ),
     ],
 )

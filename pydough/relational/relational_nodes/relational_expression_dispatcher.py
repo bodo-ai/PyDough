@@ -77,3 +77,6 @@ class RelationalExpressionDispatcher(RelationalVisitor):
         self.visit_common(root)
         for order in root.orderings:
             order.expr.accept(self._expr_visitor)
+
+    def visit_generated_table(self, generated_table) -> None:
+        self.visit_common(generated_table)

@@ -21,6 +21,7 @@ __all__ = [
     "TableCollection",
     "TopK",
     "Where",
+    "range_collection",
 ]
 
 from .augmenting_child_operator import AugmentingChildOperator
