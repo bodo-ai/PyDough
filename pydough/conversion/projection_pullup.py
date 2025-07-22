@@ -181,7 +181,7 @@ def pull_project_helper(
     )
 
     # Iterate through the columns of the project to see which ones can be
-    # pulled up into the parent, dding them to a substitutions mapping that
+    # pulled up into the parent, adding them to a substitutions mapping that
     # will be used to apply the transformations.
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
     for name, expr in project.columns.items():
