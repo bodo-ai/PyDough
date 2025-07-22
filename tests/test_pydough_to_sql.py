@@ -61,6 +61,8 @@ from tests.test_pydough_functions.user_collections import (
     simple_range_5,
     user_range_collection_1,
     user_range_collection_2,
+    user_range_collection_3,
+    user_range_collection_4,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -221,6 +223,24 @@ from tests.testing_utilities import (
             marks=pytest.mark.skip(
                 "ValueError: Context does not contain expression BACK(1).x. Available expressions: [y]"
             ),
+        ),
+        # TODO: FIXME
+        pytest.param(
+            user_range_collection_3,
+            None,
+            "user_range_collection_3",
+            id="user_range_collection_3",
+            marks=pytest.mark.skip(
+                "PyDough nodes ENDSIWTH is not callable. Did you mean to use a function?"
+            ),
+        ),
+        # TODO: FIXME
+        pytest.param(
+            user_range_collection_4,
+            None,
+            "user_range_collection_4",
+            id="user_range_collection_4",
+            marks=pytest.mark.skip("Cannot qualify NoneType: None"),
         ),
     ],
 )

@@ -73,3 +73,37 @@ def user_range_collection_2():
         .ORDER_BY(x.ASC())
     )
     return result
+
+
+def user_range_collection_3():
+    # Same as user_range_collection_2 but only includes rows of x that
+    # have at least one prefix/suffix max
+    table_a = pydough.range_collection("a", "x", 10)
+    table_b = pydough.range_collection("b", "y", 0, 1001, 2)
+    prefix_b = CROSS(table_b).WHERE(STARTSWITH(STRING(y), STRING(x)))
+    suffix_b = CROSS(table_b).WHERE(ENDSIWTH(STRING(y), STRING(x)))
+    result = (
+        table_a.CALCULATE(x)
+        .CALCULATE(
+            x,
+            n_prefix=COUNT(prefix_b),
+            n_suffix=COUNT(suffix_b),
+        )
+        .WHERE(HAS(prefix_b) & HAS(suffix_b))
+        .ORDER_BY(x.ASC())
+    )
+
+
+def user_range_collection_4():
+    # For every part size 1-10, find the name & retail price of the cheapest part
+    # of that size that is azure, plated, and has a small drum container
+    sizes = pydough.range_collection("sizes", "part_size", 10)
+    turquoise_parts = parts.WHERE(CONTAINS(name, "turquoise"))
+    result = (
+        sizes.CALCULATE(part_size)
+        .CROSS(turquoise_parts)
+        .WHERE(size == part_size)
+        .BEST(per="sizes", by=retail_price.ASC())
+        .CALCULATE(part_size, name, retail_price)
+        .ORDER_BY(part_size.ASC())
+    )
