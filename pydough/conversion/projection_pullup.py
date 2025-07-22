@@ -207,7 +207,8 @@ def pull_project_into_join(node: Join, input_index: int) -> None:
     Args:
         `node`: The Join node to pull the Project columns into.
         `input_index`: The index of the input to the Join node that should have
-        its columns pulled up, if it is a project node.
+        its columns pulled up, if it is a project node. This is assumed to be
+        either 0 (for the LHS) or 1 (for the RHS).
     """
 
     # Skip if the input at the specified input is not a Project node.
@@ -482,7 +483,7 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
     possible. This transformation is done in-place.
 
     Args:
-        `node`: The Filter node to pull the Project columns into.
+        `node`: The Aggregate node to pull the Project columns into.
     """
     if not isinstance(node.input, Project):
         return node
