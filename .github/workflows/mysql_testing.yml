@@ -57,6 +57,20 @@ jobs:
       - name: Install dependencies
         run: uv pip install -e ".[mysql]" 
 
+      - name: Verify installed packages
+        run: uv pip list
+        # This will show all packages installed in the virtual environment.
+        # Look for 'python-dotenv' in the output.
+
+      - name: Check Python path and try importing dotenv directly
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Python executable: $(which python)"
+          echo "Python sys.path:"
+          uv run python -c "import sys; print(sys.path)"
+          echo "Attempting direct import of dotenv:"
+          uv run python -c "import dotenv; print('dotenv imported successfully!');"
+
       - name: Wait for MySQL to be ready
         run: |
           for i in $(seq 1 10); do
