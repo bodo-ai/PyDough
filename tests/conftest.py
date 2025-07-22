@@ -10,6 +10,7 @@ from collections.abc import Callable
 from functools import cache
 
 import pytest
+from dotenv import load_dotenv
 
 import pydough
 import pydough.pydough_operators as pydop
@@ -26,6 +27,8 @@ from pydough.qdag import AstNodeBuilder
 from tests.testing_utilities import graph_fetcher
 
 from .gen_data.gen_technograph import gen_technograph_records
+
+load_dotenv()  # Load environment variables from .env file
 
 
 @pytest.fixture
@@ -477,7 +480,7 @@ def is_mysql_env_set() -> bool:
     Returns:
         bool: True if all required MySQL environment variables are set, False otherwise.
     """
-    return all(os.getenv(env) is not None for env in MYSQL_ENVS)
+    return all(os.getenv(var) is not None for var in MYSQL_ENVS)
 
 
 @pytest.fixture
@@ -487,7 +490,9 @@ def mysql_conn_tpch_db_context() -> DatabaseContext:
     a connection object.
     Returns a DatabaseContext for the MySQL TPCH database.
     """
+
     if not is_mysql_env_set():
+        # breakpoint()
         pytest.skip("Skipping MySQL tests: environment variables not set.")
     import mysql.connector as mysql_connector
 
