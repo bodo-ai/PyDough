@@ -38,9 +38,6 @@ from pydough.qdag import (
     Where,
     WindowCall,
 )
-from pydough.qdag.collections.user_collection_qdag import (
-    PyDoughUserGeneratedCollectionQDag,
-)
 from pydough.types import PyDoughType
 
 from .errors import PyDoughUnqualifiedException
@@ -1271,7 +1268,7 @@ class Qualifier:
         context: PyDoughCollectionQDAG,
         is_child: bool,
         is_cross: bool,
-    ) -> PyDoughUserGeneratedCollectionQDag:
+    ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedGeneratedCollection` into a PyDoughCollectionQDAG node.
 
@@ -1288,12 +1285,16 @@ class Qualifier:
 
         """
 
-        generated_collection_qdag: PyDoughUserGeneratedCollectionQDag = (
+        generated_collection_qdag: PyDoughCollectionQDAG = (
             self.builder.build_generated_collection(
                 context,
                 unqualified._parcel[0],
             )
         )
+        if is_child:
+            generated_collection_qdag = ChildOperatorChildAccess(
+                generated_collection_qdag
+            )
         return generated_collection_qdag
 
     def qualify_node(

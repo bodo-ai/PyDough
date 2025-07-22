@@ -1316,7 +1316,17 @@ class RelTranslation:
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_hybridroot(context)
             case HybridUserGeneratedCollection():
+                assert context is not None, "Malformed HybridTree pattern."
                 result = self.build_user_generated_table(operation)
+                result = self.join_outputs(
+                    context,
+                    result,
+                    JoinType.INNER,
+                    JoinCardinality.PLURAL_ACCESS,
+                    [],
+                    None,
+                    None,
+                )
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"

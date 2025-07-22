@@ -1564,6 +1564,18 @@ class HybridTranslator:
                         HybridLimit(hybrid.pipeline[-1], node.records_to_keep)
                     )
                 return hybrid
+            case PyDoughUserGeneratedCollectionQDag():
+                # A user-generated collection is a special case of a collection
+                # access that is not a sub-collection, but rather a user-defined
+                # collection that is defined in the PyDough user collections.
+                hybrid_collection = HybridUserGeneratedCollection(node)
+                # Create a new hybrid tree for the user-generated collection.
+                successor_hybrid = HybridTree(hybrid_collection, node.ancestral_mapping)
+                hybrid = self.make_hybrid_tree(
+                    node.ancestor_context, parent, is_aggregate
+                )
+                hybrid.add_successor(successor_hybrid)
+                return successor_hybrid
             case ChildOperatorChildAccess():
                 assert parent is not None
                 match node.child_access:
@@ -1631,11 +1643,16 @@ class HybridTranslator:
                         successor_hybrid = HybridTree(
                             HybridRoot(), node.ancestral_mapping
                         )
-                    # HA: TODO: handle the case where the child access is a
-                    # user-generated collection.
-                    case HybridUserGeneratedCollection():
-                        raise NotImplementedError(
-                            "User-generated collections are not supported in child access"
+                    case PyDoughUserGeneratedCollectionQDag():
+                        # A user-generated collection is a special case of a collection
+                        # access that is not a sub-collection, but rather a user-defined
+                        # collection that is defined in the PyDough user collections.
+                        hybrid_collection = HybridUserGeneratedCollection(
+                            node.child_access
+                        )
+                        # Create a new hybrid tree for the user-generated collection.
+                        successor_hybrid = HybridTree(
+                            hybrid_collection, node.ancestral_mapping
                         )
                     case _:
                         raise NotImplementedError(
@@ -1643,19 +1660,6 @@ class HybridTranslator:
                         )
                 self.define_root_link(parent, successor_hybrid, is_aggregate)
                 return successor_hybrid
-            case PyDoughUserGeneratedCollectionQDag():
-                # A user-generated collection is a special case of a collection
-                # access that is not a sub-collection, but rather a user-defined
-                # collection that is defined in the PyDough user collections.
-                hybrid_collection = HybridUserGeneratedCollection(node)
-                # Create a new hybrid tree for the user-generated collection.
-                successor_hybrid = HybridTree(hybrid_collection, node.ancestral_mapping)
-                hybrid = self.make_hybrid_tree(
-                    node.ancestor_context, parent, is_aggregate
-                )
-                hybrid.add_successor(successor_hybrid)
-                return successor_hybrid
-
             case _:
                 raise NotImplementedError(f"{node.__class__.__name__}")
 

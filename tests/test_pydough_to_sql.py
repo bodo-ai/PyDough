@@ -214,15 +214,11 @@ from tests.testing_utilities import (
             "user_range_collection_1",
             id="user_range_collection_1",
         ),
-        # TODO: FIXME
         pytest.param(
             user_range_collection_2,
             None,
             "user_range_collection_2",
             id="user_range_collection_2",
-            marks=pytest.mark.skip(
-                "ValueError: Context does not contain expression BACK(1).x. Available expressions: [y]"
-            ),
         ),
         pytest.param(
             user_range_collection_3,
