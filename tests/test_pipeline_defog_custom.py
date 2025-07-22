@@ -1671,6 +1671,128 @@ def get_day_of_week(
             ),
             id="simplification_1",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = Broker.CALCULATE("
+                " s00 = DEFAULT_TO(None, 0) == 0,"  # -> True
+                " s01 = DEFAULT_TO(None, 0) != 0,"  # -> False
+                " s02 = DEFAULT_TO(None, 0) >= 0,"  # -> True
+                " s03 = DEFAULT_TO(None, 0) > 0,"  # -> False
+                " s04 = DEFAULT_TO(None, 0) <= 0,"  # -> True
+                " s05 = DEFAULT_TO(None, 0) < 0,"  # -> False
+                " s06 = DEFAULT_TO(None, 0) == None,"  # -> None
+                " s07 = DEFAULT_TO(None, 0) != None,"  # -> None
+                " s08 = DEFAULT_TO(None, 0) >= None,"  # -> None
+                " s09 = DEFAULT_TO(None, 0) > None,"  # -> None
+                " s10 = DEFAULT_TO(None, 0) <= None,"  # -> None
+                " s11 = DEFAULT_TO(None, 0) < None,"  # -> None
+                " s12 = DEFAULT_TO(None, 'ab') == 'cd',"  # -> False
+                " s13 = DEFAULT_TO(None, 'ab') != 'cd',"  # -> True
+                " s14 = DEFAULT_TO(None, 'ab') >= 'cd',"  # -> False
+                " s15 = DEFAULT_TO(None, 'ab') > 'cd',"  # -> False
+                " s16 = DEFAULT_TO(None, 'ab') <= 'cd',"  # -> True
+                " s17 = DEFAULT_TO(None, 'ab') < 'cd',"  # -> True
+                " s18 = True | (COUNT(customers) > 10),"  # -> True
+                " s19 = False & (COUNT(customers) > 10),"  # -> False
+                " s20 = False | (LENGTH('foo') > 0),"  # -> True
+                " s21 = False | (LENGTH('foo') < 0),"  # -> False
+                " s22 = True & (LENGTH('foo') > 0),"  # -> True
+                " s23 = True & (LENGTH('foo') < 0),"  # -> False
+                " s24 = STARTSWITH('a', 'abc'),"  # -> False
+                " s25 = STARTSWITH('abc', 'a'),"  # -> True
+                " s26 = ENDSWITH('abc', 'c'),"  # -> True
+                " s27 = ENDSWITH('abc', 'ab'),"  # -> False
+                " s28 = CONTAINS('abc', 'b'),"  # -> True
+                " s29 = CONTAINS('abc', 'B'),"  # -> False
+                " s30 = LENGTH('alphabet'),"  # -> 8
+                " s31 = LOWER('AlPhAbEt'),"  # -> 'alphabet'
+                " s32 = UPPER('sOuP'),"  # -> 'SOUP'
+                " s33 = True == True,"  # -> True
+                " s34 = True != True,"  # -> False
+                " s35 = True == False,"  # -> False
+                " s36 = True != False,"  # -> True
+                " s37 = SQRT(9),"  # -> 3.0
+                ")",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "s00": [1],
+                        "s01": [0],
+                        "s02": [1],
+                        "s03": [0],
+                        "s04": [1],
+                        "s05": [0],
+                        "s06": [None],
+                        "s07": [None],
+                        "s08": [None],
+                        "s09": [None],
+                        "s10": [None],
+                        "s11": [None],
+                        "s12": [0],
+                        "s13": [1],
+                        "s14": [0],
+                        "s15": [0],
+                        "s16": [1],
+                        "s17": [1],
+                        "s18": [1],
+                        "s19": [0],
+                        "s20": [1],
+                        "s21": [0],
+                        "s22": [1],
+                        "s23": [0],
+                        "s24": [0],
+                        "s25": [1],
+                        "s26": [1],
+                        "s27": [0],
+                        "s28": [1],
+                        "s29": [0],
+                        "s30": [8],
+                        "s31": ["alphabet"],
+                        "s32": ["SOUP"],
+                        "s33": [1],
+                        "s34": [0],
+                        "s35": [0],
+                        "s36": [1],
+                        "s37": [3.0],
+                    }
+                ),
+                "simplification_2",
+            ),
+            id="simplification_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = Broker.CALCULATE("
+                " s00 = MONOTONIC(1, 2, 3),"  # -> True
+                " s01 = MONOTONIC(1, 1, 1),"  # -> True
+                " s02 = MONOTONIC(1, 0, 3),"  # -> False
+                " s03 = MONOTONIC(1, 4, 3),"  # -> False
+                " s04 = MONOTONIC(1, 2, 1),"  # -> False
+                " s05 = MONOTONIC(1, 0, 1),"  # -> False
+                " s06 = MONOTONIC(1, LENGTH('foo'), COUNT(customers)),"  # -> 3 <= COUNT(customers)
+                " s07 = MONOTONIC(10, LENGTH('foo'), COUNT(customers)),"  # False
+                " s08 = MONOTONIC(COUNT(customers), LENGTH('foobar'), 9),"  # -> COUNT(customers) <= 6
+                " s09 = MONOTONIC(COUNT(customers), LENGTH('foobar'), 5),"  # -> False
+                ")",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "s00": [1],
+                        "s01": [1],
+                        "s02": [0],
+                        "s03": [0],
+                        "s04": [0],
+                        "s05": [0],
+                        "s06": [1],
+                        "s07": [0],
+                        "s08": [0],
+                        "s09": [0],
+                    }
+                ),
+                "simplification_3",
+            ),
+            id="simplification_3",
+        ),
     ],
 )
 def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:

@@ -1,0 +1,3 @@
+ROOT(columns=[('s00', True:bool), ('s01', True:bool), ('s02', False:bool), ('s03', False:bool), ('s04', False:bool), ('s05', False:bool), ('s06', 3:numeric <= n_rows), ('s07', False:bool), ('s08', n_rows <= 6:numeric), ('s09', False:bool)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  SCAN(table=main.sbCustomer, columns={})

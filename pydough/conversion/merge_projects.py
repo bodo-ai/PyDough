@@ -197,18 +197,17 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
             if isinstance(node, RelationalRoot):
                 # Replace all column references in the root's columns with
                 # the expressions from the child projection.
-                for idx, (name, expr) in enumerate(node.ordered_columns):
-                    new_expr = transpose_expression(expr, child_project.columns)
-                    node.columns[name] = new_expr
-                    node.ordered_columns[idx] = (name, new_expr)
+                node._ordered_columns = [
+                    (name, transpose_expression(expr, node.input.columns))
+                    for name, expr in node.ordered_columns
+                ]
+                node._columns = dict(node.ordered_columns)
                 # Do the same with the sort expressions.
                 for idx, sort_info in enumerate(node.orderings):
                     new_expr = transpose_expression(
                         sort_info.expr, child_project.columns
                     )
-                    node.orderings[idx] = ExpressionSortInfo(
-                        new_expr, sort_info.ascending, sort_info.nulls_first
-                    )
+                    node.orderings[idx].expr = new_expr
                 # Delete the child projection from the tree, replacing it
                 # with its input.
                 node._input = child_project.input
@@ -262,10 +261,11 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
             # If the orderings are the same, pull in the limit into the root.
             # Replace all column references in the root's columns with
             # the expressions from the child projection.
-            for idx, (name, expr) in enumerate(node.ordered_columns):
-                new_expr = transpose_expression(expr, node.input.columns)
-                node.columns[name] = new_expr
-                node.ordered_columns[idx] = (name, new_expr)
+            node._ordered_columns = [
+                (name, transpose_expression(expr, node.input.columns))
+                for name, expr in node.ordered_columns
+            ]
+            node._columns = dict(node.ordered_columns)
             node._orderings = new_orderings
             node._limit = node.input.limit
             # Delete the child projection from the tree, replacing it
