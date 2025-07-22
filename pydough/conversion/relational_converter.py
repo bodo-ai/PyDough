@@ -1024,7 +1024,7 @@ class RelTranslation:
         # it relative to the input context.
         for name in node.new_expressions:
             name = node.renamings.get(name, name)
-            hybrid_expr: HybridExpr = node.terms[name]
+            hybrid_expr: HybridExpr = node.new_expressions[name]
             ref_expr: HybridRefExpr = HybridRefExpr(name, hybrid_expr.typ)
             rel_expr: RelationalExpression = self.translate_expression(
                 hybrid_expr, context
@@ -1417,7 +1417,15 @@ def optimize_relational_tree(
     Returns:
         The optimized relational root.
     """
-    # Step 1: push filters down as far as possible.
+
+    # Step 0: prune unused columns. This is done early to remove as many dead
+    # names as possible so that steps that require generating column names can
+    # use nicer names instead of generating nastier ones to avoid collisions.
+    # It also speeds up all subsequent steps by reducing the total number of
+    # objects inside the plan.
+    root = ColumnPruner().prune_unused_columns(root)
+
+    # Step 1: push filters down as far as possible
     root._input = push_filters(root.input, set())
 
     # Step 2: merge adjacent projections, unless it would result in excessive
