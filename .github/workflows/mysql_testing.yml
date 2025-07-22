@@ -31,11 +31,6 @@ jobs:
           MYSQL_DATABASE: tpch
         ports:
           - 3306:3306
-        options: >-
-          --health-cmd "mysqladmin ping -h localhost -P 3306 -u root -p${{ env.MYSQL_ROOT_PASSWORD }}"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
     env:
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
