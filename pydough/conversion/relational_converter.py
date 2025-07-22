@@ -1418,7 +1418,11 @@ def optimize_relational_tree(
         The optimized relational root.
     """
 
-    # Step 0: prune unused columns.
+    # Step 0: prune unused columns. This is done early to remove as many dead
+    # names as possible so that steps that require generating column names can
+    # use nicer names instead of generating nastier ones to avoid collisions.
+    # It also speeds up all subsequent steps by reducing the total number of
+    # objects inside the plan.
     root = ColumnPruner().prune_unused_columns(root)
 
     # Step 1: push filters down as far as possible
@@ -1436,10 +1440,14 @@ def optimize_relational_tree(
     # operating on already unique data.
     root = remove_redundant_aggs(root)
 
-    # Step 5: re-run projection merging.
+    # Step 5: re-run projection merging since the removal of redundant
+    # aggregations may have created redundant projections that can be deleted.
     root = confirm_root(merge_projects(root))
 
-    # Step 6: re-run column pruning.
+    # Step 6: re-run column pruning after the various steps, which may have
+    # rendered more columns unused. This is done befre the next step to remove
+    # as many column names as possible so the column bubbling step can try to
+    # use nicer names without worrying about collisions.
     root = ColumnPruner().prune_unused_columns(root)
 
     # Step 7: bubble up names from the leaf nodes to further encourage simpler
@@ -1447,21 +1455,31 @@ def optimize_relational_tree(
     # possible.
     root = bubble_column_names(root)
 
-    # Step 8: run projection pullup followed by column pruning 2x.
+    # Step 8: the following pipeline twice:
+    #   A: projection pullup
+    #   B: filter pushdown
+    #   C: column pruning
+    # This is done because pullup will create more opportunities for filter
+    # pushdown, and the two together will create more opportunities for
+    # column pruning, the latter of which will unlock more opportunities for
+    # pullup and pushdown and so on.
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
+        root._input = push_filters(root.input, set())
         root = ColumnPruner().prune_unused_columns(root)
 
-    # Step 9: re-run filter pushdown
-    root._input = push_filters(root.input, set())
-
-    # Step 10: re-run projection merging, without pushing into joins.
+    # Step 9: re-run projection merging, without pushing into joins. This
+    # will allow some redundant projections created by pullup to be removed
+    # entirely.
     root = confirm_root(merge_projects(root, push_into_joins=False))
 
-    # Step 11: re-run column bubbling
+    # Step 10: re-run column bubbling to further simplify the final names of
+    # columns in the output now that more columns have been pruned, and delete
+    # any new duplicate columns that were created during the pullup step.
     root = bubble_column_names(root)
 
-    # Step 12: re-run column pruning.
+    # Step 11: re-run column pruning one last time to remove any columns that
+    # are no longer used after the final round of transformations.
     root = ColumnPruner().prune_unused_columns(root)
 
     return root

@@ -64,7 +64,8 @@ def widen_columns(
     }
 
     # Pull all the columns from each input to the node into the node's output
-    # columns if they are not already in the node's output columns.
+    # columns if they are not already in the node's output columns. Make sure
+    # not to include no-op mappings.
     for input_idx in range(len(node.inputs)):
         input_alias: str | None = node.default_input_aliases[input_idx]
         input_node: RelationalNode = node.inputs[input_idx]
@@ -87,12 +88,13 @@ def widen_columns(
                 new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
                 node.columns[new_name] = ref_expr
                 existing_vals[expr] = ref_expr
-                substitutions[ref_expr] = new_ref
-            else:
+                if ref_expr != new_ref:
+                    substitutions[ref_expr] = new_ref
+            elif ref_expr != existing_vals[expr]:
                 substitutions[ref_expr] = existing_vals[expr]
 
-    # Return the substitution mapping, without any no-op substitutions
-    return {k: v for k, v in substitutions.items() if k != v}
+    # Return the substitution mapping
+    return substitutions
 
 
 def pull_non_columns(node: Join | Filter | Limit) -> RelationalNode:
@@ -205,7 +207,8 @@ def pull_project_into_join(node: Join, input_index: int) -> None:
     Args:
         `node`: The Join node to pull the Project columns into.
         `input_index`: The index of the input to the Join node that should have
-        its columns pulled up, if it is a project node.
+        its columns pulled up, if it is a project node. This is assumed to be
+        either 0 (for the LHS) or 1 (for the RHS).
     """
 
     # Skip if the input at the specified input is not a Project node.
@@ -480,7 +483,7 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
     possible. This transformation is done in-place.
 
     Args:
-        `node`: The Filter node to pull the Project columns into.
+        `node`: The Aggregate node to pull the Project columns into.
     """
     if not isinstance(node.input, Project):
         return node
