@@ -81,8 +81,8 @@ def user_range_collection_3():
     table_a = pydough.range_collection("a", "x", 10)
     table_b = pydough.range_collection("b", "y", 0, 1001, 2)
     prefix_b = CROSS(table_b).WHERE(STARTSWITH(STRING(y), STRING(x)))
-    suffix_b = CROSS(table_b).WHERE(ENDSIWTH(STRING(y), STRING(x)))
-    result = (
+    suffix_b = CROSS(table_b).WHERE(ENDSWITH(STRING(y), STRING(x)))
+    return (
         table_a.CALCULATE(x)
         .CALCULATE(
             x,
@@ -99,7 +99,7 @@ def user_range_collection_4():
     # of that size that is azure, plated, and has a small drum container
     sizes = pydough.range_collection("sizes", "part_size", 10)
     turquoise_parts = parts.WHERE(CONTAINS(name, "turquoise"))
-    result = (
+    return (
         sizes.CALCULATE(part_size)
         .CROSS(turquoise_parts)
         .WHERE(size == part_size)
