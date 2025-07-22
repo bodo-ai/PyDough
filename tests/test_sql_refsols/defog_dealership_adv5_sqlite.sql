@@ -6,23 +6,15 @@ WITH _s1 AS (
   FROM main.sales
   GROUP BY
     salesperson_id
-), _t0 AS (
-  SELECT
-    RANK() OVER (ORDER BY COALESCE(_s1.sum_sale_price, 0) DESC) AS sales_rank,
-    COALESCE(_s1.sum_sale_price, 0) AS total_sales,
-    salespersons.first_name,
-    salespersons.last_name,
-    _s1.n_rows
-  FROM main.salespersons AS salespersons
-  JOIN _s1 AS _s1
-    ON _s1.salesperson_id = salespersons._id
 )
 SELECT
-  first_name,
-  last_name,
-  total_sales,
-  n_rows AS num_sales,
-  sales_rank
-FROM _t0
+  salespersons.first_name,
+  salespersons.last_name,
+  COALESCE(_s1.sum_sale_price, 0) AS total_sales,
+  _s1.n_rows AS num_sales,
+  RANK() OVER (ORDER BY COALESCE(_s1.sum_sale_price, 0) DESC) AS sales_rank
+FROM main.salespersons AS salespersons
+JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  total_sales DESC
+  COALESCE(_s1.sum_sale_price, 0) DESC

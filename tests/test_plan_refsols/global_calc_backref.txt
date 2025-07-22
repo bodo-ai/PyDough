@@ -1,5 +1,2 @@
-ROOT(columns=[('part_name', p_name), ('is_above_cutoff', p_retailprice > a), ('is_nickel', CONTAINS(p_type, b))], orderings=[])
- JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, columns={'a': t0.a, 'b': t0.b, 'p_name': t1.p_name, 'p_retailprice': t1.p_retailprice, 'p_type': t1.p_type})
-  PROJECT(columns={'a': 28.15:numeric, 'b': 'NICKEL':string})
-   EMPTYSINGLETON()
-  SCAN(table=tpch.PART, columns={'p_name': p_name, 'p_retailprice': p_retailprice, 'p_type': p_type})
+ROOT(columns=[('part_name', p_name), ('is_above_cutoff', p_retailprice > 28.15:numeric), ('is_nickel', CONTAINS(p_type, 'NICKEL':string))], orderings=[])
+ SCAN(table=tpch.PART, columns={'p_name': p_name, 'p_retailprice': p_retailprice, 'p_type': p_type})

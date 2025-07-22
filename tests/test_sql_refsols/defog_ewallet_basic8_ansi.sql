@@ -15,5 +15,5 @@ FROM main.coupons AS coupons
 LEFT JOIN _s1 AS _s1
   ON _s1.coupon_id = coupons.cid
 ORDER BY
-  redemption_count DESC
+  COALESCE(_s1.count_txid, 0) DESC
 LIMIT 3
