@@ -26,6 +26,8 @@ from tests.test_pydough_functions.all_pydough_functions_dialects import (
     window_functions,
 )
 from tests.test_pydough_functions.simple_pydough_functions import (
+    agg_simplification_1,
+    agg_simplification_2,
     cumulative_stock_analysis,
     datediff,
     datetime_sampler,
@@ -195,7 +197,7 @@ from tests.testing_utilities import (
     ],
 )
 def test_pydough_to_sql_tpch(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     test_name: str,
     get_sample_graph: graph_fetcher,
@@ -246,6 +248,18 @@ def test_pydough_to_sql_tpch(
             id="week_offset",
         ),
         pytest.param(
+            agg_simplification_1,
+            "agg_simplification_1",
+            "Broker",
+            id="agg_simplification_1",
+        ),
+        pytest.param(
+            agg_simplification_2,
+            "agg_simplification_2",
+            "Broker",
+            id="agg_simplification_2",
+        ),
+        pytest.param(
             cumulative_stock_analysis,
             "cumulative_stock_analysis",
             "Broker",
@@ -278,7 +292,7 @@ def test_pydough_to_sql_tpch(
     ],
 )
 def test_pydough_to_sql_defog(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     test_name: str,
     graph_name: str,
     defog_graphs: graph_fetcher,

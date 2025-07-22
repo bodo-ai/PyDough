@@ -827,3 +827,4 @@ def gen_technograph_records(cursor: sqlite3.Cursor) -> None:
         )
 
     cursor.connection.commit()
+    cursor.close()

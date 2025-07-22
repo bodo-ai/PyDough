@@ -26,6 +26,7 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.testing_utilities import graph_fetcher
 
+from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
 
 load_dotenv()  # Load environment variables from .env file
@@ -535,3 +536,52 @@ def mysql_params_tpch_db_context() -> DatabaseContext:
         host=mysql_host,
         database=mysql_tpch_db,
     )
+
+
+@pytest.fixture(scope="session")
+def get_pagerank_graph() -> graph_fetcher:
+    """
+    A function that returns the graph used for PageRank calculations. The same
+    graph is used for all PageRank tests, but different databases are used that
+    adhere to the same table schema setup that the graph invokes.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=f"{os.path.dirname(__file__)}/test_metadata/pagerank_graphs.json",
+            graph_name="PAGERANK",
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
+    """
+    Returns the SQLITE database contexts for the various pagerank database.
+    This is returned as a dictionary mapping the name of the database to the
+    DatabaseContext for that database, all of which adhere to the same
+    schema structure assumed by the PAGERANK graph.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+
+    # Setup each of the the pagerank databases using the configurations.
+    result: dict[str, DatabaseContext] = {}
+    for name, nodes, edges in pagerank_configs():
+        # Create the database and ensure it is empty.
+        subprocess.run(
+            f"cd tests; rm -fv gen_data/{name.lower()}.db; sqlite3 gen_data/{name.lower()}.db < gen_data/init_pagerank.sql",
+            shell=True,
+        )
+        path: str = os.path.join(base_dir, f"tests/gen_data/{name.lower()}.db")
+        connection: sqlite3.Connection = sqlite3.connect(path)
+
+        # Fill the tables of the database using the nodes/edges, then store the
+        # database context in the result.
+        gen_pagerank_records(connection, nodes, edges)
+        result[name] = DatabaseContext(
+            DatabaseConnection(connection), DatabaseDialect.SQLITE
+        )
+    return result

@@ -18,4 +18,6 @@ LEFT JOIN _s1 AS _s1
 WHERE
   NOT _s1.n_rows IS NULL AND _s1.n_rows >= 5
 ORDER BY
-  success_rate
+  CAST((
+    100.0 * COALESCE(_s1.sum_expr_2, 0)
+  ) AS REAL) / COALESCE(_s1.n_rows, 0)

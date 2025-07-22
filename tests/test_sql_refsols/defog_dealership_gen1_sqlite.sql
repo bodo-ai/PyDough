@@ -9,5 +9,7 @@ FROM main.salespersons
 WHERE
   NOT termination_date IS NULL
 ORDER BY
-  days_employed
+  CAST((
+    JULIANDAY(DATE(termination_date, 'start of day')) - JULIANDAY(DATE(hire_date, 'start of day'))
+  ) AS INTEGER) * 1.0
 LIMIT 1

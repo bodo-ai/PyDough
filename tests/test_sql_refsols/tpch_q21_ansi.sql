@@ -1,4 +1,4 @@
-WITH _t7 AS (
+WITH _t6 AS (
   SELECT
     l_commitdate,
     l_linenumber,
@@ -8,47 +8,47 @@ WITH _t7 AS (
   FROM tpch.lineitem
   WHERE
     l_commitdate < l_receiptdate
-), _t4 AS (
+), _t3 AS (
   SELECT
-    ANY_VALUE(_t7.l_linenumber) AS anything_l_linenumber,
-    ANY_VALUE(_t7.l_orderkey) AS anything_l_orderkey,
-    ANY_VALUE(_t7.l_suppkey) AS anything_l_suppkey,
+    ANY_VALUE(_t6.l_linenumber) AS anything_l_linenumber,
+    ANY_VALUE(_t6.l_orderkey) AS anything_l_orderkey,
+    ANY_VALUE(_t6.l_suppkey) AS anything_l_suppkey,
     ANY_VALUE(orders.o_orderkey) AS anything_o_orderkey,
     ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus
-  FROM _t7 AS _t7
+  FROM _t6 AS _t6
   JOIN tpch.orders AS orders
-    ON _t7.l_orderkey = orders.o_orderkey
+    ON _t6.l_orderkey = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON _t7.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
+    ON _t6.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    _t7.l_linenumber,
-    _t7.l_orderkey,
+    _t6.l_linenumber,
+    _t6.l_orderkey,
     orders.o_orderkey
 ), _s11 AS (
   SELECT
-    _t9.l_linenumber,
-    _t9.l_orderkey,
+    _t8.l_linenumber,
+    _t8.l_orderkey,
     orders.o_orderkey
-  FROM _t7 AS _t9
+  FROM _t6 AS _t8
   JOIN tpch.orders AS orders
-    ON _t9.l_orderkey = orders.o_orderkey
+    ON _t8.l_orderkey = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON _t9.l_suppkey <> lineitem.l_suppkey
+    ON _t8.l_suppkey <> lineitem.l_suppkey
     AND lineitem.l_commitdate < lineitem.l_receiptdate
     AND lineitem.l_orderkey = orders.o_orderkey
 ), _s13 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _t4.anything_l_suppkey
-  FROM _t4 AS _t4
+    _t3.anything_l_suppkey
+  FROM _t3 AS _t3
   JOIN _s11 AS _s11
-    ON _s11.l_linenumber = _t4.anything_l_linenumber
-    AND _s11.l_orderkey = _t4.anything_l_orderkey
-    AND _s11.o_orderkey = _t4.anything_o_orderkey
+    ON _s11.l_linenumber = _t3.anything_l_linenumber
+    AND _s11.l_orderkey = _t3.anything_l_orderkey
+    AND _s11.o_orderkey = _t3.anything_o_orderkey
   WHERE
-    _t4.anything_o_orderstatus = 'F'
+    _t3.anything_o_orderstatus = 'F'
   GROUP BY
-    _t4.anything_l_suppkey
+    _t3.anything_l_suppkey
 )
 SELECT
   supplier.s_name AS S_NAME,
@@ -59,6 +59,6 @@ JOIN tpch.nation AS nation
 LEFT JOIN _s13 AS _s13
   ON _s13.anything_l_suppkey = supplier.s_suppkey
 ORDER BY
-  numwait DESC,
+  COALESCE(_s13.n_rows, 0) DESC,
   s_name
 LIMIT 10
