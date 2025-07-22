@@ -5,7 +5,6 @@ Logic used to transpose filters lower into relational trees.
 __all__ = ["push_filters"]
 
 
-import pydough.pydough_operators as pydop
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -32,18 +31,6 @@ from pydough.relational.rel_util import (
 )
 
 from .relational_simplification import run_simplification
-
-
-def is_present_filter(expr: RelationalExpression, column_names: set[str]):
-    """
-    TODO
-    """
-    return (
-        isinstance(expr, CallExpression)
-        and expr.op == pydop.PRESENT
-        and isinstance(expr.inputs[0], ColumnReference)
-        and expr.inputs[0].name in column_names
-    )
 
 
 def replace_with_null(expr: RelationalExpression, null_column_names: set[str]):

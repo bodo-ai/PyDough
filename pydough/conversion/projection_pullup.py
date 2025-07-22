@@ -64,7 +64,8 @@ def widen_columns(
     }
 
     # Pull all the columns from each input to the node into the node's output
-    # columns if they are not already in the node's output columns.
+    # columns if they are not already in the node's output columns. Make sure
+    # not to include no-op mappings.
     for input_idx in range(len(node.inputs)):
         input_alias: str | None = node.default_input_aliases[input_idx]
         input_node: RelationalNode = node.inputs[input_idx]
@@ -87,12 +88,13 @@ def widen_columns(
                 new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
                 node.columns[new_name] = ref_expr
                 existing_vals[expr] = ref_expr
-                substitutions[ref_expr] = new_ref
-            else:
+                if ref_expr != new_ref:
+                    substitutions[ref_expr] = new_ref
+            elif ref_expr != existing_vals[expr]:
                 substitutions[ref_expr] = existing_vals[expr]
 
-    # Return the substitution mapping, without any no-op substitutions
-    return {k: v for k, v in substitutions.items() if k != v}
+    # Return the substitution mapping
+    return substitutions
 
 
 def pull_non_columns(node: Join | Filter | Limit) -> RelationalNode:
