@@ -268,28 +268,28 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         union_set: PredicateSet = PredicateSet.union(arg_predicates)
         intersect_set: PredicateSet = PredicateSet.intersect(arg_predicates)
 
-        # If the call has null propagating rules, all of hte arguments are non-null,
-        # the output is guaranteed to be non-null.
+        # If the call has null propagating rules, all of hte arguments are
+        # non-null, the output is guaranteed to be non-null.
         if expr.op in NULL_PROPAGATING_OPS:
             if intersect_set.not_null:
                 output_predicates.not_null = True
 
         match expr.op:
             case pydop.COUNT | pydop.NDISTINCT:
-                # COUNT(n), COUNT(*), and NDISTINCT(n) are guaranteed to be non-null
-                # and non-negative.
+                # COUNT(n), COUNT(*), and NDISTINCT(n) are guaranteed to be
+                # non-null and non-negative.
                 output_predicates.not_null = True
                 output_predicates.not_negative = True
 
-                # The output if COUNT(*) is positive if unless doing a no-groupby
-                # aggregation. Same goes for calling COUNT or NDISTINCT ona non-null
-                # column.
+                # The output if COUNT(*) is positive if unless doing a
+                # no-groupby aggregation. Same goes for calling COUNT or
+                # NDISTINCT ona non-null column.
                 if not no_group_aggregate:
                     if len(expr.inputs) == 0 or arg_predicates[0].not_null:
                         output_predicates.positive = True
 
-                # COUNT(x) where x is non-null can be rewritten as COUNT(*), which
-                # has the same positive rule as before.
+                # COUNT(x) where x is non-null can be rewritten as COUNT(*),
+                # which has the same positive rule as before.
                 elif (
                     expr.op == pydop.COUNT
                     and len(expr.inputs) == 1
@@ -299,8 +299,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         output_predicates.positive = True
                     output_expr = CallExpression(pydop.COUNT, expr.data_type, [])
 
-            # All of these operators are non-null aor non-negative if their first
-            # argument is.
+            # All of these operators are non-null aor non-negative if their
+            # first argument is.
             case (
                 pydop.SUM
                 | pydop.AVG
@@ -315,8 +315,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 )
 
             # The result of addition is non-negative or positive if all the
-            # operands are. It is also positive if all the operands are non-negative
-            # and at least one of them is positive.
+            # operands are. It is also positive if all the operands are
+            # non-negative and at least one of them is positive.
             case pydop.ADD:
                 output_predicates |= intersect_set & PredicateSet(
                     not_negative=True, positive=True
@@ -324,16 +324,16 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 if intersect_set.not_negative and union_set.positive:
                     output_predicates.positive = True
 
-            # The result of multiplication is non-negative or positive if all the
-            # operands are.
+            # The result of multiplication is non-negative or positive if all
+            # the operands are.
             case pydop.MUL:
                 output_predicates |= intersect_set & PredicateSet(
                     not_negative=True, positive=True
                 )
 
             # The result of division is non-negative or positive if all the
-            # operands are, and is also non-null if both operands are non-null and
-            # the second operand is positive.
+            # operands are, and is also non-null if both operands are non-null
+            # and the second operand is positive.
             case pydop.DIV:
                 output_predicates |= intersect_set & PredicateSet(
                     not_negative=True, positive=True
