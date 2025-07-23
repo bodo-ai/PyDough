@@ -4,7 +4,7 @@ This is used to handle the common case where we need to modify a type of
 input. Shuttles are defined to be stateless by default.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
@@ -28,8 +28,7 @@ class RelationalShuttle(ABC):
     will return a transformed version of the node after visiting its inputs.
     """
 
-    @abstractmethod
-    def reset(self) -> RelationalNode:
+    def reset(self):
         """
         Clear any internal state to allow reusing this shuttle.
         """
