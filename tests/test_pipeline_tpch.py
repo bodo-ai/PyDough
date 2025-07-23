@@ -326,14 +326,14 @@ def test_pipeline_e2e_tpch(
 @pytest.mark.execute
 def test_pipeline_e2e_mysql_conn(
     tpch_pipeline_test_data: PyDoughPandasTest,
-    get_mysql_sample_graph: graph_fetcher,
+    get_sample_graph: graph_fetcher,
     mysql_conn_tpch_db_context: DatabaseContext,
 ):
     """
     Test executing the TPC-H queries from the original code generation on MySQL.
     """
     tpch_pipeline_test_data.run_e2e_test(
-        get_mysql_sample_graph,
+        get_sample_graph,
         mysql_conn_tpch_db_context,
         coerce_types=True,
     )
@@ -364,7 +364,7 @@ def mysql_params_data(request) -> PyDoughPandasTest:
 @pytest.mark.execute
 def test_pipeline_e2e_mysql_params(
     mysql_params_data: PyDoughPandasTest,
-    get_mysql_sample_graph: graph_fetcher,
+    get_sample_graph: graph_fetcher,
     mysql_params_tpch_db_context: DatabaseContext,
 ):
     """
@@ -374,5 +374,5 @@ def test_pipeline_e2e_mysql_params(
     as keyword arguments to the DatabaseContext.
     """
     mysql_params_data.run_e2e_test(
-        get_mysql_sample_graph, mysql_params_tpch_db_context, coerce_types=True
+        get_sample_graph, mysql_params_tpch_db_context, coerce_types=True
     )

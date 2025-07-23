@@ -87,15 +87,6 @@ def sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
-def mysql_sample_graph_path() -> str:
-    """
-    Tuple of the path to the JSON file containing the MySQL sample graphs.
-    It is the same as the sample graph path
-    """
-    return f"{os.path.dirname(__file__)}/test_metadata/sample_graphs.json"
-
-
-@pytest.fixture(scope="session")
 def udf_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the UDF graphs.
@@ -151,27 +142,6 @@ def get_sample_graph(
             raise Exception(f"Unrecognized graph name '{name}'")
         return pydough.parse_json_metadata_from_file(
             file_path=sample_graph_path, graph_name=name
-        )
-
-    return impl
-
-
-@pytest.fixture(scope="session")
-def get_mysql_sample_graph(
-    mysql_sample_graph_path: str,
-    valid_sample_graph_names: set[str],
-) -> graph_fetcher:
-    """
-    A function that takes in the name of a graph from the supported sample
-    MySQL graph names and returns the metadata for that PyDough graph.
-    """
-
-    @cache
-    def impl(name: str) -> GraphMetadata:
-        if name not in valid_sample_graph_names:
-            raise Exception(f"Unrecognized graph name '{name}'")
-        return pydough.parse_json_metadata_from_file(
-            file_path=mysql_sample_graph_path, graph_name=name
         )
 
     return impl
@@ -462,7 +432,6 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
 
 MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
-
 """
     MySQL environment variables required for connection.
     MYSQL_USERNAME: The username for MySQL.
@@ -470,26 +439,22 @@ MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
 """
 
 
-def is_mysql_env_set() -> bool:
+@pytest.fixture
+def require_mysql_env():
     """
-    Check if the MySQL environment variables are set. Allowing empty strings.
-    Returns:
-        bool: True if all required MySQL environment variables are set, False otherwise.
+    Checks whether all required MySQL environment variables are set.
     """
-    return all(os.getenv(var) is not None for var in MYSQL_ENVS)
+    if not all(os.getenv(var) is not None for var in MYSQL_ENVS):
+        pytest.skip("Skipping MySQL tests: environment variables not set.")
 
 
 @pytest.fixture
-def mysql_conn_tpch_db_context() -> DatabaseContext:
+def mysql_conn_tpch_db_context(require_mysql_env) -> DatabaseContext:
     """
     This fixture is used to connect to the MySQL TPCH database using
     a connection object.
     Returns a DatabaseContext for the MySQL TPCH database.
     """
-
-    if not is_mysql_env_set():
-        # breakpoint()
-        pytest.skip("Skipping MySQL tests: environment variables not set.")
     import mysql.connector as mysql_connector
 
     mysql_username = os.getenv("MYSQL_USERNAME")
@@ -510,14 +475,12 @@ def mysql_conn_tpch_db_context() -> DatabaseContext:
 
 
 @pytest.fixture
-def mysql_params_tpch_db_context() -> DatabaseContext:
+def mysql_params_tpch_db_context(require_mysql_env) -> DatabaseContext:
     """
     This fixture is used to connect to the MySQL TPCH database using
     parameters instead of a connection object.
     Returns a DatabaseContext for the MySQL TPCH database.
     """
-    if not is_mysql_env_set():
-        pytest.skip("Skipping MySQL tests: environment variables not set.")
 
     mysql_username = os.getenv("MYSQL_USERNAME")
     mysql_password = os.getenv("MYSQL_PASSWORD")

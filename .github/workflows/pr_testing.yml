@@ -132,7 +132,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not snowflake" -rs
+        run: uv run pytest tests/ -m "not snowflake and not mysql" -rs
 
   run-sf-tests:
     name: Snowflake Tests
