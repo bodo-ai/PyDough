@@ -56,18 +56,18 @@ class NullReplacementShuttle(RelationalExpressionShuttle):
 
 class FilterPushdownShuttle(RelationalShuttle):
     """
-    Shuttle implementation that pushes down filters as far as possible
-    in the relational tree. It collects filters that can be pushed down
-    and materializes them at the appropriate nodes, while also ensuring
-    that filters that cannot be pushed down are materialized above the
-    nodes where they cannot be pushed further.
+    Shuttle implementation that pushes down filters as far as possible in the
+    relational tree. It collects filters that can be pushed down and
+    materializes them at the appropriate nodes, while also ensuring that filters
+    that cannot be pushed down are materialized above the nodes where they
+    cannot be pushed further.
     """
 
     def __init__(self):
         # The set of filters that are currently being pushed down. When
         # visit_xxx is called, it is presumed that the set of conditions in
-        # self.filters are the conditions that can be pushed down as far as
-        # the current node from its ancestors.
+        # self.filters are the conditions that can be pushed down as far as the
+        # current node from its ancestors.
         self.filters: set[RelationalExpression] = set()
 
     def reset(self):
@@ -99,10 +99,10 @@ class FilterPushdownShuttle(RelationalShuttle):
         return build_filter(node, remaining_filters)
 
     def visit_filter(self, filter: Filter) -> RelationalNode:
-        # Add all of the conditions from the filters pushed down this far
-        # with the filters from the current node. If there is a window
-        # function, materialize all of them at this point, otherwise push
-        # all of them further.
+        # Add all of the conditions from the filters pushed down this far with
+        # the filters from the current node. If there is a window function,
+        # materialize all of them at this point, otherwise push all of them
+        # further.
         transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
             filter, False
         )
@@ -122,17 +122,17 @@ class FilterPushdownShuttle(RelationalShuttle):
         pushable_filters: set[RelationalExpression]
         remaining_filters: set[RelationalExpression]
         if any(contains_window(expr) for expr in project.columns.values()):
-            # If there is a window function, materialize all filters at
-            # this point.
+            # If there is a window function, materialize all filters at this
+            # point.
             pushable_filters, remaining_filters = set(), self.filters
         else:
-            # Otherwise push all filters that only depend on columns in
-            # the project that are pass-through of another column.
-            # For example consider the following:
-            # `filters`: `{a > 0, b > 0, a > b}`
-            # `node`: `Project(columns={"a": "x", "b": "LENGTH(y)"})`
-            # Then the only filter that can be pushed down is `a > 0`,
-            # which becomes `x > 0`.
+            # Otherwise push all filters that only depend on columns in the
+            # project that are pass-through of another column. For example
+            # consider the following:
+            #   `filters`: `{a > 0, b > 0, a > b}`
+            #   `node`: `Project(columns={"a": "x", "b": "LENGTH(y)"})`
+            # Then the only filter that can be pushed down is `a > 0`, which
+            # becomes `x > 0`.
             allowed_cols: set[str] = set()
             for name, expr in project.columns.items():
                 if isinstance(expr, ColumnReference):
@@ -178,20 +178,22 @@ class FilterPushdownShuttle(RelationalShuttle):
         # If the join is a LEFT join, deduce whether the filters above it can
         # turn it into an INNER join.
         if join.join_type == JoinType.LEFT and len(self.filters) > 0:
-            # Build a shuttle that replaces the right-hand side columns with NULLs.
+            # Build a shuttle that replaces the right-hand side columns with
+            # NULLs.
             null_shuttle: NullReplacementShuttle = NullReplacementShuttle(input_cols[1])
 
-            # For each filter, replace any references to the right-hand side columns
-            # with nulls, then attempt to simplify the expression. If the expression
-            # is a literal false, then the join can be transformed into an INNER join.
+            # For each filter, replace any references to the right-hand side
+            # columns with nulls, then attempt to simplify the expression. If
+            # the expression is a literal false, then the join can be
+            # transformed into an INNER join.
             for cond in self.filters:
                 with_nulls: RelationalExpression = cond.accept_shuttle(null_shuttle)
                 with_nulls, _ = run_simplification(with_nulls, {}, False)
                 if isinstance(with_nulls, LiteralExpression) and not bool(
                     with_nulls.value
                 ):
-                    # If the filters are false when the right-hand side is null, then
-                    # the left join becomes an inner join.
+                    # If the filters are false when the right-hand side is null,
+                    # then the left join becomes an inner join.
                     join_type = JoinType.INNER
                     break
 
