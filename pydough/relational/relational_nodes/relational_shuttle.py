@@ -48,7 +48,6 @@ class RelationalShuttle(ABC):
         """
         return node.copy(inputs=[child.accept_shuttle(self) for child in node.inputs])
 
-    @abstractmethod
     def visit_scan(self, scan: Scan) -> RelationalNode:
         """
         Visit a Scan node.
@@ -58,7 +57,6 @@ class RelationalShuttle(ABC):
         """
         return scan
 
-    @abstractmethod
     def visit_join(self, join: Join) -> RelationalNode:
         """
         Visit a Join node.
@@ -68,7 +66,6 @@ class RelationalShuttle(ABC):
         """
         return self.generic_visit_inputs(join)
 
-    @abstractmethod
     def visit_project(self, project: Project) -> RelationalNode:
         """
         Visit a Project node.
@@ -78,7 +75,6 @@ class RelationalShuttle(ABC):
         """
         return self.generic_visit_inputs(project)
 
-    @abstractmethod
     def visit_filter(self, filter: Filter) -> RelationalNode:
         """
         Visit a filter node.
@@ -88,7 +84,6 @@ class RelationalShuttle(ABC):
         """
         return self.generic_visit_inputs(filter)
 
-    @abstractmethod
     def visit_aggregate(self, aggregate: Aggregate) -> RelationalNode:
         """
         Visit an Aggregate node.
@@ -98,7 +93,6 @@ class RelationalShuttle(ABC):
         """
         return self.generic_visit_inputs(aggregate)
 
-    @abstractmethod
     def visit_limit(self, limit: Limit) -> RelationalNode:
         """
         Visit a Limit node.
@@ -108,7 +102,6 @@ class RelationalShuttle(ABC):
         """
         return self.generic_visit_inputs(limit)
 
-    @abstractmethod
     def visit_empty_singleton(self, singleton: EmptySingleton) -> RelationalNode:
         """
         Visit an EmptySingleton node.
@@ -118,7 +111,6 @@ class RelationalShuttle(ABC):
         """
         return singleton
 
-    @abstractmethod
     def visit_root(self, root: RelationalRoot) -> RelationalNode:
         """
         Visit a root node.
