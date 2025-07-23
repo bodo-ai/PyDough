@@ -7,7 +7,6 @@ __all__ = ["push_filters"]
 
 from pydough.relational import (
     Aggregate,
-    CallExpression,
     ColumnReference,
     EmptySingleton,
     Filter,
@@ -17,6 +16,7 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalExpression,
+    RelationalExpressionShuttle,
     RelationalNode,
     Scan,
 )
@@ -33,50 +33,58 @@ from pydough.relational.rel_util import (
 from .relational_simplification import run_simplification
 
 
-def replace_with_null(expr: RelationalExpression, null_column_names: set[str]):
+class NullReplacementShuttle(RelationalExpressionShuttle):
     """
-    TODO
+    Shuttle implementation designed to replace specific column references with
+    NULL literals.
     """
-    match expr:
-        case ColumnReference():
-            if expr.name in null_column_names:
-                return LiteralExpression(None, expr.data_type)
-            return expr
-        case CallExpression():
-            return CallExpression(
-                expr.op,
-                return_type=expr.data_type,
-                inputs=[
-                    replace_with_null(arg, null_column_names) for arg in expr.inputs
-                ],
-            )
-        case _:
-            return expr
+
+    def __init__(self, null_column_names: set[str]) -> None:
+        self.null_column_names: set[str] = null_column_names
+
+    def visit_column_reference(
+        self, column_reference: ColumnReference
+    ) -> RelationalExpression:
+        # Transform the column into a NULL literal if its name is one
+        # of the null column names.
+        if column_reference.name in self.null_column_names:
+            return LiteralExpression(None, column_reference.data_type)
+        return column_reference
 
 
 def apply_filter_left_join_transform(
     join: Join, filters: set[RelationalExpression], rhs_cols: set[str]
-) -> Join:
+) -> None:
     """
-    TODO
-    """
-    if join.join_type != JoinType.LEFT:
-        return join
+    Attempts to transform a left join if there are filters above it into an
+    INNER join if the filters are false when the right-hand side is null.
 
+    Args:
+        `join`: The join node to transform.
+        `filters`: The set of filter conditions that are above the join in the
+        relational tree.
+        `rhs_cols`: The set of column names from the output of the JOIN that
+        correspond to columns from the right-hand side of the join.
+    """
+
+    # Skip if the join is not a left join or if there are no filters to push.
+    if join.join_type != JoinType.LEFT or len(filters) == 0:
+        return
+
+    # Build a shuttle that replaces the right-hand side columns with NULLs.
+    null_shuttle: NullReplacementShuttle = NullReplacementShuttle(rhs_cols)
+
+    # For each filter, replace any references to the right-hand side columns
+    # with nulls, then attempt to simplify the expression. If the expression
+    # is a literal false, then the join can be transformed into an INNER join.
     for cond in filters:
-        with_nulls: RelationalExpression = replace_with_null(cond, rhs_cols)
+        with_nulls: RelationalExpression = cond.accept_shuttle(null_shuttle)
         with_nulls, _ = run_simplification(with_nulls, {}, False)
-        if isinstance(with_nulls, LiteralExpression) and with_nulls.value in [
-            False,
-            0,
-            None,
-        ]:
+        if isinstance(with_nulls, LiteralExpression) and not bool(with_nulls.value):
             # If the filters are false when the right-hand side is null, then
             # the left join becomes an inner join.
             join.join_type = JoinType.INNER
-            return join
-
-    return join
+            return
 
 
 def push_filters(
@@ -152,21 +160,18 @@ def push_filters(
             # First pre-process to account for transformations that can be
             # done due to the presence of filters above a join or with its
             # join conditions.
-            node = apply_filter_left_join_transform(node, filters, input_cols[1])
+            apply_filter_left_join_transform(node, filters, input_cols[1])
             # For each input to the join, push down any filters that only
             # reference columns from that input.
             for idx, child in enumerate(node.inputs):
                 if idx > 0 and node.join_type == JoinType.LEFT:
-                    # If doing a left join, only push filters if they depend
-                    # on the input and are false if the input is null. If this
-                    # happens, the left join becomes an inner join.
+                    # If doing a left join, only push filters into the RHS if
+                    # they are false if the input is null.
                     pushable_filters, remaining_filters = partition_expressions(
                         remaining_filters,
                         lambda expr: only_references_columns(expr, input_cols[idx])
                         and false_when_null_columns(expr, input_cols[idx]),
                     )
-                    if pushable_filters:
-                        node.join_type = JoinType.INNER
                 else:
                     pushable_filters, remaining_filters = partition_expressions(
                         remaining_filters,
