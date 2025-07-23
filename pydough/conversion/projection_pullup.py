@@ -666,7 +666,13 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
 
 class ProjectionPullupShuttle(RelationalShuttle):
     """
-    TODO
+    Relational shuttle that performs projection pull-up on a relational node and
+    its inputs, ensuring that expression calculations, such as function calls,
+    are done as late as possible in the plan. This is done by pulling up
+    projections from the inputs of the node into the node itself, and then
+    attempting to eject such expressions from the current node into its parent,
+    while also combining adjacent nodes when possible. Several forms of
+    simplification involving aggregation calls are also performed at this stage.
     """
 
     def visit_project(self, node: Project) -> RelationalNode:
