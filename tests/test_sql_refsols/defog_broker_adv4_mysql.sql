@@ -16,5 +16,5 @@ FROM main.sbTicker AS sbTicker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbDpTickerId = sbTicker.sbtickerid
 ORDER BY
-  price_change DESC
+  _s1.max_sbDpHigh - _s1.min_sbDpLow DESC
 LIMIT 3

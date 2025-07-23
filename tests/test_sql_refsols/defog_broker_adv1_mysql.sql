@@ -13,5 +13,5 @@ FROM main.sbCustomer AS sbCustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbTxCustId = sbCustomer.sbcustid
 ORDER BY
-  total_amount DESC
+  COALESCE(_s1.sum_sbTxAmount, 0) DESC
 LIMIT 5

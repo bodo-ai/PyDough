@@ -15,5 +15,5 @@ FROM main.sbTicker AS sbTicker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbTxTickerId = sbTicker.sbtickerid
 ORDER BY
-  total_amount DESC
+  COALESCE(_s1.sum_sbTxAmount, 0) DESC
 LIMIT 10

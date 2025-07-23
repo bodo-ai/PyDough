@@ -27,6 +27,6 @@ LEFT JOIN _s3 AS _s3
 JOIN tpch.NATION AS NATION
   ON CUSTOMER.c_nationkey = NATION.n_nationkey
 ORDER BY
-  REVENUE DESC,
+  COALESCE(_s3.sum_expr_1, 0) DESC,
   CUSTOMER.c_custkey
 LIMIT 20

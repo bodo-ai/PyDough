@@ -9,19 +9,16 @@ WITH _s5 AS (
     ON DEVICES.de_product_id = PRODUCTS.pr_id AND PRODUCTS.pr_name = 'Sun-Set'
   GROUP BY
     INCIDENTS.in_error_id
-), _t0 AS (
-  SELECT
-    ROUND((
-      100.0 * COALESCE(_s5.n_rows, 0)
-    ) / SUM(COALESCE(_s5.n_rows, 0)) OVER (), 2) AS pct,
-    ERRORS.er_name
-  FROM main.ERRORS AS ERRORS
-  LEFT JOIN _s5 AS _s5
-    ON ERRORS.er_id = _s5.in_error_id
 )
 SELECT
-  er_name AS error,
-  pct
-FROM _t0
+  ERRORS.er_name AS error,
+  ROUND((
+    100.0 * COALESCE(_s5.n_rows, 0)
+  ) / SUM(COALESCE(_s5.n_rows, 0)) OVER (), 2) AS pct
+FROM main.ERRORS AS ERRORS
+LEFT JOIN _s5 AS _s5
+  ON ERRORS.er_id = _s5.in_error_id
 ORDER BY
-  pct DESC
+  ROUND((
+    100.0 * COALESCE(_s5.n_rows, 0)
+  ) / SUM(COALESCE(_s5.n_rows, 0)) OVER (), 2) DESC

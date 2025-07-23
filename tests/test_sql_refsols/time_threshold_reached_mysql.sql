@@ -3,15 +3,14 @@ WITH _t3 AS (
     (
       100.0 * SUM(sbtxshares) OVER (PARTITION BY DATE(CAST(sbtxdatetime AS DATETIME)) ORDER BY sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
     ) / SUM(sbtxshares) OVER (PARTITION BY DATE(CAST(sbtxdatetime AS DATETIME))) AS pct_of_day,
-    sbtxdatetime AS sbTxDateTime,
-    DATE(CAST(sbtxdatetime AS DATETIME)) AS txn_day
+    sbtxdatetime AS sbTxDateTime
   FROM main.sbTransaction
   WHERE
     YEAR(sbtxdatetime) = 2023
 ), _t AS (
   SELECT
     sbTxDateTime,
-    ROW_NUMBER() OVER (PARTITION BY txn_day ORDER BY CASE WHEN pct_of_day IS NULL THEN 1 ELSE 0 END, pct_of_day) AS _w
+    ROW_NUMBER() OVER (PARTITION BY DATE(CAST(sbTxDateTime AS DATETIME)) ORDER BY CASE WHEN pct_of_day IS NULL THEN 1 ELSE 0 END, pct_of_day) AS _w
   FROM _t3
   WHERE
     pct_of_day >= 50.0

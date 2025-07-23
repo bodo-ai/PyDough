@@ -1,7 +1,7 @@
 WITH _s2 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0')) AS month
+    CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0')) AS month,
+    COUNT(*) AS n_rows
   FROM main.sbCustomer
   WHERE
     sbcustjoindate < STR_TO_DATE(

@@ -12,7 +12,7 @@ WITH _t1 AS (
     AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
 )
 SELECT
-  ANY_VALUE(er_name) AS era_name,
+  er_name AS era_name,
   AVG(day_gap) AS avg_event_gap
 FROM _t1
 GROUP BY

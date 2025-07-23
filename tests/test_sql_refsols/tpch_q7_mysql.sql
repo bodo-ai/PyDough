@@ -38,8 +38,8 @@ JOIN _s9 AS _s9
 WHERE
   YEAR(LINEITEM.l_shipdate) IN (1995, 1996)
 GROUP BY
-  _s9.n_name,
   YEAR(LINEITEM.l_shipdate),
+  _s9.n_name,
   _s1.n_name
 ORDER BY
   _s1.n_name,

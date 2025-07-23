@@ -7,7 +7,8 @@ WITH _s3 AS (
     in_device_id
 ), _s5 AS (
   SELECT
-    ROUND(COALESCE(SUM(COALESCE(_s3.n_rows, 0)), 0) / COUNT(*), 2) AS ir,
+    COUNT(*) AS n_rows,
+    SUM(_s3.n_rows) AS sum_n_incidents,
     DEVICES.de_product_id
   FROM main.DEVICES AS DEVICES
   JOIN main.PRODUCTS AS PRODUCTS
@@ -21,10 +22,10 @@ SELECT
   PRODUCTS.pr_name AS product,
   PRODUCTS.pr_brand AS product_brand,
   PRODUCTS.pr_type AS product_type,
-  _s5.ir
+  ROUND(COALESCE(COALESCE(_s5.sum_n_incidents, 0), 0) / _s5.n_rows, 2) AS ir
 FROM main.PRODUCTS AS PRODUCTS
 JOIN _s5 AS _s5
   ON PRODUCTS.pr_id = _s5.de_product_id
 ORDER BY
-  ir DESC
+  ROUND(COALESCE(COALESCE(_s5.sum_n_incidents, 0), 0) / _s5.n_rows, 2) DESC
 LIMIT 5

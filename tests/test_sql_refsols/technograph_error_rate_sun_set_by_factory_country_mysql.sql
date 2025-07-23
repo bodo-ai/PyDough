@@ -7,9 +7,9 @@ WITH _s3 AS (
     in_device_id
 ), _s5 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(COALESCE(_s3.n_rows, 0)) AS sum_n_incidents,
-    DEVICES.de_production_country_id
+    COALESCE(SUM(_s3.n_rows), 0) AS sum_n_incidents,
+    DEVICES.de_production_country_id,
+    COUNT(*) AS n_rows
   FROM main.DEVICES AS DEVICES
   JOIN main.PRODUCTS AS PRODUCTS
     ON DEVICES.de_product_id = PRODUCTS.pr_id AND PRODUCTS.pr_name = 'Sun-Set'

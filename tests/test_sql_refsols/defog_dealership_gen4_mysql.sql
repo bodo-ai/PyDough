@@ -1,7 +1,5 @@
 WITH _s0 AS (
   SELECT
-    SUM(sale_price) AS sum_sale_price,
-    customer_id,
     STR_TO_DATE(
       CONCAT(
         YEAR(CAST(sale_date AS DATETIME)),
@@ -10,12 +8,13 @@ WITH _s0 AS (
         ' 1'
       ),
       '%Y %c %e'
-    ) AS quarter
+    ) AS quarter,
+    SUM(sale_price) AS sum_sale_price,
+    customer_id
   FROM main.sales
   WHERE
     YEAR(sale_date) = 2023
   GROUP BY
-    customer_id,
     STR_TO_DATE(
       CONCAT(
         YEAR(CAST(sale_date AS DATETIME)),
@@ -24,8 +23,9 @@ WITH _s0 AS (
         ' 1'
       ),
       '%Y %c %e'
-    )
-), _t2 AS (
+    ),
+    customer_id
+), _t1 AS (
   SELECT
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
     _s0.quarter,
@@ -41,7 +41,7 @@ SELECT
   quarter,
   state AS customer_state,
   COALESCE(sum_sum_sale_price, 0) AS total_sales
-FROM _t2
+FROM _t1
 WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY

@@ -1,10 +1,7 @@
 WITH _s1 AS (
   SELECT
-    (
-      100.0 * (
-        COALESCE(SUM(sbtxamount), 0) - COALESCE(SUM(sbtxtax + sbtxcommission), 0)
-      )
-    ) / COALESCE(SUM(sbtxamount), 0) AS SPM,
+    SUM(sbtxtax + sbtxcommission) AS sum_expr_2,
+    SUM(sbtxamount) AS sum_sbTxAmount,
     sbtxtickerid AS sbTxTickerId
   FROM main.sbTransaction
   WHERE
@@ -15,7 +12,11 @@ WITH _s1 AS (
 )
 SELECT
   sbTicker.sbtickersymbol AS symbol,
-  _s1.SPM
+  (
+    100.0 * (
+      COALESCE(_s1.sum_sbTxAmount, 0) - COALESCE(_s1.sum_expr_2, 0)
+    )
+  ) / COALESCE(_s1.sum_sbTxAmount, 0) AS SPM
 FROM main.sbTicker AS sbTicker
 JOIN _s1 AS _s1
   ON _s1.sbTxTickerId = sbTicker.sbtickerid

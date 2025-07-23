@@ -22,8 +22,8 @@ JOIN tpch.PARTSUPP AS PARTSUPP
   ON LINEITEM.l_partkey = PARTSUPP.ps_partkey
   AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
 GROUP BY
-  NATION.n_name,
-  YEAR(ORDERS.o_orderdate)
+  YEAR(ORDERS.o_orderdate),
+  NATION.n_name
 ORDER BY
   NATION.n_name,
   YEAR(ORDERS.o_orderdate) DESC
