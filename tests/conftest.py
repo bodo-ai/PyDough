@@ -10,7 +10,6 @@ from collections.abc import Callable
 from functools import cache
 
 import pytest
-from dotenv import load_dotenv
 
 import pydough
 import pydough.pydough_operators as pydop
@@ -28,8 +27,6 @@ from tests.testing_utilities import graph_fetcher
 
 from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
-
-load_dotenv()  # Load environment variables from .env file
 
 
 @pytest.fixture
@@ -464,14 +461,12 @@ def sqlite_technograph_connection() -> DatabaseContext:
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
-MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD", "MYSQL_DB", "MYSQL_HOST"]
+MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
 
 """
     MySQL environment variables required for connection.
     MYSQL_USERNAME: The username for MySQL.
     MYSQL_PASSWORD: The password for MySQL.
-    MYSQL_DB: The database name for MySQL.
-    MYSQL_HOST: The host ip for MySQL.
 """
 
 
@@ -499,14 +494,14 @@ def mysql_conn_tpch_db_context() -> DatabaseContext:
 
     mysql_username = os.getenv("MYSQL_USERNAME")
     mysql_password = os.getenv("MYSQL_PASSWORD")
-    mysql_tpch_db = os.getenv("MYSQL_DB")
-    mysql_host = os.getenv("MYSQL_HOST")
+    mysql_db = "tpch"
+    mysql_host = "127.0.0.1"
 
     connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
         user=mysql_username,
         password=mysql_password,
         host=mysql_host,
-        database=mysql_tpch_db,
+        database=mysql_db,
     )
     return load_database_context(
         "mysql",
@@ -524,17 +519,17 @@ def mysql_params_tpch_db_context() -> DatabaseContext:
     if not is_mysql_env_set():
         pytest.skip("Skipping MySQL tests: environment variables not set.")
 
-    mysql_tpch_db = os.getenv("MYSQL_DB")
-    mysql_host = os.getenv("MYSQL_HOST")
     mysql_username = os.getenv("MYSQL_USERNAME")
     mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_db = "tpch"
+    mysql_host = "127.0.0.1"
 
     return load_database_context(
         "mysql",
         user=mysql_username,
         password=mysql_password,
         host=mysql_host,
-        database=mysql_tpch_db,
+        database=mysql_db,
     )
 
 
