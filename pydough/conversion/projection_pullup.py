@@ -24,10 +24,10 @@ from pydough.relational import (
     RelationalRoot,
 )
 from pydough.relational.rel_util import (
+    ExpressionTranspositionShuttle,
     add_input_name,
     apply_substitution,
     contains_window,
-    transpose_expression,
 )
 from pydough.types import BooleanType, NumericType
 
@@ -562,12 +562,15 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
         return node
 
     input_agg: Aggregate = node.input
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        input_agg, False
+    )
 
     # Identify all of the keys in the top vs bottom aggregations, transposing
     # the top keys so they can be expressed in the same terms as the bottom
     # keys.
     top_keys: set[RelationalExpression] = {
-        transpose_expression(expr, input_agg.columns) for expr in node.keys.values()
+        expr.accept_shuttle(transposer) for expr in node.keys.values()
     }
     bottom_keys: set[RelationalExpression] = set(input_agg.keys.values())
 
@@ -616,7 +619,7 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
             case pydop.SUM:
                 # SUM(SUM(x)) -> SUM(x)
                 # SUM(COUNT(x)) -> COUNT(x)
-                input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
+                input_expr = agg_expr.inputs[0].accept_shuttle(transposer)
                 if isinstance(input_expr, CallExpression) and input_expr.op in (
                     pydop.SUM,
                     pydop.COUNT,
@@ -633,7 +636,7 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
                 # MAX(MAX(x)) -> MAX(x)
                 # MAX(ANYTHING(x)) -> MAX(x)
                 # ANYTHING(ANYTHING(x)) -> ANYTHING(x)
-                input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
+                input_expr = agg_expr.inputs[0].accept_shuttle(transposer)
                 if isinstance(input_expr, CallExpression) and input_expr.op in (
                     agg_expr.op,
                     pydop.ANYTHING,
@@ -651,8 +654,7 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
     # If none of the aggregations caused a merge failure, we can return a new
     # Aggregate node using the top keys and the merged aggregation calls.
     new_keys: dict[str, RelationalExpression] = {
-        name: transpose_expression(expr, input_agg.columns)
-        for name, expr in node.keys.items()
+        name: expr.accept_shuttle(transposer) for name, expr in node.keys.items()
     }
     return Aggregate(
         input=input_agg.input,

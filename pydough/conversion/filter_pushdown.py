@@ -23,13 +23,13 @@ from pydough.relational import (
     Scan,
 )
 from pydough.relational.rel_util import (
+    ExpressionTranspositionShuttle,
     build_filter,
     contains_window,
     false_when_null_columns,
     get_conjunctions,
     only_references_columns,
     partition_expressions,
-    transpose_expression,
 )
 
 from .relational_simplification import run_simplification
@@ -91,9 +91,10 @@ class FilterPushdownShuttle(RelationalShuttle):
             `pushable_filters`: The set of filters that can be pushed further
             into the inputs of `node`.
         """
-        self.filters = {
-            transpose_expression(expr, node.columns) for expr in pushable_filters
-        }
+        transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+            node, False
+        )
+        self.filters = {expr.accept_shuttle(transposer) for expr in pushable_filters}
         node = self.generic_visit_inputs(node)
         return build_filter(node, remaining_filters)
 
@@ -102,8 +103,11 @@ class FilterPushdownShuttle(RelationalShuttle):
         # with the filters from the current node. If there is a window
         # function, materialize all of them at this point, otherwise push
         # all of them further.
+        transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+            filter, False
+        )
         remaining_filters: set[RelationalExpression] = {
-            transpose_expression(expr, filter.columns) for expr in self.filters
+            expr.accept_shuttle(transposer) for expr in self.filters
         }
         remaining_filters.update(get_conjunctions(filter.condition))
         if contains_window(filter.condition):
@@ -195,6 +199,9 @@ class FilterPushdownShuttle(RelationalShuttle):
         # reference columns from that input.
         pushable_filters: set[RelationalExpression]
         remaining_filters: set[RelationalExpression] = self.filters
+        transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+            join, False
+        )
         for idx, child in enumerate(join.inputs):
             if idx > 0 and join_type == JoinType.LEFT:
                 # If doing a left join, only push filters into the RHS if
@@ -214,7 +221,7 @@ class FilterPushdownShuttle(RelationalShuttle):
             if len(pushable_filters) > 0 and idx > 0:
                 cardinality = join.cardinality.add_filter()
             pushable_filters = {
-                transpose_expression(expr, join.columns) for expr in pushable_filters
+                expr.accept_shuttle(transposer) for expr in pushable_filters
             }
             # Transform the child input with the filters that can be
             # pushed down.
