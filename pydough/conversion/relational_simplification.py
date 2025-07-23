@@ -5,7 +5,7 @@ Logic used to simplify relational expressions in a relational node.
 __all__ = ["simplify_expressions"]
 
 
-from enum import Enum
+from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
 from pydough.relational import (
@@ -31,15 +31,81 @@ from pydough.relational.rel_util import (
 )
 
 
-class LogicalPredicate(Enum):
+@dataclass
+class PredicateSet:
     """
-    Enum representing logical predicates that can be inferred about relational
-    expressions.
+    A set of logical predicates that can be inferred about relational
+    expressions and used to simplify other expressions.
     """
 
-    NOT_NULL = "NOT_NULL"
-    NOT_NEGATIVE = "NOT_NEGATIVE"
-    POSITIVE = "POSITIVE"
+    not_null: bool = False
+    """
+    Whether the expression is guaranteed to not be null.
+    """
+
+    not_negative: bool = False
+    """
+    Whether the expression is guaranteed to not be negative.
+    """
+
+    positive: bool = False
+    """
+    Whether the expression is guaranteed to be positive.
+    """
+
+    def __or__(self, other: "PredicateSet") -> "PredicateSet":
+        """
+        Combines two predicate sets using a logical OR operation.
+        """
+        return PredicateSet(
+            not_null=self.not_null or other.not_null,
+            not_negative=self.not_negative or other.not_negative,
+            positive=self.positive or other.positive,
+        )
+
+    def __and__(self, other: "PredicateSet") -> "PredicateSet":
+        """
+        Combines two predicate sets using a logical AND operation.
+        """
+        return PredicateSet(
+            not_null=self.not_null and other.not_null,
+            not_negative=self.not_negative and other.not_negative,
+            positive=self.positive and other.positive,
+        )
+
+    def __sub__(self, other: "PredicateSet") -> "PredicateSet":
+        """
+        Subtracts one predicate set from another.
+        """
+        return PredicateSet(
+            not_null=self.not_null and not other.not_null,
+            not_negative=self.not_negative and not other.not_negative,
+            positive=self.positive and not other.positive,
+        )
+
+    @staticmethod
+    def union(predicates: list["PredicateSet"]) -> "PredicateSet":
+        """
+        Computes the union of a list of predicate sets.
+        """
+        result: PredicateSet = PredicateSet()
+        for pred in predicates[1:]:
+            result = result | pred
+        return result
+
+    @staticmethod
+    def intersect(predicates: list["PredicateSet"]) -> "PredicateSet":
+        """
+        Computes the intersection of a list of predicate sets.
+        """
+        result: PredicateSet = PredicateSet()
+        if len(predicates) == 0:
+            return result
+        else:
+            result |= predicates[0]
+        for pred in predicates[1:]:
+            result = result & pred
+        return result
 
 
 NULL_PROPAGATING_OPS: set[pydop.PyDoughOperator] = {
@@ -93,34 +159,50 @@ NULL_PROPAGATING_OPS: set[pydop.PyDoughOperator] = {
 
 def simplify_function_call(
     expr: CallExpression,
-    arg_predicates: list[set[LogicalPredicate]],
+    arg_predicates: list[PredicateSet],
     no_group_aggregate: bool,
-) -> tuple[RelationalExpression, set[LogicalPredicate]]:
+) -> tuple[RelationalExpression, PredicateSet]:
     """
     TODO
     """
     output_expr: RelationalExpression = expr
-    output_predicates: set[LogicalPredicate] = set()
+    output_predicates: PredicateSet = PredicateSet()
+    union_set: PredicateSet = PredicateSet.union(arg_predicates)
+    intersect_set: PredicateSet = PredicateSet.intersect(arg_predicates)
+
+    # If the call has null propagating rules, all of hte arguments are non-null,
+    # the output is guaranteed to be non-null.
     if expr.op in NULL_PROPAGATING_OPS:
-        if all(LogicalPredicate.NOT_NULL in preds for preds in arg_predicates):
-            output_predicates.add(LogicalPredicate.NOT_NULL)
+        if intersect_set.not_null:
+            output_predicates.not_null = True
+
     match expr.op:
         case pydop.COUNT | pydop.NDISTINCT:
-            output_predicates.add(LogicalPredicate.NOT_NULL)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            # COUNT(n), COUNT(*), and NDISTINCT(n) are guaranteed to be non-null
+            # and non-negative.
+            output_predicates.not_null = True
+            output_predicates.not_negative = True
+
+            # The output if COUNT(*) is positive if unless doing a no-groupby
+            # aggregation. Same goes for calling COUNT or NDISTINCT ona non-null
+            # column.
             if not no_group_aggregate:
-                if (
-                    len(expr.inputs) == 0
-                    or LogicalPredicate.NOT_NULL in arg_predicates[0]
-                ):
-                    output_predicates.add(LogicalPredicate.POSITIVE)
+                if len(expr.inputs) == 0 or arg_predicates[0].not_null:
+                    output_predicates.positive = True
+
+            # COUNT(x) where x is non-null can be rewritten as COUNT(*), which
+            # has the same positive rule as before.
             elif (
                 expr.op == pydop.COUNT
                 and len(expr.inputs) == 1
-                and LogicalPredicate.NOT_NULL in arg_predicates[0]
+                and arg_predicates[0].not_null
             ):
-                output_predicates.add(LogicalPredicate.POSITIVE)
+                if not no_group_aggregate:
+                    output_predicates.positive = True
                 output_expr = CallExpression(pydop.COUNT, expr.data_type, [])
+
+        # All of these operators are non-null aor non-negative if their first
+        # argument is.
         case (
             pydop.SUM
             | pydop.AVG
@@ -130,53 +212,79 @@ def simplify_function_call(
             | pydop.MEDIAN
             | pydop.QUANTILE
         ):
-            for predicate in [
-                LogicalPredicate.NOT_NEGATIVE,
-                LogicalPredicate.POSITIVE,
-            ]:
-                if predicate in arg_predicates[0]:
-                    output_predicates.add(predicate)
+            output_predicates |= arg_predicates[0] & PredicateSet(
+                not_null=True, not_negative=True
+            )
+
+        # The result of addition is non-negative or positive if all the
+        # operands are. It is also positive if all the operands are non-negative
+        # and at least one of them is positive.
+        case pydop.ADD:
+            output_predicates |= intersect_set & PredicateSet(
+                not_negative=True, positive=True
+            )
+            if intersect_set.not_negative and union_set.positive:
+                output_predicates.positive = True
+
+        # The result of multiplication is non-negative or positive if all the
+        # operands are.
+        case pydop.MUL:
+            output_predicates |= intersect_set & PredicateSet(
+                not_negative=True, positive=True
+            )
+
+        # The result of division is non-negative or positive if all the
+        # operands are, and is also non-null if both operands are non-null and
+        # the second operand is positive.
+        case pydop.DIV:
+            output_predicates |= intersect_set & PredicateSet(
+                not_negative=True, positive=True
+            )
             if (
-                LogicalPredicate.NOT_NULL in arg_predicates[0]
-                and not no_group_aggregate
+                arg_predicates[0].not_null
+                and arg_predicates[1].not_null
+                and arg_predicates[1].positive
             ):
-                output_predicates.add(LogicalPredicate.NOT_NULL)
-        case pydop.ADD | pydop.MUL | pydop.DIV:
-            for predicate in [LogicalPredicate.NOT_NEGATIVE, LogicalPredicate.POSITIVE]:
-                if all(predicate in preds for preds in arg_predicates):
-                    output_predicates.add(predicate)
-            if expr.op == pydop.DIV:
-                if (
-                    LogicalPredicate.NOT_NULL in arg_predicates[0]
-                    and LogicalPredicate.NOT_NULL in arg_predicates[1]
-                    and LogicalPredicate.POSITIVE in arg_predicates[1]
-                ):
-                    output_predicates.add(LogicalPredicate.NOT_NULL)
+                output_predicates.not_null = True
+
         case pydop.DEFAULT_TO:
+            # DEFAULT_TO(None, x) -> x
             if (
                 isinstance(expr.inputs[0], LiteralExpression)
                 and expr.inputs[0].value is None
             ):
-                output_expr = expr.inputs[1]
-                output_predicates = arg_predicates[1]
-            if LogicalPredicate.NOT_NULL in arg_predicates[0]:
+                if len(expr.inputs) == 2:
+                    output_expr = expr.inputs[1]
+                    output_predicates = arg_predicates[1]
+                else:
+                    output_expr = CallExpression(
+                        pydop.DEFAULT_TO, expr.data_type, expr.inputs[1:]
+                    )
+                    output_predicates |= PredicateSet.intersect(arg_predicates[1:])
+
+            # DEFAULT_TO(x, y) -> x if x is non-null.
+            elif arg_predicates[0].not_null:
                 output_expr = expr.inputs[0]
-                output_predicates = arg_predicates[0]
+                output_predicates |= arg_predicates[0]
+
+            # Otherwise, it is non-null if any of the arguments are non-null,
+            # and gains any predicates that all the arguments have in common.
             else:
-                if any(LogicalPredicate.NOT_NULL in preds for preds in arg_predicates):
-                    output_predicates.add(LogicalPredicate.NOT_NULL)
-                for pred in arg_predicates[0]:
-                    if all(pred in preds for preds in arg_predicates):
-                        output_predicates.add(pred)
+                if union_set.not_null:
+                    output_predicates.not_null = True
+                output_predicates |= intersect_set
+
+        # ABS(x) -> x if x is positive or non-negative. At hte very least, we
+        # know it is always non-negative.
         case pydop.ABS:
-            if (
-                LogicalPredicate.POSITIVE in arg_predicates[0]
-                or LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]
-            ):
+            if arg_predicates[0].not_negative or arg_predicates[0].positive:
                 output_expr = expr.inputs[0]
-                output_predicates = arg_predicates[0]
+                output_predicates |= arg_predicates[0]
             else:
-                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.not_negative = True
+
+        # LENGTH(x) can be constant folded if x is a string literal. Otherwise,
+        # we know it is non-negative.
         case pydop.LENGTH:
             if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
                 expr.inputs[0].value, str
@@ -184,8 +292,12 @@ def simplify_function_call(
                 str_len: int = len(expr.inputs[0].value)
                 output_expr = LiteralExpression(str_len, expr.data_type)
                 if str_len > 0:
-                    output_predicates.add(LogicalPredicate.POSITIVE)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                    output_predicates.positive = True
+            output_predicates.not_negative = True
+
+        # LOWER, UPPER, STARTSWITH, ENDSWITH, and CONTAINS can be constant
+        # folded if the inputs are string literals. The boolean-returning
+        # operators are always non-negative.
         case pydop.LOWER:
             if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
                 expr.inputs[0].value, str
@@ -211,7 +323,10 @@ def simplify_function_call(
                     expr.inputs[0].value.startswith(expr.inputs[1].value),
                     expr.data_type,
                 )
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.positive |= expr.inputs[0].value.startswith(
+                    expr.inputs[1].value
+                )
+            output_predicates.not_negative = True
         case pydop.ENDSWITH:
             if (
                 isinstance(expr.inputs[0], LiteralExpression)
@@ -222,7 +337,10 @@ def simplify_function_call(
                 output_expr = LiteralExpression(
                     expr.inputs[0].value.endswith(expr.inputs[1].value), expr.data_type
                 )
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.positive |= expr.inputs[0].value.endswith(
+                    expr.inputs[1].value
+                )
+            output_predicates.not_negative = True
         case pydop.CONTAINS:
             if (
                 isinstance(expr.inputs[0], LiteralExpression)
@@ -233,7 +351,13 @@ def simplify_function_call(
                 output_expr = LiteralExpression(
                     expr.inputs[1].value in expr.inputs[0].value, expr.data_type
                 )
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.positive |= (
+                    expr.inputs[1].value in expr.inputs[0].value
+                )
+            output_predicates.not_negative = True
+
+        # SQRT(x) can be constant folded if x is a literal and non-negative.
+        # Otherwise, it is non-negative, and positive if x is positive.
         case pydop.SQRT:
             if (
                 isinstance(expr.inputs[0], LiteralExpression)
@@ -242,9 +366,10 @@ def simplify_function_call(
             ):
                 sqrt_value: float = expr.inputs[0].value ** 0.5
                 output_expr = LiteralExpression(sqrt_value, expr.data_type)
-                if sqrt_value > 0:
-                    output_predicates.add(LogicalPredicate.POSITIVE)
-                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            if arg_predicates[0].positive:
+                output_predicates.positive = True
+            output_predicates.not_negative = True
+
         case pydop.MONOTONIC:
             v0: int | float | None = None
             v1: int | float | None = None
@@ -262,11 +387,17 @@ def simplify_function_call(
                 expr.inputs[2].value, (int, float)
             ):
                 v2 = expr.inputs[2].value
+
+            # MONOTONIC(x, y, z), where x/y/z are all literals
+            # -> True if x <= y <= z, False otherwise
             if v0 is not None and v1 is not None and v2 is not None:
                 monotonic_result = (v0 <= v1) and (v1 <= v2)
                 output_expr = LiteralExpression(monotonic_result, expr.data_type)
                 if monotonic_result:
-                    output_predicates.add(LogicalPredicate.POSITIVE)
+                    output_predicates.positive = True
+
+            # MONOTONIC(x, y, z), where x/y are literals
+            # -> if x <= y, then y <= z, otherwise False
             elif v0 is not None and v1 is not None:
                 if v0 <= v1:
                     output_expr = CallExpression(
@@ -274,6 +405,9 @@ def simplify_function_call(
                     )
                 else:
                     output_expr = LiteralExpression(False, expr.data_type)
+
+            # MONOTONIC(x, y, z), where y/z are literals
+            # -> if y <= z, then x <= y, otherwise False
             elif v1 is not None and v2 is not None:
                 if v1 <= v2:
                     output_expr = CallExpression(
@@ -281,9 +415,14 @@ def simplify_function_call(
                     )
                 else:
                     output_expr = LiteralExpression(False, expr.data_type)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            output_predicates.not_negative = True
+
+        # XOR and LIKE are always non-negative
         case pydop.BXR | pydop.LIKE:
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            output_predicates.not_negative = True
+
+        # X & Y is False if any of the arguments are False-y literals, and True
+        # if all of the arguments are Truth-y literals.
         case pydop.BAN:
             if any(
                 isinstance(arg, LiteralExpression) and arg.value in [0, False, None]
@@ -295,7 +434,10 @@ def simplify_function_call(
                 for arg in expr.inputs
             ):
                 output_expr = LiteralExpression(True, expr.data_type)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            output_predicates.not_negative = True
+
+        # X | Y is True if any of the arguments are Truth-y literals, and False
+        # if all of the arguments are False-y literals.
         case pydop.BOR:
             if any(
                 isinstance(arg, LiteralExpression) and arg.value not in [0, False, None]
@@ -307,25 +449,42 @@ def simplify_function_call(
                 for arg in expr.inputs
             ):
                 output_expr = LiteralExpression(False, expr.data_type)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            output_predicates.not_negative = True
+
         case pydop.EQU | pydop.NEQ | pydop.GEQ | pydop.GRT | pydop.LET | pydop.LEQ:
             match (expr.inputs[0], expr.op, expr.inputs[1]):
-                case (_, pydop.GRT, LiteralExpression()) if (
-                    expr.inputs[1].value == 0
-                    and LogicalPredicate.POSITIVE in arg_predicates[0]
+                # x > y is True if x is positive and y is a literal that is
+                # zero or negative. The same goes for x >= y.
+                case (_, pydop.GRT, LiteralExpression()) | (
+                    _,
+                    pydop.GEQ,
+                    LiteralExpression(),
+                ) if (
+                    isinstance(expr.inputs[1].value, (int, float, bool))
+                    and expr.inputs[1].value <= 0
+                    and arg_predicates[0].not_null
+                    and arg_predicates[0].positive
                 ):
                     output_expr = LiteralExpression(True, expr.data_type)
-                    output_predicates.add(LogicalPredicate.NOT_NULL)
-                    output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-                    output_predicates.add(LogicalPredicate.POSITIVE)
+                    output_predicates |= PredicateSet(
+                        not_null=True, not_negative=True, positive=True
+                    )
+
+                # x >= y is True if x is non-negative and y is a literal that is
+                # zero or negative.
                 case (_, pydop.GEQ, LiteralExpression()) if (
-                    expr.inputs[1].value == 0
-                    and LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]
+                    isinstance(expr.inputs[1].value, (int, float, bool))
+                    and expr.inputs[1].value <= 0
+                    and arg_predicates[0].not_null
+                    and arg_predicates[0].not_negative
                 ):
                     output_expr = LiteralExpression(True, expr.data_type)
-                    output_predicates.add(LogicalPredicate.NOT_NULL)
-                    output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-                    output_predicates.add(LogicalPredicate.POSITIVE)
+                    output_predicates |= PredicateSet(
+                        not_null=True, not_negative=True, positive=True
+                    )
+
+                # The rest of the case of x CMP y can be constant folded if both
+                # x and y are literals.
                 case (LiteralExpression(), _, LiteralExpression()):
                     match (
                         expr.inputs[0].value,
@@ -357,88 +516,115 @@ def simplify_function_call(
 
                 case _:
                     pass
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
 
+            output_predicates.not_negative = True
+
+        # PRESENT(x) is True if x is non-null.
         case pydop.PRESENT:
-            if LogicalPredicate.NOT_NULL in arg_predicates[0]:
+            if arg_predicates[0].not_null:
                 output_expr = LiteralExpression(True, expr.data_type)
-            output_predicates.add(LogicalPredicate.NOT_NULL)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.positive = True
+            output_predicates.not_null = True
+            output_predicates.not_negative = True
+
+        # ABSENT(x) is True if x is null.
         case pydop.ABSENT:
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            if (
+                isinstance(expr.inputs[0], LiteralExpression)
+                and expr.inputs[0].value is None
+            ):
+                output_expr = LiteralExpression(True, expr.data_type)
+                output_predicates.positive = True
+            output_predicates.not_null = True
+            output_predicates.not_negative = True
+
+        # IFF(True, y, z) -> y (same if the first argument is guaranteed to be
+        # positive & non-null).
+        # IFF(False, y, z) -> z
+        # Otherwise, it inherits the intersection of the predicates of y and z.
         case pydop.IFF:
             if isinstance(expr.inputs[0], LiteralExpression):
                 if bool(expr.inputs[0].value):
                     output_expr = expr.inputs[1]
-                    output_predicates = arg_predicates[1]
+                    output_predicates |= arg_predicates[1]
                 else:
                     output_expr = expr.inputs[2]
-                    output_predicates = arg_predicates[2]
-            elif (
-                LogicalPredicate.POSITIVE in arg_predicates[0]
-                and LogicalPredicate.NOT_NULL in arg_predicates[0]
-            ):
+                    output_predicates |= arg_predicates[2]
+            elif arg_predicates[0].not_null and arg_predicates[0].positive:
                 output_expr = expr.inputs[1]
-                output_predicates = arg_predicates[1]
+                output_predicates |= arg_predicates[1]
             else:
-                output_predicates = arg_predicates[1] & arg_predicates[2]
+                output_predicates |= arg_predicates[1] & arg_predicates[2]
+
+        # KEEP_IF(x, True) -> x
+        # KEEP_IF(x, False) -> None
         case pydop.KEEP_IF:
             if isinstance(expr.inputs[1], LiteralExpression):
                 if bool(expr.inputs[1].value):
                     output_expr = expr.inputs[0]
-                    output_predicates = arg_predicates[0]
+                    output_predicates |= arg_predicates[0]
                 else:
                     output_expr = LiteralExpression(None, expr.data_type)
-                    output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-            elif (
-                LogicalPredicate.POSITIVE in arg_predicates[1]
-                and LogicalPredicate.NOT_NULL in arg_predicates[1]
-            ):
+                    output_predicates.not_negative = True
+            elif arg_predicates[1].not_null and arg_predicates[1].positive:
                 output_expr = expr.inputs[0]
                 output_predicates = arg_predicates[0]
-            elif LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]:
-                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+            else:
+                output_predicates |= arg_predicates[0] & PredicateSet(
+                    not_null=True, not_negative=True
+                )
     return output_expr, output_predicates
 
 
 def simplify_window_call(
     expr: WindowCallExpression,
-    arg_predicates: list[set[LogicalPredicate]],
-) -> tuple[RelationalExpression, set[LogicalPredicate]]:
+    arg_predicates: list[PredicateSet],
+) -> tuple[RelationalExpression, PredicateSet]:
     """
     TODO
     """
-    output_predicates: set[LogicalPredicate] = set()
+    output_predicates: PredicateSet = PredicateSet()
     no_frame: bool = not (
         expr.kwargs.get("cumulative", False) or "frame" in expr.kwargs
     )
     match expr.op:
+        # RANKING & PERCENTILE are always non-null, non-negative, and positive.
         case pydop.RANKING | pydop.PERCENTILE:
-            output_predicates.add(LogicalPredicate.NOT_NULL)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-            output_predicates.add(LogicalPredicate.POSITIVE)
+            output_predicates |= PredicateSet(
+                not_null=True, not_negative=True, positive=True
+            )
+
+        # RELSUM and RELAVG retain the properties of their argument, but become
+        # nullable if there is a frame.
         case pydop.RELSUM | pydop.RELAVG:
-            if LogicalPredicate.NOT_NULL in arg_predicates[0] and no_frame:
-                output_predicates.add(LogicalPredicate.NOT_NULL)
-            if LogicalPredicate.NOT_NEGATIVE in arg_predicates[0]:
-                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
-            if LogicalPredicate.POSITIVE in arg_predicates[0] and no_frame:
-                output_predicates.add(LogicalPredicate.POSITIVE)
+            if arg_predicates[0].not_null and no_frame:
+                output_predicates.not_null = True
+            if arg_predicates[0].not_negative:
+                output_predicates.not_negative = True
+            if arg_predicates[0].positive:
+                output_predicates.positive = True
+
+        # RELSIZE is always non-negative, but is only non-null & positive if
+        # there is no frame.
         case pydop.RELSIZE:
             if no_frame:
-                output_predicates.add(LogicalPredicate.NOT_NULL)
-                output_predicates.add(LogicalPredicate.POSITIVE)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.not_null = True
+                output_predicates.positive = True
+            output_predicates.not_negative = True
+
+        # RELCOUNT is always non-negative, but it is only non-null if there is
+        # no frame, and positive if there is no frame and the first argument
+        # is non-null.
         case pydop.RELCOUNT:
             if no_frame:
-                output_predicates.add(LogicalPredicate.NOT_NULL)
-                if LogicalPredicate.NOT_NULL in arg_predicates[0]:
-                    output_predicates.add(LogicalPredicate.POSITIVE)
-            output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.not_null = True
+                if arg_predicates[0].not_null:
+                    output_predicates.positive = True
+            output_predicates.not_negative = True
     return expr, output_predicates
 
 
-def infer_literal_predicates(expr: LiteralExpression) -> set[LogicalPredicate]:
+def infer_literal_predicates(expr: LiteralExpression) -> PredicateSet:
     """
     Infers logical predicates from a literal expression.
 
@@ -448,22 +634,22 @@ def infer_literal_predicates(expr: LiteralExpression) -> set[LogicalPredicate]:
     Returns:
         A set of logical predicates inferred from the literal.
     """
-    output_predicates: set[LogicalPredicate] = set()
+    output_predicates: PredicateSet = PredicateSet()
     if expr.value is not None:
-        output_predicates.add(LogicalPredicate.NOT_NULL)
+        output_predicates.not_null = True
         if isinstance(expr.value, (int, float)):
             if expr.value >= 0:
-                output_predicates.add(LogicalPredicate.NOT_NEGATIVE)
+                output_predicates.not_negative = True
                 if expr.value > 0:
-                    output_predicates.add(LogicalPredicate.POSITIVE)
+                    output_predicates.positive = True
     return output_predicates
 
 
 def run_simplification(
     expr: RelationalExpression,
-    input_predicates: dict[RelationalExpression, set[LogicalPredicate]],
+    input_predicates: dict[RelationalExpression, PredicateSet],
     no_group_aggregate: bool,
-) -> tuple[RelationalExpression, set[LogicalPredicate]]:
+) -> tuple[RelationalExpression, PredicateSet]:
     """
     Runs the simplification on a single expression, applying any predicates
     inferred from the input nodes to aid the process and inferring any new
@@ -484,15 +670,15 @@ def run_simplification(
     new_args: list[RelationalExpression]
     new_partitions: list[RelationalExpression]
     new_orders: list[ExpressionSortInfo]
-    arg_predicates: list[set[LogicalPredicate]]
-    output_predicates: set[LogicalPredicate] = set()
+    arg_predicates: list[PredicateSet]
+    output_predicates: PredicateSet = PredicateSet()
     requires_rewrite: bool = False
 
     if isinstance(expr, LiteralExpression):
         output_predicates = infer_literal_predicates(expr)
 
     if isinstance(expr, ColumnReference):
-        output_predicates = input_predicates.get(expr, set())
+        output_predicates = input_predicates.get(expr, PredicateSet())
 
     if isinstance(expr, CallExpression):
         new_args = []
@@ -552,7 +738,7 @@ def run_simplification(
 
 def simplify_expressions(
     node: RelationalNode,
-) -> dict[RelationalExpression, set[LogicalPredicate]]:
+) -> dict[RelationalExpression, PredicateSet]:
     """
     The main recursive procedure done to perform expression simplification on
     a relational node and its descendants. The transformation is done in-place
@@ -564,7 +750,7 @@ def simplify_expressions(
         The predicates inferred from the output columns of the node.
     """
     # Recursively invoke the procedure on all inputs to the node.
-    input_predicates: dict[RelationalExpression, set[LogicalPredicate]] = {}
+    input_predicates: dict[RelationalExpression, PredicateSet] = {}
     for idx, input_node in enumerate(node.inputs):
         input_alias: str | None = node.default_input_aliases[idx]
         predicates = simplify_expressions(input_node)
@@ -573,7 +759,7 @@ def simplify_expressions(
 
     # Transform the expressions of the current node in-place.
     ref_expr: RelationalExpression
-    output_predicates: dict[RelationalExpression, set[LogicalPredicate]] = {}
+    output_predicates: dict[RelationalExpression, PredicateSet] = {}
     match node:
         case (
             Project()
@@ -612,8 +798,7 @@ def simplify_expressions(
                         isinstance(expr, ColumnReference)
                         and expr.input_name != node.default_input_aliases[0]
                     ):
-                        preds.discard(LogicalPredicate.NOT_NULL)
-                        preds.discard(LogicalPredicate.POSITIVE)
+                        preds.not_null = False
         case Aggregate():
             for name, expr in node.keys.items():
                 ref_expr = ColumnReference(name, expr.data_type)
