@@ -901,6 +901,7 @@ class SimplificationVisitor(RelationalVisitor):
         )
         # Transform the filter condition in-place.
         node._condition = node.condition.accept_shuttle(self.shuttle)
+        self.shuttle.stack.pop()
         self.stack.append(output_predicates)
 
     def visit_join(self, node: Join) -> None:
@@ -909,6 +910,7 @@ class SimplificationVisitor(RelationalVisitor):
         )
         # Transform the join condition in-place.
         node._condition = node.condition.accept_shuttle(self.shuttle)
+        self.shuttle.stack.pop()
         # If the join is not an inner join, remove any not-null predicates
         # from the RHS of the join.
         if node.join_type != JoinType.INNER:
@@ -927,6 +929,7 @@ class SimplificationVisitor(RelationalVisitor):
         # Transform the order keys in-place.
         for ordering_expr in node.orderings:
             ordering_expr.expr = ordering_expr.expr.accept_shuttle(self.shuttle)
+            self.shuttle.stack.pop()
         self.stack.append(output_predicates)
 
     def visit_root(self, node: RelationalRoot) -> None:
@@ -939,6 +942,7 @@ class SimplificationVisitor(RelationalVisitor):
         # Transform the order keys in-place.
         for ordering_expr in node.orderings:
             ordering_expr.expr = ordering_expr.expr.accept_shuttle(self.shuttle)
+            self.shuttle.stack.pop()
         self.stack.append(output_predicates)
 
     def visit_aggregate(self, node: Aggregate) -> None:
