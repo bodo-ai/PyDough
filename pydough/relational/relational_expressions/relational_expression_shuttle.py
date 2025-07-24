@@ -23,6 +23,12 @@ class RelationalExpressionShuttle(ABC):
     at the end of each visit.
     """
 
+    def reset(self):
+        """
+        Reset the shuttle to its initial state.
+        This is useful if the shuttle is reused for multiple visits.
+        """
+
     def visit_call_expression(
         self, call_expression: CallExpression
     ) -> RelationalExpression:

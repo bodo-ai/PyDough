@@ -111,57 +111,78 @@ class PredicateSet:
 
 
 NULL_PROPAGATING_OPS: set[pydop.PyDoughOperator] = {
+    pydop.ABS,
     pydop.ADD,
-    pydop.SUB,
-    pydop.MUL,
     pydop.BAN,
     pydop.BOR,
-    pydop.NOT,
-    pydop.LOWER,
-    pydop.UPPER,
-    pydop.LENGTH,
-    pydop.STRIP,
-    pydop.REPLACE,
-    pydop.FIND,
-    pydop.ABS,
-    pydop.CEIL,
-    pydop.FLOOR,
-    pydop.ROUND,
-    pydop.EQU,
-    pydop.NEQ,
-    pydop.GEQ,
-    pydop.GRT,
-    pydop.LET,
-    pydop.LEQ,
     pydop.BXR,
-    pydop.STARTSWITH,
-    pydop.ENDSWITH,
+    pydop.CEIL,
     pydop.CONTAINS,
-    pydop.LIKE,
-    pydop.SIGN,
-    pydop.SMALLEST,
-    pydop.LARGEST,
-    pydop.IFF,
-    pydop.YEAR,
-    pydop.MONTH,
-    pydop.DAY,
-    pydop.HOUR,
-    pydop.MINUTE,
-    pydop.SECOND,
     pydop.DATEDIFF,
+    pydop.DAY,
     pydop.DAYNAME,
     pydop.DAYOFWEEK,
-    pydop.SLICE,
-    pydop.LPAD,
-    pydop.RPAD,
-    pydop.MONOTONIC,
+    pydop.ENDSWITH,
+    pydop.EQU,
+    pydop.FIND,
+    pydop.FLOOR,
+    pydop.GEQ,
+    pydop.GRT,
+    pydop.HOUR,
     pydop.JOIN_STRINGS,
+    pydop.LARGEST,
+    pydop.LENGTH,
+    pydop.LEQ,
+    pydop.LET,
+    pydop.LIKE,
+    pydop.LOWER,
+    pydop.LPAD,
+    pydop.MINUTE,
+    pydop.MONOTONIC,
+    pydop.MONTH,
+    pydop.MUL,
+    pydop.NEQ,
+    pydop.NOT,
+    pydop.REPLACE,
+    pydop.ROUND,
+    pydop.RPAD,
+    pydop.SECOND,
+    pydop.SIGN,
+    pydop.SLICE,
+    pydop.SMALLEST,
+    pydop.STARTSWITH,
+    pydop.STRIP,
+    pydop.SUB,
+    pydop.UPPER,
+    pydop.YEAR,
 }
+"""
+A set of operators that only output null if one of the inputs is null. This set
+is significant because it means that if all of the inputs to a function are
+guaranteed to be non-null, the output is guaranteed to be non-null as well.
+"""
 
 
 class SimplificationShuttle(RelationalExpressionShuttle):
     """
-    TODO
+    Shuttle implementation for simplifying relational expressions. Has three
+    sources of state used to determine how to simplify expressions:
+
+    - `input_predicates`: A dictionary mapping column references to
+      the corresponding predicate sets for all of the columns that are used as
+      inputs to all of the expressions in the current relational node (e.g. from
+      the inputs to the node). This needs to be set before the shuttle is
+      used, and the default is an empty dictionary.
+    - `no_group_aggregate`: A boolean indicating whether the current
+      transformation is being done within the context of an aggregation without
+      grouping keys. This is important because some aggregation functions will
+      have different behaviors with/without grouping keys. For example, COUNT(*)
+      is always positive if there are grouping keys, but if there are no
+      grouping keys, the answer could be 0. This needs to be set before the
+      shuttle is used, and the default is False.
+    - `stack`: A stack of predicate sets corresponding to all inputs to the
+      current expression. Used for simplifying function calls by first
+      simplifying their inputs and placing their predicate sets on the stack.
     """
 
     def __init__(self):
@@ -261,7 +282,22 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         no_group_aggregate: bool,
     ) -> RelationalExpression:
         """
-        TODO
+        Procedure to simplify a function call expression based on the operator
+        and the predicates of its arguments. This assumes that the arguments
+        have already been simplified.
+
+        Args:
+            `expr`: The CallExpression to simplify, whose arguments have already
+            been simplified.
+            `arg_predicates`: A list of PredicateSet objects corresponding to
+            the predicates of the arguments of the expression.
+            `no_group_aggregate`: Whether the expression is part of a no-group
+            aggregate.
+
+        Returns:
+            The simplified expression with the predicates updated based on the
+            simplification rules. The predicates for the output are placed on
+            the stack.
         """
         output_expr: RelationalExpression = expr
         output_predicates: PredicateSet = PredicateSet()
@@ -698,7 +734,20 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         arg_predicates: list[PredicateSet],
     ) -> RelationalExpression:
         """
-        TODO
+        Procedure to simplify a window call expression based on the operator
+        and the predicates of its arguments. This assumes that the arguments
+        have already been simplified.
+
+        Args:
+            `expr`: The WindowCallExpression to simplify, whose arguments have
+            already been simplified.
+            `arg_predicates`: A list of PredicateSet objects corresponding to
+            the predicates of the arguments of the expression.
+
+        Returns:
+            The simplified expression with the predicates updated based on
+            the simplification rules. The predicates for the output are placed
+            on the stack.
         """
         output_predicates: PredicateSet = PredicateSet()
         output_expr: RelationalExpression = expr
@@ -747,26 +796,44 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
 class SimplificationVisitor(RelationalVisitor):
     """
-    TODO
+    Relational visitor implementation that simplifies relational expressions
+    within the relational tree and its subtrees in-place. The visitor first
+    transforms all the subtrees and collects predicate set information for the
+    output columns of each node, then uses those predicates to simplify the
+    expressions of the current node. The predicates for the output predicates of
+    the current node are placed on the stack.
     """
 
-    def __init__(self):
+    def __init__(self, additional_shuttles: list[RelationalExpressionShuttle]):
         self.stack: list[dict[RelationalExpression, PredicateSet]] = []
         self.shuttle: SimplificationShuttle = SimplificationShuttle()
+        self.additional_shuttles: list[RelationalExpressionShuttle] = (
+            additional_shuttles
+        )
 
     def reset(self):
         self.stack.clear()
         self.shuttle.reset()
+        for shuttle in self.additional_shuttles:
+            shuttle.reset()
 
     def get_input_predicates(
         self, node: RelationalNode
     ) -> dict[RelationalExpression, PredicateSet]:
         """
-        TODO
-        """
-        # Recursively invoke the procedure on all inputs to the node.
-        self.visit_inputs(node)
+        Recursively simplifies the inputs to the current node and collects
+        the predicates for each column from all of the inputs to the current
+        node.
 
+        Args:
+            `node`: The current relational node whose inputs are being
+            simplified.
+
+        Returns:
+            A dictionary mapping each input column reference from a column from
+            an input to the current node to the set of its inferred predicates.
+        """
+        self.visit_inputs(node)
         # For each input, pop the predicates from the stack and add them
         # to the input predicates dictionary, using the appropriate input alias.
         input_predicates: dict[RelationalExpression, PredicateSet] = {}
@@ -782,22 +849,40 @@ class SimplificationVisitor(RelationalVisitor):
         self, node: RelationalNode
     ) -> dict[RelationalExpression, PredicateSet]:
         """
-        TODO
+        The generic pattern for relational simplification used by most of the
+        relational nodes as a base. It simplifies all descendants of the current
+        node, and uses the predicates from the inputs to transform all of the
+        expressions of the current node in-place. The predicates for the output
+        columns of the current node are returned as a dictionary mapping each
+        output column reference to its set of predicates.
+
+        Args:
+            `node`: The current relational node to simplify.
+
+        Returns:
+            A dictionary mapping each output column reference from the current
+            node to the set of its inferred predicates.
         """
+        # Simplify the inputs to the current node and collect the predicates
+        # for each column from the inputs.
         input_predicates: dict[RelationalExpression, PredicateSet] = (
             self.get_input_predicates(node)
         )
+        # Set the input predicates and no-group-aggregate state for the shuttle.
         self.shuttle.input_predicates = input_predicates
-        self.shuttle.no_group_aggregate = not (
-            isinstance(node, Aggregate) and not node.keys
+        self.shuttle.no_group_aggregate = (
+            isinstance(node, Aggregate) and len(node.keys) == 0
         )
         # Transform the expressions of the current node in-place.
         ref_expr: RelationalExpression
         output_predicates: dict[RelationalExpression, PredicateSet] = {}
         for name, expr in node.columns.items():
             ref_expr = ColumnReference(name, expr.data_type)
-            node.columns[name] = expr.accept_shuttle(self.shuttle)
+            expr = expr.accept_shuttle(self.shuttle)
             output_predicates[ref_expr] = self.shuttle.stack.pop()
+            for shuttle in self.additional_shuttles:
+                expr = expr.accept_shuttle(shuttle)
+            node.columns[name] = expr
         return output_predicates
 
     def visit_scan(self, node: Scan) -> None:
@@ -824,6 +909,9 @@ class SimplificationVisitor(RelationalVisitor):
         )
         # Transform the filter condition in-place.
         node._condition = node.condition.accept_shuttle(self.shuttle)
+        self.shuttle.stack.pop()
+        for shuttle in self.additional_shuttles:
+            node._condition = node.condition.accept_shuttle(shuttle)
         self.stack.append(output_predicates)
 
     def visit_join(self, node: Join) -> None:
@@ -832,6 +920,9 @@ class SimplificationVisitor(RelationalVisitor):
         )
         # Transform the join condition in-place.
         node._condition = node.condition.accept_shuttle(self.shuttle)
+        self.shuttle.stack.pop()
+        for shuttle in self.additional_shuttles:
+            node._condition = node.condition.accept_shuttle(shuttle)
         # If the join is not an inner join, remove any not-null predicates
         # from the RHS of the join.
         if node.join_type != JoinType.INNER:
@@ -850,6 +941,9 @@ class SimplificationVisitor(RelationalVisitor):
         # Transform the order keys in-place.
         for ordering_expr in node.orderings:
             ordering_expr.expr = ordering_expr.expr.accept_shuttle(self.shuttle)
+            self.shuttle.stack.pop()
+            for shuttle in self.additional_shuttles:
+                ordering_expr.expr = ordering_expr.expr.accept_shuttle(shuttle)
         self.stack.append(output_predicates)
 
     def visit_root(self, node: RelationalRoot) -> None:
@@ -862,34 +956,28 @@ class SimplificationVisitor(RelationalVisitor):
         # Transform the order keys in-place.
         for ordering_expr in node.orderings:
             ordering_expr.expr = ordering_expr.expr.accept_shuttle(self.shuttle)
+            self.shuttle.stack.pop()
+            for shuttle in self.additional_shuttles:
+                ordering_expr.expr = ordering_expr.expr.accept_shuttle(shuttle)
         self.stack.append(output_predicates)
 
     def visit_aggregate(self, node: Aggregate) -> None:
-        input_predicates: dict[RelationalExpression, PredicateSet] = (
-            self.get_input_predicates(node)
+        output_predicates: dict[RelationalExpression, PredicateSet] = (
+            self.generic_visit(node)
         )
-        output_predicates: dict[RelationalExpression, PredicateSet] = {}
-        # Transform the keys & aggregates separately
-        self.shuttle.input_predicates = input_predicates
-        self.shuttle.no_group_aggregate = False
-        for name, expr in node.keys.items():
-            ref_expr = ColumnReference(name, expr.data_type)
-            node.keys[name] = expr.accept_shuttle(self.shuttle)
-            output_predicates[ref_expr] = self.shuttle.stack.pop()
-            node.columns[name] = node.keys[name]
-        self.shuttle.no_group_aggregate = not node.keys
-        for name, expr in node.aggregations.items():
-            ref_expr = ColumnReference(name, expr.data_type)
-            new_agg = expr.accept_shuttle(self.shuttle)
-            output_predicates[ref_expr] = self.shuttle.stack.pop()
-            assert isinstance(new_agg, CallExpression)
-            node.aggregations[name] = new_agg
-            node.columns[name] = node.aggregations[name]
+        # Transform the keys & aggregations to match the columns.
+        for name in node.keys:
+            node.keys[name] = node.columns[name]
+        for name in node.aggregations:
+            expr = node.columns[name]
+            assert isinstance(expr, CallExpression)
+            node.aggregations[name] = expr
         self.stack.append(output_predicates)
 
 
 def simplify_expressions(
     node: RelationalNode,
+    additional_shuttles: list[RelationalExpressionShuttle],
 ) -> None:
     """
     Transforms the current node and all of its descendants in-place to simplify
@@ -897,6 +985,10 @@ def simplify_expressions(
 
     Args:
         `node`: The relational node to perform simplification on.
+        `additional_shuttles`: A list of additional shuttles to apply to the
+        expressions of the node and its descendants. These shuttles are applied
+        after the simplification shuttle, and can be used to perform additional
+        transformations on the expressions.
     """
-    simplifier: SimplificationVisitor = SimplificationVisitor()
+    simplifier: SimplificationVisitor = SimplificationVisitor(additional_shuttles)
     node.accept(simplifier)
