@@ -19,6 +19,7 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
+    load_database_context,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
@@ -241,6 +242,7 @@ def binary_operators(request) -> pydop.BinaryOperator:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        pytest.param(DatabaseDialect.MYSQL, id="mysql"),
     ]
 )
 def sqlite_dialects(request) -> DatabaseDialect:
@@ -254,6 +256,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        pytest.param(DatabaseDialect.MYSQL, id="mysql"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -426,6 +429,71 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
+"""
+    MySQL environment variables required for connection.
+    MYSQL_USERNAME: The username for MySQL.
+    MYSQL_PASSWORD: The password for MySQL.
+"""
+
+
+@pytest.fixture
+def require_mysql_env():
+    """
+    Checks whether all required MySQL environment variables are set.
+    """
+    if not all(os.getenv(var) is not None for var in MYSQL_ENVS):
+        pytest.skip("Skipping MySQL tests: environment variables not set.")
+
+
+@pytest.fixture
+def mysql_conn_tpch_db_context(require_mysql_env) -> DatabaseContext:
+    """
+    This fixture is used to connect to the MySQL TPCH database using
+    a connection object.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+    import mysql.connector as mysql_connector
+
+    mysql_username = os.getenv("MYSQL_USERNAME")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_db = "tpch"
+    mysql_host = "127.0.0.1"
+
+    connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
+        user=mysql_username,
+        password=mysql_password,
+        host=mysql_host,
+        database=mysql_db,
+    )
+    return load_database_context(
+        "mysql",
+        connection=connection,
+    )
+
+
+@pytest.fixture
+def mysql_params_tpch_db_context(require_mysql_env) -> DatabaseContext:
+    """
+    This fixture is used to connect to the MySQL TPCH database using
+    parameters instead of a connection object.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+
+    mysql_username = os.getenv("MYSQL_USERNAME")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_db = "tpch"
+    mysql_host = "127.0.0.1"
+
+    return load_database_context(
+        "mysql",
+        user=mysql_username,
+        password=mysql_password,
+        host=mysql_host,
+        database=mysql_db,
+    )
 
 
 @pytest.fixture(scope="session")

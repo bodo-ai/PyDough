@@ -335,6 +335,7 @@ Just like the knowledge graph & miscellaneous configurations, the database conte
 
 Below is a list of all supported values for the database name:
 - `sqlite`: uses a SQLite database. [See here](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect) for details on the connection API and what keyword arguments can be passed in.
+- `mysql`: uses a MySQL database. [See here](https://dev.mysql.com/doc/connector-python/en/connector-python-example-connecting.html) for details on the connection API and what keyword arguments can be passed in.
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 
@@ -354,6 +355,8 @@ shakespeare_context  = pydough.active_session.load_database("sqlite", database="
 ```
 
 Notice that both APIs `load_database_context` and `sesion.load_database` take in the name of the database type first and all the connection keyword arguments, and also return the context object.
+
+Here’s an example of how to use a MySQL database with PyDough [this MySQL usage guide](./../demos/notebooks/MySQL_TPCH.ipynb).
 
 It is important to ensure that the correct database context is being used for several reasons:
 - It controls what SQL dialect is used when translating from PyDough to SQL.
