@@ -208,7 +208,7 @@ class HybridTree:
         return self._agg_keys
 
     @agg_keys.setter
-    def agg_keys(self, agg_keys: list[HybridExpr]) -> None:
+    def agg_keys(self, agg_keys: list[HybridExpr] | None) -> None:
         """
         Assigns the aggregation keys to a hybrid tree.
         """
@@ -223,7 +223,7 @@ class HybridTree:
         return self._join_keys
 
     @join_keys.setter
-    def join_keys(self, join_keys: list[tuple[HybridExpr, HybridExpr]]) -> None:
+    def join_keys(self, join_keys: list[tuple[HybridExpr, HybridExpr]] | None) -> None:
         """
         Assigns the join keys to a hybrid tree.
         """
