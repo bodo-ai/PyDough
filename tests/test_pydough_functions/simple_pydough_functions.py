@@ -3032,6 +3032,46 @@ def quantile_function_test_4():
     )
 
 
+def double_cross():
+    # For each of the first 10 weeks of orders, identify the ratio between the
+    # cumulative number of lines returned via train versus the cumulative numbe
+    # of urgent orders with status F. Also return the numbers of orders/lines in
+    # each week.
+    global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
+    order_week_info = (
+        global_info.orders.CALCULATE(ord_wk=DATEDIFF("week", min_date, order_date))
+        .WHERE((ord_wk < 10) & (order_status == "F") & (order_priority == "1-URGENT"))
+        .PARTITION(name="weeks", by=ord_wk)
+        .CALCULATE(ord_wk, n_orders=COUNT(orders))
+    )
+    line_week_info = (
+        global_info.lines.CALCULATE(line_wk=DATEDIFF("week", min_date, receipt_date))
+        .WHERE(
+            (line_wk < 10)
+            & (return_flag == "R")
+            & (YEAR(receipt_date) == 1992)
+            & (ship_mode == "RAIL")
+        )
+        .PARTITION(name="weeks", by=line_wk)
+        .CALCULATE(line_wk, n_lines=COUNT(lines))
+    )
+    return (
+        order_week_info.CROSS(line_week_info)
+        .WHERE(ord_wk == line_wk)
+        .CALCULATE(
+            wk=ord_wk,
+            n_lines=n_lines,
+            n_orders=n_orders,
+            lpo=ROUND(
+                RELSUM(n_lines, by=line_wk.ASC(), cumulative=True)
+                / RELSUM(n_orders, by=ord_wk.ASC(), cumulative=True),
+                4,
+            ),
+        )
+        .ORDER_BY(wk.ASC())
+    )
+
+
 def pagerank(n_iters):
     """
     Computes the PageRank computation on the PAGERANK graph, starting with the

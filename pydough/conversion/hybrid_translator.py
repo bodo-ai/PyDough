@@ -866,6 +866,7 @@ class HybridTranslator:
         back_expr: BackReferenceExpression,
         collection: PyDoughCollectionQDAG,
         steps_taken_so_far: int,
+        down_shift: int = 0,
     ) -> HybridCorrelExpr:
         """
         Converts a BACK reference into a correlated reference when the number
@@ -909,7 +910,7 @@ class HybridTranslator:
             # levels are consistent)
             self.stack.append(next_hybrid)
             parent_result = self.make_hybrid_correl_expr(
-                back_expr, collection, steps_taken_so_far
+                back_expr, collection, steps_taken_so_far, down_shift + 1
             ).expr
             self.stack.pop()
         elif remaining_steps_back == 0:
@@ -919,7 +920,7 @@ class HybridTranslator:
                 new_expr = BackReferenceExpression(
                     collection,
                     back_expr.term_name,
-                    parent_tree.ancestral_mapping[back_expr.term_name],
+                    parent_tree.ancestral_mapping[back_expr.term_name] - down_shift,
                 )
                 parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
             elif back_expr.term_name in parent_tree.pipeline[-1].terms:
