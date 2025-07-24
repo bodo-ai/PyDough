@@ -10,6 +10,7 @@ from IPython.core.magic import (
 )
 
 import pydough
+from pydough.errors import PyDoughSessionException
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import transform_cell
 
@@ -33,7 +34,7 @@ class PyDoughMagic(Magics):
         cell = self.shell.var_expand(cell)
         graph: GraphMetadata | None = pydough.active_session.metadata
         if graph is None:
-            raise Exception(
+            raise PyDoughSessionException(
                 "No active graph set in PyDough session."
                 " Please set a graph using"
                 " pydough.active_session.load_metadata_graph(...)"

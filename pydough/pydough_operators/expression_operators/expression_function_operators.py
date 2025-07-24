@@ -33,7 +33,7 @@ class ExpressionFunctionOperator(PyDoughExpressionOperator):
 
     @property
     def key(self) -> str:
-        return f"FUNCTION-{self.function_name}"
+        return self.function_name
 
     @property
     def is_aggregation(self) -> bool:
@@ -45,7 +45,7 @@ class ExpressionFunctionOperator(PyDoughExpressionOperator):
 
     @property
     def standalone_string(self) -> str:
-        return f"Function[{self.function_name}]"
+        return self.function_name
 
     def requires_enclosing_parens(self, parent) -> bool:
         return False

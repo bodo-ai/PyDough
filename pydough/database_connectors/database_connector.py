@@ -3,16 +3,18 @@ PyDough implementation of a generic connection to database
 by leveraging PEP 249 (Python Database API Specification v2.0).
 https://peps.python.org/pep-0249/
 """
-# Copyright (C) 2024 Bodo Inc. All rights reserved.
+
+__all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
 from dataclasses import dataclass
 from enum import Enum
 
 import pandas as pd
 
-from .db_types import DBConnection, DBCursor
+import pydough
+from pydough.errors import PyDoughSessionException
 
-__all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
+from .db_types import DBConnection, DBCursor
 
 
 class DatabaseConnection:
@@ -48,7 +50,9 @@ class DatabaseConnection:
             cursor.execute(sql)
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
-            raise e
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                sql, e, True
+            ) from e
         column_names: list[str] = [description[0] for description in cursor.description]
         # No need to close the cursor, as its closed by del.
         # TODO: (gh #174) Cache the cursor?
@@ -93,7 +97,7 @@ class DatabaseDialect(Enum):
         elif dialect == "sqlite":
             return DatabaseDialect.SQLITE
         else:
-            raise ValueError(f"Unsupported dialect: {dialect}")
+            raise PyDoughSessionException(f"Unsupported dialect: {dialect}")
 
 
 @dataclass

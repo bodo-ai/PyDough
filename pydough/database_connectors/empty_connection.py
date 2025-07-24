@@ -9,6 +9,8 @@ from sqlite3 import Connection
 
 __all__ = ["empty_connection"]
 
+from pydough.errors import PyDoughSessionException
+
 from .database_connector import DatabaseConnection
 
 
@@ -22,16 +24,16 @@ class EmptyConnection(Connection):
         pass
 
     def commit(self):
-        raise ValueError("No SQL Database is specified.")
+        raise PyDoughSessionException("No SQL Database is specified.")
 
     def close(self):
-        raise ValueError("No SQL Database is specified.")
+        raise PyDoughSessionException("No SQL Database is specified.")
 
     def rollback(self):
-        raise ValueError("No SQL Database is specified.")
+        raise PyDoughSessionException("No SQL Database is specified.")
 
     def cursor(self, *args, **kwargs):
-        raise ValueError("No SQL Database is specified.")
+        raise PyDoughSessionException("No SQL Database is specified.")
 
 
 empty_connection: DatabaseConnection = DatabaseConnection(EmptyConnection())

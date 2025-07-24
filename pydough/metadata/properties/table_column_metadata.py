@@ -6,17 +6,16 @@ column of a table from a relational system.
 __all__ = ["TableColumnMetadata"]
 
 
-from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import (
+from pydough.errors import PyDoughMetadataException, PyDoughTypeException
+from pydough.errors.error_utils import (
     NoExtraKeys,
-    PyDoughMetadataException,
     extract_array,
     extract_object,
     extract_string,
     is_string,
 )
+from pydough.metadata.collections import CollectionMetadata
 from pydough.types import PyDoughType, parse_type_from_string
-from pydough.types.errors import PyDoughTypeException
 
 from .property_metadata import PropertyMetadata
 from .scalar_attribute_metadata import ScalarAttributeMetadata
