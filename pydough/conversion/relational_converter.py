@@ -43,6 +43,7 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalExpression,
+    RelationalExpressionShuttle,
     RelationalNode,
     RelationalRoot,
     Scan,
@@ -1405,7 +1406,9 @@ def confirm_root(node: RelationalNode) -> RelationalRoot:
 
 
 def optimize_relational_tree(
-    root: RelationalRoot, configs: PyDoughConfigs
+    root: RelationalRoot,
+    configs: PyDoughConfigs,
+    additional_shuttles: list[RelationalExpressionShuttle],
 ) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
@@ -1414,6 +1417,8 @@ def optimize_relational_tree(
     Args:
         `root`: the relational root to optimize.
         `configs`: the configuration settings to use during optimization.
+        `additional_shuttles`: additional relational expression shuttles to use
+        for expression simplification.
 
     Returns:
         The optimized relational root.
@@ -1468,7 +1473,7 @@ def optimize_relational_tree(
     # pullup and pushdown and so on.
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
-        simplify_expressions(root)
+        simplify_expressions(root, additional_shuttles)
         root._input = push_filters(root.input, set())
         root = ColumnPruner().prune_unused_columns(root)
 
@@ -1535,6 +1540,9 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    optimized_result: RelationalRoot = optimize_relational_tree(raw_result, configs)
+    additional_shuttles: list[RelationalExpressionShuttle] = []
+    optimized_result: RelationalRoot = optimize_relational_tree(
+        raw_result, configs, additional_shuttles
+    )
 
     return optimized_result
