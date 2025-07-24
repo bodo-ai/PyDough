@@ -32,7 +32,7 @@ from pydough.relational.rel_util import (
     partition_expressions,
 )
 
-from .relational_simplification import run_simplification
+from .relational_simplification import SimplificationShuttle
 
 
 class NullReplacementShuttle(RelationalExpressionShuttle):
@@ -69,6 +69,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         # self.filters are the conditions that can be pushed down as far as the
         # current node from its ancestors.
         self.filters: set[RelationalExpression] = set()
+        self.simplifier: SimplificationShuttle = SimplificationShuttle()
 
     def reset(self):
         self.filters = set()
@@ -188,7 +189,7 @@ class FilterPushdownShuttle(RelationalShuttle):
             # transformed into an INNER join.
             for cond in self.filters:
                 with_nulls: RelationalExpression = cond.accept_shuttle(null_shuttle)
-                with_nulls, _ = run_simplification(with_nulls, {}, False)
+                with_nulls = with_nulls.accept_shuttle(self.simplifier)
                 if isinstance(with_nulls, LiteralExpression) and not bool(
                     with_nulls.value
                 ):
