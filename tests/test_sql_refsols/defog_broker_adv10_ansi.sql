@@ -18,5 +18,5 @@ FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s3 AS _s3
   ON _s3.sbcustid = sbcustomer.sbcustid
 ORDER BY
-  num_transactions DESC
+  COALESCE(_s3.n_rows, 0) DESC
 LIMIT 1

@@ -364,14 +364,14 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
 
     def find_possible_name_matches(self, term_name: str) -> list[str]:
         """
-        Finds and returns a list of candidate names that closely match the given
-        name based on minimum edit distance.
+        Finds and returns a list of candidate names that closely match the
+        given name based on minimum edit distance.
 
         Args:
-            name (str): The name to match against the list of candidates.
+            `term_name`: The name to match against the list of candidates.
 
         Returns:
-            list[str]: A list of candidate names, based on the closest matches.
+            A list of candidate names, based on the closest matches.
         """
 
         terms_distance_list: list[tuple[float, str]] = []
@@ -424,11 +424,11 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         https://en.wikipedia.org/wiki/Levenshtein_distance#Iterative_with_two_matrix_rows
 
         Args:
-            str1 (str): The first string.
-            str2 (str): The second string.
+            `s`: The first string.
+            `t`: The second string.
 
         Returns:
-            float: The minimum edit distance between the two strings.
+            The minimum edit distance between the two strings.
         """
         # Ensures str1 is the shorter string
         if len(s) > len(t):

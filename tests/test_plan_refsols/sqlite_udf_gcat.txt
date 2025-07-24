@@ -1,0 +1,2 @@
+ROOT(columns=[('name', r_name), ('c1', GCAT(args=[r_name, '-':string], partition=[], order=[(r_name):asc_last])), ('c2', GCAT(args=[r_name, '-':string], partition=[], order=[(r_name):desc_first])), ('c3', GCAT(args=[r_name, '-':string], partition=[], order=[(r_name):asc_last], cumulative=True))], orderings=[(r_name):asc_first])
+ SCAN(table=tpch.REGION, columns={'r_name': r_name})

@@ -22,8 +22,8 @@ JOIN tpch.partsupp AS partsupp
   ON lineitem.l_partkey = partsupp.ps_partkey
   AND lineitem.l_suppkey = partsupp.ps_suppkey
 GROUP BY
-  nation.n_name,
-  CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER)
+  CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER),
+  nation.n_name
 ORDER BY
   nation.n_name,
   o_year DESC

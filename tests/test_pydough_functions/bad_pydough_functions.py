@@ -483,6 +483,26 @@ def bad_name_25():
     )
 
 
+def bad_sqlite_udf_1():
+    # Calling a UDF that requires 2 arguments with only 1 argument
+    return orders.CALCULATE(x=FORMAT_DATETIME("%Y"))
+
+
+def bad_sqlite_udf_2():
+    # Calling a UDF that requires 2 arguments with 3 arguments
+    return orders.CALCULATE(x=FORMAT_DATETIME("%Y", order_date, "foo"))
+
+
+def bad_sqlite_udf_3():
+    # Calling a UDF that requires 1-2 arguments with 0 arguments
+    return nations.CALCULATE(x=GCAT(by=name.ASC()))
+
+
+def bad_sqlite_udf_4():
+    # Calling a UDF that requires 1-2 arguments with 3 arguments
+    return nations.CALCULATE(x=GCAT(name, ";", "bar", by=name.ASC()))
+
+
 # TEST for CROSS
 def bad_cross_1():
     # Reason it is bad: Using `CROSS` with a not a collection
@@ -542,6 +562,24 @@ def bad_cross_11():
     # Reason it is bad: `customers` is a sub-collection of `nations`,
     # not `regions`
     return nations.CROSS(regions).CALCULATE(n=COUNT(customers))
+
+
+# Tests for the GETPART function
+# Missing arguments (all 3 required)
+def bad_get_part_1():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(split_part=GETPART(-1))
+
+
+def bad_get_part_2():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, " ")
+    )
+
+
+def bad_get_part_3():
+    return customers.WHERE(name == "Alex Rodriguez").CALCULATE(
+        split_part=GETPART(name, -1)
+    )
 
 
 # QUANTILE function's test

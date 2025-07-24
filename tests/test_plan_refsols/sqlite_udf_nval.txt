@@ -1,0 +1,4 @@
+ROOT(columns=[('rname', r_name), ('nname', n_name), ('v1', NVAL(args=[n_name, 3:numeric], partition=[], order=[(n_name):asc_last])), ('v2', NVAL(args=[n_name, 1:numeric], partition=[n_regionkey], order=[(n_name):asc_last])), ('v3', NVAL(args=[n_name, 2:numeric], partition=[n_regionkey], order=[(n_name):asc_last], frame=(1, None))), ('v4', NVAL(args=[n_name, 5:numeric], partition=[], order=[(n_name):asc_last], cumulative=True))], orderings=[(r_name):asc_first, (n_name):asc_first])
+ JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'n_name': t1.n_name, 'n_regionkey': t1.n_regionkey, 'r_name': t0.r_name})
+  SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
+  SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})

@@ -16,5 +16,5 @@ WHERE
 GROUP BY
   _s1.country
 ORDER BY
-  total_amount DESC
+  COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC
 LIMIT 5

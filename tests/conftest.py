@@ -24,6 +24,7 @@ from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.testing_utilities import graph_fetcher
 
+from .gen_data.gen_pagerank import gen_pagerank_records, pagerank_configs
 from .gen_data.gen_technograph import gen_technograph_records
 
 
@@ -85,6 +86,14 @@ def sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def udf_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the UDF graphs.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/udf_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
 def invalid_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the invalid graphs.
@@ -98,6 +107,14 @@ def valid_sample_graph_names() -> set[str]:
     Set of valid names to use to access a sample graph.
     """
     return {"TPCH", "Empty", "Epoch", "TechnoGraph"}
+
+
+@pytest.fixture(scope="session")
+def valid_udf_graph_names() -> set[str]:
+    """
+    Set of valid names to use to access a UDF graph.
+    """
+    return {"TPCH_SQLITE_UDFS"}
 
 
 @pytest.fixture(params=["TPCH", "Empty", "Epoch"])
@@ -124,6 +141,26 @@ def get_sample_graph(
             raise Exception(f"Unrecognized graph name '{name}'")
         return pydough.parse_json_metadata_from_file(
             file_path=sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_udf_graph(
+    udf_graph_path: str, valid_udf_graph_names: set[str]
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported UDF
+    graph names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_udf_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=udf_graph_path, graph_name=name
         )
 
     return impl
@@ -389,3 +426,52 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture(scope="session")
+def get_pagerank_graph() -> graph_fetcher:
+    """
+    A function that returns the graph used for PageRank calculations. The same
+    graph is used for all PageRank tests, but different databases are used that
+    adhere to the same table schema setup that the graph invokes.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        return pydough.parse_json_metadata_from_file(
+            file_path=f"{os.path.dirname(__file__)}/test_metadata/pagerank_graphs.json",
+            graph_name="PAGERANK",
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
+    """
+    Returns the SQLITE database contexts for the various pagerank database.
+    This is returned as a dictionary mapping the name of the database to the
+    DatabaseContext for that database, all of which adhere to the same
+    schema structure assumed by the PAGERANK graph.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+
+    # Setup each of the the pagerank databases using the configurations.
+    result: dict[str, DatabaseContext] = {}
+    for name, nodes, edges in pagerank_configs():
+        # Create the database and ensure it is empty.
+        subprocess.run(
+            f"cd tests; rm -fv gen_data/{name.lower()}.db; sqlite3 gen_data/{name.lower()}.db < gen_data/init_pagerank.sql",
+            shell=True,
+        )
+        path: str = os.path.join(base_dir, f"tests/gen_data/{name.lower()}.db")
+        connection: sqlite3.Connection = sqlite3.connect(path)
+
+        # Fill the tables of the database using the nodes/edges, then store the
+        # database context in the result.
+        gen_pagerank_records(connection, nodes, edges)
+        result[name] = DatabaseContext(
+            DatabaseConnection(connection), DatabaseDialect.SQLITE
+        )
+    return result

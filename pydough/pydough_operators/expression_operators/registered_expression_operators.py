@@ -27,6 +27,7 @@ __all__ = [
     "FLOAT",
     "FLOOR",
     "GEQ",
+    "GETPART",
     "GRT",
     "HAS",
     "HASNOT",
@@ -328,4 +329,7 @@ FLOAT = ExpressionFunctionOperator(
 )
 STRING = ExpressionFunctionOperator(
     "STRING", False, RequireArgRange(1, 2), ConstantType(StringType())
+)
+GETPART = ExpressionFunctionOperator(
+    "GETPART", False, RequireNumArgs(3), ConstantType(StringType())
 )

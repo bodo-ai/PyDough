@@ -3,14 +3,18 @@ Handle the conversion from the Relation Expressions inside
 the relation Tree to a single SQLGlot query component.
 """
 
+__all__ = ["SQLGlotRelationalExpressionVisitor"]
+
 import datetime
 import warnings
+from typing import TYPE_CHECKING
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 from sqlglot.expressions import Star as SQLGlotStar
 
+import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
@@ -27,7 +31,8 @@ from pydough.types import PyDoughType
 from .sqlglot_helpers import set_glot_alias
 from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
-__all__ = ["SQLGlotRelationalExpressionVisitor"]
+if TYPE_CHECKING:
+    from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 
 class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
@@ -41,6 +46,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         dialect: DatabaseDialect,
         correlated_names: dict[str, str],
         config: PyDoughConfigs,
+        relational_visitor: "SQLGlotRelationalVisitor",
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
@@ -48,7 +54,10 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         self._dialect: DatabaseDialect = dialect
         self._correlated_names: dict[str, str] = correlated_names
         self._config: PyDoughConfigs = config
-        self._bindings: BaseTransformBindings = bindings_from_dialect(dialect, config)
+        self._relational_visitor: SQLGlotRelationalVisitor = relational_visitor
+        self._bindings: BaseTransformBindings = bindings_from_dialect(
+            dialect, config, self._relational_visitor
+        )
 
     def reset(self) -> None:
         """
@@ -89,9 +98,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         - `-N`: `N PRECEDING`
 
         Args:
-            kwargs (dict[str, object]): The keyword arguments to parse, which
-            may include a `frame` argument or a `cumulative` argument. It is
-            assumed the keyword arguments are the correct types/formats.
+            `kwargs`: The keyword arguments to parse, which may include a
+            `frame` argument or a `cumulative` argument. It is assumed the
+            keyword arguments are the correct types/formats.
 
         Returns:
             The window specification if applicable, otherwise None.
@@ -114,8 +123,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             lower, upper = lower_raw, upper_raw
 
         else:
-            # Otherwise, there is no frame
-            return None
+            # Otherwise, the frame is from unbounded preceding to unbounded following.
+            lower = upper = None
 
         spec_args: dict[str, str] = {"kind": "ROWS"}
 
@@ -249,6 +258,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "RELSIZE":
                 this = sqlglot_expressions.Count.from_arg_list([SQLGlotStar()])
                 window_spec = self.get_window_spec(window_expression.kwargs)
+            case _ if isinstance(
+                window_expression.op, pydop.SqlWindowAliasExpressionFunctionOperator
+            ):
+                this = sqlglot_expressions.Anonymous(
+                    this=window_expression.op.sql_function_alias, expressions=arg_exprs
+                )
+                if window_expression.op.allows_frame:
+                    window_spec = self.get_window_spec(window_expression.kwargs)
             case _:
                 raise NotImplementedError(
                     f"Window operator {window_expression.op.function_name} not supported"
@@ -260,8 +277,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             window_args["order"] = sqlglot_expressions.Order(
                 this=None, expressions=order_exprs
             )
-        if window_spec is not None:
-            window_args["spec"] = window_spec
+            if window_spec is not None:
+                window_args["spec"] = window_spec
         self._stack.append(sqlglot_expressions.Window(**window_args))
 
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
@@ -311,10 +328,10 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
         Args:
-            column_reference (ColumnReference): The column reference to generate
-                an identifier for.
+            `column_reference`: The column reference to generate an identifier
+            for.
         Returns:
-            Identifier: The output identifier.
+            The output identifier.
         """
         if column_reference.input_name is not None:
             full_name = f"{column_reference.input_name}.{column_reference.name}"
@@ -333,12 +350,12 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         and assign it the given alias.
 
         Args:
-            expr (RelationalExpression): The relational expression to convert.
-            output_name (str | None): The name to assign to the final SQLGlot expression
+            `expr`: The relational expression to convert.
+            `output_name`: The name to assign to the final SQLGlot expression
                 or None if we should omit any alias.
 
         Returns:
-            SQLGlotExpression: The final SQLGlot expression representing the entire
+            The final SQLGlot expression representing the entire
                 relational tree.
         """
         self.reset()
@@ -351,7 +368,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Interface to get the current SQLGlot expression result based on the current state.
 
         Returns:
-            SQLGlotExpression: The SQLGlot expression representing the tree we have already
+            The SQLGlot expression representing the tree we have already
                 visited.
         """
         assert len(self._stack) == 1, "Expected exactly one expression on the stack"

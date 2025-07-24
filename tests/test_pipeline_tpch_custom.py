@@ -92,6 +92,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     deep_best_analysis,
     double_partition,
     dumb_aggregation,
+    extract_colors,
     first_order_in_year,
     first_order_per_customer,
     floor_and_ceil,
@@ -1708,6 +1709,25 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                extract_colors,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 6)),
+                        "c1": ["GOLDENROD", "BLUSH", "SPRING", "CORNFLOWER", "FOREST"],
+                        "c2": ["LAVENDER", "THISTLE", "GREEN", "CHOCOLATE", "BROWN"],
+                        "c3": ["SPRING", "BLUE", "YELLOW", "SMOKE", "CORAL"],
+                        "c4": ["CHOCOLATE", "YELLOW", "PURPLE", "GREEN", "PUFF"],
+                        "c5": ["LACE", "SADDLE", "CORNSILK", "PINK", "CREAM"],
+                        "c6": [None] * 5,
+                    }
+                ),
+                "extract_colors",
+            ),
+            id="extract_colors",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_int_float_string_cast,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -3292,7 +3312,7 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     error_message: str,
     get_sample_graph: graph_fetcher,
