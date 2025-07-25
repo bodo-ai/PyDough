@@ -76,6 +76,7 @@ class DatabaseDialect(Enum):
     In general the dialects should"""
 
     ANSI = "ansi"
+    POSTGRES = "postgres"
     SQLITE = "sqlite"
 
     @staticmethod
@@ -88,10 +89,15 @@ class DatabaseDialect(Enum):
         Returns:
             The dialect enum.
         """
+        # Lowercase the string to make it case insensitive.
+        dialect = dialect.lower()
+
         if dialect == "ansi":
             return DatabaseDialect.ANSI
         elif dialect == "sqlite":
             return DatabaseDialect.SQLITE
+        elif dialect in ("postgres", "postgresql"):
+            return DatabaseDialect.POSTGRES
         else:
             raise ValueError(f"Unsupported dialect: {dialect}")
 
