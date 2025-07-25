@@ -306,7 +306,6 @@ def test_pipeline_until_sql_tpch(
         get_sample_graph, file_path, update_tests, empty_context_database
     )
 
-
 @pytest.mark.execute
 def test_pipeline_e2e_tpch(
     tpch_pipeline_test_data: PyDoughPandasTest,
@@ -319,4 +318,19 @@ def test_pipeline_e2e_tpch(
     tpch_pipeline_test_data.run_e2e_test(
         get_sample_graph,
         sqlite_tpch_db_context,
+    )
+
+@pytest.mark.pgsql
+@pytest.mark.execute
+def test_pipeline_e2e_pgsql_conn(
+    tpch_pipeline_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    postgresql_conn_tpch_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H queries from the original code generation on PostgreSQL.
+    """
+    tpch_pipeline_test_data.run_e2e_test(
+        get_sample_graph,
+        postgresql_conn_tpch_db_context,
     )
