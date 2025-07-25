@@ -1,3 +1,28 @@
+WITH _t1 AS (
+  SELECT
+    CASE
+      WHEN CAST(0.8 * COUNT(c_acctbal) OVER () AS INTEGER) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC)
+      THEN c_acctbal
+      ELSE NULL
+    END AS expr_30,
+    CASE
+      WHEN ABS(
+        (
+          ROW_NUMBER() OVER (ORDER BY c_acctbal DESC) - 1.0
+        ) - (
+          CAST((
+            COUNT(c_acctbal) OVER () - 1.0
+          ) AS REAL) / 2.0
+        )
+      ) < 1.0
+      THEN c_acctbal
+      ELSE NULL
+    END AS expr_31,
+    c_acctbal,
+    c_mktsegment,
+    c_name
+  FROM tpch.customer
+)
 SELECT
   COUNT(*) AS a,
   COALESCE(
@@ -134,5 +159,7 @@ SELECT
   ) AS m,
   ROUND(AVG(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0)), 2) AS n,
   SUM(NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS o,
-  SUM(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS p
-FROM tpch.customer
+  SUM(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS p,
+  MAX(expr_30) AS q,
+  AVG(expr_31) AS r
+FROM _t1

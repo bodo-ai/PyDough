@@ -391,7 +391,7 @@ from .testing_utilities import PyDoughPandasTest
         pytest.param(
             # Smoke test covering SUM, COUNT, NDISTINCT, AVG, MIN, MAX,
             # ANYTHING, VAR, STD, ABS, FLOOR, CEIL, KEEP_IF, DEFAULT_TO,
-            # PRESENT, ABSENT, ROUND.
+            # PRESENT, ABSENT, ROUND, MEDIAN and QUANTILE.
             PyDoughPandasTest(
                 "result = TPCH.CALCULATE("
                 " a=COUNT(customers),"
@@ -410,6 +410,8 @@ from .testing_utilities import PyDoughPandasTest
                 " n=ROUND(AVG(DEFAULT_TO(KEEP_IF(customers.account_balance, customers.account_balance > 0), 0)), 2),"
                 " o=SUM(PRESENT(KEEP_IF(customers.account_balance, customers.account_balance > 1000))),"
                 " p=SUM(ABSENT(KEEP_IF(customers.account_balance, customers.account_balance > 1000))),"
+                " q=QUANTILE(customers.account_balance, 0.2),"
+                " r=MEDIAN(customers.account_balance),"
                 ")",
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -430,6 +432,8 @@ from .testing_utilities import PyDoughPandasTest
                         "n": [4541.1],
                         "o": [122881],
                         "p": [27119],
+                        "q": [1215.91],
+                        "r": [4477.3],
                     }
                 ),
                 "smoke_c",
