@@ -866,6 +866,7 @@ class HybridTranslator:
         back_expr: BackReferenceExpression,
         collection: PyDoughCollectionQDAG,
         steps_taken_so_far: int,
+        down_shift: int,
     ) -> HybridCorrelExpr:
         """
         Converts a BACK reference into a correlated reference when the number
@@ -879,6 +880,10 @@ class HybridTranslator:
             up from the BACK node. This is needed so we know how many steps
             still need to be taken upward once we have stepped out of the child
             subtree back into the parent subtree.
+            `down_shift`: a factor that should be subtracted from the final
+            back shift when creating a term in the form CORREL(BACK(n).x), to
+            account for edge cases involving PARTITION nodes. Starts as 0, and
+            is incremented as-needed.
         """
         if len(self.stack) == 0:
             raise ValueError("Back reference steps too far back")
@@ -909,7 +914,7 @@ class HybridTranslator:
             # levels are consistent)
             self.stack.append(next_hybrid)
             parent_result = self.make_hybrid_correl_expr(
-                back_expr, collection, steps_taken_so_far
+                back_expr, collection, steps_taken_so_far, down_shift + 1
             ).expr
             self.stack.pop()
         elif remaining_steps_back == 0:
@@ -919,7 +924,7 @@ class HybridTranslator:
                 new_expr = BackReferenceExpression(
                     collection,
                     back_expr.term_name,
-                    parent_tree.ancestral_mapping[back_expr.term_name],
+                    parent_tree.ancestral_mapping[back_expr.term_name] - down_shift,
                 )
                 parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
             elif back_expr.term_name in parent_tree.pipeline[-1].terms:
@@ -1107,7 +1112,7 @@ class HybridTranslator:
                     collection = collection.ancestor_context
                     if ancestor_tree.parent is None:
                         return self.make_hybrid_correl_expr(
-                            expr, collection, true_steps_back
+                            expr, collection, true_steps_back, 0
                         )
                     ancestor_tree = ancestor_tree.parent
                     if not ancestor_tree.is_hidden_level:
