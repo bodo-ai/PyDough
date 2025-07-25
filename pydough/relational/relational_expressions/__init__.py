@@ -14,6 +14,7 @@ __all__ = [
     "ExpressionSortInfo",
     "LiteralExpression",
     "RelationalExpression",
+    "RelationalExpressionShuttle",
     "RelationalExpressionVisitor",
     "WindowCallExpression",
 ]
@@ -27,5 +28,6 @@ from .correlated_reference import CorrelatedReference
 from .correlated_reference_finder import CorrelatedReferenceFinder
 from .expression_sort_info import ExpressionSortInfo
 from .literal_expression import LiteralExpression
+from .relational_expression_shuttle import RelationalExpressionShuttle
 from .relational_expression_visitor import RelationalExpressionVisitor
 from .window_call_expression import WindowCallExpression

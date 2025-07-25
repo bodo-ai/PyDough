@@ -8,6 +8,7 @@ operations (e.g. string generation).
 
 from abc import ABC, abstractmethod
 
+from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
 from .filter import Filter
@@ -36,7 +37,7 @@ class RelationalVisitor(ABC):
         Clear any internal state to allow reusing this visitor.
         """
 
-    def visit_inputs(self, node) -> None:
+    def visit_inputs(self, node: RelationalNode) -> None:
         """
         Visit all inputs of the provided node. This is a helper method
         to avoid repeating the same code in each visit method.

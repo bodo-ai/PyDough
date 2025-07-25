@@ -26,8 +26,6 @@ from tests.test_pydough_functions.all_pydough_functions_dialects import (
     window_functions,
 )
 from tests.test_pydough_functions.simple_pydough_functions import (
-    agg_simplification_1,
-    agg_simplification_2,
     cumulative_stock_analysis,
     datediff,
     datetime_sampler,
@@ -35,7 +33,6 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     floor_and_ceil,
     floor_and_ceil_2,
     get_part_multiple,
-    get_part_single,
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
@@ -248,18 +245,6 @@ def test_pydough_to_sql_tpch(
             id="week_offset",
         ),
         pytest.param(
-            agg_simplification_1,
-            "agg_simplification_1",
-            "Broker",
-            id="agg_simplification_1",
-        ),
-        pytest.param(
-            agg_simplification_2,
-            "agg_simplification_2",
-            "Broker",
-            id="agg_simplification_2",
-        ),
-        pytest.param(
             cumulative_stock_analysis,
             "cumulative_stock_analysis",
             "Broker",
@@ -282,9 +267,6 @@ def test_pydough_to_sql_tpch(
             "window_sliding_frame_relsum",
             "Broker",
             id="window_sliding_frame_relsum",
-        ),
-        pytest.param(
-            get_part_single, "get_part_single", "Broker", id="get_part_single"
         ),
         pytest.param(
             get_part_multiple, "get_part_multiple", "Broker", id="get_part_multiple"

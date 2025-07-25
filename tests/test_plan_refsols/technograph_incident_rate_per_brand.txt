@@ -1,4 +1,4 @@
-ROOT(columns=[('brand', pr_brand), ('ir', ROUND(DEFAULT_TO(DEFAULT_TO(sum_n_incidents, 0:numeric), 0:numeric) / n_rows, 2:numeric))], orderings=[(pr_brand):asc_first])
+ROOT(columns=[('brand', pr_brand), ('ir', ROUND(DEFAULT_TO(sum_n_incidents, 0:numeric) / n_rows, 2:numeric))], orderings=[(pr_brand):asc_first])
  AGGREGATE(keys={'pr_brand': pr_brand}, aggregations={'n_rows': COUNT(), 'sum_n_incidents': SUM(n_rows)})
   JOIN(condition=t0.de_id == t1.in_device_id, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'pr_brand': t0.pr_brand})
    JOIN(condition=t0.de_product_id == t1.pr_id, type=INNER, cardinality=SINGULAR_ACCESS, columns={'de_id': t0.de_id, 'pr_brand': t1.pr_brand})

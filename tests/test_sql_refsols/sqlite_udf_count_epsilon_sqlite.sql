@@ -18,7 +18,7 @@ WITH _t2 AS (
 )
 SELECT
   region.r_name AS name,
-  COALESCE(_s3.n_rows, 0) AS n_cust
+  _s3.n_rows AS n_cust
 FROM tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.n_regionkey = region.r_regionkey
