@@ -1,4 +1,4 @@
-ROOT(columns=[('n', DEFAULT_TO(sum_n_above_avg, 0:numeric))], orderings=[])
+ROOT(columns=[('n', sum_n_above_avg)], orderings=[])
  AGGREGATE(keys={}, aggregations={'sum_n_above_avg': COUNT()})
   FILTER(condition=o_totalprice >= 0.5:numeric * DEFAULT_TO(sum_o_totalprice, 0:numeric), columns={})
    JOIN(condition=t0.o_custkey == t1.o_custkey & t0.o_orderdate == t1.o_orderdate, type=INNER, cardinality=PLURAL_FILTER, columns={'o_totalprice': t1.o_totalprice, 'sum_o_totalprice': t0.sum_o_totalprice})
