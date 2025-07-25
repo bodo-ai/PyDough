@@ -5,11 +5,17 @@ represents any "base table" in relational algebra. As we expand to more types of
 class for more specific implementations.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
 from .abstract_node import RelationalNode
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class Scan(RelationalNode):
@@ -47,8 +53,11 @@ class Scan(RelationalNode):
     def node_equals(self, other: RelationalNode) -> bool:
         return isinstance(other, Scan) and self.table_name == other.table_name
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_scan(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_scan(self)
 
     def to_string(self, compact=False) -> str:
         return f"SCAN(table={self.table_name}, columns={self.make_column_string(self.columns, compact)})"

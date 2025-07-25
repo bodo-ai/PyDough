@@ -22,12 +22,13 @@ from pydough.relational import (
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
+    RelationalShuttle,
 )
 from pydough.relational.rel_util import (
+    ExpressionTranspositionShuttle,
     add_input_name,
     apply_substitution,
     contains_window,
-    transpose_expression,
 )
 from pydough.types import BooleanType, NumericType
 
@@ -562,12 +563,15 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
         return node
 
     input_agg: Aggregate = node.input
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        input_agg, False
+    )
 
     # Identify all of the keys in the top vs bottom aggregations, transposing
     # the top keys so they can be expressed in the same terms as the bottom
     # keys.
     top_keys: set[RelationalExpression] = {
-        transpose_expression(expr, input_agg.columns) for expr in node.keys.values()
+        expr.accept_shuttle(transposer) for expr in node.keys.values()
     }
     bottom_keys: set[RelationalExpression] = set(input_agg.keys.values())
 
@@ -616,7 +620,7 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
             case pydop.SUM:
                 # SUM(SUM(x)) -> SUM(x)
                 # SUM(COUNT(x)) -> COUNT(x)
-                input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
+                input_expr = agg_expr.inputs[0].accept_shuttle(transposer)
                 if isinstance(input_expr, CallExpression) and input_expr.op in (
                     pydop.SUM,
                     pydop.COUNT,
@@ -633,7 +637,7 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
                 # MAX(MAX(x)) -> MAX(x)
                 # MAX(ANYTHING(x)) -> MAX(x)
                 # ANYTHING(ANYTHING(x)) -> ANYTHING(x)
-                input_expr = transpose_expression(agg_expr.inputs[0], input_agg.columns)
+                input_expr = agg_expr.inputs[0].accept_shuttle(transposer)
                 if isinstance(input_expr, CallExpression) and input_expr.op in (
                     agg_expr.op,
                     pydop.ANYTHING,
@@ -651,8 +655,7 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
     # If none of the aggregations caused a merge failure, we can return a new
     # Aggregate node using the top keys and the merged aggregation calls.
     new_keys: dict[str, RelationalExpression] = {
-        name: transpose_expression(expr, input_agg.columns)
-        for name, expr in node.keys.items()
+        name: expr.accept_shuttle(transposer) for name, expr in node.keys.items()
     }
     return Aggregate(
         input=input_agg.input,
@@ -661,9 +664,73 @@ def merge_adjacent_aggregations(node: Aggregate) -> Aggregate:
     )
 
 
+class ProjectionPullupShuttle(RelationalShuttle):
+    """
+    Relational shuttle that performs projection pull-up on a relational node and
+    its inputs, ensuring that expression calculations, such as function calls,
+    are done as late as possible in the plan. This is done by pulling up
+    projections from the inputs of the node into the node itself, and then
+    attempting to eject such expressions from the current node into its parent,
+    while also combining adjacent nodes when possible. Several forms of
+    simplification involving aggregation calls are also performed at this stage.
+    """
+
+    def visit_project(self, node: Project) -> RelationalNode:
+        # Attempt to squish the project with its input, if possible.
+        new_node = self.generic_visit_inputs(node)
+        assert isinstance(new_node, Project)
+        return merge_adjacent_projects(new_node)
+
+    def visit_root(self, node: RelationalRoot) -> RelationalNode:
+        # Attempt to squish the root with its input, if possible.
+        new_node = self.generic_visit_inputs(node)
+        assert isinstance(new_node, RelationalRoot)
+        return merge_adjacent_projects(new_node)
+
+    def visit_join(self, node: Join) -> RelationalNode:
+        # For Join nodes, pull projections from the left input (also the right
+        # for INNER joins), then eject the non-column expressions
+        # into a parent projection.
+        new_node = self.generic_visit_inputs(node)
+        assert isinstance(new_node, Join)
+        pull_project_into_join(new_node, 0)
+        if new_node.join_type == JoinType.INNER:
+            pull_project_into_join(new_node, 1)
+        return pull_non_columns(new_node)
+
+    def visit_filter(self, node: Filter) -> RelationalNode:
+        # For Filter nodes, pull projections into the filter's condition and
+        # output columns, then eject the non-column expressions into a parent
+        # projection.
+        new_node = self.generic_visit_inputs(node)
+        assert isinstance(new_node, Filter)
+        pull_project_into_filter(new_node)
+        return pull_non_columns(new_node)
+
+    def visit_limit(self, node: Limit) -> RelationalNode:
+        # For Limit nodes, pull projections into the limit's orderings and
+        # output columns, then eject the non-column expressions into a parent
+        # projection.
+        new_node = self.generic_visit_inputs(node)
+        assert isinstance(new_node, Limit)
+        pull_project_into_limit(new_node)
+        return pull_non_columns(new_node)
+
+    def visit_aggregate(self, node: Aggregate) -> RelationalNode:
+        # For Aggregate nodes, pull projections into the aggregation keys and
+        # aggregations (also simplifying aggregate calls when possible), then
+        # merge adjacent aggregations if possible.
+        new_node = self.generic_visit_inputs(node)
+        assert isinstance(new_node, Aggregate)
+        new_node = merge_adjacent_aggregations(new_node)
+        return pull_project_into_aggregate(new_node)
+
+
 def pullup_projections(node: RelationalNode) -> RelationalNode:
     """
-    The main recursive procedure done to perform projection pull-up.
+    Perform projection pull-up on a relational node and its inputs, ensuring
+    that expression calculations, such as function calls, are done as late as
+    possible in the plan.
 
     Args:
         `node`: The relational node to pull projections up from.
@@ -672,47 +739,5 @@ def pullup_projections(node: RelationalNode) -> RelationalNode:
         The transformed node with projections pulled up on it and all of its
         descendants.
     """
-    # Recursively invoke the procedure on all inputs to the node.
-    node = node.copy(inputs=[pullup_projections(input) for input in node.inputs])
-
-    # Transform the current node versus its inputs depending on the type of
-    # node it is.
-    match node:
-        # For Root/Project, attempt to squish with the child node, if possible.
-        case RelationalRoot() | Project():
-            return merge_adjacent_projects(node)
-
-        # For Join nodes, pull projections from the left input (also the right
-        # for INNER joins), then eject the non-column expressions
-        # into a parent projection.
-        case Join():
-            pull_project_into_join(node, 0)
-            if node.join_type == JoinType.INNER:
-                pull_project_into_join(node, 1)
-            return pull_non_columns(node)
-
-        # For Filter nodes, pull projections into the filter's condition and
-        # output columns, then eject the non-column expressions into a parent
-        # projection.
-        case Filter():
-            pull_project_into_filter(node)
-            return pull_non_columns(node)
-
-        # For Limit nodes, pull projections into the limit's orderings and
-        # output columns, then eject the non-column expressions into a parent
-        # projection.
-        case Limit():
-            pull_project_into_limit(node)
-            return pull_non_columns(node)
-
-        # For Aggregate nodes, pull projections into the aggregation keys and
-        # aggregations (also simplifying aggregate calls when possible), then
-        # merge adjacent aggregations if possible.
-        case Aggregate():
-            node = merge_adjacent_aggregations(node)
-            return pull_project_into_aggregate(node)
-
-        # For all other nodes, just returned the node as-is since its inputs
-        # have already been transformed.
-        case _:
-            return node
+    pullup_shuttle: ProjectionPullupShuttle = ProjectionPullupShuttle()
+    return node.accept_shuttle(pullup_shuttle)

@@ -21,9 +21,9 @@ from pydough.relational import (
     RelationalNode,
 )
 from pydough.relational.rel_util import (
+    ExpressionTranspositionShuttle,
     extract_equijoin_keys,
     fetch_or_insert,
-    transpose_expression,
 )
 from pydough.types import NumericType
 
@@ -171,6 +171,10 @@ def transpose_aggregate_join(
     agg_input_name: str | None = join.default_input_aliases[agg_side]
     need_projection: bool = False
 
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        join, False
+    )
+
     # Calculate the aggregate terms to go above vs below the join.
     agg_input: RelationalNode = join.inputs[agg_side]
     top_aggs: dict[str, CallExpression] = {}
@@ -216,7 +220,7 @@ def transpose_aggregate_join(
         input_aggs[bottom_name] = CallExpression(
             bottom_aggfunc,
             agg.data_type,
-            [transpose_expression(arg, join.columns) for arg in agg.inputs],
+            [arg.accept_shuttle(transposer) for arg in agg.inputs],
         )
         join.columns[bottom_name] = ColumnReference(
             bottom_name, agg.data_type, agg_input_name
@@ -229,10 +233,9 @@ def transpose_aggregate_join(
     input_keys: dict[str, RelationalExpression] = {}
     for ref in side_keys:
         input_keys[ref.name] = ref.with_input(None)
+    transposer.toggle_keep_input_names(True)
     for agg_key in node.keys.values():
-        transposed_agg_key = transpose_expression(
-            agg_key, join.columns, keep_input_names=True
-        )
+        transposed_agg_key = agg_key.accept_shuttle(transposer)
         assert isinstance(transposed_agg_key, ColumnReference)
         if transposed_agg_key.input_name == agg_input_name:
             input_keys[transposed_agg_key.name] = transposed_agg_key.with_input(None)
@@ -278,9 +281,12 @@ def attempt_join_aggregate_transpose(
     rhs_aggs: list[str] = []
     count_aggs: list[str] = []
     finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        join, True
+    )
     for agg_name, agg_call in node.aggregations.items():
         finder.reset()
-        transpose_expression(agg_call, join.columns, True).accept(finder)
+        agg_call.accept_shuttle(transposer).accept(finder)
         agg_input_names = {ref.input_name for ref in finder.get_column_references()}
         if len(agg_input_names) == 0:
             if agg_call.op == pydop.COUNT:

@@ -6,9 +6,13 @@ ordering and other properties of the relational expression.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydough.relational.relational_expressions import RelationalExpression
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class RelationalNode(ABC):
@@ -132,12 +136,21 @@ class RelationalNode(ABC):
         return visitor.make_tree_string()
 
     @abstractmethod
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         """
         Accept a visitor to traverse the relational tree.
 
         Args:
             `visitor`: The visitor to traverse the tree.
+        """
+
+    @abstractmethod
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> "RelationalNode":
+        """
+        Accept a shuttle to transform the relational tree.
+
+        Args:
+            `shuttle`: The shuttle to transform the tree.
         """
 
     @abstractmethod

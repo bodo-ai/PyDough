@@ -23,6 +23,7 @@ __all__ = [
     "RelationalExpressionVisitor",
     "RelationalNode",
     "RelationalRoot",
+    "RelationalShuttle",
     "RelationalVisitor",
     "Scan",
     "WindowCallExpression",
@@ -56,6 +57,7 @@ from .relational_nodes import (
     RelationalExpressionDispatcher,
     RelationalNode,
     RelationalRoot,
+    RelationalShuttle,
     RelationalVisitor,
     Scan,
 )

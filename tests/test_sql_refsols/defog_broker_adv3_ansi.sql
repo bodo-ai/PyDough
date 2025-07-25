@@ -1,4 +1,4 @@
-WITH _s1 AS (
+WITH _t1 AS (
   SELECT
     COUNT(*) AS n_rows,
     SUM(sbtxstatus = 'success') AS sum_expr_2,
@@ -10,14 +10,12 @@ WITH _s1 AS (
 SELECT
   sbcustomer.sbcustname AS name,
   (
-    100.0 * COALESCE(_s1.sum_expr_2, 0)
-  ) / COALESCE(_s1.n_rows, 0) AS success_rate
+    100.0 * COALESCE(_t1.sum_expr_2, 0)
+  ) / _t1.n_rows AS success_rate
 FROM main.sbcustomer AS sbcustomer
-LEFT JOIN _s1 AS _s1
-  ON _s1.sbtxcustid = sbcustomer.sbcustid
-WHERE
-  NOT _s1.n_rows IS NULL AND _s1.n_rows >= 5
+JOIN _t1 AS _t1
+  ON _t1.n_rows >= 5 AND _t1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
   (
-    100.0 * COALESCE(_s1.sum_expr_2, 0)
-  ) / COALESCE(_s1.n_rows, 0)
+    100.0 * COALESCE(_t1.sum_expr_2, 0)
+  ) / _t1.n_rows
