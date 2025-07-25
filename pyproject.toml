@@ -31,6 +31,7 @@ dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7", "pytest-repeat"]
 
 [project.optional-dependencies]
 mysql = ["mysql-connector-python"]
+postgres = ["psycopg2-binary"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

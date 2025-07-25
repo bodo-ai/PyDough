@@ -9,6 +9,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Postgres as PostgreSQLDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import Alias, Column, Select, Table, With
@@ -393,6 +394,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
         return SQLiteDialect()
     elif dialect == DatabaseDialect.MYSQL:
         return MySQLDialect()
+    elif dialect == DatabaseDialect.POSTGRES:
+        return PostgreSQLDialect()
     else:
         raise ValueError(f"Unsupported dialect: {dialect}")
 
