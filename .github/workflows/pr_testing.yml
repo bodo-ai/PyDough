@@ -36,6 +36,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-pgsql:
+        description: "Run PostgreSQL Tests"
+        type: boolean
+        required: false
+        default: false        
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -168,6 +173,21 @@ jobs:
     secrets:
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-pgsql-tests:
+    name: PostgreSQL Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run pgsql]')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.run-pgsql)
+    uses: ./.github/workflows/pgsql_testing.yml
+    secrets:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix

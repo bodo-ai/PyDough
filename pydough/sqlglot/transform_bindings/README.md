@@ -10,6 +10,7 @@ The Transform Bindings module provides the following notable APIs:
 - `SQLiteTransformBindings`: Subclass of `BaseTransformBindings` for the SQLite dialect, providing SQLite-specific implementations.
 - `SnowflakeTransformBindings`: Subclass of `BaseTransformBindings` for the Snowflake dialect, providing Snowflake-specific implementations.
 - `MySQLTransformBindings`: Subclass of `BaseTransformBindings` for the MySQL dialect, providing MySQL-specific implementations.
+- `PostgreSQLTransformBindings`: Subclass of `BaseTransformBindings` for the PostgreSQL dialect, providing PostgreSQL-specific implementations.
 - `bindings_from_dialect`: Factory function that returns the appropriate binding instance for a specific database dialect.
 
 ## Core Components

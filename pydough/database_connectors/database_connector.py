@@ -101,6 +101,7 @@ class DatabaseDialect(Enum):
     In general the dialects should"""
 
     ANSI = "ansi"
+    POSTGRES = "postgres"
     SQLITE = "sqlite"
     SNOWFLAKE = "snowflake"
     MYSQL = "mysql"
@@ -118,6 +119,8 @@ class DatabaseDialect(Enum):
         dialect = dialect.upper()
         if dialect in DatabaseDialect.__members__:
             return DatabaseDialect.__members__[dialect]
+        elif dialect == "POSTGRESQL":
+            return DatabaseDialect.POSTGRES
         else:
             raise ValueError(f"Unsupported dialect: {dialect}")
 

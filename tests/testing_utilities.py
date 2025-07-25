@@ -1305,6 +1305,12 @@ class PyDoughPandasTest:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
+        # If coerce_types is True, harmonize the types of the columns in the result
+        if coerce_types:
+            for col_name in result.columns:
+                result[col_name], refsol[col_name] = harmonize_types(
+                    result[col_name], refsol[col_name]
+                )
         # Perform the comparison between the result and the reference solution
         if coerce_types:
             for col_name in result.columns:
