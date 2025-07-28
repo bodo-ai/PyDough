@@ -449,6 +449,13 @@ def require_mysql_env() -> None:
         pytest.skip("Skipping MySQL tests: environment variables not set.")
 
 
+def is_ci():
+    """
+    Detect if running inside CI (GitHub Actions sets this env var).
+    """
+    return os.getenv("GITHUB_ACTIONS", "false").lower() == "true"
+
+
 def container_exists(name: str) -> bool:
     """
     Check if a Docker container with the given name exists.
@@ -490,23 +497,24 @@ MYSQL_DB = "tpch"
 def mysql_docker_setup() -> None:
     """Set up and tear down the MySQL Docker container for testing."""
 
-    if container_exists(MYSQL_DOCKER_CONTAINER):
-        if not container_is_running(MYSQL_DOCKER_CONTAINER):
-            subprocess.run(["docker", "start", MYSQL_DOCKER_CONTAINER], check=True)
-    else:
-        subprocess.run(
-            [
-                "docker",
-                "run",
-                "-d",
-                "--name",
-                MYSQL_DOCKER_CONTAINER,
-                "-p",
-                f"{MYSQL_PORT}:3306",
-                MYSQL_DOCKER_IMAGE,
-            ],
-            check=True,
-        )
+    if not is_ci():
+        if container_exists(MYSQL_DOCKER_CONTAINER):
+            if not container_is_running(MYSQL_DOCKER_CONTAINER):
+                subprocess.run(["docker", "start", MYSQL_DOCKER_CONTAINER], check=True)
+        else:
+            subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "-d",
+                    "--name",
+                    MYSQL_DOCKER_CONTAINER,
+                    "-p",
+                    f"{MYSQL_PORT}:3306",
+                    MYSQL_DOCKER_IMAGE,
+                ],
+                check=True,
+            )
 
     # Wait for MySQL to be ready
     for _ in range(30):
