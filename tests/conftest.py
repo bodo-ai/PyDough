@@ -6,6 +6,7 @@ available.
 import os
 import sqlite3
 import subprocess
+import time
 from collections.abc import Callable
 from functools import cache
 
@@ -440,7 +441,7 @@ MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
 
 
 @pytest.fixture
-def require_mysql_env():
+def require_mysql_env() -> None:
     """
     Checks whether all required MySQL environment variables are set.
     """
@@ -448,8 +449,90 @@ def require_mysql_env():
         pytest.skip("Skipping MySQL tests: environment variables not set.")
 
 
+def container_exists(name: str) -> bool:
+    """
+    Check if a Docker container with the given name exists.
+    """
+    result = subprocess.run(
+        ["docker", "ps", "-a", "--format", "{{.Names}}"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    return name in result.stdout.splitlines()
+
+
+def container_is_running(name: str) -> bool:
+    """
+    Check if a Docker container with the given name is currently running.
+    """
+    result = subprocess.run(
+        ["docker", "ps", "--format", "{{.Names}}"], stdout=subprocess.PIPE, text=True
+    )
+    return name in result.stdout.splitlines()
+
+
+MYSQL_DOCKER_CONTAINER = "mysql_tpch_test"
+MYSQL_DOCKER_IMAGE = "johnbodoai/pydough-mysql-tpch:latest"
+MYSQL_HOST = "127.0.0.1"
+MYSQL_PORT = "3306"
+MYSQL_DB = "tpch"
+"""
+    CONSTANTS for the MySQL Docker container setup.
+    - DOCKER_CONTAINER: The name of the Docker container.
+    - DOCKER_IMAGE: The Docker image to use for the MySQL container.
+    - MYSQL_HOST: The host address for MySQL.
+    - MYSQL_PORT: The port on which MySQL is exposed.
+    - MYSQL_DB: The name of the TPCH database in MySQL.
+"""
+
+
+@pytest.fixture(scope="session")
+def mysql_docker_setup() -> None:
+    """Set up and tear down the MySQL Docker container for testing."""
+
+    if container_exists(MYSQL_DOCKER_CONTAINER):
+        if not container_is_running(MYSQL_DOCKER_CONTAINER):
+            subprocess.run(["docker", "start", MYSQL_DOCKER_CONTAINER], check=True)
+    else:
+        subprocess.run(
+            [
+                "docker",
+                "run",
+                "-d",
+                "--name",
+                MYSQL_DOCKER_CONTAINER,
+                "-p",
+                f"{MYSQL_PORT}:3306",
+                MYSQL_DOCKER_IMAGE,
+            ],
+            check=True,
+        )
+
+    # Wait for MySQL to be ready
+    for _ in range(30):
+        try:
+            import mysql.connector as mysql_connector
+
+            conn = mysql_connector.connect(
+                host=MYSQL_HOST,
+                port=MYSQL_PORT,
+                user=os.getenv("MYSQL_USERNAME", "root"),
+                password=os.getenv("MYSQL_PASSWORD", "admin1234"),
+                database=MYSQL_DB,
+            )
+            conn.close()
+            break
+        except mysql_connector.Error:
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", MYSQL_DOCKER_CONTAINER])
+        pytest.fail("MySQL container did not become ready in time.")
+
+
 @pytest.fixture
-def mysql_conn_tpch_db_context(require_mysql_env) -> DatabaseContext:
+def mysql_conn_tpch_db_context(
+    require_mysql_env, mysql_docker_setup
+) -> DatabaseContext:
     """
     This fixture is used to connect to the MySQL TPCH database using
     a connection object.
@@ -459,8 +542,8 @@ def mysql_conn_tpch_db_context(require_mysql_env) -> DatabaseContext:
 
     mysql_username = os.getenv("MYSQL_USERNAME")
     mysql_password = os.getenv("MYSQL_PASSWORD")
-    mysql_db = "tpch"
-    mysql_host = "127.0.0.1"
+    mysql_db = MYSQL_DB
+    mysql_host = MYSQL_HOST
 
     connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
         user=mysql_username,
@@ -475,7 +558,9 @@ def mysql_conn_tpch_db_context(require_mysql_env) -> DatabaseContext:
 
 
 @pytest.fixture
-def mysql_params_tpch_db_context(require_mysql_env) -> DatabaseContext:
+def mysql_params_tpch_db_context(
+    require_mysql_env, mysql_docker_setup
+) -> DatabaseContext:
     """
     This fixture is used to connect to the MySQL TPCH database using
     parameters instead of a connection object.
@@ -484,8 +569,8 @@ def mysql_params_tpch_db_context(require_mysql_env) -> DatabaseContext:
 
     mysql_username = os.getenv("MYSQL_USERNAME")
     mysql_password = os.getenv("MYSQL_PASSWORD")
-    mysql_db = "tpch"
-    mysql_host = "127.0.0.1"
+    mysql_db = MYSQL_DB
+    mysql_host = MYSQL_HOST
 
     return load_database_context(
         "mysql",
