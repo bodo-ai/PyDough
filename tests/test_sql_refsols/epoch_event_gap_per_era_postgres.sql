@@ -9,7 +9,7 @@ WITH _t1 AS (
     AND eras.er_start_year <= EXTRACT(YEAR FROM CAST(events.ev_dt AS TIMESTAMP))
 )
 SELECT
-  MAX(er_name) AS era_name,
+  er_name AS era_name,
   AVG(day_gap) AS avg_event_gap
 FROM _t1
 GROUP BY

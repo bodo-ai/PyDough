@@ -17,5 +17,5 @@ FROM main.merchants AS merchants
 LEFT JOIN _s3 AS _s3
   ON _s3.merchant_id = merchants.mid
 ORDER BY
-  coupons_per_merchant DESC NULLS LAST
+  COALESCE(_s3.n_rows, 0) DESC NULLS LAST
 LIMIT 1

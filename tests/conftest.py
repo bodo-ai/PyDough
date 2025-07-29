@@ -477,6 +477,8 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
             DatabaseConnection(connection), DatabaseDialect.SQLITE
         )
     return result
+
+
 POSTGRES_ENVS = ["POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "POSTGRES_HOST"]
 
 """

@@ -28,6 +28,6 @@ LEFT JOIN _s3 AS _s3
 JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
-  revenue DESC NULLS LAST,
+  COALESCE(_s3.sum_expr_1, 0) DESC NULLS LAST,
   c_custkey NULLS FIRST
 LIMIT 20

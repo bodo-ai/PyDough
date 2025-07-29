@@ -16,5 +16,5 @@ FROM main.cars AS cars
 LEFT JOIN _s1 AS _s1
   ON _s1.car_id = cars._id
 ORDER BY
-  total_revenue DESC NULLS LAST
+  COALESCE(_s1.sum_sale_price, 0) DESC NULLS LAST
 LIMIT 5
