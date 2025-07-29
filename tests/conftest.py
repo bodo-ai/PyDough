@@ -255,6 +255,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
