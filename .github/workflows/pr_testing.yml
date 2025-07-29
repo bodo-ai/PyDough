@@ -156,7 +156,7 @@ jobs:
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run mysql]')) ||
       (github.event_name == 'workflow_dispatch' && inputs.run-mysql)
-    uses: ./.github/workflows/mysql_testing.yml # Path to your new MySQL workflow file
+    uses: ./.github/workflows/mysql_testing.yml # Path to MySQL workflow file
     secrets:
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}

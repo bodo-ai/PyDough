@@ -67,7 +67,7 @@ jobs:
           mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p${{ env.MYSQL_PASSWORD }} || exit 1
 
       - name: Confirm MySQL connector is installed
-        run: uv run python -c "import mysql.connector; print('MySQL connector installed')" # Or your specific connector
+        run: uv run python -c "import mysql.connector; print('MySQL connector installed')"
 
       - name: Run MySQL Tests
 

@@ -4,6 +4,7 @@ based on the database type.
 """
 
 import sqlite3
+import time
 
 from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDialect
 
@@ -64,6 +65,26 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
     Loads a MySQL database connection. This is done by providing a wrapper
     around the DB 2.0 connect API.
 
+    Args:
+        **kwargs: Either a MySQL connection object (as `connection=<object>`)
+            or the required connection parameters:
+            - user: MySQL username (str)
+            - password: MySQL password (str)
+            - database: Database name (str)
+            Optionally, you can provide:
+            - host: MySQL server host (str, default: "127.0.0.1"/"localhost")
+            - port: MySQL server port (int, default: 3306)
+            - connection_timeout: Timeout for the connection (float, default: 3 seconds).
+            - attempts (not a MySQL connector parameter): Number of connection attempts (int, default: 3)
+            - delay (not a MySQL connector parameter): Delay between connection attempts (float, default: 2 seconds).
+            If a connection object is provided, it will be used directly.
+            Optional parameters such as host, port, etc. can also be provided.
+            All arguments must be accepted by the MySQL connector connect API.
+
+    Raises:
+        ImportError: If the MySQL connector is not installed.
+        ValueError: If required connection parameters are missing.
+
     Returns:
         A database connection object for MySQL.
     """
@@ -96,8 +117,30 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
             "MySQL connection requires the following arguments: "
             + ", ".join(required_keys)
         )
-    # Lets make more robust add a timeout and limited numbers of tries, error for that
-    # Create a MySQL connection using the provided keyword arguments
-    connection = mysql.connector.connect(**kwargs)
 
-    return DatabaseConnection(connection)
+    # Default timeout for connection
+    if "connection_timeout" not in kwargs or kwargs["connection_timeout"] <= 0:
+        kwargs["connection_timeout"] = 3
+
+    if not (attempts := kwargs.pop("attempts", None)):
+        attempts = 1
+
+    if not (delay := kwargs.pop("delay", None)):
+        delay = 2.0
+
+    attempt: int = 1
+
+    while attempt <= attempts:
+        try:
+            connection = mysql.connector.connect(**kwargs)
+            return DatabaseConnection(connection)
+
+        except (OSError, mysql.connector.Error) as err:
+            if attempt >= attempts:
+                raise ValueError(
+                    f"Failed to connect to MySQL after {attempts} attempts: {err}"
+                )
+            time.sleep(delay)
+            attempt += 1
+
+    raise ValueError(f"Failed to connect to MySQL after {attempts} attempts")

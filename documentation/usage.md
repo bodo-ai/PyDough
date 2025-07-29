@@ -356,11 +356,22 @@ shakespeare_context  = pydough.active_session.load_database("sqlite", database="
 
 Notice that both APIs `load_database_context` and `sesion.load_database` take in the name of the database type first and all the connection keyword arguments, and also return the context object.
 
-Here’s an example of how to use a MySQL database with PyDough [this MySQL usage guide](./../demos/notebooks/MySQL_TPCH.ipynb).
-
 It is important to ensure that the correct database context is being used for several reasons:
 - It controls what SQL dialect is used when translating from PyDough to SQL.
 - The context's database connection is used to execute queries once translated to SQL.
+
+#### Examples with different supported database connectors with PyDough
+- MySQL: You can connect to a mysql database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH"),
+    pydough.active_session.connect_database("mysql", 
+          user=mysql_username,
+          password=mysql_password,
+          database=mysql_tpch_db,
+          host=mysql_host,
+    )
+  ```
+You can find a full example of using MySQL database with PyDough in [this usage guide](./../demos/notebooks/MySQL_TPCH.ipynb).
 
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
