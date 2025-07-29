@@ -1,11 +1,11 @@
 WITH _s2 AS (
   SELECT
-    COUNT(*) AS n_rows,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)),
       LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
-    ) AS month
+    ) AS month,
+    COUNT(*) AS n_rows
   FROM main.sbcustomer
   WHERE
     sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)

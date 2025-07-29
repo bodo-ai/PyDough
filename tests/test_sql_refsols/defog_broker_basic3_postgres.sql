@@ -15,5 +15,5 @@ FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  total_amount DESC NULLS LAST
+  COALESCE(_s1.sum_sbtxamount, 0) DESC NULLS LAST
 LIMIT 10

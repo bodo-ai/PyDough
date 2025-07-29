@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   100 * COALESCE(
-    CAST(COALESCE(SUM(sbcuststatus = 'active'), 0) AS DOUBLE PRECISION) / COUNT(*),
+    CAST(COALESCE(SUM(CASE WHEN sbcuststatus = 'active' THEN 1 ELSE 0 END), 0) AS DOUBLE PRECISION) / COUNT(*),
     0.0
   ) AS ar
 FROM main.sbcustomer

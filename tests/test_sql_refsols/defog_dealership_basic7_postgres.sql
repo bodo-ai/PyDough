@@ -6,5 +6,5 @@ FROM main.payments_received
 GROUP BY
   payment_method
 ORDER BY
-  total_amount DESC NULLS LAST
+  COALESCE(SUM(payment_amount), 0) DESC NULLS LAST
 LIMIT 3

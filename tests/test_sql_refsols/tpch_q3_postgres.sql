@@ -18,7 +18,9 @@ GROUP BY
   orders.o_orderdate,
   orders.o_shippriority
 ORDER BY
-  revenue DESC NULLS LAST,
+  COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
+  )), 0) DESC NULLS LAST,
   o_orderdate NULLS FIRST,
   l_orderkey NULLS FIRST
 LIMIT 10

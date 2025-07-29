@@ -1,4 +1,4 @@
-WITH _t3 AS (
+WITH _t2 AS (
   SELECT
     in_device_id
   FROM main.incidents
@@ -6,7 +6,7 @@ WITH _t3 AS (
   SELECT
     COUNT(*) AS n_rows,
     in_device_id
-  FROM _t3
+  FROM _t2
   GROUP BY
     in_device_id
 ), _s3 AS (
@@ -23,7 +23,7 @@ WITH _t3 AS (
   SELECT
     COUNT(*) AS n_rows,
     in_device_id
-  FROM _t3
+  FROM _t2
   GROUP BY
     in_device_id
 ), _s7 AS (
@@ -40,7 +40,7 @@ WITH _t3 AS (
   SELECT
     COUNT(*) AS n_rows,
     in_device_id
-  FROM _t3
+  FROM _t2
   GROUP BY
     in_device_id
 ), _s13 AS (

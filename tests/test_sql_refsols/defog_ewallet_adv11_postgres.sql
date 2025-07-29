@@ -1,11 +1,8 @@
 WITH _s1 AS (
   SELECT
-    COALESCE(
-      SUM(
-        CAST(EXTRACT(EPOCH FROM CAST(session_end_ts AS TIMESTAMP) - CAST(session_start_ts AS TIMESTAMP)) AS BIGINT)
-      ),
-      0
-    ) AS total_duration,
+    SUM(
+      CAST(EXTRACT(EPOCH FROM CAST(session_end_ts AS TIMESTAMP) - CAST(session_start_ts AS TIMESTAMP)) AS BIGINT)
+    ) AS sum_duration,
     user_id
   FROM main.user_sessions
   WHERE
@@ -15,9 +12,9 @@ WITH _s1 AS (
 )
 SELECT
   users.uid,
-  _s1.total_duration
+  COALESCE(_s1.sum_duration, 0) AS total_duration
 FROM main.users AS users
 JOIN _s1 AS _s1
   ON _s1.user_id = users.uid
 ORDER BY
-  total_duration DESC NULLS LAST
+  COALESCE(_s1.sum_duration, 0) DESC NULLS LAST

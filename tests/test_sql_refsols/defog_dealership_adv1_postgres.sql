@@ -2,11 +2,17 @@ SELECT
   DATE_TRUNC('WEEK', CAST(payments_received.payment_date AS TIMESTAMP)) AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
-    SUM((
-      (
-        DAY_OF_WEEK(payments_received.payment_date) + 6
-      ) % 7
-    ) IN (5, 6)),
+    SUM(
+      CASE
+        WHEN (
+          (
+            DAY_OF_WEEK(payments_received.payment_date) + 6
+          ) % 7
+        ) IN (5, 6)
+        THEN 1
+        ELSE 0
+      END
+    ),
     0
   ) AS weekend_payments
 FROM main.payments_received AS payments_received
