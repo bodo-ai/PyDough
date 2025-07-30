@@ -495,25 +495,29 @@ MYSQL_DB = "tpch"
 @pytest.fixture(scope="session")
 def mysql_docker_setup() -> None:
     """Set up and tear down the MySQL Docker container for testing."""
-
-    if not is_ci():
-        if container_exists(MYSQL_DOCKER_CONTAINER):
-            if not container_is_running(MYSQL_DOCKER_CONTAINER):
-                subprocess.run(["docker", "start", MYSQL_DOCKER_CONTAINER], check=True)
-        else:
-            subprocess.run(
-                [
-                    "docker",
-                    "run",
-                    "-d",
-                    "--name",
-                    MYSQL_DOCKER_CONTAINER,
-                    "-p",
-                    f"{MYSQL_PORT}:3306",
-                    MYSQL_DOCKER_IMAGE,
-                ],
-                check=True,
-            )
+    try:
+        if not is_ci():
+            if container_exists(MYSQL_DOCKER_CONTAINER):
+                if not container_is_running(MYSQL_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", MYSQL_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        MYSQL_DOCKER_CONTAINER,
+                        "-p",
+                        f"{MYSQL_PORT}:3306",
+                        MYSQL_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up MySQL Docker container: {e}")
 
     # Wait for MySQL to be ready
     for _ in range(30):
@@ -523,8 +527,8 @@ def mysql_docker_setup() -> None:
             conn = mysql_connector.connect(
                 host=MYSQL_HOST,
                 port=MYSQL_PORT,
-                user=os.getenv("MYSQL_USERNAME", "root"),
-                password=os.getenv("MYSQL_PASSWORD", "admin1234"),
+                user=os.getenv("MYSQL_USERNAME"),
+                password=os.getenv("MYSQL_PASSWORD"),
                 database=MYSQL_DB,
             )
             conn.close()
