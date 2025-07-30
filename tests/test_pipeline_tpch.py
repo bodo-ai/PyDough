@@ -440,6 +440,122 @@ from .testing_utilities import PyDoughPandasTest
             ),
             id="smoke_c",
         ),
+        pytest.param(
+            # Smoke test covering RANKING, RELSUM, RELAVG, RELCOUNT, RELSIZE,
+            # PERCENTILE, PREV, NEXT.
+            PyDoughPandasTest(
+                "result = nations.WHERE(region.name == 'ASIA').customers.CALCULATE("
+                " key,"
+                " a=RANKING(by=(account_balance.ASC(), key.ASC())),"
+                " b=RANKING(by=(account_balance.ASC(), key.ASC()), per='nations'),"
+                " c=RANKING(by=market_segment.ASC(), allow_ties=True),"
+                " d=RANKING(by=market_segment.ASC(), allow_ties=True, dense=True),"
+                " e=PERCENTILE(by=(account_balance.ASC(), key.ASC())),"
+                " f=PERCENTILE(by=(account_balance.ASC(), key.ASC()), n_buckets=12, per='nations'),"
+                " g=PREV(key, by=key.ASC()),"
+                " h=PREV(key, n=2, default=-1, by=key.ASC(), per='nations'),"
+                " i=NEXT(key, by=key.ASC()),"
+                " j=NEXT(key, n=6000, by=key.ASC(), per='nations'),"
+                " k=RELSUM(account_balance, per='nations'),"
+                " l=RELSUM(account_balance, by=key.ASC(), cumulative=True),"
+                " m=ROUND(RELAVG(account_balance), 2),"
+                " n=ROUND(RELAVG(account_balance, per='nations', by=key.ASC(), frame=(None, -1)), 2),"
+                " o=RELCOUNT(KEEP_IF(account_balance, account_balance > 0)),"
+                " p=RELSIZE(),"
+                ")"
+                ".TOP_K(10, by=key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [7, 9, 19, 21, 25, 28, 36, 37, 38, 45],
+                        "a": [
+                            29000,
+                            25596,
+                            27275,
+                            6657,
+                            22305,
+                            5509,
+                            16404,
+                            246,
+                            20106,
+                            30146,
+                        ],
+                        "b": [5803, 5081, 5465, 1367, 4416, 1119, 3265, 53, 3975, 6156],
+                        "c": [
+                            1,
+                            12012,
+                            18100,
+                            24087,
+                            12012,
+                            12012,
+                            5924,
+                            12012,
+                            18100,
+                            1,
+                        ],
+                        "d": [1, 3, 4, 5, 3, 3, 2, 3, 4, 1],
+                        "e": [97, 85, 91, 23, 74, 19, 55, 1, 67, 100],
+                        "f": [12, 11, 11, 3, 9, 3, 7, 1, 9, 12],
+                        "g": [None, 7, 9, 19, 21, 25, 28, 36, 37, 38],
+                        "h": [-1, -1, -1, -1, -1, 9, -1, 21, -1, -1],
+                        "i": [9, 19, 21, 25, 28, 36, 37, 38, 45, 51],
+                        "j": [
+                            149394,
+                            149030,
+                            149411,
+                            149032,
+                            None,
+                            149036,
+                            149751,
+                            149062,
+                            None,
+                            146097,
+                        ],
+                        "k": [
+                            26740212.13,
+                            27293627.48,
+                            26740212.13,
+                            27293627.48,
+                            26898468.71,
+                            27293627.48,
+                            27081997.67,
+                            27293627.48,
+                            26898468.71,
+                            27930482.5,
+                        ],
+                        "l": [
+                            9561.95,
+                            17886.02,
+                            26800.73,
+                            28228.98,
+                            35362.68,
+                            36369.86,
+                            41357.13,
+                            40439.38,
+                            46784.49,
+                            56767.87,
+                        ],
+                        "m": [4504.02] * 10,
+                        "n": [
+                            None,
+                            None,
+                            9561.95,
+                            8324.07,
+                            None,
+                            4876.16,
+                            None,
+                            3586.5,
+                            7133.7,
+                            None,
+                        ],
+                        "o": [27454] * 10,
+                        "p": [30183] * 10,
+                    }
+                ),
+                "smoke_d",
+            ),
+            id="smoke_d",
+        ),
     ],
 )
 def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
