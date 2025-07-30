@@ -49,9 +49,6 @@ class MySQLTransformBindings(BaseTransformBindings):
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_MYSQL_FUNC[operator], expressions=args
             )
-        match operator:
-            case pydop.SLICE:
-                return self.convert_slice(args, types)
 
         return super().convert_call_to_sqlglot(operator, args, types)
 
@@ -120,7 +117,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         match (start_idx, stop_idx):
             case (None, None):
                 # If both start and stop are None, return the whole string
-                result = sqlglot_expressions.Substring(this=string_expr)
+                result = string_expr
             case (None, _):
                 # If only stop is provided, slice from the start to stop
                 result = sqlglot_expressions.Substring(

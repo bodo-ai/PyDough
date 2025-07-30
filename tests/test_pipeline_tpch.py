@@ -354,7 +354,7 @@ def test_pipeline_e2e_mysql_conn(
 )
 def mysql_params_data(request) -> PyDoughPandasTest:
     """
-    Test data for e2e tests for the 22 TPC-H queries. Returns an instance of
+    Test data for e2e tests for the TPC-H query 16. Returns an instance of
     PyDoughPandasTest containing information about the test.
     """
     return request.param

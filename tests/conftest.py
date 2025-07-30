@@ -243,7 +243,6 @@ def binary_operators(request) -> pydop.BinaryOperator:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
-        pytest.param(DatabaseDialect.MYSQL, id="mysql"),
     ]
 )
 def sqlite_dialects(request) -> DatabaseDialect:
@@ -479,7 +478,7 @@ def container_is_running(name: str) -> bool:
 
 
 MYSQL_DOCKER_CONTAINER = "mysql_tpch_test"
-MYSQL_DOCKER_IMAGE = "johnbodoai/pydough-mysql-tpch:latest"
+MYSQL_DOCKER_IMAGE = "bodoai1/pydough-mysql-tpch:latest"
 MYSQL_HOST = "127.0.0.1"
 MYSQL_PORT = "3306"
 MYSQL_DB = "tpch"
