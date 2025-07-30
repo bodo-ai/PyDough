@@ -6,9 +6,6 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext
-from tests.test_pydough_functions.simple_pydough_functions import (
-    slicing_test,
-)
 from tests.test_pydough_functions.tpch_outputs import (
     tpch_q16_output,
 )
@@ -47,7 +44,17 @@ def mysql_params_data(request) -> PyDoughPandasTest:
     params=[
         pytest.param(
             PyDoughPandasTest(
-                slicing_test,
+                "result = customers.CALCULATE("
+                "key,"
+                "name,"
+                "phone,"
+                "country_code=phone[:3],"
+                "name_without_first_char=name[1:],"
+                "last_digit=phone[-1:],"
+                "name_without_start_and_end_char=name[1:-1],"
+                "phone_without_last_5_chars=phone[:-5],"
+                "name_second_to_last_char=name[-2:-1],"
+                ").TOP_K(5, by=key.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
                     {

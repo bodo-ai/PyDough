@@ -146,5 +146,5 @@ class MySQLTransformBindings(BaseTransformBindings):
                     ),
                 )
         assert result is not None
-
+        breakpoint()
         return result

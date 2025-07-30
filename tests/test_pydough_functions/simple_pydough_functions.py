@@ -2293,18 +2293,12 @@ def get_part_single():
 def extract_colors():
     return parts.CALCULATE(
         key,
-        c1=name[1:],
-        c2=name[1:],
-        c3=name[1:],
-        c4=name[1:],
-        c5=name[1:],
-        c6=name[1:],
-        # c1=UPPER(GETPART(name, " ", 1)),
-        # c2=UPPER(GETPART(name, " ", 2)),
-        # c3=UPPER(GETPART(name, " ", 3)),
-        # c4=UPPER(GETPART(name, " ", 4)),
-        # c5=UPPER(GETPART(name, " ", 5)),
-        # c6=UPPER(GETPART(name, " ", 6)),
+        c1=UPPER(GETPART(name, " ", 1)),
+        c2=UPPER(GETPART(name, " ", 2)),
+        c3=UPPER(GETPART(name, " ", 3)),
+        c4=UPPER(GETPART(name, " ", 4)),
+        c5=UPPER(GETPART(name, " ", 5)),
+        c6=UPPER(GETPART(name, " ", 6)),
     ).TOP_K(5, by=key.ASC())
 
 
@@ -3234,17 +3228,3 @@ def agg_simplification_2():
         )
         .ORDER_BY(state.ASC())
     )
-
-
-def slicing_test():
-    return customers.CALCULATE(
-        key,
-        name,
-        phone,
-        country_code=phone[:3],
-        name_without_first_char=name[1:],
-        last_digit=phone[-1:],
-        name_without_start_and_end_char=name[1:-1],
-        phone_without_last_5_chars=phone[:-5],
-        name_second_to_last_char=name[-2:-1],
-    ).TOP_K(5, by=key.ASC())
