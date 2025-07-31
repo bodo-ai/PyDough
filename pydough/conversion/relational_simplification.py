@@ -211,7 +211,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
     @property
     def no_group_aggregate(self) -> bool:
         """
-        Returns whether the shuttle currently a handling no-group-aggregate.
+        Returns whether the shuttle is currently handling a no-group-aggregate.
         """
         return self._no_group_aggregate
 
@@ -321,9 +321,9 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 output_predicates.not_null = True
                 output_predicates.not_negative = True
 
-                # The output if COUNT(*) is positive if unless doing a
+                # The output of COUNT(*) is positive unless doing a
                 # no-groupby aggregation. Same goes for calling COUNT or
-                # NDISTINCT ona non-null column.
+                # NDISTINCT on a non-null column.
                 if not no_group_aggregate:
                     if len(expr.inputs) == 0 or arg_predicates[0].not_null:
                         output_predicates.positive = True
@@ -339,7 +339,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         output_predicates.positive = True
                     output_expr = CallExpression(pydop.COUNT, expr.data_type, [])
 
-            # All of these operators are non-null aor non-negative if their
+            # All of these operators are non-null or non-negative if their
             # first argument is.
             case (
                 pydop.SUM
