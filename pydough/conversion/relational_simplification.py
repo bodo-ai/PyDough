@@ -231,7 +231,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         output_predicates: PredicateSet = PredicateSet()
         if literal_expression.value is not None:
             output_predicates.not_null = True
-            if isinstance(literal_expression.value, (int, float)):
+            if isinstance(literal_expression.value, (int, float, bool)):
                 if literal_expression.value >= 0:
                     output_predicates.not_negative = True
                     if literal_expression.value > 0:
