@@ -382,31 +382,34 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     output_predicates.not_null = True
 
             case pydop.DEFAULT_TO:
-                # DEFAULT_TO(None, x) -> x
-                if (
-                    isinstance(expr.inputs[0], LiteralExpression)
-                    and expr.inputs[0].value is None
-                ):
-                    if len(expr.inputs) == 2:
-                        output_expr = expr.inputs[1]
-                        output_predicates = arg_predicates[1]
-                    else:
-                        output_expr = CallExpression(
-                            pydop.DEFAULT_TO, expr.data_type, expr.inputs[1:]
-                        )
-                        output_predicates |= PredicateSet.intersect(arg_predicates[1:])
-
-                # DEFAULT_TO(x, y) -> x if x is non-null.
-                elif arg_predicates[0].not_null:
-                    output_expr = expr.inputs[0]
-                    output_predicates |= arg_predicates[0]
-
-                # Otherwise, it is non-null if any of the arguments are non-null,
-                # and gains any predicates that all the arguments have in common.
+                # Modify the list of arguments by removing any that are None,
+                # and stopping once we find the first argument that has is
+                # non-null.
+                new_args: list[RelationalExpression] = []
+                new_predicates: list[PredicateSet] = []
+                for i, arg in enumerate(expr.inputs):
+                    if isinstance(arg, LiteralExpression) and arg.value is None:
+                        continue
+                    new_args.append(arg)
+                    new_predicates.append(arg_predicates[i])
+                    if arg_predicates[i].not_null:
+                        break
+                if len(new_args) == 0:
+                    # If all inputs are None, the output is None.
+                    output_expr = LiteralExpression(None, expr.data_type)
+                elif len(new_args) == 1:
+                    # If there is only one input, the output is that input.
+                    output_expr = new_args[0]
+                    output_predicates |= new_predicates[0]
                 else:
-                    if union_set.not_null:
+                    # If there are multiple inputs, the output is a new
+                    # DEFAULT_TO expression with the non-None inputs.
+                    output_expr = CallExpression(
+                        pydop.DEFAULT_TO, expr.data_type, new_args
+                    )
+                    output_predicates = PredicateSet.intersect(new_predicates)
+                    if PredicateSet.union(new_predicates).not_null:
                         output_predicates.not_null = True
-                    output_predicates |= intersect_set
 
             # ABS(x) -> x if x is positive or non-negative. At hte very least, we
             # know it is always non-negative.
@@ -552,8 +555,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         output_expr = LiteralExpression(False, expr.data_type)
                 output_predicates.not_negative = True
 
-            # XOR and LIKE are always non-negative
-            case pydop.BXR | pydop.LIKE:
+            # LIKE is always non-negative
+            case pydop.LIKE:
                 output_predicates.not_negative = True
 
             # X & Y is False if any of the arguments are False-y literals, and True
