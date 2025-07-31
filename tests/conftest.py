@@ -6,6 +6,7 @@ available.
 import os
 import sqlite3
 import subprocess
+import time
 from collections.abc import Callable
 from functools import cache
 
@@ -19,6 +20,7 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
+    load_database_context,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
@@ -254,6 +256,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        pytest.param(DatabaseDialect.MYSQL, id="mysql"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -426,6 +429,167 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
+"""
+    MySQL environment variables required for connection.
+    MYSQL_USERNAME: The username for MySQL.
+    MYSQL_PASSWORD: The password for MySQL.
+"""
+
+
+@pytest.fixture
+def require_mysql_env() -> None:
+    """
+    Checks whether all required MySQL environment variables are set.
+    """
+    if not all(os.getenv(var) is not None for var in MYSQL_ENVS):
+        pytest.skip("Skipping MySQL tests: environment variables not set.")
+
+
+def is_ci():
+    """
+    Detect if running inside CI (GitHub Actions sets this env var).
+    """
+    return os.getenv("GITHUB_ACTIONS", "false").lower() == "true"
+
+
+def container_exists(name: str) -> bool:
+    """
+    Check if a Docker container with the given name exists.
+    """
+    result = subprocess.run(
+        ["docker", "ps", "-a", "--format", "{{.Names}}"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    return name in result.stdout.splitlines()
+
+
+def container_is_running(name: str) -> bool:
+    """
+    Check if a Docker container with the given name is currently running.
+    """
+    result = subprocess.run(
+        ["docker", "ps", "--format", "{{.Names}}"], stdout=subprocess.PIPE, text=True
+    )
+    return name in result.stdout.splitlines()
+
+
+MYSQL_DOCKER_CONTAINER = "mysql_tpch_test"
+MYSQL_DOCKER_IMAGE = "bodoai1/pydough-mysql-tpch:latest"
+MYSQL_HOST = "127.0.0.1"
+MYSQL_PORT = "3306"
+MYSQL_DB = "tpch"
+"""
+    CONSTANTS for the MySQL Docker container setup.
+    - DOCKER_CONTAINER: The name of the Docker container.
+    - DOCKER_IMAGE: The Docker image to use for the MySQL container.
+    - MYSQL_HOST: The host address for MySQL.
+    - MYSQL_PORT: The port on which MySQL is exposed.
+    - MYSQL_DB: The name of the TPCH database in MySQL.
+"""
+
+
+@pytest.fixture(scope="session")
+def mysql_docker_setup() -> None:
+    """Set up and tear down the MySQL Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(MYSQL_DOCKER_CONTAINER):
+                if not container_is_running(MYSQL_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", MYSQL_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        MYSQL_DOCKER_CONTAINER,
+                        "-p",
+                        f"{MYSQL_PORT}:3306",
+                        MYSQL_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up MySQL Docker container: {e}")
+
+    # Wait for MySQL to be ready
+    for _ in range(30):
+        try:
+            import mysql.connector as mysql_connector
+
+            conn = mysql_connector.connect(
+                host=MYSQL_HOST,
+                port=MYSQL_PORT,
+                user=os.getenv("MYSQL_USERNAME"),
+                password=os.getenv("MYSQL_PASSWORD"),
+                database=MYSQL_DB,
+            )
+            conn.close()
+            break
+        except mysql_connector.Error:
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", MYSQL_DOCKER_CONTAINER])
+        pytest.fail("MySQL container did not become ready in time.")
+
+
+@pytest.fixture
+def mysql_conn_tpch_db_context(
+    require_mysql_env, mysql_docker_setup
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the MySQL TPCH database using
+    a connection object.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+    import mysql.connector as mysql_connector
+
+    mysql_username = os.getenv("MYSQL_USERNAME")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_db = MYSQL_DB
+    mysql_host = MYSQL_HOST
+
+    connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
+        user=mysql_username,
+        password=mysql_password,
+        host=mysql_host,
+        database=mysql_db,
+    )
+    return load_database_context(
+        "mysql",
+        connection=connection,
+    )
+
+
+@pytest.fixture
+def mysql_params_tpch_db_context(
+    require_mysql_env, mysql_docker_setup
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the MySQL TPCH database using
+    parameters instead of a connection object.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+
+    mysql_username = os.getenv("MYSQL_USERNAME")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_db = MYSQL_DB
+    mysql_host = MYSQL_HOST
+
+    return load_database_context(
+        "mysql",
+        user=mysql_username,
+        password=mysql_password,
+        host=mysql_host,
+        database=mysql_db,
+    )
 
 
 @pytest.fixture(scope="session")
