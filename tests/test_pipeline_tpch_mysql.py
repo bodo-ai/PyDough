@@ -46,14 +46,16 @@ def mysql_params_data(request) -> PyDoughPandasTest:
             PyDoughPandasTest(
                 "result = customers.CALCULATE("
                 "key,"
-                "name,"
+                "name[:],"
                 "phone,"
+                "next_digits=phone[3:6],"
                 "country_code=phone[:3],"
                 "name_without_first_char=name[1:],"
                 "last_digit=phone[-1:],"
                 "name_without_start_and_end_char=name[1:-1],"
                 "phone_without_last_5_chars=phone[:-5],"
                 "name_second_to_last_char=name[-2:-1],"
+                "cust_number=name[-10:18]"
                 ").TOP_K(5, by=key.ASC())",
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -73,6 +75,13 @@ def mysql_params_data(request) -> PyDoughPandasTest:
                             "14-128-190-5944",
                             "13-750-942-6364",
                         ],
+                        "next_digits": [
+                            "989",
+                            "768",
+                            "719",
+                            "128",
+                            "750",
+                        ],
                         "country_code": ["25-", "23-", "11-", "14-", "13-"],
                         "name_without_first_char": [
                             "ustomer#000000001",
@@ -81,10 +90,29 @@ def mysql_params_data(request) -> PyDoughPandasTest:
                             "ustomer#000000004",
                             "ustomer#000000005",
                         ],
-                        "last_digit": ["", "", "", "", ""],
-                        "name_without_start_and_end_char": ["", "", "", "", ""],
-                        "phone_without_last_5_chars": ["", "", "", "", ""],
-                        "name_second_to_last_char": ["1", "2", "3", "4", "5"],
+                        "last_digit": ["8", "5", "4", "4", "4"],
+                        "name_without_start_and_end_char": [
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                        ],
+                        "phone_without_last_5_chars": [
+                            "25-989-741",
+                            "23-768-687",
+                            "11-719-748",
+                            "14-128-190",
+                            "13-750-942",
+                        ],
+                        "name_second_to_last_char": ["0", "0", "0", "0", "0"],
+                        "cust_number": [
+                            "#000000001",
+                            "#000000002",
+                            "#000000003",
+                            "#000000004",
+                            "#000000005",
+                        ],
                     }
                 ),
                 "slicing_test",

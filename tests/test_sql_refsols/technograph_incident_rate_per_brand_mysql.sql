@@ -8,7 +8,7 @@ WITH _s3 AS (
 )
 SELECT
   PRODUCTS.pr_brand AS brand,
-  ROUND(COALESCE(COALESCE(SUM(_s3.n_rows), 0), 0) / COUNT(*), 2) AS ir
+  ROUND(COALESCE(SUM(_s3.n_rows), 0) / COUNT(*), 2) AS ir
 FROM main.DEVICES AS DEVICES
 JOIN main.PRODUCTS AS PRODUCTS
   ON DEVICES.de_product_id = PRODUCTS.pr_id

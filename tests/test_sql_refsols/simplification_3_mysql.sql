@@ -1,0 +1,12 @@
+SELECT
+  TRUE AS s00,
+  TRUE AS s01,
+  FALSE AS s02,
+  FALSE AS s03,
+  FALSE AS s04,
+  FALSE AS s05,
+  COUNT(*) >= 3 AS s06,
+  FALSE AS s07,
+  COUNT(*) <= 6 AS s08,
+  FALSE AS s09
+FROM main.sbCustomer

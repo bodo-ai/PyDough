@@ -16,18 +16,15 @@ WITH _s3 AS (
     ON PART.p_partkey = _s3.l_partkey
   WHERE
     PART.p_name LIKE 'forest%'
-), _t2 AS (
-  SELECT
-    COUNT(*) AS n_rows,
+), _s7 AS (
+  SELECT DISTINCT
     PARTSUPP.ps_suppkey
   FROM tpch.PARTSUPP AS PARTSUPP
   JOIN _s5 AS _s5
     ON PARTSUPP.ps_availqty > (
-      0.5 * COALESCE(COALESCE(_s5.sum_l_quantity, 0), 0)
+      0.5 * COALESCE(_s5.sum_l_quantity, 0)
     )
     AND PARTSUPP.ps_partkey = _s5.p_partkey
-  GROUP BY
-    PARTSUPP.ps_suppkey
 )
 SELECT
   SUPPLIER.s_name AS S_NAME,
@@ -35,8 +32,8 @@ SELECT
 FROM tpch.SUPPLIER AS SUPPLIER
 JOIN tpch.NATION AS NATION
   ON NATION.n_name = 'CANADA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
-JOIN _t2 AS _t2
-  ON SUPPLIER.s_suppkey = _t2.ps_suppkey AND _t2.n_rows > 0
+JOIN _s7 AS _s7
+  ON SUPPLIER.s_suppkey = _s7.ps_suppkey
 ORDER BY
   SUPPLIER.s_name
 LIMIT 10

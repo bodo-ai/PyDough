@@ -58,6 +58,31 @@ class MySQLTransformBindings(BaseTransformBindings):
         """
         Convert a PyDough slice operation to a SQLGlot expression.
         MySQL uses the SUBSTRING function for slicing.
+
+        Outline of the logic:
+        - If the start index is None, it defaults to 1 (1-based indexing).
+        - If the stop index is None, it defaults to the length of the string.
+        - a = start index
+        - b = stop index
+        match (a, b):
+            case (None, None):
+                return SUBSTRING(x, 1)
+            case (+a, None):
+                return SUBSTRING(x, a + 1)
+            case (-a, None):
+                return SUBSTRING(x, a)
+            case (None, +b):
+                return SUBSTRING(x, 1, b)
+            case (None, -b):
+                return SUBSTRING(x, 1, LENGTH(x) + b)
+            case (+a, +b):
+                return SUBSTRING(x, a + 1, GREATEST(b - a, 0))
+            case (-a, -b):
+                return SUBSTRING(x, a, GREATEST(b - a, 0))
+            case (+a, -b):
+                return SUBSTRING(x, a + 1, GREATEST(LENGTH(x) + b - a, 0))
+            case (-a, +b):
+                return SUBSTRING(x, a, b - GREATEST(LENGTH(x) + a, 0))
         """
 
         assert len(args) == 4
@@ -111,40 +136,61 @@ class MySQLTransformBindings(BaseTransformBindings):
 
         # SQLGlot expressions for 0 and 1 and empty string
         sql_one: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
-
-        result: SQLGlotExpression = None
+        sql_zero: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+        expr_length: SQLGlotExpression = sqlglot_expressions.Length(this=string_expr)
+        one_index_start: SQLGlotExpression = sqlglot_expressions.Add(
+            this=start, expression=sql_one
+        )
+        # length adjustment
+        length: SQLGlotExpression = None
 
         match (start_idx, stop_idx):
-            case (None, None):
-                # If both start and stop are None, return the whole string
-                result = string_expr
-            case (None, _):
-                # If only stop is provided, slice from the start to stop
-                result = sqlglot_expressions.Substring(
-                    this=string_expr, start=sql_one, length=stop
+            case (None, e) if e is not None and e >= 0:
+                length = stop
+
+            case (None, e) if e is not None and e < 0:
+                length = sqlglot_expressions.Add(this=expr_length, expression=stop)
+
+            case (s, e) if s is not None and e is not None and s >= 0 and e >= 0:
+                length = sqlglot_expressions.Greatest(
+                    this=sqlglot_expressions.Sub(this=stop, expression=start),
+                    expressions=[sql_zero],
                 )
-            case (_, None):
-                # If only start is provided, slice from start to the end of the string
-                result = sqlglot_expressions.Substring(
-                    this=string_expr,
-                    start=sqlglot_expressions.Add(
-                        this=start,
-                        expression=sql_one,
-                    ),
+
+            case (s, e) if s is not None and e is not None and s < 0 and e < 0:
+                length = sqlglot_expressions.Greatest(
+                    this=sqlglot_expressions.Sub(this=stop, expression=start),
+                    expressions=[sql_zero],
                 )
-            case _:
-                # If both start and stop are provided, slice from start to stop
-                result = sqlglot_expressions.Substring(
-                    this=string_expr,
-                    start=sqlglot_expressions.Add(
-                        this=start,
-                        expression=sql_one,
-                    ),
-                    length=sqlglot_expressions.Sub(
-                        this=stop,
+
+            case (s, e) if s is not None and e is not None and s >= 0 and e < 0:
+                length = sqlglot_expressions.Greatest(
+                    this=sqlglot_expressions.Sub(
+                        this=sqlglot_expressions.Add(this=expr_length, expression=stop),
                         expression=start,
                     ),
+                    expressions=[sql_zero],
                 )
-        assert result is not None
-        breakpoint()
+
+            case (s, e) if s is not None and e is not None and s < 0 and e >= 0:
+                length = sqlglot_expressions.Sub(
+                    this=stop,
+                    expression=sqlglot_expressions.Greatest(
+                        this=sqlglot_expressions.Add(
+                            this=expr_length, expression=start
+                        ),
+                        expressions=[sql_zero],
+                    ),
+                )
+
+        # start adjustment
+        if start_idx is not None and start_idx >= 0:
+            start = one_index_start
+        elif start_idx is None:
+            start = sql_one
+
+        result: SQLGlotExpression = sqlglot_expressions.Substring(
+            this=string_expr, start=start, length=length
+        )
+
         return result
