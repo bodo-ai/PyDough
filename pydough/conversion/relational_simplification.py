@@ -1,5 +1,9 @@
 """
-Logic used to simplify relational expressions in a relational node.
+Logic used to simplify relational expressions in a relational node. A visitor
+is used on the relational nodes to first simplify the child subtrees, then a
+relational shuttle is run on the expressions of the current node to simplify
+them, using the input predicates from the child nodes, and also infer the
+predicates of the simplified expressions.
 """
 
 __all__ = ["simplify_expressions"]
@@ -91,7 +95,7 @@ class PredicateSet:
         Computes the union of a list of predicate sets.
         """
         result: PredicateSet = PredicateSet()
-        for pred in predicates[1:]:
+        for pred in predicates:
             result = result | pred
         return result
 
@@ -207,7 +211,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
     @property
     def no_group_aggregate(self) -> bool:
         """
-        Returns whether the shuttle currently a handling no-group-aggregate.
+        Returns whether the shuttle is currently handling a no-group-aggregate.
         """
         return self._no_group_aggregate
 
@@ -227,7 +231,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         output_predicates: PredicateSet = PredicateSet()
         if literal_expression.value is not None:
             output_predicates.not_null = True
-            if isinstance(literal_expression.value, (int, float)):
+            if isinstance(literal_expression.value, (int, float, bool)):
                 if literal_expression.value >= 0:
                     output_predicates.not_negative = True
                     if literal_expression.value > 0:
@@ -304,7 +308,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         union_set: PredicateSet = PredicateSet.union(arg_predicates)
         intersect_set: PredicateSet = PredicateSet.intersect(arg_predicates)
 
-        # If the call has null propagating rules, all of hte arguments are
+        # If the call has null propagating rules, all of the arguments are
         # non-null, the output is guaranteed to be non-null.
         if expr.op in NULL_PROPAGATING_OPS:
             if intersect_set.not_null:
@@ -317,9 +321,9 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 output_predicates.not_null = True
                 output_predicates.not_negative = True
 
-                # The output if COUNT(*) is positive if unless doing a
+                # The output of COUNT(*) is positive unless doing a
                 # no-groupby aggregation. Same goes for calling COUNT or
-                # NDISTINCT ona non-null column.
+                # NDISTINCT on a non-null column.
                 if not no_group_aggregate:
                     if len(expr.inputs) == 0 or arg_predicates[0].not_null:
                         output_predicates.positive = True
@@ -335,7 +339,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         output_predicates.positive = True
                     output_expr = CallExpression(pydop.COUNT, expr.data_type, [])
 
-            # All of these operators are non-null aor non-negative if their
+            # All of these operators are non-null or non-negative if their
             # first argument is.
             case (
                 pydop.SUM
@@ -382,33 +386,36 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     output_predicates.not_null = True
 
             case pydop.DEFAULT_TO:
-                # DEFAULT_TO(None, x) -> x
-                if (
-                    isinstance(expr.inputs[0], LiteralExpression)
-                    and expr.inputs[0].value is None
-                ):
-                    if len(expr.inputs) == 2:
-                        output_expr = expr.inputs[1]
-                        output_predicates = arg_predicates[1]
-                    else:
-                        output_expr = CallExpression(
-                            pydop.DEFAULT_TO, expr.data_type, expr.inputs[1:]
-                        )
-                        output_predicates |= PredicateSet.intersect(arg_predicates[1:])
-
-                # DEFAULT_TO(x, y) -> x if x is non-null.
-                elif arg_predicates[0].not_null:
-                    output_expr = expr.inputs[0]
-                    output_predicates |= arg_predicates[0]
-
-                # Otherwise, it is non-null if any of the arguments are non-null,
-                # and gains any predicates that all the arguments have in common.
+                # Modify the list of arguments by removing any that are None,
+                # and stopping once we find the first argument that has is
+                # non-null.
+                new_args: list[RelationalExpression] = []
+                new_predicates: list[PredicateSet] = []
+                for i, arg in enumerate(expr.inputs):
+                    if isinstance(arg, LiteralExpression) and arg.value is None:
+                        continue
+                    new_args.append(arg)
+                    new_predicates.append(arg_predicates[i])
+                    if arg_predicates[i].not_null:
+                        break
+                if len(new_args) == 0:
+                    # If all inputs are None, the output is None.
+                    output_expr = LiteralExpression(None, expr.data_type)
+                elif len(new_args) == 1:
+                    # If there is only one input, the output is that input.
+                    output_expr = new_args[0]
+                    output_predicates |= new_predicates[0]
                 else:
-                    if union_set.not_null:
+                    # If there are multiple inputs, the output is a new
+                    # DEFAULT_TO expression with the non-None inputs.
+                    output_expr = CallExpression(
+                        pydop.DEFAULT_TO, expr.data_type, new_args
+                    )
+                    output_predicates = PredicateSet.intersect(new_predicates)
+                    if PredicateSet.union(new_predicates).not_null:
                         output_predicates.not_null = True
-                    output_predicates |= intersect_set
 
-            # ABS(x) -> x if x is positive or non-negative. At hte very least, we
+            # ABS(x) -> x if x is positive or non-negative. At the very least, we
             # know it is always non-negative.
             case pydop.ABS:
                 if arg_predicates[0].not_negative or arg_predicates[0].positive:
@@ -431,7 +438,9 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
             # LOWER, UPPER, STARTSWITH, ENDSWITH, and CONTAINS can be constant
             # folded if the inputs are string literals. The boolean-returning
-            # operators are always non-negative.
+            # operators are always non-negative. Most of cases do not set
+            # predicates because there are no predicates to infer, beyond those
+            # already accounted for with NULL_PROPAGATING_OPS.
             case pydop.LOWER:
                 if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
                     expr.inputs[0].value, str
@@ -552,8 +561,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         output_expr = LiteralExpression(False, expr.data_type)
                 output_predicates.not_negative = True
 
-            # XOR and LIKE are always non-negative
-            case pydop.BXR | pydop.LIKE:
+            # LIKE is always non-negative
+            case pydop.LIKE:
                 output_predicates.not_negative = True
 
             # X & Y is False if any of the arguments are False-y literals, and True
@@ -564,7 +573,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     for arg in expr.inputs
                 ):
                     output_expr = LiteralExpression(False, expr.data_type)
-                if all(
+                elif all(
                     isinstance(arg, LiteralExpression)
                     and arg.value not in [0, False, None]
                     for arg in expr.inputs
@@ -581,7 +590,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     for arg in expr.inputs
                 ):
                     output_expr = LiteralExpression(True, expr.data_type)
-                if all(
+                elif all(
                     isinstance(arg, LiteralExpression) and arg.value in [0, False, None]
                     for arg in expr.inputs
                 ):
@@ -600,7 +609,6 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     )
                     output_predicates.positive = not bool(expr.inputs[0].value)
                 output_predicates.not_negative = True
-                pass
 
             case pydop.EQU | pydop.NEQ | pydop.GEQ | pydop.GRT | pydop.LET | pydop.LEQ:
                 match (expr.inputs[0], expr.op, expr.inputs[1]):
@@ -666,6 +674,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                                 output_expr = LiteralExpression(x >= y, expr.data_type)  # type: ignore
 
                     case _:
+                        # All other cases remain non-simplified.
                         pass
 
                 output_predicates.not_negative = True
@@ -724,6 +733,9 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     output_predicates |= arg_predicates[0] & PredicateSet(
                         not_null=True, not_negative=True
                     )
+            case _:
+                # All other operators remain non-simplified.
+                pass
 
         self.stack.append(output_predicates)
         return output_expr
@@ -789,6 +801,10 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     if arg_predicates[0].not_null:
                         output_predicates.positive = True
                 output_predicates.not_negative = True
+
+            case _:
+                # All other operators remain non-simplified.
+                pass
 
         self.stack.append(output_predicates)
         return output_expr
