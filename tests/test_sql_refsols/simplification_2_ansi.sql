@@ -36,6 +36,15 @@ SELECT
   FALSE AS s34,
   FALSE AS s35,
   TRUE AS s36,
-  3.0 AS s37
-FROM (VALUES
-  (NULL)) AS _q_0(_col_0)
+  3.0 AS s37,
+  NULL AS s38,
+  NULL AS s39,
+  NULL AS s40,
+  NULL AS s41,
+  NULL AS s42,
+  NULL AS s43,
+  NULL AS s44,
+  NULL AS s45,
+  NULL AS s46,
+  COALESCE(MAX(sbcustname), '') LIKE '%r%' AS s47
+FROM main.sbcustomer
