@@ -6,17 +6,17 @@ joining them on certain key columns.
 __all__ = ["SimpleJoinMetadata"]
 
 
-from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import (
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import (
     HasPropertyWith,
     NoExtraKeys,
-    PyDoughMetadataException,
     extract_array,
     extract_bool,
     extract_object,
     extract_string,
     simple_join_keys_predicate,
 )
+from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.graphs import GraphMetadata
 
 from .property_metadata import PropertyMetadata

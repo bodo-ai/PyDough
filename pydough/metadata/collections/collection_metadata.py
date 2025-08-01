@@ -4,13 +4,13 @@ Base definition of PyDough metadaata for collections.
 
 from abc import abstractmethod
 
-from pydough.metadata.abstract_metadata import AbstractMetadata
-from pydough.metadata.errors import (
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import (
     HasType,
-    PyDoughMetadataException,
     extract_string,
     is_valid_name,
 )
+from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.graphs import GraphMetadata
 
 
@@ -253,6 +253,7 @@ class CollectionMetadata(AbstractMetadata):
             scalar property that should be parsed and inserted into the
             collection.
         """
+        from pydough.errors import PyDoughMetadataException
         from pydough.metadata.properties import TableColumnMetadata
 
         for property_json in properties_json:
