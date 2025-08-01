@@ -1,4 +1,4 @@
-ROOT(columns=[('name', s_name), ('num_10parts', DEFAULT_TO(None:unknown, 0:numeric)), ('avg_price_of_10parts', None:unknown), ('sum_price_of_10parts', DEFAULT_TO(None:unknown, 0:numeric))], orderings=[])
+ROOT(columns=[('name', s_name), ('num_10parts', 0:numeric), ('avg_price_of_10parts', None:unknown), ('sum_price_of_10parts', 0:numeric)], orderings=[])
  JOIN(condition=t0.s_suppkey == t1.ps_suppkey, type=ANTI, cardinality=SINGULAR_FILTER, columns={'s_name': t0.s_name})
   SCAN(table=tpch.SUPPLIER, columns={'s_name': s_name, 's_suppkey': s_suppkey})
   JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'ps_suppkey': t0.ps_suppkey})
