@@ -3,11 +3,17 @@ This file contains the relational implementation for an dummy relational node
 with 1 row and 0 columns.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
 from .abstract_node import RelationalNode
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class EmptySingleton(RelationalNode):
@@ -29,8 +35,11 @@ class EmptySingleton(RelationalNode):
     def to_string(self, compact: bool = False) -> str:
         return "EMPTYSINGLETON()"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         return visitor.visit_empty_singleton(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_empty_singleton(self)
 
     def node_copy(
         self,

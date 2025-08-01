@@ -4,7 +4,7 @@ This is used to handle the common case where we need to modify a type of
 input. Shuttles are defined to be stateless by default.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 
 from .abstract_expression import RelationalExpression
 from .call_expression import CallExpression
@@ -70,7 +70,6 @@ class RelationalExpressionShuttle(ABC):
             window_expression.kwargs,
         )
 
-    @abstractmethod
     def visit_literal_expression(
         self, literal_expression: LiteralExpression
     ) -> RelationalExpression:
@@ -83,8 +82,8 @@ class RelationalExpressionShuttle(ABC):
         Returns:
             The new node resulting from visiting this node.
         """
+        return literal_expression
 
-    @abstractmethod
     def visit_column_reference(
         self, column_reference: ColumnReference
     ) -> RelationalExpression:
@@ -97,8 +96,8 @@ class RelationalExpressionShuttle(ABC):
         Returns:
            The new node resulting from visiting this node.
         """
+        return column_reference
 
-    @abstractmethod
     def visit_correlated_reference(
         self, correlated_reference: CorrelatedReference
     ) -> RelationalExpression:
@@ -111,3 +110,4 @@ class RelationalExpressionShuttle(ABC):
         Returns:
             The new node resulting from visiting this node.
         """
+        return correlated_reference
