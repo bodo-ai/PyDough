@@ -9,6 +9,7 @@ This page document the exact format that the JSON files containing PyDough metad
    * [Collection Type: Simple Table](#collection-type-simple-table)
 - [Properties](#properties)
    * [Property Type: Table Column](#property-type-table-column)
+   * [Property Type: Masked Table Column](#property-type-masked-table-column)
 - [Relationships](#relationships)
    * [Relationship Type: Simple Join](#relationship-type-simple-join)
    * [Relationship Type: General Join](#relationship-type-general-join)
@@ -141,6 +142,32 @@ Example of the structure of the metadata for a table column property:
     "description": "The amount of money currently in the account",
     "sample values": [0.0, 123.45, 999864.00],
     "synonyms": ["amount", "value", "balance"],
+    "extra semantic info": {...}
+}
+```
+
+<!-- TOC --><a name="property-type-masked-table-column"></a>
+### Property Type: Masked Table Column
+
+A property with this type is the same as a regular table column, except the data in the underlying table has been masked by some sort of encryption protocol. The metadata includes information required to encrypt values in SQL with the same masking protocol, or how to generate SQL to unmask data that has been masked. Properties of this type have a type string of "masked table column" and have the following additional key-value pairs in their metadata JSON object, in addition to all of the properties from [table column](#property-type-table-column):
+
+- `unprotect protocol` (required): a Python format string indicating the SQL text that is used to unmask the data after reading it from the underlying table. The format string should expect a single value to get injected (e.g. `"SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)".format("c_name")` can be used to create the SQL text `SUBSTRING(c_name, -1) || SUBSTRING(c_name, 1, LENGTH(c_name) - 1)`).
+- `protect protocol` (required): a Python format string, in the same format as `unprotect protocol`, indicating the scheme used to mask the data in the first place. This can be used to create values that are encrypted in the same scheme as the data, thus allowing comparisons between masked data.
+- `server masked` (optional): a boolean indicating whether the column was encrypted in such at a server, which has been attached to PyDough, can be queried in order to rewrite predicates & expressions involving the column to avoid unmasking the data.
+
+Example of the structure of the metadata for a masked table column property where the string data is masked by moving the first character to the end, and unmasked by moving it back to the beginning:
+
+```json
+{
+    "name": "name",
+    "type": "table column",
+    "column_name": "c_name",
+    "data_type": "string",
+    "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
+    "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
+    "description": "The name of the customer",
+    "sample values": ["John Smith", "Adrien Lee", "Anna Rodriguez"],
+    "synonyms": ["full name"],
     "extra semantic info": {...}
 }
 ```
