@@ -2840,6 +2840,253 @@
       ]
     },
     {
+      "name": "MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_COLUMN_NAME",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": true,
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "strdatmeric",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": [0, 1, 2],
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": 1,
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_SERVER_MASKED",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": "not a boolean"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "c_key", "type": "table column", "column name": "customer_id", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false,
+              "foo": "bar"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "BAD_JOIN_CONDITIONS",
       "version": "V2",
       "collections": [
