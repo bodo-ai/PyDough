@@ -34,10 +34,6 @@ SELECT
   COUNT(*) >= 3 AS s06,
   FALSE AS s07,
   COUNT(*) <= 6 AS s08,
-<<<<<<< HEAD
-  FALSE AS s09
-FROM main.sbcustomer
-=======
   FALSE AS s09,
   91 AS s10,
   0 AS s11,
@@ -68,4 +64,3 @@ FROM main.sbcustomer
   ANY_VALUE(rsiz1) AS s35,
   ROUND(SUM(rsiz2), 2) AS s36
 FROM _t1
->>>>>>> main
