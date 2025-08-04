@@ -11,6 +11,9 @@ import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 
 from .base_transform_bindings import BaseTransformBindings
+from .sqlglot_transform_utils import (
+    apply_parens,
+)
 
 
 class MySQLTransformBindings(BaseTransformBindings):
@@ -193,4 +196,148 @@ class MySQLTransformBindings(BaseTransformBindings):
             this=string_expr, start=start, length=length
         )
 
+        return result
+
+    def convert_get_part(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        GETPART(str, delim, idx) ->
+            CASE
+                WHEN LENGTH(str) = 0 THEN NULL
+                WHEN LENGTH(delim) = 0 THEN
+                    CASE
+                        WHEN ABS(idx) = 1 THEN str
+                        ELSE NULL
+                    END
+                WHEN idx > 0 AND idx <= (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
+                    THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, -1)
+                WHEN idx < 0 AND -idx <= (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
+                    THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, 1)
+                WHEN idx = 0 THEN SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, 1), delim, -1)
+                ELSE NULL
+            END
+        """
+
+        assert len(args) == 3
+
+        string_expr, delimiter_expr, index_expr = args
+        literal_1: SQLGlotExpression = sqlglot_expressions.Literal.number(1)
+        literal_neg_1: SQLGlotExpression = sqlglot_expressions.Literal.number(-1)
+        literal_0: SQLGlotExpression = sqlglot_expressions.Literal.number(0)
+
+        # (LENGTH(str) - LENGTH(REPLACE(str, delim, '')))/LENGTH(delim) + 1
+        difference: SQLGlotExpression = sqlglot_expressions.Sub(
+            this=sqlglot_expressions.Length(this=string_expr),
+            expression=sqlglot_expressions.Length(
+                this=self.convert_replace([string_expr, delimiter_expr], types[:2])
+            ),
+        )
+
+        index_expr = apply_parens(index_expr)
+
+        delimiter_count: SQLGlotExpression = sqlglot_expressions.Div(
+            this=apply_parens(difference),
+            expression=sqlglot_expressions.Length(this=delimiter_expr),
+        )
+        total_parts = sqlglot_expressions.Add(
+            this=delimiter_count, expression=literal_1
+        )
+
+        # SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, -1)
+        pos_index_case: SQLGlotExpression = sqlglot_expressions.Anonymous(
+            this="SUBSTRING_INDEX",
+            expressions=[
+                sqlglot_expressions.Anonymous(
+                    this="SUBSTRING_INDEX",
+                    expressions=[string_expr, delimiter_expr, index_expr],
+                ),
+                delimiter_expr,
+                literal_neg_1,
+            ],
+        )
+
+        # SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, idx), delim, 1)
+        neg_index_case: SQLGlotExpression = sqlglot_expressions.Anonymous(
+            this="SUBSTRING_INDEX",
+            expressions=[
+                sqlglot_expressions.Anonymous(
+                    this="SUBSTRING_INDEX",
+                    expressions=[string_expr, delimiter_expr, index_expr],
+                ),
+                delimiter_expr,
+                literal_1,
+            ],
+        )
+
+        # SUBSTRING_INDEX(SUBSTRING_INDEX(str, delim, 1), delim, -1)
+        zero_index_case: SQLGlotExpression = sqlglot_expressions.Anonymous(
+            this="SUBSTRING_INDEX",
+            expressions=[
+                sqlglot_expressions.Anonymous(
+                    this="SUBSTRING_INDEX",
+                    expressions=[string_expr, delimiter_expr, literal_1],
+                ),
+                delimiter_expr,
+                literal_neg_1,
+            ],
+        )
+
+        result: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=sqlglot_expressions.Length(this=string_expr),
+                        expression=literal_0,
+                    ),
+                    true=sqlglot_expressions.Null(),
+                ),
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=sqlglot_expressions.Length(this=delimiter_expr),
+                        expression=literal_0,
+                    ),
+                    true=sqlglot_expressions.Case(
+                        ifs=[
+                            sqlglot_expressions.If(
+                                this=sqlglot_expressions.EQ(
+                                    this=sqlglot_expressions.Abs(this=index_expr),
+                                    expression=literal_1,
+                                ),
+                                true=string_expr,
+                            )
+                        ],
+                        default=sqlglot_expressions.Null(),
+                    ),
+                ),
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.And(
+                        this=sqlglot_expressions.GT(
+                            this=index_expr, expression=literal_0
+                        ),
+                        expression=sqlglot_expressions.LTE(
+                            this=index_expr, expression=total_parts
+                        ),
+                    ),
+                    true=pos_index_case,
+                ),
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.And(
+                        this=sqlglot_expressions.LT(
+                            this=index_expr, expression=literal_0
+                        ),
+                        expression=sqlglot_expressions.LTE(
+                            this=sqlglot_expressions.Abs(this=index_expr),
+                            expression=total_parts,
+                        ),
+                    ),
+                    true=neg_index_case,
+                ),
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(this=index_expr, expression=literal_0),
+                    true=zero_index_case,
+                ),
+            ],
+            default=sqlglot_expressions.Null(),
+        )
         return result
