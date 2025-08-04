@@ -1712,6 +1712,16 @@ def get_day_of_week(
                 " s35 = True == False,"  # -> False
                 " s36 = True != False,"  # -> True
                 " s37 = SQRT(9),"  # -> 3.0
+                " s38 = COUNT(customers) == None,"  # -> None
+                " s39 = None >= COUNT(customers),"  # -> None
+                " s40 = COUNT(customers) > None,"  # -> None
+                " s41 = None < COUNT(customers),"  # -> None
+                " s42 = None <= COUNT(customers),"  # -> None
+                " s43 = None + COUNT(customers),"  # -> None
+                " s44 = COUNT(customers) - None,"  # -> None
+                " s45 = None * COUNT(customers),"  # -> None
+                " s46 = COUNT(customers) / None,"  # -> None
+                " s47 = ABS(DEFAULT_TO(LIKE(DEFAULT_TO(MAX(customers.name), ''), '%r%'), 1))"  # -> COALESCE(MAX(sbcustname), '') LIKE '%r%'
                 ")",
                 "Broker",
                 lambda: pd.DataFrame(
@@ -1754,6 +1764,16 @@ def get_day_of_week(
                         "s35": [0],
                         "s36": [1],
                         "s37": [3.0],
+                        "s38": [None],
+                        "s39": [None],
+                        "s40": [None],
+                        "s41": [None],
+                        "s42": [None],
+                        "s43": [None],
+                        "s44": [None],
+                        "s45": [None],
+                        "s46": [None],
+                        "s47": [1],
                     }
                 ),
                 "simplification_2",
@@ -1762,6 +1782,18 @@ def get_day_of_week(
         ),
         pytest.param(
             PyDoughPandasTest(
+                "cust_info = customers.CALCULATE(p=DEFAULT_TO(INTEGER(postal_code), 0))"
+                " .CALCULATE("
+                " rank = RANKING(by=name.ASC()),"
+                " rsum1 = DEFAULT_TO(RELSUM(ABS(p)), 0.1),"
+                " rsum2 = DEFAULT_TO(RELSUM(ABS(p), by=name.ASC(), cumulative=True), 0.1),"
+                " ravg1 = DEFAULT_TO(RELAVG(ABS(p)), 0.1),"
+                " ravg2 = DEFAULT_TO(RELAVG(ABS(p), by=name.ASC(), frame=(None, -1)), 0.1),"
+                " rcnt1 = DEFAULT_TO(RELCOUNT(INTEGER(postal_code)), 0.1),"
+                " rcnt2 = DEFAULT_TO(RELCOUNT(INTEGER(postal_code), by=name.ASC(), cumulative=True), 0.1),"
+                " rsiz1 = DEFAULT_TO(RELSIZE(), 0.1),"
+                " rsiz2 = DEFAULT_TO(RELSIZE(by=name.ASC(), frame=(1, None)), 0.1),"
+                ")\n"
                 "result = Broker.CALCULATE("
                 " s00 = MONOTONIC(1, 2, 3),"  # -> True
                 " s01 = MONOTONIC(1, 1, 1),"  # -> True
@@ -1769,10 +1801,37 @@ def get_day_of_week(
                 " s03 = MONOTONIC(1, 4, 3),"  # -> False
                 " s04 = MONOTONIC(1, 2, 1),"  # -> False
                 " s05 = MONOTONIC(1, 0, 1),"  # -> False
-                " s06 = MONOTONIC(1, LENGTH('foo'), COUNT(customers)),"  # -> 3 <= COUNT(customers)
-                " s07 = MONOTONIC(10, LENGTH('foo'), COUNT(customers)),"  # False
-                " s08 = MONOTONIC(COUNT(customers), LENGTH('foobar'), 9),"  # -> COUNT(customers) <= 6
-                " s09 = MONOTONIC(COUNT(customers), LENGTH('foobar'), 5),"  # -> False
+                " s06 = MONOTONIC(1, LENGTH('foo'), COUNT(cust_info)),"  # -> 3 <= COUNT(*)
+                " s07 = MONOTONIC(10, LENGTH('foo'), COUNT(cust_info)),"  # False
+                " s08 = MONOTONIC(COUNT(cust_info), LENGTH('foobar'), 9),"  # -> COUNT(*) <= 6
+                " s09 = MONOTONIC(COUNT(cust_info), LENGTH('foobar'), 5),"  # -> False
+                " s10 = 13 * 7,"  # -> 91
+                " s11 = 42 * LENGTH(''),"  # -> 0
+                " s12 = 42 + LENGTH('fizzbuzz'),"  # -> 50
+                " s13 = 50 - 15,"  # -> 35
+                " s14 = 50 / 2,"  # -> 25
+                " s15 = ABS(COUNT(cust_info) * -0.75),"  # -> not simplified
+                " s16 = DEFAULT_TO(10, COUNT(cust_info)),"  # -> 10
+                " s17 = DEFAULT_TO(None, None, None, COUNT(cust_info)),"  # -> COUNT(*)
+                " s18 = DEFAULT_TO(None, None, COUNT(cust_info), None, -1),"  # -> COUNT(*)
+                " s19 = STARTSWITH('', 'a'),"  # -> False
+                " s20 = STARTSWITH('a', ''),"  # -> True
+                " s21 = ENDSWITH('', 'a'),"  # -> False
+                " s22 = ENDSWITH('a', ''),"  # -> True
+                " s23 = CONTAINS('', 'a'),"  # -> False
+                " s24 = CONTAINS('a', ''),"  # -> True
+                " s25 = ABS(QUANTILE(ABS(INTEGER(cust_info.postal_code)), 0.25)),"  # -> QUANTILE(ABS(INTEGER(cust_info.postal_code)), 0.25)
+                " s26 = ABS(MEDIAN(ABS(INTEGER(cust_info.postal_code)))),"  # -> MEDIAN(ABS(INTEGER(cust_info.postal_code)))
+                " s27 = ABS(MIN(cust_info.rank)),"  # -> MIN(cust_info.rank)
+                " s28 = ABS(MAX(cust_info.rank)),"  # -> MAX(cust_info.rank)
+                " s29 = ABS(ANYTHING(cust_info.rsum1)),"  # -> ANYTHING(cust_info.rsum1)
+                " s30 = ROUND(ABS(SUM(cust_info.rsum2)), 2),"  # -> ROUND(SUM(cust_info.rsum2), 2)
+                " s31 = ABS(ANYTHING(cust_info.ravg1)),"  # -> ANYTHING(cust_info.ravg1)
+                " s32 = ROUND(ABS(SUM(cust_info.ravg2)), 2),"  # -> ROUND(SUM(cust_info.ravg2), 2)
+                " s33 = ABS(ANYTHING(cust_info.rcnt1)),"  # -> ANYTHING(cust_info.rcnt1)
+                " s34 = ROUND(ABS(SUM(cust_info.rcnt2)), 2),"  # -> ROUND(SUM(cust_info.rcnt2), 2)
+                " s35 = ABS(ANYTHING(cust_info.rsiz1)),"  # -> ANYTHING(cust_info.rsiz1)
+                " s36 = ROUND(ABS(SUM(cust_info.rsiz2)), 2),"  # -> ROUND(SUM(cust_info.rsiz2), 2)
                 ")",
                 "Broker",
                 lambda: pd.DataFrame(
@@ -1787,6 +1846,33 @@ def get_day_of_week(
                         "s07": [0],
                         "s08": [0],
                         "s09": [0],
+                        "s10": [91],
+                        "s11": [0],
+                        "s12": [50],
+                        "s13": [35],
+                        "s14": [25.0],
+                        "s15": [15.0],
+                        "s16": [10],
+                        "s17": [20],
+                        "s18": [20],
+                        "s19": [0],
+                        "s20": [1],
+                        "s21": [0],
+                        "s22": [1],
+                        "s23": [0],
+                        "s24": [1],
+                        "s25": [10002],
+                        "s26": [54050.5],
+                        "s27": [1],
+                        "s28": [20],
+                        "s29": [1027021],
+                        "s30": [9096414.0],
+                        "s31": [51351.05],
+                        "s32": [802375.94],
+                        "s33": [20],
+                        "s34": [210.0],
+                        "s35": [20],
+                        "s36": [190.0],
                     }
                 ),
                 "simplification_3",
