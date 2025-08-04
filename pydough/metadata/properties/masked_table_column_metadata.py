@@ -98,10 +98,6 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         """
         return self._server_masked
 
-    @property
-    def column_name(self) -> str:
-        return self._column_name
-
     @staticmethod
     def create_error_name(name: str, collection_error_name: str):
         return f"masked table column property {name!r} of {collection_error_name}"
@@ -109,7 +105,6 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
     @property
     def components(self) -> list:
         comp: list = super().components
-        comp.append(self.column_name)
         comp.append(self.unprotect_protocol)
         comp.append(self.protect_protocol)
         comp.append(self.server_masked)
