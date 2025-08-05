@@ -105,11 +105,11 @@ def mk_literal(value: Any, is_string: bool = False) -> Literal:
     Make a literal expression with the given value.
 
     Args:
-        value (int): The value to use for the literal.
-        is_string (bool): Whether the literal should be a string.
+        `value`: The value to use for the literal.
+        `is_string`: Whether the literal should be a string.
 
     Returns:
-        Literal: The output literal expression.
+        The output literal expression.
     """
     return Literal(this=str(value), is_string=is_string)
 
@@ -121,15 +121,13 @@ def mkglot(expressions: list[Expression], _from: Expression, **kwargs) -> Select
     from clause directly because all clauses must use them.
 
     Args:
-        expressions (list[Expression]): The expressions to add as columns.
-        _from (Expression): The from query that should not already be wrapped
-        in a FROM.
-    Kwargs:
-        **kwargs: Additional keyword arguments that can be accepted
+        `expressions`: The expressions to add as columns.
+        `_from`: The from query that should not already be wrapped in a FROM.
+        `**kwargs`: Additional keyword arguments that can be accepted
             to build the Select object. Examples include 'from',
             and 'where'.
     Returns:
-        Select: The output select statement.
+        The output select statement.
     """
     from_value = _from.input
     from_alias = _from.alias
@@ -332,7 +330,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     Ident(this="a", quoted=False),
                     Ident(this="b", quoted=False),
                 ],
-                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                _from=GlotFrom(
+                    mkglot(
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                    )
+                ),
                 where=mkglot_func(
                     EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
                 ),
@@ -379,7 +385,17 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                             Ident(this="a", quoted=False),
                             Ident(this="b", quoted=False),
                         ],
-                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                        _from=GlotFrom(
+                            mkglot(
+                                expressions=[
+                                    Ident(this="a", quoted=False),
+                                    Ident(this="b", quoted=False),
+                                ],
+                                _from=GlotFrom(
+                                    Table(this=Ident(this="table", quoted=False))
+                                ),
+                            )
+                        ),
                         where=mkglot_func(
                             EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
                         ),
@@ -1419,7 +1435,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 where=mkglot_func(
                     EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
                 ),
-                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                _from=GlotFrom(
+                    mkglot(
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                    )
+                ),
             ),
             id="root_after_filter",
         ),
@@ -1781,7 +1805,15 @@ def test_expression_identifiers(expr: Expression, expected: set[Ident]) -> None:
                 where=mkglot_func(
                     EQ, [Ident(this="a", quoted=False), mk_literal(1, False)]
                 ),
-                _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                _from=GlotFrom(
+                    mkglot(
+                        expressions=[
+                            Ident(this="a", quoted=False),
+                            Ident(this="b", quoted=False),
+                        ],
+                        _from=GlotFrom(Table(this=Ident(this="table", quoted=False))),
+                    )
+                ),
             ),
             id="root_after_filter",
         ),

@@ -226,7 +226,7 @@ def transpose_aggregate_join(
 
     # Derive which columns are used as aggregate keys by
     # the input.
-    input_keys: dict[str, ColumnReference] = {}
+    input_keys: dict[str, RelationalExpression] = {}
     for ref in side_keys:
         input_keys[ref.name] = ref.with_input(None)
     for agg_key in node.keys.values():

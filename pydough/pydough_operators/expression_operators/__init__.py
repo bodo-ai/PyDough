@@ -32,6 +32,7 @@ __all__ = [
     "FLOAT",
     "FLOOR",
     "GEQ",
+    "GETPART",
     "GRT",
     "HAS",
     "HASNOT",
@@ -93,6 +94,9 @@ __all__ = [
     "STRIP",
     "SUB",
     "SUM",
+    "SqlAliasExpressionFunctionOperator",
+    "SqlMacroExpressionFunctionOperator",
+    "SqlWindowAliasExpressionFunctionOperator",
     "UPPER",
     "VAR",
     "YEAR",
@@ -128,6 +132,7 @@ from .registered_expression_operators import (
     FLOAT,
     FLOOR,
     GEQ,
+    GETPART,
     GRT,
     HAS,
     HASNOT,
@@ -190,4 +195,9 @@ from .registered_expression_operators import (
     UPPER,
     VAR,
     YEAR,
+)
+from .sql_alias_expression_function_operators import SqlAliasExpressionFunctionOperator
+from .sql_macro_expression_function_operators import SqlMacroExpressionFunctionOperator
+from .sql_window_alias_expression_function_operators import (
+    SqlWindowAliasExpressionFunctionOperator,
 )

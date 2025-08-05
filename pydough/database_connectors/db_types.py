@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 
 if TYPE_CHECKING:
     # Importing database-specific modules only for type checking
-    # This allows us to use type hints for SQLite and Snowflake connections
+    # This allows us to use type hints for SQL dialect connections
+    # (SQLite, ..etc.)
     # without requiring these modules at runtime unless they are actually used.
     import sqlite3
 
@@ -22,15 +23,27 @@ if TYPE_CHECKING:
     SnowflakeConn: TypeAlias = snowflake.connector.Connection
     SnowflakeCursor: TypeAlias = snowflake.connector.cursor.SnowflakeCursor
 
-    DBConnection: TypeAlias = SQLiteConn | SnowflakeConn
-    DBCursor: TypeAlias = SQLiteCursor | SnowflakeCursor
+    # TBD: Placeholder lines to add other dialects.
+    # 1. Replace with actual dialect module
+    # import dialect1_module
+    # 2. Replace with other dialect connections
+    # Dialect1_Conn: TypeAlias = dialect1_module.Connection
+    # 3. Replace with other dialect cursors
+    # Dialect1_Cursor: TypeAlias = dialect1_module.Cursor
+
+    # 4. Define the type aliases for database connections and cursors
+    DBConnection: TypeAlias = SQLiteConn | SnowflakeConn  # | Dialect1_Conn
+    DBCursor: TypeAlias = SQLiteCursor | SnowflakeCursor  # | Dialect1_Cursor
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
-    SnowflakeCursor: TypeAlias = Any
     SQLiteConn: TypeAlias = Any
     SQLiteCursor: TypeAlias = Any
+    SnowflakeCursor: TypeAlias = Any
     SnowflakeConn: TypeAlias = Any
+    # Dialect1_Conn: TypeAlias = Any
+    # Dialect1_Cursor: TypeAlias = Any
+
 # This allows us to use these type aliases in the rest of the code
 # without worrying about whether the specific database modules are available.
 __all__ = [
@@ -40,6 +53,8 @@ __all__ = [
     "SQLiteCursor",
     "SnowflakeConn",
     "SnowflakeCursor",
+    # "Dialect1_Conn",
+    # "Dialect1_Cursor",
 ]
 # The type aliases are used to provide a consistent interface for database connections
 # and cursors across different database backends, allowing for easier

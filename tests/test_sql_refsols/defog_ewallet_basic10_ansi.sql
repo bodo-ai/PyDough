@@ -18,5 +18,5 @@ FROM main.merchants AS merchants
 LEFT JOIN _s1 AS _s1
   ON _s1.receiver_id = merchants.mid
 ORDER BY
-  total_amount DESC
+  COALESCE(_s1.sum_amount, 0) DESC
 LIMIT 2

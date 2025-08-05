@@ -39,7 +39,7 @@ class DatabaseConnection:
         types are in scope and how we need to test them.
 
         Args:
-            sql (str): The SQL query to execute.
+            `sql`: The SQL query to execute.
 
         Returns:
             list[pt.Any]: A list of rows returned by the query.
@@ -80,8 +80,7 @@ class DatabaseConnection:
         the functionality can be encapsulated in the DatabaseConnection.
 
         Returns:
-            Connection: The database connection PyDough is managing.
-                        (SQLite3.Connection or SnowflakeConnection)
+            The database connection PyDough is managing.
         """
         return self._connection
 
@@ -99,10 +98,10 @@ class DatabaseDialect(Enum):
         """Convert a string to a DatabaseDialect enum.
 
         Args:
-            dialect (str): The string representation of the dialect.
+            `dialect`: The string representation of the dialect.
 
         Returns:
-            DatabaseDialect: The dialect enum.
+            The dialect enum.
         """
         if dialect == "ansi":
             return DatabaseDialect.ANSI

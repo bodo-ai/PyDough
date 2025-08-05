@@ -4,6 +4,7 @@ A mixture of utility functions for relational nodes and expressions.
 
 __all__ = [
     "add_expr_uses",
+    "add_input_name",
     "apply_substitution",
     "bubble_uniqueness",
     "build_filter",
@@ -38,6 +39,7 @@ from .relational_nodes import (
     Filter,
     Join,
     JoinType,
+    Project,
     RelationalNode,
 )
 
@@ -52,6 +54,15 @@ null_propagating_operators = {
     pydop.STARTSWITH,
     pydop.ENDSWITH,
     pydop.CONTAINS,
+    pydop.REPLACE,
+    pydop.FIND,
+    pydop.GETPART,
+    pydop.LPAD,
+    pydop.RPAD,
+    pydop.STRCOUNT,
+    pydop.INTEGER,
+    pydop.FLOAT,
+    pydop.STRING,
     pydop.LIKE,
     pydop.LOWER,
     pydop.UPPER,
@@ -70,10 +81,21 @@ null_propagating_operators = {
     pydop.SUB,
     pydop.MUL,
     pydop.DIV,
+    pydop.ABS,
+    pydop.FLOOR,
+    pydop.LARGEST,
+    pydop.SMALLEST,
+    pydop.CEIL,
+    pydop.MONOTONIC,
+    pydop.POW,
+    pydop.POWER,
+    pydop.SQRT,
+    pydop.ROUND,
+    pydop.SLICE,
 }
 """
 A set of operators with the property that the output is null if any of the
-inputs are null.
+column inputs are null.
 """
 
 
@@ -244,7 +266,9 @@ def passthrough_column_mapping(node: RelationalNode) -> dict[str, RelationalExpr
 
 
 def build_filter(
-    node: RelationalNode, filters: set[RelationalExpression]
+    node: RelationalNode,
+    filters: set[RelationalExpression],
+    columns: dict[str, RelationalExpression] | None = None,
 ) -> RelationalNode:
     """
     Build a filter node with the given filters on top of an input node.
@@ -252,6 +276,9 @@ def build_filter(
     Args:
         `node`: The input node to build the filter on top of.
         `filters`: The set of filters to apply.
+        `columns`: An optional mapping of the column mapping to use on the
+        built filter node. If not provided, uses the passthrough column mapping
+        of `node`.
 
     Returns:
         A filter node with the given filters applied on top of `node`. If
@@ -263,6 +290,9 @@ def build_filter(
     filters.discard(LiteralExpression(True, BooleanType()))
     condition: RelationalExpression
     if len(filters) == 0:
+        # If columns was provided, use it to create a Project node
+        if columns is not None:
+            return Project(node, columns)
         return node
 
     # Detect whether the filter can be pushed into a join condition. If so,
@@ -297,11 +327,15 @@ def build_filter(
         assert isinstance(new_join, Join)
         new_join.condition = condition
         new_join.cardinality = new_join.cardinality.add_potential_filter()
+        if columns is not None:
+            return Project(new_join, columns)
         return new_join
 
     # Otherwise, just return a new filter node with the new condition on top
     # of the existing node.
-    return Filter(node, condition, passthrough_column_mapping(node))
+    if columns is None:
+        columns = passthrough_column_mapping(node)
+    return Filter(node, condition, columns)
 
 
 def transpose_expression(
@@ -741,6 +775,54 @@ def apply_substitution(
                     apply_substitution(
                         order_arg.expr, substitutions, correl_substitutions
                     ),
+                    order_arg.ascending,
+                    order_arg.nulls_first,
+                )
+                for order_arg in expr.order_inputs
+            ],
+            expr.kwargs,
+        )
+
+    # For all other cases, just return the expression as is.
+    return expr
+
+
+def add_input_name(
+    expr: RelationalExpression, input_name: str | None
+) -> RelationalExpression:
+    """
+    Adds an input name to all column references inside the given expression.
+
+    Args:
+        `expr`: The expression to add the input name to its contents.
+        `input_name`: The input name to add.
+
+    Returns:
+        The expression with the input name added to all contents, if
+        applicable.
+    """
+    if isinstance(expr, ColumnReference):
+        return expr.with_input(input_name)
+
+    # For call expressions, recursively transform the inputs.
+    if isinstance(expr, CallExpression):
+        return CallExpression(
+            expr.op,
+            expr.data_type,
+            [add_input_name(arg, input_name) for arg in expr.inputs],
+        )
+
+    # For window call expressions, recursively transform the inputs, partition
+    # inputs, and order inputs.
+    if isinstance(expr, WindowCallExpression):
+        return WindowCallExpression(
+            expr.op,
+            expr.data_type,
+            [add_input_name(arg, input_name) for arg in expr.inputs],
+            [add_input_name(arg, input_name) for arg in expr.partition_inputs],
+            [
+                ExpressionSortInfo(
+                    add_input_name(order_arg.expr, input_name),
                     order_arg.ascending,
                     order_arg.nulls_first,
                 )

@@ -90,8 +90,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     datetime_current,
     datetime_relative,
     deep_best_analysis,
+    double_cross,
     double_partition,
     dumb_aggregation,
+    extract_colors,
     first_order_in_year,
     first_order_per_customer,
     floor_and_ceil,
@@ -1708,6 +1710,25 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                extract_colors,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 6)),
+                        "c1": ["GOLDENROD", "BLUSH", "SPRING", "CORNFLOWER", "FOREST"],
+                        "c2": ["LAVENDER", "THISTLE", "GREEN", "CHOCOLATE", "BROWN"],
+                        "c3": ["SPRING", "BLUE", "YELLOW", "SMOKE", "CORAL"],
+                        "c4": ["CHOCOLATE", "YELLOW", "PURPLE", "GREEN", "PUFF"],
+                        "c5": ["LACE", "SADDLE", "CORNSILK", "PINK", "CREAM"],
+                        "c6": [None] * 5,
+                    }
+                ),
+                "extract_colors",
+            ),
+            id="extract_colors",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_int_float_string_cast,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2346,6 +2367,32 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "order_quarter_test",
             ),
             id="order_quarter_test",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                double_cross,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "wk": list(range(1, 10)),
+                        "n_lines": [9, 23, 58, 143, 195, 274, 348, 393, 503],
+                        "n_orders": [891, 847, 870, 918, 893, 850, 854, 863, 824],
+                        "lpo": [
+                            0.0101,
+                            0.0184,
+                            0.0345,
+                            0.0661,
+                            0.0969,
+                            0.1332,
+                            0.1715,
+                            0.2066,
+                            0.2492,
+                        ],
+                    }
+                ),
+                "double_cross",
+            ),
+            id="double_cross",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -3292,7 +3339,7 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     error_message: str,
     get_sample_graph: graph_fetcher,
