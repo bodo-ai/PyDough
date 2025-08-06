@@ -1,4 +1,4 @@
-WITH _T1 AS (
+WITH _T0 AS (
   SELECT
     ANY_VALUE(TIMES.t_name) AS ANYTHING_T_NAME,
     ANY_VALUE(TIMES.t_start_hour) AS ANYTHING_T_START_HOUR,
@@ -9,18 +9,12 @@ WITH _T1 AS (
     AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
   GROUP BY
     TIMES.t_name
-), _T0 AS (
-  SELECT
-    ROUND((
-      100.0 * N_ROWS
-    ) / SUM(N_ROWS) OVER (), 2) AS PCT_SEARCHES,
-    ANYTHING_T_NAME,
-    ANYTHING_T_START_HOUR
-  FROM _T1
 )
 SELECT
   ANYTHING_T_NAME AS tod,
-  PCT_SEARCHES AS pct_searches
+  ROUND((
+    100.0 * N_ROWS
+  ) / SUM(N_ROWS) OVER (), 2) AS pct_searches
 FROM _T0
 ORDER BY
   ANYTHING_T_START_HOUR NULLS FIRST

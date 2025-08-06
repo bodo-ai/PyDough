@@ -1,6 +1,6 @@
 WITH _S1 AS (
   SELECT
-    COUNT(*) AS TOTAL_COUPONS,
+    COUNT(*) AS N_ROWS,
     merchant_id AS MERCHANT_ID
   FROM MAIN.COUPONS
   GROUP BY
@@ -8,7 +8,7 @@ WITH _S1 AS (
 )
 SELECT
   MERCHANTS.name AS merchant_name,
-  _S1.TOTAL_COUPONS AS total_coupons
+  _S1.N_ROWS AS total_coupons
 FROM MAIN.MERCHANTS AS MERCHANTS
 JOIN _S1 AS _S1
   ON MERCHANTS.mid = _S1.MERCHANT_ID

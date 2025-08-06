@@ -1,10 +1,10 @@
-WITH _T4 AS (
+WITH _T2 AS (
   SELECT
     ca_dt AS CA_DT
   FROM MAIN.CALENDAR
   WHERE
     YEAR(ca_dt) IN (2020, 2021)
-), _T8 AS (
+), _T5 AS (
   SELECT
     co_id AS CO_ID,
     co_name AS CO_NAME
@@ -14,42 +14,42 @@ WITH _T4 AS (
 ), _S7 AS (
   SELECT
     COUNT(*) AS N_ROWS,
-    _T7.CA_DT
-  FROM _T4 AS _T7
+    _T4.CA_DT
+  FROM _T2 AS _T4
   JOIN MAIN.CALENDAR AS CALENDAR
-    ON CALENDAR.ca_dt >= DATEADD(MONTH, -6, CAST(_T7.CA_DT AS TIMESTAMP))
+    ON CALENDAR.ca_dt >= DATEADD(MONTH, -6, CAST(_T4.CA_DT AS TIMESTAMP))
   JOIN MAIN.DEVICES AS DEVICES
     ON CALENDAR.ca_dt = DATE_TRUNC('DAY', CAST(DEVICES.de_purchase_ts AS TIMESTAMP))
-  JOIN _T8 AS _T8
-    ON DEVICES.de_production_country_id = _T8.CO_ID
+  JOIN _T5 AS _T5
+    ON DEVICES.de_production_country_id = _T5.CO_ID
   GROUP BY
-    _T7.CA_DT
+    _T4.CA_DT
 ), _S15 AS (
   SELECT
     COUNT(*) AS N_ROWS,
-    _T11.CA_DT
-  FROM _T4 AS _T11
+    _T7.CA_DT
+  FROM _T2 AS _T7
   JOIN MAIN.INCIDENTS AS INCIDENTS
-    ON _T11.CA_DT = DATE_TRUNC('DAY', CAST(INCIDENTS.in_error_report_ts AS TIMESTAMP))
+    ON _T7.CA_DT = DATE_TRUNC('DAY', CAST(INCIDENTS.in_error_report_ts AS TIMESTAMP))
   JOIN MAIN.DEVICES AS DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
-  JOIN _T8 AS _T12
-    ON DEVICES.de_production_country_id = _T12.CO_ID
+  JOIN _T5 AS _T8
+    ON DEVICES.de_production_country_id = _T8.CO_ID
   GROUP BY
-    _T11.CA_DT
+    _T7.CA_DT
 )
 SELECT
-  CONCAT_WS('-', YEAR(_T4.CA_DT), LPAD(MONTH(_T4.CA_DT), 2, '0')) AS month,
+  CONCAT_WS('-', YEAR(_T2.CA_DT), LPAD(MONTH(_T2.CA_DT), 2, '0')) AS month,
   ROUND((
     1000000.0 * COALESCE(SUM(_S15.N_ROWS), 0)
   ) / COALESCE(SUM(_S7.N_ROWS), 0), 2) AS ir
-FROM _T4 AS _T4
+FROM _T2 AS _T2
 LEFT JOIN _S7 AS _S7
-  ON _S7.CA_DT = _T4.CA_DT
+  ON _S7.CA_DT = _T2.CA_DT
 LEFT JOIN _S15 AS _S15
-  ON _S15.CA_DT = _T4.CA_DT
+  ON _S15.CA_DT = _T2.CA_DT
 GROUP BY
-  MONTH(_T4.CA_DT),
-  YEAR(_T4.CA_DT)
+  MONTH(_T2.CA_DT),
+  YEAR(_T2.CA_DT)
 ORDER BY
   MONTH NULLS FIRST

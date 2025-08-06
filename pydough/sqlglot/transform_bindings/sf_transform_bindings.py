@@ -27,16 +27,10 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
         pydop.SIGN: "SIGN",
-        pydop.YEAR: "YEAR",
-        pydop.QUARTER: "QUARTER",
-        pydop.MONTH: "MONTH",
-        pydop.DAY: "DAY",
-        pydop.HOUR: "HOUR",
-        pydop.MINUTE: "MINUTE",
-        pydop.SECOND: "SECOND",
-        pydop.DAYNAME: "DAYNAME",
+        # pydop.DAYNAME: "DAYNAME",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
+        pydop.GETPART: "SPLIT_PART",
     }
     """
     Mapping of PyDough operators to equivalent Snowflake SQL function names
@@ -77,3 +71,26 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             case _:
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
+
+    # def convert_extract_datetime(
+    #     self,
+    #     args: list[SQLGlotExpression],
+    #     types: list[PyDoughType],
+    #     unit: DateTimeUnit,
+    # ) -> SQLGlotExpression:
+
+    #     # Update argument type to fit datetime
+    #     dt_expr = self.handle_datetime_base_arg(args[0])
+    #     match unit:
+    #         case DateTimeUnit.YEAR:
+    #             return sqlglot_expressions.Year(this=dt_expr)
+    #         case DateTimeUnit.QUARTER:
+    #             return sqlglot_expressions.Quarter(this=dt_expr)
+    #         case DateTimeUnit.MONTH:
+    #             return sqlglot_expressions.Month(this=dt_expr)
+    #         case DateTimeUnit.DAY:
+    #             return sqlglot_expressions.Day(this=dt_expr)
+    #         case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
+    #             return sqlglot_expressions.Anonymous(
+    #             this=unit.value.upper(), expressions=[dt_expr]
+    #         )

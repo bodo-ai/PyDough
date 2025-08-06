@@ -1,19 +1,11 @@
-WITH _S0 AS (
-  SELECT
-    SUM(sale_price) AS SUM_SALE_PRICE,
-    car_id AS CAR_ID
-  FROM MAIN.SALES
-  WHERE
-    YEAR(sale_date) = 2023
-  GROUP BY
-    car_id
-)
 SELECT
   (
     (
-      COALESCE(SUM(_S0.SUM_SALE_PRICE), 0) - COALESCE(SUM(CARS.cost), 0)
+      COALESCE(SUM(SALES.sale_price), 0) - COALESCE(SUM(CARS.cost), 0)
     ) / COALESCE(SUM(CARS.cost), 0)
   ) * 100 AS GPM
-FROM _S0 AS _S0
+FROM MAIN.SALES AS SALES
 JOIN MAIN.CARS AS CARS
-  ON CARS._id = _S0.CAR_ID
+  ON CARS._id = SALES.car_id
+WHERE
+  YEAR(SALES.sale_date) = 2023

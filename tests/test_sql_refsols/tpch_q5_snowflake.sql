@@ -1,37 +1,4 @@
-WITH _S7 AS (
-  SELECT
-    SUM(l_extendedprice * (
-      1 - l_discount
-    )) AS SUM_VALUE,
-    l_orderkey AS L_ORDERKEY,
-    l_suppkey AS L_SUPPKEY
-  FROM TPCH.LINEITEM
-  GROUP BY
-    l_orderkey,
-    l_suppkey
-), _S10 AS (
-  SELECT
-    ANY_VALUE(NATION.n_name) AS ANYTHING_N_NAME,
-    SUM(_S7.SUM_VALUE) AS SUM_SUM_VALUE,
-    _S7.L_SUPPKEY,
-    NATION.n_name AS N_NAME,
-    NATION.n_nationkey AS N_NATIONKEY
-  FROM TPCH.NATION AS NATION
-  JOIN TPCH.REGION AS REGION
-    ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'ASIA'
-  JOIN TPCH.CUSTOMER AS CUSTOMER
-    ON CUSTOMER.c_nationkey = NATION.n_nationkey
-  JOIN TPCH.ORDERS AS ORDERS
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey
-    AND ORDERS.o_orderdate < CAST('1995-01-01' AS DATE)
-    AND ORDERS.o_orderdate >= CAST('1994-01-01' AS DATE)
-  JOIN _S7 AS _S7
-    ON ORDERS.o_orderkey = _S7.L_ORDERKEY
-  GROUP BY
-    _S7.L_SUPPKEY,
-    NATION.n_name,
-    NATION.n_nationkey
-), _S11 AS (
+WITH _S11 AS (
   SELECT
     NATION.n_name AS N_NAME,
     SUPPLIER.s_suppkey AS S_SUPPKEY
@@ -40,12 +7,26 @@ WITH _S7 AS (
     ON NATION.n_nationkey = SUPPLIER.s_nationkey
 )
 SELECT
-  ANY_VALUE(_S10.ANYTHING_N_NAME) AS N_NAME,
-  COALESCE(SUM(_S10.SUM_SUM_VALUE), 0) AS REVENUE
-FROM _S10 AS _S10
+  ANY_VALUE(NATION.n_name) AS N_NAME,
+  COALESCE(SUM(LINEITEM.l_extendedprice * (
+    1 - LINEITEM.l_discount
+  )), 0) AS REVENUE
+FROM TPCH.NATION AS NATION
+JOIN TPCH.REGION AS REGION
+  ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'ASIA'
+JOIN TPCH.CUSTOMER AS CUSTOMER
+  ON CUSTOMER.c_nationkey = NATION.n_nationkey
+JOIN TPCH.ORDERS AS ORDERS
+  ON CUSTOMER.c_custkey = ORDERS.o_custkey
+  AND ORDERS.o_orderdate < CAST('1995-01-01' AS DATE)
+  AND ORDERS.o_orderdate >= CAST('1994-01-01' AS DATE)
+JOIN TPCH.LINEITEM AS LINEITEM
+  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
 JOIN _S11 AS _S11
-  ON _S10.L_SUPPKEY = _S11.S_SUPPKEY AND _S10.N_NAME = _S11.N_NAME
+  ON LINEITEM.l_suppkey = _S11.S_SUPPKEY AND NATION.n_name = _S11.N_NAME
 GROUP BY
-  _S10.N_NATIONKEY
+  NATION.n_nationkey
 ORDER BY
-  REVENUE DESC NULLS LAST
+  COALESCE(SUM(LINEITEM.l_extendedprice * (
+    1 - LINEITEM.l_discount
+  )), 0) DESC NULLS LAST
