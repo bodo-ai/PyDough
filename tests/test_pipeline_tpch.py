@@ -385,7 +385,6 @@ from .testing_utilities import PyDoughPandasTest
                     }
                 ),
                 "smoke_b",
-                fix_output_dialect="snowflake",
             ),
             id="smoke_b",
         ),

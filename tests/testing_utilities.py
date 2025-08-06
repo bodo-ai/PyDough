@@ -1279,6 +1279,7 @@ class PyDoughPandasTest:
             assert len(result.columns) == len(refsol.columns)
             result.columns = refsol.columns
 
+        # FIXME:
         if self.fix_output_dialect == "snowflake":
             # Update column "q"
             # Start of Week in Snowflake is Monday
