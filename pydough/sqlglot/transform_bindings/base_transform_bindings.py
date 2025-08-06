@@ -1362,10 +1362,17 @@ class BaseTransformBindings:
         Returns:
             The SQLGlot expression to truncate `base`.
         """
-        return sqlglot_expressions.DateTrunc(
-            this=self.make_datetime_arg(base),
-            unit=sqlglot_expressions.Var(this=unit.value),
-        )
+        match unit:
+            case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
+                return sqlglot_expressions.TimestampTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
+            case _:
+                return sqlglot_expressions.DateTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
 
     def apply_datetime_offset(
         self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit

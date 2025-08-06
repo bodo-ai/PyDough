@@ -1291,7 +1291,22 @@ class PyDoughPandasTest:
 
 def harmonize_types(column_a, column_b):
     """
-    TODO ADD DOCSTRING
+    Harmonizes data types between two Pandas columns to ensure compatibility
+    for comparison equality check operations.
+
+    The function performs type conversions based on common mismatches, including:
+    - Decimal to float conversion
+    - String to datetime or date conversion
+    - Date to string or datetime conversion
+
+    If no known mismatch pattern is found, the original columns are returned unchanged.
+
+    Parameters:
+        `column_a`: The first column to harmonize.
+        `column_b`: The second column to harmonize.
+
+    Returns:
+        A tuple of the two harmonized columns.
     """
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, float) for elem in column_b
