@@ -33,10 +33,70 @@ SELECT
   MAX(c_acctbal) AS g,
   ANY_VALUE(SUBSTRING(c_name, 1, 1)) AS h,
   COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END) AS i,
-  CEIL(VARIANCE_POP(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END)) AS j,
-  ROUND(VARIANCE(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END), 4) AS k,
-  FLOOR(STDDEV_POP(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END)) AS l,
-  ROUND(STDDEV(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END), 4) AS m,
+  CEIL(
+    (
+      (
+        SUM((
+          POWER(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 2)
+        )) - (
+          (
+            POWER(SUM(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END), 2)
+          ) / COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END)
+        )
+      ) / COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END)
+    )
+  ) AS j,
+  ROUND(
+    (
+      (
+        SUM((
+          POWER(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END, 2)
+        )) - (
+          (
+            POWER(SUM(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END), 2)
+          ) / COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END)
+        )
+      ) / (
+        COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) - 1
+      )
+    ),
+    4
+  ) AS k,
+  FLOOR(
+    POWER(
+      (
+        (
+          SUM((
+            POWER(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END, 2)
+          )) - (
+            (
+              POWER(SUM(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END), 2)
+            ) / COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END)
+          )
+        ) / COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END)
+      ),
+      0.5
+    )
+  ) AS l,
+  ROUND(
+    POWER(
+      (
+        (
+          SUM((
+            POWER(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 2)
+          )) - (
+            (
+              POWER(SUM(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END), 2)
+            ) / COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END)
+          )
+        ) / (
+          COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END) - 1
+        )
+      ),
+      0.5
+    ),
+    4
+  ) AS m,
   ROUND(AVG(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0)), 2) AS n,
   SUM(NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS o,
   SUM(CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL) AS p,
