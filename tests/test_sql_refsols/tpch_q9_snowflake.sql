@@ -1,6 +1,6 @@
 SELECT
   NATION.n_name AS NATION,
-  YEAR(ORDERS.o_orderdate) AS O_YEAR,
+  YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)) AS O_YEAR,
   COALESCE(
     SUM(
       LINEITEM.l_extendedprice * (
@@ -22,7 +22,7 @@ JOIN TPCH.PARTSUPP AS PARTSUPP
   ON LINEITEM.l_partkey = PARTSUPP.ps_partkey
   AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
 GROUP BY
-  YEAR(ORDERS.o_orderdate),
+  YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)),
   NATION.n_name
 ORDER BY
   NATION.n_name NULLS FIRST,

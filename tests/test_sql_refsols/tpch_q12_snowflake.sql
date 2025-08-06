@@ -11,7 +11,7 @@ WHERE
   AND (
     LINEITEM.l_shipmode = 'MAIL' OR LINEITEM.l_shipmode = 'SHIP'
   )
-  AND YEAR(LINEITEM.l_receiptdate) = 1994
+  AND YEAR(CAST(LINEITEM.l_receiptdate AS TIMESTAMP)) = 1994
 GROUP BY
   LINEITEM.l_shipmode
 ORDER BY

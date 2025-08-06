@@ -1,27 +1,43 @@
 WITH _S2 AS (
   SELECT
-    CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0')) AS MONTH,
+    CONCAT_WS(
+      '-',
+      YEAR(CAST(sbcustjoindate AS TIMESTAMP)),
+      LPAD(MONTH(CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
+    ) AS MONTH,
     COUNT(*) AS N_ROWS
   FROM MAIN.SBCUSTOMER
   WHERE
     sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND sbcustjoindate >= DATE_TRUNC('MONTH', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
   GROUP BY
-    CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0'))
+    CONCAT_WS(
+      '-',
+      YEAR(CAST(sbcustjoindate AS TIMESTAMP)),
+      LPAD(MONTH(CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
+    )
 ), _S3 AS (
   SELECT
     AVG(SBTRANSACTION.sbtxamount) AS AVG_SBTXAMOUNT,
-    CONCAT_WS('-', YEAR(SBCUSTOMER.sbcustjoindate), LPAD(MONTH(SBCUSTOMER.sbcustjoindate), 2, '0')) AS MONTH
+    CONCAT_WS(
+      '-',
+      YEAR(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)),
+      LPAD(MONTH(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)), 2, '0')
+    ) AS MONTH
   FROM MAIN.SBCUSTOMER AS SBCUSTOMER
   JOIN MAIN.SBTRANSACTION AS SBTRANSACTION
-    ON MONTH(SBCUSTOMER.sbcustjoindate) = MONTH(SBTRANSACTION.sbtxdatetime)
+    ON MONTH(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)) = MONTH(CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP))
     AND SBCUSTOMER.sbcustid = SBTRANSACTION.sbtxcustid
-    AND YEAR(SBCUSTOMER.sbcustjoindate) = YEAR(SBTRANSACTION.sbtxdatetime)
+    AND YEAR(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)) = YEAR(CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP))
   WHERE
     SBCUSTOMER.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND SBCUSTOMER.sbcustjoindate >= DATE_TRUNC('MONTH', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
   GROUP BY
-    CONCAT_WS('-', YEAR(SBCUSTOMER.sbcustjoindate), LPAD(MONTH(SBCUSTOMER.sbcustjoindate), 2, '0'))
+    CONCAT_WS(
+      '-',
+      YEAR(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)),
+      LPAD(MONTH(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)), 2, '0')
+    )
 )
 SELECT
   _S2.MONTH AS month,

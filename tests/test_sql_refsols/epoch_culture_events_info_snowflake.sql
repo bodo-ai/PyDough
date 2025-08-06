@@ -7,23 +7,24 @@ WITH _S2 AS (
 SELECT
   EVENTS.ev_name AS event_name,
   ERAS.er_name AS era_name,
-  YEAR(EVENTS.ev_dt) AS event_year,
+  YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP)) AS event_year,
   SEASONS.s_name AS season_name,
   TIMES.t_name AS tod
 FROM EVENTS AS EVENTS
 JOIN ERAS AS ERAS
-  ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
-  AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
+  ON ERAS.er_end_year > YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
+  AND ERAS.er_start_year <= YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
 JOIN _S2 AS _S2
   ON EVENTS.ev_key = _S2.EV_KEY
 JOIN SEASONS AS SEASONS
-  ON SEASONS.s_month1 = MONTH(_S2.EV_DT)
-  OR SEASONS.s_month2 = MONTH(_S2.EV_DT)
-  OR SEASONS.s_month3 = MONTH(_S2.EV_DT)
+  ON SEASONS.s_month1 = MONTH(CAST(_S2.EV_DT AS TIMESTAMP))
+  OR SEASONS.s_month2 = MONTH(CAST(_S2.EV_DT AS TIMESTAMP))
+  OR SEASONS.s_month3 = MONTH(CAST(_S2.EV_DT AS TIMESTAMP))
 JOIN _S2 AS _S6
   ON EVENTS.ev_key = _S6.EV_KEY
 JOIN TIMES AS TIMES
-  ON TIMES.t_end_hour > HOUR(_S6.EV_DT) AND TIMES.t_start_hour <= HOUR(_S6.EV_DT)
+  ON TIMES.t_end_hour > HOUR(CAST(_S6.EV_DT AS TIMESTAMP))
+  AND TIMES.t_start_hour <= HOUR(CAST(_S6.EV_DT AS TIMESTAMP))
 WHERE
   EVENTS.ev_typ = 'culture'
 ORDER BY

@@ -3,4 +3,5 @@ SELECT
     ORDERS.o_totalprice) AS seventieth_order_price
 FROM TPCH.CUSTOMER AS CUSTOMER
 JOIN TPCH.ORDERS AS ORDERS
-  ON CUSTOMER.c_custkey = ORDERS.o_custkey AND YEAR(ORDERS.o_orderdate) = 1998
+  ON CUSTOMER.c_custkey = ORDERS.o_custkey
+  AND YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)) = 1998

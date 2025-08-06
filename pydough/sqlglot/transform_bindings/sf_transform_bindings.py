@@ -13,6 +13,7 @@ from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 
 from .base_transform_bindings import BaseTransformBindings
+from .sqlglot_transform_utils import DateTimeUnit
 
 
 class SnowflakeTransformBindings(BaseTransformBindings):
@@ -27,7 +28,6 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
         pydop.SIGN: "SIGN",
-        # pydop.DAYNAME: "DAYNAME",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
         pydop.GETPART: "SPLIT_PART",
@@ -72,25 +72,26 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
 
-    # def convert_extract_datetime(
-    #     self,
-    #     args: list[SQLGlotExpression],
-    #     types: list[PyDoughType],
-    #     unit: DateTimeUnit,
-    # ) -> SQLGlotExpression:
-
-    #     # Update argument type to fit datetime
-    #     dt_expr = self.handle_datetime_base_arg(args[0])
-    #     match unit:
-    #         case DateTimeUnit.YEAR:
-    #             return sqlglot_expressions.Year(this=dt_expr)
-    #         case DateTimeUnit.QUARTER:
-    #             return sqlglot_expressions.Quarter(this=dt_expr)
-    #         case DateTimeUnit.MONTH:
-    #             return sqlglot_expressions.Month(this=dt_expr)
-    #         case DateTimeUnit.DAY:
-    #             return sqlglot_expressions.Day(this=dt_expr)
-    #         case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
-    #             return sqlglot_expressions.Anonymous(
-    #             this=unit.value.upper(), expressions=[dt_expr]
-    #         )
+    def convert_extract_datetime(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+        unit: DateTimeUnit,
+    ) -> SQLGlotExpression:
+        # Update argument type to fit datetime
+        dt_expr = self.handle_datetime_base_arg(args[0])
+        func_expr: SQLGlotExpression
+        match unit:
+            case DateTimeUnit.YEAR:
+                func_expr = sqlglot_expressions.Year(this=dt_expr)
+            case DateTimeUnit.QUARTER:
+                func_expr = sqlglot_expressions.Quarter(this=dt_expr)
+            case DateTimeUnit.MONTH:
+                func_expr = sqlglot_expressions.Month(this=dt_expr)
+            case DateTimeUnit.DAY:
+                func_expr = sqlglot_expressions.Day(this=dt_expr)
+            case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
+                func_expr = sqlglot_expressions.Anonymous(
+                    this=unit.value.upper(), expressions=[dt_expr]
+                )
+        return func_expr

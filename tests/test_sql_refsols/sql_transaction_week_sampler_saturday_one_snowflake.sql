@@ -1,7 +1,22 @@
 SELECT
   sbtxdatetime AS date_time,
   DATE_TRUNC('WEEK', CAST(sbtxdatetime AS TIMESTAMP)) AS sow,
-  DAYNAME(sbtxdatetime) AS dayname,
+  CASE
+    WHEN DAYOFWEEK(sbtxdatetime) = 0
+    THEN 'Sunday'
+    WHEN DAYOFWEEK(sbtxdatetime) = 1
+    THEN 'Monday'
+    WHEN DAYOFWEEK(sbtxdatetime) = 2
+    THEN 'Tuesday'
+    WHEN DAYOFWEEK(sbtxdatetime) = 3
+    THEN 'Wednesday'
+    WHEN DAYOFWEEK(sbtxdatetime) = 4
+    THEN 'Thursday'
+    WHEN DAYOFWEEK(sbtxdatetime) = 5
+    THEN 'Friday'
+    WHEN DAYOFWEEK(sbtxdatetime) = 6
+    THEN 'Saturday'
+  END AS dayname,
   (
     (
       DAYOFWEEK(sbtxdatetime) + 1
@@ -9,4 +24,5 @@ SELECT
   ) + 1 AS dayofweek
 FROM MAIN.SBTRANSACTION
 WHERE
-  DAY(sbtxdatetime) > 1 AND YEAR(sbtxdatetime) < 2025
+  DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
+  AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025

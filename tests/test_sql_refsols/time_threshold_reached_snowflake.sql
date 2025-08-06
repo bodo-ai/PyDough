@@ -6,7 +6,7 @@ WITH _T3 AS (
     sbtxdatetime AS SBTXDATETIME
   FROM MAIN.SBTRANSACTION
   WHERE
-    YEAR(sbtxdatetime) = 2023
+    YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023
 ), _T1 AS (
   SELECT
     SBTXDATETIME

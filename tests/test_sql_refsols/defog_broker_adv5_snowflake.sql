@@ -3,12 +3,20 @@ WITH _S0 AS (
     COUNT(sbdpclose) AS COUNT_SBDPCLOSE,
     MAX(sbdphigh) AS MAX_HIGH,
     MIN(sbdplow) AS MIN_LOW,
-    CONCAT_WS('-', YEAR(sbdpdate), LPAD(MONTH(sbdpdate), 2, '0')) AS MONTH,
+    CONCAT_WS(
+      '-',
+      YEAR(CAST(sbdpdate AS TIMESTAMP)),
+      LPAD(MONTH(CAST(sbdpdate AS TIMESTAMP)), 2, '0')
+    ) AS MONTH,
     SUM(sbdpclose) AS SUM_SBDPCLOSE,
     sbdptickerid AS SBDPTICKERID
   FROM MAIN.SBDAILYPRICE
   GROUP BY
-    CONCAT_WS('-', YEAR(sbdpdate), LPAD(MONTH(sbdpdate), 2, '0')),
+    CONCAT_WS(
+      '-',
+      YEAR(CAST(sbdpdate AS TIMESTAMP)),
+      LPAD(MONTH(CAST(sbdpdate AS TIMESTAMP)), 2, '0')
+    ),
     sbdptickerid
 ), _T0 AS (
   SELECT

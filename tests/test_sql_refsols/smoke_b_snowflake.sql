@@ -1,7 +1,32 @@
 SELECT
   o_orderkey AS key,
-  CONCAT_WS('_', YEAR(o_orderdate), QUARTER(o_orderdate), MONTH(o_orderdate), DAY(o_orderdate)) AS a,
-  CONCAT_WS(':', DAYNAME(o_orderdate), DAYOFWEEK(o_orderdate)) AS b,
+  CONCAT_WS(
+    '_',
+    YEAR(CAST(o_orderdate AS TIMESTAMP)),
+    QUARTER(CAST(o_orderdate AS TIMESTAMP)),
+    MONTH(CAST(o_orderdate AS TIMESTAMP)),
+    DAY(CAST(o_orderdate AS TIMESTAMP))
+  ) AS a,
+  CONCAT_WS(
+    ':',
+    CASE
+      WHEN DAYOFWEEK(o_orderdate) = 0
+      THEN 'Sunday'
+      WHEN DAYOFWEEK(o_orderdate) = 1
+      THEN 'Monday'
+      WHEN DAYOFWEEK(o_orderdate) = 2
+      THEN 'Tuesday'
+      WHEN DAYOFWEEK(o_orderdate) = 3
+      THEN 'Wednesday'
+      WHEN DAYOFWEEK(o_orderdate) = 4
+      THEN 'Thursday'
+      WHEN DAYOFWEEK(o_orderdate) = 5
+      THEN 'Friday'
+      WHEN DAYOFWEEK(o_orderdate) = 6
+      THEN 'Saturday'
+    END,
+    DAYOFWEEK(o_orderdate)
+  ) AS b,
   DATEADD(DAY, -13, DATEADD(MONTH, 6, DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)))) AS c,
   DATEADD(HOUR, 25, DATEADD(YEAR, 1, DATE_TRUNC('QUARTER', CAST(o_orderdate AS TIMESTAMP)))) AS d,
   DATE_TRUNC('MINUTE', CAST('2025-01-01 12:35:13' AS TIMESTAMP)) AS e,
@@ -13,9 +38,9 @@ SELECT
   CAST('2025-01-01 12:35:13' AS TIMESTAMP) AS g,
   CONCAT_WS(
     ';',
-    HOUR('2025-01-01 12:35:13'),
-    MINUTE(CAST('2025-01-01 13:20:13' AS TIMESTAMP)),
-    SECOND(CAST('2025-01-01 12:35:06' AS TIMESTAMP))
+    HOUR(CAST('2025-01-01 12:35:13' AS TIMESTAMP)),
+    MINUTE(CAST(CAST('2025-01-01 13:20:13' AS TIMESTAMP) AS TIMESTAMP)),
+    SECOND(CAST(CAST('2025-01-01 12:35:06' AS TIMESTAMP) AS TIMESTAMP))
   ) AS h,
   DATEDIFF(YEAR, CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS DATETIME)) AS i,
   DATEDIFF(QUARTER, CAST('1993-05-25 12:45:36' AS TIMESTAMP), CAST(o_orderdate AS DATETIME)) AS j,

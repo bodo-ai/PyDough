@@ -4,7 +4,7 @@ WITH _S3 AS (
     l_partkey AS L_PARTKEY
   FROM TPCH.LINEITEM
   WHERE
-    YEAR(l_shipdate) = 1994
+    YEAR(CAST(l_shipdate AS TIMESTAMP)) = 1994
   GROUP BY
     l_partkey
 ), _S5 AS (

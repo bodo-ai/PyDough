@@ -5,9 +5,9 @@ WITH _T0 AS (
   JOIN EVENTS AS EVENTS
     ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
   JOIN ERAS AS ERAS
-    ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
+    ON ERAS.er_end_year > YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
     AND ERAS.er_name = 'Cold War'
-    AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
+    AND ERAS.er_start_year <= YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
   GROUP BY
     SEARCHES.search_id
 ), _S5 AS (

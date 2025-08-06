@@ -3,7 +3,9 @@ SELECT
   AVG(sbtxprice) AS avg_price
 FROM MAIN.SBTRANSACTION
 WHERE
-  QUARTER(sbtxdatetime) = 1 AND sbtxstatus = 'success' AND YEAR(sbtxdatetime) = 2023
+  QUARTER(CAST(sbtxdatetime AS TIMESTAMP)) = 1
+  AND sbtxstatus = 'success'
+  AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023
 GROUP BY
   DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP))
 ORDER BY

@@ -5,8 +5,8 @@ WITH _T1 AS (
     EVENTS.ev_name AS EV_NAME
   FROM ERAS AS ERAS
   JOIN EVENTS AS EVENTS
-    ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
-    AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
+    ON ERAS.er_end_year > YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
+    AND ERAS.er_start_year <= YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY ERAS.er_name ORDER BY EVENTS.ev_dt) = 1
 )
