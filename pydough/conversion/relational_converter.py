@@ -1439,7 +1439,7 @@ def optimize_relational_tree(
     root = ColumnPruner().prune_unused_columns(root)
 
     # Step 1: push filters down as far as possible
-    root._input = push_filters(root.input, set())
+    root = confirm_root(push_filters(root))
 
     # Step 2: merge adjacent projections, unless it would result in excessive
     # duplicate subexpression computations.
@@ -1481,7 +1481,7 @@ def optimize_relational_tree(
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
         simplify_expressions(root, additional_shuttles)
-        root._input = push_filters(root.input, set())
+        root = confirm_root(push_filters(root))
         root = ColumnPruner().prune_unused_columns(root)
 
     # Step 9: re-run projection merging, without pushing into joins. This

@@ -4,6 +4,8 @@ relational representation for any grouping operation that optionally involves
 keys and aggregate functions.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     CallExpression,
     RelationalExpression,
@@ -11,6 +13,10 @@ from pydough.relational.relational_expressions import (
 
 from .abstract_node import RelationalNode
 from .single_relational import SingleRelational
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class Aggregate(SingleRelational):
@@ -62,8 +68,11 @@ class Aggregate(SingleRelational):
     def to_string(self, compact: bool = False) -> str:
         return f"AGGREGATE(keys={self.make_column_string(self.keys, compact)}, aggregations={self.make_column_string(self.aggregations, compact)})"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_aggregate(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_aggregate(self)
 
     def node_copy(
         self,
