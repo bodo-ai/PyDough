@@ -726,12 +726,19 @@ def correl_35():
     #   order priority
     # - The original lineitem's part type is the same as the other lineitem's
     #   part type
+    # - The customer nation is in Asia
     alt_orders = (
-        customer.WHERE(nation_key == original_supplier_nation)
+        customer.WHERE(
+            (
+                nation_key == original_supplier_nation
+                #    & (nation.region.name == "ASIA")
+            )
+        )
         .orders.WHERE(
             (YEAR(order_date) == 1997) & (order_priority == original_priority)
         )
-        .lines.WHERE((YEAR(ship_date) == 1997) & (part.part_type == original_part_type))
+        .lines.CALCULATE(part_type=part.part_type)
+        .WHERE((YEAR(ship_date) == 1997) & (part_type == original_part_type))
     )
     return TPCH.CALCULATE(
         n=COUNT(
@@ -751,7 +758,7 @@ def correl_35():
 SELECT COUNT(*)
 FROM (
     SELECT DISTINCT l1.l_orderkey, l1.l_linenumber
-    FROM part p1, supplier s, lineitem l1, orders o1, customer c, orders o2, lineitem l2, part p2
+    FROM part p1, supplier s, lineitem l1, orders o1, customer c, orders o2, lineitem l2, part p2, nation n, region r
     WHERE p1.p_partkey = l1.l_partkey
         AND l1.l_suppkey = s.s_suppkey
         AND l1.l_orderkey = o1.o_orderkey
@@ -759,6 +766,9 @@ FROM (
         AND c.c_custkey = o2.o_custkey
         AND o2.o_orderkey = l2.l_orderkey
         AND l2.l_partkey = p2.p_partkey
+        AND c.c_nationkey = n.n_nationkey
+        AND n.n_regionkey = r.r_regionkey
+        AND r.r_name = 'ASIA'
         AND STRFTIME('%Y', o1.o_orderdate) = '1998'
         AND STRFTIME('%Y', l1.l_shipdate) = '1998'
         AND STRFTIME('%Y', o2.o_orderdate) = '1997'

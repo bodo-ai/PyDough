@@ -44,6 +44,7 @@ class HybridCorrelationExtractor:
         new_equi_filters: list[tuple[HybridExpr, HybridExpr]],
         rhs_subtree: HybridTree,
         reserved_rhs_names: set[str],
+        levels_from_bottom: int,
     ) -> bool:
         """
         Attempts to extract an equijoin condition from the given condition.
@@ -58,6 +59,9 @@ class HybridCorrelationExtractor:
                 connection.
             `reserved_rhs_names`: a set of names that are reserved for the
                 right-hand side of the connection, to avoid name conflicts.
+            `levels_from_bottom`: the number of levels from the bottom of the
+                hybrid tree to the current subtree, used to determine the shifts
+                required for the right-hand side expressions.
 
         Returns:
             True if an equijoin condition was extracted, False otherwise.
@@ -73,13 +77,13 @@ class HybridCorrelationExtractor:
                 condition.args[0].count_correlated_levels() == 0
                 and condition.args[1].count_correlated_levels() == 1
             ):
-                lhs_expr = condition.args[1].strip_correl(False)
+                lhs_expr = condition.args[1].strip_correl(False, 0)
                 rhs_expr = condition.args[0]
             elif (
                 condition.args[1].count_correlated_levels() == 0
                 and condition.args[0].count_correlated_levels() == 1
             ):
-                lhs_expr = condition.args[0].strip_correl(False)
+                lhs_expr = condition.args[0].strip_correl(False, 0)
                 rhs_expr = condition.args[1]
             else:
                 return False
@@ -89,7 +93,7 @@ class HybridCorrelationExtractor:
                 )
                 assert isinstance(rhs_expr, HybridRefExpr)
                 reserved_rhs_names.add(rhs_expr.name)
-            new_equi_filters.append((lhs_expr, rhs_expr))
+            new_equi_filters.append((lhs_expr, rhs_expr.shift_back(levels_from_bottom)))
             return True
         return False
 
@@ -97,6 +101,7 @@ class HybridCorrelationExtractor:
         self,
         condition: HybridExpr,
         new_general_filters: list[HybridExpr],
+        levels_from_bottom: int,
     ) -> bool:
         """
         Attempts to extract a general condition from the given condition.
@@ -107,11 +112,16 @@ class HybridCorrelationExtractor:
             `condition`: the condition to extract the general condition from.
             `new_general_filters`: a list to append the extracted general
                 conditions to.
+            `levels_from_bottom`: the number of levels from the bottom of the
+                hybrid tree to the current subtree, used to determine the shifts
+                required for the expressions.
 
         Returns:
             True if a general condition was extracted, False otherwise.
         """
-        new_general_filters.append(condition.strip_correl(sided_ref=True))
+        new_general_filters.append(
+            condition.strip_correl(sided_ref=True, shift=levels_from_bottom)
+        )
         return True
 
     def attempt_correlation_extraction(
@@ -194,7 +204,11 @@ class HybridCorrelationExtractor:
                         (
                             is_equijoin
                             and self.extract_equijoin_condition(
-                                cond, new_equi_filters, bottom_subtree, rhs_names
+                                cond,
+                                new_equi_filters,
+                                bottom_subtree,
+                                rhs_names,
+                                levels_from_bottom,
                             )
                         )
                         or (
@@ -202,7 +216,7 @@ class HybridCorrelationExtractor:
                             and not connection.connection_type.is_anti
                             and connection.connection_type != ConnectionType.SEMI
                             and self.extract_general_condition(
-                                cond, new_general_filters
+                                cond, new_general_filters, levels_from_bottom
                             )
                         )
                     ):

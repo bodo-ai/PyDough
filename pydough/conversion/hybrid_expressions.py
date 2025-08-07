@@ -184,7 +184,7 @@ class HybridExpr(ABC):
         """
         return [self]
 
-    def strip_correl(self, sided_ref: bool) -> "HybridExpr":
+    def strip_correl(self, sided_ref: bool, shift: int) -> "HybridExpr":
         """
         Removes any correlated references from the expression, returning a
         version of the expression that does not contain any correlated
@@ -195,6 +195,10 @@ class HybridExpr(ABC):
             HybridSidedRefExpr, which are references to the parent side of a
             join condition. If False, converts them to HybridRefExpr, which are
             references to a term from a preceding HybridOperation.
+            `shift`: the number of levels to shift the correlated references
+            back by. This is used to adjust the correlated references to point
+            to the correct level in the hybrid tree after the correlation
+            extraction.
 
         Returns:
             The expression with all correlated references removed.
@@ -376,8 +380,10 @@ class HybridCorrelExpr(HybridExpr):
         else:
             return self
 
-    def strip_correl(self, sided_ref: bool) -> HybridExpr:
-        inner_expr: HybridExpr = self.expr.strip_correl(sided_ref)
+    def strip_correl(self, sided_ref: bool, shift: int) -> HybridExpr:
+        inner_expr: HybridExpr = self.expr.strip_correl(sided_ref, shift).shift_back(
+            shift
+        )
         if sided_ref:
             return HybridSidedRefExpr(inner_expr)
         else:
@@ -526,10 +532,10 @@ class HybridFunctionExpr(HybridExpr):
             return result
         return super().get_conjunction()
 
-    def strip_correl(self, sided_ref: bool) -> HybridExpr:
+    def strip_correl(self, sided_ref: bool, shift: int) -> HybridExpr:
         return HybridFunctionExpr(
             self.operator,
-            [arg.strip_correl(sided_ref) for arg in self.args],
+            [arg.strip_correl(sided_ref, shift) for arg in self.args],
             self.typ,
         )
 
@@ -699,14 +705,17 @@ class HybridWindowExpr(HybridExpr):
             )
         )
 
-    def strip_correl(self, sided_ref: bool) -> HybridExpr:
+    def strip_correl(self, sided_ref: bool, shift: int) -> HybridExpr:
         return HybridWindowExpr(
             self.window_func,
-            [arg.strip_correl(sided_ref) for arg in self.args],
-            [part_arg.strip_correl(sided_ref) for part_arg in self.partition_args],
+            [arg.strip_correl(sided_ref, shift) for arg in self.args],
+            [
+                part_arg.strip_correl(sided_ref, shift)
+                for part_arg in self.partition_args
+            ],
             [
                 HybridCollation(
-                    order_arg.expr.strip_correl(sided_ref),
+                    order_arg.expr.strip_correl(sided_ref, shift),
                     order_arg.asc,
                     order_arg.na_first,
                 )
