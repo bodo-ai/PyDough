@@ -4,6 +4,8 @@ This is the relational representation of top-n selection and typically depends
 on explicit ordering of the input relation.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     RelationalExpression,
@@ -12,6 +14,10 @@ from pydough.types.numeric_type import NumericType
 
 from .abstract_node import RelationalNode
 from .single_relational import SingleRelational
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class Limit(SingleRelational):
@@ -68,8 +74,11 @@ class Limit(SingleRelational):
         ]
         return f"LIMIT(limit={self.limit.to_string(compact)}, columns={self.make_column_string(self.columns, compact)}, orderings=[{', '.join(orderings)}])"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         return visitor.visit_limit(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_limit(self)
 
     def node_copy(
         self,
