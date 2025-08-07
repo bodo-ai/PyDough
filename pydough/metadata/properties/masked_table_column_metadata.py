@@ -1,7 +1,7 @@
 """
 Definition of the class for PyDough metadata for properties that access a
 column of a table from a relational system that has been masked by a certain
-protocol, but has an un-masking protocol as well.
+protocol, and includes an associated unmasking protocol to reverse the operation.
 """
 
 __all__ = ["MaskedTableColumnMetadata"]
@@ -25,8 +25,8 @@ from .table_column_metadata import TableColumnMetadata
 class MaskedTableColumnMetadata(TableColumnMetadata):
     """
     Concrete metadata implementation for a PyDough property representing a
-    column of data from a relational table that has been masked by a certain
-    protocol, but has an un-masking protocol as well.
+    column of data in a relational table that where the data is masked by a specific
+    protocol, and can be unmasked using a defined unmasking protocol.
     """
 
     # Set of names of fields that can be included in the JSON object
@@ -68,23 +68,16 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
     @property
     def unprotect_protocol(self) -> str:
         """
-        Returns the format string used to un-mask the data in this
-        table column property. The format string should create SQL text such
-        that when `self.unprotect_protocol.format(value)` is called, where
-        `value` is the SQL text string corresponding to a value that is masked,
-        it returns the SQL text string that will un-mask the value.
+        Returns the format string used to un-mask the data in this column.
+        Call `self.unprotect_protocol.format(value)` to generate SQL for unmasking, where `value` is the SQL text string corresponding to a value that is masked.
         """
         return self._unprotect_protocol
 
     @property
     def protect_protocol(self) -> str:
         """
-        Returns the format string used to mask the data in this table column
-        property. The format string should create SQL text such that when
-        `self.protect_protocol.format(value)` is called, where `value` is the
-        SQL text string corresponding to a value that is to be masked, it
-        returns the SQL text string that will mask the value in a way that can
-        be reversed by `self.unprotect_protocol`.
+        Returns the format string used to mask the data in this column.
+        Should be reversible by `self.unprotect_protocol`.
         """
         return self._protect_protocol
 
