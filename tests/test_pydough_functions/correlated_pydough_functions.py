@@ -713,3 +713,59 @@ def correl_34():
         .WHERE(HAS(selected_lines))
     )
     return TPCH.CALCULATE(n=COUNT(selected_records))
+
+
+def correl_35():
+    # Counts how many lineitems exist that were ordered/shipped in 1997 and have
+    # at least 1 other lineitem with all of the following properties:
+    # - The other lineitem was ordered/shipped in 1997
+    # - The other lineitem was made by the same customer as the original
+    # - The original lineitem's supplier nation is the same as the customer
+    #   nation
+    # - The original lineitem & other lineitem were part of orders with the same
+    #   order priority
+    # - The original lineitem's part type is the same as the other lineitem's
+    #   part type
+    alt_orders = (
+        customer.WHERE(nation_key == original_supplier_nation)
+        .orders.WHERE(
+            (YEAR(order_date) == 1997) & (order_priority == original_priority)
+        )
+        .lines.WHERE((YEAR(ship_date) == 1997) & (part.part_type == original_part_type))
+    )
+    return TPCH.CALCULATE(
+        n=COUNT(
+            lines.WHERE(YEAR(ship_date) == 1998)
+            .CALCULATE(
+                original_part_type=part.part_type,
+                original_supplier_nation=supplier.nation_key,
+            )
+            .order.WHERE(YEAR(order_date) == 1998)
+            .CALCULATE(original_priority=order_priority)
+            .WHERE(COUNT(alt_orders) > 0)
+        )
+    )
+
+
+"""
+SELECT COUNT(*)
+FROM (
+    SELECT DISTINCT l1.l_orderkey, l1.l_linenumber
+    FROM part p1, supplier s, lineitem l1, orders o1, customer c, orders o2, lineitem l2, part p2
+    WHERE p1.p_partkey = l1.l_partkey
+        AND l1.l_suppkey = s.s_suppkey
+        AND l1.l_orderkey = o1.o_orderkey
+        AND o1.o_custkey = c.c_custkey
+        AND c.c_custkey = o2.o_custkey
+        AND o2.o_orderkey = l2.l_orderkey
+        AND l2.l_partkey = p2.p_partkey
+        AND STRFTIME('%Y', o1.o_orderdate) = '1998'
+        AND STRFTIME('%Y', l1.l_shipdate) = '1998'
+        AND STRFTIME('%Y', o2.o_orderdate) = '1997'
+        AND STRFTIME('%Y', l2.l_shipdate) = '1997'
+        AND c_nationkey = s_nationkey
+        AND o1.o_orderpriority = o2.o_orderpriority
+        AND p1.p_type = p2.p_type
+)
+;
+"""

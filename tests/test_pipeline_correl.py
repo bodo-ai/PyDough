@@ -44,6 +44,7 @@ from tests.test_pydough_functions.correlated_pydough_functions import (
     correl_32,
     correl_33,
     correl_34,
+    correl_35,
 )
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher
@@ -779,6 +780,15 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                 "correl_34",
             ),
             id="correl_34",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                correl_35,
+                "TPCH",
+                lambda: pd.DataFrame({"n": [240]}),
+                "correl_35",
+            ),
+            id="correl_35",
         ),
     ],
 )

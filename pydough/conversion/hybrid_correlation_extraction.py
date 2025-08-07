@@ -114,24 +114,23 @@ class HybridCorrelationExtractor:
         new_general_filters.append(condition.strip_correl(sided_ref=True))
         return True
 
-    def attempt_correlation_extraction(self, connection: HybridConnection) -> None:
+    def attempt_correlation_extraction(
+        self, subtree: HybridTree, connection: HybridConnection, levels_from_bottom: int
+    ) -> None:
         """
         Searches for any correlated references inside filters within the bottom
         level of the hybrid subtree of a connection, and attempts to move them
         to a join condition if possible, thus removing the correlation. The
         transformation is done in-place.
 
-        Args:
-            `connection`: the hybrid connection to run the correlation
-            extraction on.
+        TODO
         """
-        subtree: HybridTree = connection.subtree
-
-        is_equijoin: bool = subtree.general_join_condition is None
+        bottom_subtree: HybridTree = connection.subtree
+        is_equijoin: bool = bottom_subtree.general_join_condition is None
         non_aggregate: bool = not connection.connection_type.is_aggregation
         rhs_names: set[str] = set()
         rhs_names.update(connection.aggs)
-        rhs_names.update(subtree.pipeline[-1].terms)
+        rhs_names.update(bottom_subtree.pipeline[-1].terms)
 
         # Identify the prefix of the pipeline that must be completed before
         # all the children are defined.
@@ -195,7 +194,7 @@ class HybridCorrelationExtractor:
                         (
                             is_equijoin
                             and self.extract_equijoin_condition(
-                                cond, new_equi_filters, subtree, rhs_names
+                                cond, new_equi_filters, bottom_subtree, rhs_names
                             )
                         )
                         or (
@@ -210,19 +209,21 @@ class HybridCorrelationExtractor:
                         new_conjunction.append(cond)
 
                 if len(new_equi_filters) > 0:
-                    if subtree.join_keys is None:
-                        subtree.join_keys = []
-                    subtree.join_keys.extend(new_equi_filters)
+                    if bottom_subtree.join_keys is None:
+                        bottom_subtree.join_keys = []
+                    bottom_subtree.join_keys.extend(new_equi_filters)
                     if not non_aggregate:
-                        assert subtree.agg_keys is not None
+                        assert bottom_subtree.agg_keys is not None
                         for _, rhs_key in new_equi_filters:
-                            subtree.agg_keys.append(rhs_key)
+                            bottom_subtree.agg_keys.append(rhs_key)
 
                 if len(new_general_filters) > 0:
-                    if subtree.general_join_condition is not None:
-                        new_general_filters.append(subtree.general_join_condition)
-                    if subtree.join_keys is not None:
-                        for lhs_key, rhs_key in subtree.join_keys:
+                    if bottom_subtree.general_join_condition is not None:
+                        new_general_filters.append(
+                            bottom_subtree.general_join_condition
+                        )
+                    if bottom_subtree.join_keys is not None:
+                        for lhs_key, rhs_key in bottom_subtree.join_keys:
                             new_general_filters.append(
                                 HybridFunctionExpr(
                                     pydop.EQU,
@@ -230,12 +231,12 @@ class HybridCorrelationExtractor:
                                     BooleanType(),
                                 )
                             )
-                        subtree.join_keys = None
-                        subtree.agg_keys = None
+                        bottom_subtree.join_keys = None
+                        bottom_subtree.agg_keys = None
                     if len(new_general_filters) == 1:
-                        subtree.general_join_condition = new_general_filters[0]
+                        bottom_subtree.general_join_condition = new_general_filters[0]
                     else:
-                        subtree.general_join_condition = HybridFunctionExpr(
+                        bottom_subtree.general_join_condition = HybridFunctionExpr(
                             pydop.BAN, new_general_filters, BooleanType()
                         )
 
@@ -252,6 +253,44 @@ class HybridCorrelationExtractor:
                             pydop.BAN, new_conjunction, operation.condition.typ
                         )
 
+    def correlation_extraction_traversal(
+        self,
+        hybrid: HybridTree,
+        connection: HybridConnection | None,
+        levels_from_bottom: int,
+    ) -> None:
+        """
+        TODO
+        """
+        for child in hybrid.children:
+            self.correlation_extraction_traversal(child.subtree, child, 0)
+
+        if connection is not None:
+            self.attempt_correlation_extraction(hybrid, connection, levels_from_bottom)
+
+        for operation in hybrid.pipeline:
+            if (
+                (
+                    isinstance(operation, HybridFilter)
+                    and operation.condition.contains_window_functions()
+                )
+                or isinstance(operation, HybridLimit)
+                or (
+                    isinstance(operation, HybridCalculate)
+                    and any(
+                        expr.contains_window_functions()
+                        for expr in operation.new_expressions.values()
+                    )
+                )
+            ):
+                connection = None
+
+        # Recursively invoke the procedure on the parent of the hybrid tree.
+        if hybrid.parent is not None:
+            self.correlation_extraction_traversal(
+                hybrid.parent, connection, levels_from_bottom + 1
+            )
+
     def run_correlation_extraction(self, hybrid: HybridTree):
         """
         Run the correlation extraction procedure on the hybrid tree. The
@@ -261,15 +300,4 @@ class HybridCorrelationExtractor:
             `hybrid`: the hybrid tree to run the correlation extraction on.
             The procedure is also run on ancestors and children of the tree.
         """
-        # For each child, first run the core step of the procedure on the
-        # bottom-most level of the child, in order to remove correlated filters
-        # in that level, if possible, by moving them into a join condition.
-        # Afterwards, run the entire procedure recursively on the child so it
-        # can be applied to its own children.
-        for child in hybrid.children:
-            self.attempt_correlation_extraction(child)
-            self.run_correlation_extraction(child.subtree)
-
-        # Recursively invoke the procedure on the parent of the hybrid tree.
-        if hybrid.parent is not None:
-            self.run_correlation_extraction(hybrid.parent)
+        self.correlation_extraction_traversal(hybrid, None, 0)
