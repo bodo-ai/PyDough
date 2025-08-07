@@ -497,14 +497,16 @@ class RelTranslation:
         cond_terms: list[RelationalExpression] = []
         if join_keys is not None:
             for lhs_key, rhs_key in sorted(join_keys, key=repr):
-                lhs_key_column: ColumnReference = lhs_result.expressions[
-                    lhs_key
-                ].with_input(input_aliases[0])
-                rhs_key_column: ColumnReference = rhs_result.expressions[
-                    rhs_key
-                ].with_input(input_aliases[1])
+                lhs_expr: RelationalExpression = self.translate_expression(
+                    lhs_key, lhs_result
+                )
+                lhs_expr = self.rename_inputs(lhs_expr, input_aliases[0])
+                rhs_expr: RelationalExpression = self.translate_expression(
+                    rhs_key, rhs_result
+                )
+                rhs_expr = self.rename_inputs(rhs_expr, input_aliases[1])
                 cond: RelationalExpression = CallExpression(
-                    pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
+                    pydop.EQU, BooleanType(), [lhs_expr, rhs_expr]
                 )
                 cond_terms.append(cond)
             out_rel.condition = RelationalExpression.form_conjunction(cond_terms)
@@ -596,11 +598,18 @@ class RelTranslation:
         # First, propagate all key columns into the output, and add them to
         # the keys mapping of the aggregate.
         for agg_key in agg_keys:
-            agg_key_expr = self.translate_expression(agg_key, context)
-            assert isinstance(agg_key_expr, ColumnReference)
-            out_columns[agg_key] = agg_key_expr
-            keys[agg_key_expr.name] = agg_key_expr
-            used_names.add(agg_key_expr.name)
+            agg_key_expr: RelationalExpression = self.translate_expression(
+                agg_key, context
+            )
+            key_name: str
+            if isinstance(agg_key_expr, ColumnReference):
+                out_columns[agg_key] = agg_key_expr
+                key_name = agg_key_expr.name
+            else:
+                key_name = self.get_column_name("expr", used_names)
+                out_columns[agg_key] = ColumnReference(key_name, agg_key_expr.data_type)
+            keys[key_name] = agg_key_expr
+            used_names.add(key_name)
         # Then, add all of the agg calls to the aggregations mapping of the
         # the aggregate, and add references to the corresponding dummy-names
         # to the output.

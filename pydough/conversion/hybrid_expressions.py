@@ -176,6 +176,22 @@ class HybridExpr(ABC):
         """
         return False
 
+    def get_conjunction(self) -> list["HybridExpr"]:
+        """
+        Returns a list of expressions that are part of the conjunction of this
+        expression, if it is a conjunction. If it is not a conjunction, returns
+        a list containing just this expression.
+        """
+        return [self]
+
+    def strip_correl(self) -> "HybridExpr":
+        """
+        Removes any correlated references from the expression, returning a
+        version of the expression that does not contain any correlated
+        references.
+        """
+        return self
+
 
 class HybridCollation:
     """
@@ -351,6 +367,9 @@ class HybridCorrelExpr(HybridExpr):
         else:
             return self
 
+    def strip_correl(self):
+        return self.expr.strip_correl()
+
 
 class HybridLiteralExpr(HybridExpr):
     """
@@ -485,6 +504,21 @@ class HybridFunctionExpr(HybridExpr):
                 )
             case _:
                 return False
+
+    def get_conjunction(self) -> list[HybridExpr]:
+        if self.operator == pydop.BAN:
+            result: list[HybridExpr] = []
+            for arg in self.args:
+                result.extend(arg.get_conjunction())
+            return result
+        return super().get_conjunction()
+
+    def strip_correl(self) -> HybridExpr:
+        return HybridFunctionExpr(
+            self.operator,
+            [arg.strip_correl() for arg in self.args],
+            self.typ,
+        )
 
 
 class HybridWindowExpr(HybridExpr):
@@ -650,4 +684,19 @@ class HybridWindowExpr(HybridExpr):
                 order_arg.expr.has_correlated_window_function(levels)
                 for order_arg in self.order_args
             )
+        )
+
+    def strip_correl(self) -> HybridExpr:
+        return HybridWindowExpr(
+            self.window_func,
+            [arg.strip_correl() for arg in self.args],
+            [part_arg.strip_correl() for part_arg in self.partition_args],
+            [
+                HybridCollation(
+                    order_arg.expr.strip_correl(), order_arg.asc, order_arg.na_first
+                )
+                for order_arg in self.order_args
+            ],
+            self.typ,
+            self.kwargs,
         )
