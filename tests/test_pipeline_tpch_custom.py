@@ -3265,8 +3265,6 @@ def test_pipeline_e2e_tpch_custom(
             ),
             id="bad_cross_6",
         ),
-        # TODO: fix the error handling here to give a proper error message
-        # (currently fails in hybrid due to an assertion)
         pytest.param(
             bad_cross_7,
             None,
