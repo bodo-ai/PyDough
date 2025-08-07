@@ -8,9 +8,15 @@ from typing import TYPE_CHECKING
 
 import pydough.pydough_operators as pydop
 from pydough.qdag import Literal
+from pydough.types import BooleanType
 
 from .hybrid_connection import HybridConnection
-from .hybrid_expressions import HybridExpr, HybridFunctionExpr, HybridLiteralExpr
+from .hybrid_expressions import (
+    HybridExpr,
+    HybridFunctionExpr,
+    HybridLiteralExpr,
+    HybridSidedRefExpr,
+)
 from .hybrid_operations import (
     HybridCalculate,
     HybridFilter,
@@ -193,8 +199,7 @@ class HybridCorrelationExtractor:
                             )
                         )
                         or (
-                            (not is_equijoin)
-                            and non_aggregate
+                            non_aggregate
                             and self.extract_general_condition(
                                 cond, new_general_filters
                             )
@@ -212,7 +217,25 @@ class HybridCorrelationExtractor:
                             subtree.agg_keys.append(rhs_key)
 
                 if len(new_general_filters) > 0:
-                    breakpoint()
+                    if subtree.general_join_condition is not None:
+                        new_general_filters.append(subtree.general_join_condition)
+                    if subtree.join_keys is not None:
+                        for lhs_key, rhs_key in subtree.join_keys:
+                            new_general_filters.append(
+                                HybridFunctionExpr(
+                                    pydop.EQU,
+                                    [HybridSidedRefExpr(lhs_key), rhs_key],
+                                    BooleanType(),
+                                )
+                            )
+                        subtree.join_keys = None
+                        subtree.agg_keys = None
+                    if len(new_general_filters) == 1:
+                        subtree.general_join_condition = new_general_filters[0]
+                    else:
+                        subtree.general_join_condition = HybridFunctionExpr(
+                            pydop.BAN, new_general_filters, BooleanType()
+                        )
 
                 # Update the filter condition with the new conjunction of terms
                 if new_conjunction != conjunction:

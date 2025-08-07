@@ -1,68 +1,55 @@
-WITH _t6 AS (
+WITH _t3 AS (
   SELECT
     l_commitdate,
-    l_linenumber,
     l_orderkey,
     l_receiptdate,
     l_suppkey
   FROM tpch.lineitem
   WHERE
     l_commitdate < l_receiptdate
-), _t3 AS (
-  SELECT
-    MAX(_t6.l_linenumber) AS anything_l_linenumber,
-    MAX(_t6.l_orderkey) AS anything_l_orderkey,
-    MAX(_t6.l_suppkey) AS anything_l_suppkey,
-    MAX(orders.o_orderkey) AS anything_o_orderkey,
-    MAX(orders.o_orderstatus) AS anything_o_orderstatus
-  FROM _t6 AS _t6
-  JOIN tpch.orders AS orders
-    ON _t6.l_orderkey = orders.o_orderkey
-  JOIN tpch.lineitem AS lineitem
-    ON _t6.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
-  GROUP BY
-    _t6.l_linenumber,
-    _t6.l_orderkey,
-    orders.o_orderkey
 ), _u_0 AS (
   SELECT
-    _t8.l_linenumber AS _u_1,
-    _t8.l_orderkey AS _u_2,
-    orders.o_orderkey AS _u_3
-  FROM _t6 AS _t8
-  JOIN tpch.orders AS orders
-    ON _t8.l_orderkey = orders.o_orderkey
-  JOIN tpch.lineitem AS lineitem
-    ON _t8.l_suppkey <> lineitem.l_suppkey
-    AND lineitem.l_commitdate < lineitem.l_receiptdate
-    AND lineitem.l_orderkey = orders.o_orderkey
+    ARRAY_AGG(l_suppkey) AS _u_1,
+    l_orderkey AS _u_2
+  FROM tpch.lineitem
   GROUP BY
-    _t8.l_linenumber,
-    _t8.l_orderkey,
-    orders.o_orderkey
-), _s13 AS (
+    l_orderkey
+), _u_3 AS (
+  SELECT
+    ARRAY_AGG(l_suppkey) AS _u_4,
+    l_orderkey AS _u_5
+  FROM _t3
+  GROUP BY
+    l_orderkey
+), _s9 AS (
   SELECT
     COUNT(*) AS n_rows,
-    _t3.anything_l_suppkey
+    _t3.l_suppkey
   FROM _t3 AS _t3
+  JOIN tpch.orders AS orders
+    ON _t3.l_orderkey = orders.o_orderkey AND orders.o_orderstatus = 'F'
   LEFT JOIN _u_0 AS _u_0
-    ON _t3.anything_l_linenumber = _u_0._u_1
-    AND _t3.anything_l_orderkey = _u_0._u_2
-    AND _t3.anything_o_orderkey = _u_0._u_3
+    ON _u_0._u_2 = orders.o_orderkey
+  LEFT JOIN _u_3 AS _u_3
+    ON _u_3._u_5 = orders.o_orderkey
   WHERE
-    _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
+    ARRAY_ANY(_u_0._u_1, _x -> _t3.l_suppkey <> _x)
+    AND (
+      NOT ARRAY_ANY(_u_3._u_4, _x -> _t3.l_suppkey <> _x) OR _u_3._u_4 IS NULL
+    )
+    AND NOT _u_0._u_1 IS NULL
   GROUP BY
-    _t3.anything_l_suppkey
+    _t3.l_suppkey
 )
 SELECT
   supplier.s_name AS S_NAME,
-  COALESCE(_s13.n_rows, 0) AS NUMWAIT
+  COALESCE(_s9.n_rows, 0) AS NUMWAIT
 FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
-LEFT JOIN _s13 AS _s13
-  ON _s13.anything_l_suppkey = supplier.s_suppkey
+LEFT JOIN _s9 AS _s9
+  ON _s9.l_suppkey = supplier.s_suppkey
 ORDER BY
-  COALESCE(_s13.n_rows, 0) DESC,
+  COALESCE(_s9.n_rows, 0) DESC,
   s_name
 LIMIT 10
