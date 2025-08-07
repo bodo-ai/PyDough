@@ -5,10 +5,11 @@ Logic for converting JSON strings to PyDough types.
 __all__ = ["parse_type_from_string"]
 
 
+from pydough.errors import PyDoughTypeException
+
 from .array_type import ArrayType
 from .boolean_type import BooleanType
 from .datetime_type import DatetimeType
-from .errors import PyDoughTypeException
 from .map_type import MapType
 from .numeric_type import NumericType
 from .pydough_type import PyDoughType

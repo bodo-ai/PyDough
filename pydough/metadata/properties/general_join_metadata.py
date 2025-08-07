@@ -6,14 +6,14 @@ joining them on certain key columns.
 __all__ = ["GeneralJoinMetadata"]
 
 
-from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import (
+from pydough.errors.error_utils import (
     NoExtraKeys,
     extract_array,
     extract_bool,
     extract_object,
     extract_string,
 )
+from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.graphs import GraphMetadata
 
 from .property_metadata import PropertyMetadata

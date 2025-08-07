@@ -605,7 +605,7 @@ class HybridTree:
             `successor`: the HybridTree to be marked as one level below `self`.
         """
         if self._successor is not None:
-            raise Exception("Duplicate successor")
+            raise ValueError("Duplicate successor")
         self._successor = successor
         successor._parent = self
         # Shift the aggregation keys and rhs of join keys back by 1 level to

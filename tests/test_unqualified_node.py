@@ -740,8 +740,7 @@ def test_init_pydough_context(
         pytest.param(
             bad_unsupported_kwarg3,
             re.escape(
-                "PyDough function call SUM does not support "
-                "keyword arguments at this time."
+                "PyDough function SUM does not support keyword arguments at this time."
             ),
             id="bad_unsupported_kwarg3",
         ),

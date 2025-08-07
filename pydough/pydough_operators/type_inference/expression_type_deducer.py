@@ -12,9 +12,9 @@ __all__ = [
 from abc import ABC, abstractmethod
 from typing import Any
 
-from pydough.metadata import PyDoughMetadataException
-from pydough.metadata.errors import (
+from pydough.errors.error_utils import (
     NoExtraKeys,
+    PyDoughMetadataException,
     extract_integer,
     extract_string,
 )
