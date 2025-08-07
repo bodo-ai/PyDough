@@ -6,10 +6,14 @@ WITH _s3 AS (
     ON part.p_partkey = partsupp.ps_partkey
 ), _s7 AS (
   SELECT DISTINCT
-    ps_suppkey
-  FROM tpch.partsupp
-  WHERE
-    NOT _u_0._u_1 IS NULL
+    partsupp.ps_suppkey
+  FROM tpch.partsupp AS partsupp
+  JOIN tpch.part AS part
+    ON part.p_container LIKE 'SM%'
+    AND part.p_partkey = partsupp.ps_partkey
+    AND part.p_retailprice < (
+      partsupp.ps_supplycost * 1.5
+    )
 )
 SELECT
   COUNT(*) AS n

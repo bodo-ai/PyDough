@@ -10,7 +10,7 @@ import pydough.pydough_operators as pydop
 from pydough.qdag import Literal
 from pydough.types import BooleanType
 
-from .hybrid_connection import HybridConnection
+from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
     HybridExpr,
     HybridFunctionExpr,
@@ -200,6 +200,8 @@ class HybridCorrelationExtractor:
                         )
                         or (
                             non_aggregate
+                            and not connection.connection_type.is_anti
+                            and connection.connection_type != ConnectionType.SEMI
                             and self.extract_general_condition(
                                 cond, new_general_filters
                             )

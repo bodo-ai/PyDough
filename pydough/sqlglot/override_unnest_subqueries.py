@@ -104,6 +104,13 @@ def decorrelate(select, parent_select, external_columns, next_alias_name):
 
     parent_predicate = select.find_ancestor(exp.Predicate)
 
+    # PyDough Change: abandon de-correlation in this scenario since this
+    # solution is not usable in most dialects.
+    if (not is_subquery_projection) and any(
+        expr not in group_by for expr in key_aliases
+    ):
+        return
+
     # if the value of the subquery is not an agg or a key, we need to collect it into an array
     # so that it can be grouped. For subquery projections, we use a MAX aggregation instead.
     agg_func = exp.Max if is_subquery_projection else exp.ArrayAgg
@@ -200,14 +207,11 @@ def decorrelate(select, parent_select, external_columns, next_alias_name):
                 f"({parent_predicate} AND ARRAY_CONTAINS({nested}, {column}))",
             )
         else:
-            # PyDough Change: abandon de-correlation in this scenario since this
-            # solution is not usable in most dialects.
-            return
-            # key.replace(exp.to_identifier("_x"))
-            # parent_predicate = _replace(
-            #     parent_predicate,
-            #     f"({parent_predicate} AND ARRAY_ANY({nested}, _x -> {predicate}))",
-            # )
+            key.replace(exp.to_identifier("_x"))
+            parent_predicate = _replace(
+                parent_predicate,
+                f"({parent_predicate} AND ARRAY_ANY({nested}, _x -> {predicate}))",
+            )
 
     parent_select.join(
         select.group_by(*group_by, copy=False),
