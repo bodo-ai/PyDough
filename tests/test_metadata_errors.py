@@ -732,6 +732,58 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             ),
             id="BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_EXTRA_FIELD",
         ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME' must be a JSON object containing a field 'column name' and field 'column name' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_COLUMN_NAME",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_COLUMN_NAME' must be a JSON object containing a field 'column name' and field 'column name' must be a string",
+            id="MASKED_TABLE_COLUMN_BAD_COLUMN_NAME",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_DATA_TYPE",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_DATA_TYPE' must be a JSON object containing a field 'data type' and field 'data type' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_DATA_TYPE",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
+            "Unrecognized type string 'strdatmeric'",
+            id="MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL' must be a JSON object containing a field 'unprotect protocol' and field 'unprotect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL' must be a JSON object containing a field 'unprotect protocol' and field 'unprotect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL' must be a JSON object containing a field 'protect protocol' and field 'protect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL' must be a JSON object containing a field 'protect protocol' and field 'protect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_SERVER_MASKED",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_SERVER_MASKED' must be a JSON object containing a field 'server masked' and field 'server masked' must be a boolean",
+            id="MASKED_TABLE_COLUMN_BAD_SERVER_MASKED",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
+            re.escape(
+                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'sample values', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
+            ),
+            id="MASKED_TABLE_COLUMN_EXTRA_FIELDS",
+        ),
     ],
 )
 def test_invalid_graphs(
