@@ -8,7 +8,7 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 
-from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from tests.test_pydough_functions.correlated_pydough_functions import (
     correl_1,
     correl_2,
@@ -805,6 +805,25 @@ def test_pipeline_until_relational_correlated(
     file_path: str = get_plan_test_filename(correl_pipeline_test_data.test_name)
     correl_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
+    )
+
+
+def test_pipeline_until_sql_tpch(
+    correl_pipeline_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Same as test_pipeline_until_relational_correlated, but for the generated SQL
+    text.
+    """
+    file_path: str = get_sql_test_filename(
+        correl_pipeline_test_data.test_name, empty_context_database.dialect
+    )
+    correl_pipeline_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database
     )
 
 
