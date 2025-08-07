@@ -15,7 +15,8 @@ WITH _s1 AS (
     ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1997
     AND customer.c_custkey = orders.o_custkey
   JOIN tpch.lineitem AS lineitem
-    ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1997
+    ON EXTRACT(QUARTER FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1
+    AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1997
     AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
     customer.c_custkey,
