@@ -315,9 +315,7 @@ class RelTranslation:
             case HybridSidedRefExpr():
                 # For sided references, access the referenced expression from
                 # the lhs output.
-                result = self.translate_expression(
-                    HybridRefExpr(condition.name, condition.typ), lhs_result
-                )
+                result = self.translate_expression(condition.expr, lhs_result)
                 return self.rename_inputs(result, lhs_alias)
             case HybridFunctionExpr():
                 # For function calls, recursively convert the arguments, then

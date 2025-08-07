@@ -67,14 +67,14 @@ class HybridCorrelationExtractor:
                 condition.args[0].count_correlated_levels() == 0
                 and condition.args[1].count_correlated_levels() == 1
             ):
-                lhs_expr = condition.args[1].strip_correl()
+                lhs_expr = condition.args[1].strip_correl(False)
                 rhs_expr = condition.args[0]
             elif (
                 condition.args[1].count_correlated_levels() == 0
                 and condition.args[0].count_correlated_levels() == 1
             ):
-                lhs_expr = condition.args[1].strip_correl()
-                rhs_expr = condition.args[0]
+                lhs_expr = condition.args[0].strip_correl(False)
+                rhs_expr = condition.args[1]
             else:
                 return False
             if not isinstance(rhs_expr, HybridRefExpr):
@@ -86,6 +86,27 @@ class HybridCorrelationExtractor:
             new_equi_filters.append((lhs_expr, rhs_expr))
             return True
         return False
+
+    def extract_general_condition(
+        self,
+        condition: HybridExpr,
+        new_general_filters: list[HybridExpr],
+    ) -> bool:
+        """
+        Attempts to extract a general condition from the given condition.
+        If successful, appends the extracted condition to `new_general_filters`
+        and returns True. Otherwise, returns False.
+
+        Args:
+            `condition`: the condition to extract the general condition from.
+            `new_general_filters`: a list to append the extracted general
+                conditions to.
+
+        Returns:
+            True if a general condition was extracted, False otherwise.
+        """
+        new_general_filters.append(condition.strip_correl(sided_ref=True))
+        return True
 
     def attempt_correlation_extraction(self, connection: HybridConnection) -> None:
         """
@@ -100,7 +121,7 @@ class HybridCorrelationExtractor:
         """
         subtree: HybridTree = connection.subtree
 
-        is_equijoin: bool = subtree.join_keys is not None and len(subtree.join_keys) > 0
+        is_equijoin: bool = subtree.general_join_condition is None
         non_aggregate: bool = not connection.connection_type.is_aggregation
         rhs_names: set[str] = set()
         rhs_names.update(connection.aggs)
@@ -150,33 +171,48 @@ class HybridCorrelationExtractor:
                 conjunction: list[HybridExpr] = operation.condition.get_conjunction()
                 new_conjunction: list[HybridExpr] = []
                 new_equi_filters: list[tuple[HybridExpr, HybridExpr]] = []
+                new_general_filters: list[HybridExpr] = []
                 for cond in operation.condition.get_conjunction():
-                    # Skip any filters in the conjunction that are not
-                    # correlated, are correlated by more than 1 level, or
-                    # contain a window function.
+                    # Add the filter back to the original conjunction if it
+                    # contains a window function, or contains no correlates, or
+                    # has a correlation nesting level greater than 1. If none of
+                    # those cases occur, see if any of the extraction patterns
+                    # are successful, and if none of them are then add it back
+                    # to the original conjunction. THe extraction patterns are
+                    # pulling an equijoin condition into the join keys of an
+                    # equijoin, or pulling an arbitrary condition into the
+                    # general join condition of a non-equijoin.
                     if (
                         cond.contains_window_functions()
                         or cond.count_correlated_levels() != 1
+                    ) or not (
+                        (
+                            is_equijoin
+                            and self.extract_equijoin_condition(
+                                cond, new_equi_filters, subtree, rhs_names
+                            )
+                        )
+                        or (
+                            (not is_equijoin)
+                            and non_aggregate
+                            and self.extract_general_condition(
+                                cond, new_general_filters
+                            )
+                        )
                     ):
-                        new_conjunction.append(cond)
-
-                    elif is_equijoin and self.extract_equijoin_condition(
-                        cond, new_equi_filters, subtree, rhs_names
-                    ):
-                        pass
-
-                    # In all other cases, the filter cannot be moved so keep it
-                    # in the conjunction.
-                    else:
                         new_conjunction.append(cond)
 
                 if len(new_equi_filters) > 0:
-                    assert subtree.join_keys is not None
+                    if subtree.join_keys is None:
+                        subtree.join_keys = []
                     subtree.join_keys.extend(new_equi_filters)
                     if not non_aggregate:
                         assert subtree.agg_keys is not None
                         for _, rhs_key in new_equi_filters:
                             subtree.agg_keys.append(rhs_key)
+
+                if len(new_general_filters) > 0:
+                    breakpoint()
 
                 # Update the filter condition with the new conjunction of terms
                 if new_conjunction != conjunction:

@@ -1094,7 +1094,9 @@ class HybridTranslator:
                 )
             case SidedReference():
                 if expr.is_parent:
-                    return HybridSidedRefExpr(expr.term_name, expr.pydough_type)
+                    return HybridSidedRefExpr(
+                        HybridRefExpr(expr.term_name, expr.pydough_type)
+                    )
                 else:
                     return HybridRefExpr(expr.term_name, expr.pydough_type)
             case BackReferenceExpression():
