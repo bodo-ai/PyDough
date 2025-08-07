@@ -109,6 +109,20 @@ class ExpressionTranspositionShuttle(RelationalExpressionShuttle):
     """
 
     def __init__(self, node: RelationalNode, keep_input_names: bool) -> None:
+        """
+        Args:
+            `node`: The node whose column mapping to use for rewriting the
+            expressions. It is assumed that the expressions being rewritten are
+            for a relational node directly above `node` (e.g. using its output
+            columns as their inputs), and the goal is to instead use the inputs
+            of `node` within the expression so it can be pushed into or beneath
+            `node`.
+            `keep_input_names`: Whether the shuttle should keep the input names
+            for column references from the inputs to `node`. This will be true
+            only when the transposition is being done to push an expression into
+            the columns or condition of a join node (rather than beneath it),
+            and false otherwise.
+        """
         self.node: RelationalNode = node
         self.keep_input_names: bool = keep_input_names
 

@@ -69,6 +69,10 @@ class FilterPushdownShuttle(RelationalShuttle):
         # self.filters are the conditions that can be pushed down as far as the
         # current node from its ancestors.
         self.filters: set[RelationalExpression] = set()
+        # A relational expression shuttle that can be used to invoke the
+        # simplification logic to aid in advanced filter predicate inference,
+        # such as determining that a left join is redundant because if the RHS
+        # column is null then the filter will always be false.
         self.simplifier: SimplificationShuttle = SimplificationShuttle()
 
     def reset(self):
@@ -92,11 +96,16 @@ class FilterPushdownShuttle(RelationalShuttle):
             `pushable_filters`: The set of filters that can be pushed further
             into the inputs of `node`.
         """
+        # Use an expression transposition shuttle to convert all of the pushable
+        # filters to be in terms of the input columns of the current node, then
+        # recurse using those new filters stored into `self.filters`.
         transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
             node, False
         )
         self.filters = {expr.accept_shuttle(transposer) for expr in pushable_filters}
         node = self.generic_visit_inputs(node)
+        # Then, take the result and filter it with all of the remaining filters
+        # that must occur after the current node.
         return build_filter(node, remaining_filters)
 
     def visit_filter(self, filter: Filter) -> RelationalNode:
