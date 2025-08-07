@@ -4,11 +4,16 @@ This node is responsible for holding all types of joins.
 """
 
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pydough.relational.relational_expressions import RelationalExpression
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class JoinType(Enum):
@@ -258,8 +263,11 @@ class Join(RelationalNode):
         )
         return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_join(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_join(self)
 
     def node_copy(
         self,
