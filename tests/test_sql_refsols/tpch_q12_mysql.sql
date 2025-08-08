@@ -6,12 +6,12 @@ FROM tpch.LINEITEM AS LINEITEM
 JOIN tpch.ORDERS AS ORDERS
   ON LINEITEM.l_orderkey = ORDERS.o_orderkey
 WHERE
-  LINEITEM.l_commitdate < LINEITEM.l_receiptdate
+  EXTRACT(YEAR FROM CAST(LINEITEM.l_receiptdate AS DATETIME)) = 1994
+  AND LINEITEM.l_commitdate < LINEITEM.l_receiptdate
   AND LINEITEM.l_commitdate > LINEITEM.l_shipdate
   AND (
     LINEITEM.l_shipmode = 'MAIL' OR LINEITEM.l_shipmode = 'SHIP'
   )
-  AND YEAR(LINEITEM.l_receiptdate) = 1994
 GROUP BY
   LINEITEM.l_shipmode
 ORDER BY

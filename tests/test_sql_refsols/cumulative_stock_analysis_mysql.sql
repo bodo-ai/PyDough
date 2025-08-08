@@ -25,8 +25,8 @@ FROM main.sbTransaction AS sbTransaction
 JOIN main.sbTicker AS sbTicker
   ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
 WHERE
-  MONTH(sbTransaction.sbtxdatetime) = 4
-  AND YEAR(sbTransaction.sbtxdatetime) = 2023
+  EXTRACT(MONTH FROM CAST(sbTransaction.sbtxdatetime AS DATETIME)) = 4
+  AND EXTRACT(YEAR FROM CAST(sbTransaction.sbtxdatetime AS DATETIME)) = 2023
   AND sbTransaction.sbtxstatus = 'success'
 ORDER BY
   sbTransaction.sbtxdatetime

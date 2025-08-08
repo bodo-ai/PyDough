@@ -8,4 +8,4 @@ FROM main.sales AS sales
 JOIN main.cars AS cars
   ON cars._id = sales.car_id
 WHERE
-  YEAR(sales.sale_date) = 2023
+  EXTRACT(YEAR FROM CAST(sales.sale_date AS DATETIME)) = 2023

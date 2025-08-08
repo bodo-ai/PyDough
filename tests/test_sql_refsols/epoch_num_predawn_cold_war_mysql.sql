@@ -8,9 +8,9 @@ WITH _s0 AS (
     _s2.ev_key AS _u_1
   FROM _s0 AS _s2
   JOIN ERAS AS ERAS
-    ON ERAS.er_end_year > YEAR(_s2.ev_dt)
+    ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(_s2.ev_dt AS DATETIME))
     AND ERAS.er_name = 'Cold War'
-    AND ERAS.er_start_year <= YEAR(_s2.ev_dt)
+    AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(_s2.ev_dt AS DATETIME))
   GROUP BY
     _s2.ev_key
 )

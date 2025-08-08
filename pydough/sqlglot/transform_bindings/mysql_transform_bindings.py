@@ -54,11 +54,6 @@ class MySQLTransformBindings(BaseTransformBindings):
     PYDOP_TO_MYSQL_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
-        pydop.SIGN: "SIGN",
-        pydop.YEAR: "YEAR",
-        pydop.QUARTER: "QUARTER",
-        pydop.MONTH: "MONTH",
-        pydop.DAY: "DAY",
         pydop.HOUR: "HOUR",
         pydop.MINUTE: "MINUTE",
         pydop.SECOND: "SECOND",

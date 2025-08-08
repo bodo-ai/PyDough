@@ -3,7 +3,7 @@ WITH _t2 AS (
     ca_dt
   FROM main.CALENDAR
   WHERE
-    YEAR(ca_dt) IN (2020, 2021)
+    EXTRACT(YEAR FROM CAST(ca_dt AS DATETIME)) IN (2020, 2021)
 ), _t5 AS (
   SELECT
     co_id,
@@ -39,7 +39,11 @@ WITH _t2 AS (
     _t7.ca_dt
 )
 SELECT
-  CONCAT_WS('-', YEAR(_t2.ca_dt), LPAD(MONTH(_t2.ca_dt), 2, '0')) AS month,
+  CONCAT_WS(
+    '-',
+    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)),
+    LPAD(EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)), 2, '0')
+  ) AS month,
   ROUND((
     1000000.0 * COALESCE(SUM(_s15.n_rows), 0)
   ) / COALESCE(SUM(_s7.n_rows), 0), 2) AS ir
@@ -49,7 +53,7 @@ LEFT JOIN _s7 AS _s7
 LEFT JOIN _s15 AS _s15
   ON _s15.ca_dt = _t2.ca_dt
 GROUP BY
-  MONTH(_t2.ca_dt),
-  YEAR(_t2.ca_dt)
+  EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)),
+  EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME))
 ORDER BY
   month

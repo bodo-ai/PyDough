@@ -57,7 +57,8 @@ WITH _s0 AS (
     CUSTOMER.c_nationkey
   FROM tpch.CUSTOMER AS CUSTOMER
   JOIN tpch.ORDERS AS ORDERS
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey AND YEAR(ORDERS.o_orderdate) = 1998
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey
+    AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1998
 ), _s5 AS (
   SELECT
     MAX(expr_10) AS max_expr_10,

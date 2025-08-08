@@ -24,14 +24,14 @@ WITH _s2 AS (
   SELECT
     SUM(_s3.n_rows) AS sum_expr_3,
     SUM(_s7.n_rows) AS sum_n_rows,
-    YEAR(_s2.ca_dt) AS year
+    EXTRACT(YEAR FROM CAST(_s2.ca_dt AS DATETIME)) AS year
   FROM _s2 AS _s2
   LEFT JOIN _s3 AS _s3
     ON _s2.ca_dt = _s3.ca_dt
   LEFT JOIN _s7 AS _s7
     ON _s2.ca_dt = _s7.ca_dt
   GROUP BY
-    YEAR(_s2.ca_dt)
+    EXTRACT(YEAR FROM CAST(_s2.ca_dt AS DATETIME))
 )
 SELECT
   year AS yr,

@@ -7,19 +7,19 @@ WITH _s2 AS (
 SELECT
   EVENTS.ev_name AS event_name,
   ERAS.er_name AS era_name,
-  YEAR(EVENTS.ev_dt) AS event_year,
+  EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME)) AS event_year,
   SEASONS.s_name AS season_name,
   TIMES.t_name AS tod
 FROM EVENTS AS EVENTS
 JOIN ERAS AS ERAS
-  ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
-  AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
+  ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
+  AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
 JOIN _s2 AS _s2
   ON EVENTS.ev_key = _s2.ev_key
 JOIN SEASONS AS SEASONS
-  ON SEASONS.s_month1 = MONTH(_s2.ev_dt)
-  OR SEASONS.s_month2 = MONTH(_s2.ev_dt)
-  OR SEASONS.s_month3 = MONTH(_s2.ev_dt)
+  ON SEASONS.s_month1 = EXTRACT(MONTH FROM CAST(_s2.ev_dt AS DATETIME))
+  OR SEASONS.s_month2 = EXTRACT(MONTH FROM CAST(_s2.ev_dt AS DATETIME))
+  OR SEASONS.s_month3 = EXTRACT(MONTH FROM CAST(_s2.ev_dt AS DATETIME))
 JOIN _s2 AS _s6
   ON EVENTS.ev_key = _s6.ev_key
 JOIN TIMES AS TIMES

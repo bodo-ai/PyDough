@@ -22,7 +22,7 @@ SELECT
   TIMESTAMPDIFF(SECOND, sbtxdatetime, CAST('2023-04-03 13:16:30' AS DATETIME)) AS seconds_diff
 FROM main.sbTransaction
 WHERE
-  YEAR(sbtxdatetime) < 2025
+  EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025
 ORDER BY
   YEAR(CAST('2025-05-02 11:00:00' AS DATETIME)) - YEAR(sbtxdatetime)
 LIMIT 30

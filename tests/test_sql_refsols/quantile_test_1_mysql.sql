@@ -7,7 +7,8 @@ WITH _t0 AS (
     END AS expr_1
   FROM tpch.CUSTOMER AS CUSTOMER
   JOIN tpch.ORDERS AS ORDERS
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey AND YEAR(ORDERS.o_orderdate) = 1998
+    ON CUSTOMER.c_custkey = ORDERS.o_custkey
+    AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1998
 )
 SELECT
   MAX(expr_1) AS seventieth_order_price

@@ -1,6 +1,12 @@
 SELECT
   o_orderkey AS `key`,
-  CONCAT_WS('_', YEAR(o_orderdate), QUARTER(o_orderdate), MONTH(o_orderdate), DAY(o_orderdate)) AS a,
+  CONCAT_WS(
+    '_',
+    EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)),
+    EXTRACT(QUARTER FROM CAST(o_orderdate AS DATETIME)),
+    EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)),
+    EXTRACT(DAY FROM CAST(o_orderdate AS DATETIME))
+  ) AS a,
   CONCAT_WS(':', DAYNAME(o_orderdate), (
     (
       DAYOFWEEK(o_orderdate) + 6

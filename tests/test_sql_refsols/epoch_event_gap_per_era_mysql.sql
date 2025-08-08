@@ -8,8 +8,8 @@ WITH _t1 AS (
     ERAS.er_start_year
   FROM ERAS AS ERAS
   JOIN EVENTS AS EVENTS
-    ON ERAS.er_end_year > YEAR(EVENTS.ev_dt)
-    AND ERAS.er_start_year <= YEAR(EVENTS.ev_dt)
+    ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
+    AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
 )
 SELECT
   er_name AS era_name,

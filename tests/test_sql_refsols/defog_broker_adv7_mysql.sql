@@ -1,6 +1,10 @@
 WITH _s2 AS (
   SELECT
-    CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0')) AS month,
+    CONCAT_WS(
+      '-',
+      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
+      LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 2, '0')
+    ) AS month,
     COUNT(*) AS n_rows
   FROM main.sbCustomer
   WHERE
@@ -18,15 +22,23 @@ WITH _s2 AS (
       '%Y %c %e'
     )
   GROUP BY
-    CONCAT_WS('-', YEAR(sbcustjoindate), LPAD(MONTH(sbcustjoindate), 2, '0'))
+    CONCAT_WS(
+      '-',
+      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
+      LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 2, '0')
+    )
 ), _s3 AS (
   SELECT
     AVG(sbTransaction.sbtxamount) AS avg_sbTxAmount,
-    CONCAT_WS('-', YEAR(sbCustomer.sbcustjoindate), LPAD(MONTH(sbCustomer.sbcustjoindate), 2, '0')) AS month
+    CONCAT_WS(
+      '-',
+      EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)),
+      LPAD(EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)), 2, '0')
+    ) AS month
   FROM main.sbCustomer AS sbCustomer
   JOIN main.sbTransaction AS sbTransaction
-    ON MONTH(sbCustomer.sbcustjoindate) = MONTH(sbTransaction.sbtxdatetime)
-    AND YEAR(sbCustomer.sbcustjoindate) = YEAR(sbTransaction.sbtxdatetime)
+    ON EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbTransaction.sbtxdatetime AS DATETIME))
+    AND EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)) = EXTRACT(YEAR FROM CAST(sbTransaction.sbtxdatetime AS DATETIME))
     AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
   WHERE
     sbCustomer.sbcustjoindate < STR_TO_DATE(
@@ -43,7 +55,11 @@ WITH _s2 AS (
       '%Y %c %e'
     )
   GROUP BY
-    CONCAT_WS('-', YEAR(sbCustomer.sbcustjoindate), LPAD(MONTH(sbCustomer.sbcustjoindate), 2, '0'))
+    CONCAT_WS(
+      '-',
+      EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)),
+      LPAD(EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)), 2, '0')
+    )
 )
 SELECT
   _s2.month,

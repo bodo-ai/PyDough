@@ -6,7 +6,7 @@ WITH _t3 AS (
     sbtxdatetime AS sbTxDateTime
   FROM main.sbTransaction
   WHERE
-    YEAR(sbtxdatetime) = 2023
+    EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
 ), _t AS (
   SELECT
     sbTxDateTime,

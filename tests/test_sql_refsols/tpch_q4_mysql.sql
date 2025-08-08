@@ -14,9 +14,9 @@ FROM tpch.ORDERS AS ORDERS
 LEFT JOIN _u_0 AS _u_0
   ON ORDERS.o_orderkey = _u_0._u_1
 WHERE
-  NOT _u_0._u_1 IS NULL
-  AND QUARTER(ORDERS.o_orderdate) = 3
-  AND YEAR(ORDERS.o_orderdate) = 1993
+  EXTRACT(QUARTER FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 3
+  AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1993
+  AND NOT _u_0._u_1 IS NULL
 GROUP BY
   ORDERS.o_orderpriority
 ORDER BY

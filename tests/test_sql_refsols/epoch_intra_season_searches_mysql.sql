@@ -17,17 +17,17 @@ WITH _s0 AS (
     SEARCHES.search_id
   FROM _s0 AS _s2
   JOIN SEARCHES AS SEARCHES
-    ON _s2.s_month1 = MONTH(SEARCHES.search_ts)
-    OR _s2.s_month2 = MONTH(SEARCHES.search_ts)
-    OR _s2.s_month3 = MONTH(SEARCHES.search_ts)
+    ON _s2.s_month1 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
+    OR _s2.s_month2 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
+    OR _s2.s_month3 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
   JOIN _s5 AS _s5
     ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(_s5.ev_name), '%')
   JOIN _s0 AS _s7
     ON _s2.s_name = _s7.s_name
     AND (
-      _s7.s_month1 = MONTH(_s5.ev_dt)
-      OR _s7.s_month2 = MONTH(_s5.ev_dt)
-      OR _s7.s_month3 = MONTH(_s5.ev_dt)
+      _s7.s_month1 = EXTRACT(MONTH FROM CAST(_s5.ev_dt AS DATETIME))
+      OR _s7.s_month2 = EXTRACT(MONTH FROM CAST(_s5.ev_dt AS DATETIME))
+      OR _s7.s_month3 = EXTRACT(MONTH FROM CAST(_s5.ev_dt AS DATETIME))
     )
   GROUP BY
     _s2.s_name,
@@ -41,9 +41,9 @@ WITH _s0 AS (
     _s0.s_name
   FROM _s0 AS _s0
   JOIN SEARCHES AS SEARCHES
-    ON _s0.s_month1 = MONTH(SEARCHES.search_ts)
-    OR _s0.s_month2 = MONTH(SEARCHES.search_ts)
-    OR _s0.s_month3 = MONTH(SEARCHES.search_ts)
+    ON _s0.s_month1 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
+    OR _s0.s_month2 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
+    OR _s0.s_month3 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
   LEFT JOIN _s9 AS _s9
     ON SEARCHES.search_id = _s9.search_id AND _s0.s_name = _s9.s_name
   GROUP BY
@@ -55,15 +55,15 @@ WITH _s0 AS (
     _s10.s_name
   FROM _s0 AS _s10
   JOIN _s5 AS _s11
-    ON _s10.s_month1 = MONTH(_s11.ev_dt)
-    OR _s10.s_month2 = MONTH(_s11.ev_dt)
-    OR _s10.s_month3 = MONTH(_s11.ev_dt)
+    ON _s10.s_month1 = EXTRACT(MONTH FROM CAST(_s11.ev_dt AS DATETIME))
+    OR _s10.s_month2 = EXTRACT(MONTH FROM CAST(_s11.ev_dt AS DATETIME))
+    OR _s10.s_month3 = EXTRACT(MONTH FROM CAST(_s11.ev_dt AS DATETIME))
   JOIN SEARCHES AS SEARCHES
     ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(_s11.ev_name), '%')
   JOIN _s0 AS _s15
-    ON _s15.s_month1 = MONTH(SEARCHES.search_ts)
-    OR _s15.s_month2 = MONTH(SEARCHES.search_ts)
-    OR _s15.s_month3 = MONTH(SEARCHES.search_ts)
+    ON _s15.s_month1 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
+    OR _s15.s_month2 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
+    OR _s15.s_month3 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
   GROUP BY
     _s10.s_name
 )

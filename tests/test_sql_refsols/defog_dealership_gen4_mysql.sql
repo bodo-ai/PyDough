@@ -13,7 +13,7 @@ WITH _s0 AS (
     customer_id
   FROM main.sales
   WHERE
-    YEAR(sale_date) = 2023
+    EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
   GROUP BY
     STR_TO_DATE(
       CONCAT(
