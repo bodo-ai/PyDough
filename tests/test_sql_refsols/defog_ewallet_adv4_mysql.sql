@@ -9,4 +9,4 @@ FROM main.wallet_transactions_daily AS wallet_transactions_daily
 JOIN main.users AS users
   ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), CAST(wallet_transactions_daily.created_at AS DATETIME)) <= 7
+  DATEDIFF(CURRENT_TIMESTAMP(), wallet_transactions_daily.created_at) <= 7

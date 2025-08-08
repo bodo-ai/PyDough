@@ -1,9 +1,55 @@
 WITH _s1 AS (
   SELECT
-    STDDEV_POP(s_acctbal) AS pop_std,
-    VARIANCE_POP(s_acctbal) AS pop_var,
-    STDDEV(s_acctbal) AS sample_std,
-    VARIANCE(s_acctbal) AS sample_var,
+    POWER(
+      (
+        (
+          SUM((
+            POWER(s_acctbal, 2)
+          )) - (
+            (
+              POWER(SUM(s_acctbal), 2)
+            ) / COUNT(s_acctbal)
+          )
+        ) / COUNT(s_acctbal)
+      ),
+      0.5
+    ) AS pop_std,
+    (
+      SUM((
+        POWER(s_acctbal, 2)
+      )) - (
+        (
+          POWER(SUM(s_acctbal), 2)
+        ) / COUNT(s_acctbal)
+      )
+    ) / COUNT(s_acctbal) AS pop_var,
+    POWER(
+      (
+        (
+          SUM((
+            POWER(s_acctbal, 2)
+          )) - (
+            (
+              POWER(SUM(s_acctbal), 2)
+            ) / COUNT(s_acctbal)
+          )
+        ) / (
+          COUNT(s_acctbal) - 1
+        )
+      ),
+      0.5
+    ) AS sample_std,
+    (
+      SUM((
+        POWER(s_acctbal, 2)
+      )) - (
+        (
+          POWER(SUM(s_acctbal), 2)
+        ) / COUNT(s_acctbal)
+      )
+    ) / (
+      COUNT(s_acctbal) - 1
+    ) AS sample_var,
     s_nationkey
   FROM tpch.SUPPLIER
   GROUP BY

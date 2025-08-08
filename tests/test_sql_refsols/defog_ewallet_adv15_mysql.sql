@@ -4,7 +4,13 @@ WITH _s3 AS (
     coupons.merchant_id
   FROM main.coupons AS coupons
   JOIN main.merchants AS merchants
-    ON DATEDIFF(CAST(coupons.created_at AS DATETIME), CAST(merchants.created_at AS DATETIME)) = 0
+    ON (
+      (
+        YEAR(coupons.created_at) - YEAR(merchants.created_at)
+      ) * 12 + (
+        MONTH(coupons.created_at) - MONTH(merchants.created_at)
+      )
+    ) = 0
     AND coupons.merchant_id = merchants.mid
   GROUP BY
     coupons.merchant_id

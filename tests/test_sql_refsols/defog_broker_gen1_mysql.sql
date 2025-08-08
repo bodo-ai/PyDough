@@ -5,4 +5,4 @@ JOIN main.sbTicker AS sbTicker
   ON sbDailyPrice.sbdptickerid = sbTicker.sbtickerid
   AND sbTicker.sbtickersymbol = 'VTI'
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), CAST(sbDailyPrice.sbdpdate AS DATETIME)) <= 7
+  DATEDIFF(CURRENT_TIMESTAMP(), sbDailyPrice.sbdpdate) <= 7

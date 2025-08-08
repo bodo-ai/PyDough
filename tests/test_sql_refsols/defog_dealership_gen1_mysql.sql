@@ -2,10 +2,10 @@ SELECT
   first_name,
   last_name,
   phone,
-  DATEDIFF(CAST(termination_date AS DATETIME), CAST(hire_date AS DATETIME)) * 1.0 AS days_employed
+  DATEDIFF(termination_date, hire_date) * 1.0 AS days_employed
 FROM main.salespersons
 WHERE
   NOT termination_date IS NULL
 ORDER BY
-  DATEDIFF(CAST(termination_date AS DATETIME), CAST(hire_date AS DATETIME)) * 1.0
+  DATEDIFF(termination_date, hire_date) * 1.0
 LIMIT 1

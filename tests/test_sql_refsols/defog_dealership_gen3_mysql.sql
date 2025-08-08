@@ -4,7 +4,17 @@ SELECT
   COALESCE(SUM(payment_amount), 0) AS total_amount
 FROM main.payments_received
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), CAST(payment_date AS DATETIME)) = 1
+  CAST((
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(payment_date AS DATETIME)) + (
+      (
+        DAYOFWEEK(payment_date) + 5
+      ) % 7
+    ) - (
+      (
+        DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
+      ) % 7
+    )
+  ) / 7 AS SIGNED) = 1
 GROUP BY
   payment_date,
   payment_method

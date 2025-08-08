@@ -27,15 +27,37 @@ SELECT
   HOUR('1995-12-01 23:59:59') AS hour_str,
   MINUTE('1995-12-01 23:59:59') AS minute_str,
   SECOND(CAST('1992-01-01 00:00:59' AS DATETIME)) AS second_ts,
-  DATEDIFF(CAST('1992-01-01' AS DATETIME), CAST(o_orderdate AS DATETIME)) AS dd_col_str,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1992-01-01' AS DATETIME)) AS dd_str_col,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1995-10-10 00:00:00' AS DATETIME)) AS dd_pd_col,
-  DATEDIFF(CAST('1992-01-01 12:30:45' AS DATETIME), CAST(o_orderdate AS DATETIME)) AS dd_col_dt,
-  DATEDIFF(CAST('1992-01-01 12:30:45' AS DATETIME), CAST('1992-01-01' AS DATETIME)) AS dd_dt_str,
-  DAYOFWEEK(o_orderdate) AS dow_col,
-  DAYOFWEEK(CAST('1992-07-01' AS DATE)) AS dow_str,
-  DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) AS dow_dt,
-  DAYOFWEEK(CAST('1995-10-10 00:00:00' AS DATETIME)) AS dow_pd,
+  DATEDIFF(CAST('1992-01-01' AS DATETIME), o_orderdate) AS dd_col_str,
+  DATEDIFF(o_orderdate, CAST('1992-01-01' AS DATETIME)) AS dd_str_col,
+  (
+    YEAR(o_orderdate) - YEAR(CAST('1995-10-10 00:00:00' AS DATETIME))
+  ) * 12 + (
+    MONTH(o_orderdate) - MONTH(CAST('1995-10-10 00:00:00' AS DATETIME))
+  ) AS dd_pd_col,
+  YEAR(CAST('1992-01-01 12:30:45' AS DATETIME)) - YEAR(o_orderdate) AS dd_col_dt,
+  CAST((
+    DATEDIFF(CAST('1992-01-01 12:30:45' AS DATETIME), CAST('1992-01-01' AS DATETIME)) + (
+      (
+        DAYOFWEEK(CAST('1992-01-01' AS DATETIME)) + 6
+      ) % 7
+    ) - (
+      (
+        DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + 6
+      ) % 7
+    )
+  ) / 7 AS SIGNED) AS dd_dt_str,
+  (
+    DAYOFWEEK(o_orderdate) + 6
+  ) % 7 AS dow_col,
+  (
+    DAYOFWEEK(CAST('1992-07-01' AS DATE)) + 6
+  ) % 7 AS dow_str,
+  (
+    DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + 6
+  ) % 7 AS dow_dt,
+  (
+    DAYOFWEEK(CAST('1995-10-10 00:00:00' AS DATETIME)) + 6
+  ) % 7 AS dow_pd,
   DAYNAME(o_orderdate) AS dayname_col,
   DAYNAME('1995-06-30') AS dayname_str,
   DAYNAME(CAST('1993-08-15 00:00:00' AS DATETIME)) AS dayname_dt

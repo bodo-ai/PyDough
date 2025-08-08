@@ -3,6 +3,8 @@ Utilities used by PyDough test files, such as the TestInfo classes used to
 build QDAG nodes for unit tests.
 """
 
+from dateutil import parser  # type: ignore[import-untyped]
+
 __all__ = [
     "AstNodeTestInfo",
     "BackReferenceExpressionInfo",
@@ -1276,13 +1278,12 @@ class PyDoughPandasTest:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
-        # If coerce_types is True, harmonize the types of the columns in the result
+        # Perform the comparison between the result and the reference solution
         if coerce_types:
             for col_name in result.columns:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
                 )
-        # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )
@@ -1300,22 +1301,6 @@ def harmonize_types(column_a, column_b):
         isinstance(elem, Decimal) for elem in column_b
     ):
         return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else float(x))
-    if any(isinstance(elem, datetime.date) for elem in column_a) and any(
-        isinstance(elem, str) for elem in column_b
-    ):
-        return column_a, column_b.apply(
-            lambda x: datetime.datetime.strptime(x, "%Y-%m-%d").date()
-            if isinstance(x, str)
-            else x
-        )
-    if any(isinstance(elem, str) for elem in column_a) and any(
-        isinstance(elem, datetime.date) for elem in column_b
-    ):
-        return column_a.apply(
-            lambda x: datetime.datetime.strptime(x, "%Y-%m-%d").date()
-            if isinstance(x, str)
-            else x
-        ), column_b
     if any(isinstance(elem, pd.Timestamp) for elem in column_a) and any(
         isinstance(elem, str) for elem in column_b
     ):
@@ -1327,6 +1312,18 @@ def harmonize_types(column_a, column_b):
     ):
         return column_a.apply(
             lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        ), column_b
+    if any(isinstance(elem, datetime.date) for elem in column_a) and any(
+        isinstance(elem, str) for elem in column_b
+    ):
+        return column_a, column_b.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
+        )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
         ), column_b
     return column_a, column_b
 

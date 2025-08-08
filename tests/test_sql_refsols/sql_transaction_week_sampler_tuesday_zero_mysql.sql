@@ -1,17 +1,18 @@
 SELECT
   sbtxdatetime AS date_time,
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST(sbtxdatetime AS DATETIME)),
-      ' ',
-      WEEK(CAST(sbtxdatetime AS DATETIME), 1),
-      ' 1'
-    ),
-    '%Y %u %w'
+  DATE(
+    DATE_SUB(
+      CAST(sbtxdatetime AS DATETIME),
+      INTERVAL (
+        (
+          DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + 4
+        ) % 7
+      ) DAY
+    )
   ) AS sow,
   DAYNAME(sbtxdatetime) AS dayname,
   (
-    DAYOFWEEK(sbtxdatetime) + 5
+    DAYOFWEEK(sbtxdatetime) + 4
   ) % 7 AS dayofweek
 FROM main.sbTransaction
 WHERE

@@ -1,7 +1,11 @@
 SELECT
   o_orderkey AS `key`,
   CONCAT_WS('_', YEAR(o_orderdate), QUARTER(o_orderdate), MONTH(o_orderdate), DAY(o_orderdate)) AS a,
-  CONCAT_WS(':', DAYNAME(o_orderdate), DAYOFWEEK(o_orderdate)) AS b,
+  CONCAT_WS(':', DAYNAME(o_orderdate), (
+    (
+      DAYOFWEEK(o_orderdate) + 6
+    ) % 7
+  )) AS b,
   DATE_ADD(
     DATE_ADD(
       STR_TO_DATE(CONCAT(YEAR(CAST(o_orderdate AS DATETIME)), ' 1 1'), '%Y %c %e'),
@@ -33,17 +37,49 @@ SELECT
     MINUTE(CAST('2025-01-01 13:20:13' AS DATETIME)),
     SECOND(CAST('2025-01-01 12:35:06' AS DATETIME))
   ) AS h,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS i,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS j,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS k,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS l,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS m,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS n,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS o,
-  DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) AS p,
-  STR_TO_DATE(
-    CONCAT(YEAR(CAST(o_orderdate AS DATETIME)), ' ', WEEK(CAST(o_orderdate AS DATETIME), 1), ' 1'),
-    '%Y %u %w'
+  YEAR(o_orderdate) - YEAR(CAST('1993-05-25 12:45:36' AS DATETIME)) AS i,
+  (
+    YEAR(o_orderdate) - YEAR(CAST('1993-05-25 12:45:36' AS DATETIME))
+  ) * 4 + (
+    QUARTER(o_orderdate) - QUARTER(CAST('1993-05-25 12:45:36' AS DATETIME))
+  ) AS j,
+  (
+    YEAR(o_orderdate) - YEAR(CAST('1993-05-25 12:45:36' AS DATETIME))
+  ) * 12 + (
+    MONTH(o_orderdate) - MONTH(CAST('1993-05-25 12:45:36' AS DATETIME))
+  ) AS k,
+  CAST((
+    DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) + (
+      (
+        DAYOFWEEK(CAST('1993-05-25 12:45:36' AS DATETIME)) + 6
+      ) % 7
+    ) - (
+      (
+        DAYOFWEEK(o_orderdate) + 6
+      ) % 7
+    )
+  ) / 7 AS SIGNED) AS l,
+  DATEDIFF(o_orderdate, CAST('1993-05-25 12:45:36' AS DATETIME)) AS m,
+  TIMESTAMPDIFF(
+    HOUR,
+    DATE_FORMAT(CAST('1993-05-25 12:45:36' AS DATETIME), '%Y-%m-%d %H:00:00'),
+    DATE_FORMAT(o_orderdate, '%Y-%m-%d %H:00:00')
+  ) AS n,
+  TIMESTAMPDIFF(
+    MINUTE,
+    DATE_FORMAT(CAST('1993-05-25 12:45:36' AS DATETIME), '%Y-%m-%d %H:%i::00'),
+    DATE_FORMAT(o_orderdate, '%Y-%m-%d %H:%i::00')
+  ) AS o,
+  TIMESTAMPDIFF(SECOND, CAST('1993-05-25 12:45:36' AS DATETIME), o_orderdate) AS p,
+  DATE(
+    DATE_SUB(
+      CAST(o_orderdate AS DATETIME),
+      INTERVAL (
+        (
+          DAYOFWEEK(CAST(o_orderdate AS DATETIME)) + 6
+        ) % 7
+      ) DAY
+    )
   ) AS q
 FROM tpch.ORDERS
 WHERE

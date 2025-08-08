@@ -1,8 +1,8 @@
 WITH _t1 AS (
   SELECT
     DATEDIFF(
-      CAST(EVENTS.ev_dt AS DATETIME),
-      CAST(LAG(EVENTS.ev_dt, 1) OVER (PARTITION BY ERAS.er_name ORDER BY CASE WHEN EVENTS.ev_dt IS NULL THEN 1 ELSE 0 END, EVENTS.ev_dt) AS DATETIME)
+      EVENTS.ev_dt,
+      LAG(EVENTS.ev_dt, 1) OVER (PARTITION BY ERAS.er_name ORDER BY CASE WHEN EVENTS.ev_dt IS NULL THEN 1 ELSE 0 END, EVENTS.ev_dt)
     ) AS day_gap,
     ERAS.er_name,
     ERAS.er_start_year

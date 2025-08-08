@@ -8,10 +8,13 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.configs import DayOfWeek
 from pydough.types import PyDoughType
+from pydough.types.datetime_type import DatetimeType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
+    DateTimeUnit,
     apply_parens,
 )
 
@@ -20,6 +23,33 @@ class MySQLTransformBindings(BaseTransformBindings):
     """
     Subclass of BaseTransformBindings for the MySQL dialect.
     """
+
+    @property
+    def start_of_week_offset(self) -> int:
+        """
+        The number of days to add to the start of the week within the
+        SQL dialect to obtain the start of week referenced by the configs.
+        """
+        dows: list[DayOfWeek] = list(DayOfWeek)
+        dialect_index: int = dows.index(self.dialect_start_of_week) - 1
+        config_index: int = dows.index(self.configs.start_of_week)
+        return (config_index - dialect_index) % 7
+
+    @property
+    def dialect_dow_mapping(self) -> dict[str, int]:
+        """
+        A mapping of each day of week string to its corresponding integer value
+        in the dialect when converted to a day of week.
+        """
+        return {
+            "Sunday": 1,
+            "Monday": 2,
+            "Tuesday": 3,
+            "Wednesday": 4,
+            "Thursday": 5,
+            "Friday": 6,
+            "Saturday": 7,
+        }
 
     PYDOP_TO_MYSQL_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.LPAD: "LPAD",
@@ -433,3 +463,155 @@ class MySQLTransformBindings(BaseTransformBindings):
         return sqlglot_expressions.Pow(
             this=variance, expression=sqlglot_expressions.Literal.number(0.5)
         )
+
+    def convert_datediff(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        Creates a SQLGlot expression for `DATEDIFF(unit, X, Y)`.
+
+        Args:
+            `args`: The operands to `DATEDIFF`, after they were
+            converted to SQLGlot expressions.
+            `types`: The PyDough types of the arguments to `DATEDIFF`.
+
+        Returns:
+            The SQLGlot expression matching the functionality of `DATEDIFF`.
+        """
+        assert len(args) == 3
+        # Check if unit is a string.
+        if not (isinstance(args[0], sqlglot_expressions.Literal) and args[0].is_string):
+            raise ValueError(
+                f"Unsupported argument for DATEDIFF: {args[0]!r}. It should be a string literal."
+            )
+        date1 = self.make_datetime_arg(args[1])
+        date2 = self.make_datetime_arg(args[2])
+
+        unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
+        if unit is None:
+            raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+
+        year_diff: SQLGlotExpression = sqlglot_expressions.Sub(
+            this=sqlglot_expressions.Year(this=date2),
+            expression=sqlglot_expressions.Year(this=date1),
+        )
+
+        match unit:
+            case DateTimeUnit.YEAR:
+                # YEAR(date2) - YEAR(date1)
+                return year_diff
+            case DateTimeUnit.QUARTER:
+                # (YEAR(date2) - YEAR(date1)) * 4 + (QUARTER(date2) - QUARTER(date1))
+                literal_4: SQLGlotExpression = sqlglot_expressions.Literal.number(4)
+
+                quarter_diff: SQLGlotExpression = sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Quarter(this=date2),
+                    expression=sqlglot_expressions.Quarter(this=date1),
+                )
+                return sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Mul(
+                        this=apply_parens(year_diff), expression=literal_4
+                    ),
+                    expression=apply_parens(quarter_diff),
+                )
+            case DateTimeUnit.MONTH:
+                # (YEAR(date2) - YEAR(date1)) * 12 + (MONTH(date2) - MONTH(date1))
+                literal_12: SQLGlotExpression = sqlglot_expressions.Literal.number(12)
+
+                month_diff: SQLGlotExpression = sqlglot_expressions.Sub(
+                    this=sqlglot_expressions.Month(this=date2),
+                    expression=sqlglot_expressions.Month(this=date1),
+                )
+                return sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Mul(
+                        this=apply_parens(year_diff), expression=literal_12
+                    ),
+                    expression=apply_parens(month_diff),
+                )
+            case DateTimeUnit.WEEK:
+                # INTEGER((raw_delta + dow1 - dow2) / 7)
+                raw_delta = sqlglot_expressions.DateDiff(this=date2, expression=date1)
+                dow1 = self.convert_dayofweek([date1], [types[1]])
+                dow2 = self.convert_dayofweek([date2], [types[2]])
+                divion = sqlglot_expressions.Div(
+                    this=apply_parens(
+                        sqlglot_expressions.Add(
+                            this=raw_delta,
+                            expression=sqlglot_expressions.Sub(
+                                this=dow1, expression=dow2
+                            ),
+                        )
+                    ),
+                    expression=sqlglot_expressions.Literal.number(7),
+                )
+
+                return sqlglot_expressions.Cast(
+                    this=divion, to=sqlglot_expressions.DataType.build("BIGINT")
+                )
+
+            case DateTimeUnit.DAY:
+                # DATEDIFF(DATE(date2), DATE(date1))
+                return sqlglot_expressions.DateDiff(
+                    this=sqlglot_expressions.Date(this=date2),
+                    expression=sqlglot_expressions.Date(this=date1),
+                )
+            case DateTimeUnit.HOUR:
+                # TIMESTAMPDIFF(HOUR, DATE_FORMAT(date1, '%Y-%m-%d %H:00:00'), DATE_FORMAT(date2, '%Y-%m-%d %H:00:00'))
+                hour_format: SQLGlotExpression = sqlglot_expressions.Literal.string(
+                    "%Y-%m-%d %H:00:00"
+                )
+
+                return sqlglot_expressions.TimestampDiff(
+                    unit=sqlglot_expressions.Var(this=unit.value),
+                    this=sqlglot_expressions.Anonymous(
+                        this="DATE_FORMAT", expressions=[date2, hour_format]
+                    ),
+                    expression=sqlglot_expressions.Anonymous(
+                        this="DATE_FORMAT", expressions=[date1, hour_format]
+                    ),
+                )
+            case DateTimeUnit.MINUTE:
+                # TIMESTAMPDIFF(MINUTE, DATE_FORMAT(date1, '%Y-%m-%d %H:%i:00'), DATE_FORMAT(date2, '%Y-%m-%d %H:%i:00'))
+                minute_format: SQLGlotExpression = sqlglot_expressions.Literal.string(
+                    "%Y-%m-%d %H:%i::00"
+                )
+
+                return sqlglot_expressions.TimestampDiff(
+                    unit=sqlglot_expressions.Var(this=unit.value),
+                    this=sqlglot_expressions.Anonymous(
+                        this="DATE_FORMAT", expressions=[date2, minute_format]
+                    ),
+                    expression=sqlglot_expressions.Anonymous(
+                        this="DATE_FORMAT", expressions=[date1, minute_format]
+                    ),
+                )
+            case DateTimeUnit.SECOND:
+                # TIMESTAMPDIFF(SECOND, date1, date2)
+                return sqlglot_expressions.TimestampDiff(
+                    unit=sqlglot_expressions.Var(this=unit.value),
+                    this=date2,
+                    expression=date1,
+                )
+            case _:
+                raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+
+    def apply_datetime_truncation(
+        self, base: SQLGlotExpression, unit: DateTimeUnit
+    ) -> SQLGlotExpression:
+        # DOW = DAYOFWEEK(X)
+        # Y = subtract DOW days from X
+        # RESULT = DATETIME(Y, "start of day")
+
+        if unit == DateTimeUnit.WEEK:
+            dow = self.convert_dayofweek([base], [DatetimeType()])
+            y = sqlglot_expressions.DateSub(
+                this=base,
+                expression=dow,
+                unit=sqlglot_expressions.Var(this=DateTimeUnit.DAY),
+            )
+            return self.apply_datetime_truncation(y, DateTimeUnit.DAY)
+
+        else:
+            return super().apply_datetime_truncation(base, unit)

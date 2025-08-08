@@ -1,18 +1,19 @@
 SELECT
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST(payments_received.payment_date AS DATETIME)),
-      ' ',
-      WEEK(CAST(payments_received.payment_date AS DATETIME), 1),
-      ' 1'
-    ),
-    '%Y %u %w'
+  DATE(
+    DATE_SUB(
+      CAST(payments_received.payment_date AS DATETIME),
+      INTERVAL (
+        (
+          DAYOFWEEK(CAST(payments_received.payment_date AS DATETIME)) + 5
+        ) % 7
+      ) DAY
+    )
   ) AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
     SUM((
       (
-        DAYOFWEEK(payments_received.payment_date) + 6
+        DAYOFWEEK(payments_received.payment_date) + 5
       ) % 7
     ) IN (5, 6)),
     0
@@ -21,15 +22,36 @@ FROM main.payments_received AS payments_received
 JOIN main.sales AS sales
   ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME)) <= 8
-  AND DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME)) >= 1
+  CAST((
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME)) + (
+      (
+        DAYOFWEEK(payments_received.payment_date) + 5
+      ) % 7
+    ) - (
+      (
+        DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
+      ) % 7
+    )
+  ) / 7 AS SIGNED) <= 8
+  AND CAST((
+    DATEDIFF(CURRENT_TIMESTAMP(), CAST(payments_received.payment_date AS DATETIME)) + (
+      (
+        DAYOFWEEK(payments_received.payment_date) + 5
+      ) % 7
+    ) - (
+      (
+        DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
+      ) % 7
+    )
+  ) / 7 AS SIGNED) >= 1
 GROUP BY
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST(payments_received.payment_date AS DATETIME)),
-      ' ',
-      WEEK(CAST(payments_received.payment_date AS DATETIME), 1),
-      ' 1'
-    ),
-    '%Y %u %w'
+  DATE(
+    DATE_SUB(
+      CAST(payments_received.payment_date AS DATETIME),
+      INTERVAL (
+        (
+          DAYOFWEEK(CAST(payments_received.payment_date AS DATETIME)) + 5
+        ) % 7
+      ) DAY
+    )
   )

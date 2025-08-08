@@ -41,8 +41,33 @@ WITH _s1 AS (
     MAX(expr_16) AS max_expr_16,
     MIN(c_acctbal) AS min_c_acctbal,
     COUNT(DISTINCT c_acctbal) AS ndistinct_c_acctbal,
-    STDDEV(c_acctbal) AS sample_std_c_acctbal,
-    VARIANCE(c_acctbal) AS sample_variance_c_acctbal,
+    POWER(
+      (
+        (
+          SUM((
+            POWER(c_acctbal, 2)
+          )) - (
+            (
+              POWER(SUM(c_acctbal), 2)
+            ) / COUNT(c_acctbal)
+          )
+        ) / (
+          COUNT(c_acctbal) - 1
+        )
+      ),
+      0.5
+    ) AS sample_std_c_acctbal,
+    (
+      SUM((
+        POWER(c_acctbal, 2)
+      )) - (
+        (
+          POWER(SUM(c_acctbal), 2)
+        ) / COUNT(c_acctbal)
+      )
+    ) / (
+      COUNT(c_acctbal) - 1
+    ) AS sample_variance_c_acctbal,
     SUM(c_acctbal) AS sum_c_acctbal,
     SUM(n_rows) AS sum_n_rows,
     c_nationkey

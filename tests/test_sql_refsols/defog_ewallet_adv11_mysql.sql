@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    SUM(DATEDIFF(CAST(session_end_ts AS DATETIME), CAST(session_start_ts AS DATETIME))) AS sum_duration,
+    SUM(TIMESTAMPDIFF(SECOND, session_start_ts, session_end_ts)) AS sum_duration,
     user_id
   FROM main.user_sessions
   WHERE

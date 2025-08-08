@@ -1,17 +1,18 @@
 SELECT
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST(sbTransaction.sbtxdatetime AS DATETIME)),
-      ' ',
-      WEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME), 1),
-      ' 1'
-    ),
-    '%Y %u %w'
+  DATE(
+    DATE_SUB(
+      CAST(sbTransaction.sbtxdatetime AS DATETIME),
+      INTERVAL (
+        (
+          DAYOFWEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME)) + 5
+        ) % 7
+      ) DAY
+    )
   ) AS week,
   COUNT(*) AS num_transactions,
   COALESCE(SUM((
     (
-      DAYOFWEEK(sbTransaction.sbtxdatetime) + 6
+      DAYOFWEEK(sbTransaction.sbtxdatetime) + 5
     ) % 7
   ) IN (5, 6)), 0) AS weekend_transactions
 FROM main.sbTransaction AS sbTransaction
@@ -19,24 +20,35 @@ JOIN main.sbTicker AS sbTicker
   ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
   AND sbTicker.sbtickertype = 'stock'
 WHERE
-  sbTransaction.sbtxdatetime < STR_TO_DATE(
-    CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', WEEK(CURRENT_TIMESTAMP(), 1), ' 1'),
-    '%Y %u %w'
+  sbTransaction.sbtxdatetime < DATE(
+    DATE_SUB(
+      CURRENT_TIMESTAMP(),
+      INTERVAL (
+        (
+          DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
+        ) % 7
+      ) DAY
+    )
   )
   AND sbTransaction.sbtxdatetime >= DATE_ADD(
-    STR_TO_DATE(
-      CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', WEEK(CURRENT_TIMESTAMP(), 1), ' 1'),
-      '%Y %u %w'
+    DATE_SUB(
+      CURRENT_TIMESTAMP(),
+      INTERVAL (
+        (
+          DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
+        ) % 7
+      ) DAY
     ),
     INTERVAL '-8' WEEK
   )
 GROUP BY
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST(sbTransaction.sbtxdatetime AS DATETIME)),
-      ' ',
-      WEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME), 1),
-      ' 1'
-    ),
-    '%Y %u %w'
+  DATE(
+    DATE_SUB(
+      CAST(sbTransaction.sbtxdatetime AS DATETIME),
+      INTERVAL (
+        (
+          DAYOFWEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME)) + 5
+        ) % 7
+      ) DAY
+    )
   )
