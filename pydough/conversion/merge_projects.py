@@ -4,7 +4,6 @@ Logic used to merge adjacent projections in relational trees when convenient.
 
 __all__ = ["merge_projects"]
 
-from collections import defaultdict
 
 from pydough.relational import (
     Aggregate,
@@ -17,31 +16,42 @@ from pydough.relational import (
     Limit,
     Project,
     RelationalExpression,
+    RelationalExpressionShuttle,
     RelationalNode,
     RelationalRoot,
     Scan,
 )
 from pydough.relational.rel_util import (
-    add_expr_uses,
+    ExpressionTranspositionShuttle,
     contains_window,
-    remap_join_condition,
-    transpose_expression,
 )
 
 
-def merging_doesnt_create_convolution(
-    columns_a: dict[str, RelationalExpression],
-    columns_b: dict[str, RelationalExpression],
-) -> bool:
+class JoinRemapShuttle(RelationalExpressionShuttle):
     """
-    Confirms whether merging two projections results in any complex expressions
-    being calculated more than once, ignoring any top-level expressions.
+    Same idea as `ExpressionTranspositionShuttle`, but for remapping
+    column references in a join condition.
     """
-    n_uses: defaultdict[RelationalExpression, int] = defaultdict(int)
-    for expr in columns_a.values():
-        expr = transpose_expression(expr, columns_b)
-        add_expr_uses(expr, n_uses, top_level=True)
-    return len(n_uses) == 0 or max(n_uses.values()) == 1
+
+    def __init__(
+        self,
+        left_renamings: dict[str, RelationalExpression],
+        right_renamings: dict[str, RelationalExpression],
+        input_names: list[str | None],
+    ) -> None:
+        self.left_renamings: dict[str, RelationalExpression] = left_renamings
+        self.right_renamings: dict[str, RelationalExpression] = right_renamings
+        self.input_names: list[str | None] = input_names
+
+    def visit_column_reference(
+        self, column_reference: ColumnReference
+    ) -> RelationalExpression:
+        if column_reference.input_name == self.input_names[0]:
+            return self.left_renamings.get(column_reference.name, column_reference)
+        elif column_reference.input_name == self.input_names[1]:
+            return self.right_renamings.get(column_reference.name, column_reference)
+        else:
+            raise ValueError(f"Unexpected input name: {column_reference.input_name}")
 
 
 def project_join_transpose(project: Project) -> RelationalNode:
@@ -127,6 +137,9 @@ def project_join_transpose(project: Project) -> RelationalNode:
     new_columns: dict[str, RelationalExpression] = {}
     # For each join input, place all of the columns used from that input into
     # a join.
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        join, False
+    )
     for idx, join_input in enumerate(join.inputs):
         renaming: dict[str, RelationalExpression] = (left_renamings, right_renamings)[
             idx
@@ -145,9 +158,7 @@ def project_join_transpose(project: Project) -> RelationalNode:
                 counter += 1
             # Add the expression to the projection for the referenced input,
             # and a reference to the new column in the join's columns.
-            transposed_expr: RelationalExpression = transpose_expression(
-                expr, join.columns
-            )
+            transposed_expr: RelationalExpression = expr.accept_shuttle(transposer)
             new_input_cols[input_expr_name] = transposed_expr
             new_columns[name] = ColumnReference(
                 input_expr_name, expr.data_type, input_name=input_name
@@ -160,9 +171,10 @@ def project_join_transpose(project: Project) -> RelationalNode:
             join.inputs[idx] = Project(join_input, new_input_cols)
 
     # Replace the original columns with the new columns, and update the join condition
-    join.condition = remap_join_condition(
-        join.condition, left_renamings, right_renamings, join.default_input_aliases
+    join_remap_shuttle: JoinRemapShuttle = JoinRemapShuttle(
+        left_renamings, right_renamings, join.default_input_aliases
     )
+    join.condition = join.condition.accept_shuttle(join_remap_shuttle)
     join._columns = new_columns
     return join
 
@@ -183,64 +195,43 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
         it, or the original node if the merging is not possible.
     """
     expr: RelationalExpression
-    new_expr: RelationalExpression
+    transposer: ExpressionTranspositionShuttle
     # Repeatedly attempt the merging protocol until the input of the node is
     # no longer a projection.
     while isinstance(node.input, Project):
         child_project: Project = node.input
-        if isinstance(node, RelationalRoot):
-            # The columns of the projection can be sucked into the root
-            # above it if they are all pass-through/renamings, or if there
-            # is no convolution created (only allowed if there are no
-            # ordering expressions).
-            if all(
-                isinstance(expr, ColumnReference)
-                for expr in child_project.columns.values()
-            ) or (
-                len(node.orderings) == 0
-                and merging_doesnt_create_convolution(
-                    node.columns, child_project.columns
-                )
-            ):
+        # The columns of the projection can be sucked into the parent
+        # above it unless there is a window function in both.
+        if not (
+            any(contains_window(expr) for expr in child_project.columns.values())
+            and any(contains_window(expr) for expr in node.columns.values())
+        ):
+            transposer = ExpressionTranspositionShuttle(child_project, False)
+            if isinstance(node, RelationalRoot):
                 # Replace all column references in the root's columns with
-                # the expressions from the child projection..
-                for idx, (name, expr) in enumerate(node.ordered_columns):
-                    new_expr = transpose_expression(expr, child_project.columns)
-                    node.columns[name] = new_expr
-                    node.ordered_columns[idx] = (name, new_expr)
+                # the expressions from the child projection.
+                node._ordered_columns = [
+                    (name, expr.accept_shuttle(transposer))
+                    for name, expr in node.ordered_columns
+                ]
+                node._columns = dict(node.ordered_columns)
                 # Do the same with the sort expressions.
-                for idx, sort_info in enumerate(node.orderings):
-                    new_expr = transpose_expression(
-                        sort_info.expr, child_project.columns
-                    )
-                    node.orderings[idx] = ExpressionSortInfo(
-                        new_expr, sort_info.ascending, sort_info.nulls_first
-                    )
+                for sort_info in node.orderings:
+                    sort_info.expr = sort_info.expr.accept_shuttle(transposer)
                 # Delete the child projection from the tree, replacing it
                 # with its input.
                 node._input = child_project.input
-            else:
-                # Otherwise, halt the merging process since it is no longer
-                # possible to merge the children of this root into it.
-                break
-        elif isinstance(node, Project):
-            # The columns of the projection can be sucked into the
-            # projection above it if they are all pass-through/renamings
-            # or if there is no convolution created.
-            if all(
-                isinstance(expr, ColumnReference)
-                for expr in child_project.columns.values()
-            ) or merging_doesnt_create_convolution(node.columns, child_project.columns):
+                continue
+            elif isinstance(node, Project):
                 for name, expr in node.columns.items():
-                    new_expr = transpose_expression(expr, child_project.columns)
-                    node.columns[name] = new_expr
+                    node.columns[name] = expr.accept_shuttle(transposer)
                 # Delete the child projection from the tree, replacing it
                 # with its input.
                 node._input = child_project.input
-            else:
-                # Otherwise, halt the merging process since it is no longer
-                # possible to merge the children of this project into it.
-                break
+                continue
+        # Otherwise, halt the merging process since it is no longer
+        # possible to merge the children of this project into it.
+        break
     # Final round: if there is a project on top of a scan, aggregate, filter,
     # or limit that only does  column pruning/renaming, just push it into the
     # node.
@@ -249,13 +240,12 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
         and isinstance(node.input, (Scan, Aggregate, Filter, Limit))
         and all(isinstance(expr, ColumnReference) for expr in node.columns.values())
     ):
+        transposer = ExpressionTranspositionShuttle(node.input, False)
         # If the input is an aggregate, make sure to include its keys in the result.
         keys_used: set[str] = set()
         new_columns: dict[str, RelationalExpression] = {}
         for name, expr in node.columns.items():
-            transposed_expr: RelationalExpression = transpose_expression(
-                expr, node.input.columns
-            )
+            transposed_expr: RelationalExpression = expr.accept_shuttle(transposer)
             new_columns[name] = transposed_expr
             if isinstance(node.input, Aggregate) and isinstance(expr, ColumnReference):
                 keys_used.add(expr.name)
@@ -264,15 +254,44 @@ def merge_adjacent_projects(node: RelationalRoot | Project) -> RelationalNode:
                 if key_name not in keys_used:
                     new_columns[key_name] = node.input.columns[key_name]
         return node.input.copy(columns=new_columns)
+    # Alternatively: if the node is a root and it is on top of a limit, try to
+    # suck the limit into the root.
+    if isinstance(node, RelationalRoot) and isinstance(node.input, Limit):
+        transposer = ExpressionTranspositionShuttle(node.input, False)
+        new_orderings: list[ExpressionSortInfo] = [
+            ExpressionSortInfo(
+                ordering.expr.accept_shuttle(transposer),
+                ordering.ascending,
+                ordering.nulls_first,
+            )
+            for ordering in node.orderings
+        ]
+        if node.input.orderings == new_orderings:
+            # If the orderings are the same, pull in the limit into the root.
+            # Replace all column references in the root's columns with
+            # the expressions from the child projection.
+            node._ordered_columns = [
+                (name, expr.accept_shuttle(transposer))
+                for name, expr in node.ordered_columns
+            ]
+            node._columns = dict(node.ordered_columns)
+            node._orderings = new_orderings
+            node._limit = node.input.limit
+            # Delete the child projection from the tree, replacing it
+            # with its input.
+            node._input = node.input.input
     return node
 
 
-def merge_projects(node: RelationalNode) -> RelationalNode:
+def merge_projects(
+    node: RelationalNode, push_into_joins: bool = True
+) -> RelationalNode:
     """
     Merge adjacent projections when beneficial.
 
     Args:
         `node`: The current node of the relational tree.
+        `push_into_joins`: If True, push projections into joins when possible.
 
     Returns:
         The transformed version of `node` with adjacent projections merged
@@ -281,11 +300,13 @@ def merge_projects(node: RelationalNode) -> RelationalNode:
     """
     # If there is a project on top of a join, attempt to push it down into the
     # inputs of the join.
-    if isinstance(node, Project) and isinstance(node.input, Join):
+    if isinstance(node, Project) and isinstance(node.input, Join) and push_into_joins:
         node = project_join_transpose(node)
 
     # Recursively invoke the procedure on all inputs to the node.
-    node = node.copy(inputs=[merge_projects(input) for input in node.inputs])
+    node = node.copy(
+        inputs=[merge_projects(input, push_into_joins) for input in node.inputs]
+    )
 
     # Invoke the main merging step if the current node is a root/projection,
     # potentially multiple times if the projection below it that gets deleted

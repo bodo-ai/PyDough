@@ -39,13 +39,12 @@ WITH _t0 AS (
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
     END AS expr_7,
-    CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END AS negative_acctbal,
-    CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END AS non_negative_acctbal
+    c_acctbal
   FROM tpch.customer
 )
 SELECT
-  COUNT(negative_acctbal) AS n_red_acctbal,
-  COUNT(non_negative_acctbal) AS n_black_acctbal,
+  COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS n_red_acctbal,
+  COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS n_black_acctbal,
   AVG(expr_7) AS median_red_acctbal,
   AVG(expr_5) AS median_black_acctbal,
   AVG(expr_6) AS median_overall_acctbal

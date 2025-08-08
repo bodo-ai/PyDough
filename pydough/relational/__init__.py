@@ -19,9 +19,11 @@ __all__ = [
     "Project",
     "RelationalExpression",
     "RelationalExpressionDispatcher",
+    "RelationalExpressionShuttle",
     "RelationalExpressionVisitor",
     "RelationalNode",
     "RelationalRoot",
+    "RelationalShuttle",
     "RelationalVisitor",
     "Scan",
     "WindowCallExpression",
@@ -37,6 +39,7 @@ from .relational_expressions import (
     ExpressionSortInfo,
     LiteralExpression,
     RelationalExpression,
+    RelationalExpressionShuttle,
     RelationalExpressionVisitor,
     WindowCallExpression,
 )
@@ -54,6 +57,7 @@ from .relational_nodes import (
     RelationalExpressionDispatcher,
     RelationalNode,
     RelationalRoot,
+    RelationalShuttle,
     RelationalVisitor,
     Scan,
 )

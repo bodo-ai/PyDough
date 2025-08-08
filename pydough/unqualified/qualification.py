@@ -882,7 +882,7 @@ class Qualifier:
         Returns:
             A tuple where the first element is the ancestor of all the data
             being partitioned, the second is the data being partitioned which
-            now points to an root instead of hte original ancestor, and the
+            now points to an root instead of the original ancestor, and the
             third is a list of the ancestor names.
         """
 
@@ -904,6 +904,7 @@ class Qualifier:
                 | UnqualifiedOrderBy()
                 | UnqualifiedSingular()
                 | UnqualifiedPartition()
+                | UnqualifiedBest()
             ):
                 parent: UnqualifiedNode = node._parcel[0]
                 new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
@@ -964,6 +965,8 @@ class Qualifier:
                 build_node[0] = UnqualifiedOrderBy(build_node[0], *node._parcel[1:])
             case UnqualifiedSingular():
                 build_node[0] = UnqualifiedSingular(build_node[0], *node._parcel[1:])
+            case UnqualifiedBest():
+                build_node[0] = UnqualifiedBest(build_node[0], *node._parcel[1:])
             case _:
                 # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
@@ -1014,7 +1017,7 @@ class Qualifier:
             unqualified_parent, None
         )
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, True, is_cross
+            unqualified_parent, context, is_child, is_cross
         )
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child, qualified_parent, True, is_cross
@@ -1252,7 +1255,6 @@ class Qualifier:
         )
         # If parent is a root, then the child is qualified as a child access
         # example: a.CALCULATE(x=COUNT(CROSS(b)))
-        #
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child,
             qualified_parent,

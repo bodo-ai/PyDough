@@ -11,7 +11,7 @@ WITH _s7 AS (
 SELECT
   countries.co_name AS country_name,
   products.pr_name AS product_name,
-  ROUND(COALESCE(SUM(COALESCE(_s7.n_rows, 0)), 0) / COUNT(*), 2) AS ir
+  ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) AS ir
 FROM main.countries AS countries
 JOIN main.devices AS devices
   ON countries.co_id = devices.de_production_country_id
@@ -23,7 +23,7 @@ GROUP BY
   countries.co_name,
   products.pr_name
 ORDER BY
-  ir DESC,
+  ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) DESC,
   products.pr_name,
   countries.co_name
 LIMIT 5

@@ -905,22 +905,33 @@ def make_relational_ordering(
 
 
 def transform_and_exec_pydough(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode] | str,
     graph: GraphMetadata,
+    kwargs: dict | None,
 ) -> UnqualifiedNode:
     """
     Obtains the unqualified node from a PyDough function by invoking the
-    decorator to transform it, then calling the transformed function.
+    decorator to transform it (or evaluating the string if provided), then
+    calling the transformed function.
 
     Args:
-        `pydough_impl`: The PyDough function to be transformed and executed.
+        `pydough_impl`: The PyDough function to be transformed and executed,
+        or the string containing the PyDough code to be executed.
         `graph`: The metadata being used.
+        `kwargs`: The keyword arguments to pass to the PyDough function, if
+        any.
 
     Returns:
         The unqualified node created by running the transformed version of
         `pydough_impl`.
     """
-    return init_pydough_context(graph)(pydough_impl)()
+    kwargs = kwargs if kwargs is not None else {}
+    if isinstance(pydough_impl, str):
+        # If the pydough_impl is a string, parse it with pydough.from_string.
+        return pydough.from_string(pydough_impl, metadata=graph, environment=kwargs)
+    else:
+        # OTherwise, transform the function with the decorator and call it.
+        return init_pydough_context(graph)(pydough_impl)(**kwargs)
 
 
 @dataclass
@@ -931,7 +942,7 @@ class PyDoughSQLComparisonTest:
     SQL query.
     """
 
-    pydough_function: Callable[[], UnqualifiedNode]
+    pydough_function: Callable[..., UnqualifiedNode]
     """
     Function that returns the PyDough code evaluated by the unit test.
     """
@@ -989,7 +1000,9 @@ class PyDoughSQLComparisonTest:
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, None
+        )
 
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {"metadata": graph, "database": database}
@@ -1026,7 +1039,7 @@ class PyDoughPandasTest:
     a function that returns a Pandas DataFrame. The dataclass contains the
     following fields:
     - `pydough_function`: the function that returns the PyDough code evaluated
-      by the unit test.
+      by the unit test, or a string representing the PyDough code.
     - `graph_name`: the name of the graph that the PyDough code will use.
     - `pd_function`: the function that returns the Pandas DataFrame that should
       be used as the reference solution.
@@ -1038,11 +1051,17 @@ class PyDoughPandasTest:
     - `fix_column_names` (optional): if True, ignore whatever column names are
       in the output and just use the same column names as in the reference
       solution.
+    - `args` (optional): additional arguments to pass to the PyDough function.
+    - `skip_relational`: (optional): if True, does not run the test as part of
+       relational plan testing. Default is False.
+    - `skip_sql`: (optional): if True, does not run the test as part of SQL
+       testing. Default is False.
     """
 
-    pydough_function: Callable[[], UnqualifiedNode]
+    pydough_function: Callable[..., UnqualifiedNode] | str
     """
-    Function that returns the PyDough code evaluated by the unit test.
+    Function that returns the PyDough code evaluated by the unit test, or a
+    string representing the PyDough code.
     """
 
     graph_name: str
@@ -1079,6 +1098,22 @@ class PyDoughPandasTest:
     same column names as in the reference solution.
     """
 
+    kwargs: dict | None = None
+    """
+    Any additional keyword arguments to pass to the PyDough function when
+    executing it. If None, no additional keyword arguments are passed.
+    """
+
+    skip_relational: bool = False
+    """
+    If True, does not run the test as part of relational plan testing.
+    """
+
+    skip_sql: bool = False
+    """
+    If True, does not run the test as part of SQL testing.
+    """
+
     def run_relational_test(
         self,
         fetcher: graph_fetcher,
@@ -1100,9 +1135,15 @@ class PyDoughPandasTest:
             against the expected relational plan text in the file.
             `config`: The PyDough configuration to use for the test, if any.
         """
+        # Skip if indicated.
+        if self.skip_relational:
+            pytest.skip(f"Skipping relational plan test for {self.test_name}")
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
 
         # Run the PyDough code through the pipeline up until it is converted to
         # a relational plan.
@@ -1152,9 +1193,15 @@ class PyDoughPandasTest:
             to use when generating the SQL test.
             `config`: The PyDough configuration to use for the test, if any.
         """
+        # Skip if indicated.
+        if self.skip_sql:
+            pytest.skip(f"Skipping SQL text test for {self.test_name}")
+
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
 
         # Convert the PyDough code to SQL text
         call_kwargs: dict = {"metadata": graph, "database": database}
@@ -1197,7 +1244,9 @@ class PyDoughPandasTest:
         """
         # Obtain the graph and the unqualified node
         graph: GraphMetadata = fetcher(self.graph_name)
-        root: UnqualifiedNode = transform_and_exec_pydough(self.pydough_function, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(
+            self.pydough_function, graph, self.kwargs
+        )
 
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {
@@ -1230,7 +1279,7 @@ class PyDoughPandasTest:
 
 
 def run_e2e_error_test(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     error_message: str,
     graph: GraphMetadata,
     columns: dict[str, str] | list[str] | None = None,
@@ -1251,7 +1300,7 @@ def run_e2e_error_test(
         `config`: The PyDough configuration to use for the test, if any.
     """
     with pytest.raises(Exception, match=error_message):
-        root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph)
+        root: UnqualifiedNode = transform_and_exec_pydough(pydough_impl, graph, None)
         call_kwargs: dict = {}
         if graph is not None:
             call_kwargs["metadata"] = graph

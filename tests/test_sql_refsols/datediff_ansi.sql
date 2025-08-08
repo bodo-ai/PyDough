@@ -12,5 +12,5 @@ FROM main.sbtransaction
 WHERE
   EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025
 ORDER BY
-  years_diff
+  DATEDIFF(CAST('2025-05-02 11:00:00' AS TIMESTAMP), CAST(sbtxdatetime AS DATETIME), YEAR)
 LIMIT 30

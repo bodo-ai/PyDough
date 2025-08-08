@@ -90,6 +90,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     datetime_current,
     datetime_relative,
     deep_best_analysis,
+    double_cross,
     double_partition,
     dumb_aggregation,
     extract_colors,
@@ -2369,6 +2370,32 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                double_cross,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "wk": list(range(1, 10)),
+                        "n_lines": [9, 23, 58, 143, 195, 274, 348, 393, 503],
+                        "n_orders": [891, 847, 870, 918, 893, 850, 854, 863, 824],
+                        "lpo": [
+                            0.0101,
+                            0.0184,
+                            0.0345,
+                            0.0661,
+                            0.0969,
+                            0.1332,
+                            0.1715,
+                            0.2066,
+                            0.2492,
+                        ],
+                    }
+                ),
+                "double_cross",
+            ),
+            id="double_cross",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 bad_child_reuse_1,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -3312,7 +3339,7 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     error_message: str,
     get_sample_graph: graph_fetcher,
