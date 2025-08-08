@@ -4,6 +4,8 @@ This node is responsible for enforcing the final orderings and columns as well
 as any other traits that impact the shape/display of the final output.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     ExpressionSortInfo,
     RelationalExpression,
@@ -11,6 +13,10 @@ from pydough.relational.relational_expressions import (
 
 from .abstract_node import RelationalNode
 from .single_relational import SingleRelational
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class RelationalRoot(SingleRelational):
@@ -84,8 +90,11 @@ class RelationalRoot(SingleRelational):
             kwargs.append(("limit", self.limit.to_string(compact)))
         return f"ROOT({', '.join(f'{k}={v}' for k, v in kwargs)})"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_root(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_root(self)
 
     def node_copy(
         self,
