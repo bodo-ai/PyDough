@@ -8,6 +8,9 @@ __all__ = ["HybridDecorrelater"]
 
 import copy
 
+import pydough.pydough_operators as pydop
+from pydough.types import BooleanType
+
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
     HybridBackRefExpr,
@@ -375,6 +378,26 @@ class HybridDecorrelater:
                 parent_agg_keys.append(lhs_key)
             current_level = current_level.parent
             additional_levels += 1
+        # TODO: MOVE OLD JOIN KEYS / GENERAL JOIN TO A NEW FILTER
+        new_conds: list[HybridExpr] = []
+        if child.subtree.join_keys is not None:
+            for lhs_key, rhs_key in child.subtree.join_keys:
+                new_conds.append(
+                    HybridFunctionExpr(
+                        pydop.EQU,
+                        [lhs_key.shift_back(rhs_shift), rhs_key],
+                        BooleanType(),
+                    )
+                )
+        if len(new_conds) > 0:
+            conjunction: HybridExpr
+            if len(new_conds) == 1:
+                conjunction = new_conds[0]
+            else:
+                conjunction = HybridFunctionExpr(pydop.BAN, new_conds, BooleanType())
+            child.subtree.add_operation(
+                HybridFilter(child.subtree.pipeline[-1], conjunction)
+            )
         child.subtree.join_keys = new_join_keys
         child.subtree.general_join_condition = None
         # Replace any correlated references to the original parent with BACK references.
