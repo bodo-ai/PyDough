@@ -27,8 +27,13 @@ WITH _s13 AS (
   JOIN _s13 AS _s13
     ON _s13.c_custkey = orders.o_custkey AND _s13.n_name = nation.n_name
   QUALIFY
-    COUNT(*) OVER (PARTITION BY lineitem.l_partkey, lineitem.l_suppkey) = 1
-    OR orders.o_totalprice > AVG(orders.o_totalprice) OVER (PARTITION BY lineitem.l_linenumber, lineitem.l_orderkey, partsupp.ps_partkey, partsupp.ps_suppkey)
+    (
+      COUNT(*) OVER (PARTITION BY lineitem.l_partkey, lineitem.l_suppkey) = 1
+      OR orders.o_totalprice > AVG(orders.o_totalprice) OVER (PARTITION BY lineitem.l_linenumber, lineitem.l_orderkey, partsupp.ps_partkey, partsupp.ps_suppkey)
+    )
+    AND lineitem.l_orderkey = orders.o_orderkey
+    AND lineitem.l_partkey = partsupp.ps_partkey
+    AND lineitem.l_suppkey = partsupp.ps_suppkey
 ), _t0 AS (
   SELECT DISTINCT
     ps_partkey,

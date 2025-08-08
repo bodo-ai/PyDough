@@ -1699,8 +1699,6 @@ class HybridTranslator:
         # 4. Run the correlation extraction procedure to attempt to coerce some
         # filters with correlated references into join conditions.
         self.run_correlation_extraction(hybrid)
-        print()
-        print(hybrid)
         # 5. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
         # 6. Run any final rewrites, such as turning MEDIAN into an average

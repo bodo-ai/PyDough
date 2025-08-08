@@ -3,8 +3,9 @@ WITH _s4 AS (
     r_name,
     r_regionkey
   FROM tpch.region
-), _t1 AS (
+), _t2 AS (
   SELECT
+    ANY_VALUE(nation.n_regionkey) AS anything_n_regionkey,
     ANY_VALUE(_s0.r_regionkey) AS anything_r_regionkey
   FROM _s4 AS _s0
   JOIN tpch.nation AS nation
@@ -19,7 +20,9 @@ WITH _s4 AS (
   SELECT
     COUNT(*) AS n_rows,
     anything_r_regionkey
-  FROM _t1
+  FROM _t2
+  WHERE
+    anything_n_regionkey = anything_r_regionkey
   GROUP BY
     anything_r_regionkey
 )

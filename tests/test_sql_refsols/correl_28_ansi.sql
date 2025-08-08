@@ -1,29 +1,4 @@
-WITH _s5 AS (
-  SELECT DISTINCT
-    l_orderkey,
-    l_suppkey
-  FROM tpch.lineitem
-), _s8 AS (
-  SELECT
-    ANY_VALUE(nation.n_regionkey) AS anything_n_regionkey,
-    COUNT(*) AS sum_agg_0,
-    _s5.l_suppkey,
-    nation.n_name,
-    nation.n_nationkey
-  FROM tpch.nation AS nation
-  JOIN tpch.customer AS customer
-    ON customer.c_nationkey = nation.n_nationkey
-  JOIN tpch.orders AS orders
-    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1994
-    AND customer.c_custkey = orders.o_custkey
-    AND orders.o_orderpriority = '1-URGENT'
-  JOIN _s5 AS _s5
-    ON _s5.l_orderkey = orders.o_orderkey
-  GROUP BY
-    _s5.l_suppkey,
-    nation.n_name,
-    nation.n_nationkey
-), _s9 AS (
+WITH _s9 AS (
   SELECT
     nation.n_name,
     supplier.s_suppkey
@@ -32,21 +7,28 @@ WITH _s5 AS (
     ON nation.n_nationkey = supplier.s_nationkey
 ), _s10 AS (
   SELECT
-    ANY_VALUE(_s8.n_name) AS anything_anything_n_name,
-    ANY_VALUE(_s8.anything_n_regionkey) AS anything_anything_n_regionkey,
-    SUM(_s8.sum_agg_0) AS sum_sum_agg_0
-  FROM _s8 AS _s8
+    ANY_VALUE(nation.n_name) AS anything_n_name,
+    ANY_VALUE(nation.n_regionkey) AS anything_n_regionkey,
+    COUNT(*) AS n_rows
+  FROM tpch.nation AS nation
+  JOIN tpch.customer AS customer
+    ON customer.c_nationkey = nation.n_nationkey
+  JOIN tpch.orders AS orders
+    ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1994
+    AND customer.c_custkey = orders.o_custkey
+    AND orders.o_orderpriority = '1-URGENT'
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_orderkey = orders.o_orderkey
   JOIN _s9 AS _s9
-    ON _s8.l_suppkey = _s9.s_suppkey AND _s8.n_name = _s9.n_name
+    ON _s9.n_name = nation.n_name AND _s9.s_suppkey = lineitem.l_suppkey
   GROUP BY
-    _s8.n_nationkey
+    nation.n_nationkey
 )
 SELECT
-  _s10.anything_anything_n_name AS nation_name,
-  _s10.sum_sum_agg_0 AS n_selected_purchases
+  _s10.anything_n_name AS nation_name,
+  _s10.n_rows AS n_selected_purchases
 FROM _s10 AS _s10
 JOIN tpch.region AS region
-  ON _s10.anything_anything_n_regionkey = region.r_regionkey
-  AND region.r_name = 'EUROPE'
+  ON _s10.anything_n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
 ORDER BY
-  _s10.anything_anything_n_name
+  _s10.anything_n_name

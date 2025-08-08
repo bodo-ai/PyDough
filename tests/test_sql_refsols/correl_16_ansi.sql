@@ -15,7 +15,8 @@ WITH _s0 AS (
   JOIN tpch.customer AS customer
     ON customer.c_mktsegment = 'BUILDING' AND customer.c_nationkey = nation.n_nationkey
   QUALIFY
-    _s0.tile = NTILE(10000) OVER (PARTITION BY customer.c_nationkey, _s0.s_suppkey ORDER BY customer.c_acctbal NULLS LAST, customer.c_custkey NULLS LAST)
+    _s0.s_nationkey = nation.n_nationkey
+    AND _s0.tile = NTILE(10000) OVER (PARTITION BY customer.c_nationkey, _s0.s_suppkey ORDER BY customer.c_acctbal NULLS LAST, customer.c_custkey NULLS LAST)
 )
 SELECT
   COUNT(DISTINCT s_suppkey) AS n

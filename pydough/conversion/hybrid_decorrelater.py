@@ -354,6 +354,15 @@ class HybridDecorrelater:
             child_height += 1
             child_root = child_root.parent
         # Link the top level of the child subtree to the new parent.
+        # print()
+        # print("-->")
+        # print(new_parent)
+        # print("***")
+        # print(child.subtree)
+        # print(child.subtree.join_keys)
+        original_join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
+            child.subtree.join_keys
+        )
         new_parent.add_successor(child_root)
         # Update the join keys to join on the unique keys of all the ancestors,
         # and the aggregation keys along with them.
@@ -380,8 +389,8 @@ class HybridDecorrelater:
             additional_levels += 1
         # TODO: MOVE OLD JOIN KEYS / GENERAL JOIN TO A NEW FILTER
         new_conds: list[HybridExpr] = []
-        if child.subtree.join_keys is not None:
-            for lhs_key, rhs_key in child.subtree.join_keys:
+        if original_join_keys is not None:
+            for lhs_key, rhs_key in original_join_keys:
                 new_conds.append(
                     HybridFunctionExpr(
                         pydop.EQU,
@@ -390,6 +399,7 @@ class HybridDecorrelater:
                     )
                 )
         if len(new_conds) > 0:
+            # breakpoint()
             conjunction: HybridExpr
             if len(new_conds) == 1:
                 conjunction = new_conds[0]

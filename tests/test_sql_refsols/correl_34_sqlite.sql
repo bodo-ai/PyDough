@@ -7,6 +7,10 @@ WITH _s13 AS (
     ON customer.c_nationkey = nation.n_nationkey
 ), _t AS (
   SELECT
+    lineitem.l_orderkey,
+    lineitem.l_partkey,
+    lineitem.l_suppkey,
+    orders.o_orderkey,
     orders.o_totalprice,
     partsupp.ps_partkey,
     partsupp.ps_suppkey,
@@ -35,7 +39,12 @@ WITH _s13 AS (
     ps_suppkey
   FROM _t
   WHERE
-    _w < o_totalprice OR _w_2 = 1
+    (
+      _w < o_totalprice OR _w_2 = 1
+    )
+    AND l_orderkey = o_orderkey
+    AND l_partkey = ps_partkey
+    AND l_suppkey = ps_suppkey
 )
 SELECT
   COUNT(*) AS n

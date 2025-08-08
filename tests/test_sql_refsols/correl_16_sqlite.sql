@@ -6,6 +6,8 @@ WITH _s0 AS (
   FROM tpch.supplier
 ), _t AS (
   SELECT
+    nation.n_nationkey,
+    _s0.s_nationkey,
     _s0.s_suppkey,
     _s0.tile,
     NTILE(10000) OVER (PARTITION BY customer.c_nationkey, _s0.s_suppkey ORDER BY customer.c_acctbal, customer.c_custkey) AS _w
@@ -21,4 +23,4 @@ SELECT
   COUNT(DISTINCT s_suppkey) AS n
 FROM _t
 WHERE
-  _w = tile
+  _w = tile AND n_nationkey = s_nationkey
