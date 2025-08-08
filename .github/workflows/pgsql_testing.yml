@@ -1,0 +1,84 @@
+name: Run PostgreSQL Tests
+
+on:
+  workflow_call:
+    inputs:
+      python-versions:
+        description: "JSON string of Python versions"
+        type: string
+        required: true
+    secrets:
+      POSTGRES_USER:
+        required: true
+      POSTGRES_PASSWORD:
+        required: true
+
+jobs:
+  postgres-test:
+    name: PostgreSQL Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(inputs.python-versions) }}
+
+    # Define services here to run Docker containers alongside your job
+    services:
+      postgresql:
+        image: juankxbodo/pydough-pgsql-tests:latest
+        env:
+          # Set environment variables for PostgreSQL container
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: "tpch"
+        ports:
+          - 5432:5432
+    env:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      POSTGRES_DB: tpch
+      POSTGRES_HOST: "localhost"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[postgres]" 
+
+      - name: Verify installed packages
+        run: uv pip list
+        # This will show all packages installed in the virtual environment.
+        # Look for 'python-dotenv' in the output.
+
+      - name: Check Python path and try importing dotenv directly
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Python executable: $(which python)"
+          echo "Python sys.path:"
+          uv run python -c "import sys; print(sys.path)"
+          echo "Attempting direct import of dotenv:"
+          uv run python -c "import dotenv; print('dotenv imported successfully!');"
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          for i in $(seq 1 240); do
+            pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && break || sleep 2;
+          done
+          pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && echo "postgreSQL is running" && break || exit 1;
+      - name: Confirm PostgreSQL connector is installed
+        run: uv run python -c "import psycopg2; print('PostgreSQL connector installed')"
+
+      - name: Run PostgreSQL Tests
+        run: uv run pytest -m pgsql tests/ -rs
