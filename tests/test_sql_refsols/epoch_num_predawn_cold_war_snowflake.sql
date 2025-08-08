@@ -1,0 +1,27 @@
+WITH _S0 AS (
+  SELECT
+    ev_dt AS EV_DT,
+    ev_key AS EV_KEY
+  FROM EVENTS
+), _u_0 AS (
+  SELECT
+    _S2.EV_KEY AS _u_1
+  FROM _S0 AS _S2
+  JOIN ERAS AS ERAS
+    ON ERAS.er_end_year > YEAR(CAST(_S2.EV_DT AS TIMESTAMP))
+    AND ERAS.er_name = 'Cold War'
+    AND ERAS.er_start_year <= YEAR(CAST(_S2.EV_DT AS TIMESTAMP))
+  GROUP BY
+    _S2.EV_KEY
+)
+SELECT
+  COUNT(*) AS n_events
+FROM _S0 AS _S0
+JOIN TIMES AS TIMES
+  ON TIMES.t_end_hour > HOUR(CAST(_S0.EV_DT AS TIMESTAMP))
+  AND TIMES.t_name = 'Pre-Dawn'
+  AND TIMES.t_start_hour <= HOUR(CAST(_S0.EV_DT AS TIMESTAMP))
+LEFT JOIN _u_0 AS _u_0
+  ON _S0.EV_KEY = _u_0._u_1
+WHERE
+  NOT _u_0._u_1 IS NULL

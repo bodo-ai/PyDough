@@ -1,0 +1,16 @@
+WITH _S1 AS (
+  SELECT
+    COUNT(*) AS N_ROWS,
+    sender_id AS SENDER_ID
+  FROM MAIN.WALLET_TRANSACTIONS_DAILY
+  WHERE
+    sender_type = 0
+  GROUP BY
+    sender_id
+)
+SELECT
+  USERS.uid AS user_id,
+  _S1.N_ROWS AS total_transactions
+FROM MAIN.USERS AS USERS
+JOIN _S1 AS _S1
+  ON USERS.uid = _S1.SENDER_ID

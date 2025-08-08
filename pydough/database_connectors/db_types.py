@@ -3,7 +3,7 @@ Type aliases for database connections and cursors used in type hints.
 use `if TYPE_CHECKING:` to import database-specific modules in a way
 that allows static type checkers to understand the types without triggering
 runtime imports. This avoids runtime errors when some optional dependencies
-are not installed.
+(e.g., `snowflake-connector-python`) are not installed.
 """
 
 from typing import TYPE_CHECKING, Any, TypeAlias
@@ -15,8 +15,13 @@ if TYPE_CHECKING:
     # without requiring these modules at runtime unless they are actually used.
     import sqlite3
 
+    import snowflake.connector
+    import snowflake.connector.cursor
+
     SQLiteConn: TypeAlias = sqlite3.Connection
     SQLiteCursor: TypeAlias = sqlite3.Cursor
+    SnowflakeConn: TypeAlias = snowflake.connector.Connection
+    SnowflakeCursor: TypeAlias = snowflake.connector.cursor.SnowflakeCursor
 
     # TBD: Placeholder lines to add other dialects.
     # 1. Replace with actual dialect module
@@ -27,13 +32,15 @@ if TYPE_CHECKING:
     # Dialect1_Cursor: TypeAlias = dialect1_module.Cursor
 
     # 4. Define the type aliases for database connections and cursors
-    DBConnection: TypeAlias = SQLiteConn  # | Dialect1_Conn
-    DBCursor: TypeAlias = SQLiteCursor  # | Dialect1_Cursor
+    DBConnection: TypeAlias = SQLiteConn | SnowflakeConn  # | Dialect1_Conn
+    DBCursor: TypeAlias = SQLiteCursor | SnowflakeCursor  # | Dialect1_Cursor
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
     SQLiteConn: TypeAlias = Any
     SQLiteCursor: TypeAlias = Any
+    SnowflakeCursor: TypeAlias = Any
+    SnowflakeConn: TypeAlias = Any
     # Dialect1_Conn: TypeAlias = Any
     # Dialect1_Cursor: TypeAlias = Any
 
@@ -44,6 +51,8 @@ __all__ = [
     "DBCursor",
     "SQLiteConn",
     "SQLiteCursor",
+    "SnowflakeConn",
+    "SnowflakeCursor",
     # "Dialect1_Conn",
     # "Dialect1_Cursor",
 ]

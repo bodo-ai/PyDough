@@ -1,0 +1,16 @@
+WITH _u_0 AS (
+  SELECT
+    salesperson_id AS _u_1
+  FROM MAIN.SALES
+  GROUP BY
+    salesperson_id
+)
+SELECT
+  SALESPERSONS._id,
+  SALESPERSONS.first_name,
+  SALESPERSONS.last_name
+FROM MAIN.SALESPERSONS AS SALESPERSONS
+LEFT JOIN _u_0 AS _u_0
+  ON SALESPERSONS._id = _u_0._u_1
+WHERE
+  _u_0._u_1 IS NULL
