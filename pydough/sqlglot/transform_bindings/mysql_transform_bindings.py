@@ -418,25 +418,24 @@ class MySQLTransformBindings(BaseTransformBindings):
             this=sum_squares_expr, expression=apply_parens(mean_sum_squared_expr)
         )
 
-        if type == "population":
-            # Divide by COUNT(X)
-            return apply_parens(
-                sqlglot_expressions.Div(
-                    this=apply_parens(numerator), expression=apply_parens(count_expr)
-                )
-            )
-        elif type == "sample":
+        if type not in ("population", "sample"):
+            raise ValueError(f"Unsupported type: {type}")
+
+        # when type is population
+        # Divide by COUNT(X)
+        denominator: SQLGlotExpression = count_expr
+
+        if type == "sample":
             # Divide by (COUNT(X) - 1)
             denominator = sqlglot_expressions.Sub(
                 this=count_expr, expression=sqlglot_expressions.Literal.number(1)
             )
-            return apply_parens(
-                sqlglot_expressions.Div(
-                    this=apply_parens(numerator), expression=apply_parens(denominator)
-                )
+
+        return apply_parens(
+            sqlglot_expressions.Div(
+                this=apply_parens(numerator), expression=apply_parens(denominator)
             )
-        else:
-            raise ValueError(f"Unsupported type: {type}")
+        )
 
     def convert_std(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
@@ -595,18 +594,28 @@ class MySQLTransformBindings(BaseTransformBindings):
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
     ) -> SQLGlotExpression:
-        # DOW = DAYOFWEEK(X)
-        # Y = subtract DOW days from X
-        # RESULT = DATETIME(Y, "start of day")
+        """
+        Applies a truncation operation to a date/time expression by a certain unit.
+
+        Args:
+            `base`: The base date/time expression to truncate.
+            `unit`: The unit to truncate the date/time expression to.
+
+        Returns:
+            The SQLGlot expression to truncate `base`.
+        """
 
         if unit == DateTimeUnit.WEEK:
+            # DOW = DAYOFWEEK(X)
+            # Y = subtract DOW days from X
+            # RESULT = DATETIME(Y, "start of day")
             dow = self.convert_dayofweek([base], [DatetimeType()])
-            y = sqlglot_expressions.DateSub(
+            substraction: SQLGlotExpression = sqlglot_expressions.DateSub(
                 this=base,
                 expression=dow,
                 unit=sqlglot_expressions.Var(this=DateTimeUnit.DAY),
             )
-            return self.apply_datetime_truncation(y, DateTimeUnit.DAY)
+            return self.apply_datetime_truncation(substraction, DateTimeUnit.DAY)
 
         else:
             return super().apply_datetime_truncation(base, unit)

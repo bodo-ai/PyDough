@@ -111,7 +111,7 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
     # will default to the user's settings.
     # See: https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html
 
-    required_keys = ["user", "password", "database"]
+    required_keys: list[str] = ["user", "password", "database"]
     if not all(key in kwargs for key in required_keys):
         raise ValueError(
             "MySQL connection requires the following arguments: "

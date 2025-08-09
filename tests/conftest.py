@@ -543,7 +543,7 @@ MYSQL_DB = "tpch"
 
 @pytest.fixture(scope="session")
 def mysql_docker_setup() -> None:
-    """Set up and tear down the MySQL Docker container for testing."""
+    """Set up the MySQL Docker container for testing."""
     try:
         if not is_ci():
             if container_exists(MYSQL_DOCKER_CONTAINER):
