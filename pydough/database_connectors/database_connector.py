@@ -77,6 +77,7 @@ class DatabaseDialect(Enum):
 
     ANSI = "ansi"
     SQLITE = "sqlite"
+    MYSQL = "mysql"
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":
@@ -92,6 +93,8 @@ class DatabaseDialect(Enum):
             return DatabaseDialect.ANSI
         elif dialect == "sqlite":
             return DatabaseDialect.SQLITE
+        elif dialect == "mysql":
+            return DatabaseDialect.MYSQL
         else:
             raise ValueError(f"Unsupported dialect: {dialect}")
 

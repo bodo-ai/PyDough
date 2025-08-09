@@ -1,0 +1,6 @@
+SELECT
+  COUNT(*) AS TUC
+FROM main.user_sessions
+WHERE
+  session_end_ts >= DATE(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-1' MONTH))
+  OR session_start_ts >= DATE(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-1' MONTH))
