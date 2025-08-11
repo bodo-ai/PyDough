@@ -1,5 +1,16 @@
 SELECT
-  DATE_TRUNC('WEEK', CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)) AS payment_week,
+  DATE_TRUNC(
+    'DAY',
+    DATEADD(
+      DAY,
+      (
+        (
+          DAYOFWEEK(CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)) + 6
+        ) % 7
+      ) * -1,
+      CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)
+    )
+  ) AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
     COUNT_IF((
@@ -16,4 +27,15 @@ WHERE
   DATEDIFF(WEEK, CAST(PAYMENTS_RECEIVED.payment_date AS DATETIME), CURRENT_TIMESTAMP()) <= 8
   AND DATEDIFF(WEEK, CAST(PAYMENTS_RECEIVED.payment_date AS DATETIME), CURRENT_TIMESTAMP()) >= 1
 GROUP BY
-  DATE_TRUNC('WEEK', CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP))
+  DATE_TRUNC(
+    'DAY',
+    DATEADD(
+      DAY,
+      (
+        (
+          DAYOFWEEK(CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)) + 6
+        ) % 7
+      ) * -1,
+      CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)
+    )
+  )

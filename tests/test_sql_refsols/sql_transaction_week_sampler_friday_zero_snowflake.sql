@@ -1,6 +1,17 @@
 SELECT
   sbtxdatetime AS date_time,
-  DATE_TRUNC('WEEK', CAST(sbtxdatetime AS TIMESTAMP)) AS sow,
+  DATE_TRUNC(
+    'DAY',
+    DATEADD(
+      DAY,
+      (
+        (
+          DAYOFWEEK(CAST(sbtxdatetime AS TIMESTAMP)) + 2
+        ) % 7
+      ) * -1,
+      CAST(sbtxdatetime AS TIMESTAMP)
+    )
+  ) AS sow,
   CASE
     WHEN DAYOFWEEK(sbtxdatetime) = 0
     THEN 'Sunday'
