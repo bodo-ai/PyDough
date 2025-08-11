@@ -1,21 +1,21 @@
-WITH _t3 AS (
+WITH _t2 AS (
   SELECT
     p_size
   FROM tpch.part
-), _t2 AS (
+), _t1 AS (
   SELECT
     COUNT(*) AS n_parts
-  FROM _t3
+  FROM _t2
   GROUP BY
     p_size
 ), _s0 AS (
   SELECT
     AVG(n_parts) AS avg_n_parts
-  FROM _t2
+  FROM _t1
 ), _s1 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM _t3
+  FROM _t2
   GROUP BY
     p_size
 )

@@ -5,7 +5,7 @@ ROOT(columns=[('factory_country', co_name), ('purchase_country', name_2), ('ir',
    SCAN(table=main.COUNTRIES, columns={'co_id': co_id, 'co_name': co_name})
   AGGREGATE(keys={'_id_3': _id_3, 'co_id': co_id}, aggregations={'n_rows': COUNT(), 'sum_n_rows': SUM(n_rows)})
    JOIN(condition=t0.de_id == t1.in_device_id, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'_id_3': t0._id_3, 'co_id': t0.co_id, 'n_rows': t1.n_rows})
-    JOIN(condition=t0._id_3 == t1.de_purchase_country_id & t1.de_production_country_id == t0.co_id, type=INNER, cardinality=PLURAL_UNKNOWN, columns={'_id_3': t0._id_3, 'co_id': t0.co_id, 'de_id': t1.de_id})
+    JOIN(condition=t0._id_3 == t1.de_purchase_country_id & t1.de_production_country_id == t0.co_id, type=INNER, cardinality=PLURAL_ACCESS, columns={'_id_3': t0._id_3, 'co_id': t0.co_id, 'de_id': t1.de_id})
      JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, columns={'_id_3': t1.co_id, 'co_id': t0.co_id})
       SCAN(table=main.COUNTRIES, columns={'co_id': co_id})
       SCAN(table=main.COUNTRIES, columns={'co_id': co_id})

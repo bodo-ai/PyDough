@@ -1,23 +1,23 @@
-WITH _t3 AS (
+WITH _t2 AS (
   SELECT DISTINCT
     p_container,
     p_size,
     p_type
   FROM tpch.part
-), _t2 AS (
+), _t1 AS (
   SELECT
     COUNT(*) AS n_combos
-  FROM _t3
+  FROM _t2
   GROUP BY
     p_size
 ), _s0 AS (
   SELECT
     AVG(n_combos) AS avg_n_combo
-  FROM _t2
+  FROM _t1
 ), _s1 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM _t3
+  FROM _t2
   GROUP BY
     p_size
 )

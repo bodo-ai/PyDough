@@ -7,8 +7,6 @@ WITH _s0 AS (
     AVG(p_retailprice) AS avg_p_retailprice,
     p_container
   FROM tpch.part
-  WHERE
-    p_container = p_container
   GROUP BY
     p_container,
     p_type

@@ -1,4 +1,4 @@
-WITH _t6 AS (
+WITH _t5 AS (
   SELECT
     l_commitdate,
     l_linenumber,
@@ -10,30 +10,30 @@ WITH _t6 AS (
     l_commitdate < l_receiptdate
 ), _t3 AS (
   SELECT
-    ANY_VALUE(_t6.l_linenumber) AS anything_l_linenumber,
-    ANY_VALUE(_t6.l_orderkey) AS anything_l_orderkey,
-    ANY_VALUE(_t6.l_suppkey) AS anything_l_suppkey,
+    ANY_VALUE(_t5.l_linenumber) AS anything_l_linenumber,
+    ANY_VALUE(_t5.l_orderkey) AS anything_l_orderkey,
+    ANY_VALUE(_t5.l_suppkey) AS anything_l_suppkey,
     ANY_VALUE(orders.o_orderkey) AS anything_o_orderkey,
     ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus
-  FROM _t6 AS _t6
+  FROM _t5 AS _t5
   JOIN tpch.orders AS orders
-    ON _t6.l_orderkey = orders.o_orderkey
+    ON _t5.l_orderkey = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON _t6.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
+    ON _t5.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    _t6.l_linenumber,
-    _t6.l_orderkey,
+    _t5.l_linenumber,
+    _t5.l_orderkey,
     orders.o_orderkey
 ), _s11 AS (
   SELECT
-    _t8.l_linenumber,
-    _t8.l_orderkey,
+    _t6.l_orderkey,
+    _t6.l_linenumber,
     orders.o_orderkey
-  FROM _t6 AS _t8
+  FROM _t5 AS _t6
   JOIN tpch.orders AS orders
-    ON _t8.l_orderkey = orders.o_orderkey
+    ON _t6.l_orderkey = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON _t8.l_suppkey <> lineitem.l_suppkey
+    ON _t6.l_suppkey <> lineitem.l_suppkey
     AND lineitem.l_commitdate < lineitem.l_receiptdate
     AND lineitem.l_orderkey = orders.o_orderkey
 ), _s13 AS (

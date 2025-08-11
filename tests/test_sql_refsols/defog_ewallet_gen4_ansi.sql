@@ -1,4 +1,4 @@
-WITH _t1 AS (
+WITH _t0 AS (
   SELECT
     merchant_id,
     start_date
@@ -7,7 +7,7 @@ WITH _t1 AS (
   SELECT
     MIN(start_date) AS min_start_date,
     merchant_id
-  FROM _t1
+  FROM _t0
   GROUP BY
     merchant_id
 ), _s3 AS (
@@ -30,6 +30,6 @@ LEFT JOIN _s1 AS _s1
   ON _s1.merchant_id = merchants.mid
 LEFT JOIN _s3 AS _s3
   ON _s1.min_start_date = _s3.start_date AND _s3.merchant_id = merchants.mid
-JOIN _t1 AS _s5
+JOIN _t0 AS _s5
   ON _s5.merchant_id = merchants.mid
   AND _s5.start_date <= DATE_ADD(CAST(merchants.created_at AS TIMESTAMP), 1, 'YEAR')

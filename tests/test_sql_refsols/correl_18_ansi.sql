@@ -1,4 +1,4 @@
-WITH _t4 AS (
+WITH _t3 AS (
   SELECT
     o_custkey,
     o_orderdate,
@@ -6,25 +6,25 @@ WITH _t4 AS (
   FROM tpch.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) = 1993
-), _t2 AS (
+), _t1 AS (
   SELECT
     COUNT(*) AS n_rows,
     SUM(o_totalprice) AS sum_o_totalprice,
     o_custkey,
     o_orderdate
-  FROM _t4
+  FROM _t3
   GROUP BY
     o_custkey,
     o_orderdate
 )
 SELECT
   COUNT(*) AS n
-FROM _t2 AS _t2
-JOIN _t4 AS _t5
-  ON _t2.o_custkey = _t5.o_custkey
-  AND _t2.o_orderdate = _t5.o_orderdate
-  AND _t5.o_totalprice >= (
-    0.5 * COALESCE(_t2.sum_o_totalprice, 0)
+FROM _t1 AS _t1
+JOIN _t3 AS _t4
+  ON _t1.o_custkey = _t4.o_custkey
+  AND _t1.o_orderdate = _t4.o_orderdate
+  AND _t4.o_totalprice >= (
+    0.5 * COALESCE(_t1.sum_o_totalprice, 0)
   )
 WHERE
-  _t2.n_rows > 1
+  _t1.n_rows > 1

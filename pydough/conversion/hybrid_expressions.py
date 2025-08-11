@@ -205,6 +205,21 @@ class HybridExpr(ABC):
         """
         return self
 
+    def expand_sided(self, shift: int) -> "HybridExpr":
+        """
+        Returns a modified version of the expression that converts any sided
+        references to regular expressions shifted by the specified number of
+        levels.
+
+        Args:
+            `shift`: the number of levels to shift the sided references back by.
+
+        Returns:
+            The expression with all sided references expanded to regular
+            expressions shifted by the specified number of levels.
+        """
+        return self
+
 
 class HybridCollation:
     """
@@ -337,6 +352,9 @@ class HybridSidedRefExpr(HybridExpr):
 
     def to_string(self):
         return f"SIDED({self.expr})"
+
+    def expand_sided(self, shift: int) -> HybridExpr:
+        return self.expr.shift_back(shift)
 
 
 class HybridCorrelExpr(HybridExpr):
@@ -539,6 +557,13 @@ class HybridFunctionExpr(HybridExpr):
             self.typ,
         )
 
+    def expand_sided(self, shift: int) -> HybridExpr:
+        return HybridFunctionExpr(
+            self.operator,
+            [arg.expand_sided(shift) for arg in self.args],
+            self.typ,
+        )
+
 
 class HybridWindowExpr(HybridExpr):
     """
@@ -716,6 +741,23 @@ class HybridWindowExpr(HybridExpr):
             [
                 HybridCollation(
                     order_arg.expr.strip_correl(sided_ref, shift),
+                    order_arg.asc,
+                    order_arg.na_first,
+                )
+                for order_arg in self.order_args
+            ],
+            self.typ,
+            self.kwargs,
+        )
+
+    def expand_sided(self, shift: int) -> HybridExpr:
+        return HybridWindowExpr(
+            self.window_func,
+            [arg.expand_sided(shift) for arg in self.args],
+            [part_arg.expand_sided(shift) for part_arg in self.partition_args],
+            [
+                HybridCollation(
+                    order_arg.expr.expand_sided(shift),
                     order_arg.asc,
                     order_arg.na_first,
                 )
