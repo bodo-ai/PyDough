@@ -116,3 +116,52 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         else:
             # For other units, use the standard SQLGlot truncation
             return super().apply_datetime_truncation(base, unit)
+
+    def convert_datediff(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        assert len(args) == 3
+        if not isinstance(args[0], sqlglot_expressions.Literal):
+            raise ValueError(
+                f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
+            )
+        elif not args[0].is_string:
+            raise ValueError(
+                f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
+            )
+        unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
+        if unit is DateTimeUnit.WEEK:
+            args = [
+                args[0],
+                self.make_datetime_arg(args[1]),
+                self.make_datetime_arg(args[2]),
+            ]
+            # 1. For both dates, get # of shifted of days since the start of week
+            shifted_start: SQLGlotExpression = self.days_from_start_of_week(args[1])
+            shifted_end: SQLGlotExpression = self.days_from_start_of_week(args[2])
+
+            # 2. Subtract shifted_weekday DAYS from the datetime
+
+            date_sub_start: SQLGlotExpression = sqlglot_expressions.DateSub(
+                this=args[1],
+                expression=shifted_start,
+                unit=sqlglot_expressions.Var(this="DAY"),
+            )
+
+            date_sub_end: SQLGlotExpression = sqlglot_expressions.DateSub(
+                this=args[2],
+                expression=shifted_end,
+                unit=sqlglot_expressions.Var(this="DAY"),
+            )
+
+            # 3. Call DATEDIFF in weeks with the shifted dates
+            return sqlglot_expressions.DateDiff(
+                unit=sqlglot_expressions.Var(this=unit.value),
+                this=date_sub_end,
+                expression=date_sub_start,
+            )
+        else:
+            # For other units, use base implementation
+            return super().convert_datediff(args, types)

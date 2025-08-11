@@ -242,6 +242,7 @@ The following configs are used in the behavior of `DAYOFWEEK`, `DATETIME`, and `
 - `DAYOFWEEK` : A function that returns the number of days since the start of the week. Start of week is relative to the `start_of_week` config.
 - `DATETIME` : This function also supports the `start of week` unit, which is relative to the `start_of_week` config.
 - `DATEDIFF` : This function also supports difference between two dates in terms of weeks, which is relative to the `start_of_week` config.
+- `DATE_TRUNC` : This function also supports truncating a date to the start of the week, which is relative to the `start_of_week` config.
 
 The value must be one of the following `DayOfWeek` enum values:
 
@@ -254,6 +255,10 @@ The value must be one of the following `DayOfWeek` enum values:
    - `DayOfWeek.SATURDAY`
 
    The `DayOfWeek` enum is defined in the `pydough.configs` module.
+
+**Note:** In Snowflake, PyDough does not automatically detect changes to `WEEK_START` session parameter. Please configure the `start_of_week` in your PyDough configurations.
+
+
 6. `start_week_as_zero` (default=True): if True, then the first day of the week is considered to be 0. If False, then the first day of the week is considered to be 1. This config is used by  `DAYOFWEEK` function.
 
 ```py
@@ -336,6 +341,8 @@ Just like the knowledge graph & miscellaneous configurations, the database conte
 Below is a list of all supported values for the database name:
 - `sqlite`: uses a SQLite database. [See here](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect) for details on the connection API and what keyword arguments can be passed in.
 
+- `snowflake`: uses a Snowflake database. [See here](https://docs.snowflake.com/en/user-guide/python-connector.html#connecting-to-snowflake) for details on the connection API and what keyword arguments can be passed in.
+
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 
 ```py
@@ -358,6 +365,21 @@ Notice that both APIs `load_database_context` and `sesion.load_database` take in
 It is important to ensure that the correct database context is being used for several reasons:
 - It controls what SQL dialect is used when translating from PyDough to SQL.
 - The context's database connection is used to execute queries once translated to SQL.
+
+#### Examples with different supported database connectors with PyDough
+- Snowflake: You can connect to a Snowflake database using `load_metadata_graph` and `connect_database` APIs. For example:
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH"),
+    pydough.active_session.connect_database("snowflake", 
+          user=snowflake_username,
+          password=snowflake_password,
+          account=snowflake_account,
+          warehouse=snowflake_warehouse,
+          database=snowflake_database,
+          schema=snowflake_schema
+    )
+  ```
+You can find a full example of using Snowflake database with PyDough in [this usage guide](./../demos/notebooks/Snowflake_TPCH.ipynb).
 
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
