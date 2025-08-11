@@ -388,6 +388,11 @@ class HybridDecorrelater:
                 parent_agg_keys.append(lhs_key)
             current_level = current_level.parent
             additional_levels += 1
+
+        # Copy over all existing join/general conditions into a new filter at
+        # the bottom of the child subtree, in case any new filters were pushed
+        # into those join connections that are now being deleted by the use of
+        # a new parent link.
         new_conds: list[HybridExpr] = []
         if original_join_keys is not None:
             for lhs_key, rhs_key in original_join_keys:
@@ -411,6 +416,9 @@ class HybridDecorrelater:
             child.subtree.add_operation(
                 HybridFilter(child.subtree.pipeline[-1], conjunction)
             )
+
+        # Replace the original parent link with the new one using the uniqueness
+        # keys of the parent to link it to the de-correlated child.
         child.subtree.join_keys = new_join_keys
         child.subtree.general_join_condition = None
         # Replace any correlated references to the original parent with BACK references.
