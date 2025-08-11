@@ -1059,7 +1059,6 @@ class PyDoughPandasTest:
        relational plan testing. Default is False.
     - `skip_sql`: (optional): if True, does not run the test as part of SQL
        testing. Default is False.
-    - `fix_output_dialect`: (optional): update refsol to match Dialect behavior
     """
 
     pydough_function: Callable[..., UnqualifiedNode] | str
@@ -1116,11 +1115,6 @@ class PyDoughPandasTest:
     skip_sql: bool = False
     """
     If True, does not run the test as part of SQL testing.
-    """
-
-    fix_output_dialect: str = "sqlite"
-    """
-    Dialect name to update output
     """
 
     def run_relational_test(
@@ -1278,19 +1272,6 @@ class PyDoughPandasTest:
         if self.fix_column_names:
             assert len(result.columns) == len(refsol.columns)
             result.columns = refsol.columns
-
-        # FIXME:
-        if self.fix_output_dialect == "snowflake":
-            # Update column "q"
-            # Start of Week in Snowflake is Monday
-            if self.test_name == "smoke_b":
-                refsol["q"] = [
-                    "1994-06-06",
-                    "1994-05-23",
-                    "1998-02-16",
-                    "1993-06-07",
-                    "1992-10-19",
-                ]
 
         # If the query is not order-sensitive, sort the DataFrames before comparison
         if not self.order_sensitive:

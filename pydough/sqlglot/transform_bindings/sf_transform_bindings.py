@@ -95,3 +95,24 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                     this=unit.value.upper(), expressions=[dt_expr]
                 )
         return func_expr
+
+    def apply_datetime_truncation(
+        self, base: SQLGlotExpression, unit: DateTimeUnit
+    ) -> SQLGlotExpression:
+        if unit is DateTimeUnit.WEEK:
+            # 1. Get shifted_weekday (# of days since the start of week)
+            # 2. Subtract shifted_weekday DAYS from the datetime
+            # 3. Truncate the result to the nearest day
+            shifted_weekday: SQLGlotExpression = self.days_from_start_of_week(base)
+            date_sub: SQLGlotExpression = sqlglot_expressions.DateSub(
+                this=base,
+                expression=shifted_weekday,
+                unit=sqlglot_expressions.Var(this="DAY"),
+            )
+            return sqlglot_expressions.DateTrunc(
+                this=date_sub,
+                unit=sqlglot_expressions.Var(this="DAY"),
+            )
+        else:
+            # For other units, use the standard SQLGlot truncation
+            return super().apply_datetime_truncation(base, unit)
