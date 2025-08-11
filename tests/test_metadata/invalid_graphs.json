@@ -2938,6 +2938,32 @@
       ]
     },
     {
+      "name": "MASKED_TABLE_COLUMN_BAD_PROTECTED_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "protected data type": "num",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
       "version": "V2",
       "relationships": [],

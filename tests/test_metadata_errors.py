@@ -753,6 +753,11 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
         ),
         pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_PROTECTED_DATA_TYPE",
+            "Unrecognized type string 'num'",
+            id="MASKED_TABLE_COLUMN_BAD_PROTECTED_DATA_TYPE",
+        ),
+        pytest.param(
             "MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
             "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL' must be a JSON object containing a field 'unprotect protocol' and field 'unprotect protocol' must be a string",
             id="MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
@@ -780,7 +785,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
             re.escape(
-                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'sample values', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
+                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'protected data type', 'sample values', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
             ),
             id="MASKED_TABLE_COLUMN_EXTRA_FIELDS",
         ),
