@@ -14,14 +14,12 @@ from sqlglot.expressions import Alias, Column, Select, Table, With
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
-from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
-from sqlglot.optimizer.simplify import simplify
 from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
 
 from pydough.configs import PyDoughConfigs
@@ -35,9 +33,11 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
+from .override_canonicalize import canonicalize
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
+from .override_simplify import simplify
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]

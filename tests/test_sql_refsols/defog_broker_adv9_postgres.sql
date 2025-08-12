@@ -6,7 +6,7 @@ SELECT
       CASE
         WHEN (
           (
-            DAY_OF_WEEK(sbtransaction.sbtxdatetime) + 6
+            EXTRACT(DOW FROM CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) + 6
           ) % 7
         ) IN (5, 6)
         THEN 1

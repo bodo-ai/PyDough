@@ -12,6 +12,7 @@ from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 
 from .base_transform_bindings import BaseTransformBindings
+from .sqlglot_transform_utils import DateTimeUnit
 
 
 class PostgreSQLTransformBindings(BaseTransformBindings):
@@ -20,9 +21,24 @@ class PostgreSQLTransformBindings(BaseTransformBindings):
     """
 
     PYDOP_TO_POSTGRES_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
+        pydop.ABS: "ABS",
+        pydop.AVG: "AVG",
+        pydop.CEIL: "CEIL",
+        #        pydop.COUNT: "COUNT",
+        pydop.FLOOR: "FLOOR",
+        pydop.GETPART: "SPLIT_PART",
+        pydop.LENGTH: "LENGTH",
+        pydop.LOWER: "LOWER",
+        pydop.MAX: "MAX",
+        pydop.MIN: "MIN",
+        pydop.MOD: "MOD",
+        pydop.POWER: "POWER",
+        #        pydop.ROUND: "ROUND",
+        #       pydop.SQRT: "SQRT",
+        pydop.UPPER: "UPPER",
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
-        pydop.SIGN: "SIGN",
+        #        pydop.SIGN: "SIGN",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
     }
@@ -66,3 +82,45 @@ class PostgreSQLTransformBindings(BaseTransformBindings):
             case _:
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
+
+    def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        """
+        Gets the day of the week, as an integer, for the `base` argument in
+        terms of its dialect.
+
+        Args:
+            `base`: The base date/time expression to calculate the day of week
+            from.
+
+        Returns:
+            The SQLGlot expression to calculating the day of week of `base` in
+            terms of the dialect's start of week.
+        """
+        # Build the EXTRACT expression
+        extract_expr: SQLGlotExpression = sqlglot_expressions.Extract(
+            this=sqlglot_expressions.var("DOW"),  # The field to extract
+            expression=base,  # The date column
+        )
+        return extract_expr
+
+    def apply_datetime_offset(
+        self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
+    ) -> SQLGlotExpression:
+        """
+        Adds/subtracts a datetime interval to to a date/time expression.
+
+        Args:
+            `base`: The base date/time expression to add/subtract from.
+            `amt`: The amount of the unit to add (if positive) or subtract
+            (if negative).
+            `unit`: The unit of the interval to add/subtract.
+
+        Returns:
+            The SQLGlot expression to add/subtract the specified interval to/from
+            `base`.
+        """
+        if unit == DateTimeUnit.QUARTER:
+            unit = DateTimeUnit.MONTH
+            amt *= 3
+
+        return super().apply_datetime_offset(base, amt, unit)
