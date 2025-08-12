@@ -6,7 +6,7 @@ SELECT
       CASE
         WHEN (
           (
-            DAY_OF_WEEK(notifications.created_at) + 6
+            EXTRACT(DOW FROM CAST(notifications.created_at AS TIMESTAMP)) + 6
           ) % 7
         ) IN (5, 6)
         THEN 1

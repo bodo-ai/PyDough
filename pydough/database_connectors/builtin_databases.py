@@ -29,8 +29,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     Returns:
         The database context object.
     """
-    supported_databases = {"sqlite", "mysql"}
-    supported_databases = {"postgres", "sqlite"}
+    supported_databases = {"sqlite", "mysql", "postgres"}
     connection: DatabaseConnection
     dialect: DatabaseDialect
     match database_name.lower():

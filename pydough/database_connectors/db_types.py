@@ -36,8 +36,10 @@ if TYPE_CHECKING:
     # Dialect1_Cursor: TypeAlias = dialect1_module.Cursor
 
     # 4. Define the type aliases for database connections and cursors
-    DBConnection: TypeAlias = SQLiteConn | MySQLConn | PostgreSQLConn
-    DBCursor: TypeAlias = SQLiteCursor | MySQLCursor | PostgreSQLCursor
+    DBConnection: TypeAlias = SQLiteConn | MySQLConn | PostgreSQLConn  # | Dialect1_Conn
+    DBCursor: TypeAlias = (
+        SQLiteCursor | MySQLCursor | PostgreSQLCursor
+    )  # | Dialect1_Cursor
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
