@@ -3,6 +3,8 @@ Utilities used by PyDough test files, such as the TestInfo classes used to
 build QDAG nodes for unit tests.
 """
 
+from dateutil import parser  # type: ignore[import-untyped]
+
 __all__ = [
     "AstNodeTestInfo",
     "BackReferenceExpressionInfo",
@@ -23,9 +25,11 @@ __all__ = [
     "map_over_dict_values",
 ]
 
+import datetime
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
 import pandas as pd
@@ -1056,6 +1060,7 @@ class PyDoughPandasTest:
        relational plan testing. Default is False.
     - `skip_sql`: (optional): if True, does not run the test as part of SQL
        testing. Default is False.
+    - `fix_output_dialect`: (optional): update refsol to match Dialect behavior
     """
 
     pydough_function: Callable[..., UnqualifiedNode] | str
@@ -1112,6 +1117,11 @@ class PyDoughPandasTest:
     skip_sql: bool = False
     """
     If True, does not run the test as part of SQL testing.
+    """
+
+    fix_output_dialect: str = "sqlite"
+    """
+    Dialect name to update output
     """
 
     def run_relational_test(
@@ -1229,6 +1239,7 @@ class PyDoughPandasTest:
         database: DatabaseContext,
         config: PyDoughConfigs | None = None,
         display_sql: bool = False,
+        coerce_types: bool = False,
     ):
         """
         Runs an end-to-end test using the data in the SQL comparison test,
@@ -1269,13 +1280,87 @@ class PyDoughPandasTest:
             assert len(result.columns) == len(refsol.columns)
             result.columns = refsol.columns
 
+        # FIXME:
+        if self.fix_output_dialect == "snowflake":
+            # Update column "q"
+            # Start of Week in Snowflake is Monday
+            if self.test_name == "smoke_b":
+                refsol["q"] = [
+                    "1994-06-06",
+                    "1994-05-23",
+                    "1998-02-16",
+                    "1993-06-07",
+                    "1992-10-19",
+                ]
+
         # If the query is not order-sensitive, sort the DataFrames before comparison
         if not self.order_sensitive:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol)
+        if coerce_types:
+            for col_name in result.columns:
+                result[col_name], refsol[col_name] = harmonize_types(
+                    result[col_name], refsol[col_name]
+                )
+        pd.testing.assert_frame_equal(
+            result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
+        )
+
+
+def harmonize_types(column_a, column_b):
+    """
+    Harmonizes data types between two Pandas columns to ensure compatibility
+    for comparison equality check operations.
+
+    The function performs type conversions based on common mismatches, including:
+    - Decimal to float conversion
+    - String to datetime or date conversion
+    - Date to string or datetime conversion
+
+    If no known mismatch pattern is found, the original columns are returned unchanged.
+
+    Parameters:
+        `column_a`: The first column to harmonize.
+        `column_b`: The second column to harmonize.
+
+    Returns:
+        A tuple of the two harmonized columns.
+    """
+    if any(isinstance(elem, Decimal) for elem in column_a) and any(
+        isinstance(elem, float) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else float(x)), column_b
+    if any(isinstance(elem, float) for elem in column_a) and any(
+        isinstance(elem, Decimal) for elem in column_b
+    ):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else float(x))
+    if any(isinstance(elem, pd.Timestamp) for elem in column_a) and any(
+        isinstance(elem, str) for elem in column_b
+    ):
+        return column_a, column_b.apply(
+            lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        ), column_b
+    if any(isinstance(elem, datetime.date) for elem in column_a) and any(
+        isinstance(elem, str) for elem in column_b
+    ):
+        return column_a, column_b.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
+        )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
+        ), column_b
+    return column_a, column_b
 
 
 def run_e2e_error_test(
