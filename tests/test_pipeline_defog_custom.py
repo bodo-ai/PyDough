@@ -1945,6 +1945,7 @@ def test_pipeline_e2e_defog_custom(
     """
     defog_custom_pipeline_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection)
 
+
 @pytest.mark.pgsql
 @pytest.mark.execute
 def test_pipeline_e2e_defog_custom(
@@ -1959,7 +1960,7 @@ def test_pipeline_e2e_defog_custom(
     schemas.
     """
     defog_custom_pipeline_test_data.run_e2e_test(
-        defog_graphs, 
+        defog_graphs,
         postgresql_conn_tpch_db_context,
         coerce_types=True,
     )
