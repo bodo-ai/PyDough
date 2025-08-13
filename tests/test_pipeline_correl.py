@@ -831,7 +831,7 @@ def test_pipeline_until_relational_correlated(
 def test_pipeline_until_sql_tpch(
     correl_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    empty_context_database: DatabaseContext,
+    sqlite_tpch_db_context: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ) -> None:
@@ -840,10 +840,10 @@ def test_pipeline_until_sql_tpch(
     text.
     """
     file_path: str = get_sql_test_filename(
-        correl_pipeline_test_data.test_name, empty_context_database.dialect
+        correl_pipeline_test_data.test_name, sqlite_tpch_db_context.dialect
     )
     correl_pipeline_test_data.run_sql_test(
-        get_sample_graph, file_path, update_tests, empty_context_database
+        get_sample_graph, file_path, update_tests, sqlite_tpch_db_context
     )
 
 
