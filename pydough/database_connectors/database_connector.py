@@ -7,10 +7,11 @@ https://peps.python.org/pep-0249/
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 
-from .db_types import DBConnection, DBCursor
+from .db_types import DBConnection, DBCursor, SnowflakeCursor
 
 __all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
@@ -49,12 +50,25 @@ class DatabaseConnection:
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise e
-        column_names: list[str] = [description[0] for description in cursor.description]
-        # No need to close the cursor, as its closed by del.
-        # TODO: (gh #174) Cache the cursor?
-        # TODO: (gh #175) enable typed DataFrames.
-        data = cursor.fetchall()
-        return pd.DataFrame(data, columns=column_names)
+
+        # This is only for MyPy to pass and know about fetch_pandas_all()
+        # NOTE: Code does not run in type checking mode, so we need to
+        # check at run-time if the cursor has the method.
+        if TYPE_CHECKING:
+            _ = cast(SnowflakeCursor, cursor).fetch_pandas_all
+        # At run-time check and run the fetch.
+        if hasattr(cursor, "fetch_pandas_all"):
+            return cursor.fetch_pandas_all()
+        else:
+            # Assume sqlite3
+            column_names: list[str] = [
+                description[0] for description in cursor.description
+            ]
+            # No need to close the cursor, as its closed by del.
+            # TODO: (gh #174) Cache the cursor?
+            # TODO: (gh #175) enable typed DataFrames.
+            data = cursor.fetchall()
+            return pd.DataFrame(data, columns=column_names)
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
     # how this will be available at a user API level.
@@ -77,6 +91,7 @@ class DatabaseDialect(Enum):
 
     ANSI = "ansi"
     SQLITE = "sqlite"
+    SNOWFLAKE = "snowflake"
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":
@@ -92,6 +107,8 @@ class DatabaseDialect(Enum):
             return DatabaseDialect.ANSI
         elif dialect == "sqlite":
             return DatabaseDialect.SQLITE
+        elif dialect == "snowflake":
+            return DatabaseDialect.SNOWFLAKE
         else:
             raise ValueError(f"Unsupported dialect: {dialect}")
 

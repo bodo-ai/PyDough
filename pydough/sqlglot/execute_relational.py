@@ -7,6 +7,7 @@ the query on the database.
 import pandas as pd
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import Alias, Column, Select, Table, With
@@ -20,7 +21,6 @@ from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
-from sqlglot.optimizer.simplify import simplify
 from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
 
 from pydough.configs import PyDoughConfigs
@@ -37,6 +37,7 @@ from pydough.relational.relational_expressions import (
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
+from .override_simplify import simplify
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
@@ -273,6 +274,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
         return SQLGlotDialect()
     elif dialect == DatabaseDialect.SQLITE:
         return SQLiteDialect()
+    elif dialect == DatabaseDialect.SNOWFLAKE:
+        return SnowflakeDialect()
     else:
         raise ValueError(f"Unsupported dialect: {dialect}")
 

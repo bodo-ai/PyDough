@@ -19,6 +19,7 @@ from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
     empty_connection,
+    load_database_context,
 )
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
@@ -86,6 +87,14 @@ def sample_graph_path() -> str:
 
 
 @pytest.fixture(scope="session")
+def sf_sample_graph_path() -> str:
+    """
+    Tuple of the path to the JSON file containing the Snowflake sample graphs.
+    """
+    return f"{os.path.dirname(__file__)}/test_metadata/snowflake_sample_graphs.json"
+
+
+@pytest.fixture(scope="session")
 def udf_graph_path() -> str:
     """
     Tuple of the path to the JSON file containing the UDF graphs.
@@ -142,6 +151,43 @@ def get_sample_graph(
         return pydough.parse_json_metadata_from_file(
             file_path=sample_graph_path, graph_name=name
         )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_sf_sample_graph(
+    sf_sample_graph_path: str,
+    valid_sample_graph_names: set[str],
+) -> graph_fetcher:
+    """
+    A function that takes in the name of a graph from the supported sample
+    Snowflake graph names and returns the metadata for that PyDough graph.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        if name not in valid_sample_graph_names:
+            raise Exception(f"Unrecognized graph name '{name}'")
+        return pydough.parse_json_metadata_from_file(
+            file_path=sf_sample_graph_path, graph_name=name
+        )
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_sf_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in Snowflake.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = (
+            f"{os.path.dirname(__file__)}/test_metadata/snowflake_defog_graphs.json"
+        )
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
 
@@ -254,6 +300,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
     params=[
         pytest.param(DatabaseDialect.ANSI, id="ansi"),
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
+        pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -426,6 +473,81 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+SF_ENVS = ["SF_USERNAME", "SF_PASSWORD", "SF_ACCOUNT"]
+"""
+    Snowflake environment variables required for connection.
+    SF_USERNAME: The username for the Snowflake account.
+    SF_PASSWORD: The password for the Snowflake account.
+    SF_ACCOUNT: The account identifier for the Snowflake account.
+"""
+
+
+def is_snowflake_env_set() -> bool:
+    """
+    Check if the Snowflake environment variables are set.
+
+    Returns:
+        bool: True if all required Snowflake environment variables are set, False otherwise.
+    """
+    return all(os.getenv(env) for env in SF_ENVS)
+
+
+@pytest.fixture
+def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
+    """
+    This fixture is used to connect to the Snowflake TPCH database using
+    a connection object.
+    Return a DatabaseContext for the Snowflake TPCH database.
+    """
+
+    def _impl(database_name: str, schema_name: str) -> DatabaseContext:
+        if not is_snowflake_env_set():
+            pytest.skip("Skipping Snowflake tests: environment variables not set.")
+        import snowflake.connector as sf_connector
+
+        warehouse = "DEMO_WH"
+        password = os.getenv("SF_PASSWORD")
+        username = os.getenv("SF_USERNAME")
+        account = os.getenv("SF_ACCOUNT")
+        connection: sf_connector.connection.SnowflakeConnection = sf_connector.connect(
+            user=username,
+            password=password,
+            account=account,
+            warehouse=warehouse,
+            database=database_name,
+            schema=schema_name,
+        )
+        return load_database_context("snowflake", connection=connection)
+
+    return _impl
+
+
+@pytest.fixture
+def sf_params_tpch_db_context() -> DatabaseContext:
+    """
+    This fixture is used to connect to the Snowflake TPCH database using
+    parameters instead of a connection object.
+    Return a DatabaseContext for the Snowflake TPCH database.
+    """
+    if not is_snowflake_env_set():
+        pytest.skip("Skipping Snowflake tests: environment variables not set.")
+    sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
+    sf_tpch_schema = "TPCH_SF1"
+    warehouse = "DEMO_WH"
+    password = os.getenv("SF_PASSWORD")
+    username = os.getenv("SF_USERNAME")
+    account = os.getenv("SF_ACCOUNT")
+    return load_database_context(
+        "snowflake",
+        user=username,
+        password=password,
+        account=account,
+        warehouse=warehouse,
+        database=sf_tpch_db,
+        schema=sf_tpch_schema,
+    )
 
 
 @pytest.fixture(scope="session")

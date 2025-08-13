@@ -1,0 +1,9 @@
+SELECT
+  device_type,
+  COUNT(*) AS count
+FROM MAIN.USER_SESSIONS
+GROUP BY
+  device_type
+ORDER BY
+  COUNT DESC NULLS LAST
+LIMIT 2

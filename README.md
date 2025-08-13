@@ -100,6 +100,23 @@ script must be run so that the `defog.db` file is located in the `tests` directo
 To run our CI tests on your PR, you must include the flag `[run CI]` in latest
 commit message.
 
+### Running Snowflake Tests on CI
+To run our Snowflake CI tests on your PR, you must include the flag `[run SF]` in your commit message.
+
+**Note:** To run these tests locally, you need the following:
+
+1. Install the Snowflake Connector for Python with Pandas support
+    ```bash
+    pip install "snowflake-connector-python[pandas]"
+    ```
+
+2. Set your Snowflake credentials as environment variables:
+    ```bash
+        export SF_USERNAME="your_username"
+        export SF_PASSWORD="your_password"
+        export SF_ACCOUNT="your_account"
+    ```
+
 ## Runtime Dependencies
 
 PyDough requires having the following Python modules installed to use

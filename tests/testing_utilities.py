@@ -3,6 +3,10 @@ Utilities used by PyDough test files, such as the TestInfo classes used to
 build QDAG nodes for unit tests.
 """
 
+from types import NoneType
+
+from dateutil import parser  # type: ignore[import-untyped]
+
 __all__ = [
     "AstNodeTestInfo",
     "BackReferenceExpressionInfo",
@@ -23,9 +27,11 @@ __all__ = [
     "map_over_dict_values",
 ]
 
+import datetime
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
 import pandas as pd
@@ -1229,6 +1235,7 @@ class PyDoughPandasTest:
         database: DatabaseContext,
         config: PyDoughConfigs | None = None,
         display_sql: bool = False,
+        coerce_types: bool = False,
     ):
         """
         Runs an end-to-end test using the data in the SQL comparison test,
@@ -1275,7 +1282,84 @@ class PyDoughPandasTest:
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol)
+        if coerce_types:
+            for col_name in result.columns:
+                result[col_name], refsol[col_name] = harmonize_types(
+                    result[col_name], refsol[col_name]
+                )
+        pd.testing.assert_frame_equal(
+            result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
+        )
+
+
+def harmonize_types(column_a, column_b):
+    """
+    Harmonizes data types between two Pandas columns to ensure compatibility
+    for comparison equality check operations.
+
+    The function performs type conversions based on common mismatches, including:
+    - None to ' ' for string and NoneType columns
+    - Decimal to integer conversion
+    - Decimal to float conversion
+    - String to datetime or date conversion
+    - Date to string or datetime conversion
+
+    If no known mismatch pattern is found, the original columns are returned unchanged.
+
+    Parameters:
+        `column_a`: The first column to harmonize.
+        `column_b`: The second column to harmonize.
+
+    Returns:
+        A tuple of the two harmonized columns.
+    """
+    if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
+        isinstance(elem, (str, NoneType)) for elem in column_b
+    ):
+        return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
+            lambda x: "" if pd.isna(x) else str(x)
+        )
+    if any(isinstance(elem, Decimal) for elem in column_a) and any(
+        isinstance(elem, int) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else int(x)), column_b
+    if any(isinstance(elem, int) for elem in column_a) and any(
+        isinstance(elem, Decimal) for elem in column_b
+    ):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else int(x))
+    if any(isinstance(elem, Decimal) for elem in column_a) and any(
+        isinstance(elem, float) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else float(x)), column_b
+    if any(isinstance(elem, float) for elem in column_a) and any(
+        isinstance(elem, Decimal) for elem in column_b
+    ):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else float(x))
+    if any(isinstance(elem, pd.Timestamp) for elem in column_a) and any(
+        isinstance(elem, str) for elem in column_b
+    ):
+        return column_a, column_b.apply(
+            lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: pd.NA if pd.isna(x) else pd.Timestamp(x)
+        ), column_b
+    if any(isinstance(elem, datetime.date) for elem in column_a) and any(
+        isinstance(elem, str) for elem in column_b
+    ):
+        return column_a, column_b.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
+        )
+    if any(isinstance(elem, str) for elem in column_a) and any(
+        isinstance(elem, datetime.date) for elem in column_b
+    ):
+        return column_a.apply(
+            lambda x: parser.parse(x).date() if isinstance(x, str) else x
+        ), column_b
+    return column_a, column_b
 
 
 def run_e2e_error_test(

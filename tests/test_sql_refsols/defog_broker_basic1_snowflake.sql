@@ -1,0 +1,20 @@
+WITH _S1 AS (
+  SELECT
+    COUNT(*) AS N_ROWS,
+    SUM(sbtxamount) AS SUM_SBTXAMOUNT,
+    sbtxcustid AS SBTXCUSTID
+  FROM MAIN.SBTRANSACTION
+  WHERE
+    sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -30, CURRENT_TIMESTAMP()))
+  GROUP BY
+    sbtxcustid
+)
+SELECT
+  SBCUSTOMER.sbcustcountry AS country,
+  COALESCE(SUM(_S1.N_ROWS), 0) AS num_transactions,
+  COALESCE(SUM(_S1.SUM_SBTXAMOUNT), 0) AS total_amount
+FROM MAIN.SBCUSTOMER AS SBCUSTOMER
+LEFT JOIN _S1 AS _S1
+  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
+GROUP BY
+  SBCUSTOMER.sbcustcountry

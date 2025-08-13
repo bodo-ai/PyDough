@@ -1,0 +1,3396 @@
+[
+  {
+    "name": "Broker",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "customers",
+        "type": "simple table",
+        "table path": "BROKER.sbCustomer",
+        "unique properties": ["_id"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "sbCustId",
+            "data type": "string",
+            "description": "The unique identifying string for the customer",
+            "sample values": ["C001", "C005", "C014"],
+            "synonyms": ["customer key"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "sbCustName",
+            "data type": "string",
+            "description": "The name of the customer",
+            "sample values": ["Ava Wilson", "Bob Johnson", "David Kim", "Emily Davis"],
+            "synonyms": ["customer name", "first and last name"]
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "sbCustEmail",
+            "data type": "string",
+            "description": "The email of the customer",
+            "sample values": ["alex.rodriguez@email.com", "ava.wilson@email.com", "arah.nguyen@email.com", "samantha.lee@email.com"],
+            "synonyms": ["email address", "customer email"]
+          },
+          {
+            "name": "phone",
+            "type": "table column",
+            "column name": "sbCustPhone",
+            "data type": "string",
+            "description": "The phone number of the customer",
+            "sample values": ["555-123-4567", "555-623-7419", "555-135-7902"],
+            "synonyms": ["phone number", "customer phone"]
+          },
+          {
+            "name": "address1",
+            "type": "table column",
+            "column name": "sbCustAddress1",
+            "data type": "string",
+            "description": "The address of the customer",
+            "sample values": ["123 Main St", "951 Pine Rd", "246 Elm St", "258 Elm Ave"],
+            "synonyms": ["first address line", "street address"]
+          },
+          {
+            "name": "address2",
+            "type": "table column",
+            "column name": "sbCustAddress2",
+            "data type": "string",
+            "description": "The second address of the customer, if one exists",
+            "synonyms": ["second address line"]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "sbCustCity",
+            "data type": "string",
+            "description": "The city the customer lives in",
+            "sample values": ["Anytown", "Yourtown", "Someville", "Mytown"],
+            "synonyms": ["customer address city"]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "sbCustState",
+            "data type": "string",
+            "description": "The state the customer lives in, by its capitalized two-letter abbreviation",
+            "sample values": ["CA", "NY", "TX", "FL", "NJ"],
+            "synonyms": ["customer address state"]
+          },
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "sbCustCountry",
+            "data type": "string",
+            "description": "The country the customer lives in",
+            "sample values": ["USA"],
+            "synonyms": ["customer address country"]
+          },
+          {
+            "name": "postal_code",
+            "type": "table column",
+            "column name": "sbCustPostalCode",
+            "data type": "string",
+            "description": "The postal/zip code of the customer's address",
+            "sample values": ["90001", "10002", "08801"],
+            "synonyms": ["zip code", "customer address postal code"]
+          },
+          {
+            "name": "join_date",
+            "type": "table column",
+            "column name": "sbCustJoinDate",
+            "data type": "datetime",
+            "description": "The date the customer joined the brokerage",
+            "synonyms": ["signup date", "customer join date", "account creation date"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "sbCustStatus",
+            "data type": "string",
+            "description": "The state of the customer's account, which is either 'active', 'inactive', or 'suspended'",
+            "sample values": ["active", "inactive", "suspended"],
+            "synonyms": ["customer account status", "activity state"]
+          }
+        ],
+        "description": "The customers who have accounts with the the brokerage",
+        "synonyms": ["users", "clients", "members", "subscribers"]
+      },
+      {
+        "name": "tickers",
+        "type": "simple table",
+        "table path": "BROKER.sbTicker",
+        "unique properties": ["_id"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "sbTickerId",
+            "data type": "string",
+            "description": "The unique identifying string for each ticker",
+            "sample values": ["T001", "T003", "T007", "T0018"],
+            "synonyms": ["ticker key"]
+          },
+          {
+            "name": "symbol",
+            "type": "table column",
+            "column name": "sbTickerSymbol",
+            "data type": "string",
+            "description": "The symbol used to abbreviate the ticker name in a recognizable manner, e.g. APPL for Apple, or GOOG for Google",
+            "sample values": ["APPL", "AMZN", "BRK.B", "FB", "GOOG", "NFLX", "MSFT"],
+            "synonyms": ["ticker symbol", "ticker abbreviation"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "sbTickerName",
+            "data type": "string",
+            "description": "The full name of the ticker, e.g. the company name",
+            "sample values": ["Berkshire Hathaway Inc.", "Alphabet Inc.", "Apple Inc.", "Microsoft Corporation"],
+            "synonyms": ["company name", "business name"]
+          },
+          {
+            "name": "ticker_type",
+            "type": "table column",
+            "column name": "sbTickerType",
+            "data type": "string",
+            "description": "The category of ticker, which is either 'stock', 'etf', or 'mutual fund'",
+            "sample values": ["stock", "etf", "mutual fund"],
+            "synonyms": ["category", "classification"]
+          },
+          {
+            "name": "exchange",
+            "type": "table column",
+            "column name": "sbTickerExchange",
+            "data type": "string",
+            "description": "The exchange that the ticker is listed on, which is either 'NASDAQ', 'NYSE', 'NYSE Arca', or 'Vanguard'",
+            "sample values": ["NASDAQ", "NYSE", "NYSE Arca", "Vanguard"],
+            "synonyms": []
+          },
+          {
+            "name": "currency",
+            "type": "table column",
+            "column name": "sbTickerCurrency",
+            "data type": "string",
+            "description": "The currency that the ticker is traded in, which is always 'USD'",
+            "sample values": ["USD"]
+          },
+          {
+            "name": "db2x",
+            "type": "table column",
+            "column name": "sbTickerDb2x",
+            "data type": "string",
+            "description": "The two-letter exchange code corresponding to the ticker's exchange, which is either 'NQ' for NASDAQ, 'NY' for NYSE, 'NX' for 'NYSE Arca', or 'VA' for Vanguard",
+            "sample values": ["NQ", "NY", "NX", "VG"],
+            "synonyms": ["exchange code"]
+          },
+          {
+            "name": "is_active",
+            "type": "table column",
+            "column name": "sbTickerIsActive",
+            "data type": "bool",
+            "description": "Whether the ticker is still active",
+            "synonyms": ["ticker in use"]
+          }
+        ],
+        "description": "All of the tickers that the brokerage trades",
+        "synonyms": ["stocks", "etfs", "mutual funds"]
+      },
+      {
+        "name": "daily_prices",
+        "type": "simple table",
+        "table path": "BROKER.sbDailyPrice",
+        "unique properties": [["ticker_id", "date"]],
+        "properties": [
+          {
+            "name": "ticker_id",
+            "type": "table column",
+            "column name": "sbDpTickerId",
+            "data type": "string",
+            "description": "The ticker id from the ticker whose price is being record",
+            "sample values": ["T002", "T003", "T005", "T007", "T011"],
+            "synonyms": ["ticker key"]
+          },
+          {
+            "name": "date",
+            "type": "table column",
+            "column name": "sbDpDate",
+            "data type": "datetime",
+            "description": "The date of the price record",
+            "synonyms": ["record datetime", "price update date"]
+          },
+          {
+            "name": "open",
+            "type": "table column",
+            "column name": "sbDpOpen",
+            "data type": "numeric",
+            "description": "The opening price of the ticker on the day of the record",
+            "sample values": [150, 3200, 2500, 280],
+            "synonyms": ["opening price"]
+          },
+          {
+            "name": "high",
+            "type": "table column",
+            "column name": "sbDpHigh",
+            "data type": "numeric",
+            "description": "The highest price of the ticker during the day of the record",
+            "sample values": [152.5, 282.75, 3225, 185, 2525],
+            "synonyms": ["high price", "high-point", "maximum price during day"]
+          },
+          {
+            "name": "low",
+            "type": "table column",
+            "column name": "sbDpLow",
+            "data type": "numeric",
+            "description": "The lowest price of the ticker during the day of the record",
+            "sample values": [148.75, 279.5, 3180, 178.5, 2475],
+            "synonyms": ["low price", "low-point", "minimum price during day"]
+          },
+          {
+            "name": "close",
+            "type": "table column",
+            "column name": "sbDpClose",
+            "data type": "numeric",
+            "description": "The close price of the ticker on the day of the record",
+            "sample values": [151.25, 281, 3210, 184.25, 2510],
+            "synonyms": ["closing price"]
+          },
+          {
+            "name": "volume",
+            "type": "table column",
+            "column name": "sbDpVolume",
+            "data type": "numeric",
+            "description": "The total number of shares of the ticker traded during the day",
+            "sample values": [75000000, 4000000, 1500000, 35000000],
+            "synonyms": ["daily trading volume"]
+          },
+          {
+            "name": "epoch_ms",
+            "type": "table column",
+            "column name": "sbDpEpochMs",
+            "data type": "numeric",
+            "description": "The number of milliseconds since the epoch (January 1, 1970) that the record was created",
+            "sample values": [1680336000000, 1680336000000, 1680336000000],
+            "synonyms": ["created timestamp in epoch milliseconds"]
+          },
+          {
+            "name": "source",
+            "type": "table column",
+            "column name": "sbDpSource",
+            "data type": "string",
+            "description": "The exchange where the price record originated from, which is either 'NASDAQ', 'NYSE' or 'Vanguard'",
+            "sample values": ["NYSE", "NASDAQ", "Vanguard"],
+            "synonyms": ["price record origin"]
+          }
+        ],
+        "description": "The daily updates on tickers including their price information within a single day",
+        "synonyms": ["historical stock prices", "daily ticker price data"]
+      },
+      {
+        "name": "transactions",
+        "type": "simple table",
+        "table path": "BROKER.sbTransaction",
+        "unique properties": ["transaction_id", "kpx"],
+        "properties": [
+          {
+            "name": "transaction_id",
+            "type": "table column",
+            "column name": "sbTxId",
+            "data type": "string",
+            "description": "The unique identifying string for each transaction",
+            "sample values": ["TX035", "TX001", "TX008", "TX033"],
+            "synonyms": ["transaction key"]
+          },
+          {
+            "name": "customer_id",
+            "type": "table column",
+            "column name": "sbTxCustId",
+            "data type": "string",
+            "description": "The id of the customer who made the transaction",
+            "sample values": ["C003", "C005", "C007", "C001", "C008"],
+            "synonyms": ["customer key"]
+          },
+          {
+            "name": "ticker_id",
+            "type": "table column",
+            "column name": "sbTxTickerId",
+            "data type": "string",
+            "description": "The id of the ticker being bought/sold in the transaction",
+            "sample values": ["T001", "T007", "T008"],
+            "synonyms": ["ticker key"]
+          },
+          {
+            "name": "date_time",
+            "type": "table column",
+            "column name": "sbTxDateTime",
+            "data type": "datetime",
+            "description": "The timestamp that the transaction was made at",
+            "synonyms": ["transaction timestamp", "buy/sell datetime"]
+          },
+          {
+            "name": "transaction_type",
+            "type": "table column",
+            "column name": "sbTxType",
+            "data type": "string",
+            "description": "The type of transaction, which is either 'buy' or 'sell'",
+            "sample values": ["buy", "sell"],
+            "synonyms": ["category", "classification"]
+          },
+          {
+            "name": "shares",
+            "type": "table column",
+            "column name": "sbTxShares",
+            "data type": "numeric",
+            "description": "The number of shares being bought/sold in the transaction",
+            "sample values": [150, 120, 110],
+            "synonyms": ["volume traded", "transaction size"]
+          },
+          {
+            "name": "price",
+            "type": "table column",
+            "column name": "sbTxPrice",
+            "data type": "numeric",
+            "description": "The price that the ticker was bought/sold at in the transaction",
+            "sample values": [180, 200, 220, 150, 130],
+            "synonyms": ["buy price", "sell price", "cost", "per-share value"]
+          },
+          {
+            "name": "amount",
+            "type": "table column",
+            "column name": "sbTxAmount",
+            "data type": "numeric",
+            "description": "The total monetary value of the transaction (cost for buy, revenue for sell), which is the price multiplied by the number of shares",
+            "sample values": [27000, 24000, 24200, 15000, 13000],
+            "synonyms": ["total cost", "total revenue", "transaction value"]
+          },
+          {
+            "name": "currency",
+            "type": "table column",
+            "column name": "sbTxCcy",
+            "data type": "string",
+            "description": "The currency that the transaction was made in, which is always 'USD'",
+            "sample values": ["USD"]
+          },
+          {
+            "name": "tax",
+            "type": "table column",
+            "column name": "sbTxTax",
+            "data type": "numeric",
+            "description": "The tax applied by the brokerage onto the transaction",
+            "sample values": [135, 120, 121, 75, 65],
+            "synonyms": ["levy", "duty", "tariff"]
+          },
+          {
+            "name": "commission",
+            "type": "table column",
+            "column name": "sbTxCommission",
+            "data type": "numeric",
+            "description": "The commission taken by the brokerage for the transaction",
+            "sample values": [20, 15, 10],
+            "synonyms": ["brokerage fee", "transaction fee"]
+          },
+          {
+            "name": "kpx",
+            "type": "table column",
+            "column name": "sbTxKpx",
+            "data type": "string",
+            "description": "The internal code used for the transaction, which corresponds to the transaction id",
+            "sample values": ["KP056", "KP053", "KP011"],
+            "synonyms": []
+          },
+          {
+            "name": "settlement_date_str",
+            "type": "table column",
+            "column name": "sbTxSettlementDateStr",
+            "data type": "string",
+            "description": "The date the transaction was settled, which is a string in the form YYYYMMDD HH:MM:SS, or null if not settled yet",
+            "sample values": ["20230401 09:30:00", "20230401 10:15:00", "20230401 11:00:00"],
+            "synonyms": ["settlement timestamp", "datetime of transaction finalization"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "sbTxStatus",
+            "data type": "string",
+            "description": "The status of the transaction, which is either 'success', 'fail', or 'pending'",
+            "sample values": ["success", "fail", "pending"],
+            "synonyms": ["transaction state"]
+          }
+        ],
+        "description": "All transactions made through the brokerage",
+        "synonyms": ["exchanges", "trades", "buy/sell orders"]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "transactions_made",
+        "type": "simple join",
+        "parent collection": "customers",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "_id": [
+            "customer_id"
+          ]
+        },
+        "description": "All of the transactions made by the customer, including both buys and sells",
+        "synonyms": ["exchanges made", "trades made", "stock purchases and sales"]
+      },
+      {
+        "name": "customer",
+        "type": "reverse",
+        "original parent": "customers",
+        "original property": "transactions_made",
+        "singular": true,
+        "always matches": true,
+        "description": "The customer who made the transaction",
+        "synonyms": ["user", "client", "stock buyer/seller"]
+      },
+      {
+        "name": "transactions_of",
+        "type": "simple join",
+        "parent collection": "tickers",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "_id": [
+            "ticker_id"
+          ]
+        },
+        "description": "The transactions made of a ticker, including both buys and sells of the ticker",
+        "synonyms": ["purchases", "sales", "exchanges", "trades of ticker"]
+      },
+      {
+        "name": "ticker",
+        "type": "reverse",
+        "original parent": "tickers",
+        "original property": "transactions_of",
+        "singular": true,
+        "always matches": true,
+        "description": "The ticker that the transaction was made of",
+        "synonyms": ["stock", "etf", "fund", "company"]
+      },
+      {
+        "name": "ticker",
+        "type": "simple join",
+        "parent collection": "daily_prices",
+        "child collection": "tickers",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ticker_id": [
+            "_id"
+          ]
+        },
+        "description": "The ticker that the daily price record corresponds to",
+        "synonyms": ["stock", "etf", "fund", "company"]
+      },
+      {
+        "name": "daily_prices",
+        "type": "reverse",
+        "original parent": "daily_prices",
+        "original property": "ticker",
+        "singular": false,
+        "always matches": false,
+        "description": "The daily price records for the ticker",
+        "synonyms": ["historical prices", "price updates"]
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
+  },
+  {
+    "name": "Dealership",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "cars",
+        "type": "simple table",
+        "table path": "BROKER.cars",
+        "unique properties": ["_id", "vin_number"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each car",
+            "sample values": [1, 3, 5, 6, 18],
+            "synonyms": ["car key", "car id"]
+          },
+          {
+            "name": "make",
+            "type": "table column",
+            "column name": "make",
+            "data type": "string",
+            "description": "The make of the car, e.g. Ford, Toyota, etc.",
+            "sample values": ["Toyota", "Honda", "Ford", "Tesla", "Nissan"],
+            "synonyms": ["car brand", "car manufacturer"]
+          },
+          {
+            "name": "model",
+            "type": "table column",
+            "column name": "model",
+            "data type": "string",
+            "description": "The model name of the car, e..g Civic, Model 3, A4, RX350, Equinox, etc.",
+            "sample values": ["Camry", "Accord", "Mustang", "Civic", "Altima", "Tiguan"],
+            "synonyms": ["car model", "car type"]
+          },
+          {
+            "name": "year",
+            "type": "table column",
+            "column name": "year",
+            "data type": "numeric",
+            "description": "Year the car was manufactured",
+            "sample values": [2021, 2022, 2023],
+            "synonyms": ["year of production", "manufacturing year"]
+          },
+          {
+            "name": "color",
+            "type": "table column",
+            "column name": "color",
+            "data type": "string",
+            "description": "Color of the car",
+            "sample values": ["Silver", "platinum/grey", "blue", "Titan Silver", "black", "ebony black", "baby blue", "Black", "Jade", "Fiery red"],
+            "synonyms": ["paint color"]
+          },
+          {
+            "name": "vin_number",
+            "type": "table column",
+            "column name": "vin_number",
+            "data type": "string",
+            "description": "Vehicle identification number, a unique code used to identify individual motor vehicles",
+            "sample values": ["1C4HJXDG3NW123456", "1C6SRFFT3NN123456", "3VV2B7AX1NM123456"],
+            "synonyms": ["VIN", "vehicle ID"]
+          },
+          {
+            "name": "engine_type",
+            "type": "table column",
+            "column name": "engine_type",
+            "data type": "string",
+            "description": "Type of engine (e.g., V6, V8, Electric)",
+            "sample values": [
+              "Boxer 4",
+              "Electric",
+              "Flat 6",
+              "Inline 4",
+              "Inline 6",
+              "V6",
+              "V8"
+            ],
+            "synonyms": ["motor", "engine model"]
+          },
+          {
+            "name": "transmission",
+            "type": "table column",
+            "column name": "transmission",
+            "data type": "string",
+            "description": "Type of transmission, which is always either 'Automatic', 'Manual', or 'CVT'",
+            "sample values": ["Automatic", "Manual", "CVT"],
+            "synonyms": ["gearbox", "transmission type"]
+          },
+          {
+            "name": "cost",
+            "type": "table column",
+            "column name": "cost",
+            "data type": "numeric",
+            "description": "Cost of the car",
+            "sample values": [38000.0, 45000.0, 22000.0, 32000.0],
+            "synonyms": ["value"]
+          },
+          {
+            "name": "crtd_ts",
+            "type": "table column",
+            "column name": "crtd_ts",
+            "data type": "datetime",
+            "description": "Timestamp when the car was added to the system",
+            "synonyms": ["created timestamp", "system entry date"]
+          }
+        ],
+        "description": "All cars recorded in the dealership system",
+        "synonyms": ["vehicles", "automobiles"]
+      },
+      {
+        "name": "salespeople",
+        "type": "simple table",
+        "table path": "BROKER.salespersons",
+        "unique properties": ["_id", "email"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each salesperson in the dealership",
+            "sample values": [1, 5, 10, 13],
+            "synonyms": ["salesperson key", "salesperson id", "salesperson number"]
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "first_name",
+            "data type": "string",
+            "description": "The first name of the salesperson",
+            "sample values": ["John", "Jane", "David", "Sarah"]
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "last_name",
+            "data type": "string",
+            "description": "The last name of the salesperson",
+            "sample values": ["Doe", "Smith", "Taylor", "Thomas"],
+            "synonyms": ["surname"]
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "email",
+            "data type": "string",
+            "description": "Work email of the salesperson",
+            "sample values": ["john.doe@autonation.com", "michael.johnson@autonation.com", "jennifer.davis@directauto.com"],
+            "synonyms": ["email address", "work email"]
+          },
+          {
+            "name": "phone",
+            "type": "table column",
+            "column name": "phone",
+            "data type": "string",
+            "description": "Contact phone number of the salesperson, where tte first 3 digits are the area code. Format: (123)-456-7890",
+            "sample values": ["(555)-123-4567", "(444)-333-4444", "(001)-415-5678", "(555)-789-0123"],
+            "synonyms": ["phone number", "contact information"]
+          },
+          {
+            "name": "hire_date",
+            "type": "table column",
+            "column name": "hire_date",
+            "data type": "datetime",
+            "description": "The date the salesperson was hired",
+            "synonyms": ["employment date", "start date"]
+          },
+          {
+            "name": "termination_date",
+            "type": "table column",
+            "column name": "termination_date",
+            "data type": "datetime",
+            "description": "The date the salesperson left the dealership, if applicable (null if still working there)",
+            "synonyms": ["firing date", "exit date", "quitting date", "end date"]
+          },
+          {
+            "name": "crtd_ts",
+            "type": "table column",
+            "column name": "crtd_ts",
+            "data type": "datetime",
+            "description": "Timestamp when the salesperson record was created",
+            "synonyms": ["created timestamp", "system entry date"]
+          }
+        ],
+        "description": "The salespeople working at the dealership, current and former",
+        "synonyms": ["dealership employees", "sales staff", "sales associates"]
+      },
+      {
+        "name": "customers",
+        "type": "simple table",
+        "table path": "BROKER.customers",
+        "unique properties": ["_id", "email"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each customer",
+            "sample values": [1, 5, 9, 12],
+            "synonyms": ["customer key", "customer id"]
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "first_name",
+            "data type": "string",
+            "description": "The first name of the customer",
+            "sample values": ["William", "Ava", "Sophia", "Mia"]
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "last_name",
+            "data type": "string",
+            "description": "The last name of the customer",
+            "sample values": ["Davis", "Miller", "Jackson", "Lee"],
+            "synonyms": ["surname"]
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "email",
+            "data type": "string",
+            "description": "The email address of the customer",
+            "sample values": ["william.davis@example.com", "charlotte.anderson@example.com", "sophia.lee@microsoft.com", "christopher.brown@ai.com", "abigail.harris@company.io"],
+            "synonyms": ["contact email", "email address"]
+          },
+          {
+            "name": "phone",
+            "type": "table column",
+            "column name": "phone",
+            "data type": "string",
+            "description": "The phone number of the customer listed with the dealership",
+            "sample values": ["555-888-9999", "555-666-5555", "555-456-7890", "555-444-3333"],
+            "synonyms": ["contact information", "phone number"]
+          },
+          {
+            "name": "address",
+            "type": "table column",
+            "column name": "address",
+            "data type": "string",
+            "description": "The home address of the customer given to the dealership",
+            "sample values": ["123 Main St", "456 Oak Ave", "987 Birch Dr", "951 Oak Ln"],
+            "synonyms": ["street address", "home address", "street name and street number"]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "city",
+            "data type": "string",
+            "description": "The city of the customer's home address",
+            "sample values": ["New York", "Los Angeles", "Chicago", "Dallas"]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "state",
+            "data type": "string",
+            "description": "The state of the customer's home address, by its capitalized two-letter abbreviation",
+            "sample values": ["NY", "CA", "TX", "IL"]
+          },
+          {
+            "name": "zip_code",
+            "type": "table column",
+            "column name": "zip_code",
+            "data type": "string",
+            "description": "The zip-code of the customer's home address",
+            "sample values": ["10001", "60007", "95101", "94101"],
+            "synonyms": []
+          },
+          {
+            "name": "crtd_ts",
+            "type": "table column",
+            "column name": "crtd_ts",
+            "data type": "datetime",
+            "description": "Timestamp when the customer record was created",
+            "synonyms": ["created timestamp", "system entry date"]
+          }
+        ],
+        "description": "All the customers who are registered with the dealership",
+        "synonyms": ["clients", "users", "buyers", "consumers"]
+      },
+      {
+        "name": "payments_made",
+        "type": "simple table",
+        "table path": "BROKER.payments_made",
+        "unique properties": ["_id", "invoice_number"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each payment made",
+            "sample values": [1, 11, 16, 17],
+            "synonyms": ["payment key", "payment id"]
+          },
+          {
+            "name": "vendor_name",
+            "type": "table column",
+            "column name": "vendor_name",
+            "data type": "string",
+            "description": "Name of the vendor to whom the payment was made",
+            "sample values": ["Chevrolet Auto", "Marketing Agency", "Car Manufacturer Inc"],
+            "synonyms": ["payment recipient", "vendor"]
+          },
+          {
+            "name": "payment_date",
+            "type": "table column",
+            "column name": "payment_date",
+            "data type": "datetime",
+            "description": "Date that the payment was made"
+          },
+          {
+            "name": "payment_amount",
+            "type": "table column",
+            "column name": "payment_amount",
+            "data type": "numeric",
+            "description": "The amount that was paid in the payment in USD",
+            "sample values": [150000.0, 1500.0, 22000.0],
+            "synonyms": ["payment sum", "dollar value"]
+          },
+          {
+            "name": "payment_method",
+            "type": "table column",
+            "column name": "payment_method",
+            "data type": "string",
+            "description": "Method of payment, which is either 'bank_transfer', 'credit_card', 'check', or 'credit_card'",
+            "sample values": ["bank_transfer", "credit_card", "check", "credit_card"],
+            "synonyms": ["transfer medium", "payment type"]
+          },
+          {
+            "name": "invoice_number",
+            "type": "table column",
+            "column name": "invoice_number",
+            "data type": "string",
+            "description": "Invoice number associated with the payment",
+            "sample values": ["INV-001", "INV-017", "INV-008"],
+            "synonyms": ["invoice id", "invoice key", "invoice serial"]
+          },
+          {
+            "name": "invoice_date",
+            "type": "table column",
+            "column name": "invoice_date",
+            "data type": "datetime",
+            "description": "Date of the invoice",
+            "synonyms": ["date of payment"]
+          },
+          {
+            "name": "due_date",
+            "type": "table column",
+            "column name": "due_date",
+            "data type": "datetime",
+            "description": "Due date of the invoice",
+            "synonyms": ["deadline", "expected payment date"]
+          },
+          {
+            "name": "crtd_ts",
+            "type": "table column",
+            "column name": "crtd_ts",
+            "data type": "datetime",
+            "description": "Timestamp when the payment made record was created",
+            "synonyms": ["system entry date", "created timestamp"]
+          }
+        ],
+        "description": "Records of payments made by the dealership to vendors",
+        "synonyms": ["vendor payments", "vendor transactions", "vendor expenditures"]
+      },
+      {
+        "name": "payments_received",
+        "type": "simple table",
+        "table path": "BROKER.payments_received",
+        "unique properties": ["_id"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each payment received record",
+            "sample values": [1, 2, 10, 19, 23],
+            "synonyms": ["payment key", "payment id"]
+          },
+          {
+            "name": "sale_id",
+            "type": "table column",
+            "column name": "sale_id",
+            "data type": "numeric",
+            "description": "The id of the sale that the payment is associated with",
+            "sample values": [1, 5, 9, 20, 21],
+            "synonyms": ["sale key", "sale id"]
+          },
+          {
+            "name": "payment_date",
+            "type": "table column",
+            "column name": "payment_date",
+            "data type": "datetime",
+            "description": "Date when the payment was received. Can take place after the sale date, or in installments.",
+            "synonyms": ["transaction date", "installment date"]
+          },
+          {
+            "name": "payment_amount",
+            "type": "table column",
+            "column name": "payment_amount",
+            "data type": "numeric",
+            "description": "Amount of the payment received. Can be less than the sale price if the payment is made in installments.",
+            "sample values": [115000.0, 5000.0, 44000.0, 26000.0],
+            "synonyms": ["cash received", "payment sum"]
+          },
+          {
+            "name": "payment_method",
+            "type": "table column",
+            "column name": "payment_method",
+            "data type": "string",
+            "description": "Method used to make the payment, which can be 'check', 'financing', 'credit_card', 'debit_card', or 'cash'",
+            "sample values": ["check", "financing", "credit_card", "debit_card", "cash"],
+            "synonyms": ["transfer method", "payment type"]
+          },
+          {
+            "name": "crtd_ts",
+            "type": "table column",
+            "column name": "crtd_ts",
+            "data type": "datetime",
+            "description": "Timestamp when the payment received record was created",
+            "synonyms": ["system entry date", "created timestamp"]
+          }
+        ],
+        "description": "Records of payments received by the dealership from customers as part of a sale",
+        "synonyms": ["car purchase payments", "customer payments", "customer transactions", "car purchase installments"]
+      },
+      {
+        "name": "sales",
+        "type": "simple table",
+        "table path": "BROKER.sales",
+        "unique properties": ["_id"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each car sale",
+            "sample values": [5, 11, 12, 18, 22],
+            "synonyms": ["sale key", "sale id"]
+          },
+          {
+            "name": "car_id",
+            "type": "table column",
+            "column name": "car_id",
+            "data type": "numeric",
+            "description": "The id of the car being purchased in the sale",
+            "sample values": [1, 3, 5, 6, 18],
+            "synonyms": ["car key", "car id"]
+          },
+          {
+            "name": "salesperson_id",
+            "type": "table column",
+            "column name": "salesperson_id",
+            "data type": "numeric",
+            "description": "The id of the salesperson who brokered the sale",
+            "sample values": [1, 5, 10, 13],
+            "synonyms": ["salesperson key", "salesperson id"]
+          },
+          {
+            "name": "customer_id",
+            "type": "table column",
+            "column name": "customer_id",
+            "data type": "numeric",
+            "description": "The id of the customer who purchased the car in the sale",
+            "sample values": [1, 5, 9, 12],
+            "synonyms": ["customer key", "customer id"]
+          },
+          {
+            "name": "sale_price",
+            "type": "table column",
+            "column name": "sale_price",
+            "data type": "numeric",
+            "description": "Price at which the car was sold",
+            "sample values": [43500.0, 30500.0, 38000.0, 49000.0, 26500.0],
+            "synonyms": ["purchase cost", "sale amount", "dollar value"]
+          },
+          {
+            "name": "sale_date",
+            "type": "table column",
+            "column name": "sale_date",
+            "data type": "datetime",
+            "description": "Date when the car was sold",
+            "synonyms": ["purchase date", "transaction date"]
+          },
+          {
+            "name": "crtd_ts",
+            "type": "table column",
+            "column name": "crtd_ts",
+            "data type": "datetime",
+            "description": "Timestamp when the sale record was created",
+            "synonyms": ["system entry date", "created timestamp"]
+          }
+        ],
+        "description": "Records of cars being purchased from the dealership from a customer via one of the salespeople",
+        "synonyms": ["car purchases", "sale records", "vehicle sale transactions"]
+      },
+      {
+        "name": "inventory_snapshots",
+        "type": "simple table",
+        "table path": "BROKER.inventory_snapshots",
+        "unique properties": ["_id"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each inventory snapshot entry",
+            "sample values": [1, 4, 13, 19, 23],
+            "synonyms": ["inventory snapshot key", "snapshot id"]
+          },
+          {
+            "name": "snapshot_date",
+            "type": "table column",
+            "column name": "snapshot_date",
+            "data type": "datetime",
+            "description": "Date of the inventory snapshot",
+            "synonyms": ["date of snapshot", "inventory date"]
+          },
+          {
+            "name": "car_id",
+            "type": "table column",
+            "column name": "car_id",
+            "data type": "numeric",
+            "description": "The key of the car that the inventory snapshot is for",
+            "sample values": [2, 10, 1, 4, 9],
+            "synonyms": ["car key", "car id"]
+          },
+          {
+            "name": "is_in_inventory",
+            "type": "table column",
+            "column name": "is_in_inventory",
+            "data type": "bool",
+            "description": "Whether that specific car was in the dealership's inventory at the time of the snapshot",
+            "synonyms": ["car in inventory", "car availability"]
+          },
+          {
+            "name": "crtd_ts",
+            "type": "table column",
+            "column name": "crtd_ts",
+            "data type": "datetime",
+            "description": "Timestamp when the inventory snapshot record was created",
+            "synonyms": ["system entry date", "created timestamp"]
+          }
+        ],
+        "description": "Records of whether specific individual cars were in the dealership's inventory as of specific dates",
+        "synonyms": ["inventory records", "stock records", "car availability manifest"]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "sale_records",
+        "type": "simple join",
+        "parent collection": "cars",
+        "child collection": "sales",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "_id": [
+            "car_id"
+          ]
+        },
+        "description": "All sales made where the car was sold",
+        "synonyms": ["purchases of vehicle", "car sales", "vehicle transactions"]
+      },
+      {
+        "name": "car",
+        "type": "reverse",
+        "original parent": "cars",
+        "original property": "sale_records",
+        "singular": true,
+        "always matches": true,
+        "description": "The car being purchased in the sale",
+        "synonyms": ["vehicle", "automobile"]
+      },
+      {
+        "name": "inventory_snapshots",
+        "type": "simple join",
+        "parent collection": "cars",
+        "child collection": "inventory_snapshots",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "_id": [
+            "car_id"
+          ]
+        },
+        "description": "The inventory snapshots for the car, which show whether it was in the dealership's inventory at specific dates",
+        "synonyms": ["availability records", "inventory history"]
+      },
+      {
+        "name": "car",
+        "type": "reverse",
+        "original parent": "cars",
+        "original property": "inventory_snapshots",
+        "singular": true,
+        "always matches": true,
+        "description": "The car that the inventory snapshot belongs to",
+        "synonyms": ["vehicle", "automobile"]
+      },
+      {
+        "name": "sales_made",
+        "type": "simple join",
+        "parent collection": "salespeople",
+        "child collection": "sales",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "_id": [
+            "salesperson_id"
+          ]
+        },
+        "description": "All the sales brokered by the salesperson",
+        "synonyms": ["sales records", "transactions made", "deals closed"]
+      },
+      {
+        "name": "salesperson",
+        "type": "reverse",
+        "original parent": "salespeople",
+        "original property": "sales_made",
+        "singular": true,
+        "always matches": true,
+        "description": "The salesperson who brokered the car purchase deal",
+        "synonyms": ["broker", "sales associate", "sales staff", "dealer"]
+      },
+      {
+        "name": "car_purchases",
+        "type": "simple join",
+        "parent collection": "customers",
+        "child collection": "sales",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "_id": [
+            "customer_id"
+          ]
+        },
+        "description": "All car purchases made by the customer",
+        "synonyms": ["vehicle purchase records", "car transactions", "automobile purchases"]
+      },
+      {
+        "name": "customer",
+        "type": "reverse",
+        "original parent": "customers",
+        "original property": "car_purchases",
+        "singular": true,
+        "always matches": true,
+        "description": "The customer who purchased the car",
+        "synonyms": ["client", "buyer", "purchaser", "consumer", "user"]
+      },
+      {
+        "name": "payment",
+        "type": "simple join",
+        "parent collection": "sales",
+        "child collection": "payments_received",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "_id": [
+            "sale_id"
+          ]
+        },
+        "description": "The payment installments made for the sale, which can be one or multiple installments for a single sale",
+        "synonyms": ["sale purchase installments", "payment records"]
+      },
+      {
+        "name": "sale_record",
+        "type": "reverse",
+        "original parent": "sales",
+        "original property": "payment",
+        "singular": true,
+        "always matches": true,
+        "description": "The sale that the payment is a part of",
+        "synonyms": ["purchase record", "vehicle sale", "car purchase"]
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
+  },
+  {
+    "name": "DermTreatment",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "doctors",
+        "type": "simple table",
+        "table path": "BROKER.doctors",
+        "unique properties": ["doc_id"],
+        "properties": [
+          {
+            "name": "doc_id",
+            "type": "table column",
+            "column name": "doc_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each doctor in the system",
+            "sample values": [1, 2, 4, 8, 10],
+            "synonyms": ["doctor key", "doctor id"]
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "first_name",
+            "data type": "string",
+            "description": "The first name of the doctor",
+            "sample values": ["John", "Michael", "Daniel", "Olivia"]
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "last_name",
+            "data type": "string",
+            "description": "The last name of the doctor",
+            "sample values": ["Smith", "Brown", "Wilson", "Garcia"],
+            "synonyms": ["surname"]
+          },
+          {
+            "name": "specialty",
+            "type": "table column",
+            "column name": "specialty",
+            "data type": "string",
+            "description": "The specialty of the doctor, which can be one of the following: dermatology, immunology, general, or oncology",
+            "sample values": ["dermatology", "immunology", "general", "oncology"],
+            "synonyms": ["focus", "area", "specialization", "expertise", "type of doctor"]
+          },
+          {
+            "name": "year_reg",
+            "type": "table column",
+            "column name": "year_reg",
+            "data type": "numeric",
+            "description": "Year the doctor was registered and obtained license",
+            "sample values": [1998, 2006, 2012, 2015, 2018],
+            "synonyms": ["registration year", "year received license"]
+          },
+          {
+            "name": "med_school_name",
+            "type": "table column",
+            "column name": "med_school_name",
+            "data type": "string",
+            "description": "The name of the medical school where the doctor graduated",
+            "sample values": ["University of Pennsylvania", "Johns Hopkins University", "Columbia University"],
+            "synonyms": ["alma matter", "medical school", "graduated from"]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "loc_city",
+            "data type": "string",
+            "description": "The city where the doctor is located",
+            "sample values": ["San Francisco", "Durham", "Ann Arbour", "New York"],
+            "synonyms": ["city of practice", "city of work", "location city", "city of residence"]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "loc_state",
+            "data type": "string",
+            "description": "The state where the doctor is located, by its capitalized two-letter abbreviation",
+            "sample values": ["CA", "NC", "NY", "MI"],
+            "synonyms": ["state of practice", "state of work", "location state", "state of residence"]
+          },
+          {
+            "name": "zip_code",
+            "type": "table column",
+            "column name": "loc_zip",
+            "data type": "string",
+            "description": "The zip code where the doctor is located",
+            "sample values": ["21201", "02115", "94304", "10027"],
+            "synonyms": ["zip code of practice", "zip code of work", "location zip code", "zip code of residence"]
+          },
+          {
+            "name": "board_certification_number",
+            "type": "table column",
+            "column name": "bd_cert_num",
+            "data type": "string",
+            "description": "The board certification number of the doctor",
+            "sample values": ["YZA890", "ABC123", "GHI012", "JKL345"],
+            "synonyms": ["board certification number", "certification number"]
+          }
+        ],
+        "description": "All the doctors registered in the system",
+        "synonyms": ["practitioners", "physicians", "medical professionals"]
+      },
+      {
+        "name": "patients",
+        "type": "simple table",
+        "table path": "BROKER.patients",
+        "unique properties": ["patient_id", "email", "phone"],
+        "properties": [
+          {
+            "name": "patient_id",
+            "type": "table column",
+            "column name": "patient_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each patient in the system",
+            "sample values": [1, 3, 5, 7, 9],
+            "synonyms": ["patient key", "patient id"]
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "first_name",
+            "data type": "string",
+            "description": "The first name of the patient",
+            "sample values": ["Alice", "Bob", "Carol", "David", "Eve"]
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "last_name",
+            "data type": "string",
+            "description": "The last name of the patient",
+            "sample values": ["Smith", "Richter", "Martinez", "Taylor"],
+            "synonyms": ["surname"]
+          },
+          {
+            "name": "date_of_birth",
+            "type": "table column",
+            "column name": "date_of_birth",
+            "data type": "datetime",
+            "description": "The date the patient was born",
+            "synonyms": ["birthday"]
+          },
+          {
+            "name": "date_of_registration",
+            "type": "table column",
+            "column name": "date_of_registration",
+            "data type": "datetime",
+            "description": "The date the patient was registered in the system",
+            "synonyms": ["registration date", "system entry date"]
+          },
+          {
+            "name": "gender",
+            "type": "table column",
+            "column name": "gender",
+            "data type": "string",
+            "description": "The gender of the patient, which can either 'Male', 'Female', or 'Others'",
+            "sample values": ["Male", "Female", "Others"],
+            "synonyms": ["sex"]
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "email",
+            "data type": "string",
+            "description": "The email of the patient used for contact information",
+            "sample values": ["alice@email.com", "eve@email.com", "frank@email.com", "john@qwik.com'"],
+            "synonyms": ["email address", "contact email"]
+          },
+          {
+            "name": "phone",
+            "type": "table column",
+            "column name": "phone",
+            "data type": "string",
+            "description": "The phone number of the patient used for contact information",
+            "sample values": ["555-123-4567", "555-987-6543", "555-123-4567"],
+            "synonyms": ["contact phone", "phone number"]
+          },
+          {
+            "name": "street_address",
+            "type": "table column",
+            "column name": "addr_city",
+            "data type": "string",
+            "description": "The street address of the patient's home, including street name and number",
+            "sample values": ["987 Birch Dr", "753 Walnut Ave", "951 Spruce Blvd"],
+            "synonyms": ["street name and number", "home address"]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "addr_city",
+            "data type": "string",
+            "description": "The city of the patient's address",
+            "sample values": ["Anytown", "Somecity", "Somewhere", "Somewhere"],
+            "synonyms": ["home city", "town", "city of residence"]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "addr_state",
+            "data type": "string",
+            "description": "The state of the patient's address, by its capitalized two-letter abbreviation",
+            "sample values": ["CA", "TX", "FL", "OH"],
+            "synonyms": ["home state", "state of residence"]
+          },
+          {
+            "name": "zip_code",
+            "type": "table column",
+            "column name": "addr_zip",
+            "data type": "string",
+            "description": "The zip code of the patient's address",
+            "sample values": ["12345", "54321", "86420"],
+            "synonyms": ["home zip code", "postal code", "zip code of residence"]
+          },
+          {
+            "name": "insurance_type",
+            "type": "table column",
+            "column name": "ins_type",
+            "data type": "string",
+            "description": "The type of insurance the patient has, which can be one of the following: private, medicare, medicaid, or uninsured",
+            "sample values": ["private", "medicare", "medicaid", "uninsured"],
+            "synonyms": []
+          },
+          {
+            "name": "insurance_policy_number",
+            "type": "table column",
+            "column name": "ins_policy_num",
+            "data type": "string",
+            "description": "The policy number of the patient's insurance (null if uninsured)",
+            "sample values": ["ABC123456", "XYZ789012", "JKL567890", "PQR135790"],
+            "synonyms": ["policy number"]
+          },
+          {
+            "name": "height",
+            "type": "table column",
+            "column name": "height_cm",
+            "data type": "numeric",
+            "description": "The height of the patient in centimeters",
+            "sample values": [165, 180, 160, 178],
+            "synonyms": ["centimeter height"]
+          },
+          {
+            "name": "weight",
+            "type": "table column",
+            "column name": "weight_kg",
+            "data type": "numeric",
+            "description": "The weight of the patient in kilograms",
+            "sample values": [60, 78, 90, 60],
+            "synonyms": ["kilogram weight"]
+          }
+        ],
+        "description": "The personal & registration information about every patient registered in the system",
+        "synonyms": ["patient records", "patient information", "patient data", "clients", "trial subjects", "participants"]
+      },
+      {
+        "name": "drugs",
+        "type": "simple table",
+        "table path": "BROKER.drugs",
+        "unique properties": ["drug_id", "national_drug_code"],
+        "properties": [
+          {
+            "name": "drug_id",
+            "type": "table column",
+            "column name": "drug_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each drug in the system",
+            "sample values": [1, 2, 4, 8],
+            "synonyms": ["drug key", "drug id"]
+          },
+          {
+            "name": "drug_name",
+            "type": "table column",
+            "column name": "drug_name",
+            "data type": "string",
+            "description": "The brand name of the drug",
+            "sample values": ["Drugalin", "Topizol", "Biologic-X", "Topicalin"],
+            "synonyms": ["brand name", "pharmaceutical name", "medication name"]
+          },
+          {
+            "name": "manufacturer",
+            "type": "table column",
+            "column name": "manufacturer",
+            "data type": "string",
+            "description": "The name of the company who produces the drug",
+            "sample values": ["Pharma Inc", "Acme Pharma", "Derma Rx", "BioMed Ltd"],
+            "synonyms": ["producer", "drug manufacturer", "pharmaceutical company", "drug company"]
+          },
+          {
+            "name": "drug_type",
+            "type": "table column",
+            "column name": "drug_type",
+            "data type": "string",
+            "description": "The category of drug, which can be one of the following: 'biologic', 'small molecule', or 'topical'",
+            "sample values": ["biologic", "small molecule", "topical"],
+            "synonyms": ["category", "classification", "type of drug"]
+          },
+          {
+            "name": "mechanism_of_activation",
+            "type": "table column",
+            "column name": "moa",
+            "data type": "string",
+            "description": "The mechanism of activation of the drug",
+            "sample values": ["TNF-alpha inhibitor", "PDE4 inhibitor", "IL-12/23 inhibitor"],
+            "synonyms": ["moa"]
+          },
+          {
+            "name": "fda_approval_date",
+            "type": "table column",
+            "column name": "fda_appr_dt",
+            "data type": "datetime",
+            "description": "The date the drug was approved by the FDA (null if not approved because it is still under trial)",
+            "synonyms": ["approval date"]
+          },
+          {
+            "name": "administration_route",
+            "type": "table column",
+            "column name": "admin_route",
+            "data type": "string",
+            "description": "The means used to administer the drug, which can be one of the following: 'oral', 'injection' or 'topical'",
+            "sample values": ["oral", "injection", "topical"],
+            "synonyms": ["method of procedure", "administration method", "delivery means"]
+          },
+          {
+            "name": "recommended_dosage_amount",
+            "type": "table column",
+            "column name": "dos_amt",
+            "data type": "numeric",
+            "description": "The recommended amount of the drug to be taken per dose, where the unit is specified in the dosage_units property",
+            "sample values": [40, 30, 15, 5],
+            "synonyms": ["dose size", "quantity per dose", "amount taken per administration"]
+          },
+          {
+            "name": "dosage_units",
+            "type": "table column",
+            "column name": "dos_unit",
+            "data type": "string",
+            "description": "The unit used by recommended_dosage_amount, which is either `mg` (for milligrams) or `g` (for grams)",
+            "sample values": ["mg", "g"],
+            "synonyms": ["units of measurement", "dosage unit", "dose quantity scale factor"]
+          },
+          {
+            "name": "dose_frequency_hours",
+            "type": "table column",
+            "column name": "dos_freq_hrs",
+            "data type": "numeric",
+            "description": "The recommended number of hours between dosages",
+            "sample values": [336, 24, 12, 672],
+            "synonyms": ["gap between doses", "administration hour intervals", "time between doses"]
+          },
+          {
+            "name": "national_drug_code",
+            "type": "table column",
+            "column name": "ndc",
+            "data type": "string",
+            "description": "The national drug code of the drug, which is a unique identifier assigned to each drug by the FDA",
+            "sample values": ["12345-678-90", "13579-246-80", "95146-753-19"],
+            "synonyms": []
+          }
+        ],
+        "description": "The drugs listed in the system, which are used for treatment of patients",
+        "synonyms": ["medications", "pharmaceuticals"]
+      },
+      {
+        "name": "diagnoses",
+        "type": "simple table",
+        "table path": "BROKER.diagnoses",
+        "unique properties": ["_id", "code", "name"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "diagnosis_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each diagnosis in the system",
+            "sample values": [1, 3, 5, 7, 9],
+            "synonyms": ["diagnosis key", "diagnosis id"]
+          },
+          {
+            "name": "code",
+            "type": "table column",
+            "column name": "diag_code",
+            "data type": "string",
+            "description": "The code of the diagnosis, which is a unique identifier assigned to each diagnosis by the ICD-10 system",
+            "sample values": ["L40.0", "L40.59", "F40.8", "L40.50"],
+            "synonyms": ["diagnosis code", "ICD-10 code"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "diag_name",
+            "data type": "string",
+            "description": "Name of the diagnosis, in medical terms",
+            "sample values": ["Psoriasis vulgaris", "Generalized pustular psoriasis", "Psoriasis, unspecified", "Other psoriatic arthropathy", "Psoriatic arthritis mutilans"],
+            "synonyms": ["title"]
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "diag_desc",
+            "data type": "string",
+            "description": "An elaboration of the diagnosis, in more layman's terms and/or with some symptoms included",
+            "sample values": ["Plaque psoriasis, the most common form", "Psoriasis not further specified", "Includes flexural, erythrodermic, and other rare types", "Small, teardrop-shaped lesions", "Widespread pustules on top of red skin"],
+            "synonyms": ["details", "symptoms", "explanation"]
+          }
+        ],
+        "description": "Records of each diagnosis in the system, which are identified when treating patients",
+        "synonyms": ["medical conditions", "diagnostic codes"]
+      },
+      {
+        "name": "treatments",
+        "type": "simple table",
+        "table path": "BROKER.treatments",
+        "unique properties": ["treatment_id"],
+        "properties": [
+          {
+            "name": "treatment_id",
+            "type": "table column",
+            "column name": "treatment_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each treatment record in the system",
+            "sample values": [1, 4, 7, 16, 26],
+            "synonyms": ["treatment id", "treatment key"]
+          },
+          {
+            "name": "patient_id",
+            "type": "table column",
+            "column name": "patient_id",
+            "data type": "numeric",
+            "description": "The id of the patient who is receiving the treatment",
+            "sample values": [1, 3, 5, 7, 9],
+            "synonyms": ["patient key", "patient id"]
+          },
+          {
+            "name": "doc_id",
+            "type": "table column",
+            "column name": "doc_id",
+            "data type": "numeric",
+            "description": "The id of the doctor who is administering the treatment",
+            "sample values": [1, 2, 4, 8],
+            "synonyms": ["doctor key", "doctor id"]
+          },
+          {
+            "name": "drug_id",
+            "type": "table column",
+            "column name": "drug_id",
+            "data type": "numeric",
+            "description": "The id of the drug being used in the treatment",
+            "sample values": [1, 2, 3, 5],
+            "synonyms": ["drug key", "drug id"]
+          },
+          {
+            "name": "diagnosis_id",
+            "type": "table column",
+            "column name": "diagnosis_id",
+            "data type": "numeric",
+            "description": "The id of the diagnosis the patient is being treated for",
+            "sample values": [2, 4, 5, 6, 8],
+            "synonyms": ["diagnosis key", "diagnosis id"]
+          },
+          {
+            "name": "start_date",
+            "type": "table column",
+            "column name": "start_dt",
+            "data type": "datetime",
+            "description": "The date the treatment began",
+            "synonyms": ["treatment start date", "treatment initiation date"]
+          },
+          {
+            "name": "end_date",
+            "type": "table column",
+            "column name": "end_dt",
+            "data type": "datetime",
+            "description": "The date the treatment ended (null if ongoing)",
+            "synonyms": ["treatment end date", "treatment completion date"]
+          },
+          {
+            "name": "is_placebo",
+            "type": "table column",
+            "column name": "is_placebo",
+            "data type": "bool",
+            "description": "True if the treatment is a placebo, false otherwise",
+            "synonyms": ["placebo treatment", "dummy treatment"]
+          },
+          {
+            "name": "total_drug_amount",
+            "type": "table column",
+            "column name": "tot_drug_amt",
+            "data type": "numeric",
+            "description": "The total quantity of the drug used in the treatment, where the unit is specified in the drug_unit property",
+            "sample values": [240, 180, 720, 360],
+            "synonyms": ["amount of drug used", "total drug quantity", "total dosage"]
+          },
+          {
+            "name": "drug_unit",
+            "type": "table column",
+            "column name": "drug_unit",
+            "data type": "string",
+            "description": "The unit used by total_drug_amount, which is either `mg` (for milligrams) or `g` (for grams)",
+            "sample values": ["mg", "g"],
+            "synonyms": ["dosage unit", "unit of measurement", "drug quantity scale factor"]
+          }
+        ],
+        "description": "The records of each treatment administered to patients in the system, which can be either a drug or a placebo",
+        "synonyms": ["treatment records", "medical treatments", "therapies"]
+      },
+      {
+        "name": "outcomes",
+        "type": "simple table",
+        "table path": "BROKER.outcomes",
+        "unique properties": ["outcome_id"],
+        "properties": [
+          {
+            "name": "outcome_id",
+            "type": "table column",
+            "column name": "outcome_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each treatment outcome in the system",
+            "sample values": [1, 5, 16, 20, 21],
+            "synonyms": ["outcome key", "outcome id"]
+          },
+          {
+            "name": "treatment_id",
+            "type": "table column",
+            "column name": "treatment_id",
+            "data type": "numeric",
+            "description": "The id for the treatment that the outcome is related to",
+            "sample values": [3, 5, 9, 25, 26],
+            "synonyms": ["treatment key", "treatment id"]
+          },
+          {
+            "name": "assessment_date",
+            "type": "table column",
+            "column name": "assess_dt",
+            "data type": "datetime",
+            "description": "The date when the outcome assessment was made",
+            "synonyms": ["date of assessment", "evaluation date"]
+          },
+          {
+            "name": "day7_lesion_count",
+            "type": "table column",
+            "column name": "day7_lesion_cnt",
+            "data type": "numeric",
+            "description": "The number of lesions counted on the patient's skin at day 7 after treatment started",
+            "sample values": [20, 25, 18, 30, 22],
+            "synonyms": ["lesions observed on day 7"]
+          },
+          {
+            "name": "day30_lesion_count",
+            "type": "table column",
+            "column name": "day30_lesion_cnt",
+            "data type": "numeric",
+            "description": "The number of lesions counted on the patient's skin at day 30 after treatment started (null if not enough time has passed)",
+            "sample values": [15, 18, 12, 25, 16],
+            "synonyms": ["lesions observed on day 30"]
+          },
+          {
+            "name": "day100_lesion_count",
+            "type": "table column",
+            "column name": "day100_lesion_cnt",
+            "data type": "numeric",
+            "description": "The number of lesions counted on the patient's skin at day 100 after treatment started (null if not enough time has passed)",
+            "sample values": [5, 8, 3, 12, 6],
+            "synonyms": ["lesions observed on day 100"]
+          },
+          {
+            "name": "day7_pasi_score",
+            "type": "table column",
+            "column name": "day7_pasi_score",
+            "data type": "numeric",
+            "description": "The PASI score calculated at day 7 after treatment started, (Psoriasis Area and Severity Index) which is a measure of the severity of psoriasis from 0 to 72",
+            "sample values": [12.5, 15.0, 10.8, 18.2, 13.1],
+            "synonyms": ["PASI on day 7"]
+          },
+          {
+            "name": "day30_pasi_score",
+            "type": "table column",
+            "column name": "day30_pasi_score",
+            "data type": "numeric",
+            "description": "The PASI score calculated at day 30 after treatment started, (Psoriasis Area and Severity Index) which is a measure of the severity of psoriasis from 0 to 72 (null if not enough time has passed)",
+            "sample values": [8.2, 10.1, 6.4, 18.2, 13.1],
+            "synonyms": ["PASI on day 30"]
+          },
+          {
+            "name": "day100_pasi_score",
+            "type": "table column",
+            "column name": "day100_pasi_score",
+            "data type": "numeric",
+            "description": "The PASI score calculated at day 100 after treatment started, (Psoriasis Area and Severity Index) which is a measure of the severity of psoriasis from 0 to 72 (null if not enough time has passed)",
+            "sample values": [2.1, 3.5, 1.2, 5.8, 2.6],
+            "synonyms": ["PASI on day 100"]
+          },
+          {
+            "name": "day7_tewl",
+            "type": "table column",
+            "column name": "day7_tewl",
+            "data type": "numeric",
+            "description": "TEWL score (Transepidermal Water Loss) calculated at day 7 after treatment started, which is a measure of skin hydration",
+            "sample values": [18.2, 20.1, 16.5, 22.4],
+            "synonyms": ["TEWL on day 7"]
+          },
+          {
+            "name": "day30_tewl",
+            "type": "table column",
+            "column name": "day30_tewl",
+            "data type": "numeric",
+            "description": "TEWL score (Transepidermal Water Loss) calculated at day 30 after treatment started, which is a measure of skin hydration, in n g/m^2/h (null if not enough time has passed)",
+            "sample values": [15.6, 17.2, 14.0, 19.1],
+            "synonyms": ["TEWL on day 30"]
+          },
+          {
+            "name": "day100_tewl",
+            "type": "table column",
+            "column name": "day100_tewl",
+            "data type": "numeric",
+            "description": "TEWL score (Transepidermal Water Loss) calculated at day 100 after treatment started, which is a measure of skin hydration, in n g/m^2/h (null if not enough time has passed)",
+            "sample values": [12.1, 13.5, 10.8, 15.2],
+            "synonyms": ["TEWL on day 100"]
+          },
+          {
+            "name": "day7_itch_vas",
+            "type": "table column",
+            "column name": "day7_itch_vas",
+            "data type": "numeric",
+            "description": "The itch visual analog scale (VAS) score at day 7 after treatment started, which is a measure of itch severity from 0 to 100",
+            "sample values": [60, 70, 55, 80, 65],
+            "synonyms": ["VAS on day 7"]
+          },
+          {
+            "name": "day30_itch_vas",
+            "type": "table column",
+            "column name": "day30_itch_vas",
+            "data type": "numeric",
+            "description": "The itch visual analog scale (VAS) score at day 30 after treatment started, which is a measure of itch severity from 0 to 100 (null if not enough time has passed)",
+            "sample values": [40, 50, 35, 60, 45],
+            "synonyms": ["VAS on day 30"]
+          },
+          {
+            "name": "day100_itch_vas",
+            "type": "table column",
+            "column name": "day100_itch_vas",
+            "data type": "numeric",
+            "description": "The itch visual analog scale (VAS) score at day 100 after treatment started, which is a measure of itch severity from 0 to 100 (null if not enough time has passed)",
+            "sample values": [20, 30, 15, 40, 25],
+            "synonyms": ["VAS on day 100"]
+          },
+          {
+            "name": "day7_hfg",
+            "type": "table column",
+            "column name": "day7_hfg",
+            "data type": "numeric",
+            "description": "Hair growth factor (HGF) score at day 7 after treatment started, on a scale from 0 to 5",
+            "sample values": [1.5, 1.0, 2.0, 0.5, 1.2],
+            "synonyms": ["HFG on day 7"]
+          },
+          {
+            "name": "day30_hfg",
+            "type": "table column",
+            "column name": "day30_hfg",
+            "data type": "numeric",
+            "description": "Hair growth factor (HGF) score at day 30 after treatment started, on a scale from 0 to 5 (null if not enough time has passed)",
+            "sample values": [2.5, 2.0, 3.0, 1.5, 2.2],
+            "synonyms": ["HFG on day 30"]
+          },
+          {
+            "name": "day100_hfg",
+            "type": "table column",
+            "column name": "day100_hfg",
+            "data type": "numeric",
+            "description": "Hair growth factor (HGF) score at day 100 after treatment started, on a scale from 0 to 5 (null if not enough time has passed)",
+            "sample values": [4.0, 3.5, 4.5, 3.0, 3.8],
+            "synonyms": ["HFG on day 100"]
+          }
+        ],
+        "description": "The recorded outcomes of treatments, which can include the same treatment at different points in time if not enough time has elapsed to record the complete outcome for a treatment",
+        "synonyms": ["results", "treatment evaluations", "assessments"]
+      },
+      {
+        "name": "concomitant_meds",
+        "type": "simple table",
+        "table path": "BROKER.concomitant_meds",
+        "unique properties": ["_id", ["treatment_id", "medicine_name"]],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each concomitant medication record in the system",
+            "sample values": [1, 5, 12, 14, 15],
+            "synonyms": ["concomitant drug key", "concomitant drug id"]
+          },
+          {
+            "name": "treatment_id",
+            "type": "table column",
+            "column name": "treatment_id",
+            "data type": "numeric",
+            "description": "The id of the treatment that the concomitant medication record is related to",
+            "sample values": [1, 4, 8, 11, 13, 14],
+            "synonyms": []
+          },
+          {
+            "name": "medicine_name",
+            "type": "table column",
+            "column name": "med_name",
+            "data type": "string",
+            "description": "The name of the medicine being taken by the patient as a concomitant drug",
+            "sample values": ["Acetaminophen", "Ibuprofen", "Loratadine", "Multivitamin", "Calcium supplement", "Vitamin D", "Hydrocortisone cream"],
+            "synonyms": ["concomitant drug name"]
+          },
+          {
+            "name": "start_date",
+            "type": "table column",
+            "column name": "start_dt",
+            "data type": "string",
+            "description": "Date the concomitant drug treatment was started",
+            "synonyms": ["concomitant drug start date", "first date"]
+          },
+          {
+            "name": "end_date",
+            "type": "table column",
+            "column name": "end_dt",
+            "data type": "string",
+            "description": "Date the concomitant drug treatment finished (null if ongoing)",
+            "synonyms": ["last date", "concomitant drug end date"]
+          },
+          {
+            "name": "dose_amount",
+            "type": "table column",
+            "column name": "dose_amt",
+            "data type": "numeric",
+            "description": "The amount of the medicine taken per dose, where the unit is specified in the dose_unit property",
+            "sample values": [500, 200, 10, 1, 50],
+            "synonyms": ["amount of dose", "quantity per dose", "dose size"]
+          },
+          {
+            "name": "dose_unit",
+            "type": "table column",
+            "column name": "dose_unit",
+            "data type": "string",
+            "description": "The unit used by dose_amount",
+            "sample values": ["mg", "g", "tablet", "IU"],
+            "synonyms": []
+          },
+          {
+            "name": "dose_frequency",
+            "type": "table column",
+            "column name": "freq_hrs",
+            "data type": "numeric",
+            "description": "The frequency of the dose in hours (null if one-time use)",
+            "sample values": [6, 24, 8, 12],
+            "synonyms": ["gap between doses", "administration hour intervals", "time between doses"]
+          }
+        ],
+        "description": "Records of medications that are taken by patients in addition to the treatment they are receiving during their treatment",
+        "synonyms": ["additional drugs", "ancillary medications", "concomitant drugs", "accompanying medications", "concurrent drugs"]
+      },
+      {
+        "name": "adverse_events",
+        "type": "simple table",
+        "table path": "BROKER.adverse_events",
+        "unique properties": ["_id"],
+        "properties": [
+          {
+            "name": "_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each adverse event record in the system",
+            "sample values": [1, 3, 5, 7, 8],
+            "synonyms": ["adverse event key", "adverse event id"]
+          },
+          {
+            "name": "treatment_id",
+            "type": "table column",
+            "column name": "treatment_id",
+            "data type": "numeric",
+            "description": "The id for the treatment that the adverse event occurred during",
+            "sample values": [2, 5, 9, 11, 14],
+            "synonyms": ["treatment key", "treatment id"]
+          },
+          {
+            "name": "reported_date",
+            "type": "table column",
+            "column name": "reported_dt",
+            "data type": "datetime",
+            "description": "The date the adverse event was reported",
+            "synonyms": ["incident date", "date of reaction"]
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "Descriptor of the adverse event, which can be a single word or a phrase",
+            "sample values": ["Mild injection site  reaction", "Headache, nausea", "Severe allergic reaction, hospitalization required", "Diarrhea"],
+            "synonyms": []
+          }
+        ],
+        "description": "All records of adverse events that have been reported in the system  related to a treatment",
+        "synonyms": ["incidents during treatment", "adverse reactions", "side effects"]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "doctor",
+        "type": "simple join",
+        "parent collection": "treatments",
+        "child collection": "doctors",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "doc_id": [
+            "doc_id"
+          ]
+        },
+        "description": "The doctor who administered the treatment",
+        "synonyms": ["medical professional", "treatment administrator", "prescribing doctor"]
+      },
+      {
+        "name": "prescribed_treatments",
+        "type": "reverse",
+        "original parent": "treatments",
+        "original property": "doctor",
+        "singular": false,
+        "always matches": false,
+        "description": "The treatments prescribed/administered by the doctor",
+        "synonyms": ["regimens", "treatment plans", "medical prescriptions"]
+      },
+      {
+        "name": "patient",
+        "type": "simple join",
+        "parent collection": "treatments",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "patient_id": [
+            "patient_id"
+          ]
+        },
+        "description": "The patient who the treatment was administered to",
+        "synonyms": ["trial subject", "participant", "client", "drug recipient"]
+      },
+      {
+        "name": "treatments_received",
+        "type": "reverse",
+        "original parent": "treatments",
+        "original property": "patient",
+        "singular": false,
+        "always matches": false,
+        "description": "The drug treatment regimens the patient has been a part of",
+        "synonyms": ["Drug regimens", "medical treatments", "therapies", "treatment history"]
+      },
+      {
+        "name": "drug",
+        "type": "simple join",
+        "parent collection": "treatments",
+        "child collection": "drugs",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "drug_id": [
+            "drug_id"
+          ]
+        },
+        "description": "The drug being used as part of the treatment",
+        "synonyms": ["medication", "pharmaceutical", "drug product", "therapy"]
+      },
+      {
+        "name": "treatments_used_in",
+        "type": "reverse",
+        "original parent": "treatments",
+        "original property": "drug",
+        "singular": false,
+        "always matches": false,
+        "description": "The treatments the drug was used in",
+        "synonyms": ["therapies", "uses", "regimens", "prescriptions"]
+      },
+      {
+        "name": "diagnosis",
+        "type": "simple join",
+        "parent collection": "treatments",
+        "child collection": "diagnoses",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "diagnosis_id": [
+            "_id"
+          ]
+        },
+        "description": "The diagnosis associated with the treatment which the drug is treating",
+        "synonyms": ["medical condition", "associated condition", "cause of treatment"]
+      },
+      {
+        "name": "treatments_for",
+        "type": "reverse",
+        "original parent": "treatments",
+        "original property": "diagnosis",
+        "singular": false,
+        "always matches": false,
+        "description": "The drug treatment regimens targeted at a patient with this diagnosis",
+        "synonyms": []
+      },
+      {
+        "name": "outcome_records",
+        "type": "simple join",
+        "parent collection": "treatments",
+        "child collection": "outcomes",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "treatment_id": [
+            "treatment_id"
+          ]
+        },
+        "description": "The reported outcomes of the treatment, which can include the same treatment at different points in time if not enough time has elapsed to record the complete outcome for a treatment",
+        "synonyms": ["quality reports", "evaluations", "assessments"]
+      },
+      {
+        "name": "treatment",
+        "type": "reverse",
+        "original parent": "treatments",
+        "original property": "outcome_records",
+        "singular": true,
+        "always matches": true,
+        "description": "The treatment that the outcome record is reporting on",
+        "synonyms": ["regimen", "prescription", "medical trial"]
+      },
+      {
+        "name": "concomitant_meds",
+        "type": "simple join",
+        "parent collection": "treatments",
+        "child collection": "concomitant_meds",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "treatment_id": [
+            "treatment_id"
+          ]
+        },
+        "description": "The ancillary medications that were taken by a patient in addition to the treatment they are receiving during their treatment",
+        "synonyms": ["additional drugs", "ancillary medications", "concomitant drugs", "accompanying medications", "concurrent drugs"]
+      },
+      {
+        "name": "treatment",
+        "type": "reverse",
+        "original parent": "treatments",
+        "original property": "concomitant_meds",
+        "singular": true,
+        "always matches": true,
+        "description": "The treatment that the administration of the concomitant medication was related to",
+        "synonyms": ["medical trial", "regimen", "main prescription"]
+      },
+      {
+        "name": "adverse_events",
+        "type": "simple join",
+        "parent collection": "treatments",
+        "child collection": "adverse_events",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "treatment_id": [
+            "treatment_id"
+          ]
+        },
+        "description": "Any incident events recorded in association with the treatment",
+        "synonyms": ["side effects", "medical incidents"]
+      },
+      {
+        "name": "treatment",
+        "type": "reverse",
+        "original parent": "treatments",
+        "original property": "adverse_events",
+        "singular": true,
+        "always matches": true,
+        "description": "The treatment that the adverse event occurred during",
+        "synonyms": ["regimen", "medical trial", "prescription"]
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
+  },
+  {
+    "name": "Ewallet",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "users",
+        "type": "simple table",
+        "table path": "BROKER.users",
+        "unique properties": ["uid", "username"],
+        "properties": [
+          {
+            "name": "uid",
+            "type": "table column",
+            "column name": "uid",
+            "data type": "numeric",
+            "description": "The unique identifier for each user in the system",
+            "sample values": [1, 3, 5, 10, 11],
+            "synonyms": ["user id", "user key"]
+          },
+          {
+            "name": "username",
+            "type": "table column",
+            "column name": "username",
+            "data type": "string",
+            "description": "The username for the user",
+            "sample values": ["john_doe", "michael_brown", "bizuser", "huang2143"],
+            "synonyms": ["name", "account profile"]
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "email",
+            "data type": "string",
+            "description": "The email for the user",
+            "sample values": ["john.doe@email.com", "lisa.jones@email.com", "customerserv@shopsmart.biz", "huang2143@example.com", "contact@business.co"],
+            "synonyms": ["email address", "contact email"]
+          },
+          {
+            "name": "phone_number",
+            "type": "table column",
+            "column name": "phone_number",
+            "data type": "string",
+            "description": "The phone number for the user (null if not provided), which always starts with a `+` and the country code and does not have dashes",
+            "sample values": ["+1234567890", "+9876543210", "+8091017161", "+8612345678901", "+6123456789"],
+            "synonyms": ["phone", "mobile number", "contact number"]
+          },
+          {
+            "name": "created_at",
+            "type": "table column",
+            "column name": "created_at",
+            "data type": "datetime",
+            "description": "The timestamp when the user account was created",
+            "synonyms": ["account creation date", "registration datetime"]
+          },
+          {
+            "name": "last_login_at",
+            "type": "table column",
+            "column name": "last_login_at",
+            "data type": "datetime",
+            "description": "The last time the user logged into their account (null if never logged in)",
+            "synonyms": ["most recent login datetime", "latest access timestmap"]
+          },
+          {
+            "name": "user_type",
+            "type": "table column",
+            "column name": "user_type",
+            "data type": "string",
+            "description": "The type of user, which can be either `individual` or `business`",
+            "sample values": ["individual", "business"],
+            "synonyms": ["category", "classification"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The status of the user account, which can be either `active`, `inactive`, `deleted` or `suspended`",
+            "sample values": ["active", "inactive", "suspended", "deleted"],
+            "synonyms": ["account state", "activity", "user status"]
+          },
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "country",
+            "data type": "string",
+            "description": "The two-letter country code for the country of the user",
+            "sample values": ["US", "CA", "FR", "GB", "AU"],
+            "synonyms": ["nation"]
+          },
+          {
+            "name": "address_billing",
+            "type": "table column",
+            "column name": "address_billing",
+            "data type": "string",
+            "description": "The billing address for the user, including street address, city, sometimes province/country, and postal code",
+            "sample values": ["123 Main St, Anytown US 12345", "456 Oak Rd, Toronto ON M1M2M2", "12 Rue Baptiste, Paris 75001", "12 Mardon Rd, Wellington 6012"],
+            "synonyms": ["billing location", "billing street address"]
+          },
+          {
+            "name": "address_delivery",
+            "type": "table column",
+            "column name": "address_delivery",
+            "data type": "string",
+            "description": "The delivery address for the user, including street address, city, sometimes province/country, and postal code, or null if not provided",
+            "sample values": ["123 Main St, Anytown US 12345", "25 London Road, Manchester M12 4XY", "19 Smith St, Brunswick VIC 3056"],
+            "synonyms": []
+          },
+          {
+            "name": "kyc_status",
+            "type": "table column",
+            "column name": "kyc_status",
+            "data type": "string",
+            "description": "The KYC status, which can be either `approved`, `pending`, or `rejected`",
+            "sample values": ["approved", "pending", "rejected"],
+            "synonyms": ["approval status", "verification status"]
+          },
+          {
+            "name": "kyc_verified_at",
+            "type": "table column",
+            "column name": "kyc_verified_at",
+            "data type": "datetime",
+            "description": "The date when the kyc status became verified (null if not provided)",
+            "synonyms": ["date of approval", "date of verification"]
+          }
+        ],
+        "description": "Every user in the system, which can be either an individual or a business",
+        "synonyms": ["accounts", "user profiles", "user accounts", "clients", "consumers"]
+      },
+      {
+        "name": "merchants",
+        "type": "simple table",
+        "table path": "BROKER.merchants",
+        "unique properties": ["mid", "name"],
+        "properties": [
+          {
+            "name": "mid",
+            "type": "table column",
+            "column name": "mid",
+            "data type": "numeric",
+            "description": "Unique identifier for each merchant in the system",
+            "sample values": [1, 5, 10, 12, 15],
+            "synonyms": ["merchant key", "merchant id"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "name",
+            "data type": "string",
+            "description": "The name of the merchant",
+            "sample values": ["TechMart", "FitLifeGear", "UrbanDining", "KidzPlayhouse", "GameRush"],
+            "synonyms": ["merchant name", "business name", "company name"]
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "The detailed description of what the merchant does or sells",
+            "sample values": ["Leading electronics retailer", "SaaS productivity tools for developers", "Cosmetics and beauty supplies", "Books and reading accessories"],
+            "synonyms": ["business industry description", "merchant product types", "market segment description", "company description"]
+          },
+          {
+            "name": "website_url",
+            "type": "table column",
+            "column name": "website_url",
+            "data type": "string",
+            "description": "The URL to the merchant's website",
+            "sample values": ["https://fitlifegear.com", "https://hometechsolutions.net", "https://bookworms.co.uk", "https://www.zenhomegoods.com'"],
+            "synonyms": ["website link", "web address"]
+          },
+          {
+            "name": "logo_url",
+            "type": "table column",
+            "column name": "logo_url",
+            "data type": "string",
+            "description": "The URL to the merchant's logo image",
+            "sample values": ["https://www.techmart.com/logo.png", "https://www.fashiontrend.com/logo.png", "https://gamerush.co/gr-logo.png", "https://kidzplayhouse.com/logo.png"],
+            "synonyms": ["image link", "logo image address"]
+          },
+          {
+            "name": "created_at",
+            "type": "table column",
+            "column name": "created_at",
+            "data type": "datetime",
+            "description": "The timestamp when the merchant was registered in the system",
+            "synonyms": ["merchant registration date", "merchant creation date"]
+          },
+          {
+            "name": "country",
+            "type": "table column",
+            "column name": "country",
+            "data type": "string",
+            "description": "The two-letter capitalized country code for the country of the merchant",
+            "sample values": ["US", "CA", "IT", "FR", "UK"],
+            "synonyms": ["nation"]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "state",
+            "data type": "string",
+            "description": "The state for the merchant within the country, or null if not applicable",
+            "sample values": ["California", "Ontario", "Catalonia", "New South Wales", "British Columbia"],
+            "synonyms": ["province"]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "city",
+            "data type": "string",
+            "description": "The city for the merchant's location within the country",
+            "sample values": ["Los Angeles", "Berlin", "Rome", "Vancouver", "Sydney"]
+          },
+          {
+            "name": "postal_code",
+            "type": "table column",
+            "column name": "postal_code",
+            "data type": "string",
+            "description": "The postal/zip code of the merchant's location within the city",
+            "sample values": ["90011", "M5V2J2", "1010", "94105"],
+            "synonyms": ["zip code"]
+          },
+          {
+            "name": "address",
+            "type": "table column",
+            "column name": "address",
+            "data type": "string",
+            "description": "The full address of the merchant, including street address, city, sometimes province, and postal code",
+            "sample values": ["645 Wilshire Blvd, Los Angeles CA 90011", "159 Franklin St, Melbourne VIC 3004", "350 Mission St, San Francisco CA 94105", "35 Rue du Faubourg Saint-Antoine, 75011 Paris", "Passeig de Gracia 35, Barcelona 08003"],
+            "synonyms": ["street address", "full location"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The status of the merchant account, which can be either `active`, `inactive` or `suspended`",
+            "sample values": ["active", "inactive", "suspended"],
+            "synonyms": ["account state", "activity", "merchant status"]
+          },
+          {
+            "name": "category",
+            "type": "table column",
+            "column name": "category",
+            "data type": "string",
+            "description": "The blanket category/industry/market segment that the merchant is in",
+            "sample values": ["retail (hardware)", "Food & Dining", "Travel & Hospitality", "Retail", "Business Services"],
+            "synonyms": ["industry", "high-level market segment"]
+          },
+          {
+            "name": "sub_category",
+            "type": "table column",
+            "column name": "sub_category",
+            "data type": "string",
+            "description": "The more specific category/industry/market segment that the merchant is in within the category",
+            "sample values": ["Electronics", "Sporting GOods", "Restaurants", "Accommodation", "Toys & Games", "Books", "Pets", "Groceries"],
+            "synonyms": ["sub-industry", "specific market segment"]
+          },
+          {
+            "name": "merchant_category_code",
+            "type": "table column",
+            "column name": "mcc",
+            "data type": "numeric",
+            "description": "The category code for the merchant, which is a 4-digit number that identifies the type of business",
+            "sample values": [5734, 5977, 7011, 5719, 5732],
+            "synonyms": []
+          },
+          {
+            "name": "contact_name",
+            "type": "table column",
+            "column name": "contact_name",
+            "data type": "string",
+            "description": "The full name of the individual who is the primary contact for the merchant",
+            "sample values": ["John Jacobs", "Daniel Lee", "Marco Rossi", "Sophia Turner"],
+            "synonyms": ["contact person", "contact individual"]
+          },
+          {
+            "name": "contact_email",
+            "type": "table column",
+            "column name": "contact_email",
+            "data type": "string",
+            "description": "The email of the contact person for the merchant",
+            "sample values": ["jjacobs@techmart.com", "dlee@greengourmet.com", "ebrown@hometechsolutions.net", "sturner@bookworms.co.uk", "mschmidt@codesuite.io", "agarcia@handycraft.store"],
+            "synonyms": ["contact email", "contact person email"]
+          },
+          {
+            "name": "contact_phone",
+            "type": "table column",
+            "column name": "contact_phone",
+            "data type": "string",
+            "description": "The phone number of the contact person, which always starts with a `+` and the country code and does not have dashes",
+            "sample values": ["+15551234567", "+49301234567", "+441612345678", "+61298765432", "+442078912345"],
+            "synonyms": ["contact phone number", "contact person phone"]
+          }
+        ],
+        "description": "The merchant accounts registered in the system",
+        "synonyms": ["companies", "businesses", "vendors", "retailers", "stores"]
+      },
+      {
+        "name": "coupons",
+        "type": "simple table",
+        "table path": "BROKER.coupons",
+        "unique properties": ["cid"],
+        "properties": [
+          {
+            "name": "cid",
+            "type": "table column",
+            "column name": "cid",
+            "data type": "numeric",
+            "description": "The unique identifier for each coupon in the system",
+            "sample values": [1, 4, 5, 7, 10],
+            "synonyms": ["coupon key", "coupon id"]
+          },
+          {
+            "name": "merchant_id",
+            "type": "table column",
+            "column name": "merchant_id",
+            "data type": "numeric",
+            "description": "The id of the merchant who issues the coupon",
+            "sample values": [2, 5, 7, 8, 9],
+            "synonyms": ["merchant key", "merchant id", "issuing business id"]
+          },
+          {
+            "name": "code",
+            "type": "table column",
+            "column name": "code",
+            "data type": "string",
+            "description": "The code used to enter the coupon",
+            "sample values": ["TECH20", "DINEDISCOUNT", "HOME15", "GLOWUP", "GAMERALERT"],
+            "synonyms": ["coupon code", "discount code", "promo code"]
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "A verbal description of what hte coupon is for",
+            "sample values": ["20% off tech and electronics", "Buy 2 get 1 free on cosmetics'", "Get 25% off accessories", "$10 off $75+ purchase"],
+            "synonyms": []
+          },
+          {
+            "name": "start_date",
+            "type": "table column",
+            "column name": "start_date",
+            "data type": "datetime",
+            "description": "The date when the coupon first became valid",
+            "synonyms": ["available since", "valid from"]
+          },
+          {
+            "name": "end_date",
+            "type": "table column",
+            "column name": "end_date",
+            "data type": "datetime",
+            "description": "The date when the coupon is no longer valid",
+            "synonyms": ["available until", "valid until", "expiration date"]
+          },
+          {
+            "name": "discount_type",
+            "type": "table column",
+            "column name": "discount_type",
+            "data type": "string",
+            "description": "The category of the coupon, which can be either `percentage` or `fixed_amount`",
+            "sample values": ["percentage", "fixed_amount"],
+            "synonyms": ["classification", "category"]
+          },
+          {
+            "name": "discount_value",
+            "type": "table column",
+            "column name": "discount_value",
+            "data type": "numeric",
+            "description": "The value of the discount, which is the percentage off if the discount type is `percentage`, or the number of dollars off if `fixed_amount`",
+            "sample values": [20.0, 30.0, 10.0, 15.0, 25.0],
+            "synonyms": ["dollars off", "percentage off", "amount", "size"]
+          },
+          {
+            "name": "min_purchase_amount",
+            "type": "table column",
+            "column name": "min_purchase_amount",
+            "data type": "numeric",
+            "description": "The minimum amount of money that must be spent on a purchase in USD to be eligible for the coupon (null if not applicable)",
+            "sample values": [100.0, 50.0, 1000.0, 150.0],
+            "synonyms": ["minimum spend", "minimum purchase", "minimum order price"]
+          },
+          {
+            "name": "max_discount_amount",
+            "type": "table column",
+            "column name": "max_discount_amount",
+            "data type": "numeric",
+            "description": "The maximum amount of money that can be saved using the coupon in USD (null if not applicable)",
+            "sample values": [50.0, 300.0, 10.0, 15.0],
+            "synonyms": ["promotion limit", "discount cap", "maximum savings"]
+          },
+          {
+            "name": "redemption_limit",
+            "type": "table column",
+            "column name": "redemption_limit",
+            "data type": "numeric",
+            "description": "The maximum number of times the coupon can be redeemed before expiring/becoming invalid (null if not applicable)",
+            "sample values": [500, 1000, 200, 300, 750],
+            "synonyms": ["maximum number of uses", "redemption cap", "usage limit"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The status of the coupon, which can be either `active`, `inactive`, or `expired`",
+            "sample values": ["active", "inactive", "expired"],
+            "synonyms": ["availability", "usability", "activity state"]
+          },
+          {
+            "name": "created_at",
+            "type": "table column",
+            "column name": "created_at",
+            "data type": "datetime",
+            "description": "Timestamp when the coupon record was created in the system",
+            "synonyms": ["creation datetime"]
+          },
+          {
+            "name": "updated_at",
+            "type": "table column",
+            "column name": "updated_at",
+            "data type": "datetime",
+            "description": "Timestamp when the coupon record was last updated in the system (null if never updated after creation)",
+            "synonyms": ["update datetime"]
+          }
+        ],
+        "description": "The records of coupons that have been issued by merchants in the system",
+        "synonyms": ["discounts", "promotions", "special offers"]
+      },
+      {
+        "name": "transactions",
+        "type": "simple table",
+        "table path": "BROKER.wallet_transactions_daily",
+        "unique properties": ["txid", "transaction_ref"],
+        "properties": [
+          {
+            "name": "txid",
+            "type": "table column",
+            "column name": "txid",
+            "data type": "numeric",
+            "description": "The unique identifier for each transaction in the system (the original transaction & coupon applied are different rows with different values of this key)",
+            "sample values": [1, 3, 17, 21, 26],
+            "synonyms": ["transaction key", "transaction id"]
+          },
+          {
+            "name": "sender_id",
+            "type": "table column",
+            "column name": "sender_id",
+            "data type": "numeric",
+            "description": "The id of the key of the individual who sent the transaction, which is either the id of a user or a merchant, depending on sender_type",
+            "sample values": [1, 3, 8, 4, 10],
+            "synonyms": []
+          },
+          {
+            "name": "sender_type",
+            "type": "table column",
+            "column name": "sender_type",
+            "data type": "numeric",
+            "description": "Which type of individual sent the transaction: 0 for user (meaning sender_id is a uid from users) or 1 for merchant (meaning sender_id is a mid from merchants)",
+            "sample values": [0, 1],
+            "synonyms": ["sent by merchant"]
+          },
+          {
+            "name": "receiver_id",
+            "type": "table column",
+            "column name": "receiver_id",
+            "data type": "numeric",
+            "description": "The id of the key of the individual who received the transaction, which is either the id of a user or a merchant, depending on receiver_type",
+            "sample values": [1, 9, 10, 2, 5],
+            "synonyms": []
+          },
+          {
+            "name": "receiver_type",
+            "type": "table column",
+            "column name": "receiver_type",
+            "data type": "numeric",
+            "description": "Which type of individual received the transaction: 0 for user (meaning receiver_id is a uid from users) or 1 for merchant (meaning receiver_id is a mid from merchants)",
+            "sample values": [0, 1],
+            "synonyms": ["received by merchant"]
+          },
+          {
+            "name": "amount",
+            "type": "table column",
+            "column name": "amount",
+            "data type": "numeric",
+            "description": "The dollar amount of the transaction, which is the total amount for a record without a coupon applied, or the amount saved/rebated when the coupon is applied",
+            "sample values": [99.99, 20.0, 16.0, 125.50, 10.0],
+            "synonyms": []
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The status of the transaction, which can be either `success`, `failed`, `refunded`, or `pending`",
+            "sample values": ["success", "failed", "pending", "refunded"],
+            "synonyms": ["outcome", "result", "transaction status"]
+          },
+          {
+            "name": "transaction_type",
+            "type": "table column",
+            "column name": "type",
+            "data type": "string",
+            "description": "The means the transaction was made, which can be either `credit` or `debit",
+            "sample values": ["credit", "debit"],
+            "synonyms": ["payment method", "credit or debit"]
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "The category of transaction, which either says what was purchased or 'Coupon discount' if the transaction is a coupon discount being applied to a previous transaction in the system",
+            "sample values": ["Online purchase", "Coupon discount", "Product purchase", "Order #438721", "Villa rental deposit", "Refund on order #1234"],
+            "synonyms": ["description of purchase", "purchase subject"]
+          },
+          {
+            "name": "coupon_id",
+            "type": "table column",
+            "column name": "coupon_id",
+            "data type": "numeric",
+            "description": "The id of the coupon being used in the transaction, or null if the transaction is not a coupon discount",
+            "sample values": [1, 3, 9, 10],
+            "synonyms": ["coupon key", "coupon id"]
+          },
+          {
+            "name": "created_at",
+            "type": "table column",
+            "column name": "created_at",
+            "data type": "datetime",
+            "description": "The timestamp when the transfer was created in the system",
+            "synonyms": ["creation datetime"]
+          },
+          {
+            "name": "completed_at",
+            "type": "table column",
+            "column name": "completed_at",
+            "data type": "datetime",
+            "description": "The timestamp when the transfer was completed (null if not completed yet)",
+            "synonyms": ["completion datetime"]
+          },
+          {
+            "name": "transaction_ref",
+            "type": "table column",
+            "column name": "transaction_ref",
+            "data type": "string",
+            "description": "Randomly generated uuid4 for users' reference",
+            "sample values": ["ad154bf7-8185-4230-a8d8-3ef59b4e0012", "kd454bf7-428d-eig2-a8d8-3ef59b4e0012", "a7659c81-0cd0-4635-af6c-cf68d2c15ab2'"],
+            "synonyms": ["transaction uuid", "reference number"]
+          },
+          {
+            "name": "gateway_name",
+            "type": "table column",
+            "column name": "gateway_name",
+            "data type": "string",
+            "description": "The portal through which the transaction was made, which can be either 'Stripe', 'PayPal', 'Checkout.com', 'Braintree' or 'Adyen'",
+            "sample values": ["Stripe", "PayPal", "Checkout.com", "Braintree", "Adyen"],
+            "synonyms": ["payment gateway", "payment processor", "payment portal"]
+          },
+          {
+            "name": "gateway_ref",
+            "type": "table column",
+            "column name": "gateway_ref",
+            "data type": "string",
+            "description": "A reference number generated by the payment gateway for the transaction, which is used to track the transaction in the payment processor's system",
+            "sample values": ["tx_123abc456def", "rfnd_xkt521", "sub_pjj908", "stripe_ref_11_1", "paypal_ref_12_1"],
+            "synonyms": ["gateway reference number", "payment processor reference"]
+          },
+          {
+            "name": "device_id",
+            "type": "table column",
+            "column name": "device_id",
+            "data type": "string",
+            "description": "The unique identifier for the device used to make the transaction",
+            "sample values": ["mobile_8fh2k1", "web_8902wknz", "web_zld22f", "device_11_1", "mobile_1av8p0"],
+            "synonyms": ["device key", "device identifier", "device number"]
+          },
+          {
+            "name": "ip_address",
+            "type": "table column",
+            "column name": "ip_address",
+            "data type": "string",
+            "description": "The IP address of the device used to make the transaction",
+            "sample values": ["199.59.148.201", "199.59.148.201", "70.121.39.25", "8.26.53.165"],
+            "synonyms": ["IP"]
+          },
+          {
+            "name": "user_agent",
+            "type": "table column",
+            "column name": "user_agent",
+            "data type": "string",
+            "description": "The user agent used to make the transaction, which is a string that identifies the browser, operating system, and device type of the device used to make the transaction",
+            "sample values": ["Mozilla/5.0 (iPhone; CPU iPhone OS 16_3_1 like Mac OS X) ...", "Mozilla/5.0 (Linux; Android 13; SM-S901B) ...", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ..."],
+            "synonyms": ["device information", "browser information", "device details"]
+          }
+        ],
+        "description": "Every transaction that has occurred in the system, where the source can be either a user or a merchant and the destination can be either a user or a merchant. If a coupon is used, there will be two identical transaction records, one for the original transaction (where the coupon id is null) and one for the coupon discount applied (where the coupon id is provided)",
+        "synonyms": ["transfers", "payments", "purchases"]
+      },
+      {
+        "name": "user_balances",
+        "type": "simple table",
+        "table path": "BROKER.wallet_user_balance_daily",
+        "unique properties": [["user_id", "updated_at"]],
+        "properties": [
+          {
+            "name": "user_id",
+            "type": "table column",
+            "column name": "user_id",
+            "data type": "numeric",
+            "description": "The id of the user whose account balance is being recorded",
+            "sample values": [1, 4, 9, 10, 5],
+            "synonyms": ["user id", "user key"]
+          },
+          {
+            "name": "balance",
+            "type": "table column",
+            "column name": "balance",
+            "data type": "numeric",
+            "description": "The balance of the user's account in USD on the date of the record",
+            "sample values": [525.80, -725.55, -55.99, -559.98, 0.00, 2733.92],
+            "synonyms": ["amount in account", "user balance", "account value"]
+          },
+          {
+            "name": "updated_at",
+            "type": "table column",
+            "column name": "updated_at",
+            "data type": "datetime",
+            "description": "The timestamp when the user's balance was recorded",
+            "synonyms": ["update datetime", "balance record date"]
+          }
+        ],
+        "description": "The records of users' account balances in the system, which can include negative balances and multiple records for the same user made at different points in time",
+        "synonyms": ["user balance histories", "user balance records", "user account balances"]
+      },
+      {
+        "name": "merchant_balances",
+        "type": "simple table",
+        "table path": "BROKER.wallet_merchant_balance_daily",
+        "unique properties": [["merchant_id", "updated_at"]],
+        "properties": [
+          {
+            "name": "merchant_id",
+            "type": "table column",
+            "column name": "merchant_id",
+            "data type": "numeric",
+            "description": "The id of the merchant whose account balance is being recorded",
+            "sample values": [2, 4, 5, 9, 1],
+            "synonyms": ["merchant key", "merchant id"]
+          },
+          {
+            "name": "balance",
+            "type": "table column",
+            "column name": "balance",
+            "data type": "numeric",
+            "description": "The balance of the user's account in USD on the date of the record",
+            "sample values": [3897.99, 29.95, 0.00, 89.99],
+            "synonyms": ["amount in account", "merchant balance", "account value"]
+          },
+          {
+            "name": "updated_at",
+            "type": "table column",
+            "column name": "updated_at",
+            "data type": "datetime",
+            "description": "The timestamp when the merchant's balance was recorded",
+            "synonyms": ["update datetime", "balance record date"]
+          }
+        ],
+        "description": "The records of merchants' account balances in the system, which can include negative balances and multiple records for the same merchant made at different points in time",
+        "synonyms": ["merchant balance histories", "merchant balance records", "merchant account balances"]
+      },
+      {
+        "name": "notifications",
+        "type": "simple table",
+        "table path": "BROKER.notifications",
+        "unique properties": ["notif_id"],
+        "properties": [
+          {
+            "name": "notif_id",
+            "type": "table column",
+            "column name": "_id",
+            "data type": "numeric",
+            "description": "The unique identifier for each notification in the system",
+            "sample values": [1, 5, 10, 14, 16],
+            "synonyms": ["notification key", "notification id"]
+          },
+          {
+            "name": "user_id",
+            "type": "table column",
+            "column name": "user_id",
+            "data type": "numeric",
+            "description": "The id for the user who received the notification",
+            "sample values": [3, 5, 9, 10],
+            "synonyms": ["user key", "user id"]
+          },
+          {
+            "name": "message",
+            "type": "table column",
+            "column name": "message",
+            "data type": "string",
+            "description": "The message contained in the notification sent to the user",
+            "sample values": ["Your order #123abc has been shipped!", "Your CodeSuite subscription will renew on 7/1", "Here''s $10 to start your glow up!'", "Reminder: Your FitLife membership expires in 7 days", "An order from UrbanDining was unsuccessful", "Weekend Flash Sale: 25% off all activewear!"],
+            "synonyms": ["contents", "text", "description"]
+          },
+          {
+            "name": "notification_type",
+            "type": "table column",
+            "column name": "type",
+            "data type": "string",
+            "description": "The type of notification message, which can be either `transaction`, `promotion`, or `general`",
+            "sample values": ["transaction", "promotion", "general"],
+            "synonyms": ["message category", "alert classification"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The status of the notification, which can be either `read`, `unread`, or `archived`",
+            "sample values": ["read", "unread", "archived"],
+            "synonyms": ["has been read"]
+          },
+          {
+            "name": "created_at",
+            "type": "table column",
+            "column name": "created_at",
+            "data type": "datetime",
+            "description": "The timestamp when the notification was created",
+            "synonyms": ["creation datetime", "notification creation date"]
+          },
+          {
+            "name": "read_at",
+            "type": "table column",
+            "column name": "read_at",
+            "data type": "datetime",
+            "description": "The timestamp when the notification was read (null if not read yet)",
+            "synonyms": ["datetime read"]
+          },
+          {
+            "name": "device_type",
+            "type": "table column",
+            "column name": "device_type",
+            "data type": "string",
+            "description": "The type of device/medium the notification was sent through, which can be either `mobile_app`, `email`, `sms`, or `web_app`",
+            "sample values": ["mobile_app", "email", "sms", "web_app"],
+            "synonyms": []
+          },
+          {
+            "name": "device_id",
+            "type": "table column",
+            "column name": "device_id",
+            "data type": "string",
+            "description": "The id of the device the notification was sent to, or null if the device type does not have device ids",
+            "sample values": ["mobile_8fh2k1", "web_d8180kaf", "mobile_8fh2k1"],
+            "synonyms": []
+          },
+          {
+            "name": "action_url",
+            "type": "table column",
+            "column name": "action_url",
+            "data type": "string",
+            "description": "The URL included in hte notification that the user can click on to take action; can be external https or deeplink url within the app",
+            "sample values": ["app://orders/123abc", "https://zenhomesurvey.com/order/c51e10d1", "https://kidzplayhouse.com/new-arrivals", "https://techmart.com/promo/TECH20"],
+            "synonyms": ["link", "notification hyperlink"]
+          }
+        ],
+        "description": "All notifications sent to users in the system, such as alerts, reminders, and promotional messages",
+        "synonyms": ["alerts", "messages"]
+      },
+      {
+        "name": "user_sessions",
+        "type": "simple table",
+        "table path": "BROKER.user_sessions",
+        "unique properties": [["user_id", "session_start"], ["user_id", "session_end"]],
+        "properties": [
+          {
+            "name": "user_id",
+            "type": "table column",
+            "column name": "user_id",
+            "data type": "numeric",
+            "description": "The id of the user who the session belongs to",
+            "sample values": [1, 2, 3, 8, 10],
+            "synonyms": ["user id", "user key"]
+          },
+          {
+            "name": "session_start",
+            "type": "table column",
+            "column name": "session_start_ts",
+            "data type": "datetime",
+            "description": "The timestamp when the user session started",
+            "synonyms": ["beginning timestamp", "session initialization datetime"]
+          },
+          {
+            "name": "session_end",
+            "type": "table column",
+            "column name": "session_end_ts",
+            "data type": "datetime",
+            "description": "The timestamp when the user session ended",
+            "synonyms": ["ending timestamp", "session termination datetime"]
+          },
+          {
+            "name": "device_type",
+            "type": "table column",
+            "column name": "device_type",
+            "data type": "string",
+            "description": "The type of device the session was made with, which can be either `web_app` or `mobile_app`",
+            "sample values": ["web_app", "mobile_app"],
+            "synonyms": ["session device", "web or mobile"]
+          },
+          {
+            "name": "device_id",
+            "type": "table column",
+            "column name": "device_id",
+            "data type": "string",
+            "description": "The id of the device the session was made with",
+            "sample values": ["web_d8180kaf", "mobile_g3mjfz", "web_zz91p44l", "web_8902wknz"],
+            "synonyms": []
+          }
+        ],
+        "description": "The records of user sessions in the system, which can include multiple sessions for the same user made at different points in time, each session with a start/end timestamp",
+        "synonyms": ["system logs", "user activity logs", "user session records"]
+      },
+      {
+        "name": "user_setting_snapshots",
+        "type": "simple table",
+        "table path": "BROKER.user_setting_snapshot",
+        "unique properties": [["user_id", "snapshot_date"]],
+        "properties": [
+          {
+            "name": "user_id",
+            "type": "table column",
+            "column name": "user_id",
+            "data type": "numeric",
+            "description": "The id for the user whose settings are being recorded",
+            "sample values": [1, 2, 3, 5, 9],
+            "synonyms": ["user key", "user id"]
+          },
+          {
+            "name": "snapshot_date",
+            "type": "table column",
+            "column name": "snapshot_date",
+            "data type": "datetime",
+            "description": "The date when the setting snapshot was taken",
+            "synonyms": ["date of setting update", "recorded date"]
+          },
+          {
+            "name": "daily_transaction_limit",
+            "type": "table column",
+            "column name": "tx_limit_daily",
+            "data type": "numeric",
+            "description": "The cap in settings of how much the user account allows to be spent in a single day",
+            "sample values": [1000.0, 500.0, 50.0, 250.0],
+            "synonyms": ["daily spending cap"]
+          },
+          {
+            "name": "monthly_transaction_limit",
+            "type": "table column",
+            "column name": "tx_limit_monthly",
+            "data type": "numeric",
+            "description": "The cap in settings of how much the user account allows to be spent in a single month",
+            "sample values": [5000.0, 500.0, 2000.0, 1000.0],
+            "synonyms": ["monthly spending cap"]
+          },
+          {
+            "name": "membership_status",
+            "type": "table column",
+            "column name": "membership_status",
+            "data type": "numeric",
+            "description": "The member's status level within the system: 0 for bronze, 1 for silver, 2 for gold, 3 for platinum, 4 for VIP",
+            "sample values": [0, 1, 2, 3, 4],
+            "synonyms": ["rank", "membership level", "membership tier"]
+          },
+          {
+            "name": "password_hash",
+            "type": "table column",
+            "column name": "password_hash",
+            "data type": "string",
+            "description": "The hashed password of the user, which is used to verify the user's identity when they log in",
+            "sample values": ["bcryptHash($2yz9!&ka1)", "bcryptHash($2yz9!&ka1)", "bcryptHash(C0d3Rul3z!99)"],
+            "synonyms": []
+          },
+          {
+            "name": "api_key",
+            "type": "table column",
+            "column name": "api_key",
+            "data type": "string",
+            "description": "The user's API key, which is used to authenticate the user when they make API requests (null if not provided)",
+            "sample values": ["9d61c49b-8977-4914-a36b-80d1445e38fa", "6c03c175-9ac9-4854-b064-a3fff2c62e31"],
+            "synonyms": ["api token", "application programming interface key"]
+          },
+          {
+            "name": "verified_devices",
+            "type": "table column",
+            "column name": "verified_devices",
+            "data type": "string",
+            "description": "A comma-separated list of the ids of the devices that have been verified for the user (null if not provided)",
+            "sample values": ["mobile_8fh2k1", "mobile_yjp08q, mobile_1av8p0", "web_k29qjd, mobile_x28qlj", "web_d8180kaf, mobile_q3mz8n"],
+            "synonyms": ["device list", "device ids"]
+          },
+          {
+            "name": "verified_ips",
+            "type": "table column",
+            "column name": "verified_ips",
+            "data type": "string",
+            "description": "A comma-sparated list of the IP addresses that have been verified for the user (null if not provided)",
+            "sample values": ["8.26.53.165, 68.85.32.201", "203.96.81.36", "192.168.0.1", "198.51.100.233, 70.121.39.25"],
+            "synonyms": ["IP addresses", "IP list"]
+          },
+          {
+            "name": "mfa_enabled",
+            "type": "table column",
+            "column name": "mfa_enabled",
+            "data type": "bool",
+            "description": "Whether the user has enabled multi-factor authentication (MFA) for their account",
+            "synonyms": ["has mfa"]
+          },
+          {
+            "name": "marketing_opt_in",
+            "type": "table column",
+            "column name": "marketing_opt_in",
+            "data type": "bool",
+            "description": "Whether the user has opted in to receive marketing communications",
+            "synonyms": ["allowed marketing"]
+          },
+          {
+            "name": "created_at",
+            "type": "table column",
+            "column name": "created_at",
+            "data type": "datetime",
+            "description": "The timestamp when the record was added to the system",
+            "synonyms": ["system entry date"]
+          }
+        ],
+        "description": "The records of user settings in the system, which can include multiple updates for the same user made at different points in time",
+        "synonyms": ["user settings history", "user settings records"]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "transactions_sent",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "uid": [
+            "sender_id"
+          ]
+        },
+        "description": "All transactions made where the user is the sender",
+        "synonyms": ["transactions from user"]
+      },
+      {
+        "name": "sending_user",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "transactions_sent",
+        "singular": true,
+        "always matches": false,
+        "description": "The user who sent the transaction, if it was sent by a user (not found if it was sent by a merchant)",
+        "synonyms": ["source user", "originating user"]
+      },
+      {
+        "name": "transactions_received",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "uid": [
+            "receiver_id"
+          ]
+        },
+        "description": "The transactions where the user was the recipient",
+        "synonyms": ["transactions to user"]
+      },
+      {
+        "name": "receiving_user",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "transactions_received",
+        "singular": true,
+        "always matches": false,
+        "description": "The user who received the transaction, if it was received by a user (not found if it was received by a merchant)",
+        "synonyms": ["destination user", "receiving user account"]
+      },
+      {
+        "name": "balances",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "user_balances",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "uid": [
+            "user_id"
+          ]
+        },
+        "description": "The historical account balance for the user, which can include multiple updates over time",
+        "synonyms": ["historical account balance", "user balance history"]
+      },
+      {
+        "name": "user",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "balances",
+        "singular": true,
+        "always matches": true,
+        "description": "The user who the account balance belongs to",
+        "synonyms": ["customer"]
+      },
+      {
+        "name": "notifications",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "notifications",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "uid": [
+            "user_id"
+          ]
+        },
+        "description": "The notifications that have been sent to the user",
+        "synonyms": ["user notifications", "user alerts"]
+      },
+      {
+        "name": "user",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "notifications",
+        "singular": true,
+        "always matches": true,
+        "description": "The user who received the notification",
+        "synonyms": ["customer", "client", "user account"]
+      },
+      {
+        "name": "sessions",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "user_sessions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "uid": [
+            "user_id"
+          ]
+        },
+        "description": "The login sessions by the user",
+        "synonyms": ["user login sessions", "session history"]
+      },
+      {
+        "name": "user",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "sessions",
+        "singular": true,
+        "description": "The user who the login session information belongs to",
+        "synonyms": ["customer", "client", "user account"]
+      },
+      {
+        "name": "setting_snapshots",
+        "type": "simple join",
+        "parent collection": "users",
+        "child collection": "user_setting_snapshots",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "uid": [
+            "user_id"
+          ]
+        },
+        "description": "The setting snapshot history for the user, which can include multiple updates over time",
+        "synonyms": ["setting history", "user setting snapshots"]
+      },
+      {
+        "name": "user",
+        "type": "reverse",
+        "original parent": "users",
+        "original property": "setting_snapshots",
+        "singular": true,
+        "description": "The user who the setting snapshot belongs to",
+        "synonyms": ["customer", "client", "user account"]
+      },
+      {
+        "name": "transactions_sent",
+        "type": "simple join",
+        "parent collection": "merchants",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "mid": [
+            "sender_id"
+          ]
+        },
+        "description": "The transactions sent by the merchant",
+        "synonyms": ["merchant transactions sent", "merchant outgoing transactions"]
+      },
+      {
+        "name": "sending_merchant",
+        "type": "reverse",
+        "original parent": "merchants",
+        "original property": "transactions_sent",
+        "singular": true,
+        "always matches": false,
+        "description": "The merchant who sent the transaction, if it was sent by a merchant (not found if it was sent by a user)",
+        "synonyms": ["merchant source", "merchant origin"]
+      },
+      {
+        "name": "transactions_received",
+        "type": "simple join",
+        "parent collection": "merchants",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "mid": [
+            "receiver_id"
+          ]
+        },
+        "description": "The transactions received by the merchant",
+        "synonyms": ["merchant transactions received", "merchant incoming transactions"]
+      },
+      {
+        "name": "receiving_merchant",
+        "type": "reverse",
+        "original parent": "merchants",
+        "original property": "transactions_received",
+        "singular": true,
+        "always matches": false,
+        "description": "The merchant who received the transaction, if it was received by a merchant (not found if it was received by a user)",
+        "synonyms": ["merchant destination", "merchant recipient"]
+      },
+      {
+        "name": "balances",
+        "type": "simple join",
+        "parent collection": "merchants",
+        "child collection": "merchant_balances",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "mid": [
+            "merchant_id"
+          ]
+        },
+        "description": "The historical account balance for the merchant, which can include multiple updates over time",
+        "synonyms": ["historical account balance", "merchant balance history"]
+      },
+      {
+        "name": "merchant",
+        "type": "reverse",
+        "original parent": "merchants",
+        "original property": "balances",
+        "singular": true,
+        "always matches": true,
+        "description": "The merchant who the account balance information belongs to",
+        "synonyms": ["business", "company", "merchant account"]
+      },
+      {
+        "name": "coupons",
+        "type": "simple join",
+        "parent collection": "merchants",
+        "child collection": "coupons",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "mid": [
+            "merchant_id"
+          ]
+        },
+        "description": "The coupons issued by the merchant",
+        "synonyms": ["merchant coupons", "merchant discount codes"]
+      },
+      {
+        "name": "merchant",
+        "type": "reverse",
+        "original parent": "merchants",
+        "original property": "coupons",
+        "singular": true,
+        "always matches": true,
+        "description": "The merchant who issued the coupon",
+        "synonyms": ["issuing company", "business"]
+      },
+      {
+        "name": "transaction_used_in",
+        "type": "simple join",
+        "parent collection": "coupons",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "cid": [
+            "coupon_id"
+          ]
+        },
+        "description": "The transactions that the coupon was used in",
+        "synonyms": ["uses", "transactions with coupon"]
+      },
+      {
+        "name": "coupon",
+        "type": "reverse",
+        "original parent": "coupons",
+        "original property": "transaction_used_in",
+        "singular": true,
+        "always matches": false,
+        "description": "The coupon that was used in the transaction, if one exists",
+        "synonyms": ["coupon used", "discount used"]
+      }
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
+  }
+]
