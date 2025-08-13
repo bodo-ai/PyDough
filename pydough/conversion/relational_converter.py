@@ -50,6 +50,7 @@ from pydough.relational import (
     WindowCallExpression,
 )
 from pydough.types import BooleanType, NumericType, UnknownType
+from pydough.types.pydough_type import PyDoughType
 
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
@@ -1314,16 +1315,27 @@ class RelTranslation:
         """
         Transforms the final PyDough collection by appending it with an extra
         CALCULATE containing all of the columns that are output.
+        Args:
+            `node`: the PyDough QDAG collection node to be translated.
+            `output_cols`: a list of tuples in the form `(alias, column)`
+            describing every column that should be in the output, in the order
+        they should appear, and the alias they should be given. If None, uses
+        the most recent CALCULATE in the node to determine the columns.
+        Returns:
+            The PyDoughCollectionQDAG with an additional CALCULATE at the end
+            that contains all of the columns that should be in the output.
         """
         # Fetch all of the expressions that should be kept in the final output
         final_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
         if output_cols is None:
             for name in node.calc_terms:
-                final_terms.append((name, Reference(node, name)))
+                name_typ: PyDoughType = node.get_expr(name).pydough_type
+                final_terms.append((name, Reference(node, name, name_typ)))
             final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
         else:
             for _, column in output_cols:
-                final_terms.append((column, Reference(node, column)))
+                column_typ: PyDoughType = node.get_expr(column).pydough_type
+                final_terms.append((column, Reference(node, column, column_typ)))
         children: list[PyDoughCollectionQDAG] = []
         final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
         return final_calc
