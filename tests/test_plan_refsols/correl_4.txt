@@ -1,7 +1,7 @@
 ROOT(columns=[('name', n_name)], orderings=[(n_name):asc_first])
  JOIN(condition=t0.n_nationkey == t1.n_nationkey, type=ANTI, cardinality=SINGULAR_FILTER, columns={'n_name': t0.n_name})
   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
-  JOIN(condition=t1.c_acctbal <= t0.smallest_bal + 5.0:numeric & t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'n_nationkey': t0.n_nationkey})
+  JOIN(condition=t1.c_acctbal <= t0.smallest_bal + 5.0:numeric & t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_FILTER, columns={'n_nationkey': t0.n_nationkey})
    JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, columns={'n_nationkey': t1.n_nationkey, 'smallest_bal': t0.smallest_bal})
     AGGREGATE(keys={}, aggregations={'smallest_bal': MIN(c_acctbal)})
      SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal})

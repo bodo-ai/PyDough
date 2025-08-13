@@ -685,9 +685,9 @@ class RelTranslation:
                         | ConnectionType.ANTI
                     ):
                         cardinality: JoinCardinality = JoinCardinality.SINGULAR_ACCESS
-                        if child.connection_type.is_anti or (
-                            child.connection_type.is_semi
-                            and not child.get_always_exists()
+                        if (
+                            child.connection_type.is_anti
+                            or not child.get_always_exists()
                         ):
                             cardinality = JoinCardinality.SINGULAR_FILTER
                         if child.connection_type.is_aggregation:

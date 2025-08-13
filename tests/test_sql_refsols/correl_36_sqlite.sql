@@ -1,31 +1,21 @@
-WITH _t1 AS (
-  SELECT
-    l_linenumber,
-    l_orderkey,
-    l_partkey,
-    l_shipdate,
-    l_suppkey
-  FROM tpch.lineitem
-  WHERE
-    CAST(STRFTIME('%Y', l_shipdate) AS INTEGER) = 1998
-), _s7 AS (
+WITH _s3 AS (
   SELECT
     p_partkey,
     p_type
   FROM tpch.part
-), _s25 AS (
+), _s21 AS (
   SELECT DISTINCT
     orders.o_orderkey AS key_12,
-    _t3.l_linenumber,
-    _t3.l_orderkey
-  FROM _t1 AS _t3
-  JOIN _s7 AS _s7
-    ON _s7.p_partkey = _t3.l_partkey
+    lineitem.l_linenumber,
+    lineitem.l_orderkey
+  FROM tpch.lineitem AS lineitem
+  JOIN _s3 AS _s3
+    ON _s3.p_partkey = lineitem.l_partkey
   JOIN tpch.supplier AS supplier
-    ON _t3.l_suppkey = supplier.s_suppkey
+    ON lineitem.l_suppkey = supplier.s_suppkey
   JOIN tpch.orders AS orders
     ON CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1998
-    AND _t3.l_orderkey = orders.o_orderkey
+    AND lineitem.l_orderkey = orders.o_orderkey
   JOIN tpch.customer AS customer
     ON customer.c_custkey = orders.o_custkey
     AND customer.c_nationkey = supplier.s_nationkey
@@ -37,37 +27,37 @@ WITH _t1 AS (
     ON CAST(STRFTIME('%Y', orders_2.o_orderdate) AS INTEGER) = 1997
     AND customer.c_custkey = orders_2.o_custkey
     AND orders.o_orderpriority = orders_2.o_orderpriority
-  JOIN tpch.lineitem AS lineitem
+  JOIN tpch.lineitem AS lineitem_2
     ON CASE
-      WHEN CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) <= 3
-      AND CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) >= 1
+      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 3
+      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 1
       THEN 1
-      WHEN CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) <= 6
-      AND CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) >= 4
+      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 6
+      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 4
       THEN 2
-      WHEN CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) <= 9
-      AND CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) >= 7
+      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 9
+      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 7
       THEN 3
-      WHEN CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) <= 12
-      AND CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) >= 10
+      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 12
+      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 10
       THEN 4
     END = 1
-    AND CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1997
-    AND lineitem.l_orderkey = orders_2.o_orderkey
-  JOIN _s7 AS _s23
-    ON _s23.p_partkey = lineitem.l_partkey AND _s23.p_type = _s7.p_type
+    AND CAST(STRFTIME('%Y', lineitem_2.l_shipdate) AS INTEGER) = 1997
+    AND lineitem_2.l_orderkey = orders_2.o_orderkey
+  JOIN _s3 AS _s19
+    ON _s19.p_partkey = lineitem_2.l_partkey AND _s19.p_type = _s3.p_type
+  WHERE
+    CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1998
 )
 SELECT
   COUNT(*) AS n
-FROM _t1 AS _t1
-JOIN tpch.part AS part
-  ON _t1.l_partkey = part.p_partkey
-JOIN tpch.supplier AS supplier
-  ON _t1.l_suppkey = supplier.s_suppkey
+FROM tpch.lineitem AS lineitem
 JOIN tpch.orders AS orders
   ON CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1998
-  AND _t1.l_orderkey = orders.o_orderkey
-JOIN _s25 AS _s25
-  ON _s25.key_12 = orders.o_orderkey
-  AND _s25.l_linenumber = _t1.l_linenumber
-  AND _s25.l_orderkey = _t1.l_orderkey
+  AND lineitem.l_orderkey = orders.o_orderkey
+JOIN _s21 AS _s21
+  ON _s21.key_12 = orders.o_orderkey
+  AND _s21.l_linenumber = lineitem.l_linenumber
+  AND _s21.l_orderkey = lineitem.l_orderkey
+WHERE
+  CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1998

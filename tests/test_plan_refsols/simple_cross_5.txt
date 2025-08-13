@@ -1,5 +1,5 @@
 ROOT(columns=[('part_size', p_size), ('best_order_priority', o_orderpriority), ('best_order_priority_qty', total_qty)], orderings=[(p_size):asc_first])
- JOIN(condition=t0.p_size == t1.p_size, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'o_orderpriority': t1.o_orderpriority, 'p_size': t0.p_size, 'total_qty': t1.total_qty})
+ JOIN(condition=t0.p_size == t1.p_size, type=LEFT, cardinality=SINGULAR_FILTER, columns={'o_orderpriority': t1.o_orderpriority, 'p_size': t0.p_size, 'total_qty': t1.total_qty})
   LIMIT(limit=10:numeric, columns={'p_size': p_size}, orderings=[(p_size):asc_first])
    AGGREGATE(keys={'p_size': p_size}, aggregations={})
     FILTER(condition=STARTSWITH(p_container, 'LG':string), columns={'p_size': p_size})

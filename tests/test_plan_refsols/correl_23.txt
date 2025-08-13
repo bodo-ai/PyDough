@@ -1,6 +1,6 @@
 ROOT(columns=[('n_sizes', n_sizes)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_sizes': COUNT()})
-  JOIN(condition=t1.n_rows > t0.avg_n_combo, type=INNER, cardinality=SINGULAR_ACCESS, columns={})
+  JOIN(condition=t1.n_rows > t0.avg_n_combo, type=INNER, cardinality=SINGULAR_FILTER, columns={})
    AGGREGATE(keys={}, aggregations={'avg_n_combo': AVG(n_combos)})
     AGGREGATE(keys={'p_size': p_size}, aggregations={'n_combos': COUNT()})
      AGGREGATE(keys={'p_container': p_container, 'p_size': p_size, 'p_type': p_type}, aggregations={})

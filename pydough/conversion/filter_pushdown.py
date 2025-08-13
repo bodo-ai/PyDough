@@ -242,6 +242,8 @@ class FilterPushdownShuttle(RelationalShuttle):
             self.filters = pushable_filters
             new_inputs.append(child.accept_shuttle(self))
 
+        # If there are no window functions in the filters, push any remaining
+        # filters into the join condition if it is an inner join.
         if (
             join_type == JoinType.INNER
             and len(remaining_filters) > 0
@@ -258,6 +260,7 @@ class FilterPushdownShuttle(RelationalShuttle):
                 new_conjunction.update(join._condition.inputs)
             else:
                 new_conjunction.add(join._condition)
+            cardinality = join.cardinality.add_filter()
             join._condition = RelationalExpression.form_conjunction(
                 sorted(new_conjunction, key=repr)
             )

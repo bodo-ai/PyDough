@@ -1,5 +1,5 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
- JOIN(condition=MONTH(t0.first_order_date) == t1.expr_3 & YEAR(t0.first_order_date) == t1.expr_2, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows})
+ JOIN(condition=MONTH(t0.first_order_date) == t1.expr_3 & YEAR(t0.first_order_date) == t1.expr_2, type=LEFT, cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows})
   AGGREGATE(keys={}, aggregations={'first_order_date': MIN(o_orderdate)})
    SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})
   AGGREGATE(keys={'expr_2': YEAR(o_orderdate), 'expr_3': MONTH(o_orderdate)}, aggregations={'n_rows': COUNT()})
