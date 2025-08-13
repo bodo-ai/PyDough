@@ -9,7 +9,7 @@ SELECT
   ) AS a,
   CONCAT_WS(':', DAYNAME(o_orderdate), (
     (
-      DAYOFWEEK(o_orderdate) + 6
+      DAYOFWEEK(o_orderdate) + -1
     ) % 7
   )) AS b,
   DATE_ADD(
@@ -57,11 +57,11 @@ SELECT
   CAST((
     DATEDIFF(CAST(o_orderdate AS DATETIME), CAST('1993-05-25 12:45:36' AS DATETIME)) + (
       (
-        DAYOFWEEK(CAST('1993-05-25 12:45:36' AS DATETIME)) + 6
+        DAYOFWEEK(CAST('1993-05-25 12:45:36' AS DATETIME)) + -1
       ) % 7
     ) - (
       (
-        DAYOFWEEK(o_orderdate) + 6
+        DAYOFWEEK(o_orderdate) + -1
       ) % 7
     )
   ) / 7 AS SIGNED) AS l,
@@ -73,8 +73,8 @@ SELECT
   ) AS n,
   TIMESTAMPDIFF(
     MINUTE,
-    DATE_FORMAT(CAST('1993-05-25 12:45:36' AS DATETIME), '%Y-%m-%d %H:%i::00'),
-    DATE_FORMAT(o_orderdate, '%Y-%m-%d %H:%i::00')
+    DATE_FORMAT(CAST('1993-05-25 12:45:36' AS DATETIME), '%Y-%m-%d %H:%i:00'),
+    DATE_FORMAT(o_orderdate, '%Y-%m-%d %H:%i:00')
   ) AS o,
   TIMESTAMPDIFF(SECOND, CAST('1993-05-25 12:45:36' AS DATETIME), o_orderdate) AS p,
   DATE(
@@ -82,7 +82,7 @@ SELECT
       CAST(o_orderdate AS DATETIME),
       INTERVAL (
         (
-          DAYOFWEEK(CAST(o_orderdate AS DATETIME)) + 6
+          DAYOFWEEK(CAST(o_orderdate AS DATETIME)) + -1
         ) % 7
       ) DAY
     )

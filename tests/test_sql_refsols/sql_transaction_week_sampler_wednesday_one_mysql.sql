@@ -5,10 +5,8 @@ SELECT
       CAST(sbtxdatetime AS DATETIME),
       INTERVAL (
         (
-          (
-            DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + 3
-          ) % 7
-        ) + 1
+          DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + 3
+        ) % 7
       ) DAY
     )
   ) AS sow,

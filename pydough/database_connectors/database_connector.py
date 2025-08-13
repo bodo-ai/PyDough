@@ -89,12 +89,9 @@ class DatabaseDialect(Enum):
         Returns:
             The dialect enum.
         """
-        if dialect == "ansi":
-            return DatabaseDialect.ANSI
-        elif dialect == "sqlite":
-            return DatabaseDialect.SQLITE
-        elif dialect == "mysql":
-            return DatabaseDialect.MYSQL
+        dialect = dialect.upper()
+        if dialect in DatabaseDialect.__members__:
+            return DatabaseDialect.__members__[dialect]
         else:
             raise ValueError(f"Unsupported dialect: {dialect}")
 

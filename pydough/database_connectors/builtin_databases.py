@@ -122,14 +122,18 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
     if "connection_timeout" not in kwargs or kwargs["connection_timeout"] <= 0:
         kwargs["connection_timeout"] = 3
 
+    # Default attempts for connection if not given
     if not (attempts := kwargs.pop("attempts", None)):
         attempts = 1
 
+    # Default delay between attempts for connection if not given
     if not (delay := kwargs.pop("delay", None)):
         delay = 2.0
 
     attempt: int = 1
 
+    # For each attempt a connection is tried
+    # If it fails, there is a delay before another attempt is executed
     while attempt <= attempts:
         try:
             connection = mysql.connector.connect(**kwargs)
@@ -140,6 +144,7 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
                 raise ValueError(
                     f"Failed to connect to MySQL after {attempts} attempts: {err}"
                 )
+            # Delay for another attempt
             time.sleep(delay)
             attempt += 1
 

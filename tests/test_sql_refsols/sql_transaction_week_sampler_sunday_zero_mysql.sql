@@ -5,14 +5,14 @@ SELECT
       CAST(sbtxdatetime AS DATETIME),
       INTERVAL (
         (
-          DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + 6
+          DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + -1
         ) % 7
       ) DAY
     )
   ) AS sow,
   DAYNAME(sbtxdatetime) AS dayname,
   (
-    DAYOFWEEK(sbtxdatetime) + 6
+    DAYOFWEEK(sbtxdatetime) + -1
   ) % 7 AS dayofweek
 FROM main.sbTransaction
 WHERE

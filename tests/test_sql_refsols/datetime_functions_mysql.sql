@@ -38,25 +38,25 @@ SELECT
   CAST((
     DATEDIFF(CAST('1992-01-01 12:30:45' AS DATETIME), CAST('1992-01-01' AS DATETIME)) + (
       (
-        DAYOFWEEK(CAST('1992-01-01' AS DATETIME)) + 6
+        DAYOFWEEK(CAST('1992-01-01' AS DATETIME)) + -1
       ) % 7
     ) - (
       (
-        DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + 6
+        DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + -1
       ) % 7
     )
   ) / 7 AS SIGNED) AS dd_dt_str,
   (
-    DAYOFWEEK(o_orderdate) + 6
+    DAYOFWEEK(o_orderdate) + -1
   ) % 7 AS dow_col,
   (
-    DAYOFWEEK(CAST('1992-07-01' AS DATE)) + 6
+    DAYOFWEEK(CAST('1992-07-01' AS DATE)) + -1
   ) % 7 AS dow_str,
   (
-    DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + 6
+    DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + -1
   ) % 7 AS dow_dt,
   (
-    DAYOFWEEK(CAST('1995-10-10 00:00:00' AS DATETIME)) + 6
+    DAYOFWEEK(CAST('1995-10-10 00:00:00' AS DATETIME)) + -1
   ) % 7 AS dow_pd,
   DAYNAME(o_orderdate) AS dayname_col,
   DAYNAME('1995-06-30') AS dayname_str,

@@ -4,12 +4,18 @@ SELECT
     DATE_SUB(
       CAST(sbtxdatetime AS DATETIME),
       INTERVAL (
-        DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + 1
+        (
+          DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + 0
+        ) % 7
       ) DAY
     )
   ) AS sow,
   DAYNAME(sbtxdatetime) AS dayname,
-  DAYOFWEEK(sbtxdatetime) + 1 AS dayofweek
+  (
+    (
+      DAYOFWEEK(sbtxdatetime) + 0
+    ) % 7
+  ) + 1 AS dayofweek
 FROM main.sbTransaction
 WHERE
   EXTRACT(DAY FROM CAST(sbtxdatetime AS DATETIME)) > 1

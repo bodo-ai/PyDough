@@ -8,14 +8,14 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.configs import DayOfWeek
 from pydough.types import PyDoughType
-from pydough.types.datetime_type import DatetimeType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    expand_std,
+    expand_variance,
 )
 
 
@@ -23,17 +23,6 @@ class MySQLTransformBindings(BaseTransformBindings):
     """
     Subclass of BaseTransformBindings for the MySQL dialect.
     """
-
-    @property
-    def start_of_week_offset(self) -> int:
-        """
-        The number of days to add to the start of the week within the
-        SQL dialect to obtain the start of week referenced by the configs.
-        """
-        dows: list[DayOfWeek] = list(DayOfWeek)
-        dialect_index: int = dows.index(self.dialect_start_of_week) - 1
-        config_index: int = dows.index(self.configs.start_of_week)
-        return (config_index - dialect_index) % 7
 
     @property
     def dialect_dow_mapping(self) -> dict[str, int]:
@@ -173,25 +162,40 @@ class MySQLTransformBindings(BaseTransformBindings):
         length: SQLGlotExpression = None
 
         match (start_idx, stop_idx):
-            case (None, e) if e is not None and e >= 0:
+            case (None, end_idx) if end_idx is not None and end_idx >= 0:
                 length = stop
 
-            case (None, e) if e is not None and e < 0:
+            case (None, end_idx) if end_idx is not None and end_idx < 0:
                 length = sqlglot_expressions.Add(this=expr_length, expression=stop)
 
-            case (s, e) if s is not None and e is not None and s >= 0 and e >= 0:
+            case (begin_idx, end_idx) if (
+                begin_idx is not None
+                and end_idx is not None
+                and begin_idx >= 0
+                and end_idx >= 0
+            ):
                 length = sqlglot_expressions.Greatest(
                     this=sqlglot_expressions.Sub(this=stop, expression=start),
                     expressions=[sql_zero],
                 )
 
-            case (s, e) if s is not None and e is not None and s < 0 and e < 0:
+            case (begin_idx, end_idx) if (
+                begin_idx is not None
+                and end_idx is not None
+                and begin_idx < 0
+                and end_idx < 0
+            ):
                 length = sqlglot_expressions.Greatest(
                     this=sqlglot_expressions.Sub(this=stop, expression=start),
                     expressions=[sql_zero],
                 )
 
-            case (s, e) if s is not None and e is not None and s >= 0 and e < 0:
+            case (begin_idx, end_idx) if (
+                begin_idx is not None
+                and end_idx is not None
+                and begin_idx >= 0
+                and end_idx < 0
+            ):
                 length = sqlglot_expressions.Greatest(
                     this=sqlglot_expressions.Sub(
                         this=sqlglot_expressions.Add(this=expr_length, expression=stop),
@@ -200,7 +204,12 @@ class MySQLTransformBindings(BaseTransformBindings):
                     expressions=[sql_zero],
                 )
 
-            case (s, e) if s is not None and e is not None and s < 0 and e >= 0:
+            case (begin_idx, end_idx) if (
+                begin_idx is not None
+                and end_idx is not None
+                and begin_idx < 0
+                and end_idx >= 0
+            ):
                 length = sqlglot_expressions.Sub(
                     this=stop,
                     expression=sqlglot_expressions.Greatest(
@@ -370,93 +379,12 @@ class MySQLTransformBindings(BaseTransformBindings):
     def convert_variance(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
     ) -> SQLGlotExpression:
-        """
-        Converts a population variance calculation to an equivalent
-        SQLGlot expression.
-
-        Args:
-            `args`: The arguments to the population variance function.
-            `types`: The types of the arguments.
-            `type`: The type of variance to calculate.
-
-        Returns:
-            The SQLGlot expression to calculate the population variance
-            of the argument.
-        """
-        arg = args[0]
-        # Formula: (SUM(X*X) - (SUM(X)*SUM(X) / COUNT(X))) / COUNT(X) for population variance
-        # For sample variance, divide by (COUNT(X) - 1) instead of COUNT(X)
-
-        # SUM(X*X)
-        square_expr = apply_parens(
-            sqlglot_expressions.Pow(
-                this=arg, expression=sqlglot_expressions.Literal.number(2)
-            )
-        )
-        sum_squares_expr = sqlglot_expressions.Sum(this=square_expr)
-
-        # SUM(X)
-        sum_expr = sqlglot_expressions.Sum(this=arg)
-
-        # COUNT(X)
-        count_expr = sqlglot_expressions.Count(this=arg)
-
-        # (SUM(X)*SUM(X))
-        sum_squared_expr = sqlglot_expressions.Pow(
-            this=sum_expr, expression=sqlglot_expressions.Literal.number(2)
-        )
-
-        # ((SUM(X)*SUM(X)) / COUNT(X))
-        mean_sum_squared_expr = apply_parens(
-            sqlglot_expressions.Div(
-                this=apply_parens(sum_squared_expr), expression=apply_parens(count_expr)
-            )
-        )
-
-        # (SUM(X*X) - (SUM(X)*SUM(X) / COUNT(X)))
-        numerator = sqlglot_expressions.Sub(
-            this=sum_squares_expr, expression=apply_parens(mean_sum_squared_expr)
-        )
-
-        if type not in ("population", "sample"):
-            raise ValueError(f"Unsupported type: {type}")
-
-        # when type is population
-        # Divide by COUNT(X)
-        denominator: SQLGlotExpression = count_expr
-
-        if type == "sample":
-            # Divide by (COUNT(X) - 1)
-            denominator = sqlglot_expressions.Sub(
-                this=count_expr, expression=sqlglot_expressions.Literal.number(1)
-            )
-
-        return apply_parens(
-            sqlglot_expressions.Div(
-                this=apply_parens(numerator), expression=apply_parens(denominator)
-            )
-        )
+        return expand_variance(args=args, types=types, type=type)
 
     def convert_std(
         self, args: list[SQLGlotExpression], types: list[PyDoughType], type: str
     ) -> SQLGlotExpression:
-        """
-        Converts a standard deviation calculation to an equivalent
-        SQLGlot expression.
-
-        Args:
-            `args`: The arguments to the standard deviation function.
-            `types`: The types of the arguments.
-            `type`: The type of standard deviation to calculate.
-
-        Returns:
-            The SQLGlot expression to calculate the standard deviation
-            of the argument.
-        """
-        variance = self.convert_variance(args, types, type)
-        return sqlglot_expressions.Pow(
-            this=variance, expression=sqlglot_expressions.Literal.number(0.5)
-        )
+        return expand_std(args=args, types=types, type=type)
 
     def convert_datediff(
         self,
@@ -525,7 +453,10 @@ class MySQLTransformBindings(BaseTransformBindings):
                     expression=apply_parens(month_diff),
                 )
             case DateTimeUnit.WEEK:
-                # INTEGER((raw_delta + dow1 - dow2) / 7)
+                # raw_delta = number of days between date1 and date2
+                # dow1 = DAYOFWEEK(date1)
+                # dow2 = DAYOFWEEK(date2)
+                # result = INTEGER((raw_delta + dow1 - dow2) / 7)
                 raw_delta = sqlglot_expressions.DateDiff(this=date2, expression=date1)
                 dow1 = self.convert_dayofweek([date1], [types[1]])
                 dow2 = self.convert_dayofweek([date2], [types[2]])
@@ -551,36 +482,27 @@ class MySQLTransformBindings(BaseTransformBindings):
                     this=sqlglot_expressions.Date(this=date2),
                     expression=sqlglot_expressions.Date(this=date1),
                 )
-            case DateTimeUnit.HOUR:
-                # TIMESTAMPDIFF(HOUR, DATE_FORMAT(date1, '%Y-%m-%d %H:00:00'), DATE_FORMAT(date2, '%Y-%m-%d %H:00:00'))
-                hour_format: SQLGlotExpression = sqlglot_expressions.Literal.string(
-                    "%Y-%m-%d %H:00:00"
+
+            case DateTimeUnit.HOUR | DateTimeUnit.MINUTE:
+                # HOUR/MINUTE
+                # TIMESTAMPDIFF(HOUR, DATE_FORMAT(date1, '%Y-%m-%d %H:{00/%i}:00'), DATE_FORMAT(date2, '%Y-%m-%d %H:{00/%i}:00'))
+                # Truncate to the corresponding unit, then take the difference
+                minute_str: str = "00" if unit == DateTimeUnit.HOUR else "%i"
+                trunc_string: str = f"%Y-%m-%d %H:{minute_str}:00"
+                fmt: SQLGlotExpression = sqlglot_expressions.Literal.string(
+                    trunc_string
                 )
 
                 return sqlglot_expressions.TimestampDiff(
                     unit=sqlglot_expressions.Var(this=unit.value),
                     this=sqlglot_expressions.Anonymous(
-                        this="DATE_FORMAT", expressions=[date2, hour_format]
+                        this="DATE_FORMAT", expressions=[date2, fmt]
                     ),
                     expression=sqlglot_expressions.Anonymous(
-                        this="DATE_FORMAT", expressions=[date1, hour_format]
+                        this="DATE_FORMAT", expressions=[date1, fmt]
                     ),
-                )
-            case DateTimeUnit.MINUTE:
-                # TIMESTAMPDIFF(MINUTE, DATE_FORMAT(date1, '%Y-%m-%d %H:%i:00'), DATE_FORMAT(date2, '%Y-%m-%d %H:%i:00'))
-                minute_format: SQLGlotExpression = sqlglot_expressions.Literal.string(
-                    "%Y-%m-%d %H:%i::00"
                 )
 
-                return sqlglot_expressions.TimestampDiff(
-                    unit=sqlglot_expressions.Var(this=unit.value),
-                    this=sqlglot_expressions.Anonymous(
-                        this="DATE_FORMAT", expressions=[date2, minute_format]
-                    ),
-                    expression=sqlglot_expressions.Anonymous(
-                        this="DATE_FORMAT", expressions=[date1, minute_format]
-                    ),
-                )
             case DateTimeUnit.SECOND:
                 # TIMESTAMPDIFF(SECOND, date1, date2)
                 return sqlglot_expressions.TimestampDiff(
@@ -588,28 +510,18 @@ class MySQLTransformBindings(BaseTransformBindings):
                     this=date2,
                     expression=date1,
                 )
+
             case _:
                 raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
 
     def apply_datetime_truncation(
         self, base: SQLGlotExpression, unit: DateTimeUnit
     ) -> SQLGlotExpression:
-        """
-        Applies a truncation operation to a date/time expression by a certain unit.
-
-        Args:
-            `base`: The base date/time expression to truncate.
-            `unit`: The unit to truncate the date/time expression to.
-
-        Returns:
-            The SQLGlot expression to truncate `base`.
-        """
-
         if unit == DateTimeUnit.WEEK:
             # DOW = DAYOFWEEK(X)
             # Y = subtract DOW days from X
             # RESULT = DATETIME(Y, "start of day")
-            dow = self.convert_dayofweek([base], [DatetimeType()])
+            dow = self.days_from_start_of_week(base)
             substraction: SQLGlotExpression = sqlglot_expressions.DateSub(
                 this=base,
                 expression=dow,
@@ -619,3 +531,17 @@ class MySQLTransformBindings(BaseTransformBindings):
 
         else:
             return super().apply_datetime_truncation(base, unit)
+
+    def days_from_start_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
+        offset: int = (-self.start_of_week_offset) % 7 - 1
+        dow_expr: SQLGlotExpression = self.dialect_day_of_week(base)
+
+        return sqlglot_expressions.Mod(
+            this=apply_parens(
+                sqlglot_expressions.Add(
+                    this=dow_expr,
+                    expression=sqlglot_expressions.Literal.number(offset),
+                )
+            ),
+            expression=sqlglot_expressions.Literal.number(7),
+        )

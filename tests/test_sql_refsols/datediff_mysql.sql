@@ -16,8 +16,8 @@ SELECT
   ) AS hours_diff,
   TIMESTAMPDIFF(
     MINUTE,
-    DATE_FORMAT(sbtxdatetime, '%Y-%m-%d %H:%i::00'),
-    DATE_FORMAT(CAST('2023-04-03 13:16:30' AS DATETIME), '%Y-%m-%d %H:%i::00')
+    DATE_FORMAT(sbtxdatetime, '%Y-%m-%d %H:%i:00'),
+    DATE_FORMAT(CAST('2023-04-03 13:16:30' AS DATETIME), '%Y-%m-%d %H:%i:00')
   ) AS minutes_diff,
   TIMESTAMPDIFF(SECOND, sbtxdatetime, CAST('2023-04-03 13:16:30' AS DATETIME)) AS seconds_diff
 FROM main.sbTransaction
