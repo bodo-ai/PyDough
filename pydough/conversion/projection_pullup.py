@@ -419,7 +419,7 @@ def simplify_agg(
             pydop.COUNT,
             pydop.NDISTINCT,
         )
-        and len(agg.inputs) == 1
+        and len(agg.inputs) >= 1
     ):
         arg = agg.inputs[0]
         if arg in reverse_keys:
@@ -436,9 +436,13 @@ def simplify_agg(
                     [
                         out_ref,
                         CallExpression(
-                            pydop.INTEGER,
+                            pydop.IFF,
                             NumericType(),
-                            [CallExpression(pydop.PRESENT, BooleanType(), [key_ref])],
+                            [
+                                CallExpression(pydop.PRESENT, BooleanType(), [key_ref]),
+                                one_expr,
+                                zero_expr,
+                            ],
                         ),
                     ],
                 ), count_star
@@ -471,7 +475,6 @@ def simplify_agg(
         arg = agg.inputs[0]
         if isinstance(arg, LiteralExpression):
             return arg, None
-
     # In all other cases, we just return the aggregation as is.
     return out_ref, agg
 
