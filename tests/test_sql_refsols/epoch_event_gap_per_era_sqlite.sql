@@ -18,7 +18,7 @@ WITH _t2 AS (
     AND eras.er_start_year <= CAST(STRFTIME('%Y', events.ev_dt) AS INTEGER)
 )
 SELECT
-  MAX(er_name) AS era_name,
+  er_name AS era_name,
   AVG(day_gap) AS avg_event_gap
 FROM _t2
 WHERE

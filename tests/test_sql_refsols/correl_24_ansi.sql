@@ -1,16 +1,16 @@
-WITH _t4 AS (
+WITH _t3 AS (
   SELECT
     o_orderdate,
     o_totalprice
   FROM tpch.orders
   WHERE
     EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) < 1994
-), _t2 AS (
+), _t1 AS (
   SELECT
     AVG(o_totalprice) AS avg_o_totalprice,
     EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) AS month,
     EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) AS year
-  FROM _t4
+  FROM _t3
   GROUP BY
     EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)),
     EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME))
@@ -20,35 +20,35 @@ WITH _t4 AS (
     avg_o_totalprice,
     month,
     year
-  FROM _t2
+  FROM _t1
 )
 SELECT
-  ANY_VALUE(_s0.year) AS year,
-  ANY_VALUE(_s0.month) AS month,
+  _s0.year,
+  _s0.month,
   COUNT(*) AS n_orders_in_range
 FROM _s0 AS _s0
-JOIN _t4 AS _t5
+JOIN _t3 AS _t4
   ON (
-    _s0.avg_o_totalprice <= _t5.o_totalprice
-    OR _s0.avg_o_totalprice >= _t5.o_totalprice
+    _s0.avg_o_totalprice <= _t4.o_totalprice
+    OR _s0.avg_o_totalprice >= _t4.o_totalprice
   )
   AND (
-    _s0.avg_o_totalprice <= _t5.o_totalprice
-    OR _s0.prev_month_avg_price <= _t5.o_totalprice
+    _s0.avg_o_totalprice <= _t4.o_totalprice
+    OR _s0.prev_month_avg_price <= _t4.o_totalprice
   )
   AND (
-    _s0.avg_o_totalprice >= _t5.o_totalprice
-    OR _s0.prev_month_avg_price >= _t5.o_totalprice
+    _s0.avg_o_totalprice >= _t4.o_totalprice
+    OR _s0.prev_month_avg_price >= _t4.o_totalprice
   )
-  AND _s0.month = EXTRACT(MONTH FROM CAST(_t5.o_orderdate AS DATETIME))
+  AND _s0.month = EXTRACT(MONTH FROM CAST(_t4.o_orderdate AS DATETIME))
   AND (
-    _s0.prev_month_avg_price <= _t5.o_totalprice
-    OR _s0.prev_month_avg_price >= _t5.o_totalprice
+    _s0.prev_month_avg_price <= _t4.o_totalprice
+    OR _s0.prev_month_avg_price >= _t4.o_totalprice
   )
-  AND _s0.year = EXTRACT(YEAR FROM CAST(_t5.o_orderdate AS DATETIME))
+  AND _s0.year = EXTRACT(YEAR FROM CAST(_t4.o_orderdate AS DATETIME))
 GROUP BY
   _s0.month,
   _s0.year
 ORDER BY
-  ANY_VALUE(_s0.year),
-  ANY_VALUE(_s0.month)
+  year,
+  month

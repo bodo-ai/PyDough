@@ -10,15 +10,17 @@ WITH _t2 AS (
   FROM _t2
   GROUP BY
     p_brand
+), _t0 AS (
+  SELECT DISTINCT
+    _s0.p_brand
+  FROM _s0 AS _s0
+  JOIN _t2 AS _s1
+    ON _s0.p_brand = _s1.p_brand AND _s1.p_retailprice > (
+      1.4 * _s0.avg_price
+    )
 )
 SELECT
-  ANY_VALUE(_s0.p_brand) AS brand
-FROM _s0 AS _s0
-JOIN _t2 AS _s1
-  ON _s0.p_brand = _s1.p_brand AND _s1.p_retailprice > (
-    1.4 * _s0.avg_price
-  )
-GROUP BY
-  _s0.p_brand
+  p_brand AS brand
+FROM _t0
 ORDER BY
-  ANY_VALUE(_s0.p_brand)
+  p_brand

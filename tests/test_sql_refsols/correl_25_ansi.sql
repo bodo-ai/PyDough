@@ -22,9 +22,9 @@ WITH _s0 AS (
 )
 SELECT
   ANY_VALUE(_s0.r_name) AS cust_region_name,
-  ANY_VALUE(_s0.r_regionkey) AS cust_region_key,
+  _s0.r_regionkey AS cust_region_key,
   ANY_VALUE(_s1.n_name) AS cust_nation_name,
-  ANY_VALUE(_s1.n_nationkey) AS cust_nation_key,
+  _s1.n_nationkey AS cust_nation_key,
   ANY_VALUE(customer.c_name) AS customer_name,
   COUNT(DISTINCT lineitem.l_orderkey) AS n_urgent_semi_domestic_rail_orders
 FROM _s0 AS _s0

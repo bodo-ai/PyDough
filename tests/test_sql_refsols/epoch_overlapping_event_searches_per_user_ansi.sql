@@ -6,8 +6,8 @@ WITH _s0 AS (
 ), _t2 AS (
   SELECT
     ANY_VALUE(searches.search_user_id) AS anything_search_user_id,
-    ANY_VALUE(_s0.user_id) AS anything_user_id,
-    ANY_VALUE(_s0.user_name) AS anything_user_name
+    ANY_VALUE(_s0.user_name) AS anything_user_name,
+    _s0.user_id
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.user_id = searches.search_user_id
@@ -26,9 +26,9 @@ SELECT
   COUNT(*) AS n_searches
 FROM _t2
 WHERE
-  anything_search_user_id = anything_user_id
+  anything_search_user_id = user_id
 GROUP BY
-  anything_user_id
+  user_id
 ORDER BY
   n_searches DESC,
   ANY_VALUE(anything_user_name)

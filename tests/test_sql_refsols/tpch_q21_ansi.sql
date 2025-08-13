@@ -10,11 +10,11 @@ WITH _t5 AS (
     l_commitdate < l_receiptdate
 ), _t3 AS (
   SELECT
-    ANY_VALUE(_t5.l_linenumber) AS anything_l_linenumber,
-    ANY_VALUE(_t5.l_orderkey) AS anything_l_orderkey,
     ANY_VALUE(_t5.l_suppkey) AS anything_l_suppkey,
-    ANY_VALUE(orders.o_orderkey) AS anything_o_orderkey,
-    ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus
+    ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus,
+    _t5.l_linenumber,
+    _t5.l_orderkey,
+    orders.o_orderkey
   FROM _t5 AS _t5
   JOIN tpch.orders AS orders
     ON _t5.l_orderkey = orders.o_orderkey
@@ -42,9 +42,9 @@ WITH _t5 AS (
     _t3.anything_l_suppkey
   FROM _t3 AS _t3
   JOIN _s11 AS _s11
-    ON _s11.l_linenumber = _t3.anything_l_linenumber
-    AND _s11.l_orderkey = _t3.anything_l_orderkey
-    AND _s11.o_orderkey = _t3.anything_o_orderkey
+    ON _s11.l_linenumber = _t3.l_linenumber
+    AND _s11.l_orderkey = _t3.l_orderkey
+    AND _s11.o_orderkey = _t3.o_orderkey
   WHERE
     _t3.anything_o_orderstatus = 'F'
   GROUP BY

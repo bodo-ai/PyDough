@@ -17,9 +17,9 @@ WITH _t3 AS (
 ), _t1 AS (
   SELECT
     ANY_VALUE(nation.n_name) AS anything_n_name,
-    ANY_VALUE(nation.n_nationkey) AS anything_n_nationkey,
     ANY_VALUE(nation.n_regionkey) AS anything_n_regionkey,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    nation.n_nationkey
   FROM tpch.nation AS nation
   JOIN _s1 AS _s1
     ON _s1.c_nationkey = nation.n_nationkey
@@ -76,9 +76,9 @@ SELECT
   _s7.max_c_acctbal AS max_cust_acctbal
 FROM _t1 AS _t1
 JOIN _s7 AS _s7
-  ON _s7.c_nationkey = _t1.anything_n_nationkey
+  ON _s7.c_nationkey = _t1.n_nationkey
 JOIN _s15 AS _s15
-  ON _s15.n_nationkey = _t1.anything_n_nationkey
+  ON _s15.n_nationkey = _t1.n_nationkey
 WHERE
   _t1.anything_n_regionkey IN (1, 3)
 ORDER BY

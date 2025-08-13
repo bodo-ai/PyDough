@@ -6,7 +6,7 @@ WITH _s4 AS (
 ), _t2 AS (
   SELECT
     ANY_VALUE(nation.n_regionkey) AS anything_n_regionkey,
-    ANY_VALUE(_s0.r_regionkey) AS anything_r_regionkey
+    _s0.r_regionkey
   FROM _s4 AS _s0
   JOIN tpch.nation AS nation
     ON _s0.r_regionkey = nation.n_regionkey
@@ -19,18 +19,18 @@ WITH _s4 AS (
 ), _s5 AS (
   SELECT
     COUNT(*) AS n_rows,
-    anything_r_regionkey
+    r_regionkey
   FROM _t2
   WHERE
-    anything_n_regionkey = anything_r_regionkey
+    anything_n_regionkey = r_regionkey
   GROUP BY
-    anything_r_regionkey
+    r_regionkey
 )
 SELECT
   _s4.r_name AS region_name,
   COALESCE(_s5.n_rows, 0) AS n_nations
 FROM _s4 AS _s4
 LEFT JOIN _s5 AS _s5
-  ON _s4.r_regionkey = _s5.anything_r_regionkey
+  ON _s4.r_regionkey = _s5.r_regionkey
 ORDER BY
   _s4.r_name
