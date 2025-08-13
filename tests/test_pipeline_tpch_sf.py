@@ -25,6 +25,7 @@ from tests.testing_utilities import (
     harmonize_types,
 )
 from .test_pipeline_tpch import tpch_pipeline_test_data
+from .test_pipeline_defog_custom import defog_custom_pipeline_test_data
 
 from .testing_utilities import PyDoughPandasTest
 from pydough import init_pydough_context, to_df, to_sql
@@ -56,7 +57,7 @@ def snowflake_params_tpch_q16_data(request) -> PyDoughPandasTest:
 def test_pipeline_e2e_tpch_sf_conn(
     tpch_pipeline_test_data: PyDoughPandasTest,
     get_sf_sample_graph: graph_fetcher,
-    sf_conn_tpch_db_context: DatabaseContext,
+    sf_conn_db_context: DatabaseContext,
 ):
     """
     Test executing the TPC-H queries from the original code generation,
@@ -64,7 +65,9 @@ def test_pipeline_e2e_tpch_sf_conn(
     Using the `connection` as keyword argument to the DatabaseContext.
     """
     tpch_pipeline_test_data.run_e2e_test(
-        get_sf_sample_graph, sf_conn_tpch_db_context, coerce_types=True
+        get_sf_sample_graph,
+        sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
+        coerce_types=True,
     )
 
 
@@ -129,7 +132,7 @@ def simple_week_sampler():
 @pytest.mark.execute
 def test_pipeline_e2e_tpch_simple_week(
     get_sf_sample_graph: graph_fetcher,
-    sf_conn_tpch_db_context: DatabaseContext,
+    sf_conn_db_context: DatabaseContext,
     week_handling_config: PyDoughConfigs,
 ):
     """
@@ -141,7 +144,7 @@ def test_pipeline_e2e_tpch_simple_week(
     result: pd.DataFrame = to_df(
         root,
         metadata=graph,
-        database=sf_conn_tpch_db_context,
+        database=sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
         config=week_handling_config,
     )
 
@@ -206,3 +209,18 @@ def test_pipeline_e2e_tpch_simple_week(
             result[col_name], expected_df[col_name]
         )
     pd.testing.assert_frame_equal(result, expected_df, check_dtype=False)
+
+
+@pytest.mark.snowflake
+@pytest.mark.execute
+def test_pipeline_sf_e2e_defog_custom(
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
+    get_sf_defog_graphs: graph_fetcher,
+    sf_conn_db_context: DatabaseContext,
+):
+    """
+    Test executing the defog analytical queries with Snowflake database.
+    """
+    defog_custom_pipeline_test_data.run_e2e_test(
+        get_sf_defog_graphs, sf_conn_db_context("DEFOG", "BROKER"), coerce_types=True
+    )
