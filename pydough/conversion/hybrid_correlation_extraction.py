@@ -237,6 +237,7 @@ class HybridCorrelationExtractor:
                         assert bottom_subtree.agg_keys is not None
                         for _, rhs_key in new_equi_filters:
                             bottom_subtree.agg_keys.append(rhs_key)
+                    connection.always_exists = False
 
                 if len(new_general_filters) > 0:
                     if bottom_subtree.general_join_condition is not None:
@@ -260,6 +261,7 @@ class HybridCorrelationExtractor:
                         bottom_subtree.general_join_condition = HybridFunctionExpr(
                             pydop.BAN, new_general_filters, BooleanType()
                         )
+                    connection.always_exists = False
 
                 # Update the filter condition with the new conjunction of terms
                 if new_conjunction != conjunction:
