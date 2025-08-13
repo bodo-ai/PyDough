@@ -114,7 +114,9 @@ class PartitionChild(ChildOperatorChildAccess):
                 else:
                     assert context.ancestor_context is not None
                     context = context.ancestor_context
-            return Reference(context, term_name)
+            return Reference(
+                context, term_name, context.get_expr(term_name).pydough_type
+            )
 
         return super().get_term(term_name)
 

@@ -619,7 +619,8 @@ class Qualifier:
                 if isinstance(unqualified_parent, UnqualifiedRoot):
                     # If at the root, the access must be a reference to a scalar
                     # attribute accessible in the current context.
-                    return self.builder.build_reference(context, name)
+                    typ: PyDoughType = context.get_expr(name).pydough_type
+                    return self.builder.build_reference(context, name, typ)
                 else:
                     # Otherwise, the access is a reference to a scalar attribute of
                     # a child collection node of the current context. Add this new

@@ -132,7 +132,9 @@ class CollectionAccess(ChildAccess):
                 else:
                     assert context.ancestor_context is not None
                     context = context.ancestor_context
-            return Reference(context, term_name)
+            return Reference(
+                context, term_name, context.get_expr(term_name).pydough_type
+            )
 
         return self.get_term_from_property(term_name)
 

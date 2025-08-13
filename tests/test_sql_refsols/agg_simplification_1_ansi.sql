@@ -78,8 +78,7 @@ SELECT
   0 AS qu5,
   0.5 AS qu6,
   NULL AS qu7,
-  PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) NULLS LAST) AS qu8
+  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS qu8
 FROM main.sbticker
 GROUP BY
   LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)

@@ -28,7 +28,15 @@ class ChildReferenceExpression(Reference):
         self._child_idx: int = child_idx
         self._term_name: str = term_name
         self._expression: PyDoughExpressionQDAG = self._collection.get_expr(term_name)
+        self._term_type = self._expression.pydough_type
         collection.verify_singular_terms([self.expression])
+
+    @property
+    def expression(self) -> PyDoughExpressionQDAG:
+        """
+        The expression that the ChildReferenceExpression refers to.
+        """
+        return self._expression
 
     @property
     def child_idx(self) -> int:
