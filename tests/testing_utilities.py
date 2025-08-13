@@ -3,6 +3,8 @@ Utilities used by PyDough test files, such as the TestInfo classes used to
 build QDAG nodes for unit tests.
 """
 
+from types import NoneType
+
 from dateutil import parser  # type: ignore[import-untyped]
 
 __all__ = [
@@ -1295,6 +1297,8 @@ def harmonize_types(column_a, column_b):
     for comparison equality check operations.
 
     The function performs type conversions based on common mismatches, including:
+    - None to ' ' for string and NoneType columns
+    - Decimal to integer conversion
     - Decimal to float conversion
     - String to datetime or date conversion
     - Date to string or datetime conversion
@@ -1308,6 +1312,20 @@ def harmonize_types(column_a, column_b):
     Returns:
         A tuple of the two harmonized columns.
     """
+    if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
+        isinstance(elem, (str, NoneType)) for elem in column_b
+    ):
+        return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
+            lambda x: "" if pd.isna(x) else str(x)
+        )
+    if any(isinstance(elem, Decimal) for elem in column_a) and any(
+        isinstance(elem, int) for elem in column_b
+    ):
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else int(x)), column_b
+    if any(isinstance(elem, int) for elem in column_a) and any(
+        isinstance(elem, Decimal) for elem in column_b
+    ):
+        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else int(x))
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, float) for elem in column_b
     ):
