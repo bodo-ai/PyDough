@@ -1,5 +1,7 @@
 """
-TODO
+Logic for pulling correlated filters at the bottom of a hybrid subtree up into
+the join conditions of the hybrid connection, to eliminate correlation where
+possible.
 """
 
 __all__ = ["HybridCorrelationExtractor"]
@@ -32,7 +34,7 @@ if TYPE_CHECKING:
 
 class HybridCorrelationExtractor:
     """
-    TODO
+    Class encapsulating the correlation extraction procedure for hybrid trees.
     """
 
     def __init__(self, translator: "HybridTranslator"):
@@ -133,7 +135,12 @@ class HybridCorrelationExtractor:
         to a join condition if possible, thus removing the correlation. The
         transformation is done in-place.
 
-        TODO
+        Args:
+            `subtree`: the hybrid subtree to attempt correlation extraction on.
+            `connection`: the hybrid connection containing the subtree.
+            `levels_from_bottom`: the number of levels from the bottom of the
+                connection subtree to the current subtree, used to determine the
+                shifts required for the right-hand side expressions.
         """
         bottom_subtree: HybridTree = connection.subtree
         is_equijoin: bool = bottom_subtree.general_join_condition is None
@@ -274,14 +281,35 @@ class HybridCorrelationExtractor:
         levels_from_bottom: int,
     ) -> None:
         """
-        TODO
+        Main recursive traversal procedure for correlation extraction. The
+        procedure traverses the hybrid tree in a bottom-up manner, attempting to
+        extract correlated filters from child subtrees before processing the
+        current hybrid subtree. The transformation is done in-place.
+
+        Args:
+            `hybrid`: the hybrid tree to process.
+            `connection`: the hybrid connection containing the current hybrid
+            subtree, or None if the current hybrid tree is at the root level.
+            `levels_from_bottom`: the number of levels from the bottom of the
+            connection subtree to the current subtree, used to determine the
+            shifts required for the right-hand side expressions.
         """
+        # First, recursively transform all of the children of the current tree,
+        # transforming their subtrees relative to that child connection from the
+        # bottom to the top.
         for child in hybrid.children:
             self.correlation_extraction_traversal(child.subtree, child, 0)
 
+        # If we are inside a connection, attempt to extract correlated filters
+        # from the current hybrid subtree level's pipeline into the connection.
         if connection is not None:
             self.attempt_correlation_extraction(hybrid, connection, levels_from_bottom)
 
+        # If any of the operations in the current pipeline contain window
+        # functions or limits, replace connection with None so that invocations
+        # done on the parent levels within the hybrid tree do not attempt to
+        # call attempt_correlation_extraction, since the filter cannot be pulled
+        # out of the subtree without changing the behavior of the limit/window.
         for operation in hybrid.pipeline:
             if (
                 (
