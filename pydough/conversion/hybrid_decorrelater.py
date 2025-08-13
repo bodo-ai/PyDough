@@ -354,12 +354,6 @@ class HybridDecorrelater:
             child_height += 1
             child_root = child_root.parent
         # Link the top level of the child subtree to the new parent.
-        # print()
-        # print("-->")
-        # print(new_parent)
-        # print("***")
-        # print(child.subtree)
-        # print(child.subtree.join_keys)
         original_join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
             child.subtree.join_keys
         )
