@@ -331,10 +331,21 @@ def build_filter(
         the set of filters is empty, just returns `node`. Ignores any filter
         condition that is always True.
     """
-    # Remove literal True conditions from the filters, and just return the
-    # input if there are no filters left.
+    # Remove literal True conditions from the filters
     filters.discard(LiteralExpression(True, BooleanType()))
-    condition: RelationalExpression
+
+    # Remove any of the filters that are also present in the input if it is a
+    # join or filter node.
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        node, keep_input_names=True
+    )
+    if isinstance(node, (Join, Filter)):
+        condition_filters: set[RelationalExpression] = get_conjunctions(node.condition)
+        for expr in list(filters):
+            if expr.accept_shuttle(transposer) in condition_filters:
+                filters.discard(expr)
+
+    # Just return the input if there are no filters left.
     if len(filters) == 0:
         # If columns was provided, use it to create a Project node
         if columns is not None:
@@ -352,14 +363,12 @@ def build_filter(
             for pred in filters
         ):
             push_into_join = True
-            transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
-                node, keep_input_names=True
-            )
             filters = {exp.accept_shuttle(transposer) for exp in filters}
             filters.add(node.condition)
             filters.discard(LiteralExpression(True, BooleanType()))
 
     # Build the new filter condition by forming the conjunction.
+    condition: RelationalExpression
     if len(filters) == 1:
         condition = filters.pop()
     else:
@@ -372,7 +381,7 @@ def build_filter(
         new_join: RelationalNode = node.copy()
         assert isinstance(new_join, Join)
         new_join.condition = condition
-        new_join.cardinality = new_join.cardinality.add_potential_filter()
+        new_join.cardinality = new_join.cardinality.add_filter()
         if columns is not None:
             return Project(new_join, columns)
         return new_join

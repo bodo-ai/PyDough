@@ -5,7 +5,7 @@ ROOT(columns=[('name', c_name), ('largest_diff', IFF(ABS(min_diff) > max_diff, m
   AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'max_diff': MAX(revenue_delta), 'min_diff': MIN(revenue_delta)})
    PROJECT(columns={'o_custkey': o_custkey, 'revenue_delta': DEFAULT_TO(sum_r, 0:numeric) - PREV(args=[DEFAULT_TO(sum_r, 0:numeric)], partition=[o_custkey], order=[(o_orderdate):asc_last])})
     FILTER(condition=PRESENT(PREV(args=[DEFAULT_TO(sum_r, 0:numeric)], partition=[o_custkey], order=[(o_orderdate):asc_last])), columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'sum_r': sum_r})
-     JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'o_custkey': t0.o_custkey, 'o_orderdate': t0.o_orderdate, 'sum_r': t1.sum_r})
+     JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'o_custkey': t0.o_custkey, 'o_orderdate': t0.o_orderdate, 'sum_r': t1.sum_r})
       FILTER(condition=YEAR(o_orderdate) == 1994:numeric, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey})
        SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey})
       AGGREGATE(keys={'l_orderkey': l_orderkey}, aggregations={'sum_r': SUM(l_extendedprice * 1:numeric - l_discount)})
