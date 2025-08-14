@@ -3,11 +3,12 @@ This file contains functionality for interacting with SQLGlot expressions
 that can act as wrappers around the internal implementation of SQLGlot.
 """
 
+import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
 
-__all__ = ["get_glot_name", "set_glot_alias", "unwrap_alias"]
+__all__ = ["get_glot_name", "is_boolean_expression", "set_glot_alias", "unwrap_alias"]
 
 
 def get_glot_name(expr: SQLGlotExpression) -> str | None:
@@ -67,3 +68,34 @@ def unwrap_alias(expr: SQLGlotExpression) -> SQLGlotExpression:
         The unwrapped expression.
     """
     return expr.this if isinstance(expr, SQLGlotAlias) else expr
+
+
+def is_boolean_expression(expr: SQLGlotExpression) -> bool:
+    """Check if the given expression is a boolean expression.
+
+    Args:
+        expr The expression to check.
+
+    Returns:
+        True if the expression is a boolean expression, False otherwise.
+    """
+    boolean_types = (
+        sqlglot_expressions.In,
+        sqlglot_expressions.EQ,
+        sqlglot_expressions.NEQ,
+        sqlglot_expressions.GT,
+        sqlglot_expressions.GTE,
+        sqlglot_expressions.LT,
+        sqlglot_expressions.LTE,
+        sqlglot_expressions.And,
+        sqlglot_expressions.Or,
+        sqlglot_expressions.Not,
+        sqlglot_expressions.Between,
+        sqlglot_expressions.Like,
+        sqlglot_expressions.ILike,
+        sqlglot_expressions.Is,
+    )
+    if isinstance(expr, boolean_types):
+        return True
+
+    return False

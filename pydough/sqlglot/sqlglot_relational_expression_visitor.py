@@ -28,7 +28,7 @@ from pydough.relational import (
 )
 from pydough.types import PyDoughType
 
-from .sqlglot_helpers import set_glot_alias
+from .sqlglot_helpers import is_boolean_expression, set_glot_alias
 from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
 if TYPE_CHECKING:
@@ -247,7 +247,12 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                     )
                 this = func(**lag_args)
             case "RELSUM":
-                this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
+                if self._dialect == DatabaseDialect.SNOWFLAKE and is_boolean_expression(
+                    arg_exprs[0]
+                ):
+                    this = sqlglot_expressions.CountIf.from_arg_list(arg_exprs)
+                else:
+                    this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
                 window_spec = self.get_window_spec(window_expression.kwargs)
             case "RELAVG":
                 this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)
