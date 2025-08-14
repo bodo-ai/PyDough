@@ -1,7 +1,7 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
   FILTER(condition=DEFAULT_TO(n_rows, 0:numeric) < RELAVG(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[], order=[]) & n_rows > 0:numeric, columns={})
-   JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows})
+   JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows})
     JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey})
      SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
      FILTER(condition=n_name == 'GERMANY':string, columns={'n_nationkey': n_nationkey})

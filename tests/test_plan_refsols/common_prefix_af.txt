@@ -6,7 +6,7 @@ ROOT(columns=[('nation_name', n_name), ('n_customers', n_rows), ('customer_name'
     SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
   FILTER(condition=sum_n_rows > 0:numeric, columns={'c_nationkey': c_nationkey, 'max_c_name': max_c_name, 'n_rows': n_rows})
    AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'max_c_name': MAX(c_name), 'n_rows': COUNT(), 'sum_n_rows': SUM(n_rows)})
-    JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'c_name': t1.c_name, 'c_nationkey': t0.c_nationkey, 'n_rows': t1.n_rows})
+    JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'c_name': t1.c_name, 'c_nationkey': t0.c_nationkey, 'n_rows': t1.n_rows})
      SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
      JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'c_name': t1.c_name, 'n_rows': t0.n_rows, 'o_custkey': t0.o_custkey})
       AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})

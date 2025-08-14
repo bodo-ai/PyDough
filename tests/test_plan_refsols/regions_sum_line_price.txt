@@ -1,5 +1,5 @@
 ROOT(columns=[('okey', r_regionkey), ('lsum', DEFAULT_TO(sum_sum_l_extendedprice, 0:numeric))], orderings=[])
- JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'r_regionkey': t0.r_regionkey, 'sum_sum_l_extendedprice': t1.sum_sum_l_extendedprice})
+ JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'r_regionkey': t0.r_regionkey, 'sum_sum_l_extendedprice': t1.sum_sum_l_extendedprice})
   SCAN(table=tpch.REGION, columns={'r_regionkey': r_regionkey})
   AGGREGATE(keys={'n_regionkey': n_regionkey}, aggregations={'sum_sum_l_extendedprice': SUM(sum_l_extendedprice)})
    JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, columns={'n_regionkey': t0.n_regionkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
