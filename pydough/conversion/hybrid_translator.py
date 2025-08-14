@@ -46,6 +46,7 @@ from pydough.qdag import (
 from pydough.types import BooleanType, NumericType
 
 from .hybrid_connection import ConnectionType, HybridConnection
+from .hybrid_correlation_extraction import HybridCorrelationExtractor
 from .hybrid_decorrelater import HybridDecorrelater
 from .hybrid_expressions import (
     HybridBackRefExpr,
@@ -1094,7 +1095,9 @@ class HybridTranslator:
                 )
             case SidedReference():
                 if expr.is_parent:
-                    return HybridSidedRefExpr(expr.term_name, expr.pydough_type)
+                    return HybridSidedRefExpr(
+                        HybridRefExpr(expr.term_name, expr.pydough_type)
+                    )
                 else:
                     return HybridRefExpr(expr.term_name, expr.pydough_type)
             case BackReferenceExpression():
@@ -1650,6 +1653,18 @@ class HybridTranslator:
         sync: HybridSyncretizer = HybridSyncretizer(self)
         return sync.syncretize_children(hybrid)
 
+    def run_correlation_extraction(self, hybrid: "HybridTree") -> None:
+        """
+        Invokes the procedure to extract correlated references from the hybrid
+        tree, attempting to coerce some filters with correlated references into
+        join conditions. The transformation is done in-place.
+
+        Args:
+            `hybrid`: The hybrid tree to run correlation extraction on.
+        """
+        extractor: HybridCorrelationExtractor = HybridCorrelationExtractor(self)
+        extractor.run_correlation_extraction(hybrid)
+
     def run_hybrid_decorrelation(self, hybrid: "HybridTree") -> None:
         """
         Invokes the procedure to remove correlated references from a hybrid tree
@@ -1682,12 +1697,15 @@ class HybridTranslator:
         # 3. Syncretize any children of the hybrid tree that share a common
         # prefix, thus eliminating duplicate logic.
         self.run_syncretization(hybrid)
-        # 4. Run the de-correlation procedure.
+        # 4. Run the correlation extraction procedure to attempt to coerce some
+        # filters with correlated references into join conditions.
+        self.run_correlation_extraction(hybrid)
+        # 5. Run the de-correlation procedure.
         self.run_hybrid_decorrelation(hybrid)
-        # 5. Run any final rewrites, such as turning MEDIAN into an average
+        # 6. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)
-        # 6. Remove any dead children in the hybrid tree that are no longer
+        # 7. Remove any dead children in the hybrid tree that are no longer
         # being used.
         hybrid.remove_dead_children(set())
         return hybrid

@@ -18,9 +18,13 @@ SELECT
   COUNT(*) AS co5,
   COUNT(*) AS co6,
   0 AS co7,
-  COUNT(*) * CAST(NOT (
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) IS NULL
-  ) AS BIGINT) AS co8,
+  COUNT(*) * CASE
+    WHEN NOT (
+      LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) IS NULL
+    )
+    THEN 1
+    ELSE 0
+  END AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,

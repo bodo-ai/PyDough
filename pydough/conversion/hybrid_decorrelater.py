@@ -8,6 +8,9 @@ __all__ = ["HybridDecorrelater"]
 
 import copy
 
+import pydough.pydough_operators as pydop
+from pydough.types import BooleanType
+
 from .hybrid_connection import ConnectionType, HybridConnection
 from .hybrid_expressions import (
     HybridBackRefExpr,
@@ -351,6 +354,10 @@ class HybridDecorrelater:
             child_height += 1
             child_root = child_root.parent
         # Link the top level of the child subtree to the new parent.
+        original_join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
+            child.subtree.join_keys
+        )
+        original_general_join: HybridExpr | None = child.subtree.general_join_condition
         new_parent.add_successor(child_root)
         # Update the join keys to join on the unique keys of all the ancestors,
         # and the aggregation keys along with them.
@@ -375,6 +382,37 @@ class HybridDecorrelater:
                 parent_agg_keys.append(lhs_key)
             current_level = current_level.parent
             additional_levels += 1
+
+        # Copy over all existing join/general conditions into a new filter at
+        # the bottom of the child subtree, in case any new filters were pushed
+        # into those join connections that are now being deleted by the use of
+        # a new parent link.
+        new_conds: list[HybridExpr] = []
+        if original_join_keys is not None:
+            for lhs_key, rhs_key in original_join_keys:
+                if (lhs_key, rhs_key) in new_join_keys:
+                    continue
+                new_conds.append(
+                    HybridFunctionExpr(
+                        pydop.EQU,
+                        [lhs_key.shift_back(rhs_shift), rhs_key],
+                        BooleanType(),
+                    )
+                )
+        if original_general_join is not None:
+            new_conds.append(original_general_join.expand_sided(rhs_shift))
+        if len(new_conds) > 0:
+            conjunction: HybridExpr
+            if len(new_conds) == 1:
+                conjunction = new_conds[0]
+            else:
+                conjunction = HybridFunctionExpr(pydop.BAN, new_conds, BooleanType())
+            child.subtree.add_operation(
+                HybridFilter(child.subtree.pipeline[-1], conjunction)
+            )
+
+        # Replace the original parent link with the new one using the uniqueness
+        # keys of the parent to link it to the de-correlated child.
         child.subtree.join_keys = new_join_keys
         child.subtree.general_join_condition = None
         # Replace any correlated references to the original parent with BACK references.

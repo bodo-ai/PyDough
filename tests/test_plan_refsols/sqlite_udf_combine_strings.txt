@@ -1,5 +1,5 @@
 ROOT(columns=[('s1', combine_strings_r_name), ('s2', agg_1), ('s3', agg_2), ('s4', agg_3)], orderings=[])
- JOIN(condition=True:bool, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'agg_1': t0.agg_1, 'agg_2': t0.agg_2, 'agg_3': t1.agg_3, 'combine_strings_r_name': t0.combine_strings_r_name})
+ JOIN(condition=True:bool, type=LEFT, cardinality=SINGULAR_FILTER, columns={'agg_1': t0.agg_1, 'agg_2': t0.agg_2, 'agg_3': t1.agg_3, 'combine_strings_r_name': t0.combine_strings_r_name})
   JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, columns={'agg_1': t0.agg_1, 'agg_2': t1.agg_2, 'combine_strings_r_name': t0.combine_strings_r_name})
    AGGREGATE(keys={}, aggregations={'agg_1': COMBINE_STRINGS(KEEP_IF(r_name, r_name != 'EUROPE':string), ', ':string), 'combine_strings_r_name': COMBINE_STRINGS(r_name)})
     SCAN(table=tpch.REGION, columns={'r_name': r_name})

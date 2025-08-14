@@ -21,7 +21,6 @@ from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.simplify import simplify
-from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
 
 import pydough
 from pydough.configs import PyDoughConfigs
@@ -38,6 +37,7 @@ from pydough.relational.relational_expressions import (
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
+from .override_unnest_subqueries import unnest_subqueries
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]

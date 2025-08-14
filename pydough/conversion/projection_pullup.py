@@ -419,7 +419,7 @@ def simplify_agg(
             pydop.COUNT,
             pydop.NDISTINCT,
         )
-        and len(agg.inputs) == 1
+        and len(agg.inputs) >= 1
     ):
         arg = agg.inputs[0]
         if arg in reverse_keys:
@@ -436,9 +436,13 @@ def simplify_agg(
                     [
                         out_ref,
                         CallExpression(
-                            pydop.INTEGER,
+                            pydop.IFF,
                             NumericType(),
-                            [CallExpression(pydop.PRESENT, BooleanType(), [key_ref])],
+                            [
+                                CallExpression(pydop.PRESENT, BooleanType(), [key_ref]),
+                                one_expr,
+                                zero_expr,
+                            ],
                         ),
                     ],
                 ), count_star
@@ -471,12 +475,11 @@ def simplify_agg(
         arg = agg.inputs[0]
         if isinstance(arg, LiteralExpression) or arg in reverse_keys:
             return arg, None
-
     # In all other cases, we just return the aggregation as is.
     return out_ref, agg
 
 
-def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
+def pull_project_into_aggregate(node: Aggregate) -> Aggregate:
     """
     Attempts to pull columns from a Project node that is an input to an
     Aggregate into the inputs of the aggregation calls of the Aggregate, and
@@ -485,6 +488,9 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
 
     Args:
         `node`: The Aggregate node to pull the Project columns into.
+
+    Returns:
+        The transformed version of the Aggregate node.
     """
     if not isinstance(node.input, Project):
         return node
@@ -498,13 +504,6 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
         pull_project_helper(node.input, None)
     )
 
-    # Build up the columns of a new project that points to all of the output
-    # columns of the aggregate. Start with just the keys, since the aggs will
-    # be added later.
-    new_columns: dict[str, RelationalExpression] = {
-        name: ColumnReference(name, expr.data_type) for name, expr in node.keys.items()
-    }
-
     # Apply the substitutions to the keys and aggregations of the aggregate.
     new_keys: dict[str, RelationalExpression] = {
         name: apply_substitution(expr, substitutions, {})
@@ -514,18 +513,52 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
     # Apply the substitutions to the aggregation calls of the aggregate,
     # then try to simplify them, before updating the `new_columns`.
     new_aggs: dict[str, CallExpression] = {}
-    out_expr: RelationalExpression
-    new_agg_expr: CallExpression | None
     for name, expr in node.aggregations.items():
         new_expr = apply_substitution(expr, substitutions, {})
         assert isinstance(new_expr, CallExpression)
+        new_aggs[name] = new_expr
+
+    return Aggregate(
+        input=node.input,
+        keys=new_keys,
+        aggregations=new_aggs,
+    )
+
+
+def transform_aggregations(node: Aggregate) -> RelationalNode:
+    """
+    Transforms an Aggregate node by running various simplifications on its
+    aggregation calls, potentially creating compound expressions in a parent
+    projection.
+
+    Args:
+        `node`: The Aggregate node to transform.
+
+    Returns:
+        Either the original node if no transformations were applicable, or a
+        new relational node that contains the transformed aggregation logic.
+    """
+
+    # Build up the columns of a new project that points to all of the output
+    # columns of the aggregate. Start with just the keys, since the aggs will
+    # be added later.
+    new_columns: dict[str, RelationalExpression] = {
+        name: ColumnReference(name, expr.data_type) for name, expr in node.keys.items()
+    }
+
+    # For every aggregation, try to simplify it, potentially adding new columns
+    # to the parent project.
+    new_aggs: dict[str, CallExpression] = {}
+    out_expr: RelationalExpression
+    new_agg_expr: CallExpression | None
+    for name, expr in node.aggregations.items():
         # Simplify agg returns the value used in the project to store the
         # answer, and the aggregation value used to derive it (if needed). If
         # the aggregation value is None, then it means the aggregation was
         # simplified in a way that could be derived entirely in the project.
         # Otherwise, the aggregation value is referenced in the project via
         # a reference to `name`.
-        out_expr, new_agg_expr = simplify_agg(new_keys, new_expr, name)
+        out_expr, new_agg_expr = simplify_agg(node.keys, expr, name)
         new_columns[name] = out_expr
         if new_agg_expr is not None:
             new_aggs[name] = new_agg_expr
@@ -537,7 +570,7 @@ def pull_project_into_aggregate(node: Aggregate) -> RelationalNode:
     # `key`.
     agg: Aggregate = Aggregate(
         input=node.input,
-        keys=new_keys,
+        keys=node.keys,
         aggregations=new_aggs,
     )
     return merge_adjacent_projects(Project(input=agg, columns=new_columns))
@@ -723,7 +756,8 @@ class ProjectionPullupShuttle(RelationalShuttle):
         new_node = self.generic_visit_inputs(node)
         assert isinstance(new_node, Aggregate)
         new_node = merge_adjacent_aggregations(new_node)
-        return pull_project_into_aggregate(new_node)
+        new_node = pull_project_into_aggregate(new_node)
+        return transform_aggregations(new_node)
 
 
 def pullup_projections(node: RelationalNode) -> RelationalNode:
