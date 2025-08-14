@@ -39,11 +39,7 @@ SELECT
   RPAD(CAST(p_size AS TEXT), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
-  CASE
-    WHEN LENGTH('o') = 0
-    THEN 0
-    ELSE CAST(LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', '')) / LENGTH('o') AS BIGINT)
-  END + (
+  REGEXP_COUNT(p_name, 'o') + (
     (
       CHARINDEX('o', p_name) - 1
     ) / 100.0

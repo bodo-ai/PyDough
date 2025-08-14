@@ -753,7 +753,7 @@ class BaseTransformBindings:
                                     ),
                                     expression=sql_zero,
                                 ),
-                                sql_empty_str,  # If length ≤ 0, return empty string
+                                sql_zero,  # If length ≤ 0, return empty string
                                 # Otherwise calculate actual length
                                 sqlglot_expressions.Sub(
                                     this=stop_idx_adjusted_glot,
@@ -795,7 +795,7 @@ class BaseTransformBindings:
                                             ),
                                             expression=sql_zero,
                                         ),
-                                        sql_empty_str,  # If length ≤ 0, return empty string
+                                        sql_zero,  # If length ≤ 0, return empty string
                                         sqlglot_expressions.Sub(  # Otherwise calculate actual length
                                             this=stop_idx_adjusted_glot,
                                             expression=start_idx_adjusted_glot,
