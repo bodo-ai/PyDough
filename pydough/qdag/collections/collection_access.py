@@ -8,6 +8,8 @@ __all__ = ["CollectionAccess"]
 
 from functools import cache
 
+import pydough
+from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
     PropertyMetadata,
@@ -16,7 +18,6 @@ from pydough.metadata import (
 )
 from pydough.metadata.properties import SubcollectionRelationshipMetadata
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
     BackReferenceExpression,
     CollationExpression,
@@ -107,14 +108,16 @@ class CollectionAccess(ChildAccess):
 
     @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
+        self.verify_term_exists(term_name)
+
         # Special handling of terms down-streamed from an ancestor CALCULATE
         # clause.
         if term_name in self.ancestral_mapping:
             # Verify that the ancestor name is not also a name in the current
             # context.
             if term_name in self.calc_terms:
-                raise PyDoughQDAGException(
-                    f"Cannot have term name {term_name!r} used in an ancestor of collection {self!r}"
+                raise pydough.active_session.error_builder.down_streaming_conflict(
+                    collection=self, term_name=term_name
                 )
             # Create a back-reference to the ancestor term.
             return BackReferenceExpression(
@@ -133,9 +136,6 @@ class CollectionAccess(ChildAccess):
                 context, term_name, context.get_expr(term_name).pydough_type
             )
 
-        if term_name not in self.all_terms:
-            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
-
         return self.get_term_from_property(term_name)
 
     def get_term_from_property(self, term_name: str) -> PyDoughQDAG:
@@ -151,7 +151,7 @@ class CollectionAccess(ChildAccess):
         elif isinstance(property, TableColumnMetadata):
             return ColumnProperty(property)
         else:
-            raise PyDoughQDAGException(
+            raise NotImplementedError(
                 f"Unsupported property type for collection access: {property.__class__.name}"
             )
 
