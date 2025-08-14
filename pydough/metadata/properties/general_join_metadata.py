@@ -9,9 +9,7 @@ __all__ = ["GeneralJoinMetadata"]
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
     NoExtraKeys,
-    extract_array,
     extract_bool,
-    extract_object,
     extract_string,
 )
 from pydough.metadata.graphs import GraphMetadata
@@ -48,9 +46,9 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         condition: str,
         self_name: str,
         other_name: str,
-        description: str | None,
-        synonyms: list[str] | None,
-        extra_semantic_info: dict | None,
+        description: str | None = None,
+        synonyms: list[str] | None = None,
+        extra_semantic_info: dict | None = None,
     ):
         super().__init__(
             name,
@@ -99,7 +97,7 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         return comp
 
     @staticmethod
-    def create_error_name(name: str, collection_error_name: str):
+    def create_error_name(name: str, collection_error_name: str) -> str:
         return f"general join property {name!r} of {collection_error_name}"
 
     @staticmethod
@@ -155,18 +153,6 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
             always_matches = extract_bool(property_json, "always matches", error_name)
         condition = extract_string(property_json, "condition", error_name)
 
-        # Extract the optional fields from the JSON object.
-        description: str | None = None
-        synonyms: list[str] | None = None
-        extra_semantic_info: dict | None = None
-        if "description" in property_json:
-            description = extract_string(property_json, "description", error_name)
-        if "synonyms" in property_json:
-            synonyms = extract_array(property_json, "synonyms", error_name)
-        if "extra semantic info" in property_json:
-            extra_semantic_info = extract_object(
-                property_json, "extra semantic info", error_name
-            )
         NoExtraKeys(GeneralJoinMetadata.allowed_fields).verify(
             property_json, error_name
         )
@@ -182,10 +168,9 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
             condition,
             "self",
             "other",
-            description,
-            synonyms,
-            extra_semantic_info,
         )
+        # Parse the optional common semantic properties like the description.
+        property.parse_optional_properties(property_json)
         parent_collection.add_property(property)
 
     def build_reverse_relationship(

@@ -69,7 +69,7 @@ class PropertyMetadata(AbstractMetadata):
 
     @staticmethod
     @abstractmethod
-    def create_error_name(name: str, collection_error_name: str):
+    def create_error_name(name: str, collection_error_name: str) -> str:
         """
         Creates a string used for the purposes of the `error_name` property.
 
