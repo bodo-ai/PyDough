@@ -36,15 +36,15 @@ WITH _s2 AS (
 SELECT
   year AS yr,
   ROUND(
-    SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(sum_expr_3, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(sum_expr_3) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS cum_ir,
   ROUND(
     (
       100.0 * (
-        COALESCE(sum_expr_3, 0) - LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year NULLS LAST)
+        sum_expr_3 - LAG(sum_expr_3, 1) OVER (ORDER BY year NULLS LAST)
       )
-    ) / LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year NULLS LAST),
+    ) / LAG(sum_expr_3, 1) OVER (ORDER BY year NULLS LAST),
     2
   ) AS pct_bought_change,
   ROUND(
@@ -55,7 +55,7 @@ SELECT
     ) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year NULLS LAST),
     2
   ) AS pct_incident_change,
-  COALESCE(sum_expr_3, 0) AS bought,
+  sum_expr_3 AS bought,
   COALESCE(sum_n_rows, 0) AS incidents
 FROM _t1
 WHERE

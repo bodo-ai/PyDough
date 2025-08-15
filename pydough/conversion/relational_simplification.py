@@ -171,6 +171,18 @@ guaranteed to be non-null, the output is guaranteed to be non-null as well.
 """
 
 
+NULL_IF_INPUT_NULL_OPS: set[pydop.PyDoughOperator] = (
+    NULL_PROPAGATING_OPS | {pydop.GETPART, pydop.DATETIME}
+) - {pydop.BOR, pydop.SLICE}
+"""
+A set of operators that will always output null if any of their inputs are null.
+This includes all operators from NULL_PROPAGATING_OPS unless it is possible for
+them to output a non-null value even if some inputs are null (e.g. OR, SLICE),
+and also include some operators that can return NULL even if none of the inputs
+are null (e.g. GETPART or DATEDIFF).
+"""
+
+
 class SimplificationShuttle(RelationalExpressionShuttle):
     """
     Shuttle implementation for simplifying relational expressions. Has three
@@ -667,6 +679,16 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         output_predicates: PredicateSet = PredicateSet()
         union_set: PredicateSet = PredicateSet.union(arg_predicates)
         intersect_set: PredicateSet = PredicateSet.intersect(arg_predicates)
+
+        # Return None if any of the inputs are None and the operator is
+        # guaranteed to return NULL if any of its inptus are NULL.
+        if expr.op in NULL_IF_INPUT_NULL_OPS:
+            if any(
+                isinstance(arg, LiteralExpression) and arg.value is None
+                for arg in expr.inputs
+            ):
+                self.stack.append(output_predicates)
+                return LiteralExpression(None, expr.data_type)
 
         # If the call has null propagating rules, all of the arguments are
         # non-null, the output is guaranteed to be non-null.
@@ -1335,6 +1357,34 @@ class SimplificationVisitor(RelationalVisitor):
         )
         self.stack.append(output_predicates)
 
+    def infer_null_predicates_from_condition(
+        self,
+        output_predicates: dict[RelationalExpression, PredicateSet],
+        condition: RelationalExpression,
+        columns: dict[str, RelationalExpression],
+    ) -> None:
+        """
+        TODO
+        """
+        from .filter_pushdown import NullReplacementShuttle
+
+        self.shuttle.input_predicates = {}
+        for expr, preds in output_predicates.items():
+            if preds.not_null:
+                continue
+            if isinstance(expr, ColumnReference) and expr.name in columns:
+                expr = columns[expr.name]
+                if isinstance(expr, ColumnReference):
+                    shuttle: NullReplacementShuttle = NullReplacementShuttle(
+                        {expr.name}
+                    )
+                    new_cond: RelationalExpression = condition.accept_shuttle(shuttle)
+                    new_cond = new_cond.accept_shuttle(self.shuttle)
+                    if isinstance(new_cond, LiteralExpression) and not bool(
+                        new_cond.value
+                    ):
+                        preds.not_null = True
+
     def visit_filter(self, node: Filter) -> None:
         output_predicates: dict[RelationalExpression, PredicateSet] = (
             self.generic_visit(node)
@@ -1344,6 +1394,11 @@ class SimplificationVisitor(RelationalVisitor):
         self.shuttle.stack.pop()
         for shuttle in self.additional_shuttles:
             node._condition = node.condition.accept_shuttle(shuttle)
+        self.infer_null_predicates_from_condition(
+            output_predicates,
+            node.condition,
+            node.columns,
+        )
         self.stack.append(output_predicates)
 
     def visit_join(self, node: Join) -> None:
@@ -1364,6 +1419,13 @@ class SimplificationVisitor(RelationalVisitor):
                     and expr.input_name != node.default_input_aliases[0]
                 ):
                     preds.not_null = False
+
+        if node.join_type in (JoinType.INNER, JoinType.SEMI):
+            self.infer_null_predicates_from_condition(
+                output_predicates,
+                node.condition,
+                node.columns,
+            )
         self.stack.append(output_predicates)
 
     def visit_limit(self, node: Limit) -> None:
