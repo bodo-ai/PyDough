@@ -1879,6 +1879,91 @@ def get_day_of_week(
             ),
             id="simplification_3",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " transactions"
+                " .WHERE(YEAR(date_time) == 2023)"
+                " .WHERE((RANKING(by=date_time.ASC()) == 1) | (RANKING(by=date_time.DESC()) == 1))"
+                " .CALCULATE("
+                " date_time,"
+                " s00 = DATETIME(DATETIME(date_time, 'start of week'), '-8 weeks'),"  # -> DATETIME(date_time, 'start of week', '-8 weeks')
+                " s01 = QUARTER(date_time) == 0,"  # KEEP_IF(False, PRESENT(date_time))
+                " s02 = 1 == QUARTER(date_time),"  # ISIN(MONTH(date_time), [1,2,3])
+                " s03 = QUARTER(date_time) == 2,"  # ISIN(MONTH(date_time), [4,5,6])
+                " s04 = 3 == QUARTER(date_time),"  # ISIN(MONTH(date_time), [7,8,9])
+                " s05 = QUARTER(date_time) == 4,"  # ISIN(MONTH(date_time), [10,11,12])
+                " s06 = 5 == QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s07 = 1 > QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s08 = QUARTER(date_time) < 2,"  # MONTH(date_time) < 4
+                " s09 = 3 > QUARTER(date_time),"  # MONTH(date_time) < 7
+                " s10 = QUARTER(date_time) < 4,"  # MONTH(date_time) < 10
+                " s11 = 5 > QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s12 = QUARTER(date_time) <= 0,"  # KEEP_IF(False, PRESENT(date_time))
+                " s13 = 1 >= QUARTER(date_time),"  # MONTH(date_time) <= 3
+                " s14 = QUARTER(date_time) <= 2,"  # MONTH(date_time) <= 6
+                " s15 = 3 >= QUARTER(date_time),"  # MONTH(date_time) <= 9
+                " s16 = QUARTER(date_time) <= 4,"  # KEEP_IF(True, PRESENT(date_time))
+                " s17 = 0 < QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s18 = QUARTER(date_time) > 1,"  # MONTH(date_time) > 3
+                " s19 = 2 < QUARTER(date_time),"  # MONTH(date_time) > 6
+                " s20 = QUARTER(date_time) > 3,"  # MONTH(date_time) > 9
+                " s21 = 4 < QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s22 = 1 <= QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s23 = QUARTER(date_time) >= 2,"  # MONTH(date_time) >= 4
+                " s24 = 3 <= QUARTER(date_time),"  # MONTH(date_time) >= 7
+                " s25 = QUARTER(date_time) >= 4,"  # MONTH(date_time) >= 10
+                " s26 = 5 <= QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s27 = QUARTER(date_time) != 0,"  # KEEP_IF(True, PRESENT(date_time))
+                " s28 = 1 != QUARTER(date_time),"  # NOT(ISIN(MONTH(date_time), [1,2,3]))
+                " s29 = QUARTER(date_time) != 2,"  # NOT(ISIN(MONTH(date_time), [4,5,6]))
+                " s30 = 3 != QUARTER(date_time),"  # NOT(ISIN(MONTH(date_time), [7,8,9]))
+                " s31 = QUARTER(date_time) != 4,"  # NOT(ISIN(MONTH(date_time), [10,11,12]))
+                " s32 = 5 != QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                "))",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "date_time": ["2023-01-15 10:00:00", "2023-04-03 16:15:00"],
+                        "s00": ["2022-11-20", "2023-02-05"],
+                        "s01": [0, 0],
+                        "s02": [1, 0],
+                        "s03": [0, 1],
+                        "s04": [0, 0],
+                        "s05": [0, 0],
+                        "s06": [0, 0],
+                        "s07": [0, 0],
+                        "s08": [1, 0],
+                        "s09": [1, 1],
+                        "s10": [1, 1],
+                        "s11": [1, 1],
+                        "s12": [0, 0],
+                        "s13": [1, 0],
+                        "s14": [1, 1],
+                        "s15": [1, 1],
+                        "s16": [1, 1],
+                        "s17": [1, 1],
+                        "s18": [0, 1],
+                        "s19": [0, 0],
+                        "s20": [0, 0],
+                        "s21": [0, 0],
+                        "s22": [1, 1],
+                        "s23": [0, 1],
+                        "s24": [0, 0],
+                        "s25": [0, 0],
+                        "s26": [0, 0],
+                        "s27": [1, 1],
+                        "s28": [0, 1],
+                        "s29": [1, 0],
+                        "s30": [1, 1],
+                        "s31": [1, 1],
+                        "s32": [1, 1],
+                    }
+                ),
+                "simplification_4",
+            ),
+            id="simplification_4",
+        ),
     ],
 )
 def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:

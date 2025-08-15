@@ -373,7 +373,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         pydop.LET,
                         expr.data_type,
                         [
-                            func_expr.inputs[0],
+                            self.switch_operator(func_expr, pydop.MONTH),
                             LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
                         ],
                     )
@@ -392,7 +392,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         pydop.LEQ,
                         expr.data_type,
                         [
-                            func_expr.inputs[0],
+                            self.switch_operator(func_expr, pydop.MONTH),
                             LiteralExpression(lit_expr.value * 3, NumericType()),
                         ],
                     )
@@ -408,10 +408,10 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 # QUARTER(x) > 1 <=> MONTH(X) > 3
                 if lit_expr.value in (1, 2, 3):
                     result = CallExpression(
-                        pydop.LET,
+                        pydop.GRT,
                         expr.data_type,
                         [
-                            func_expr.inputs[0],
+                            self.switch_operator(func_expr, pydop.MONTH),
                             LiteralExpression(lit_expr.value * 3, NumericType()),
                         ],
                     )
@@ -430,7 +430,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         pydop.GEQ,
                         expr.data_type,
                         [
-                            func_expr.inputs[0],
+                            self.switch_operator(func_expr, pydop.MONTH),
                             LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
                         ],
                     )
@@ -440,34 +440,95 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 # QUARTER(x) >= 6 <=> KEEP_IF(False, PRESENT(x))
                 elif lit_expr.value > 4:
                     result = conditional_false
-            # MONTH(x) > 0 <=> KEEP_IF(True, PRESENT(x)) (same for other units)
-            # MONTH(x) != -3 <=> KEEP_IF(True, PRESENT(x)) (same for other units)
+            # MONTH(x) > 0 <=> KEEP_IF(True, PRESENT(x)) (same for day)
+            # MONTH(x) != -3 <=> KEEP_IF(True, PRESENT(x)) (same for day)
             case (
                 pydop.GRT | pydop.NEQ,
-                pydop.MONTH | pydop.DAY | pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                pydop.MONTH | pydop.DAY,
                 NumericType(),
             ) if isinstance(lit_expr.value, int) and lit_expr.value < 1:
                 result = conditional_true
-            # MONTH(x) >= 1 <=> KEEP_IF(True, PRESENT(x)) (same for other units)
+            # MONTH(x) >= 1 <=> KEEP_IF(True, PRESENT(x)) (same for day)
             case (
                 pydop.GEQ,
-                pydop.MONTH | pydop.DAY | pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                pydop.MONTH | pydop.DAY,
                 NumericType(),
             ) if isinstance(lit_expr.value, int) and lit_expr.value <= 1:
                 result = conditional_true
-            # MONTH(x) < 1 <=> KEEP_IF(False, PRESENT(x)) (same for other units)
+            # MONTH(x) < 1 <=> KEEP_IF(False, PRESENT(x)) (same for day)
             case (
                 pydop.LET,
-                pydop.MONTH | pydop.DAY | pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                pydop.MONTH | pydop.DAY,
                 NumericType(),
             ) if isinstance(lit_expr.value, int) and lit_expr.value <= 1:
                 result = conditional_false
-            # MONTH(x) <= 0 <=> KEEP_IF(False, PRESENT(x)) (same for other units)
+            # MONTH(x) <= 0 <=> KEEP_IF(False, PRESENT(x)) (same for day)
+            # MONTH(x) == 0 <=> KEEP_IF(False, PRESENT(x)) (same for day)
             case (
-                pydop.LEQ,
-                pydop.MONTH | pydop.DAY | pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                pydop.LEQ | pydop.EQU,
+                pydop.MONTH | pydop.DAY,
                 NumericType(),
             ) if isinstance(lit_expr.value, int) and lit_expr.value < 1:
+                result = conditional_false
+            # HOUR(x) <= -1 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            # HOUR(x) == -1 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LEQ | pydop.EQU,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value < 0:
+                result = conditional_false
+            # HOUR(x) < 0 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LET,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 0:
+                result = conditional_false
+            # HOUR(x) > -1 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            # HOUR(x) != -1 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GRT | pydop.NEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value < 0:
+                result = conditional_true
+            # HOUR(x) >= 0 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 0:
+                result = conditional_true
+            # HOUR(x) > 60 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            # HOUR(x) == 60 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GRT | pydop.EQU,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value >= 60:
+                result = conditional_false
+            # HOUR(x) < 61 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            # HOUR(x) != 61 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LET | pydop.NEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value > 60:
+                result = conditional_true
+            # HOUR(x) <= 60 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value >= 60:
+                result = conditional_true
+            # HOUR(x) >= 61 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value > 60:
                 result = conditional_false
             case _:
                 # Fall back to the original expression by default.
@@ -955,6 +1016,19 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     output_predicates |= arg_predicates[0] & PredicateSet(
                         not_null=True, not_negative=True
                     )
+
+            # DATETIME(DATETIME(u, v, w), x, y, z) -> DATETIME(u, v, w, x, y, z)
+            case pydop.DATETIME:
+                if (
+                    isinstance(expr.inputs[0], CallExpression)
+                    and expr.inputs[0].op == pydop.DATETIME
+                ):
+                    output_expr = CallExpression(
+                        pydop.DATETIME,
+                        expr.data_type,
+                        expr.inputs[0].inputs + expr.inputs[1:],
+                    )
+
             case _:
                 # All other operators remain non-simplified.
                 pass
