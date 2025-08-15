@@ -59,7 +59,7 @@ SELECT
   DATE('2025-01-01 12:35:13', 'start of day') AS g,
   CONCAT_WS(
     ';',
-    CAST(STRFTIME('%H', DATETIME('2025-01-01 12:35:13')) AS INTEGER),
+    12,
     CAST(STRFTIME('%M', DATETIME('2025-01-01 12:35:13', '45 minute')) AS INTEGER),
     CAST(STRFTIME('%S', DATETIME('2025-01-01 12:35:13', '-7 second')) AS INTEGER)
   ) AS h,

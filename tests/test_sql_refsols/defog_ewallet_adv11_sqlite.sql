@@ -18,9 +18,9 @@ WITH _s1 AS (
 )
 SELECT
   users.uid,
-  COALESCE(_s1.sum_duration, 0) AS total_duration
+  _s1.sum_duration AS total_duration
 FROM main.users AS users
 JOIN _s1 AS _s1
   ON _s1.user_id = users.uid
 ORDER BY
-  COALESCE(_s1.sum_duration, 0) DESC
+  _s1.sum_duration DESC
