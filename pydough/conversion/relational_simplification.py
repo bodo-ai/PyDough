@@ -1127,6 +1127,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
             # KEEP_IF(x, True) -> x
             # KEEP_IF(x, False) -> None
+            # KEEP_IF(None, y) -> None
             case pydop.KEEP_IF:
                 if isinstance(expr.inputs[1], LiteralExpression):
                     if bool(expr.inputs[1].value):
@@ -1135,13 +1136,19 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     else:
                         output_expr = LiteralExpression(None, expr.data_type)
                         output_predicates.not_negative = True
+                elif (
+                    isinstance(expr.inputs[0], LiteralExpression)
+                    and expr.inputs[0].value is None
+                ):
+                    output_expr = LiteralExpression(None, expr.data_type)
                 elif arg_predicates[1].not_null and arg_predicates[1].positive:
                     output_expr = expr.inputs[0]
                     output_predicates = arg_predicates[0]
                 else:
-                    output_predicates |= arg_predicates[0] & PredicateSet(
-                        not_null=True, not_negative=True
-                    )
+                    # Otherwise the predicates are the same as the first
+                    # argument, except it can be null.
+                    output_predicates |= arg_predicates[0]
+                    output_predicates.not_null = False
 
             # DATETIME(DATETIME(u, v, w), x, y, z) -> DATETIME(u, v, w, x, y, z)
             case pydop.DATETIME:

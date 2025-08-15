@@ -81,19 +81,6 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY NULL DESC) - 1.0
-        ) - (
-          CAST((
-            COUNT(NULL) OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) - 1.0
-          ) AS REAL) / 2.0
-        )
-      ) < 1.0
-      THEN NULL
-      ELSE NULL
-    END AS expr_78,
-    CASE
-      WHEN ABS(
-        (
           ROW_NUMBER() OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) DESC) - 1.0
         ) - (
           CAST((
@@ -136,11 +123,6 @@ WITH _t1 AS (
       THEN 0.5
       ELSE NULL
     END AS expr_85,
-    CASE
-      WHEN CAST(0.30000000000000004 * COUNT(NULL) OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS INTEGER) < ROW_NUMBER() OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY NULL DESC)
-      THEN NULL
-      ELSE NULL
-    END AS expr_86,
     CASE
       WHEN CAST(0.19999999999999996 * COUNT(
         LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
@@ -226,7 +208,7 @@ SELECT
   AVG(expr_75) AS me4,
   AVG(expr_76) AS me5,
   AVG(expr_77) AS me6,
-  AVG(expr_78) AS me7,
+  NULL AS me7,
   AVG(expr_79) AS me8,
   MAX(expr_80) AS qu1,
   MAX(expr_81) AS qu2,
@@ -234,7 +216,7 @@ SELECT
   MAX(expr_83) AS qu4,
   MAX(expr_84) AS qu5,
   MAX(expr_85) AS qu6,
-  MAX(expr_86) AS qu7,
+  NULL AS qu7,
   MAX(expr_87) AS qu8
 FROM _t1
 GROUP BY
