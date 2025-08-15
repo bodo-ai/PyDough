@@ -285,7 +285,15 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
     def quarter_month_array(self, quarter: int) -> RelationalExpression:
         """
-        TODO
+        Returns a LiteralExpression containing an array of the months
+        corresponding to the given quarter.
+
+        Args:
+            `quarter`: The quarter (1-4) to get the corresponding months for.
+
+        Returns:
+            A LiteralExpression containing an array of the months in the
+            given quarter.
         """
         assert 1 <= quarter <= 4
         month_arr: list[int] = [3 * (quarter - 1) + i + 1 for i in range(3)]
@@ -295,7 +303,16 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         self, expr: CallExpression, op: pydop.PyDoughExpressionOperator
     ) -> RelationalExpression:
         """
-        TODO
+        Returns a new CallExpression switching the operator of the given
+        CallExpression to the given operator, keeping the same inputs and data
+        type.
+
+        Args:
+            `expr`: The CallExpression whose operator is to be switched.
+            `op`: The operator to switch to.
+
+        Returns:
+            A new CallExpression with the given operator.
         """
         return CallExpression(op, expr.data_type, expr.inputs)
 
@@ -303,7 +320,15 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         self, source: RelationalExpression, expr: RelationalExpression
     ) -> RelationalExpression:
         """
-        TODO
+        Returns a CallExpression that keeps the given expression only if the
+        source expression is not null.
+
+        Args:
+            `source`: The source expression to check for nullness.
+            `expr`: The expression to keep if the source is not null.
+
+        Returns:
+            A CallExpression representing KEEP_IF(expr, PRESENT(source)).
         """
         source_not_null: RelationalExpression = CallExpression(
             pydop.PRESENT, source.data_type, [source]
@@ -318,7 +343,18 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         lit_expr: LiteralExpression,
     ) -> RelationalExpression:
         """
-        TODO
+        Simplifies a comparison between a function call expression and a
+        literal expression, e.g. `QUARTER(x) == 2` can be simplified to
+        `ISIN(MONTH(x), [4, 5, 6])`.
+
+        Args:
+            `expr`: The original expression representing the comparison. This
+            should be returned if there is no simplification possible.
+            `op`: The comparison operator (e.g. EQU, NEQ, LET, etc).
+            `func_expr`: The left argument of the comparison, which is a
+            function call expression.
+            `lit_expr`: The right argument of the comparison, which is a
+            literal expression.
         """
         assert op in (pydop.EQU, pydop.NEQ, pydop.GRT, pydop.GEQ, pydop.LET, pydop.LEQ)
         result: RelationalExpression = expr
@@ -545,10 +581,32 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         lit_expr: LiteralExpression,
     ) -> RelationalExpression:
         """
-        TODO
+        Attempts to simplify a datetime part extraction function call with a
+        literal argument, e.g. `YEAR('2020-05-01')` can be simplified to `2020`.
+
+        Args:
+            `expr`: The original expression representing the datetime part
+            extraction. This should be returned if there is no simplification
+            possible.
+            `op`: The datetime part extraction operator (e.g. YEAR, MONTH, DAY,
+            etc).
+            `lit_expr`: The literal expression argument to the datetime part
+            extraction function.
+
+        Returns:
+            The simplified expression if possible, otherwise the original
+            expression.
         """
+        # Extract a pandas Timestamp from the literal if possible. Allows cases
+        # where the literal is a native Python datetime/date, a pandas
+        # Timestamp, or a string without any alphabetic characters (to avoid
+        # parsing things like 'now' that depend on the current date).
         ts: pd.Timestamp | None = None
-        if isinstance(lit_expr.value, (str, datetime.date)):
+        if isinstance(lit_expr.value, datetime.date):
+            ts = pd.Timestamp(lit_expr.value)
+        elif isinstance(lit_expr.value, str) and not any(
+            c.isalpha() for c in lit_expr.value
+        ):
             try:
                 ts = pd.Timestamp(lit_expr.value)
             except Exception:

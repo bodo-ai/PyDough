@@ -1949,6 +1949,30 @@ def get_day_of_week(
                 " s58 = HOUR(pd.Timestamp('1999-12-31 23:59:58')),"  # 23
                 " s59 = MINUTE(pd.Timestamp('1999-12-31 23:59:58')),"  # 59
                 " s60 = SECOND(pd.Timestamp('1999-12-31 23:59:58')),"  # 58
+                " s61 = MONTH(date_time) == 0,"  # KEEP_IF(False, PRESENT(datetime))
+                " s62 = MONTH(date_time) < 1,"  # KEEP_IF(False, PRESENT(datetime))
+                " s63 = MONTH(date_time) <= 0,"  # KEEP_IF(False, PRESENT(datetime))
+                " s64 = MONTH(date_time) != 0,"  # KEEP_IF(True, PRESENT(datetime))
+                " s65 = MONTH(date_time) > 0,"  # KEEP_IF(True, PRESENT(datetime))
+                " s66 = MONTH(date_time) >= 1,"  # KEEP_IF(True, PRESENT(datetime))
+                " s67 = 0 == DAY(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s68 = 1 > DAY(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s69 = 0 >= DAY(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s70 = 0 != DAY(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s71 = 0 < DAY(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s72 = 0 <= DAY(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s73 = HOUR(date_time) == -1,"  # KEEP_IF(False, PRESENT(datetime))
+                " s74 = 61 == MINUTE(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s75 = -2 != SECOND(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s76 = HOUR(date_time) != 62,"  # KEEP_IF(True, PRESENT(datetime))
+                " s77 = MINUTE(date_time) < 0,"  # KEEP_IF(False, PRESENT(datetime))
+                " s78 = SECOND(date_time) < 61,"  # KEEP_IF(True, PRESENT(datetime))
+                " s79 = HOUR(date_time) <= -1,"  # KEEP_IF(False, PRESENT(datetime))
+                " s80 = MINUTE(date_time) <= 60,"  # KEEP_IF(True, PRESENT(datetime))
+                " s81 = SECOND(date_time) > -5,"  # KEEP_IF(True, PRESENT(datetime))
+                " s82 = HOUR(date_time) > 60,"  # KEEP_IF(False, PRESENT(datetime))
+                " s83 = MINUTE(date_time) >= 0,"  # KEEP_IF(True, PRESENT(datetime))
+                " s84 = SECOND(date_time) >= 80,"  # KEEP_IF(False, PRESENT(datetime))
                 "))",
                 "Broker",
                 lambda: pd.DataFrame(
@@ -2015,6 +2039,30 @@ def get_day_of_week(
                         "s58": [23, 23],
                         "s59": [59, 59],
                         "s60": [58, 58],
+                        "s61": [0, 0],
+                        "s62": [0, 0],
+                        "s63": [0, 0],
+                        "s64": [1, 1],
+                        "s65": [1, 1],
+                        "s66": [1, 1],
+                        "s67": [0, 0],
+                        "s68": [0, 0],
+                        "s69": [0, 0],
+                        "s70": [1, 1],
+                        "s71": [1, 1],
+                        "s72": [1, 1],
+                        "s73": [0, 0],
+                        "s74": [0, 0],
+                        "s75": [1, 1],
+                        "s76": [1, 1],
+                        "s77": [0, 0],
+                        "s78": [1, 1],
+                        "s79": [0, 0],
+                        "s80": [1, 1],
+                        "s81": [1, 1],
+                        "s82": [0, 0],
+                        "s83": [1, 1],
+                        "s84": [0, 0],
                     }
                 ),
                 "simplification_4",
