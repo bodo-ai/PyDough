@@ -350,13 +350,9 @@ class HybridDecorrelater:
         child: HybridConnection = old_parent.children[child_idx]
         child_root: HybridTree = child.subtree
         child_height: int = 1
-        # if isinstance(child_root.pipeline[0], HybridPartitionChild):
-        #     breakpoint()
         while child_root.parent is not None:
             child_height += 1
             child_root = child_root.parent
-            # if isinstance(child_root.pipeline[0], HybridPartitionChild):
-            #     breakpoint()
         # Link the top level of the child subtree to the new parent.
         original_join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
             child.subtree.join_keys
