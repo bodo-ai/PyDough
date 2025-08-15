@@ -43,7 +43,7 @@ class HybridDecorrelater:
         self.children_indices: list[int] = []
 
     def make_decorrelate_parent(
-        self, hybrid: HybridTree, child_idx: int, min_steps: int, max_steps: int
+        self, hybrid: HybridTree, child_idx: int, max_steps: int
     ) -> tuple[HybridTree, int, int]:
         """
         Creates a snapshot of the ancestry of the hybrid tree that contains
@@ -55,9 +55,6 @@ class HybridDecorrelater:
             in the de-correlation of a correlated child.
             `child_idx`: The index of the correlated child of hybrid that the
             snapshot is being created to aid in the de-correlation of.
-            `min_steps`: The index of the last pipeline operator that
-            needs to be included in the snapshot in order for the child to be
-            derivable.
             `max_steps`: The index of the first pipeline operator that cannot
             occur because it depends on the correlated child.
 
@@ -83,7 +80,6 @@ class HybridDecorrelater:
             result = self.make_decorrelate_parent(
                 hybrid.parent,
                 -1,
-                len(hybrid.parent.pipeline) - 1,
                 len(hybrid.parent.pipeline),
             )
             return result[0], result[1] + 1, 1
@@ -510,7 +506,6 @@ class HybridDecorrelater:
                         self.make_decorrelate_parent(
                             original_parent,
                             child_idx,
-                            hybrid.children[child_idx].min_steps,
                             hybrid.children[child_idx].max_steps,
                         )
                     )

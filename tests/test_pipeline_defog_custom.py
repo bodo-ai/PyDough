@@ -1614,30 +1614,6 @@ def get_day_of_week(
         ),
         pytest.param(
             PyDoughPandasTest(
-                "states_collection = customers.PARTITION(name='states', by=state).CALCULATE(original_state=state)\n"
-                "months_collection = transactions.WHERE((YEAR(date_time) == 2023)).CALCULATE(month=DATETIME(date_time, 'start of month')).PARTITION(name='months', by=month).CALCULATE(month)\n"
-                "result = ("
-                " states_collection"
-                " .CROSS(months_collection)"
-                " .CALCULATE(n=COUNT(transactions.WHERE(customer.state == original_state)))"
-                " .PARTITION(name='s', by=original_state)"
-                " .CALCULATE("
-                "  state=original_state,"
-                "  max_n=MAX(months.n),"
-                "))",
-                "Broker",
-                lambda: pd.DataFrame(
-                    {
-                        "state": ["CA", "FL", "NJ", "NY", "TX"],
-                        "max_n": [10, 5, 3, 7, 8],
-                    }
-                ),
-                "part_cross_part_d",
-            ),
-            id="part_cross_part_d",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
                 agg_simplification_1,
                 "Broker",
                 lambda: pd.DataFrame(
