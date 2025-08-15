@@ -22,8 +22,7 @@ WITH _s0 AS (
     _s3.month,
     _s2.sbcuststate
   FROM _s0 AS _s2
-  LEFT JOIN _s3 AS _s3
-    ON TRUE
+  CROSS JOIN _s3 AS _s3
   JOIN main.sbtransaction AS sbtransaction
     ON CAST(STRFTIME('%Y', sbtransaction.sbtxdatetime) AS INTEGER) = 2023
     AND _s3.month = DATE(sbtransaction.sbtxdatetime, 'start of month')
@@ -38,8 +37,7 @@ SELECT
   _s0.sbcuststate AS state,
   MAX(COALESCE(_s9.n_rows, 0)) AS max_n
 FROM _s0 AS _s0
-LEFT JOIN _s1 AS _s1
-  ON TRUE
+CROSS JOIN _s1 AS _s1
 LEFT JOIN _s9 AS _s9
   ON _s0.sbcuststate = _s9.sbcuststate AND _s1.month = _s9.month
 GROUP BY

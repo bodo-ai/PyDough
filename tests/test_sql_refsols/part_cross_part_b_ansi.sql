@@ -22,8 +22,7 @@ WITH _s0 AS (
     _s3.month,
     _s2.sbcuststate
   FROM _s0 AS _s2
-  LEFT JOIN _s3 AS _s3
-    ON TRUE
+  CROSS JOIN _s3 AS _s3
   JOIN main.sbtransaction AS sbtransaction
     ON EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS DATETIME)) = 2023
     AND _s3.month = DATE_TRUNC('MONTH', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
@@ -39,8 +38,7 @@ SELECT
   _s1.month AS month_of_year,
   SUM(COALESCE(_s9.n_rows, 0)) OVER (PARTITION BY _s0.sbcuststate ORDER BY _s1.month NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n
 FROM _s0 AS _s0
-LEFT JOIN _s1 AS _s1
-  ON TRUE
+CROSS JOIN _s1 AS _s1
 LEFT JOIN _s9 AS _s9
   ON _s0.sbcuststate = _s9.sbcuststate AND _s1.month = _s9.month
 ORDER BY
