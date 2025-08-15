@@ -9,7 +9,10 @@ predicates of the simplified expressions.
 __all__ = ["simplify_expressions"]
 
 
+import datetime
 from dataclasses import dataclass
+
+import pandas as pd
 
 import pydough.pydough_operators as pydop
 from pydough.relational import (
@@ -535,6 +538,49 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 pass
         return result
 
+    def simplify_datetime_literal_part(
+        self,
+        expr: RelationalExpression,
+        op: pydop.PyDoughExpressionOperator,
+        lit_expr: LiteralExpression,
+    ) -> RelationalExpression:
+        """
+        TODO
+        """
+        ts: pd.Timestamp | None = None
+        if isinstance(lit_expr.value, (str, datetime.date)):
+            try:
+                ts = pd.Timestamp(lit_expr.value)
+            except Exception:
+                return expr
+        elif isinstance(lit_expr.value, pd.Timestamp):
+            ts = lit_expr.value
+
+        # Fall back to the original expression by default.
+        if ts is None:
+            return expr
+
+        # Otherwise, extract the relevant part from the timestamp and return it
+        # as a literal.
+        match op:
+            case pydop.YEAR:
+                return LiteralExpression(ts.year, NumericType())
+            case pydop.QUARTER:
+                quarter: int = ((ts.month - 1) // 3) + 1
+                return LiteralExpression(quarter, NumericType())
+            case pydop.MONTH:
+                return LiteralExpression(ts.month, NumericType())
+            case pydop.DAY:
+                return LiteralExpression(ts.day, NumericType())
+            case pydop.HOUR:
+                return LiteralExpression(ts.hour, NumericType())
+            case pydop.MINUTE:
+                return LiteralExpression(ts.minute, NumericType())
+            case pydop.SECOND:
+                return LiteralExpression(ts.second, NumericType())
+            case _:
+                return expr
+
     def simplify_function_call(
         self,
         expr: CallExpression,
@@ -1027,6 +1073,22 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         pydop.DATETIME,
                         expr.data_type,
                         expr.inputs[0].inputs + expr.inputs[1:],
+                    )
+
+            # YEAR(literal_datetime) -> can infer the year as a literal
+            # (same for QUARTER, MONTH, DAY, HOUR, MINUTE, SECOND)
+            case (
+                pydop.YEAR
+                | pydop.QUARTER
+                | pydop.MONTH
+                | pydop.DAY
+                | pydop.HOUR
+                | pydop.MINUTE
+                | pydop.SECOND
+            ):
+                if isinstance(expr.inputs[0], LiteralExpression):
+                    output_expr = self.simplify_datetime_literal_part(
+                        expr, expr.op, expr.inputs[0]
                     )
 
             case _:

@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow on custom queries using the defog.ai
 schemas.
 """
 
+import datetime
 import re
 from collections.abc import Callable
 
@@ -1920,6 +1921,34 @@ def get_day_of_week(
                 " s30 = 3 != QUARTER(date_time),"  # NOT(ISIN(MONTH(date_time), [7,8,9]))
                 " s31 = QUARTER(date_time) != 4,"  # NOT(ISIN(MONTH(date_time), [10,11,12]))
                 " s32 = 5 != QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s33 = YEAR('2024-08-13 12:45:59'),"  # 2024
+                " s34 = QUARTER('2024-08-13 12:45:59'),"  # 3
+                " s35 = MONTH('2024-08-13 12:45:59'),"  # 8
+                " s36 = DAY('2024-08-13 12:45:59'),"  # 13
+                " s37 = HOUR('2024-08-13 12:45:59'),"  # 12
+                " s38 = MINUTE('2024-08-13 12:45:59'),"  # 45
+                " s39 = SECOND('2024-08-13 12:45:59'),"  # 59
+                " s40 = YEAR(datetime.date(2020, 1, 31)),"  # 2024
+                " s41 = QUARTER(datetime.date(2020, 1, 31)),"  # 1
+                " s42 = MONTH(datetime.date(2020, 1, 31)),"  # 1
+                " s43 = DAY(datetime.date(2020, 1, 31)),"  # 31
+                " s44 = HOUR(datetime.date(2020, 1, 31)),"  # 0
+                " s45 = MINUTE(datetime.date(2020, 1, 31)),"  # 0
+                " s46 = SECOND(datetime.date(2020, 1, 31)),"  # 0
+                " s47 = YEAR(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 2023
+                " s48 = QUARTER(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 3
+                " s49 = MONTH(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 7
+                " s50 = DAY(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 4
+                " s51 = HOUR(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 6
+                " s52 = MINUTE(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 55
+                " s53 = SECOND(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 0
+                " s54 = YEAR(pd.Timestamp('1999-12-31 23:59:58')),"  # 1999
+                " s55 = QUARTER(pd.Timestamp('1999-12-31 23:59:58')),"  # 4
+                " s56 = MONTH(pd.Timestamp('1999-12-31 23:59:58')),"  # 12
+                " s57 = DAY(pd.Timestamp('1999-12-31 23:59:58')),"  # 31
+                " s58 = HOUR(pd.Timestamp('1999-12-31 23:59:58')),"  # 23
+                " s59 = MINUTE(pd.Timestamp('1999-12-31 23:59:58')),"  # 59
+                " s60 = SECOND(pd.Timestamp('1999-12-31 23:59:58')),"  # 58
                 "))",
                 "Broker",
                 lambda: pd.DataFrame(
@@ -1958,9 +1987,38 @@ def get_day_of_week(
                         "s30": [1, 1],
                         "s31": [1, 1],
                         "s32": [1, 1],
+                        "s33": [2024, 2024],
+                        "s34": [3, 3],
+                        "s35": [8, 8],
+                        "s36": [13, 13],
+                        "s37": [12, 12],
+                        "s38": [45, 45],
+                        "s39": [59, 59],
+                        "s40": [2020, 2020],
+                        "s41": [1, 1],
+                        "s42": [1, 1],
+                        "s43": [31, 31],
+                        "s44": [0, 0],
+                        "s45": [0, 0],
+                        "s46": [0, 0],
+                        "s47": [2023, 2023],
+                        "s48": [3, 3],
+                        "s49": [7, 7],
+                        "s50": [4, 4],
+                        "s51": [6, 6],
+                        "s52": [55, 55],
+                        "s53": [0, 0],
+                        "s54": [1999, 1999],
+                        "s55": [4, 4],
+                        "s56": [12, 12],
+                        "s57": [31, 31],
+                        "s58": [23, 23],
+                        "s59": [59, 59],
+                        "s60": [58, 58],
                     }
                 ),
                 "simplification_4",
+                kwargs={"pd": pd, "datetime": datetime},
             ),
             id="simplification_4",
         ),
