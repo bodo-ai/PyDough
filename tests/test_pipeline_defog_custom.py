@@ -1482,6 +1482,138 @@ def get_day_of_week(
         ),
         pytest.param(
             PyDoughPandasTest(
+                "exchanges = tickers.PARTITION(name='exchanges', by=exchange).CALCULATE(original_exchange=exchange)\n"
+                "states = customers.PARTITION(name='states', by=state).CALCULATE(state)\n"
+                "result = ("
+                " exchanges"
+                " .CROSS(states)"
+                " .CALCULATE("
+                "  state,"
+                "  exchange=original_exchange,"
+                "  n=COUNT(customers.transactions_made.WHERE(ticker.exchange == original_exchange)),"
+                ")"
+                ".ORDER_BY(state.ASC(), exchange.ASC())"
+                ")",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "state": ["CA"] * 4
+                        + ["FL"] * 4
+                        + ["NJ"] * 4
+                        + ["NY"] * 4
+                        + ["TX"] * 4,
+                        "exchange": ["NASDAQ", "NYSE", "NYSE Arca", "Vanguard"] * 5,
+                        "n": [
+                            12,
+                            7,
+                            1,
+                            0,
+                            5,
+                            3,
+                            0,
+                            0,
+                            4,
+                            0,
+                            0,
+                            0,
+                            10,
+                            3,
+                            0,
+                            0,
+                            8,
+                            2,
+                            1,
+                            0,
+                        ],
+                    }
+                ),
+                "part_cross_part_a",
+            ),
+            id="part_cross_part_a",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "states = customers.PARTITION(name='states', by=state).CALCULATE(original_state=state)\n"
+                "months = transactions.WHERE((YEAR(date_time) == 2023)).CALCULATE(month=DATETIME(date_time, 'start of month')).PARTITION(name='months', by=month).CALCULATE(month)\n"
+                "result = ("
+                " states"
+                " .CROSS(months)"
+                " .CALCULATE("
+                "  state=original_state,"
+                "  month_of_year=month,"
+                "  n=RELSUM(COUNT(transactions.WHERE(customer.state == original_state)), per='states', by=month.ASC(), cumulative=True),"
+                ")"
+                ".ORDER_BY(state.ASC(), month_of_year.ASC())"
+                ")",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "state": ["CA"] * 4
+                        + ["FL"] * 4
+                        + ["NJ"] * 4
+                        + ["NY"] * 4
+                        + ["TX"] * 4,
+                        "months": [
+                            "2023-01-01",
+                            "2023-02-01",
+                            "2023-03-01",
+                            "2023-04-01",
+                        ]
+                        * 5,
+                        "n": [
+                            0,
+                            0,
+                            2,
+                            12,
+                            0,
+                            0,
+                            0,
+                            5,
+                            3,
+                            3,
+                            3,
+                            3,
+                            0,
+                            2,
+                            2,
+                            9,
+                            0,
+                            0,
+                            0,
+                            8,
+                        ],
+                    }
+                ),
+                "part_cross_part_b",
+            ),
+            id="part_cross_part_b",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "states_collection = customers.PARTITION(name='states', by=state).CALCULATE(original_state=state)\n"
+                "months_collection = transactions.WHERE((YEAR(date_time) == 2023)).CALCULATE(month=DATETIME(date_time, 'start of month')).PARTITION(name='months', by=month).CALCULATE(month)\n"
+                "result = ("
+                " states_collection"
+                " .CROSS(months_collection)"
+                " .CALCULATE(n=COUNT(transactions.WHERE(customer.state == original_state)))"
+                " .PARTITION(name='s', by=original_state)"
+                " .CALCULATE("
+                "  state=original_state,"
+                "  max_n=MAX(months.n),"
+                "))",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "state": ["CA", "FL", "NJ", "NY", "TX"],
+                        "max_n": [10, 5, 3, 7, 8],
+                    }
+                ),
+                "part_cross_part_c",
+            ),
+            id="part_cross_part_c",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 agg_simplification_1,
                 "Broker",
                 lambda: pd.DataFrame(
