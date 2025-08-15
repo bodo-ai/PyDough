@@ -1371,22 +1371,44 @@ class SimplificationVisitor(RelationalVisitor):
         columns: dict[str, RelationalExpression],
     ) -> None:
         """
-        TODO
+        Infers whether an output column can be marked as not-null based on the
+        given condition expression. If the condition implies that a column is
+        not null, the corresponding PredicateSet in output_predicates is updated
+        in-place.
+
+        Args:
+            `output_predicates`: A dictionary mapping each output column
+            reference from the current node to the set of its inferred
+            predicates.
+            `condition`: The condition expression from the current node (e.g. a
+            filter or an inner/semi join) which, if false when a certain column
+            is null, means that column can be marked as not-null in the output.
+            `columns`: A dictionary mapping column names to their corresponding
+            relational expressions in the current node.
         """
         from .filter_pushdown import NullReplacementShuttle
 
         self.shuttle.input_predicates = {}
+        # Iterate across all of the output columns that are not already marked
+        # as not-null and identify the ones that correspond to a column
+        # reference passed through from the input node.
         for expr, preds in output_predicates.items():
             if preds.not_null:
                 continue
             if isinstance(expr, ColumnReference) and expr.name in columns:
                 expr = columns[expr.name]
                 if isinstance(expr, ColumnReference):
+                    # Transform the condition by creating a version where the
+                    # input column is replaced with a NULL literal, and then run
+                    # the simplifier on the new expression.
                     shuttle: NullReplacementShuttle = NullReplacementShuttle(
                         {expr.name}
                     )
                     new_cond: RelationalExpression = condition.accept_shuttle(shuttle)
                     new_cond = new_cond.accept_shuttle(self.shuttle)
+                    # If the new condition simplifies to a False-y literal, then
+                    # the column must be not-null since it means that if the
+                    # column were, the row would be filtered out.
                     if isinstance(new_cond, LiteralExpression) and not bool(
                         new_cond.value
                     ):
