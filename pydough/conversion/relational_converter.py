@@ -662,6 +662,9 @@ class RelTranslation:
                 continue
             if pipeline_idx == (child.max_steps - 1):
                 self.stack.append(context)
+                # print("***")
+                # print(child.subtree)
+                # print("$$$")
                 child_output = self.rel_translation(
                     child.subtree, len(child.subtree.pipeline) - 1
                 )
@@ -1069,6 +1072,8 @@ class RelTranslation:
             The TranslationOutput payload containing expressions for both the
             aggregated partitions and the original partitioned data.
         """
+        # print(node)
+        # print(context.relational_node.to_tree_string())
         child_output: TranslationOutput = self.rel_translation(
             node.subtree, len(node.subtree.pipeline) - 1
         )
@@ -1094,6 +1099,9 @@ class RelTranslation:
         for agg_key in sorted(node.subtree.agg_keys, key=str):
             join_keys.append((agg_key, agg_key))
 
+        # print("-->")
+        # print(child_output.relational_node.to_tree_string())
+        # print(join_keys)
         result = self.join_outputs(
             context,
             child_output,

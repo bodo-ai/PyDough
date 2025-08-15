@@ -102,7 +102,7 @@ class HybridDecorrelater:
         original_max_steps: int = max_steps
         new_correlated_children: set[int] = set()
         for idx, child in enumerate(new_hybrid.children):
-            if child.min_steps < min_steps and child.max_steps <= original_max_steps:
+            if child.max_steps < original_max_steps:
                 new_children.append(child)
                 if idx in hybrid.correlated_children:
                     new_correlated_children.add(len(new_children) - 1)
@@ -350,9 +350,13 @@ class HybridDecorrelater:
         child: HybridConnection = old_parent.children[child_idx]
         child_root: HybridTree = child.subtree
         child_height: int = 1
+        # if isinstance(child_root.pipeline[0], HybridPartitionChild):
+        #     breakpoint()
         while child_root.parent is not None:
             child_height += 1
             child_root = child_root.parent
+            # if isinstance(child_root.pipeline[0], HybridPartitionChild):
+            #     breakpoint()
         # Link the top level of the child subtree to the new parent.
         original_join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
             child.subtree.join_keys

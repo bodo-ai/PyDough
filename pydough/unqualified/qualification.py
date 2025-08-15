@@ -905,6 +905,7 @@ class Qualifier:
                 | UnqualifiedSingular()
                 | UnqualifiedPartition()
                 | UnqualifiedBest()
+                | UnqualifiedCross()
             ):
                 parent: UnqualifiedNode = node._parcel[0]
                 new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
@@ -967,6 +968,8 @@ class Qualifier:
                 build_node[0] = UnqualifiedSingular(build_node[0], *node._parcel[1:])
             case UnqualifiedBest():
                 build_node[0] = UnqualifiedBest(build_node[0], *node._parcel[1:])
+            case UnqualifiedCross():
+                build_node[0] = UnqualifiedCross(build_node[0], *node._parcel[1:])
             case _:
                 # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
