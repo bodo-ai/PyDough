@@ -8,7 +8,6 @@ from pydough.metadata.errors import (
     NoExtraKeys,
     PyDoughMetadataException,
     extract_array,
-    extract_object,
     extract_string,
     is_string,
     unique_properties_predicate,
@@ -41,9 +40,9 @@ class SimpleTableMetadata(CollectionMetadata):
         graph,
         table_path: str,
         unique_properties: list[str | list[str]],
-        description: str | None,
-        synonyms: list[str] | None,
-        extra_semantic_info: dict | None,
+        description: str | None = None,
+        synonyms: list[str] | None = None,
+        extra_semantic_info: dict | None = None,
     ):
         super().__init__(name, graph, description, synonyms, extra_semantic_info)
         is_string.verify(table_path, f"Property 'table_path' of {self.error_name}")
@@ -151,18 +150,6 @@ class SimpleTableMetadata(CollectionMetadata):
             collection_json, error_name
         )
         unique_properties: list[str | list[str]] = collection_json["unique properties"]
-        # Extract the optional fields from the JSON.
-        description: str | None = None
-        synonyms: list[str] | None = None
-        extra_semantic_info: dict | None = None
-        if "description" in collection_json:
-            description = extract_string(collection_json, "description", error_name)
-        if "synonyms" in collection_json:
-            synonyms = extract_array(collection_json, "synonyms", error_name)
-        if "extra semantic info" in collection_json:
-            extra_semantic_info = extract_object(
-                collection_json, "extra semantic info", error_name
-            )
         NoExtraKeys(SimpleTableMetadata.allowed_fields).verify(
             collection_json, error_name
         )
@@ -171,10 +158,9 @@ class SimpleTableMetadata(CollectionMetadata):
             graph,
             table_path,
             unique_properties,
-            description,
-            synonyms,
-            extra_semantic_info,
         )
+        # Parse the optional common semantic properties like the description.
+        new_collection.parse_optional_properties(collection_json)
         properties: list = extract_array(
             collection_json, "properties", new_collection.error_name
         )
