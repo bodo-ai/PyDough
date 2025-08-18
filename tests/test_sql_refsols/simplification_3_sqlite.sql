@@ -93,26 +93,3 @@ SELECT
   MAX(rsiz1) AS s35,
   ROUND(SUM(rsiz2), 2) AS s36
 FROM _t1
-
-
-SELECT
-  sbcustname,
-   COALESCE(
-      SUM(ABS(COALESCE(CAST(sbcustpostalcode AS INTEGER), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
-      0.1
-    ) AS rsum2,
-    ROW_NUMBER() OVER (ORDER BY sbcustname) AS rnk
-FROM main.sbcustomer
-ORDER BY sbcustname
-;
-
-SELECT
-  sbCustname,
-   COALESCE(
-      SUM(ABS(COALESCE(CAST(sbcustpostalcode AS SIGNED), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
-      0.1
-    ) AS rsum2,
-    ROW_NUMBER() OVER (ORDER BY sbcustname) AS rnk
-FROM sbCustomer
-ORDER BY sbCustname
-;
