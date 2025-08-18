@@ -48,7 +48,9 @@ class GraphMetadata(AbstractMetadata):
         self._name: str = name
         self._collections: dict[str, AbstractMetadata] = {}
         self._functions: dict[str, ExpressionFunctionOperator] = {}
-        super().__init__(description, synonyms, extra_semantic_info)
+        self._description = description
+        self._synonyms = synonyms
+        self._extra_semantic_info = extra_semantic_info
 
     @property
     def name(self) -> str:
