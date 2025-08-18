@@ -893,7 +893,19 @@ def call_function_operator(
     **kwargs,
 ) -> UnqualifiedNode:
     """
-    TODO
+    Creates an invocation of a PyDough (non-window) function operator on the
+    provided operands and keyword arguments.
+
+    Args:
+        `operator`: the function operator being called.
+        `operands`: the list of unqualified nodes being passed as arguments.
+        `kwargs`: the keyword arguments being passed to the function. These are
+        used for operators that branch on a keyword, such as variance and
+        standard deviation which have different sub-operators for population
+        versus sample.
+
+    Returns:
+        The unqualified node representing the function call.
     """
 
     # Check if this is a keyword branching operator
@@ -923,25 +935,48 @@ def call_window_operator(
     operator: pydop.ExpressionWindowOperator, operands: list[UnqualifiedNode], **kwargs
 ) -> UnqualifiedNode:
     """
-    TODO
+    Creates an invocation of a PyDough window function operator on the
+    provided operands and keyword arguments.
+
+    Args:
+        `operator`: the window function operator being called.
+        `operands`: the list of unqualified nodes being passed as arguments.
+        `kwargs`: the keyword arguments being passed to the window function.
+        These may include `by`, `per`, `n_buckets`, `allow_ties`, `dense`,
+        `n`, etc. depending on the operator.
+
+    Returns:
+        The unqualified node representing the window function call.
     """
     match operator:
         case pydop.PERCENTILE:
+            # Percentile has an optional `n_buckets` argument, defaulting to 100
             is_positive_int.verify(kwargs.get("n_buckets", 100), "`n_buckets` argument")
         case pydop.RANKING:
+            # Ranking has optional `allow_ties` and `dense` boolean arguments,
+            # both defaulting to False
             is_bool.verify(kwargs.get("allow_ties", False), "`allow_ties` argument")
             is_bool.verify(kwargs.get("dense", False), "`dense` argument")
         case pydop.PREV | pydop.NEXT:
+            # PREV/NEXT have an optional `n` argument, defaulting to 1, which
+            # could also be a positional argument.
             is_integer.verify(kwargs.get("n", 1), "`n` argument")
             if len(operands) > 1:
                 is_integer.verify(operands[1], "`n` argument")
 
+    # Extract the `by` argument to the window function, if it has one, and
+    # verify that it is valid for to have one given the operator and other
+    # keyword arguments (e.g. cumulative, frame).
     by: Iterable[UnqualifiedNode] = get_by_arg(kwargs, operator)
+
+    # Any window function can have an optional `per` argument saying which
+    # ancestor the window function is being computed with regards to.
     per: str | None = None
     if "per" in kwargs:
         per_arg = kwargs.pop("per")
         is_string.verify(per_arg, "`per` argument")
         per = per_arg
+
     return UnqualifiedWindow(
         operator,
         operands,
