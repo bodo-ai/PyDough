@@ -1,25 +1,25 @@
-WITH _s0 AS (
+WITH _t2 AS (
   SELECT
-    DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)) AS quarter,
-    SUM(sale_price) AS sum_sale_price,
-    customer_id
-  FROM main.sales
+    ANY_VALUE(customers.state) AS state,
+    SUM(sales.sale_price) AS sum_sale_price,
+    DATE_TRUNC('QUARTER', CAST(sales.sale_date AS TIMESTAMP)) AS quarter
+  FROM main.sales AS sales
+  JOIN main.customers AS customers
+    ON customers._id = sales.customer_id
   WHERE
-    EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
+    EXTRACT(YEAR FROM CAST(sales.sale_date AS DATETIME)) = 2023
   GROUP BY
-    DATE_TRUNC('QUARTER', CAST(sale_date AS TIMESTAMP)),
-    customer_id
+    sales.customer_id,
+    DATE_TRUNC('QUARTER', CAST(sales.sale_date AS TIMESTAMP))
 ), _t1 AS (
   SELECT
-    SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
-    _s0.quarter,
-    customers.state
-  FROM _s0 AS _s0
-  JOIN main.customers AS customers
-    ON _s0.customer_id = customers._id
+    SUM(sum_sale_price) AS sum_sum_sale_price,
+    quarter,
+    state
+  FROM _t2
   GROUP BY
-    _s0.quarter,
-    customers.state
+    quarter,
+    state
 )
 SELECT
   quarter,

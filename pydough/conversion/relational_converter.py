@@ -84,6 +84,7 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
+from .join_agg_transpose import pull_joins_after_aggregates
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
 from .relational_simplification import simplify_expressions
@@ -1483,7 +1484,8 @@ def optimize_relational_tree(
     #   A: projection pullup
     #   B: expression simplification
     #   C: filter pushdown
-    #   D: column pruning
+    #   D: join-aggregate transpose
+    #   E: column pruning
     # This is done because pullup will create more opportunities for expression
     # simplification, which will allow more filters to be pushed further down,
     # and the combination of those together will create more opportunities for
@@ -1493,6 +1495,7 @@ def optimize_relational_tree(
         root = confirm_root(pullup_projections(root))
         simplify_expressions(root, additional_shuttles)
         root = confirm_root(push_filters(root))
+        root = confirm_root(pull_joins_after_aggregates(root))
         root = ColumnPruner().prune_unused_columns(root)
 
     # Step 9: re-run projection merging, without pushing into joins. This

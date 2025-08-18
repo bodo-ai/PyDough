@@ -1,41 +1,41 @@
-WITH _s0 AS (
+WITH _t2 AS (
   SELECT
+    MAX(customers.state) AS state,
+    SUM(sales.sale_price) AS sum_sale_price,
     DATE(
-      sale_date,
+      sales.sale_date,
       'start of month',
       '-' || CAST((
         (
-          CAST(STRFTIME('%m', DATETIME(sale_date)) AS INTEGER) - 1
+          CAST(STRFTIME('%m', DATETIME(sales.sale_date)) AS INTEGER) - 1
         ) % 3
       ) AS TEXT) || ' months'
-    ) AS quarter,
-    SUM(sale_price) AS sum_sale_price,
-    customer_id
-  FROM main.sales
+    ) AS quarter
+  FROM main.sales AS sales
+  JOIN main.customers AS customers
+    ON customers._id = sales.customer_id
   WHERE
-    CAST(STRFTIME('%Y', sale_date) AS INTEGER) = 2023
+    CAST(STRFTIME('%Y', sales.sale_date) AS INTEGER) = 2023
   GROUP BY
+    sales.customer_id,
     DATE(
-      sale_date,
+      sales.sale_date,
       'start of month',
       '-' || CAST((
         (
-          CAST(STRFTIME('%m', DATETIME(sale_date)) AS INTEGER) - 1
+          CAST(STRFTIME('%m', DATETIME(sales.sale_date)) AS INTEGER) - 1
         ) % 3
       ) AS TEXT) || ' months'
-    ),
-    customer_id
+    )
 ), _t1 AS (
   SELECT
-    SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
-    _s0.quarter,
-    customers.state
-  FROM _s0 AS _s0
-  JOIN main.customers AS customers
-    ON _s0.customer_id = customers._id
+    SUM(sum_sale_price) AS sum_sum_sale_price,
+    quarter,
+    state
+  FROM _t2
   GROUP BY
-    _s0.quarter,
-    customers.state
+    quarter,
+    state
 )
 SELECT
   quarter,

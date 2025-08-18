@@ -1,34 +1,35 @@
-WITH _s0 AS (
+WITH _t2 AS (
   SELECT
     COUNT(*) AS num_transactions,
-    sbtxcustid,
-    sbtxtickerid
-  FROM main.sbtransaction
-  GROUP BY
-    sbtxcustid,
-    sbtxtickerid
-), _s2 AS (
-  SELECT
-    SUM(_s0.num_transactions) AS num_transactions,
-    sbticker.sbtickertype,
-    _s0.sbtxcustid
-  FROM _s0 AS _s0
+    MAX(sbcustomer.sbcuststate) AS sbcuststate,
+    MAX(sbticker.sbtickertype) AS sbtickertype,
+    sbtransaction.sbtxcustid
+  FROM main.sbtransaction AS sbtransaction
   JOIN main.sbticker AS sbticker
-    ON _s0.sbtxtickerid = sbticker.sbtickerid
+    ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
+  JOIN main.sbcustomer AS sbcustomer
+    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
-    sbticker.sbtickertype,
-    _s0.sbtxcustid
+    sbtransaction.sbtxcustid,
+    sbtransaction.sbtxtickerid
+), _t1 AS (
+  SELECT
+    SUM(num_transactions) AS num_transactions,
+    MAX(sbcuststate) AS sbcuststate,
+    sbtickertype
+  FROM _t2
+  GROUP BY
+    sbtickertype,
+    sbtxcustid
 )
 SELECT
-  sbcustomer.sbcuststate AS state,
-  _s2.sbtickertype AS ticker_type,
-  SUM(_s2.num_transactions) AS num_transactions
-FROM _s2 AS _s2
-JOIN main.sbcustomer AS sbcustomer
-  ON _s2.sbtxcustid = sbcustomer.sbcustid
+  sbcuststate AS state,
+  sbtickertype AS ticker_type,
+  SUM(num_transactions) AS num_transactions
+FROM _t1
 GROUP BY
-  sbcustomer.sbcuststate,
-  _s2.sbtickertype
+  sbcuststate,
+  sbtickertype
 ORDER BY
   num_transactions DESC
 LIMIT 5
