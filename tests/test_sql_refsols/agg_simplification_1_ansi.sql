@@ -85,6 +85,6 @@ SELECT
   LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS qu8
 FROM main.sbticker
 GROUP BY
-  1
+  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
 ORDER BY
   aug_exchange

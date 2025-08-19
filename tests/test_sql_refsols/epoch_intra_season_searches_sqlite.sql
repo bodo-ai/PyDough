@@ -69,7 +69,7 @@ WITH _s0 AS (
     OR _s15.s_month2 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
     OR _s15.s_month3 = CAST(STRFTIME('%m', searches.search_ts) AS INTEGER)
   GROUP BY
-    3
+    _s10.s_name
 )
 SELECT
   _s16.s_name AS season_name,

@@ -10,8 +10,8 @@ WITH _t AS (
   JOIN USERS AS USERS
     ON SEARCHES.search_user_id = USERS.user_id
   GROUP BY
-    2,
-    3
+    USERS.user_region,
+    2
 )
 SELECT
   user_region AS region,

@@ -11,6 +11,6 @@ SELECT
   ANY_VALUE(LOWER(sbcuststate)) AS a9
 FROM main.sbCustomer
 GROUP BY
-  1
+  sbcuststate
 ORDER BY
   1

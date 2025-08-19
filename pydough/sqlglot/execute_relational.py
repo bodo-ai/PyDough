@@ -23,7 +23,7 @@ from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
-from sqlglot.optimizer.scope import traverse_scope
+from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 from sqlglot.optimizer.simplify import simplify
 
 from pydough.configs import PyDoughConfigs
@@ -220,7 +220,20 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
         if expression.args.get("group") is not None:
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
-                if key_expr in expressions:
+                # Only replace if the key expression appears in the select list
+                # exactly once.
+                if (
+                    key_expr in expressions
+                    and len(
+                        [
+                            exp
+                            for select_elem in expressions
+                            for exp in walk_in_scope(select_elem)
+                            if exp == key_expr
+                        ]
+                    )
+                    == 1
+                ):
                     keys_list[idx] = sqlglot_expressions.convert(
                         expressions.index(key_expr) + 1
                     )

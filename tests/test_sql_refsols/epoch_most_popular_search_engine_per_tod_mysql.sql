@@ -9,8 +9,8 @@ WITH _t AS (
     ON TIMES.t_end_hour > HOUR(SEARCHES.search_ts)
     AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
   GROUP BY
-    2,
-    3
+    SEARCHES.search_engine,
+    TIMES.t_name
 )
 SELECT
   t_name COLLATE utf8mb4_bin AS tod,
