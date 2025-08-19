@@ -9,6 +9,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
+from pydough.types.string_type import StringType
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -185,9 +186,22 @@ class MySQLTransformBindings(BaseTransformBindings):
                 and begin_idx < 0
                 and end_idx < 0
             ):
-                length = sqlglot_expressions.Greatest(
-                    this=sqlglot_expressions.Sub(this=stop, expression=start),
-                    expressions=[sql_zero],
+                length = sqlglot_expressions.Case(
+                    ifs=[
+                        sqlglot_expressions.If(
+                            this=sqlglot_expressions.LT(
+                                this=expr_length,
+                                expression=sqlglot_expressions.Abs(this=start),
+                            ),
+                            true=sqlglot_expressions.Add(
+                                this=expr_length, expression=stop
+                            ),
+                        )
+                    ],
+                    default=sqlglot_expressions.Greatest(
+                        this=sqlglot_expressions.Sub(this=stop, expression=start),
+                        expressions=[sql_zero],
+                    ),
                 )
 
             case (begin_idx, end_idx) if (
@@ -223,6 +237,20 @@ class MySQLTransformBindings(BaseTransformBindings):
         # start adjustment
         if start_idx is not None and start_idx >= 0:
             start = one_index_start
+        elif start_idx is not None and start_idx < 0:
+            start = sqlglot_expressions.Case(
+                ifs=[
+                    sqlglot_expressions.If(
+                        this=sqlglot_expressions.GT(
+                            this=expr_length,
+                            expression=sqlglot_expressions.Abs(this=start),
+                        ),
+                        true=start,
+                    )
+                ],
+                default=sql_one,
+            )
+
         elif start_idx is None:
             start = sql_one
 
@@ -545,3 +573,100 @@ class MySQLTransformBindings(BaseTransformBindings):
             ),
             expression=sqlglot_expressions.Literal.number(7),
         )
+
+    def convert_strip(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        """
+        CASE replacement_expr == args[0] THEN ""
+        DEFAULT
+            REGEXP_REPLACE(CAST(args[0] AS CHAR) COLLATE utf8mb4_bin, regex_replace, '')
+        REGEXP_REPLACE(
+            CAST(args[0] AS CHAR) COLLATE utf8mb4_bin,
+            '^[' || regexp_replace(
+                replacement_expr, '([][\\^\\-])', '\\\1') ||
+                ']+|[' ||
+                regexp_replace(replacement_expr, '([][\\^\\-])', '\\\1') ||
+                ']+$',
+            ''
+        )
+        """
+        assert 1 <= len(args) <= 2
+
+        replacement_expr: SQLGlotExpression = (
+            sqlglot_expressions.Literal.string("\s") if len(args) == 1 else args[1]
+        )
+
+        #  '^[' || REGEXP_REPLACE(replacement_expr, '([][\\^\\-])', '\\\1') || ']+|['
+        dpipe2: SQLGlotExpression = sqlglot_expressions.DPipe(
+            this=sqlglot_expressions.DPipe(
+                this=sqlglot_expressions.Literal.string("^["),
+                expression=sqlglot_expressions.RegexpReplace(
+                    this=replacement_expr,
+                    expression=sqlglot_expressions.Literal.string("([]\\[\\^\\-])"),
+                    replacement=sqlglot_expressions.Literal.string("\\\\\\1"),
+                ),
+            ),
+            expression=sqlglot_expressions.Literal.string("]+|["),
+            safe=True,
+        )
+
+        # dpipe2 || REGEXP_REPLACE(replacement_expr, '([][\\^\\-])', '\\\1'
+        dpipe1: SQLGlotExpression = sqlglot_expressions.DPipe(
+            this=dpipe2,
+            expression=sqlglot_expressions.RegexpReplace(
+                this=replacement_expr,
+                expression=sqlglot_expressions.Literal.string("([]\\[\\^\\-])"),
+                replacement=sqlglot_expressions.Literal.string("\\\\\\1"),
+            ),
+            safe=True,
+        )
+        # dpipe1 || ']+$'
+        regex_replace: SQLGlotExpression = sqlglot_expressions.DPipe(
+            this=dpipe1,
+            expression=sqlglot_expressions.Literal.string("]+$"),
+            safe=True,
+        )
+
+        utf8mb4_bin: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this="utf8mb4_bin"
+        )
+
+        # CASE replacement_expr == args[0] THEN ""
+        # DEFAULT
+        #   REGEXP_REPLACE(CAST(args[0] AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_bin, regex_replace, '')
+
+        result: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.EQ(
+                        this=args[0],
+                        expression=replacement_expr,
+                    ),
+                    true=sqlglot_expressions.Literal.string(""),
+                )
+            ],
+            default=sqlglot_expressions.RegexpReplace(
+                this=sqlglot_expressions.Collate(
+                    this=sqlglot_expressions.Cast(
+                        this=args[0], to=sqlglot_expressions.DataType.build("CHAR")
+                    ),
+                    expression=utf8mb4_bin,
+                ),
+                expression=regex_replace,
+                replacement=sqlglot_expressions.Literal.string(""),
+            ),
+        )
+        return result
+
+    def convert_ordering(
+        self, arg: SQLGlotExpression, data_type: PyDoughType
+    ) -> SQLGlotExpression:
+        if isinstance(data_type, StringType):
+            return sqlglot_expressions.Collate(
+                this=arg,
+                expression=sqlglot_expressions.Identifier(this="utf8mb4_bin"),
+            )
+        return arg

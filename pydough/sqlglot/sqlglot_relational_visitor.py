@@ -259,6 +259,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
                 col.expr
             )
+            glot_expr = self._expr_visitor._bindings.convert_ordering(
+                glot_expr, col.expr.data_type
+            )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
             if self._dialect == DatabaseDialect.SQLITE:

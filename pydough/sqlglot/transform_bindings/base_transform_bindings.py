@@ -431,7 +431,7 @@ class BaseTransformBindings:
         # Take in count if LENGH(Y) > 1 dividing the difference by Y's length:
         # LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
         quotient: SQLGlotExpression = sqlglot_expressions.Div(
-            this=difference, expression=len_substring_count
+            this=apply_parens(difference), expression=len_substring_count
         )
 
         # Cast to Interger:
@@ -1446,6 +1446,7 @@ class BaseTransformBindings:
                 result = self.apply_datetime_offset(result, amt, unit)
             else:
                 raise ValueError(f"Unsupported DATETIME modifier string: {arg.this!r}")
+        # breakpoint()
         return result
 
     def convert_extract_datetime(
@@ -2097,3 +2098,11 @@ class BaseTransformBindings:
         )
 
         return within_group_clause
+
+    def convert_ordering(
+        self, arg: SQLGlotExpression, data_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        TODO
+        """
+        return arg

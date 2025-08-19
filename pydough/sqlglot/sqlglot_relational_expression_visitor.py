@@ -183,6 +183,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         for order_arg in window_expression.order_inputs:
             order_arg.expr.accept(self)
             glot_expr: SQLGlotExpression = self._stack.pop()
+            glot_expr = self._bindings.convert_ordering(
+                glot_expr, order_arg.expr.data_type
+            )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
             if self._dialect == DatabaseDialect.SQLITE:
