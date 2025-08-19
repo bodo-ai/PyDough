@@ -11,6 +11,7 @@ from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
 
@@ -259,6 +260,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
                 col.expr
             )
+            if isinstance(glot_expr, (SQLGlotLiteral, SQLGlotNull)):
+                continue
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
             if self._dialect == DatabaseDialect.SQLITE:
@@ -492,7 +495,9 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 for key in sorted(keys, key=repr):
                     while isinstance(key, SQLGlotAlias):
                         key = key.this
-                    if key not in grouping_keys:
+                    if key not in grouping_keys and not isinstance(
+                        key, (SQLGlotLiteral, SQLGlotNull)
+                    ):
                         grouping_keys.append(key)
                 query = query.group_by(*grouping_keys)
             else:
