@@ -24,8 +24,8 @@ WHERE
     )
   ) AS INTEGER) AS REAL) / 7 AS INTEGER) = 1
 GROUP BY
-  payment_date,
-  payment_method
+  1,
+  2
 ORDER BY
   payment_date DESC,
   payment_method

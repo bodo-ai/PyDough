@@ -42,13 +42,4 @@ WHERE
     INTERVAL '-8' WEEK
   )
 GROUP BY
-  DATE(
-    DATE_SUB(
-      CAST(sbTransaction.sbtxdatetime AS DATETIME),
-      INTERVAL (
-        (
-          DAYOFWEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME)) + 5
-        ) % 7
-      ) DAY
-    )
-  )
+  1

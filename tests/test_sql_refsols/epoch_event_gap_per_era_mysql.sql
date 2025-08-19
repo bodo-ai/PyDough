@@ -21,6 +21,6 @@ WHERE
   er_end_year > EXTRACT(YEAR FROM CAST(ev_dt AS DATETIME))
   AND er_start_year <= EXTRACT(YEAR FROM CAST(ev_dt AS DATETIME))
 GROUP BY
-  er_name
+  1
 ORDER BY
   ANY_VALUE(er_start_year)

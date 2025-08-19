@@ -15,6 +15,6 @@ JOIN main.PRODUCTS AS PRODUCTS
 LEFT JOIN _s3 AS _s3
   ON DEVICES.de_id = _s3.in_device_id
 GROUP BY
-  PRODUCTS.pr_brand
+  1
 ORDER BY
   PRODUCTS.pr_brand COLLATE utf8mb4_bin

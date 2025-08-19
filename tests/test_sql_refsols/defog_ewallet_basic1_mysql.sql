@@ -17,12 +17,4 @@ WHERE
   AND wallet_transactions_daily.sender_type = 0
   AND wallet_transactions_daily.status = 'success'
 GROUP BY
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST(wallet_transactions_daily.created_at AS DATETIME)),
-      ' ',
-      MONTH(CAST(wallet_transactions_daily.created_at AS DATETIME)),
-      ' 1'
-    ),
-    '%Y %c %e'
-  )
+  1

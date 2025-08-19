@@ -3,7 +3,7 @@ SELECT
   COUNT(*) AS count
 FROM main.user_sessions
 GROUP BY
-  device_type
+  1
 ORDER BY
   count DESC
 LIMIT 2

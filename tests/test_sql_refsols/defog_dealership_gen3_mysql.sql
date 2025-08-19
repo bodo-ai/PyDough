@@ -16,8 +16,8 @@ WHERE
     )
   ) / 7 AS SIGNED) = 1
 GROUP BY
-  payment_date,
-  payment_method
+  1,
+  2
 ORDER BY
   payment_date DESC,
   payment_method COLLATE utf8mb4_bin

@@ -10,9 +10,6 @@ WHERE
   AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
   AND sbtxstatus = 'success'
 GROUP BY
-  STR_TO_DATE(
-    CONCAT(YEAR(CAST(sbtxdatetime AS DATETIME)), ' ', MONTH(CAST(sbtxdatetime AS DATETIME)), ' 1'),
-    '%Y %c %e'
-  )
+  1
 ORDER BY
   month

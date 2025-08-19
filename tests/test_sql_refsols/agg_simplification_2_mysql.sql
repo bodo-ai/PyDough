@@ -11,6 +11,6 @@ SELECT
   ANY_VALUE(LOWER(sbcuststate)) AS a9
 FROM main.sbCustomer
 GROUP BY
-  sbcuststate
+  1
 ORDER BY
   sbcuststate COLLATE utf8mb4_bin

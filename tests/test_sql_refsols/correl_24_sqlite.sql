@@ -47,8 +47,8 @@ JOIN _t3 AS _t4
   )
   AND _s0.year = CAST(STRFTIME('%Y', _t4.o_orderdate) AS INTEGER)
 GROUP BY
-  _s0.month,
-  _s0.year
+  1,
+  2
 ORDER BY
   year,
   month

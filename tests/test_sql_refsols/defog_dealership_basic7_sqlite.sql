@@ -4,7 +4,7 @@ SELECT
   COALESCE(SUM(payment_amount), 0) AS total_amount
 FROM main.payments_received
 GROUP BY
-  payment_method
+  1
 ORDER BY
   COALESCE(SUM(payment_amount), 0) DESC
 LIMIT 3

@@ -31,6 +31,6 @@ WHERE
   AND CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1993
   AND NOT _u_0._u_1 IS NULL
 GROUP BY
-  orders.o_orderpriority
+  1
 ORDER BY
   o_orderpriority

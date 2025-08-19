@@ -11,6 +11,6 @@ SELECT
   MAX(LOWER(sbcuststate)) AS a9
 FROM main.sbcustomer
 GROUP BY
-  sbcuststate
+  1
 ORDER BY
   sbcuststate

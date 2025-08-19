@@ -19,8 +19,8 @@ FROM tpch.LINEITEM
 WHERE
   l_shipdate <= CAST('1998-12-01' AS DATE)
 GROUP BY
-  l_linestatus,
-  l_returnflag
+  1,
+  2
 ORDER BY
   l_returnflag COLLATE utf8mb4_bin,
   l_linestatus COLLATE utf8mb4_bin

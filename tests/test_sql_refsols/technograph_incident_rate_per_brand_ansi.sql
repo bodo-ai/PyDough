@@ -15,6 +15,6 @@ JOIN main.products AS products
 LEFT JOIN _s3 AS _s3
   ON _s3.in_device_id = devices.de_id
 GROUP BY
-  products.pr_brand
+  1
 ORDER BY
   products.pr_brand

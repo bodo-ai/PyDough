@@ -13,9 +13,9 @@ JOIN tpch.PART AS PART
   AND PART.p_partkey = PARTSUPP.ps_partkey
   AND PART.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
 GROUP BY
-  PART.p_brand,
-  PART.p_size,
-  PART.p_type
+  1,
+  2,
+  3
 ORDER BY
   SUPPLIER_COUNT DESC,
   PART.p_brand COLLATE utf8mb4_bin,

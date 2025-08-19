@@ -20,8 +20,8 @@ JOIN main.PRODUCTS AS PRODUCTS
 LEFT JOIN _s7 AS _s7
   ON DEVICES.de_id = _s7.in_device_id
 GROUP BY
-  COUNTRIES.co_name,
-  PRODUCTS.pr_name
+  1,
+  2
 ORDER BY
   ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) DESC,
   PRODUCTS.pr_name COLLATE utf8mb4_bin,

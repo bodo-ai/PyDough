@@ -26,6 +26,6 @@ LEFT JOIN _s3 AS _s3
 WHERE
   _s3.n_rows = 0 OR _s3.n_rows IS NULL
 GROUP BY
-  SUBSTRING(customer.c_phone, 1, 2)
+  1
 ORDER BY
   cntry_code

@@ -189,7 +189,9 @@ def tpch_mysql_test_data(request) -> PyDoughPandasTest:
 
 
 @pytest.fixture
-def defog_mysql_test_data(defog_custom_pipeline_test_data) -> PyDoughPandasTest:
+def defog_mysql_test_data(
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
+) -> PyDoughPandasTest:
     """
     Test data for e2e tests for the TPC-H queries. Returns an instance of
     PyDoughPandasTest containing information about the test.
@@ -653,5 +655,4 @@ def test_pipeline_mysql_e2e_defog_custom(
         get_mysql_defog_graphs,
         mysql_conn_db_context("broker"),
         coerce_types=True,
-        # display_sql=True,
     )

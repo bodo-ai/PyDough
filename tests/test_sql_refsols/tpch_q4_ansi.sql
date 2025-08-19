@@ -9,6 +9,6 @@ WHERE
   EXTRACT(QUARTER FROM CAST(orders.o_orderdate AS DATETIME)) = 3
   AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
 GROUP BY
-  orders.o_orderpriority
+  1
 ORDER BY
   o_orderpriority

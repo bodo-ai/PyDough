@@ -7,7 +7,7 @@ JOIN events AS events
   OR seasons.s_month2 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
   OR seasons.s_month3 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
 GROUP BY
-  seasons.s_name
+  1
 ORDER BY
   n_events DESC,
   seasons.s_name

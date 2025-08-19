@@ -55,4 +55,4 @@ CROSS JOIN _s1 AS _s1
 LEFT JOIN _s9 AS _s9
   ON _s0.sbCustState = _s9.sbCustState AND _s1.month = _s9.month
 GROUP BY
-  _s0.sbCustState
+  1

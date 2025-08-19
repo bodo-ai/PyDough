@@ -14,9 +14,9 @@ JOIN tpch.LINEITEM AS LINEITEM
 WHERE
   ORDERS.o_orderdate < CAST('1995-03-15' AS DATE)
 GROUP BY
-  LINEITEM.l_orderkey,
-  ORDERS.o_orderdate,
-  ORDERS.o_shippriority
+  1,
+  3,
+  4
 ORDER BY
   COALESCE(SUM(LINEITEM.l_extendedprice * (
     1 - LINEITEM.l_discount

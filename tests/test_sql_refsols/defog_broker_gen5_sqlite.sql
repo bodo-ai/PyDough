@@ -20,6 +20,6 @@ WHERE
   AND CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER) = 2023
   AND sbtxstatus = 'success'
 GROUP BY
-  DATE(sbtxdatetime, 'start of month')
+  1
 ORDER BY
   month

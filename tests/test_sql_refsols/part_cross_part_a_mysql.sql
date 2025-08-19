@@ -28,8 +28,8 @@ LEFT JOIN _s9 AS _s9
   ON _s0.sbTickerExchange = _s9.sbTickerExchange
   AND _s9.sbCustId = sbCustomer.sbcustid
 GROUP BY
-  sbCustomer.sbcuststate,
-  _s0.sbTickerExchange
+  1,
+  2
 ORDER BY
   sbCustomer.sbcuststate COLLATE utf8mb4_bin,
   _s0.sbTickerExchange COLLATE utf8mb4_bin

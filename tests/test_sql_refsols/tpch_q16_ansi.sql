@@ -13,9 +13,9 @@ JOIN tpch.part AS part
   AND part.p_partkey = partsupp.ps_partkey
   AND part.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
 GROUP BY
-  part.p_brand,
-  part.p_size,
-  part.p_type
+  1,
+  2,
+  3
 ORDER BY
   supplier_count DESC,
   p_brand,

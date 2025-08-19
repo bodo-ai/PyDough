@@ -496,9 +496,9 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
 MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
 """
-    MySQL environment variables required for connection.
-    MYSQL_USERNAME: The username for MySQL.
-    MYSQL_PASSWORD: The password for MySQL.
+The MySQL environment variables required for connection.
+- `MYSQL_USERNAME`: The username for MySQL.
+- `MYSQL_PASSWORD`: The password for MySQL.
 """
 
 
@@ -573,6 +573,8 @@ def mysql_docker_setup() -> None:
                         "-d",
                         "--name",
                         MYSQL_DOCKER_CONTAINER,
+                        "-e",
+                        f"MYSQL_ROOT_PASSWORD={repr(os.getenv('MYSQL_PASSWORD'))}",
                         "-p",
                         f"{MYSQL_PORT}:3306",
                         MYSQL_DOCKER_IMAGE,

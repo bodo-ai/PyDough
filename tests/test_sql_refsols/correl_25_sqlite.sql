@@ -44,8 +44,8 @@ JOIN _s13 AS _s13
   AND _s13.s_suppkey = lineitem.l_suppkey
 GROUP BY
   customer.c_custkey,
-  _s1.n_nationkey,
-  _s0.r_regionkey
+  2,
+  4
 ORDER BY
   n_urgent_semi_domestic_rail_orders DESC,
   MAX(customer.c_name)

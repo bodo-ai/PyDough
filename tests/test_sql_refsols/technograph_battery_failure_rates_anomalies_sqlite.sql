@@ -20,8 +20,8 @@ JOIN main.products AS products
 LEFT JOIN _s7 AS _s7
   ON _s7.in_device_id = devices.de_id
 GROUP BY
-  countries.co_name,
-  products.pr_name
+  1,
+  2
 ORDER BY
   ROUND(CAST(COALESCE(SUM(_s7.n_rows), 0) AS REAL) / COUNT(*), 2) DESC,
   products.pr_name,

@@ -22,8 +22,8 @@ JOIN tpch.PARTSUPP AS PARTSUPP
   ON LINEITEM.l_partkey = PARTSUPP.ps_partkey
   AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
 GROUP BY
-  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)),
-  NATION.n_name
+  1,
+  2
 ORDER BY
   NATION.n_name COLLATE utf8mb4_bin,
   EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) DESC

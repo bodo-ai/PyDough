@@ -41,13 +41,4 @@ WHERE
     INTERVAL '-3' WEEK
   )
 GROUP BY
-  DATE(
-    DATE_SUB(
-      CAST(notifications.created_at AS DATETIME),
-      INTERVAL (
-        (
-          DAYOFWEEK(CAST(notifications.created_at AS DATETIME)) + 5
-        ) % 7
-      ) DAY
-    )
-  )
+  1

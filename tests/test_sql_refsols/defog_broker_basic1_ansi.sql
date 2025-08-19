@@ -17,4 +17,4 @@ FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid
 GROUP BY
-  sbcustomer.sbcustcountry
+  1

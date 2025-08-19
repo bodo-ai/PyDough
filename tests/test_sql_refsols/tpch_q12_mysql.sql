@@ -13,6 +13,6 @@ WHERE
     LINEITEM.l_shipmode = 'MAIL' OR LINEITEM.l_shipmode = 'SHIP'
   )
 GROUP BY
-  LINEITEM.l_shipmode
+  1
 ORDER BY
   LINEITEM.l_shipmode COLLATE utf8mb4_bin

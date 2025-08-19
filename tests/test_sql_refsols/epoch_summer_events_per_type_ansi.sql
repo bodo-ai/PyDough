@@ -10,6 +10,6 @@ JOIN seasons AS seasons
   )
   AND seasons.s_name = 'Summer'
 GROUP BY
-  events.ev_typ
+  1
 ORDER BY
   events.ev_typ

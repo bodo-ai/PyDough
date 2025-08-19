@@ -27,8 +27,8 @@ FROM _s2 AS _s2
 JOIN main.sbCustomer AS sbCustomer
   ON _s2.sbTxCustId = sbCustomer.sbcustid
 GROUP BY
-  sbCustomer.sbcuststate,
-  _s2.sbTickerType
+  1,
+  2
 ORDER BY
   num_transactions DESC
 LIMIT 5

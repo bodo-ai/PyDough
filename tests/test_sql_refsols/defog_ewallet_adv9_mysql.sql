@@ -19,7 +19,4 @@ WHERE
   )
   AND sender_type = 0
 GROUP BY
-  STR_TO_DATE(
-    CONCAT(YEAR(CAST(created_at AS DATETIME)), ' ', MONTH(CAST(created_at AS DATETIME)), ' 1'),
-    '%Y %c %e'
-  )
+  1

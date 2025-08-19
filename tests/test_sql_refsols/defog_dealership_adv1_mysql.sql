@@ -45,13 +45,4 @@ WHERE
     )
   ) / 7 AS SIGNED) >= 1
 GROUP BY
-  DATE(
-    DATE_SUB(
-      CAST(payments_received.payment_date AS DATETIME),
-      INTERVAL (
-        (
-          DAYOFWEEK(CAST(payments_received.payment_date AS DATETIME)) + 5
-        ) % 7
-      ) DAY
-    )
-  )
+  1

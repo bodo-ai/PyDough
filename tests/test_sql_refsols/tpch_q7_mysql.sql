@@ -37,9 +37,9 @@ JOIN _s9 AS _s9
 WHERE
   EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)) IN (1995, 1996)
 GROUP BY
-  EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)),
-  _s9.n_name,
-  NATION.n_name
+  1,
+  2,
+  3
 ORDER BY
   NATION.n_name COLLATE utf8mb4_bin,
   _s9.n_name COLLATE utf8mb4_bin,

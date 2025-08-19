@@ -18,6 +18,6 @@ WHERE
   AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1993
   AND NOT _u_0._u_1 IS NULL
 GROUP BY
-  ORDERS.o_orderpriority
+  1
 ORDER BY
   ORDERS.o_orderpriority COLLATE utf8mb4_bin

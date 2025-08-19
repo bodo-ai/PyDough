@@ -7,7 +7,7 @@ WHERE
   sbtxdatetime <= CAST('2023-03-31' AS DATE)
   AND sbtxdatetime >= CAST('2023-01-01' AS DATE)
 GROUP BY
-  sbtxtype
+  1
 ORDER BY
   num_customers DESC,
   sbtxtype

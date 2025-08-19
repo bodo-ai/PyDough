@@ -238,6 +238,6 @@ SELECT
   MAX(expr_87) AS qu8
 FROM _t1
 GROUP BY
-  CHAR_LENGTH(CASE WHEN sbTickerExchange <> 'NYSE Arca' THEN sbTickerExchange ELSE NULL END)
+  1
 ORDER BY
   aug_exchange

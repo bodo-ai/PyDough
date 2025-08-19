@@ -7,7 +7,7 @@ JOIN events AS events
   OR seasons.s_month2 = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
   OR seasons.s_month3 = CAST(STRFTIME('%m', events.ev_dt) AS INTEGER)
 GROUP BY
-  seasons.s_name
+  1
 ORDER BY
   n_events DESC,
   seasons.s_name
