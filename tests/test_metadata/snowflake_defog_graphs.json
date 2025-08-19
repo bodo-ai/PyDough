@@ -512,13 +512,13 @@
       {
         "name": "cars",
         "type": "simple table",
-        "table path": "BROKER.cars",
+        "table path": "DEALERSHIP.cars",
         "unique properties": ["_id", "vin_number"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "Unique identifier for each car",
             "sample values": [1, 3, 5, 6, 18],
@@ -619,13 +619,13 @@
       {
         "name": "salespeople",
         "type": "simple table",
-        "table path": "BROKER.salespersons",
+        "table path": "DEALERSHIP.salespersons",
         "unique properties": ["_id", "email"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "Unique identifier for each salesperson in the dealership",
             "sample values": [1, 5, 10, 13],
@@ -697,13 +697,13 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "BROKER.customers",
+        "table path": "DEALERSHIP.customers",
         "unique properties": ["_id", "email"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "Unique identifier for each customer",
             "sample values": [1, 5, 9, 12],
@@ -793,13 +793,13 @@
       {
         "name": "payments_made",
         "type": "simple table",
-        "table path": "BROKER.payments_made",
+        "table path": "DEALERSHIP.payments_made",
         "unique properties": ["_id", "invoice_number"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "Unique identifier for each payment made",
             "sample values": [1, 11, 16, 17],
@@ -879,13 +879,13 @@
       {
         "name": "payments_received",
         "type": "simple table",
-        "table path": "BROKER.payments_received",
+        "table path": "DEALERSHIP.payments_received",
         "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "Unique identifier for each payment received record",
             "sample values": [1, 2, 10, 19, 23],
@@ -941,13 +941,13 @@
       {
         "name": "sales",
         "type": "simple table",
-        "table path": "BROKER.sales",
+        "table path": "DEALERSHIP.sales",
         "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "Unique identifier for each car sale",
             "sample values": [5, 11, 12, 18, 22],
@@ -1012,13 +1012,13 @@
       {
         "name": "inventory_snapshots",
         "type": "simple table",
-        "table path": "BROKER.inventory_snapshots",
+        "table path": "DEALERSHIP.inventory_snapshots",
         "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "Unique identifier for each inventory snapshot entry",
             "sample values": [1, 4, 13, 19, 23],
@@ -1200,7 +1200,7 @@
       {
         "name": "doctors",
         "type": "simple table",
-        "table path": "BROKER.doctors",
+        "table path": "DERMTREATMENT.doctors",
         "unique properties": ["doc_id"],
         "properties": [
           {
@@ -1299,7 +1299,7 @@
       {
         "name": "patients",
         "type": "simple table",
-        "table path": "BROKER.patients",
+        "table path": "DERMTREATMENT.patients",
         "unique properties": ["patient_id", "email", "phone"],
         "properties": [
           {
@@ -1450,7 +1450,7 @@
       {
         "name": "drugs",
         "type": "simple table",
-        "table path": "BROKER.drugs",
+        "table path": "DERMTREATMENT.drugs",
         "unique properties": ["drug_id", "national_drug_code"],
         "properties": [
           {
@@ -1558,13 +1558,13 @@
       {
         "name": "diagnoses",
         "type": "simple table",
-        "table path": "BROKER.diagnoses",
+        "table path": "DERMTREATMENT.diagnoses",
         "unique properties": ["_id", "code", "name"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "diagnosis_id",
+            "column name": "DIAG_ID",
             "data type": "numeric",
             "description": "The unique identifier for each diagnosis in the system",
             "sample values": [1, 3, 5, 7, 9],
@@ -1604,7 +1604,7 @@
       {
         "name": "treatments",
         "type": "simple table",
-        "table path": "BROKER.treatments",
+        "table path": "DERMTREATMENT.treatments",
         "unique properties": ["treatment_id"],
         "properties": [
           {
@@ -1646,7 +1646,7 @@
           {
             "name": "diagnosis_id",
             "type": "table column",
-            "column name": "diagnosis_id",
+            "column name": "diag_id",
             "data type": "numeric",
             "description": "The id of the diagnosis the patient is being treated for",
             "sample values": [2, 4, 5, 6, 8],
@@ -1701,7 +1701,7 @@
       {
         "name": "outcomes",
         "type": "simple table",
-        "table path": "BROKER.outcomes",
+        "table path": "DERMTREATMENT.outcomes",
         "unique properties": ["outcome_id"],
         "properties": [
           {
@@ -1872,13 +1872,13 @@
       {
         "name": "concomitant_meds",
         "type": "simple table",
-        "table path": "BROKER.concomitant_meds",
+        "table path": "DERMTREATMENT.concomitant_meds",
         "unique properties": ["_id", ["treatment_id", "medicine_name"]],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "The unique identifier for each concomitant medication record in the system",
             "sample values": [1, 5, 12, 14, 15],
@@ -1952,13 +1952,13 @@
       {
         "name": "adverse_events",
         "type": "simple table",
-        "table path": "BROKER.adverse_events",
+        "table path": "DERMTREATMENT.adverse_events",
         "unique properties": ["_id"],
         "properties": [
           {
             "name": "_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "The unique identifier for each adverse event record in the system",
             "sample values": [1, 3, 5, 7, 8],
@@ -2183,7 +2183,7 @@
       {
         "name": "users",
         "type": "simple table",
-        "table path": "BROKER.users",
+        "table path": "EWALLET.users",
         "unique properties": ["uid", "username"],
         "properties": [
           {
@@ -2307,7 +2307,7 @@
       {
         "name": "merchants",
         "type": "simple table",
-        "table path": "BROKER.merchants",
+        "table path": "EWALLET.merchants",
         "unique properties": ["mid", "name"],
         "properties": [
           {
@@ -2477,7 +2477,7 @@
       {
         "name": "coupons",
         "type": "simple table",
-        "table path": "BROKER.coupons",
+        "table path": "EWALLET.coupons",
         "unique properties": ["cid"],
         "properties": [
           {
@@ -2609,7 +2609,7 @@
       {
         "name": "transactions",
         "type": "simple table",
-        "table path": "BROKER.wallet_transactions_daily",
+        "table path": "EWALLET.wallet_transactions_daily",
         "unique properties": ["txid", "transaction_ref"],
         "properties": [
           {
@@ -2779,7 +2779,7 @@
       {
         "name": "user_balances",
         "type": "simple table",
-        "table path": "BROKER.wallet_user_balance_daily",
+        "table path": "EWALLET.wallet_user_balance_daily",
         "unique properties": [["user_id", "updated_at"]],
         "properties": [
           {
@@ -2815,7 +2815,7 @@
       {
         "name": "merchant_balances",
         "type": "simple table",
-        "table path": "BROKER.wallet_merchant_balance_daily",
+        "table path": "EWALLET.wallet_merchant_balance_daily",
         "unique properties": [["merchant_id", "updated_at"]],
         "properties": [
           {
@@ -2851,13 +2851,13 @@
       {
         "name": "notifications",
         "type": "simple table",
-        "table path": "BROKER.notifications",
+        "table path": "EWALLET.notifications",
         "unique properties": ["notif_id"],
         "properties": [
           {
             "name": "notif_id",
             "type": "table column",
-            "column name": "_id",
+            "column name": "id",
             "data type": "numeric",
             "description": "The unique identifier for each notification in the system",
             "sample values": [1, 5, 10, 14, 16],
@@ -2949,7 +2949,7 @@
       {
         "name": "user_sessions",
         "type": "simple table",
-        "table path": "BROKER.user_sessions",
+        "table path": "EWALLET.user_sessions",
         "unique properties": [["user_id", "session_start"], ["user_id", "session_end"]],
         "properties": [
           {
@@ -3002,7 +3002,7 @@
       {
         "name": "user_setting_snapshots",
         "type": "simple table",
-        "table path": "BROKER.user_setting_snapshot",
+        "table path": "EWALLET.user_setting_snapshot",
         "unique properties": [["user_id", "snapshot_date"]],
         "properties": [
           {
