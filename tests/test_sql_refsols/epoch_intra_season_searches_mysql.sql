@@ -79,4 +79,4 @@ FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17
   ON _s16.s_name = _s17.s_name
 ORDER BY
-  _s16.s_name
+  _s16.s_name COLLATE utf8mb4_bin

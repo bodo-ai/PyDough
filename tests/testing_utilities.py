@@ -1284,6 +1284,8 @@ class PyDoughPandasTest:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
                 )
+
+        # breakpoint()
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )

@@ -196,7 +196,9 @@ SELECT
   CASE
     WHEN LENGTH('o') = 0
     THEN 0
-    ELSE CAST(LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', '')) / LENGTH('o') AS BIGINT)
+    ELSE CAST((
+      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+    ) / LENGTH('o') AS BIGINT)
   END + (
     (
       STR_POSITION(p_name, 'o') - 1

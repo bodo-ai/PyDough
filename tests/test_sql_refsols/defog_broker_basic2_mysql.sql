@@ -10,5 +10,5 @@ GROUP BY
   sbtxtype
 ORDER BY
   num_customers DESC,
-  sbtxtype
+  sbtxtype COLLATE utf8mb4_bin
 LIMIT 3

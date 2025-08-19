@@ -21,4 +21,4 @@ FROM main.sbTicker AS sbTicker
 JOIN _s1 AS _s1
   ON _s1.sbTxTickerId = sbTicker.sbtickerid
 ORDER BY
-  sbTicker.sbtickersymbol
+  sbTicker.sbtickersymbol COLLATE utf8mb4_bin

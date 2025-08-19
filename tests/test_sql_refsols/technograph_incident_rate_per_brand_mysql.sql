@@ -17,4 +17,4 @@ LEFT JOIN _s3 AS _s3
 GROUP BY
   PRODUCTS.pr_brand
 ORDER BY
-  PRODUCTS.pr_brand
+  PRODUCTS.pr_brand COLLATE utf8mb4_bin

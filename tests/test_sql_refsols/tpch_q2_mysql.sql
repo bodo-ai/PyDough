@@ -35,7 +35,7 @@ WHERE
   _w = 1
 ORDER BY
   s_acctbal DESC,
-  n_name,
-  s_name,
+  n_name COLLATE utf8mb4_bin,
+  s_name COLLATE utf8mb4_bin,
   p_partkey
 LIMIT 10

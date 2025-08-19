@@ -20,4 +20,4 @@ GROUP BY
   payment_method
 ORDER BY
   payment_date DESC,
-  payment_method
+  payment_method COLLATE utf8mb4_bin

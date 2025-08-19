@@ -69,4 +69,4 @@ JOIN _s7 AS _s7
 LEFT JOIN _s13 AS _s13
   ON COUNTRIES.co_id = _s13.us_country_id
 ORDER BY
-  COUNTRIES.co_name
+  COUNTRIES.co_name COLLATE utf8mb4_bin

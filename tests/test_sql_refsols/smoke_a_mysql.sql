@@ -2,9 +2,17 @@ SELECT
   p_partkey AS `key`,
   CAST(CONCAT_WS(
     '',
-    SUBSTRING(p_brand, -2),
+    SUBSTRING(p_brand, CASE WHEN ABS(-2) < CHAR_LENGTH(p_brand) THEN -2 ELSE 1 END),
     SUBSTRING(p_brand, 8),
-    SUBSTRING(p_brand, -2, GREATEST(1, 0))
+    SUBSTRING(
+      p_brand,
+      CASE WHEN ABS(-2) < CHAR_LENGTH(p_brand) THEN -2 ELSE 1 END,
+      CASE
+        WHEN ABS(-2) > CHAR_LENGTH(p_brand)
+        THEN CHAR_LENGTH(p_brand) + -1
+        ELSE GREATEST(1, 0)
+      END
+    )
   ) AS SIGNED) AS a,
   UPPER(
     LEAST(
@@ -32,7 +40,21 @@ SELECT
       END
     )
   ) AS b,
-  TRIM('o' FROM SUBSTRING(p_name, 1, 2)) AS c,
+  CASE
+    WHEN SUBSTRING(p_name, 1, 2) = 'o'
+    THEN ''
+    ELSE REGEXP_REPLACE(
+      CAST(SUBSTRING(p_name, 1, 2) AS CHAR) COLLATE utf8mb4_bin,
+      CONCAT(
+        '^[',
+        REGEXP_REPLACE('o', '([]\\[\\^\\-])', '\\\\\\1'),
+        ']+|[',
+        REGEXP_REPLACE('o', '([]\\[\\^\\-])', '\\\\\\1'),
+        ']+$'
+      ),
+      ''
+    )
+  END AS c,
   LPAD(CAST(p_size AS CHAR), 3, '0') AS d,
   RPAD(CAST(p_size AS CHAR), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
@@ -40,7 +62,9 @@ SELECT
   CASE
     WHEN CHAR_LENGTH('o') = 0
     THEN 0
-    ELSE CAST(CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, 'o', '')) / CHAR_LENGTH('o') AS SIGNED)
+    ELSE CAST((
+      CHAR_LENGTH(p_name) - CHAR_LENGTH(REPLACE(p_name, 'o', ''))
+    ) / CHAR_LENGTH('o') AS SIGNED)
   END + (
     (
       LOCATE('o', p_name) - 1

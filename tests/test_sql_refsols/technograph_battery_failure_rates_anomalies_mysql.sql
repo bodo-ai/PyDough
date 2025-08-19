@@ -24,6 +24,6 @@ GROUP BY
   PRODUCTS.pr_name
 ORDER BY
   ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) DESC,
-  PRODUCTS.pr_name,
-  COUNTRIES.co_name
+  PRODUCTS.pr_name COLLATE utf8mb4_bin,
+  COUNTRIES.co_name COLLATE utf8mb4_bin
 LIMIT 5

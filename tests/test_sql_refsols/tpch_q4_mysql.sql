@@ -20,4 +20,4 @@ WHERE
 GROUP BY
   ORDERS.o_orderpriority
 ORDER BY
-  ORDERS.o_orderpriority
+  ORDERS.o_orderpriority COLLATE utf8mb4_bin

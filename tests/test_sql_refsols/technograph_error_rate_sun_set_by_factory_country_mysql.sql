@@ -25,4 +25,4 @@ FROM main.COUNTRIES AS COUNTRIES
 LEFT JOIN _s5 AS _s5
   ON COUNTRIES.co_id = _s5.de_production_country_id
 ORDER BY
-  COUNTRIES.co_name
+  COUNTRIES.co_name COLLATE utf8mb4_bin

@@ -28,5 +28,5 @@ GROUP BY
   anything_user_id
 ORDER BY
   n_searches DESC,
-  ANY_VALUE(anything_user_name)
+  ANY_VALUE(anything_user_name) COLLATE utf8mb4_bin
 LIMIT 4

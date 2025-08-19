@@ -1937,7 +1937,7 @@ def abs_round_magic_method():
 def years_months_days_hours_datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     return (
-        transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025) & (MONTH(date_time) > 3))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1956,7 +1956,7 @@ def years_months_days_hours_datediff():
             c_hours_diff=DATEDIFF("HOURS", date_time, y1_datetime),
             c_h_diff=DATEDIFF("H", date_time, y1_datetime),
         )
-        .TOP_K(30, by=years_diff.ASC())
+        .TOP_K(30, by=x.ASC())
     )
 
 

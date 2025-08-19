@@ -18,7 +18,7 @@ GROUP BY
   PART.p_type
 ORDER BY
   SUPPLIER_COUNT DESC,
-  PART.p_brand,
-  PART.p_type,
+  PART.p_brand COLLATE utf8mb4_bin,
+  PART.p_type COLLATE utf8mb4_bin,
   PART.p_size
 LIMIT 10

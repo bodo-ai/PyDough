@@ -42,6 +42,6 @@ GROUP BY
   _s9.n_name,
   _s1.n_name
 ORDER BY
-  _s1.n_name,
-  _s9.n_name,
+  _s1.n_name COLLATE utf8mb4_bin,
+  _s9.n_name COLLATE utf8mb4_bin,
   EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME))

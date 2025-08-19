@@ -177,6 +177,20 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
+def get_mysql_defog_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the defog database in MySQL.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/mysql_defog_graphs.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def get_sample_graph(
     sample_graph_path: str,
     valid_sample_graph_names: set[str],
@@ -590,31 +604,37 @@ def mysql_docker_setup() -> None:
 
 
 @pytest.fixture
-def mysql_conn_tpch_db_context(
+def mysql_conn_db_context(
     require_mysql_env, mysql_docker_setup
-) -> DatabaseContext:
+) -> Callable[[str], DatabaseContext]:
     """
     This fixture is used to connect to the MySQL TPCH database using
     a connection object.
     Returns a DatabaseContext for the MySQL TPCH database.
     """
-    import mysql.connector as mysql_connector
 
-    mysql_username = os.getenv("MYSQL_USERNAME")
-    mysql_password = os.getenv("MYSQL_PASSWORD")
-    mysql_db = MYSQL_DB
-    mysql_host = MYSQL_HOST
+    def _impl(database_name: str) -> DatabaseContext:
+        import mysql.connector as mysql_connector
 
-    connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
-        user=mysql_username,
-        password=mysql_password,
-        host=mysql_host,
-        database=mysql_db,
-    )
-    return load_database_context(
-        "mysql",
-        connection=connection,
-    )
+        mysql_username = os.getenv("MYSQL_USERNAME")
+        mysql_password = os.getenv("MYSQL_PASSWORD")
+        mysql_db = database_name
+        mysql_host = MYSQL_HOST
+
+        connection: mysql_connector.connection.MySQLConnection = (
+            mysql_connector.connect(
+                user=mysql_username,
+                password=mysql_password,
+                host=mysql_host,
+                database=mysql_db,
+            )
+        )
+        return load_database_context(
+            "mysql",
+            connection=connection,
+        )
+
+    return _impl
 
 
 @pytest.fixture

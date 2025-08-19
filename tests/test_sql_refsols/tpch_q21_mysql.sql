@@ -64,5 +64,5 @@ LEFT JOIN _s13 AS _s13
   ON SUPPLIER.s_suppkey = _s13.anything_l_suppkey
 ORDER BY
   COALESCE(_s13.n_rows, 0) DESC,
-  SUPPLIER.s_name
+  SUPPLIER.s_name COLLATE utf8mb4_bin
 LIMIT 10

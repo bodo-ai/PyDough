@@ -67,4 +67,4 @@ FROM tpch.REGION AS REGION
 JOIN _s3 AS _s3
   ON REGION.r_regionkey = _s3.n_regionkey
 ORDER BY
-  REGION.r_name
+  REGION.r_name COLLATE utf8mb4_bin

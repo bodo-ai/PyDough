@@ -5,9 +5,9 @@ WITH _s0 AS (
     n_regionkey
   FROM tpch.NATION
   ORDER BY
-    n_name
+    n_name COLLATE utf8mb4_bin
   LIMIT 5
-), _t1 AS (
+), _t2 AS (
   SELECT
     CASE
       WHEN CAST(0.99 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS SIGNED) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -71,7 +71,7 @@ WITH _s0 AS (
     MAX(expr_17) AS max_expr_17,
     MAX(expr_9) AS max_expr_9,
     c_nationkey
-  FROM _t1
+  FROM _t2
   GROUP BY
     c_nationkey
 )
@@ -93,4 +93,4 @@ JOIN tpch.REGION AS REGION
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
-  _s0.n_name
+  _s0.n_name COLLATE utf8mb4_bin

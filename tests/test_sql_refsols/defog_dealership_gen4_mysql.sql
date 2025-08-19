@@ -46,4 +46,4 @@ WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
   quarter,
-  state
+  state COLLATE utf8mb4_bin

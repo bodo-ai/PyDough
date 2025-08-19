@@ -10,4 +10,4 @@ GROUP BY
   SEASONS.s_name
 ORDER BY
   n_events DESC,
-  season_name
+  season_name COLLATE utf8mb4_bin

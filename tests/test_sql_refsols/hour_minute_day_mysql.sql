@@ -8,4 +8,4 @@ JOIN main.sbTicker AS sbTicker
   ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
   AND sbTicker.sbtickersymbol IN ('AAPL', 'GOOGL', 'NFLX')
 ORDER BY
-  sbTransaction.sbtxid
+  sbTransaction.sbtxid COLLATE utf8mb4_bin

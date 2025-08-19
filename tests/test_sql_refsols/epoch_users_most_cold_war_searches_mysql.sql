@@ -1,4 +1,4 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     ANY_VALUE(SEARCHES.search_user_id) AS anything_search_user_id
   FROM SEARCHES AS SEARCHES
@@ -14,7 +14,7 @@ WITH _t0 AS (
   SELECT
     COUNT(*) AS n_cold_war_searches,
     anything_search_user_id
-  FROM _t0
+  FROM _t1
   GROUP BY
     anything_search_user_id
 )
@@ -26,5 +26,5 @@ JOIN _s5 AS _s5
   ON USERS.user_id = _s5.anything_search_user_id
 ORDER BY
   n_cold_war_searches DESC,
-  user_name
+  user_name COLLATE utf8mb4_bin
 LIMIT 3

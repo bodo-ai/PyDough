@@ -138,7 +138,9 @@ SELECT
   CASE
     WHEN LENGTH('o') = 0
     THEN 0
-    ELSE CAST(CAST(LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', '')) AS REAL) / LENGTH('o') AS INTEGER)
+    ELSE CAST(CAST((
+      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+    ) AS REAL) / LENGTH('o') AS INTEGER)
   END + (
     CAST((
       INSTR(p_name, 'o') - 1

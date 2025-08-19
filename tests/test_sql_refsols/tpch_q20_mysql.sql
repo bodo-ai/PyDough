@@ -35,5 +35,5 @@ JOIN tpch.NATION AS NATION
 JOIN _s7 AS _s7
   ON SUPPLIER.s_suppkey = _s7.ps_suppkey
 ORDER BY
-  SUPPLIER.s_name
+  SUPPLIER.s_name COLLATE utf8mb4_bin
 LIMIT 10

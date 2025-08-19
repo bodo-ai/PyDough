@@ -15,4 +15,4 @@ WHERE
 GROUP BY
   LINEITEM.l_shipmode
 ORDER BY
-  LINEITEM.l_shipmode
+  LINEITEM.l_shipmode COLLATE utf8mb4_bin
