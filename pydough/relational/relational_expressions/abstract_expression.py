@@ -38,6 +38,12 @@ class RelationalExpression(ABC):
         from .call_expression import CallExpression
         from .literal_expression import LiteralExpression
 
+        terms = [
+            term
+            for term in terms
+            if not (isinstance(term, LiteralExpression) and bool(term.value))
+        ]
+
         if len(terms) == 0:
             return LiteralExpression(True, BooleanType())
         elif len(terms) == 1:

@@ -155,7 +155,7 @@ class ColumnPruner:
             (output.join_type == JoinType.LEFT)
             or (
                 output.join_type == JoinType.INNER
-                and output.cardinality.filters == JoinCardinality.SINGULAR_ACCESS
+                and output.cardinality == JoinCardinality.SINGULAR_ACCESS
             )
         ):
             uses_rhs: bool = False

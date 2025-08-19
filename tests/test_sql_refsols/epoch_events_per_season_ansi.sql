@@ -1,5 +1,5 @@
 SELECT
-  ANY_VALUE(seasons.s_name) AS season_name,
+  seasons.s_name AS season_name,
   COUNT(*) AS n_events
 FROM seasons AS seasons
 JOIN events AS events
@@ -10,4 +10,4 @@ GROUP BY
   seasons.s_name
 ORDER BY
   n_events DESC,
-  season_name
+  seasons.s_name
