@@ -28,9 +28,7 @@ from tests.test_pydough_functions.tpch_test_functions import (
 )
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher, harmonize_types
 
-from .test_pipeline_defog_custom import (  # type: ignore # noqa
-    defog_custom_pipeline_test_data,
-)
+from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
 
 
 @pytest.fixture(
