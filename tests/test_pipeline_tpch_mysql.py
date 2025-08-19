@@ -26,8 +26,14 @@ from tests.test_pydough_functions.tpch_outputs import (
 from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q16,
 )
-from tests.testing_utilities import PyDoughPandasTest, graph_fetcher, harmonize_types
+from tests.testing_utilities import (
+    PyDoughPandasTest,
+    PyDoughSQLComparisonTest,
+    graph_fetcher,
+    harmonize_types,
+)
 
+from .test_pipeline_defog import defog_pipeline_test_data  # noqa
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
 
 
@@ -656,5 +662,32 @@ def test_pipeline_mysql_e2e_defog_custom(
     defog_mysql_test_data.run_e2e_test(
         get_mysql_defog_graphs,
         mysql_conn_db_context("broker"),
+        coerce_types=True,
+    )
+
+
+@pytest.mark.mysql
+@pytest.mark.execute
+def test_defog_e2e(
+    defog_pipeline_test_data: PyDoughSQLComparisonTest,  # noqa: F811
+    get_mysql_defog_graphs: graph_fetcher,
+    mysql_conn_db_context: Callable[[str], DatabaseContext],
+    defog_config: PyDoughConfigs,
+    sqlite_defog_connection: DatabaseContext,
+) -> None:
+    """
+    Test executing the defog analytical questions on the sqlite database,
+    comparing against the result of running the reference SQL query text on the
+    same database connector. Run on the defog.ai queries.
+    NOTE: passing SQLite connection as reference database so that refsol
+    is executed using SQLite.
+    This is needed because refsol uses SQLite SQL syntax to obtain
+    the correct results.
+    """
+    defog_pipeline_test_data.run_e2e_test(
+        get_mysql_defog_graphs,
+        mysql_conn_db_context(defog_pipeline_test_data.graph_name.lower()),
+        defog_config,
+        reference_database=sqlite_defog_connection,
         coerce_types=True,
     )

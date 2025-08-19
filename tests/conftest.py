@@ -502,7 +502,7 @@ The MySQL environment variables required for connection.
 """
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def require_mysql_env() -> None:
     """
     Checks whether all required MySQL environment variables are set.
@@ -605,7 +605,7 @@ def mysql_docker_setup() -> None:
         pytest.fail("MySQL container did not become ready in time.")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mysql_conn_db_context(
     require_mysql_env, mysql_docker_setup
 ) -> Callable[[str], DatabaseContext]:
@@ -614,10 +614,33 @@ def mysql_conn_db_context(
     a connection object.
     Returns a DatabaseContext for the MySQL TPCH database.
     """
+    # The first time, set up the defog data
+    import mysql.connector as mysql_connector
 
+    mysql_username = os.getenv("MYSQL_USERNAME")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_host = MYSQL_HOST
+
+    connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
+        user=mysql_username,
+        password=mysql_password,
+        host=mysql_host,
+        use_pure=True,
+    )
+
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    path: str = os.path.join(base_dir, "tests/gen_data/init_defog_mysql.sql")
+    with open(path) as f:
+        init_defog_script: str = f.read()
+    cursor: mysql_connector.connection.MySQLCursor = connection.cursor()
+    for statement in init_defog_script.split(";\n"):
+        if statement.strip():
+            cursor.execute(statement.strip())
+    connection.commit()
+    cursor.close()
+
+    @cache
     def _impl(database_name: str) -> DatabaseContext:
-        import mysql.connector as mysql_connector
-
         mysql_username = os.getenv("MYSQL_USERNAME")
         mysql_password = os.getenv("MYSQL_PASSWORD")
         mysql_db = database_name
@@ -639,7 +662,7 @@ def mysql_conn_db_context(
     return _impl
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mysql_params_tpch_db_context(
     require_mysql_env, mysql_docker_setup
 ) -> DatabaseContext:

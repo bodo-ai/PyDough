@@ -172,7 +172,16 @@ def apply_sqlglot_optimizer(
 
 def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
     """
-    TODO
+    Runs a transformation postprocessing pass on the SQLGlot AST to make the
+    following changes:
+    - Replace ORDER BY keys that are in the select clause with indices, and if
+      they have a COLLATE, move the COLLATE from the ORDER BY key to the
+      operation in the select clause.
+    - Replace GROUP BY keys that are in the select clause with indices, unless
+      the key appears multiple times in the select clause (e.g. as a top level
+      expression and as a subexpression in other scalar expressions).
+    - If any window function ordering key expressions have become literals,
+      delete and/or replace them with '1'
     """
     assert isinstance(glot_expr, Select)
 
@@ -238,6 +247,19 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
                         expressions.index(key_expr) + 1
                     )
             keys_list.sort(key=repr)
+
+    # Now iterate through all window functions and replace any ordering keys
+    # that are literals with '1'.
+    for window_expr in glot_expr.find_all(sqlglot_expressions.Window):
+        if window_expr.args.get("order") is not None:
+            exprs: list[SQLGlotExpression] = window_expr.args.get("order").expressions
+            original_length: int = len(exprs)
+            for idx in range(len(exprs) - 1, -1, -1):
+                order_expr = exprs[idx]
+                if isinstance(order_expr.this, sqlglot_expressions.Literal):
+                    exprs.pop(idx)
+            if len(exprs) == 0 and original_length > 0:
+                exprs.append(sqlglot_expressions.convert("1"))
 
 
 def fix_column_case(

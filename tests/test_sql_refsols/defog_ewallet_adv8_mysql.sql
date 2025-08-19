@@ -13,7 +13,7 @@ SELECT
   merchants.name AS merchants_name,
   merchants.category,
   COALESCE(_s1.sum_amount, 0) AS total_revenue,
-  ROW_NUMBER() OVER (ORDER BY 0 DESC, COALESCE(_s1.sum_amount, 0) DESC) AS mrr
+  ROW_NUMBER() OVER (ORDER BY COALESCE(_s1.sum_amount, 0) DESC) AS mrr
 FROM main.merchants AS merchants
 JOIN _s1 AS _s1
   ON _s1.receiver_id = merchants.mid
