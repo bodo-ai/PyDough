@@ -24,7 +24,7 @@ WITH _s5 AS (
     AND customer.c_custkey = orders.o_custkey
     AND orders.o_orderpriority = '2-HIGH'
   GROUP BY
-    nation.n_regionkey
+    2
 )
 SELECT
   region.r_name AS region_name,
@@ -33,4 +33,4 @@ FROM tpch.region AS region
 LEFT JOIN _s5 AS _s5
   ON _s5.n_regionkey = region.r_regionkey
 ORDER BY
-  region.r_name
+  1

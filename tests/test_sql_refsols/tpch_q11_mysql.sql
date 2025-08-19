@@ -28,7 +28,7 @@ WITH _s0 AS (
   JOIN _t2 AS _t4
     ON _s4.s_nationkey = _t4.n_nationkey
   GROUP BY
-    PARTSUPP.ps_partkey
+    2
 )
 SELECT
   _s9.ps_partkey AS PS_PARTKEY,
@@ -39,5 +39,5 @@ JOIN _s9 AS _s9
     COALESCE(_s8.sum_metric, 0) * 0.0001
   ) < COALESCE(_s9.sum_expr_2, 0)
 ORDER BY
-  COALESCE(_s9.sum_expr_2, 0) DESC
+  2 DESC
 LIMIT 10

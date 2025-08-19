@@ -13,7 +13,7 @@ WITH _s2 AS (
     CAST(STRFTIME('%Y', searches.search_ts) AS INTEGER) <= 2019
     AND CAST(STRFTIME('%Y', searches.search_ts) AS INTEGER) >= 2010
   GROUP BY
-    searches.search_engine
+    2
 )
 SELECT
   _s2.search_engine AS engine,
@@ -22,4 +22,4 @@ FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
   ON _s2.search_engine = _s3.search_engine
 ORDER BY
-  _s2.search_engine
+  1

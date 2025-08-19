@@ -6,7 +6,7 @@ WITH _s7 AS (
   JOIN main.ERRORS AS ERRORS
     ON ERRORS.er_id = INCIDENTS.in_error_id AND ERRORS.er_name = 'Battery Failure'
   GROUP BY
-    INCIDENTS.in_device_id
+    2
 )
 SELECT
   COUNTRIES.co_name AS country_name,
@@ -23,7 +23,7 @@ GROUP BY
   1,
   2
 ORDER BY
-  ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) DESC,
-  PRODUCTS.pr_name COLLATE utf8mb4_bin,
-  COUNTRIES.co_name COLLATE utf8mb4_bin
+  3 DESC,
+  2 COLLATE utf8mb4_bin,
+  1 COLLATE utf8mb4_bin
 LIMIT 5

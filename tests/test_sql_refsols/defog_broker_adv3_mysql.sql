@@ -5,7 +5,7 @@ WITH _t1 AS (
     sbtxcustid AS sbTxCustId
   FROM main.sbTransaction
   GROUP BY
-    sbtxcustid
+    3
 )
 SELECT
   sbCustomer.sbcustname AS name,
@@ -16,6 +16,4 @@ FROM main.sbCustomer AS sbCustomer
 JOIN _t1 AS _t1
   ON _t1.n_rows >= 5 AND _t1.sbTxCustId = sbCustomer.sbcustid
 ORDER BY
-  (
-    100.0 * COALESCE(_t1.sum_expr_2, 0)
-  ) / _t1.n_rows
+  2

@@ -9,5 +9,5 @@ GROUP BY
   1
 ORDER BY
   num_customers DESC,
-  sbtxtype
+  1
 LIMIT 3

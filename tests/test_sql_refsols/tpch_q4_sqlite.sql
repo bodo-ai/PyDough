@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     l_commitdate < l_receiptdate
   GROUP BY
-    l_orderkey
+    1
 )
 SELECT
   orders.o_orderpriority AS O_ORDERPRIORITY,

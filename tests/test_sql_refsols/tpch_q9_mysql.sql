@@ -25,6 +25,6 @@ GROUP BY
   1,
   2
 ORDER BY
-  NATION.n_name COLLATE utf8mb4_bin,
-  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) DESC
+  1 COLLATE utf8mb4_bin,
+  2 DESC
 LIMIT 10

@@ -4,7 +4,7 @@ WITH _s1 AS (
     in_device_id
   FROM main.incidents
   GROUP BY
-    in_device_id
+    2
 ), _s3 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -14,7 +14,7 @@ WITH _s1 AS (
   LEFT JOIN _s1 AS _s1
     ON _s1.in_device_id = devices.de_id
   GROUP BY
-    devices.de_product_id
+    3
 )
 SELECT
   products.pr_name AS product,
@@ -25,5 +25,5 @@ FROM main.products AS products
 JOIN _s3 AS _s3
   ON _s3.de_product_id = products.pr_id
 ORDER BY
-  ROUND(CAST(COALESCE(_s3.sum_n_incidents, 0) AS REAL) / _s3.n_rows, 2) DESC
+  4 DESC
 LIMIT 5

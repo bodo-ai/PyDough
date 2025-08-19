@@ -17,17 +17,7 @@ WITH _s2 AS (
     sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND sbcustjoindate >= DATE_TRUNC('MONTH', DATE_ADD(CURRENT_TIMESTAMP(), -6, 'MONTH'))
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME))), (
-          2 * -1
-        ))
-      END
-    )
+    1
 ), _s3 AS (
   SELECT
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount,
@@ -54,20 +44,7 @@ WITH _s2 AS (
     sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND sbcustomer.sbcustjoindate >= DATE_TRUNC('MONTH', DATE_ADD(CURRENT_TIMESTAMP(), -6, 'MONTH'))
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(
-          CONCAT('00', EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME))),
-          (
-            2 * -1
-          )
-        )
-      END
-    )
+    2
 )
 SELECT
   _s2.month,

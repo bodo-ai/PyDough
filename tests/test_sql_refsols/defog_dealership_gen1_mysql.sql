@@ -7,5 +7,5 @@ FROM main.salespersons
 WHERE
   NOT termination_date IS NULL
 ORDER BY
-  DATEDIFF(termination_date, hire_date) * 1.0
+  4
 LIMIT 1

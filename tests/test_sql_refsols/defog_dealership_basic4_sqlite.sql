@@ -3,7 +3,7 @@ WITH _u_0 AS (
     salesperson_id AS _u_1
   FROM main.sales
   GROUP BY
-    salesperson_id
+    1
 )
 SELECT
   salespersons._id,

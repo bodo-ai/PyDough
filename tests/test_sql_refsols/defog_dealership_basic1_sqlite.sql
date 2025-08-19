@@ -3,7 +3,7 @@ WITH _u_0 AS (
     car_id AS _u_1
   FROM main.sales
   GROUP BY
-    car_id
+    1
 )
 SELECT
   cars._id,

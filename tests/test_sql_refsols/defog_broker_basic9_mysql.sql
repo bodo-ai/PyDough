@@ -3,7 +3,7 @@ WITH _u_0 AS (
     sbtxcustid AS _u_1
   FROM main.sbTransaction
   GROUP BY
-    sbtxcustid
+    1
 )
 SELECT
   sbCustomer.sbcustid AS _id,

@@ -16,7 +16,7 @@ WITH _t0 AS (
     anything_search_user_id
   FROM _t0
   GROUP BY
-    anything_search_user_id
+    2
 )
 SELECT
   users.user_name,

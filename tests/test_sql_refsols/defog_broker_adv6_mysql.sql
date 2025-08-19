@@ -5,7 +5,7 @@ WITH _s1 AS (
     sbtxcustid AS sbTxCustId
   FROM main.sbTransaction
   GROUP BY
-    sbtxcustid
+    3
 )
 SELECT
   sbCustomer.sbcustname AS name,

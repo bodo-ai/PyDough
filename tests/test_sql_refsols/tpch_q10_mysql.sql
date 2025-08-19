@@ -11,7 +11,7 @@ WITH _s3 AS (
     EXTRACT(QUARTER FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 4
     AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1993
   GROUP BY
-    ORDERS.o_custkey
+    2
 )
 SELECT
   CUSTOMER.c_custkey AS C_CUSTKEY,
@@ -28,6 +28,6 @@ LEFT JOIN _s3 AS _s3
 JOIN tpch.NATION AS NATION
   ON CUSTOMER.c_nationkey = NATION.n_nationkey
 ORDER BY
-  COALESCE(_s3.sum_expr_1, 0) DESC,
-  CUSTOMER.c_custkey
+  3 DESC,
+  1
 LIMIT 20

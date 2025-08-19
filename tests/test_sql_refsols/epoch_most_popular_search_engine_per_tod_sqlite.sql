@@ -9,8 +9,8 @@ WITH _t AS (
     ON times.t_end_hour > CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
     AND times.t_start_hour <= CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
   GROUP BY
-    searches.search_engine,
-    times.t_name
+    2,
+    3
 )
 SELECT
   t_name AS tod,
@@ -20,4 +20,4 @@ FROM _t
 WHERE
   _w = 1
 ORDER BY
-  t_name
+  1

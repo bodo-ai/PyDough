@@ -4,7 +4,7 @@ WITH _s1 AS (
     sale_id
   FROM main.payments_received
   GROUP BY
-    sale_id
+    2
 )
 SELECT
   ROUND(

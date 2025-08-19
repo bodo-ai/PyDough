@@ -5,7 +5,7 @@ WITH _s1 AS (
     sbtxtickerid AS sbTxTickerId
   FROM main.sbTransaction
   GROUP BY
-    sbtxtickerid
+    3
 )
 SELECT
   sbTicker.sbtickersymbol AS symbol,
@@ -15,5 +15,5 @@ FROM main.sbTicker AS sbTicker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbTxTickerId = sbTicker.sbtickerid
 ORDER BY
-  COALESCE(_s1.sum_sbTxAmount, 0) DESC
+  3 DESC
 LIMIT 10

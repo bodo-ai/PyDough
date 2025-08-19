@@ -16,7 +16,7 @@ WITH _t3 AS (
     l_suppkey
   FROM _t3
   GROUP BY
-    l_suppkey
+    2
 ), _s2 AS (
   SELECT
     MAX(COALESCE(_s1.sum_expr_2, 0)) AS max_revenue
@@ -31,7 +31,7 @@ WITH _t3 AS (
     l_suppkey
   FROM _t3
   GROUP BY
-    l_suppkey
+    2
 )
 SELECT
   SUPPLIER.s_suppkey AS S_SUPPKEY,
@@ -45,4 +45,4 @@ JOIN _s5 AS _s5
   ON SUPPLIER.s_suppkey = _s5.l_suppkey
   AND _s2.max_revenue = COALESCE(_s5.sum_expr_3, 0)
 ORDER BY
-  SUPPLIER.s_suppkey
+  1

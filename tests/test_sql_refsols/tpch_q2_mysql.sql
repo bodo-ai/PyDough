@@ -34,8 +34,8 @@ FROM _t
 WHERE
   _w = 1
 ORDER BY
-  s_acctbal DESC,
-  n_name COLLATE utf8mb4_bin,
-  s_name COLLATE utf8mb4_bin,
-  p_partkey
+  1 DESC,
+  3 COLLATE utf8mb4_bin,
+  2 COLLATE utf8mb4_bin,
+  4
 LIMIT 10

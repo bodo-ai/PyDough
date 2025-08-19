@@ -52,7 +52,7 @@ WITH _t2 AS (
     c_nationkey
   FROM _t2
   GROUP BY
-    c_nationkey
+    6
 )
 SELECT
   NATION.n_name AS nation_name,
@@ -67,4 +67,4 @@ JOIN tpch.REGION AS REGION
 JOIN _s3 AS _s3
   ON NATION.n_nationkey = _s3.c_nationkey
 ORDER BY
-  NATION.n_name COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

@@ -48,5 +48,5 @@ GROUP BY
   4
 ORDER BY
   n_urgent_semi_domestic_rail_orders DESC,
-  MAX(customer.c_name)
+  5
 LIMIT 5

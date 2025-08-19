@@ -207,5 +207,5 @@ SELECT
   ROUND(POWER(CASE WHEN p_size >= 10 THEN p_size WHEN p_size <= 10 THEN 10 END, 0.5), 3) AS i
 FROM tpch.part
 ORDER BY
-  p_partkey
+  1
 LIMIT 5

@@ -8,7 +8,7 @@ WITH _s1 AS (
     sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-1' MONTH)
     AND sbtxtype = 'sell'
   GROUP BY
-    sbtxtickerid
+    3
 )
 SELECT
   sbTicker.sbtickersymbol AS symbol,
@@ -21,4 +21,4 @@ FROM main.sbTicker AS sbTicker
 JOIN _s1 AS _s1
   ON _s1.sbTxTickerId = sbTicker.sbtickerid
 ORDER BY
-  sbTicker.sbtickersymbol COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

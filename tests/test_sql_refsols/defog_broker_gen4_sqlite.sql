@@ -6,7 +6,7 @@ WITH _s1 AS (
   WHERE
     DATE(sbtxdatetime, 'start of day') = DATE('2023-04-01') AND sbtxtype = 'sell'
   GROUP BY
-    sbtxcustid
+    2
 )
 SELECT
   sbcustomer.sbcustid AS _id,
@@ -16,5 +16,5 @@ FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
-  COALESCE(_s1.n_rows, 0) DESC
+  3 DESC
 LIMIT 1

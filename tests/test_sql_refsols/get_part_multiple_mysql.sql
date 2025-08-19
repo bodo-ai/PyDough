@@ -692,4 +692,4 @@ FROM main.sbCustomer
 WHERE
   CAST(SUBSTRING(sbcustid, 2) AS SIGNED) <= 4
 ORDER BY
-  CAST(SUBSTRING(sbcustid, 2) AS SIGNED)
+  1

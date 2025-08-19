@@ -42,5 +42,5 @@ GROUP BY
   3
 ORDER BY
   supp_nation,
-  _s9.n_name,
+  2,
   l_year

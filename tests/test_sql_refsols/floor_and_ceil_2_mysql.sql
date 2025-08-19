@@ -5,5 +5,5 @@ SELECT
   CEIL(ps_supplycost * FLOOR(ps_availqty)) AS total_cost
 FROM tpch.PARTSUPP
 ORDER BY
-  CEIL(ps_supplycost * FLOOR(ps_availqty)) DESC
+  4 DESC
 LIMIT 10

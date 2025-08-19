@@ -4,7 +4,7 @@ WITH _s1 AS (
     o_custkey
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    2
 )
 SELECT
   customer.c_acctbal < 0 AS in_debt,

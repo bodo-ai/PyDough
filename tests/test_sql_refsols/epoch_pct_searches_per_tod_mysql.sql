@@ -8,7 +8,7 @@ WITH _t0 AS (
     ON TIMES.t_end_hour > HOUR(SEARCHES.search_ts)
     AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
   GROUP BY
-    TIMES.t_name
+    3
 )
 SELECT
   t_name AS tod,

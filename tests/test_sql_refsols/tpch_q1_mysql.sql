@@ -22,5 +22,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  l_returnflag COLLATE utf8mb4_bin,
-  l_linestatus COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin,
+  2 COLLATE utf8mb4_bin

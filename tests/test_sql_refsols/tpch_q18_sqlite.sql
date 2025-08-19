@@ -4,7 +4,7 @@ WITH _t1 AS (
     l_orderkey
   FROM tpch.lineitem
   GROUP BY
-    l_orderkey
+    2
 )
 SELECT
   customer.c_name AS C_NAME,

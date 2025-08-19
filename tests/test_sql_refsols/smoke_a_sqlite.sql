@@ -149,5 +149,5 @@ SELECT
   ROUND(POWER(MAX(p_size, 10), 0.5), 3) AS i
 FROM tpch.part
 ORDER BY
-  p_partkey
+  1
 LIMIT 5

@@ -9,7 +9,7 @@ WITH _t2 AS (
     c_nationkey
   FROM _t2
   GROUP BY
-    c_nationkey
+    2
 ), _t3 AS (
   SELECT
     r_name,
@@ -31,7 +31,7 @@ WITH _t2 AS (
   JOIN _t2 AS _s5
     ON _s1.avg_cust_acctbal < _s5.c_acctbal AND _s5.c_nationkey = nation.n_nationkey
   GROUP BY
-    nation.n_nationkey
+    4
 ), _t5 AS (
   SELECT
     s_acctbal,
@@ -43,7 +43,7 @@ WITH _t2 AS (
     s_nationkey
   FROM _t5
   GROUP BY
-    s_nationkey
+    2
 ), _s13 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -56,7 +56,7 @@ WITH _t2 AS (
   JOIN _t5 AS _s11
     ON _s11.s_acctbal > _s7.avg_supp_acctbal AND _s11.s_nationkey = nation.n_nationkey
   GROUP BY
-    nation.n_nationkey
+    2
 )
 SELECT
   _s12.anything_region_name AS region_name,
@@ -67,5 +67,5 @@ FROM _s12 AS _s12
 JOIN _s13 AS _s13
   ON _s12.n_nationkey = _s13.n_nationkey
 ORDER BY
-  _s12.anything_region_name,
-  _s12.anything_n_name
+  1,
+  2

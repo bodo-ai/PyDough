@@ -54,7 +54,7 @@ WITH _t1 AS (
     n_regionkey
   FROM _t1
   GROUP BY
-    n_regionkey
+    6
 )
 SELECT
   REGION.r_name AS region_name,
@@ -67,4 +67,4 @@ FROM tpch.REGION AS REGION
 JOIN _s3 AS _s3
   ON REGION.r_regionkey = _s3.n_regionkey
 ORDER BY
-  REGION.r_name COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

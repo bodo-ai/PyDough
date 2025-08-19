@@ -6,7 +6,7 @@ WITH _s3 AS (
   WHERE
     CAST(STRFTIME('%Y', l_shipdate) AS INTEGER) = 1994
   GROUP BY
-    l_partkey
+    2
 ), _s5 AS (
   SELECT
     part.p_partkey,

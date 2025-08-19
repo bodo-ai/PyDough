@@ -10,4 +10,4 @@ GROUP BY
   1
 ORDER BY
   n_events DESC,
-  seasons.s_name
+  1

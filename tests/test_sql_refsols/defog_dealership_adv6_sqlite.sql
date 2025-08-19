@@ -10,7 +10,7 @@ WITH _t AS (
     car_id
   FROM main.sales
   GROUP BY
-    car_id
+    2
 )
 SELECT
   cars.make,
@@ -22,4 +22,4 @@ JOIN _t AS _t
 LEFT JOIN _s3 AS _s3
   ON _s3.car_id = cars._id
 ORDER BY
-  _s3.max_sale_price DESC
+  3 DESC

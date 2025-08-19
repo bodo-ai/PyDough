@@ -28,6 +28,10 @@ from tests.test_pydough_functions.tpch_test_functions import (
 )
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher, harmonize_types
 
+from .test_pipeline_defog_custom import (  # type: ignore # noqa
+    defog_custom_pipeline_test_data,
+)
+
 
 @pytest.fixture(
     params=[
@@ -190,7 +194,7 @@ def tpch_mysql_test_data(request) -> PyDoughPandasTest:
 
 @pytest.fixture
 def defog_mysql_test_data(
-    defog_custom_pipeline_test_data: PyDoughPandasTest,
+    defog_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
 ) -> PyDoughPandasTest:
     """
     Test data for e2e tests for the TPC-H queries. Returns an instance of

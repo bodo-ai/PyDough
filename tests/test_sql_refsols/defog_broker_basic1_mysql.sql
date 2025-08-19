@@ -7,7 +7,7 @@ WITH _s1 AS (
   WHERE
     sbtxdatetime >= DATE(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-30' DAY))
   GROUP BY
-    sbtxcustid
+    3
 )
 SELECT
   sbCustomer.sbcustcountry AS country,

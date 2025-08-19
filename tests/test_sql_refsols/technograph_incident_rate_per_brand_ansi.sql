@@ -4,7 +4,7 @@ WITH _s3 AS (
     in_device_id
   FROM main.incidents
   GROUP BY
-    in_device_id
+    2
 )
 SELECT
   products.pr_brand AS brand,
@@ -17,4 +17,4 @@ LEFT JOIN _s3 AS _s3
 GROUP BY
   1
 ORDER BY
-  products.pr_brand
+  1

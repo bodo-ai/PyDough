@@ -13,4 +13,4 @@ FROM main.sbcustomer
 GROUP BY
   1
 ORDER BY
-  sbcuststate
+  1

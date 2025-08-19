@@ -6,7 +6,7 @@ WITH _s1 AS (
   WHERE
     status = 'unread' AND type = 'promotion'
   GROUP BY
-    user_id
+    2
 )
 SELECT
   users.username,

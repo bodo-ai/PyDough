@@ -12,4 +12,4 @@ JOIN seasons AS seasons
 GROUP BY
   1
 ORDER BY
-  events.ev_typ
+  1

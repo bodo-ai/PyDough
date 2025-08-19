@@ -23,7 +23,7 @@ WITH _t2 AS (
   JOIN _t5 AS _t5
     ON _t5.co_id = devices.de_production_country_id
   GROUP BY
-    _t4.ca_dt
+    2
 ), _s15 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -36,7 +36,7 @@ WITH _t2 AS (
   JOIN _t5 AS _t8
     ON _t8.co_id = devices.de_production_country_id
   GROUP BY
-    _t7.ca_dt
+    2
 )
 SELECT
   CONCAT_WS(

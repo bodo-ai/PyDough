@@ -4,7 +4,7 @@ WITH _s1 AS (
     sbtxcustid AS sbTxCustId
   FROM main.sbTransaction
   GROUP BY
-    sbtxcustid
+    2
 )
 SELECT
   sbCustomer.sbcustname AS name,
@@ -13,5 +13,5 @@ FROM main.sbCustomer AS sbCustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbTxCustId = sbCustomer.sbcustid
 ORDER BY
-  COALESCE(_s1.sum_sbTxAmount, 0) DESC
+  2 DESC
 LIMIT 5

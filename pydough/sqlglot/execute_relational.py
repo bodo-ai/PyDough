@@ -211,7 +211,7 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
 
         # Replace GROUP BY keys that are in the select clause with indices.
         if expression.args.get("group") is not None:
-            keys_list: list[SQLGlotExpression] = glot_expr.args["group"].expressions
+            keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
                 if key_expr in expressions:
                     keys_list[idx] = sqlglot_expressions.convert(

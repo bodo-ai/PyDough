@@ -73,7 +73,7 @@ WITH _s0 AS (
     c_nationkey
   FROM _t2
   GROUP BY
-    c_nationkey
+    10
 )
 SELECT
   REGION.r_name AS region_name,
@@ -93,4 +93,4 @@ JOIN tpch.REGION AS REGION
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
-  _s0.n_name COLLATE utf8mb4_bin
+  2 COLLATE utf8mb4_bin

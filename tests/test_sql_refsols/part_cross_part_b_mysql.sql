@@ -44,8 +44,8 @@ WITH _s0 AS (
     ON _s2.sbCustState = sbCustomer.sbcuststate
     AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
   GROUP BY
-    _s3.month,
-    _s2.sbCustState
+    2,
+    3
 )
 SELECT
   _s0.sbCustState AS state,
@@ -56,5 +56,5 @@ CROSS JOIN _s1 AS _s1
 LEFT JOIN _s9 AS _s9
   ON _s0.sbCustState = _s9.sbCustState AND _s1.month = _s9.month
 ORDER BY
-  _s0.sbCustState COLLATE utf8mb4_bin,
-  _s1.month
+  1 COLLATE utf8mb4_bin,
+  2

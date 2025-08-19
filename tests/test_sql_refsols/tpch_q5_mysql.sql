@@ -27,6 +27,4 @@ JOIN _s11 AS _s11
 GROUP BY
   NATION.n_nationkey
 ORDER BY
-  COALESCE(SUM(LINEITEM.l_extendedprice * (
-    1 - LINEITEM.l_discount
-  )), 0) DESC
+  2 DESC

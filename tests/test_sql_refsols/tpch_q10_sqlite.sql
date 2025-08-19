@@ -24,7 +24,7 @@ WITH _s3 AS (
     END = 4
     AND CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1993
   GROUP BY
-    orders.o_custkey
+    2
 )
 SELECT
   customer.c_custkey AS C_CUSTKEY,
@@ -41,6 +41,6 @@ LEFT JOIN _s3 AS _s3
 JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
-  COALESCE(_s3.sum_expr_1, 0) DESC,
+  3 DESC,
   c_custkey
 LIMIT 20

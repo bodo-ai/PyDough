@@ -8,7 +8,7 @@ WITH _s1 AS (
       JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sale_date, 'start of day'))
     ) AS INTEGER) <= 30
   GROUP BY
-    salesperson_id
+    2
 )
 SELECT
   salespersons._id,
@@ -19,4 +19,4 @@ FROM main.salespersons AS salespersons
 JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  _s1.n_rows DESC
+  4 DESC

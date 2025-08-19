@@ -22,11 +22,7 @@ WITH _s2 AS (
       '%Y %c %e'
     )
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustjoindate AS DATETIME)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS DATETIME)), 2, '0')
-    )
+    1
 ), _s3 AS (
   SELECT
     AVG(sbTransaction.sbtxamount) AS avg_sbTxAmount,
@@ -55,11 +51,7 @@ WITH _s2 AS (
       '%Y %c %e'
     )
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)), 2, '0')
-    )
+    2
 )
 SELECT
   _s2.month,

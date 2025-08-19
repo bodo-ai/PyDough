@@ -13,4 +13,4 @@ FROM main.sbCustomer
 GROUP BY
   1
 ORDER BY
-  sbcuststate COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

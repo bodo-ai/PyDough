@@ -6,9 +6,9 @@ WITH _s1 AS (
     sbtxcustid AS sbTxCustId
   FROM main.sbTransaction
   GROUP BY
-    EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)),
-    EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)),
-    sbtxcustid
+    1,
+    2,
+    4
 )
 SELECT
   sbCustomer.sbcustid AS _id,
@@ -20,5 +20,5 @@ LEFT JOIN _s1 AS _s1
   AND _s1.expr_2 = EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME))
   AND _s1.sbTxCustId = sbCustomer.sbcustid
 ORDER BY
-  COALESCE(_s1.n_rows, 0) DESC
+  3 DESC
 LIMIT 1

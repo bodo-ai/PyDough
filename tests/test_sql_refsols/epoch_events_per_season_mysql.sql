@@ -10,4 +10,4 @@ GROUP BY
   1
 ORDER BY
   n_events DESC,
-  SEASONS.s_name COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

@@ -16,5 +16,5 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC
+  3 DESC
 LIMIT 5

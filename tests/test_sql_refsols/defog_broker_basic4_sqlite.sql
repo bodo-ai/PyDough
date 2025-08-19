@@ -5,8 +5,8 @@ WITH _s0 AS (
     sbtxtickerid
   FROM main.sbtransaction
   GROUP BY
-    sbtxcustid,
-    sbtxtickerid
+    2,
+    3
 ), _s2 AS (
   SELECT
     SUM(_s0.num_transactions) AS num_transactions,
@@ -16,8 +16,8 @@ WITH _s0 AS (
   JOIN main.sbticker AS sbticker
     ON _s0.sbtxtickerid = sbticker.sbtickerid
   GROUP BY
-    sbticker.sbtickertype,
-    _s0.sbtxcustid
+    2,
+    3
 )
 SELECT
   sbcustomer.sbcuststate AS state,

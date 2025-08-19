@@ -218,7 +218,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # Special case: if we removed all of the order inputs, but the window
         # call originally had an order, add `ORDER BY 1` as a placeholder.
         if len(window_expression.order_inputs) > 0 and len(order_exprs) == 0:
-            order_exprs.append(sqlglot_expressions.convert(1))
+            order_exprs.append(sqlglot_expressions.convert("1"))
         this: SQLGlotExpression
         window_spec: sqlglot_expressions.WindowSpec | None = None
         match window_expression.op.function_name:

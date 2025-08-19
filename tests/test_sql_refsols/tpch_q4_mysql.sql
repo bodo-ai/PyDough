@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     l_commitdate < l_receiptdate
   GROUP BY
-    l_orderkey
+    1
 )
 SELECT
   ORDERS.o_orderpriority AS O_ORDERPRIORITY,
@@ -20,4 +20,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  ORDERS.o_orderpriority COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

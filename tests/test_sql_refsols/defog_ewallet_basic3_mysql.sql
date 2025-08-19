@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     receiver_type = 1
   GROUP BY
-    receiver_id
+    1
 )
 SELECT
   merchants.mid AS merchant

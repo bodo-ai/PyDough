@@ -73,7 +73,7 @@ WITH _s0 AS (
     c_nationkey
   FROM _t1
   GROUP BY
-    c_nationkey
+    10
 )
 SELECT
   region.r_name AS region_name,
@@ -93,4 +93,4 @@ JOIN tpch.region AS region
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
-  _s0.n_name
+  2

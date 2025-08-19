@@ -14,7 +14,7 @@ WITH _t1 AS (
     AND inventory_snapshots.snapshot_date = sales.sale_date
   GROUP BY
     sales._id,
-    cars._id
+    5
 )
 SELECT
   anything_make AS make,
@@ -24,5 +24,5 @@ FROM _t1
 WHERE
   _id_1 = anything_car_id
 ORDER BY
-  anything_sale_price DESC
+  3 DESC
 LIMIT 1

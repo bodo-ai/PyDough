@@ -13,7 +13,7 @@ WITH _s0 AS (
   WHERE
     EXTRACT(YEAR FROM CAST(snapshot_date AS DATETIME)) = 2023
   GROUP BY
-    snapshot_date
+    3
 )
 SELECT
   _s1.avg_tx_limit_daily AS avg_daily_limit,

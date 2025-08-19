@@ -8,5 +8,5 @@ JOIN main.customers AS customers
 GROUP BY
   1
 ORDER BY
-  COALESCE(SUM(sales.sale_price), 0) DESC
+  3 DESC
 LIMIT 5

@@ -11,7 +11,7 @@ WITH _s0 AS (
     o_custkey
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    2
 )
 SELECT
   SUBSTRING(customer.c_phone, 1, 2) AS CNTRY_CODE,

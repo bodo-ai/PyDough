@@ -11,7 +11,7 @@ WITH _s0 AS (
     o_custkey
   FROM tpch.ORDERS
   GROUP BY
-    o_custkey
+    2
 )
 SELECT
   SUBSTRING(CUSTOMER.c_phone, 1, 2) AS CNTRY_CODE,
@@ -28,4 +28,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  SUBSTRING(CUSTOMER.c_phone, 1, 2) COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

@@ -25,5 +25,5 @@ GROUP BY
   _s0.user_id
 ORDER BY
   n_other_users DESC,
-  ANY_VALUE(_s0.user_name) COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin
 LIMIT 7

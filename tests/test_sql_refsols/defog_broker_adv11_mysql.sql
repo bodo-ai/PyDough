@@ -6,7 +6,7 @@ WITH _u_0 AS (
     ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
     AND sbTicker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
   GROUP BY
-    sbTransaction.sbtxcustid
+    1
 )
 SELECT
   COUNT(*) AS n_customers

@@ -6,7 +6,7 @@ WITH _s3 AS (
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS DATETIME)) = 1994
   GROUP BY
-    l_partkey
+    2
 ), _s5 AS (
   SELECT
     part.p_partkey,

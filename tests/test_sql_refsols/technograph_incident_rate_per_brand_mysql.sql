@@ -4,7 +4,7 @@ WITH _s3 AS (
     in_device_id
   FROM main.INCIDENTS
   GROUP BY
-    in_device_id
+    2
 )
 SELECT
   PRODUCTS.pr_brand AS brand,
@@ -17,4 +17,4 @@ LEFT JOIN _s3 AS _s3
 GROUP BY
   1
 ORDER BY
-  PRODUCTS.pr_brand COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

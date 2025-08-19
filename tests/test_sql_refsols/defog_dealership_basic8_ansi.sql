@@ -5,7 +5,7 @@ WITH _s1 AS (
     car_id
   FROM main.sales
   GROUP BY
-    car_id
+    3
 )
 SELECT
   cars.make,
@@ -16,5 +16,5 @@ FROM main.cars AS cars
 LEFT JOIN _s1 AS _s1
   ON _s1.car_id = cars._id
 ORDER BY
-  COALESCE(_s1.sum_sale_price, 0) DESC
+  4 DESC
 LIMIT 5

@@ -5,8 +5,8 @@ WITH _s1 AS (
     n_regionkey
   FROM tpch.nation
   GROUP BY
-    SUBSTRING(n_name, 1, 1),
-    n_regionkey
+    1,
+    3
 )
 SELECT
   region.r_name AS name,

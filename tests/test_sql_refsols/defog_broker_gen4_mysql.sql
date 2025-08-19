@@ -7,7 +7,7 @@ WITH _s1 AS (
     DATE(CAST(sbtxdatetime AS DATETIME)) = CAST('2023-04-01' AS DATE)
     AND sbtxtype = 'sell'
   GROUP BY
-    sbtxcustid
+    2
 )
 SELECT
   sbCustomer.sbcustid AS _id,
@@ -17,5 +17,5 @@ FROM main.sbCustomer AS sbCustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbTxCustId = sbCustomer.sbcustid
 ORDER BY
-  COALESCE(_s1.n_rows, 0) DESC
+  3 DESC
 LIMIT 1

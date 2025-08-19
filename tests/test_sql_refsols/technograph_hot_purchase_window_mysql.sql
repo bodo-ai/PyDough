@@ -13,5 +13,5 @@ GROUP BY
   1
 ORDER BY
   n_purchases DESC,
-  CALENDAR.ca_dt
+  1
 LIMIT 1

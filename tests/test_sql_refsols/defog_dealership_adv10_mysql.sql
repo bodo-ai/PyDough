@@ -4,7 +4,7 @@ WITH _s1 AS (
     sale_id
   FROM main.payments_received
   GROUP BY
-    sale_id
+    2
 )
 SELECT
   ROUND(AVG(DATEDIFF(_s1.max_payment_date, sales.sale_date)), 2) AS avg_days_to_payment

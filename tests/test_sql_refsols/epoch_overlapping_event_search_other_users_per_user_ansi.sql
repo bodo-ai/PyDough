@@ -25,5 +25,5 @@ GROUP BY
   _s0.user_id
 ORDER BY
   n_other_users DESC,
-  ANY_VALUE(_s0.user_name)
+  1
 LIMIT 7

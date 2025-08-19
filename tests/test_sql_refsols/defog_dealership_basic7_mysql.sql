@@ -6,5 +6,5 @@ FROM main.payments_received
 GROUP BY
   1
 ORDER BY
-  COALESCE(SUM(payment_amount), 0) DESC
+  3 DESC
 LIMIT 3

@@ -10,8 +10,8 @@ WITH _t AS (
   JOIN USERS AS USERS
     ON SEARCHES.search_user_id = USERS.user_id
   GROUP BY
-    EVENTS.ev_typ,
-    USERS.user_region
+    2,
+    3
 )
 SELECT
   user_region AS region,

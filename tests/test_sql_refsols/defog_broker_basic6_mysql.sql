@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     sbdpdate >= CAST('2023-04-01' AS DATE)
   GROUP BY
-    sbdptickerid
+    1
 )
 SELECT
   sbTicker.sbtickerid AS _id

@@ -12,7 +12,7 @@ WITH _s0 AS (
     AND ERAS.er_name = 'Cold War'
     AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(_s2.ev_dt AS DATETIME))
   GROUP BY
-    _s2.ev_key
+    1
 )
 SELECT
   COUNT(*) AS n_events

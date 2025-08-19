@@ -24,5 +24,5 @@ FROM main.sbTransaction
 WHERE
   EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025
 ORDER BY
-  YEAR(CAST('2025-05-02 11:00:00' AS DATETIME)) - YEAR(sbtxdatetime)
+  4
 LIMIT 30

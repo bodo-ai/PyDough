@@ -44,8 +44,8 @@ WITH _s0 AS (
     ON _s2.sbCustState = sbCustomer.sbcuststate
     AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
   GROUP BY
-    _s3.month,
-    _s2.sbCustState
+    2,
+    3
 )
 SELECT
   _s0.sbCustState AS state,

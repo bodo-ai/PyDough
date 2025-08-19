@@ -6,7 +6,7 @@ WITH _s1 AS (
   WHERE
     NOT o_comment LIKE '%special%requests%'
   GROUP BY
-    o_custkey
+    2
 )
 SELECT
   COALESCE(_s1.n_rows, 0) AS C_COUNT,
@@ -18,5 +18,5 @@ GROUP BY
   1
 ORDER BY
   CUSTDIST DESC,
-  COALESCE(_s1.n_rows, 0) DESC
+  1 DESC
 LIMIT 10

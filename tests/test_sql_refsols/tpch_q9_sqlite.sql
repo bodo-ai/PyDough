@@ -25,6 +25,6 @@ GROUP BY
   1,
   2
 ORDER BY
-  nation.n_name,
+  1,
   o_year DESC
 LIMIT 10

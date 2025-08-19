@@ -18,9 +18,7 @@ GROUP BY
   3,
   4
 ORDER BY
-  COALESCE(SUM(LINEITEM.l_extendedprice * (
-    1 - LINEITEM.l_discount
-  )), 0) DESC,
-  ORDERS.o_orderdate,
-  LINEITEM.l_orderkey
+  2 DESC,
+  3,
+  1
 LIMIT 10

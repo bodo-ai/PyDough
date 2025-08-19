@@ -4,7 +4,7 @@ WITH _t1 AS (
     l_orderkey
   FROM tpch.LINEITEM
   GROUP BY
-    l_orderkey
+    2
 )
 SELECT
   CUSTOMER.c_name AS C_NAME,
@@ -21,6 +21,6 @@ JOIN _t1 AS _t1
   AND ORDERS.o_orderkey = _t1.l_orderkey
   AND _t1.sum_l_quantity > 300
 ORDER BY
-  ORDERS.o_totalprice DESC,
-  ORDERS.o_orderdate
+  5 DESC,
+  4
 LIMIT 10

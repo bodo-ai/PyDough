@@ -6,7 +6,7 @@ WITH _s3 AS (
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS DATETIME)) = 1994
   GROUP BY
-    l_partkey
+    2
 ), _s5 AS (
   SELECT
     PART.p_partkey,
@@ -35,5 +35,5 @@ JOIN tpch.NATION AS NATION
 JOIN _s7 AS _s7
   ON SUPPLIER.s_suppkey = _s7.ps_suppkey
 ORDER BY
-  SUPPLIER.s_name COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin
 LIMIT 10

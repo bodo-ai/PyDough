@@ -7,7 +7,7 @@ WITH _s1 AS (
   WHERE
     sale_date >= DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-3' MONTH)
   GROUP BY
-    salesperson_id
+    3
 )
 SELECT
   salespersons.first_name,
@@ -18,5 +18,5 @@ FROM main.salespersons AS salespersons
 LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  COALESCE(_s1.sum_sale_price, 0) DESC
+  4 DESC
 LIMIT 3

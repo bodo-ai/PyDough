@@ -4,7 +4,7 @@ WITH _s1 AS (
     sbtxcustid AS sbTxCustId
   FROM main.sbTransaction
   GROUP BY
-    sbtxcustid
+    2
 )
 SELECT
   sbCustomer.sbcustid AS cust_id,

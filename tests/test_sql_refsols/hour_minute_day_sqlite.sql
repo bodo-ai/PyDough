@@ -8,4 +8,4 @@ JOIN main.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
   AND sbticker.sbtickersymbol IN ('AAPL', 'GOOGL', 'NFLX')
 ORDER BY
-  sbtransaction.sbtxid
+  1

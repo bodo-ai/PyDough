@@ -12,12 +12,8 @@ WITH _s0 AS (
     sbdptickerid AS sbDpTickerId
   FROM main.sbDailyPrice
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 2, '0')
-    ),
-    sbdptickerid
+    4,
+    6
 ), _t0 AS (
   SELECT
     MAX(_s0.max_high) AS max_high,
@@ -30,8 +26,8 @@ WITH _s0 AS (
   JOIN main.sbTicker AS sbTicker
     ON _s0.sbDpTickerId = sbTicker.sbtickerid
   GROUP BY
-    _s0.month,
-    sbTicker.sbtickersymbol
+    5,
+    6
 )
 SELECT
   sbTickerSymbol AS symbol,

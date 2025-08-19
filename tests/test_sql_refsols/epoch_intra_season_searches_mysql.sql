@@ -30,8 +30,8 @@ WITH _s0 AS (
       OR _s7.s_month3 = EXTRACT(MONTH FROM CAST(_s5.ev_dt AS DATETIME))
     )
   GROUP BY
-    _s2.s_name,
-    SEARCHES.search_id
+    2,
+    3
 ), _s16 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -47,7 +47,7 @@ WITH _s0 AS (
   LEFT JOIN _s9 AS _s9
     ON SEARCHES.search_id = _s9.search_id AND _s0.s_name = _s9.s_name
   GROUP BY
-    _s0.s_name
+    3
 ), _s17 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -65,7 +65,7 @@ WITH _s0 AS (
     OR _s15.s_month2 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
     OR _s15.s_month3 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
   GROUP BY
-    _s10.s_name
+    3
 )
 SELECT
   _s16.s_name AS season_name,
@@ -79,4 +79,4 @@ FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17
   ON _s16.s_name = _s17.s_name
 ORDER BY
-  _s16.s_name COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

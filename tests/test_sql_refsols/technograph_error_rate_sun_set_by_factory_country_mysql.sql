@@ -4,7 +4,7 @@ WITH _s3 AS (
     in_device_id
   FROM main.INCIDENTS
   GROUP BY
-    in_device_id
+    2
 ), _s5 AS (
   SELECT
     COALESCE(SUM(_s3.n_rows), 0) AS sum_n_incidents,
@@ -16,7 +16,7 @@ WITH _s3 AS (
   LEFT JOIN _s3 AS _s3
     ON DEVICES.de_id = _s3.in_device_id
   GROUP BY
-    DEVICES.de_production_country_id
+    2
 )
 SELECT
   COUNTRIES.co_name AS country,
@@ -25,4 +25,4 @@ FROM main.COUNTRIES AS COUNTRIES
 LEFT JOIN _s5 AS _s5
   ON COUNTRIES.co_id = _s5.de_production_country_id
 ORDER BY
-  COUNTRIES.co_name COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin

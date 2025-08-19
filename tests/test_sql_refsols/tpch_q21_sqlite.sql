@@ -21,9 +21,9 @@ WITH _t5 AS (
   JOIN tpch.lineitem AS lineitem
     ON _t5.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    _t5.l_linenumber,
-    _t5.l_orderkey,
-    orders.o_orderkey
+    3,
+    4,
+    5
 ), _u_0 AS (
   SELECT
     _t6.l_linenumber AS _u_1,
@@ -37,9 +37,9 @@ WITH _t5 AS (
     AND lineitem.l_commitdate < lineitem.l_receiptdate
     AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    _t6.l_linenumber,
-    _t6.l_orderkey,
-    orders.o_orderkey
+    1,
+    2,
+    3
 ), _s13 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -52,7 +52,7 @@ WITH _t5 AS (
   WHERE
     _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
   GROUP BY
-    _t3.anything_l_suppkey
+    2
 )
 SELECT
   supplier.s_name AS S_NAME,
@@ -63,6 +63,6 @@ JOIN tpch.nation AS nation
 LEFT JOIN _s13 AS _s13
   ON _s13.anything_l_suppkey = supplier.s_suppkey
 ORDER BY
-  COALESCE(_s13.n_rows, 0) DESC,
+  2 DESC,
   s_name
 LIMIT 10

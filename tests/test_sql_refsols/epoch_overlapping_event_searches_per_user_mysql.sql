@@ -19,7 +19,7 @@ WITH _s0 AS (
     ON SEARCHES_2.search_user_id = _s7.user_id AND _s0.user_name <> _s7.user_name
   GROUP BY
     SEARCHES.search_id,
-    _s0.user_id
+    3
 )
 SELECT
   ANY_VALUE(anything_user_name) AS user_name,
@@ -31,5 +31,5 @@ GROUP BY
   user_id
 ORDER BY
   n_searches DESC,
-  ANY_VALUE(anything_user_name) COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin
 LIMIT 4

@@ -15,8 +15,8 @@ WITH _s0 AS (
     ON _s2.sbTickerExchange = sbTicker.sbtickerexchange
     AND sbTicker.sbtickerid = sbTransaction.sbtxtickerid
   GROUP BY
-    sbCustomer.sbcustid,
-    _s2.sbTickerExchange
+    2,
+    3
 )
 SELECT
   sbCustomer.sbcuststate AS state,
@@ -31,5 +31,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  sbCustomer.sbcuststate COLLATE utf8mb4_bin,
-  _s0.sbTickerExchange COLLATE utf8mb4_bin
+  1 COLLATE utf8mb4_bin,
+  2 COLLATE utf8mb4_bin
