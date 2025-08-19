@@ -434,6 +434,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         ).accept_shuttle(self._alias_modifier)
         cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(cond)
         join_type: str = join.join_type.value
+        if join_type == "SEMI" and join.cardinality.singular:
+            join_type == "INNER"
         query = query.join(subquery, on=cond_expr, join_type=join_type)
         self._stack.append(query)
 

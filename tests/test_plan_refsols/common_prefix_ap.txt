@@ -1,5 +1,5 @@
 ROOT(columns=[('part_name', p_name), ('supplier_name', s_name), ('supplier_quantity', ps_availqty), ('supplier_nation', n_name)], orderings=[(p_name):asc_first])
- JOIN(condition=t0.p_partkey == t1.ps_partkey, type=LEFT, cardinality=SINGULAR_ACCESS, columns={'n_name': t1.n_name, 'p_name': t0.p_name, 'ps_availqty': t1.ps_availqty, 's_name': t1.s_name})
+ JOIN(condition=t0.p_partkey == t1.ps_partkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'n_name': t1.n_name, 'p_name': t0.p_name, 'ps_availqty': t1.ps_availqty, 's_name': t1.s_name})
   FILTER(condition=p_brand == 'Brand#32':string & p_size == 10:numeric & CONTAINS(p_name, 'pink':string), columns={'p_name': p_name, 'p_partkey': p_partkey})
    SCAN(table=tpch.PART, columns={'p_brand': p_brand, 'p_name': p_name, 'p_partkey': p_partkey, 'p_size': p_size})
   JOIN(condition=t0.ps_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'n_name': t1.n_name, 'ps_availqty': t0.ps_availqty, 'ps_partkey': t0.ps_partkey, 's_name': t1.s_name})

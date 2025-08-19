@@ -18,9 +18,13 @@ SELECT
   COUNT(*) AS co5,
   COUNT(*) AS co6,
   0 AS co7,
-  COUNT(*) * CAST(NOT (
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) IS NULL
-  ) AS BIGINT) AS co8,
+  COUNT(*) * CASE
+    WHEN NOT (
+      LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) IS NULL
+    )
+    THEN 1
+    ELSE 0
+  END AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,
@@ -78,8 +82,7 @@ SELECT
   0 AS qu5,
   0.5 AS qu6,
   NULL AS qu7,
-  PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) NULLS LAST) AS qu8
+  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS qu8
 FROM main.sbticker
 GROUP BY
   LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)

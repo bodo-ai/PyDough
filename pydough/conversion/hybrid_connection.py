@@ -316,11 +316,54 @@ class HybridConnection:
     """
 
     parent: "HybridTree"
+    """
+    The HybridTree that the connection exists within.
+    """
+
     subtree: "HybridTree"
+    """
+    The HybridTree corresponding to the child itself, starting from the bottom.
+    """
+
     connection_type: ConnectionType
+    """
+    The type of connection that the child subtree is being accessed with
+    relative to the parent hybrid tree.
+    """
+
     min_steps: int
+    """
+    The step in the parent pipeline that this connection MUST be defined after.
+    """
+
     max_steps: int
+    """
+    The step in the parent pipeline that this connection MUST be defined before.
+    """
+
     aggs: dict[str, HybridFunctionExpr]
+    """
+    A dictionary storing information about how to aggregate the child before
+    joining it to the parent. The keys are the names of the aggregation calls
+    within the child subtree, and the values are the corresponding aggregation
+    expressions defined relative to the child subtree.
+    """
+
+    always_exists: bool | None = None
+    """
+    Whether the connection is guaranteed to have at least one matching
+    record for every parent record. If None, this is unknown and must be
+    inferred from the subtree (can be stored and then modified later).
+    """
+
+    def get_always_exists(self) -> bool:
+        """
+        Returns whether the connection is guaranteed to have at least one
+        matching record for every parent record.
+        """
+        if self.always_exists is None:
+            self.always_exists = self.subtree.always_exists()
+        return self.always_exists
 
     def __eq__(self, other):
         return (

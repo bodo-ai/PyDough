@@ -50,6 +50,7 @@ from pydough.relational import (
     WindowCallExpression,
 )
 from pydough.types import BooleanType, NumericType, UnknownType
+from pydough.types.pydough_type import PyDoughType
 
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
@@ -315,9 +316,7 @@ class RelTranslation:
             case HybridSidedRefExpr():
                 # For sided references, access the referenced expression from
                 # the lhs output.
-                result = self.translate_expression(
-                    HybridRefExpr(condition.name, condition.typ), lhs_result
-                )
+                result = self.translate_expression(condition.expr, lhs_result)
                 return self.rename_inputs(result, lhs_alias)
             case HybridFunctionExpr():
                 # For function calls, recursively convert the arguments, then
@@ -497,14 +496,16 @@ class RelTranslation:
         cond_terms: list[RelationalExpression] = []
         if join_keys is not None:
             for lhs_key, rhs_key in sorted(join_keys, key=repr):
-                lhs_key_column: ColumnReference = lhs_result.expressions[
-                    lhs_key
-                ].with_input(input_aliases[0])
-                rhs_key_column: ColumnReference = rhs_result.expressions[
-                    rhs_key
-                ].with_input(input_aliases[1])
+                lhs_expr: RelationalExpression = self.translate_expression(
+                    lhs_key, lhs_result
+                )
+                lhs_expr = self.rename_inputs(lhs_expr, input_aliases[0])
+                rhs_expr: RelationalExpression = self.translate_expression(
+                    rhs_key, rhs_result
+                )
+                rhs_expr = self.rename_inputs(rhs_expr, input_aliases[1])
                 cond: RelationalExpression = CallExpression(
-                    pydop.EQU, BooleanType(), [lhs_key_column, rhs_key_column]
+                    pydop.EQU, BooleanType(), [lhs_expr, rhs_expr]
                 )
                 cond_terms.append(cond)
             out_rel.condition = RelationalExpression.form_conjunction(cond_terms)
@@ -596,11 +597,18 @@ class RelTranslation:
         # First, propagate all key columns into the output, and add them to
         # the keys mapping of the aggregate.
         for agg_key in agg_keys:
-            agg_key_expr = self.translate_expression(agg_key, context)
-            assert isinstance(agg_key_expr, ColumnReference)
-            out_columns[agg_key] = agg_key_expr
-            keys[agg_key_expr.name] = agg_key_expr
-            used_names.add(agg_key_expr.name)
+            agg_key_expr: RelationalExpression = self.translate_expression(
+                agg_key, context
+            )
+            key_name: str
+            if isinstance(agg_key_expr, ColumnReference):
+                out_columns[agg_key] = agg_key_expr
+                key_name = agg_key_expr.name
+            else:
+                key_name = self.get_column_name("expr", used_names)
+                out_columns[agg_key] = ColumnReference(key_name, agg_key_expr.data_type)
+            keys[key_name] = agg_key_expr
+            used_names.add(key_name)
         # Then, add all of the agg calls to the aggregations mapping of the
         # the aggregate, and add references to the corresponding dummy-names
         # to the output.
@@ -677,9 +685,9 @@ class RelTranslation:
                         | ConnectionType.ANTI
                     ):
                         cardinality: JoinCardinality = JoinCardinality.SINGULAR_ACCESS
-                        if child.connection_type.is_anti or (
-                            child.connection_type.is_semi
-                            and not child.subtree.always_exists()
+                        if (
+                            child.connection_type.is_anti
+                            or not child.get_always_exists()
                         ):
                             cardinality = JoinCardinality.SINGULAR_FILTER
                         if child.connection_type.is_aggregation:
@@ -1307,16 +1315,27 @@ class RelTranslation:
         """
         Transforms the final PyDough collection by appending it with an extra
         CALCULATE containing all of the columns that are output.
+        Args:
+            `node`: the PyDough QDAG collection node to be translated.
+            `output_cols`: a list of tuples in the form `(alias, column)`
+            describing every column that should be in the output, in the order
+        they should appear, and the alias they should be given. If None, uses
+        the most recent CALCULATE in the node to determine the columns.
+        Returns:
+            The PyDoughCollectionQDAG with an additional CALCULATE at the end
+            that contains all of the columns that should be in the output.
         """
         # Fetch all of the expressions that should be kept in the final output
         final_terms: list[tuple[str, PyDoughExpressionQDAG]] = []
         if output_cols is None:
             for name in node.calc_terms:
-                final_terms.append((name, Reference(node, name)))
+                name_typ: PyDoughType = node.get_expr(name).pydough_type
+                final_terms.append((name, Reference(node, name, name_typ)))
             final_terms.sort(key=lambda term: node.get_expression_position(term[0]))
         else:
             for _, column in output_cols:
-                final_terms.append((column, Reference(node, column)))
+                column_typ: PyDoughType = node.get_expr(column).pydough_type
+                final_terms.append((column, Reference(node, column, column_typ)))
         children: list[PyDoughCollectionQDAG] = []
         final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
         return final_calc

@@ -1,4 +1,4 @@
-WITH _t6 AS (
+WITH _t5 AS (
   SELECT
     l_commitdate,
     l_linenumber,
@@ -10,35 +10,35 @@ WITH _t6 AS (
     l_commitdate < l_receiptdate
 ), _t3 AS (
   SELECT
-    MAX(_t6.l_linenumber) AS anything_l_linenumber,
-    MAX(_t6.l_orderkey) AS anything_l_orderkey,
-    MAX(_t6.l_suppkey) AS anything_l_suppkey,
-    MAX(orders.o_orderkey) AS anything_o_orderkey,
-    MAX(orders.o_orderstatus) AS anything_o_orderstatus
-  FROM _t6 AS _t6
+    MAX(_t5.l_suppkey) AS anything_l_suppkey,
+    MAX(orders.o_orderstatus) AS anything_o_orderstatus,
+    _t5.l_linenumber,
+    _t5.l_orderkey,
+    orders.o_orderkey
+  FROM _t5 AS _t5
   JOIN tpch.orders AS orders
-    ON _t6.l_orderkey = orders.o_orderkey
+    ON _t5.l_orderkey = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON _t6.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
+    ON _t5.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    _t6.l_linenumber,
-    _t6.l_orderkey,
+    _t5.l_linenumber,
+    _t5.l_orderkey,
     orders.o_orderkey
 ), _u_0 AS (
   SELECT
-    _t8.l_linenumber AS _u_1,
-    _t8.l_orderkey AS _u_2,
+    _t6.l_linenumber AS _u_1,
+    _t6.l_orderkey AS _u_2,
     orders.o_orderkey AS _u_3
-  FROM _t6 AS _t8
+  FROM _t5 AS _t6
   JOIN tpch.orders AS orders
-    ON _t8.l_orderkey = orders.o_orderkey
+    ON _t6.l_orderkey = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
-    ON _t8.l_suppkey <> lineitem.l_suppkey
+    ON _t6.l_suppkey <> lineitem.l_suppkey
     AND lineitem.l_commitdate < lineitem.l_receiptdate
     AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    _t8.l_linenumber,
-    _t8.l_orderkey,
+    _t6.l_linenumber,
+    _t6.l_orderkey,
     orders.o_orderkey
 ), _s13 AS (
   SELECT
@@ -46,9 +46,9 @@ WITH _t6 AS (
     _t3.anything_l_suppkey
   FROM _t3 AS _t3
   LEFT JOIN _u_0 AS _u_0
-    ON _t3.anything_l_linenumber = _u_0._u_1
-    AND _t3.anything_l_orderkey = _u_0._u_2
-    AND _t3.anything_o_orderkey = _u_0._u_3
+    ON _t3.l_linenumber = _u_0._u_1
+    AND _t3.l_orderkey = _u_0._u_2
+    AND _t3.o_orderkey = _u_0._u_3
   WHERE
     _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
   GROUP BY
