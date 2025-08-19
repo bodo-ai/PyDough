@@ -1,5 +1,5 @@
 SELECT
-  sbcuststate AS state,
+  sbcuststate COLLATE utf8mb4_bin AS state,
   COUNT(DISTINCT sbcustcity) AS a1,
   COUNT(*) AS a2,
   COUNT(CASE WHEN LOWER(sbcustname) LIKE 'j%' THEN sbcustname ELSE NULL END) AS a3,
@@ -13,4 +13,4 @@ FROM main.sbCustomer
 GROUP BY
   1
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

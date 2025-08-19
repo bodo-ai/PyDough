@@ -11,7 +11,7 @@ WITH _s1 AS (
     3
 )
 SELECT
-  sbTicker.sbtickersymbol AS symbol,
+  sbTicker.sbtickersymbol COLLATE utf8mb4_bin AS symbol,
   (
     100.0 * (
       COALESCE(_s1.sum_sbTxAmount, 0) - COALESCE(_s1.sum_expr_2, 0)
@@ -21,4 +21,4 @@ FROM main.sbTicker AS sbTicker
 JOIN _s1 AS _s1
   ON _s1.sbTxTickerId = sbTicker.sbtickerid
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

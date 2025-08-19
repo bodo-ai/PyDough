@@ -68,7 +68,7 @@ WITH _s0 AS (
     3
 )
 SELECT
-  _s16.s_name AS season_name,
+  _s16.s_name COLLATE utf8mb4_bin AS season_name,
   ROUND((
     100.0 * COALESCE(_s16.sum_is_intra_season, 0)
   ) / _s16.n_rows, 2) AS pct_season_searches,
@@ -79,4 +79,4 @@ FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17
   ON _s16.s_name = _s17.s_name
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

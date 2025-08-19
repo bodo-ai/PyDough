@@ -55,7 +55,7 @@ WITH _t5 AS (
     2
 )
 SELECT
-  SUPPLIER.s_name AS S_NAME,
+  SUPPLIER.s_name COLLATE utf8mb4_bin AS S_NAME,
   COALESCE(_s13.n_rows, 0) AS NUMWAIT
 FROM tpch.SUPPLIER AS SUPPLIER
 JOIN tpch.NATION AS NATION
@@ -64,5 +64,5 @@ LEFT JOIN _s13 AS _s13
   ON SUPPLIER.s_suppkey = _s13.anything_l_suppkey
 ORDER BY
   2 DESC,
-  1 COLLATE utf8mb4_bin
+  1
 LIMIT 10

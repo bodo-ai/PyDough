@@ -13,11 +13,11 @@ WITH _t AS (
     3
 )
 SELECT
-  t_name AS tod,
+  t_name COLLATE utf8mb4_bin AS tod,
   search_engine,
   n_searches
 FROM _t
 WHERE
   _w = 1
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

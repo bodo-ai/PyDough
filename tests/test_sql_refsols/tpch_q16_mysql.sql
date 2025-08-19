@@ -1,6 +1,6 @@
 SELECT
-  PART.p_brand AS P_BRAND,
-  PART.p_type AS P_TYPE,
+  PART.p_brand COLLATE utf8mb4_bin AS P_BRAND,
+  PART.p_type COLLATE utf8mb4_bin AS P_TYPE,
   PART.p_size AS P_SIZE,
   COUNT(DISTINCT PARTSUPP.ps_suppkey) AS SUPPLIER_COUNT
 FROM tpch.PARTSUPP AS PARTSUPP
@@ -18,7 +18,7 @@ GROUP BY
   3
 ORDER BY
   SUPPLIER_COUNT DESC,
-  1 COLLATE utf8mb4_bin,
-  2 COLLATE utf8mb4_bin,
+  1,
+  2,
   3
 LIMIT 10

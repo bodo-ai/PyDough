@@ -9,8 +9,8 @@ WITH _s7 AS (
     2
 )
 SELECT
-  COUNTRIES.co_name AS country_name,
-  PRODUCTS.pr_name AS product_name,
+  COUNTRIES.co_name COLLATE utf8mb4_bin AS country_name,
+  PRODUCTS.pr_name COLLATE utf8mb4_bin AS product_name,
   ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) AS ir
 FROM main.COUNTRIES AS COUNTRIES
 JOIN main.DEVICES AS DEVICES
@@ -24,6 +24,6 @@ GROUP BY
   2
 ORDER BY
   3 DESC,
-  2 COLLATE utf8mb4_bin,
-  1 COLLATE utf8mb4_bin
+  2,
+  1
 LIMIT 5

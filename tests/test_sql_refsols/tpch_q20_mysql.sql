@@ -27,7 +27,7 @@ WITH _s3 AS (
     AND PARTSUPP.ps_partkey = _s5.p_partkey
 )
 SELECT
-  SUPPLIER.s_name AS S_NAME,
+  SUPPLIER.s_name COLLATE utf8mb4_bin AS S_NAME,
   SUPPLIER.s_address AS S_ADDRESS
 FROM tpch.SUPPLIER AS SUPPLIER
 JOIN tpch.NATION AS NATION
@@ -35,5 +35,5 @@ JOIN tpch.NATION AS NATION
 JOIN _s7 AS _s7
   ON SUPPLIER.s_suppkey = _s7.ps_suppkey
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1
 LIMIT 10

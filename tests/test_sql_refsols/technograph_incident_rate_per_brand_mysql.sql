@@ -7,7 +7,7 @@ WITH _s3 AS (
     2
 )
 SELECT
-  PRODUCTS.pr_brand AS brand,
+  PRODUCTS.pr_brand COLLATE utf8mb4_bin AS brand,
   ROUND(COALESCE(SUM(_s3.n_rows), 0) / COUNT(*), 2) AS ir
 FROM main.DEVICES AS DEVICES
 JOIN main.PRODUCTS AS PRODUCTS
@@ -17,4 +17,4 @@ LEFT JOIN _s3 AS _s3
 GROUP BY
   1
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

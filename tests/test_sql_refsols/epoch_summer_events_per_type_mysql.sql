@@ -1,5 +1,5 @@
 SELECT
-  EVENTS.ev_typ AS event_type,
+  EVENTS.ev_typ COLLATE utf8mb4_bin AS event_type,
   COUNT(*) AS n_events
 FROM EVENTS AS EVENTS
 JOIN SEASONS AS SEASONS
@@ -12,4 +12,4 @@ JOIN SEASONS AS SEASONS
 GROUP BY
   1
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

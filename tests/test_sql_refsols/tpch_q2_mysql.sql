@@ -23,8 +23,8 @@ WITH _t AS (
 )
 SELECT
   s_acctbal AS S_ACCTBAL,
-  s_name AS S_NAME,
-  n_name AS N_NAME,
+  s_name COLLATE utf8mb4_bin AS S_NAME,
+  n_name COLLATE utf8mb4_bin AS N_NAME,
   p_partkey AS P_PARTKEY,
   p_mfgr AS P_MFGR,
   s_address AS S_ADDRESS,
@@ -35,7 +35,7 @@ WHERE
   _w = 1
 ORDER BY
   1 DESC,
-  3 COLLATE utf8mb4_bin,
-  2 COLLATE utf8mb4_bin,
+  3,
+  2,
   4
 LIMIT 10

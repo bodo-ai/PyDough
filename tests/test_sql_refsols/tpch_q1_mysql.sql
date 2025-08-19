@@ -1,6 +1,6 @@
 SELECT
-  l_returnflag AS L_RETURNFLAG,
-  l_linestatus AS L_LINESTATUS,
+  l_returnflag COLLATE utf8mb4_bin AS L_RETURNFLAG,
+  l_linestatus COLLATE utf8mb4_bin AS L_LINESTATUS,
   COALESCE(SUM(l_quantity), 0) AS SUM_QTY,
   COALESCE(SUM(l_extendedprice), 0) AS SUM_BASE_PRICE,
   COALESCE(SUM(l_extendedprice * (
@@ -22,5 +22,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  1 COLLATE utf8mb4_bin,
-  2 COLLATE utf8mb4_bin
+  1,
+  2

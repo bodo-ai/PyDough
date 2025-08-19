@@ -10,7 +10,7 @@ WITH _s0 AS (
   FROM SEARCHES
 )
 SELECT
-  ANY_VALUE(_s0.user_name) AS user_name,
+  ANY_VALUE(_s0.user_name) COLLATE utf8mb4_bin AS user_name,
   COUNT(DISTINCT _s7.user_id) AS n_other_users
 FROM _s0 AS _s0
 JOIN _s1 AS _s1
@@ -25,5 +25,5 @@ GROUP BY
   _s0.user_id
 ORDER BY
   n_other_users DESC,
-  1 COLLATE utf8mb4_bin
+  1
 LIMIT 7

@@ -31,11 +31,11 @@ WITH _s0 AS (
 )
 SELECT
   quarter,
-  state AS customer_state,
+  state COLLATE utf8mb4_bin AS customer_state,
   COALESCE(sum_sum_sale_price, 0) AS total_sales
 FROM _t1
 WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
   quarter,
-  2 COLLATE utf8mb4_bin
+  2

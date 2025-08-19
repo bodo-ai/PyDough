@@ -57,7 +57,7 @@ WITH _t2 AS (
     3
 )
 SELECT
-  COUNTRIES.co_name AS country_name,
+  COUNTRIES.co_name COLLATE utf8mb4_bin AS country_name,
   ROUND(COALESCE(_s3.sum_n_rows, 0) / _s3.n_rows, 2) AS made_ir,
   ROUND(COALESCE(_s7.sum_n_rows, 0) / _s7.n_rows, 2) AS sold_ir,
   ROUND(COALESCE(_s13.sum_n_rows, 0) / COALESCE(_s13.n_rows, 0), 2) AS user_ir
@@ -69,4 +69,4 @@ JOIN _s7 AS _s7
 LEFT JOIN _s13 AS _s13
   ON COUNTRIES.co_id = _s13.us_country_id
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

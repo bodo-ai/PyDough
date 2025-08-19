@@ -19,10 +19,10 @@ WITH _s3 AS (
     2
 )
 SELECT
-  COUNTRIES.co_name AS country,
+  COUNTRIES.co_name COLLATE utf8mb4_bin AS country,
   ROUND(COALESCE(_s5.sum_n_incidents, 0) / COALESCE(_s5.n_rows, 0), 2) AS ir
 FROM main.COUNTRIES AS COUNTRIES
 LEFT JOIN _s5 AS _s5
   ON COUNTRIES.co_id = _s5.de_production_country_id
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

@@ -1,5 +1,5 @@
 SELECT
-  sbtxtype AS transaction_type,
+  sbtxtype COLLATE utf8mb4_bin AS transaction_type,
   COUNT(DISTINCT sbtxcustid) AS num_customers,
   AVG(sbtxshares) AS avg_shares
 FROM main.sbTransaction
@@ -10,5 +10,5 @@ GROUP BY
   1
 ORDER BY
   num_customers DESC,
-  1 COLLATE utf8mb4_bin
+  1
 LIMIT 3

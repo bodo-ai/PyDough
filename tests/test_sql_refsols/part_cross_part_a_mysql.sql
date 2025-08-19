@@ -19,8 +19,8 @@ WITH _s0 AS (
     3
 )
 SELECT
-  sbCustomer.sbcuststate AS state,
-  _s0.sbTickerExchange AS exchange,
+  sbCustomer.sbcuststate COLLATE utf8mb4_bin AS state,
+  _s0.sbTickerExchange COLLATE utf8mb4_bin AS exchange,
   COALESCE(SUM(_s9.n_rows), 0) AS n
 FROM _s0 AS _s0
 CROSS JOIN main.sbCustomer AS sbCustomer
@@ -31,5 +31,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  1 COLLATE utf8mb4_bin,
-  2 COLLATE utf8mb4_bin
+  1,
+  2

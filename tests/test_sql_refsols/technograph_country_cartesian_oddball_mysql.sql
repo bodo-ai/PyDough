@@ -4,9 +4,9 @@ WITH _s1 AS (
   FROM main.COUNTRIES
 )
 SELECT
-  COUNTRIES.co_name AS name,
+  COUNTRIES.co_name COLLATE utf8mb4_bin AS name,
   _s1.n_other_countries
 FROM main.COUNTRIES AS COUNTRIES
 CROSS JOIN _s1 AS _s1
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

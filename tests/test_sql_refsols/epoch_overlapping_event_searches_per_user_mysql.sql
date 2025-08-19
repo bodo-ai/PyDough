@@ -22,7 +22,7 @@ WITH _s0 AS (
     3
 )
 SELECT
-  ANY_VALUE(anything_user_name) AS user_name,
+  ANY_VALUE(anything_user_name) COLLATE utf8mb4_bin AS user_name,
   COUNT(*) AS n_searches
 FROM _t2
 WHERE
@@ -31,5 +31,5 @@ GROUP BY
   user_id
 ORDER BY
   n_searches DESC,
-  1 COLLATE utf8mb4_bin
+  1
 LIMIT 4

@@ -55,7 +55,7 @@ WITH _t2 AS (
     6
 )
 SELECT
-  NATION.n_name AS nation_name,
+  NATION.n_name COLLATE utf8mb4_bin AS nation_name,
   _s3.n_red_acctbal,
   _s3.n_black_acctbal,
   _s3.median_red_acctbal,
@@ -67,4 +67,4 @@ JOIN tpch.REGION AS REGION
 JOIN _s3 AS _s3
   ON NATION.n_nationkey = _s3.c_nationkey
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

@@ -8,7 +8,7 @@ WITH _u_0 AS (
     1
 )
 SELECT
-  ORDERS.o_orderpriority AS O_ORDERPRIORITY,
+  ORDERS.o_orderpriority COLLATE utf8mb4_bin AS O_ORDERPRIORITY,
   COUNT(*) AS ORDER_COUNT
 FROM tpch.ORDERS AS ORDERS
 LEFT JOIN _u_0 AS _u_0
@@ -20,4 +20,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  1 COLLATE utf8mb4_bin
+  1

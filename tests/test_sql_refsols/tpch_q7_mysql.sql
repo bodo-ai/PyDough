@@ -12,8 +12,8 @@ WITH _s9 AS (
     )
 )
 SELECT
-  NATION.n_name AS SUPP_NATION,
-  _s9.n_name AS CUST_NATION,
+  NATION.n_name COLLATE utf8mb4_bin AS SUPP_NATION,
+  _s9.n_name COLLATE utf8mb4_bin AS CUST_NATION,
   EXTRACT(YEAR FROM CAST(LINEITEM.l_shipdate AS DATETIME)) AS L_YEAR,
   COALESCE(SUM(LINEITEM.l_extendedprice * (
     1 - LINEITEM.l_discount
@@ -41,6 +41,6 @@ GROUP BY
   2,
   3
 ORDER BY
-  1 COLLATE utf8mb4_bin,
-  2 COLLATE utf8mb4_bin,
+  1,
+  2,
   3

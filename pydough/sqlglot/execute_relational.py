@@ -187,27 +187,34 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
 
         # Replace ORDER BY keys that are in the select clause with indices. This
         # includes cases where the entire ORDER BY key is in the select clause,
-        # or a subexpression inside COLLATE is.
+        # or a subexpression inside COLLATE is. If it is a collate, change the
+        # original expression to include the collate instead.
         if expression.args.get("order") is not None:
+            expr_idx: int
             order_list: list[SQLGlotExpression] = expression.args["order"].expressions
             for idx, order_expr in enumerate(order_list):
                 if order_expr.this in expressions:
+                    expr_idx = expressions.index(order_expr.this)
                     order_list[idx].set(
                         "this",
-                        sqlglot_expressions.convert(
-                            expressions.index(order_expr.this) + 1
-                        ),
+                        sqlglot_expressions.convert(expr_idx + 1),
                     )
                 elif (
                     isinstance(order_expr.this, SQLGlotCollate)
                     and order_expr.this.this in expressions
                 ):
-                    order_list[idx].this.set(
+                    collate: SQLGlotExpression = order_expr.this
+                    expr_idx = expressions.index(collate.this)
+                    # Remove the COLLATE from the order expression, but change
+                    # the original expression to include the collate.
+                    order_list[idx].set(
                         "this",
-                        sqlglot_expressions.convert(
-                            expressions.index(order_expr.this.this) + 1
-                        ),
+                        sqlglot_expressions.convert(expr_idx + 1),
                     )
+                    if isinstance(expression.expressions[expr_idx], Alias):
+                        expression.expressions[expr_idx].set("this", collate)
+                    else:
+                        expression.expressions[expr_idx] = collate
 
         # Replace GROUP BY keys that are in the select clause with indices.
         if expression.args.get("group") is not None:

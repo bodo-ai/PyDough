@@ -1,5 +1,5 @@
 SELECT
-  SEASONS.s_name AS season_name,
+  SEASONS.s_name COLLATE utf8mb4_bin AS season_name,
   COUNT(*) AS n_events
 FROM SEASONS AS SEASONS
 JOIN EVENTS AS EVENTS
@@ -10,4 +10,4 @@ GROUP BY
   1
 ORDER BY
   n_events DESC,
-  1 COLLATE utf8mb4_bin
+  1

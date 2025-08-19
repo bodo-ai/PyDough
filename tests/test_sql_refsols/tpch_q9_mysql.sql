@@ -1,5 +1,5 @@
 SELECT
-  NATION.n_name AS NATION,
+  NATION.n_name COLLATE utf8mb4_bin AS NATION,
   EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) AS O_YEAR,
   COALESCE(
     SUM(
@@ -25,6 +25,6 @@ GROUP BY
   1,
   2
 ORDER BY
-  1 COLLATE utf8mb4_bin,
+  1,
   2 DESC
 LIMIT 10

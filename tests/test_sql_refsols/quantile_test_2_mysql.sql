@@ -77,7 +77,7 @@ WITH _s0 AS (
 )
 SELECT
   REGION.r_name AS region_name,
-  _s0.n_name AS nation_name,
+  _s0.n_name COLLATE utf8mb4_bin AS nation_name,
   _s5.max_expr_17 AS orders_min,
   _s5.max_expr_10 AS orders_1_percent,
   _s5.max_expr_9 AS orders_10_percent,
@@ -93,4 +93,4 @@ JOIN tpch.REGION AS REGION
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
-  2 COLLATE utf8mb4_bin
+  2
