@@ -1920,3 +1920,22 @@ def defog_sql_text_ewallet_gen5() -> str:
     AND date(u.created_at, '+1 year') 
     WHERE n.user_id IS NULL;
     """
+
+
+def defog_sql_text_dermtreatment_basic1() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    What are the top 3 doctor specialties by total drug amount prescribed for
+    treatments started in the past 6 calendar months? Return the specialty,
+    number of treatments, and total drug amount.
+    """
+    return """
+    SELECT d.specialty, COUNT(*) AS num_treatments, 
+    SUM(t.tot_drug_amt) AS total_drug_amt 
+    FROM treatments AS t JOIN doctors AS d 
+    ON t.doc_id = d.doc_id 
+    WHERE t.start_dt >= DATE('now', '-6 months') 
+    GROUP BY d.specialty 
+    ORDER BY total_drug_amt DESC LIMIT 3;	
+    """

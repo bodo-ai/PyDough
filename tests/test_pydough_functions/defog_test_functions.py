@@ -1744,3 +1744,29 @@ def impl_defog_ewallet_gen5():
     return users.WHERE(HASNOT(selected_notifications)).CALCULATE(
         username=username, email=email, created_at=created_at
     )
+
+
+def impl_defog_dermtreatment_basic1():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    What are the top 3 doctor specialties by total drug amount prescribed for
+    treatments started in the past 6 calendar months? Return the specialty,
+    number of treatments, and total drug amount.
+    """
+    # Filter treatments started in the past 6 months
+    recent_treatments = treatments.WHERE(
+        DATEDIFF("months", start_date, DATETIME("now")) <= 6
+    ).CALCULATE(specialty=doctor.specialty, drug_amount=total_drug_amount)
+
+    # Group by specialty and calculate totals
+    specialty_totals = recent_treatments.PARTITION(
+        name="specialties", by=specialty
+    ).CALCULATE(
+        specialty=specialty,
+        num_treatments=COUNT(treatments),
+        total_drug_amount=SUM(treatments.total_drug_amount),
+    )
+
+    # Get top 3 specialties by total drug amount
+    return specialty_totals.TOP_K(3, by=total_drug_amount.DESC())

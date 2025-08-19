@@ -76,6 +76,7 @@ from tests.test_pydough_functions.defog_outputs import (
     defog_sql_text_dealership_gen3,
     defog_sql_text_dealership_gen4,
     defog_sql_text_dealership_gen5,
+    defog_sql_text_dermtreatment_basic1,
     defog_sql_text_ewallet_adv1,
     defog_sql_text_ewallet_adv2,
     defog_sql_text_ewallet_adv3,
@@ -171,6 +172,7 @@ from tests.test_pydough_functions.defog_test_functions import (
     impl_defog_dealership_gen3,
     impl_defog_dealership_gen4,
     impl_defog_dealership_gen5,
+    impl_defog_dermtreatment_basic1,
     impl_defog_ewallet_adv1,
     impl_defog_ewallet_adv2,
     impl_defog_ewallet_adv3,
@@ -1098,6 +1100,15 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "ewallet_gen5",
             ),
             id="ewallet_gen5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_dermtreatment_basic1,
+                "DermTreatment",
+                defog_sql_text_dermtreatment_basic1,
+                "dermtreatment_basic1",
+            ),
+            id="dermtreatment_basic1",
         ),
     ],
 )
