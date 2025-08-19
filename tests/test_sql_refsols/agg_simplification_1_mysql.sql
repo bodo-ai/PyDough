@@ -171,9 +171,13 @@ SELECT
   COUNT(*) AS co5,
   COUNT(*) AS co6,
   0 AS co7,
-  COUNT(*) * CAST(NOT (
-    CHAR_LENGTH(CASE WHEN sbTickerExchange <> 'NYSE Arca' THEN sbTickerExchange ELSE NULL END) IS NULL
-  ) AS SIGNED) AS co8,
+  COUNT(*) * CASE
+    WHEN NOT (
+      CHAR_LENGTH(CASE WHEN sbTickerExchange <> 'NYSE Arca' THEN sbTickerExchange ELSE NULL END) IS NULL
+    )
+    THEN 1
+    ELSE 0
+  END AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,
