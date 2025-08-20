@@ -18,4 +18,4 @@ JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
   4 DESC,
-  _id
+  1

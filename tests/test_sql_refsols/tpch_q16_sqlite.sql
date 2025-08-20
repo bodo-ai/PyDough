@@ -17,8 +17,8 @@ GROUP BY
   2,
   3
 ORDER BY
-  supplier_count DESC,
-  p_brand,
-  p_type,
-  p_size
+  4 DESC,
+  1,
+  2,
+  3
 LIMIT 10

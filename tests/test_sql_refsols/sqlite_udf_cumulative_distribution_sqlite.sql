@@ -18,4 +18,4 @@ FROM _t0
 GROUP BY
   1
 ORDER BY
-  c
+  1

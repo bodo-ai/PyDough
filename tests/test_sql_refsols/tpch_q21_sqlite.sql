@@ -64,5 +64,5 @@ LEFT JOIN _s13 AS _s13
   ON _s13.anything_l_suppkey = supplier.s_suppkey
 ORDER BY
   2 DESC,
-  s_name
+  1
 LIMIT 10

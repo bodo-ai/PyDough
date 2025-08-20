@@ -673,7 +673,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         return sqlglot_expressions.Anonymous(
-            this="TRUNC",
+            this="Truncate",
             expressions=[
                 sqlglot_expressions.Cast(
                     this=args[0],

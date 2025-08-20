@@ -22,4 +22,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  month
+  1

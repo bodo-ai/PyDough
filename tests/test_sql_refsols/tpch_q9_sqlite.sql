@@ -26,5 +26,5 @@ GROUP BY
   2
 ORDER BY
   1,
-  o_year DESC
+  2 DESC
 LIMIT 10

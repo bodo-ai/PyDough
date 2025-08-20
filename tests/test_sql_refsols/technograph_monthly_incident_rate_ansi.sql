@@ -67,4 +67,4 @@ SELECT
   ) / COALESCE(sum_expr_3, 0), 2) AS ir
 FROM _t0
 ORDER BY
-  month
+  1

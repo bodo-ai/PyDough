@@ -1,6 +1,6 @@
 SELECT
   p_partkey AS `key`,
-  TRUNC(
+  TRUNCATE(
     CAST(CONCAT_WS(
       '',
       SUBSTRING(p_brand, CASE WHEN ABS(-2) < CHAR_LENGTH(p_brand) THEN -2 ELSE 1 END),

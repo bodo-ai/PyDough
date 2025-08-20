@@ -9,6 +9,6 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  num_customers DESC,
+  2 DESC,
   1
 LIMIT 3

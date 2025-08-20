@@ -19,6 +19,6 @@ GROUP BY
   4
 ORDER BY
   2 DESC,
-  o_orderdate,
-  l_orderkey
+  3,
+  1
 LIMIT 10

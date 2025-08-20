@@ -107,7 +107,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_79,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.9 * COUNT(1) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
@@ -115,7 +115,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_80,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.8 * COUNT(2) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
@@ -123,7 +123,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_81,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.7 * COUNT(-1) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
@@ -131,7 +131,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_82,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.6 * COUNT(-3) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
@@ -139,7 +139,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_83,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.5 * COUNT(0) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
@@ -147,7 +147,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_84,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.4 * COUNT(0.5) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
@@ -155,7 +155,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_85,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.30000000000000004 * COUNT(NULL) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
@@ -163,7 +163,7 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_86,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.19999999999999996 * COUNT(
           CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
         ) OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS FLOAT),
@@ -223,7 +223,7 @@ SELECT
   1 AS nd5,
   1 AS nd6,
   0 AS nd7,
-  TRUNC(CAST(NOT aug_exchange IS NULL AS FLOAT), 0) AS nd8,
+  TRUNCATE(CAST(NOT aug_exchange IS NULL AS FLOAT), 0) AS nd8,
   1 AS av1,
   2 AS av2,
   -1 AS av3,
@@ -274,4 +274,4 @@ SELECT
   max_expr_87 AS qu8
 FROM _t0
 ORDER BY
-  aug_exchange
+  1

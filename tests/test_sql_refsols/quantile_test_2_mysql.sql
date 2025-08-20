@@ -1,16 +1,16 @@
 WITH _s0 AS (
   SELECT
-    n_name,
+    n_name COLLATE utf8mb4_bin AS n_name,
     n_nationkey,
     n_regionkey
   FROM tpch.NATION
   ORDER BY
-    n_name COLLATE utf8mb4_bin
+    1
   LIMIT 5
 ), _t2 AS (
   SELECT
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.99 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -18,7 +18,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_10,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.75 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -26,7 +26,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_11,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.25 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -34,7 +34,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_12,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.09999999999999998 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -42,7 +42,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_13,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.010000000000000009 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -50,7 +50,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_14,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.0 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -58,7 +58,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_15,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.5 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -66,7 +66,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_16,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(1.0 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
@@ -74,7 +74,7 @@ WITH _s0 AS (
       ELSE NULL
     END AS expr_17,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.9 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)

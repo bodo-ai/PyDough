@@ -3,7 +3,7 @@ SELECT
   COUNT(DISTINCT sbcustcity) AS a1,
   COUNT(*) AS a2,
   COUNT(CASE WHEN LOWER(sbcustname) LIKE 'j%' THEN sbcustname ELSE NULL END) AS a3,
-  COALESCE(SUM(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0)), 0) AS a4,
+  COALESCE(SUM(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)), 0) AS a4,
   MIN(sbcustphone) AS a5,
   MAX(sbcustphone) AS a6,
   ANY_VALUE(LOWER(sbcuststate)) AS a7,
@@ -11,6 +11,6 @@ SELECT
   ANY_VALUE(LOWER(sbcuststate)) AS a9
 FROM main.sbCustomer
 GROUP BY
-  state
+  1
 ORDER BY
   1

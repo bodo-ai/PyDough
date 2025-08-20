@@ -29,5 +29,5 @@ JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
   3 DESC,
-  c_custkey
+  1
 LIMIT 20

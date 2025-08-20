@@ -1,15 +1,15 @@
 WITH _t2 AS (
   SELECT
-    ABS(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0)) AS expr_13,
+    ABS(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) AS expr_13,
     ROW_NUMBER() OVER (ORDER BY CASE WHEN sbcustname COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, sbcustname COLLATE utf8mb4_bin) AS `rank`,
-    AVG(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER () AS ravg1,
+    AVG(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER () AS ravg1,
     COALESCE(
-      AVG(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
     ) AS ravg2,
-    COUNT(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0)) OVER () AS rcnt1,
+    COUNT(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) OVER () AS rcnt1,
     COALESCE(
-      COUNT(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0)) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      COUNT(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0)) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rcnt2,
     COUNT(*) OVER () AS rsiz1,
@@ -17,16 +17,16 @@ WITH _t2 AS (
       COUNT(*) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING),
       0.1
     ) AS rsiz2,
-    SUM(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER () AS rsum1,
+    SUM(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER () AS rsum1,
     COALESCE(
-      SUM(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      SUM(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rsum2
   FROM main.sbCustomer
 ), _t1 AS (
   SELECT
     CASE
-      WHEN TRUNC(CAST(0.75 * COUNT(expr_13) OVER () AS FLOAT), 0) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
+      WHEN TRUNCATE(CAST(0.75 * COUNT(expr_13) OVER () AS FLOAT), 0) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
       THEN expr_13
       ELSE NULL
     END AS expr_15,

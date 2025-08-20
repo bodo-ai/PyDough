@@ -4,7 +4,7 @@ WITH _t0 AS (
     b
   FROM table
   ORDER BY
-    a
+    1
   LIMIT 5
 )
 SELECT
@@ -12,5 +12,5 @@ SELECT
   b
 FROM _t0
 ORDER BY
-  b DESC
+  2 DESC
 LIMIT 2

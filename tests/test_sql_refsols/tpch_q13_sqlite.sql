@@ -17,6 +17,6 @@ LEFT JOIN _s1 AS _s1
 GROUP BY
   1
 ORDER BY
-  custdist DESC,
+  2 DESC,
   1 DESC
 LIMIT 10

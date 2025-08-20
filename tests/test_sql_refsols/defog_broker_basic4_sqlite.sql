@@ -30,5 +30,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  num_transactions DESC
+  3 DESC
 LIMIT 5

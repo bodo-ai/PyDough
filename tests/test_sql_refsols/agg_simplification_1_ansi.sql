@@ -82,4 +82,4 @@ SELECT
   aug_exchange AS qu8
 FROM _t0
 ORDER BY
-  aug_exchange
+  1

@@ -25,6 +25,6 @@ FROM users AS users
 JOIN _s5 AS _s5
   ON _s5.anything_search_user_id = users.user_id
 ORDER BY
-  n_cold_war_searches DESC,
-  user_name
+  2 DESC,
+  1
 LIMIT 3

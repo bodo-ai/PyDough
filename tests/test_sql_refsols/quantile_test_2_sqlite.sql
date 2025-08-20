@@ -5,7 +5,7 @@ WITH _s0 AS (
     n_regionkey
   FROM tpch.nation
   ORDER BY
-    n_name
+    1
   LIMIT 5
 ), _t1 AS (
   SELECT

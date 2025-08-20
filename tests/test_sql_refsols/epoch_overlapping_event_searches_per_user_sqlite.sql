@@ -34,6 +34,6 @@ WHERE
 GROUP BY
   user_id
 ORDER BY
-  n_searches DESC,
+  2 DESC,
   1
 LIMIT 4

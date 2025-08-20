@@ -29,5 +29,5 @@ FROM _t1
 WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
-  quarter,
+  1,
   2

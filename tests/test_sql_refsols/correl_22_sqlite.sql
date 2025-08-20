@@ -20,6 +20,6 @@ JOIN _s1 AS _s1
 GROUP BY
   1
 ORDER BY
-  n_types DESC,
+  2 DESC,
   1
 LIMIT 5

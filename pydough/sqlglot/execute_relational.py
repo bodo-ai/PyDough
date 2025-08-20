@@ -193,27 +193,45 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
             expr.this if isinstance(expr, Alias) else expr
             for expr in expression.expressions
         ]
+        expr_idx: int
 
         # Replace ORDER BY keys that are in the select clause with indices. This
         # includes cases where the entire ORDER BY key is in the select clause,
         # or a subexpression inside COLLATE is. If it is a collate, change the
         # original expression to include the collate instead.
         if expression.args.get("order") is not None:
-            expr_idx: int
             order_list: list[SQLGlotExpression] = expression.args["order"].expressions
+            aliases: list[str] = []
+            for expr in expression.expressions:
+                if isinstance(expr, Alias):
+                    aliases.append(expr.alias.lower())
+                elif isinstance(expr, Column):
+                    aliases.append(expr.name.lower())
             for idx, order_expr in enumerate(order_list):
-                if order_expr.this in expressions:
-                    expr_idx = expressions.index(order_expr.this)
+                if order_expr.this in expressions or (
+                    isinstance(order_expr.this, Column)
+                    and order_expr.this.name.lower() in aliases
+                ):
+                    if order_expr.this in expressions:
+                        expr_idx = expressions.index(order_expr.this)
+                    else:
+                        expr_idx = aliases.index(order_expr.this.name.lower())
                     order_list[idx].set(
                         "this",
                         sqlglot_expressions.convert(expr_idx + 1),
                     )
-                elif (
-                    isinstance(order_expr.this, SQLGlotCollate)
-                    and order_expr.this.this in expressions
+                elif isinstance(order_expr.this, SQLGlotCollate) and (
+                    order_expr.this.this in expressions
+                    or (
+                        isinstance(order_expr.this.this, Column)
+                        and order_expr.this.this.name.lower() in aliases
+                    )
                 ):
                     collate: SQLGlotExpression = order_expr.this
-                    expr_idx = expressions.index(collate.this)
+                    if order_expr.this.this in expressions:
+                        expr_idx = expressions.index(collate.this)
+                    else:
+                        expr_idx = aliases.index(collate.this.this.name.lower())
                     # Remove the COLLATE from the order expression, but change
                     # the original expression to include the collate.
                     order_list[idx].set(
@@ -233,23 +251,18 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
                 # the select list exactly once. Otherwise, replace with the
                 # alias.
                 if key_expr in expressions:
-                    if (
-                        len(
-                            [
-                                exp
-                                for select_elem in expressions
-                                for exp in walk_in_scope(select_elem)
-                                if exp == key_expr
-                            ]
-                        )
-                        == 1
-                    ):
-                        keys_list[idx] = sqlglot_expressions.convert(
-                            expressions.index(key_expr) + 1
-                        )
-                    elif isinstance(expression.expressions[idx], Alias):
+                    expr_idx = expressions.index(key_expr)
+                    n_match: int = 0
+                    for select_elem in expressions:
+                        if not select_elem.find(sqlglot_expressions.AggFunc):
+                            for exp in walk_in_scope(select_elem):
+                                if exp == key_expr:
+                                    n_match += 1
+                    if n_match <= 1:
+                        keys_list[idx] = sqlglot_expressions.convert(expr_idx + 1)
+                    elif isinstance(expression.expressions[expr_idx], Alias):
                         keys_list[idx] = sqlglot_expressions.Identifier(
-                            this=expression.expressions[idx].alias, quoted=False
+                            this=expression.expressions[expr_idx].alias, quoted=False
                         )
             keys_list.sort(key=repr)
 

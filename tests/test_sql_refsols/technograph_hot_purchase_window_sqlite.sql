@@ -12,6 +12,6 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  n_purchases DESC,
+  2 DESC,
   1
 LIMIT 1

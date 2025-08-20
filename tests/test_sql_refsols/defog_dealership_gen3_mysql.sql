@@ -1,6 +1,6 @@
 SELECT
   payment_date,
-  payment_method,
+  payment_method COLLATE utf8mb4_bin AS payment_method,
   COALESCE(SUM(payment_amount), 0) AS total_amount
 FROM main.payments_received
 WHERE
@@ -19,5 +19,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  payment_date DESC,
-  payment_method COLLATE utf8mb4_bin
+  1 DESC,
+  2

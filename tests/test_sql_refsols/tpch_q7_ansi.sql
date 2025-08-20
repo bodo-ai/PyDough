@@ -41,6 +41,6 @@ GROUP BY
   2,
   3
 ORDER BY
-  supp_nation,
+  1,
   2,
-  l_year
+  3

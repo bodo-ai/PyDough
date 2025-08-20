@@ -33,4 +33,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  o_orderpriority
+  1

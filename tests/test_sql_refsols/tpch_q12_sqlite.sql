@@ -15,4 +15,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  l_shipmode
+  1

@@ -27,5 +27,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  payment_date DESC,
-  payment_method
+  1 DESC,
+  2

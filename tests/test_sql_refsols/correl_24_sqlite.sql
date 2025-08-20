@@ -50,5 +50,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  year,
-  month
+  1,
+  2

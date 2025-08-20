@@ -45,4 +45,4 @@ JOIN _s5 AS _s5
   ON _s2.max_revenue = COALESCE(_s5.sum_expr_3, 0)
   AND _s5.l_suppkey = supplier.s_suppkey
 ORDER BY
-  s_suppkey
+  1

@@ -19,12 +19,12 @@ WITH _t1 AS (
     2
 )
 SELECT
-  USERS.user_name,
+  user_name COLLATE utf8mb4_bin AS user_name,
   _s5.n_cold_war_searches
 FROM USERS AS USERS
 JOIN _s5 AS _s5
   ON USERS.user_id = _s5.anything_search_user_id
 ORDER BY
-  n_cold_war_searches DESC,
-  user_name COLLATE utf8mb4_bin
+  2 DESC,
+  1
 LIMIT 3

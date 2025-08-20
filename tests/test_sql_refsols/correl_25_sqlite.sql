@@ -47,6 +47,6 @@ GROUP BY
   2,
   4
 ORDER BY
-  n_urgent_semi_domestic_rail_orders DESC,
+  6 DESC,
   5
 LIMIT 5

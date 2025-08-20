@@ -70,4 +70,4 @@ SELECT
   ) AS ir
 FROM _t0
 ORDER BY
-  month
+  1

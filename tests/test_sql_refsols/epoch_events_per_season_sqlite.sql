@@ -9,5 +9,5 @@ JOIN events AS events
 GROUP BY
   1
 ORDER BY
-  n_events DESC,
+  2 DESC,
   1

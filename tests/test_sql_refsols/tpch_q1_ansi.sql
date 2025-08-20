@@ -22,5 +22,5 @@ GROUP BY
   1,
   2
 ORDER BY
-  l_returnflag,
-  l_linestatus
+  1,
+  2

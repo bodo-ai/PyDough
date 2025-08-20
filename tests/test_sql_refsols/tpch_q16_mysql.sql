@@ -17,7 +17,7 @@ GROUP BY
   2,
   3
 ORDER BY
-  SUPPLIER_COUNT DESC,
+  4 DESC,
   1,
   2,
   3

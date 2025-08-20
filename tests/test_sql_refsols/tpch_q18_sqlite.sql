@@ -21,6 +21,6 @@ JOIN _t1 AS _t1
   AND _t1.l_orderkey = orders.o_orderkey
   AND _t1.sum_l_quantity > 300
 ORDER BY
-  o_totalprice DESC,
-  o_orderdate
+  5 DESC,
+  4
 LIMIT 10

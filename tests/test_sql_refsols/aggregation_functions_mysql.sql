@@ -21,7 +21,7 @@ WITH _s1 AS (
       ELSE NULL
     END AS expr_15,
     CASE
-      WHEN TRUNC(
+      WHEN TRUNCATE(
         CAST(0.19999999999999996 * COUNT(CUSTOMER.c_acctbal) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
         0
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC)

@@ -28,4 +28,4 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  cntry_code
+  1

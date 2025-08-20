@@ -35,5 +35,5 @@ JOIN tpch.nation AS nation
 JOIN _s7 AS _s7
   ON _s7.ps_suppkey = supplier.s_suppkey
 ORDER BY
-  s_name
+  1
 LIMIT 10
