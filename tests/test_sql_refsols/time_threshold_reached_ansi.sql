@@ -20,4 +20,4 @@ SELECT
   sbtxdatetime AS date_time
 FROM _t1
 ORDER BY
-  sbtxdatetime
+  1

@@ -3,6 +3,6 @@ SELECT
   b
 FROM table
 ORDER BY
-  a,
-  b DESC
+  1,
+  2 DESC
 LIMIT 10

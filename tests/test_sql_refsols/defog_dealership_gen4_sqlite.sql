@@ -15,16 +15,8 @@ WITH _s0 AS (
   WHERE
     CAST(STRFTIME('%Y', sale_date) AS INTEGER) = 2023
   GROUP BY
-    DATE(
-      sale_date,
-      'start of month',
-      '-' || CAST((
-        (
-          CAST(STRFTIME('%m', DATETIME(sale_date)) AS INTEGER) - 1
-        ) % 3
-      ) AS TEXT) || ' months'
-    ),
-    customer_id
+    1,
+    3
 ), _t1 AS (
   SELECT
     SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
@@ -34,8 +26,8 @@ WITH _s0 AS (
   JOIN main.customers AS customers
     ON _s0.customer_id = customers._id
   GROUP BY
-    _s0.quarter,
-    customers.state
+    2,
+    3
 )
 SELECT
   quarter,
@@ -45,5 +37,5 @@ FROM _t1
 WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
-  quarter,
-  state
+  1,
+  2

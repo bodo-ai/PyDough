@@ -431,7 +431,7 @@ class BaseTransformBindings:
         # Take in count if LENGH(Y) > 1 dividing the difference by Y's length:
         # LENGTH(X) - LENGTH(REPLACE(X, Y, ''))) / LENGTH(Y)
         quotient: SQLGlotExpression = sqlglot_expressions.Div(
-            this=difference, expression=len_substring_count
+            this=apply_parens(difference), expression=len_substring_count
         )
 
         # Cast to Interger:
@@ -2097,3 +2097,16 @@ class BaseTransformBindings:
         )
 
         return within_group_clause
+
+    def convert_ordering(
+        self, arg: SQLGlotExpression, data_type: PyDoughType
+    ) -> SQLGlotExpression:
+        """
+        Post-processes a SQLGlot expression used as an ordering key, e.g. if it requires a collation
+        Args:
+            `arg`: The argument being used as an order key.
+            `data_type`: The PyDough types of the order key.
+        Returns:
+            A SQLGlotExpression representing the order key transformed in any necessary way.
+        """
+        return arg

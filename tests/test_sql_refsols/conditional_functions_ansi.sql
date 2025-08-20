@@ -4,7 +4,7 @@ WITH _s1 AS (
     o_custkey
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    2
 )
 SELECT
   CASE WHEN customer.c_acctbal > 1000 THEN 'High' ELSE 'Low' END AS iff_col,

@@ -13,7 +13,7 @@ WITH _s0 AS (
   JOIN tpch.customer AS customer
     ON _s0.n_nationkey = customer.c_nationkey
   GROUP BY
-    _s0.n_regionkey
+    2
 ), _s7 AS (
   SELECT
     CAST((
@@ -24,7 +24,7 @@ WITH _s0 AS (
   JOIN tpch.supplier AS supplier
     ON _s4.n_nationkey = supplier.s_nationkey
   GROUP BY
-    _s4.n_regionkey
+    2
 )
 SELECT
   region.r_name AS name,
@@ -36,4 +36,4 @@ JOIN _s3 AS _s3
 JOIN _s7 AS _s7
   ON _s7.n_regionkey = region.r_regionkey
 ORDER BY
-  region.r_name
+  1

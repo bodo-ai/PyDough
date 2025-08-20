@@ -29,4 +29,4 @@ WHERE
   AND EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS DATETIME)) = 2023
   AND sbtransaction.sbtxstatus = 'success'
 ORDER BY
-  sbtransaction.sbtxdatetime
+  1

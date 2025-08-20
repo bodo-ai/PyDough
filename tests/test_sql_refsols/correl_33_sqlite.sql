@@ -13,8 +13,8 @@ WITH _t0 AS (
     COUNT(*) AS n_rows
   FROM _t0
   GROUP BY
-    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER),
-    CAST(STRFTIME('%m', o_orderdate) AS INTEGER)
+    1,
+    2
 )
 SELECT
   _s1.n_rows AS n

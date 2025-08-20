@@ -21,9 +21,9 @@ WITH _t5 AS (
   JOIN tpch.lineitem AS lineitem
     ON _t5.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    _t5.l_linenumber,
-    _t5.l_orderkey,
-    orders.o_orderkey
+    3,
+    4,
+    5
 ), _s11 AS (
   SELECT
     _t6.l_orderkey,
@@ -48,7 +48,7 @@ WITH _t5 AS (
   WHERE
     _t3.anything_o_orderstatus = 'F'
   GROUP BY
-    _t3.anything_l_suppkey
+    2
 )
 SELECT
   supplier.s_name AS S_NAME,
@@ -59,6 +59,6 @@ JOIN tpch.nation AS nation
 LEFT JOIN _s13 AS _s13
   ON _s13.anything_l_suppkey = supplier.s_suppkey
 ORDER BY
-  COALESCE(_s13.n_rows, 0) DESC,
-  s_name
+  2 DESC,
+  1
 LIMIT 10

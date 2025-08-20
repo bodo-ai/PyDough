@@ -3,7 +3,7 @@ SELECT
   COUNT(*) AS num_transactions
 FROM main.sbtransaction
 GROUP BY
-  sbtxstatus
+  1
 ORDER BY
-  num_transactions DESC
+  2 DESC
 LIMIT 3

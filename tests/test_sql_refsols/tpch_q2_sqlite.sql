@@ -34,8 +34,8 @@ FROM _t
 WHERE
   _w = 1
 ORDER BY
-  s_acctbal DESC,
-  n_name,
-  s_name,
-  p_partkey
+  1 DESC,
+  3,
+  2,
+  4
 LIMIT 10

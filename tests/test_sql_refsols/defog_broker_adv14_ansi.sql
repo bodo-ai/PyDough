@@ -6,4 +6,4 @@ JOIN main.sbdailyprice AS sbdailyprice
   ON DATEDIFF(CURRENT_TIMESTAMP(), CAST(sbdailyprice.sbdpdate AS DATETIME), DAY) <= 7
   AND sbdailyprice.sbdptickerid = sbticker.sbtickerid
 GROUP BY
-  sbticker.sbtickertype
+  1

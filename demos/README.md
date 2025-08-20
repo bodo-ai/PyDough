@@ -23,4 +23,5 @@ Once the introduction notebook is complete, you can explore the other notebooks:
 - [3_exploration.ipynb](notebooks/3_exploration.ipynb) shows how to use several user APIs for exploring PyDough.
 - [4_tpch.ipynb](notebooks/4_tpch.ipynb) provides PyDough translations for most of the TPC-H benchmark queries.
 - [5_what_if.ipynb](notebooks/5_what_if.ipynb) demonstrates how to do WHAT-IF analysis with PyDough.
+- [MySQL_TPCH.ipynb](notebooks/MySQL_TPCH.ipynb) demonstrates how to connect a MySQL database with PyDough.
 

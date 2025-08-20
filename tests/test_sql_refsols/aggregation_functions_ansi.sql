@@ -4,7 +4,7 @@ WITH _s1 AS (
     o_custkey
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    2
 ), _t1 AS (
   SELECT
     PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
@@ -25,7 +25,7 @@ WITH _s1 AS (
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
   GROUP BY
-    customer.c_nationkey
+    13
 )
 SELECT
   COALESCE(_t1.sum_c_acctbal, 0) AS sum_value,
