@@ -7,7 +7,7 @@ __all__ = ["ScalarAttributeMetadata"]
 
 from abc import abstractmethod
 
-from pydough.errors.error_utils import HasType
+from pydough.errors.error_utils import HasType, extract_array
 from pydough.metadata.collections import CollectionMetadata
 from pydough.types import PyDoughType
 
@@ -67,3 +67,10 @@ class ScalarAttributeMetadata(PropertyMetadata):
         A list of sample values for the attribute, if it exists.
         """
         return self._sample_values
+
+    def parse_optional_properties(self, meta_json: dict) -> None:
+        super().parse_optional_properties(meta_json)
+
+        # Extract the optional sample values field from the JSON object.
+        if "sample values" in meta_json:
+            extract_array(meta_json, "sample values", self.error_name)

@@ -213,36 +213,6 @@ class CollectionMetadata(AbstractMetadata):
     def __getitem__(self, key: str):
         return self.get_property(key)
 
-    @staticmethod
-    def get_class_for_collection_type(
-        name: str, error_name: str
-    ) -> type["CollectionMetadata"]:
-        """
-        Fetches the PropertyType implementation class for a string
-        representation of the collection type.
-
-        Args:
-            `name`: the string representation of a collection type.
-            `error_name`: the string used in error messages to describe
-            the object that `name` came from.
-
-        Returns:
-            The class of the property type corresponding to `name`.
-
-        Raises:
-            `PyDoughMetadataException` if the string does not correspond
-            to a known class type.
-        """
-        from .simple_table_metadata import SimpleTableMetadata
-
-        match name:
-            case "simple_table":
-                return SimpleTableMetadata
-            case property_type:
-                raise PyDoughMetadataException(
-                    f"Unrecognized collection type for {error_name}: {repr(property_type)}"
-                )
-
     def add_properties_from_json(self, properties_json: list) -> None:
         """
         Insert the scalar properties from the JSON for collection into the
@@ -254,7 +224,7 @@ class CollectionMetadata(AbstractMetadata):
             collection.
         """
         from pydough.errors import PyDoughMetadataException
-        from pydough.metadata.properties import TableColumnMetadata
+        from pydough.metadata import MaskedTableColumnMetadata, TableColumnMetadata
 
         for property_json in properties_json:
             # Extract the name/type, and create the string used to identify
@@ -268,6 +238,10 @@ class CollectionMetadata(AbstractMetadata):
             match property_type:
                 case "table column":
                     TableColumnMetadata.parse_from_json(
+                        self, property_name, property_json
+                    )
+                case "masked table column":
+                    MaskedTableColumnMetadata.parse_from_json(
                         self, property_name, property_json
                     )
                 case _:

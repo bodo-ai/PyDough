@@ -7,6 +7,7 @@ __all__ = [
     "CollectionMetadata",
     "GeneralJoinMetadata",
     "GraphMetadata",
+    "MaskedTableColumnMetadata",
     "PropertyMetadata",
     "SimpleJoinMetadata",
     "SimpleTableMetadata",
@@ -21,6 +22,7 @@ from .parse import parse_json_metadata_from_file
 from .properties import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
+    MaskedTableColumnMetadata,
     PropertyMetadata,
     SimpleJoinMetadata,
     SubcollectionRelationshipMetadata,
