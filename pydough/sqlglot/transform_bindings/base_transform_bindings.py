@@ -2102,6 +2102,11 @@ class BaseTransformBindings:
         self, arg: SQLGlotExpression, data_type: PyDoughType
     ) -> SQLGlotExpression:
         """
-        TODO
+        Post-processes a SQLGlot expression used as an ordering key, e.g. if it requires a collation
+        Args:
+            `arg`: The argument being used as an order key.
+            `data_type`: The PyDough types of the order key.
+        Returns:
+            A SQLGlotExpression representing the order key transformed in any necessary way.
         """
         return arg
