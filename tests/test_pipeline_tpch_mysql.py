@@ -661,7 +661,7 @@ def test_pipeline_mysql_e2e_defog_custom(
     """
     defog_mysql_test_data.run_e2e_test(
         get_mysql_defog_graphs,
-        mysql_conn_db_context("broker"),
+        mysql_conn_db_context(defog_mysql_test_data.graph_name.lower()),
         coerce_types=True,
     )
 
