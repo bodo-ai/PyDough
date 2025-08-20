@@ -50,7 +50,7 @@ from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
         ),
     ],
 )
-def mysql_params_data(request) -> PyDoughPandasTest:
+def tpch_mysql_params_test_data(request) -> PyDoughPandasTest:
     """
     Test data for e2e tests for the TPC-H query 16. Returns an instance of
     PyDoughPandasTest containing information about the test.
@@ -188,7 +188,7 @@ def mysql_params_data(request) -> PyDoughPandasTest:
         ),
     ],
 )
-def tpch_mysql_test_data(request) -> PyDoughPandasTest:
+def tpch_mysql_functions_test_data(request) -> PyDoughPandasTest:
     """
     Test data for e2e tests for the TPC-H. Returns an instance of
     PyDoughPandasTest containing information about the test.
@@ -512,7 +512,7 @@ def defog_mysql_test_data(
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_pipeline_e2e_mysql_conn(
+def test_pipeline_e2e_mysql_tpch(
     tpch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
@@ -529,8 +529,8 @@ def test_pipeline_e2e_mysql_conn(
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_pipeline_e2e_mysql_params(
-    mysql_params_data: PyDoughPandasTest,
+def test_pipeline_e2e_mysql_tpch_16_params(
+    tpch_mysql_params_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     mysql_params_tpch_db_context: DatabaseContext,
 ):
@@ -540,15 +540,15 @@ def test_pipeline_e2e_mysql_params(
     Using the  `user`, `password`, `database`, and `host`
     as keyword arguments to the DatabaseContext.
     """
-    mysql_params_data.run_e2e_test(
+    tpch_mysql_params_test_data.run_e2e_test(
         get_sample_graph, mysql_params_tpch_db_context, coerce_types=True
     )
 
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_pipeline_e2e_mysql_functions(
-    tpch_mysql_test_data: PyDoughPandasTest,
+def test_pipeline_e2e_mysql_tpch_functions(
+    tpch_mysql_functions_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
 ):
@@ -558,14 +558,14 @@ def test_pipeline_e2e_mysql_functions(
     Using the  `user`, `password`, `database`, and `host`
     as keyword arguments to the DatabaseContext.
     """
-    tpch_mysql_test_data.run_e2e_test(
+    tpch_mysql_functions_test_data.run_e2e_test(
         get_sample_graph, mysql_conn_db_context("tpch"), coerce_types=True
     )
 
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_pipeline_e2e_tpch_simple_week(
+def test_pipeline_e2e_mysql_tpch_simple_week(
     get_sample_graph: graph_fetcher,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
     week_handling_config: PyDoughConfigs,
@@ -651,7 +651,7 @@ def test_pipeline_e2e_tpch_simple_week(
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_pipeline_mysql_e2e_defog_custom(
+def test_pipeline_e2e_mysql_defog_custom(
     defog_mysql_test_data: PyDoughPandasTest,
     get_mysql_defog_graphs: graph_fetcher,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
@@ -668,7 +668,7 @@ def test_pipeline_mysql_e2e_defog_custom(
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_defog_e2e(
+def test_pipeline_e2e_mysql_defog(
     defog_pipeline_test_data: PyDoughSQLComparisonTest,  # noqa: F811
     get_mysql_defog_graphs: graph_fetcher,
     mysql_conn_db_context: Callable[[str], DatabaseContext],

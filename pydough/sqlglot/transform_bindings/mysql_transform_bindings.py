@@ -604,7 +604,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         assert 1 <= len(args) <= 2
 
         replacement_expr: SQLGlotExpression = (
-            sqlglot_expressions.Literal.string("\s") if len(args) == 1 else args[1]
+            sqlglot_expressions.Literal.string("\\s") if len(args) == 1 else args[1]
         )
 
         #  '^[' || REGEXP_REPLACE(replacement_expr, '([][\\^\\-])', '\\\1') || ']+|['
