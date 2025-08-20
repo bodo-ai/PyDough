@@ -97,7 +97,7 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
             " `pip install mysql-connector-python`."
         )
 
-    # mysql python connector
+    # MySQL Python connector
     connection: mysql.connector.MySQLConnection
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in

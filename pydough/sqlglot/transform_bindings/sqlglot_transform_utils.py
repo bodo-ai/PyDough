@@ -289,11 +289,11 @@ def expand_variance(
     args: list[SQLGlotExpression], types: list[PyDoughType], type: str
 ) -> SQLGlotExpression:
     """
-    Converts a population variance calculation to an equivalent
+    Converts a variance calculation (population or sample) to an equivalent
     SQLGlot expression.
 
     Args:
-        `args`: The arguments to the population variance function.
+        `args`: The arguments to the variance function.
         `types`: The types of the arguments.
         `type`: The type of variance to calculate.
 

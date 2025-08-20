@@ -574,7 +574,7 @@ def mysql_docker_setup() -> None:
                         "--name",
                         MYSQL_DOCKER_CONTAINER,
                         "-e",
-                        f"MYSQL_ROOT_PASSWORD={repr(os.getenv('MYSQL_PASSWORD'))}",
+                        f"MYSQL_ROOT_PASSWORD={os.getenv('MYSQL_PASSWORD')}",
                         "-p",
                         f"{MYSQL_PORT}:3306",
                         MYSQL_DOCKER_IMAGE,
@@ -628,6 +628,7 @@ def mysql_conn_db_context(
         use_pure=True,
     )
 
+    # Loads the defog data into the MySQL engine.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     path: str = os.path.join(base_dir, "tests/gen_data/init_defog_mysql.sql")
     with open(path) as f:

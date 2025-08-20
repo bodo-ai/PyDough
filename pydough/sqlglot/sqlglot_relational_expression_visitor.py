@@ -190,6 +190,8 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 continue
             # Invoke the binding's conversion for ordering arguments to
             # postprocess as needed (e.g. adding collations).
+            # For example, when a string column is sorted in MySQL, we add
+            # collations
             glot_expr = self._bindings.convert_ordering(
                 glot_expr, order_arg.expr.data_type
             )
