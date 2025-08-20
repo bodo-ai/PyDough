@@ -4,7 +4,7 @@ WITH _s1 AS (
     sbtxtickerid AS sbTxTickerId
   FROM main.sbTransaction
   WHERE
-    sbtxdatetime >= DATE(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-10' DAY))
+    sbtxdatetime >= CAST(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-10' DAY) AS DATE)
     AND sbtxtype = 'buy'
   GROUP BY
     2

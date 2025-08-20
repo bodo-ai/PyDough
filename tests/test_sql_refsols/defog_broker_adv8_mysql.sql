@@ -15,24 +15,22 @@ LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = sbTransaction.sbtxcustid
 WHERE
   NOT _u_0._u_1 IS NULL
-  AND sbTransaction.sbtxdatetime < DATE(
-    DATE_SUB(
-      CURRENT_TIMESTAMP(),
-      INTERVAL (
-        (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
-        ) % 7
-      ) DAY
-    )
-  )
+  AND sbTransaction.sbtxdatetime < CAST(DATE_SUB(
+    CURRENT_TIMESTAMP(),
+    INTERVAL (
+      (
+        DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
+      ) % 7
+    ) DAY
+  ) AS DATE)
   AND sbTransaction.sbtxdatetime >= DATE_ADD(
-    DATE_SUB(
+    CAST(DATE_SUB(
       CURRENT_TIMESTAMP(),
       INTERVAL (
         (
           DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
         ) % 7
       ) DAY
-    ),
+    ) AS DATE),
     INTERVAL '-1' WEEK
   )

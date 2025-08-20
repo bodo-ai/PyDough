@@ -507,8 +507,12 @@ class MySQLTransformBindings(BaseTransformBindings):
             case DateTimeUnit.DAY:
                 # DATEDIFF(DATE(date2), DATE(date1))
                 return sqlglot_expressions.DateDiff(
-                    this=sqlglot_expressions.Date(this=date2),
-                    expression=sqlglot_expressions.Date(this=date1),
+                    this=sqlglot_expressions.DateTrunc(
+                        this=date2, unit=sqlglot_expressions.Var(this="DAY")
+                    ),
+                    expression=sqlglot_expressions.DateTrunc(
+                        this=date1, unit=sqlglot_expressions.Var(this="DAY")
+                    ),
                 )
 
             case DateTimeUnit.HOUR | DateTimeUnit.MINUTE:
@@ -550,12 +554,16 @@ class MySQLTransformBindings(BaseTransformBindings):
             # Y = subtract DOW days from X
             # RESULT = DATETIME(Y, "start of day")
             dow = self.days_from_start_of_week(base)
-            substraction: SQLGlotExpression = sqlglot_expressions.DateSub(
+            minus_dow: SQLGlotExpression = sqlglot_expressions.DateSub(
                 this=base,
                 expression=dow,
                 unit=sqlglot_expressions.Var(this=DateTimeUnit.DAY),
             )
-            return self.apply_datetime_truncation(substraction, DateTimeUnit.DAY)
+            return self.apply_datetime_truncation(minus_dow, DateTimeUnit.DAY)
+        elif unit == DateTimeUnit.DAY:
+            return sqlglot_expressions.Cast(
+                this=base, to=sqlglot_expressions.DataType.build("DATE")
+            )
 
         else:
             return super().apply_datetime_truncation(base, unit)
@@ -660,6 +668,20 @@ class MySQLTransformBindings(BaseTransformBindings):
             ),
         )
         return result
+
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(
+            this="TRUNC",
+            expressions=[
+                sqlglot_expressions.Cast(
+                    this=args[0],
+                    to=sqlglot_expressions.DataType.build("REAL"),
+                ),
+                sqlglot_expressions.convert(0),
+            ],
+        )
 
     def convert_ordering(
         self, arg: SQLGlotExpression, data_type: PyDoughType

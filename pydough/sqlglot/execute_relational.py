@@ -229,23 +229,28 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
         if expression.args.get("group") is not None:
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
-                # Only replace if the key expression appears in the select list
-                # exactly once.
-                if (
-                    key_expr in expressions
-                    and len(
-                        [
-                            exp
-                            for select_elem in expressions
-                            for exp in walk_in_scope(select_elem)
-                            if exp == key_expr
-                        ]
-                    )
-                    == 1
-                ):
-                    keys_list[idx] = sqlglot_expressions.convert(
-                        expressions.index(key_expr) + 1
-                    )
+                # Only replace with the index if the key expression appears in
+                # the select list exactly once. Otherwise, replace with the
+                # alias.
+                if key_expr in expressions:
+                    if (
+                        len(
+                            [
+                                exp
+                                for select_elem in expressions
+                                for exp in walk_in_scope(select_elem)
+                                if exp == key_expr
+                            ]
+                        )
+                        == 1
+                    ):
+                        keys_list[idx] = sqlglot_expressions.convert(
+                            expressions.index(key_expr) + 1
+                        )
+                    elif isinstance(expression.expressions[idx], Alias):
+                        keys_list[idx] = sqlglot_expressions.Identifier(
+                            this=expression.expressions[idx].alias, quoted=False
+                        )
             keys_list.sort(key=repr)
 
     # Now iterate through all window functions and replace any ordering keys

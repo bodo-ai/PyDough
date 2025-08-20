@@ -4,7 +4,7 @@ WITH _s1 AS (
     sbtxcustid AS sbTxCustId
   FROM main.sbTransaction
   WHERE
-    DATE(CAST(sbtxdatetime AS DATETIME)) = CAST('2023-04-01' AS DATE)
+    CAST(CAST(sbtxdatetime AS DATETIME) AS DATE) = CAST('2023-04-01' AS DATE)
     AND sbtxtype = 'sell'
   GROUP BY
     2

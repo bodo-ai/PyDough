@@ -21,7 +21,7 @@ WITH _s14 AS (
     _s0.ca_dt
   FROM _s6 AS _s0
   JOIN main.INCIDENTS AS INCIDENTS
-    ON _s0.ca_dt = DATE(CAST(INCIDENTS.in_error_report_ts AS DATETIME))
+    ON _s0.ca_dt = CAST(CAST(INCIDENTS.in_error_report_ts AS DATETIME) AS DATE)
   JOIN main.DEVICES AS DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
   JOIN _t5 AS _t5
@@ -34,7 +34,7 @@ WITH _s14 AS (
     _s8.ca_dt
   FROM _s6 AS _s8
   JOIN main.DEVICES AS DEVICES
-    ON _s8.ca_dt = DATE(CAST(DEVICES.de_purchase_ts AS DATETIME))
+    ON _s8.ca_dt = CAST(CAST(DEVICES.de_purchase_ts AS DATETIME) AS DATE)
   JOIN _t5 AS _t7
     ON DEVICES.de_product_id = _t7.pr_id
   GROUP BY

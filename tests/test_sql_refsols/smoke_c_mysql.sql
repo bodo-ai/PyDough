@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     CASE
-      WHEN CAST(0.8 * COUNT(c_acctbal) OVER () AS SIGNED) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC)
+      WHEN TRUNC(CAST(0.8 * COUNT(c_acctbal) OVER () AS FLOAT), 0) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC)
       THEN c_acctbal
       ELSE NULL
     END AS expr_30,

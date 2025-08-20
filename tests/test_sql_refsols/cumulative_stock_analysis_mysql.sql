@@ -1,9 +1,9 @@
 SELECT
   sbTransaction.sbtxdatetime AS date_time,
-  COUNT(*) OVER (PARTITION BY DATE(CAST(sbTransaction.sbtxdatetime AS DATETIME)) ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS txn_within_day,
+  COUNT(*) OVER (PARTITION BY CAST(CAST(sbTransaction.sbtxdatetime AS DATETIME) AS DATE) ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS txn_within_day,
   COUNT(
     CASE WHEN sbTransaction.sbtxtype = 'buy' THEN sbTransaction.sbtxtype ELSE NULL END
-  ) OVER (PARTITION BY DATE(CAST(sbTransaction.sbtxdatetime AS DATETIME)) ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_buys_within_day,
+  ) OVER (PARTITION BY CAST(CAST(sbTransaction.sbtxdatetime AS DATETIME) AS DATE) ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_buys_within_day,
   ROUND(
     (
       100.0 * SUM(sbTicker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)

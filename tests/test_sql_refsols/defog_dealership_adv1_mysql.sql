@@ -1,14 +1,12 @@
 SELECT
-  DATE(
-    DATE_SUB(
-      CAST(payments_received.payment_date AS DATETIME),
-      INTERVAL (
-        (
-          DAYOFWEEK(CAST(payments_received.payment_date AS DATETIME)) + 5
-        ) % 7
-      ) DAY
-    )
-  ) AS payment_week,
+  CAST(DATE_SUB(
+    CAST(payments_received.payment_date AS DATETIME),
+    INTERVAL (
+      (
+        DAYOFWEEK(CAST(payments_received.payment_date AS DATETIME)) + 5
+      ) % 7
+    ) DAY
+  ) AS DATE) AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
     SUM((

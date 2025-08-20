@@ -5,7 +5,7 @@ WITH _s1 AS (
     sbtxcustid AS sbTxCustId
   FROM main.sbTransaction
   WHERE
-    sbtxdatetime >= DATE(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-30' DAY))
+    sbtxdatetime >= CAST(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-30' DAY) AS DATE)
   GROUP BY
     3
 )

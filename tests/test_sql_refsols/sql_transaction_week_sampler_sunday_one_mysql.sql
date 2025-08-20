@@ -1,15 +1,13 @@
 SELECT
   sbtxdatetime AS date_time,
-  DATE(
-    DATE_SUB(
-      CAST(sbtxdatetime AS DATETIME),
-      INTERVAL (
-        (
-          DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + -1
-        ) % 7
-      ) DAY
-    )
-  ) AS sow,
+  CAST(DATE_SUB(
+    CAST(sbtxdatetime AS DATETIME),
+    INTERVAL (
+      (
+        DAYOFWEEK(CAST(sbtxdatetime AS DATETIME)) + -1
+      ) % 7
+    ) DAY
+  ) AS DATE) AS sow,
   DAYNAME(sbtxdatetime) AS dayname,
   (
     (

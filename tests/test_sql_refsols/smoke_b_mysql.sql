@@ -36,7 +36,7 @@ SELECT
   ) AS d,
   DATE(CAST('2025-01-01 12:35:13' AS DATETIME)) AS e,
   CAST('2025-07-22' AS DATE) AS f,
-  DATE(CAST('2025-01-01 12:35:13' AS DATETIME)) AS g,
+  CAST(CAST('2025-01-01 12:35:13' AS DATETIME) AS DATE) AS g,
   CONCAT_WS(
     ';',
     HOUR('2025-01-01 12:35:13'),
@@ -77,16 +77,14 @@ SELECT
     DATE_FORMAT(o_orderdate, '%Y-%m-%d %H:%i:00')
   ) AS o,
   TIMESTAMPDIFF(SECOND, CAST('1993-05-25 12:45:36' AS DATETIME), o_orderdate) AS p,
-  DATE(
-    DATE_SUB(
-      CAST(o_orderdate AS DATETIME),
-      INTERVAL (
-        (
-          DAYOFWEEK(CAST(o_orderdate AS DATETIME)) + -1
-        ) % 7
-      ) DAY
-    )
-  ) AS q
+  CAST(DATE_SUB(
+    CAST(o_orderdate AS DATETIME),
+    INTERVAL (
+      (
+        DAYOFWEEK(CAST(o_orderdate AS DATETIME)) + -1
+      ) % 7
+    ) DAY
+  ) AS DATE) AS q
 FROM tpch.ORDERS
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'

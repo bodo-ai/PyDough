@@ -37,29 +37,34 @@ WITH _t2 AS (
     ON _t8.co_id = devices.de_production_country_id
   GROUP BY
     2
+), _t0 AS (
+  SELECT
+    EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)) AS month,
+    SUM(_s7.n_rows) AS sum_expr_3,
+    SUM(_s15.n_rows) AS sum_n_rows,
+    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)) AS year
+  FROM _t2 AS _t2
+  LEFT JOIN _s7 AS _s7
+    ON _s7.ca_dt = _t2.ca_dt
+  LEFT JOIN _s15 AS _s15
+    ON _s15.ca_dt = _t2.ca_dt
+  GROUP BY
+    1,
+    4
 )
 SELECT
   CONCAT_WS(
     '-',
-    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)),
+    year,
     CASE
-      WHEN LENGTH(EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME))) >= 2
-      THEN SUBSTRING(EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)), 1, 2)
-      ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME))), (
-        2 * -1
-      ))
+      WHEN LENGTH(month) >= 2
+      THEN SUBSTRING(month, 1, 2)
+      ELSE SUBSTRING(CONCAT('00', month), -2)
     END
   ) AS month,
   ROUND((
-    1000000.0 * COALESCE(SUM(_s15.n_rows), 0)
-  ) / COALESCE(SUM(_s7.n_rows), 0), 2) AS ir
-FROM _t2 AS _t2
-LEFT JOIN _s7 AS _s7
-  ON _s7.ca_dt = _t2.ca_dt
-LEFT JOIN _s15 AS _s15
-  ON _s15.ca_dt = _t2.ca_dt
-GROUP BY
-  EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)),
-  EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME))
+    1000000.0 * COALESCE(sum_n_rows, 0)
+  ) / COALESCE(sum_expr_3, 0), 2) AS ir
+FROM _t0
 ORDER BY
   month

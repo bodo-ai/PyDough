@@ -19,7 +19,7 @@ WITH _t2 AS (
   JOIN main.CALENDAR AS CALENDAR
     ON CALENDAR.ca_dt >= DATE_ADD(CAST(_t4.ca_dt AS DATETIME), INTERVAL '-6' MONTH)
   JOIN main.DEVICES AS DEVICES
-    ON CALENDAR.ca_dt = DATE(CAST(DEVICES.de_purchase_ts AS DATETIME))
+    ON CALENDAR.ca_dt = CAST(CAST(DEVICES.de_purchase_ts AS DATETIME) AS DATE)
   JOIN _t5 AS _t5
     ON DEVICES.de_production_country_id = _t5.co_id
   GROUP BY
@@ -30,30 +30,33 @@ WITH _t2 AS (
     _t7.ca_dt
   FROM _t2 AS _t7
   JOIN main.INCIDENTS AS INCIDENTS
-    ON _t7.ca_dt = DATE(CAST(INCIDENTS.in_error_report_ts AS DATETIME))
+    ON _t7.ca_dt = CAST(CAST(INCIDENTS.in_error_report_ts AS DATETIME) AS DATE)
   JOIN main.DEVICES AS DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
   JOIN _t5 AS _t8
     ON DEVICES.de_production_country_id = _t8.co_id
   GROUP BY
     2
+), _t0 AS (
+  SELECT
+    EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)) AS month,
+    SUM(_s7.n_rows) AS sum_expr_3,
+    SUM(_s15.n_rows) AS sum_n_rows,
+    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)) AS year
+  FROM _t2 AS _t2
+  LEFT JOIN _s7 AS _s7
+    ON _s7.ca_dt = _t2.ca_dt
+  LEFT JOIN _s15 AS _s15
+    ON _s15.ca_dt = _t2.ca_dt
+  GROUP BY
+    1,
+    4
 )
 SELECT
-  CONCAT_WS(
-    '-',
-    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)),
-    LPAD(EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)), 2, '0')
-  ) AS month,
+  CONCAT_WS('-', year, LPAD(month, 2, '0')) AS month,
   ROUND((
-    1000000.0 * COALESCE(SUM(_s15.n_rows), 0)
-  ) / COALESCE(SUM(_s7.n_rows), 0), 2) AS ir
-FROM _t2 AS _t2
-LEFT JOIN _s7 AS _s7
-  ON _s7.ca_dt = _t2.ca_dt
-LEFT JOIN _s15 AS _s15
-  ON _s15.ca_dt = _t2.ca_dt
-GROUP BY
-  EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)),
-  EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME))
+    1000000.0 * COALESCE(sum_n_rows, 0)
+  ) / COALESCE(sum_expr_3, 0), 2) AS ir
+FROM _t0
 ORDER BY
   month

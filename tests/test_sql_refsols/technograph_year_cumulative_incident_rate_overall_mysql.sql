@@ -8,7 +8,7 @@ WITH _s2 AS (
     _s0.ca_dt
   FROM _s2 AS _s0
   JOIN main.DEVICES AS DEVICES
-    ON _s0.ca_dt = DATE(CAST(DEVICES.de_purchase_ts AS DATETIME))
+    ON _s0.ca_dt = CAST(CAST(DEVICES.de_purchase_ts AS DATETIME) AS DATE)
   GROUP BY
     2
 ), _s7 AS (
@@ -17,7 +17,7 @@ WITH _s2 AS (
     _s4.ca_dt
   FROM _s2 AS _s4
   JOIN main.INCIDENTS AS INCIDENTS
-    ON _s4.ca_dt = DATE(CAST(INCIDENTS.in_error_report_ts AS DATETIME))
+    ON _s4.ca_dt = CAST(CAST(INCIDENTS.in_error_report_ts AS DATETIME) AS DATE)
   GROUP BY
     2
 ), _t1 AS (

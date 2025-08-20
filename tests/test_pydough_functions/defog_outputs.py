@@ -740,6 +740,8 @@ def defog_sql_text_dealership_adv2() -> str:
     How many sales did each salesperson make in the past 30 days, inclusive of
     today's date? Return their ID, first name, last name and number of sales
     made, ordered from most to least sales.
+
+    MODIFICATION: using the key as a tiebreaker.
     """
     return """
     WITH recent_sales AS (
@@ -750,7 +752,7 @@ def defog_sql_text_dealership_adv2() -> str:
         GROUP BY sp._id
     ) 
     SELECT _id, first_name, last_name, num_sales FROM recent_sales
-    ORDER BY num_sales DESC;
+    ORDER BY num_sales DESC, _id ASC;
     """
 
 

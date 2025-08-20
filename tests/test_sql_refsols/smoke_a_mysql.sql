@@ -1,19 +1,22 @@
 SELECT
   p_partkey AS `key`,
-  CAST(CONCAT_WS(
-    '',
-    SUBSTRING(p_brand, CASE WHEN ABS(-2) < CHAR_LENGTH(p_brand) THEN -2 ELSE 1 END),
-    SUBSTRING(p_brand, 8),
-    SUBSTRING(
-      p_brand,
-      CASE WHEN ABS(-2) < CHAR_LENGTH(p_brand) THEN -2 ELSE 1 END,
-      CASE
-        WHEN ABS(-2) > CHAR_LENGTH(p_brand)
-        THEN CHAR_LENGTH(p_brand) + -1
-        ELSE GREATEST(1, 0)
-      END
-    )
-  ) AS SIGNED) AS a,
+  TRUNC(
+    CAST(CONCAT_WS(
+      '',
+      SUBSTRING(p_brand, CASE WHEN ABS(-2) < CHAR_LENGTH(p_brand) THEN -2 ELSE 1 END),
+      SUBSTRING(p_brand, 8),
+      SUBSTRING(
+        p_brand,
+        CASE WHEN ABS(-2) < CHAR_LENGTH(p_brand) THEN -2 ELSE 1 END,
+        CASE
+          WHEN ABS(-2) > CHAR_LENGTH(p_brand)
+          THEN CHAR_LENGTH(p_brand) + -1
+          ELSE GREATEST(1, 0)
+        END
+      )
+    ) AS FLOAT),
+    0
+  ) AS a,
   UPPER(
     LEAST(
       CASE

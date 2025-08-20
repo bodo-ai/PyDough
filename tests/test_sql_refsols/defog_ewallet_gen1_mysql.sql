@@ -19,7 +19,7 @@ WITH _t0 AS (
     AND merchants.mid = wallet_merchant_balance_daily.merchant_id
     AND merchants.status = 'active'
   WHERE
-    DATE(CAST(wallet_merchant_balance_daily.updated_at AS DATETIME)) = DATE(CURRENT_TIMESTAMP())
+    CAST(CAST(wallet_merchant_balance_daily.updated_at AS DATETIME) AS DATE) = CAST(CURRENT_TIMESTAMP() AS DATE)
 )
 SELECT
   AVG(expr_1) AS _expr0

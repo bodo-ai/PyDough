@@ -1,14 +1,12 @@
 SELECT
-  DATE(
-    DATE_SUB(
-      CAST(sbTransaction.sbtxdatetime AS DATETIME),
-      INTERVAL (
-        (
-          DAYOFWEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME)) + 5
-        ) % 7
-      ) DAY
-    )
-  ) AS week,
+  CAST(DATE_SUB(
+    CAST(sbTransaction.sbtxdatetime AS DATETIME),
+    INTERVAL (
+      (
+        DAYOFWEEK(CAST(sbTransaction.sbtxdatetime AS DATETIME)) + 5
+      ) % 7
+    ) DAY
+  ) AS DATE) AS week,
   COUNT(*) AS num_transactions,
   COALESCE(SUM((
     (
@@ -20,25 +18,23 @@ JOIN main.sbTicker AS sbTicker
   ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
   AND sbTicker.sbtickertype = 'stock'
 WHERE
-  sbTransaction.sbtxdatetime < DATE(
-    DATE_SUB(
-      CURRENT_TIMESTAMP(),
-      INTERVAL (
-        (
-          DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
-        ) % 7
-      ) DAY
-    )
-  )
+  sbTransaction.sbtxdatetime < CAST(DATE_SUB(
+    CURRENT_TIMESTAMP(),
+    INTERVAL (
+      (
+        DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
+      ) % 7
+    ) DAY
+  ) AS DATE)
   AND sbTransaction.sbtxdatetime >= DATE_ADD(
-    DATE_SUB(
+    CAST(DATE_SUB(
       CURRENT_TIMESTAMP(),
       INTERVAL (
         (
           DAYOFWEEK(CURRENT_TIMESTAMP()) + 5
         ) % 7
       ) DAY
-    ),
+    ) AS DATE),
     INTERVAL '-8' WEEK
   )
 GROUP BY

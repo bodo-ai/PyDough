@@ -65,7 +65,7 @@ WITH _s0 AS (
     OR _s15.s_month2 = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
     OR _s15.s_month3 = EXTRACT(MONTH FROM CAST(searches.search_ts AS DATETIME))
   GROUP BY
-    _s10.s_name
+    n_rows
 )
 SELECT
   _s16.s_name AS season_name,
