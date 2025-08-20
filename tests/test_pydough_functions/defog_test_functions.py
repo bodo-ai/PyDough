@@ -61,6 +61,7 @@ __all__ = [
     "impl_defog_dealership_gen3",
     "impl_defog_dealership_gen4",
     "impl_defog_dealership_gen5",
+    "impl_defog_dermtreatment_basic1",
     "impl_defog_ewallet_adv1",
     "impl_defog_ewallet_adv10",
     "impl_defog_ewallet_adv11",
@@ -1770,3 +1771,172 @@ def impl_defog_dermtreatment_basic1():
 
     # Get top 3 specialties by total drug amount
     return specialty_totals.TOP_K(3, by=total_drug_amount.DESC())
+
+
+def impl_defog_dermtreatment_basic2():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    For treatments that ended in the year 2022 (from Jan 1st to Dec 31st inclusive),
+    what is the average PASI score at day 100 and number of distinct patients
+    per insurance type? Return the top 5 insurance types sorted by lowest average
+    PASI score first.
+    """
+
+    # First, filter treatments to those that ended in 2022 and have a recorded day 100 PASI score.
+    # Then, extract the insurance type from the associated patient to use as a partition key.
+    treatments_info = treatments.WHERE(
+        (YEAR(end_date) == 2022)
+        & (HAS(outcome_records.WHERE(PRESENT(day100_pasi_score))) == 1)
+    ).CALCULATE(insurance_type=patient.insurance_type)
+
+    # Partition the filtered treatments by insurance type. For each type, calculate the
+    # average day 100 PASI score and the count of distinct patients.
+    return (
+        treatments_info.PARTITION(name="insurance_groups", by=insurance_type)
+        .CALCULATE(
+            insurance_type=insurance_type,
+            num_distinct_patients=NDISTINCT(treatments.patient.patient_id),
+            avg_pasi_score_day100=AVG(treatments.outcome_records.day100_pasi_score),
+        )
+        .TOP_K(5, by=avg_pasi_score_day100.ASC())
+    )
+
+
+def impl_defog_dermtreatment_basic3():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    What are the top 5 drugs by number of treatments and average drug amount per
+    treatment? Return the drug name, number of treatments, and average drug amount.
+    """
+
+    return drugs.CALCULATE(
+        drug_name=drug_name,
+        num_treatments=COUNT(treatments_used_in),
+        avg_drug_amount=AVG(treatments_used_in.total_drug_amount),
+    ).TOP_K(
+        5,
+        by=(
+            COUNT(treatments_used_in).DESC(),
+            AVG(treatments_used_in.total_drug_amount).DESC(),
+            drug_name.ASC(),
+        ),
+    )
+
+
+def impl_defog_dermtreatment_basic4():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    What are the top 3 diagnoses by maximum itch VAS score at day 100 and number
+    of distinct patients? Return the diagnosis name, number of patients, and
+    maximum itch score.[[[ Only include patients with a registered outcome ]]]
+
+    FAILED tests/test_pipeline_defog.py::test_defog_e2e[dermtreatment_basic4] - sqlite3.OperationalError: no such column: treatments.diagnosis_id
+    """
+
+    return (
+        diagnoses.WHERE(
+            HAS(treatments_for.outcome_records.WHERE(PRESENT(day100_itch_vas))) == 1
+        )
+        .CALCULATE(
+            diagnosis_name=name,
+            num_patients=NDISTINCT(
+                treatments_for.WHERE(
+                    HAS(outcome_records.WHERE(PRESENT(day100_itch_vas))) == 1
+                ).patient_id
+            ),
+            max_itch_score=MAX(
+                treatments_for.outcome_records.WHERE(
+                    PRESENT(day100_itch_vas)
+                ).day100_itch_vas
+            ),
+        )
+        .TOP_K(3, by=max_itch_score.DESC())
+    )
+
+
+def impl_defog_dermtreatment_basic5():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    Return the distinct list of doctor IDs, first names and last names that have
+    prescribed treatments.
+    """
+
+    return doctors.WHERE(HAS(prescribed_treatments) == 1).CALCULATE(
+        doc_id=doc_id, first_name=first_name, last_name=last_name
+    )
+
+
+def impl_defog_dermtreatment_basic6():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    Return the distinct list of patient IDs, first names and last names that have
+    outcome assessments.
+    """
+    return patients.WHERE(HAS(treatments_received.outcome_records) == 1).CALCULATE(
+        patient_id=patient_id, first_name=first_name, last_name=last_name
+    )
+
+
+def impl_defog_dermtreatment_basic7():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    What are the top 3 insurance types by average patient height in cm? Return
+    the insurance type, average height and average weight.
+    """
+
+    return (
+        patients.PARTITION(name="insurance_groups", by=insurance_type)
+        .CALCULATE(
+            insurance_type=insurance_type,
+            avg_height=AVG(patients.height),
+            avg_weight=AVG(patients.weight),
+        )
+        .TOP_K(3, by=avg_height.DESC())
+    )
+
+
+def impl_defog_dermtreatment_basic8():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    What are the top 2 specialties by number of doctors? Return the specialty
+    and number of doctors.
+    """
+
+    return (
+        doctors.PARTITION(name="specialty_groups", by=specialty)
+        .CALCULATE(specialty=specialty, num_doctors=COUNT(doctors))
+        .TOP_K(2, by=num_doctors.DESC())
+    )
+
+
+def impl_defog_dermtreatment_basic9():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    Return the patient IDs, first names and last names of patients who have not
+    received any treatments.
+    """
+
+    return patients.WHERE(HASNOT(treatments_received) == 1).CALCULATE(
+        patient_id=patient_id, first_name=first_name, last_name=last_name
+    )
+
+
+def impl_defog_dermtreatment_basic10():
+    """
+    PYDough implementation of the following question for the Derm Treatment graph:
+
+    Return the drug IDs and names of drugs that have not been used in any
+    treatments.
+    """
+
+    return drugs.WHERE(HASNOT(treatments_used_in) == 1).CALCULATE(
+        drug_id=drug_id, drug_name=drug_name
+    )

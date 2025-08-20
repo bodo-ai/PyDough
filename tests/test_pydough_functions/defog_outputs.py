@@ -1939,3 +1939,161 @@ def defog_sql_text_dermtreatment_basic1() -> str:
     GROUP BY d.specialty 
     ORDER BY total_drug_amt DESC LIMIT 3;	
     """
+
+
+def defog_sql_text_dermtreatment_basic2() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    For treatments that ended in the year 2022 (from Jan 1st to Dec 31st inclusive),
+    what is the average PASI score at day 100 and number of distinct patients
+    per insurance type? Return the top 5 insurance types sorted by lowest average
+    PASI score first.
+    """
+    return """
+    SELECT p.ins_type, 
+        COUNT(DISTINCT t.patient_id) AS num_patients, 
+        AVG(o.day100_pasi_score) AS avg_pasi_score 
+    FROM treatments AS t 
+    JOIN patients AS p ON t.patient_id = p.patient_id 
+    JOIN outcomes AS o ON t.treatment_id = o.treatment_id 
+    WHERE t.end_dt BETWEEN '2022-01-01' AND '2022-12-31' 
+    GROUP BY p.ins_type 
+    ORDER BY CASE WHEN avg_pasi_score IS NULL THEN 1 ELSE 0 END, avg_pasi_score LIMIT 5;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic3() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    What are the top 5 drugs by number of treatments and average drug amount per
+    treatment? Return the drug name, number of treatments, and average drug amount.
+
+    """
+    return """
+    SELECT 
+        d.drug_name, 
+        COUNT(*) AS num_treatments, 
+        AVG(t.tot_drug_amt) AS avg_drug_amt 
+    FROM treatments AS t 
+    JOIN drugs AS d ON t.drug_id = d.drug_id 
+    GROUP BY d.drug_name 
+    ORDER BY CASE 
+        WHEN num_treatments IS NULL THEN 1 ELSE 0 
+    END DESC, 
+    num_treatments DESC, 
+    CASE 
+        WHEN avg_drug_amt IS NULL THEN 1 ELSE 0 END DESC, 
+        avg_drug_amt DESC 
+    LIMIT 5;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic4() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    What are the top 3 diagnoses by maximum itch VAS score at day 100 and number
+    of distinct patients? Return the diagnosis name, number of patients, and
+    maximum itch score. Only include patients with a registered outcome
+    """
+    return """
+    SELECT di.diag_name, COUNT(DISTINCT t.patient_id) AS num_patients, 
+        MAX(o.day100_itch_vas) AS max_itch_score 
+    FROM treatments AS t JOIN diagnoses AS di ON t.diag_id = di.diag_id 
+    JOIN outcomes AS o ON t.treatment_id = o.treatment_id 
+    GROUP BY di.diag_name 
+    ORDER BY CASE WHEN max_itch_score IS NULL THEN 1 ELSE 0 END DESC, 
+        max_itch_score DESC, 
+        CASE WHEN num_patients IS NULL THEN 1 ELSE 0 END DESC, 
+        num_patients DESC 
+    LIMIT 3;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic5() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    Return the distinct list of doctor IDs, first names and last names that have
+    prescribed treatments.
+
+    """
+    return """
+    SELECT DISTINCT d.doc_id, d.first_name, d.last_name 
+    FROM treatments AS t JOIN doctors AS d ON t.doc_id = d.doc_id;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic6() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    Return the distinct list of patient IDs, first names and last names that have
+    outcome assessments.
+    """
+    return """
+    SELECT DISTINCT p.patient_id, p.first_name, p.last_name FROM outcomes AS o 
+    JOIN treatments AS t ON o.treatment_id = t.treatment_id 
+    JOIN patients AS p ON t.patient_id = p.patient_id;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic7() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    What are the top 3 insurance types by average patient height in cm? Return
+    the insurance type, average height and average weight.
+    """
+    return """
+    SELECT ins_type, AVG(height_cm) AS avg_height, AVG(weight_kg) AS avg_weight 
+    FROM patients GROUP BY ins_type 
+    ORDER BY CASE WHEN avg_height IS NULL THEN 1 ELSE 0 END DESC, 
+    avg_height DESC 
+    LIMIT 3;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic8() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    What are the top 2 specialties by number of doctors? Return the specialty
+    and number of doctors.
+    """
+    return """
+    SELECT specialty, COUNT(*) AS num_doctors FROM doctors GROUP BY specialty 
+    ORDER BY CASE WHEN num_doctors IS NULL THEN 1 ELSE 0 END DESC, 
+    num_doctors DESC 
+    LIMIT 2;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic9() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    Return the patient IDs, first names and last names of patients who have not
+    received any treatments.
+    """
+    return """
+    SELECT p.patient_id, p.first_name, p.last_name 
+    FROM patients AS p LEFT JOIN treatments AS t ON p.patient_id = t.patient_id
+    WHERE t.patient_id IS NULL;	 
+    """
+
+
+def defog_sql_text_dermtreatment_basic10() -> str:
+    """
+    SQLite query text for the following question for the Dermatology Treatment graph:
+
+    Return the drug IDs and names of drugs that have not been used in any
+    treatments.
+    """
+    return """
+    SELECT d.drug_id, d.drug_name 
+    FROM drugs AS d LEFT JOIN treatments AS t ON d.drug_id = t.drug_id 
+    WHERE t.drug_id IS NULL;	 
+    """
