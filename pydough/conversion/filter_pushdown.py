@@ -187,6 +187,15 @@ class FilterPushdownShuttle(RelationalShuttle):
         cardinality: JoinCardinality = join.cardinality
         new_inputs: list[RelationalNode] = []
 
+        # If the join type is LEFT or SEMI but the condition is TRUE, convert it
+        # to an INNER join.
+        if (
+            isinstance(join.condition, LiteralExpression)
+            and bool(join.condition.value)
+            and join.join_type in (JoinType.LEFT, JoinType.SEMI)
+        ):
+            join_type = JoinType.INNER
+
         # If the join is a LEFT join, deduce whether the filters above it can
         # turn it into an INNER join.
         if join.join_type == JoinType.LEFT and len(self.filters) > 0:

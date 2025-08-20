@@ -6,6 +6,8 @@ __all__ = ["AbstractMetadata"]
 
 from abc import ABC, abstractmethod
 
+from pydough.errors.error_utils import extract_array, extract_object, extract_string
+
 
 class AbstractMetadata(ABC):
     """
@@ -27,6 +29,26 @@ class AbstractMetadata(ABC):
         self._description: str | None = description
         self._synonyms: list[str] | None = synonyms
         self._extra_semantic_info: dict | None = extra_semantic_info
+
+    def parse_optional_properties(self, meta_json: dict) -> None:
+        """
+        Parse the optional metadata fields from a JSON object describing
+        the metadata to fill the description / synonyms / extra semantic info
+        fields of the metadata object.
+
+        Args:
+            `meta_json`: the JSON object describing the metadata.
+        """
+        if "description" in meta_json:
+            self._description = extract_string(
+                meta_json, "description", self.error_name
+            )
+        if "synonyms" in meta_json:
+            self._synonyms = extract_array(meta_json, "synonyms", self.error_name)
+        if "extra semantic info" in meta_json:
+            self._extra_semantic_info = extract_object(
+                meta_json, "extra semantic info", self.error_name
+            )
 
     @property
     @abstractmethod

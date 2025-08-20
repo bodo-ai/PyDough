@@ -9,8 +9,6 @@ __all__ = ["TableColumnMetadata"]
 from pydough.errors import PyDoughMetadataException, PyDoughTypeException
 from pydough.errors.error_utils import (
     NoExtraKeys,
-    extract_array,
-    extract_object,
     extract_string,
     is_string,
 )
@@ -63,7 +61,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         return self._column_name
 
     @staticmethod
-    def create_error_name(name: str, collection_error_name: str):
+    def create_error_name(name: str, collection_error_name: str) -> str:
         return f"table column property {name!r} of {collection_error_name}"
 
     @property
@@ -106,31 +104,13 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             property_json, error_name
         )
 
-        # Extract the optional fields from the JSON object.
-        sample_values: list | None = None
-        description: str | None = None
-        synonyms: list[str] | None = None
-        extra_semantic_info: dict | None = None
-        if "sample values" in property_json:
-            sample_values = extract_array(property_json, "sample values", error_name)
-        if "description" in property_json:
-            description = extract_string(property_json, "description", error_name)
-        if "synonyms" in property_json:
-            synonyms = extract_array(property_json, "synonyms", error_name)
-        if "extra semantic info" in property_json:
-            extra_semantic_info = extract_object(
-                property_json, "extra semantic info", error_name
-            )
-
         # Build the new property metadata object and add it to the collection.
         property: TableColumnMetadata = TableColumnMetadata(
             property_name,
             collection,
             data_type,
             column_name,
-            sample_values,
-            description,
-            synonyms,
-            extra_semantic_info,
         )
+        # Parse the optional common semantic properties like the description.
+        property.parse_optional_properties(property_json)
         collection.add_property(property)

@@ -10,9 +10,7 @@ from pydough.errors import PyDoughMetadataException
 from pydough.errors.error_utils import (
     HasPropertyWith,
     NoExtraKeys,
-    extract_array,
     extract_bool,
-    extract_object,
     extract_string,
     simple_join_keys_predicate,
 )
@@ -47,9 +45,9 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         singular: bool,
         always_matches: bool,
         keys: dict[str, list[str]],
-        description: str | None,
-        synonyms: list[str] | None,
-        extra_semantic_info: dict | None,
+        description: str | None = None,
+        synonyms: list[str] | None = None,
+        extra_semantic_info: dict | None = None,
     ):
         super().__init__(
             name,
@@ -109,7 +107,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         return comp
 
     @staticmethod
-    def create_error_name(name: str, collection_error_name: str):
+    def create_error_name(name: str, collection_error_name: str) -> str:
         return f"simple join property {name!r} of {collection_error_name}"
 
     @staticmethod
@@ -169,18 +167,6 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         )
         keys = property_json["keys"]
 
-        # Extract the optional fields from the JSON object.
-        description: str | None = None
-        synonyms: list[str] | None = None
-        extra_semantic_info: dict | None = None
-        if "description" in property_json:
-            description = extract_string(property_json, "description", error_name)
-        if "synonyms" in property_json:
-            synonyms = extract_array(property_json, "synonyms", error_name)
-        if "extra semantic info" in property_json:
-            extra_semantic_info = extract_object(
-                property_json, "extra semantic info", error_name
-            )
         NoExtraKeys(SimpleJoinMetadata.allowed_fields).verify(property_json, error_name)
 
         # Build the new property, its reverse, then add both
@@ -192,10 +178,9 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             singular,
             always_matches,
             keys,
-            description,
-            synonyms,
-            extra_semantic_info,
         )
+        # Parse the optional common semantic properties like the description.
+        property.parse_optional_properties(property_json)
         parent_collection.add_property(property)
 
     def build_reverse_relationship(
