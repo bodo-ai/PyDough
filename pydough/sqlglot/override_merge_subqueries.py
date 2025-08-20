@@ -150,19 +150,25 @@ def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope) -> boo
         )
     ):
         result = True
+    # Do not allow merging the inner scope into the outer if the inner contains a grouping
+    # key used by the outer scope besides being passed-through.
     if inner_scope.expression.find(exp.Group):
+        # Identify all of the expressions in the inner scope, and the aliases they correspond to.
         aliases: list[str] = []
         exprs: list[exp.Expression] = []
         for expr in inner_scope.expression.expressions:
             assert isinstance(expr, exp.Alias)
             aliases.append(expr.alias)
             exprs.append(expr.this)
+        # Identify which columns in the inner select list are amongst the grouping keys
         key_column_names: list[str] = []
         for key_expr in inner_scope.expression.find(exp.Group).expressions:
             if isinstance(key_expr, exp.Identifier) and key_expr.this in aliases:
                 key_column_names.append(key_expr.this)
             elif key_expr in exprs:
                 key_column_names.append(aliases[exprs.index(key_expr)])
+        # Search the columns of the outer select list. If any of them are nested
+        # expressions that contain one of the key columns, do not allow a merge.
         for outer_expr in outer_scope.expression.expressions:
             assert isinstance(outer_expr, exp.Alias)
             if isinstance(outer_expr.this, exp.Column):
