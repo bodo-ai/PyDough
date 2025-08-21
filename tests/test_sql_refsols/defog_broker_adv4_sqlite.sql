@@ -7,7 +7,7 @@ WITH _s1 AS (
   WHERE
     sbdpdate <= '2023-04-04' AND sbdpdate >= '2023-04-01'
   GROUP BY
-    sbdptickerid
+    3
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
@@ -16,5 +16,5 @@ FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbdptickerid = sbticker.sbtickerid
 ORDER BY
-  _s1.max_sbdphigh - _s1.min_sbdplow DESC
+  2 DESC
 LIMIT 3

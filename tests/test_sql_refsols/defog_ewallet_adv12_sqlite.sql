@@ -4,7 +4,7 @@ WITH _s1 AS (
     coupon_id
   FROM main.wallet_transactions_daily
   GROUP BY
-    coupon_id
+    2
 )
 SELECT
   coupons.cid AS coupon_id,

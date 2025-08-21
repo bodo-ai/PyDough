@@ -4,7 +4,7 @@ WITH _s1 AS (
     o_custkey
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    2
 )
 SELECT
   IIF(customer.c_acctbal > 1000, 'High', 'Low') AS iff_col,

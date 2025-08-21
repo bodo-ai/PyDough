@@ -5,6 +5,7 @@ invocations of PyDough function operators into SQLGlot function calls.
 
 __all__ = [
     "BaseTransformBindings",
+    "MySQLTransformBindings",
     "SQLiteTransformBindings",
     "SnowflakeTransformBindings",
     "bindings_from_dialect",
@@ -16,6 +17,7 @@ from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 
 from .base_transform_bindings import BaseTransformBindings
+from .mysql_transform_bindings import MySQLTransformBindings
 from .sf_transform_bindings import SnowflakeTransformBindings
 from .sqlite_transform_bindings import SQLiteTransformBindings
 
@@ -47,5 +49,7 @@ def bindings_from_dialect(
             return SQLiteTransformBindings(configs, visitor)
         case DatabaseDialect.SNOWFLAKE:
             return SnowflakeTransformBindings(configs, visitor)
+        case DatabaseDialect.MYSQL:
+            return MySQLTransformBindings(configs, visitor)
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")

@@ -3,7 +3,7 @@ WITH _s0 AS (
     s_nationkey,
     s_suppkey
   FROM tpch.supplier
-), _t3 AS (
+), _t2 AS (
   SELECT
     n_name,
     n_nationkey
@@ -16,8 +16,8 @@ WITH _s0 AS (
   FROM tpch.partsupp AS partsupp
   JOIN _s0 AS _s0
     ON _s0.s_suppkey = partsupp.ps_suppkey
-  JOIN _t3 AS _t3
-    ON _s0.s_nationkey = _t3.n_nationkey
+  JOIN _t2 AS _t2
+    ON _s0.s_nationkey = _t2.n_nationkey
 ), _s9 AS (
   SELECT
     SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr_2,
@@ -25,10 +25,10 @@ WITH _s0 AS (
   FROM tpch.partsupp AS partsupp
   JOIN _s0 AS _s4
     ON _s4.s_suppkey = partsupp.ps_suppkey
-  JOIN _t3 AS _t5
-    ON _s4.s_nationkey = _t5.n_nationkey
+  JOIN _t2 AS _t4
+    ON _s4.s_nationkey = _t4.n_nationkey
   GROUP BY
-    partsupp.ps_partkey
+    2
 )
 SELECT
   _s9.ps_partkey AS PS_PARTKEY,
@@ -39,5 +39,5 @@ JOIN _s9 AS _s9
     COALESCE(_s8.sum_metric, 0) * 0.0001
   ) < COALESCE(_s9.sum_expr_2, 0)
 ORDER BY
-  COALESCE(_s9.sum_expr_2, 0) DESC
+  2 DESC
 LIMIT 10

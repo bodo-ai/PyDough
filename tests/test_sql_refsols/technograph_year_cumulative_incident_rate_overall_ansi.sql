@@ -10,7 +10,7 @@ WITH _s2 AS (
   JOIN main.devices AS devices
     ON _s0.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   GROUP BY
-    _s0.ca_dt
+    2
 ), _s7 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -19,7 +19,7 @@ WITH _s2 AS (
   JOIN main.incidents AS incidents
     ON _s4.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
   GROUP BY
-    _s4.ca_dt
+    2
 ), _t1 AS (
   SELECT
     SUM(_s3.n_rows) AS sum_expr_3,
@@ -31,7 +31,7 @@ WITH _s2 AS (
   LEFT JOIN _s7 AS _s7
     ON _s2.ca_dt = _s7.ca_dt
   GROUP BY
-    EXTRACT(YEAR FROM CAST(_s2.ca_dt AS DATETIME))
+    3
 )
 SELECT
   year AS yr,
@@ -61,4 +61,4 @@ FROM _t1
 WHERE
   NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
 ORDER BY
-  year
+  1

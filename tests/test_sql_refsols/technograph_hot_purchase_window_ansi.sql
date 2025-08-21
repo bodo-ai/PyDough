@@ -1,5 +1,5 @@
 SELECT
-  ANY_VALUE(calendar.ca_dt) AS start_of_period,
+  calendar.ca_dt AS start_of_period,
   COUNT(*) AS n_purchases
 FROM main.calendar AS calendar
 JOIN main.calendar AS calendar_2
@@ -10,8 +10,8 @@ JOIN main.devices AS devices
 WHERE
   EXTRACT(YEAR FROM CAST(calendar.ca_dt AS DATETIME)) = 2024
 GROUP BY
-  calendar.ca_dt
+  1
 ORDER BY
-  n_purchases DESC,
-  start_of_period
+  2 DESC,
+  1
 LIMIT 1

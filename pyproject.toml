@@ -35,6 +35,10 @@ dev-dependencies = [
     "pydough[snowflake]",
 ]
 
+[project.optional-dependencies]
+snowflake = ["snowflake-connector-python[pandas]"]
+mysql = ["mysql-connector-python"]
+
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
@@ -61,6 +65,3 @@ lint.ignore = [
 [tool.mypy]
 # Don't run mypy on any ipython notebooks
 exclude = '.*\.ipynb$'
-
-[project.optional-dependencies]
-snowflake = ["snowflake-connector-python[pandas]"]

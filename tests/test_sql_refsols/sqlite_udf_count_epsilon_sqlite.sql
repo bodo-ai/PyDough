@@ -14,7 +14,7 @@ WITH _t2 AS (
   WHERE
     ABS(avg_balance - c_acctbal) <= avg_balance * 0.1
   GROUP BY
-    n_regionkey
+    2
 )
 SELECT
   region.r_name AS name,
@@ -23,4 +23,4 @@ FROM tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.n_regionkey = region.r_regionkey
 ORDER BY
-  region.r_name
+  1

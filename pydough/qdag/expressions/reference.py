@@ -8,7 +8,6 @@ __all__ = ["Reference"]
 
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG
@@ -20,14 +19,12 @@ class Reference(PyDoughExpressionQDAG):
     a preceding collection.
     """
 
-    def __init__(self, collection: PyDoughCollectionQDAG, term_name: str):
+    def __init__(
+        self, collection: PyDoughCollectionQDAG, term_name: str, term_type: PyDoughType
+    ):
         self._collection: PyDoughCollectionQDAG = collection
         self._term_name: str = term_name
-        self._expression: PyDoughExpressionQDAG = collection.get_expr(term_name)
-        if not self.expression.is_singular(collection.starting_predecessor):
-            raise PyDoughQDAGException(
-                f"Cannot reference plural expression {self.expression} from {self.collection}"
-            )
+        self._term_type: PyDoughType = term_type
 
     @property
     def collection(self) -> PyDoughCollectionQDAG:
@@ -44,19 +41,12 @@ class Reference(PyDoughExpressionQDAG):
         return self._term_name
 
     @property
-    def expression(self) -> PyDoughExpressionQDAG:
-        """
-        The original expression that the reference refers to.
-        """
-        return self._expression
-
-    @property
     def pydough_type(self) -> PyDoughType:
-        return self.expression.pydough_type
+        return self._term_type
 
     @property
     def is_aggregation(self) -> bool:
-        return self.expression.is_aggregation
+        return False
 
     def is_singular(self, context: PyDoughQDAG) -> bool:
         # References are already known to be singular via their construction.
@@ -73,4 +63,5 @@ class Reference(PyDoughExpressionQDAG):
             isinstance(other, Reference)
             and self.term_name == other.term_name
             and self.collection.equals(other.collection)
+            and self.pydough_type == other.pydough_type
         )

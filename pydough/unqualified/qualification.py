@@ -617,7 +617,8 @@ class Qualifier:
                 if isinstance(unqualified_parent, UnqualifiedRoot):
                     # If at the root, the access must be a reference to a scalar
                     # attribute accessible in the current context.
-                    return self.builder.build_reference(context, name)
+                    typ: PyDoughType = context.get_expr(name).pydough_type
+                    return self.builder.build_reference(context, name, typ)
                 else:
                     # Otherwise, the access is a reference to a scalar attribute of
                     # a child collection node of the current context. Add this new
@@ -904,6 +905,7 @@ class Qualifier:
                 | UnqualifiedSingular()
                 | UnqualifiedPartition()
                 | UnqualifiedBest()
+                | UnqualifiedCross()
             ):
                 parent: UnqualifiedNode = node._parcel[0]
                 new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
@@ -966,6 +968,8 @@ class Qualifier:
                 build_node[0] = UnqualifiedSingular(build_node[0], *node._parcel[1:])
             case UnqualifiedBest():
                 build_node[0] = UnqualifiedBest(build_node[0], *node._parcel[1:])
+            case UnqualifiedCross():
+                build_node[0] = UnqualifiedCross(build_node[0], *node._parcel[1:])
             case _:
                 # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(

@@ -17,17 +17,7 @@ WITH _s2 AS (
     sbcustjoindate < DATE('now', 'start of month')
     AND sbcustjoindate >= DATE(DATETIME('now', '-6 month'), 'start of month')
   GROUP BY
-    CONCAT_WS(
-      '-',
-      CAST(STRFTIME('%Y', sbcustjoindate) AS INTEGER),
-      CASE
-        WHEN LENGTH(CAST(STRFTIME('%m', sbcustjoindate) AS INTEGER)) >= 2
-        THEN SUBSTRING(CAST(STRFTIME('%m', sbcustjoindate) AS INTEGER), 1, 2)
-        ELSE SUBSTRING('00' || CAST(STRFTIME('%m', sbcustjoindate) AS INTEGER), (
-          2 * -1
-        ))
-      END
-    )
+    1
 ), _s3 AS (
   SELECT
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount,
@@ -51,17 +41,7 @@ WITH _s2 AS (
     sbcustomer.sbcustjoindate < DATE('now', 'start of month')
     AND sbcustomer.sbcustjoindate >= DATE(DATETIME('now', '-6 month'), 'start of month')
   GROUP BY
-    CONCAT_WS(
-      '-',
-      CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER),
-      CASE
-        WHEN LENGTH(CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER)) >= 2
-        THEN SUBSTRING(CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER), 1, 2)
-        ELSE SUBSTRING('00' || CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER), (
-          2 * -1
-        ))
-      END
-    )
+    2
 )
 SELECT
   _s2.month,

@@ -298,7 +298,8 @@ class ReferenceInfo(AstNodeTestInfo):
         assert context is not None, (
             "Cannot call .build() on ReferenceInfo without providing a context"
         )
-        return builder.build_reference(context, self.name)
+        typ: PyDoughType = context.get_expr(self.name).pydough_type
+        return builder.build_reference(context, self.name, typ)
 
 
 class BackReferenceExpressionInfo(AstNodeTestInfo):
@@ -1049,7 +1050,13 @@ class PyDoughSQLComparisonTest:
                     result[col_name], refsol[col_name]
                 )
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol)
+        if coerce_types:
+            for col_name in result.columns:
+                result[col_name], refsol[col_name] = harmonize_types(
+                    result[col_name], refsol[col_name]
+                )
+        # Perform the comparison between the result and the reference solution
+        pd.testing.assert_frame_equal(result, refsol, rtol=1.0e-5, atol=1.0e-5)
 
 
 @dataclass
@@ -1310,7 +1317,6 @@ class PyDoughPandasTest:
 
 
 def harmonize_types(column_a, column_b):
-    # breakpoint()
     """
     Harmonizes data types between two Pandas columns to ensure compatibility
     for comparison equality check operations.

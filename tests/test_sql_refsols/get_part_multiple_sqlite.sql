@@ -840,4 +840,4 @@ FROM main.sbcustomer
 WHERE
   CAST(SUBSTRING(sbcustid, 2) AS INTEGER) <= 4
 ORDER BY
-  CAST(SUBSTRING(sbcustid, 2) AS INTEGER)
+  1

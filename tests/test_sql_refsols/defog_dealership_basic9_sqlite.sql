@@ -3,7 +3,7 @@ SELECT
   COUNT(*) AS total_signups
 FROM main.customers
 GROUP BY
-  state
+  1
 ORDER BY
-  total_signups DESC
+  2 DESC
 LIMIT 2

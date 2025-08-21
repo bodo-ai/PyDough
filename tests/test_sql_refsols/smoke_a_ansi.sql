@@ -196,7 +196,9 @@ SELECT
   CASE
     WHEN LENGTH('o') = 0
     THEN 0
-    ELSE CAST(LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', '')) / LENGTH('o') AS BIGINT)
+    ELSE CAST((
+      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+    ) / LENGTH('o') AS BIGINT)
   END + (
     (
       STR_POSITION(p_name, 'o') - 1
@@ -205,5 +207,5 @@ SELECT
   ROUND(POWER(CASE WHEN p_size >= 10 THEN p_size WHEN p_size <= 10 THEN 10 END, 0.5), 3) AS i
 FROM tpch.part
 ORDER BY
-  p_partkey
+  1
 LIMIT 5

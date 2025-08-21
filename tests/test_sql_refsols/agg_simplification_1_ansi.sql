@@ -1,26 +1,29 @@
+WITH _t0 AS (
+  SELECT
+    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS aug_exchange,
+    COUNT(*) AS count_one
+  FROM main.sbticker
+  GROUP BY
+    1
+)
 SELECT
-  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS aug_exchange,
-  COUNT(*) AS su1,
-  COUNT(*) * 2 AS su2,
-  COUNT(*) * -1 AS su3,
-  COUNT(*) * -3 AS su4,
+  aug_exchange,
+  count_one AS su1,
+  count_one * 2 AS su2,
+  count_one * -1 AS su3,
+  count_one * -3 AS su4,
   0 AS su5,
-  COUNT(*) * 0.5 AS su6,
+  count_one * 0.5 AS su6,
   0 AS su7,
-  COALESCE(
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END),
-    0
-  ) AS su8,
-  COUNT(*) AS co1,
-  COUNT(*) AS co2,
-  COUNT(*) AS co3,
-  COUNT(*) AS co4,
-  COUNT(*) AS co5,
-  COUNT(*) AS co6,
+  COALESCE(aug_exchange, 0) AS su8,
+  count_one AS co1,
+  count_one AS co2,
+  count_one AS co3,
+  count_one AS co4,
+  count_one AS co5,
+  count_one AS co6,
   0 AS co7,
-  COUNT(*) * CAST(NOT (
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) IS NULL
-  ) AS BIGINT) AS co8,
+  count_one * CASE WHEN NOT aug_exchange IS NULL THEN 1 ELSE 0 END AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,
@@ -28,9 +31,7 @@ SELECT
   1 AS nd5,
   1 AS nd6,
   0 AS nd7,
-  CAST(NOT (
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) IS NULL
-  ) AS BIGINT) AS nd8,
+  CAST(NOT aug_exchange IS NULL AS BIGINT) AS nd8,
   1 AS av1,
   2 AS av2,
   -1 AS av3,
@@ -38,7 +39,7 @@ SELECT
   0 AS av5,
   0.5 AS av6,
   NULL AS av7,
-  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS av8,
+  aug_exchange AS av8,
   1 AS mi1,
   2 AS mi2,
   -1 AS mi3,
@@ -46,7 +47,7 @@ SELECT
   0 AS mi5,
   0.5 AS mi6,
   NULL AS mi7,
-  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS mi8,
+  aug_exchange AS mi8,
   1 AS ma1,
   2 AS ma2,
   -1 AS ma3,
@@ -54,7 +55,7 @@ SELECT
   0 AS ma5,
   0.5 AS ma6,
   NULL AS ma7,
-  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS ma8,
+  aug_exchange AS ma8,
   1 AS an1,
   2 AS an2,
   -1 AS an3,
@@ -62,7 +63,7 @@ SELECT
   0 AS an5,
   0.5 AS an6,
   NULL AS an7,
-  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS an8,
+  aug_exchange AS an8,
   1 AS me1,
   2 AS me2,
   -1 AS me3,
@@ -70,7 +71,7 @@ SELECT
   0 AS me5,
   0.5 AS me6,
   NULL AS me7,
-  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS me8,
+  aug_exchange AS me8,
   1 AS qu1,
   2 AS qu2,
   -1 AS qu3,
@@ -78,10 +79,7 @@ SELECT
   0 AS qu5,
   0.5 AS qu6,
   NULL AS qu7,
-  PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) NULLS LAST) AS qu8
-FROM main.sbticker
-GROUP BY
-  LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
+  aug_exchange AS qu8
+FROM _t0
 ORDER BY
-  aug_exchange
+  1
