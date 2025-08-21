@@ -3,6 +3,8 @@
 __all__ = ["pull_joins_after_aggregates"]
 
 
+from collections.abc import Iterable
+
 import pydough.pydough_operators as pydop
 from pydough.relational import (
     Aggregate,
@@ -38,6 +40,21 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 self.join_aggregate_transpose(node, node.inputs[0])
             )
         return super().visit_join(node)
+
+    def generate_name(self, base: str, used_names: Iterable[str]) -> str:
+        """
+        Generates a new name for a column based on the base name and the existing
+        columns in the join. This is used to ensure that the new column names are
+        unique and do not conflict with existing names.
+        """
+        if base not in used_names:
+            return base
+        i = 0
+        while True:
+            name = f"{base}_{i}"
+            if name not in used_names:
+                return name
+            i += 1
 
     def join_aggregate_transpose(
         self, join: Join, aggregate: Aggregate
@@ -84,6 +101,13 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         ):
             return join
 
+        reverse_join_columns: dict[str, RelationalExpression] = {}
+        for join_col_name, join_col_expr in join.columns.items():
+            assert isinstance(join_col_expr, ColumnReference)
+            reverse_join_columns[join_col_expr.name] = ColumnReference(
+                join_col_name, join_col_expr.data_type
+            )
+
         new_join_columns: dict[str, RelationalExpression] = {}
         new_key_columns: dict[str, RelationalExpression] = {}
         new_aggregate_columns: dict[str, CallExpression] = {}
@@ -113,22 +137,31 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             new_join_columns[key_name] = add_input_name(
                 key_expr, join.default_input_aliases[0]
             )
-            if key_name in used_column_names:
-                assert False
-            new_key_columns[key_name] = ColumnReference(key_name, col_expr.data_type)
-            used_column_names.add(key_name)
+            agg_key_name: str = self.generate_name(key_name, used_column_names)
+            new_key_columns[agg_key_name] = ColumnReference(
+                key_name, col_expr.data_type
+            )
+            used_column_names.add(agg_key_name)
 
         for agg_name, agg_expr in aggregate.aggregations.items():
+            new_inputs: list[RelationalExpression] = []
             for input_expr in agg_expr.inputs:
-                if not isinstance(input_expr, ColumnReference):
-                    assert False
-                if input_expr.name in new_join_columns:
-                    assert False
-                new_join_columns[input_expr.name] = add_input_name(
+                join_name: str
+                if isinstance(input_expr, ColumnReference):
+                    join_name = self.generate_name(input_expr.name, new_join_columns)
+                else:
+                    join_name = self.generate_name("expr", new_join_columns)
+                new_join_columns[join_name] = add_input_name(
                     input_expr, join.default_input_aliases[0]
                 )
-            if agg_name in used_column_names:
-                assert False
+                new_inputs.append(ColumnReference(join_name, input_expr.data_type))
+            agg_name = self.generate_name(agg_name, used_column_names)
+            if new_inputs != agg_expr.inputs:
+                agg_expr = CallExpression(
+                    agg_expr.op,
+                    agg_expr.data_type,
+                    new_inputs,
+                )
             new_aggregate_columns[agg_name] = agg_expr
             used_column_names.add(agg_name)
 

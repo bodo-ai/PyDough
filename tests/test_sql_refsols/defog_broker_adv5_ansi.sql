@@ -1,49 +1,55 @@
-WITH _s0 AS (
+WITH _t1 AS (
   SELECT
-    COUNT(sbdpclose) AS count_sbdpclose,
-    MAX(sbdphigh) AS max_high,
-    MIN(sbdplow) AS min_low,
+    COUNT(sbdailyprice.sbdpclose) AS count_sbdpclose,
+    MAX(sbdailyprice.sbdphigh) AS max_high,
+    MIN(sbdailyprice.sbdplow) AS min_low,
+    ANY_VALUE(sbticker.sbtickersymbol) AS sbtickersymbol,
+    SUM(sbdailyprice.sbdpclose) AS sum_sbdpclose,
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
+      EXTRACT(YEAR FROM CAST(sbdailyprice.sbdpdate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))), (
-          2 * -1
-        ))
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME))),
+          (
+            2 * -1
+          )
+        )
       END
-    ) AS month,
-    SUM(sbdpclose) AS sum_sbdpclose,
-    sbdptickerid
-  FROM main.sbdailyprice
+    ) AS month
+  FROM main.sbdailyprice AS sbdailyprice
+  JOIN main.sbticker AS sbticker
+    ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
   GROUP BY
     CONCAT_WS(
       '-',
-      EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
+      EXTRACT(YEAR FROM CAST(sbdailyprice.sbdpdate AS DATETIME)),
       CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME))), (
-          2 * -1
-        ))
+        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME))) >= 2
+        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME)), 1, 2)
+        ELSE SUBSTRING(
+          CONCAT('00', EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME))),
+          (
+            2 * -1
+          )
+        )
       END
     ),
-    sbdptickerid
+    sbdailyprice.sbdptickerid
 ), _t0 AS (
   SELECT
-    MAX(_s0.max_high) AS max_high,
-    MIN(_s0.min_low) AS min_low,
-    SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
-    SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
-    _s0.month,
-    sbticker.sbtickersymbol
-  FROM _s0 AS _s0
-  JOIN main.sbticker AS sbticker
-    ON _s0.sbdptickerid = sbticker.sbtickerid
+    MAX(max_high) AS max_high,
+    MIN(min_low) AS min_low,
+    SUM(count_sbdpclose) AS sum_count_sbdpclose,
+    SUM(sum_sbdpclose) AS sum_sum_sbdpclose,
+    month,
+    sbtickersymbol
+  FROM _t1
   GROUP BY
-    _s0.month,
-    sbticker.sbtickersymbol
+    month,
+    sbtickersymbol
 )
 SELECT
   sbtickersymbol AS symbol,

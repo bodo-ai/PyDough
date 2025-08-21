@@ -1496,6 +1496,8 @@ def optimize_relational_tree(
         simplify_expressions(root, additional_shuttles)
         root = confirm_root(push_filters(root))
         root = confirm_root(pull_joins_after_aggregates(root))
+        print()
+        print(root.to_tree_string())
         root = ColumnPruner().prune_unused_columns(root)
 
     # Step 9: re-run projection merging, without pushing into joins. This
