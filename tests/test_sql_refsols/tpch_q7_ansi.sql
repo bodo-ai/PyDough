@@ -37,10 +37,10 @@ JOIN _s9 AS _s9
 WHERE
   EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) IN (1995, 1996)
 GROUP BY
-  EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)),
-  _s9.n_name,
-  nation.n_name
+  1,
+  2,
+  3
 ORDER BY
-  supp_nation,
-  _s9.n_name,
-  l_year
+  1,
+  2,
+  3

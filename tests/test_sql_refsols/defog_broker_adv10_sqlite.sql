@@ -6,9 +6,9 @@ WITH _s1 AS (
     sbtxcustid
   FROM main.sbtransaction
   GROUP BY
-    CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER),
-    CAST(STRFTIME('%m', sbtxdatetime) AS INTEGER),
-    sbtxcustid
+    1,
+    2,
+    4
 )
 SELECT
   sbcustomer.sbcustid AS _id,
@@ -20,5 +20,5 @@ LEFT JOIN _s1 AS _s1
   AND _s1.expr_2 = CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER)
   AND _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
-  COALESCE(_s1.n_rows, 0) DESC
+  3 DESC
 LIMIT 1

@@ -1937,7 +1937,7 @@ def abs_round_magic_method():
 def years_months_days_hours_datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     return (
-        transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025) & (MONTH(date_time) > 3))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1956,7 +1956,7 @@ def years_months_days_hours_datediff():
             c_hours_diff=DATEDIFF("HOURS", date_time, y1_datetime),
             c_h_diff=DATEDIFF("H", date_time, y1_datetime),
         )
-        .TOP_K(30, by=years_diff.ASC())
+        .TOP_K(30, by=x.ASC())
     )
 
 
@@ -1985,6 +1985,46 @@ def simple_week_sampler():
     y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
     y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
     return Broker.CALCULATE(
+        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
+        sow1=DATETIME(y_dt, "start of week"),
+        sow2=DATETIME(y_dt2, "start of week"),
+        sow3=DATETIME(y_dt3, "start of week"),
+        sow4=DATETIME(y_dt4, "start of week"),
+        sow5=DATETIME(y_dt5, "start of week"),
+        sow6=DATETIME(y_dt6, "start of week"),
+        sow7=DATETIME(y_dt7, "start of week"),
+        sow8=DATETIME(y_dt8, "start of week"),
+        dayname1=DAYNAME(y_dt),
+        dayname2=DAYNAME(y_dt2),
+        dayname3=DAYNAME(y_dt3),
+        dayname4=DAYNAME(y_dt4),
+        dayname5=DAYNAME(y_dt5),
+        dayname6=DAYNAME(y_dt6),
+        dayname7=DAYNAME(y_dt7),
+        dayname8=DAYNAME(y_dt8),
+        dayofweek1=DAYOFWEEK(y_dt),
+        dayofweek2=DAYOFWEEK(y_dt2),
+        dayofweek3=DAYOFWEEK(y_dt3),
+        dayofweek4=DAYOFWEEK(y_dt4),
+        dayofweek5=DAYOFWEEK(y_dt5),
+        dayofweek6=DAYOFWEEK(y_dt6),
+        dayofweek7=DAYOFWEEK(y_dt7),
+        dayofweek8=DAYOFWEEK(y_dt8),
+    )
+
+
+def simple_week_sampler_tpch():
+    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
+    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
+    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
+    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
+    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
+    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
+    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
+    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
+    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
+
+    return TPCH.CALCULATE(
         weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
         sow1=DATETIME(y_dt, "start of week"),
         sow2=DATETIME(y_dt2, "start of week"),

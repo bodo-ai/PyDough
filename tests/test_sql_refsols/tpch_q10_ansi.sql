@@ -11,7 +11,7 @@ WITH _s3 AS (
     EXTRACT(MONTH FROM CAST(orders.o_orderdate AS DATETIME)) IN (10, 11, 12)
     AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
   GROUP BY
-    orders.o_custkey
+    2
 )
 SELECT
   customer.c_custkey AS C_CUSTKEY,
@@ -28,6 +28,6 @@ LEFT JOIN _s3 AS _s3
 JOIN tpch.nation AS nation
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
-  COALESCE(_s3.sum_expr_1, 0) DESC,
-  c_custkey
+  3 DESC,
+  1
 LIMIT 20

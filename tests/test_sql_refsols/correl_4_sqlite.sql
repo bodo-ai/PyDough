@@ -13,7 +13,7 @@ WITH _s0 AS (
     )
     AND customer.c_nationkey = nation.n_nationkey
   GROUP BY
-    nation.n_nationkey
+    1
 )
 SELECT
   nation.n_name AS name
@@ -23,4 +23,4 @@ LEFT JOIN _u_0 AS _u_0
 WHERE
   _u_0._u_1 IS NULL
 ORDER BY
-  nation.n_name
+  1

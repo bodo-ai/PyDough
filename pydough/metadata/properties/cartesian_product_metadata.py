@@ -9,9 +9,7 @@ __all__ = ["CartesianProductMetadata"]
 from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.errors import (
     NoExtraKeys,
-    extract_array,
     extract_bool,
-    extract_object,
     extract_string,
 )
 from pydough.metadata.graphs import GraphMetadata
@@ -40,9 +38,9 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         parent_collection: CollectionMetadata,
         child_collection: CollectionMetadata,
         always_matches: bool,
-        description: str | None,
-        synonyms: list[str] | None,
-        extra_semantic_info: dict | None,
+        description: str | None = None,
+        synonyms: list[str] | None = None,
+        extra_semantic_info: dict | None = None,
     ):
         super().__init__(
             name,
@@ -56,7 +54,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         )
 
     @staticmethod
-    def create_error_name(name: str, collection_error_name: str):
+    def create_error_name(name: str, collection_error_name: str) -> str:
         return f"cartesian property {name!r} of {collection_error_name}"
 
     @property
@@ -108,19 +106,6 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         if "always matches" in property_json:
             always_matches = extract_bool(property_json, "always matches", error_name)
 
-        # Extract the optional fields from the JSON object.
-        description: str | None = None
-        synonyms: list[str] | None = None
-        extra_semantic_info: dict | None = None
-        if "description" in property_json:
-            description = extract_string(property_json, "description", error_name)
-        if "synonyms" in property_json:
-            synonyms = extract_array(property_json, "synonyms", error_name)
-        if "extra semantic info" in property_json:
-            extra_semantic_info = extract_object(
-                property_json, "extra semantic info", error_name
-            )
-
         NoExtraKeys(CartesianProductMetadata.allowed_fields).verify(
             property_json, error_name
         )
@@ -131,10 +116,9 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
             parent_collection,
             child_collection,
             always_matches,
-            description,
-            synonyms,
-            extra_semantic_info,
         )
+        # Parse the optional common semantic properties like the description.
+        property.parse_optional_properties(property_json)
         parent_collection.add_property(property)
 
     def build_reverse_relationship(

@@ -138,5 +138,5 @@ FROM tpch.orders
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'
 ORDER BY
-  o_orderkey
+  1
 LIMIT 5

@@ -19,8 +19,8 @@ FROM tpch.lineitem
 WHERE
   l_shipdate <= '1998-12-01'
 GROUP BY
-  l_linestatus,
-  l_returnflag
+  1,
+  2
 ORDER BY
-  l_returnflag,
-  l_linestatus
+  1,
+  2

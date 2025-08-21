@@ -1,0 +1,32 @@
+WITH _q_0 AS (
+  SELECT
+    1 AS _
+)
+SELECT
+  LEAST(20, 10) AS s1,
+  LEAST(20, 20) AS s2,
+  LEAST(20, 10, 0) AS s3,
+  LEAST(20, 10, 10, -1, -2, 100, -200) AS s4,
+  NULL AS s5,
+  LEAST(20.22, 10.22, -0.34) AS s6,
+  LEAST(
+    CAST('2025-01-01 00:00:00' AS DATETIME),
+    CAST('2024-01-01 00:00:00' AS DATETIME),
+    CAST('2023-01-01 00:00:00' AS DATETIME)
+  ) AS s7,
+  LEAST('', 'alphabet soup', 'Hello World') AS s8,
+  NULL AS s9,
+  GREATEST(20, 10) AS l1,
+  GREATEST(20, 20) AS l2,
+  GREATEST(20, 10, 0) AS l3,
+  GREATEST(20, 10, 10, -1, -2, 100, -200, 300) AS l4,
+  NULL AS l5,
+  GREATEST(20.22, 100.22, -0.34) AS l6,
+  GREATEST(
+    CAST('2025-01-01 00:00:00' AS DATETIME),
+    CAST('2024-01-01 00:00:00' AS DATETIME),
+    CAST('2023-01-01 00:00:00' AS DATETIME)
+  ) AS l7,
+  GREATEST('', 'alphabet soup', 'Hello World') AS l8,
+  NULL AS l9
+FROM _q_0

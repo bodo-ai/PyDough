@@ -9,4 +9,4 @@ WHERE
   AND wallet_transactions_daily.sender_type = 0
   AND wallet_transactions_daily.status = 'success'
 GROUP BY
-  DATE(wallet_transactions_daily.created_at, 'start of month')
+  1

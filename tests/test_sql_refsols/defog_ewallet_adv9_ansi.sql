@@ -7,4 +7,4 @@ WHERE
   AND created_at >= DATE_ADD(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), -2, 'MONTH')
   AND sender_type = 0
 GROUP BY
-  DATE_TRUNC('MONTH', CAST(created_at AS TIMESTAMP))
+  1

@@ -9,7 +9,7 @@ WITH _t0 AS (
     ON times.t_end_hour > CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
     AND times.t_start_hour <= CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
   GROUP BY
-    times.t_name
+    4
 )
 SELECT
   t_name AS tod,

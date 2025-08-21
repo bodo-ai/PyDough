@@ -7,7 +7,7 @@ WITH _s1 AS (
     sbtxdatetime >= DATE(DATETIME('now', '-10 day'), 'start of day')
     AND sbtxtype = 'buy'
   GROUP BY
-    sbtxtickerid
+    2
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
@@ -16,5 +16,5 @@ FROM main.sbticker AS sbticker
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  COALESCE(_s1.n_rows, 0) DESC
+  2 DESC
 LIMIT 2

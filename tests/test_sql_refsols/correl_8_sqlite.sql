@@ -13,4 +13,4 @@ LEFT JOIN _s1 AS _s1
   ON _s1.expr_0 = SUBSTRING(nation.n_name, 1, 1)
   AND _s1.r_regionkey = nation.n_regionkey
 ORDER BY
-  nation.n_name
+  1

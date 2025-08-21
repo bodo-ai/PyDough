@@ -6,7 +6,7 @@ WITH _s3 AS (
   WHERE
     CAST(STRFTIME('%Y', l_shipdate) AS INTEGER) = 1994
   GROUP BY
-    l_partkey
+    2
 ), _s5 AS (
   SELECT
     part.p_partkey,
@@ -35,5 +35,5 @@ JOIN tpch.nation AS nation
 JOIN _s7 AS _s7
   ON _s7.ps_suppkey = supplier.s_suppkey
 ORDER BY
-  s_name
+  1
 LIMIT 10

@@ -8,8 +8,8 @@ WITH _s0 AS (
     p_container
   FROM tpch.part
   GROUP BY
-    p_container,
-    p_type
+    p_type,
+    2
 )
 SELECT
   _s1.p_container AS container,
@@ -18,8 +18,8 @@ FROM _s0 AS _s0
 JOIN _s1 AS _s1
   ON _s0.global_avg_price < _s1.avg_p_retailprice
 GROUP BY
-  _s1.p_container
+  1
 ORDER BY
-  n_types DESC,
-  _s1.p_container
+  2 DESC,
+  1
 LIMIT 5

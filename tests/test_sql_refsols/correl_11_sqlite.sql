@@ -9,7 +9,7 @@ WITH _t2 AS (
     p_brand
   FROM _t2
   GROUP BY
-    p_brand
+    2
 ), _t0 AS (
   SELECT DISTINCT
     _s0.p_brand
@@ -23,4 +23,4 @@ SELECT
   p_brand AS brand
 FROM _t0
 ORDER BY
-  p_brand
+  1

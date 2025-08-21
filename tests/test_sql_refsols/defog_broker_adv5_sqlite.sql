@@ -18,18 +18,8 @@ WITH _s0 AS (
     sbdptickerid
   FROM main.sbdailyprice
   GROUP BY
-    CONCAT_WS(
-      '-',
-      CAST(STRFTIME('%Y', sbdpdate) AS INTEGER),
-      CASE
-        WHEN LENGTH(CAST(STRFTIME('%m', sbdpdate) AS INTEGER)) >= 2
-        THEN SUBSTRING(CAST(STRFTIME('%m', sbdpdate) AS INTEGER), 1, 2)
-        ELSE SUBSTRING('00' || CAST(STRFTIME('%m', sbdpdate) AS INTEGER), (
-          2 * -1
-        ))
-      END
-    ),
-    sbdptickerid
+    4,
+    6
 ), _t0 AS (
   SELECT
     MAX(_s0.max_high) AS max_high,
@@ -42,8 +32,8 @@ WITH _s0 AS (
   JOIN main.sbticker AS sbticker
     ON _s0.sbdptickerid = sbticker.sbtickerid
   GROUP BY
-    _s0.month,
-    sbticker.sbtickersymbol
+    5,
+    6
 )
 SELECT
   sbtickersymbol AS symbol,

@@ -14,8 +14,8 @@ WITH _t3 AS (
     o_orderdate
   FROM _t3
   GROUP BY
-    o_custkey,
-    o_orderdate
+    3,
+    4
 )
 SELECT
   COUNT(*) AS n

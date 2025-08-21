@@ -7,7 +7,7 @@ WITH _s0 AS (
     a AS _u_1
   FROM _s0
   GROUP BY
-    a
+    1
 )
 SELECT
   _s0.a

@@ -19,10 +19,10 @@ WITH _s1 AS (
     AND CAST(STRFTIME('%m', lineitem.l_shipdate) AS INTEGER) IN (1, 2, 3)
     AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    customer.c_custkey,
-    customer.c_nationkey,
-    lineitem.l_partkey,
-    orders.o_orderpriority
+    2,
+    3,
+    4,
+    5
 ), _t3 AS (
   SELECT
     SUM(_s10.n_rows) AS sum_n_rows,
@@ -34,10 +34,10 @@ WITH _s1 AS (
   JOIN _s1 AS _s11
     ON _s10.l_partkey = _s11.p_partkey
   GROUP BY
-    _s10.c_custkey,
-    _s10.c_nationkey,
-    _s10.o_orderpriority,
-    _s11.p_type
+    2,
+    3,
+    4,
+    5
 )
 SELECT
   COUNT(*) AS n

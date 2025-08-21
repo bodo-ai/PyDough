@@ -38,10 +38,4 @@ WHERE
     '-56 day'
   )
 GROUP BY
-  DATE(
-    sbtransaction.sbtxdatetime,
-    '-' || CAST((
-      CAST(STRFTIME('%w', DATETIME(sbtransaction.sbtxdatetime)) AS INTEGER) + 6
-    ) % 7 AS TEXT) || ' days',
-    'start of day'
-  )
+  1

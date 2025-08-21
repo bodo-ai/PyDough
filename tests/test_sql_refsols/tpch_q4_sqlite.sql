@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     l_commitdate < l_receiptdate
   GROUP BY
-    l_orderkey
+    1
 )
 SELECT
   orders.o_orderpriority AS O_ORDERPRIORITY,
@@ -18,6 +18,6 @@ WHERE
   AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) IN (7, 8, 9)
   AND NOT _u_0._u_1 IS NULL
 GROUP BY
-  orders.o_orderpriority
+  1
 ORDER BY
-  o_orderpriority
+  1

@@ -51,4 +51,4 @@ FROM _t1
 GROUP BY
   n_nationkey
 ORDER BY
-  nation_name
+  1

@@ -7,6 +7,6 @@ WHERE
   AND CAST(STRFTIME('%m', sbtxdatetime) AS INTEGER) IN (1, 2, 3)
   AND sbtxstatus = 'success'
 GROUP BY
-  DATE(sbtxdatetime, 'start of month')
+  1
 ORDER BY
-  month
+  1
