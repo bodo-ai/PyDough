@@ -15,7 +15,7 @@ WITH _s4 AS (
     AND customer.c_nationkey = nation.n_nationkey
   GROUP BY
     nation.n_nationkey,
-    _s0.r_regionkey
+    2
 ), _s5 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -24,7 +24,7 @@ WITH _s4 AS (
   WHERE
     anything_n_regionkey = r_regionkey
   GROUP BY
-    r_regionkey
+    2
 )
 SELECT
   _s4.r_name AS region_name,
@@ -33,4 +33,4 @@ FROM _s4 AS _s4
 LEFT JOIN _s5 AS _s5
   ON _s4.r_regionkey = _s5.r_regionkey
 ORDER BY
-  _s4.r_name
+  1

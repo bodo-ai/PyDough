@@ -1,4 +1,15 @@
+<<<<<<< HEAD
 WITH _s1 AS (
+=======
+WITH _s0 AS (
+  SELECT
+    COUNT(*) AS n_rows,
+    de_product_id
+  FROM main.devices
+  GROUP BY
+    2
+), _s1 AS (
+>>>>>>> kian/error_handler
   SELECT
     pr_id,
     pr_release
@@ -18,7 +29,11 @@ WITH _s1 AS (
     SUM(n_rows_1) AS sum_n_rows
   FROM _t1
   GROUP BY
+<<<<<<< HEAD
     CAST(STRFTIME('%Y', pr_release) AS INTEGER)
+=======
+    1
+>>>>>>> kian/error_handler
 ), _s7 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -29,7 +44,7 @@ WITH _s1 AS (
   JOIN main.incidents AS incidents
     ON devices.de_id = incidents.in_device_id
   GROUP BY
-    CAST(STRFTIME('%Y', _s3.pr_release) AS INTEGER)
+    2
 )
 SELECT
   _s6.release_year AS year,
@@ -38,4 +53,4 @@ FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7
   ON _s6.release_year = _s7.release_year
 ORDER BY
-  _s6.release_year
+  1

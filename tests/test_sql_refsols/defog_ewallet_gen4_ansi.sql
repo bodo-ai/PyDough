@@ -9,7 +9,7 @@ WITH _t0 AS (
     merchant_id
   FROM _t0
   GROUP BY
-    merchant_id
+    2
 ), _s3 AS (
   SELECT
     MAX(cid) AS max_cid,
@@ -17,8 +17,8 @@ WITH _t0 AS (
     start_date
   FROM main.coupons
   GROUP BY
-    merchant_id,
-    start_date
+    2,
+    3
 )
 SELECT
   merchants.mid AS merchants_id,

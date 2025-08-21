@@ -34,10 +34,10 @@ WITH _s1 AS (
   JOIN _s1 AS _s11
     ON _s11.p_partkey = lineitem.l_partkey
   GROUP BY
-    customer.c_custkey,
-    customer.c_nationkey,
     lineitem.l_partkey,
-    orders.o_orderpriority
+    3,
+    4,
+    5
 ), _t3 AS (
   SELECT
     SUM(n_rows) AS sum_n_rows,
@@ -47,10 +47,10 @@ WITH _s1 AS (
     p_type
   FROM _t4
   GROUP BY
-    c_custkey,
-    c_nationkey,
-    o_orderpriority,
-    p_type
+    2,
+    3,
+    4,
+    5
 )
 SELECT
   COUNT(*) AS n

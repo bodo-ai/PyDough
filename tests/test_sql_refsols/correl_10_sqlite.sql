@@ -4,8 +4,8 @@ WITH _u_0 AS (
     r_regionkey AS _u_2
   FROM tpch.region
   GROUP BY
-    SUBSTRING(r_name, 1, 1),
-    r_regionkey
+    1,
+    2
 )
 SELECT
   nation.n_name AS name,
@@ -16,4 +16,4 @@ LEFT JOIN _u_0 AS _u_0
 WHERE
   _u_0._u_1 IS NULL
 ORDER BY
-  nation.n_name
+  1

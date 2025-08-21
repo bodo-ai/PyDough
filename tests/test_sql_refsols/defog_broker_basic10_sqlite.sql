@@ -3,7 +3,7 @@ WITH _u_0 AS (
     sbdptickerid AS _u_1
   FROM main.sbdailyprice
   GROUP BY
-    sbdptickerid
+    1
 )
 SELECT
   sbticker.sbtickerid AS _id,

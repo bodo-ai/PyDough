@@ -7,7 +7,7 @@ WITH _t0 AS (
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) = 1994
     AND o_orderpriority = '1-URGENT'
   GROUP BY
-    CAST(STRFTIME('%m', o_orderdate) AS INTEGER)
+    1
 )
 SELECT
   month,
@@ -17,4 +17,4 @@ SELECT
   MIN(n_rows) OVER (ORDER BY month ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS m3
 FROM _t0
 ORDER BY
-  month
+  1

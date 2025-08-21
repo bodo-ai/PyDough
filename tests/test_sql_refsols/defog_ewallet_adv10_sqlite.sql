@@ -6,7 +6,7 @@ WITH _s1 AS (
   WHERE
     sender_type = 0
   GROUP BY
-    sender_id
+    2
 )
 SELECT
   users.uid AS user_id,

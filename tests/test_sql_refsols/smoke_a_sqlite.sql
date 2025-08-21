@@ -138,7 +138,9 @@ SELECT
   CASE
     WHEN LENGTH('o') = 0
     THEN 0
-    ELSE CAST(CAST(LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', '')) AS REAL) / LENGTH('o') AS INTEGER)
+    ELSE CAST(CAST((
+      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+    ) AS REAL) / LENGTH('o') AS INTEGER)
   END + (
     CAST((
       INSTR(p_name, 'o') - 1
@@ -147,5 +149,5 @@ SELECT
   ROUND(POWER(MAX(p_size, 10), 0.5), 3) AS i
 FROM tpch.part
 ORDER BY
-  p_partkey
+  1
 LIMIT 5

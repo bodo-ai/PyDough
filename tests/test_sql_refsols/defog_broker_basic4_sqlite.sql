@@ -10,8 +10,8 @@ WITH _t2 AS (
   JOIN main.sbcustomer AS sbcustomer
     ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
-    sbtransaction.sbtxcustid,
-    sbtransaction.sbtxtickerid
+    sbtransaction.sbtxtickerid,
+    4
 ), _t1 AS (
   SELECT
     SUM(num_transactions) AS num_transactions,
@@ -19,8 +19,8 @@ WITH _t2 AS (
     sbtickertype
   FROM _t2
   GROUP BY
-    sbtickertype,
-    sbtxcustid
+    sbtxcustid,
+    3
 )
 SELECT
   sbcuststate AS state,
@@ -28,8 +28,8 @@ SELECT
   SUM(num_transactions) AS num_transactions
 FROM _t1
 GROUP BY
-  sbcuststate,
-  sbtickertype
+  1,
+  2
 ORDER BY
-  num_transactions DESC
+  3 DESC
 LIMIT 5

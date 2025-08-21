@@ -14,4 +14,4 @@ WHERE
   sbtransaction.sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
   AND sbtransaction.sbtxdatetime >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -8, 'WEEK')
 GROUP BY
-  DATE_TRUNC('WEEK', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
+  1

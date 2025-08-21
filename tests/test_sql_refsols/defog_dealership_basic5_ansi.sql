@@ -7,7 +7,7 @@ WITH _s1 AS (
   WHERE
     DATEDIFF(CURRENT_TIMESTAMP(), CAST(sale_date AS DATETIME), DAY) <= 30
   GROUP BY
-    salesperson_id
+    3
 )
 SELECT
   salespersons.first_name,
@@ -18,5 +18,5 @@ FROM main.salespersons AS salespersons
 JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  _s1.n_rows_1 DESC
+  3 DESC
 LIMIT 5

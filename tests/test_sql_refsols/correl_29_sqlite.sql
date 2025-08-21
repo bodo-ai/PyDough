@@ -9,7 +9,7 @@ WITH _t3 AS (
     c_nationkey
   FROM _t3
   GROUP BY
-    c_nationkey
+    2
 ), _t1 AS (
   SELECT
     MAX(nation.n_name) AS anything_n_name,
@@ -22,7 +22,7 @@ WITH _t3 AS (
   JOIN _t3 AS _s3
     ON _s1.avg_cust_acctbal < _s3.c_acctbal AND _s3.c_nationkey = nation.n_nationkey
   GROUP BY
-    nation.n_nationkey
+    4
 ), _s5 AS (
   SELECT
     MAX(c_acctbal) AS max_c_acctbal,
@@ -30,7 +30,7 @@ WITH _t3 AS (
     c_nationkey
   FROM _t3
   GROUP BY
-    c_nationkey
+    3
 ), _t6 AS (
   SELECT
     s_acctbal,
@@ -42,7 +42,7 @@ WITH _t3 AS (
     s_nationkey
   FROM _t6
   GROUP BY
-    s_nationkey
+    2
 ), _s11 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -53,7 +53,7 @@ WITH _t3 AS (
   JOIN _t6 AS _s9
     ON _s7.avg_supp_acctbal < _s9.s_acctbal AND _s9.s_nationkey = nation.n_nationkey
   GROUP BY
-    nation.n_nationkey
+    2
 )
 SELECT
   _t1.anything_n_regionkey AS region_key,
@@ -70,5 +70,5 @@ JOIN _s11 AS _s11
 WHERE
   _t1.anything_n_regionkey IN (1, 3)
 ORDER BY
-  _t1.anything_n_regionkey,
-  _t1.anything_n_name
+  1,
+  2

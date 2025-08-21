@@ -8,4 +8,4 @@ JOIN main.sbdailyprice AS sbdailyprice
   ) AS INTEGER) <= 7
   AND sbdailyprice.sbdptickerid = sbticker.sbtickerid
 GROUP BY
-  sbticker.sbtickertype
+  1

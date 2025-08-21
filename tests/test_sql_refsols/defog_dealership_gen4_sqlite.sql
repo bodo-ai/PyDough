@@ -18,15 +18,7 @@ WITH _t2 AS (
     CAST(STRFTIME('%Y', sales.sale_date) AS INTEGER) = 2023
   GROUP BY
     sales.customer_id,
-    DATE(
-      sales.sale_date,
-      'start of month',
-      '-' || CAST((
-        (
-          CAST(STRFTIME('%m', DATETIME(sales.sale_date)) AS INTEGER) - 1
-        ) % 3
-      ) AS TEXT) || ' months'
-    )
+    3
 ), _t1 AS (
   SELECT
     SUM(sum_sale_price) AS sum_sum_sale_price,
@@ -34,8 +26,8 @@ WITH _t2 AS (
     state
   FROM _t2
   GROUP BY
-    quarter,
-    state
+    2,
+    3
 )
 SELECT
   quarter,
@@ -45,5 +37,5 @@ FROM _t1
 WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
-  quarter,
-  state
+  1,
+  2

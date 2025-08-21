@@ -15,8 +15,8 @@ WITH _s0 AS (
     ON _s2.sbtickerexchange = sbticker.sbtickerexchange
     AND sbticker.sbtickerid = sbtransaction.sbtxtickerid
   GROUP BY
-    sbcustomer.sbcustid,
-    _s2.sbtickerexchange
+    2,
+    3
 )
 SELECT
   sbcustomer.sbcuststate AS state,
@@ -28,8 +28,8 @@ LEFT JOIN _s9 AS _s9
   ON _s0.sbtickerexchange = _s9.sbtickerexchange
   AND _s9.sbcustid = sbcustomer.sbcustid
 GROUP BY
-  sbcustomer.sbcuststate,
-  _s0.sbtickerexchange
+  1,
+  2
 ORDER BY
-  sbcustomer.sbcuststate,
-  _s0.sbtickerexchange
+  1,
+  2

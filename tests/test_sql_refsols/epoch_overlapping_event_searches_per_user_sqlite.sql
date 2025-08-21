@@ -23,7 +23,7 @@ WITH _s0 AS (
     ON _s0.user_name <> _s7.user_name AND _s7.user_id = searches_2.search_user_id
   GROUP BY
     searches.search_id,
-    _s0.user_id
+    3
 )
 SELECT
   MAX(anything_user_name) AS user_name,
@@ -34,6 +34,6 @@ WHERE
 GROUP BY
   user_id
 ORDER BY
-  n_searches DESC,
-  MAX(anything_user_name)
+  2 DESC,
+  1
 LIMIT 4

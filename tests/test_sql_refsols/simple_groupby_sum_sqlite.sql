@@ -3,4 +3,4 @@ SELECT
   b
 FROM table
 GROUP BY
-  b
+  2

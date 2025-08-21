@@ -8,6 +8,7 @@ The Transform Bindings module provides the following notable APIs:
 
 - `BaseTransformBindings`: The base class for converting function calls from relational expressions into the SQLGlot AST, used for generic ANSI SQL.
 - `SQLiteTransformBindings`: Subclass of `BaseTransformBindings` for the SQLite dialect, providing SQLite-specific implementations.
+- `MySQLTransformBindings`: Subclass of `BaseTransformBindings` for the MySQL dialect, providing MySQL-specific implementations.
 - `bindings_from_dialect`: Factory function that returns the appropriate binding instance for a specific database dialect.
 
 ## Core Components
@@ -26,6 +27,7 @@ The `BaseTransformBindings` class provides the foundation for transforming PyDou
 The module includes specific binding implementations for different SQL dialects:
 
 - `SQLiteTransformBindings`: Provides SQLite-specific implementations, handling quirks and features unique to SQLite.
+- `MySQLTransformBindings`: Provides MySQL-specific implementations, handling quirks and features unique to MySQL.
 
 These dialect-specific bindings override the base implementations as needed to provide correct SQL generation for each supported database system.
 

@@ -5,11 +5,14 @@ the query on the database.
 """
 
 import pandas as pd
+import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import Alias, Column, Select, Table, With
+from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
@@ -20,6 +23,7 @@ from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
+from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 from sqlglot.optimizer.simplify import simplify
 
 import pydough
@@ -158,10 +162,124 @@ def apply_sqlglot_optimizer(
     # match the alias in the relational tree.
     fix_column_case(glot_expr, relational.ordered_columns)
 
+    # Replaces any grouping or ordering keys that point to a clause in the
+    # SELECT with an index (e.g. ORDER BY 1, GROUP BY 1, 2)
+    replace_keys_with_indices(glot_expr)
+
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
 
     return glot_expr
+
+
+def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
+    """
+    Runs a transformation postprocessing pass on the SQLGlot AST to make the
+    following changes:
+    - Replace ORDER BY keys that are in the select clause with indices, and if
+      they have a COLLATE, move the COLLATE from the ORDER BY key to the
+      operation in the select clause.
+    - Replace GROUP BY keys that are in the select clause with indices, unless
+      the key appears multiple times in the select clause (e.g. as a top level
+      expression and as a subexpression in other scalar expressions).
+    - If any window function ordering key expressions have become literals,
+      delete and/or replace them with '1'
+    """
+    assert isinstance(glot_expr, Select)
+
+    for scope in traverse_scope(glot_expr):
+        expression = scope.expression
+
+        # Obtain all the raw expressions in the SELECT clause, without aliases.
+        expressions: list[SQLGlotExpression] = [
+            expr.this if isinstance(expr, Alias) else expr
+            for expr in expression.expressions
+        ]
+        expr_idx: int
+
+        # Replace ORDER BY keys that are in the select clause with indices. This
+        # includes cases where the entire ORDER BY key is in the select clause,
+        # or a subexpression inside COLLATE is. If it is a collate, change the
+        # original expression to include the collate instead.
+        if expression.args.get("order") is not None:
+            order_list: list[SQLGlotExpression] = expression.args["order"].expressions
+            aliases: list[str] = []
+            for expr in expression.expressions:
+                if isinstance(expr, Alias):
+                    aliases.append(expr.alias.lower())
+                elif isinstance(expr, Column):
+                    aliases.append(expr.name.lower())
+            for idx, order_expr in enumerate(order_list):
+                if order_expr.this in expressions or (
+                    isinstance(order_expr.this, Column)
+                    and order_expr.this.name.lower() in aliases
+                ):
+                    if order_expr.this in expressions:
+                        expr_idx = expressions.index(order_expr.this)
+                    else:
+                        expr_idx = aliases.index(order_expr.this.name.lower())
+                    order_list[idx].set(
+                        "this",
+                        sqlglot_expressions.convert(expr_idx + 1),
+                    )
+                elif isinstance(order_expr.this, SQLGlotCollate) and (
+                    order_expr.this.this in expressions
+                    or (
+                        isinstance(order_expr.this.this, Column)
+                        and order_expr.this.this.name.lower() in aliases
+                    )
+                ):
+                    collate: SQLGlotExpression = order_expr.this
+                    if order_expr.this.this in expressions:
+                        expr_idx = expressions.index(collate.this)
+                    else:
+                        expr_idx = aliases.index(collate.this.this.name.lower())
+                    # Remove the COLLATE from the order expression, but change
+                    # the original expression to include the collate.
+                    order_list[idx].set(
+                        "this",
+                        sqlglot_expressions.convert(expr_idx + 1),
+                    )
+                    if isinstance(expression.expressions[expr_idx], Alias):
+                        expression.expressions[expr_idx].set("this", collate)
+                    else:
+                        expression.expressions[expr_idx] = collate
+
+        # Replace GROUP BY keys that are in the select clause with indices.
+        if expression.args.get("group") is not None:
+            keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
+            for idx, key_expr in enumerate(keys_list):
+                # Only replace with the index if the key expression appears in
+                # the select list exactly once. Otherwise, replace with the
+                # alias.
+                if key_expr in expressions:
+                    expr_idx = expressions.index(key_expr)
+                    n_match: int = 0
+                    for select_elem in expressions:
+                        if not select_elem.find(sqlglot_expressions.AggFunc):
+                            for exp in walk_in_scope(select_elem):
+                                if exp == key_expr:
+                                    n_match += 1
+                    if n_match <= 1:
+                        keys_list[idx] = sqlglot_expressions.convert(expr_idx + 1)
+                    elif isinstance(expression.expressions[expr_idx], Alias):
+                        keys_list[idx] = sqlglot_expressions.Identifier(
+                            this=expression.expressions[expr_idx].alias, quoted=False
+                        )
+            keys_list.sort(key=repr)
+
+    # Now iterate through all window functions and replace any ordering keys
+    # that are literals with '1'.
+    for window_expr in glot_expr.find_all(sqlglot_expressions.Window):
+        if window_expr.args.get("order") is not None:
+            exprs: list[SQLGlotExpression] = window_expr.args.get("order").expressions
+            original_length: int = len(exprs)
+            for idx in range(len(exprs) - 1, -1, -1):
+                order_expr = exprs[idx]
+                if isinstance(order_expr.this, sqlglot_expressions.Literal):
+                    exprs.pop(idx)
+            if len(exprs) == 0 and original_length > 0:
+                exprs.append(sqlglot_expressions.convert("1"))
 
 
 def fix_column_case(
@@ -275,6 +393,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
         return SQLGlotDialect()
     elif dialect == DatabaseDialect.SQLITE:
         return SQLiteDialect()
+    elif dialect == DatabaseDialect.MYSQL:
+        return MySQLDialect()
     else:
         raise NotImplementedError(f"Unsupported dialect: {dialect}")
 

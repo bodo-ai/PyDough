@@ -25,6 +25,6 @@ WHERE
   er_end_year > CAST(STRFTIME('%Y', ev_dt) AS INTEGER)
   AND er_start_year <= CAST(STRFTIME('%Y', ev_dt) AS INTEGER)
 GROUP BY
-  er_name
+  1
 ORDER BY
   MAX(er_start_year)

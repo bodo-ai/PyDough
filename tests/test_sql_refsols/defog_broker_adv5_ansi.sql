@@ -23,21 +23,8 @@ WITH _t1 AS (
   JOIN main.sbticker AS sbticker
     ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbdailyprice.sbdpdate AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(
-          CONCAT('00', EXTRACT(MONTH FROM CAST(sbdailyprice.sbdpdate AS DATETIME))),
-          (
-            2 * -1
-          )
-        )
-      END
-    ),
-    sbdailyprice.sbdptickerid
+    sbdailyprice.sbdptickerid,
+    6
 ), _t0 AS (
   SELECT
     MAX(max_high) AS max_high,
@@ -48,8 +35,8 @@ WITH _t1 AS (
     sbtickersymbol
   FROM _t1
   GROUP BY
-    month,
-    sbtickersymbol
+    5,
+    6
 )
 SELECT
   sbtickersymbol AS symbol,

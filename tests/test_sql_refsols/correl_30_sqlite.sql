@@ -9,7 +9,7 @@ WITH _t2 AS (
     c_nationkey
   FROM _t2
   GROUP BY
-    c_nationkey
+    2
 ), _t3 AS (
   SELECT
     r_name,
@@ -28,7 +28,7 @@ WITH _t2 AS (
     s_nationkey
   FROM _t5
   GROUP BY
-    s_nationkey
+    2
 ), _s13 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -41,7 +41,7 @@ WITH _t2 AS (
   JOIN _t5 AS _s11
     ON _s11.s_acctbal > _s7.avg_supp_acctbal AND _s11.s_nationkey = nation.n_nationkey
   GROUP BY
-    nation.n_nationkey
+    2
 )
 SELECT
   MAX(LOWER(_t3.r_name)) AS region_name,
@@ -61,5 +61,5 @@ GROUP BY
   nation.n_nationkey,
   n_nationkey
 ORDER BY
-  MAX(LOWER(_t3.r_name)),
-  MAX(nation.n_name)
+  1,
+  2

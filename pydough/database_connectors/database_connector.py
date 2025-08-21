@@ -81,6 +81,7 @@ class DatabaseDialect(Enum):
 
     ANSI = "ansi"
     SQLITE = "sqlite"
+    MYSQL = "mysql"
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":
@@ -92,10 +93,9 @@ class DatabaseDialect(Enum):
         Returns:
             The dialect enum.
         """
-        if dialect == "ansi":
-            return DatabaseDialect.ANSI
-        elif dialect == "sqlite":
-            return DatabaseDialect.SQLITE
+        dialect = dialect.upper()
+        if dialect in DatabaseDialect.__members__:
+            return DatabaseDialect.__members__[dialect]
         else:
             raise PyDoughSessionException(f"Unsupported dialect: {dialect}")
 

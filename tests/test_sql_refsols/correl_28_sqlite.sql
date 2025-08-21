@@ -31,4 +31,4 @@ FROM _s10 AS _s10
 JOIN tpch.region AS region
   ON _s10.anything_n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
 ORDER BY
-  _s10.anything_n_name
+  1

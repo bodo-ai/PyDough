@@ -29,4 +29,4 @@ WHERE
   AND CAST(STRFTIME('%m', sbtransaction.sbtxdatetime) AS INTEGER) = 4
   AND sbtransaction.sbtxstatus = 'success'
 ORDER BY
-  sbtransaction.sbtxdatetime
+  1

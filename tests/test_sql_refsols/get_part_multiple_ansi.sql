@@ -840,4 +840,4 @@ FROM main.sbcustomer
 WHERE
   CAST(SUBSTRING(sbcustid, 2) AS BIGINT) <= 4
 ORDER BY
-  CAST(SUBSTRING(sbcustid, 2) AS BIGINT)
+  1

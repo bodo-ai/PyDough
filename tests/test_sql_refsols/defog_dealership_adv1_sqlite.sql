@@ -60,10 +60,4 @@ WHERE
     )
   ) AS INTEGER) AS REAL) / 7 AS INTEGER) >= 1
 GROUP BY
-  DATE(
-    payments_received.payment_date,
-    '-' || CAST((
-      CAST(STRFTIME('%w', DATETIME(payments_received.payment_date)) AS INTEGER) + 6
-    ) % 7 AS TEXT) || ' days',
-    'start of day'
-  )
+  1
