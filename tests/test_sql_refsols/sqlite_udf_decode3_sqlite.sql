@@ -13,5 +13,5 @@ FROM tpch.orders
 WHERE
   o_clerk = 'Clerk#000000951'
 ORDER BY
-  o_orderkey
+  1
 LIMIT 10

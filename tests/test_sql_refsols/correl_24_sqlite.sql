@@ -12,8 +12,8 @@ WITH _t3 AS (
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year
   FROM _t3
   GROUP BY
-    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER),
-    CAST(STRFTIME('%m', o_orderdate) AS INTEGER)
+    2,
+    3
 ), _s0 AS (
   SELECT
     LAG(avg_o_totalprice, 1) OVER (ORDER BY year, month) AS prev_month_avg_price,
@@ -47,8 +47,8 @@ JOIN _t3 AS _t4
   )
   AND _s0.year = CAST(STRFTIME('%Y', _t4.o_orderdate) AS INTEGER)
 GROUP BY
-  _s0.month,
-  _s0.year
+  1,
+  2
 ORDER BY
-  year,
-  month
+  1,
+  2

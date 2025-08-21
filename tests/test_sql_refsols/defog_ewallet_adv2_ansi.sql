@@ -13,4 +13,4 @@ WHERE
   notifications.created_at < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
   AND notifications.created_at >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -3, 'WEEK')
 GROUP BY
-  DATE_TRUNC('WEEK', CAST(notifications.created_at AS TIMESTAMP))
+  1

@@ -31,4 +31,4 @@ JOIN tpch.supplier AS supplier
 JOIN tpch.nation AS nation_2
   ON nation_2.n_nationkey = supplier.s_nationkey
 GROUP BY
-  CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER)
+  1

@@ -11,7 +11,7 @@ WITH _s3 AS (
     ) = 0
     AND coupons.merchant_id = merchants.mid
   GROUP BY
-    coupons.merchant_id
+    2
 )
 SELECT
   merchants.mid AS merchant_id,
@@ -21,5 +21,5 @@ FROM main.merchants AS merchants
 LEFT JOIN _s3 AS _s3
   ON _s3.merchant_id = merchants.mid
 ORDER BY
-  COALESCE(_s3.n_rows, 0) DESC
+  3 DESC
 LIMIT 1

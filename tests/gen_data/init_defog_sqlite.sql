@@ -218,11 +218,11 @@ INSERT INTO sbTransaction (sbTxId, sbTxCustId, sbTxTickerId, sbTxDateTime, sbTxT
 ('TX048', 'C012', 'T004', '2023-01-30 13:15:00', 'sell', 40, 190.00, 7600.00, 'USD', 38.00, 10.00, 'KP048', '20230130 13:15:00', 'success'),
 ('TX049', 'C013', 'T005', '2023-02-28 16:00:00', 'buy', 2, 2550.00, 5100.00, 'USD', 25.50, 15.00, 'KP049', '20230228 16:00:00', 'success'),
 ('TX050', 'C014', 'T006', '2023-03-30 09:45:00', 'sell', 30, 210.00, 6300.00, 'USD', 31.50, 10.00, 'KP050', '20230331 09:45:00', 'success'),
-('TX051', 'C015', 'T001', DATE('now', 'start of month', '5 months', '1 day'), 'buy', 50, 150.00, 7500.00, 'USD', 37.50, 10.00, 'KP051', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-5 months', '+1 day')), 'success'),
-('TX052', 'C016', 'T002', DATE('now', 'start of month', '4 months', '2 days'), 'sell', 40, 280.00, 11200.00, 'USD', 56.00, 10.00, 'KP052', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-4 months', '+2 days')), 'success'),
-('TX053', 'C017', 'T003', DATE('now', 'start of month', '3 months', '3 days'), 'buy', 15, 3200.00, 48000.00, 'USD', 240.00, 20.00, 'KP053', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-3 months', '+3 days')), 'success'),
-('TX054', 'C018', 'T004', DATE('now', 'start of month', '2 months', '4 days'), 'sell', 30, 180.00, 5400.00, 'USD', 27.00, 5.00, 'KP054', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-2 months', '+4 days')), 'success'),
-('TX055', 'C019', 'T005', DATE('now', 'start of month', '1 month', '5 days'), 'buy', 10, 2500.00, 25000.00, 'USD', 125.00, 15.00, 'KP055', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-1 months', '+5 days')), 'success'),
+('TX051', 'C015', 'T001', DATE('now', 'start of month', '-5 months', '1 day'), 'buy', 50, 150.00, 7500.00, 'USD', 37.50, 10.00, 'KP051', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-5 months', '+1 day')), 'success'),
+('TX052', 'C016', 'T002', DATE('now', 'start of month', '-4 months', '2 days'), 'sell', 40, 280.00, 11200.00, 'USD', 56.00, 10.00, 'KP052', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-4 months', '+2 days')), 'success'),
+('TX053', 'C017', 'T003', DATE('now', 'start of month', '-3 months', '3 days'), 'buy', 15, 3200.00, 48000.00, 'USD', 240.00, 20.00, 'KP053', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-3 months', '+3 days')), 'success'),
+('TX054', 'C018', 'T004', DATE('now', 'start of month', '-2 months', '4 days'), 'sell', 30, 180.00, 5400.00, 'USD', 27.00, 5.00, 'KP054', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-2 months', '+4 days')), 'success'),
+('TX055', 'C019', 'T005', DATE('now', 'start of month', '-1 month', '5 days'), 'buy', 10, 2500.00, 25000.00, 'USD', 125.00, 15.00, 'KP055', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '-1 months', '+5 days')), 'success'),
 ('TX056', 'C002', 'T006', DATE('now', 'start of month', '1 day'), 'sell', 20, 200.00, 4000.00, 'USD', 20.00, 10.00, 'KP056', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', 'start of month', '+1 day')), 'success');
 
 

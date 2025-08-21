@@ -8,7 +8,7 @@ WITH _s0 AS (
     p_brand
   FROM tpch.part
   GROUP BY
-    p_brand
+    2
 ), _t0 AS (
   SELECT DISTINCT
     _s1.p_brand
@@ -24,4 +24,4 @@ SELECT
   p_brand AS brand
 FROM _t0
 ORDER BY
-  p_brand
+  1

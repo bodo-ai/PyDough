@@ -9,4 +9,4 @@ SELECT
 FROM main.countries AS countries
 CROSS JOIN _s1 AS _s1
 ORDER BY
-  countries.co_name
+  1

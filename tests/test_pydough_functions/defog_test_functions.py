@@ -687,7 +687,7 @@ def impl_defog_dealership_adv2():
     return (
         salespeople.WHERE(HAS(selected_sales))
         .CALCULATE(_id, first_name, last_name, num_sales=COUNT(selected_sales))
-        .ORDER_BY(num_sales.DESC())
+        .ORDER_BY(num_sales.DESC(), _id.ASC())
     )
 
 

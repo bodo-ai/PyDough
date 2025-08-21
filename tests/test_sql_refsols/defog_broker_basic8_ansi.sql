@@ -3,7 +3,7 @@ SELECT
   COUNT(*) AS num_customers
 FROM main.sbcustomer
 GROUP BY
-  sbcustcountry
+  1
 ORDER BY
-  num_customers DESC
+  2 DESC
 LIMIT 5

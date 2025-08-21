@@ -10,8 +10,8 @@ JOIN main.devices AS devices
 WHERE
   CAST(STRFTIME('%Y', calendar.ca_dt) AS INTEGER) = 2024
 GROUP BY
-  calendar.ca_dt
+  1
 ORDER BY
-  n_purchases DESC,
-  calendar.ca_dt
+  2 DESC,
+  1
 LIMIT 1

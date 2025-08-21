@@ -5,8 +5,8 @@ WITH _s3 AS (
     c_nationkey
   FROM tpch.customer
   GROUP BY
-    SUBSTRING(c_comment, 1, 1),
-    c_nationkey
+    1,
+    3
 )
 SELECT
   nation.n_name AS name,
@@ -20,4 +20,4 @@ LEFT JOIN _s3 AS _s3
 WHERE
   NOT region.r_name LIKE 'A%'
 ORDER BY
-  nation.n_name
+  1

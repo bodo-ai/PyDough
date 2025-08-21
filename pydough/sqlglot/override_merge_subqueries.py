@@ -150,6 +150,40 @@ def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope) -> boo
         )
     ):
         result = True
+    # Do not allow merging the inner scope into the outer if the inner contains a grouping
+    # key used by the outer scope besides being passed-through.
+    if inner_scope.expression.find(exp.Group):
+        # Identify all of the expressions in the inner scope, and the aliases they correspond to.
+        aliases: list[str] = []
+        exprs: list[exp.Expression] = []
+        for expr in inner_scope.expression.expressions:
+            assert isinstance(expr, exp.Alias)
+            aliases.append(expr.alias)
+            exprs.append(expr.this)
+        # Identify which columns in the inner select list are amongst the grouping keys
+        key_column_names: list[str] = []
+        for key_expr in inner_scope.expression.find(exp.Group).expressions:
+            if isinstance(key_expr, exp.Identifier) and key_expr.this in aliases:
+                key_column_names.append(key_expr.this)
+            elif key_expr in exprs:
+                key_column_names.append(aliases[exprs.index(key_expr)])
+        # Search the columns of the outer select list. If any of them are nested
+        # expressions that contain one of the key columns, do not allow a merge.
+        for outer_expr in outer_scope.expression.expressions:
+            assert isinstance(outer_expr, exp.Alias)
+            if isinstance(outer_expr.this, exp.Column):
+                continue
+            contains_match: bool = False
+            for sub_expr in outer_expr.this.find_all(exp.Column):
+                if (
+                    isinstance(sub_expr, exp.Column)
+                    and sub_expr.alias_or_name in key_column_names
+                ):
+                    contains_match = True
+                    break
+            if contains_match:
+                result = True
+                break
     outer_scope.expression.args["with"] = with_ctx
     return result
 
@@ -167,6 +201,7 @@ def _mergeable(
     # PYDOUGH CHANGE: avoid merging CTEs when it would break a left join.
     if isinstance(from_or_join, exp.Join) and from_or_join.side not in ("INNER", ""):
         return False
+
     # PYDOUGH CHANGE: avoid merging CTEs when the inner scope has a window
     # expression and the outer scope has a join.
     if (
@@ -251,9 +286,10 @@ def _mergeable(
         and not any(inner_select.args.get(arg) for arg in UNMERGABLE_ARGS)
         and inner_select.args.get("from") is not None
         and not outer_scope.pivots
-        # PYDOUGH CHANGE: allow merging when the inner select has an
-        # aggregation, as long as the outer select does not.
         and not any(e.find(exp.Select, exp.Explode) for e in inner_select.expressions)
+        # PYDOUGH CHANGE: allow merging when the inner select has an
+        # aggregation, as long as the outer select does not, and so long as the
+        # grouping keys are not used in the outer select besides pass-through.
         and not invalid_aggregate_convolution(inner_scope, outer_scope)
         and not (leave_tables_isolated and len(outer_scope.selected_sources) > 1)
         and not (

@@ -5,7 +5,7 @@ WITH _s1 AS (
     o_custkey
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    3
 ), _t2 AS (
   SELECT
     MIN(customer.c_acctbal) OVER () AS min_bal,

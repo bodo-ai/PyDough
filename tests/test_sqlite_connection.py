@@ -90,7 +90,7 @@ def test_unsupported_database() -> None:
     """
     Test that we error if an unsupported database is provided.
 
-    TODO: Remove when we support mysql or move to a more generic file.
+    TODO: Remove when we support duckdb or move to a more generic file.
     """
     with pytest.raises(ValueError):
-        load_database_context("mysql", database=":memory:")
+        load_database_context("duckdb", database=":memory:")

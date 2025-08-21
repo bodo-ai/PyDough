@@ -6,8 +6,8 @@ FROM main.sbtransaction
 WHERE
   sbtxdatetime <= '2023-03-31' AND sbtxdatetime >= '2023-01-01'
 GROUP BY
-  sbtxtype
+  1
 ORDER BY
-  num_customers DESC,
-  sbtxtype
+  2 DESC,
+  1
 LIMIT 3

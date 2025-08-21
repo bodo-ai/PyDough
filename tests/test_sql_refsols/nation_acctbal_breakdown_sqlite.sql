@@ -52,7 +52,7 @@ WITH _t2 AS (
     c_nationkey
   FROM _t2
   GROUP BY
-    c_nationkey
+    6
 )
 SELECT
   nation.n_name AS nation_name,
@@ -67,4 +67,4 @@ JOIN tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.c_nationkey = nation.n_nationkey
 ORDER BY
-  nation.n_name
+  1

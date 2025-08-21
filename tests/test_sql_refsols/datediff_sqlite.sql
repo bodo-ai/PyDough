@@ -28,5 +28,5 @@ FROM main.sbtransaction
 WHERE
   CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER) < 2025
 ORDER BY
-  CAST(STRFTIME('%Y', '2025-05-02 11:00:00') AS INTEGER) - CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER)
+  4
 LIMIT 30

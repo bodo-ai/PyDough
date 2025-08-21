@@ -5,4 +5,4 @@ FROM main.sbcustomer
 WHERE
   sbcustjoindate >= '2023-01-01'
 GROUP BY
-  sbcustcountry
+  1

@@ -9,7 +9,7 @@ WITH _t0 AS (
     ON times.t_end_hour > EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
     AND times.t_start_hour <= EXTRACT(HOUR FROM CAST(searches.search_ts AS DATETIME))
   GROUP BY
-    times.t_name
+    4
 )
 SELECT
   t_name AS tod,
