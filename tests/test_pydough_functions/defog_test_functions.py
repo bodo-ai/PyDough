@@ -92,6 +92,11 @@ __all__ = [
 
 import datetime
 
+from pydough.pydough_operators.expression_operators.registered_expression_operators import (
+    AVG,
+    HAS,
+)
+
 # ruff: noqa
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
@@ -1749,7 +1754,8 @@ def impl_defog_ewallet_gen5():
 
 def impl_defog_dermtreatment_basic1():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     What are the top 3 doctor specialties by total drug amount prescribed for
     treatments started in the past 6 calendar months? Return the specialty,
@@ -1775,7 +1781,8 @@ def impl_defog_dermtreatment_basic1():
 
 def impl_defog_dermtreatment_basic2():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     For treatments that ended in the year 2022 (from Jan 1st to Dec 31st inclusive),
     what is the average PASI score at day 100 and number of distinct patients
@@ -1805,7 +1812,8 @@ def impl_defog_dermtreatment_basic2():
 
 def impl_defog_dermtreatment_basic3():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     What are the top 5 drugs by number of treatments and average drug amount per
     treatment? Return the drug name, number of treatments, and average drug amount.
@@ -1827,7 +1835,8 @@ def impl_defog_dermtreatment_basic3():
 
 def impl_defog_dermtreatment_basic4():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     What are the top 3 diagnoses by maximum itch VAS score at day 100 and number
     of distinct patients? Return the diagnosis name, number of patients, and
@@ -1859,7 +1868,8 @@ def impl_defog_dermtreatment_basic4():
 
 def impl_defog_dermtreatment_basic5():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     Return the distinct list of doctor IDs, first names and last names that have
     prescribed treatments.
@@ -1872,7 +1882,8 @@ def impl_defog_dermtreatment_basic5():
 
 def impl_defog_dermtreatment_basic6():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     Return the distinct list of patient IDs, first names and last names that have
     outcome assessments.
@@ -1884,7 +1895,8 @@ def impl_defog_dermtreatment_basic6():
 
 def impl_defog_dermtreatment_basic7():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     What are the top 3 insurance types by average patient height in cm? Return
     the insurance type, average height and average weight.
@@ -1903,7 +1915,8 @@ def impl_defog_dermtreatment_basic7():
 
 def impl_defog_dermtreatment_basic8():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     What are the top 2 specialties by number of doctors? Return the specialty
     and number of doctors.
@@ -1918,7 +1931,8 @@ def impl_defog_dermtreatment_basic8():
 
 def impl_defog_dermtreatment_basic9():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     Return the patient IDs, first names and last names of patients who have not
     received any treatments.
@@ -1931,7 +1945,8 @@ def impl_defog_dermtreatment_basic9():
 
 def impl_defog_dermtreatment_basic10():
     """
-    PYDough implementation of the following question for the Derm Treatment graph:
+    PyDough implementation of the following question for the DermTreatment
+    graph:
 
     Return the drug IDs and names of drugs that have not been used in any
     treatments.
@@ -1939,4 +1954,390 @@ def impl_defog_dermtreatment_basic10():
 
     return drugs.WHERE(HASNOT(treatments_used_in) == 1).CALCULATE(
         drug_id=drug_id, drug_name=drug_name
+    )
+
+
+def impl_defog_dermtreatment_adv1():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Which states do doctors who have prescribed biologic drugs reside in?
+    Return the distinct states.
+    """
+
+    doctors_biologic_prescribed = doctors.prescribed_treatments.WHERE(
+        drug.drug_type == "biologic"
+    ).CALCULATE(state=doctor.state)
+
+    return doctors_biologic_prescribed.PARTITION(name="states", by=state).CALCULATE(
+        state
+    )
+
+
+def impl_defog_dermtreatment_adv2():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the average weight in kg of patients treated with the drug named
+    'Drugalin'? Return the average weight.
+    """
+
+    # patients_druglin_treatment = patients.WHERE(HAS(treatments_received.WHERE(drug.drug_name == 'Drugalin')))
+
+    # return patients_druglin_treatment
+
+    # return DermTreatment.CALCULATE(
+    #     avg_weight=AVG(drugs.WHERE(LOWER(drug_name) == 'drugalin').treatments_used_in.patient.weight)
+    # )
+
+    # return DermTreatment.CALCULATE(
+    #     avg_weight=AVG(drugs.WHERE(LOWER(drug_name) == 'drugalin').treatments_used_in.patient.weight)
+    # )
+    return DermTreatment.CALCULATE(avg_weight=MAX(patients.CALCULATE(weight)))
+
+
+def impl_defog_dermtreatment_adv3():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    I want the adverse events that have been reported for treatments involving
+    topical drugs. Give me the description, treatment id, drug id and name.
+    """
+
+    return adverse_events.WHERE(treatment.drug.drug_type == "topical").CALCULATE(
+        description=description,
+        treatment_id=treatment_id,
+        drug_id=treatment.drug.drug_id,
+        drug_name=treatment.drug.drug_name,
+    )
+
+
+def impl_defog_dermtreatment_adv4():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many patients have been diagnosed with 'Psoriasis vulgaris' and treated
+    with a biologic drug? Return the distinct count of patients.
+    """
+
+    return DermTreatment.CALCULATE(
+        patient_count=COUNT(
+            patients.WHERE(
+                HAS(
+                    treatments_received.WHERE(
+                        (LOWER(diagnosis.name) == LOWER("Psoriasis vulgaris"))
+                        & (LOWER(drug.drug_type) == LOWER("biologic"))
+                    )
+                )
+                == 1
+            )
+        )
+    )
+
+
+def impl_defog_dermtreatment_adv5():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the NPI for each year? Return the year, number of new patients,
+    and NPI
+    """
+
+    # Step 1: For each patient who has received treatment, find their first treatment year
+    patients_with_first_treatment = patients.WHERE(
+        HAS(treatments_received) == 1
+    ).CALCULATE(
+        patient_id=patient_id,
+        first_treatment_year=MIN(
+            treatments_received.CALCULATE(start_year=YEAR(start_date)).start_year
+        ),
+    )
+
+    # Step 2: Group by year to count new patients per year
+    new_patients_by_year = patients_with_first_treatment.PARTITION(
+        name="years", by=first_treatment_year
+    ).CALCULATE(year=first_treatment_year, number_of_new_patients=COUNT(patients))
+
+    # Step 3: Calculate NPI (increase compared to previous year)
+    return (
+        new_patients_by_year.CALCULATE(
+            year=year,
+            number_of_new_patients=number_of_new_patients,
+            npi=number_of_new_patients
+            - DEFAULT_TO(
+                PREV(number_of_new_patients, by=year.ASC()), number_of_new_patients
+            ),
+        )
+        .CALCULATE(
+            year=year,
+            number_of_new_patients=number_of_new_patients,
+            npi=IFF(npi == 0, None, npi),
+        )
+        .ORDER_BY(year.ASC())
+    )
+
+
+def impl_defog_dermtreatment_adv6():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return each doctor's doc_id, specialty, number of distinct drugs prescribed,
+    and SDR
+    """
+
+    # First, calculate the number of distinct drugs prescribed by each doctor
+    doctor_drug_counts = doctors.CALCULATE(
+        doc_id=doc_id,
+        specialty=specialty,
+        num_distinct_drugs=NDISTINCT(prescribed_treatments.drug_id),
+    )
+
+    # Then partition by specialty to enable ranking within each specialty
+    specialty_groups = doctor_drug_counts.PARTITION(name="specialties", by=specialty)
+
+    # Calculate the rank within each specialty
+    return specialty_groups.doctors.CALCULATE(
+        doc_id=doc_id,
+        specialty=specialty,
+        num_distinct_drugs=num_distinct_drugs,
+        SDRSDR=RANKING(by=num_distinct_drugs.DESC(), per="specialties"),
+    )
+
+
+def impl_defog_dermtreatment_adv7():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many treatments did the patient Alice have in the last 6 months, not
+    including the current month?
+    """
+
+    start_of_current_month = DATETIME("now", "start of month")
+    start_of_period = DATETIME("now", "start of month", "-6 months")
+
+    alice_treatments_in_period = patients.WHERE(
+        LOWER(first_name) == "alice"
+    ).treatments_received.WHERE(
+        (start_date >= start_of_period) & (start_date < start_of_current_month)
+    )
+
+    return DermTreatment.CALCULATE(num_treatments=COUNT(alice_treatments_in_period))
+
+
+def impl_defog_dermtreatment_adv8():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What are the PMPD and PMTC for each of the last 12 months, not including
+    the current month
+    """
+
+    # Get current date info to filter last 12 months
+    current_info = DermTreatment.CALCULATE(
+        current_date=DATETIME("now"),
+        current_month_start=DATETIME("now", "start of month"),
+    )
+
+    # Get treatments with month info
+    treatment_info = current_info.treatments.CALCULATE(
+        month=JOIN_STRINGS("-", YEAR(start_date), LPAD(MONTH(start_date), 2, "0")),
+        start_month=DATETIME(start_date, "start of month"),
+    ).WHERE(
+        (start_month < current_month_start)
+        & (start_month >= DATETIME(current_month_start, "-12 months"))
+    )
+
+    # Partition by month and calculate counts
+    return (
+        treatment_info.PARTITION(name="months", by=month)
+        .CALCULATE(
+            month=month,
+            PMPD=NDISTINCT(treatments.diagnosis_id),  # Distinct diagnoses per month
+            PMTC=COUNT(treatments),  # Total treatments per month
+        )
+        .ORDER_BY(month.DESC())
+    )
+
+
+def impl_defog_dermtreatment_adv9():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many distinct patients had treatments in each of the last 3 months, not
+    including the current month? Out of these, how many had treatments with
+    biologic drugs? Return the month, patient count, and biologic treatment count.
+    """
+
+    # Get treatments from the last 3 months (excluding current month)
+    # First, calculate the date range for the last 3 months
+    recent_treatments = treatments.WHERE(
+        (start_date >= DATETIME("now", "start of month", "-3 months"))
+        & (start_date < DATETIME("now", "start of month"))
+    ).CALCULATE(
+        patient_id=patient_id,
+        treatment_month=JOIN_STRINGS(
+            "-", YEAR(start_date), LPAD(MONTH(start_date), 2, "0")
+        ),
+        is_biologic=drug.drug_type == "biologic",
+    )
+
+    # Partition by month to group treatments
+    monthly_groups = recent_treatments.PARTITION(name="months", by=treatment_month)
+
+    # Calculate distinct patient counts for each month
+    return monthly_groups.CALCULATE(
+        month=treatment_month,
+        patient_count=NDISTINCT(treatments.patient_id),
+        biologic_treatment_count=NDISTINCT(treatments.WHERE(is_biologic).patient_id),
+    ).ORDER_BY(month.DESC())
+
+
+def impl_defog_dermtreatment_adv10():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Which drug had the highest number of adverse events reported within the same
+    month as the treatment start date (adverse event or treatment can be earlier
+    than the other)? Return the number of adverse events along with the drug's
+    id and name.
+    """
+
+    # First, let's get adverse events with their treatment start dates and drug information
+    adverse_events_info = adverse_events.CALCULATE(
+        drug_id=treatment.drug_id,
+        drug_name=treatment.drug.drug_name,
+        ae_month=MONTH(reported_date),
+        ae_year=YEAR(reported_date),
+        treatment_month=MONTH(treatment.start_date),
+        treatment_year=YEAR(treatment.start_date),
+    )
+
+    # Filter for adverse events that occurred in the same month as treatment start
+    same_month_events = adverse_events_info.WHERE(
+        (ae_month == treatment_month) & (ae_year == treatment_year)
+    )
+
+    # Group by drug and count adverse events
+    drug_ae_counts = same_month_events.PARTITION(
+        name="drug_groups", by=(drug_id, drug_name)
+    ).CALCULATE(
+        drug_id=drug_id, drug_name=drug_name, num_adverse_events=COUNT(adverse_events)
+    )
+
+    # Find the drug with the highest number of adverse events
+    return drug_ae_counts.TOP_K(1, by=num_adverse_events.DESC())
+
+
+def impl_defog_dermtreatment_adv11():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many patients have a Gmail or Yahoo email address?
+    """
+
+    return DermTreatment.CALCULATE(
+        num_patients_with_gmail_or_yahoo=COUNT(
+            patients.WHERE(
+                ENDSWITH(email, "@gmail.com") | ENDSWITH(email, "@yahoo.com")
+            )
+        )
+    )
+
+
+def impl_defog_dermtreatment_adv12():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the first name, last name and specialty of doctors whose first name
+    starts with 'J' or last name contains 'son', case-insensitive.
+    """
+
+    return doctors.WHERE(
+        STARTSWITH(LOWER(first_name), "j") | CONTAINS(LOWER(last_name), "son")
+    ).CALCULATE(first_name=first_name, last_name=last_name, specialty=specialty)
+
+
+def impl_defog_dermtreatment_adv13():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the PIC for female patients?
+    """
+
+    return DermTreatment.CALCULATE(
+        PIC_female=COUNT(
+            patients.WHERE((gender == "Female") & (insurance_type == "private"))
+        )
+    )
+
+
+def impl_defog_dermtreatment_adv14():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the CAW for male patients
+    """
+
+    return DermTreatment.CALCULATE(
+        CAW_male=AVG(patients.WHERE(LOWER(gender) == LOWER("male")).weight)
+    )
+
+
+def impl_defog_dermtreatment_adv15():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Calculate the average DDD for each drug. Return the drug name and average
+    DDD value.
+    """
+
+    return drugs.CALCULATE(
+        drug_name=drug_name,
+        avg_ddd=AVG(
+            treatments_used_in.WHERE(PRESENT(end_date))
+            .CALCULATE(
+                days_of_treatment=DATEDIFF("days", start_date, end_date),
+                ddd=total_drug_amount / DATEDIFF("days", start_date, end_date),
+            )
+            .ddd
+        ),
+    )
+
+
+def impl_defog_dermtreatment_adv16():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is the overall D7D100PIR across all treatments? Return the percentage
+    value.
+    """
+
+    # Filter outcomes to only include those with non-null PASI scores for both day 7 and day 100
+    valid_outcomes = outcomes.WHERE(
+        PRESENT(day7_pasi_score) & PRESENT(day100_pasi_score)
+    )
+
+    # Calculate the overall D7D100PIR
+    return DermTreatment.CALCULATE(
+        d7d100pir=(
+            AVG(valid_outcomes.day100_pasi_score) - AVG(valid_outcomes.day7_pasi_score)
+        )
+        / AVG(valid_outcomes.day7_pasi_score)
+        * 100
     )

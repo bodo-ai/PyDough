@@ -1924,7 +1924,7 @@ def defog_sql_text_ewallet_gen5() -> str:
 
 def defog_sql_text_dermtreatment_basic1() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     What are the top 3 doctor specialties by total drug amount prescribed for
     treatments started in the past 6 calendar months? Return the specialty,
@@ -1943,7 +1943,7 @@ def defog_sql_text_dermtreatment_basic1() -> str:
 
 def defog_sql_text_dermtreatment_basic2() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     For treatments that ended in the year 2022 (from Jan 1st to Dec 31st inclusive),
     what is the average PASI score at day 100 and number of distinct patients
@@ -1965,7 +1965,7 @@ def defog_sql_text_dermtreatment_basic2() -> str:
 
 def defog_sql_text_dermtreatment_basic3() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     What are the top 5 drugs by number of treatments and average drug amount per
     treatment? Return the drug name, number of treatments, and average drug amount.
@@ -1992,7 +1992,7 @@ def defog_sql_text_dermtreatment_basic3() -> str:
 
 def defog_sql_text_dermtreatment_basic4() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     What are the top 3 diagnoses by maximum itch VAS score at day 100 and number
     of distinct patients? Return the diagnosis name, number of patients, and
@@ -2014,7 +2014,7 @@ def defog_sql_text_dermtreatment_basic4() -> str:
 
 def defog_sql_text_dermtreatment_basic5() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     Return the distinct list of doctor IDs, first names and last names that have
     prescribed treatments.
@@ -2028,7 +2028,7 @@ def defog_sql_text_dermtreatment_basic5() -> str:
 
 def defog_sql_text_dermtreatment_basic6() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     Return the distinct list of patient IDs, first names and last names that have
     outcome assessments.
@@ -2042,7 +2042,7 @@ def defog_sql_text_dermtreatment_basic6() -> str:
 
 def defog_sql_text_dermtreatment_basic7() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     What are the top 3 insurance types by average patient height in cm? Return
     the insurance type, average height and average weight.
@@ -2058,7 +2058,7 @@ def defog_sql_text_dermtreatment_basic7() -> str:
 
 def defog_sql_text_dermtreatment_basic8() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     What are the top 2 specialties by number of doctors? Return the specialty
     and number of doctors.
@@ -2073,7 +2073,7 @@ def defog_sql_text_dermtreatment_basic8() -> str:
 
 def defog_sql_text_dermtreatment_basic9() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     Return the patient IDs, first names and last names of patients who have not
     received any treatments.
@@ -2087,7 +2087,7 @@ def defog_sql_text_dermtreatment_basic9() -> str:
 
 def defog_sql_text_dermtreatment_basic10() -> str:
     """
-    SQLite query text for the following question for the Dermatology Treatment graph:
+    SQLite query text for the following question for the DermTreatment graph:
 
     Return the drug IDs and names of drugs that have not been used in any
     treatments.
@@ -2096,4 +2096,281 @@ def defog_sql_text_dermtreatment_basic10() -> str:
     SELECT d.drug_id, d.drug_name 
     FROM drugs AS d LEFT JOIN treatments AS t ON d.drug_id = t.drug_id 
     WHERE t.drug_id IS NULL;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv1() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Which states do doctors who have prescribed biologic drugs reside in?
+    Return the distinct states.
+    """
+    return """
+    WITH doctor_treatment AS (SELECT d.doc_id, d.loc_state 
+        FROM doctors AS d 
+        JOIN treatments AS t ON d.doc_id = t.doc_id 
+        JOIN drugs AS dr ON t.drug_id = dr.drug_id 
+        WHERE dr.drug_type = 'biologic') 
+    SELECT DISTINCT loc_state FROM doctor_treatment; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv2() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the average weight in kg of patients treated with the drug named
+    'Drugalin'? Return the average weight.
+    """
+    return """
+    WITH patient_treatment AS (SELECT p.patient_id, p.weight_kg 
+        FROM patients AS p 
+        JOIN treatments AS t ON p.patient_id = t.patient_id 
+        WHERE t.drug_id = (SELECT drug_id FROM drugs 
+            WHERE drug_name = 'Drugalin')) 
+        SELECT AVG(weight_kg) 
+    FROM patient_treatment;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv3() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    I want the adverse events that have been reported for treatments involving
+    topical drugs. Give me the description, treatment id, drug id and name.
+    """
+    return """
+    SELECT a.description, a.treatment_id, d.drug_id, d.drug_name 
+    FROM adverse_events AS a 
+    JOIN treatments AS t ON a.treatment_id = t.treatment_id 
+    JOIN drugs AS d ON t.drug_id = d.drug_id 
+    WHERE d.drug_type = 'topical';	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv4() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many patients have been diagnosed with 'Psoriasis vulgaris' and treated
+    with a biologic drug? Return the distinct count of patients.
+    """
+    return """
+    WITH patient_diagnosis_treatment AS (SELECT p.patient_id 
+        FROM patients AS p 
+        JOIN treatments AS t ON p.patient_id = t.patient_id 
+        JOIN diagnoses AS d ON t.diag_id = d.diag_id 
+        JOIN drugs AS dr ON t.drug_id = dr.drug_id 
+        WHERE d.diag_name = 'Psoriasis vulgaris' AND dr.drug_type = 'biologic') 
+    SELECT COUNT(DISTINCT patient_id) FROM patient_diagnosis_treatment;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv5() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the NPI for each year? Return the year, number of new patients,
+    and NPI
+    """
+    return """
+    WITH FirstTreatment AS (SELECT p.patient_id, MIN(t.start_dt) 
+    AS first_treatment_date 
+    FROM patients AS p 
+    JOIN treatments AS t ON p.patient_id = t.patient_id 
+    GROUP BY p.patient_id), 
+    NewPatientsPerYear AS (SELECT strftime('%Y', first_treatment_date) AS year, 
+    COUNT(patient_id) AS new_patients 
+    FROM FirstTreatment 
+    GROUP BY strftime('%Y', first_treatment_date)), 
+    NPI AS (SELECT year, new_patients, new_patients - LAG(new_patients, 1) 
+    OVER (ORDER BY year) AS npi FROM NewPatientsPerYear) 
+    SELECT year, new_patients, npi 
+    FROM NPI 
+    ORDER BY year; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv6() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return each doctor's doc_id, specialty, number of distinct drugs prescribed,
+    and SDR
+    """
+    return """
+    WITH doc_drug_counts AS (SELECT d.doc_id, d.specialty, 
+        COUNT(DISTINCT t.drug_id) AS num_drugs_prescribed 
+        FROM doctors AS d 
+        JOIN treatments AS t ON d.doc_id = t.doc_id 
+        GROUP BY d.doc_id) 
+    SELECT doc_id, specialty, num_drugs_prescribed, DENSE_RANK() 
+    OVER (PARTITION BY specialty 
+        ORDER BY CASE WHEN num_drugs_prescribed IS NULL THEN 1 ELSE 0 END DESC, 
+        num_drugs_prescribed DESC) AS specialty_drug_rank FROM doc_drug_counts;	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv7() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many treatments did the patient Alice have in the last 6 months, not
+    including the current month?
+    """
+    return """
+    SELECT COUNT(t.treatment_id) FROM treatments AS t 
+    JOIN patients AS p ON t.patient_id = p.patient_id 
+    WHERE p.first_name = 'Alice' AND 
+        t.start_dt BETWEEN date('now', 'start of month', '-6 months') AND 
+        date('now', 'start of month', '-1 day');	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv8() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What are the PMPD and PMTC for each of the last 12 months, not including
+    the current month
+    """
+    return """
+    SELECT strftime('%Y-%m', t.start_dt) AS month, 
+        COUNT(DISTINCT t.patient_id) AS patient_count, 
+        COUNT(DISTINCT t.treatment_id) AS treatment_count 
+    FROM treatments AS t 
+        JOIN diagnoses AS d ON t.diag_id = d.diag_id 
+    WHERE t.start_dt >= date('now', '-12 months', 'start of month') AND 
+        t.start_dt < date('now', 'start of month')
+    GROUP BY month; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv9() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many distinct patients had treatments in each of the last 3 months, not
+    including the current month? Out of these, how many had treatments with
+    biologic drugs? Return the month, patient count, and biologic treatment count.
+    """
+    return """
+    SELECT strftime('%Y-%m', t.start_dt) AS MONTH, 
+        COUNT(DISTINCT t.patient_id) AS patient_count, 
+        COUNT(DISTINCT CASE 
+            WHEN d.drug_type = 'biologic' 
+            THEN t.treatment_id END) AS biologic_treatment_count 
+    FROM treatments AS t 
+        JOIN drugs AS d ON t.drug_id = d.drug_id 
+    WHERE t.start_dt >= date('now', '-3 months', 'start of month') AND 
+        t.start_dt < date('now', 'start of month') 
+    GROUP BY month;
+    """
+
+
+def defog_sql_text_dermtreatment_adv10() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Which drug had the highest number of adverse events reported within the same
+    month as the treatment start date (adverse event or treatment can be earlier
+    than the other)? Return the number of adverse events along with the drug's
+    id and name.
+    """
+    return """
+    WITH adverse_events_per_drug AS (SELECT d.drug_id, COUNT(ae.id) AS num_events 
+    FROM adverse_events AS ae 
+        JOIN treatments AS t ON ae.treatment_id = t.treatment_id AND 
+        strftime('%Y-%m', ae.reported_dt) = strftime('%Y-%m', t.start_dt) 
+        JOIN drugs AS d ON t.drug_id = d.drug_id GROUP BY d.drug_id) 
+    SELECT ae.drug_id, d.drug_name, ae.num_events 
+    FROM adverse_events_per_drug AS ae 
+        JOIN drugs AS d USING (drug_id) 
+        ORDER BY ae.num_events DESC LIMIT 1; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv11() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many patients have a Gmail or Yahoo email address?
+    """
+    return """
+    SELECT COUNT(*) FROM patients WHERE email LIKE '%@gmail.com' OR 
+    email LIKE '%@yahoo.com'; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv12() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the first name, last name and specialty of doctors whose first name
+    starts with 'J' or last name contains 'son', case-insensitive.
+    """
+    return """
+    SELECT first_name, last_name, specialty 
+    FROM doctors 
+    WHERE LOWER(first_name) LIKE 'J%' OR 
+    LOWER(last_name) LIKE '%son%'; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv13() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the PIC for female patients?
+    """
+    return """
+    SELECT COUNT(patient_id) AS pic 
+    FROM patients 
+    WHERE gender = 'Female' AND 
+    ins_type = 'private';	 
+    """
+
+
+def defog_sql_text_dermtreatment_adv14() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the CAW for male patients
+    """
+    return """
+    SELECT AVG(weight_kg) AS caw FROM patients WHERE gender = 'Male'; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv15() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Calculate the average DDD for each drug. Return the drug name and average
+    DDD value.
+    """
+    return """
+    SELECT d.drug_name, 
+        AVG(t.tot_drug_amt / NULLIF((JULIANDAY(t.end_dt) - JULIANDAY(t.start_dt)), 0)) AS ddd 
+    FROM treatments AS t 
+        JOIN drugs AS d ON t.drug_id = d.drug_id 
+    WHERE NOT t.end_dt IS NULL 
+    GROUP BY d.drug_name; 
+    """
+
+
+def defog_sql_text_dermtreatment_adv16() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is the overall D7D100PIR across all treatments? Return the percentage
+    value.
+    """
+    return """
+    SELECT (AVG(day100_pasi_score) - AVG(day7_pasi_score)) / AVG(day7_pasi_score) * 100 AS d7d100pir 
+    FROM outcomes 
+    WHERE NOT day7_pasi_score IS NULL AND 
+        NOT day100_pasi_score IS NULL;	
     """
