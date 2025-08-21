@@ -8,7 +8,7 @@ WITH _s5 AS (
   JOIN main.products AS products
     ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
   GROUP BY
-    incidents.in_error_id
+    2
 )
 SELECT
   errors.er_name AS error,
@@ -19,6 +19,4 @@ FROM main.errors AS errors
 LEFT JOIN _s5 AS _s5
   ON _s5.in_error_id = errors.er_id
 ORDER BY
-  ROUND((
-    100.0 * COALESCE(_s5.n_rows, 0)
-  ) / SUM(COALESCE(_s5.n_rows, 0)) OVER (), 2) DESC
+  2 DESC

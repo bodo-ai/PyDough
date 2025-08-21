@@ -11,6 +11,7 @@ from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
 from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
 
@@ -259,6 +260,14 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
                 col.expr
             )
+            # Skip ordering keys that are literals or NULL.
+            if isinstance(glot_expr, (SQLGlotLiteral, SQLGlotNull)):
+                continue
+            # Invoke the binding's conversion for ordering arguments to
+            # postprocess as needed (e.g. adding collations).
+            glot_expr = self._expr_visitor._bindings.convert_ordering(
+                glot_expr, col.expr.data_type
+            )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
             if self._dialect == DatabaseDialect.SQLITE:
@@ -492,9 +501,15 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             if aggregations:
                 grouping_keys: list[SQLGlotExpression] = []
                 for key in sorted(keys, key=repr):
+                    # Unwrap aliases to get the original expression, since
+                    # the grouping keys cannot contain `AS` clauses.
                     while isinstance(key, SQLGlotAlias):
                         key = key.this
-                    if key not in grouping_keys:
+                    # Skip if the key is already in the grouping keys, or is
+                    # a literal or NULL.
+                    if key not in grouping_keys and not isinstance(
+                        key, (SQLGlotLiteral, SQLGlotNull)
+                    ):
                         grouping_keys.append(key)
                 query = query.group_by(*grouping_keys)
             else:

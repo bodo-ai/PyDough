@@ -16,6 +16,6 @@ SELECT
   COUNT(*) AS n
 FROM _t0
 GROUP BY
-  c
+  1
 ORDER BY
-  c
+  1

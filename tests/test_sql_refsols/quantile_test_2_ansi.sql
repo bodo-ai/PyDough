@@ -5,7 +5,7 @@ WITH _s0 AS (
     n_regionkey
   FROM tpch.nation
   ORDER BY
-    n_name
+    1
   LIMIT 5
 ), _s5 AS (
   SELECT
@@ -33,7 +33,7 @@ WITH _s0 AS (
     ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1998
     AND customer.c_custkey = orders.o_custkey
   GROUP BY
-    customer.c_nationkey
+    10
 )
 SELECT
   region.r_name AS region_name,
@@ -53,4 +53,4 @@ JOIN tpch.region AS region
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
-  _s0.n_name
+  2

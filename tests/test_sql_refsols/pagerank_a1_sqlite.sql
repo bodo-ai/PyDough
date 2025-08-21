@@ -23,7 +23,7 @@ WITH _t4 AS (
   JOIN _s1 AS _s1
     ON _s0.s_key = _s1.l_source
   GROUP BY
-    _s0.s_key
+    4
 ), _t1 AS (
   SELECT
     (
@@ -49,4 +49,4 @@ FROM _t1
 WHERE
   NOT l_target IS NULL AND l_source = l_target
 ORDER BY
-  s_key
+  1

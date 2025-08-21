@@ -279,5 +279,5 @@ SELECT
   ) AS c6
 FROM tpch.part
 ORDER BY
-  p_partkey
+  1
 LIMIT 5

@@ -53,7 +53,7 @@ WITH _s1 AS (
     s_nationkey
   FROM tpch.supplier
   GROUP BY
-    s_nationkey
+    5
 )
 SELECT
   nation.n_name AS name,

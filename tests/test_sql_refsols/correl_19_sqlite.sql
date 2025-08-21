@@ -10,5 +10,5 @@ JOIN tpch.customer AS customer
 GROUP BY
   supplier.s_suppkey
 ORDER BY
-  n_super_cust DESC
+  2 DESC
 LIMIT 5

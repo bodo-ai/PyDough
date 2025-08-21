@@ -11,7 +11,7 @@ WITH _s0 AS (
   JOIN tpch.part AS part
     ON part.p_partkey = partsupp.ps_partkey
   GROUP BY
-    partsupp.ps_suppkey
+    3
 )
 SELECT
   COUNT(DISTINCT supplier.s_suppkey) AS n

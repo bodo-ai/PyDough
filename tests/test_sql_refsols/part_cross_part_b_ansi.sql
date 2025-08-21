@@ -30,8 +30,8 @@ WITH _s0 AS (
     ON _s2.sbcuststate = sbcustomer.sbcuststate
     AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
-    _s3.month,
-    _s2.sbcuststate
+    2,
+    3
 )
 SELECT
   _s0.sbcuststate AS state,
@@ -42,5 +42,5 @@ CROSS JOIN _s1 AS _s1
 LEFT JOIN _s9 AS _s9
   ON _s0.sbcuststate = _s9.sbcuststate AND _s1.month = _s9.month
 ORDER BY
-  _s0.sbcuststate,
-  _s1.month
+  1,
+  2

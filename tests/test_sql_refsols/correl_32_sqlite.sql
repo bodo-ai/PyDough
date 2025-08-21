@@ -56,15 +56,8 @@ WITH _t2 AS (
     n_nationkey
   FROM _t2
   GROUP BY
-    SUBSTRING(
-      s_phone,
-      CASE WHEN (
-        LENGTH(s_phone) + 0
-      ) < 1 THEN 1 ELSE (
-        LENGTH(s_phone) + 0
-      ) END
-    ),
-    n_nationkey
+    2,
+    3
 )
 SELECT
   customer.c_name AS customer_name,
@@ -87,5 +80,5 @@ JOIN _s5 AS _s5
 WHERE
   customer.c_mktsegment = 'AUTOMOBILE'
 ORDER BY
-  ABS(customer.c_acctbal - _s5.avg_expr_2)
+  2
 LIMIT 5

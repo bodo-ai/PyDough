@@ -9,5 +9,5 @@ FROM tpch.region AS region
 JOIN tpch.nation AS nation
   ON nation.n_regionkey = region.r_regionkey
 ORDER BY
-  region.r_name,
-  nation.n_name
+  1,
+  2

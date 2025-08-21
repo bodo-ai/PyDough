@@ -17,4 +17,4 @@ JOIN tpch.supplier AS supplier
 GROUP BY
   region.r_regionkey
 ORDER BY
-  name
+  1

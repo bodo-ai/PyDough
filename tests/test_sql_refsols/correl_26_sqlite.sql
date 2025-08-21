@@ -25,4 +25,4 @@ JOIN _s11 AS _s11
 GROUP BY
   nation.n_nationkey
 ORDER BY
-  nation_name
+  1

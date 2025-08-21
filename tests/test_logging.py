@@ -205,11 +205,11 @@ FROM lineitem
 WHERE
   l_shipdate <= '1998-12-01'
 GROUP BY
-  l_linestatus,
-  l_returnflag
+  1,
+  2
 ORDER BY
-  l_returnflag,
-  l_linestatus
+  1,
+  2
 """
     assert required_op.strip() in captured_output.strip(), (
         f"'{required_op.strip()}' not found in captured output: {captured_output.strip()}"

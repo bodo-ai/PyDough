@@ -27,7 +27,7 @@ WITH _s14 AS (
   JOIN _t5 AS _t5
     ON _t5.pr_id = devices.de_product_id
   GROUP BY
-    _s0.ca_dt
+    2
 ), _s13 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -38,7 +38,7 @@ WITH _s14 AS (
   JOIN _t5 AS _t7
     ON _t7.pr_id = devices.de_product_id
   GROUP BY
-    _s8.ca_dt
+    2
 ), _s15 AS (
   SELECT
     SUM(_s7.n_rows) AS sum_expr_4,
@@ -50,7 +50,7 @@ WITH _s14 AS (
   LEFT JOIN _s13 AS _s13
     ON _s13.ca_dt = _s6.ca_dt
   GROUP BY
-    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS DATETIME))
+    3
 )
 SELECT
   _s15.year_1 - EXTRACT(YEAR FROM CAST(_s14.release_date AS DATETIME)) AS years_since_release,
@@ -80,4 +80,4 @@ FROM _s14 AS _s14
 JOIN _s15 AS _s15
   ON _s15.year_1 >= EXTRACT(YEAR FROM CAST(_s14.release_date AS DATETIME))
 ORDER BY
-  _s15.year_1 - EXTRACT(YEAR FROM CAST(_s14.release_date AS DATETIME))
+  1

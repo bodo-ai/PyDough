@@ -26,6 +26,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-mysql:
+        description: "Run MySQL Tests"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -127,7 +132,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not snowflake" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql)" -rs
 
   run-sf-tests:
     name: Snowflake Tests
@@ -140,6 +145,21 @@ jobs:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
       SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
       SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-mysql-tests:
+    name: MySQL Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run mysql]')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.run-mysql)
+    uses: ./.github/workflows/mysql_testing.yml # Path to MySQL workflow file
+    secrets:
+      MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix

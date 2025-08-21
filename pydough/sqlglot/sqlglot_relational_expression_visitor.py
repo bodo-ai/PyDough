@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
+from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 
 import pydough
@@ -190,6 +192,16 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         for order_arg in window_expression.order_inputs:
             order_arg.expr.accept(self)
             glot_expr: SQLGlotExpression = self._stack.pop()
+            # Skip ordering keys that are literals or NULL.
+            if isinstance(glot_expr, (SQLGlotLiteral, SQLGlotNull)):
+                continue
+            # Invoke the binding's conversion for ordering arguments to
+            # postprocess as needed (e.g. adding collations).
+            # For example, when a string column is sorted in MySQL, we add
+            # collations
+            glot_expr = self._bindings.convert_ordering(
+                glot_expr, order_arg.expr.data_type
+            )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
             if self._dialect == DatabaseDialect.SQLITE:
@@ -212,6 +224,10 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             else:
                 glot_expr = glot_expr.desc(nulls_first=na_first)
             order_exprs.append(glot_expr)
+        # Special case: if we removed all of the order inputs, but the window
+        # call originally had an order, add `ORDER BY 1` as a placeholder.
+        if len(window_expression.order_inputs) > 0 and len(order_exprs) == 0:
+            order_exprs.append(sqlglot_expressions.convert("1"))
         this: SQLGlotExpression
         window_spec: sqlglot_expressions.WindowSpec | None = None
         match window_expression.op.function_name:

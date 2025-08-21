@@ -4,7 +4,7 @@ WITH _s1 AS (
     o_custkey
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    2
 ), _t2 AS (
   SELECT
     CASE
@@ -96,7 +96,7 @@ WITH _s1 AS (
     c_nationkey
   FROM _t2
   GROUP BY
-    c_nationkey
+    15
 )
 SELECT
   COALESCE(_t1.sum_c_acctbal, 0) AS sum_value,
