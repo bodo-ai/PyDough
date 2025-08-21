@@ -4,7 +4,7 @@ SELECT
   AVG(weight_kg) AS avg_weight
 FROM main.patients
 GROUP BY
-  ins_type
+  1
 ORDER BY
-  avg_height DESC
+  2 DESC
 LIMIT 3

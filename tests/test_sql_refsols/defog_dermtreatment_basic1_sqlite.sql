@@ -1,4 +1,4 @@
-WITH _s0 AS (
+WITH _s1 AS (
   SELECT
     COUNT(*) AS n_rows,
     SUM(tot_drug_amt) AS sum_tot_drug_amt,
@@ -11,17 +11,25 @@ WITH _s0 AS (
       ) * 12 + CAST(STRFTIME('%m', DATETIME('now')) AS INTEGER) - CAST(STRFTIME('%m', start_dt) AS INTEGER)
     ) <= 6
   GROUP BY
-    doc_id
+    3
+), _t1 AS (
+  SELECT
+    SUM(_s1.n_rows) AS sum_n_rows,
+    SUM(_s1.sum_tot_drug_amt) AS sum_sum_tot_drug_amt,
+    doctors.specialty
+  FROM main.doctors AS doctors
+  LEFT JOIN _s1 AS _s1
+    ON _s1.doc_id = doctors.doc_id
+  GROUP BY
+    3
 )
 SELECT
-  doctors.specialty,
-  SUM(_s0.n_rows) AS num_treatments,
-  COALESCE(SUM(_s0.sum_tot_drug_amt), 0) AS total_drug_amount
-FROM _s0 AS _s0
-JOIN main.doctors AS doctors
-  ON _s0.doc_id = doctors.doc_id
-GROUP BY
-  doctors.specialty
+  specialty,
+  sum_n_rows AS num_treatments,
+  COALESCE(sum_sum_tot_drug_amt, 0) AS total_drug_amount
+FROM _t1
+WHERE
+  sum_n_rows > 0
 ORDER BY
-  COALESCE(SUM(_s0.sum_tot_drug_amt), 0) DESC
+  3 DESC
 LIMIT 3

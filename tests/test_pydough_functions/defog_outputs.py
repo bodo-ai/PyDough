@@ -2178,17 +2178,22 @@ def defog_sql_text_dermtreatment_adv5() -> str:
     and NPI
     """
     return """
-    WITH FirstTreatment AS (SELECT p.patient_id, MIN(t.start_dt) 
-    AS first_treatment_date 
-    FROM patients AS p 
-    JOIN treatments AS t ON p.patient_id = t.patient_id 
-    GROUP BY p.patient_id), 
-    NewPatientsPerYear AS (SELECT strftime('%Y', first_treatment_date) AS year, 
-    COUNT(patient_id) AS new_patients 
-    FROM FirstTreatment 
-    GROUP BY strftime('%Y', first_treatment_date)), 
-    NPI AS (SELECT year, new_patients, new_patients - LAG(new_patients, 1) 
-    OVER (ORDER BY year) AS npi FROM NewPatientsPerYear) 
+    WITH FirstTreatment AS (
+        SELECT p.patient_id, MIN(t.start_dt) AS first_treatment_date
+        FROM patients AS p
+        JOIN treatments AS t ON p.patient_id = t.patient_id
+        GROUP BY p.patient_id
+    ),
+    NewPatientsPerYear AS (
+        SELECT strftime('%Y', first_treatment_date) AS year,
+        COUNT(patient_id) AS new_patients 
+        FROM FirstTreatment 
+        GROUP BY strftime('%Y', first_treatment_date)
+    ), 
+    NPI AS (
+        SELECT year, new_patients, new_patients - LAG(new_patients, 1) 
+        OVER (ORDER BY year) AS npi FROM NewPatientsPerYear
+    ) 
     SELECT year, new_patients, npi 
     FROM NPI 
     ORDER BY year; 
@@ -2203,11 +2208,13 @@ def defog_sql_text_dermtreatment_adv6() -> str:
     and SDR
     """
     return """
-    WITH doc_drug_counts AS (SELECT d.doc_id, d.specialty, 
+    WITH doc_drug_counts AS (
+        SELECT d.doc_id, d.specialty, 
         COUNT(DISTINCT t.drug_id) AS num_drugs_prescribed 
         FROM doctors AS d 
         JOIN treatments AS t ON d.doc_id = t.doc_id 
-        GROUP BY d.doc_id) 
+        GROUP BY d.doc_id
+    ) 
     SELECT doc_id, specialty, num_drugs_prescribed, DENSE_RANK() 
     OVER (PARTITION BY specialty 
         ORDER BY CASE WHEN num_drugs_prescribed IS NULL THEN 1 ELSE 0 END DESC, 

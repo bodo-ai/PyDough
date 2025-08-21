@@ -92,10 +92,6 @@ __all__ = [
 
 import datetime
 
-from pydough.pydough_operators.expression_operators.registered_expression_operators import (
-    AVG,
-    HAS,
-)
 
 # ruff: noqa
 # mypy: ignore-errors
@@ -1761,22 +1757,24 @@ def impl_defog_dermtreatment_basic1():
     treatments started in the past 6 calendar months? Return the specialty,
     number of treatments, and total drug amount.
     """
-    # Filter treatments started in the past 6 months
-    recent_treatments = treatments.WHERE(
-        DATEDIFF("months", start_date, DATETIME("now")) <= 6
-    ).CALCULATE(specialty=doctor.specialty, drug_amount=total_drug_amount)
+    # Obtain the specialty groups
+    specialties = doctors.PARTITION(name="specialties", by=specialty)
 
-    # Group by specialty and calculate totals
-    specialty_totals = recent_treatments.PARTITION(
-        name="specialties", by=specialty
-    ).CALCULATE(
-        specialty=specialty,
-        num_treatments=COUNT(treatments),
-        total_drug_amount=SUM(treatments.total_drug_amount),
+    # Find the treatments from the doctors within the specialty in the past 6 months
+    recent_treatments = doctors.prescribed_treatments.WHERE(
+        DATEDIFF("months", start_date, DATETIME("now")) <= 6
     )
 
-    # Get top 3 specialties by total drug amount
-    return specialty_totals.TOP_K(3, by=total_drug_amount.DESC())
+    # Calculate totals for each specialty
+    return (
+        specialties.WHERE(HAS(recent_treatments))
+        .CALCULATE(
+            specialty,
+            num_treatments=COUNT(recent_treatments),
+            total_drug_amount=SUM(recent_treatments.total_drug_amount),
+        )
+        .TOP_K(3, by=total_drug_amount.DESC())
+    )
 
 
 def impl_defog_dermtreatment_basic2():
@@ -1794,7 +1792,7 @@ def impl_defog_dermtreatment_basic2():
     # Then, extract the insurance type from the associated patient to use as a partition key.
     treatments_info = treatments.WHERE(
         (YEAR(end_date) == 2022)
-        & (HAS(outcome_records.WHERE(PRESENT(day100_pasi_score))) == 1)
+        & (HAS(outcome_records.WHERE(PRESENT(day100_pasi_score))))
     ).CALCULATE(insurance_type=patient.insurance_type)
 
     # Partition the filtered treatments by insurance type. For each type, calculate the
@@ -1820,14 +1818,14 @@ def impl_defog_dermtreatment_basic3():
     """
 
     return drugs.CALCULATE(
-        drug_name=drug_name,
+        drug_name,
         num_treatments=COUNT(treatments_used_in),
         avg_drug_amount=AVG(treatments_used_in.total_drug_amount),
     ).TOP_K(
         5,
         by=(
-            COUNT(treatments_used_in).DESC(),
-            AVG(treatments_used_in.total_drug_amount).DESC(),
+            num_treatments.DESC(),
+            avg_drug_amount.DESC(),
             drug_name.ASC(),
         ),
     )
@@ -1840,24 +1838,20 @@ def impl_defog_dermtreatment_basic4():
 
     What are the top 3 diagnoses by maximum itch VAS score at day 100 and number
     of distinct patients? Return the diagnosis name, number of patients, and
-    maximum itch score.[[[ Only include patients with a registered outcome ]]]
-
-    FAILED tests/test_pipeline_defog.py::test_defog_e2e[dermtreatment_basic4] - sqlite3.OperationalError: no such column: treatments.diagnosis_id
+    maximum itch score. Only include patients with a registered outcome
     """
+    day_100_itch_vas_outcomes = outcome_records.WHERE(PRESENT(day100_itch_vas))
+    day_100_itch_vas_outcome_treatments = treatments_for.WHERE(
+        HAS(day_100_itch_vas_outcomes)
+    )
 
     return (
-        diagnoses.WHERE(
-            HAS(treatments_for.outcome_records.WHERE(PRESENT(day100_itch_vas))) == 1
-        )
+        diagnoses.WHERE(HAS(day_100_itch_vas_outcome_treatments))
         .CALCULATE(
             diagnosis_name=name,
-            num_patients=NDISTINCT(
-                treatments_for.WHERE(
-                    HAS(outcome_records.WHERE(PRESENT(day100_itch_vas))) == 1
-                ).patient_id
-            ),
+            num_patients=NDISTINCT(day_100_itch_vas_outcome_treatments.patient_id),
             max_itch_score=MAX(
-                treatments_for.outcome_records.WHERE(
+                day_100_itch_vas_outcome_treatments.outcome_records.WHERE(
                     PRESENT(day100_itch_vas)
                 ).day100_itch_vas
             ),
@@ -1875,8 +1869,8 @@ def impl_defog_dermtreatment_basic5():
     prescribed treatments.
     """
 
-    return doctors.WHERE(HAS(prescribed_treatments) == 1).CALCULATE(
-        doc_id=doc_id, first_name=first_name, last_name=last_name
+    return doctors.WHERE(HAS(prescribed_treatments)).CALCULATE(
+        doc_id, first_name, last_name
     )
 
 
@@ -1888,8 +1882,8 @@ def impl_defog_dermtreatment_basic6():
     Return the distinct list of patient IDs, first names and last names that have
     outcome assessments.
     """
-    return patients.WHERE(HAS(treatments_received.outcome_records) == 1).CALCULATE(
-        patient_id=patient_id, first_name=first_name, last_name=last_name
+    return patients.WHERE(HAS(treatments_received.outcome_records)).CALCULATE(
+        patient_id, first_name, last_name
     )
 
 
@@ -1905,7 +1899,7 @@ def impl_defog_dermtreatment_basic7():
     return (
         patients.PARTITION(name="insurance_groups", by=insurance_type)
         .CALCULATE(
-            insurance_type=insurance_type,
+            insurance_type,
             avg_height=AVG(patients.height),
             avg_weight=AVG(patients.weight),
         )
@@ -1924,7 +1918,7 @@ def impl_defog_dermtreatment_basic8():
 
     return (
         doctors.PARTITION(name="specialty_groups", by=specialty)
-        .CALCULATE(specialty=specialty, num_doctors=COUNT(doctors))
+        .CALCULATE(specialty, num_doctors=COUNT(doctors))
         .TOP_K(2, by=num_doctors.DESC())
     )
 
@@ -1938,8 +1932,8 @@ def impl_defog_dermtreatment_basic9():
     received any treatments.
     """
 
-    return patients.WHERE(HASNOT(treatments_received) == 1).CALCULATE(
-        patient_id=patient_id, first_name=first_name, last_name=last_name
+    return patients.WHERE(HASNOT(treatments_received)).CALCULATE(
+        patient_id, first_name, last_name
     )
 
 
@@ -1952,9 +1946,7 @@ def impl_defog_dermtreatment_basic10():
     treatments.
     """
 
-    return drugs.WHERE(HASNOT(treatments_used_in) == 1).CALCULATE(
-        drug_id=drug_id, drug_name=drug_name
-    )
+    return drugs.WHERE(HASNOT(treatments_used_in)).CALCULATE(drug_id, drug_name)
 
 
 def impl_defog_dermtreatment_adv1():
@@ -1983,19 +1975,11 @@ def impl_defog_dermtreatment_adv2():
     What is the average weight in kg of patients treated with the drug named
     'Drugalin'? Return the average weight.
     """
-
-    # patients_druglin_treatment = patients.WHERE(HAS(treatments_received.WHERE(drug.drug_name == 'Drugalin')))
-
-    # return patients_druglin_treatment
-
-    # return DermTreatment.CALCULATE(
-    #     avg_weight=AVG(drugs.WHERE(LOWER(drug_name) == 'drugalin').treatments_used_in.patient.weight)
-    # )
-
-    # return DermTreatment.CALCULATE(
-    #     avg_weight=AVG(drugs.WHERE(LOWER(drug_name) == 'drugalin').treatments_used_in.patient.weight)
-    # )
-    return DermTreatment.CALCULATE(avg_weight=MAX(patients.CALCULATE(weight)))
+    return DermTreatment.CALCULATE(
+        avg_weight=AVG(
+            treatments.WHERE(LOWER(drug.drug_name) == "drugalin").patient.weight
+        )
+    )
 
 
 def impl_defog_dermtreatment_adv3():
@@ -2008,10 +1992,10 @@ def impl_defog_dermtreatment_adv3():
     """
 
     return adverse_events.WHERE(treatment.drug.drug_type == "topical").CALCULATE(
-        description=description,
-        treatment_id=treatment_id,
-        drug_id=treatment.drug.drug_id,
-        drug_name=treatment.drug.drug_name,
+        description,
+        treatment_id,
+        treatment.drug.drug_id,
+        treatment.drug.drug_name,
     )
 
 
@@ -2029,11 +2013,10 @@ def impl_defog_dermtreatment_adv4():
             patients.WHERE(
                 HAS(
                     treatments_received.WHERE(
-                        (LOWER(diagnosis.name) == LOWER("Psoriasis vulgaris"))
-                        & (LOWER(drug.drug_type) == LOWER("biologic"))
+                        (LOWER(diagnosis.name) == "psoriasis vulgaris")
+                        & (LOWER(drug.drug_type) == "biologic")
                     )
                 )
-                == 1
             )
         )
     )
@@ -2049,10 +2032,7 @@ def impl_defog_dermtreatment_adv5():
     """
 
     # Step 1: For each patient who has received treatment, find their first treatment year
-    patients_with_first_treatment = patients.WHERE(
-        HAS(treatments_received) == 1
-    ).CALCULATE(
-        patient_id=patient_id,
+    patients_with_first_treatment = patients.WHERE(HAS(treatments_received)).CALCULATE(
         first_treatment_year=MIN(
             treatments_received.CALCULATE(start_year=YEAR(start_date)).start_year
         ),
@@ -2061,22 +2041,21 @@ def impl_defog_dermtreatment_adv5():
     # Step 2: Group by year to count new patients per year
     new_patients_by_year = patients_with_first_treatment.PARTITION(
         name="years", by=first_treatment_year
-    ).CALCULATE(year=first_treatment_year, number_of_new_patients=COUNT(patients))
+    ).CALCULATE(number_of_new_patients=COUNT(patients))
 
     # Step 3: Calculate NPI (increase compared to previous year)
     return (
         new_patients_by_year.CALCULATE(
-            year=year,
-            number_of_new_patients=number_of_new_patients,
             npi=number_of_new_patients
             - DEFAULT_TO(
-                PREV(number_of_new_patients, by=year.ASC()), number_of_new_patients
+                PREV(number_of_new_patients, by=first_treatment_year.ASC()),
+                number_of_new_patients,
             ),
         )
         .CALCULATE(
-            year=year,
+            year=STRING(first_treatment_year),
             number_of_new_patients=number_of_new_patients,
-            npi=IFF(npi == 0, None, npi),
+            npi=KEEP_IF(npi, npi != 0),
         )
         .ORDER_BY(year.ASC())
     )
@@ -2093,10 +2072,8 @@ def impl_defog_dermtreatment_adv6():
 
     # First, calculate the number of distinct drugs prescribed by each doctor
     doctor_drug_counts = doctors.CALCULATE(
-        doc_id=doc_id,
-        specialty=specialty,
-        num_distinct_drugs=NDISTINCT(prescribed_treatments.drug_id),
-    )
+        num_distinct_drugs=NDISTINCT(prescribed_treatments.drug_id)
+    ).WHERE(HAS(prescribed_treatments))
 
     # Then partition by specialty to enable ranking within each specialty
     specialty_groups = doctor_drug_counts.PARTITION(name="specialties", by=specialty)
@@ -2106,7 +2083,9 @@ def impl_defog_dermtreatment_adv6():
         doc_id=doc_id,
         specialty=specialty,
         num_distinct_drugs=num_distinct_drugs,
-        SDRSDR=RANKING(by=num_distinct_drugs.DESC(), per="specialties"),
+        SDRSDR=RANKING(
+            by=num_distinct_drugs.DESC(), per="specialties", allow_ties=True, dense=True
+        ),
     )
 
 
@@ -2122,13 +2101,13 @@ def impl_defog_dermtreatment_adv7():
     start_of_current_month = DATETIME("now", "start of month")
     start_of_period = DATETIME("now", "start of month", "-6 months")
 
-    alice_treatments_in_period = patients.WHERE(
-        LOWER(first_name) == "alice"
-    ).treatments_received.WHERE(
-        (start_date >= start_of_period) & (start_date < start_of_current_month)
+    selected_treatments = treatments.WHERE(
+        (start_date >= start_of_period)
+        & (start_date < start_of_current_month)
+        & (LOWER(patient.first_name) == "alice")
     )
 
-    return DermTreatment.CALCULATE(num_treatments=COUNT(alice_treatments_in_period))
+    return DermTreatment.CALCULATE(num_treatments=COUNT(selected_treatments))
 
 
 def impl_defog_dermtreatment_adv8():
@@ -2140,26 +2119,20 @@ def impl_defog_dermtreatment_adv8():
     the current month
     """
 
-    # Get current date info to filter last 12 months
-    current_info = DermTreatment.CALCULATE(
-        current_date=DATETIME("now"),
-        current_month_start=DATETIME("now", "start of month"),
-    )
-
     # Get treatments with month info
-    treatment_info = current_info.treatments.CALCULATE(
+    treatment_info = treatments.CALCULATE(
         month=JOIN_STRINGS("-", YEAR(start_date), LPAD(MONTH(start_date), 2, "0")),
         start_month=DATETIME(start_date, "start of month"),
     ).WHERE(
-        (start_month < current_month_start)
-        & (start_month >= DATETIME(current_month_start, "-12 months"))
+        (start_month < DATETIME("now", "start of month"))
+        & (start_month >= DATETIME("now", "start of month", "-12 months"))
     )
 
     # Partition by month and calculate counts
     return (
         treatment_info.PARTITION(name="months", by=month)
         .CALCULATE(
-            month=month,
+            month,
             PMPD=NDISTINCT(treatments.diagnosis_id),  # Distinct diagnoses per month
             PMTC=COUNT(treatments),  # Total treatments per month
         )
@@ -2183,7 +2156,7 @@ def impl_defog_dermtreatment_adv9():
         (start_date >= DATETIME("now", "start of month", "-3 months"))
         & (start_date < DATETIME("now", "start of month"))
     ).CALCULATE(
-        patient_id=patient_id,
+        patient_id,
         treatment_month=JOIN_STRINGS(
             "-", YEAR(start_date), LPAD(MONTH(start_date), 2, "0")
         ),
@@ -2214,25 +2187,21 @@ def impl_defog_dermtreatment_adv10():
 
     # First, let's get adverse events with their treatment start dates and drug information
     adverse_events_info = adverse_events.CALCULATE(
-        drug_id=treatment.drug_id,
-        drug_name=treatment.drug.drug_name,
-        ae_month=MONTH(reported_date),
-        ae_year=YEAR(reported_date),
-        treatment_month=MONTH(treatment.start_date),
-        treatment_year=YEAR(treatment.start_date),
+        treatment.drug_id, treatment.drug.drug_name
     )
 
     # Filter for adverse events that occurred in the same month as treatment start
     same_month_events = adverse_events_info.WHERE(
-        (ae_month == treatment_month) & (ae_year == treatment_year)
+        (
+            DATETIME(reported_date, "start of month")
+            == DATETIME(treatment.start_date, "start of month")
+        )
     )
 
     # Group by drug and count adverse events
     drug_ae_counts = same_month_events.PARTITION(
         name="drug_groups", by=(drug_id, drug_name)
-    ).CALCULATE(
-        drug_id=drug_id, drug_name=drug_name, num_adverse_events=COUNT(adverse_events)
-    )
+    ).CALCULATE(drug_id, drug_name, num_adverse_events=COUNT(adverse_events))
 
     # Find the drug with the highest number of adverse events
     return drug_ae_counts.TOP_K(1, by=num_adverse_events.DESC())
@@ -2266,7 +2235,7 @@ def impl_defog_dermtreatment_adv12():
 
     return doctors.WHERE(
         STARTSWITH(LOWER(first_name), "j") | CONTAINS(LOWER(last_name), "son")
-    ).CALCULATE(first_name=first_name, last_name=last_name, specialty=specialty)
+    ).CALCULATE(first_name, last_name, specialty)
 
 
 def impl_defog_dermtreatment_adv13():
@@ -2306,15 +2275,13 @@ def impl_defog_dermtreatment_adv15():
     DDD value.
     """
 
-    return drugs.CALCULATE(
-        drug_name=drug_name,
+    selected_treatments = treatments_used_in.WHERE(PRESENT(end_date))
+    return drugs.WHERE(HAS(selected_treatments)).CALCULATE(
+        drug_name,
         avg_ddd=AVG(
-            treatments_used_in.WHERE(PRESENT(end_date))
-            .CALCULATE(
-                days_of_treatment=DATEDIFF("days", start_date, end_date),
+            selected_treatments.CALCULATE(
                 ddd=total_drug_amount / DATEDIFF("days", start_date, end_date),
-            )
-            .ddd
+            ).ddd
         ),
     )
 

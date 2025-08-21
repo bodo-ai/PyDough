@@ -3,7 +3,7 @@ SELECT
   COUNT(*) AS num_doctors
 FROM main.doctors
 GROUP BY
-  specialty
+  1
 ORDER BY
-  num_doctors DESC
+  2 DESC
 LIMIT 2

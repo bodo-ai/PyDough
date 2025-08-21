@@ -5,7 +5,13 @@ WITH _s1 AS (
     doc_id
   FROM main.treatments
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), CAST(start_dt AS DATETIME), MONTH) <= 6
+    (
+      (
+        YEAR(CURRENT_TIMESTAMP()) - YEAR(start_dt)
+      ) * 12 + (
+        MONTH(CURRENT_TIMESTAMP()) - MONTH(start_dt)
+      )
+    ) <= 6
   GROUP BY
     3
 ), _t1 AS (

@@ -17,17 +17,7 @@ WITH _s2 AS (
     start_dt < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND start_dt >= DATE_ADD(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), -3, 'MONTH')
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(start_dt AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(start_dt AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(start_dt AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(CONCAT('00', EXTRACT(MONTH FROM CAST(start_dt AS DATETIME))), (
-          2 * -1
-        ))
-      END
-    )
+    2
 ), _s3 AS (
   SELECT
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id,
@@ -52,20 +42,7 @@ WITH _s2 AS (
     treatments.start_dt < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND treatments.start_dt >= DATE_ADD(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), -3, 'MONTH')
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(treatments.start_dt AS DATETIME)),
-      CASE
-        WHEN LENGTH(EXTRACT(MONTH FROM CAST(treatments.start_dt AS DATETIME))) >= 2
-        THEN SUBSTRING(EXTRACT(MONTH FROM CAST(treatments.start_dt AS DATETIME)), 1, 2)
-        ELSE SUBSTRING(
-          CONCAT('00', EXTRACT(MONTH FROM CAST(treatments.start_dt AS DATETIME))),
-          (
-            2 * -1
-          )
-        )
-      END
-    )
+    2
 )
 SELECT
   _s2.treatment_month AS month,
@@ -75,4 +52,4 @@ FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
   ON _s2.treatment_month = _s3.treatment_month
 ORDER BY
-  _s2.treatment_month DESC
+  1 DESC

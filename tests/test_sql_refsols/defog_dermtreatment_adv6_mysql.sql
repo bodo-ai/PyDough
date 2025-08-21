@@ -10,7 +10,7 @@ SELECT
   doctors.doc_id,
   doctors.specialty,
   _s1.ndistinct_drug_id AS num_distinct_drugs,
-  DENSE_RANK() OVER (PARTITION BY doctors.specialty ORDER BY _s1.ndistinct_drug_id DESC NULLS FIRST) AS SDRSDR
+  DENSE_RANK() OVER (PARTITION BY doctors.specialty ORDER BY CASE WHEN _s1.ndistinct_drug_id IS NULL THEN 1 ELSE 0 END DESC, _s1.ndistinct_drug_id DESC) AS SDRSDR
 FROM main.doctors AS doctors
 JOIN _s1 AS _s1
   ON _s1.doc_id = doctors.doc_id

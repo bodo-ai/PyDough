@@ -13,6 +13,12 @@ WITH _t1 AS (
   FROM main.outcomes
   WHERE
     NOT day100_pasi_score IS NULL
+), _u_0 AS (
+  SELECT
+    treatment_id AS _u_1
+  FROM _t2
+  GROUP BY
+    1
 ), _s3 AS (
   SELECT
     ins_type,
@@ -22,34 +28,52 @@ WITH _t1 AS (
   SELECT DISTINCT
     _s3.ins_type
   FROM _t1 AS _t1
-  JOIN _t2 AS _t2
-    ON _t1.treatment_id = _t2.treatment_id
+  LEFT JOIN _u_0 AS _u_0
+    ON _t1.treatment_id = _u_0._u_1
   JOIN _s3 AS _s3
     ON _s3.patient_id = _t1.patient_id
+  WHERE
+    NOT _u_0._u_1 IS NULL
+), _u_2 AS (
+  SELECT
+    treatment_id AS _u_3
+  FROM _t2
+  GROUP BY
+    1
 ), _s11 AS (
   SELECT
     COUNT(DISTINCT patients.patient_id) AS ndistinct_patient_id,
     _s7.ins_type
   FROM _t1 AS _t4
-  JOIN _t2 AS _t5
-    ON _t4.treatment_id = _t5.treatment_id
+  LEFT JOIN _u_2 AS _u_2
+    ON _t4.treatment_id = _u_2._u_3
   JOIN _s3 AS _s7
     ON _s7.patient_id = _t4.patient_id
   JOIN main.patients AS patients
     ON _t4.patient_id = patients.patient_id
+  WHERE
+    NOT _u_2._u_3 IS NULL
   GROUP BY
     2
+), _u_4 AS (
+  SELECT
+    treatment_id AS _u_5
+  FROM _t2
+  GROUP BY
+    1
 ), _s19 AS (
   SELECT
     AVG(outcomes.day100_pasi_score) AS avg_day100_pasi_score,
     _s15.ins_type
   FROM _t1 AS _t7
-  JOIN _t2 AS _t8
-    ON _t7.treatment_id = _t8.treatment_id
+  LEFT JOIN _u_4 AS _u_4
+    ON _t7.treatment_id = _u_4._u_5
   JOIN _s3 AS _s15
     ON _s15.patient_id = _t7.patient_id
   JOIN main.outcomes AS outcomes
     ON _t7.treatment_id = outcomes.treatment_id
+  WHERE
+    NOT _u_4._u_5 IS NULL
   GROUP BY
     2
 )

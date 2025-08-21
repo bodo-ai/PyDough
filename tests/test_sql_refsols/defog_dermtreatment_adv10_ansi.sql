@@ -4,14 +4,13 @@ SELECT
   COUNT(*) AS num_adverse_events
 FROM main.adverse_events AS adverse_events
 JOIN main.treatments AS treatments
-  ON EXTRACT(MONTH FROM CAST(adverse_events.reported_dt AS DATETIME)) = EXTRACT(MONTH FROM CAST(treatments.start_dt AS DATETIME))
-  AND EXTRACT(YEAR FROM CAST(adverse_events.reported_dt AS DATETIME)) = EXTRACT(YEAR FROM CAST(treatments.start_dt AS DATETIME))
+  ON DATE_TRUNC('MONTH', CAST(adverse_events.reported_dt AS TIMESTAMP)) = DATE_TRUNC('MONTH', CAST(treatments.start_dt AS TIMESTAMP))
   AND adverse_events.treatment_id = treatments.treatment_id
 JOIN main.drugs AS drugs
   ON drugs.drug_id = treatments.drug_id
 GROUP BY
-  treatments.drug_id,
-  drugs.drug_name
+  1,
+  2
 ORDER BY
-  num_adverse_events DESC
+  3 DESC
 LIMIT 1

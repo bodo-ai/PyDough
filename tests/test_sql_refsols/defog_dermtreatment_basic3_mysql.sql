@@ -8,7 +8,7 @@ WITH _s1 AS (
     3
 )
 SELECT
-  drugs.drug_name,
+  drug_name COLLATE utf8mb4_bin AS drug_name,
   COALESCE(_s1.n_rows, 0) AS num_treatments,
   _s1.avg_tot_drug_amt AS avg_drug_amount
 FROM main.drugs AS drugs

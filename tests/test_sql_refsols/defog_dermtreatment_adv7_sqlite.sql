@@ -1,9 +1,9 @@
 SELECT
   COUNT(*) AS num_treatments
-FROM main.patients AS patients
-JOIN main.treatments AS treatments
-  ON patients.patient_id = treatments.patient_id
-  AND treatments.start_dt < DATE('now', 'start of month')
-  AND treatments.start_dt >= DATE('now', 'start of month', '-6 month')
+FROM main.treatments AS treatments
+JOIN main.patients AS patients
+  ON LOWER(patients.first_name) = 'alice'
+  AND patients.patient_id = treatments.patient_id
 WHERE
-  LOWER(patients.first_name) = 'alice'
+  treatments.start_dt < DATE('now', 'start of month')
+  AND treatments.start_dt >= DATE('now', 'start of month', '-6 month')
