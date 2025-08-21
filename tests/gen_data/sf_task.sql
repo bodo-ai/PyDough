@@ -250,7 +250,7 @@ VALUES
   DELETE FROM DEFOG.DEALERSHIP.CUSTOMERS;
   INSERT INTO DEFOG.DEALERSHIP.CUSTOMERS (id, first_name, last_name, email, phone, address, city, state, zip_code, crtd_ts)
 VALUES
-  -- (1, 'William', 'Davis', 'william.davis@example.com', '555-888-9999', '123 Main St', 'New York', 'NY', '10001', CURRENT_TIMESTAMP - INTERVAL '5 years');,
+  (1, 'William', 'Davis', 'william.davis@example.com', '555-888-9999', '123 Main St', 'New York', 'NY', '10001', CURRENT_TIMESTAMP - INTERVAL '5 years'),
   (2, 'Ava', 'Miller', 'ava.miller@example.com', '555-777-6666', '456 Oak Ave', 'Los Angeles', 'CA', '90001', CURRENT_TIMESTAMP - INTERVAL '4 years'),
   (3, 'Benjamin', 'Wilson', 'benjamin.wilson@example.com', '555-666-5555', '789 Elm St', 'Chicago', 'IL', '60007', CURRENT_TIMESTAMP - INTERVAL '3 years'),
   (4, 'Mia', 'Moore', 'mia.moore@example.com', '555-555-4444', '321 Pine Rd', 'Houston', 'TX', '77001', CURRENT_TIMESTAMP - INTERVAL '2 years'),

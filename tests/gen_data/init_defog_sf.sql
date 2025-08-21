@@ -237,7 +237,7 @@ INSERT INTO sbTransaction (sbTxId, sbTxCustId, sbTxTickerId, sbTxDateTime, sbTxT
 
 -------------------------------------------------------------------------------
 -- For the Dealership SCHEMA
--- https://github.com/defog-ai/defog-data/blob/main/defog_data/dealership/dealership.sql
+-- https://github.com/defog-ai/defog-data/blob/main/defog_data/car_dealership/car_dealership.sql
 
 -- Snowflake dialect compatibility replace:
 --    - SERIAL PRIMARY KEY -> INTEGER AUTOINCREMENT PRIMARY KEY
