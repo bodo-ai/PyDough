@@ -3,12 +3,12 @@ WITH _s1 AS (
     p_partkey,
     p_type
   FROM tpch.part
-), _s10 AS (
+), _t4 AS (
   SELECT
     COUNT(*) AS n_rows,
+    MAX(_s11.p_type) AS p_type,
     customer.c_custkey,
     customer.c_nationkey,
-    lineitem.l_partkey,
     orders.o_orderpriority
   FROM tpch.customer AS customer
   JOIN tpch.orders AS orders
@@ -31,21 +31,21 @@ WITH _s1 AS (
     END = 1
     AND CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1997
     AND lineitem.l_orderkey = orders.o_orderkey
+  JOIN _s1 AS _s11
+    ON _s11.p_partkey = lineitem.l_partkey
   GROUP BY
-    2,
+    lineitem.l_partkey,
     3,
     4,
     5
 ), _t3 AS (
   SELECT
-    SUM(_s10.n_rows) AS sum_n_rows,
-    _s10.c_custkey,
-    _s10.c_nationkey,
-    _s10.o_orderpriority,
-    _s11.p_type
-  FROM _s10 AS _s10
-  JOIN _s1 AS _s11
-    ON _s10.l_partkey = _s11.p_partkey
+    SUM(n_rows) AS sum_n_rows,
+    c_custkey,
+    c_nationkey,
+    o_orderpriority,
+    p_type
+  FROM _t4
   GROUP BY
     2,
     3,
