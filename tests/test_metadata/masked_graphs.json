@@ -1,0 +1,47 @@
+[
+    {
+      "name": "CRYPTBANK",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CRBNK.sbCustomer",
+          "unique properties": ["TODO"],
+          "properties": [
+            {
+              "name": "TODO",
+              "type": "table column",
+              "column name": "TODO",
+              "data type": "string",
+              "description": "TODO",
+              "sample values": ["TODO"],
+              "synonyms": ["TODO"]
+            }
+          ],
+          "description": "TODO",
+          "synonyms": ["TODO"]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "transactions_made",
+          "type": "simple join",
+          "parent collection": "customers",
+          "child collection": "transactions",
+          "singular": false,
+          "always matches": false,
+          "keys": {
+            "_id": [
+              "customer_id"
+            ]
+          },
+          "description": "All of the transactions made by the customer, including both buys and sells",
+          "synonyms": ["exchanges made", "trades made", "stock purchases and sales"]
+        }
+      ],
+      "additional definitions": [],
+      "verified pydough analysis": [],
+      "extra semantic info": {}
+    }
+  ]
