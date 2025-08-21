@@ -7,6 +7,8 @@ __all__ = ["PyDoughOperator"]
 from abc import abstractmethod
 from typing import Any
 
+from pydough.errors import PyDoughQDAGException
+
 from .type_inference import TypeVerifier
 
 
@@ -55,17 +57,15 @@ class PyDoughOperator:
             `PyDoughQDAGException` if the operator does not accept the
             provided arguments.
         """
-        from pydough.qdag.errors import PyDoughQDAGException
 
         try:
             self.verifier.accepts(args)
         except PyDoughQDAGException as e:
-            # If the verifier failed, raise the error with the same traceback
-            # but prepend it with information about the operator and args
-            # that caused the failure.
-            arg_strings: list[str] = [str(arg) for arg in args]
-            msg = f"Invalid operator invocation {self.to_string(arg_strings)!r}: {e}"
-            raise PyDoughQDAGException(msg).with_traceback(e.__traceback__)
+            import pydough
+
+            raise pydough.active_session.error_builder.type_verification_fail(
+                self, args, str(e)
+            )
 
     @abstractmethod
     def to_string(self, arg_strings: list[str]) -> str:

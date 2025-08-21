@@ -4,8 +4,9 @@ Definition of PyDough metadata for a graph.
 
 from typing import TYPE_CHECKING
 
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import HasType, is_valid_name
 from pydough.metadata.abstract_metadata import AbstractMetadata
-from pydough.metadata.errors import HasType, PyDoughMetadataException, is_valid_name
 
 if TYPE_CHECKING:
     from pydough.pydough_operators import (

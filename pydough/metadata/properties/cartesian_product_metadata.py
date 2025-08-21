@@ -6,12 +6,12 @@ a cartesian product of their records.
 __all__ = ["CartesianProductMetadata"]
 
 
-from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import (
+from pydough.errors.error_utils import (
     NoExtraKeys,
     extract_bool,
     extract_string,
 )
+from pydough.metadata.collections import CollectionMetadata
 from pydough.metadata.graphs import GraphMetadata
 
 from .property_metadata import PropertyMetadata
