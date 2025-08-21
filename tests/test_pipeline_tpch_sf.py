@@ -25,7 +25,6 @@ from tests.testing_utilities import (
     harmonize_types,
     PyDoughSQLComparisonTest,
 )
-from .test_pipeline_tpch import tpch_pipeline_test_data
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data
 from .test_pipeline_defog import defog_pipeline_test_data
 

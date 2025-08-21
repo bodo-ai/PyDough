@@ -1,17 +1,17 @@
 WITH _T0 AS (
   SELECT
-    ANY_VALUE(TIMES.t_name) AS ANYTHING_T_NAME,
     ANY_VALUE(TIMES.t_start_hour) AS ANYTHING_T_START_HOUR,
-    COUNT(*) AS N_ROWS
+    COUNT(*) AS N_ROWS,
+    TIMES.t_name AS T_NAME
   FROM TIMES AS TIMES
   JOIN SEARCHES AS SEARCHES
     ON TIMES.t_end_hour > HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
     AND TIMES.t_start_hour <= HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
   GROUP BY
-    TIMES.t_name
+    3
 )
 SELECT
-  ANYTHING_T_NAME AS tod,
+  T_NAME AS tod,
   ROUND((
     100.0 * N_ROWS
   ) / SUM(N_ROWS) OVER (), 2) AS pct_searches

@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     type = 'transaction'
   GROUP BY
-    user_id
+    1
 )
 SELECT
   USERS.uid AS user_id

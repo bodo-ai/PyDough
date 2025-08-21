@@ -9,8 +9,8 @@ WITH _T0 AS (
   JOIN USERS AS USERS
     ON SEARCHES.search_user_id = USERS.user_id
   GROUP BY
-    EVENTS.ev_typ,
-    USERS.user_region
+    2,
+    3
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY USERS.user_region ORDER BY COUNT(DISTINCT SEARCHES.search_id) DESC) = 1
 )

@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     l_commitdate < l_receiptdate
   GROUP BY
-    l_orderkey
+    1
 )
 SELECT
   ORDERS.o_orderpriority AS O_ORDERPRIORITY,
@@ -18,6 +18,6 @@ WHERE
   AND QUARTER(CAST(ORDERS.o_orderdate AS TIMESTAMP)) = 3
   AND YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)) = 1993
 GROUP BY
-  ORDERS.o_orderpriority
+  1
 ORDER BY
-  O_ORDERPRIORITY NULLS FIRST
+  1 NULLS FIRST

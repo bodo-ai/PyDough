@@ -11,11 +11,7 @@ WITH _S2 AS (
     sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND sbcustjoindate >= DATE_TRUNC('MONTH', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
   GROUP BY
-    CONCAT_WS(
-      '-',
-      YEAR(CAST(sbcustjoindate AS TIMESTAMP)),
-      LPAD(MONTH(CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
-    )
+    1
 ), _S3 AS (
   SELECT
     AVG(SBTRANSACTION.sbtxamount) AS AVG_SBTXAMOUNT,
@@ -33,11 +29,7 @@ WITH _S2 AS (
     SBCUSTOMER.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND SBCUSTOMER.sbcustjoindate >= DATE_TRUNC('MONTH', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
   GROUP BY
-    CONCAT_WS(
-      '-',
-      YEAR(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)),
-      LPAD(MONTH(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP)), 2, '0')
-    )
+    2
 )
 SELECT
   _S2.MONTH AS month,

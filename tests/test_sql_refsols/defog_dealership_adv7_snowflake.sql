@@ -4,7 +4,7 @@ WITH _S1 AS (
     car_id AS CAR_ID
   FROM MAIN.SALES
   GROUP BY
-    car_id
+    2
 )
 SELECT
   CARS.make,

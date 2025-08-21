@@ -7,7 +7,7 @@ WITH _S1 AS (
   WHERE
     status = 'success'
   GROUP BY
-    receiver_id
+    3
 )
 SELECT
   MERCHANTS.name,

@@ -10,7 +10,7 @@ WITH _S3 AS (
   JOIN TPCH.CUSTOMER AS CUSTOMER
     ON CUSTOMER.c_nationkey = NATION.n_nationkey
   GROUP BY
-    NATION.n_regionkey
+    6
 )
 SELECT
   REGION.r_name AS region_name,
@@ -23,4 +23,4 @@ FROM TPCH.REGION AS REGION
 JOIN _S3 AS _S3
   ON REGION.r_regionkey = _S3.N_REGIONKEY
 ORDER BY
-  REGION.r_name NULLS FIRST
+  1 NULLS FIRST

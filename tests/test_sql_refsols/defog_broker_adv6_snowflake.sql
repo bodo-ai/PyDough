@@ -5,7 +5,7 @@ WITH _S1 AS (
     sbtxcustid AS SBTXCUSTID
   FROM MAIN.SBTRANSACTION
   GROUP BY
-    sbtxcustid
+    3
 )
 SELECT
   SBCUSTOMER.sbcustname AS name,

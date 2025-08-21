@@ -8,7 +8,7 @@ WITH _S1 AS (
   WHERE
     session_end_ts < '2023-06-08' AND session_start_ts >= '2023-06-01'
   GROUP BY
-    user_id
+    2
 )
 SELECT
   USERS.uid,
@@ -17,4 +17,4 @@ FROM MAIN.USERS AS USERS
 JOIN _S1 AS _S1
   ON USERS.uid = _S1.USER_ID
 ORDER BY
-  COALESCE(_S1.SUM_DURATION, 0) DESC NULLS LAST
+  2 DESC NULLS LAST

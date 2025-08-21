@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     sbtxtype = 'buy'
   GROUP BY
-    sbtxcustid
+    1
 )
 SELECT
   SBCUSTOMER.sbcustid AS _id

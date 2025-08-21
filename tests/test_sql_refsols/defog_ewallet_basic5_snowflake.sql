@@ -3,7 +3,7 @@ WITH _u_0 AS (
     user_id AS _u_1
   FROM MAIN.NOTIFICATIONS
   GROUP BY
-    user_id
+    1
 )
 SELECT
   USERS.uid,

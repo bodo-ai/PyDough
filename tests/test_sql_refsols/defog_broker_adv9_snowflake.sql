@@ -54,15 +54,4 @@ WHERE
     )
   )
 GROUP BY
-  DATE_TRUNC(
-    'DAY',
-    DATEADD(
-      DAY,
-      (
-        (
-          DAYOFWEEK(CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP)) + 6
-        ) % 7
-      ) * -1,
-      CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP)
-    )
-  )
+  1

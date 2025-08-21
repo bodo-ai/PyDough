@@ -7,7 +7,7 @@ WITH _S1 AS (
   WHERE
     sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -30, CURRENT_TIMESTAMP()))
   GROUP BY
-    sbtxcustid
+    3
 )
 SELECT
   SBCUSTOMER.sbcustcountry AS country,
@@ -17,4 +17,4 @@ FROM MAIN.SBCUSTOMER AS SBCUSTOMER
 LEFT JOIN _S1 AS _S1
   ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
 GROUP BY
-  SBCUSTOMER.sbcustcountry
+  1

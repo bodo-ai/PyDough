@@ -8,7 +8,7 @@ WITH _T2 AS (
     IN_DEVICE_ID
   FROM _T2
   GROUP BY
-    IN_DEVICE_ID
+    2
 ), _S3 AS (
   SELECT
     COUNT(*) AS N_ROWS,
@@ -18,14 +18,14 @@ WITH _T2 AS (
   LEFT JOIN _S1 AS _S1
     ON DEVICES.de_id = _S1.IN_DEVICE_ID
   GROUP BY
-    DEVICES.de_production_country_id
+    3
 ), _S5 AS (
   SELECT
     COUNT(*) AS N_ROWS,
     IN_DEVICE_ID
   FROM _T2
   GROUP BY
-    IN_DEVICE_ID
+    2
 ), _S7 AS (
   SELECT
     COUNT(*) AS N_ROWS,
@@ -35,14 +35,14 @@ WITH _T2 AS (
   LEFT JOIN _S5 AS _S5
     ON DEVICES.de_id = _S5.IN_DEVICE_ID
   GROUP BY
-    DEVICES.de_purchase_country_id
+    3
 ), _S11 AS (
   SELECT
     COUNT(*) AS N_ROWS,
     IN_DEVICE_ID
   FROM _T2
   GROUP BY
-    IN_DEVICE_ID
+    2
 ), _S13 AS (
   SELECT
     COUNT(*) AS N_ROWS,
@@ -54,7 +54,7 @@ WITH _T2 AS (
   LEFT JOIN _S11 AS _S11
     ON DEVICES.de_id = _S11.IN_DEVICE_ID
   GROUP BY
-    USERS.us_country_id
+    3
 )
 SELECT
   COUNTRIES.co_name AS country_name,
@@ -69,4 +69,4 @@ JOIN _S7 AS _S7
 LEFT JOIN _S13 AS _S13
   ON COUNTRIES.co_id = _S13.US_COUNTRY_ID
 ORDER BY
-  COUNTRIES.co_name NULLS FIRST
+  1 NULLS FIRST

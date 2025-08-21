@@ -8,8 +8,8 @@ WITH _T1 AS (
     ON TIMES.t_end_hour > HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
     AND TIMES.t_start_hour <= HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
   GROUP BY
-    SEARCHES.search_engine,
-    TIMES.t_name
+    2,
+    3
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY TIMES.t_name ORDER BY COUNT(*) DESC, SEARCHES.search_engine) = 1
 )
@@ -19,4 +19,4 @@ SELECT
   N_SEARCHES AS n_searches
 FROM _T1
 ORDER BY
-  T_NAME NULLS FIRST
+  1 NULLS FIRST

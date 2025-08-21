@@ -4,7 +4,7 @@ WITH _S1 AS (
     coupon_id AS COUPON_ID
   FROM MAIN.WALLET_TRANSACTIONS_DAILY
   GROUP BY
-    coupon_id
+    2
 )
 SELECT
   COUPONS.cid AS coupon_id,

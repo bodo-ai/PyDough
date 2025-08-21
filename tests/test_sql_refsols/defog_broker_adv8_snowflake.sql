@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     LOWER(sbcustcountry) = 'usa'
   GROUP BY
-    sbcustid
+    1
 )
 SELECT
   CASE WHEN COUNT(*) > 0 THEN COUNT(*) ELSE NULL END AS n_transactions,

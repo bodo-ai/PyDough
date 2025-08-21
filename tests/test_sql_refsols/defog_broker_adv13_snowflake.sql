@@ -5,4 +5,4 @@ FROM MAIN.SBCUSTOMER
 WHERE
   sbcustjoindate >= CAST('2023-01-01' AS DATE)
 GROUP BY
-  sbcustcountry
+  1

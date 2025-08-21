@@ -4,7 +4,7 @@ WITH _S1 AS (
     sbtxcustid AS SBTXCUSTID
   FROM MAIN.SBTRANSACTION
   GROUP BY
-    sbtxcustid
+    2
 )
 SELECT
   SBCUSTOMER.sbcustid AS cust_id,

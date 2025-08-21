@@ -68,5 +68,5 @@ WHERE
   AND ENDSWITH(o_clerk, '5')
   AND STARTSWITH(o_orderpriority, '3')
 ORDER BY
-  o_orderkey NULLS FIRST
+  1 NULLS FIRST
 LIMIT 5

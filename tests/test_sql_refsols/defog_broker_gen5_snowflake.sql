@@ -7,6 +7,6 @@ WHERE
   AND sbtxstatus = 'success'
   AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023
 GROUP BY
-  DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP))
+  1
 ORDER BY
-  MONTH NULLS FIRST
+  1 NULLS FIRST

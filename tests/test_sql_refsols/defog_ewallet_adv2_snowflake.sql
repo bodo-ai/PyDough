@@ -50,15 +50,4 @@ WHERE
     )
   )
 GROUP BY
-  DATE_TRUNC(
-    'DAY',
-    DATEADD(
-      DAY,
-      (
-        (
-          DAYOFWEEK(CAST(NOTIFICATIONS.created_at AS TIMESTAMP)) + 6
-        ) % 7
-      ) * -1,
-      CAST(NOTIFICATIONS.created_at AS TIMESTAMP)
-    )
-  )
+  1

@@ -3,7 +3,7 @@ WITH _u_0 AS (
     merchant_id AS _u_1
   FROM MAIN.COUPONS
   GROUP BY
-    merchant_id
+    1
 )
 SELECT
   MERCHANTS.mid AS merchant_id,

@@ -67,15 +67,4 @@ WHERE
     )
   ) >= 1
 GROUP BY
-  DATE_TRUNC(
-    'DAY',
-    DATEADD(
-      DAY,
-      (
-        (
-          DAYOFWEEK(CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)) + 6
-        ) % 7
-      ) * -1,
-      CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)
-    )
-  )
+  1

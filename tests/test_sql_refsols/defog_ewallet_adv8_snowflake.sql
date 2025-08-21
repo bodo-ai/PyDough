@@ -6,7 +6,7 @@ WITH _S1 AS (
   WHERE
     receiver_type = 1 AND status = 'success'
   GROUP BY
-    receiver_id
+    2
 )
 SELECT
   MERCHANTS.mid AS merchants_id,

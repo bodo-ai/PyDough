@@ -7,7 +7,7 @@ WITH _S1 AS (
   WHERE
     sale_date >= DATEADD(DAY, -30, CURRENT_TIMESTAMP())
   GROUP BY
-    car_id
+    3
 )
 SELECT
   COALESCE(_S1.N_ROWS, 0) AS num_sales,

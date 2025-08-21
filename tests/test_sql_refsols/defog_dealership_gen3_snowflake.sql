@@ -22,8 +22,8 @@ WHERE
     )
   ) = 1
 GROUP BY
-  payment_date,
-  payment_method
+  1,
+  2
 ORDER BY
-  PAYMENT_DATE DESC NULLS LAST,
-  PAYMENT_METHOD NULLS FIRST
+  1 DESC NULLS LAST,
+  2 NULLS FIRST

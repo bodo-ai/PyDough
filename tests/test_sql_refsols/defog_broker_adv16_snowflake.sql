@@ -7,7 +7,7 @@ WITH _S1 AS (
   WHERE
     sbtxdatetime >= DATEADD(MONTH, -1, CURRENT_TIMESTAMP()) AND sbtxtype = 'sell'
   GROUP BY
-    sbtxtickerid
+    3
 )
 SELECT
   SBTICKER.sbtickersymbol AS symbol,
@@ -20,4 +20,4 @@ FROM MAIN.SBTICKER AS SBTICKER
 JOIN _S1 AS _S1
   ON SBTICKER.sbtickerid = _S1.SBTXTICKERID
 ORDER BY
-  SBTICKER.sbtickersymbol NULLS FIRST
+  1 NULLS FIRST

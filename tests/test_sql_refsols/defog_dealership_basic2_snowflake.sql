@@ -3,7 +3,7 @@ WITH _u_0 AS (
     customer_id AS _u_1
   FROM MAIN.SALES
   GROUP BY
-    customer_id
+    1
 )
 SELECT
   CUSTOMERS._id

@@ -5,4 +5,4 @@ SELECT
   ) AS avg_session_duration_seconds
 FROM MAIN.USER_SESSIONS
 GROUP BY
-  device_type
+  1

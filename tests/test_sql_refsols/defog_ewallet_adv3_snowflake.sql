@@ -4,7 +4,7 @@ WITH _S1 AS (
     merchant_id AS MERCHANT_ID
   FROM MAIN.COUPONS
   GROUP BY
-    merchant_id
+    2
 )
 SELECT
   MERCHANTS.name AS merchant_name,
