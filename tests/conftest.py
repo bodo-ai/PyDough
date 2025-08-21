@@ -521,7 +521,8 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
         shell=True,
     )
     path: str = os.path.join(base_dir, "tests/gen_data/cryptbank.db")
-    connection: sqlite3.Connection = sqlite3.connect(path)
+    connection: sqlite3.Connection = sqlite3.connect(":memory:")
+    connection.execute(f"attach database '{path}' as CRBNK")
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
