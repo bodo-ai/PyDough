@@ -5,6 +5,8 @@ Definition of SQLGlot transformation bindings for the Snowflake dialect.
 __all__ = ["SnowflakeTransformBindings"]
 
 
+import re
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
@@ -46,6 +48,10 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         match operator:
             case pydop.SUM:
                 return self.convert_sum(args, types)
+            case pydop.STRCOUNT:
+                return self.convert_str_count(args, types)
+            case pydop.GETPART:
+                return self.convert_get_part(args, types)
         if operator in self.PYDOP_TO_SNOWFLAKE_FUNC:
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_SNOWFLAKE_FUNC[operator], expressions=args
@@ -71,6 +77,23 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             case _:
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
+
+    # HA: TODO: FIX base and remove this
+    def convert_str_count(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        if isinstance(args[1], sqlglot_expressions.Literal):
+            escaped_pattern = re.escape(args[1].this)
+            args[1] = sqlglot_expressions.Literal.string(escaped_pattern)
+        return sqlglot_expressions.Anonymous(
+            this="REGEXP_COUNT",
+            expressions=args,
+        )
+
+    def convert_get_part(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Anonymous(this="SPLIT_PART", expressions=args)
 
     def convert_extract_datetime(
         self,

@@ -224,7 +224,9 @@ def test_pipeline_sf_e2e_defog_custom(
     Test executing the defog analytical queries with Snowflake database.
     """
     defog_custom_pipeline_test_data.run_e2e_test(
-        get_sf_defog_graphs, sf_conn_db_context("DEFOG", "BROKER"), coerce_types=True
+        get_sf_defog_graphs,
+        sf_conn_db_context("DEFOG", defog_custom_pipeline_test_data.graph_name),
+        coerce_types=True,
     )
 
 
@@ -248,7 +250,7 @@ def test_defog_e2e(
     """
     defog_pipeline_test_data.run_e2e_test(
         get_sf_defog_graphs,
-        sf_conn_db_context("DEFOG", "BROKER"),
+        sf_conn_db_context("DEFOG", defog_pipeline_test_data.graph_name),
         defog_config,
         reference_database=sqlite_defog_connection,
         coerce_types=True,

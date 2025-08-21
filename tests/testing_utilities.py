@@ -1042,7 +1042,7 @@ class PyDoughSQLComparisonTest:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
-        # Perform the comparison between the result and the reference solution
+        # Harmonize types between result and reference solution
         if coerce_types:
             for col_name in result.columns:
                 result[col_name], refsol[col_name] = harmonize_types(
@@ -1310,6 +1310,7 @@ class PyDoughPandasTest:
 
 
 def harmonize_types(column_a, column_b):
+    # breakpoint()
     """
     Harmonizes data types between two Pandas columns to ensure compatibility
     for comparison equality check operations.
@@ -1379,6 +1380,12 @@ def harmonize_types(column_a, column_b):
         return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
             lambda x: "" if pd.isna(x) else str(x)
         )
+    # float vs None. Convert to nullable floats
+    if any(isinstance(elem, (float, NoneType)) for elem in column_a) and any(
+        isinstance(elem, (float, NoneType)) for elem in column_b
+    ):
+        return column_a.astype("Float64"), column_b.astype("Float64")
+
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, int) for elem in column_b
     ):

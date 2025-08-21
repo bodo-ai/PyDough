@@ -2035,7 +2035,7 @@ def week_offset():
         week_adj4=DATETIME(date_time, "-1 s", "2 w"),
         week_adj5=DATETIME(date_time, "1 d", "2 w"),
         week_adj6=DATETIME(date_time, "-1 m", "2 w"),
-        week_adj7=DATETIME(date_time, "1 mm", "2 w"),
+        # week_adj7=DATETIME(date_time, "1 mm", "2 w"),
         week_adj8=DATETIME(date_time, "1 y", "2 w"),
     )
 

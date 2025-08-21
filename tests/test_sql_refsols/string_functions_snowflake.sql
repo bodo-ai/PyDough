@@ -13,11 +13,7 @@ SELECT
   TRIM(CUSTOMER.c_name, 'aeiou') AS stripped_vowels,
   REPLACE(CUSTOMER.c_name, 'Corp', 'Inc') AS replaced_name,
   REPLACE(CUSTOMER.c_name, 'Ltd', '') AS removed_substr,
-  CASE
-    WHEN LENGTH('e') = 0
-    THEN 0
-    ELSE CAST(LENGTH(CUSTOMER.c_name) - LENGTH(REPLACE(CUSTOMER.c_name, 'e', '')) / LENGTH('e') AS BIGINT)
-  END AS count_e,
+  REGEXP_COUNT(CUSTOMER.c_name, 'e') AS count_e,
   CHARINDEX('Alex', CUSTOMER.c_name) - 1 AS idx_Alex
 FROM TPCH.CUSTOMER AS CUSTOMER
 JOIN TPCH.NATION AS NATION

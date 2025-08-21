@@ -6,7 +6,6 @@ SELECT
   DATETIME(sbtxdatetime, '-1 second', '14 day') AS week_adj4,
   DATETIME(sbtxdatetime, '1 day', '14 day') AS week_adj5,
   DATETIME(sbtxdatetime, '-1 minute', '14 day') AS week_adj6,
-  DATETIME(sbtxdatetime, '1 month', '14 day') AS week_adj7,
   DATETIME(sbtxdatetime, '1 year', '14 day') AS week_adj8
 FROM main.sbtransaction
 WHERE
