@@ -396,7 +396,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
             case (pydop.NEQ, pydop.QUARTER, NumericType()) if isinstance(
                 lit_expr.value, int
             ):
-# QUARTER(x) != 4 <=> NOT(ISIN(MONTH(x), [10, 11, 12]))
+                # QUARTER(x) != 4 <=> NOT(ISIN(MONTH(x), [10, 11, 12]))
                 if lit_expr.value in (1, 2, 3, 4):
                     result = CallExpression(
                         pydop.NOT,
