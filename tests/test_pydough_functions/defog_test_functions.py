@@ -2309,3 +2309,107 @@ def impl_defog_dermtreatment_adv16():
         / AVG(valid_outcomes.day7_pasi_score)
         * 100
     )
+
+
+def impl_defog_dermtreatment_gen1():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Return the treatment id, treatment start date, adverse event date and
+    description of all adverse events that occured within 10 days after starting
+    treatment
+    """
+    return adverse_events.WHERE(
+        DATEDIFF("days", treatment.start_date, reported_date) <= 10
+    ).CALCULATE(
+        treatment_id,
+        treatment_start_date=treatment.start_date,
+        adverse_event_date=reported_date,
+        description=description,
+    )
+
+
+def impl_defog_dermtreatment_gen2():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    List the last name, year of registration, and first treatment (date and id)
+    by doctors who were registered 2 years ago.
+    """
+    # First doctor's treatment
+    first_treatment = prescribed_treatments.BEST(per="doctors", by=start_date.ASC())
+
+    # Find doctors registered 2 years ago and their first treatment
+    return doctors.WHERE(year_reg == YEAR(DATETIME("now", "-2 years"))).CALCULATE(
+        last_name,
+        year_reg,
+        first_treatment_date=first_treatment.start_date,
+        first_treatment_id=first_treatment.treatment_id,
+    )
+
+
+def impl_defog_dermtreatment_gen3():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    What is average age (in integer years) of all registered male patients with
+    private insurance currently?
+    """
+    return DermTreatment.CALCULATE(
+        average_age=AVG(
+            patients.WHERE(
+                (LOWER(gender) == LOWER("Male"))
+                & (LOWER(insurance_type) == LOWER("private"))
+            )
+            .CALCULATE(age_in_years=DATEDIFF("years", date_of_birth, DATETIME("now")))
+            .age_in_years
+        )
+    )
+
+
+def impl_defog_dermtreatment_gen4():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    Show all placebo treatment id, start and end date, where there
+    concomitant_meds were started within 2 weeks of starting the treatment.
+    Also return the start and end dates of all concomitant drug usage.
+    """
+    return (
+        treatments.WHERE(is_placebo == True)
+        .concomitant_meds.WHERE(
+            DATEDIFF("days", treatment.start_date, start_date) <= 14
+        )
+        .CALCULATE(
+            treatment.treatment_id,
+            treatment_start_date=treatment.start_date,
+            treatment_end_date=treatment.end_date,
+            concomitant_med_start_date=start_date,
+            concomitant_med_end_date=end_date,
+        )
+    )
+
+
+def impl_defog_dermtreatment_gen5():
+    """
+    PyDough implementation of the following question for the DermTreatment
+    graph:
+
+    How many treatments for diagnoses containing 'psoriasis' (match with
+    wildcards case-insensitively) involve drugs that have been FDA-approved and
+    the treatments have ended within the last 6 months from today?
+    """
+    return DermTreatment.CALCULATE(
+        num_treatments=COUNT(
+            treatments.WHERE(
+                CONTAINS(LOWER(diagnosis.name), "psoriasis")
+                & PRESENT(drug.fda_approval_date)
+                & PRESENT(end_date)
+                & (DATEDIFF("days", end_date, DATETIME("now")) <= 180)
+            )
+        )
+    )

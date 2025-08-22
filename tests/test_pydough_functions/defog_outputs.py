@@ -2383,3 +2383,105 @@ def defog_sql_text_dermtreatment_adv16() -> str:
     WHERE NOT day7_pasi_score IS NULL AND 
         NOT day100_pasi_score IS NULL;	
     """
+
+
+def defog_sql_text_dermtreatment_gen1() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Return the treatment id, treatment start date, adverse event date and
+    description of all adverse events that occured within 10 days after starting
+    treatment
+    """
+    return """
+    SELECT t.treatment_id, 
+        t.start_dt, 
+        ae.reported_dt, 
+        ae.description 
+    FROM adverse_events AS ae 
+        JOIN treatments AS t ON ae.treatment_id = t.treatment_id 
+    WHERE ae.reported_dt BETWEEN t.start_dt AND date(t.start_dt, '+10 days');
+    """
+
+
+def defog_sql_text_dermtreatment_gen2() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    List the last name, year of registration, and first treatment (date and id)
+    by doctors who were registered 2 years ago.
+    """
+    return """
+    WITH doc_first_treatment AS (
+        SELECT d.doc_id, 
+            d.last_name, 
+            d.year_reg, 
+            t.treatment_id, 
+            t.start_dt, 
+            ROW_NUMBER() OVER (PARTITION BY d.doc_id ORDER BY t.start_dt ASC) AS rn 
+        FROM doctors AS d 
+        JOIN treatments AS t ON d.doc_id = t.doc_id 
+        WHERE d.year_reg = strftime('%Y', 'now', '-2 years')
+    ) 
+    SELECT last_name, 
+        year_reg, 
+        start_dt AS first_treatment_date, 
+        treatment_id AS first_treatment_id 
+    FROM doc_first_treatment 
+    WHERE rn = 1;
+    """
+
+
+def defog_sql_text_dermtreatment_gen3() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    What is average age (in integer years) of all registered male patients with
+    private insurance currently?
+    """
+    return """
+    SELECT AVG(strftime('%Y', 'now') - strftime('%Y', date_of_birth)) AS avg_age 
+    FROM patients 
+    WHERE gender = 'Male' AND ins_type = 'private';
+    """
+
+
+def defog_sql_text_dermtreatment_gen4() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    Show all placebo treatment id, start and end date, where there
+    concomitant_meds were started within 2 weeks of starting the treatment.
+    Also return the start and end dates of all concomitant drug usage.
+    """
+    return """
+    SELECT t.treatment_id, 
+        t.start_dt AS treatment_start_date, 
+        t.end_dt AS treatment_end_date, 
+        cm.start_dt AS concomitant_med_start_date, 
+        cm.end_dt AS concomitant_med_end_date 
+    FROM treatments AS t 
+    JOIN concomitant_meds AS cm ON t.treatment_id = cm.treatment_id 
+    WHERE t.is_placebo = 1 AND 
+        cm.start_dt BETWEEN t.start_dt AND date(t.start_dt, '+14 days') 
+    ORDER BY t.treatment_id;
+    """
+
+
+def defog_sql_text_dermtreatment_gen5() -> str:
+    """
+    SQLite query text for the following question for the DermTreatment graph:
+
+    How many treatments for diagnoses containing 'psoriasis' (match with
+    wildcards case-insensitively) involve drugs that have been FDA-approved and
+    the treatments have ended within the last 6 months from today?
+    """
+    return """
+    SELECT COUNT(*) 
+    FROM treatments t 
+        JOIN diagnoses d ON t.diag_id = d.diag_id 
+        JOIN drugs dr ON t.drug_id = dr.drug_id 
+    WHERE d.diag_name LIKE '%psoriasis%' AND
+        dr.fda_appr_dt IS NOT NULL AND
+        t.end_dt >= DATE('now', '-6 months');
+    """
