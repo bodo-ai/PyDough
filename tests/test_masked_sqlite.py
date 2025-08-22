@@ -270,6 +270,86 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
+                "selected_customers = customers.WHERE(LIKE(email, '%.%@%mail%'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [8]}),
+                "cryptbank_filter_count_18",
+            ),
+            id="cryptbank_filter_count_18",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(email, 'mail'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [12]}),
+                "cryptbank_filter_count_19",
+            ),
+            id="cryptbank_filter_count_19",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday > '1991-11-15')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_20",
+            ),
+            id="cryptbank_filter_count_20",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday >= '1991-11-15')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [6]}),
+                "cryptbank_filter_count_21",
+            ),
+            id="cryptbank_filter_count_21",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday < '1991-11-15')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [14]}),
+                "cryptbank_filter_count_22",
+            ),
+            id="cryptbank_filter_count_22",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday <= '1991-11-15')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [15]}),
+                "cryptbank_filter_count_23",
+            ),
+            id="cryptbank_filter_count_23",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday == '1991-11-15')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_24",
+            ),
+            id="cryptbank_filter_count_24",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday != '1991-11-15')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [19]}),
+                "cryptbank_filter_count_25",
+            ),
+            id="cryptbank_filter_count_25",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "selected_transactions = transactions.WHERE((YEAR(time_stamp) == 2022) & (MONTH(time_stamp) == 6))\n"
                 "result = CRYPTBANK.CALCULATE(n=ROUND(AVG(selected_transactions.amount), 2))",
                 "CRYPTBANK",
@@ -302,8 +382,8 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
-                "acc_typs = accounts.PARTITION(name='account_types', by=account_type)\n"
-                "result = acc_typs.accounts.BEST(per='account_types', by=balance.DESC()).CALCULATE(account_type, balance, name=JOIN_STRINGS(' ', account_holder.first_name, account_holder.last_name))\n",
+                "acc_typs = accounts.CALCULATE(name=JOIN_STRINGS(' ', account_holder.first_name, account_holder.last_name)).PARTITION(name='account_types', by=account_type)\n"
+                "result = acc_typs.accounts.BEST(per='account_types', by=balance.DESC()).CALCULATE(account_type, balance, name)\n",
                 "CRYPTBANK",
                 lambda: pd.DataFrame(
                     {
@@ -353,6 +433,22 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "cryptbank_agg_04",
             ),
             id="cryptbank_agg_04",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "account_info = accounts.CALCULATE("
+                " first_transaction_sent=MIN(transactions_sent.time_stamp),"
+                ")\n"
+                "result = CRYPTBANK.CALCULATE(avg_secs=ROUND(AVG(DATEDIFF('seconds', account_info.creation_timestamp, account_info.first_transaction_sent)), 2))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "avg_secs": [67095338.32],
+                    }
+                ),
+                "cryptbank_agg_05",
+            ),
+            id="cryptbank_agg_05",
         ),
     ],
 )
