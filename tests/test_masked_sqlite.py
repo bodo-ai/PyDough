@@ -16,30 +16,71 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
     params=[
         pytest.param(
             PyDoughPandasTest(
-                "TODO",
+                "result = customers.TOP_K(3, by=key)",
                 "CRYPTBANK",
                 lambda: pd.DataFrame(
                     {
-                        "era_name": [
-                            "WWI",
-                            "Interwar",
-                            "WWII",
-                            "Cold War",
-                            "Modern Era",
+                        "key": [1, 2, 3],
+                        "first_name": ["alice", "bob", "carol"],
+                        "last_name": ["johnson", "smith", "lee"],
+                        "phone": ["555-123-4567", "555-234-5678", "555-345-6789"],
+                        "email": [
+                            "alice_j@example.org",
+                            "bob.smith77@gmail.com",
+                            "c.lee@outlook.com",
                         ],
-                        "event_name": [
-                            "Assassination of Archduke Ferdinand",
-                            "Founding of the League of Nations",
-                            "Invasion of Poland",
-                            "First Meeting of the United Nations General Assembly",
-                            "Dissolution of the Soviet Union",
+                        "address": [
+                            "123 Maple St;Portland;OR;97205",
+                            "456 Oak Ave;Seattle;WA;98101",
+                            "789 Pine Rd;Las Vegas;NV;89101",
                         ],
+                        "birthday": ["1985-04-12", "1990-07-23", "1982-11-05"],
                     }
                 ),
-                "TODO",
+                "basic_scan_topk",
             ),
-            id="TODO",
-        )
+            id="basic_scan_topk",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(last_name == 'lee')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [3]}),
+                "filter_count_1",
+            ),
+            id="filter_count_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(last_name != 'lee')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [17]}),
+                "filter_count_2",
+            ),
+            id="filter_count_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(last_name, ('lee', 'smith', 'rodriguez')))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [6]}),
+                "filter_count_3",
+            ),
+            id="filter_count_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(last_name, ('lee', 'smith', 'rodriguez')))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [14]}),
+                "filter_count_4",
+            ),
+            id="filter_count_4",
+        ),
     ],
 )
 def cryptbank_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -57,7 +98,7 @@ def test_pipeline_until_relational_cryptbank(
     update_tests: bool,
 ) -> None:
     """
-    Tests the conversion of the PyDough queries on the custom epoch dataset
+    Tests the conversion of the PyDough queries on the custom cryptbank dataset
     into relational plans.
     """
     file_path: str = get_plan_test_filename(cryptbank_pipeline_test_data.test_name)
@@ -74,7 +115,7 @@ def test_pipeline_until_sql_cryptbank(
     update_tests: bool,
 ):
     """
-    Tests the conversion of the PyDough queries on the custom epoch dataset
+    Tests the conversion of the PyDough queries on the custom cryptbank dataset
     into SQL text.
     """
     file_path: str = get_sql_test_filename(
@@ -89,14 +130,14 @@ def test_pipeline_until_sql_cryptbank(
 
 
 @pytest.mark.execute
-def test_pipeline_e2e_epoch(
+def test_pipeline_e2e_cryptbank(
     cryptbank_pipeline_test_data: PyDoughPandasTest,
     masked_graphs: graph_fetcher,
     sqlite_cryptbank_connection: DatabaseContext,
 ):
     """
-    Test executing the the custom queries with the custom epoch dataset against
-    the refsol DataFrame.
+    Test executing the the custom queries with the custom cryptbank dataset
+    against the refsol DataFrame.
     """
     cryptbank_pipeline_test_data.run_e2e_test(
         masked_graphs,
