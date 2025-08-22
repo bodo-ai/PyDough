@@ -20,6 +20,9 @@ from tests.test_pydough_functions.tpch_outputs import (
 from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q16,
 )
+
+from tests.test_pydough_functions.simple_pydough_functions import week_offset7
+
 from tests.testing_utilities import (
     graph_fetcher,
     harmonize_types,
@@ -30,6 +33,88 @@ from .test_pipeline_defog import defog_pipeline_test_data
 
 from .testing_utilities import PyDoughPandasTest
 from pydough import init_pydough_context, to_df, to_sql
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            PyDoughPandasTest(
+                week_offset7,
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "date_time": [
+                            "2023-04-02 09:30:00",
+                            "2023-04-02 10:15:00",
+                            "2023-04-02 11:00:00",
+                            "2023-04-02 11:45:00",
+                            "2023-04-02 12:30:00",
+                            "2023-04-02 13:15:00",
+                            "2023-04-02 14:00:00",
+                            "2023-04-02 14:45:00",
+                            "2023-04-02 15:30:00",
+                            "2023-04-02 16:15:00",
+                            "2023-04-03 09:30:00",
+                            "2023-04-03 10:15:00",
+                            "2023-04-03 11:00:00",
+                            "2023-04-03 11:45:00",
+                            "2023-04-03 12:30:00",
+                            "2023-04-03 13:15:00",
+                            "2023-04-03 14:00:00",
+                            "2023-04-03 14:45:00",
+                            "2023-04-03 15:30:00",
+                            "2023-04-03 16:15:00",
+                            "2023-01-15 10:00:00",
+                            "2023-01-16 10:30:00",
+                            "2023-02-20 11:30:00",
+                            "2023-03-25 14:45:00",
+                            "2023-01-30 13:15:00",
+                            "2023-02-28 16:00:00",
+                            "2023-03-30 09:45:00",
+                        ],
+                        "week_adj7": [
+                            "2023-05-16 09:30:00",
+                            "2023-05-16 10:15:00",
+                            "2023-05-16 11:00:00",
+                            "2023-05-16 11:45:00",
+                            "2023-05-16 12:30:00",
+                            "2023-05-16 13:15:00",
+                            "2023-05-16 14:00:00",
+                            "2023-05-16 14:45:00",
+                            "2023-05-16 15:30:00",
+                            "2023-05-16 16:15:00",
+                            "2023-05-17 09:30:00",
+                            "2023-05-17 10:15:00",
+                            "2023-05-17 11:00:00",
+                            "2023-05-17 11:45:00",
+                            "2023-05-17 12:30:00",
+                            "2023-05-17 13:15:00",
+                            "2023-05-17 14:00:00",
+                            "2023-05-17 14:45:00",
+                            "2023-05-17 15:30:00",
+                            "2023-05-17 16:15:00",
+                            "2023-03-01 10:00:00",
+                            "2023-03-02 10:30:00",
+                            "2023-04-03 11:30:00",
+                            "2023-05-09 14:45:00",
+                            "2023-03-14 13:15:00",
+                            "2023-04-11 16:00:00",
+                            "2023-05-14 09:45:00",
+                        ],
+                    }
+                ),
+                "week_offset7",
+            ),
+            id="sf_week_offset_7",
+        ),
+    ],
+)
+def snowflake_params_week_offset_7_data(request) -> PyDoughPandasTest:
+    """
+    Test data for e2e tests for the TPC-H query 16. Returns an instance of
+    PyDoughPandasTest containing information about the test.
+    """
+    return request.param
 
 
 @pytest.fixture(
@@ -252,5 +337,20 @@ def test_defog_e2e(
         sf_conn_db_context("DEFOG", defog_pipeline_test_data.graph_name),
         defog_config,
         reference_database=sqlite_defog_connection,
+        coerce_types=True,
+    )
+
+
+@pytest.mark.snowflake
+@pytest.mark.execute
+def test_pipeline_e2e_week_offset_7_sf(
+    snowflake_params_week_offset_7_data: PyDoughPandasTest,
+    get_sf_defog_graphs: graph_fetcher,
+    sf_conn_db_context: DatabaseContext,
+):
+    """ """
+    snowflake_params_week_offset_7_data.run_e2e_test(
+        get_sf_defog_graphs,
+        sf_conn_db_context("DEFOG", snowflake_params_week_offset_7_data.graph_name),
         coerce_types=True,
     )
