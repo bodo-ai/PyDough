@@ -340,9 +340,26 @@ Just like the knowledge graph & miscellaneous configurations, the database conte
 
 Below is a list of all supported values for the database name:
 - `sqlite`: uses a SQLite database. [See here](https://docs.python.org/3/library/sqlite3.html#sqlite3.connect) for details on the connection API and what keyword arguments can be passed in.
+
 - `mysql`: uses a MySQL database. [See here](https://dev.mysql.com/doc/connector-python/en/connector-python-example-connecting.html) for details on the connection API and what keyword arguments can be passed in.
 
 - `snowflake`: uses a Snowflake database. [See here](https://docs.snowflake.com/en/user-guide/python-connector.html#connecting-to-snowflake) for details on the connection API and what keyword arguments can be passed in.
+
+> Note: If you installed PyDough via pip, you can install optional connectors using pip extras:
+>
+> ```bash
+> pip install pydough[mysql]         # Install MySQL connector
+> pip install pydough[snowflake]    # Install Snowflake connector
+> pip install "pydough[mysql,snowflake]"  # Install both at once
+> ```
+
+Here’s a quick reference table showing which connector is needed for each dialect:
+
+| Dialect    | Connector Needed                        |
+|-----------|----------------------------------------|
+| `sqlite`    | Already included with PyDough          |
+| `mysql`     | `mysql-connector-python`               |
+| `snowflake` | `snowflake-connector-python[pandas]`  |
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 
@@ -381,6 +398,7 @@ It is important to ensure that the correct database context is being used for se
     )
   ```
 You can find a full example of using Snowflake database with PyDough in [this usage guide](./../demos/notebooks/Snowflake_TPCH.ipynb).
+
 - MySQL: You can connect to a mysql database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
     pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH"),
