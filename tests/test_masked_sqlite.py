@@ -37,10 +37,10 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                         "birthday": ["1985-04-12", "1990-07-23", "1982-11-05"],
                     }
                 ),
-                "basic_scan_topk",
+                "cryptbank_basic_scan_topk",
                 order_sensitive=True,
             ),
-            id="basic_scan_topk",
+            id="cryptbank_basic_scan_topk",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -58,10 +58,10 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                         ],
                     }
                 ),
-                "partially_encrypted_scan_topk",
+                "cryptbank_partially_encrypted_scan_topk",
                 order_sensitive=True,
             ),
-            id="partially_encrypted_scan_topk",
+            id="cryptbank_partially_encrypted_scan_topk",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -81,9 +81,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                         "n_local_cust_local_acct": [10, 9, 6, 3, 3, 11, 3, 3],
                     }
                 ),
-                "general_join_01",
+                "cryptbank_general_join_01",
             ),
-            id="general_join_01",
+            id="cryptbank_general_join_01",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -94,9 +94,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [48]}),
-                "general_join_02",
+                "cryptbank_general_join_02",
             ),
-            id="general_join_02",
+            id="cryptbank_general_join_02",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -104,9 +104,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [3]}),
-                "filter_count_01",
+                "cryptbank_filter_count_01",
             ),
-            id="filter_count_01",
+            id="cryptbank_filter_count_01",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -114,9 +114,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [17]}),
-                "filter_count_02",
+                "cryptbank_filter_count_02",
             ),
-            id="filter_count_02",
+            id="cryptbank_filter_count_02",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -124,9 +124,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [6]}),
-                "filter_count_03",
+                "cryptbank_filter_count_03",
             ),
-            id="filter_count_03",
+            id="cryptbank_filter_count_03",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -134,9 +134,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [14]}),
-                "filter_count_04",
+                "cryptbank_filter_count_04",
             ),
-            id="filter_count_04",
+            id="cryptbank_filter_count_04",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -144,9 +144,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [2]}),
-                "filter_count_05",
+                "cryptbank_filter_count_05",
             ),
-            id="filter_count_05",
+            id="cryptbank_filter_count_05",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -154,9 +154,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [4]}),
-                "filter_count_06",
+                "cryptbank_filter_count_06",
             ),
-            id="filter_count_06",
+            id="cryptbank_filter_count_06",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -164,9 +164,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [2]}),
-                "filter_count_07",
+                "cryptbank_filter_count_07",
             ),
-            id="filter_count_07",
+            id="cryptbank_filter_count_07",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -174,9 +174,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [1]}),
-                "filter_count_08",
+                "cryptbank_filter_count_08",
             ),
-            id="filter_count_08",
+            id="cryptbank_filter_count_08",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -184,9 +184,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [31]}),
-                "filter_count_09",
+                "cryptbank_filter_count_09",
             ),
-            id="filter_count_09",
+            id="cryptbank_filter_count_09",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -194,9 +194,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [3]}),
-                "filter_count_10",
+                "cryptbank_filter_count_10",
             ),
-            id="filter_count_10",
+            id="cryptbank_filter_count_10",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -204,9 +204,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [17]}),
-                "filter_count_11",
+                "cryptbank_filter_count_11",
             ),
-            id="filter_count_11",
+            id="cryptbank_filter_count_11",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -214,9 +214,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [9]}),
-                "filter_count_12",
+                "cryptbank_filter_count_12",
             ),
-            id="filter_count_12",
+            id="cryptbank_filter_count_12",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -224,9 +224,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [64]}),
-                "filter_count_13",
+                "cryptbank_filter_count_13",
             ),
-            id="filter_count_13",
+            id="cryptbank_filter_count_13",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -234,9 +234,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [8]}),
-                "filter_count_14",
+                "cryptbank_filter_count_14",
             ),
-            id="filter_count_14",
+            id="cryptbank_filter_count_14",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -244,9 +244,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [11]}),
-                "filter_count_15",
+                "cryptbank_filter_count_15",
             ),
-            id="filter_count_15",
+            id="cryptbank_filter_count_15",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -254,9 +254,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [12]}),
-                "filter_count_16",
+                "cryptbank_filter_count_16",
             ),
-            id="filter_count_16",
+            id="cryptbank_filter_count_16",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -264,9 +264,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [5]}),
-                "filter_count_17",
+                "cryptbank_filter_count_17",
             ),
-            id="filter_count_17",
+            id="cryptbank_filter_count_17",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -274,9 +274,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = CRYPTBANK.CALCULATE(n=ROUND(AVG(selected_transactions.amount), 2))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [3858.9]}),
-                "agg_01",
+                "cryptbank_agg_01",
             ),
-            id="agg_01",
+            id="cryptbank_agg_01",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -296,14 +296,14 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                         "avg_bal": [4600.0, 1283.99, 4700.25, 20181.82, 6715.33],
                     }
                 ),
-                "agg_02",
+                "cryptbank_agg_02",
             ),
-            id="agg_02",
+            id="cryptbank_agg_02",
         ),
         pytest.param(
             PyDoughPandasTest(
                 "acc_typs = accounts.PARTITION(name='account_types', by=account_type)\n"
-                "result = acc_typs.accounts.BEST(per='account_types', by=balance.DESC()).CALCULATE(account_type, balance)\n",
+                "result = acc_typs.accounts.BEST(per='account_types', by=balance.DESC()).CALCULATE(account_type, balance, name=JOIN_STRINGS(' ', account_holder.first_name, account_holder.last_name))\n",
                 "CRYPTBANK",
                 lambda: pd.DataFrame(
                     {
@@ -315,11 +315,18 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                             "savings",
                         ],
                         "balance": [4800.0, 3200.0, 5500.0, 25000.0, 10500.0],
+                        "name": [
+                            "grace davis",
+                            "peter thomas",
+                            "carol lee",
+                            "james martinez",
+                            "robert moore",
+                        ],
                     }
                 ),
-                "agg_03",
+                "cryptbank_agg_03",
             ),
-            id="agg_03",
+            id="cryptbank_agg_03",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -343,9 +350,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                         ],
                     }
                 ),
-                "agg_04",
+                "cryptbank_agg_04",
             ),
-            id="agg_04",
+            id="cryptbank_agg_04",
         ),
     ],
 )
