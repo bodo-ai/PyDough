@@ -321,7 +321,7 @@
           "synonyms": ["outgoing transactions", "sent transfers", "money sent"]
         },
         {
-          "name": "source_account",
+          "name": "sender_account",
           "type": "reverse",
           "original parent": "accounts",
           "original property": "transactions_sent",
@@ -342,7 +342,7 @@
           "synonyms": ["incoming transactions", "received transfers", "money received"]
         },
         {
-          "name": "receiver",
+          "name": "receiver_account",
           "type": "reverse",
           "original parent": "accounts",
           "original property": "transactions_received",
@@ -358,7 +358,7 @@
           "child collection": "customers",
           "singular": false,
           "always matches": true,
-          "condition": "self.address[-8:-6] = other.address[-8:-6]",
+          "condition": "self.address[-8:-6] == other.address[-8:-6]",
           "description": "All customers who live in the same state as the branch",
           "synonyms": ["customers in same state", "local customers"]
         },

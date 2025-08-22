@@ -1,0 +1,3 @@
+ROOT(columns=[('account_type', a_type), ('balance', a_balance)], orderings=[])
+ FILTER(condition=RANKING(args=[], partition=[a_type], order=[(a_balance):desc_first], allow_ties=False) == 1:numeric, columns={'a_balance': a_balance, 'a_type': a_type})
+  SCAN(table=CRBNK.ACCOUNTS, columns={'a_balance': a_balance, 'a_type': a_type})

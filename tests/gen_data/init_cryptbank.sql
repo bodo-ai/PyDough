@@ -55,7 +55,7 @@ VALUES
     (5, 'emily', 'jones', '555-567-8901', 'emily.jones@mail.com', '654 Cedar Blvd;San Diego;CA;92101', '1995-09-30'),
     (6, 'frank', 'lee', '555-678-9012', 'frank.k@protonmail.com', '987 Spruce Ct;Tucson;AZ;85701', '1988-12-14'),
     (7, 'grace', 'davis', '555-789-0123', 'grace_davis123@gmail.net', '135 Walnut Dr;Reno;NV;89502', '1992-06-27'),
-    (8, 'henry', 'garcia', '555-890-1234', 'henry.g@fastmail.com', '246 Elm St;Los Angeles;CA;90001', '1980-02-11'),
+    (8, 'henry', 'garcia', '555-890-1234', 'henry.g@fastmail.com', '246 Elm St;Los Angeles;CA;90001', '1978-02-11'),
     (9, 'isabel', 'rodriguez', '555-901-2345', 'isa.rodriguez@zoho.com', '357 Aspen Way;Salem;OR;97301', '1987-10-08'),
     (10, 'james', 'martinez', '555-012-3456', 'jmartinez94@outlook.org', '468 Poplar Pl;Sacramento;CA;95814', '1975-01-29'),
     (11, 'karen', 'hernandez', '555-213-4567', 'k.hernandez@icloud.com', '579 Chestnut Rd;Spokane;WA;99201', '1993-08-21'),
