@@ -38,14 +38,13 @@ CREATE TABLE TRANSACTIONS (
 
 INSERT INTO CUSTOMERS (c_key, c_fname, c_lname, c_phone, c_email, c_addr, c_birthday)
 SELECT 
-    *
-    -- 42 - column1, -- ARITHMETIC SHIFT: 42
-    -- UPPER(column2), -- UPPERCASE
-    -- UPPER(column3), -- UPPERCASE
-    -- REPLACE(REPLACE(REPLACE(column4, '0', '*'), '9', '0'), '*', '9'), -- DIGIT SWITCH: 0 <-> 9
-    -- SUBSTRING(column5, 2) || SUBSTRING(column5, 1, 1), -- FIRST CHAR TRANSPOSE
-    -- SUBSTRING(column6, 2) || SUBSTRING(column6, 1, 1),  -- FIRST CHAR TRANSPOSE
-    -- DATE(column7, '-472 days') -- DAY SHIFT: 472
+    42 - column1, -- ARITHMETIC SHIFT: 42
+    UPPER(column2), -- UPPERCASE
+    UPPER(column3), -- UPPERCASE
+    REPLACE(REPLACE(REPLACE(column4, '0', '*'), '9', '0'), '*', '9'), -- DIGIT SWITCH: 0 <-> 9
+    SUBSTRING(column5, 2) || SUBSTRING(column5, 1, 1), -- FIRST CHAR TRANSPOSE
+    SUBSTRING(column6, 2) || SUBSTRING(column6, 1, 1),  -- FIRST CHAR TRANSPOSE
+    DATE(column7, '-472 days') -- DAY SHIFT: 472
 FROM (
 VALUES
     (1, 'alice', 'johnson', '555-123-4567', 'alice_j@example.org', '123 Maple St;Portland;OR;97205', '1985-04-12'),
@@ -83,13 +82,12 @@ INSERT INTO BRANCHES (b_key, b_name, b_addr) VALUES
 
 INSERT INTO ACCOUNTS (a_key, a_custkey, a_branchkey, a_balance, a_type, a_open_ts)
 SELECT
-    *
-    -- CAST(CAST(column1 as TEXT) || CAST(column1 as TEXT) AS INTEGER),
-    -- column2,
-    -- column3,
-    -- column4 * column4, -- GEOMETRIC SHIFT
-    -- SUBSTRING(column5, 2) || SUBSTRING(column5, 1, 1), -- FIRST CHAR TRANSPOSE
-    -- DATETIME(column6, '-123456789 seconds') -- SECOND SHIFT: 123456789
+    CAST(CAST(column1 as TEXT) || CAST(column1 as TEXT) AS INTEGER),
+    column2,
+    column3,
+    column4 * column4, -- GEOMETRIC SHIFT
+    SUBSTRING(column5, 2) || SUBSTRING(column5, 1, 1), -- FIRST CHAR TRANSPOSE
+    DATETIME(column6, '-123456789 seconds') -- SECOND SHIFT: 123456789
 FROM (
 VALUES
     -- Customer 1 (alice johnson, OR) - 3 accounts
@@ -191,12 +189,11 @@ VALUES
 
 INSERT INTO TRANSACTIONS (t_key, t_sourceaccount, t_destaccount, t_amount, t_ts)
 SELECT
-    *
-    -- column1,
-    -- column2,
-    -- column3,
-    -- 1025.67 - column4, -- ARITHMETIC SHIFT: 1025.67
-    -- DATETIME(column5, '-54321 seconds') -- SECOND SHIFT: 54321
+    column1,
+    column2,
+    column3,
+    1025.67 - column4, -- ARITHMETIC SHIFT: 1025.67
+    DATETIME(column5, '-54321 seconds') -- SECOND SHIFT: 54321
 FROM (
 VALUES
     (1, 41, 8, 2753.92, '2019-11-11 18:00:52'),
