@@ -1,0 +1,9 @@
+SELECT
+  state,
+  COUNT(*) AS total_signups
+FROM MAIN.CUSTOMERS
+GROUP BY
+  1
+ORDER BY
+  2 DESC NULLS LAST
+LIMIT 2

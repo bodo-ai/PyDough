@@ -8,6 +8,7 @@ The Transform Bindings module provides the following notable APIs:
 
 - `BaseTransformBindings`: The base class for converting function calls from relational expressions into the SQLGlot AST, used for generic ANSI SQL.
 - `SQLiteTransformBindings`: Subclass of `BaseTransformBindings` for the SQLite dialect, providing SQLite-specific implementations.
+- `SnowflakeTransformBindings`: Subclass of `BaseTransformBindings` for the Snowflake dialect, providing Snowflake-specific implementations.
 - `MySQLTransformBindings`: Subclass of `BaseTransformBindings` for the MySQL dialect, providing MySQL-specific implementations.
 - `bindings_from_dialect`: Factory function that returns the appropriate binding instance for a specific database dialect.
 

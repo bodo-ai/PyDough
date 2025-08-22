@@ -1,0 +1,68 @@
+WITH _T5 AS (
+  SELECT
+    l_commitdate AS L_COMMITDATE,
+    l_linenumber AS L_LINENUMBER,
+    l_orderkey AS L_ORDERKEY,
+    l_receiptdate AS L_RECEIPTDATE,
+    l_suppkey AS L_SUPPKEY
+  FROM TPCH.LINEITEM
+  WHERE
+    l_commitdate < l_receiptdate
+), _T3 AS (
+  SELECT
+    ANY_VALUE(_T5.L_SUPPKEY) AS ANYTHING_L_SUPPKEY,
+    ANY_VALUE(ORDERS.o_orderstatus) AS ANYTHING_O_ORDERSTATUS,
+    _T5.L_LINENUMBER,
+    _T5.L_ORDERKEY,
+    ORDERS.o_orderkey AS O_ORDERKEY
+  FROM _T5 AS _T5
+  JOIN TPCH.ORDERS AS ORDERS
+    ON ORDERS.o_orderkey = _T5.L_ORDERKEY
+  JOIN TPCH.LINEITEM AS LINEITEM
+    ON LINEITEM.l_orderkey = ORDERS.o_orderkey AND LINEITEM.l_suppkey <> _T5.L_SUPPKEY
+  GROUP BY
+    3,
+    4,
+    5
+), _u_0 AS (
+  SELECT
+    _T6.L_LINENUMBER AS _u_1,
+    _T6.L_ORDERKEY AS _u_2,
+    ORDERS.o_orderkey AS _u_3
+  FROM _T5 AS _T6
+  JOIN TPCH.ORDERS AS ORDERS
+    ON ORDERS.o_orderkey = _T6.L_ORDERKEY
+  JOIN TPCH.LINEITEM AS LINEITEM
+    ON LINEITEM.l_commitdate < LINEITEM.l_receiptdate
+    AND LINEITEM.l_orderkey = ORDERS.o_orderkey
+    AND LINEITEM.l_suppkey <> _T6.L_SUPPKEY
+  GROUP BY
+    1,
+    2,
+    3
+), _S13 AS (
+  SELECT
+    COUNT(*) AS N_ROWS,
+    _T3.ANYTHING_L_SUPPKEY
+  FROM _T3 AS _T3
+  LEFT JOIN _u_0 AS _u_0
+    ON _T3.L_LINENUMBER = _u_0._u_1
+    AND _T3.L_ORDERKEY = _u_0._u_2
+    AND _T3.O_ORDERKEY = _u_0._u_3
+  WHERE
+    _T3.ANYTHING_O_ORDERSTATUS = 'F' AND _u_0._u_1 IS NULL
+  GROUP BY
+    2
+)
+SELECT
+  SUPPLIER.s_name AS S_NAME,
+  COALESCE(_S13.N_ROWS, 0) AS NUMWAIT
+FROM TPCH.SUPPLIER AS SUPPLIER
+JOIN TPCH.NATION AS NATION
+  ON NATION.n_name = 'SAUDI ARABIA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
+LEFT JOIN _S13 AS _S13
+  ON SUPPLIER.s_suppkey = _S13.ANYTHING_L_SUPPKEY
+ORDER BY
+  2 DESC NULLS LAST,
+  1 NULLS FIRST
+LIMIT 10

@@ -1,0 +1,23 @@
+WITH _S1 AS (
+  SELECT
+    SUM(sbtxtax + sbtxcommission) AS SUM_EXPR_2,
+    SUM(sbtxamount) AS SUM_SBTXAMOUNT,
+    sbtxtickerid AS SBTXTICKERID
+  FROM MAIN.SBTRANSACTION
+  WHERE
+    sbtxdatetime >= DATEADD(MONTH, -1, CURRENT_TIMESTAMP()) AND sbtxtype = 'sell'
+  GROUP BY
+    3
+)
+SELECT
+  SBTICKER.sbtickersymbol AS symbol,
+  (
+    100.0 * (
+      COALESCE(_S1.SUM_SBTXAMOUNT, 0) - COALESCE(_S1.SUM_EXPR_2, 0)
+    )
+  ) / COALESCE(_S1.SUM_SBTXAMOUNT, 0) AS SPM
+FROM MAIN.SBTICKER AS SBTICKER
+JOIN _S1 AS _S1
+  ON SBTICKER.sbtickerid = _S1.SBTXTICKERID
+ORDER BY
+  1 NULLS FIRST

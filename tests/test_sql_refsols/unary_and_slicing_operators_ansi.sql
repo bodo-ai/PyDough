@@ -23,7 +23,7 @@ SELECT
             LENGTH(c_name) + 0
           ) - 2
         ) <= 0
-        THEN ''
+        THEN 0
         ELSE (
           LENGTH(c_name) + 0
         ) - 2
