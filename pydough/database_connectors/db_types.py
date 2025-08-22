@@ -11,12 +11,16 @@ from typing import TYPE_CHECKING, Any, TypeAlias
 if TYPE_CHECKING:
     # Importing database-specific modules only for type checking
     # This allows us to use type hints for SQL dialect connections
-    # (SQLite, ..etc.)
+    # (PostgreSQL, SQLite, ..etc.)
     # without requiring these modules at runtime unless they are actually used.
     import sqlite3
 
     import mysql.connector
     import mysql.connector.cursor
+    import psycopg2
+
+    PostgreSQLConn: TypeAlias = psycopg2.connection  # type: ignore
+    PostgreSQLCursor: TypeAlias = psycopg2.cursor  # type: ignore
 
     SQLiteConn: TypeAlias = sqlite3.Connection
     SQLiteCursor: TypeAlias = sqlite3.Cursor
@@ -32,11 +36,15 @@ if TYPE_CHECKING:
     # Dialect1_Cursor: TypeAlias = dialect1_module.Cursor
 
     # 4. Define the type aliases for database connections and cursors
-    DBConnection: TypeAlias = SQLiteConn | MySQLConn  # | Dialect1_Conn
-    DBCursor: TypeAlias = SQLiteCursor | MySQLCursor  # | Dialect1_Cursor
+    DBConnection: TypeAlias = SQLiteConn | MySQLConn | PostgreSQLConn  # | Dialect1_Conn
+    DBCursor: TypeAlias = (
+        SQLiteCursor | MySQLCursor | PostgreSQLCursor
+    )  # | Dialect1_Cursor
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
+    PostgreSQLConn: TypeAlias = Any
+    PostgreSQLCursor: TypeAlias = Any
     SQLiteConn: TypeAlias = Any
     SQLiteCursor: TypeAlias = Any
     MySQLConn: TypeAlias = Any
@@ -51,6 +59,8 @@ __all__ = [
     "DBCursor",
     "MySQLConn",
     "MySQLCursor",
+    "PostgreSQLConn",
+    "PostgreSQLCursor",
     "SQLiteConn",
     "SQLiteCursor",
     # "Dialect1_Conn",
