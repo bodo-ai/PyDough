@@ -2121,7 +2121,6 @@ def impl_defog_dermtreatment_adv8():
 
     # Get treatments with month info
     treatment_info = treatments.CALCULATE(
-        month=JOIN_STRINGS("-", YEAR(start_date), LPAD(MONTH(start_date), 2, "0")),
         start_month=DATETIME(start_date, "start of month"),
     ).WHERE(
         (start_month < DATETIME("now", "start of month"))
@@ -2130,13 +2129,15 @@ def impl_defog_dermtreatment_adv8():
 
     # Partition by month and calculate counts
     return (
-        treatment_info.PARTITION(name="months", by=month)
+        treatment_info.PARTITION(name="months", by=start_month)
         .CALCULATE(
-            month,
+            start_month=JOIN_STRINGS(
+                "-", YEAR(start_month), LPAD(MONTH(start_month), 2, "0")
+            ),
             PMPD=NDISTINCT(treatments.diagnosis_id),  # Distinct diagnoses per month
             PMTC=COUNT(treatments),  # Total treatments per month
         )
-        .ORDER_BY(month.DESC())
+        .ORDER_BY(start_month.DESC())
     )
 
 
