@@ -699,11 +699,15 @@ def mysql_docker_setup() -> None:
     except subprocess.CalledProcessError as e:
         pytest.fail(f"Failed to set up MySQL Docker container: {e}")
 
+    # Check import is successful
+    try:
+        import mysql.connector as mysql_connector
+    except ImportError as e:
+        raise RuntimeError("mysql-connector-python is not installed") from e
+
     # Wait for MySQL to be ready
     for _ in range(30):
         try:
-            import mysql.connector as mysql_connector
-
             conn = mysql_connector.connect(
                 host=MYSQL_HOST,
                 port=MYSQL_PORT,
@@ -713,7 +717,8 @@ def mysql_docker_setup() -> None:
             )
             conn.close()
             break
-        except mysql_connector.Error:
+        except mysql_connector.Error as e:
+            print("Error occurred while connecting to MySQL:", e)
             time.sleep(1)
     else:
         subprocess.run(["docker", "rm", "-f", MYSQL_DOCKER_CONTAINER])
