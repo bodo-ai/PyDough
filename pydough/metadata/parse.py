@@ -311,6 +311,8 @@ def create_reverse_relationship(
             extra_semantic_info,
         )
     )
+    original_property.reverse = reverse_property
+    reverse_property.reverse = original_property
     reverse_collection.add_property(reverse_property)
 
 

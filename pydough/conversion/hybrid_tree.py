@@ -18,11 +18,13 @@ import pydough.pydough_operators as pydop
 from pydough.metadata import (
     SubcollectionRelationshipMetadata,
 )
+from pydough.metadata.properties import ReversiblePropertyMetadata
 from pydough.qdag import (
     Literal,
     SubCollection,
     TableCollection,
 )
+from pydough.relational import JoinCardinality
 from pydough.types import BooleanType, NumericType
 
 from .hybrid_connection import ConnectionType, HybridConnection
@@ -571,12 +573,26 @@ class HybridTree:
                 # Return the index of the existing child.
                 return idx
 
+        # Infer the cardinality of the join from the perspective of the new
+        # collection to the existing data.
+        reverse_cardinality: JoinCardinality = child.infer_root_reverse_cardinality()
+
         # Create and insert the new child connection.
         new_child_idx = len(self.children)
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, min_steps, max_steps, {}
+            self,
+            child,
+            connection_type,
+            min_steps,
+            max_steps,
+            {},
+            reverse_cardinality,
         )
         self._children.append(connection)
+
+        # Augment the reverse cardinality if the parent does not always exist.
+        if (not reverse_cardinality.filters) and (not self.always_exists()):
+            connection.reverse_cardinality = reverse_cardinality.add_filter()
 
         # If an operation prevents the child's presence from directly
         # filtering the current level, update its connection type to be either
@@ -596,6 +612,41 @@ class HybridTree:
 
         # Return the index of the newly created child.
         return new_child_idx
+
+    def infer_root_reverse_cardinality(self) -> JoinCardinality:
+        """
+        TODO
+        """
+        if self.parent is None:
+            match self.pipeline[0]:
+                case HybridRoot():
+                    return JoinCardinality.PLURAL_ACCESS
+                case HybridCollectionAccess():
+                    cardinality: JoinCardinality = JoinCardinality.PLURAL_ACCESS
+                    if isinstance(self.pipeline[0].collection, SubCollection):
+                        metadata = self.pipeline[0].collection.subcollection_property
+                        if (
+                            isinstance(metadata, ReversiblePropertyMetadata)
+                            and metadata.reverse is not None
+                        ):
+                            if metadata.reverse.is_plural:
+                                cardinality = JoinCardinality.PLURAL_ACCESS
+                            else:
+                                cardinality = JoinCardinality.SINGULAR_ACCESS
+                            if not metadata.reverse.always_matches:
+                                cardinality = cardinality.add_filter()
+                        return JoinCardinality.PLURAL_ACCESS
+                    return cardinality
+                case HybridPartition():
+                    return self.children[0].subtree.infer_root_reverse_cardinality()
+                case HybridPartitionChild():
+                    return self.pipeline[0].subtree.infer_root_reverse_cardinality()
+                case _:
+                    raise NotImplementedError(
+                        f"Invalid start of pipeline: {self.pipeline[0].__class__.__name__}"
+                    )
+        else:
+            return self.parent.infer_root_reverse_cardinality()
 
     def add_successor(self, successor: "HybridTree") -> None:
         """

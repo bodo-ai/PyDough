@@ -160,6 +160,7 @@ class Join(RelationalNode):
         join_type: JoinType,
         columns: dict[str, RelationalExpression],
         cardinality: JoinCardinality = JoinCardinality.UNKNOWN_UNKNOWN,
+        reverse_cardinality: JoinCardinality = JoinCardinality.UNKNOWN_UNKNOWN,
         correl_name: str | None = None,
     ) -> None:
         super().__init__(columns)
@@ -171,6 +172,7 @@ class Join(RelationalNode):
         self._condition: RelationalExpression = condition
         self._join_type: JoinType = join_type
         self._cardinality: JoinCardinality = cardinality
+        self._reverse_cardinality: JoinCardinality = reverse_cardinality
         self._correl_name: str | None = correl_name
 
     @property
@@ -212,7 +214,7 @@ class Join(RelationalNode):
     @property
     def cardinality(self) -> JoinCardinality:
         """
-        The type of the joins.
+        The cardinality of the join, from the perspective of the first input.
         """
         return self._cardinality
 
@@ -222,6 +224,20 @@ class Join(RelationalNode):
         The setter for the join cardinality.
         """
         self._cardinality = cardinality
+
+    @property
+    def reverse_cardinality(self) -> JoinCardinality:
+        """
+        The cardinality of the join, from the perspective of the second input.
+        """
+        return self._reverse_cardinality
+
+    @reverse_cardinality.setter
+    def reverse_cardinality(self, cardinality: JoinCardinality) -> None:
+        """
+        The setter for the reverse join cardinality.
+        """
+        self._reverse_cardinality = cardinality
 
     @property
     def inputs(self) -> list[RelationalNode]:
@@ -261,7 +277,12 @@ class Join(RelationalNode):
             if self.cardinality == JoinCardinality.UNKNOWN_UNKNOWN
             else f", cardinality={self.cardinality.name}"
         )
-        return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
+        reverse_cardinality_suffix: str = (
+            ""
+            if self.reverse_cardinality == JoinCardinality.UNKNOWN_UNKNOWN
+            else f", reverse_cardinality={self.reverse_cardinality.name}"
+        )
+        return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}{reverse_cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
     def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_join(self)
@@ -280,5 +301,6 @@ class Join(RelationalNode):
             self.join_type,
             columns,
             self.cardinality,
+            self.reverse_cardinality,
             self.correl_name,
         )

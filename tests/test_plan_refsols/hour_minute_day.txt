@@ -1,5 +1,5 @@
 ROOT(columns=[('transaction_id', sbTxId), ('_expr0', HOUR(sbTxDateTime)), ('_expr1', MINUTE(sbTxDateTime)), ('_expr2', SECOND(sbTxDateTime))], orderings=[(sbTxId):asc_first])
- JOIN(condition=t0.sbTxTickerId == t1.sbTickerId, type=INNER, cardinality=SINGULAR_FILTER, columns={'sbTxDateTime': t0.sbTxDateTime, 'sbTxId': t0.sbTxId})
+ JOIN(condition=t0.sbTxTickerId == t1.sbTickerId, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'sbTxDateTime': t0.sbTxDateTime, 'sbTxId': t0.sbTxId})
   SCAN(table=main.sbTransaction, columns={'sbTxDateTime': sbTxDateTime, 'sbTxId': sbTxId, 'sbTxTickerId': sbTxTickerId})
   FILTER(condition=ISIN(sbTickerSymbol, ['AAPL', 'GOOGL', 'NFLX']:array[unknown]), columns={'sbTickerId': sbTickerId})
    SCAN(table=main.sbTicker, columns={'sbTickerId': sbTickerId, 'sbTickerSymbol': sbTickerSymbol})

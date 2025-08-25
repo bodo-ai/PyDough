@@ -1,6 +1,6 @@
 ROOT(columns=[('L_SHIPMODE', l_shipmode), ('HIGH_LINE_COUNT', DEFAULT_TO(sum_is_high_priority, 0:numeric)), ('LOW_LINE_COUNT', DEFAULT_TO(sum_expr_2, 0:numeric))], orderings=[(l_shipmode):asc_first])
  AGGREGATE(keys={'l_shipmode': l_shipmode}, aggregations={'sum_expr_2': SUM(NOT(ISIN(o_orderpriority, ['1-URGENT', '2-HIGH']:array[unknown]))), 'sum_is_high_priority': SUM(ISIN(o_orderpriority, ['1-URGENT', '2-HIGH']:array[unknown]))})
-  JOIN(condition=t0.l_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'l_shipmode': t0.l_shipmode, 'o_orderpriority': t1.o_orderpriority})
+  JOIN(condition=t0.l_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'l_shipmode': t0.l_shipmode, 'o_orderpriority': t1.o_orderpriority})
    FILTER(condition=l_commitdate < l_receiptdate & l_shipdate < l_commitdate & YEAR(l_receiptdate) == 1994:numeric & l_shipmode == 'MAIL':string | l_shipmode == 'SHIP':string, columns={'l_orderkey': l_orderkey, 'l_shipmode': l_shipmode})
     SCAN(table=tpch.LINEITEM, columns={'l_commitdate': l_commitdate, 'l_orderkey': l_orderkey, 'l_receiptdate': l_receiptdate, 'l_shipdate': l_shipdate, 'l_shipmode': l_shipmode})
    SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey, 'o_orderpriority': o_orderpriority})
