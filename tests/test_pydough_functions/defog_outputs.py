@@ -2485,3 +2485,411 @@ def defog_sql_text_dermtreatment_gen5() -> str:
         dr.fda_appr_dt IS NOT NULL AND
         t.end_dt >= DATE('now', '-6 months');
     """
+
+
+def defog_sql_text_academic_gen1() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which authors have written publications in both the domain
+    'Machine Learning' and the domain 'Data Science'?
+    """
+    return """
+    SELECT author.name 
+    FROM author 
+    WHERE author.aid IN (
+        SELECT domain_author.aid 
+        FROM domain_author 
+        WHERE domain_author.did IN (
+            SELECT domain.did 
+            FROM DOMAIN 
+            WHERE domain.name IN ('Machine Learning', 'Data Science')
+        ) 
+        GROUP BY 1 HAVING COUNT(DISTINCT domain_author.did) = 2
+    );
+    """
+
+
+def defog_sql_text_academic_gen2() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of citations received by each author?
+    """
+    return """
+    SELECT author.name, SUM(publication.citation_num) AS total_citations 
+    FROM author 
+        JOIN writes ON author.aid = writes.aid 
+        JOIN publication ON writes.pid = publication.pid 
+    GROUP BY author.name 
+    ORDER BY total_citations DESC;
+    """
+
+
+def defog_sql_text_academic_gen3() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of publications published in each year?
+    """
+    return """
+    SELECT publication.year, COUNT(DISTINCT publication.pid) AS total_publications
+    FROM publication
+    GROUP BY publication.year 
+    ORDER BY publication.year NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen4() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the average number of references cited by publications in each
+    domain name?
+    """
+    return """
+    SELECT domain.name, AVG(publication.reference_num) AS average_references
+    FROM domain_publication
+    JOIN publication ON domain_publication.pid = publication.pid
+    JOIN domain ON domain.did = domain_publication.did
+    GROUP BY domain.name;
+    """
+
+
+def defog_sql_text_academic_gen5() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the average number of citations received by publications in each year?
+    """
+    return """
+    SELECT publication.year, AVG(publication.citation_num) AS average_citations 
+    FROM publication 
+    GROUP BY publication.year 
+    ORDER BY publication.year NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen6() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the title of the publication that has received the highest number of
+    citations?
+    """
+    return """
+    SELECT publication.title FROM publication ORDER BY publication.citation_num 
+    DESC LIMIT 1;
+    """
+
+
+def defog_sql_text_academic_gen7() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the top 5 domains with the highest number of authors associated
+    with them?
+    """
+    return """
+    SELECT d.name, COUNT(DISTINCT a.aid) AS author_count 
+    FROM author AS a JOIN domain_author AS da ON a.aid = da.aid 
+        JOIN domain AS d ON da.did = d.did 
+    GROUP BY d.name 
+    ORDER BY author_count DESC NULLS FIRST LIMIT 5;
+    """
+
+
+def defog_sql_text_academic_gen8() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the top 3 titles of the publications that have the highest number
+    of references cited, ordered by the number of references cited in descending
+    order?
+    """
+    return """
+    SELECT publication.title 
+    FROM publication 
+    ORDER BY publication.reference_num DESC NULLS FIRST LIMIT 3;
+    """
+
+
+def defog_sql_text_academic_gen9() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the top 3 publications with the highest number of citations?
+    """
+    return """
+    SELECT publication.title, publication.citation_num 
+    FROM publication 
+    ORDER BY publication.citation_num DESC NULLS FIRST LIMIT 3;
+    """
+
+
+def defog_sql_text_academic_gen10() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the titles of all publications ordered alphabetically?
+    """
+    return """
+    SELECT DISTINCT publication.title 
+    FROM publication 
+    ORDER BY publication.title ASC NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen11() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+
+    What is the ratio of publications to authors in the database?
+    """
+    return """
+    SELECT CAST(
+        COUNT(
+            DISTINCT publication.pid
+        ) AS REAL
+    ) / NULLIF(COUNT(DISTINCT author.aid), 0) AS publication_to_author_ratio 
+    FROM publication, author;
+    """
+
+
+def defog_sql_text_academic_gen12() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the ratio of publications presented in conferences to publications
+    published in journals?
+    """
+    return """
+    SELECT CAST(
+        COUNT(
+            DISTINCT CASE WHEN NOT cid IS NULL THEN pid END
+        ) AS REAL
+    ) / NULLIF(COUNT(DISTINCT CASE WHEN NOT jid IS NULL THEN pid END), 0) AS ratio 
+    FROM publication;
+    """
+
+
+def defog_sql_text_academic_gen13() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the ratio of the total number of publications to the total number of
+    keywords within each domain ID? Show all domain IDs.
+    """
+    return """
+    SELECT domain_publication.did, 
+    CAST(
+        COUNT(
+            DISTINCT domain_publication.pid
+        ) AS REAL
+    ) / NULLIF(COUNT(DISTINCT domain_keyword.kid), 0) AS publication_to_keyword_ratio 
+    FROM domain_publication 
+        LEFT JOIN domain_keyword ON domain_publication.did = domain_keyword.did 
+    GROUP BY domain_publication.did 
+    ORDER BY publication_to_keyword_ratio DESC;
+    """
+
+
+def defog_sql_text_academic_gen14() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How does the ratio of publications to journals change over the years? Return
+    the annual numbers of publications and journals as well.
+    """
+    return """
+    SELECT publication.year, 
+        COUNT(DISTINCT publication.pid) AS num_publications, 
+        COUNT(DISTINCT publication.jid) AS num_journals, 
+        CAST(COUNT(DISTINCT publication.pid) AS REAL) / NULLIF(COUNT(DISTINCT publication.jid), 0) AS ratio 
+    FROM publication 
+    GROUP BY publication.year 
+    ORDER BY publication.year NULLS LAST;
+    """
+
+
+def defog_sql_text_academic_gen15() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How does the ratio of authors to organizations differ by continent?
+    """
+    return """
+    SELECT organization.continent, 
+        CAST(COUNT(DISTINCT author.aid) AS REAL) / NULLIF(COUNT(DISTINCT organization.oid), 0) AS ratio 
+    FROM organization 
+        LEFT JOIN author ON author.oid = organization.oid 
+    GROUP BY organization.continent 
+    ORDER BY ratio DESC;
+    """
+
+
+def defog_sql_text_academic_gen16() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which author had the most publications in the year 2021 and how many
+    publications did he/she have that year?
+    """
+    return """
+    SELECT author.name, 
+        COUNT(publication.pid) AS publication_count 
+    FROM writes 
+        JOIN author ON writes.aid = author.aid 
+        JOIN publication ON writes.pid = publication.pid 
+    WHERE publication.year = 2021 
+    GROUP BY author.name 
+    ORDER BY publication_count DESC LIMIT 1;
+    """
+
+
+def defog_sql_text_academic_gen17() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of publications presented in each conference?
+    """
+    return """
+    SELECT conference.name, COUNT(publication.pid) AS total_publications 
+    FROM publication 
+    JOIN conference ON publication.cid = conference.cid 
+    GROUP BY conference.name 
+    ORDER BY total_publications DESC NULLS FIRST;
+    """
+
+
+def defog_sql_text_academic_gen18() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What is the total number of publications in each journal, ordered by the
+    number of publications in descending order?
+    """
+    return """
+    SELECT journal.name, journal.jid, COUNT(publication.pid) AS total_publications 
+    FROM journal 
+    LEFT JOIN publication ON journal.jid = publication.jid 
+    GROUP BY journal.name, journal.jid 
+    ORDER BY total_publications DESC;
+    """
+
+
+def defog_sql_text_academic_gen19() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How many publications were presented at each conference, ordered by the
+    number of publications in descending order? Give the names of the conferences
+    and their corresponding number of publications.
+    """
+    return """
+    SELECT conference.name, COUNT(publication.pid) AS num_publications 
+    FROM publication 
+        JOIN conference ON publication.cid = conference.cid 
+    GROUP BY conference.name, conference.cid 
+    ORDER BY num_publications DESC;
+    """
+
+
+def defog_sql_text_academic_gen20() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    How many publications were published in journals whose names start with the
+    letter 'J'?
+    """
+    return """
+    SELECT COUNT(DISTINCT publication.pid) 
+    FROM publication 
+        JOIN journal ON publication.jid = journal.jid 
+    WHERE LOWER(journal.name) LIKE LOWER('J%');
+    """
+
+
+def defog_sql_text_academic_gen21() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which organizations have authors who have written publications in the
+    domain 'Machine Learning'?
+    """
+    return """
+    SELECT DISTINCT organization.name, organization.oid 
+    FROM organization 
+        JOIN author ON organization.oid = author.oid 
+        JOIN writes ON author.aid = writes.aid 
+        JOIN domain_publication ON writes.pid = domain_publication.pid 
+        JOIN domain ON domain_publication.did = domain.did 
+    WHERE domain.name = 'Machine Learning';
+    """
+
+
+def defog_sql_text_academic_gen22() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which authors belong to the same domain as Martin?,Always filter names using
+    LIKE with percent sign wildcards
+    """
+    return """
+    SELECT DISTINCT a2.name, a2.aid 
+    FROM author AS a1 
+        JOIN domain_author AS da1 ON a1.aid = da1.aid 
+        JOIN domain_author AS da2 ON da1.did = da2.did 
+        JOIN author AS a2 ON da2.aid = a2.aid 
+    WHERE LOWER(LOWER(a1.name)) LIKE LOWER('%martin%');
+    """
+
+
+def defog_sql_text_academic_gen23() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    Which authors are not part of any organization?
+    """
+    return """
+    SELECT DISTINCT name, aid FROM author WHERE oid IS NULL;
+    """
+
+
+def defog_sql_text_academic_gen24() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the publications written by authors from the 'Sociology' domain and
+    presented at conferences in the year 2020?
+    """
+    return """
+    SELECT DISTINCT publication.title 
+    FROM domain 
+    JOIN domain_author ON domain.did = domain_author.did 
+    JOIN writes ON domain_author.aid = writes.aid 
+    JOIN publication ON writes.pid = publication.pid 
+    JOIN domain_conference ON domain.did = domain_conference.did 
+    WHERE LOWER(domain.name) LIKE LOWER('%Sociology%') 
+    AND publication.year = 2020 
+    AND publication.cid = domain_conference.cid;
+    """
+
+
+def defog_sql_text_academic_gen25() -> str:
+    """
+    SQLite query text for the following question for the Academic graph:
+
+    What are the names of the authors who have written publications in the
+    domain 'Computer Science'?
+    """
+    return """
+    SELECT DISTINCT author.name 
+    FROM author 
+        JOIN writes ON author.aid = writes.aid 
+        JOIN publication ON writes.pid = publication.pid 
+        JOIN domain_publication ON publication.pid = domain_publication.pid 
+        JOIN domain ON domain_publication.did = domain.did 
+    WHERE LOWER(domain.name) LIKE LOWER('%computer%science%');
+    """
