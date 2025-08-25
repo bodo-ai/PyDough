@@ -17,6 +17,11 @@ class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
     reverse relationship.
     """
 
+    reverse: SubcollectionRelationshipMetadata | None = None
+    """
+    The reverse property that goes from the child back to the parent.
+    """
+
     @abstractmethod
     def build_reverse_relationship(
         self,

@@ -1,5 +1,5 @@
 ROOT(columns=[('nation_name', n_name), ('total_bal', sum_c_acctbal), ('num_bal', count_c_acctbal), ('avg_bal', DEFAULT_TO(avg_c_acctbal, 0:numeric)), ('min_bal', min_c_acctbal), ('max_bal', max_c_acctbal), ('num_cust', n_rows)], orderings=[])
- JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'avg_c_acctbal': t1.avg_c_acctbal, 'count_c_acctbal': t1.count_c_acctbal_1, 'max_c_acctbal': t1.max_c_acctbal_1, 'min_c_acctbal': t1.min_c_acctbal_1, 'n_name': t0.n_name, 'n_rows': t1.n_rows_1, 'sum_c_acctbal': t1.sum_c_acctbal_1})
+ JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'avg_c_acctbal': t1.avg_c_acctbal, 'count_c_acctbal': t1.count_c_acctbal_1, 'max_c_acctbal': t1.max_c_acctbal_1, 'min_c_acctbal': t1.min_c_acctbal_1, 'n_name': t0.n_name, 'n_rows': t1.n_rows_1, 'sum_c_acctbal': t1.sum_c_acctbal_1})
   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
   AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'avg_c_acctbal': AVG(c_acctbal), 'count_c_acctbal_1': COUNT(c_acctbal), 'max_c_acctbal_1': MAX(c_acctbal), 'min_c_acctbal_1': MIN(c_acctbal), 'n_rows_1': COUNT(), 'sum_c_acctbal_1': SUM(c_acctbal)})
    SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_nationkey': c_nationkey})
