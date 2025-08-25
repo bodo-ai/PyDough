@@ -33,7 +33,7 @@ SELECT
       DAYOFWEEK(sbtxdatetime) + 5
     ) % 7
   ) + 1 AS dayofweek
-FROM MAIN.SBTRANSACTION
+FROM main.sbtransaction
 WHERE
   DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
   AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025

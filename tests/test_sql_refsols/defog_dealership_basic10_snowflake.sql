@@ -1,22 +1,22 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    SUM(sale_price) AS SUM_SALE_PRICE,
-    salesperson_id AS SALESPERSON_ID
-  FROM MAIN.SALES
+    COUNT(*) AS n_rows,
+    SUM(sale_price) AS sum_sale_price,
+    salesperson_id
+  FROM main.sales
   WHERE
     sale_date >= DATEADD(MONTH, -3, CURRENT_TIMESTAMP())
   GROUP BY
     3
 )
 SELECT
-  SALESPERSONS.first_name,
-  SALESPERSONS.last_name,
-  COALESCE(_S1.N_ROWS, 0) AS total_sales,
-  COALESCE(_S1.SUM_SALE_PRICE, 0) AS total_revenue
-FROM MAIN.SALESPERSONS AS SALESPERSONS
-LEFT JOIN _S1 AS _S1
-  ON SALESPERSONS._id = _S1.SALESPERSON_ID
+  salespersons.first_name,
+  salespersons.last_name,
+  COALESCE(_s1.n_rows, 0) AS total_sales,
+  COALESCE(_s1.sum_sale_price, 0) AS total_revenue
+FROM main.salespersons AS salespersons
+LEFT JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
   4 DESC NULLS LAST
 LIMIT 3

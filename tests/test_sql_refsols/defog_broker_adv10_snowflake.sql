@@ -1,24 +1,24 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    YEAR(CAST(sbtxdatetime AS TIMESTAMP)) AS EXPR_1,
-    MONTH(CAST(sbtxdatetime AS TIMESTAMP)) AS EXPR_2,
-    COUNT(*) AS N_ROWS,
-    sbtxcustid AS SBTXCUSTID
-  FROM MAIN.SBTRANSACTION
+    YEAR(CAST(sbtxdatetime AS TIMESTAMP)) AS expr_1,
+    MONTH(CAST(sbtxdatetime AS TIMESTAMP)) AS expr_2,
+    COUNT(*) AS n_rows,
+    sbtxcustid
+  FROM main.sbtransaction
   GROUP BY
     1,
     2,
     4
 )
 SELECT
-  SBCUSTOMER.sbcustid AS _id,
-  SBCUSTOMER.sbcustname AS name,
-  COALESCE(_S1.N_ROWS, 0) AS num_transactions
-FROM MAIN.SBCUSTOMER AS SBCUSTOMER
-LEFT JOIN _S1 AS _S1
-  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
-  AND _S1.EXPR_1 = YEAR(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP))
-  AND _S1.EXPR_2 = MONTH(CAST(SBCUSTOMER.sbcustjoindate AS TIMESTAMP))
+  sbcustomer.sbcustid AS _id,
+  sbcustomer.sbcustname AS name,
+  COALESCE(_s1.n_rows, 0) AS num_transactions
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.expr_1 = YEAR(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
+  AND _s1.expr_2 = MONTH(CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
+  AND _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 1

@@ -1,14 +1,14 @@
 WITH _u_0 AS (
   SELECT
     customer_id AS _u_1
-  FROM MAIN.SALES
+  FROM main.sales
   GROUP BY
     1
 )
 SELECT
-  CUSTOMERS._id
-FROM MAIN.CUSTOMERS AS CUSTOMERS
+  customers._id
+FROM main.customers AS customers
 LEFT JOIN _u_0 AS _u_0
-  ON CUSTOMERS._id = _u_0._u_1
+  ON _u_0._u_1 = customers._id
 WHERE
   NOT _u_0._u_1 IS NULL

@@ -1,44 +1,44 @@
-WITH _S0 AS (
+WITH _s0 AS (
   SELECT DISTINCT
-    sbcuststate AS SBCUSTSTATE
-  FROM MAIN.SBCUSTOMER
-), _T2 AS (
+    sbcuststate
+  FROM main.sbcustomer
+), _t2 AS (
   SELECT
-    sbtxdatetime AS SBTXDATETIME
-  FROM MAIN.SBTRANSACTION
+    sbtxdatetime
+  FROM main.sbtransaction
   WHERE
     YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023
-), _S1 AS (
+), _s1 AS (
   SELECT DISTINCT
-    DATE_TRUNC('MONTH', CAST(SBTXDATETIME AS TIMESTAMP)) AS MONTH
-  FROM _T2
-), _S3 AS (
+    DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP)) AS month
+  FROM _t2
+), _s3 AS (
   SELECT DISTINCT
-    DATE_TRUNC('MONTH', CAST(SBTXDATETIME AS TIMESTAMP)) AS MONTH
-  FROM _T2
-), _S9 AS (
+    DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP)) AS month
+  FROM _t2
+), _s9 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    _S3.MONTH,
-    _S2.SBCUSTSTATE
-  FROM _S0 AS _S2
-  CROSS JOIN _S3 AS _S3
-  JOIN MAIN.SBTRANSACTION AS SBTRANSACTION
-    ON YEAR(CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP)) = 2023
-    AND _S3.MONTH = DATE_TRUNC('MONTH', CAST(SBTRANSACTION.sbtxdatetime AS TIMESTAMP))
-  JOIN MAIN.SBCUSTOMER AS SBCUSTOMER
-    ON SBCUSTOMER.sbcustid = SBTRANSACTION.sbtxcustid
-    AND SBCUSTOMER.sbcuststate = _S2.SBCUSTSTATE
+    COUNT(*) AS n_rows,
+    _s3.month,
+    _s2.sbcuststate
+  FROM _s0 AS _s2
+  CROSS JOIN _s3 AS _s3
+  JOIN main.sbtransaction AS sbtransaction
+    ON YEAR(CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 2023
+    AND _s3.month = DATE_TRUNC('MONTH', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP))
+  JOIN main.sbcustomer AS sbcustomer
+    ON _s2.sbcuststate = sbcustomer.sbcuststate
+    AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
     2,
     3
 )
 SELECT
-  _S0.SBCUSTSTATE AS state,
-  MAX(COALESCE(_S9.N_ROWS, 0)) AS max_n
-FROM _S0 AS _S0
-CROSS JOIN _S1 AS _S1
-LEFT JOIN _S9 AS _S9
-  ON _S0.SBCUSTSTATE = _S9.SBCUSTSTATE AND _S1.MONTH = _S9.MONTH
+  _s0.sbcuststate AS state,
+  MAX(COALESCE(_s9.n_rows, 0)) AS max_n
+FROM _s0 AS _s0
+CROSS JOIN _s1 AS _s1
+LEFT JOIN _s9 AS _s9
+  ON _s0.sbcuststate = _s9.sbcuststate AND _s1.month = _s9.month
 GROUP BY
   1

@@ -1,28 +1,28 @@
-WITH _S3 AS (
+WITH _s3 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    in_device_id AS IN_DEVICE_ID
-  FROM MAIN.INCIDENTS
+    COUNT(*) AS n_rows,
+    in_device_id
+  FROM main.incidents
   GROUP BY
     2
-), _S5 AS (
+), _s5 AS (
   SELECT
-    COALESCE(SUM(_S3.N_ROWS), 0) AS SUM_N_INCIDENTS,
-    DEVICES.de_production_country_id AS DE_PRODUCTION_COUNTRY_ID,
-    COUNT(*) AS N_ROWS
-  FROM MAIN.DEVICES AS DEVICES
-  JOIN MAIN.PRODUCTS AS PRODUCTS
-    ON DEVICES.de_product_id = PRODUCTS.pr_id AND PRODUCTS.pr_name = 'Sun-Set'
-  LEFT JOIN _S3 AS _S3
-    ON DEVICES.de_id = _S3.IN_DEVICE_ID
+    COALESCE(SUM(_s3.n_rows), 0) AS sum_n_incidents,
+    devices.de_production_country_id,
+    COUNT(*) AS n_rows
+  FROM main.devices AS devices
+  JOIN main.products AS products
+    ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
+  LEFT JOIN _s3 AS _s3
+    ON _s3.in_device_id = devices.de_id
   GROUP BY
     2
 )
 SELECT
-  COUNTRIES.co_name AS country,
-  ROUND(COALESCE(_S5.SUM_N_INCIDENTS, 0) / COALESCE(_S5.N_ROWS, 0), 2) AS ir
-FROM MAIN.COUNTRIES AS COUNTRIES
-LEFT JOIN _S5 AS _S5
-  ON COUNTRIES.co_id = _S5.DE_PRODUCTION_COUNTRY_ID
+  countries.co_name AS country,
+  ROUND(COALESCE(_s5.sum_n_incidents, 0) / COALESCE(_s5.n_rows, 0), 2) AS ir
+FROM main.countries AS countries
+LEFT JOIN _s5 AS _s5
+  ON _s5.de_production_country_id = countries.co_id
 ORDER BY
   1 NULLS FIRST

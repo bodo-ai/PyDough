@@ -1,22 +1,22 @@
-WITH _S5 AS (
+WITH _s5 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    INCIDENTS.in_error_id AS IN_ERROR_ID
-  FROM MAIN.INCIDENTS AS INCIDENTS
-  JOIN MAIN.DEVICES AS DEVICES
-    ON DEVICES.de_id = INCIDENTS.in_device_id
-  JOIN MAIN.PRODUCTS AS PRODUCTS
-    ON DEVICES.de_product_id = PRODUCTS.pr_id AND PRODUCTS.pr_name = 'Sun-Set'
+    COUNT(*) AS n_rows,
+    incidents.in_error_id
+  FROM main.incidents AS incidents
+  JOIN main.devices AS devices
+    ON devices.de_id = incidents.in_device_id
+  JOIN main.products AS products
+    ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
   GROUP BY
     2
 )
 SELECT
-  ERRORS.er_name AS error,
+  errors.er_name AS error,
   ROUND((
-    100.0 * COALESCE(_S5.N_ROWS, 0)
-  ) / SUM(COALESCE(_S5.N_ROWS, 0)) OVER (), 2) AS pct
-FROM MAIN.ERRORS AS ERRORS
-LEFT JOIN _S5 AS _S5
-  ON ERRORS.er_id = _S5.IN_ERROR_ID
+    100.0 * COALESCE(_s5.n_rows, 0)
+  ) / SUM(COALESCE(_s5.n_rows, 0)) OVER (), 2) AS pct
+FROM main.errors AS errors
+LEFT JOIN _s5 AS _s5
+  ON _s5.in_error_id = errors.er_id
 ORDER BY
   2 DESC NULLS LAST

@@ -1,56 +1,56 @@
-WITH _S0 AS (
+WITH _s0 AS (
   SELECT
-    n_name AS N_NAME,
-    n_nationkey AS N_NATIONKEY,
-    n_regionkey AS N_REGIONKEY
-  FROM TPCH.NATION
+    n_name,
+    n_nationkey,
+    n_regionkey
+  FROM tpch.nation
   ORDER BY
     1 NULLS FIRST
   LIMIT 5
-), _S5 AS (
+), _s5 AS (
   SELECT
     PERCENTILE_DISC(0.1) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_0,
+      orders.o_totalprice) AS agg_0,
     PERCENTILE_DISC(0.01) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_1,
+      orders.o_totalprice) AS agg_1,
     PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_2,
+      orders.o_totalprice) AS agg_2,
     PERCENTILE_DISC(0.75) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_3,
+      orders.o_totalprice) AS agg_3,
     PERCENTILE_DISC(0.9) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_4,
+      orders.o_totalprice) AS agg_4,
     PERCENTILE_DISC(0.99) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_5,
+      orders.o_totalprice) AS agg_5,
     PERCENTILE_DISC(1.0) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_6,
+      orders.o_totalprice) AS agg_6,
     PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_7,
+      orders.o_totalprice) AS agg_7,
     PERCENTILE_DISC(0.0) WITHIN GROUP (ORDER BY
-      ORDERS.o_totalprice) AS AGG_8,
-    CUSTOMER.c_nationkey AS C_NATIONKEY
-  FROM TPCH.CUSTOMER AS CUSTOMER
-  JOIN TPCH.ORDERS AS ORDERS
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey
-    AND YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)) = 1998
+      orders.o_totalprice) AS agg_8,
+    customer.c_nationkey
+  FROM tpch.customer AS customer
+  JOIN tpch.orders AS orders
+    ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
+    AND customer.c_custkey = orders.o_custkey
   GROUP BY
     10
 )
 SELECT
-  REGION.r_name AS region_name,
-  _S0.N_NAME AS nation_name,
-  _S5.AGG_8 AS orders_min,
-  _S5.AGG_1 AS orders_1_percent,
-  _S5.AGG_0 AS orders_10_percent,
-  _S5.AGG_2 AS orders_25_percent,
-  _S5.AGG_7 AS orders_median,
-  _S5.AGG_3 AS orders_75_percent,
-  _S5.AGG_4 AS orders_90_percent,
-  _S5.AGG_5 AS orders_99_percent,
-  _S5.AGG_6 AS orders_max
-FROM _S0 AS _S0
-JOIN TPCH.REGION AS REGION
-  ON REGION.r_regionkey = _S0.N_REGIONKEY
-LEFT JOIN _S5 AS _S5
-  ON _S0.N_NATIONKEY = _S5.C_NATIONKEY
+  region.r_name AS region_name,
+  _s0.n_name AS nation_name,
+  _s5.agg_8 AS orders_min,
+  _s5.agg_1 AS orders_1_percent,
+  _s5.agg_0 AS orders_10_percent,
+  _s5.agg_2 AS orders_25_percent,
+  _s5.agg_7 AS orders_median,
+  _s5.agg_3 AS orders_75_percent,
+  _s5.agg_4 AS orders_90_percent,
+  _s5.agg_5 AS orders_99_percent,
+  _s5.agg_6 AS orders_max
+FROM _s0 AS _s0
+JOIN tpch.region AS region
+  ON _s0.n_regionkey = region.r_regionkey
+LEFT JOIN _s5 AS _s5
+  ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
   2 NULLS FIRST

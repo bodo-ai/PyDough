@@ -1,18 +1,18 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    user_id AS USER_ID
-  FROM MAIN.NOTIFICATIONS
+    COUNT(*) AS n_rows,
+    user_id
+  FROM main.notifications
   WHERE
     status = 'unread' AND type = 'promotion'
   GROUP BY
     2
 )
 SELECT
-  USERS.username,
-  _S1.N_ROWS AS total_unread_notifs
-FROM MAIN.USERS AS USERS
-JOIN _S1 AS _S1
-  ON USERS.uid = _S1.USER_ID
+  users.username,
+  _s1.n_rows AS total_unread_notifs
+FROM main.users AS users
+JOIN _s1 AS _s1
+  ON _s1.user_id = users.uid
 WHERE
-  LOWER(USERS.country) = 'us'
+  LOWER(users.country) = 'us'

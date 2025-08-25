@@ -1,14 +1,14 @@
 SELECT
-  EVENTS.ev_typ AS event_type,
+  events.ev_typ AS event_type,
   COUNT(*) AS n_events
-FROM EVENTS AS EVENTS
-JOIN SEASONS AS SEASONS
+FROM events AS events
+JOIN seasons AS seasons
   ON (
-    SEASONS.s_month1 = MONTH(CAST(EVENTS.ev_dt AS TIMESTAMP))
-    OR SEASONS.s_month2 = MONTH(CAST(EVENTS.ev_dt AS TIMESTAMP))
-    OR SEASONS.s_month3 = MONTH(CAST(EVENTS.ev_dt AS TIMESTAMP))
+    seasons.s_month1 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
+    OR seasons.s_month2 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
+    OR seasons.s_month3 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
   )
-  AND SEASONS.s_name = 'Summer'
+  AND seasons.s_name = 'Summer'
 GROUP BY
   1
 ORDER BY

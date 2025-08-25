@@ -1,24 +1,24 @@
-WITH _S7 AS (
+WITH _s7 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    INCIDENTS.in_device_id AS IN_DEVICE_ID
-  FROM MAIN.INCIDENTS AS INCIDENTS
-  JOIN MAIN.ERRORS AS ERRORS
-    ON ERRORS.er_id = INCIDENTS.in_error_id AND ERRORS.er_name = 'Battery Failure'
+    COUNT(*) AS n_rows,
+    incidents.in_device_id
+  FROM main.incidents AS incidents
+  JOIN main.errors AS errors
+    ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
   GROUP BY
     2
 )
 SELECT
-  COUNTRIES.co_name AS country_name,
-  PRODUCTS.pr_name AS product_name,
-  ROUND(COALESCE(SUM(_S7.N_ROWS), 0) / COUNT(*), 2) AS ir
-FROM MAIN.COUNTRIES AS COUNTRIES
-JOIN MAIN.DEVICES AS DEVICES
-  ON COUNTRIES.co_id = DEVICES.de_production_country_id
-JOIN MAIN.PRODUCTS AS PRODUCTS
-  ON DEVICES.de_product_id = PRODUCTS.pr_id
-LEFT JOIN _S7 AS _S7
-  ON DEVICES.de_id = _S7.IN_DEVICE_ID
+  countries.co_name AS country_name,
+  products.pr_name AS product_name,
+  ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) AS ir
+FROM main.countries AS countries
+JOIN main.devices AS devices
+  ON countries.co_id = devices.de_production_country_id
+JOIN main.products AS products
+  ON devices.de_product_id = products.pr_id
+LEFT JOIN _s7 AS _s7
+  ON _s7.in_device_id = devices.de_id
 GROUP BY
   1,
   2

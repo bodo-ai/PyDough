@@ -2,7 +2,7 @@ SELECT
   payment_date,
   payment_method,
   COALESCE(SUM(payment_amount), 0) AS total_amount
-FROM MAIN.PAYMENTS_RECEIVED
+FROM main.payments_received
 WHERE
   DATEDIFF(
     WEEK,

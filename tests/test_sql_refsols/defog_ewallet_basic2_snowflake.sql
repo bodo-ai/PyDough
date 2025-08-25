@@ -1,15 +1,15 @@
 WITH _u_0 AS (
   SELECT
     merchant_id AS _u_1
-  FROM MAIN.COUPONS
+  FROM main.coupons
   GROUP BY
     1
 )
 SELECT
-  MERCHANTS.mid AS merchant_id,
-  MERCHANTS.name AS merchant_name
-FROM MAIN.MERCHANTS AS MERCHANTS
+  merchants.mid AS merchant_id,
+  merchants.name AS merchant_name
+FROM main.merchants AS merchants
 LEFT JOIN _u_0 AS _u_0
-  ON MERCHANTS.mid = _u_0._u_1
+  ON _u_0._u_1 = merchants.mid
 WHERE
   _u_0._u_1 IS NULL

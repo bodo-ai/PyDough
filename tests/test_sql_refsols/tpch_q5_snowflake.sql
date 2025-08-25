@@ -1,30 +1,30 @@
-WITH _S11 AS (
+WITH _s11 AS (
   SELECT
-    NATION.n_name AS N_NAME,
-    SUPPLIER.s_suppkey AS S_SUPPKEY
-  FROM TPCH.SUPPLIER AS SUPPLIER
-  JOIN TPCH.NATION AS NATION
-    ON NATION.n_nationkey = SUPPLIER.s_nationkey
+    nation.n_name,
+    supplier.s_suppkey
+  FROM tpch.supplier AS supplier
+  JOIN tpch.nation AS nation
+    ON nation.n_nationkey = supplier.s_nationkey
 )
 SELECT
-  ANY_VALUE(NATION.n_name) AS N_NAME,
-  COALESCE(SUM(LINEITEM.l_extendedprice * (
-    1 - LINEITEM.l_discount
+  ANY_VALUE(nation.n_name) AS N_NAME,
+  COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
   )), 0) AS REVENUE
-FROM TPCH.NATION AS NATION
-JOIN TPCH.REGION AS REGION
-  ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'ASIA'
-JOIN TPCH.CUSTOMER AS CUSTOMER
-  ON CUSTOMER.c_nationkey = NATION.n_nationkey
-JOIN TPCH.ORDERS AS ORDERS
-  ON CUSTOMER.c_custkey = ORDERS.o_custkey
-  AND ORDERS.o_orderdate < CAST('1995-01-01' AS DATE)
-  AND ORDERS.o_orderdate >= CAST('1994-01-01' AS DATE)
-JOIN TPCH.LINEITEM AS LINEITEM
-  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
-JOIN _S11 AS _S11
-  ON LINEITEM.l_suppkey = _S11.S_SUPPKEY AND NATION.n_name = _S11.N_NAME
+FROM tpch.nation AS nation
+JOIN tpch.region AS region
+  ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'ASIA'
+JOIN tpch.customer AS customer
+  ON customer.c_nationkey = nation.n_nationkey
+JOIN tpch.orders AS orders
+  ON customer.c_custkey = orders.o_custkey
+  AND orders.o_orderdate < CAST('1995-01-01' AS DATE)
+  AND orders.o_orderdate >= CAST('1994-01-01' AS DATE)
+JOIN tpch.lineitem AS lineitem
+  ON lineitem.l_orderkey = orders.o_orderkey
+JOIN _s11 AS _s11
+  ON _s11.n_name = nation.n_name AND _s11.s_suppkey = lineitem.l_suppkey
 GROUP BY
-  NATION.n_nationkey
+  nation.n_nationkey
 ORDER BY
   2 DESC NULLS LAST

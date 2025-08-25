@@ -1,17 +1,17 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    car_id AS CAR_ID
-  FROM MAIN.SALES
+    COUNT(*) AS n_rows,
+    car_id
+  FROM main.sales
   GROUP BY
     2
 )
 SELECT
-  CARS.make,
-  CARS.model,
-  COALESCE(_S1.N_ROWS, 0) AS num_sales
-FROM MAIN.CARS AS CARS
-LEFT JOIN _S1 AS _S1
-  ON CARS._id = _S1.CAR_ID
+  cars.make,
+  cars.model,
+  COALESCE(_s1.n_rows, 0) AS num_sales
+FROM main.cars AS cars
+LEFT JOIN _s1 AS _s1
+  ON _s1.car_id = cars._id
 WHERE
-  CONTAINS(LOWER(CARS.vin_number), 'm5')
+  CONTAINS(LOWER(cars.vin_number), 'm5')

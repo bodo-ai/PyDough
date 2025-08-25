@@ -101,14 +101,18 @@ def apply_sqlglot_optimizer(
 
     # Apply each rule explicitly with appropriate kwargs
 
+    kwargs = {
+        "quote_identifiers": False,
+        "isolate_tables": True,
+        "validate_qualify_columns": False,
+    }
+    # Exclude Snowflake dialect to avoid some issues
+    # related to qualify and column decorrelation
+    if not isinstance(dialect, SnowflakeDialect):
+        kwargs["dialect"] = dialect
+
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
-    glot_expr = qualify(
-        glot_expr,
-        dialect=dialect,
-        quote_identifiers=False,
-        isolate_tables=True,
-        validate_qualify_columns=False,
-    )
+    glot_expr = qualify(glot_expr, **kwargs)
 
     # Rewrite sqlglot AST to remove unused columns projections.
     glot_expr = pushdown_projections(glot_expr)

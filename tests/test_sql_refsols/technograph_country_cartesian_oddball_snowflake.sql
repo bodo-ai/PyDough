@@ -1,12 +1,12 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_OTHER_COUNTRIES
-  FROM MAIN.COUNTRIES
+    COUNT(*) AS n_other_countries
+  FROM main.countries
 )
 SELECT
-  COUNTRIES.co_name AS name,
-  _S1.N_OTHER_COUNTRIES AS n_other_countries
-FROM MAIN.COUNTRIES AS COUNTRIES
-CROSS JOIN _S1 AS _S1
+  countries.co_name AS name,
+  _s1.n_other_countries
+FROM main.countries AS countries
+CROSS JOIN _s1 AS _s1
 ORDER BY
   1 NULLS FIRST

@@ -1,21 +1,21 @@
-WITH _T0 AS (
+WITH _t0 AS (
   SELECT
-    COUNT(DISTINCT SEARCHES.search_id) AS N_SEARCHES,
-    EVENTS.ev_typ AS EV_TYP,
-    USERS.user_region AS USER_REGION
-  FROM EVENTS AS EVENTS
-  JOIN SEARCHES AS SEARCHES
-    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
-  JOIN USERS AS USERS
-    ON SEARCHES.search_user_id = USERS.user_id
+    COUNT(DISTINCT searches.search_id) AS n_searches,
+    events.ev_typ,
+    users.user_region
+  FROM events AS events
+  JOIN searches AS searches
+    ON CONTAINS(LOWER(searches.search_string), LOWER(events.ev_name))
+  JOIN users AS users
+    ON searches.search_user_id = users.user_id
   GROUP BY
     2,
     3
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY USERS.user_region ORDER BY COUNT(DISTINCT SEARCHES.search_id) DESC) = 1
+    ROW_NUMBER() OVER (PARTITION BY users.user_region ORDER BY COUNT(DISTINCT searches.search_id) DESC) = 1
 )
 SELECT
-  USER_REGION AS region,
-  EV_TYP AS event_type,
-  N_SEARCHES AS n_searches
-FROM _T0
+  user_region AS region,
+  ev_typ AS event_type,
+  n_searches
+FROM _t0

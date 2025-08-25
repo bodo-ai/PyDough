@@ -1,15 +1,15 @@
 WITH _u_0 AS (
   SELECT
     sbtxcustid AS _u_1
-  FROM MAIN.SBTRANSACTION
+  FROM main.sbtransaction
   GROUP BY
     1
 )
 SELECT
-  SBCUSTOMER.sbcustid AS _id,
-  SBCUSTOMER.sbcustname AS name
-FROM MAIN.SBCUSTOMER AS SBCUSTOMER
+  sbcustomer.sbcustid AS _id,
+  sbcustomer.sbcustname AS name
+FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _u_0 AS _u_0
-  ON SBCUSTOMER.sbcustid = _u_0._u_1
+  ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE
   _u_0._u_1 IS NULL

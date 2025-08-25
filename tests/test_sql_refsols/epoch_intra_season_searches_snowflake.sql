@@ -1,82 +1,82 @@
-WITH _S0 AS (
+WITH _s0 AS (
   SELECT
-    s_month1 AS S_MONTH1,
-    s_month2 AS S_MONTH2,
-    s_month3 AS S_MONTH3,
-    s_name AS S_NAME
-  FROM SEASONS
-), _S5 AS (
+    s_month1,
+    s_month2,
+    s_month3,
+    s_name
+  FROM seasons
+), _s5 AS (
   SELECT
-    ev_dt AS EV_DT,
-    ev_name AS EV_NAME
-  FROM EVENTS
-), _S9 AS (
+    ev_dt,
+    ev_name
+  FROM events
+), _s9 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    _S2.S_NAME,
-    SEARCHES.search_id AS SEARCH_ID
-  FROM _S0 AS _S2
-  JOIN SEARCHES AS SEARCHES
-    ON _S2.S_MONTH1 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-    OR _S2.S_MONTH2 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-    OR _S2.S_MONTH3 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-  JOIN _S5 AS _S5
-    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(_S5.EV_NAME))
-  JOIN _S0 AS _S7
-    ON _S2.S_NAME = _S7.S_NAME
+    COUNT(*) AS n_rows,
+    _s2.s_name,
+    searches.search_id
+  FROM _s0 AS _s2
+  JOIN searches AS searches
+    ON _s2.s_month1 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+    OR _s2.s_month2 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+    OR _s2.s_month3 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+  JOIN _s5 AS _s5
+    ON CONTAINS(LOWER(searches.search_string), LOWER(_s5.ev_name))
+  JOIN _s0 AS _s7
+    ON _s2.s_name = _s7.s_name
     AND (
-      _S7.S_MONTH1 = MONTH(CAST(_S5.EV_DT AS TIMESTAMP))
-      OR _S7.S_MONTH2 = MONTH(CAST(_S5.EV_DT AS TIMESTAMP))
-      OR _S7.S_MONTH3 = MONTH(CAST(_S5.EV_DT AS TIMESTAMP))
+      _s7.s_month1 = MONTH(CAST(_s5.ev_dt AS TIMESTAMP))
+      OR _s7.s_month2 = MONTH(CAST(_s5.ev_dt AS TIMESTAMP))
+      OR _s7.s_month3 = MONTH(CAST(_s5.ev_dt AS TIMESTAMP))
     )
   GROUP BY
     2,
     3
-), _S16 AS (
+), _s16 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
+    COUNT(*) AS n_rows,
     COUNT_IF((
-      NOT _S9.N_ROWS IS NULL AND _S9.N_ROWS > 0
-    )) AS SUM_IS_INTRA_SEASON,
-    _S0.S_NAME
-  FROM _S0 AS _S0
-  JOIN SEARCHES AS SEARCHES
-    ON _S0.S_MONTH1 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-    OR _S0.S_MONTH2 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-    OR _S0.S_MONTH3 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-  LEFT JOIN _S9 AS _S9
-    ON SEARCHES.search_id = _S9.SEARCH_ID AND _S0.S_NAME = _S9.S_NAME
+      NOT _s9.n_rows IS NULL AND _s9.n_rows > 0
+    )) AS sum_is_intra_season,
+    _s0.s_name
+  FROM _s0 AS _s0
+  JOIN searches AS searches
+    ON _s0.s_month1 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+    OR _s0.s_month2 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+    OR _s0.s_month3 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+  LEFT JOIN _s9 AS _s9
+    ON _s0.s_name = _s9.s_name AND _s9.search_id = searches.search_id
   GROUP BY
     3
-), _S17 AS (
+), _s17 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    COUNT_IF(_S15.S_NAME = _S10.S_NAME) AS SUM_IS_INTRA_SEASON,
-    _S10.S_NAME
-  FROM _S0 AS _S10
-  JOIN _S5 AS _S11
-    ON _S10.S_MONTH1 = MONTH(CAST(_S11.EV_DT AS TIMESTAMP))
-    OR _S10.S_MONTH2 = MONTH(CAST(_S11.EV_DT AS TIMESTAMP))
-    OR _S10.S_MONTH3 = MONTH(CAST(_S11.EV_DT AS TIMESTAMP))
-  JOIN SEARCHES AS SEARCHES
-    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(_S11.EV_NAME))
-  JOIN _S0 AS _S15
-    ON _S15.S_MONTH1 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-    OR _S15.S_MONTH2 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
-    OR _S15.S_MONTH3 = MONTH(CAST(SEARCHES.search_ts AS TIMESTAMP))
+    COUNT(*) AS n_rows,
+    COUNT_IF(_s15.s_name = _s10.s_name) AS sum_is_intra_season,
+    _s10.s_name
+  FROM _s0 AS _s10
+  JOIN _s5 AS _s11
+    ON _s10.s_month1 = MONTH(CAST(_s11.ev_dt AS TIMESTAMP))
+    OR _s10.s_month2 = MONTH(CAST(_s11.ev_dt AS TIMESTAMP))
+    OR _s10.s_month3 = MONTH(CAST(_s11.ev_dt AS TIMESTAMP))
+  JOIN searches AS searches
+    ON CONTAINS(LOWER(searches.search_string), LOWER(_s11.ev_name))
+  JOIN _s0 AS _s15
+    ON _s15.s_month1 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+    OR _s15.s_month2 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
+    OR _s15.s_month3 = MONTH(CAST(searches.search_ts AS TIMESTAMP))
   GROUP BY
     3
 )
 SELECT
-  _S16.S_NAME AS season_name,
+  _s16.s_name AS season_name,
   ROUND((
-    100.0 * COALESCE(_S16.SUM_IS_INTRA_SEASON, 0)
-  ) / _S16.N_ROWS, 2) AS pct_season_searches,
+    100.0 * COALESCE(_s16.sum_is_intra_season, 0)
+  ) / _s16.n_rows, 2) AS pct_season_searches,
   ROUND((
-    100.0 * COALESCE(_S17.SUM_IS_INTRA_SEASON, 0)
-  ) / COALESCE(_S17.N_ROWS, 0), 2) AS pct_event_searches
-FROM _S16 AS _S16
-LEFT JOIN _S17 AS _S17
-  ON _S16.S_NAME = _S17.S_NAME
+    100.0 * COALESCE(_s17.sum_is_intra_season, 0)
+  ) / COALESCE(_s17.n_rows, 0), 2) AS pct_event_searches
+FROM _s16 AS _s16
+LEFT JOIN _s17 AS _s17
+  ON _s16.s_name = _s17.s_name
 ORDER BY
   1 NULLS FIRST

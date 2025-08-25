@@ -3,7 +3,7 @@ SELECT
   ps_partkey AS part_key,
   FLOOR(ps_availqty) AS complete_parts,
   CEIL(ps_supplycost * FLOOR(ps_availqty)) AS total_cost
-FROM TPCH.PARTSUPP
+FROM tpch.partsupp
 ORDER BY
   4 DESC NULLS LAST
 LIMIT 10

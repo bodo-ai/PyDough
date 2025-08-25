@@ -3,7 +3,7 @@ SELECT
   last_name,
   phone,
   DATEDIFF(DAY, CAST(hire_date AS DATETIME), CAST(termination_date AS DATETIME)) * 1.0 AS days_employed
-FROM MAIN.SALESPERSONS
+FROM main.salespersons
 WHERE
   NOT termination_date IS NULL
 ORDER BY

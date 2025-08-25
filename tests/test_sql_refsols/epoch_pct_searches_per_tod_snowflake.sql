@@ -1,20 +1,20 @@
-WITH _T0 AS (
+WITH _t0 AS (
   SELECT
-    ANY_VALUE(TIMES.t_start_hour) AS ANYTHING_T_START_HOUR,
-    COUNT(*) AS N_ROWS,
-    TIMES.t_name AS T_NAME
-  FROM TIMES AS TIMES
-  JOIN SEARCHES AS SEARCHES
-    ON TIMES.t_end_hour > HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
-    AND TIMES.t_start_hour <= HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
+    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
+    COUNT(*) AS n_rows,
+    times.t_name
+  FROM times AS times
+  JOIN searches AS searches
+    ON times.t_end_hour > HOUR(CAST(searches.search_ts AS TIMESTAMP))
+    AND times.t_start_hour <= HOUR(CAST(searches.search_ts AS TIMESTAMP))
   GROUP BY
     3
 )
 SELECT
-  T_NAME AS tod,
+  t_name AS tod,
   ROUND((
-    100.0 * N_ROWS
-  ) / SUM(N_ROWS) OVER (), 2) AS pct_searches
-FROM _T0
+    100.0 * n_rows
+  ) / SUM(n_rows) OVER (), 2) AS pct_searches
+FROM _t0
 ORDER BY
-  ANYTHING_T_START_HOUR NULLS FIRST
+  anything_t_start_hour NULLS FIRST

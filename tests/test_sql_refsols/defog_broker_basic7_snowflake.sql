@@ -1,7 +1,7 @@
 SELECT
   sbtxstatus AS status,
   COUNT(*) AS num_transactions
-FROM MAIN.SBTRANSACTION
+FROM main.sbtransaction
 GROUP BY
   1
 ORDER BY

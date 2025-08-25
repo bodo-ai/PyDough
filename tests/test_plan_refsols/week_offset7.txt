@@ -1,3 +1,0 @@
-ROOT(columns=[('date_time', sbTxDateTime), ('week_adj7', DATETIME(sbTxDateTime, '1 mm':string, '2 w':string))], orderings=[])
- FILTER(condition=YEAR(sbTxDateTime) < 2025:numeric & DAY(sbTxDateTime) > 1:numeric, columns={'sbTxDateTime': sbTxDateTime})
-  SCAN(table=main.sbTransaction, columns={'sbTxDateTime': sbTxDateTime})

@@ -1,19 +1,19 @@
-WITH _T1 AS (
+WITH _t1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    COUNT_IF(sbtxstatus = 'success') AS SUM_EXPR_2,
-    sbtxcustid AS SBTXCUSTID
-  FROM MAIN.SBTRANSACTION
+    COUNT(*) AS n_rows,
+    COUNT_IF(sbtxstatus = 'success') AS sum_expr_2,
+    sbtxcustid
+  FROM main.sbtransaction
   GROUP BY
     3
 )
 SELECT
-  SBCUSTOMER.sbcustname AS name,
+  sbcustomer.sbcustname AS name,
   (
-    100.0 * COALESCE(_T1.SUM_EXPR_2, 0)
-  ) / _T1.N_ROWS AS success_rate
-FROM MAIN.SBCUSTOMER AS SBCUSTOMER
-JOIN _T1 AS _T1
-  ON SBCUSTOMER.sbcustid = _T1.SBTXCUSTID AND _T1.N_ROWS >= 5
+    100.0 * COALESCE(_t1.sum_expr_2, 0)
+  ) / _t1.n_rows AS success_rate
+FROM main.sbcustomer AS sbcustomer
+JOIN _t1 AS _t1
+  ON _t1.n_rows >= 5 AND _t1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
   2 NULLS FIRST

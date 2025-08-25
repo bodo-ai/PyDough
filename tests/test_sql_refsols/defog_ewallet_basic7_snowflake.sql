@@ -1,7 +1,7 @@
 SELECT
   status,
   COUNT(*) AS count
-FROM MAIN.WALLET_TRANSACTIONS_DAILY
+FROM main.wallet_transactions_daily
 GROUP BY
   1
 ORDER BY

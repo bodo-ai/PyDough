@@ -1,10 +1,10 @@
 SELECT
-  CUSTOMERS.state,
-  COUNT(DISTINCT SALES.customer_id) AS unique_customers,
-  COALESCE(SUM(SALES.sale_price), 0) AS total_revenue
-FROM MAIN.SALES AS SALES
-JOIN MAIN.CUSTOMERS AS CUSTOMERS
-  ON CUSTOMERS._id = SALES.customer_id
+  customers.state,
+  COUNT(DISTINCT sales.customer_id) AS unique_customers,
+  COALESCE(SUM(sales.sale_price), 0) AS total_revenue
+FROM main.sales AS sales
+JOIN main.customers AS customers
+  ON customers._id = sales.customer_id
 GROUP BY
   1
 ORDER BY

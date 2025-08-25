@@ -1,8 +1,8 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    sbtxtickerid AS SBTXTICKERID
-  FROM MAIN.SBTRANSACTION
+    COUNT(*) AS n_rows,
+    sbtxtickerid
+  FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -10, CURRENT_TIMESTAMP()))
     AND sbtxtype = 'buy'
@@ -10,11 +10,11 @@ WITH _S1 AS (
     2
 )
 SELECT
-  SBTICKER.sbtickersymbol AS symbol,
-  COALESCE(_S1.N_ROWS, 0) AS tx_count
-FROM MAIN.SBTICKER AS SBTICKER
-LEFT JOIN _S1 AS _S1
-  ON SBTICKER.sbtickerid = _S1.SBTXTICKERID
+  sbticker.sbtickersymbol AS symbol,
+  COALESCE(_s1.n_rows, 0) AS tx_count
+FROM main.sbticker AS sbticker
+LEFT JOIN _s1 AS _s1
+  ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
   2 DESC NULLS LAST
 LIMIT 2

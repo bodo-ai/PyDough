@@ -1,23 +1,23 @@
-WITH _T3 AS (
+WITH _t3 AS (
   SELECT
     (
       100.0 * SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) ORDER BY sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-    ) / SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))) AS PCT_OF_DAY,
-    sbtxdatetime AS SBTXDATETIME
-  FROM MAIN.SBTRANSACTION
+    ) / SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))) AS pct_of_day,
+    sbtxdatetime
+  FROM main.sbtransaction
   WHERE
     YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023
-), _T1 AS (
+), _t1 AS (
   SELECT
-    SBTXDATETIME
-  FROM _T3
+    sbtxdatetime
+  FROM _t3
   WHERE
-    PCT_OF_DAY >= 50.0
+    pct_of_day >= 50.0
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('DAY', CAST(SBTXDATETIME AS TIMESTAMP)) ORDER BY PCT_OF_DAY) = 1
+    ROW_NUMBER() OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) ORDER BY pct_of_day) = 1
 )
 SELECT
-  SBTXDATETIME AS date_time
-FROM _T1
+  sbtxdatetime AS date_time
+FROM _t1
 ORDER BY
   1 NULLS FIRST
