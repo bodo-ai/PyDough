@@ -15,6 +15,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -38,7 +39,7 @@ from pydough.relational import (
 from pydough.relational.rel_util import (
     add_input_name,
 )
-from pydough.types import ArrayType, NumericType
+from pydough.types import ArrayType, NumericType, StringType
 
 
 @dataclass
@@ -205,10 +206,11 @@ class SimplificationShuttle(RelationalExpressionShuttle):
       simplifying their inputs and placing their predicate sets on the stack.
     """
 
-    def __init__(self):
+    def __init__(self, configs: PyDoughConfigs):
         self.stack: list[PredicateSet] = []
         self._input_predicates: dict[RelationalExpression, PredicateSet] = {}
         self._no_group_aggregate: bool = False
+        self._configs: PyDoughConfigs = configs
 
     @property
     def input_predicates(self) -> dict[RelationalExpression, PredicateSet]:
@@ -237,6 +239,20 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         Sets whether the shuttle is handling a no-group-aggregate.
         """
         self._no_group_aggregate = value
+
+    @property
+    def configs(self) -> PyDoughConfigs:
+        """
+        Returns the PyDough configuration settings.
+        """
+        return self._configs
+
+    @configs.setter
+    def configs(self, value: PyDoughConfigs) -> None:
+        """
+        Sets the PyDough configuration settings.
+        """
+        self._configs = value
 
     def reset(self) -> None:
         self.stack = []
@@ -613,41 +629,52 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         # where the literal is a native Python datetime/date, a pandas
         # Timestamp, or a string without any alphabetic characters (to avoid
         # parsing things like 'now' that depend on the current date).
-        ts: pd.Timestamp | None = None
+        timestamp_value: pd.Timestamp | None = None
         if isinstance(lit_expr.value, datetime.date):
-            ts = pd.Timestamp(lit_expr.value)
+            timestamp_value = pd.Timestamp(lit_expr.value)
         elif isinstance(lit_expr.value, str) and not any(
             c.isalpha() for c in lit_expr.value
         ):
             try:
-                ts = pd.Timestamp(lit_expr.value)
+                timestamp_value = pd.Timestamp(lit_expr.value)
             except Exception:
                 return expr
         elif isinstance(lit_expr.value, pd.Timestamp):
-            ts = lit_expr.value
+            timestamp_value = lit_expr.value
 
         # Fall back to the original expression by default.
-        if ts is None:
+        if timestamp_value is None:
             return expr
 
         # Otherwise, extract the relevant part from the timestamp and return it
         # as a literal.
         match op:
             case pydop.YEAR:
-                return LiteralExpression(ts.year, NumericType())
+                return LiteralExpression(timestamp_value.year, NumericType())
             case pydop.QUARTER:
-                quarter: int = ((ts.month - 1) // 3) + 1
+                quarter: int = ((timestamp_value.month - 1) // 3) + 1
                 return LiteralExpression(quarter, NumericType())
             case pydop.MONTH:
-                return LiteralExpression(ts.month, NumericType())
+                return LiteralExpression(timestamp_value.month, NumericType())
             case pydop.DAY:
-                return LiteralExpression(ts.day, NumericType())
+                return LiteralExpression(timestamp_value.day, NumericType())
             case pydop.HOUR:
-                return LiteralExpression(ts.hour, NumericType())
+                return LiteralExpression(timestamp_value.hour, NumericType())
             case pydop.MINUTE:
-                return LiteralExpression(ts.minute, NumericType())
+                return LiteralExpression(timestamp_value.minute, NumericType())
             case pydop.SECOND:
-                return LiteralExpression(ts.second, NumericType())
+                return LiteralExpression(timestamp_value.second, NumericType())
+            case pydop.DAYNAME:
+                return LiteralExpression(timestamp_value.day_name(), StringType())
+            case pydop.DAYOFWEEK:
+                # Derive the day of week as an integer, adjusting based on the
+                # configured start of the week.
+                dow: int = timestamp_value.weekday()
+                dow -= self.configs.start_of_week.pandas_dow
+                dow %= 7
+                if not self.configs.start_week_as_zero:
+                    dow += 1
+                return LiteralExpression(dow, NumericType())
             case _:
                 return expr
 
@@ -1163,7 +1190,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     )
 
             # YEAR(literal_datetime) -> can infer the year as a literal
-            # (same for QUARTER, MONTH, DAY, HOUR, MINUTE, SECOND)
+            # (same for QUARTER, MONTH, DAY, HOUR, MINUTE, SECOND, DAYOFWEEK,
+            # and DAYNAME)
             case (
                 pydop.YEAR
                 | pydop.QUARTER
@@ -1172,6 +1200,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 | pydop.HOUR
                 | pydop.MINUTE
                 | pydop.SECOND
+                | pydop.DAYOFWEEK
+                | pydop.DAYNAME
             ):
                 if isinstance(expr.inputs[0], LiteralExpression):
                     output_expr = self.simplify_datetime_literal_part(
@@ -1265,9 +1295,13 @@ class SimplificationVisitor(RelationalVisitor):
     the current node are placed on the stack.
     """
 
-    def __init__(self, additional_shuttles: list[RelationalExpressionShuttle]):
+    def __init__(
+        self,
+        configs: PyDoughConfigs,
+        additional_shuttles: list[RelationalExpressionShuttle],
+    ):
         self.stack: list[dict[RelationalExpression, PredicateSet]] = []
-        self.shuttle: SimplificationShuttle = SimplificationShuttle()
+        self.shuttle: SimplificationShuttle = SimplificationShuttle(configs)
         self.additional_shuttles: list[RelationalExpressionShuttle] = (
             additional_shuttles
         )
@@ -1500,6 +1534,7 @@ class SimplificationVisitor(RelationalVisitor):
 
 def simplify_expressions(
     node: RelationalNode,
+    configs: PyDoughConfigs,
     additional_shuttles: list[RelationalExpressionShuttle],
 ) -> None:
     """
@@ -1508,10 +1543,13 @@ def simplify_expressions(
 
     Args:
         `node`: The relational node to perform simplification on.
+        `configs`: The PyDough configuration settings.
         `additional_shuttles`: A list of additional shuttles to apply to the
         expressions of the node and its descendants. These shuttles are applied
         after the simplification shuttle, and can be used to perform additional
         transformations on the expressions.
     """
-    simplifier: SimplificationVisitor = SimplificationVisitor(additional_shuttles)
+    simplifier: SimplificationVisitor = SimplificationVisitor(
+        configs, additional_shuttles
+    )
     node.accept(simplifier)

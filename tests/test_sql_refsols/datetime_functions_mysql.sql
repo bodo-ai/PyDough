@@ -49,16 +49,21 @@ SELECT
   (
     DAYOFWEEK(o_orderdate) + -1
   ) % 7 AS dow_col,
-  (
-    DAYOFWEEK(CAST('1992-07-01' AS DATE)) + -1
-  ) % 7 AS dow_str,
-  (
-    DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + -1
-  ) % 7 AS dow_dt,
-  (
-    DAYOFWEEK(CAST('1995-10-10 00:00:00' AS DATETIME)) + -1
-  ) % 7 AS dow_pd,
+  3 AS dow_str1,
+  4 AS dow_str2,
+  5 AS dow_str3,
+  6 AS dow_str4,
+  0 AS dow_str5,
+  1 AS dow_str6,
+  2 AS dow_str7,
+  3 AS dow_dt,
+  2 AS dow_pd,
   DAYNAME(o_orderdate) AS dayname_col,
-  DAYNAME('1995-06-30') AS dayname_str,
-  DAYNAME(CAST('1993-08-15 00:00:00' AS DATETIME)) AS dayname_dt
+  'Monday' AS dayname_str1,
+  'Tuesday' AS dayname_str2,
+  'Wednesday' AS dayname_str3,
+  'Thursday' AS dayname_str4,
+  'Friday' AS dayname_str5,
+  'Saturday' AS dayname_str6,
+  'Sunday' AS dayname_dt
 FROM tpch.ORDERS

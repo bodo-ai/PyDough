@@ -42,9 +42,15 @@ SELECT
     )
   ) AS INTEGER) AS REAL) / 7 AS INTEGER) AS dd_dt_str,
   CAST(STRFTIME('%w', o_orderdate) AS INTEGER) AS dow_col,
-  CAST(STRFTIME('%w', DATETIME('1992-07-01')) AS INTEGER) AS dow_str,
-  CAST(STRFTIME('%w', '1992-01-01 12:30:45') AS INTEGER) AS dow_dt,
-  CAST(STRFTIME('%w', '1995-10-10 00:00:00') AS INTEGER) AS dow_pd,
+  3 AS dow_str1,
+  4 AS dow_str2,
+  5 AS dow_str3,
+  6 AS dow_str4,
+  0 AS dow_str5,
+  1 AS dow_str6,
+  2 AS dow_str7,
+  3 AS dow_dt,
+  2 AS dow_pd,
   CASE
     WHEN CAST(STRFTIME('%w', o_orderdate) AS INTEGER) = 0
     THEN 'Sunday'
@@ -61,36 +67,11 @@ SELECT
     WHEN CAST(STRFTIME('%w', o_orderdate) AS INTEGER) = 6
     THEN 'Saturday'
   END AS dayname_col,
-  CASE
-    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 0
-    THEN 'Sunday'
-    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 1
-    THEN 'Monday'
-    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 2
-    THEN 'Tuesday'
-    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 3
-    THEN 'Wednesday'
-    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 4
-    THEN 'Thursday'
-    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 5
-    THEN 'Friday'
-    WHEN CAST(STRFTIME('%w', DATETIME('1995-06-30')) AS INTEGER) = 6
-    THEN 'Saturday'
-  END AS dayname_str,
-  CASE
-    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 0
-    THEN 'Sunday'
-    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 1
-    THEN 'Monday'
-    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 2
-    THEN 'Tuesday'
-    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 3
-    THEN 'Wednesday'
-    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 4
-    THEN 'Thursday'
-    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 5
-    THEN 'Friday'
-    WHEN CAST(STRFTIME('%w', '1993-08-15 00:00:00') AS INTEGER) = 6
-    THEN 'Saturday'
-  END AS dayname_dt
+  'Monday' AS dayname_str1,
+  'Tuesday' AS dayname_str2,
+  'Wednesday' AS dayname_str3,
+  'Thursday' AS dayname_str4,
+  'Friday' AS dayname_str5,
+  'Saturday' AS dayname_str6,
+  'Sunday' AS dayname_dt
 FROM tpch.orders

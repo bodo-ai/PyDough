@@ -22,9 +22,15 @@ SELECT
   DATEDIFF(CAST('1992-01-01 12:30:45' AS TIMESTAMP), CAST(o_orderdate AS DATETIME), YEAR) AS dd_col_dt,
   DATEDIFF(CAST('1992-01-01 12:30:45' AS TIMESTAMP), CAST('1992-01-01' AS TIMESTAMP), WEEK) AS dd_dt_str,
   DAY_OF_WEEK(o_orderdate) AS dow_col,
-  DAY_OF_WEEK('1992-07-01') AS dow_str,
-  DAY_OF_WEEK(CAST('1992-01-01 12:30:45' AS TIMESTAMP)) AS dow_dt,
-  DAY_OF_WEEK(CAST('1995-10-10 00:00:00' AS TIMESTAMP)) AS dow_pd,
+  3 AS dow_str1,
+  4 AS dow_str2,
+  5 AS dow_str3,
+  6 AS dow_str4,
+  0 AS dow_str5,
+  1 AS dow_str6,
+  2 AS dow_str7,
+  3 AS dow_dt,
+  2 AS dow_pd,
   CASE
     WHEN DAY_OF_WEEK(o_orderdate) = 0
     THEN 'Sunday'
@@ -41,36 +47,11 @@ SELECT
     WHEN DAY_OF_WEEK(o_orderdate) = 6
     THEN 'Saturday'
   END AS dayname_col,
-  CASE
-    WHEN DAY_OF_WEEK('1995-06-30') = 0
-    THEN 'Sunday'
-    WHEN DAY_OF_WEEK('1995-06-30') = 1
-    THEN 'Monday'
-    WHEN DAY_OF_WEEK('1995-06-30') = 2
-    THEN 'Tuesday'
-    WHEN DAY_OF_WEEK('1995-06-30') = 3
-    THEN 'Wednesday'
-    WHEN DAY_OF_WEEK('1995-06-30') = 4
-    THEN 'Thursday'
-    WHEN DAY_OF_WEEK('1995-06-30') = 5
-    THEN 'Friday'
-    WHEN DAY_OF_WEEK('1995-06-30') = 6
-    THEN 'Saturday'
-  END AS dayname_str,
-  CASE
-    WHEN DAY_OF_WEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 0
-    THEN 'Sunday'
-    WHEN DAY_OF_WEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 1
-    THEN 'Monday'
-    WHEN DAY_OF_WEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 2
-    THEN 'Tuesday'
-    WHEN DAY_OF_WEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 3
-    THEN 'Wednesday'
-    WHEN DAY_OF_WEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 4
-    THEN 'Thursday'
-    WHEN DAY_OF_WEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 5
-    THEN 'Friday'
-    WHEN DAY_OF_WEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 6
-    THEN 'Saturday'
-  END AS dayname_dt
+  'Monday' AS dayname_str1,
+  'Tuesday' AS dayname_str2,
+  'Wednesday' AS dayname_str3,
+  'Thursday' AS dayname_str4,
+  'Friday' AS dayname_str5,
+  'Saturday' AS dayname_str6,
+  'Sunday' AS dayname_dt
 FROM tpch.orders
