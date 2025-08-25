@@ -5,21 +5,21 @@ WITH _t5 AS (
     l_orderkey,
     l_receiptdate,
     l_suppkey
-  FROM tpch.lineitem
+  FROM tpch.LINEITEM
   WHERE
     l_commitdate < l_receiptdate
 ), _t3 AS (
   SELECT
     ANY_VALUE(_t5.l_suppkey) AS anything_l_suppkey,
-    ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus,
+    ANY_VALUE(ORDERS.o_orderstatus) AS anything_o_orderstatus,
     _t5.l_linenumber,
     _t5.l_orderkey,
-    orders.o_orderkey
+    ORDERS.o_orderkey
   FROM _t5 AS _t5
-  JOIN tpch.orders AS orders
-    ON _t5.l_orderkey = orders.o_orderkey
-  JOIN tpch.lineitem AS lineitem
-    ON _t5.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
+  JOIN tpch.ORDERS AS ORDERS
+    ON ORDERS.o_orderkey = _t5.l_orderkey
+  JOIN tpch.LINEITEM AS LINEITEM
+    ON LINEITEM.l_orderkey = ORDERS.o_orderkey AND LINEITEM.l_suppkey <> _t5.l_suppkey
   GROUP BY
     3,
     4,
@@ -28,14 +28,14 @@ WITH _t5 AS (
   SELECT
     _t6.l_linenumber AS _u_1,
     _t6.l_orderkey AS _u_2,
-    orders.o_orderkey AS _u_3
+    ORDERS.o_orderkey AS _u_3
   FROM _t5 AS _t6
-  JOIN tpch.orders AS orders
-    ON _t6.l_orderkey = orders.o_orderkey
-  JOIN tpch.lineitem AS lineitem
-    ON _t6.l_suppkey <> lineitem.l_suppkey
-    AND lineitem.l_commitdate < lineitem.l_receiptdate
-    AND lineitem.l_orderkey = orders.o_orderkey
+  JOIN tpch.ORDERS AS ORDERS
+    ON ORDERS.o_orderkey = _t6.l_orderkey
+  JOIN tpch.LINEITEM AS LINEITEM
+    ON LINEITEM.l_commitdate < LINEITEM.l_receiptdate
+    AND LINEITEM.l_orderkey = ORDERS.o_orderkey
+    AND LINEITEM.l_suppkey <> _t6.l_suppkey
   GROUP BY
     1,
     2,
@@ -55,13 +55,13 @@ WITH _t5 AS (
     2
 )
 SELECT
-  s_name COLLATE utf8mb4_bin AS S_NAME,
+  SUPPLIER.s_name COLLATE utf8mb4_bin AS S_NAME,
   COALESCE(_s13.n_rows, 0) AS NUMWAIT
-FROM tpch.supplier AS supplier
-JOIN tpch.nation AS nation
-  ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
+FROM tpch.SUPPLIER AS SUPPLIER
+JOIN tpch.NATION AS NATION
+  ON NATION.n_name = 'SAUDI ARABIA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
 LEFT JOIN _s13 AS _s13
-  ON _s13.anything_l_suppkey = supplier.s_suppkey
+  ON SUPPLIER.s_suppkey = _s13.anything_l_suppkey
 ORDER BY
   2 DESC,
   1

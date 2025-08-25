@@ -1,34 +1,34 @@
-WITH _s0 AS (
+WITH _S0 AS (
   SELECT
-    user_id,
-    user_name
-  FROM users
-), _t2 AS (
+    user_id AS USER_ID,
+    user_name AS USER_NAME
+  FROM USERS
+), _T2 AS (
   SELECT
-    ANY_VALUE(searches.search_user_id) AS anything_search_user_id,
-    ANY_VALUE(_s0.user_name) AS anything_user_name,
-    _s0.user_id
-  FROM _s0 AS _s0
-  JOIN searches AS searches
-    ON _s0.user_id = searches.search_user_id
-  JOIN events AS events
-    ON CONTAINS(LOWER(searches.search_string), LOWER(events.ev_name))
-  JOIN searches AS searches_2
-    ON CONTAINS(LOWER(searches_2.search_string), LOWER(events.ev_name))
-  JOIN _s0 AS _s7
-    ON _s0.user_name <> _s7.user_name AND _s7.user_id = searches_2.search_user_id
+    ANY_VALUE(SEARCHES.search_user_id) AS ANYTHING_SEARCH_USER_ID,
+    ANY_VALUE(_S0.USER_NAME) AS ANYTHING_USER_NAME,
+    _S0.USER_ID
+  FROM _S0 AS _S0
+  JOIN SEARCHES AS SEARCHES
+    ON SEARCHES.search_user_id = _S0.USER_ID
+  JOIN EVENTS AS EVENTS
+    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
+  JOIN SEARCHES AS SEARCHES_2
+    ON CONTAINS(LOWER(SEARCHES_2.search_string), LOWER(EVENTS.ev_name))
+  JOIN _S0 AS _S7
+    ON SEARCHES_2.search_user_id = _S7.USER_ID AND _S0.USER_NAME <> _S7.USER_NAME
   GROUP BY
-    searches.search_id,
+    SEARCHES.search_id,
     3
 )
 SELECT
-  ANY_VALUE(anything_user_name) AS user_name,
+  ANY_VALUE(ANYTHING_USER_NAME) AS user_name,
   COUNT(*) AS n_searches
-FROM _t2
+FROM _T2
 WHERE
-  anything_search_user_id = user_id
+  ANYTHING_SEARCH_USER_ID = USER_ID
 GROUP BY
-  user_id
+  USER_ID
 ORDER BY
   2 DESC NULLS LAST,
   1 NULLS FIRST

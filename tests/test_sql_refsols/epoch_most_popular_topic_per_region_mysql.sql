@@ -1,13 +1,13 @@
 WITH _t1 AS (
   SELECT
-    COUNT(DISTINCT searches.search_id) AS n_searches,
-    events.ev_typ,
-    users.user_region
-  FROM events AS events
-  JOIN searches AS searches
-    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
-  JOIN users AS users
-    ON searches.search_user_id = users.user_id
+    COUNT(DISTINCT SEARCHES.search_id) AS n_searches,
+    EVENTS.ev_typ,
+    USERS.user_region
+  FROM EVENTS AS EVENTS
+  JOIN SEARCHES AS SEARCHES
+    ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
+  JOIN USERS AS USERS
+    ON SEARCHES.search_user_id = USERS.user_id
   GROUP BY
     2,
     3

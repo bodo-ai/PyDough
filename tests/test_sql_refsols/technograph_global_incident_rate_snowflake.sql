@@ -1,13 +1,13 @@
-WITH _s0 AS (
+WITH _S0 AS (
   SELECT
-    COUNT(*) AS n_rows
-  FROM main.incidents
-), _s1 AS (
+    COUNT(*) AS N_ROWS
+  FROM MAIN.INCIDENTS
+), _S1 AS (
   SELECT
-    COUNT(*) AS n_rows
-  FROM main.devices
+    COUNT(*) AS N_ROWS
+  FROM MAIN.DEVICES
 )
 SELECT
-  ROUND(_s0.n_rows / _s1.n_rows, 2) AS ir
-FROM _s0 AS _s0
-CROSS JOIN _s1 AS _s1
+  ROUND(_S0.N_ROWS / _S1.N_ROWS, 2) AS ir
+FROM _S0 AS _S0
+CROSS JOIN _S1 AS _S1

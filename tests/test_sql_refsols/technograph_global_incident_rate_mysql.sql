@@ -1,11 +1,11 @@
 WITH _s0 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.incidents
+  FROM main.INCIDENTS
 ), _s1 AS (
   SELECT
     COUNT(*) AS n_rows
-  FROM main.devices
+  FROM main.DEVICES
 )
 SELECT
   ROUND(_s0.n_rows / _s1.n_rows, 2) AS ir

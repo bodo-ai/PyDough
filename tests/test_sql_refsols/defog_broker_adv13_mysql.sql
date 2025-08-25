@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS cust_country,
   COUNT(*) AS TAC
-FROM main.sbcustomer
+FROM main.sbCustomer
 WHERE
   sbcustjoindate >= CAST('2023-01-01' AS DATE)
 GROUP BY

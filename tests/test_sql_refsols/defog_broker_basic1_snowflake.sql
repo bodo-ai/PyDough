@@ -1,20 +1,20 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxcustid
-  FROM main.sbtransaction
+    COUNT(*) AS N_ROWS,
+    SUM(sbtxamount) AS SUM_SBTXAMOUNT,
+    sbtxcustid AS SBTXCUSTID
+  FROM MAIN.SBTRANSACTION
   WHERE
     sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -30, CURRENT_TIMESTAMP()))
   GROUP BY
     3
 )
 SELECT
-  sbcustomer.sbcustcountry AS country,
-  COALESCE(SUM(_s1.n_rows), 0) AS num_transactions,
-  COALESCE(SUM(_s1.sum_sbtxamount), 0) AS total_amount
-FROM main.sbcustomer AS sbcustomer
-LEFT JOIN _s1 AS _s1
-  ON _s1.sbtxcustid = sbcustomer.sbcustid
+  SBCUSTOMER.sbcustcountry AS country,
+  COALESCE(SUM(_S1.N_ROWS), 0) AS num_transactions,
+  COALESCE(SUM(_S1.SUM_SBTXAMOUNT), 0) AS total_amount
+FROM MAIN.SBCUSTOMER AS SBCUSTOMER
+LEFT JOIN _S1 AS _S1
+  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
 GROUP BY
   1

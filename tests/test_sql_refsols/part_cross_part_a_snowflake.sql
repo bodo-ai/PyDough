@@ -1,32 +1,32 @@
-WITH _s0 AS (
+WITH _S0 AS (
   SELECT DISTINCT
-    sbtickerexchange
-  FROM main.sbticker
-), _s9 AS (
+    sbtickerexchange AS SBTICKEREXCHANGE
+  FROM MAIN.SBTICKER
+), _S9 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    sbcustomer.sbcustid,
-    _s2.sbtickerexchange
-  FROM _s0 AS _s2
-  CROSS JOIN main.sbcustomer AS sbcustomer
-  JOIN main.sbtransaction AS sbtransaction
-    ON sbcustomer.sbcustid = sbtransaction.sbtxcustid
-  JOIN main.sbticker AS sbticker
-    ON _s2.sbtickerexchange = sbticker.sbtickerexchange
-    AND sbticker.sbtickerid = sbtransaction.sbtxtickerid
+    COUNT(*) AS N_ROWS,
+    SBCUSTOMER.sbcustid AS SBCUSTID,
+    _S2.SBTICKEREXCHANGE
+  FROM _S0 AS _S2
+  CROSS JOIN MAIN.SBCUSTOMER AS SBCUSTOMER
+  JOIN MAIN.SBTRANSACTION AS SBTRANSACTION
+    ON SBCUSTOMER.sbcustid = SBTRANSACTION.sbtxcustid
+  JOIN MAIN.SBTICKER AS SBTICKER
+    ON SBTICKER.sbtickerexchange = _S2.SBTICKEREXCHANGE
+    AND SBTICKER.sbtickerid = SBTRANSACTION.sbtxtickerid
   GROUP BY
     2,
     3
 )
 SELECT
-  sbcustomer.sbcuststate AS state,
-  _s0.sbtickerexchange AS exchange,
-  COALESCE(SUM(_s9.n_rows), 0) AS n
-FROM _s0 AS _s0
-CROSS JOIN main.sbcustomer AS sbcustomer
-LEFT JOIN _s9 AS _s9
-  ON _s0.sbtickerexchange = _s9.sbtickerexchange
-  AND _s9.sbcustid = sbcustomer.sbcustid
+  SBCUSTOMER.sbcuststate AS state,
+  _S0.SBTICKEREXCHANGE AS exchange,
+  COALESCE(SUM(_S9.N_ROWS), 0) AS n
+FROM _S0 AS _S0
+CROSS JOIN MAIN.SBCUSTOMER AS SBCUSTOMER
+LEFT JOIN _S9 AS _S9
+  ON SBCUSTOMER.sbcustid = _S9.SBCUSTID
+  AND _S0.SBTICKEREXCHANGE = _S9.SBTICKEREXCHANGE
 GROUP BY
   1,
   2

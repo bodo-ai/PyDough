@@ -1,21 +1,21 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    salesperson_id
-  FROM main.sales
+    COUNT(*) AS N_ROWS,
+    salesperson_id AS SALESPERSON_ID
+  FROM MAIN.SALES
   WHERE
     DATEDIFF(DAY, CAST(sale_date AS DATETIME), CURRENT_TIMESTAMP()) <= 30
   GROUP BY
     2
 )
 SELECT
-  salespersons._id,
-  salespersons.first_name,
-  salespersons.last_name,
-  _s1.n_rows AS num_sales
-FROM main.salespersons AS salespersons
-JOIN _s1 AS _s1
-  ON _s1.salesperson_id = salespersons._id
+  SALESPERSONS._id,
+  SALESPERSONS.first_name,
+  SALESPERSONS.last_name,
+  _S1.N_ROWS AS num_sales
+FROM MAIN.SALESPERSONS AS SALESPERSONS
+JOIN _S1 AS _S1
+  ON SALESPERSONS._id = _S1.SALESPERSON_ID
 ORDER BY
   4 DESC NULLS LAST,
   1 NULLS FIRST

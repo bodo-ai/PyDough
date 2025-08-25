@@ -1,7 +1,7 @@
 SELECT
   device_type,
   COUNT(*) AS count
-FROM main.user_sessions
+FROM MAIN.USER_SESSIONS
 GROUP BY
   1
 ORDER BY

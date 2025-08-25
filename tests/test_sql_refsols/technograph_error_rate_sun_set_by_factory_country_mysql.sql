@@ -2,27 +2,27 @@ WITH _s3 AS (
   SELECT
     COUNT(*) AS n_rows,
     in_device_id
-  FROM main.incidents
+  FROM main.INCIDENTS
   GROUP BY
     2
 ), _s5 AS (
   SELECT
     COALESCE(SUM(_s3.n_rows), 0) AS sum_n_incidents,
-    devices.de_production_country_id,
+    DEVICES.de_production_country_id,
     COUNT(*) AS n_rows
-  FROM main.devices AS devices
-  JOIN main.products AS products
-    ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
+  FROM main.DEVICES AS DEVICES
+  JOIN main.PRODUCTS AS PRODUCTS
+    ON DEVICES.de_product_id = PRODUCTS.pr_id AND PRODUCTS.pr_name = 'Sun-Set'
   LEFT JOIN _s3 AS _s3
-    ON _s3.in_device_id = devices.de_id
+    ON DEVICES.de_id = _s3.in_device_id
   GROUP BY
     2
 )
 SELECT
-  countries.co_name COLLATE utf8mb4_bin AS country,
+  COUNTRIES.co_name COLLATE utf8mb4_bin AS country,
   ROUND(COALESCE(_s5.sum_n_incidents, 0) / COALESCE(_s5.n_rows, 0), 2) AS ir
-FROM main.countries AS countries
+FROM main.COUNTRIES AS COUNTRIES
 LEFT JOIN _s5 AS _s5
-  ON _s5.de_production_country_id = countries.co_id
+  ON COUNTRIES.co_id = _s5.de_production_country_id
 ORDER BY
   1

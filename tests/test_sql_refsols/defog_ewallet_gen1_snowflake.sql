@@ -1,9 +1,9 @@
 SELECT
-  MEDIAN(wallet_merchant_balance_daily.balance) AS _expr0
-FROM main.wallet_merchant_balance_daily AS wallet_merchant_balance_daily
-JOIN main.merchants AS merchants
-  ON CONTAINS(LOWER(merchants.category), 'retail')
-  AND merchants.mid = wallet_merchant_balance_daily.merchant_id
-  AND merchants.status = 'active'
+  MEDIAN(WALLET_MERCHANT_BALANCE_DAILY.balance) AS _expr0
+FROM MAIN.WALLET_MERCHANT_BALANCE_DAILY AS WALLET_MERCHANT_BALANCE_DAILY
+JOIN MAIN.MERCHANTS AS MERCHANTS
+  ON CONTAINS(LOWER(MERCHANTS.category), 'retail')
+  AND MERCHANTS.mid = WALLET_MERCHANT_BALANCE_DAILY.merchant_id
+  AND MERCHANTS.status = 'active'
 WHERE
-  DATE_TRUNC('DAY', CAST(wallet_merchant_balance_daily.updated_at AS TIMESTAMP)) = DATE_TRUNC('DAY', CURRENT_TIMESTAMP())
+  DATE_TRUNC('DAY', CAST(WALLET_MERCHANT_BALANCE_DAILY.updated_at AS TIMESTAMP)) = DATE_TRUNC('DAY', CURRENT_TIMESTAMP())

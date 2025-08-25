@@ -1,17 +1,17 @@
 WITH _u_0 AS (
   SELECT
-    sales.salesperson_id AS _u_1
-  FROM main.sales AS sales
-  JOIN main.payments_received AS payments_received
-    ON payments_received.payment_method = 'cash'
-    AND payments_received.sale_id = sales._id
+    SALES.salesperson_id AS _u_1
+  FROM MAIN.SALES AS SALES
+  JOIN MAIN.PAYMENTS_RECEIVED AS PAYMENTS_RECEIVED
+    ON PAYMENTS_RECEIVED.payment_method = 'cash'
+    AND PAYMENTS_RECEIVED.sale_id = SALES._id
   GROUP BY
     1
 )
 SELECT
-  salespersons._id AS salesperson_id
-FROM main.salespersons AS salespersons
+  SALESPERSONS._id AS salesperson_id
+FROM MAIN.SALESPERSONS AS SALESPERSONS
 LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = salespersons._id
+  ON SALESPERSONS._id = _u_0._u_1
 WHERE
   NOT _u_0._u_1 IS NULL

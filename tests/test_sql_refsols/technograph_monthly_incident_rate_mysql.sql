@@ -1,14 +1,14 @@
 WITH _t2 AS (
   SELECT
     ca_dt
-  FROM main.calendar
+  FROM main.CALENDAR
   WHERE
     EXTRACT(YEAR FROM CAST(ca_dt AS DATETIME)) IN (2020, 2021)
 ), _t5 AS (
   SELECT
     co_id,
     co_name
-  FROM main.countries
+  FROM main.COUNTRIES
   WHERE
     co_name = 'CN'
 ), _s7 AS (
@@ -16,12 +16,12 @@ WITH _t2 AS (
     COUNT(*) AS n_rows,
     _t4.ca_dt
   FROM _t2 AS _t4
-  JOIN main.calendar AS calendar
-    ON calendar.ca_dt >= DATE_ADD(CAST(_t4.ca_dt AS DATETIME), INTERVAL '-6' MONTH)
-  JOIN main.devices AS devices
-    ON calendar.ca_dt = CAST(CAST(devices.de_purchase_ts AS DATETIME) AS DATE)
+  JOIN main.CALENDAR AS CALENDAR
+    ON CALENDAR.ca_dt >= DATE_ADD(CAST(_t4.ca_dt AS DATETIME), INTERVAL '-6' MONTH)
+  JOIN main.DEVICES AS DEVICES
+    ON CALENDAR.ca_dt = CAST(CAST(DEVICES.de_purchase_ts AS DATETIME) AS DATE)
   JOIN _t5 AS _t5
-    ON _t5.co_id = devices.de_production_country_id
+    ON DEVICES.de_production_country_id = _t5.co_id
   GROUP BY
     2
 ), _s15 AS (
@@ -29,12 +29,12 @@ WITH _t2 AS (
     COUNT(*) AS n_rows,
     _t7.ca_dt
   FROM _t2 AS _t7
-  JOIN main.incidents AS incidents
-    ON _t7.ca_dt = CAST(CAST(incidents.in_error_report_ts AS DATETIME) AS DATE)
-  JOIN main.devices AS devices
-    ON devices.de_id = incidents.in_device_id
+  JOIN main.INCIDENTS AS INCIDENTS
+    ON _t7.ca_dt = CAST(CAST(INCIDENTS.in_error_report_ts AS DATETIME) AS DATE)
+  JOIN main.DEVICES AS DEVICES
+    ON DEVICES.de_id = INCIDENTS.in_device_id
   JOIN _t5 AS _t8
-    ON _t8.co_id = devices.de_production_country_id
+    ON DEVICES.de_production_country_id = _t8.co_id
   GROUP BY
     2
 ), _t0 AS (

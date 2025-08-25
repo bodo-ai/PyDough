@@ -74,7 +74,7 @@ SELECT
     ) / 100.0
   ) AS h,
   ROUND(POWER(GREATEST(p_size, 10), 0.5), 3) AS i
-FROM tpch.part
+FROM tpch.PART
 ORDER BY
   1
 LIMIT 5

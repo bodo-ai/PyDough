@@ -12,7 +12,7 @@ SELECT
   (
     DAYOFWEEK(sbtxdatetime) + 5
   ) % 7 AS dayofweek
-FROM main.sbtransaction
+FROM main.sbTransaction
 WHERE
   EXTRACT(DAY FROM CAST(sbtxdatetime AS DATETIME)) > 1
   AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025

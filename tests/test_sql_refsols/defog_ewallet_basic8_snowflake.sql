@@ -1,19 +1,19 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(txid) AS count_txid,
-    SUM(amount) AS sum_amount,
-    coupon_id
-  FROM main.wallet_transactions_daily
+    COUNT(txid) AS COUNT_TXID,
+    SUM(amount) AS SUM_AMOUNT,
+    coupon_id AS COUPON_ID
+  FROM MAIN.WALLET_TRANSACTIONS_DAILY
   GROUP BY
     3
 )
 SELECT
-  coupons.code AS coupon_code,
-  COALESCE(_s1.count_txid, 0) AS redemption_count,
-  COALESCE(_s1.sum_amount, 0) AS total_discount
-FROM main.coupons AS coupons
-LEFT JOIN _s1 AS _s1
-  ON _s1.coupon_id = coupons.cid
+  COUPONS.code AS coupon_code,
+  COALESCE(_S1.COUNT_TXID, 0) AS redemption_count,
+  COALESCE(_S1.SUM_AMOUNT, 0) AS total_discount
+FROM MAIN.COUPONS AS COUPONS
+LEFT JOIN _S1 AS _S1
+  ON COUPONS.cid = _S1.COUPON_ID
 ORDER BY
   2 DESC NULLS LAST
 LIMIT 3

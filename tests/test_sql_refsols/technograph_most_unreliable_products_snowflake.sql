@@ -1,29 +1,29 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
-  FROM main.incidents
+    COUNT(*) AS N_ROWS,
+    in_device_id AS IN_DEVICE_ID
+  FROM MAIN.INCIDENTS
   GROUP BY
     2
-), _s3 AS (
+), _S3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(_s1.n_rows) AS sum_n_incidents,
-    devices.de_product_id
-  FROM main.devices AS devices
-  LEFT JOIN _s1 AS _s1
-    ON _s1.in_device_id = devices.de_id
+    COUNT(*) AS N_ROWS,
+    SUM(_S1.N_ROWS) AS SUM_N_INCIDENTS,
+    DEVICES.de_product_id AS DE_PRODUCT_ID
+  FROM MAIN.DEVICES AS DEVICES
+  LEFT JOIN _S1 AS _S1
+    ON DEVICES.de_id = _S1.IN_DEVICE_ID
   GROUP BY
     3
 )
 SELECT
-  products.pr_name AS product,
-  products.pr_brand AS product_brand,
-  products.pr_type AS product_type,
-  ROUND(COALESCE(_s3.sum_n_incidents, 0) / _s3.n_rows, 2) AS ir
-FROM main.products AS products
-JOIN _s3 AS _s3
-  ON _s3.de_product_id = products.pr_id
+  PRODUCTS.pr_name AS product,
+  PRODUCTS.pr_brand AS product_brand,
+  PRODUCTS.pr_type AS product_type,
+  ROUND(COALESCE(_S3.SUM_N_INCIDENTS, 0) / _S3.N_ROWS, 2) AS ir
+FROM MAIN.PRODUCTS AS PRODUCTS
+JOIN _S3 AS _S3
+  ON PRODUCTS.pr_id = _S3.DE_PRODUCT_ID
 ORDER BY
   4 DESC NULLS LAST
 LIMIT 5

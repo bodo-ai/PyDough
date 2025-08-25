@@ -1,19 +1,19 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    SUM(amount) AS sum_amount,
-    receiver_id
-  FROM main.wallet_transactions_daily
+    SUM(amount) AS SUM_AMOUNT,
+    receiver_id AS RECEIVER_ID
+  FROM MAIN.WALLET_TRANSACTIONS_DAILY
   WHERE
     receiver_type = 1 AND status = 'success'
   GROUP BY
     2
 )
 SELECT
-  merchants.mid AS merchants_id,
-  merchants.name AS merchants_name,
-  merchants.category,
-  COALESCE(_s1.sum_amount, 0) AS total_revenue,
-  ROW_NUMBER() OVER (ORDER BY COALESCE(_s1.sum_amount, 0) DESC) AS mrr
-FROM main.merchants AS merchants
-JOIN _s1 AS _s1
-  ON _s1.receiver_id = merchants.mid
+  MERCHANTS.mid AS merchants_id,
+  MERCHANTS.name AS merchants_name,
+  MERCHANTS.category,
+  COALESCE(_S1.SUM_AMOUNT, 0) AS total_revenue,
+  ROW_NUMBER() OVER (ORDER BY COALESCE(_S1.SUM_AMOUNT, 0) DESC) AS mrr
+FROM MAIN.MERCHANTS AS MERCHANTS
+JOIN _S1 AS _S1
+  ON MERCHANTS.mid = _S1.RECEIVER_ID

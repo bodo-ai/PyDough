@@ -1,16 +1,16 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    SUM(amount) AS sum_amount,
-    coupon_id
-  FROM main.wallet_transactions_daily
+    SUM(amount) AS SUM_AMOUNT,
+    coupon_id AS COUPON_ID
+  FROM MAIN.WALLET_TRANSACTIONS_DAILY
   GROUP BY
     2
 )
 SELECT
-  coupons.cid AS coupon_id,
-  COALESCE(_s1.sum_amount, 0) AS total_discount
-FROM main.coupons AS coupons
-LEFT JOIN _s1 AS _s1
-  ON _s1.coupon_id = coupons.cid
+  COUPONS.cid AS coupon_id,
+  COALESCE(_S1.SUM_AMOUNT, 0) AS total_discount
+FROM MAIN.COUPONS AS COUPONS
+LEFT JOIN _S1 AS _S1
+  ON COUPONS.cid = _S1.COUPON_ID
 WHERE
-  coupons.merchant_id = '1'
+  COUPONS.merchant_id = '1'

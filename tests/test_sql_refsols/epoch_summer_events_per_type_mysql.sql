@@ -1,14 +1,14 @@
 SELECT
-  events.ev_typ COLLATE utf8mb4_bin AS event_type,
+  EVENTS.ev_typ COLLATE utf8mb4_bin AS event_type,
   COUNT(*) AS n_events
-FROM events AS events
-JOIN seasons AS seasons
+FROM EVENTS AS EVENTS
+JOIN SEASONS AS SEASONS
   ON (
-    seasons.s_month1 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
-    OR seasons.s_month2 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
-    OR seasons.s_month3 = EXTRACT(MONTH FROM CAST(events.ev_dt AS DATETIME))
+    SEASONS.s_month1 = EXTRACT(MONTH FROM CAST(EVENTS.ev_dt AS DATETIME))
+    OR SEASONS.s_month2 = EXTRACT(MONTH FROM CAST(EVENTS.ev_dt AS DATETIME))
+    OR SEASONS.s_month3 = EXTRACT(MONTH FROM CAST(EVENTS.ev_dt AS DATETIME))
   )
-  AND seasons.s_name = 'Summer'
+  AND SEASONS.s_name = 'Summer'
 GROUP BY
   1
 ORDER BY

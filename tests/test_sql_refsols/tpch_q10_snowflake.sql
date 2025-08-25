@@ -1,32 +1,32 @@
-WITH _s3 AS (
+WITH _S3 AS (
   SELECT
-    SUM(lineitem.l_extendedprice * (
-      1 - lineitem.l_discount
-    )) AS sum_expr_1,
-    orders.o_custkey
-  FROM tpch.orders AS orders
-  JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
+    SUM(LINEITEM.l_extendedprice * (
+      1 - LINEITEM.l_discount
+    )) AS SUM_EXPR_1,
+    ORDERS.o_custkey AS O_CUSTKEY
+  FROM TPCH.ORDERS AS ORDERS
+  JOIN TPCH.LINEITEM AS LINEITEM
+    ON LINEITEM.l_orderkey = ORDERS.o_orderkey AND LINEITEM.l_returnflag = 'R'
   WHERE
-    QUARTER(CAST(orders.o_orderdate AS TIMESTAMP)) = 4
-    AND YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1993
+    QUARTER(CAST(ORDERS.o_orderdate AS TIMESTAMP)) = 4
+    AND YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)) = 1993
   GROUP BY
     2
 )
 SELECT
-  customer.c_custkey AS C_CUSTKEY,
-  customer.c_name AS C_NAME,
-  COALESCE(_s3.sum_expr_1, 0) AS REVENUE,
-  customer.c_acctbal AS C_ACCTBAL,
-  nation.n_name AS N_NAME,
-  customer.c_address AS C_ADDRESS,
-  customer.c_phone AS C_PHONE,
-  customer.c_comment AS C_COMMENT
-FROM tpch.customer AS customer
-LEFT JOIN _s3 AS _s3
-  ON _s3.o_custkey = customer.c_custkey
-JOIN tpch.nation AS nation
-  ON customer.c_nationkey = nation.n_nationkey
+  CUSTOMER.c_custkey AS C_CUSTKEY,
+  CUSTOMER.c_name AS C_NAME,
+  COALESCE(_S3.SUM_EXPR_1, 0) AS REVENUE,
+  CUSTOMER.c_acctbal AS C_ACCTBAL,
+  NATION.n_name AS N_NAME,
+  CUSTOMER.c_address AS C_ADDRESS,
+  CUSTOMER.c_phone AS C_PHONE,
+  CUSTOMER.c_comment AS C_COMMENT
+FROM TPCH.CUSTOMER AS CUSTOMER
+LEFT JOIN _S3 AS _S3
+  ON CUSTOMER.c_custkey = _S3.O_CUSTKEY
+JOIN TPCH.NATION AS NATION
+  ON CUSTOMER.c_nationkey = NATION.n_nationkey
 ORDER BY
   3 DESC NULLS LAST,
   1 NULLS FIRST

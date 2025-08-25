@@ -1,16 +1,16 @@
 SELECT
   (
-    lineitem.l_extendedprice * (
+    LINEITEM.l_extendedprice * (
       1 - (
-        POWER(lineitem.l_discount, 2)
+        POWER(LINEITEM.l_discount, 2)
       )
     ) + 1.0
-  ) / part.p_retailprice AS computed_value,
-  lineitem.l_quantity + lineitem.l_extendedprice AS total,
-  lineitem.l_extendedprice - lineitem.l_quantity AS delta,
-  lineitem.l_quantity * lineitem.l_discount AS product,
-  lineitem.l_extendedprice / lineitem.l_quantity AS ratio,
-  POWER(lineitem.l_discount, 2) AS exponent
-FROM tpch.lineitem AS lineitem
-JOIN tpch.part AS part
-  ON lineitem.l_partkey = part.p_partkey
+  ) / PART.p_retailprice AS computed_value,
+  LINEITEM.l_quantity + LINEITEM.l_extendedprice AS total,
+  LINEITEM.l_extendedprice - LINEITEM.l_quantity AS delta,
+  LINEITEM.l_quantity * LINEITEM.l_discount AS product,
+  LINEITEM.l_extendedprice / LINEITEM.l_quantity AS ratio,
+  POWER(LINEITEM.l_discount, 2) AS exponent
+FROM TPCH.LINEITEM AS LINEITEM
+JOIN TPCH.PART AS PART
+  ON LINEITEM.l_partkey = PART.p_partkey

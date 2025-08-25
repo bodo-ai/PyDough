@@ -1,16 +1,16 @@
-WITH _t2 AS (
+WITH _T2 AS (
   SELECT
-    lineitem.l_extendedprice
-  FROM tpch.part AS part
-  JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_partkey = part.p_partkey
+    LINEITEM.l_extendedprice AS L_EXTENDEDPRICE
+  FROM TPCH.PART AS PART
+  JOIN TPCH.LINEITEM AS LINEITEM
+    ON LINEITEM.l_partkey = PART.p_partkey
   WHERE
-    part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
+    PART.p_brand = 'Brand#23' AND PART.p_container = 'MED BOX'
   QUALIFY
-    lineitem.l_quantity < (
-      0.2 * AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey)
+    LINEITEM.l_quantity < (
+      0.2 * AVG(LINEITEM.l_quantity) OVER (PARTITION BY LINEITEM.l_partkey)
     )
 )
 SELECT
-  COALESCE(SUM(l_extendedprice), 0) / 7.0 AS AVG_YEARLY
-FROM _t2
+  COALESCE(SUM(L_EXTENDEDPRICE), 0) / 7.0 AS AVG_YEARLY
+FROM _T2

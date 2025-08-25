@@ -61,4 +61,4 @@ SELECT
     END
   ) AS name_second_to_last_char,
   c_acctbal >= 0 AS is_not_in_debt
-FROM tpch.customer
+FROM TPCH.CUSTOMER

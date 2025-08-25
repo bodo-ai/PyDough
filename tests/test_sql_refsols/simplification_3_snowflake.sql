@@ -1,28 +1,28 @@
-WITH _t1 AS (
+WITH _T1 AS (
   SELECT
-    ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
-    AVG(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS ravg1,
+    ROW_NUMBER() OVER (ORDER BY sbcustname) AS RANK,
+    AVG(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS RAVG1,
     COALESCE(
       AVG(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
-    ) AS ravg2,
-    COUNT(CAST(sbcustpostalcode AS BIGINT)) OVER () AS rcnt1,
+    ) AS RAVG2,
+    COUNT(CAST(sbcustpostalcode AS BIGINT)) OVER () AS RCNT1,
     COALESCE(
       COUNT(CAST(sbcustpostalcode AS BIGINT)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
-    ) AS rcnt2,
-    COUNT(*) OVER () AS rsiz1,
+    ) AS RCNT2,
+    COUNT(*) OVER () AS RSIZ1,
     COALESCE(
       COUNT(*) OVER (ORDER BY sbcustname ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING),
       0.1
-    ) AS rsiz2,
-    SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS rsum1,
+    ) AS RSIZ2,
+    SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS RSUM1,
     COALESCE(
       SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
-    ) AS rsum2,
-    sbcustpostalcode
-  FROM main.sbcustomer
+    ) AS RSUM2,
+    sbcustpostalcode AS SBCUSTPOSTALCODE
+  FROM MAIN.SBCUSTOMER
 )
 SELECT
   TRUE AS s00,
@@ -51,16 +51,16 @@ SELECT
   FALSE AS s23,
   TRUE AS s24,
   PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY
-    ABS(CAST(sbcustpostalcode AS BIGINT))) AS s25,
-  MEDIAN(ABS(CAST(sbcustpostalcode AS BIGINT))) AS s26,
-  MIN(rank) AS s27,
-  MAX(rank) AS s28,
-  ANY_VALUE(rsum1) AS s29,
-  ROUND(SUM(rsum2), 2) AS s30,
-  ANY_VALUE(ravg1) AS s31,
-  ROUND(SUM(ravg2), 2) AS s32,
-  ANY_VALUE(rcnt1) AS s33,
-  ROUND(SUM(rcnt2), 2) AS s34,
-  ANY_VALUE(rsiz1) AS s35,
-  ROUND(SUM(rsiz2), 2) AS s36
-FROM _t1
+    ABS(CAST(SBCUSTPOSTALCODE AS BIGINT))) AS s25,
+  MEDIAN(ABS(CAST(SBCUSTPOSTALCODE AS BIGINT))) AS s26,
+  MIN(RANK) AS s27,
+  MAX(RANK) AS s28,
+  ANY_VALUE(RSUM1) AS s29,
+  ROUND(SUM(RSUM2), 2) AS s30,
+  ANY_VALUE(RAVG1) AS s31,
+  ROUND(SUM(RAVG2), 2) AS s32,
+  ANY_VALUE(RCNT1) AS s33,
+  ROUND(SUM(RCNT2), 2) AS s34,
+  ANY_VALUE(RSIZ1) AS s35,
+  ROUND(SUM(RSIZ2), 2) AS s36
+FROM _T1

@@ -1,17 +1,17 @@
 WITH _t2 AS (
   SELECT
     DATEDIFF(
-      events.ev_dt,
-      LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY CASE WHEN events.ev_dt IS NULL THEN 1 ELSE 0 END, events.ev_dt)
+      EVENTS.ev_dt,
+      LAG(EVENTS.ev_dt, 1) OVER (PARTITION BY ERAS.er_name, ERAS.er_name ORDER BY CASE WHEN EVENTS.ev_dt IS NULL THEN 1 ELSE 0 END, EVENTS.ev_dt)
     ) AS day_gap,
-    eras.er_end_year,
-    eras.er_name,
-    eras.er_start_year,
-    events.ev_dt
-  FROM eras AS eras
-  JOIN events AS events
-    ON eras.er_end_year > EXTRACT(YEAR FROM CAST(events.ev_dt AS DATETIME))
-    AND eras.er_start_year <= EXTRACT(YEAR FROM CAST(events.ev_dt AS DATETIME))
+    ERAS.er_end_year,
+    ERAS.er_name,
+    ERAS.er_start_year,
+    EVENTS.ev_dt
+  FROM ERAS AS ERAS
+  JOIN EVENTS AS EVENTS
+    ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
+    AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
 )
 SELECT
   er_name AS era_name,

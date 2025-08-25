@@ -1,43 +1,43 @@
-WITH _s0 AS (
+WITH _S0 AS (
   SELECT
-    s_nationkey,
-    s_suppkey
-  FROM tpch.supplier
-), _t2 AS (
+    s_nationkey AS S_NATIONKEY,
+    s_suppkey AS S_SUPPKEY
+  FROM TPCH.SUPPLIER
+), _T2 AS (
   SELECT
-    n_name,
-    n_nationkey
-  FROM tpch.nation
+    n_name AS N_NAME,
+    n_nationkey AS N_NATIONKEY
+  FROM TPCH.NATION
   WHERE
     n_name = 'GERMANY'
-), _s8 AS (
+), _S8 AS (
   SELECT
-    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_metric
-  FROM tpch.partsupp AS partsupp
-  JOIN _s0 AS _s0
-    ON _s0.s_suppkey = partsupp.ps_suppkey
-  JOIN _t2 AS _t2
-    ON _s0.s_nationkey = _t2.n_nationkey
-), _s9 AS (
+    SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty) AS SUM_METRIC
+  FROM TPCH.PARTSUPP AS PARTSUPP
+  JOIN _S0 AS _S0
+    ON PARTSUPP.ps_suppkey = _S0.S_SUPPKEY
+  JOIN _T2 AS _T2
+    ON _S0.S_NATIONKEY = _T2.N_NATIONKEY
+), _S9 AS (
   SELECT
-    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr_2,
-    partsupp.ps_partkey
-  FROM tpch.partsupp AS partsupp
-  JOIN _s0 AS _s4
-    ON _s4.s_suppkey = partsupp.ps_suppkey
-  JOIN _t2 AS _t4
-    ON _s4.s_nationkey = _t4.n_nationkey
+    SUM(PARTSUPP.ps_supplycost * PARTSUPP.ps_availqty) AS SUM_EXPR_2,
+    PARTSUPP.ps_partkey AS PS_PARTKEY
+  FROM TPCH.PARTSUPP AS PARTSUPP
+  JOIN _S0 AS _S4
+    ON PARTSUPP.ps_suppkey = _S4.S_SUPPKEY
+  JOIN _T2 AS _T4
+    ON _S4.S_NATIONKEY = _T4.N_NATIONKEY
   GROUP BY
     2
 )
 SELECT
-  _s9.ps_partkey AS PS_PARTKEY,
-  COALESCE(_s9.sum_expr_2, 0) AS VALUE
-FROM _s8 AS _s8
-JOIN _s9 AS _s9
+  _S9.PS_PARTKEY,
+  COALESCE(_S9.SUM_EXPR_2, 0) AS VALUE
+FROM _S8 AS _S8
+JOIN _S9 AS _S9
   ON (
-    COALESCE(_s8.sum_metric, 0) * 0.0001
-  ) < COALESCE(_s9.sum_expr_2, 0)
+    COALESCE(_S8.SUM_METRIC, 0) * 0.0001
+  ) < COALESCE(_S9.SUM_EXPR_2, 0)
 ORDER BY
   2 DESC NULLS LAST
 LIMIT 10

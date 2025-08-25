@@ -1,18 +1,18 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    country,
-    uid
-  FROM main.users
+    country AS COUNTRY,
+    uid AS UID
+  FROM MAIN.USERS
 )
 SELECT
-  _s1.country,
-  COUNT(DISTINCT wallet_transactions_daily.sender_id) AS user_count,
-  COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_amount
-FROM main.wallet_transactions_daily AS wallet_transactions_daily
-LEFT JOIN _s1 AS _s1
-  ON _s1.uid = wallet_transactions_daily.sender_id
+  _S1.COUNTRY AS country,
+  COUNT(DISTINCT WALLET_TRANSACTIONS_DAILY.sender_id) AS user_count,
+  COALESCE(SUM(WALLET_TRANSACTIONS_DAILY.amount), 0) AS total_amount
+FROM MAIN.WALLET_TRANSACTIONS_DAILY AS WALLET_TRANSACTIONS_DAILY
+LEFT JOIN _S1 AS _S1
+  ON WALLET_TRANSACTIONS_DAILY.sender_id = _S1.UID
 WHERE
-  wallet_transactions_daily.sender_type = 0
+  WALLET_TRANSACTIONS_DAILY.sender_type = 0
 GROUP BY
   1
 ORDER BY

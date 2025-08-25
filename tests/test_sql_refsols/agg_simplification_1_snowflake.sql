@@ -1,29 +1,29 @@
-WITH _t0 AS (
+WITH _T0 AS (
   SELECT
-    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS aug_exchange,
-    COUNT(*) AS count_one
-  FROM main.sbticker
+    LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS AUG_EXCHANGE,
+    COUNT(*) AS COUNT_ONE
+  FROM MAIN.SBTICKER
   GROUP BY
     1
 )
 SELECT
-  aug_exchange,
-  count_one AS su1,
-  count_one * 2 AS su2,
-  count_one * -1 AS su3,
-  count_one * -3 AS su4,
+  AUG_EXCHANGE AS aug_exchange,
+  COUNT_ONE AS su1,
+  COUNT_ONE * 2 AS su2,
+  COUNT_ONE * -1 AS su3,
+  COUNT_ONE * -3 AS su4,
   0 AS su5,
-  count_one * 0.5 AS su6,
+  COUNT_ONE * 0.5 AS su6,
   0 AS su7,
-  COALESCE(aug_exchange, 0) AS su8,
-  count_one AS co1,
-  count_one AS co2,
-  count_one AS co3,
-  count_one AS co4,
-  count_one AS co5,
-  count_one AS co6,
+  COALESCE(AUG_EXCHANGE, 0) AS su8,
+  COUNT_ONE AS co1,
+  COUNT_ONE AS co2,
+  COUNT_ONE AS co3,
+  COUNT_ONE AS co4,
+  COUNT_ONE AS co5,
+  COUNT_ONE AS co6,
   0 AS co7,
-  count_one * IFF(NOT aug_exchange IS NULL, 1, 0) AS co8,
+  COUNT_ONE * IFF(NOT AUG_EXCHANGE IS NULL, 1, 0) AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,
@@ -31,7 +31,7 @@ SELECT
   1 AS nd5,
   1 AS nd6,
   0 AS nd7,
-  CAST(NOT aug_exchange IS NULL AS BIGINT) AS nd8,
+  CAST(NOT AUG_EXCHANGE IS NULL AS BIGINT) AS nd8,
   1 AS av1,
   2 AS av2,
   -1 AS av3,
@@ -39,7 +39,7 @@ SELECT
   0 AS av5,
   0.5 AS av6,
   NULL AS av7,
-  aug_exchange AS av8,
+  AUG_EXCHANGE AS av8,
   1 AS mi1,
   2 AS mi2,
   -1 AS mi3,
@@ -47,7 +47,7 @@ SELECT
   0 AS mi5,
   0.5 AS mi6,
   NULL AS mi7,
-  aug_exchange AS mi8,
+  AUG_EXCHANGE AS mi8,
   1 AS ma1,
   2 AS ma2,
   -1 AS ma3,
@@ -55,7 +55,7 @@ SELECT
   0 AS ma5,
   0.5 AS ma6,
   NULL AS ma7,
-  aug_exchange AS ma8,
+  AUG_EXCHANGE AS ma8,
   1 AS an1,
   2 AS an2,
   -1 AS an3,
@@ -63,7 +63,7 @@ SELECT
   0 AS an5,
   0.5 AS an6,
   NULL AS an7,
-  aug_exchange AS an8,
+  AUG_EXCHANGE AS an8,
   1 AS me1,
   2 AS me2,
   -1 AS me3,
@@ -71,7 +71,7 @@ SELECT
   0 AS me5,
   0.5 AS me6,
   NULL AS me7,
-  aug_exchange AS me8,
+  AUG_EXCHANGE AS me8,
   1 AS qu1,
   2 AS qu2,
   -1 AS qu3,
@@ -79,7 +79,7 @@ SELECT
   0 AS qu5,
   0.5 AS qu6,
   NULL AS qu7,
-  aug_exchange AS qu8
-FROM _t0
+  AUG_EXCHANGE AS qu8
+FROM _T0
 ORDER BY
   1 NULLS FIRST

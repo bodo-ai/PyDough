@@ -1,47 +1,47 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
-  FROM tpch.orders
+    COUNT(*) AS N_ROWS,
+    o_custkey AS O_CUSTKEY
+  FROM TPCH.ORDERS
   GROUP BY
     2
-), _t1 AS (
+), _T1 AS (
   SELECT
     PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
-      customer.c_acctbal) AS agg_7,
-    ANY_VALUE(customer.c_acctbal) AS anything_c_acctbal,
-    AVG(customer.c_acctbal) AS avg_c_acctbal,
-    COUNT(customer.c_acctbal) AS count_c_acctbal,
-    MAX(customer.c_acctbal) AS max_c_acctbal,
-    MEDIAN(customer.c_acctbal) AS median_c_acctbal,
-    MIN(customer.c_acctbal) AS min_c_acctbal,
-    COUNT(DISTINCT customer.c_acctbal) AS ndistinct_c_acctbal,
-    STDDEV(customer.c_acctbal) AS sample_std_c_acctbal,
-    VARIANCE(customer.c_acctbal) AS sample_variance_c_acctbal,
-    SUM(customer.c_acctbal) AS sum_c_acctbal,
-    SUM(_s1.n_rows) AS sum_n_rows,
-    customer.c_nationkey
-  FROM tpch.customer AS customer
-  LEFT JOIN _s1 AS _s1
-    ON _s1.o_custkey = customer.c_custkey
+      CUSTOMER.c_acctbal) AS AGG_7,
+    ANY_VALUE(CUSTOMER.c_acctbal) AS ANYTHING_C_ACCTBAL,
+    AVG(CUSTOMER.c_acctbal) AS AVG_C_ACCTBAL,
+    COUNT(CUSTOMER.c_acctbal) AS COUNT_C_ACCTBAL,
+    MAX(CUSTOMER.c_acctbal) AS MAX_C_ACCTBAL,
+    MEDIAN(CUSTOMER.c_acctbal) AS MEDIAN_C_ACCTBAL,
+    MIN(CUSTOMER.c_acctbal) AS MIN_C_ACCTBAL,
+    COUNT(DISTINCT CUSTOMER.c_acctbal) AS NDISTINCT_C_ACCTBAL,
+    STDDEV(CUSTOMER.c_acctbal) AS SAMPLE_STD_C_ACCTBAL,
+    VARIANCE(CUSTOMER.c_acctbal) AS SAMPLE_VARIANCE_C_ACCTBAL,
+    SUM(CUSTOMER.c_acctbal) AS SUM_C_ACCTBAL,
+    SUM(_S1.N_ROWS) AS SUM_N_ROWS,
+    CUSTOMER.c_nationkey AS C_NATIONKEY
+  FROM TPCH.CUSTOMER AS CUSTOMER
+  LEFT JOIN _S1 AS _S1
+    ON CUSTOMER.c_custkey = _S1.O_CUSTKEY
   GROUP BY
     13
 )
 SELECT
-  COALESCE(_t1.sum_c_acctbal, 0) AS sum_value,
-  _t1.avg_c_acctbal AS avg_value,
-  _t1.median_c_acctbal AS median_value,
-  _t1.min_c_acctbal AS min_value,
-  _t1.max_c_acctbal AS max_value,
-  _t1.agg_7 AS quantile_value,
-  _t1.anything_c_acctbal AS anything_value,
-  _t1.count_c_acctbal AS count_value,
-  _t1.ndistinct_c_acctbal AS count_distinct_value,
-  _t1.sample_variance_c_acctbal AS variance_value,
-  _t1.sample_std_c_acctbal AS stddev_value
-FROM tpch.nation AS nation
-JOIN _t1 AS _t1
-  ON _t1.c_nationkey = nation.n_nationkey
+  COALESCE(_T1.SUM_C_ACCTBAL, 0) AS sum_value,
+  _T1.AVG_C_ACCTBAL AS avg_value,
+  _T1.MEDIAN_C_ACCTBAL AS median_value,
+  _T1.MIN_C_ACCTBAL AS min_value,
+  _T1.MAX_C_ACCTBAL AS max_value,
+  _T1.AGG_7 AS quantile_value,
+  _T1.ANYTHING_C_ACCTBAL AS anything_value,
+  _T1.COUNT_C_ACCTBAL AS count_value,
+  _T1.NDISTINCT_C_ACCTBAL AS count_distinct_value,
+  _T1.SAMPLE_VARIANCE_C_ACCTBAL AS variance_value,
+  _T1.SAMPLE_STD_C_ACCTBAL AS stddev_value
+FROM TPCH.NATION AS NATION
+JOIN _T1 AS _T1
+  ON NATION.n_nationkey = _T1.C_NATIONKEY
   AND (
-    _t1.sum_n_rows = 0 OR _t1.sum_n_rows IS NULL
+    _T1.SUM_N_ROWS = 0 OR _T1.SUM_N_ROWS IS NULL
   )

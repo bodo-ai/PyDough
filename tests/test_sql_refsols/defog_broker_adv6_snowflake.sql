@@ -1,17 +1,17 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxcustid
-  FROM main.sbtransaction
+    COUNT(*) AS N_ROWS,
+    SUM(sbtxamount) AS SUM_SBTXAMOUNT,
+    sbtxcustid AS SBTXCUSTID
+  FROM MAIN.SBTRANSACTION
   GROUP BY
     3
 )
 SELECT
-  sbcustomer.sbcustname AS name,
-  _s1.n_rows AS num_tx,
-  COALESCE(_s1.sum_sbtxamount, 0) AS total_amount,
-  RANK() OVER (ORDER BY COALESCE(_s1.sum_sbtxamount, 0) DESC) AS cust_rank
-FROM main.sbcustomer AS sbcustomer
-JOIN _s1 AS _s1
-  ON _s1.sbtxcustid = sbcustomer.sbcustid
+  SBCUSTOMER.sbcustname AS name,
+  _S1.N_ROWS AS num_tx,
+  COALESCE(_S1.SUM_SBTXAMOUNT, 0) AS total_amount,
+  RANK() OVER (ORDER BY COALESCE(_S1.SUM_SBTXAMOUNT, 0) DESC) AS cust_rank
+FROM MAIN.SBCUSTOMER AS SBCUSTOMER
+JOIN _S1 AS _S1
+  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID

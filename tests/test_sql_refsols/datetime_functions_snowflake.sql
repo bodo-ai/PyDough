@@ -85,4 +85,4 @@ SELECT
     WHEN DAYOFWEEK(CAST('1993-08-15 00:00:00' AS TIMESTAMP)) = 6
     THEN 'Saturday'
   END AS dayname_dt
-FROM tpch.orders
+FROM TPCH.ORDERS

@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS n_customers
-FROM main.sbcustomer
+FROM main.sbCustomer
 WHERE
   (
     LOWER(sbcustname) LIKE '%ez' OR LOWER(sbcustname) LIKE 'j%'

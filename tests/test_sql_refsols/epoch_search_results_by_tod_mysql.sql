@@ -1,13 +1,13 @@
 WITH _t0 AS (
   SELECT
-    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
-    AVG(searches.search_num_results) AS avg_search_num_results,
+    ANY_VALUE(TIMES.t_start_hour) AS anything_t_start_hour,
+    AVG(SEARCHES.search_num_results) AS avg_search_num_results,
     COUNT(*) AS n_rows,
-    times.t_name
-  FROM times AS times
-  JOIN searches AS searches
-    ON times.t_end_hour > HOUR(searches.search_ts)
-    AND times.t_start_hour <= HOUR(searches.search_ts)
+    TIMES.t_name
+  FROM TIMES AS TIMES
+  JOIN SEARCHES AS SEARCHES
+    ON TIMES.t_end_hour > HOUR(SEARCHES.search_ts)
+    AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
   GROUP BY
     4
 )

@@ -1,20 +1,20 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(sale_price) AS sum_sale_price,
-    salesperson_id
-  FROM main.sales
+    COUNT(*) AS N_ROWS,
+    SUM(sale_price) AS SUM_SALE_PRICE,
+    salesperson_id AS SALESPERSON_ID
+  FROM MAIN.SALES
   GROUP BY
     3
 )
 SELECT
-  salespersons.first_name,
-  salespersons.last_name,
-  COALESCE(_s1.sum_sale_price, 0) AS total_sales,
-  _s1.n_rows AS num_sales,
-  RANK() OVER (ORDER BY COALESCE(_s1.sum_sale_price, 0) DESC) AS sales_rank
-FROM main.salespersons AS salespersons
-JOIN _s1 AS _s1
-  ON _s1.salesperson_id = salespersons._id
+  SALESPERSONS.first_name,
+  SALESPERSONS.last_name,
+  COALESCE(_S1.SUM_SALE_PRICE, 0) AS total_sales,
+  _S1.N_ROWS AS num_sales,
+  RANK() OVER (ORDER BY COALESCE(_S1.SUM_SALE_PRICE, 0) DESC) AS sales_rank
+FROM MAIN.SALESPERSONS AS SALESPERSONS
+JOIN _S1 AS _S1
+  ON SALESPERSONS._id = _S1.SALESPERSON_ID
 ORDER BY
   3 DESC NULLS LAST

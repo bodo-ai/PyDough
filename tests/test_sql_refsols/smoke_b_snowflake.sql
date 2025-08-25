@@ -62,7 +62,7 @@ SELECT
     'DAY',
     DATEADD(DAY, DAYOFWEEK(CAST(o_orderdate AS TIMESTAMP)) * -1, CAST(o_orderdate AS TIMESTAMP))
   ) AS q
-FROM tpch.orders
+FROM TPCH.ORDERS
 WHERE
   CONTAINS(o_comment, 'fo')
   AND ENDSWITH(o_clerk, '5')

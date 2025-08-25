@@ -1,26 +1,26 @@
-WITH _t1 AS (
+WITH _T1 AS (
   SELECT
-    car_id
-  FROM main.inventory_snapshots
+    car_id AS CAR_ID
+  FROM MAIN.INVENTORY_SNAPSHOTS
   QUALIFY
     NOT is_in_inventory
     AND ROW_NUMBER() OVER (PARTITION BY car_id ORDER BY snapshot_date DESC) = 1
-), _s3 AS (
+), _S3 AS (
   SELECT
-    MAX(sale_price) AS max_sale_price,
-    car_id
-  FROM main.sales
+    MAX(sale_price) AS MAX_SALE_PRICE,
+    car_id AS CAR_ID
+  FROM MAIN.SALES
   GROUP BY
     2
 )
 SELECT
-  cars.make,
-  cars.model,
-  _s3.max_sale_price AS highest_sale_price
-FROM main.cars AS cars
-JOIN _t1 AS _t1
-  ON _t1.car_id = cars._id
-LEFT JOIN _s3 AS _s3
-  ON _s3.car_id = cars._id
+  CARS.make,
+  CARS.model,
+  _S3.MAX_SALE_PRICE AS highest_sale_price
+FROM MAIN.CARS AS CARS
+JOIN _T1 AS _T1
+  ON CARS._id = _T1.CAR_ID
+LEFT JOIN _S3 AS _S3
+  ON CARS._id = _S3.CAR_ID
 ORDER BY
   3 DESC NULLS LAST

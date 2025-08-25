@@ -1,19 +1,19 @@
-WITH _s3 AS (
+WITH _S3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
-  FROM main.incidents
+    COUNT(*) AS N_ROWS,
+    in_device_id AS IN_DEVICE_ID
+  FROM MAIN.INCIDENTS
   GROUP BY
     2
 )
 SELECT
-  products.pr_brand AS brand,
-  ROUND(COALESCE(SUM(_s3.n_rows), 0) / COUNT(*), 2) AS ir
-FROM main.devices AS devices
-JOIN main.products AS products
-  ON devices.de_product_id = products.pr_id
-LEFT JOIN _s3 AS _s3
-  ON _s3.in_device_id = devices.de_id
+  PRODUCTS.pr_brand AS brand,
+  ROUND(COALESCE(SUM(_S3.N_ROWS), 0) / COUNT(*), 2) AS ir
+FROM MAIN.DEVICES AS DEVICES
+JOIN MAIN.PRODUCTS AS PRODUCTS
+  ON DEVICES.de_product_id = PRODUCTS.pr_id
+LEFT JOIN _S3 AS _S3
+  ON DEVICES.de_id = _S3.IN_DEVICE_ID
 GROUP BY
   1
 ORDER BY

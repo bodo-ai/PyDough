@@ -1,14 +1,14 @@
 SELECT
-  calendar.ca_dt AS start_of_period,
+  CALENDAR.ca_dt AS start_of_period,
   COUNT(*) AS n_purchases
-FROM main.calendar AS calendar
-JOIN main.calendar AS calendar_2
-  ON calendar.ca_dt <= calendar_2.ca_dt
-  AND calendar_2.ca_dt < DATE_ADD(CAST(calendar.ca_dt AS DATETIME), INTERVAL '5' DAY)
-JOIN main.devices AS devices
-  ON calendar_2.ca_dt = CAST(CAST(devices.de_purchase_ts AS DATETIME) AS DATE)
+FROM main.CALENDAR AS CALENDAR
+JOIN main.CALENDAR AS CALENDAR_2
+  ON CALENDAR.ca_dt <= CALENDAR_2.ca_dt
+  AND CALENDAR_2.ca_dt < DATE_ADD(CAST(CALENDAR.ca_dt AS DATETIME), INTERVAL '5' DAY)
+JOIN main.DEVICES AS DEVICES
+  ON CALENDAR_2.ca_dt = CAST(CAST(DEVICES.de_purchase_ts AS DATETIME) AS DATE)
 WHERE
-  EXTRACT(YEAR FROM CAST(calendar.ca_dt AS DATETIME)) = 2024
+  EXTRACT(YEAR FROM CAST(CALENDAR.ca_dt AS DATETIME)) = 2024
 GROUP BY
   1
 ORDER BY

@@ -1,18 +1,18 @@
-WITH _t1 AS (
+WITH _T1 AS (
   SELECT
-    eras.er_name,
-    eras.er_start_year,
-    events.ev_name
-  FROM eras AS eras
-  JOIN events AS events
-    ON eras.er_end_year > YEAR(CAST(events.ev_dt AS TIMESTAMP))
-    AND eras.er_start_year <= YEAR(CAST(events.ev_dt AS TIMESTAMP))
+    ERAS.er_name AS ER_NAME,
+    ERAS.er_start_year AS ER_START_YEAR,
+    EVENTS.ev_name AS EV_NAME
+  FROM ERAS AS ERAS
+  JOIN EVENTS AS EVENTS
+    ON ERAS.er_end_year > YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
+    AND ERAS.er_start_year <= YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY eras.er_name ORDER BY events.ev_dt) = 1
+    ROW_NUMBER() OVER (PARTITION BY ERAS.er_name ORDER BY EVENTS.ev_dt) = 1
 )
 SELECT
-  er_name AS era_name,
-  ev_name AS event_name
-FROM _t1
+  ER_NAME AS era_name,
+  EV_NAME AS event_name
+FROM _T1
 ORDER BY
-  er_start_year NULLS FIRST
+  ER_START_YEAR NULLS FIRST

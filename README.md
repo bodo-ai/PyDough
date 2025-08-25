@@ -97,13 +97,17 @@ script must be run so that the `defog.db` file is located in the `tests` directo
 
 ## Running CI Tests
 
-To run our CI tests on your PR, you must include the flag `[run CI]` in latest
-commit message.
+When submitting a PR, you can control which CI tests run by adding special flags
+to your **latest commit message**.
+
+- To run **PyDough CI tests**, add: `[run CI]`  
+- To run **PyDough and all dialect tests**, add: `[run all]`  
+- To run **specific dialect tests**, use the corresponding flag as described below.
 
 ### Running Snowflake Tests on CI
-To run our Snowflake CI tests on your PR, you must include the flag `[run SF]` in your commit message.
+To run **Snowflake CI tests**, add the flag `[run SF]` to your commit message.
 
-**Note:** To run these tests locally, you need the following:
+**Running Snowflake tests locally:**
 
 1. Install the Snowflake Connector for Python with Pandas support
     ```bash
@@ -116,6 +120,24 @@ To run our Snowflake CI tests on your PR, you must include the flag `[run SF]` i
         export SF_PASSWORD="your_password"
         export SF_ACCOUNT="your_account"
     ```
+
+### Running MySQL Tests on CI
+To run **MySQL CI tests**, add the flag `[run mysql]` to your commit message.
+
+**Running MySQL tests locally:**
+
+1. Make sure you have [**Docker Desktop**](https://www.docker.com/get-started/)
+ installed and running.
+
+2. Install the MySQL Connector for Python
+    ```bash
+    pip install mysql-connector-python
+    ```
+
+3. Set your MySQL credentials as environment variables:
+    ```bash
+        export MYSQL_USERNAME="your_username"
+        export MYSQL_PASSWORD="your_password"
 
 ## Runtime Dependencies
 

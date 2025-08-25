@@ -1,17 +1,17 @@
 WITH _u_0 AS (
   SELECT
     car_id AS _u_1
-  FROM main.sales
+  FROM MAIN.SALES
   GROUP BY
     1
 )
 SELECT
-  cars._id,
-  cars.make,
-  cars.model,
-  cars.year
-FROM main.cars AS cars
+  CARS._id,
+  CARS.make,
+  CARS.model,
+  CARS.year
+FROM MAIN.CARS AS CARS
 LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = cars._id
+  ON CARS._id = _u_0._u_1
 WHERE
   _u_0._u_1 IS NULL

@@ -1,8 +1,8 @@
 WITH _s1 AS (
   SELECT
     COUNT(*) AS n_rows,
-    sbtxcustid
-  FROM main.sbtransaction
+    sbtxcustid AS sbTxCustId
+  FROM main.sbTransaction
   WHERE
     CAST(CAST(sbtxdatetime AS DATETIME) AS DATE) = CAST('2023-04-01' AS DATE)
     AND sbtxtype = 'sell'
@@ -10,12 +10,12 @@ WITH _s1 AS (
     2
 )
 SELECT
-  sbcustomer.sbcustid AS _id,
-  sbcustomer.sbcustname AS name,
+  sbCustomer.sbcustid AS _id,
+  sbCustomer.sbcustname AS name,
   COALESCE(_s1.n_rows, 0) AS num_tx
-FROM main.sbcustomer AS sbcustomer
+FROM main.sbCustomer AS sbCustomer
 LEFT JOIN _s1 AS _s1
-  ON _s1.sbtxcustid = sbcustomer.sbcustid
+  ON _s1.sbTxCustId = sbCustomer.sbcustid
 ORDER BY
   3 DESC
 LIMIT 1

@@ -18,7 +18,7 @@ SELECT
   SPLIT_PART(sbcuststate, sbcuststate, CAST(SUBSTRING(sbcustid, 2) AS BIGINT)) AS p16,
   SPLIT_PART(SPLIT_PART(sbcustphone, '-', 1), '5', CAST(SUBSTRING(sbcustid, 2) AS BIGINT)) AS p17,
   SPLIT_PART(sbcustpostalcode, '0', CAST(SUBSTRING(sbcustid, 2) AS BIGINT)) AS p18
-FROM main.sbcustomer
+FROM MAIN.SBCUSTOMER
 WHERE
   CAST(SUBSTRING(sbcustid, 2) AS BIGINT) <= 4
 ORDER BY

@@ -6,7 +6,7 @@ SELECT
   UPPER(SPLIT_PART(p_name, ' ', 4)) AS c4,
   UPPER(SPLIT_PART(p_name, ' ', 5)) AS c5,
   UPPER(SPLIT_PART(p_name, ' ', 6)) AS c6
-FROM tpch.part
+FROM TPCH.PART
 ORDER BY
   1 NULLS FIRST
 LIMIT 5

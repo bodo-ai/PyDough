@@ -15,7 +15,7 @@ SELECT
   AVG(l_extendedprice) AS AVG_PRICE,
   AVG(l_discount) AS AVG_DISC,
   COUNT(*) AS COUNT_ORDER
-FROM tpch.lineitem
+FROM TPCH.LINEITEM
 WHERE
   l_shipdate <= CAST('1998-12-01' AS DATE)
 GROUP BY

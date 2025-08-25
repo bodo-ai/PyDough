@@ -1,7 +1,7 @@
 SELECT
   PERCENTILE_DISC(0.7) WITHIN GROUP (ORDER BY
-    orders.o_totalprice) AS seventieth_order_price
-FROM tpch.customer AS customer
-JOIN tpch.orders AS orders
-  ON YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1998
-  AND customer.c_custkey = orders.o_custkey
+    ORDERS.o_totalprice) AS seventieth_order_price
+FROM TPCH.CUSTOMER AS CUSTOMER
+JOIN TPCH.ORDERS AS ORDERS
+  ON CUSTOMER.c_custkey = ORDERS.o_custkey
+  AND YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)) = 1998

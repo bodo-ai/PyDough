@@ -1,28 +1,28 @@
-WITH _t1 AS (
+WITH _T1 AS (
   SELECT
-    ANY_VALUE(sales.car_id) AS anything_car_id,
-    ANY_VALUE(cars.make) AS anything_make,
-    ANY_VALUE(cars.model) AS anything_model,
-    ANY_VALUE(sales.sale_price) AS anything_sale_price,
-    cars._id AS _id_1
-  FROM main.sales AS sales
-  JOIN main.cars AS cars
-    ON cars._id = sales.car_id
-  JOIN main.inventory_snapshots AS inventory_snapshots
-    ON cars._id = inventory_snapshots.car_id
-    AND inventory_snapshots.is_in_inventory = 0
-    AND inventory_snapshots.snapshot_date = sales.sale_date
+    ANY_VALUE(SALES.car_id) AS ANYTHING_CAR_ID,
+    ANY_VALUE(CARS.make) AS ANYTHING_MAKE,
+    ANY_VALUE(CARS.model) AS ANYTHING_MODEL,
+    ANY_VALUE(SALES.sale_price) AS ANYTHING_SALE_PRICE,
+    CARS._id AS _ID_1
+  FROM MAIN.SALES AS SALES
+  JOIN MAIN.CARS AS CARS
+    ON CARS._id = SALES.car_id
+  JOIN MAIN.INVENTORY_SNAPSHOTS AS INVENTORY_SNAPSHOTS
+    ON CARS._id = INVENTORY_SNAPSHOTS.car_id
+    AND INVENTORY_SNAPSHOTS.is_in_inventory = 0
+    AND INVENTORY_SNAPSHOTS.snapshot_date = SALES.sale_date
   GROUP BY
-    sales._id,
+    SALES._id,
     5
 )
 SELECT
-  anything_make AS make,
-  anything_model AS model,
-  anything_sale_price AS sale_price
-FROM _t1
+  ANYTHING_MAKE AS make,
+  ANYTHING_MODEL AS model,
+  ANYTHING_SALE_PRICE AS sale_price
+FROM _T1
 WHERE
-  _id_1 = anything_car_id
+  ANYTHING_CAR_ID = _ID_1
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 1

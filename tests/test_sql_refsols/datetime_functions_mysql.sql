@@ -61,4 +61,4 @@ SELECT
   DAYNAME(o_orderdate) AS dayname_col,
   DAYNAME('1995-06-30') AS dayname_str,
   DAYNAME(CAST('1993-08-15 00:00:00' AS DATETIME)) AS dayname_dt
-FROM tpch.orders
+FROM tpch.ORDERS

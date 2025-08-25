@@ -1,9 +1,9 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(amount) AS sum_amount,
-    receiver_id
-  FROM main.wallet_transactions_daily
+    COUNT(*) AS N_ROWS,
+    SUM(amount) AS SUM_AMOUNT,
+    receiver_id AS RECEIVER_ID
+  FROM MAIN.WALLET_TRANSACTIONS_DAILY
   WHERE
     created_at >= DATE_TRUNC('DAY', DATEADD(DAY, -150, CURRENT_TIMESTAMP()))
     AND receiver_type = 1
@@ -11,12 +11,12 @@ WITH _s1 AS (
     3
 )
 SELECT
-  merchants.name AS merchant_name,
-  COALESCE(_s1.n_rows, 0) AS total_transactions,
-  COALESCE(_s1.sum_amount, 0) AS total_amount
-FROM main.merchants AS merchants
-LEFT JOIN _s1 AS _s1
-  ON _s1.receiver_id = merchants.mid
+  MERCHANTS.name AS merchant_name,
+  COALESCE(_S1.N_ROWS, 0) AS total_transactions,
+  COALESCE(_S1.SUM_AMOUNT, 0) AS total_amount
+FROM MAIN.MERCHANTS AS MERCHANTS
+LEFT JOIN _S1 AS _S1
+  ON MERCHANTS.mid = _S1.RECEIVER_ID
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 2

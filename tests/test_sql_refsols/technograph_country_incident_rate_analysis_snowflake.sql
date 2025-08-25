@@ -1,72 +1,72 @@
-WITH _t2 AS (
+WITH _T2 AS (
   SELECT
-    in_device_id
-  FROM main.incidents
-), _s1 AS (
+    in_device_id AS IN_DEVICE_ID
+  FROM MAIN.INCIDENTS
+), _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
-  FROM _t2
+    COUNT(*) AS N_ROWS,
+    IN_DEVICE_ID
+  FROM _T2
   GROUP BY
     2
-), _s3 AS (
+), _S3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(_s1.n_rows) AS sum_n_rows,
-    devices.de_production_country_id
-  FROM main.devices AS devices
-  LEFT JOIN _s1 AS _s1
-    ON _s1.in_device_id = devices.de_id
+    COUNT(*) AS N_ROWS,
+    SUM(_S1.N_ROWS) AS SUM_N_ROWS,
+    DEVICES.de_production_country_id AS DE_PRODUCTION_COUNTRY_ID
+  FROM MAIN.DEVICES AS DEVICES
+  LEFT JOIN _S1 AS _S1
+    ON DEVICES.de_id = _S1.IN_DEVICE_ID
   GROUP BY
     3
-), _s5 AS (
+), _S5 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
-  FROM _t2
+    COUNT(*) AS N_ROWS,
+    IN_DEVICE_ID
+  FROM _T2
   GROUP BY
     2
-), _s7 AS (
+), _S7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(_s5.n_rows) AS sum_n_rows,
-    devices.de_purchase_country_id
-  FROM main.devices AS devices
-  LEFT JOIN _s5 AS _s5
-    ON _s5.in_device_id = devices.de_id
+    COUNT(*) AS N_ROWS,
+    SUM(_S5.N_ROWS) AS SUM_N_ROWS,
+    DEVICES.de_purchase_country_id AS DE_PURCHASE_COUNTRY_ID
+  FROM MAIN.DEVICES AS DEVICES
+  LEFT JOIN _S5 AS _S5
+    ON DEVICES.de_id = _S5.IN_DEVICE_ID
   GROUP BY
     3
-), _s11 AS (
+), _S11 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
-  FROM _t2
+    COUNT(*) AS N_ROWS,
+    IN_DEVICE_ID
+  FROM _T2
   GROUP BY
     2
-), _s13 AS (
+), _S13 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(_s11.n_rows) AS sum_n_rows,
-    users.us_country_id
-  FROM main.users AS users
-  JOIN main.devices AS devices
-    ON devices.de_owner_id = users.us_id
-  LEFT JOIN _s11 AS _s11
-    ON _s11.in_device_id = devices.de_id
+    COUNT(*) AS N_ROWS,
+    SUM(_S11.N_ROWS) AS SUM_N_ROWS,
+    USERS.us_country_id AS US_COUNTRY_ID
+  FROM MAIN.USERS AS USERS
+  JOIN MAIN.DEVICES AS DEVICES
+    ON DEVICES.de_owner_id = USERS.us_id
+  LEFT JOIN _S11 AS _S11
+    ON DEVICES.de_id = _S11.IN_DEVICE_ID
   GROUP BY
     3
 )
 SELECT
-  countries.co_name AS country_name,
-  ROUND(COALESCE(_s3.sum_n_rows, 0) / _s3.n_rows, 2) AS made_ir,
-  ROUND(COALESCE(_s7.sum_n_rows, 0) / _s7.n_rows, 2) AS sold_ir,
-  ROUND(COALESCE(_s13.sum_n_rows, 0) / COALESCE(_s13.n_rows, 0), 2) AS user_ir
-FROM main.countries AS countries
-JOIN _s3 AS _s3
-  ON _s3.de_production_country_id = countries.co_id
-JOIN _s7 AS _s7
-  ON _s7.de_purchase_country_id = countries.co_id
-LEFT JOIN _s13 AS _s13
-  ON _s13.us_country_id = countries.co_id
+  COUNTRIES.co_name AS country_name,
+  ROUND(COALESCE(_S3.SUM_N_ROWS, 0) / _S3.N_ROWS, 2) AS made_ir,
+  ROUND(COALESCE(_S7.SUM_N_ROWS, 0) / _S7.N_ROWS, 2) AS sold_ir,
+  ROUND(COALESCE(_S13.SUM_N_ROWS, 0) / COALESCE(_S13.N_ROWS, 0), 2) AS user_ir
+FROM MAIN.COUNTRIES AS COUNTRIES
+JOIN _S3 AS _S3
+  ON COUNTRIES.co_id = _S3.DE_PRODUCTION_COUNTRY_ID
+JOIN _S7 AS _S7
+  ON COUNTRIES.co_id = _S7.DE_PURCHASE_COUNTRY_ID
+LEFT JOIN _S13 AS _S13
+  ON COUNTRIES.co_id = _S13.US_COUNTRY_ID
 ORDER BY
   1 NULLS FIRST

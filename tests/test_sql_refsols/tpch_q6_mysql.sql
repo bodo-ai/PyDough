@@ -1,6 +1,6 @@
 SELECT
   COALESCE(SUM(l_extendedprice * l_discount), 0) AS REVENUE
-FROM tpch.lineitem
+FROM tpch.LINEITEM
 WHERE
   l_discount <= 0.07
   AND l_discount >= 0.05

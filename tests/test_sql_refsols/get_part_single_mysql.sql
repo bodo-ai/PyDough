@@ -10,6 +10,6 @@ SELECT
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustname, ' ', -1), ' ', 1)
     ELSE NULL
   END AS last_name
-FROM main.sbcustomer
+FROM main.sbCustomer
 WHERE
   sbcustname = 'Alex Rodriguez'

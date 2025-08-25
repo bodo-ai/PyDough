@@ -4,7 +4,7 @@ WITH _t3 AS (
     l_extendedprice,
     l_shipdate,
     l_suppkey
-  FROM tpch.lineitem
+  FROM tpch.LINEITEM
   WHERE
     l_shipdate < CAST('1996-04-01' AS DATE)
     AND l_shipdate >= CAST('1996-01-01' AS DATE)
@@ -20,9 +20,9 @@ WITH _t3 AS (
 ), _s2 AS (
   SELECT
     MAX(COALESCE(_s1.sum_expr_2, 0)) AS max_revenue
-  FROM tpch.supplier AS supplier
+  FROM tpch.SUPPLIER AS SUPPLIER
   JOIN _s1 AS _s1
-    ON _s1.l_suppkey = supplier.s_suppkey
+    ON SUPPLIER.s_suppkey = _s1.l_suppkey
 ), _s5 AS (
   SELECT
     SUM(l_extendedprice * (
@@ -34,15 +34,15 @@ WITH _t3 AS (
     2
 )
 SELECT
-  supplier.s_suppkey AS S_SUPPKEY,
-  supplier.s_name AS S_NAME,
-  supplier.s_address AS S_ADDRESS,
-  supplier.s_phone AS S_PHONE,
+  SUPPLIER.s_suppkey AS S_SUPPKEY,
+  SUPPLIER.s_name AS S_NAME,
+  SUPPLIER.s_address AS S_ADDRESS,
+  SUPPLIER.s_phone AS S_PHONE,
   COALESCE(_s5.sum_expr_3, 0) AS TOTAL_REVENUE
 FROM _s2 AS _s2
-CROSS JOIN tpch.supplier AS supplier
+CROSS JOIN tpch.SUPPLIER AS SUPPLIER
 JOIN _s5 AS _s5
-  ON _s2.max_revenue = COALESCE(_s5.sum_expr_3, 0)
-  AND _s5.l_suppkey = supplier.s_suppkey
+  ON SUPPLIER.s_suppkey = _s5.l_suppkey
+  AND _s2.max_revenue = COALESCE(_s5.sum_expr_3, 0)
 ORDER BY
   1

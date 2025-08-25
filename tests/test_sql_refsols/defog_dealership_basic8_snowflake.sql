@@ -1,20 +1,20 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(sale_price) AS sum_sale_price,
-    car_id
-  FROM main.sales
+    COUNT(*) AS N_ROWS,
+    SUM(sale_price) AS SUM_SALE_PRICE,
+    car_id AS CAR_ID
+  FROM MAIN.SALES
   GROUP BY
     3
 )
 SELECT
-  cars.make,
-  cars.model,
-  COALESCE(_s1.n_rows, 0) AS total_sales,
-  COALESCE(_s1.sum_sale_price, 0) AS total_revenue
-FROM main.cars AS cars
-LEFT JOIN _s1 AS _s1
-  ON _s1.car_id = cars._id
+  CARS.make,
+  CARS.model,
+  COALESCE(_S1.N_ROWS, 0) AS total_sales,
+  COALESCE(_S1.SUM_SALE_PRICE, 0) AS total_revenue
+FROM MAIN.CARS AS CARS
+LEFT JOIN _S1 AS _S1
+  ON CARS._id = _S1.CAR_ID
 ORDER BY
   4 DESC NULLS LAST
 LIMIT 5

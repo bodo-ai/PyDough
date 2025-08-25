@@ -2,14 +2,14 @@ WITH _s0 AS (
   SELECT
     COUNT(*) AS n_rows,
     de_product_id
-  FROM main.devices
+  FROM main.DEVICES
   GROUP BY
     2
 ), _s1 AS (
   SELECT
     pr_id,
     pr_release
-  FROM main.products
+  FROM main.PRODUCTS
 ), _s6 AS (
   SELECT
     EXTRACT(YEAR FROM CAST(_s1.pr_release AS DATETIME)) AS release_year,
@@ -23,11 +23,11 @@ WITH _s0 AS (
   SELECT
     COUNT(*) AS n_rows,
     EXTRACT(YEAR FROM CAST(_s3.pr_release AS DATETIME)) AS release_year
-  FROM main.devices AS devices
+  FROM main.DEVICES AS DEVICES
   JOIN _s1 AS _s3
-    ON _s3.pr_id = devices.de_product_id
-  JOIN main.incidents AS incidents
-    ON devices.de_id = incidents.in_device_id
+    ON DEVICES.de_product_id = _s3.pr_id
+  JOIN main.INCIDENTS AS INCIDENTS
+    ON DEVICES.de_id = INCIDENTS.in_device_id
   GROUP BY
     2
 )

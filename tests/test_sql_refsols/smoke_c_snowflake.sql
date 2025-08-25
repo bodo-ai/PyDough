@@ -18,4 +18,4 @@ SELECT
   PERCENTILE_DISC(0.2) WITHIN GROUP (ORDER BY
     c_acctbal) AS q,
   MEDIAN(c_acctbal) AS r
-FROM tpch.customer
+FROM TPCH.CUSTOMER

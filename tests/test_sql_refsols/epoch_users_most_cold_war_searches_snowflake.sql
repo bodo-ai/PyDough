@@ -1,29 +1,29 @@
-WITH _t0 AS (
+WITH _T0 AS (
   SELECT
-    ANY_VALUE(searches.search_user_id) AS anything_search_user_id
-  FROM searches AS searches
-  JOIN events AS events
-    ON CONTAINS(LOWER(searches.search_string), LOWER(events.ev_name))
-  JOIN eras AS eras
-    ON eras.er_end_year > YEAR(CAST(events.ev_dt AS TIMESTAMP))
-    AND eras.er_name = 'Cold War'
-    AND eras.er_start_year <= YEAR(CAST(events.ev_dt AS TIMESTAMP))
+    ANY_VALUE(SEARCHES.search_user_id) AS ANYTHING_SEARCH_USER_ID
+  FROM SEARCHES AS SEARCHES
+  JOIN EVENTS AS EVENTS
+    ON CONTAINS(LOWER(SEARCHES.search_string), LOWER(EVENTS.ev_name))
+  JOIN ERAS AS ERAS
+    ON ERAS.er_end_year > YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
+    AND ERAS.er_name = 'Cold War'
+    AND ERAS.er_start_year <= YEAR(CAST(EVENTS.ev_dt AS TIMESTAMP))
   GROUP BY
-    searches.search_id
-), _s5 AS (
+    SEARCHES.search_id
+), _S5 AS (
   SELECT
-    COUNT(*) AS n_cold_war_searches,
-    anything_search_user_id
-  FROM _t0
+    COUNT(*) AS N_COLD_WAR_SEARCHES,
+    ANYTHING_SEARCH_USER_ID
+  FROM _T0
   GROUP BY
     2
 )
 SELECT
-  users.user_name,
-  _s5.n_cold_war_searches
-FROM users AS users
-JOIN _s5 AS _s5
-  ON _s5.anything_search_user_id = users.user_id
+  USERS.user_name,
+  _S5.N_COLD_WAR_SEARCHES AS n_cold_war_searches
+FROM USERS AS USERS
+JOIN _S5 AS _S5
+  ON USERS.user_id = _S5.ANYTHING_SEARCH_USER_ID
 ORDER BY
   2 DESC NULLS LAST,
   1 NULLS FIRST

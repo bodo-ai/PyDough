@@ -1,22 +1,22 @@
-WITH _t1 AS (
+WITH _T1 AS (
   SELECT
-    COUNT(*) AS n_searches,
-    searches.search_engine,
-    times.t_name
-  FROM times AS times
-  JOIN searches AS searches
-    ON times.t_end_hour > HOUR(CAST(searches.search_ts AS TIMESTAMP))
-    AND times.t_start_hour <= HOUR(CAST(searches.search_ts AS TIMESTAMP))
+    COUNT(*) AS N_SEARCHES,
+    SEARCHES.search_engine AS SEARCH_ENGINE,
+    TIMES.t_name AS T_NAME
+  FROM TIMES AS TIMES
+  JOIN SEARCHES AS SEARCHES
+    ON TIMES.t_end_hour > HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
+    AND TIMES.t_start_hour <= HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
   GROUP BY
     2,
     3
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY times.t_name ORDER BY COUNT(*) DESC, searches.search_engine) = 1
+    ROW_NUMBER() OVER (PARTITION BY TIMES.t_name ORDER BY COUNT(*) DESC, SEARCHES.search_engine) = 1
 )
 SELECT
-  t_name AS tod,
-  search_engine,
-  n_searches
-FROM _t1
+  T_NAME AS tod,
+  SEARCH_ENGINE AS search_engine,
+  N_SEARCHES AS n_searches
+FROM _T1
 ORDER BY
   1 NULLS FIRST

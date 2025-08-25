@@ -5,23 +5,23 @@ SELECT
       DAY,
       (
         (
-          DAYOFWEEK(CAST(notifications.created_at AS TIMESTAMP)) + 6
+          DAYOFWEEK(CAST(NOTIFICATIONS.created_at AS TIMESTAMP)) + 6
         ) % 7
       ) * -1,
-      CAST(notifications.created_at AS TIMESTAMP)
+      CAST(NOTIFICATIONS.created_at AS TIMESTAMP)
     )
   ) AS week,
   COUNT(*) AS num_notifs,
   COALESCE(COUNT_IF((
     (
-      DAYOFWEEK(notifications.created_at) + 6
+      DAYOFWEEK(NOTIFICATIONS.created_at) + 6
     ) % 7
   ) IN (5, 6)), 0) AS weekend_notifs
-FROM main.notifications AS notifications
-JOIN main.users AS users
-  ON notifications.user_id = users.uid AND users.country IN ('US', 'CA')
+FROM MAIN.NOTIFICATIONS AS NOTIFICATIONS
+JOIN MAIN.USERS AS USERS
+  ON NOTIFICATIONS.user_id = USERS.uid AND USERS.country IN ('US', 'CA')
 WHERE
-  notifications.created_at < DATE_TRUNC(
+  NOTIFICATIONS.created_at < DATE_TRUNC(
     'DAY',
     DATEADD(
       DAY,
@@ -33,7 +33,7 @@ WHERE
       CURRENT_TIMESTAMP()
     )
   )
-  AND notifications.created_at >= DATEADD(
+  AND NOTIFICATIONS.created_at >= DATEADD(
     WEEK,
     -3,
     DATE_TRUNC(

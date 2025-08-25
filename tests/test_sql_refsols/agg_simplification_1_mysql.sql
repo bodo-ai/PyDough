@@ -172,11 +172,11 @@ WITH _t1 AS (
       THEN CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
       ELSE NULL
     END AS expr_87,
-    sbtickerexchange
-  FROM main.sbticker
+    sbtickerexchange AS sbTickerExchange
+  FROM main.sbTicker
 ), _t0 AS (
   SELECT
-    CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS aug_exchange,
+    CHAR_LENGTH(CASE WHEN sbTickerExchange <> 'NYSE Arca' THEN sbTickerExchange ELSE NULL END) AS aug_exchange,
     AVG(expr_72) AS avg_expr_72,
     AVG(expr_73) AS avg_expr_73,
     AVG(expr_74) AS avg_expr_74,

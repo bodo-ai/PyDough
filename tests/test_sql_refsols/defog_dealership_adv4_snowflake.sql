@@ -1,25 +1,25 @@
-WITH _s1 AS (
+WITH _S1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(sale_price) AS sum_sale_price,
-    car_id
-  FROM main.sales
+    COUNT(*) AS N_ROWS,
+    SUM(sale_price) AS SUM_SALE_PRICE,
+    car_id AS CAR_ID
+  FROM MAIN.SALES
   WHERE
     sale_date >= DATEADD(DAY, -30, CURRENT_TIMESTAMP())
   GROUP BY
     3
 )
 SELECT
-  COALESCE(_s1.n_rows, 0) AS num_sales,
+  COALESCE(_S1.N_ROWS, 0) AS num_sales,
   CASE
     WHEN (
-      NOT _s1.n_rows IS NULL AND _s1.n_rows > 0
+      NOT _S1.N_ROWS IS NULL AND _S1.N_ROWS > 0
     )
-    THEN COALESCE(_s1.sum_sale_price, 0)
+    THEN COALESCE(_S1.SUM_SALE_PRICE, 0)
     ELSE NULL
   END AS total_revenue
-FROM main.cars AS cars
-LEFT JOIN _s1 AS _s1
-  ON _s1.car_id = cars._id
+FROM MAIN.CARS AS CARS
+LEFT JOIN _S1 AS _S1
+  ON CARS._id = _S1.CAR_ID
 WHERE
-  CONTAINS(LOWER(cars.make), 'toyota')
+  CONTAINS(LOWER(CARS.make), 'toyota')

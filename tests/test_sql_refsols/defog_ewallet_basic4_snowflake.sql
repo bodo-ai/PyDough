@@ -1,16 +1,16 @@
 WITH _u_0 AS (
   SELECT
     user_id AS _u_1
-  FROM main.notifications
+  FROM MAIN.NOTIFICATIONS
   WHERE
     type = 'transaction'
   GROUP BY
     1
 )
 SELECT
-  users.uid AS user_id
-FROM main.users AS users
+  USERS.uid AS user_id
+FROM MAIN.USERS AS USERS
 LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = users.uid
+  ON USERS.uid = _u_0._u_1
 WHERE
   NOT _u_0._u_1 IS NULL

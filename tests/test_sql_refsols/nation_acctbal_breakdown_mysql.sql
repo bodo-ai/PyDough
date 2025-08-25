@@ -41,7 +41,7 @@ WITH _t2 AS (
     END AS expr_7,
     c_acctbal,
     c_nationkey
-  FROM tpch.customer
+  FROM tpch.CUSTOMER
 ), _s3 AS (
   SELECT
     AVG(expr_5) AS median_black_acctbal,
@@ -55,16 +55,16 @@ WITH _t2 AS (
     6
 )
 SELECT
-  nation.n_name COLLATE utf8mb4_bin AS nation_name,
+  NATION.n_name COLLATE utf8mb4_bin AS nation_name,
   _s3.n_red_acctbal,
   _s3.n_black_acctbal,
   _s3.median_red_acctbal,
   _s3.median_black_acctbal,
   _s3.median_overall_acctbal
-FROM tpch.nation AS nation
-JOIN tpch.region AS region
-  ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
+FROM tpch.NATION AS NATION
+JOIN tpch.REGION AS REGION
+  ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'AMERICA'
 JOIN _s3 AS _s3
-  ON _s3.c_nationkey = nation.n_nationkey
+  ON NATION.n_nationkey = _s3.c_nationkey
 ORDER BY
   1

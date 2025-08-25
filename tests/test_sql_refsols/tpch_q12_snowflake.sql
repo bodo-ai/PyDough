@@ -1,17 +1,17 @@
 SELECT
-  lineitem.l_shipmode AS L_SHIPMODE,
-  COALESCE(COUNT_IF(orders.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS HIGH_LINE_COUNT,
-  COALESCE(COUNT_IF(NOT orders.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS LOW_LINE_COUNT
-FROM tpch.lineitem AS lineitem
-JOIN tpch.orders AS orders
-  ON lineitem.l_orderkey = orders.o_orderkey
+  LINEITEM.l_shipmode AS L_SHIPMODE,
+  COALESCE(COUNT_IF(ORDERS.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS HIGH_LINE_COUNT,
+  COALESCE(COUNT_IF(NOT ORDERS.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS LOW_LINE_COUNT
+FROM TPCH.LINEITEM AS LINEITEM
+JOIN TPCH.ORDERS AS ORDERS
+  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
 WHERE
-  YEAR(CAST(lineitem.l_receiptdate AS TIMESTAMP)) = 1994
-  AND lineitem.l_commitdate < lineitem.l_receiptdate
-  AND lineitem.l_commitdate > lineitem.l_shipdate
+  LINEITEM.l_commitdate < LINEITEM.l_receiptdate
+  AND LINEITEM.l_commitdate > LINEITEM.l_shipdate
   AND (
-    lineitem.l_shipmode = 'MAIL' OR lineitem.l_shipmode = 'SHIP'
+    LINEITEM.l_shipmode = 'MAIL' OR LINEITEM.l_shipmode = 'SHIP'
   )
+  AND YEAR(CAST(LINEITEM.l_receiptdate AS TIMESTAMP)) = 1994
 GROUP BY
   1
 ORDER BY

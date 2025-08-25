@@ -1,22 +1,22 @@
-WITH _t0 AS (
+WITH _T0 AS (
   SELECT
-    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
-    AVG(searches.search_num_results) AS avg_search_num_results,
-    COUNT(*) AS n_rows,
-    times.t_name
-  FROM times AS times
-  JOIN searches AS searches
-    ON times.t_end_hour > HOUR(CAST(searches.search_ts AS TIMESTAMP))
-    AND times.t_start_hour <= HOUR(CAST(searches.search_ts AS TIMESTAMP))
+    ANY_VALUE(TIMES.t_start_hour) AS ANYTHING_T_START_HOUR,
+    AVG(SEARCHES.search_num_results) AS AVG_SEARCH_NUM_RESULTS,
+    COUNT(*) AS N_ROWS,
+    TIMES.t_name AS T_NAME
+  FROM TIMES AS TIMES
+  JOIN SEARCHES AS SEARCHES
+    ON TIMES.t_end_hour > HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
+    AND TIMES.t_start_hour <= HOUR(CAST(SEARCHES.search_ts AS TIMESTAMP))
   GROUP BY
     4
 )
 SELECT
-  t_name AS tod,
+  T_NAME AS tod,
   ROUND((
-    100.0 * n_rows
-  ) / SUM(n_rows) OVER (), 2) AS pct_searches,
-  ROUND(avg_search_num_results, 2) AS avg_results
-FROM _t0
+    100.0 * N_ROWS
+  ) / SUM(N_ROWS) OVER (), 2) AS pct_searches,
+  ROUND(AVG_SEARCH_NUM_RESULTS, 2) AS avg_results
+FROM _T0
 ORDER BY
-  anything_t_start_hour NULLS FIRST
+  ANYTHING_T_START_HOUR NULLS FIRST

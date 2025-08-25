@@ -2,16 +2,16 @@ WITH _s0 AS (
   SELECT
     co_id,
     co_name
-  FROM main.countries
+  FROM main.COUNTRIES
 ), _s2 AS (
   SELECT
     co_id
-  FROM main.countries
+  FROM main.COUNTRIES
 ), _s7 AS (
   SELECT
     COUNT(*) AS n_rows,
     in_device_id
-  FROM main.incidents
+  FROM main.INCIDENTS
   GROUP BY
     2
 ), _s9 AS (
@@ -22,11 +22,11 @@ WITH _s0 AS (
     _s2.co_id
   FROM _s2 AS _s2
   CROSS JOIN _s2 AS _s3
-  JOIN main.devices AS devices
-    ON _s2.co_id = devices.de_production_country_id
-    AND _s3.co_id = devices.de_purchase_country_id
+  JOIN main.DEVICES AS DEVICES
+    ON DEVICES.de_production_country_id = _s2.co_id
+    AND DEVICES.de_purchase_country_id = _s3.co_id
   LEFT JOIN _s7 AS _s7
-    ON _s7.in_device_id = devices.de_id
+    ON DEVICES.de_id = _s7.in_device_id
   GROUP BY
     3,
     4

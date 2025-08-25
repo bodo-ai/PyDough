@@ -1,37 +1,37 @@
-WITH _t1 AS (
+WITH _T1 AS (
   SELECT
-    nation.n_name,
-    part.p_mfgr,
-    part.p_partkey,
-    supplier.s_acctbal,
-    supplier.s_address,
-    supplier.s_comment,
-    supplier.s_name,
-    supplier.s_phone
-  FROM tpch.part AS part
-  JOIN tpch.partsupp AS partsupp
-    ON part.p_partkey = partsupp.ps_partkey
-  JOIN tpch.supplier AS supplier
-    ON partsupp.ps_suppkey = supplier.s_suppkey
-  JOIN tpch.nation AS nation
-    ON nation.n_nationkey = supplier.s_nationkey
-  JOIN tpch.region AS region
-    ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
+    NATION.n_name AS N_NAME,
+    PART.p_mfgr AS P_MFGR,
+    PART.p_partkey AS P_PARTKEY,
+    SUPPLIER.s_acctbal AS S_ACCTBAL,
+    SUPPLIER.s_address AS S_ADDRESS,
+    SUPPLIER.s_comment AS S_COMMENT,
+    SUPPLIER.s_name AS S_NAME,
+    SUPPLIER.s_phone AS S_PHONE
+  FROM TPCH.PART AS PART
+  JOIN TPCH.PARTSUPP AS PARTSUPP
+    ON PART.p_partkey = PARTSUPP.ps_partkey
+  JOIN TPCH.SUPPLIER AS SUPPLIER
+    ON PARTSUPP.ps_suppkey = SUPPLIER.s_suppkey
+  JOIN TPCH.NATION AS NATION
+    ON NATION.n_nationkey = SUPPLIER.s_nationkey
+  JOIN TPCH.REGION AS REGION
+    ON NATION.n_regionkey = REGION.r_regionkey AND REGION.r_name = 'EUROPE'
   WHERE
-    ENDSWITH(part.p_type, 'BRASS') AND part.p_size = 15
+    ENDSWITH(PART.p_type, 'BRASS') AND PART.p_size = 15
   QUALIFY
-    RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost) = 1
+    RANK() OVER (PARTITION BY PARTSUPP.ps_partkey ORDER BY PARTSUPP.ps_supplycost) = 1
 )
 SELECT
-  s_acctbal AS S_ACCTBAL,
-  s_name AS S_NAME,
-  n_name AS N_NAME,
-  p_partkey AS P_PARTKEY,
-  p_mfgr AS P_MFGR,
-  s_address AS S_ADDRESS,
-  s_phone AS S_PHONE,
-  s_comment AS S_COMMENT
-FROM _t1
+  S_ACCTBAL,
+  S_NAME,
+  N_NAME,
+  P_PARTKEY,
+  P_MFGR,
+  S_ADDRESS,
+  S_PHONE,
+  S_COMMENT
+FROM _T1
 ORDER BY
   1 DESC NULLS LAST,
   3 NULLS FIRST,

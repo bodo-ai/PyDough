@@ -744,7 +744,7 @@ SELECT
     THEN SUBSTRING_INDEX(SUBSTRING_INDEX(sbcustpostalcode, '0', 1), '0', -1)
     ELSE NULL
   END AS p18
-FROM main.sbcustomer
+FROM main.sbCustomer
 WHERE
   TRUNCATE(CAST(SUBSTRING(sbcustid, 2) AS FLOAT), 0) <= 4
 ORDER BY

@@ -25,7 +25,7 @@ SELECT
     THEN 'Saturday'
   END AS dayname,
   DAYOFWEEK(sbtxdatetime) + 1 AS dayofweek
-FROM main.sbtransaction
+FROM MAIN.SBTRANSACTION
 WHERE
   DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
   AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025

@@ -5,24 +5,24 @@ SELECT
       DAY,
       (
         (
-          DAYOFWEEK(CAST(payments_received.payment_date AS TIMESTAMP)) + 6
+          DAYOFWEEK(CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)) + 6
         ) % 7
       ) * -1,
-      CAST(payments_received.payment_date AS TIMESTAMP)
+      CAST(PAYMENTS_RECEIVED.payment_date AS TIMESTAMP)
     )
   ) AS payment_week,
   COUNT(*) AS total_payments,
   COALESCE(
     COUNT_IF((
       (
-        DAYOFWEEK(payments_received.payment_date) + 6
+        DAYOFWEEK(PAYMENTS_RECEIVED.payment_date) + 6
       ) % 7
     ) IN (5, 6)),
     0
   ) AS weekend_payments
-FROM main.payments_received AS payments_received
-JOIN main.sales AS sales
-  ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
+FROM MAIN.PAYMENTS_RECEIVED AS PAYMENTS_RECEIVED
+JOIN MAIN.SALES AS SALES
+  ON PAYMENTS_RECEIVED.sale_id = SALES._id AND SALES.sale_price > 30000
 WHERE
   DATEDIFF(
     WEEK,
@@ -30,10 +30,10 @@ WHERE
       DAY,
       (
         (
-          DAYOFWEEK(payments_received.payment_date) + 6
+          DAYOFWEEK(PAYMENTS_RECEIVED.payment_date) + 6
         ) % 7
       ) * -1,
-      payments_received.payment_date
+      PAYMENTS_RECEIVED.payment_date
     ) AS DATETIME),
     DATEADD(
       DAY,
@@ -51,10 +51,10 @@ WHERE
       DAY,
       (
         (
-          DAYOFWEEK(payments_received.payment_date) + 6
+          DAYOFWEEK(PAYMENTS_RECEIVED.payment_date) + 6
         ) % 7
       ) * -1,
-      payments_received.payment_date
+      PAYMENTS_RECEIVED.payment_date
     ) AS DATETIME),
     DATEADD(
       DAY,
