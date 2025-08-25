@@ -397,7 +397,7 @@ It is important to ensure that the correct database context is being used for se
           schema=snowflake_schema
     )
   ```
-You can find a full example of using Snowflake database with PyDough in [this usage guide](./../demos/notebooks/Snowflake_TPCH.ipynb).
+You can find a full example of using Snowflake database with PyDough in [this usage guide](./../demos/notebooks/SF_TPCH_q1.ipynb).
 
 - MySQL: You can connect to a mysql database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py

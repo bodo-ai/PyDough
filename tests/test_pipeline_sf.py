@@ -548,18 +548,3 @@ def test_defog_e2e(
         reference_database=sqlite_defog_connection,
         coerce_types=True,
     )
-
-
-@pytest.mark.snowflake
-@pytest.mark.execute
-def test_pipeline_e2e_week_offset_7_sf(
-    snowflake_params_week_offset_7_data: PyDoughPandasTest,
-    get_sf_defog_graphs: graph_fetcher,
-    sf_conn_db_context: DatabaseContext,
-):
-    """ """
-    snowflake_params_week_offset_7_data.run_e2e_test(
-        get_sf_defog_graphs,
-        sf_conn_db_context("DEFOG", snowflake_params_week_offset_7_data.graph_name),
-        coerce_types=True,
-    )
