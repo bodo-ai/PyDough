@@ -633,9 +633,9 @@ INSERT INTO `payments_made` (`_id`, `vendor_name`, `payment_date`, `payment_amou
 -- DERM TREATMENT SCHEMA
 
 -- Create and use the `DermTreatment` database
-DROP DATABASE IF EXISTS `DermTreatment`;
-CREATE DATABASE `DermTreatment`;
-USE `DermTreatment`;
+DROP DATABASE IF EXISTS `dermtreatment`;
+CREATE DATABASE `dermtreatment`;
+USE `dermtreatment`;
 
 -- doctor dimension table
 DROP TABLE IF EXISTS `doctors`;
