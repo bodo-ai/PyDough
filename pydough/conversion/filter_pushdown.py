@@ -248,7 +248,6 @@ class FilterPushdownShuttle(RelationalShuttle):
                     cardinality = join.cardinality.add_filter()
                 else:
                     reverse_cardinality = reverse_cardinality.add_filter()
-            # Do the same
             pushable_filters = {
                 expr.accept_shuttle(transposer) for expr in pushable_filters
             }

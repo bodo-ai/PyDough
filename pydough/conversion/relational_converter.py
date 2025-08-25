@@ -1081,6 +1081,7 @@ class RelTranslation:
         self,
         node: HybridPartitionChild,
         context: TranslationOutput | None,
+        preceding_hybrid: HybridTree | None,
     ) -> TranslationOutput:
         """
         Converts a step into the child of a PARTITION node into a join between
@@ -1092,6 +1093,8 @@ class RelTranslation:
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts.
+            `preceding_hybrid`: the previous layer in the hybrid tree above the
+            current level.
 
         Returns:
             The TranslationOutput payload containing expressions for both the
@@ -1127,7 +1130,9 @@ class RelTranslation:
             child_output,
             JoinType.INNER,
             JoinCardinality.PLURAL_FILTER,
-            JoinCardinality.SINGULAR_ACCESS,
+            JoinCardinality.SINGULAR_ACCESS
+            if preceding_hybrid is not None and preceding_hybrid.always_exists()
+            else JoinCardinality.SINGULAR_FILTER,
             join_keys,
             None,
             None,
@@ -1305,7 +1310,11 @@ class RelTranslation:
                     else:
                         result = self.build_simple_table_scan(operation)
             case HybridPartitionChild():
-                result = self.translate_partition_child(operation, context)
+                result = self.translate_partition_child(
+                    operation,
+                    context,
+                    preceding_hybrid[0] if preceding_hybrid is not None else None,
+                )
             case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_calculate(operation, context)
@@ -1473,12 +1482,14 @@ def optimize_relational_tree(
         The optimized relational root.
     """
 
+    pruner: ColumnPruner = ColumnPruner()
+
     # Step 0: prune unused columns. This is done early to remove as many dead
     # names as possible so that steps that require generating column names can
     # use nicer names instead of generating nastier ones to avoid collisions.
     # It also speeds up all subsequent steps by reducing the total number of
     # objects inside the plan.
-    root = ColumnPruner().prune_unused_columns(root)
+    root = pruner.prune_unused_columns(root)
 
     # Step 1: push filters down as far as possible
     root = confirm_root(push_filters(root))
@@ -1500,10 +1511,10 @@ def optimize_relational_tree(
     root = confirm_root(merge_projects(root))
 
     # Step 6: re-run column pruning after the various steps, which may have
-    # rendered more columns unused. This is done befre the next step to remove
+    # rendered more columns unused. This is done before the next step to remove
     # as many column names as possible so the column bubbling step can try to
     # use nicer names without worrying about collisions.
-    root = ColumnPruner().prune_unused_columns(root)
+    root = pruner.prune_unused_columns(root)
 
     # Step 7: bubble up names from the leaf nodes to further encourage simpler
     # naming without aliases, and also to delete duplicate columns where
@@ -1524,7 +1535,7 @@ def optimize_relational_tree(
         root = confirm_root(pullup_projections(root))
         simplify_expressions(root, additional_shuttles)
         root = confirm_root(push_filters(root))
-        root = ColumnPruner().prune_unused_columns(root)
+        root = pruner.prune_unused_columns(root)
 
     # Step 9: re-run projection merging, without pushing into joins. This
     # will allow some redundant projections created by pullup to be removed
@@ -1538,7 +1549,7 @@ def optimize_relational_tree(
 
     # Step 11: re-run column pruning one last time to remove any columns that
     # are no longer used after the final round of transformations.
-    root = ColumnPruner().prune_unused_columns(root)
+    root = pruner.prune_unused_columns(root)
 
     return root
 
