@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
     COUNT(*) AS n_other_countries
-  FROM main.COUNTRIES
+  FROM main.countries
 )
 SELECT
-  COUNTRIES.co_name COLLATE utf8mb4_bin AS name,
+  countries.co_name COLLATE utf8mb4_bin AS name,
   _s1.n_other_countries
-FROM main.COUNTRIES AS COUNTRIES
+FROM main.countries AS countries
 CROSS JOIN _s1 AS _s1
 ORDER BY
   1

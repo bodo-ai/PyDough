@@ -1,17 +1,17 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    SUM(sbtxamount) AS SUM_SBTXAMOUNT,
-    sbtxcustid AS SBTXCUSTID
-  FROM MAIN.SBTRANSACTION
+    SUM(sbtxamount) AS sum_sbtxamount,
+    sbtxcustid
+  FROM main.sbtransaction
   GROUP BY
     2
 )
 SELECT
-  SBCUSTOMER.sbcustname AS name,
-  COALESCE(_S1.SUM_SBTXAMOUNT, 0) AS total_amount
-FROM MAIN.SBCUSTOMER AS SBCUSTOMER
-LEFT JOIN _S1 AS _S1
-  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
+  sbcustomer.sbcustname AS name,
+  COALESCE(_s1.sum_sbtxamount, 0) AS total_amount
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
   2 DESC NULLS LAST
 LIMIT 5

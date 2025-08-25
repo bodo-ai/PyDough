@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS n_customers
-FROM MAIN.SBCUSTOMER
+FROM main.sbcustomer
 WHERE
   (
     ENDSWITH(LOWER(sbcustname), 'ez') OR STARTSWITH(LOWER(sbcustname), 'j')

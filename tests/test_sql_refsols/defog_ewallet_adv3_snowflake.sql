@@ -1,16 +1,16 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    merchant_id AS MERCHANT_ID
-  FROM MAIN.COUPONS
+    COUNT(*) AS n_rows,
+    merchant_id
+  FROM main.coupons
   GROUP BY
     2
 )
 SELECT
-  MERCHANTS.name AS merchant_name,
-  _S1.N_ROWS AS total_coupons
-FROM MAIN.MERCHANTS AS MERCHANTS
-JOIN _S1 AS _S1
-  ON MERCHANTS.mid = _S1.MERCHANT_ID
+  merchants.name AS merchant_name,
+  _s1.n_rows AS total_coupons
+FROM main.merchants AS merchants
+JOIN _s1 AS _s1
+  ON _s1.merchant_id = merchants.mid
 WHERE
-  CONTAINS(LOWER(MERCHANTS.category), 'retail') AND MERCHANTS.status = 'active'
+  CONTAINS(LOWER(merchants.category), 'retail') AND merchants.status = 'active'

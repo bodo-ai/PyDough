@@ -7,7 +7,7 @@ SELECT
   DATEADD(WEEK, 2, DATEADD(DAY, 1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj5,
   DATEADD(WEEK, 2, DATEADD(MINUTE, -1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj6,
   DATEADD(WEEK, 2, DATEADD(YEAR, 1, CAST(sbtxdatetime AS TIMESTAMP))) AS week_adj8
-FROM MAIN.SBTRANSACTION
+FROM main.sbtransaction
 WHERE
   DAY(CAST(sbtxdatetime AS TIMESTAMP)) > 1
   AND YEAR(CAST(sbtxdatetime AS TIMESTAMP)) < 2025

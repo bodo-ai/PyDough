@@ -22,7 +22,7 @@ WITH _t2 AS (
       SUM(ABS(COALESCE(TRUNCATE(CAST(sbcustpostalcode AS FLOAT), 0), 0))) OVER (ORDER BY sbcustname COLLATE utf8mb4_bin ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rsum2
-  FROM main.sbCustomer
+  FROM main.sbcustomer
 ), _t1 AS (
   SELECT
     CASE

@@ -8,4 +8,4 @@ SELECT
   CASE WHEN c_acctbal = 0 THEN 0 ELSE CASE WHEN c_acctbal < 0 THEN -1 ELSE 1 END END AS sign_value,
   LEAST(c_acctbal, 0) AS smallest_value,
   GREATEST(c_acctbal, 0) AS largest_value
-FROM tpch.CUSTOMER
+FROM tpch.customer

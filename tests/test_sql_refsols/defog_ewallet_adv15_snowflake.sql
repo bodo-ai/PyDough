@@ -1,21 +1,21 @@
-WITH _S3 AS (
+WITH _s3 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    COUPONS.merchant_id AS MERCHANT_ID
-  FROM MAIN.COUPONS AS COUPONS
-  JOIN MAIN.MERCHANTS AS MERCHANTS
-    ON COUPONS.merchant_id = MERCHANTS.mid
-    AND DATEDIFF(MONTH, CAST(MERCHANTS.created_at AS DATETIME), CAST(COUPONS.created_at AS DATETIME)) = 0
+    COUNT(*) AS n_rows,
+    coupons.merchant_id
+  FROM main.coupons AS coupons
+  JOIN main.merchants AS merchants
+    ON DATEDIFF(MONTH, CAST(merchants.created_at AS DATETIME), CAST(coupons.created_at AS DATETIME)) = 0
+    AND coupons.merchant_id = merchants.mid
   GROUP BY
     2
 )
 SELECT
-  MERCHANTS.mid AS merchant_id,
-  MERCHANTS.name AS merchant_name,
-  COALESCE(_S3.N_ROWS, 0) AS coupons_per_merchant
-FROM MAIN.MERCHANTS AS MERCHANTS
-LEFT JOIN _S3 AS _S3
-  ON MERCHANTS.mid = _S3.MERCHANT_ID
+  merchants.mid AS merchant_id,
+  merchants.name AS merchant_name,
+  COALESCE(_s3.n_rows, 0) AS coupons_per_merchant
+FROM main.merchants AS merchants
+LEFT JOIN _s3 AS _s3
+  ON _s3.merchant_id = merchants.mid
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 1

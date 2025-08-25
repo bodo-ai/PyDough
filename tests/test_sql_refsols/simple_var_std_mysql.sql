@@ -51,20 +51,20 @@ WITH _s1 AS (
       COUNT(s_acctbal) - 1
     ) AS sample_var,
     s_nationkey
-  FROM tpch.SUPPLIER
+  FROM tpch.supplier
   GROUP BY
     5
 )
 SELECT
-  NATION.n_name AS name,
+  nation.n_name AS name,
   _s1.pop_var AS var,
   _s1.pop_std AS std,
   _s1.sample_var,
   _s1.sample_std,
   _s1.pop_var,
   _s1.pop_std
-FROM tpch.NATION AS NATION
+FROM tpch.nation AS nation
 JOIN _s1 AS _s1
-  ON NATION.n_nationkey = _s1.s_nationkey
+  ON _s1.s_nationkey = nation.n_nationkey
 WHERE
-  NATION.n_name IN ('ALGERIA', 'ARGENTINA')
+  nation.n_name IN ('ALGERIA', 'ARGENTINA')

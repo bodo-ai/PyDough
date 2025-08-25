@@ -2,38 +2,38 @@ WITH _s3 AS (
   SELECT
     SUM(l_quantity) AS sum_l_quantity,
     l_partkey
-  FROM tpch.LINEITEM
+  FROM tpch.lineitem
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS DATETIME)) = 1994
   GROUP BY
     2
 ), _s5 AS (
   SELECT
-    PART.p_partkey,
+    part.p_partkey,
     _s3.sum_l_quantity
-  FROM tpch.PART AS PART
+  FROM tpch.part AS part
   JOIN _s3 AS _s3
-    ON PART.p_partkey = _s3.l_partkey
+    ON _s3.l_partkey = part.p_partkey
   WHERE
-    PART.p_name LIKE 'forest%'
+    part.p_name LIKE 'forest%'
 ), _s7 AS (
   SELECT DISTINCT
-    PARTSUPP.ps_suppkey
-  FROM tpch.PARTSUPP AS PARTSUPP
+    partsupp.ps_suppkey
+  FROM tpch.partsupp AS partsupp
   JOIN _s5 AS _s5
-    ON PARTSUPP.ps_availqty > (
+    ON _s5.p_partkey = partsupp.ps_partkey
+    AND partsupp.ps_availqty > (
       0.5 * COALESCE(_s5.sum_l_quantity, 0)
     )
-    AND PARTSUPP.ps_partkey = _s5.p_partkey
 )
 SELECT
-  SUPPLIER.s_name COLLATE utf8mb4_bin AS S_NAME,
-  SUPPLIER.s_address AS S_ADDRESS
-FROM tpch.SUPPLIER AS SUPPLIER
-JOIN tpch.NATION AS NATION
-  ON NATION.n_name = 'CANADA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
+  s_name COLLATE utf8mb4_bin AS S_NAME,
+  supplier.s_address AS S_ADDRESS
+FROM tpch.supplier AS supplier
+JOIN tpch.nation AS nation
+  ON nation.n_name = 'CANADA' AND nation.n_nationkey = supplier.s_nationkey
 JOIN _s7 AS _s7
-  ON SUPPLIER.s_suppkey = _s7.ps_suppkey
+  ON _s7.ps_suppkey = supplier.s_suppkey
 ORDER BY
   1
 LIMIT 10

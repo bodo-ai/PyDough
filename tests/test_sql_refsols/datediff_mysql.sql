@@ -20,7 +20,7 @@ SELECT
     DATE_FORMAT(CAST('2023-04-03 13:16:30' AS DATETIME), '%Y-%m-%d %H:%i:00')
   ) AS minutes_diff,
   TIMESTAMPDIFF(SECOND, sbtxdatetime, CAST('2023-04-03 13:16:30' AS DATETIME)) AS seconds_diff
-FROM main.sbTransaction
+FROM main.sbtransaction
 WHERE
   EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) < 2025
 ORDER BY

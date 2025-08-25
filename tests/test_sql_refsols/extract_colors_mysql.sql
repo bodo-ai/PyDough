@@ -78,7 +78,7 @@ SELECT
       ELSE NULL
     END
   ) AS c6
-FROM tpch.PART
+FROM tpch.part
 ORDER BY
   1
 LIMIT 5

@@ -1,7 +1,7 @@
 SELECT
   state,
   COUNT(*) AS total_signups
-FROM MAIN.CUSTOMERS
+FROM main.customers
 GROUP BY
   1
 ORDER BY

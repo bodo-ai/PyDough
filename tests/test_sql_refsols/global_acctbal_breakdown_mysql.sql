@@ -40,7 +40,7 @@ WITH _t0 AS (
       ELSE NULL
     END AS expr_7,
     c_acctbal
-  FROM tpch.CUSTOMER
+  FROM tpch.customer
 )
 SELECT
   COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS n_red_acctbal,

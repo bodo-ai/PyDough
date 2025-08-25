@@ -1,8 +1,8 @@
 SELECT
-  MIN(sbDailyPrice.sbdpclose) AS lowest_price
-FROM main.sbDailyPrice AS sbDailyPrice
-JOIN main.sbTicker AS sbTicker
-  ON sbDailyPrice.sbdptickerid = sbTicker.sbtickerid
-  AND sbTicker.sbtickersymbol = 'VTI'
+  MIN(sbdailyprice.sbdpclose) AS lowest_price
+FROM main.sbdailyprice AS sbdailyprice
+JOIN main.sbticker AS sbticker
+  ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
+  AND sbticker.sbtickersymbol = 'VTI'
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), sbDailyPrice.sbdpdate) <= 7
+  DATEDIFF(CURRENT_TIMESTAMP(), sbdailyprice.sbdpdate) <= 7

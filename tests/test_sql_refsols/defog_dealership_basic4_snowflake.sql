@@ -1,16 +1,16 @@
 WITH _u_0 AS (
   SELECT
     salesperson_id AS _u_1
-  FROM MAIN.SALES
+  FROM main.sales
   GROUP BY
     1
 )
 SELECT
-  SALESPERSONS._id,
-  SALESPERSONS.first_name,
-  SALESPERSONS.last_name
-FROM MAIN.SALESPERSONS AS SALESPERSONS
+  salespersons._id,
+  salespersons.first_name,
+  salespersons.last_name
+FROM main.salespersons AS salespersons
 LEFT JOIN _u_0 AS _u_0
-  ON SALESPERSONS._id = _u_0._u_1
+  ON _u_0._u_1 = salespersons._id
 WHERE
   _u_0._u_1 IS NULL

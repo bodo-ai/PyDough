@@ -1,19 +1,19 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    SUM(sale_price) AS SUM_SALE_PRICE,
-    salesperson_id AS SALESPERSON_ID
-  FROM MAIN.SALES
+    SUM(sale_price) AS sum_sale_price,
+    salesperson_id
+  FROM main.sales
   GROUP BY
     2
 )
 SELECT
-  SALESPERSONS._id,
-  SALESPERSONS.first_name,
-  SALESPERSONS.last_name,
-  COALESCE(_S1.SUM_SALE_PRICE, 0) AS total
-FROM MAIN.SALESPERSONS AS SALESPERSONS
-LEFT JOIN _S1 AS _S1
-  ON SALESPERSONS._id = _S1.SALESPERSON_ID
+  salespersons._id,
+  salespersons.first_name,
+  salespersons.last_name,
+  COALESCE(_s1.sum_sale_price, 0) AS total
+FROM main.salespersons AS salespersons
+LEFT JOIN _s1 AS _s1
+  ON _s1.salesperson_id = salespersons._id
 ORDER BY
   4 DESC NULLS LAST
 LIMIT 5

@@ -2,11 +2,11 @@ SELECT
   COUNT(*) AS num_transactions,
   CASE
     WHEN COUNT(*) > 0
-    THEN COALESCE(SUM(WALLET_TRANSACTIONS_DAILY.amount), 0)
+    THEN COALESCE(SUM(wallet_transactions_daily.amount), 0)
     ELSE NULL
   END AS total_amount
-FROM MAIN.WALLET_TRANSACTIONS_DAILY AS WALLET_TRANSACTIONS_DAILY
-JOIN MAIN.USERS AS USERS
-  ON USERS.country = 'US' AND USERS.uid = WALLET_TRANSACTIONS_DAILY.sender_id
+FROM main.wallet_transactions_daily AS wallet_transactions_daily
+JOIN main.users AS users
+  ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
 WHERE
-  DATEDIFF(DAY, CAST(WALLET_TRANSACTIONS_DAILY.created_at AS DATETIME), CURRENT_TIMESTAMP()) <= 7
+  DATEDIFF(DAY, CAST(wallet_transactions_daily.created_at AS DATETIME), CURRENT_TIMESTAMP()) <= 7

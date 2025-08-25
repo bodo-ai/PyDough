@@ -1,11 +1,11 @@
 SELECT
-  SEASONS.s_name AS season_name,
+  seasons.s_name AS season_name,
   COUNT(*) AS n_events
-FROM SEASONS AS SEASONS
-JOIN EVENTS AS EVENTS
-  ON SEASONS.s_month1 = MONTH(CAST(EVENTS.ev_dt AS TIMESTAMP))
-  OR SEASONS.s_month2 = MONTH(CAST(EVENTS.ev_dt AS TIMESTAMP))
-  OR SEASONS.s_month3 = MONTH(CAST(EVENTS.ev_dt AS TIMESTAMP))
+FROM seasons AS seasons
+JOIN events AS events
+  ON seasons.s_month1 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
+  OR seasons.s_month2 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
+  OR seasons.s_month3 = MONTH(CAST(events.ev_dt AS TIMESTAMP))
 GROUP BY
   1
 ORDER BY

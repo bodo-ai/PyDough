@@ -1,19 +1,19 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    SUM(sbtxamount) AS SUM_SBTXAMOUNT,
-    sbtxtickerid AS SBTXTICKERID
-  FROM MAIN.SBTRANSACTION
+    COUNT(*) AS n_rows,
+    SUM(sbtxamount) AS sum_sbtxamount,
+    sbtxtickerid
+  FROM main.sbtransaction
   GROUP BY
     3
 )
 SELECT
-  SBTICKER.sbtickersymbol AS symbol,
-  COALESCE(_S1.N_ROWS, 0) AS num_transactions,
-  COALESCE(_S1.SUM_SBTXAMOUNT, 0) AS total_amount
-FROM MAIN.SBTICKER AS SBTICKER
-LEFT JOIN _S1 AS _S1
-  ON SBTICKER.sbtickerid = _S1.SBTXTICKERID
+  sbticker.sbtickersymbol AS symbol,
+  COALESCE(_s1.n_rows, 0) AS num_transactions,
+  COALESCE(_s1.sum_sbtxamount, 0) AS total_amount
+FROM main.sbticker AS sbticker
+LEFT JOIN _s1 AS _s1
+  ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 10

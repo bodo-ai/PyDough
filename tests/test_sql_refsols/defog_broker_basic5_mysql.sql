@@ -1,16 +1,16 @@
 WITH _u_0 AS (
   SELECT
     sbtxcustid AS _u_1
-  FROM main.sbTransaction
+  FROM main.sbtransaction
   WHERE
     sbtxtype = 'buy'
   GROUP BY
     1
 )
 SELECT
-  sbCustomer.sbcustid AS _id
-FROM main.sbCustomer AS sbCustomer
+  sbcustomer.sbcustid AS _id
+FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = sbCustomer.sbcustid
+  ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE
   NOT _u_0._u_1 IS NULL

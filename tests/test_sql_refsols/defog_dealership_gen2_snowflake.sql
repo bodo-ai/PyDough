@@ -1,6 +1,6 @@
 SELECT
   COUNT(*) AS weekend_payments
-FROM MAIN.PAYMENTS_MADE
+FROM main.payments_made
 WHERE
   (
     (

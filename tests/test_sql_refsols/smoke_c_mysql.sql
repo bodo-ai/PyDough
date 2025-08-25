@@ -21,7 +21,7 @@ WITH _t1 AS (
     c_acctbal,
     c_mktsegment,
     c_name
-  FROM tpch.CUSTOMER
+  FROM tpch.customer
 )
 SELECT
   COUNT(*) AS a,

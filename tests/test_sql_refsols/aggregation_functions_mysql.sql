@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     COUNT(*) AS n_rows,
     o_custkey
-  FROM tpch.ORDERS
+  FROM tpch.orders
   GROUP BY
     2
 ), _t2 AS (
@@ -10,30 +10,30 @@ WITH _s1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC) - 1.0
+          ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC) - 1.0
         ) - (
           (
-            COUNT(CUSTOMER.c_acctbal) OVER (PARTITION BY CUSTOMER.c_nationkey) - 1.0
+            COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) - 1.0
           ) / 2.0
         )
       ) < 1.0
-      THEN CUSTOMER.c_acctbal
+      THEN customer.c_acctbal
       ELSE NULL
     END AS expr_15,
     CASE
       WHEN TRUNCATE(
-        CAST(0.19999999999999996 * COUNT(CUSTOMER.c_acctbal) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
+        CAST(0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS FLOAT),
         0
-      ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC)
-      THEN CUSTOMER.c_acctbal
+      ) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC)
+      THEN customer.c_acctbal
       ELSE NULL
     END AS expr_16,
-    CUSTOMER.c_acctbal,
-    CUSTOMER.c_nationkey,
+    customer.c_acctbal,
+    customer.c_nationkey,
     _s1.n_rows
-  FROM tpch.CUSTOMER AS CUSTOMER
+  FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
-    ON CUSTOMER.c_custkey = _s1.o_custkey
+    ON _s1.o_custkey = customer.c_custkey
 ), _t1 AS (
   SELECT
     ANY_VALUE(c_acctbal) AS anything_c_acctbal,
@@ -90,9 +90,9 @@ SELECT
   _t1.ndistinct_c_acctbal AS count_distinct_value,
   _t1.sample_variance_c_acctbal AS variance_value,
   _t1.sample_std_c_acctbal AS stddev_value
-FROM tpch.NATION AS NATION
+FROM tpch.nation AS nation
 JOIN _t1 AS _t1
-  ON NATION.n_nationkey = _t1.c_nationkey
+  ON _t1.c_nationkey = nation.n_nationkey
   AND (
     _t1.sum_n_rows = 0 OR _t1.sum_n_rows IS NULL
   )

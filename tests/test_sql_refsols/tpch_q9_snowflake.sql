@@ -1,26 +1,26 @@
 SELECT
-  NATION.n_name AS NATION,
-  YEAR(CAST(ORDERS.o_orderdate AS TIMESTAMP)) AS O_YEAR,
+  nation.n_name AS NATION,
+  YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS O_YEAR,
   COALESCE(
     SUM(
-      LINEITEM.l_extendedprice * (
-        1 - LINEITEM.l_discount
-      ) - PARTSUPP.ps_supplycost * LINEITEM.l_quantity
+      lineitem.l_extendedprice * (
+        1 - lineitem.l_discount
+      ) - partsupp.ps_supplycost * lineitem.l_quantity
     ),
     0
   ) AS AMOUNT
-FROM TPCH.LINEITEM AS LINEITEM
-JOIN TPCH.PART AS PART
-  ON CONTAINS(PART.p_name, 'green') AND LINEITEM.l_partkey = PART.p_partkey
-JOIN TPCH.SUPPLIER AS SUPPLIER
-  ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
-JOIN TPCH.NATION AS NATION
-  ON NATION.n_nationkey = SUPPLIER.s_nationkey
-JOIN TPCH.ORDERS AS ORDERS
-  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
-JOIN TPCH.PARTSUPP AS PARTSUPP
-  ON LINEITEM.l_partkey = PARTSUPP.ps_partkey
-  AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
+FROM tpch.lineitem AS lineitem
+JOIN tpch.part AS part
+  ON CONTAINS(part.p_name, 'green') AND lineitem.l_partkey = part.p_partkey
+JOIN tpch.supplier AS supplier
+  ON lineitem.l_suppkey = supplier.s_suppkey
+JOIN tpch.nation AS nation
+  ON nation.n_nationkey = supplier.s_nationkey
+JOIN tpch.orders AS orders
+  ON lineitem.l_orderkey = orders.o_orderkey
+JOIN tpch.partsupp AS partsupp
+  ON lineitem.l_partkey = partsupp.ps_partkey
+  AND lineitem.l_suppkey = partsupp.ps_suppkey
 GROUP BY
   1,
   2

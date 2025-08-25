@@ -1,19 +1,19 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(DISTINCT coupon_id) AS NDISTINCT_COUPON_ID,
-    COUNT(DISTINCT txid) AS NDISTINCT_TXID,
-    receiver_id AS RECEIVER_ID
-  FROM MAIN.WALLET_TRANSACTIONS_DAILY
+    COUNT(DISTINCT coupon_id) AS ndistinct_coupon_id,
+    COUNT(DISTINCT txid) AS ndistinct_txid,
+    receiver_id
+  FROM main.wallet_transactions_daily
   WHERE
     status = 'success'
   GROUP BY
     3
 )
 SELECT
-  MERCHANTS.name,
+  merchants.name,
   (
-    _S1.NDISTINCT_COUPON_ID * 1.0
-  ) / _S1.NDISTINCT_TXID AS CPUR
-FROM MAIN.MERCHANTS AS MERCHANTS
-JOIN _S1 AS _S1
-  ON MERCHANTS.mid = _S1.RECEIVER_ID
+    _s1.ndistinct_coupon_id * 1.0
+  ) / _s1.ndistinct_txid AS CPUR
+FROM main.merchants AS merchants
+JOIN _s1 AS _s1
+  ON _s1.receiver_id = merchants.mid

@@ -39,13 +39,19 @@ SELECT
   RPAD(CAST(p_size AS TEXT), 3, '0') AS e,
   REPLACE(p_mfgr, 'Manufacturer#', 'm') AS f,
   REPLACE(LOWER(p_container), ' ', '') AS g,
-  REGEXP_COUNT(p_name, 'o') + (
+  CASE
+    WHEN LENGTH('o') = 0
+    THEN 0
+    ELSE CAST((
+      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+    ) / LENGTH('o') AS BIGINT)
+  END + (
     (
       CHARINDEX('o', p_name) - 1
     ) / 100.0
   ) AS h,
   ROUND(POWER(GREATEST(p_size, 10), 0.5), 3) AS i
-FROM TPCH.PART
+FROM tpch.part
 ORDER BY
   1 NULLS FIRST
 LIMIT 5

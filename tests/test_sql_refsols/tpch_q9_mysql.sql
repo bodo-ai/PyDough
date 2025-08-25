@@ -1,26 +1,26 @@
 SELECT
-  NATION.n_name COLLATE utf8mb4_bin AS NATION,
-  EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) AS O_YEAR,
+  nation.n_name COLLATE utf8mb4_bin AS NATION,
+  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) AS O_YEAR,
   COALESCE(
     SUM(
-      LINEITEM.l_extendedprice * (
-        1 - LINEITEM.l_discount
-      ) - PARTSUPP.ps_supplycost * LINEITEM.l_quantity
+      lineitem.l_extendedprice * (
+        1 - lineitem.l_discount
+      ) - partsupp.ps_supplycost * lineitem.l_quantity
     ),
     0
   ) AS AMOUNT
-FROM tpch.LINEITEM AS LINEITEM
-JOIN tpch.PART AS PART
-  ON LINEITEM.l_partkey = PART.p_partkey AND PART.p_name LIKE '%green%'
-JOIN tpch.SUPPLIER AS SUPPLIER
-  ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
-JOIN tpch.NATION AS NATION
-  ON NATION.n_nationkey = SUPPLIER.s_nationkey
-JOIN tpch.ORDERS AS ORDERS
-  ON LINEITEM.l_orderkey = ORDERS.o_orderkey
-JOIN tpch.PARTSUPP AS PARTSUPP
-  ON LINEITEM.l_partkey = PARTSUPP.ps_partkey
-  AND LINEITEM.l_suppkey = PARTSUPP.ps_suppkey
+FROM tpch.lineitem AS lineitem
+JOIN tpch.part AS part
+  ON lineitem.l_partkey = part.p_partkey AND part.p_name LIKE '%green%'
+JOIN tpch.supplier AS supplier
+  ON lineitem.l_suppkey = supplier.s_suppkey
+JOIN tpch.nation AS nation
+  ON nation.n_nationkey = supplier.s_nationkey
+JOIN tpch.orders AS orders
+  ON lineitem.l_orderkey = orders.o_orderkey
+JOIN tpch.partsupp AS partsupp
+  ON lineitem.l_partkey = partsupp.ps_partkey
+  AND lineitem.l_suppkey = partsupp.ps_suppkey
 GROUP BY
   1,
   2

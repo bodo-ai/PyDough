@@ -1,7 +1,7 @@
 SELECT
   sbcustcountry AS country,
   COUNT(*) AS num_customers
-FROM MAIN.SBCUSTOMER
+FROM main.sbcustomer
 GROUP BY
   1
 ORDER BY

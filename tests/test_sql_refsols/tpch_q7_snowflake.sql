@@ -1,41 +1,41 @@
-WITH _S9 AS (
+WITH _s9 AS (
   SELECT
-    NATION.n_name AS N_NAME,
-    ORDERS.o_orderkey AS O_ORDERKEY
-  FROM TPCH.ORDERS AS ORDERS
-  JOIN TPCH.CUSTOMER AS CUSTOMER
-    ON CUSTOMER.c_custkey = ORDERS.o_custkey
-  JOIN TPCH.NATION AS NATION
-    ON CUSTOMER.c_nationkey = NATION.n_nationkey
+    nation.n_name,
+    orders.o_orderkey
+  FROM tpch.orders AS orders
+  JOIN tpch.customer AS customer
+    ON customer.c_custkey = orders.o_custkey
+  JOIN tpch.nation AS nation
+    ON customer.c_nationkey = nation.n_nationkey
     AND (
-      NATION.n_name = 'FRANCE' OR NATION.n_name = 'GERMANY'
+      nation.n_name = 'FRANCE' OR nation.n_name = 'GERMANY'
     )
 )
 SELECT
-  NATION.n_name AS SUPP_NATION,
-  _S9.N_NAME AS CUST_NATION,
-  YEAR(CAST(LINEITEM.l_shipdate AS TIMESTAMP)) AS L_YEAR,
-  COALESCE(SUM(LINEITEM.l_extendedprice * (
-    1 - LINEITEM.l_discount
+  nation.n_name AS SUPP_NATION,
+  _s9.n_name AS CUST_NATION,
+  YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) AS L_YEAR,
+  COALESCE(SUM(lineitem.l_extendedprice * (
+    1 - lineitem.l_discount
   )), 0) AS REVENUE
-FROM TPCH.LINEITEM AS LINEITEM
-JOIN TPCH.SUPPLIER AS SUPPLIER
-  ON LINEITEM.l_suppkey = SUPPLIER.s_suppkey
-JOIN TPCH.NATION AS NATION
-  ON NATION.n_nationkey = SUPPLIER.s_nationkey
-JOIN _S9 AS _S9
-  ON LINEITEM.l_orderkey = _S9.O_ORDERKEY
-  AND (
-    NATION.n_name = 'FRANCE' OR NATION.n_name = 'GERMANY'
+FROM tpch.lineitem AS lineitem
+JOIN tpch.supplier AS supplier
+  ON lineitem.l_suppkey = supplier.s_suppkey
+JOIN tpch.nation AS nation
+  ON nation.n_nationkey = supplier.s_nationkey
+JOIN _s9 AS _s9
+  ON (
+    _s9.n_name = 'FRANCE' OR nation.n_name = 'FRANCE'
   )
   AND (
-    NATION.n_name = 'FRANCE' OR _S9.N_NAME = 'FRANCE'
+    _s9.n_name = 'GERMANY' OR nation.n_name = 'GERMANY'
   )
+  AND _s9.o_orderkey = lineitem.l_orderkey
   AND (
-    NATION.n_name = 'GERMANY' OR _S9.N_NAME = 'GERMANY'
+    nation.n_name = 'FRANCE' OR nation.n_name = 'GERMANY'
   )
 WHERE
-  YEAR(CAST(LINEITEM.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
+  YEAR(CAST(lineitem.l_shipdate AS TIMESTAMP)) IN (1995, 1996)
 GROUP BY
   1,
   2,

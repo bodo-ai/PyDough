@@ -9,7 +9,7 @@ SELECT
   ANY_VALUE(LOWER(sbcuststate)) AS a7,
   ANY_VALUE(LOWER(sbcuststate)) AS a8,
   ANY_VALUE(LOWER(sbcuststate)) AS a9
-FROM main.sbCustomer
+FROM main.sbcustomer
 GROUP BY
   1
 ORDER BY

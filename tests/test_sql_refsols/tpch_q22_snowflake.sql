@@ -1,30 +1,30 @@
-WITH _S0 AS (
+WITH _s0 AS (
   SELECT
-    AVG(c_acctbal) AS GLOBAL_AVG_BALANCE
-  FROM TPCH.CUSTOMER
+    AVG(c_acctbal) AS global_avg_balance
+  FROM tpch.customer
   WHERE
-    c_acctbal > 0.0
-    AND SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
-), _S3 AS (
+    SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+    AND c_acctbal > 0.0
+), _s3 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    o_custkey AS O_CUSTKEY
-  FROM TPCH.ORDERS
+    COUNT(*) AS n_rows,
+    o_custkey
+  FROM tpch.orders
   GROUP BY
     2
 )
 SELECT
-  SUBSTRING(CUSTOMER.c_phone, 1, 2) AS CNTRY_CODE,
+  SUBSTRING(customer.c_phone, 1, 2) AS CNTRY_CODE,
   COUNT(*) AS NUM_CUSTS,
-  COALESCE(SUM(CUSTOMER.c_acctbal), 0) AS TOTACCTBAL
-FROM _S0 AS _S0
-JOIN TPCH.CUSTOMER AS CUSTOMER
-  ON CUSTOMER.c_acctbal > _S0.GLOBAL_AVG_BALANCE
-  AND SUBSTRING(CUSTOMER.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
-LEFT JOIN _S3 AS _S3
-  ON CUSTOMER.c_custkey = _S3.O_CUSTKEY
+  COALESCE(SUM(customer.c_acctbal), 0) AS TOTACCTBAL
+FROM _s0 AS _s0
+JOIN tpch.customer AS customer
+  ON SUBSTRING(customer.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+  AND _s0.global_avg_balance < customer.c_acctbal
+LEFT JOIN _s3 AS _s3
+  ON _s3.o_custkey = customer.c_custkey
 WHERE
-  _S3.N_ROWS = 0 OR _S3.N_ROWS IS NULL
+  _s3.n_rows = 0 OR _s3.n_rows IS NULL
 GROUP BY
   1
 ORDER BY

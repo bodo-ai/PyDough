@@ -23,4 +23,4 @@ SELECT
   TRUE AS s21,
   TRUE AS s22,
   TRUE AS s23
-FROM MAIN.SBCUSTOMER
+FROM main.sbcustomer

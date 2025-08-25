@@ -1,14 +1,14 @@
-WITH _T0 AS (
+WITH _t0 AS (
   SELECT
-    marketing_opt_in AS MARKETING_OPT_IN,
-    user_id AS USER_ID
-  FROM MAIN.USER_SETTING_SNAPSHOT
+    marketing_opt_in,
+    user_id
+  FROM main.user_setting_snapshot
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) = 1
 )
 SELECT
-  USERS.uid,
-  _T0.MARKETING_OPT_IN AS marketing_opt_in
-FROM MAIN.USERS AS USERS
-JOIN _T0 AS _T0
-  ON USERS.uid = _T0.USER_ID
+  users.uid,
+  _t0.marketing_opt_in
+FROM main.users AS users
+JOIN _t0 AS _t0
+  ON _t0.user_id = users.uid

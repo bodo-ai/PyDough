@@ -1,12 +1,12 @@
 WITH _t0 AS (
   SELECT
-    ANY_VALUE(TIMES.t_start_hour) AS anything_t_start_hour,
+    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
     COUNT(*) AS n_rows,
-    TIMES.t_name
-  FROM TIMES AS TIMES
-  JOIN SEARCHES AS SEARCHES
-    ON TIMES.t_end_hour > HOUR(SEARCHES.search_ts)
-    AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
+    times.t_name
+  FROM times AS times
+  JOIN searches AS searches
+    ON times.t_end_hour > HOUR(searches.search_ts)
+    AND times.t_start_hour <= HOUR(searches.search_ts)
   GROUP BY
     3
 )

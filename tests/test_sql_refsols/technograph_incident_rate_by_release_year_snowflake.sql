@@ -1,41 +1,41 @@
-WITH _S0 AS (
+WITH _s0 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    de_product_id AS DE_PRODUCT_ID
-  FROM MAIN.DEVICES
+    COUNT(*) AS n_rows,
+    de_product_id
+  FROM main.devices
   GROUP BY
     2
-), _S1 AS (
+), _s1 AS (
   SELECT
-    pr_id AS PR_ID,
-    pr_release AS PR_RELEASE
-  FROM MAIN.PRODUCTS
-), _S6 AS (
+    pr_id,
+    pr_release
+  FROM main.products
+), _s6 AS (
   SELECT
-    YEAR(CAST(_S1.PR_RELEASE AS TIMESTAMP)) AS RELEASE_YEAR,
-    SUM(_S0.N_ROWS) AS SUM_N_ROWS
-  FROM _S0 AS _S0
-  JOIN _S1 AS _S1
-    ON _S0.DE_PRODUCT_ID = _S1.PR_ID
+    YEAR(CAST(_s1.pr_release AS TIMESTAMP)) AS release_year,
+    SUM(_s0.n_rows) AS sum_n_rows
+  FROM _s0 AS _s0
+  JOIN _s1 AS _s1
+    ON _s0.de_product_id = _s1.pr_id
   GROUP BY
     1
-), _S7 AS (
+), _s7 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    YEAR(CAST(_S3.PR_RELEASE AS TIMESTAMP)) AS RELEASE_YEAR
-  FROM MAIN.DEVICES AS DEVICES
-  JOIN _S1 AS _S3
-    ON DEVICES.de_product_id = _S3.PR_ID
-  JOIN MAIN.INCIDENTS AS INCIDENTS
-    ON DEVICES.de_id = INCIDENTS.in_device_id
+    COUNT(*) AS n_rows,
+    YEAR(CAST(_s3.pr_release AS TIMESTAMP)) AS release_year
+  FROM main.devices AS devices
+  JOIN _s1 AS _s3
+    ON _s3.pr_id = devices.de_product_id
+  JOIN main.incidents AS incidents
+    ON devices.de_id = incidents.in_device_id
   GROUP BY
     2
 )
 SELECT
-  _S6.RELEASE_YEAR AS year,
-  ROUND(COALESCE(_S7.N_ROWS, 0) / _S6.SUM_N_ROWS, 2) AS ir
-FROM _S6 AS _S6
-LEFT JOIN _S7 AS _S7
-  ON _S6.RELEASE_YEAR = _S7.RELEASE_YEAR
+  _s6.release_year AS year,
+  ROUND(COALESCE(_s7.n_rows, 0) / _s6.sum_n_rows, 2) AS ir
+FROM _s6 AS _s6
+LEFT JOIN _s7 AS _s7
+  ON _s6.release_year = _s7.release_year
 ORDER BY
   1 NULLS FIRST

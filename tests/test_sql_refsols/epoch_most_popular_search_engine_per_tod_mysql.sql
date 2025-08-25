@@ -1,12 +1,12 @@
 WITH _t2 AS (
   SELECT
     COUNT(*) AS n_searches,
-    SEARCHES.search_engine,
-    TIMES.t_name
-  FROM TIMES AS TIMES
-  JOIN SEARCHES AS SEARCHES
-    ON TIMES.t_end_hour > HOUR(SEARCHES.search_ts)
-    AND TIMES.t_start_hour <= HOUR(SEARCHES.search_ts)
+    searches.search_engine,
+    times.t_name
+  FROM times AS times
+  JOIN searches AS searches
+    ON times.t_end_hour > HOUR(searches.search_ts)
+    AND times.t_start_hour <= HOUR(searches.search_ts)
   GROUP BY
     2,
     3

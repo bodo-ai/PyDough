@@ -1,31 +1,31 @@
-WITH _S0 AS (
+WITH _s0 AS (
   SELECT
-    COUNT(*) AS NUM_TRANSACTIONS,
-    sbtxcustid AS SBTXCUSTID,
-    sbtxtickerid AS SBTXTICKERID
-  FROM MAIN.SBTRANSACTION
+    COUNT(*) AS num_transactions,
+    sbtxcustid,
+    sbtxtickerid
+  FROM main.sbtransaction
   GROUP BY
     2,
     3
-), _S2 AS (
+), _s2 AS (
   SELECT
-    SUM(_S0.NUM_TRANSACTIONS) AS NUM_TRANSACTIONS,
-    SBTICKER.sbtickertype AS SBTICKERTYPE,
-    _S0.SBTXCUSTID
-  FROM _S0 AS _S0
-  JOIN MAIN.SBTICKER AS SBTICKER
-    ON SBTICKER.sbtickerid = _S0.SBTXTICKERID
+    SUM(_s0.num_transactions) AS num_transactions,
+    sbticker.sbtickertype,
+    _s0.sbtxcustid
+  FROM _s0 AS _s0
+  JOIN main.sbticker AS sbticker
+    ON _s0.sbtxtickerid = sbticker.sbtickerid
   GROUP BY
     2,
     3
 )
 SELECT
-  SBCUSTOMER.sbcuststate AS state,
-  _S2.SBTICKERTYPE AS ticker_type,
-  SUM(_S2.NUM_TRANSACTIONS) AS num_transactions
-FROM _S2 AS _S2
-JOIN MAIN.SBCUSTOMER AS SBCUSTOMER
-  ON SBCUSTOMER.sbcustid = _S2.SBTXCUSTID
+  sbcustomer.sbcuststate AS state,
+  _s2.sbtickertype AS ticker_type,
+  SUM(_s2.num_transactions) AS num_transactions
+FROM _s2 AS _s2
+JOIN main.sbcustomer AS sbcustomer
+  ON _s2.sbtxcustid = sbcustomer.sbcustid
 GROUP BY
   1,
   2

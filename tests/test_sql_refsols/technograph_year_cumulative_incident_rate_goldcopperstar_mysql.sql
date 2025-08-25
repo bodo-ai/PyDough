@@ -1,18 +1,18 @@
 WITH _s14 AS (
   SELECT
     ANY_VALUE(pr_release) AS release_date
-  FROM main.PRODUCTS
+  FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
 ), _s6 AS (
   SELECT
     ca_dt
-  FROM main.CALENDAR
+  FROM main.calendar
 ), _t5 AS (
   SELECT
     pr_id,
     pr_name
-  FROM main.PRODUCTS
+  FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
 ), _s7 AS (
@@ -20,12 +20,12 @@ WITH _s14 AS (
     COUNT(*) AS n_rows,
     _s0.ca_dt
   FROM _s6 AS _s0
-  JOIN main.INCIDENTS AS INCIDENTS
-    ON _s0.ca_dt = CAST(CAST(INCIDENTS.in_error_report_ts AS DATETIME) AS DATE)
-  JOIN main.DEVICES AS DEVICES
-    ON DEVICES.de_id = INCIDENTS.in_device_id
+  JOIN main.incidents AS incidents
+    ON _s0.ca_dt = CAST(CAST(incidents.in_error_report_ts AS DATETIME) AS DATE)
+  JOIN main.devices AS devices
+    ON devices.de_id = incidents.in_device_id
   JOIN _t5 AS _t5
-    ON DEVICES.de_product_id = _t5.pr_id
+    ON _t5.pr_id = devices.de_product_id
   GROUP BY
     2
 ), _s13 AS (
@@ -33,10 +33,10 @@ WITH _s14 AS (
     COUNT(*) AS n_rows,
     _s8.ca_dt
   FROM _s6 AS _s8
-  JOIN main.DEVICES AS DEVICES
-    ON _s8.ca_dt = CAST(CAST(DEVICES.de_purchase_ts AS DATETIME) AS DATE)
+  JOIN main.devices AS devices
+    ON _s8.ca_dt = CAST(CAST(devices.de_purchase_ts AS DATETIME) AS DATE)
   JOIN _t5 AS _t7
-    ON DEVICES.de_product_id = _t7.pr_id
+    ON _t7.pr_id = devices.de_product_id
   GROUP BY
     2
 ), _s15 AS (

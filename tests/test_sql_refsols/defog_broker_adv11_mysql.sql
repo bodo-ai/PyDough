@@ -1,17 +1,17 @@
 WITH _u_0 AS (
   SELECT
-    sbTransaction.sbtxcustid AS _u_1
-  FROM main.sbTransaction AS sbTransaction
-  JOIN main.sbTicker AS sbTicker
-    ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
-    AND sbTicker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
+    sbtransaction.sbtxcustid AS _u_1
+  FROM main.sbtransaction AS sbtransaction
+  JOIN main.sbticker AS sbticker
+    ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
+    AND sbticker.sbtickersymbol IN ('AMZN', 'AAPL', 'GOOGL', 'META', 'NFLX')
   GROUP BY
     1
 )
 SELECT
   COUNT(*) AS n_customers
-FROM main.sbCustomer AS sbCustomer
+FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = sbCustomer.sbcustid
+  ON _u_0._u_1 = sbcustomer.sbcustid
 WHERE
-  NOT _u_0._u_1 IS NULL AND sbCustomer.sbcustemail LIKE '%.com'
+  NOT _u_0._u_1 IS NULL AND sbcustomer.sbcustemail LIKE '%.com'

@@ -1,11 +1,11 @@
 SELECT
   (
     (
-      COALESCE(SUM(SALES.sale_price), 0) - COALESCE(SUM(CARS.cost), 0)
-    ) / COALESCE(SUM(CARS.cost), 0)
+      COALESCE(SUM(sales.sale_price), 0) - COALESCE(SUM(cars.cost), 0)
+    ) / COALESCE(SUM(cars.cost), 0)
   ) * 100 AS GPM
-FROM MAIN.SALES AS SALES
-JOIN MAIN.CARS AS CARS
-  ON CARS._id = SALES.car_id
+FROM main.sales AS sales
+JOIN main.cars AS cars
+  ON cars._id = sales.car_id
 WHERE
-  YEAR(CAST(SALES.sale_date AS TIMESTAMP)) = 2023
+  YEAR(CAST(sales.sale_date AS TIMESTAMP)) = 2023

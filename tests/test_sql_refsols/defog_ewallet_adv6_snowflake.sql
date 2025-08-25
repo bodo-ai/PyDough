@@ -1,13 +1,14 @@
-WITH _T0 AS (
+WITH _t0 AS (
   SELECT
-    balance AS BALANCE
-  FROM MAIN.WALLET_USER_BALANCE_DAILY
+    balance,
+    user_id
+  FROM main.wallet_user_balance_daily
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY updated_at DESC) = 1
 )
 SELECT
-  USERS.uid AS user_id,
-  _T0.BALANCE AS latest_balance
-FROM MAIN.USERS AS USERS
-JOIN _T0 AS _T0
-  ON USERS.uid = USERS.uid
+  users.uid AS user_id,
+  _t0.balance AS latest_balance
+FROM main.users AS users
+JOIN _t0 AS _t0
+  ON _t0.user_id = users.uid

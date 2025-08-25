@@ -97,7 +97,7 @@ SELECT
       ) % 7
     ) DAY
   ) AS DATE) AS q
-FROM tpch.ORDERS
+FROM tpch.orders
 WHERE
   o_clerk LIKE '%5' AND o_comment LIKE '%fo%' AND o_orderpriority LIKE '3%'
 ORDER BY

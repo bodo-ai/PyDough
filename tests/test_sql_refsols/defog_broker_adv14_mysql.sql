@@ -1,9 +1,9 @@
 SELECT
-  sbTicker.sbtickertype AS ticker_type,
-  AVG(sbDailyPrice.sbdpclose) AS ACP
-FROM main.sbTicker AS sbTicker
-JOIN main.sbDailyPrice AS sbDailyPrice
-  ON DATEDIFF(CURRENT_TIMESTAMP(), sbDailyPrice.sbdpdate) <= 7
-  AND sbDailyPrice.sbdptickerid = sbTicker.sbtickerid
+  sbticker.sbtickertype AS ticker_type,
+  AVG(sbdailyprice.sbdpclose) AS ACP
+FROM main.sbticker AS sbticker
+JOIN main.sbdailyprice AS sbdailyprice
+  ON DATEDIFF(CURRENT_TIMESTAMP(), sbdailyprice.sbdpdate) <= 7
+  AND sbdailyprice.sbdptickerid = sbticker.sbtickerid
 GROUP BY
   1

@@ -1,32 +1,32 @@
 SELECT
-  sbTransaction.sbtxdatetime AS date_time,
-  COUNT(*) OVER (PARTITION BY CAST(CAST(sbTransaction.sbtxdatetime AS DATETIME) AS DATE) ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS txn_within_day,
+  sbtransaction.sbtxdatetime AS date_time,
+  COUNT(*) OVER (PARTITION BY CAST(CAST(sbtransaction.sbtxdatetime AS DATETIME) AS DATE) ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS txn_within_day,
   COUNT(
-    CASE WHEN sbTransaction.sbtxtype = 'buy' THEN sbTransaction.sbtxtype ELSE NULL END
-  ) OVER (PARTITION BY CAST(CAST(sbTransaction.sbtxdatetime AS DATETIME) AS DATE) ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_buys_within_day,
+    CASE WHEN sbtransaction.sbtxtype = 'buy' THEN sbtransaction.sbtxtype ELSE NULL END
+  ) OVER (PARTITION BY CAST(CAST(sbtransaction.sbtxdatetime AS DATETIME) AS DATE) ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_buys_within_day,
   ROUND(
     (
-      100.0 * SUM(sbTicker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-    ) / COUNT(*) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      100.0 * SUM(sbticker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+    ) / COUNT(*) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS pct_apple_txns,
   SUM(
     CASE
-      WHEN sbTransaction.sbtxtype = 'buy'
-      THEN sbTransaction.sbtxshares
-      ELSE 0 - sbTransaction.sbtxshares
+      WHEN sbtransaction.sbtxtype = 'buy'
+      THEN sbtransaction.sbtxshares
+      ELSE 0 - sbtransaction.sbtxshares
     END
-  ) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS share_change,
+  ) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS share_change,
   ROUND(
-    AVG(sbTransaction.sbtxamount) OVER (ORDER BY sbTransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    AVG(sbtransaction.sbtxamount) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS rolling_avg_amount
-FROM main.sbTransaction AS sbTransaction
-JOIN main.sbTicker AS sbTicker
-  ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
+FROM main.sbtransaction AS sbtransaction
+JOIN main.sbticker AS sbticker
+  ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
 WHERE
-  EXTRACT(MONTH FROM CAST(sbTransaction.sbtxdatetime AS DATETIME)) = 4
-  AND EXTRACT(YEAR FROM CAST(sbTransaction.sbtxdatetime AS DATETIME)) = 2023
-  AND sbTransaction.sbtxstatus = 'success'
+  EXTRACT(MONTH FROM CAST(sbtransaction.sbtxdatetime AS DATETIME)) = 4
+  AND EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS DATETIME)) = 2023
+  AND sbtransaction.sbtxstatus = 'success'
 ORDER BY
   1

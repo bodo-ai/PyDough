@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    COUNT(sbdpclose) AS count_sbDpClose,
+    COUNT(sbdpclose) AS count_sbdpclose,
     MAX(sbdphigh) AS max_high,
     MIN(sbdplow) AS min_low,
     CONCAT_WS(
@@ -8,9 +8,9 @@ WITH _s0 AS (
       EXTRACT(YEAR FROM CAST(sbdpdate AS DATETIME)),
       LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS DATETIME)), 2, '0')
     ) AS month,
-    SUM(sbdpclose) AS sum_sbDpClose,
-    sbdptickerid AS sbDpTickerId
-  FROM main.sbDailyPrice
+    SUM(sbdpclose) AS sum_sbdpclose,
+    sbdptickerid
+  FROM main.sbdailyprice
   GROUP BY
     4,
     6
@@ -18,26 +18,26 @@ WITH _s0 AS (
   SELECT
     MAX(_s0.max_high) AS max_high,
     MIN(_s0.min_low) AS min_low,
-    SUM(_s0.count_sbDpClose) AS sum_count_sbDpClose,
-    SUM(_s0.sum_sbDpClose) AS sum_sum_sbDpClose,
+    SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
+    SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
     _s0.month,
-    sbTicker.sbtickersymbol AS sbTickerSymbol
+    sbticker.sbtickersymbol
   FROM _s0 AS _s0
-  JOIN main.sbTicker AS sbTicker
-    ON _s0.sbDpTickerId = sbTicker.sbtickerid
+  JOIN main.sbticker AS sbticker
+    ON _s0.sbdptickerid = sbticker.sbtickerid
   GROUP BY
     5,
     6
 )
 SELECT
-  sbTickerSymbol AS symbol,
+  sbtickersymbol AS symbol,
   month,
-  sum_sum_sbDpClose / sum_count_sbDpClose AS avg_close,
+  sum_sum_sbdpclose / sum_count_sbdpclose AS avg_close,
   max_high,
   min_low,
   (
     (
-      sum_sum_sbDpClose / sum_count_sbDpClose
-    ) - LAG(sum_sum_sbDpClose / sum_count_sbDpClose, 1) OVER (PARTITION BY sbTickerSymbol ORDER BY CASE WHEN month COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, month COLLATE utf8mb4_bin)
-  ) / LAG(sum_sum_sbDpClose / sum_count_sbDpClose, 1) OVER (PARTITION BY sbTickerSymbol ORDER BY CASE WHEN month COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, month COLLATE utf8mb4_bin) AS momc
+      sum_sum_sbdpclose / sum_count_sbdpclose
+    ) - LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY CASE WHEN month COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, month COLLATE utf8mb4_bin)
+  ) / LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY CASE WHEN month COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, month COLLATE utf8mb4_bin) AS momc
 FROM _t0

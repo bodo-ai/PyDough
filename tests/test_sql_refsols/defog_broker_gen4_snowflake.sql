@@ -1,8 +1,8 @@
-WITH _S1 AS (
+WITH _s1 AS (
   SELECT
-    COUNT(*) AS N_ROWS,
-    sbtxcustid AS SBTXCUSTID
-  FROM MAIN.SBTRANSACTION
+    COUNT(*) AS n_rows,
+    sbtxcustid
+  FROM main.sbtransaction
   WHERE
     CAST(sbtxdatetime AS TIMESTAMP) < CAST('2023-04-02' AS DATE)
     AND CAST(sbtxdatetime AS TIMESTAMP) >= CAST('2023-04-01' AS DATE)
@@ -11,12 +11,12 @@ WITH _S1 AS (
     2
 )
 SELECT
-  SBCUSTOMER.sbcustid AS _id,
-  SBCUSTOMER.sbcustname AS name,
-  COALESCE(_S1.N_ROWS, 0) AS num_tx
-FROM MAIN.SBCUSTOMER AS SBCUSTOMER
-LEFT JOIN _S1 AS _S1
-  ON SBCUSTOMER.sbcustid = _S1.SBTXCUSTID
+  sbcustomer.sbcustid AS _id,
+  sbcustomer.sbcustname AS name,
+  COALESCE(_s1.n_rows, 0) AS num_tx
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 1

@@ -1,15 +1,15 @@
 WITH _t1 AS (
   SELECT
-    ANY_VALUE(SEARCHES.search_user_id) AS anything_search_user_id
-  FROM SEARCHES AS SEARCHES
-  JOIN EVENTS AS EVENTS
-    ON LOWER(SEARCHES.search_string) LIKE CONCAT('%', LOWER(EVENTS.ev_name), '%')
-  JOIN ERAS AS ERAS
-    ON ERAS.er_end_year > EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
-    AND ERAS.er_name = 'Cold War'
-    AND ERAS.er_start_year <= EXTRACT(YEAR FROM CAST(EVENTS.ev_dt AS DATETIME))
+    ANY_VALUE(searches.search_user_id) AS anything_search_user_id
+  FROM searches AS searches
+  JOIN events AS events
+    ON LOWER(searches.search_string) LIKE CONCAT('%', LOWER(events.ev_name), '%')
+  JOIN eras AS eras
+    ON eras.er_end_year > EXTRACT(YEAR FROM CAST(events.ev_dt AS DATETIME))
+    AND eras.er_name = 'Cold War'
+    AND eras.er_start_year <= EXTRACT(YEAR FROM CAST(events.ev_dt AS DATETIME))
   GROUP BY
-    SEARCHES.search_id
+    searches.search_id
 ), _s5 AS (
   SELECT
     COUNT(*) AS n_cold_war_searches,
@@ -21,9 +21,9 @@ WITH _t1 AS (
 SELECT
   user_name COLLATE utf8mb4_bin AS user_name,
   _s5.n_cold_war_searches
-FROM USERS AS USERS
+FROM users AS users
 JOIN _s5 AS _s5
-  ON USERS.user_id = _s5.anything_search_user_id
+  ON _s5.anything_search_user_id = users.user_id
 ORDER BY
   2 DESC,
   1
