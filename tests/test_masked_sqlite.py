@@ -450,6 +450,119 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
             ),
             id="cryptbank_agg_05",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "first_sent = accounts_held.transactions_sent.WHERE(receiver_account.branch.address[-5:] == '94105').BEST(per='accounts_held', by=time_stamp.ASC())\n"
+                "result = ("
+                " customers"
+                " .CALCULATE("
+                "  key,"
+                "  name=JOIN_STRINGS(' ', first_name, last_name),"
+                "  first_sends=SUM(first_sent.amount),"
+                " )"
+                " .TOP_K(3, by=(first_sends.DESC(), key.ASC()))"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [7, 3, 10],
+                        "name": ["grace davis", "carol lee", "james martinez"],
+                        "first_sends": [16033.18, 15871.02, 11554.16],
+                    }
+                ),
+                "cryptbank_analysis_01",
+                order_sensitive=True,
+            ),
+            id="cryptbank_analysis_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "first_received = accounts_held.transactions_received.WHERE(sender_account.branch.address[-5:] == '94105').BEST(per='accounts_held', by=time_stamp.ASC())\n"
+                "result = ("
+                " customers"
+                " .CALCULATE("
+                "  key,"
+                "  name=JOIN_STRINGS(' ', first_name, last_name),"
+                "  first_recvs=SUM(first_received.amount),"
+                " )"
+                " .TOP_K(3, by=(first_recvs.DESC(), key.ASC()))"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [3, 9, 2],
+                        "name": ["carol lee", "isabel rodriguez", "bob smith"],
+                        "first_recvs": [22802.6, 15400.64, 14990.64],
+                    }
+                ),
+                "cryptbank_analysis_02",
+                order_sensitive=True,
+            ),
+            id="cryptbank_analysis_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "first_sent = accounts_held.transactions_sent.WHERE(receiver_account.branch.address[-5:] == '94105').BEST(per='accounts_held', by=time_stamp.ASC())\n"
+                "first_received = accounts_held.transactions_received.WHERE(sender_account.branch.address[-5:] == '94105').BEST(per='accounts_held', by=time_stamp.ASC())\n"
+                "result = ("
+                " customers"
+                " .CALCULATE("
+                "  key,"
+                "  name=JOIN_STRINGS(' ', first_name, last_name),"
+                "  first_sends=SUM(first_sent.amount),"
+                "  first_recvs=SUM(first_received.amount),"
+                " )"
+                " .TOP_K(3, by=((first_sends+first_recvs).DESC(), key.ASC()))"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [3, 7, 9],
+                        "name": ["carol lee", "grace davis", "isabel rodriguez"],
+                        "first_sends": [15871.02, 16033.18, 8675.95],
+                        "first_recvs": [22802.6, 8976.13, 15400.64],
+                    }
+                ),
+                "cryptbank_analysis_03",
+                order_sensitive=True,
+            ),
+            id="cryptbank_analysis_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customer = account_holder.WHERE(MONOTONIC(1980, YEAR(birthday), 1985))\n"
+                "selected_transactions = transactions_sent.WHERE(amount > 9000.0)\n"
+                "result = ("
+                " accounts"
+                " .WHERE(HAS(selected_customer) & HAS(selected_transactions))"
+                " .CALCULATE("
+                "  key,"
+                "  cust_name=JOIN_STRINGS(' ', selected_customer.first_name, selected_customer.last_name),"
+                "  n_trans=COUNT(selected_transactions),"
+                " )"
+                " .ORDER_BY(key.ASC())"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [3, 6, 31, 33, 40, 55, 56],
+                        "cust_name": [
+                            "alice johnson",
+                            "carol lee",
+                            "luke lopez",
+                            "luke lopez",
+                            "olivia anderson",
+                            "thomas lee",
+                            "thomas lee",
+                        ],
+                        "n_trans": [1, 1, 2, 1, 2, 1, 1],
+                    }
+                ),
+                "cryptbank_analysis_04",
+                order_sensitive=True,
+            ),
+            id="cryptbank_analysis_04",
+        ),
     ],
 )
 def cryptbank_pipeline_test_data(request) -> PyDoughPandasTest:

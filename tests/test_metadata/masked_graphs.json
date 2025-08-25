@@ -141,9 +141,12 @@
           "properties": [
             {
               "name": "key",
-              "type": "table column",
+              "type": "masked table column",
               "column name": "a_key",
               "data type": "numeric",
+              "unprotect protocol": "INTEGER(STRING({0}) || STRING(ABS({0})))",
+              "protect protocol": "CASE WHEN {0} = 0 THEN 0 ELSE (CASE WHEN {0} > 0 THEN 1 ELSE -1 END) * INTEGER(SUBSTRING({0}, 1 + INSTR({0}, '-') + LENGTH({0}, '-')) / 2)) END",
+              "server masked": true,
               "description": "The unique key for the account",
               "sample values": [5, 17, 35, 58],
               "synonyms": ["account id", "account number"]
