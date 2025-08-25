@@ -1,0 +1,2 @@
+ROOT(columns=[('key', c_key), ('first_name', c_fname), ('last_name', c_lname), ('phone_number', c_phone), ('email', c_email), ('address', c_addr), ('birthday', c_birthday)], orderings=[(c_key):asc_first], limit=3:numeric)
+ SCAN(table=CRBNK.CUSTOMERS, columns={'c_addr': c_addr, 'c_birthday': c_birthday, 'c_email': c_email, 'c_fname': c_fname, 'c_key': c_key, 'c_lname': c_lname, 'c_phone': c_phone})
