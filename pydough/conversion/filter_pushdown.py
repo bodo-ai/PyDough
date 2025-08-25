@@ -185,6 +185,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         # The join type, cardinality, and inputs for the output join node.
         join_type: JoinType = join.join_type
         cardinality: JoinCardinality = join.cardinality
+        reverse_cardinality: JoinCardinality = join.reverse_cardinality
         new_inputs: list[RelationalNode] = []
 
         # If the join type is LEFT or SEMI but the condition is TRUE, convert it
@@ -239,10 +240,15 @@ class FilterPushdownShuttle(RelationalShuttle):
                     remaining_filters,
                     lambda expr: only_references_columns(expr, input_cols[idx]),
                 )
-            # Ensure that if any filter is pushed into an input (besides
-            # the first input) that the join is marked as filtering.
-            if len(pushable_filters) > 0 and idx > 0:
-                cardinality = join.cardinality.add_filter()
+            # Ensure that if any filter is pushed into an input, the
+            # corresponding join cardinality is updated to reflect that a filter
+            # has been applied.
+            if len(pushable_filters) > 0:
+                if idx == 1:
+                    cardinality = join.cardinality.add_filter()
+                else:
+                    reverse_cardinality = reverse_cardinality.add_filter()
+            # Do the same
             pushable_filters = {
                 expr.accept_shuttle(transposer) for expr in pushable_filters
             }
@@ -270,6 +276,7 @@ class FilterPushdownShuttle(RelationalShuttle):
             else:
                 new_conjunction.add(join._condition)
             cardinality = join.cardinality.add_filter()
+            reverse_cardinality = join.reverse_cardinality.add_filter()
             join._condition = RelationalExpression.form_conjunction(
                 sorted(new_conjunction, key=repr)
             )
@@ -280,6 +287,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         new_node = join.copy(inputs=new_inputs)
         assert isinstance(new_node, Join)
         new_node.cardinality = cardinality
+        new_node.reverse_cardinality = reverse_cardinality
         new_node.join_type = join_type
         return build_filter(new_node, remaining_filters)
 

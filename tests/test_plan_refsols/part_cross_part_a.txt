@@ -7,7 +7,7 @@ ROOT(columns=[('state', sbCustState), ('exchange', sbTickerExchange), ('n', DEFA
     SCAN(table=main.sbCustomer, columns={'sbCustId': sbCustId, 'sbCustState': sbCustState})
    AGGREGATE(keys={'sbCustId': sbCustId, 'sbTickerExchange': sbTickerExchange}, aggregations={'n_rows': COUNT()})
     JOIN(condition=t0.sbTxTickerId == t1.sbTickerId & t1.sbTickerExchange == t0.sbTickerExchange, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'sbCustId': t0.sbCustId, 'sbTickerExchange': t0.sbTickerExchange})
-     JOIN(condition=t0.sbCustId == t1.sbTxCustId, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'sbCustId': t0.sbCustId, 'sbTickerExchange': t0.sbTickerExchange, 'sbTxTickerId': t1.sbTxTickerId})
+     JOIN(condition=t0.sbCustId == t1.sbTxCustId, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'sbCustId': t0.sbCustId, 'sbTickerExchange': t0.sbTickerExchange, 'sbTxTickerId': t1.sbTxTickerId})
       JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'sbCustId': t1.sbCustId, 'sbTickerExchange': t0.sbTickerExchange})
        AGGREGATE(keys={'sbTickerExchange': sbTickerExchange}, aggregations={})
         SCAN(table=main.sbTicker, columns={'sbTickerExchange': sbTickerExchange})
