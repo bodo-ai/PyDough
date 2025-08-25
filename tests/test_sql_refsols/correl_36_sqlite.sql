@@ -28,21 +28,8 @@ WITH _s3 AS (
     AND customer.c_custkey = orders_2.o_custkey
     AND orders.o_orderpriority = orders_2.o_orderpriority
   JOIN tpch.lineitem AS lineitem_2
-    ON CASE
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 3
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 1
-      THEN 1
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 6
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 4
-      THEN 2
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 9
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 7
-      THEN 3
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 12
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 10
-      THEN 4
-    END = 1
-    AND CAST(STRFTIME('%Y', lineitem_2.l_shipdate) AS INTEGER) = 1997
+    ON CAST(STRFTIME('%Y', lineitem_2.l_shipdate) AS INTEGER) = 1997
+    AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) IN (1, 2, 3)
     AND lineitem_2.l_orderkey = orders_2.o_orderkey
   JOIN _s3 AS _s19
     ON _s19.p_partkey = lineitem_2.l_partkey AND _s19.p_type = _s3.p_type

@@ -1,4 +1,4 @@
-ROOT(columns=[('cust_key', c_custkey), ('n_orders', DEFAULT_TO(n_rows, 0:numeric)), ('n_cust', n_cust)], orderings=[(c_acctbal):desc_last], limit=10:numeric)
+ROOT(columns=[('cust_key', c_custkey), ('n_orders', n_rows), ('n_cust', n_cust)], orderings=[(c_acctbal):desc_last], limit=10:numeric)
  FILTER(condition=n_rows > 0:numeric, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'n_cust': n_cust, 'n_rows': n_rows})
   PROJECT(columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'n_cust': RELSIZE(args=[], partition=[c_nationkey], order=[]), 'n_rows': n_rows})
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'c_acctbal': t0.c_acctbal, 'c_custkey': t0.c_custkey, 'c_nationkey': t0.c_nationkey, 'n_rows': t1.n_rows})

@@ -12,7 +12,7 @@ SELECT
   ORDERS.o_orderkey AS O_ORDERKEY,
   ORDERS.o_orderdate AS O_ORDERDATE,
   ORDERS.o_totalprice AS O_TOTALPRICE,
-  COALESCE(_t1.sum_l_quantity, 0) AS TOTAL_QUANTITY
+  _t1.sum_l_quantity AS TOTAL_QUANTITY
 FROM tpch.ORDERS AS ORDERS
 JOIN tpch.CUSTOMER AS CUSTOMER
   ON CUSTOMER.c_custkey = ORDERS.o_custkey

@@ -6,7 +6,7 @@ SELECT
   AVG(sbtxprice) AS avg_price
 FROM main.sbTransaction
 WHERE
-  EXTRACT(QUARTER FROM CAST(sbtxdatetime AS DATETIME)) = 1
+  EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) IN (1, 2, 3)
   AND EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) = 2023
   AND sbtxstatus = 'success'
 GROUP BY

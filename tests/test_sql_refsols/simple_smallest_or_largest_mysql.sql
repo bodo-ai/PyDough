@@ -7,7 +7,7 @@ SELECT
   LEAST(20, 20) AS s2,
   LEAST(20, 10, 0) AS s3,
   LEAST(20, 10, 10, -1, -2, 100, -200) AS s4,
-  LEAST(20, 10, NULL, 100, 200) AS s5,
+  NULL AS s5,
   LEAST(20.22, 10.22, -0.34) AS s6,
   LEAST(
     CAST('2025-01-01 00:00:00' AS DATETIME),
@@ -15,12 +15,12 @@ SELECT
     CAST('2023-01-01 00:00:00' AS DATETIME)
   ) AS s7,
   LEAST('', 'alphabet soup', 'Hello World') AS s8,
-  LEAST(NULL, 'alphabet soup', 'Hello World') AS s9,
+  NULL AS s9,
   GREATEST(20, 10) AS l1,
   GREATEST(20, 20) AS l2,
   GREATEST(20, 10, 0) AS l3,
   GREATEST(20, 10, 10, -1, -2, 100, -200, 300) AS l4,
-  GREATEST(20, 10, NULL, 100, 200) AS l5,
+  NULL AS l5,
   GREATEST(20.22, 100.22, -0.34) AS l6,
   GREATEST(
     CAST('2025-01-01 00:00:00' AS DATETIME),
@@ -28,5 +28,5 @@ SELECT
     CAST('2023-01-01 00:00:00' AS DATETIME)
   ) AS l7,
   GREATEST('', 'alphabet soup', 'Hello World') AS l8,
-  GREATEST(NULL, 'alphabet soup', 'Hello World') AS l9
+  NULL AS l9
 FROM _q_0
