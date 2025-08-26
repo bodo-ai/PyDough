@@ -275,11 +275,13 @@ class Join(RelationalNode):
         cardinality_suffix: str = (
             ""
             if self.cardinality == JoinCardinality.UNKNOWN_UNKNOWN
+            or self.join_type in (JoinType.SEMI, JoinType.ANTI)
             else f", cardinality={self.cardinality.name}"
         )
         reverse_cardinality_suffix: str = (
             ""
             if self.reverse_cardinality == JoinCardinality.UNKNOWN_UNKNOWN
+            or self.join_type in (JoinType.SEMI, JoinType.ANTI)
             else f", reverse_cardinality={self.reverse_cardinality.name}"
         )
         return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}{reverse_cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"

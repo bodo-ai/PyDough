@@ -1,6 +1,6 @@
 ROOT(columns=[('n_events', n_events)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_events': COUNT()})
-  JOIN(condition=t0.ev_key == t1.ev_key, type=SEMI, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={})
+  JOIN(condition=t0.ev_key == t1.ev_key, type=SEMI, columns={})
    JOIN(condition=t1.t_start_hour <= HOUR(t0.ev_dt) & HOUR(t0.ev_dt) < t1.t_end_hour, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ev_key': t0.ev_key})
     SCAN(table=EVENTS, columns={'ev_dt': ev_dt, 'ev_key': ev_key})
     FILTER(condition=t_name == 'Pre-Dawn':string, columns={'t_end_hour': t_end_hour, 't_start_hour': t_start_hour})
