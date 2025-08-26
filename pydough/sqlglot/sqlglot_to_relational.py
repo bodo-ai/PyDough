@@ -38,6 +38,7 @@ def glot_to_rel(glot_expr: sqlglot_expressions.Expression) -> RelationalExpressi
     def sub_rels() -> list[RelationalExpression]:
         return [glot_to_rel(e) for e in glot_expr.iter_expressions()]
 
+    flushed_args: list[RelationalExpression]
     match glot_expr:
         case sqlglot_expressions.TimeStrToTime():
             return CallExpression(
@@ -69,6 +70,12 @@ def glot_to_rel(glot_expr: sqlglot_expressions.Expression) -> RelationalExpressi
             return CallExpression(pydop.LENGTH, NumericType(), sub_rels())
         case sqlglot_expressions.Abs():
             return CallExpression(pydop.ABS, StringType(), sub_rels())
+        case sqlglot_expressions.Datetime():
+            return CallExpression(pydop.DATETIME, DatetimeType(), sub_rels())
+        case sqlglot_expressions.Date():
+            flushed_args = sub_rels()
+            flushed_args.append(LiteralExpression("start of day", StringType()))
+            return CallExpression(pydop.DATETIME, DatetimeType(), flushed_args)
         case _:
             raise GlotRelFail()
 

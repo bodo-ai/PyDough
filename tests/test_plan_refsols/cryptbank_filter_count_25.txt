@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  FILTER(condition=c_birthday != MASK::(DATE(['1991-11-15':string], '-472 days')), columns={})
+  FILTER(condition=c_birthday != DATETIME('1991-11-15':string, '-472 days':string, 'start of day':string), columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_birthday': c_birthday})
