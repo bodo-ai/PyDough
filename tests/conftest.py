@@ -554,6 +554,18 @@ def sqlite_technograph_connection() -> DatabaseContext:
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
+@pytest.fixture(scope="session")
+def sqlite_synthea_connection() -> DatabaseContext:
+    """
+    Returns the SQLITE database connection for the synthea database.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    # Setup the defog database.
+    subprocess.run("cd tests/gen_data; bash setup_synthea.sh", shell=True)
+    path: str = os.path.join(base_dir, "tests/gen_data/synthea.db")
+    connection: sqlite3.Connection = sqlite3.connect(path)
+    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 @pytest.fixture(scope="session")
 def sqlite_cryptbank_connection() -> DatabaseContext:
