@@ -185,6 +185,20 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
+def get_synthea_graph() -> graph_fetcher:
+    """
+    Returns the graph for synthea database.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/synthea_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def get_mysql_defog_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database in MySQL.
@@ -539,6 +553,7 @@ def sqlite_technograph_connection() -> DatabaseContext:
     # Return the database context.
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
+
 @pytest.fixture(scope="session")
 def sqlite_synthea_connection() -> DatabaseContext:
     """
@@ -551,6 +566,7 @@ def sqlite_synthea_connection() -> DatabaseContext:
     path: str = os.path.join(base_dir, "tests/gen_data/synthea.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
 
 SF_ENVS = ["SF_USERNAME", "SF_PASSWORD", "SF_ACCOUNT"]
 """
