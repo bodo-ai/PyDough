@@ -27,9 +27,11 @@ class DatabaseConnection:
     # sqlite3 contains the connection specification and is packaged
     # with Python.
     _connection: DBConnection
+    _cursor: DBCursor | None
 
     def __init__(self, connection: DBConnection) -> None:
         self._connection = connection
+        self._cursor = None
 
     def execute_query_df(self, sql: str) -> pd.DataFrame:
         """Create a cursor object using the connection and execute the query,
@@ -44,9 +46,9 @@ class DatabaseConnection:
         Returns:
             list[pt.Any]: A list of rows returned by the query.
         """
-        cursor: DBCursor = self._connection.cursor()
+        self._cursor = self._connection.cursor()
         try:
-            cursor.execute(sql)
+            self.cursor.execute(sql)
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
             raise e
@@ -55,19 +57,19 @@ class DatabaseConnection:
         # NOTE: Code does not run in type checking mode, so we need to
         # check at run-time if the cursor has the method.
         if TYPE_CHECKING:
-            _ = cast(SnowflakeCursor, cursor).fetch_pandas_all
+            _ = cast(SnowflakeCursor, self.cursor).fetch_pandas_all
         # At run-time check and run the fetch.
-        if hasattr(cursor, "fetch_pandas_all"):
-            return cursor.fetch_pandas_all()
+        if hasattr(self.cursor, "fetch_pandas_all"):
+            return self.cursor.fetch_pandas_all()
         else:
             # Assume sqlite3
             column_names: list[str] = [
-                description[0] for description in cursor.description
+                description[0] for description in self.cursor.description
             ]
             # No need to close the cursor, as its closed by del.
             # TODO: (gh #174) Cache the cursor?
             # TODO: (gh #175) enable typed DataFrames.
-            data = cursor.fetchall()
+            data = self.cursor.fetchall()
             return pd.DataFrame(data, columns=column_names)
 
     # TODO: Consider adding a streaming API for large queries. It's not yet clear
@@ -83,6 +85,15 @@ class DatabaseConnection:
             The database connection PyDough is managing.
         """
         return self._connection
+
+    @property
+    def cursor(self) -> DBCursor:
+        """Get the database cursor.
+
+        Returns:
+            DBCursor: The database cursor PyDough is managing.
+        """
+        return self._cursor
 
 
 class DatabaseDialect(Enum):

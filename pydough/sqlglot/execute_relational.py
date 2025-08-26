@@ -107,7 +107,7 @@ def apply_sqlglot_optimizer(
         "validate_qualify_columns": False,
     }
     # Exclude Snowflake dialect to avoid some issues
-    # related to qualify and column decorrelation
+    # related to name qualification
     if not isinstance(dialect, SnowflakeDialect):
         kwargs["dialect"] = dialect
 

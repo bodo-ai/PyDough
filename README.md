@@ -100,7 +100,9 @@ script must be run so that the `defog.db` file is located in the `tests` directo
 When submitting a PR, you can control which CI tests run by adding special flags
 to your **latest commit message**.
 
-- To run **PyDough CI tests**, add: `[run CI]`  
+**Note:** All flags are **case-insensitive**.
+
+- To run **PyDough CI tests**, add: `[run CI]` (only runs **SQLite tests**, no other SQL dialects)  
 - To run **PyDough and all dialect tests**, add: `[run all]`  
 - To run **specific dialect tests**, use the corresponding flag as described below.
 

@@ -43,11 +43,6 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         args: list[SQLGlotExpression],
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
-        match operator:
-            case pydop.SUM:
-                return self.convert_sum(args, types)
-            case pydop.GETPART:
-                return self.convert_get_part(args, types)
         if operator in self.PYDOP_TO_SNOWFLAKE_FUNC:
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_SNOWFLAKE_FUNC[operator], expressions=args
@@ -63,8 +58,8 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         This method checks the type of the argument to determine whether to use
         COUNT_IF (for BooleanType) or SUM (for other types).
         Arguments:
-            arg (SQLGlotExpression): The argument to the SUM function.
-            types (list[PyDoughType]): The types of the arguments.
+            `arg` : The argument to the SUM function.
+            `types` : The types of the arguments.
         """
         match types[0]:
             # If the argument is of BooleanType, it uses COUNT_IF to count true values.
@@ -74,11 +69,6 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
 
-    def convert_get_part(
-        self, args: SQLGlotExpression, types: list[PyDoughType]
-    ) -> SQLGlotExpression:
-        return sqlglot_expressions.Anonymous(this="SPLIT_PART", expressions=args)
-
     def convert_extract_datetime(
         self,
         args: list[SQLGlotExpression],
@@ -86,7 +76,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         unit: DateTimeUnit,
     ) -> SQLGlotExpression:
         # Update argument type to fit datetime
-        dt_expr = self.handle_datetime_base_arg(args[0])
+        dt_expr: SQLGlotExpression = self.handle_datetime_base_arg(args[0])
         func_expr: SQLGlotExpression
         match unit:
             case DateTimeUnit.YEAR:

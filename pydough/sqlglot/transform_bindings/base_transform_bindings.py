@@ -87,7 +87,6 @@ class BaseTransformBindings:
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
-        pydop.SUM: sqlglot_expressions.Sum,
         pydop.AVG: sqlglot_expressions.Avg,
         pydop.MIN: sqlglot_expressions.Min,
         pydop.MAX: sqlglot_expressions.Max,
@@ -214,6 +213,8 @@ class BaseTransformBindings:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
                 return self.convert_round(args, types)
+            case pydop.SUM:
+                return self.convert_sum(args, types)
             case pydop.CEIL:
                 return self.convert_ceil(args, types)
             case pydop.FLOOR:
@@ -291,6 +292,14 @@ class BaseTransformBindings:
         if isinstance(expr, sqlglot_expressions.Literal) and expr.is_string:
             return self.handle_datetime_base_arg(expr)
         return expr
+
+    def convert_sum(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a SUM function call to its SQLGlot equivalent.
+        """
+        return sqlglot_expressions.Sum.from_arg_list(args)
 
     def convert_find(
         self,

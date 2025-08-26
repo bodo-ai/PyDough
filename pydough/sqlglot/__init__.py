@@ -7,7 +7,6 @@ __all__ = [
     "find_identifiers",
     "find_identifiers_in_list",
     "get_glot_name",
-    "is_boolean_expression",
     "set_glot_alias",
     "unwrap_alias",
 ]
@@ -18,7 +17,6 @@ from .execute_relational import (
 )
 from .sqlglot_helpers import (
     get_glot_name,
-    is_boolean_expression,
     set_glot_alias,
     unwrap_alias,
 )
