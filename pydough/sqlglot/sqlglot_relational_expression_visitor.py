@@ -300,9 +300,22 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed
         # and types do not represent implicit casts.
-        literal: SQLGlotExpression = sqlglot_expressions.convert(
-            literal_expression.value
-        )
+        literal: SQLGlotExpression
+        if isinstance(literal_expression.value, (tuple, list)):
+            # If the literal is a list or tuple, convert each element
+            # individually and create an array literal.
+            elements: list[SQLGlotExpression] = []
+            for element in literal_expression.value:
+                element_expr: SQLGlotExpression
+                if isinstance(element, RelationalExpression):
+                    element.accept(self)
+                    element_expr = self._stack.pop()
+                else:
+                    element_expr = sqlglot_expressions.convert(element)
+                elements.append(element_expr)
+            literal = sqlglot_expressions.Array(expressions=elements)
+        else:
+            literal = sqlglot_expressions.convert(literal_expression.value)
 
         # Special handling: insert cast calls for ansi casting of date/time
         # instead of relying on SQLGlot conversion functions. This is because

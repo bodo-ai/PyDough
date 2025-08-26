@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  FILTER(condition=UNMASK::(LOWER([c_lname])) == 'lee':string, columns={})
+  FILTER(condition=c_lname == MASK::(UPPER(['lee':string])), columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_lname': c_lname})
