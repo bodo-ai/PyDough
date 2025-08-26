@@ -14,5 +14,4 @@ JOIN crbnk.accounts AS accounts
 JOIN crbnk.customers AS customers
   ON accounts.a_custkey = (
     42 - customers.c_key
-  )
-  AND customers.c_fname = UPPER('alice')
+  ) AND customers.c_fname = 'ALICE'

@@ -236,6 +236,18 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     output_predicates.not_negative = True
                     if literal_expression.value > 0:
                         output_predicates.positive = True
+        if isinstance(literal_expression.value, (list, tuple)):
+            new_elems: list = []
+            for val in literal_expression.value:
+                if isinstance(val, RelationalExpression):
+                    new_elems.append(val.accept_shuttle(self))
+                    self.stack.pop()
+                else:
+                    new_elems.append(val)
+            if new_elems != literal_expression.value:
+                literal_expression = LiteralExpression(
+                    new_elems, literal_expression.data_type
+                )
         self.stack.append(output_predicates)
         return literal_expression
 
