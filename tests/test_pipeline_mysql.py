@@ -204,8 +204,6 @@ def defog_mysql_test_data(
     Modify reference solution data for some Defog queries.
     Return an instance of PyDoughPandasTest containing the modified data.
     """
-
-    # See comment in defog_sf_test_data
     if defog_custom_pipeline_test_data.test_name == "week_offset":
         return PyDoughPandasTest(
             week_offset,

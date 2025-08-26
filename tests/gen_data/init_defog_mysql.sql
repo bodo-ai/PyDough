@@ -553,12 +553,17 @@ INSERT INTO `sales` (`_id`, `car_id`, `salesperson_id`, `customer_id`, `sale_pri
  (14, 2, 3, 1, 23200.00, SUBDATE(CURDATE(), INTERVAL 21 DAY)),
  (15, 8, 6, 12, 43500.00, SUBDATE(CURDATE(), INTERVAL 3 DAY)),
  (16, 10, 4, 2, 29500.00, SUBDATE(CURDATE(), INTERVAL 5 DAY)),
- (17, 3, 2, 3, 46000.00, CURRENT_DATE - INTERVAL 7 DAY + INTERVAL 1 DAY),
- (18, 3, 2, 7, 47500.00, CURRENT_DATE - INTERVAL 7 DAY),
- (19, 3, 2, 10, 46500.00, CURRENT_DATE - INTERVAL 7 DAY - INTERVAL 1 DAY),
- (20, 4, 1, 3, 48000.00, CURRENT_DATE - INTERVAL 56 DAY + INTERVAL 1 DAY),
- (21, 4, 1, 7, 45000.00, CURRENT_DATE - INTERVAL 56 DAY),
- (22, 4, 1, 10, 49000.00, CURRENT_DATE - INTERVAL 56 DAY - INTERVAL 1 DAY);
+ -- Expression to truncate the current date to the most recent Monday in MySQL:
+ --   `DT - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY`
+ -- Reason: MySQL's DAYOFWEEK() returns 1 for Sunday, 2 for Monday, ..., 7 for
+ -- Saturday. We subtract 2 so that Monday becomes 0, Tuesday becomes 1, etc.
+ -- and Sunday becomes -1 (which becomes 6 when taken modulo 7).
+ (17, 3, 2, 3, 46000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 1 DAY),
+ (18, 3, 2, 7, 47500.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY),
+ (19, 3, 2, 10, 46500.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY - INTERVAL 1 DAY),
+ (20, 4, 1, 3, 48000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY + INTERVAL 1 DAY),
+ (21, 4, 1, 7, 45000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY),
+ (22, 4, 1, 10, 49000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY - INTERVAL 1 DAY);
 
 INSERT INTO `inventory_snapshots` (`_id`, `snapshot_date`, `car_id`, `is_in_inventory`) VALUES
  (1, '2023-03-15', 1, TRUE),
@@ -603,12 +608,12 @@ INSERT INTO `payments_received` (`_id`, `sale_id`, `payment_date`, `payment_amou
  (15, 14, SUBDATE(CURDATE(), INTERVAL 1 DAY), 17200.00, 'financing'),
  (16, 15, SUBDATE(CURDATE(), INTERVAL 1 DAY), 37500.00, 'credit_card'),
  (17, 16, SUBDATE(CURDATE(), INTERVAL 5 DAY), 26500.00, 'debit_card'),
- (18, 17, CURRENT_DATE - INTERVAL 7 DAY + INTERVAL 1 DAY, 115000.00, 'financing'),
- (19, 18, CURRENT_DATE - INTERVAL 7 DAY, 115000.00, 'credit_card'),
- (20, 19, CURRENT_DATE - INTERVAL 7 DAY - INTERVAL 1 DAY, 115000.00, 'debit_card'),
- (21, 20, CURRENT_DATE - INTERVAL 56 DAY + INTERVAL 1 DAY, 115000.00, 'cash'),
- (22, 21, CURRENT_DATE - INTERVAL 56 DAY, 115000.00, 'check'),
- (23, 22, CURRENT_DATE - INTERVAL 56 DAY - INTERVAL 1 DAY, 115000.00, 'credit_card');
+ (18, 17, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 1 DAY, 115000.00, 'financing'),
+ (19, 18, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY, 115000.00, 'credit_card'),
+ (20, 19, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY - INTERVAL 1 DAY, 115000.00, 'debit_card'),
+ (21, 20, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY + INTERVAL 1 DAY, 115000.00, 'cash'),
+ (22, 21, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY, 115000.00, 'check'),
+ (23, 22, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY - INTERVAL 1 DAY, 115000.00, 'credit_card');
 
 
 INSERT INTO `payments_made` (`_id`, `vendor_name`, `payment_date`, `payment_amount`, `payment_method`, `invoice_number`, `invoice_date`, `due_date`) VALUES
