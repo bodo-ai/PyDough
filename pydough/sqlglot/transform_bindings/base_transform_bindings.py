@@ -153,8 +153,6 @@ class BaseTransformBindings:
             provided arguments.
         """
         func: sqlglot_expressions.Func
-        arg_strings: list[str]
-        combined_string: str
         if operator in self.standard_func_bindings:
             func = self.standard_func_bindings[operator]
             return func.from_arg_list(args)
@@ -174,16 +172,24 @@ class BaseTransformBindings:
             return sqlglot_expressions.Anonymous(
                 this=operator.sql_function_alias, expressions=args
             )
-        if isinstance(operator, pydop.SqlMacroExpressionFunctionOperator):
+        if isinstance(
+            operator,
+            (
+                pydop.MaskedExpressionFunctionOperator,
+                pydop.SqlMacroExpressionFunctionOperator,
+            ),
+        ):
             # For user defined operators that are a macro for SQL text, convert
             # the arguments to SQL text strings then inject them into the macro
-            # as a format string, then re-parse it.
-            arg_strings = [arg.sql() for arg in args]
-            combined_string = operator.macro_text.format(*arg_strings)
-            return parse_one(combined_string)
-        if isinstance(operator, pydop.MaskedExpressionFunctionOperator):
-            arg_strings = [arg.sql() for arg in args]
-            combined_string = operator.format_string.format(*arg_strings)
+            # as a format string, then re-parse it. The same idea works for the
+            # masking/unmasking operators
+            arg_strings: list[str] = [arg.sql() for arg in args]
+            fmt_string: str
+            if isinstance(operator, pydop.MaskedExpressionFunctionOperator):
+                fmt_string = operator.format_string
+            else:
+                fmt_string = operator.macro_text
+            combined_string: str = fmt_string.format(*arg_strings)
             return parse_one(combined_string)
         match operator:
             case pydop.NOT:
