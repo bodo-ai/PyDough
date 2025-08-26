@@ -1,5 +1,5 @@
 ROOT(columns=[('order_key', o_orderkey), ('max_ratio', max_ratio)], orderings=[])
- JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'max_ratio': t1.max_ratio, 'o_orderkey': t0.o_orderkey})
+ JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'max_ratio': t1.max_ratio, 'o_orderkey': t0.o_orderkey})
   SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey})
   AGGREGATE(keys={'l_orderkey': l_orderkey}, aggregations={'max_ratio': MAX(l_quantity / ps_availqty)})
    JOIN(condition=t0.l_partkey == t1.ps_partkey & t0.l_suppkey == t1.ps_suppkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'l_orderkey': t0.l_orderkey, 'l_quantity': t0.l_quantity, 'ps_availqty': t1.ps_availqty})

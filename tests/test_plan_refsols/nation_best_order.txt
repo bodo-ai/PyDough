@@ -1,5 +1,5 @@
 ROOT(columns=[('nation_name', n_name), ('customer_name', c_name), ('order_key', o_orderkey), ('order_value', o_totalprice), ('value_percentage', value_percentage)], orderings=[(n_name):asc_first])
- JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'c_name': t1.c_name, 'n_name': t0.n_name, 'o_orderkey': t1.o_orderkey, 'o_totalprice': t1.o_totalprice, 'value_percentage': t1.value_percentage})
+ JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_name': t1.c_name, 'n_name': t0.n_name, 'o_orderkey': t1.o_orderkey, 'o_totalprice': t1.o_totalprice, 'value_percentage': t1.value_percentage})
   JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey})
    SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})
    FILTER(condition=r_name == 'ASIA':string, columns={'r_regionkey': r_regionkey})

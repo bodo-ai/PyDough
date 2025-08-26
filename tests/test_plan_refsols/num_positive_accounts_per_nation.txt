@@ -1,6 +1,6 @@
 ROOT(columns=[('name', n_name), ('suppliers_in_black', DEFAULT_TO(count_s_suppkey, 0:numeric)), ('total_suppliers', total_suppliers)], orderings=[])
- JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'count_s_suppkey': t0.count_s_suppkey, 'n_name': t0.n_name, 'total_suppliers': t1.total_suppliers})
-  JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'count_s_suppkey': t1.count_s_suppkey, 'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey})
+ JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'count_s_suppkey': t0.count_s_suppkey, 'n_name': t0.n_name, 'total_suppliers': t1.total_suppliers})
+  JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'count_s_suppkey': t1.count_s_suppkey, 'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey})
    SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
    AGGREGATE(keys={'s_nationkey': s_nationkey}, aggregations={'count_s_suppkey': COUNT(s_suppkey)})
     FILTER(condition=s_acctbal > 0.0:numeric, columns={'s_nationkey': s_nationkey, 's_suppkey': s_suppkey})

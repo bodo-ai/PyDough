@@ -1,5 +1,5 @@
 ROOT(columns=[('name', c_name), ('first_order_date', o_orderdate), ('first_order_price', o_totalprice)], orderings=[(o_totalprice):desc_last], limit=5:numeric)
- JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'c_name': t0.c_name, 'o_orderdate': t1.o_orderdate, 'o_totalprice': t1.o_totalprice})
+ JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_name': t0.c_name, 'o_orderdate': t1.o_orderdate, 'o_totalprice': t1.o_totalprice})
   FILTER(condition=c_acctbal >= 9000.0:numeric, columns={'c_custkey': c_custkey, 'c_name': c_name})
    SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_name': c_name})
   FILTER(condition=RANKING(args=[], partition=[o_custkey], order=[(o_orderdate):asc_last, (o_orderkey):asc_last]) == 1:numeric, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_totalprice': o_totalprice})

@@ -3,7 +3,7 @@ ROOT(columns=[('year', year), ('month', month), ('num_european_orders', n_rows),
   AGGREGATE(keys={'month': MONTH(o_orderdate), 'year': YEAR(o_orderdate)}, aggregations={'n_rows': COUNT()})
    SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})
   AGGREGATE(keys={'month': MONTH(o_orderdate), 'year': YEAR(o_orderdate)}, aggregations={'n_rows': COUNT()})
-   JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'o_orderdate': t0.o_orderdate})
+   JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'o_orderdate': t0.o_orderdate})
     SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate})
     JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey})
      JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey, 'n_regionkey': t1.n_regionkey})

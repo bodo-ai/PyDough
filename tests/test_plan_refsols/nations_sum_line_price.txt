@@ -1,5 +1,5 @@
 ROOT(columns=[('okey', n_nationkey), ('lsum', DEFAULT_TO(sum_l_extendedprice, 0:numeric))], orderings=[])
- JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'n_nationkey': t0.n_nationkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
+ JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_nationkey': t0.n_nationkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
   SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey})
   AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'sum_l_extendedprice': SUM(l_extendedprice)})
    JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'c_nationkey': t0.c_nationkey, 'l_extendedprice': t1.l_extendedprice})

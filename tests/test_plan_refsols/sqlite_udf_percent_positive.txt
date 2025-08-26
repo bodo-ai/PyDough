@@ -1,6 +1,6 @@
 ROOT(columns=[('name', r_name), ('pct_cust_positive', ROUND(percentage_expr_2, 2:numeric)), ('pct_supp_positive', ROUND(percentage_expr_3, 2:numeric))], orderings=[(r_name):asc_first])
- JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'percentage_expr_2': t0.percentage_expr_2, 'percentage_expr_3': t1.percentage_expr_3, 'r_name': t0.r_name})
-  JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'percentage_expr_2': t1.percentage_expr_2, 'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
+ JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'percentage_expr_2': t0.percentage_expr_2, 'percentage_expr_3': t1.percentage_expr_3, 'r_name': t0.r_name})
+  JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'percentage_expr_2': t1.percentage_expr_2, 'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
    SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
    AGGREGATE(keys={'n_regionkey': n_regionkey}, aggregations={'percentage_expr_2': PERCENTAGE(POSITIVE(c_acctbal))})
     JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'c_acctbal': t1.c_acctbal, 'n_regionkey': t0.n_regionkey})

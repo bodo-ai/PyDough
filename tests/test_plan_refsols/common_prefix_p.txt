@@ -1,6 +1,6 @@
 ROOT(columns=[('name', c_name), ('n_orders', n_rows), ('n_parts_ordered', n_rows_1), ('n_distinct_parts', ndistinct_l_partkey)], orderings=[(ndistinct_l_partkey / n_rows_1):asc_first, (c_name):asc_first], limit=5:numeric)
- JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_name': t0.c_name, 'n_rows': t0.n_rows, 'n_rows_1': t1.n_rows, 'ndistinct_l_partkey': t1.ndistinct_l_partkey})
-  JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey, 'c_name': t0.c_name, 'n_rows': t1.n_rows})
+ JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_name': t0.c_name, 'n_rows': t0.n_rows, 'n_rows_1': t1.n_rows, 'ndistinct_l_partkey': t1.ndistinct_l_partkey})
+  JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_custkey': t0.c_custkey, 'c_name': t0.c_name, 'n_rows': t1.n_rows})
    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name})
    AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})
     FILTER(condition=o_orderpriority == '1-URGENT':string, columns={'o_custkey': o_custkey})

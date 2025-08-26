@@ -18,7 +18,6 @@ from pydough.metadata import (
     SimpleJoinMetadata,
     SimpleTableMetadata,
 )
-from pydough.metadata.properties import ReversiblePropertyMetadata
 from pydough.qdag import (
     Calculate,
     CollectionAccess,
@@ -847,22 +846,14 @@ class RelTranslation:
         )
 
         # Infer the cardinality of the join from the perspective of the new
-        # collection to the existing data.
-        reverse_cardinality: JoinCardinality
-        if (
-            isinstance(
-                collection_access.subcollection_property, ReversiblePropertyMetadata
+        # collection to the existing data. Also, if the parent has any
+        # additional filters on its side that means a row may not always
+        # exist, then update the reverse cardinality since it may be filtering.
+        reverse_cardinality: JoinCardinality = (
+            HybridTree.infer_metadata_reverse_cardinality(
+                collection_access.subcollection_property
             )
-            and collection_access.subcollection_property.reverse is not None
-        ):
-            if collection_access.subcollection_property.reverse.is_plural:
-                reverse_cardinality = JoinCardinality.PLURAL_ACCESS
-            else:
-                reverse_cardinality = JoinCardinality.SINGULAR_ACCESS
-            if not collection_access.subcollection_property.reverse.always_matches:
-                reverse_cardinality = reverse_cardinality.add_filter()
-        else:
-            reverse_cardinality = JoinCardinality.PLURAL_ACCESS
+        )
         if (not reverse_cardinality.filters) and (not parent.always_exists()):
             reverse_cardinality = reverse_cardinality.add_filter()
 

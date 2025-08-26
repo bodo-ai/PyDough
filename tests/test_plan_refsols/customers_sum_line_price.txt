@@ -1,5 +1,5 @@
 ROOT(columns=[('okey', c_custkey), ('lsum', DEFAULT_TO(sum_l_extendedprice, 0:numeric))], orderings=[])
- JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
+ JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_custkey': t0.c_custkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
   SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey})
   AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'sum_l_extendedprice': SUM(l_extendedprice)})
    JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'l_extendedprice': t1.l_extendedprice, 'o_custkey': t0.o_custkey})

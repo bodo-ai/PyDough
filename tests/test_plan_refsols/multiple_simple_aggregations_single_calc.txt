@@ -1,6 +1,6 @@
 ROOT(columns=[('nation_name', n_nationkey), ('consumer_value', DEFAULT_TO(sum_c_acctbal, 0:numeric)), ('producer_value', DEFAULT_TO(sum_s_acctbal, 0:numeric))], orderings=[])
- JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_nationkey': t0.n_nationkey, 'sum_c_acctbal': t0.sum_c_acctbal, 'sum_s_acctbal': t1.sum_s_acctbal})
-  JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_nationkey': t0.n_nationkey, 'sum_c_acctbal': t1.sum_c_acctbal})
+ JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'n_nationkey': t0.n_nationkey, 'sum_c_acctbal': t0.sum_c_acctbal, 'sum_s_acctbal': t1.sum_s_acctbal})
+  JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'n_nationkey': t0.n_nationkey, 'sum_c_acctbal': t1.sum_c_acctbal})
    SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey})
    AGGREGATE(keys={'c_nationkey': c_nationkey}, aggregations={'sum_c_acctbal': SUM(c_acctbal)})
     SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_nationkey': c_nationkey})
