@@ -179,6 +179,10 @@ class BaseTransformBindings:
             arg_strings: list[str] = [arg.sql() for arg in args]
             combined_string: str = operator.macro_text.format(*arg_strings)
             return parse_one(combined_string)
+        # if isinstance(operator, pydop.MaskedExpressionFunctionOperator):
+        #     arg_strings: list[str] = [arg.sql() for arg in args]
+        #     combined_string: str = operator.format_string.format(*arg_strings)
+        #     return parse_one(combined_string)
         match operator:
             case pydop.NOT:
                 return sqlglot_expressions.Not(this=args[0])

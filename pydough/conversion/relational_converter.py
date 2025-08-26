@@ -808,15 +808,15 @@ class RelTranslation:
         ):
             unmask_columns: dict[str, RelationalExpression] = {}
             for name, hybrid_expr in node.terms.items():
-                if isinstance(expr, HybridColumnExpr) and isinstance(
-                    expr.column.column_property, MaskedTableColumnMetadata
+                if isinstance(hybrid_expr, HybridColumnExpr) and isinstance(
+                    hybrid_expr.column.column_property, MaskedTableColumnMetadata
                 ):
                     unmask_columns[name] = CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
-                            expr.column.column_property, True
+                            hybrid_expr.column.column_property, True
                         ),
-                        expr.column.column_property.unprotected_data_type,
-                        [ColumnReference(name, expr.typ)],
+                        hybrid_expr.column.column_property.unprotected_data_type,
+                        [ColumnReference(name, hybrid_expr.typ)],
                     )
                 else:
                     unmask_columns[name] = ColumnReference(name, hybrid_expr.typ)
