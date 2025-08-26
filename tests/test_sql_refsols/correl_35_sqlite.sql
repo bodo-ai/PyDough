@@ -3,13 +3,12 @@ WITH _s1 AS (
     p_partkey,
     p_type
   FROM tpch.part
-), _s10 AS (
-  SELECT
-    COUNT(*) AS n_rows,
+), _s13 AS (
+  SELECT DISTINCT
     customer.c_custkey,
     customer.c_nationkey,
-    lineitem.l_partkey,
-    orders.o_orderpriority
+    orders.o_orderpriority,
+    _s11.p_type
   FROM tpch.customer AS customer
   JOIN tpch.orders AS orders
     ON CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1997
@@ -31,26 +30,8 @@ WITH _s1 AS (
     END = 1
     AND CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1997
     AND lineitem.l_orderkey = orders.o_orderkey
-  GROUP BY
-    2,
-    3,
-    4,
-    5
-), _t3 AS (
-  SELECT
-    SUM(_s10.n_rows) AS sum_n_rows,
-    _s10.c_custkey,
-    _s10.c_nationkey,
-    _s10.o_orderpriority,
-    _s11.p_type
-  FROM _s10 AS _s10
   JOIN _s1 AS _s11
-    ON _s10.l_partkey = _s11.p_partkey
-  GROUP BY
-    2,
-    3,
-    4,
-    5
+    ON _s11.p_partkey = lineitem.l_partkey
 )
 SELECT
   COUNT(*) AS n
@@ -62,11 +43,10 @@ JOIN tpch.supplier AS supplier
 JOIN tpch.orders AS orders
   ON CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1998
   AND lineitem.l_orderkey = orders.o_orderkey
-JOIN _t3 AS _t3
-  ON _s1.p_type = _t3.p_type
-  AND _t3.c_custkey = orders.o_custkey
-  AND _t3.c_nationkey = supplier.s_nationkey
-  AND _t3.o_orderpriority = orders.o_orderpriority
-  AND _t3.sum_n_rows > 0
+JOIN _s13 AS _s13
+  ON _s1.p_type = _s13.p_type
+  AND _s13.c_custkey = orders.o_custkey
+  AND _s13.c_nationkey = supplier.s_nationkey
+  AND _s13.o_orderpriority = orders.o_orderpriority
 WHERE
   CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1998
