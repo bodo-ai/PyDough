@@ -61,7 +61,37 @@ __all__ = [
     "impl_defog_dealership_gen3",
     "impl_defog_dealership_gen4",
     "impl_defog_dealership_gen5",
+    "impl_defog_dermtreatment_adv1",
+    "impl_defog_dermtreatment_adv10",
+    "impl_defog_dermtreatment_adv11",
+    "impl_defog_dermtreatment_adv12",
+    "impl_defog_dermtreatment_adv13",
+    "impl_defog_dermtreatment_adv14",
+    "impl_defog_dermtreatment_adv15",
+    "impl_defog_dermtreatment_adv16",
+    "impl_defog_dermtreatment_adv2",
+    "impl_defog_dermtreatment_adv3",
+    "impl_defog_dermtreatment_adv4",
+    "impl_defog_dermtreatment_adv5",
+    "impl_defog_dermtreatment_adv6",
+    "impl_defog_dermtreatment_adv7",
+    "impl_defog_dermtreatment_adv8",
+    "impl_defog_dermtreatment_adv9",
     "impl_defog_dermtreatment_basic1",
+    "impl_defog_dermtreatment_basic10",
+    "impl_defog_dermtreatment_basic2",
+    "impl_defog_dermtreatment_basic3",
+    "impl_defog_dermtreatment_basic4",
+    "impl_defog_dermtreatment_basic5",
+    "impl_defog_dermtreatment_basic6",
+    "impl_defog_dermtreatment_basic7",
+    "impl_defog_dermtreatment_basic8",
+    "impl_defog_dermtreatment_basic9",
+    "impl_defog_dermtreatment_gen1",
+    "impl_defog_dermtreatment_gen2",
+    "impl_defog_dermtreatment_gen3",
+    "impl_defog_dermtreatment_gen4",
+    "impl_defog_dermtreatment_gen5",
     "impl_defog_ewallet_adv1",
     "impl_defog_ewallet_adv10",
     "impl_defog_ewallet_adv11",
@@ -1801,7 +1831,7 @@ def impl_defog_dermtreatment_basic2():
         treatments_info.PARTITION(name="insurance_groups", by=insurance_type)
         .CALCULATE(
             insurance_type=insurance_type,
-            num_distinct_patients=NDISTINCT(treatments.patient.patient_id),
+            num_distinct_patients=NDISTINCT(treatments.patient_id),
             avg_pasi_score_day100=AVG(treatments.outcome_records.day100_pasi_score),
         )
         .TOP_K(5, by=avg_pasi_score_day100.ASC())
@@ -2186,23 +2216,19 @@ def impl_defog_dermtreatment_adv10():
     id and name.
     """
 
-    # First, let's get adverse events with their treatment start dates and drug information
-    adverse_events_info = adverse_events.CALCULATE(
-        treatment.drug_id, treatment.drug.drug_name
+    # Identify all the adverse events for each drug that were the same month the
+    # the treatment started in.
+    same_month_adverse_events = treatments_used_in.CALCULATE(
+        treatment_start_date=start_date
+    ).adverse_events.WHERE(
+        DATETIME(treatment_start_date, "start of month")
+        == DATETIME(reported_date, "start of month")
     )
 
-    # Filter for adverse events that occurred in the same month as treatment start
-    same_month_events = adverse_events_info.WHERE(
-        (
-            DATETIME(reported_date, "start of month")
-            == DATETIME(treatment.start_date, "start of month")
-        )
+    # For each drug count the number of such events
+    drug_ae_counts = drugs.WHERE(HAS(same_month_adverse_events)).CALCULATE(
+        drug_id, drug_name, num_adverse_events=COUNT(same_month_adverse_events)
     )
-
-    # Group by drug and count adverse events
-    drug_ae_counts = same_month_events.PARTITION(
-        name="drug_groups", by=(drug_id, drug_name)
-    ).CALCULATE(drug_id, drug_name, num_adverse_events=COUNT(adverse_events))
 
     # Find the drug with the highest number of adverse events
     return drug_ae_counts.TOP_K(1, by=num_adverse_events.DESC())
@@ -2263,7 +2289,7 @@ def impl_defog_dermtreatment_adv14():
     """
 
     return DermTreatment.CALCULATE(
-        CAW_male=AVG(patients.WHERE(LOWER(gender) == LOWER("male")).weight)
+        CAW_male=AVG(patients.WHERE(gender == "Male").weight)
     )
 
 
@@ -2275,8 +2301,9 @@ def impl_defog_dermtreatment_adv15():
     Calculate the average DDD for each drug. Return the drug name and average
     DDD value.
     """
-
+    # Find all treatments the drug was used in that have finished
     selected_treatments = treatments_used_in.WHERE(PRESENT(end_date))
+
     return drugs.WHERE(HAS(selected_treatments)).CALCULATE(
         drug_name,
         avg_ddd=AVG(
@@ -2296,7 +2323,8 @@ def impl_defog_dermtreatment_adv16():
     value.
     """
 
-    # Filter outcomes to only include those with non-null PASI scores for both day 7 and day 100
+    # Filter outcomes to only include those with non-null PASI scores for both
+    # day 7 and day 100
     valid_outcomes = outcomes.WHERE(
         PRESENT(day7_pasi_score) & PRESENT(day100_pasi_score)
     )
@@ -2338,7 +2366,7 @@ def impl_defog_dermtreatment_gen2():
     List the last name, year of registration, and first treatment (date and id)
     by doctors who were registered 2 years ago.
     """
-    # First doctor's treatment
+    # Doctor's first treatment
     first_treatment = prescribed_treatments.BEST(per="doctors", by=start_date.ASC())
 
     # Find doctors registered 2 years ago and their first treatment
@@ -2360,10 +2388,7 @@ def impl_defog_dermtreatment_gen3():
     """
     return DermTreatment.CALCULATE(
         average_age=AVG(
-            patients.WHERE(
-                (LOWER(gender) == LOWER("Male"))
-                & (LOWER(insurance_type) == LOWER("private"))
-            )
+            patients.WHERE((gender == "Male") & (insurance_type == "private"))
             .CALCULATE(age_in_years=DATEDIFF("years", date_of_birth, DATETIME("now")))
             .age_in_years
         )
@@ -2382,7 +2407,8 @@ def impl_defog_dermtreatment_gen4():
     return (
         treatments.WHERE(is_placebo == True)
         .concomitant_meds.WHERE(
-            DATEDIFF("days", treatment.start_date, start_date) <= 14
+            treatment.is_placebo
+            & (DATEDIFF("days", treatment.start_date, start_date) <= 14)
         )
         .CALCULATE(
             treatment.treatment_id,
@@ -2409,7 +2435,7 @@ def impl_defog_dermtreatment_gen5():
                 CONTAINS(LOWER(diagnosis.name), "psoriasis")
                 & PRESENT(drug.fda_approval_date)
                 & PRESENT(end_date)
-                & (DATEDIFF("days", end_date, DATETIME("now")) <= 180)
+                & (end_date >= DATETIME("now", "-6 months", "start of day"))
             )
         )
     )

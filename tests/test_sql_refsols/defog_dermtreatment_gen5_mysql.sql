@@ -7,5 +7,5 @@ JOIN main.diagnoses AS diagnoses
 JOIN main.drugs AS drugs
   ON NOT drugs.fda_appr_dt IS NULL AND drugs.drug_id = treatments.drug_id
 WHERE
-  DATEDIFF(CURRENT_TIMESTAMP(), treatments.end_dt) <= 180
-  AND NOT treatments.end_dt IS NULL
+  NOT treatments.end_dt IS NULL
+  AND treatments.end_dt >= CAST(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH) AS DATE)

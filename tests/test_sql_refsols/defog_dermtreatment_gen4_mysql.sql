@@ -10,5 +10,6 @@ JOIN main.concomitant_meds AS concomitant_meds
 JOIN main.treatments AS treatments_2
   ON DATEDIFF(concomitant_meds.start_dt, treatments_2.start_dt) <= 14
   AND concomitant_meds.treatment_id = treatments_2.treatment_id
+  AND treatments_2.is_placebo
 WHERE
   treatments.is_placebo = TRUE
