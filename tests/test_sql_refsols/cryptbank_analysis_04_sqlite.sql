@@ -4,20 +4,40 @@ WITH _s3 AS (
     t_sourceaccount
   FROM crbnk.transactions
   WHERE
-    t_amount > 9000.0
+    (
+      1025.67 - t_amount
+    ) > 9000.0
   GROUP BY
     2
 )
 SELECT
-  accounts.a_key AS key,
-  CONCAT_WS(' ', customers.c_fname, customers.c_lname) AS cust_name,
+  CASE
+    WHEN accounts.a_key = 0
+    THEN 0
+    ELSE CASE WHEN accounts.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(
+      accounts.a_key,
+      1 + INSTR(accounts.a_key, '-'),
+      CAST(LENGTH(accounts.a_key) AS REAL) / 2
+    ) AS INTEGER)
+  END AS key,
+  CONCAT_WS(' ', LOWER(customers.c_fname), LOWER(customers.c_lname)) AS cust_name,
   _s3.n_rows AS n_trans
 FROM crbnk.accounts AS accounts
 JOIN crbnk.customers AS customers
-  ON CAST(STRFTIME('%Y', customers.c_birthday) AS INTEGER) <= 1985
-  AND CAST(STRFTIME('%Y', customers.c_birthday) AS INTEGER) >= 1980
-  AND accounts.a_custkey = customers.c_key
+  ON CAST(STRFTIME('%Y', DATE(customers.c_birthday, '+472 days')) AS INTEGER) <= 1985
+  AND CAST(STRFTIME('%Y', DATE(customers.c_birthday, '+472 days')) AS INTEGER) >= 1980
+  AND accounts.a_custkey = (
+    42 - customers.c_key
+  )
 JOIN _s3 AS _s3
-  ON _s3.t_sourceaccount = accounts.a_key
+  ON _s3.t_sourceaccount = CASE
+    WHEN accounts.a_key = 0
+    THEN 0
+    ELSE CASE WHEN accounts.a_key > 0 THEN 1 ELSE -1 END * CAST(SUBSTRING(
+      accounts.a_key,
+      1 + INSTR(accounts.a_key, '-'),
+      CAST(LENGTH(accounts.a_key) AS REAL) / 2
+    ) AS INTEGER)
+  END
 ORDER BY
   1

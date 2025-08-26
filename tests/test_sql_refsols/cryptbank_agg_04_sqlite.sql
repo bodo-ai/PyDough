@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    SUM(a_balance) AS sum_a_balance,
+    SUM(SQRT(a_balance)) AS sum_balance,
     a_branchkey
   FROM crbnk.accounts
   GROUP BY
@@ -9,7 +9,7 @@ WITH _s1 AS (
 SELECT
   branches.b_key AS branch_key,
   ROUND(
-    CAST(COALESCE(_s1.sum_a_balance, 0) AS REAL) / SUM(COALESCE(_s1.sum_a_balance, 0)) OVER (),
+    CAST(COALESCE(_s1.sum_balance, 0) AS REAL) / SUM(COALESCE(_s1.sum_balance, 0)) OVER (),
     2
   ) AS pct_total_wealth
 FROM crbnk.branches AS branches

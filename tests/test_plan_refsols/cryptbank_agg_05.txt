@@ -1,6 +1,6 @@
 ROOT(columns=[('avg_secs', ROUND(avg_expr_1, 2:numeric))], orderings=[])
  AGGREGATE(keys={}, aggregations={'avg_expr_1': AVG(DATEDIFF('seconds':string, UNMASK::(DATETIME([a_open_ts], '+123456789 seconds')), min_time_stamp))})
-  JOIN(condition=UNMASK::(INTEGER(STRING([t0.a_key]) || STRING(ABS([t0.a_key])))) == t1.t_sourceaccount, type=LEFT, cardinality=SINGULAR_FILTER, columns={'a_open_ts': t0.a_open_ts, 'min_time_stamp': t1.min_time_stamp})
+  JOIN(condition=UNMASK::(CASE WHEN [t0.a_key] = 0 THEN 0 ELSE (CASE WHEN [t0.a_key] > 0 THEN 1 ELSE -1 END) * CAST(SUBSTRING([t0.a_key], 1 + INSTR([t0.a_key], '-'), LENGTH([t0.a_key]) / 2) AS INTEGER) END) == t1.t_sourceaccount, type=LEFT, cardinality=SINGULAR_FILTER, columns={'a_open_ts': t0.a_open_ts, 'min_time_stamp': t1.min_time_stamp})
    SCAN(table=CRBNK.ACCOUNTS, columns={'a_key': a_key, 'a_open_ts': a_open_ts})
    AGGREGATE(keys={'t_sourceaccount': t_sourceaccount}, aggregations={'min_time_stamp': MIN(UNMASK::(DATETIME([t_ts], '+54321 seconds')))})
     SCAN(table=CRBNK.TRANSACTIONS, columns={'t_sourceaccount': t_sourceaccount, 't_ts': t_ts})

@@ -4,15 +4,17 @@ WITH _t AS (
     accounts.a_type,
     customers.c_fname,
     customers.c_lname,
-    ROW_NUMBER() OVER (PARTITION BY accounts.a_type ORDER BY accounts.a_balance DESC) AS _w
+    ROW_NUMBER() OVER (PARTITION BY SUBSTRING(accounts.a_type, -1) || SUBSTRING(accounts.a_type, 1, LENGTH(accounts.a_type) - 1) ORDER BY SQRT(accounts.a_balance) DESC) AS _w
   FROM crbnk.accounts AS accounts
   JOIN crbnk.customers AS customers
-    ON accounts.a_custkey = customers.c_key
+    ON accounts.a_custkey = (
+      42 - customers.c_key
+    )
 )
 SELECT
-  a_type AS account_type,
-  a_balance AS balance,
-  CONCAT_WS(' ', c_fname, c_lname) AS name
+  SUBSTRING(a_type, -1) || SUBSTRING(a_type, 1, LENGTH(a_type) - 1) AS account_type,
+  SQRT(a_balance) AS balance,
+  CONCAT_WS(' ', LOWER(c_fname), LOWER(c_lname)) AS name
 FROM _t
 WHERE
   _w = 1
