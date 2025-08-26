@@ -86,8 +86,8 @@
               "type": "masked table column",
               "column name": "c_birthday",
               "data type": "datetime",
-              "unprotect protocol": "DATE(column7, '+472 days')",
-              "protect protocol": "DATE(column7, '-472 days')",
+              "unprotect protocol": "DATE({}, '+472 days')",
+              "protect protocol": "DATE({}, '-472 days')",
               "server masked": true,
               "description": "The date the customer was born on.",
               "synonyms": ["birth date", "date of birth", "DOB"]
@@ -198,8 +198,8 @@
               "type": "masked table column",
               "column name": "a_open_ts",
               "data type": "datetime",
-              "unprotect protocol": "DATETIME(column6, '+123456789 seconds')",
-              "protect protocol": "DATETIME(column6, '-123456789 seconds')",
+              "unprotect protocol": "DATETIME({}, '+123456789 seconds')",
+              "protect protocol": "DATETIME({}, '-123456789 seconds')",
               "server masked": true,
               "description": "The timestamp when the account was opened at the branch",
               "synonyms": ["datetime of opening", "account creation date", "account open timestamp"]
@@ -258,8 +258,8 @@
               "type": "masked table column",
               "column name": "t_ts",
               "data type": "datetime",
-              "unprotect protocol": "DATETIME(column5, '+54321 seconds')",
-              "protect protocol": "DATETIME(column5, '-54321 seconds')",
+              "unprotect protocol": "DATETIME({}, '+54321 seconds')",
+              "protect protocol": "DATETIME({}, '-54321 seconds')",
               "server masked": true,
               "description": "The timestamp when the transaction occurred",
               "synonyms": ["transaction datetime", "transaction time", "datetime of transfer"]

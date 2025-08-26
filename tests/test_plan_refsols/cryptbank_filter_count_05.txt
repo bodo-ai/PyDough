@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  FILTER(condition=STARTSWITH(c_phone, '555-8':string), columns={})
+  FILTER(condition=STARTSWITH(UNMASK::(REPLACE(REPLACE(REPLACE([c_phone], '9', '*'), '0', '9'), '*', '0')), '555-8':string), columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_phone': c_phone})

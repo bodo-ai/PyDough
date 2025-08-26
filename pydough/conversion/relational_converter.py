@@ -15,6 +15,7 @@ from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
+    MaskedTableColumnMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
 )
@@ -794,7 +795,33 @@ class RelTranslation:
                 assert isinstance(expr, ColumnReference)
                 real_names.add(expr.name)
             uniqueness.add(frozenset(real_names))
-        answer = Scan(node.collection.collection.table_path, scan_columns, uniqueness)
+        answer: RelationalNode = Scan(
+            node.collection.collection.table_path, scan_columns, uniqueness
+        )
+
+        # If any of the columns are masked, insert a projection on top to unmask
+        # them.
+        if any(
+            isinstance(expr, HybridColumnExpr)
+            and isinstance(expr.column.column_property, MaskedTableColumnMetadata)
+            for expr in node.terms.values()
+        ):
+            unmask_columns: dict[str, RelationalExpression] = {}
+            for name, hybrid_expr in node.terms.items():
+                if isinstance(expr, HybridColumnExpr) and isinstance(
+                    expr.column.column_property, MaskedTableColumnMetadata
+                ):
+                    unmask_columns[name] = CallExpression(
+                        pydop.MaskedExpressionFunctionOperator(
+                            expr.column.column_property, True
+                        ),
+                        expr.column.column_property.unprotected_data_type,
+                        [ColumnReference(name, expr.typ)],
+                    )
+                else:
+                    unmask_columns[name] = ColumnReference(name, hybrid_expr.typ)
+            answer = Project(answer, unmask_columns)
+
         return TranslationOutput(answer, out_columns)
 
     def translate_sub_collection(
