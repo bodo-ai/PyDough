@@ -1,0 +1,7 @@
+ROOT(columns=[('condition_description', DESCRIPTION)], orderings=[(occurrence_count):desc_last], limit=1:numeric)
+ AGGREGATE(keys={'DESCRIPTION': DESCRIPTION}, aggregations={'occurrence_count': COUNT()})
+  JOIN(condition=t0.patient == t1.PATIENT, type=INNER, cardinality=PLURAL_ACCESS, columns={'DESCRIPTION': t1.DESCRIPTION})
+   FILTER(condition=ethnicity == 'american':string & gender == 'F':string, columns={'patient': patient})
+    SCAN(table=main.patients, columns={'ethnicity': ethnicity, 'gender': gender, 'patient': patient})
+   AGGREGATE(keys={'DESCRIPTION': DESCRIPTION, 'PATIENT': PATIENT}, aggregations={})
+    SCAN(table=main.conditions, columns={'DESCRIPTION': DESCRIPTION, 'PATIENT': PATIENT})

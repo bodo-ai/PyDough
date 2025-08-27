@@ -1,0 +1,1373 @@
+[
+  {
+    "name": "synthea",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "all_prevalences",
+        "type": "simple table",
+        "table path": "main.all_prevalences",
+        "unique properties": [
+          "ITEM"
+        ],
+        "properties": [
+          {
+            "name": "ITEM",
+            "type": "table column",
+            "column name": "ITEM",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "POPULATION_TYPE",
+            "type": "table column",
+            "column name": "`POPULATION TYPE`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "OCCURRENCES",
+            "type": "table column",
+            "column name": "OCCURRENCES",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "POPULATION_COUNT",
+            "type": "table column",
+            "column name": "`POPULATION COUNT`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PREVALENCE_RATE",
+            "type": "table column",
+            "column name": "`PREVALENCE RATE`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PREVALENCE_PERCENTAGE",
+            "type": "table column",
+            "column name": "`PREVALENCE PERCENTAGE`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "allergies",
+        "type": "simple table",
+        "table path": "main.allergies",
+        "unique properties": [
+          "PATIENT",
+          "ENCOUNTER",
+          "CODE"
+        ],
+        "properties": [
+          {
+            "name": "START",
+            "type": "table column",
+            "column name": "START",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "STOP",
+            "type": "table column",
+            "column name": "STOP",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "careplans",
+        "type": "simple table",
+        "table path": "main.careplans",
+        "unique properties": [
+          [
+            "ID",
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ]
+        ],
+        "properties": [
+          {
+            "name": "ID",
+            "type": "table column",
+            "column name": "ID",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "START",
+            "type": "table column",
+            "column name": "START",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "STOP",
+            "type": "table column",
+            "column name": "STOP",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONCODE",
+            "type": "table column",
+            "column name": "REASONCODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONDESCRIPTION",
+            "type": "table column",
+            "column name": "REASONDESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "claims",
+        "type": "simple table",
+        "table path": "main.claims",
+        "unique properties": [
+          "ID"
+        ],
+        "properties": [
+          {
+            "name": "ID",
+            "type": "table column",
+            "column name": "ID",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "BILLABLEPERIOD",
+            "type": "table column",
+            "column name": "BILLABLEPERIOD",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ORGANIZATION",
+            "type": "table column",
+            "column name": "ORGANIZATION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DIAGNOSIS",
+            "type": "table column",
+            "column name": "DIAGNOSIS",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "TOTAL",
+            "type": "table column",
+            "column name": "TOTAL",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "conditions",
+        "type": "simple table",
+        "table path": "main.conditions",
+        "unique properties": [
+          [
+            "START",
+            "STOP",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION"
+          ]
+        ],
+        "properties": [
+          {
+            "name": "START",
+            "type": "table column",
+            "column name": "START",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "STOP",
+            "type": "table column",
+            "column name": "STOP",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "encounters",
+        "type": "simple table",
+        "table path": "main.encounters",
+        "unique properties": [
+          "ID"
+        ],
+        "properties": [
+          {
+            "name": "ID",
+            "type": "table column",
+            "column name": "ID",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DATE",
+            "type": "table column",
+            "column name": "DATE",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONCODE",
+            "type": "table column",
+            "column name": "REASONCODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONDESCRIPTION",
+            "type": "table column",
+            "column name": "REASONDESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "immunizations",
+        "type": "simple table",
+        "table path": "main.immunizations",
+        "unique properties": [
+          "DATE",
+          "PATIENT",
+          "ENCOUNTER",
+          "CODE"
+        ],
+        "properties": [
+          {
+            "name": "DATE",
+            "type": "table column",
+            "column name": "DATE",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "medications",
+        "type": "simple table",
+        "table path": "main.medications",
+        "unique properties": [
+          "START",
+          "PATIENT",
+          "ENCOUNTER",
+          "CODE"
+        ],
+        "properties": [
+          {
+            "name": "START",
+            "type": "table column",
+            "column name": "START",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "STOP",
+            "type": "table column",
+            "column name": "STOP",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONCODE",
+            "type": "table column",
+            "column name": "REASONCODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONDESCRIPTION",
+            "type": "table column",
+            "column name": "REASONDESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "observations",
+        "type": "simple table",
+        "table path": "main.observations",
+        "unique properties": [
+          [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "VALUE",
+            "UNITS"
+          ]
+        ],
+        "properties": [
+          {
+            "name": "DATE",
+            "type": "table column",
+            "column name": "DATE",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "VALUE",
+            "type": "table column",
+            "column name": "VALUE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "UNITS",
+            "type": "table column",
+            "column name": "UNITS",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "patients",
+        "type": "simple table",
+        "table path": "main.patients",
+        "unique properties": [
+          "patient"
+        ],
+        "properties": [
+          {
+            "name": "patient",
+            "type": "table column",
+            "column name": "patient",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "birthdate",
+            "type": "table column",
+            "column name": "birthdate",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "deathdate",
+            "type": "table column",
+            "column name": "deathdate",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ssn",
+            "type": "table column",
+            "column name": "ssn",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "drivers",
+            "type": "table column",
+            "column name": "drivers",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "passport",
+            "type": "table column",
+            "column name": "passport",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "prefix",
+            "type": "table column",
+            "column name": "prefix",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "first",
+            "type": "table column",
+            "column name": "first",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "last",
+            "type": "table column",
+            "column name": "last",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "suffix",
+            "type": "table column",
+            "column name": "suffix",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "maiden",
+            "type": "table column",
+            "column name": "maiden",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "marital",
+            "type": "table column",
+            "column name": "marital",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "race",
+            "type": "table column",
+            "column name": "race",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ethnicity",
+            "type": "table column",
+            "column name": "ethnicity",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "gender",
+            "type": "table column",
+            "column name": "gender",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "birthplace",
+            "type": "table column",
+            "column name": "birthplace",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "address",
+            "type": "table column",
+            "column name": "address",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "procedures",
+        "type": "simple table",
+        "table path": "main.procedures",
+        "unique properties": [
+          [
+            "DATE",
+            "PATIENT",
+            "ENCOUNTER",
+            "CODE",
+            "DESCRIPTION",
+            "REASONCODE",
+            "REASONDESCRIPTION"
+          ]
+        ],
+        "properties": [
+          {
+            "name": "DATE",
+            "type": "table column",
+            "column name": "DATE",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "PATIENT",
+            "type": "table column",
+            "column name": "PATIENT",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ENCOUNTER",
+            "type": "table column",
+            "column name": "ENCOUNTER",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "CODE",
+            "type": "table column",
+            "column name": "CODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "DESCRIPTION",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONCODE",
+            "type": "table column",
+            "column name": "REASONCODE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "REASONDESCRIPTION",
+            "type": "table column",
+            "column name": "REASONDESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "allergies",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "allergies",
+        "original parent": "allergies",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "allergies",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "allergies",
+        "original parent": "allergies",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "careplans",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "careplans",
+        "original parent": "careplans",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "careplans",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "careplans",
+        "original parent": "careplans",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "claims",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "claims",
+        "original parent": "claims",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "claims",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "claims",
+        "original parent": "claims",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "conditions",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "conditions",
+        "original parent": "conditions",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "conditions",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "conditions",
+        "original parent": "conditions",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "encounters",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "encounters",
+        "original parent": "encounters",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "immunizations",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "immunizations",
+        "original parent": "immunizations",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "immunizations",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "immunizations",
+        "original parent": "immunizations",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "medications",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "medications",
+        "original parent": "medications",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "medications",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "medications",
+        "original parent": "medications",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "observations",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "observations",
+        "original parent": "observations",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "observations",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "observations",
+        "original parent": "observations",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "patient",
+        "parent collection": "procedures",
+        "child collection": "patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "PATIENT": [
+            "patient"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "procedures",
+        "original parent": "procedures",
+        "original property": "patient",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "encounter",
+        "parent collection": "procedures",
+        "child collection": "encounters",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "ENCOUNTER": [
+            "ID"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "procedures",
+        "original parent": "procedures",
+        "original property": "encounter",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      }
+    ]
+  }
+]
