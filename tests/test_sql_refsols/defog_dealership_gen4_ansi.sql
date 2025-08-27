@@ -24,7 +24,7 @@ WITH _s0 AS (
 SELECT
   quarter,
   state AS customer_state,
-  COALESCE(sum_sum_sale_price, 0) AS total_sales
+  sum_sum_sale_price AS total_sales
 FROM _t1
 WHERE
   NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0

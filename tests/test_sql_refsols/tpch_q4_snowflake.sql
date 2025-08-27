@@ -14,8 +14,8 @@ FROM tpch.orders AS orders
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = orders.o_orderkey
 WHERE
-  NOT _u_0._u_1 IS NULL
-  AND QUARTER(CAST(orders.o_orderdate AS TIMESTAMP)) = 3
+  MONTH(CAST(orders.o_orderdate AS TIMESTAMP)) IN (7, 8, 9)
+  AND NOT _u_0._u_1 IS NULL
   AND YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1993
 GROUP BY
   1

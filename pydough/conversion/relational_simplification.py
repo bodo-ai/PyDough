@@ -9,9 +9,14 @@ predicates of the simplified expressions.
 __all__ = ["simplify_expressions"]
 
 
+import datetime
+import re
 from dataclasses import dataclass
 
+import pandas as pd
+
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -35,6 +40,12 @@ from pydough.relational import (
 from pydough.relational.rel_util import (
     add_input_name,
 )
+from pydough.sqlglot.transform_bindings.sqlglot_transform_utils import (
+    DateTimeUnit,
+    offset_pattern,
+    trunc_pattern,
+)
+from pydough.types import ArrayType, NumericType, StringType
 
 
 @dataclass
@@ -167,6 +178,18 @@ guaranteed to be non-null, the output is guaranteed to be non-null as well.
 """
 
 
+NULL_IF_INPUT_NULL_OPS: set[pydop.PyDoughOperator] = (
+    NULL_PROPAGATING_OPS | {pydop.GETPART, pydop.DATETIME}
+) - {pydop.BOR, pydop.SLICE}
+"""
+A set of operators that will always output null if any of their inputs are null.
+This includes all operators from NULL_PROPAGATING_OPS unless it is possible for
+them to output a non-null value even if some inputs are null (e.g. OR, SLICE),
+and also include some operators that can return NULL even if none of the inputs
+are null (e.g. GETPART or DATEDIFF).
+"""
+
+
 class SimplificationShuttle(RelationalExpressionShuttle):
     """
     Shuttle implementation for simplifying relational expressions. Has three
@@ -189,10 +212,11 @@ class SimplificationShuttle(RelationalExpressionShuttle):
       simplifying their inputs and placing their predicate sets on the stack.
     """
 
-    def __init__(self):
+    def __init__(self, configs: PyDoughConfigs):
         self.stack: list[PredicateSet] = []
         self._input_predicates: dict[RelationalExpression, PredicateSet] = {}
         self._no_group_aggregate: bool = False
+        self._configs: PyDoughConfigs = configs
 
     @property
     def input_predicates(self) -> dict[RelationalExpression, PredicateSet]:
@@ -221,6 +245,20 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         Sets whether the shuttle is handling a no-group-aggregate.
         """
         self._no_group_aggregate = value
+
+    @property
+    def configs(self) -> PyDoughConfigs:
+        """
+        Returns the PyDough configuration settings.
+        """
+        return self._configs
+
+    @configs.setter
+    def configs(self, value: PyDoughConfigs) -> None:
+        """
+        Sets the PyDough configuration settings.
+        """
+        self._configs = value
 
     def reset(self) -> None:
         self.stack = []
@@ -291,6 +329,511 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         arg_predicates.reverse()
         return self.simplify_window_call(new_window, arg_predicates)
 
+    def quarter_month_array(self, quarter: int) -> RelationalExpression:
+        """
+        Returns a LiteralExpression containing an array of the months
+        corresponding to the given quarter.
+
+        Args:
+            `quarter`: The quarter (1-4) to get the corresponding months for.
+
+        Returns:
+            A LiteralExpression containing an array of the months in the
+            given quarter.
+        """
+        assert 1 <= quarter <= 4
+        month_arr: list[int] = [3 * (quarter - 1) + i + 1 for i in range(3)]
+        return LiteralExpression(month_arr, ArrayType(NumericType()))
+
+    def switch_operator(
+        self, expr: CallExpression, op: pydop.PyDoughExpressionOperator
+    ) -> RelationalExpression:
+        """
+        Returns a new CallExpression switching the operator of the given
+        CallExpression to the given operator, keeping the same inputs and data
+        type.
+
+        Args:
+            `expr`: The CallExpression whose operator is to be switched.
+            `op`: The operator to switch to.
+
+        Returns:
+            A new CallExpression with the given operator.
+        """
+        return CallExpression(op, expr.data_type, expr.inputs)
+
+    def keep_if_not_null(
+        self, source: RelationalExpression, expr: RelationalExpression
+    ) -> RelationalExpression:
+        """
+        Returns a CallExpression that keeps the given expression only if the
+        source expression is not null.
+
+        Args:
+            `source`: The source expression to check for nullness.
+            `expr`: The expression to keep if the source is not null.
+
+        Returns:
+            A CallExpression representing KEEP_IF(expr, PRESENT(source)).
+        """
+        source_not_null: RelationalExpression = CallExpression(
+            pydop.PRESENT, source.data_type, [source]
+        )
+        return CallExpression(pydop.KEEP_IF, expr.data_type, [expr, source_not_null])
+
+    def simplify_function_literal_comparison(
+        self,
+        expr: RelationalExpression,
+        op: pydop.PyDoughOperator,
+        func_expr: CallExpression,
+        lit_expr: LiteralExpression,
+    ) -> RelationalExpression:
+        """
+        Simplifies a comparison between a function call expression and a
+        literal expression, e.g. `QUARTER(x) == 2` can be simplified to
+        `ISIN(MONTH(x), [4, 5, 6])`.
+
+        Args:
+            `expr`: The original expression representing the comparison. This
+            should be returned if there is no simplification possible.
+            `op`: The comparison operator (e.g. EQU, NEQ, LET, etc).
+            `func_expr`: The left argument of the comparison, which is a
+            function call expression.
+            `lit_expr`: The right argument of the comparison, which is a
+            literal expression.
+        """
+        assert op in (pydop.EQU, pydop.NEQ, pydop.GRT, pydop.GEQ, pydop.LET, pydop.LEQ)
+        result: RelationalExpression = expr
+        conditional_true: RelationalExpression = self.keep_if_not_null(
+            func_expr.inputs[0], LiteralExpression(True, expr.data_type)
+        )
+        conditional_false: RelationalExpression = self.keep_if_not_null(
+            func_expr.inputs[0], LiteralExpression(False, expr.data_type)
+        )
+        match (op, func_expr.op, lit_expr.data_type):
+            case (pydop.EQU, pydop.QUARTER, NumericType()) if isinstance(
+                lit_expr.value, int
+            ):
+                # QUARTER(x) == 1 <=> ISIN(MONTH(x), [1, 2, 3])
+                if lit_expr.value in (1, 2, 3, 4):
+                    result = CallExpression(
+                        pydop.ISIN,
+                        expr.data_type,
+                        [
+                            self.switch_operator(func_expr, pydop.MONTH),
+                            self.quarter_month_array(lit_expr.value),
+                        ],
+                    )
+                # QUARTER(x) == 3 <=> KEEP_IF(False, PRESENT(x))
+                else:
+                    result = conditional_false
+            case (pydop.NEQ, pydop.QUARTER, NumericType()) if isinstance(
+                lit_expr.value, int
+            ):
+                # QUARTER(x) != 4 <=> NOT(ISIN(MONTH(x), [10, 11, 12]))
+                if lit_expr.value in (1, 2, 3, 4):
+                    result = CallExpression(
+                        pydop.NOT,
+                        expr.data_type,
+                        [
+                            CallExpression(
+                                pydop.ISIN,
+                                expr.data_type,
+                                [
+                                    self.switch_operator(func_expr, pydop.MONTH),
+                                    self.quarter_month_array(lit_expr.value),
+                                ],
+                            )
+                        ],
+                    )
+                # QUARTER(x) != 0 <=> KEEP_IF(True, PRESENT(x))
+                else:
+                    result = conditional_true
+            case (pydop.LET, pydop.QUARTER, NumericType()) if isinstance(
+                lit_expr.value, int
+            ):
+                # QUARTER(x) < 4 <=> MONTH(X) < 9
+                if lit_expr.value in (2, 3, 4):
+                    result = CallExpression(
+                        pydop.LET,
+                        expr.data_type,
+                        [
+                            self.switch_operator(func_expr, pydop.MONTH),
+                            LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
+                        ],
+                    )
+                # QUARTER(x) < 1 <=> KEEP_IF(False, PRESENT(x))
+                elif lit_expr.value < 2:
+                    result = conditional_false
+                # QUARTER(x) < 5 <=> KEEP_IF(True, PRESENT(x))
+                elif lit_expr.value > 4:
+                    result = conditional_true
+            case (pydop.LEQ, pydop.QUARTER, NumericType()) if isinstance(
+                lit_expr.value, int
+            ):
+                # QUARTER(x) <= 2 <=> MONTH(X) <= 6
+                if lit_expr.value in (1, 2, 3):
+                    result = CallExpression(
+                        pydop.LEQ,
+                        expr.data_type,
+                        [
+                            self.switch_operator(func_expr, pydop.MONTH),
+                            LiteralExpression(lit_expr.value * 3, NumericType()),
+                        ],
+                    )
+                # QUARTER(x) <= 0 <=> KEEP_IF(False, PRESENT(x))
+                elif lit_expr.value < 1:
+                    result = conditional_false
+                # QUARTER(x) <= 4 <=> KEEP_IF(True, PRESENT(x))
+                elif lit_expr.value > 3:
+                    result = conditional_true
+            case (pydop.GRT, pydop.QUARTER, NumericType()) if isinstance(
+                lit_expr.value, int
+            ):
+                # QUARTER(x) > 1 <=> MONTH(X) > 3
+                if lit_expr.value in (1, 2, 3):
+                    result = CallExpression(
+                        pydop.GRT,
+                        expr.data_type,
+                        [
+                            self.switch_operator(func_expr, pydop.MONTH),
+                            LiteralExpression(lit_expr.value * 3, NumericType()),
+                        ],
+                    )
+                # QUARTER(x) > 0 <=> KEEP_IF(True, PRESENT(x))
+                elif lit_expr.value < 1:
+                    result = conditional_true
+                # QUARTER(x) > 4 <=> KEEP_IF(False, PRESENT(x))
+                elif lit_expr.value > 3:
+                    result = conditional_false
+            case (pydop.GEQ, pydop.QUARTER, NumericType()) if isinstance(
+                lit_expr.value, int
+            ):
+                # QUARTER(x) >= 3 <=> MONTH(X) >= 7
+                if lit_expr.value in (2, 3, 4):
+                    result = CallExpression(
+                        pydop.GEQ,
+                        expr.data_type,
+                        [
+                            self.switch_operator(func_expr, pydop.MONTH),
+                            LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
+                        ],
+                    )
+                # QUARTER(x) >= 1 <=> KEEP_IF(True, PRESENT(x))
+                elif lit_expr.value < 2:
+                    result = conditional_true
+                # QUARTER(x) >= 6 <=> KEEP_IF(False, PRESENT(x))
+                elif lit_expr.value > 4:
+                    result = conditional_false
+            # MONTH(x) > 0 <=> KEEP_IF(True, PRESENT(x)) (same for day)
+            # MONTH(x) != -3 <=> KEEP_IF(True, PRESENT(x)) (same for day)
+            case (
+                pydop.GRT | pydop.NEQ,
+                pydop.MONTH | pydop.DAY,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value < 1:
+                result = conditional_true
+            # MONTH(x) >= 1 <=> KEEP_IF(True, PRESENT(x)) (same for day)
+            case (
+                pydop.GEQ,
+                pydop.MONTH | pydop.DAY,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 1:
+                result = conditional_true
+            # MONTH(x) < 1 <=> KEEP_IF(False, PRESENT(x)) (same for day)
+            case (
+                pydop.LET,
+                pydop.MONTH | pydop.DAY,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 1:
+                result = conditional_false
+            # MONTH(x) <= 0 <=> KEEP_IF(False, PRESENT(x)) (same for day)
+            # MONTH(x) == 0 <=> KEEP_IF(False, PRESENT(x)) (same for day)
+            case (
+                pydop.LEQ | pydop.EQU,
+                pydop.MONTH | pydop.DAY,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value < 1:
+                result = conditional_false
+            # HOUR(x) <= -1 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            # HOUR(x) == -1 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LEQ | pydop.EQU,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value < 0:
+                result = conditional_false
+            # HOUR(x) < 0 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LET,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 0:
+                result = conditional_false
+            # HOUR(x) > -1 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            # HOUR(x) != -1 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GRT | pydop.NEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value < 0:
+                result = conditional_true
+            # HOUR(x) >= 0 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 0:
+                result = conditional_true
+            # HOUR(x) > 60 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            # HOUR(x) == 60 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GRT | pydop.EQU,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value >= 60:
+                result = conditional_false
+            # HOUR(x) < 61 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            # HOUR(x) != 61 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LET | pydop.NEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value > 60:
+                result = conditional_true
+            # HOUR(x) <= 60 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.LEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value >= 60:
+                result = conditional_true
+            # HOUR(x) >= 61 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
+            case (
+                pydop.GEQ,
+                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
+                NumericType(),
+            ) if isinstance(lit_expr.value, int) and lit_expr.value > 60:
+                result = conditional_false
+            case _:
+                # Fall back to the original expression by default.
+                pass
+        return result
+
+    def get_timestamp_literal(self, expr: RelationalExpression) -> pd.Timestamp | None:
+        """
+        Attempts to extract a pandas Timestamp from a literal expression. Does
+        not try to parse strings with alphabetic characters to avoid parsing
+        things like 'now' that depend on the current date.
+
+        Args:
+            `expr`: The expression to extract the timestamp from.
+
+        Returns:
+            A pandas Timestamp if the expression is a literal that can be
+            converted to a timestamp, otherwise None.
+        """
+        if not isinstance(expr, LiteralExpression):
+            return None
+        if isinstance(expr.value, pd.Timestamp):
+            return expr.value
+        elif isinstance(expr.value, datetime.date):
+            return pd.Timestamp(expr.value)
+        elif isinstance(expr.value, str) and not any(c.isalpha() for c in expr.value):
+            try:
+                return pd.Timestamp(expr.value)
+            except Exception:
+                return None
+        else:
+            return None
+
+    def simplify_datetime_literal_part(
+        self,
+        expr: RelationalExpression,
+        op: pydop.PyDoughExpressionOperator,
+        lit_expr: LiteralExpression,
+    ) -> RelationalExpression:
+        """
+        Attempts to simplify a datetime part extraction function call with a
+        literal argument, e.g. `YEAR('2020-05-01')` can be simplified to `2020`.
+
+        Args:
+            `expr`: The original expression representing the datetime part
+            extraction. This should be returned if there is no simplification
+            possible.
+            `op`: The datetime part extraction operator (e.g. YEAR, MONTH, DAY,
+            etc).
+            `lit_expr`: The literal expression argument to the datetime part
+            extraction function.
+
+        Returns:
+            The simplified expression if possible, otherwise the original
+            expression.
+        """
+        # Extract a pandas Timestamp from the literal if possible. Allows cases
+        # where the literal is a native Python datetime/date, a pandas
+        # Timestamp, or a string without any alphabetic characters (to avoid
+        # parsing things like 'now' that depend on the current date).
+        timestamp_value: pd.Timestamp | None = self.get_timestamp_literal(lit_expr)
+
+        # Fall back to the original expression by default.
+        if timestamp_value is None:
+            return expr
+
+        # Otherwise, extract the relevant part from the timestamp and return it
+        # as a literal.
+        match op:
+            case pydop.YEAR:
+                return LiteralExpression(timestamp_value.year, NumericType())
+            case pydop.QUARTER:
+                quarter: int = ((timestamp_value.month - 1) // 3) + 1
+                return LiteralExpression(quarter, NumericType())
+            case pydop.MONTH:
+                return LiteralExpression(timestamp_value.month, NumericType())
+            case pydop.DAY:
+                return LiteralExpression(timestamp_value.day, NumericType())
+            case pydop.HOUR:
+                return LiteralExpression(timestamp_value.hour, NumericType())
+            case pydop.MINUTE:
+                return LiteralExpression(timestamp_value.minute, NumericType())
+            case pydop.SECOND:
+                return LiteralExpression(timestamp_value.second, NumericType())
+            case pydop.DAYNAME:
+                return LiteralExpression(timestamp_value.day_name(), StringType())
+            case pydop.DAYOFWEEK:
+                # Derive the day of week as an integer, adjusting based on the
+                # configured start of the week.
+                dow: int = timestamp_value.weekday()
+                dow -= self.configs.start_of_week.pandas_dow
+                dow %= 7
+                if not self.configs.start_week_as_zero:
+                    dow += 1
+                return LiteralExpression(dow, NumericType())
+            case _:
+                return expr
+
+    def compress_datetime_literal_chain(
+        self, expr: CallExpression
+    ) -> RelationalExpression:
+        """
+        Attempts to compress a DATETIME(arg0, arg1, arg2, ...) function call
+        where arg0 is a timestamp literal and all other arguments are string
+        literals representing datetime modifiers (e.g. 'start of month',
+        '+3 days', etc). If successful, returns a LiteralExpression with the
+        resulting timestamp or date. If not successful, returns the original
+        expression.
+
+        Args:
+            `expr`: The CallExpression representing the DATETIME function call.
+            Assumes all the arguments are literals.
+
+        Returns:
+            A LiteralExpression with the resulting timestamp or date if
+            successful, otherwise the original expression.
+        """
+        assert expr.op == pydop.DATETIME and len(expr.inputs) > 0
+
+        # Extract a pandas Timestamp from the first argument if possible. If
+        # not possible, return the original expression.
+        timestamp_value: pd.Timestamp | None = self.get_timestamp_literal(
+            expr.inputs[0]
+        )
+        if timestamp_value is None:
+            return expr
+
+        # Extract the raw string values from the remaining arguments. If any
+        # of them are not string literals, return the original expression.
+        raw_args: list[str] = []
+        for arg in expr.inputs[1:]:
+            if isinstance(arg, LiteralExpression) and isinstance(arg.value, str):
+                raw_args.append(arg.value)
+            else:
+                return expr
+
+        # Keep track of whether the final result should be returned as a date
+        # (i.e. without a time component) or as a timestamp.
+        return_as_date: bool = timestamp_value == timestamp_value.normalize()
+
+        # Process each argument in order, applying truncations and offsets to
+        # the timestamp value as needed. If any argument is not recognized,
+        # return the original expression.
+        for raw_arg in raw_args:
+            amt: int
+            unit: DateTimeUnit | None
+            trunc_match: re.Match | None = trunc_pattern.fullmatch(raw_arg)
+            offset_match: re.Match | None = offset_pattern.fullmatch(raw_arg)
+            if trunc_match is not None:
+                # If the string is in the form `start of <unit>`, apply
+                # truncation.
+                unit = DateTimeUnit.from_string(str(trunc_match.group(1)))
+                if unit is None:
+                    raise ValueError(
+                        f"Unsupported DATETIME modifier string: {raw_arg!r}"
+                    )
+                match unit:
+                    case DateTimeUnit.YEAR:
+                        timestamp_value = timestamp_value.to_period("Y").to_timestamp()
+                        return_as_date = True
+                    case DateTimeUnit.QUARTER:
+                        timestamp_value = timestamp_value.to_period("Q").to_timestamp()
+                        return_as_date = True
+                    case DateTimeUnit.MONTH:
+                        timestamp_value = timestamp_value.to_period("M").to_timestamp()
+                        return_as_date = True
+                    case DateTimeUnit.DAY:
+                        timestamp_value = timestamp_value.floor("d")
+                        return_as_date = True
+                    case DateTimeUnit.HOUR:
+                        timestamp_value = timestamp_value.floor("h")
+                    case DateTimeUnit.MINUTE:
+                        timestamp_value = timestamp_value.floor("min")
+                    case _:
+                        # Doesn't support truncating to WEEK or SECOND in this
+                        # simplification.
+                        return expr
+            elif offset_match is not None:
+                # If the string is in the form `±<amt> <unit>`, apply an
+                # offset.
+                amt = int(offset_match.group(2))
+                if str(offset_match.group(1)) == "-":
+                    amt *= -1
+                unit = DateTimeUnit.from_string(str(offset_match.group(3)))
+                if unit is None:
+                    raise ValueError(
+                        f"Unsupported DATETIME modifier string: {raw_arg!r}"
+                    )
+                match unit:
+                    case DateTimeUnit.YEAR:
+                        timestamp_value = timestamp_value + pd.DateOffset(years=amt)
+                    case DateTimeUnit.QUARTER:
+                        timestamp_value = timestamp_value + pd.DateOffset(
+                            months=amt * 3
+                        )
+                    case DateTimeUnit.MONTH:
+                        timestamp_value = timestamp_value + pd.DateOffset(months=amt)
+                    case DateTimeUnit.WEEK:
+                        timestamp_value = timestamp_value + pd.DateOffset(days=amt * 7)
+                    case DateTimeUnit.DAY:
+                        timestamp_value = timestamp_value + pd.DateOffset(days=amt)
+                    case DateTimeUnit.HOUR:
+                        timestamp_value = timestamp_value + pd.Timedelta(hours=amt)
+                        return_as_date = False
+                    case DateTimeUnit.MINUTE:
+                        timestamp_value = timestamp_value + pd.Timedelta(minutes=amt)
+                        return_as_date = False
+                    case DateTimeUnit.SECOND:
+                        timestamp_value = timestamp_value + pd.Timedelta(seconds=amt)
+                        return_as_date = False
+            else:
+                return expr
+
+        # Return the final timestamp as a literal expression, converting to a
+        # date if needed.
+        if return_as_date:
+            return LiteralExpression(timestamp_value.date(), expr.data_type)
+        else:
+            return LiteralExpression(timestamp_value, expr.data_type)
+
     def simplify_function_call(
         self,
         expr: CallExpression,
@@ -319,6 +862,16 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         output_predicates: PredicateSet = PredicateSet()
         union_set: PredicateSet = PredicateSet.union(arg_predicates)
         intersect_set: PredicateSet = PredicateSet.intersect(arg_predicates)
+
+        # Return None if any of the inputs are None and the operator is
+        # guaranteed to return NULL if any of its inptus are NULL.
+        if expr.op in NULL_IF_INPUT_NULL_OPS:
+            if any(
+                isinstance(arg, LiteralExpression) and arg.value is None
+                for arg in expr.inputs
+            ):
+                self.stack.append(output_predicates)
+                return LiteralExpression(None, expr.data_type)
 
         # If the call has null propagating rules, all of the arguments are
         # non-null, the output is guaranteed to be non-null.
@@ -685,6 +1238,33 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                             ) and isinstance(y, (int, float, str, bool)):
                                 output_expr = LiteralExpression(x >= y, expr.data_type)  # type: ignore
 
+                    # In cases where we do FUNC(x) cmp LIT, attempt additional
+                    # simplifications.
+                    case (CallExpression(), _, LiteralExpression()):
+                        output_expr = self.simplify_function_literal_comparison(
+                            expr, expr.op, expr.inputs[0], expr.inputs[1]
+                        )
+                    case (LiteralExpression(), pydop.EQU | pydop.NEQ, CallExpression()):
+                        output_expr = self.simplify_function_literal_comparison(
+                            expr, expr.op, expr.inputs[1], expr.inputs[0]
+                        )
+                    case (LiteralExpression(), pydop.GRT, CallExpression()):
+                        output_expr = self.simplify_function_literal_comparison(
+                            expr, pydop.LET, expr.inputs[1], expr.inputs[0]
+                        )
+                    case (LiteralExpression(), pydop.GEQ, CallExpression()):
+                        output_expr = self.simplify_function_literal_comparison(
+                            expr, pydop.LEQ, expr.inputs[1], expr.inputs[0]
+                        )
+                    case (LiteralExpression(), pydop.LET, CallExpression()):
+                        output_expr = self.simplify_function_literal_comparison(
+                            expr, pydop.GRT, expr.inputs[1], expr.inputs[0]
+                        )
+                    case (LiteralExpression(), pydop.LEQ, CallExpression()):
+                        output_expr = self.simplify_function_literal_comparison(
+                            expr, pydop.GEQ, expr.inputs[1], expr.inputs[0]
+                        )
+
                     case _:
                         # All other cases remain non-simplified.
                         pass
@@ -730,6 +1310,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
             # KEEP_IF(x, True) -> x
             # KEEP_IF(x, False) -> None
+            # KEEP_IF(None, y) -> None
             case pydop.KEEP_IF:
                 if isinstance(expr.inputs[1], LiteralExpression):
                     if bool(expr.inputs[1].value):
@@ -738,13 +1319,56 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     else:
                         output_expr = LiteralExpression(None, expr.data_type)
                         output_predicates.not_negative = True
+                elif (
+                    isinstance(expr.inputs[0], LiteralExpression)
+                    and expr.inputs[0].value is None
+                ):
+                    output_expr = LiteralExpression(None, expr.data_type)
                 elif arg_predicates[1].not_null and arg_predicates[1].positive:
                     output_expr = expr.inputs[0]
                     output_predicates = arg_predicates[0]
                 else:
-                    output_predicates |= arg_predicates[0] & PredicateSet(
-                        not_null=True, not_negative=True
+                    # Otherwise the predicates are the same as the first
+                    # argument, except it can be null.
+                    output_predicates |= arg_predicates[0]
+                    output_predicates.not_null = False
+
+            # DATETIME(DATETIME(u, v, w), x, y, z) -> DATETIME(u, v, w, x, y, z)
+            case pydop.DATETIME:
+                if (
+                    isinstance(expr.inputs[0], CallExpression)
+                    and expr.inputs[0].op == pydop.DATETIME
+                ):
+                    output_expr = CallExpression(
+                        pydop.DATETIME,
+                        expr.data_type,
+                        expr.inputs[0].inputs + expr.inputs[1:],
                     )
+                assert isinstance(output_expr, CallExpression)
+                if all(
+                    isinstance(arg, LiteralExpression) for arg in output_expr.inputs
+                ):
+                    output_expr = self.compress_datetime_literal_chain(output_expr)
+
+            # YEAR(literal_datetime) -> can infer the year as a literal
+            # (same for QUARTER, MONTH, DAY, HOUR, MINUTE, SECOND, DAYOFWEEK,
+            # and DAYNAME)
+            case (
+                pydop.YEAR
+                | pydop.QUARTER
+                | pydop.MONTH
+                | pydop.DAY
+                | pydop.HOUR
+                | pydop.MINUTE
+                | pydop.SECOND
+                | pydop.DAYOFWEEK
+                | pydop.DAYNAME
+            ):
+                if isinstance(expr.inputs[0], LiteralExpression):
+                    output_expr = self.simplify_datetime_literal_part(
+                        expr, expr.op, expr.inputs[0]
+                    )
+
             case _:
                 # All other operators remain non-simplified.
                 pass
@@ -832,9 +1456,13 @@ class SimplificationVisitor(RelationalVisitor):
     the current node are placed on the stack.
     """
 
-    def __init__(self, additional_shuttles: list[RelationalExpressionShuttle]):
+    def __init__(
+        self,
+        configs: PyDoughConfigs,
+        additional_shuttles: list[RelationalExpressionShuttle],
+    ):
         self.stack: list[dict[RelationalExpression, PredicateSet]] = []
-        self.shuttle: SimplificationShuttle = SimplificationShuttle()
+        self.shuttle: SimplificationShuttle = SimplificationShuttle(configs)
         self.additional_shuttles: list[RelationalExpressionShuttle] = (
             additional_shuttles
         )
@@ -931,6 +1559,56 @@ class SimplificationVisitor(RelationalVisitor):
         )
         self.stack.append(output_predicates)
 
+    def infer_null_predicates_from_condition(
+        self,
+        output_predicates: dict[RelationalExpression, PredicateSet],
+        condition: RelationalExpression,
+        columns: dict[str, RelationalExpression],
+    ) -> None:
+        """
+        Infers whether an output column can be marked as not-null based on the
+        given condition expression. If the condition implies that a column is
+        not null, the corresponding PredicateSet in output_predicates is updated
+        in-place.
+
+        Args:
+            `output_predicates`: A dictionary mapping each output column
+            reference from the current node to the set of its inferred
+            predicates.
+            `condition`: The condition expression from the current node (e.g. a
+            filter or an inner/semi join) which, if false when a certain column
+            is null, means that column can be marked as not-null in the output.
+            `columns`: A dictionary mapping column names to their corresponding
+            relational expressions in the current node.
+        """
+        from .filter_pushdown import NullReplacementShuttle
+
+        self.shuttle.input_predicates = {}
+        # Iterate across all of the output columns that are not already marked
+        # as not-null and identify the ones that correspond to a column
+        # reference passed through from the input node.
+        for expr, preds in output_predicates.items():
+            if preds.not_null:
+                continue
+            if isinstance(expr, ColumnReference) and expr.name in columns:
+                expr = columns[expr.name]
+                if isinstance(expr, ColumnReference):
+                    # Transform the condition by creating a version where the
+                    # input column is replaced with a NULL literal, and then run
+                    # the simplifier on the new expression.
+                    shuttle: NullReplacementShuttle = NullReplacementShuttle(
+                        {expr.name}
+                    )
+                    new_cond: RelationalExpression = condition.accept_shuttle(shuttle)
+                    new_cond = new_cond.accept_shuttle(self.shuttle)
+                    # If the new condition simplifies to a False-y literal, then
+                    # the column must be not-null since it means that if the
+                    # column were, the row would be filtered out.
+                    if isinstance(new_cond, LiteralExpression) and not bool(
+                        new_cond.value
+                    ):
+                        preds.not_null = True
+
     def visit_filter(self, node: Filter) -> None:
         output_predicates: dict[RelationalExpression, PredicateSet] = (
             self.generic_visit(node)
@@ -940,6 +1618,11 @@ class SimplificationVisitor(RelationalVisitor):
         self.shuttle.stack.pop()
         for shuttle in self.additional_shuttles:
             node._condition = node.condition.accept_shuttle(shuttle)
+        self.infer_null_predicates_from_condition(
+            output_predicates,
+            node.condition,
+            node.columns,
+        )
         self.stack.append(output_predicates)
 
     def visit_join(self, node: Join) -> None:
@@ -960,6 +1643,13 @@ class SimplificationVisitor(RelationalVisitor):
                     and expr.input_name != node.default_input_aliases[0]
                 ):
                     preds.not_null = False
+
+        if node.join_type in (JoinType.INNER, JoinType.SEMI):
+            self.infer_null_predicates_from_condition(
+                output_predicates,
+                node.condition,
+                node.columns,
+            )
         self.stack.append(output_predicates)
 
     def visit_limit(self, node: Limit) -> None:
@@ -1005,6 +1695,7 @@ class SimplificationVisitor(RelationalVisitor):
 
 def simplify_expressions(
     node: RelationalNode,
+    configs: PyDoughConfigs,
     additional_shuttles: list[RelationalExpressionShuttle],
 ) -> None:
     """
@@ -1013,10 +1704,13 @@ def simplify_expressions(
 
     Args:
         `node`: The relational node to perform simplification on.
+        `configs`: The PyDough configuration settings.
         `additional_shuttles`: A list of additional shuttles to apply to the
         expressions of the node and its descendants. These shuttles are applied
         after the simplification shuttle, and can be used to perform additional
         transformations on the expressions.
     """
-    simplifier: SimplificationVisitor = SimplificationVisitor(additional_shuttles)
+    simplifier: SimplificationVisitor = SimplificationVisitor(
+        configs, additional_shuttles
+    )
     node.accept(simplifier)
