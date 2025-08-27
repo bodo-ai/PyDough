@@ -8,6 +8,7 @@ from sqlglot import expressions as sqlglot_expressions
 from sqlglot import parse_one
 
 import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughConfigs
 from pydough.relational import (
     CallExpression,
     LiteralExpression,
@@ -24,8 +25,8 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
     TODO
     """
 
-    def __init__(self):
-        self.simplifier: SimplificationShuttle = SimplificationShuttle()
+    def __init__(self, configs: PyDoughConfigs):
+        self.simplifier: SimplificationShuttle = SimplificationShuttle(configs)
 
     def simplify_masked_literal(
         self, value: RelationalExpression

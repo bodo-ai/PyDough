@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM crbnk.customers
 WHERE
-  c_birthday <> DATE(DATETIME('1991-11-15', '-472 day'), 'start of day')
+  c_birthday <> '1990-07-31'

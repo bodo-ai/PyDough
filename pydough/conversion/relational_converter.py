@@ -1589,7 +1589,7 @@ def convert_ast_to_relational(
     # Invoke the optimization procedures on the result to clean up the tree.
     additional_shuttles: list[RelationalExpressionShuttle] = []
     if True:
-        additional_shuttles.append(MaskLiteralComparisonShuttle())
+        additional_shuttles.append(MaskLiteralComparisonShuttle(configs))
     optimized_result: RelationalRoot = optimize_relational_tree(
         raw_result, configs, additional_shuttles
     )
