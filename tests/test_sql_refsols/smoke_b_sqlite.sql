@@ -54,15 +54,10 @@ SELECT
     ),
     '25 hour'
   ) AS d,
-  STRFTIME('%Y-%m-%d %H:%M:00', DATETIME('2025-01-01 12:35:13')) AS e,
-  DATETIME(STRFTIME('%Y-%m-%d %H:00:00', DATETIME('2025-01-01 12:35:13')), '6 month', '21 day') AS f,
-  DATE('2025-01-01 12:35:13', 'start of day') AS g,
-  CONCAT_WS(
-    ';',
-    12,
-    CAST(STRFTIME('%M', DATETIME('2025-01-01 12:35:13', '45 minute')) AS INTEGER),
-    CAST(STRFTIME('%S', DATETIME('2025-01-01 12:35:13', '-7 second')) AS INTEGER)
-  ) AS h,
+  '2025-01-01 12:35:00' AS e,
+  '2025-07-22 12:00:00' AS f,
+  '2025-01-01' AS g,
+  CONCAT_WS(';', 12, 20, 6) AS h,
   CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) - CAST(STRFTIME('%Y', DATETIME('1993-05-25 12:45:36')) AS INTEGER) AS i,
   (
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) - CAST(STRFTIME('%Y', DATETIME('1993-05-25 12:45:36')) AS INTEGER)

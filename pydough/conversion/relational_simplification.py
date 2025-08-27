@@ -10,6 +10,7 @@ __all__ = ["simplify_expressions"]
 
 
 import datetime
+import re
 from dataclasses import dataclass
 
 import pandas as pd
@@ -38,6 +39,11 @@ from pydough.relational import (
 )
 from pydough.relational.rel_util import (
     add_input_name,
+)
+from pydough.sqlglot.transform_bindings.sqlglot_transform_utils import (
+    DateTimeUnit,
+    offset_pattern,
+    trunc_pattern,
 )
 from pydough.types import ArrayType, NumericType, StringType
 
@@ -602,6 +608,33 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 pass
         return result
 
+    def get_timestamp_literal(self, expr: RelationalExpression) -> pd.Timestamp | None:
+        """
+        Attempts to extract a pandas Timestamp from a literal expression. Does
+        not try to parse strings with alphabetic characters to avoid parsing
+        things like 'now' that depend on the current date.
+
+        Args:
+            `expr`: The expression to extract the timestamp from.
+
+        Returns:
+            A pandas Timestamp if the expression is a literal that can be
+            converted to a timestamp, otherwise None.
+        """
+        if not isinstance(expr, LiteralExpression):
+            return None
+        if isinstance(expr.value, pd.Timestamp):
+            return expr.value
+        elif isinstance(expr.value, datetime.date):
+            return pd.Timestamp(expr.value)
+        elif isinstance(expr.value, str) and not any(c.isalpha() for c in expr.value):
+            try:
+                return pd.Timestamp(expr.value)
+            except Exception:
+                return None
+        else:
+            return None
+
     def simplify_datetime_literal_part(
         self,
         expr: RelationalExpression,
@@ -629,18 +662,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         # where the literal is a native Python datetime/date, a pandas
         # Timestamp, or a string without any alphabetic characters (to avoid
         # parsing things like 'now' that depend on the current date).
-        timestamp_value: pd.Timestamp | None = None
-        if isinstance(lit_expr.value, datetime.date):
-            timestamp_value = pd.Timestamp(lit_expr.value)
-        elif isinstance(lit_expr.value, str) and not any(
-            c.isalpha() for c in lit_expr.value
-        ):
-            try:
-                timestamp_value = pd.Timestamp(lit_expr.value)
-            except Exception:
-                return expr
-        elif isinstance(lit_expr.value, pd.Timestamp):
-            timestamp_value = lit_expr.value
+        timestamp_value: pd.Timestamp | None = self.get_timestamp_literal(lit_expr)
 
         # Fall back to the original expression by default.
         if timestamp_value is None:
@@ -677,6 +699,128 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 return LiteralExpression(dow, NumericType())
             case _:
                 return expr
+
+    def compress_datetime_literal_chain(
+        self, expr: CallExpression
+    ) -> RelationalExpression:
+        """
+        Attempts to compress a DATETIME(arg0, arg1, arg2, ...) function call
+        where arg0 is a timestamp literal and all other arguments are string
+        literals representing datetime modifiers (e.g. 'start of month',
+        '+3 days', etc). If successful, returns a LiteralExpression with the
+        resulting timestamp or date. If not successful, returns the original
+        expression.
+
+        Args:
+            `expr`: The CallExpression representing the DATETIME function call.
+            Assumes all the arguments are literals.
+
+        Returns:
+            A LiteralExpression with the resulting timestamp or date if
+            successful, otherwise the original expression.
+        """
+        assert expr.op == pydop.DATETIME and len(expr.inputs) > 0
+
+        # Extract a pandas Timestamp from the first argument if possible. If
+        # not possible, return the original expression.
+        timestamp_value: pd.Timestamp | None = self.get_timestamp_literal(
+            expr.inputs[0]
+        )
+        if timestamp_value is None:
+            return expr
+
+        # Extract the raw string values from the remaining arguments. If any
+        # of them are not string literals, return the original expression.
+        raw_args: list[str] = []
+        for arg in expr.inputs[1:]:
+            if isinstance(arg, LiteralExpression) and isinstance(arg.value, str):
+                raw_args.append(arg.value)
+            else:
+                return expr
+
+        # Keep track of whether the final result should be returned as a date
+        # (i.e. without a time component) or as a timestamp.
+        return_as_date: bool = timestamp_value == timestamp_value.normalize()
+
+        # Process each argument in order, applying truncations and offsets to
+        # the timestamp value as needed. If any argument is not recognized,
+        # return the original expression.
+        for raw_arg in raw_args:
+            amt: int
+            unit: DateTimeUnit | None
+            trunc_match: re.Match | None = trunc_pattern.fullmatch(raw_arg)
+            offset_match: re.Match | None = offset_pattern.fullmatch(raw_arg)
+            if trunc_match is not None:
+                # If the string is in the form `start of <unit>`, apply
+                # truncation.
+                unit = DateTimeUnit.from_string(str(trunc_match.group(1)))
+                if unit is None:
+                    raise ValueError(
+                        f"Unsupported DATETIME modifier string: {raw_arg!r}"
+                    )
+                match unit:
+                    case DateTimeUnit.YEAR:
+                        timestamp_value = timestamp_value.to_period("Y").to_timestamp()
+                        return_as_date = True
+                    case DateTimeUnit.QUARTER:
+                        timestamp_value = timestamp_value.to_period("Q").to_timestamp()
+                        return_as_date = True
+                    case DateTimeUnit.MONTH:
+                        timestamp_value = timestamp_value.to_period("M").to_timestamp()
+                        return_as_date = True
+                    case DateTimeUnit.DAY:
+                        timestamp_value = timestamp_value.floor("d")
+                        return_as_date = True
+                    case DateTimeUnit.HOUR:
+                        timestamp_value = timestamp_value.floor("h")
+                    case DateTimeUnit.MINUTE:
+                        timestamp_value = timestamp_value.floor("min")
+                    case _:
+                        # Doesn't support truncating to WEEK or SECOND in this
+                        # simplification.
+                        return expr
+            elif offset_match is not None:
+                # If the string is in the form `±<amt> <unit>`, apply an
+                # offset.
+                amt = int(offset_match.group(2))
+                if str(offset_match.group(1)) == "-":
+                    amt *= -1
+                unit = DateTimeUnit.from_string(str(offset_match.group(3)))
+                if unit is None:
+                    raise ValueError(
+                        f"Unsupported DATETIME modifier string: {raw_arg!r}"
+                    )
+                match unit:
+                    case DateTimeUnit.YEAR:
+                        timestamp_value = timestamp_value + pd.DateOffset(years=amt)
+                    case DateTimeUnit.QUARTER:
+                        timestamp_value = timestamp_value + pd.DateOffset(
+                            months=amt * 3
+                        )
+                    case DateTimeUnit.MONTH:
+                        timestamp_value = timestamp_value + pd.DateOffset(months=amt)
+                    case DateTimeUnit.WEEK:
+                        timestamp_value = timestamp_value + pd.DateOffset(days=amt * 7)
+                    case DateTimeUnit.DAY:
+                        timestamp_value = timestamp_value + pd.DateOffset(days=amt)
+                    case DateTimeUnit.HOUR:
+                        timestamp_value = timestamp_value + pd.Timedelta(hours=amt)
+                        return_as_date = False
+                    case DateTimeUnit.MINUTE:
+                        timestamp_value = timestamp_value + pd.Timedelta(minutes=amt)
+                        return_as_date = False
+                    case DateTimeUnit.SECOND:
+                        timestamp_value = timestamp_value + pd.Timedelta(seconds=amt)
+                        return_as_date = False
+            else:
+                return expr
+
+        # Return the final timestamp as a literal expression, converting to a
+        # date if needed.
+        if return_as_date:
+            return LiteralExpression(timestamp_value.date(), expr.data_type)
+        else:
+            return LiteralExpression(timestamp_value, expr.data_type)
 
     def simplify_function_call(
         self,
@@ -1188,6 +1332,11 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         expr.data_type,
                         expr.inputs[0].inputs + expr.inputs[1:],
                     )
+                assert isinstance(output_expr, CallExpression)
+                if all(
+                    isinstance(arg, LiteralExpression) for arg in output_expr.inputs
+                ):
+                    output_expr = self.compress_datetime_literal_chain(output_expr)
 
             # YEAR(literal_datetime) -> can infer the year as a literal
             # (same for QUARTER, MONTH, DAY, HOUR, MINUTE, SECOND, DAYOFWEEK,

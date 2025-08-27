@@ -6,16 +6,8 @@ SELECT
     '%Y %c %e'
   ) AS ts_now_3,
   DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '1' HOUR) AS ts_now_4,
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST('2025-01-01 00:00:00' AS DATETIME)),
-      ' ',
-      MONTH(CAST('2025-01-01 00:00:00' AS DATETIME)),
-      ' 1'
-    ),
-    '%Y %c %e'
-  ) AS ts_now_5,
-  CAST('1995-10-08 00:00:00' AS DATETIME) AS ts_now_6,
+  CAST('2025-01-01' AS DATE) AS ts_now_5,
+  CAST('1995-10-08' AS DATE) AS ts_now_6,
   EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) AS year_col,
   2020 AS year_py,
   1995 AS year_pd,
