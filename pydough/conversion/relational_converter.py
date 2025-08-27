@@ -85,6 +85,7 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
+from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
 from .relational_simplification import simplify_expressions
@@ -1587,6 +1588,8 @@ def convert_ast_to_relational(
 
     # Invoke the optimization procedures on the result to clean up the tree.
     additional_shuttles: list[RelationalExpressionShuttle] = []
+    if True:
+        additional_shuttles.append(MaskLiteralComparisonShuttle())
     optimized_result: RelationalRoot = optimize_relational_tree(
         raw_result, configs, additional_shuttles
     )

@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  FILTER(condition=ISIN(UNMASK::(LOWER([c_lname])), ['lee', 'smith', 'rodriguez']:array[unknown]), columns={})
+  FILTER(condition=ISIN(c_lname, [Call(op=Function[MASK], inputs=[Literal(value='lee', type=ArrayType(UnknownType()))], return_type=StringType()), Call(op=Function[MASK], inputs=[Literal(value='smith', type=ArrayType(UnknownType()))], return_type=StringType()), Call(op=Function[MASK], inputs=[Literal(value='rodriguez', type=ArrayType(UnknownType()))], return_type=StringType())]:bool), columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_lname': c_lname})
