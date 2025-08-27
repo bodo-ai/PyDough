@@ -4,7 +4,7 @@ FROM main.payments_made
 WHERE
   (
     (
-      DAY_OF_WEEK(payment_date) + 6
+      EXTRACT(DOW FROM CAST(payment_date AS TIMESTAMP)) + 6
     ) % 7
   ) IN (5, 6)
   AND vendor_name = 'Utility Company'

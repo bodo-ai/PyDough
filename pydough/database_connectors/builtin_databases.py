@@ -11,8 +11,8 @@ from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDia
 __all__ = [
     "load_database_context",
     "load_mysql_connection",
-    "load_snowflake_connection",
     "load_postgres_connection",
+    "load_snowflake_connection",
     "load_sqlite_connection",
 ]
 

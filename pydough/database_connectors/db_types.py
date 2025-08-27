@@ -44,7 +44,9 @@ if TYPE_CHECKING:
 
     # 4. Define the type aliases for database connections and cursors
     DBConnection: TypeAlias = SQLiteConn | SnowflakeConn | MySQLConn | PostgreSQLConn
-    DBCursor: TypeAlias = SQLiteCursor | SnowflakeCursor | MySQLCursor | PostgreSQLCursor
+    DBCursor: TypeAlias = (
+        SQLiteCursor | SnowflakeCursor | MySQLCursor | PostgreSQLCursor
+    )
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any

@@ -19,8 +19,8 @@ from pydough.database_connectors import DatabaseDialect
 
 from .base_transform_bindings import BaseTransformBindings
 from .mysql_transform_bindings import MySQLTransformBindings
-from .sf_transform_bindings import SnowflakeTransformBindings
 from .postgres_transform_bindings import PostgreSQLTransformBindings
+from .sf_transform_bindings import SnowflakeTransformBindings
 from .sqlite_transform_bindings import SQLiteTransformBindings
 
 if TYPE_CHECKING:

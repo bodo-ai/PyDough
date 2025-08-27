@@ -29,13 +29,13 @@ jobs:
           # Set environment variables for PostgreSQL container
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: "tpch"
+          POSTGRES_DB: "pydough-test"
         ports:
           - 5432:5432
     env:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-      POSTGRES_DB: tpch
+      POSTGRES_DB: pydough-test
       POSTGRES_HOST: "localhost"
 
     steps:

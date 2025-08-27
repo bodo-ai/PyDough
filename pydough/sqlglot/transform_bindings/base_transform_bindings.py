@@ -1399,11 +1399,23 @@ class BaseTransformBindings:
             The SQLGlot expression to add/subtract the specified interval to/from
             `base`.
         """
-        return sqlglot_expressions.DateAdd(
-            this=base,
-            expression=sqlglot_expressions.convert(amt),
-            unit=sqlglot_expressions.Var(this=unit.value),
-        )
+        new_expr: SQLGlotExpression | None = None
+        if amt > 0:
+            new_expr = sqlglot_expressions.DateAdd(
+                this=base,
+                expression=sqlglot_expressions.convert(amt),
+                unit=sqlglot_expressions.Var(this=unit.value),
+            )
+        elif amt < 0:
+            amt *= -1
+            new_expr = sqlglot_expressions.DateSub(
+                this=base,
+                expression=sqlglot_expressions.convert(amt),
+                unit=sqlglot_expressions.Var(this=unit.value),
+            )
+        else:
+            new_expr = base
+        return new_expr
 
     def convert_datetime(
         self,

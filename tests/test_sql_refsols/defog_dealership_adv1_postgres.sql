@@ -6,7 +6,7 @@ SELECT
       CASE
         WHEN (
           (
-            DAY_OF_WEEK(payments_received.payment_date) + 6
+            EXTRACT(DOW FROM CAST(payments_received.payment_date AS TIMESTAMP)) + 6
           ) % 7
         ) IN (5, 6)
         THEN 1
