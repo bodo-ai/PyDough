@@ -201,8 +201,8 @@ def defog_mysql_test_data(
     defog_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
 ) -> PyDoughPandasTest:
     """
-    Test data for e2e tests for the TPC-H queries. Returns an instance of
-    PyDoughPandasTest containing information about the test.
+    Modify reference solution data for some Defog queries.
+    Return an instance of PyDoughPandasTest containing the modified data.
     """
     if defog_custom_pipeline_test_data.test_name == "week_offset":
         return PyDoughPandasTest(
