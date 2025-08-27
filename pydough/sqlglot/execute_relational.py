@@ -9,6 +9,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import Alias, Column, Select, Table, With
@@ -24,7 +25,6 @@ from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
-from sqlglot.optimizer.simplify import simplify
 
 import pydough
 from pydough.configs import PyDoughConfigs
@@ -41,6 +41,7 @@ from pydough.relational.relational_expressions import (
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
+from .override_simplify import simplify
 from .override_unnest_subqueries import unnest_subqueries
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
@@ -102,14 +103,18 @@ def apply_sqlglot_optimizer(
 
     # Apply each rule explicitly with appropriate kwargs
 
+    kwargs = {
+        "quote_identifiers": False,
+        "isolate_tables": True,
+        "validate_qualify_columns": False,
+    }
+    # Exclude Snowflake dialect to avoid some issues
+    # related to name qualification
+    if not isinstance(dialect, SnowflakeDialect):
+        kwargs["dialect"] = dialect
+
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
-    glot_expr = qualify(
-        glot_expr,
-        dialect=dialect,
-        quote_identifiers=False,
-        isolate_tables=True,
-        validate_qualify_columns=False,
-    )
+    glot_expr = qualify(glot_expr, **kwargs)
 
     # Rewrite sqlglot AST to remove unused columns projections.
     glot_expr = pushdown_projections(glot_expr)
@@ -393,6 +398,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
         return SQLGlotDialect()
     elif dialect == DatabaseDialect.SQLITE:
         return SQLiteDialect()
+    elif dialect == DatabaseDialect.SNOWFLAKE:
+        return SnowflakeDialect()
     elif dialect == DatabaseDialect.MYSQL:
         return MySQLDialect()
     else:
