@@ -1,5 +1,5 @@
 SELECT
-  COUNT(sbTransaction.sbtxcustid) AS transaction_count
+  COUNT(*) AS transaction_count
 FROM main.sbTransaction AS sbTransaction
 JOIN main.sbCustomer AS sbCustomer
   ON sbCustomer.sbcustid = sbTransaction.sbtxcustid

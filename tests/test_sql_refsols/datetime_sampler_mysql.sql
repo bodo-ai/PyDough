@@ -1,8 +1,8 @@
 SELECT
   CAST('2025-07-04 12:58:45' AS DATETIME) AS _expr0,
   CAST('2024-12-31 11:59:00' AS DATETIME) AS _expr1,
-  CAST('2025-01-01' AS DATETIME) AS _expr2,
-  CAST('1999-03-14' AS DATETIME) AS _expr3,
+  CAST('2025-01-01' AS DATE) AS _expr2,
+  CAST('1999-03-14' AS DATE) AS _expr3,
   CURRENT_TIMESTAMP() AS _expr4,
   CURRENT_TIMESTAMP() AS _expr5,
   CURRENT_TIMESTAMP() AS _expr6,
@@ -153,30 +153,10 @@ SELECT
     INTERVAL '344' SECOND
   ) AS _expr34,
   CAST(CURRENT_TIMESTAMP() AS DATE) AS _expr35,
-  DATE_ADD(
-    DATE_ADD(
-      DATE_ADD(
-        '0000-01-01 00:00:00',
-        INTERVAL (TIMESTAMPDIFF(HOUR, '0000-01-01 00:00:00', CAST('2025-01-01' AS DATETIME))) HOUR
-      ),
-      INTERVAL '49' MINUTE
-    ),
-    INTERVAL '91' YEAR
-  ) AS _expr36,
+  CAST('2116-01-01 00:49:00' AS DATETIME) AS _expr36,
   STR_TO_DATE(CONCAT(YEAR(CURRENT_TIMESTAMP()), ' 1 1'), '%Y %c %e') AS _expr37,
   STR_TO_DATE(CONCAT(YEAR(CAST(CURRENT_TIMESTAMP() AS DATE)), ' 1 1'), '%Y %c %e') AS _expr38,
-  DATE_ADD(
-    CAST(STR_TO_DATE(
-      CONCAT(
-        YEAR(CAST('2025-07-04 12:58:45' AS DATETIME)),
-        ' ',
-        MONTH(CAST('2025-07-04 12:58:45' AS DATETIME)),
-        ' 1'
-      ),
-      '%Y %c %e'
-    ) AS DATETIME),
-    INTERVAL '22' MINUTE
-  ) AS _expr39,
+  CAST('2025-07-01 00:22:00' AS DATETIME) AS _expr39,
   STR_TO_DATE(CONCAT(YEAR(CURRENT_TIMESTAMP()), ' 1 1'), '%Y %c %e') AS _expr40,
   STR_TO_DATE(
     CONCAT(
@@ -234,7 +214,7 @@ SELECT
     )) HOUR
   ) AS _expr45,
   CAST(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '285' SECOND) AS DATE) AS _expr46,
-  CAST('1999-05-15 00:00:00' AS DATETIME) AS _expr47,
+  CAST('1999-05-15' AS DATE) AS _expr47,
   DATE_ADD(
     STR_TO_DATE(
       CONCAT(
@@ -264,41 +244,8 @@ SELECT
     INTERVAL '-21' DAY
   ) AS _expr48,
   DATE_ADD(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '212' MINUTE), INTERVAL '368' YEAR) AS _expr49,
-  DATE_ADD(
-    '0000-01-01 00:00:00',
-    INTERVAL (TIMESTAMPDIFF(
-      MINUTE,
-      '0000-01-01 00:00:00',
-      DATE_ADD(
-        '0000-01-01 00:00:00',
-        INTERVAL (TIMESTAMPDIFF(
-          MINUTE,
-          '0000-01-01 00:00:00',
-          STR_TO_DATE(
-            CONCAT(
-              YEAR(
-                STR_TO_DATE(
-                  CONCAT(
-                    YEAR(CAST('2024-12-31 11:59:00' AS DATETIME)),
-                    ' ',
-                    MONTH(CAST('2024-12-31 11:59:00' AS DATETIME)),
-                    ' 1'
-                  ),
-                  '%Y %c %e'
-                )
-              ),
-              ' 1 1'
-            ),
-            '%Y %c %e'
-          )
-        )) MINUTE
-      )
-    )) MINUTE
-  ) AS _expr50,
-  CAST(DATE_ADD(
-    '0000-01-01 00:00:00',
-    INTERVAL (TIMESTAMPDIFF(HOUR, '0000-01-01 00:00:00', CAST('1999-03-14' AS DATETIME))) HOUR
-  ) AS DATE) AS _expr51,
+  CAST('2024-01-01' AS DATE) AS _expr50,
+  CAST('1999-03-14' AS DATE) AS _expr51,
   DATE_ADD(
     DATE_ADD(
       '0000-01-01 00:00:00',
@@ -369,23 +316,23 @@ SELECT
   ) AS _expr57,
   DATE_ADD(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '45' MONTH), INTERVAL '-135' SECOND) AS _expr58,
   EXTRACT(YEAR FROM CURRENT_TIMESTAMP()) AS _expr59,
-  EXTRACT(YEAR FROM CAST('2025-07-04 12:58:45' AS DATETIME)) AS _expr60,
-  EXTRACT(YEAR FROM CAST('1999-03-14' AS DATETIME)) AS _expr61,
+  2025 AS _expr60,
+  1999 AS _expr61,
   EXTRACT(MONTH FROM CURRENT_TIMESTAMP()) AS _expr62,
-  EXTRACT(MONTH FROM CAST('2001-06-30' AS DATE)) AS _expr63,
-  EXTRACT(MONTH FROM CAST('1999-03-14' AS DATETIME)) AS _expr64,
+  6 AS _expr63,
+  3 AS _expr64,
   EXTRACT(DAY FROM CURRENT_TIMESTAMP()) AS _expr65,
-  EXTRACT(DAY FROM CAST('2025-07-04 12:58:45' AS DATETIME)) AS _expr66,
-  EXTRACT(DAY FROM CAST('2025-07-04 12:58:45' AS DATETIME)) AS _expr67,
+  4 AS _expr66,
+  4 AS _expr67,
   HOUR('CURRENT_TIMESTAMP') AS _expr68,
-  HOUR(CAST('2001-06-30' AS DATE)) AS _expr69,
-  HOUR('2024-01-01') AS _expr70,
+  0 AS _expr69,
+  0 AS _expr70,
   MINUTE('CURRENT_TIMESTAMP') AS _expr71,
-  MINUTE(CAST('2024-12-25 20:30:59' AS DATETIME)) AS _expr72,
-  MINUTE('2024-01-01') AS _expr73,
+  30 AS _expr72,
+  0 AS _expr73,
   SECOND('now') AS _expr74,
-  SECOND(CAST('2025-07-04 12:58:45' AS DATETIME)) AS _expr75,
-  SECOND('1999-03-14') AS _expr76,
+  45 AS _expr75,
+  0 AS _expr76,
   YEAR(CURRENT_TIMESTAMP()) - YEAR(CAST('2018-02-14 12:41:06' AS DATETIME)) AS _expr77,
   YEAR(CAST('2022-11-24' AS DATE)) - YEAR(o_orderdate) AS _expr78,
   (
