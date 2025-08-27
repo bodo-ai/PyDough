@@ -9,6 +9,7 @@ __all__ = ["HybridDecorrelater"]
 import copy
 
 import pydough.pydough_operators as pydop
+from pydough.relational import JoinCardinality
 from pydough.types import BooleanType
 
 from .hybrid_connection import ConnectionType, HybridConnection
@@ -427,6 +428,13 @@ class HybridDecorrelater:
         )
         if child.connection_type.is_aggregation or is_faux_agg:
             child.subtree.agg_keys = new_agg_keys
+
+        # Mark the reverse cardinality as SINGULAR_ACCESS since each record of
+        # the de-correlated child can only match with one record of the
+        # original parent due to the join keys being based on the uniqueness
+        # keys of the original parent.
+        child.reverse_cardinality = JoinCardinality.SINGULAR_ACCESS
+
         # If the child is such that we don't need to keep rows from the parent
         # without a match, replace the parent & its ancestors with a
         # HybridPullUp node (and replace any other deleted nodes with no-ops).

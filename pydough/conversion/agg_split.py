@@ -322,6 +322,7 @@ def attempt_join_aggregate_transpose(
     # if joining first will reduce the number of rows that get aggregated.
     if join.cardinality.filters:
         can_push_left = False
+    if join.reverse_cardinality.filters:
         can_push_right = False
 
     # If any of the aggregations to either side cannot be pushed down, then

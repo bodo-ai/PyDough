@@ -17,6 +17,7 @@ from pydough.unqualified import UnqualifiedNode
 from tests.testing_utilities import graph_fetcher
 
 
+@pytest.mark.execute
 @pytest.mark.parametrize(
     "pydough_code, answer_variable, env, answer",
     [
