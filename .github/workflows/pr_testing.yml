@@ -16,6 +16,11 @@ on:
         description: "Python 3.12"
         type: boolean
         default: true
+      run-all:
+        description: "Run All Tests"
+        type: boolean
+        required: false
+        default: false
       run-python:
         description: "Run Main PyDough Tests"
         type: boolean
@@ -101,8 +106,9 @@ jobs:
     # https://docs.github.com/en/actions/learn-github-actions/expressions#contains
     # contains is case-insensitive
     if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run ci]')) ||
-      (github.event_name == 'workflow_dispatch' && inputs.run-python)
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-python))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -138,8 +144,9 @@ jobs:
     name: Snowflake Tests
     needs: [get-msg, get-py-ver-matrix]
     if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
-      (github.event_name == 'workflow_dispatch' && inputs.run-sf)
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
     uses: ./.github/workflows/sf_testing.yml
     secrets:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
@@ -154,8 +161,9 @@ jobs:
     name: MySQL Tests
     needs: [get-msg, get-py-ver-matrix]
     if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run mysql]')) ||
-      (github.event_name == 'workflow_dispatch' && inputs.run-mysql)
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-mysql))
     uses: ./.github/workflows/mysql_testing.yml # Path to MySQL workflow file
     secrets:
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
