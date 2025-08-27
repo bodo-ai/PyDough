@@ -1,31 +1,32 @@
-WITH _s0 AS (
+WITH _t2 AS (
   SELECT
     COUNT(*) AS num_transactions,
-    sbtxcustid AS sbTxCustId,
-    sbtxtickerid AS sbTxTickerId
-  FROM main.sbTransaction
-  GROUP BY
-    2,
-    3
-), _s2 AS (
-  SELECT
-    SUM(_s0.num_transactions) AS num_transactions,
-    sbTicker.sbtickertype AS sbTickerType,
-    _s0.sbTxCustId
-  FROM _s0 AS _s0
+    ANY_VALUE(sbCustomer.sbcuststate) AS sbCustState,
+    ANY_VALUE(sbTicker.sbtickertype) AS sbTickerType,
+    sbTransaction.sbtxcustid AS sbTxCustId
+  FROM main.sbTransaction AS sbTransaction
   JOIN main.sbTicker AS sbTicker
-    ON _s0.sbTxTickerId = sbTicker.sbtickerid
+    ON sbTicker.sbtickerid = sbTransaction.sbtxtickerid
+  JOIN main.sbCustomer AS sbCustomer
+    ON sbCustomer.sbcustid = sbTransaction.sbtxcustid
   GROUP BY
-    2,
+    sbTransaction.sbtxtickerid,
+    4
+), _t1 AS (
+  SELECT
+    SUM(num_transactions) AS num_transactions,
+    ANY_VALUE(sbCustState) AS sbCustState,
+    sbTickerType
+  FROM _t2
+  GROUP BY
+    sbTxCustId,
     3
 )
 SELECT
-  sbCustomer.sbcuststate AS state,
-  _s2.sbTickerType AS ticker_type,
-  SUM(_s2.num_transactions) AS num_transactions
-FROM _s2 AS _s2
-JOIN main.sbCustomer AS sbCustomer
-  ON _s2.sbTxCustId = sbCustomer.sbcustid
+  sbCustState AS state,
+  sbTickerType AS ticker_type,
+  SUM(num_transactions) AS num_transactions
+FROM _t1
 GROUP BY
   1,
   2
