@@ -87,7 +87,6 @@ class BaseTransformBindings:
     standard_func_bindings: dict[
         pydop.PyDoughExpressionOperator, sqlglot_expressions.Func
     ] = {
-        pydop.SUM: sqlglot_expressions.Sum,
         pydop.AVG: sqlglot_expressions.Avg,
         pydop.MIN: sqlglot_expressions.Min,
         pydop.MAX: sqlglot_expressions.Max,
@@ -214,6 +213,8 @@ class BaseTransformBindings:
                 return self.convert_sign(args, types)
             case pydop.ROUND:
                 return self.convert_round(args, types)
+            case pydop.SUM:
+                return self.convert_sum(args, types)
             case pydop.CEIL:
                 return self.convert_ceil(args, types)
             case pydop.FLOOR:
@@ -291,6 +292,14 @@ class BaseTransformBindings:
         if isinstance(expr, sqlglot_expressions.Literal) and expr.is_string:
             return self.handle_datetime_base_arg(expr)
         return expr
+
+    def convert_sum(
+        self, args: SQLGlotExpression, types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        """
+        Converts a SUM function call to its SQLGlot equivalent.
+        """
+        return sqlglot_expressions.Sum.from_arg_list(args)
 
     def convert_find(
         self,
@@ -753,7 +762,7 @@ class BaseTransformBindings:
                                     ),
                                     expression=sql_zero,
                                 ),
-                                sql_empty_str,  # If length ≤ 0, return empty string
+                                sql_zero,  # If length ≤ 0, return empty string
                                 # Otherwise calculate actual length
                                 sqlglot_expressions.Sub(
                                     this=stop_idx_adjusted_glot,
@@ -795,7 +804,7 @@ class BaseTransformBindings:
                                             ),
                                             expression=sql_zero,
                                         ),
-                                        sql_empty_str,  # If length ≤ 0, return empty string
+                                        sql_zero,  # If length ≤ 0, return empty string
                                         sqlglot_expressions.Sub(  # Otherwise calculate actual length
                                             this=stop_idx_adjusted_glot,
                                             expression=start_idx_adjusted_glot,
@@ -1362,10 +1371,17 @@ class BaseTransformBindings:
         Returns:
             The SQLGlot expression to truncate `base`.
         """
-        return sqlglot_expressions.DateTrunc(
-            this=self.make_datetime_arg(base),
-            unit=sqlglot_expressions.Var(this=unit.value),
-        )
+        match unit:
+            case DateTimeUnit.HOUR | DateTimeUnit.MINUTE | DateTimeUnit.SECOND:
+                return sqlglot_expressions.TimestampTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
+            case _:
+                return sqlglot_expressions.DateTrunc(
+                    this=self.make_datetime_arg(base),
+                    unit=sqlglot_expressions.Var(this=unit.value.lower()),
+                )
 
     def apply_datetime_offset(
         self, base: SQLGlotExpression, amt: int, unit: DateTimeUnit
