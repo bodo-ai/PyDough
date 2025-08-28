@@ -735,6 +735,17 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     case DateTimeUnit.MONTH:
                         timestamp_value = timestamp_value.to_period("M").to_timestamp()
                         return_as_date = True
+                    case DateTimeUnit.WEEK:
+                        # Compute the number of day since the start of the week
+                        # (accounting for the session configs) and subtract that
+                        # many days from the normalized timestamp.
+                        dow: int = timestamp_value.weekday()
+                        dow -= self.configs.start_of_week.pandas_dow
+                        dow %= 7
+                        timestamp_value = timestamp_value.normalize() - pd.Timedelta(
+                            days=dow
+                        )
+                        return_as_date = True
                     case DateTimeUnit.DAY:
                         timestamp_value = timestamp_value.floor("d")
                         return_as_date = True
@@ -743,8 +754,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     case DateTimeUnit.MINUTE:
                         timestamp_value = timestamp_value.floor("min")
                     case _:
-                        # Doesn't support truncating to WEEK or SECOND in this
-                        # simplification.
+                        # Doesn't support truncating to SECOND.
                         return expr
             elif offset_match is not None:
                 # If the string is in the form `±<amt> <unit>`, apply an

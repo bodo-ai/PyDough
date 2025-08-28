@@ -2118,12 +2118,19 @@ def get_day_of_week(
                 " s95 = DAY(date_time) <= 31,"  # KEEP_IF(True, PRESENT(datetime))
                 " s96 = DAY(date_time) < 32,"  # KEEP_IF(True, PRESENT(datetime))
                 " s97 = DATETIME('2025-01-31', '+1 month'),"  # 2025-02-28
+                " s98 = DATETIME('2025-01-01', 'start of week'),"  # 2025-12-29
+                " s99 = DATETIME('2025-01-02', 'start of week'),"  # 2025-12-29
+                " s100 = DATETIME('2025-01-03', 'start of week'),"  # 2025-12-29
+                " s101 = DATETIME('2025-01-04', 'start of week'),"  # 2025-12-29
+                " s102 = DATETIME('2025-01-05', 'start of week'),"  # 2025-01-05
+                " s103 = DATETIME('2025-01-06', 'start of week'),"  # 2025-01-05
+                " s104 = DATETIME('2025-01-07', 'start of week'),"  # 2025-01-05
                 "))",
                 "Broker",
                 lambda: pd.DataFrame(
                     {
                         "date_time": ["2023-01-15 10:00:00", "2023-04-03 16:15:00"],
-                        "s00": ["2022-11-20", "2023-02-05"],
+                        "s00": ["2022-11-14", "2023-02-06"],
                         "s01": [0, 0],
                         "s02": [1, 0],
                         "s03": [0, 1],
@@ -2221,6 +2228,13 @@ def get_day_of_week(
                         "s95": [1, 1],
                         "s96": [1, 1],
                         "s97": ["2025-02-28", "2025-02-28"],
+                        "s98": ["2024-12-30", "2024-12-30"],
+                        "s99": ["2024-12-30", "2024-12-30"],
+                        "s100": ["2024-12-30", "2024-12-30"],
+                        "s101": ["2024-12-30", "2024-12-30"],
+                        "s102": ["2024-12-30", "2024-12-30"],
+                        "s103": ["2025-01-06", "2025-01-06"],
+                        "s104": ["2025-01-06", "2025-01-06"],
                     }
                 ),
                 "simplification_4",
@@ -2242,6 +2256,7 @@ def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
 def test_pipeline_until_relational_defog_custom(
     defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ):
@@ -2252,7 +2267,7 @@ def test_pipeline_until_relational_defog_custom(
     """
     file_path: str = get_plan_test_filename(defog_custom_pipeline_test_data.test_name)
     defog_custom_pipeline_test_data.run_relational_test(
-        defog_graphs, file_path, update_tests
+        defog_graphs, file_path, update_tests, config=defog_config
     )
 
 
@@ -2284,6 +2299,7 @@ def test_pipeline_until_sql_defog_custom(
 def test_pipeline_e2e_defog_custom(
     defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     sqlite_defog_connection: DatabaseContext,
 ):
     """
@@ -2292,7 +2308,9 @@ def test_pipeline_e2e_defog_custom(
     same database connector. Run on custom questions using the defog.ai
     schemas.
     """
-    defog_custom_pipeline_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection)
+    defog_custom_pipeline_test_data.run_e2e_test(
+        defog_graphs, sqlite_defog_connection, config=defog_config
+    )
 
 
 @pytest.mark.parametrize(
