@@ -1870,24 +1870,16 @@ def impl_defog_dermtreatment_basic4():
     of distinct patients? Return the diagnosis name, number of patients, and
     maximum itch score. Only include patients with a registered outcome
     """
-    day_100_itch_vas_outcomes = outcome_records.WHERE(PRESENT(day100_itch_vas))
-    day_100_itch_vas_outcome_treatments = treatments_for.WHERE(
-        HAS(day_100_itch_vas_outcomes)
-    )
+
+    selected_treatments = treatments_for.WHERE(HAS(outcome_records))
 
     return (
-        diagnoses.WHERE(HAS(day_100_itch_vas_outcome_treatments))
-        .CALCULATE(
+        diagnoses.WHERE(HAS(selected_treatments)).CALCULATE(
             diagnosis_name=name,
-            num_patients=NDISTINCT(day_100_itch_vas_outcome_treatments.patient_id),
-            max_itch_score=MAX(
-                day_100_itch_vas_outcome_treatments.outcome_records.WHERE(
-                    PRESENT(day100_itch_vas)
-                ).day100_itch_vas
-            ),
+            num_patients=NDISTINCT(selected_treatments.patient_id),
+            max_itch_score=MAX(selected_treatments.outcome_records.day100_itch_vas),
         )
-        .TOP_K(3, by=max_itch_score.DESC())
-    )
+    ).TOP_K(3, by=(max_itch_score.DESC(), num_patients.DESC()))
 
 
 def impl_defog_dermtreatment_basic5():

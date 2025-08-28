@@ -3,8 +3,6 @@ WITH _s1 AS (
     MAX(day100_itch_vas) AS max_day100_itch_vas,
     treatment_id
   FROM main.outcomes
-  WHERE
-    NOT day100_itch_vas IS NULL
   GROUP BY
     2
 ), _s3 AS (
@@ -26,5 +24,6 @@ FROM main.diagnoses AS diagnoses
 JOIN _s3 AS _s3
   ON _s3.diag_id = diagnoses.diag_id
 ORDER BY
-  3 DESC
+  3 DESC,
+  2 DESC
 LIMIT 3

@@ -2003,7 +2003,8 @@ def defog_sql_text_dermtreatment_basic4() -> str:
     return """
     SELECT di.diag_name, COUNT(DISTINCT t.patient_id) AS num_patients, 
         MAX(o.day100_itch_vas) AS max_itch_score 
-    FROM treatments AS t JOIN diagnoses AS di ON t.diag_id = di.diag_id 
+    FROM treatments AS t 
+    JOIN diagnoses AS di ON t.diag_id = di.diag_id 
     JOIN outcomes AS o ON t.treatment_id = o.treatment_id 
     GROUP BY di.diag_name 
     ORDER BY CASE WHEN max_itch_score IS NULL THEN 1 ELSE 0 END DESC, 

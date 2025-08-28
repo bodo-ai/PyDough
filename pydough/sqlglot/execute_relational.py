@@ -167,7 +167,9 @@ def apply_sqlglot_optimizer(
 
     # Replaces any grouping or ordering keys that point to a clause in the
     # SELECT with an index (e.g. ORDER BY 1, GROUP BY 1, 2)
-    replace_keys_with_indices(glot_expr)
+    replace_keys_with_indices(
+        glot_expr, dialect.__class__.__name__.lower() == "snowflake"
+    )
 
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
@@ -175,7 +177,9 @@ def apply_sqlglot_optimizer(
     return glot_expr
 
 
-def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
+def replace_keys_with_indices(
+    glot_expr: SQLGlotExpression, skip_group_rewrite: bool
+) -> None:
     """
     Runs a transformation postprocessing pass on the SQLGlot AST to make the
     following changes:
@@ -184,7 +188,8 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
       operation in the select clause.
     - Replace GROUP BY keys that are in the select clause with indices, unless
       the key appears multiple times in the select clause (e.g. as a top level
-      expression and as a subexpression in other scalar expressions).
+      expression and as a subexpression in other scalar expressions). If
+      `skip_group_rewrite` is True, then skip this step.
     - If any window function ordering key expressions have become literals,
       delete and/or replace them with '1'
     """
@@ -249,7 +254,7 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
                         expression.expressions[expr_idx] = collate
 
         # Replace GROUP BY keys that are in the select clause with indices.
-        if expression.args.get("group") is not None:
+        if expression.args.get("group") is not None and not skip_group_rewrite:
             keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
             for idx, key_expr in enumerate(keys_list):
                 # Only replace with the index if the key expression appears in
