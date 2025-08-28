@@ -45,7 +45,7 @@ from pydough.sqlglot.transform_bindings.sqlglot_transform_utils import (
     offset_pattern,
     trunc_pattern,
 )
-from pydough.types import ArrayType, NumericType, StringType
+from pydough.types import ArrayType, BooleanType, NumericType, StringType
 
 
 @dataclass
@@ -125,7 +125,7 @@ class PredicateSet:
         return result
 
 
-NULL_PROPAGATING_OPS: set[pydop.PyDoughOperator] = {
+NULLABLE_IF_INPUT_NULLABLE_OPS: set[pydop.PyDoughOperator] = {
     pydop.ABS,
     pydop.ADD,
     pydop.BAN,
@@ -172,21 +172,21 @@ NULL_PROPAGATING_OPS: set[pydop.PyDoughOperator] = {
     pydop.YEAR,
 }
 """
-A set of operators that only output null if one of the inputs is null. This set
-is significant because it means that if all of the inputs to a function are
+A set of operators that can only output null if one of the inputs is null. This
+set is significant because it means that if all of the inputs to a function are
 guaranteed to be non-null, the output is guaranteed to be non-null as well.
 """
 
 
 NULL_IF_INPUT_NULL_OPS: set[pydop.PyDoughOperator] = (
-    NULL_PROPAGATING_OPS | {pydop.GETPART, pydop.DATETIME}
+    NULLABLE_IF_INPUT_NULLABLE_OPS | {pydop.GETPART, pydop.DATETIME}
 ) - {pydop.BOR, pydop.SLICE}
 """
 A set of operators that will always output null if any of their inputs are null.
-This includes all operators from NULL_PROPAGATING_OPS unless it is possible for
-them to output a non-null value even if some inputs are null (e.g. OR, SLICE),
-and also include some operators that can return NULL even if none of the inputs
-are null (e.g. GETPART or DATEDIFF).
+This includes all operators from `NULLABLE_IF_INPUT_NULLABLE_OPS` unless it is
+possible for them to output a non-null value even if some inputs are null (e.g.
+OR, SLICE), and also include some operators that can return NULL even if none of
+the inputs are null (e.g. GETPART or DATEDIFF).
 """
 
 
@@ -319,8 +319,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
     def quarter_month_array(self, quarter: int) -> RelationalExpression:
         """
-        Returns a LiteralExpression containing an array of the months
-        corresponding to the given quarter.
+        Returns the months corresponding to the given quarter as a
+        LiteralExpression of an integer array.
 
         Args:
             `quarter`: The quarter (1-4) to get the corresponding months for.
@@ -330,7 +330,8 @@ class SimplificationShuttle(RelationalExpressionShuttle):
             given quarter.
         """
         assert 1 <= quarter <= 4
-        month_arr: list[int] = [3 * (quarter - 1) + i + 1 for i in range(3)]
+        start: int = 3 * (quarter - 1) + 1
+        month_arr: list[int] = list(range(start, start + 3))
         return LiteralExpression(month_arr, ArrayType(NumericType()))
 
     def switch_operator(
@@ -365,7 +366,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
             A CallExpression representing KEEP_IF(expr, PRESENT(source)).
         """
         source_not_null: RelationalExpression = CallExpression(
-            pydop.PRESENT, source.data_type, [source]
+            pydop.PRESENT, BooleanType(), [source]
         )
         return CallExpression(pydop.KEEP_IF, expr.data_type, [expr, source_not_null])
 
@@ -398,213 +399,179 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         conditional_false: RelationalExpression = self.keep_if_not_null(
             func_expr.inputs[0], LiteralExpression(False, expr.data_type)
         )
+        dt_unit_boundaries: dict[pydop.PyDoughExpressionOperator, tuple[int, int]] = {
+            pydop.QUARTER: (1, 4),
+            pydop.MONTH: (1, 12),
+            pydop.DAY: (1, 31),
+            pydop.MONTH: (1, 12),
+            pydop.HOUR: (0, 23),
+            pydop.MINUTE: (0, 59),
+            pydop.SECOND: (0, 59),
+        }
+
         match (op, func_expr.op, lit_expr.data_type):
+            # e.g. QUARTER(x) == 0 <=> KEEP_IF(False, PRESENT(x))
+            # or QUARTER(x) <= -1 <=> KEEP_IF(False, PRESENT(x))
+            # same for other units below their lower bound
+            case (pydop.EQU | pydop.LEQ, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value < dt_unit_boundaries[func_expr.op][0]
+            ):
+                result = conditional_false
+
+            # e.g. QUARTER(x) < 1 <=> KEEP_IF(False, PRESENT(x))
+            # same for other units at or below their lower bound
+            case (pydop.LET, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value <= dt_unit_boundaries[func_expr.op][0]
+            ):
+                result = conditional_false
+
+            # e.g. QUARTER(x) == 5 <=> KEEP_IF(False, PRESENT(x))
+            # or QUARTER(x) >= 5 <=> KEEP_IF(False, PRESENT(x))
+            # same for other units above their lower bound
+            case (pydop.EQU | pydop.GEQ, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value > dt_unit_boundaries[func_expr.op][1]
+            ):
+                result = conditional_false
+
+            # e.g. QUARTER(x) > 4 <=> KEEP_IF(False, PRESENT(x))
+            # same for other units at or above their lower bound
+            case (pydop.GRT, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value >= dt_unit_boundaries[func_expr.op][1]
+            ):
+                result = conditional_false
+
+            # e.g. QUARTER(x) != 5 <=> KEEP_IF(True, PRESENT(x))
+            # or QUARTER(x) < 5 <=> KEEP_IF(True, PRESENT(x))
+            # Same for other units above their upper bound
+            case (pydop.LET | pydop.NEQ, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value > dt_unit_boundaries[func_expr.op][1]
+            ):
+                result = conditional_true
+
+            # e.g. QUARTER(x) <= 4 <=> KEEP_IF(True, PRESENT(x))
+            # Same for other units at or above their upper bound
+            case (pydop.LEQ, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value >= dt_unit_boundaries[func_expr.op][1]
+            ):
+                result = conditional_true
+
+            # e.g. QUARTER(x) != 0 <=> KEEP_IF(True, PRESENT(x))
+            # or QUARTER(x) > 0 <=> KEEP_IF(True, PRESENT(x))
+            # Same for other units below their lower bound
+            case (pydop.GRT | pydop.NEQ, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value < dt_unit_boundaries[func_expr.op][0]
+            ):
+                result = conditional_true
+
+            # e.g. QUARTER(x) >= 1 <=> KEEP_IF(True, PRESENT(x))
+            # Same for other units at or below their lower bound
+            case (pydop.GEQ, _, NumericType()) if (
+                isinstance(lit_expr.value, int)
+                and func_expr.op in dt_unit_boundaries
+                and lit_expr.value <= dt_unit_boundaries[func_expr.op][0]
+            ):
+                result = conditional_true
+
+            # e.g. QUARTER(x) == 1 <=> ISIN(MONTH(x), [1, 2, 3])
             case (pydop.EQU, pydop.QUARTER, NumericType()) if isinstance(
                 lit_expr.value, int
-            ):
-                # QUARTER(x) == 1 <=> ISIN(MONTH(x), [1, 2, 3])
-                if lit_expr.value in (1, 2, 3, 4):
-                    result = CallExpression(
-                        pydop.ISIN,
-                        expr.data_type,
-                        [
-                            self.switch_operator(func_expr, pydop.MONTH),
-                            self.quarter_month_array(lit_expr.value),
-                        ],
-                    )
-                # QUARTER(x) == 3 <=> KEEP_IF(False, PRESENT(x))
-                else:
-                    result = conditional_false
+            ) and lit_expr.value in (1, 2, 3, 4):
+                result = CallExpression(
+                    pydop.ISIN,
+                    expr.data_type,
+                    [
+                        self.switch_operator(func_expr, pydop.MONTH),
+                        self.quarter_month_array(lit_expr.value),
+                    ],
+                )
+
+            # e.g. QUARTER(x) != 4 <=> NOT(ISIN(MONTH(x), [10, 11, 12]))
             case (pydop.NEQ, pydop.QUARTER, NumericType()) if isinstance(
                 lit_expr.value, int
-            ):
-                # QUARTER(x) != 4 <=> NOT(ISIN(MONTH(x), [10, 11, 12]))
-                if lit_expr.value in (1, 2, 3, 4):
-                    result = CallExpression(
-                        pydop.NOT,
-                        expr.data_type,
-                        [
-                            CallExpression(
-                                pydop.ISIN,
-                                expr.data_type,
-                                [
-                                    self.switch_operator(func_expr, pydop.MONTH),
-                                    self.quarter_month_array(lit_expr.value),
-                                ],
-                            )
-                        ],
-                    )
-                # QUARTER(x) != 0 <=> KEEP_IF(True, PRESENT(x))
-                else:
-                    result = conditional_true
+            ) and lit_expr.value in (1, 2, 3, 4):
+                result = CallExpression(
+                    pydop.NOT,
+                    expr.data_type,
+                    [
+                        CallExpression(
+                            pydop.ISIN,
+                            expr.data_type,
+                            [
+                                self.switch_operator(func_expr, pydop.MONTH),
+                                self.quarter_month_array(lit_expr.value),
+                            ],
+                        )
+                    ],
+                )
+
+            # e.g. QUARTER(x) < 4 <=> MONTH(X) < 10
             case (pydop.LET, pydop.QUARTER, NumericType()) if isinstance(
                 lit_expr.value, int
-            ):
-                # QUARTER(x) < 4 <=> MONTH(X) < 9
-                if lit_expr.value in (2, 3, 4):
-                    result = CallExpression(
-                        pydop.LET,
-                        expr.data_type,
-                        [
-                            self.switch_operator(func_expr, pydop.MONTH),
-                            LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
-                        ],
-                    )
-                # QUARTER(x) < 1 <=> KEEP_IF(False, PRESENT(x))
-                elif lit_expr.value < 2:
-                    result = conditional_false
-                # QUARTER(x) < 5 <=> KEEP_IF(True, PRESENT(x))
-                elif lit_expr.value > 4:
-                    result = conditional_true
+            ) and lit_expr.value in (2, 3, 4):
+                result = CallExpression(
+                    pydop.LET,
+                    expr.data_type,
+                    [
+                        self.switch_operator(func_expr, pydop.MONTH),
+                        LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
+                    ],
+                )
+
+            # e.g. QUARTER(x) <= 2 <=> MONTH(X) <= 6
             case (pydop.LEQ, pydop.QUARTER, NumericType()) if isinstance(
                 lit_expr.value, int
-            ):
-                # QUARTER(x) <= 2 <=> MONTH(X) <= 6
-                if lit_expr.value in (1, 2, 3):
-                    result = CallExpression(
-                        pydop.LEQ,
-                        expr.data_type,
-                        [
-                            self.switch_operator(func_expr, pydop.MONTH),
-                            LiteralExpression(lit_expr.value * 3, NumericType()),
-                        ],
-                    )
-                # QUARTER(x) <= 0 <=> KEEP_IF(False, PRESENT(x))
-                elif lit_expr.value < 1:
-                    result = conditional_false
-                # QUARTER(x) <= 4 <=> KEEP_IF(True, PRESENT(x))
-                elif lit_expr.value > 3:
-                    result = conditional_true
+            ) and lit_expr.value in (1, 2, 3):
+                result = CallExpression(
+                    pydop.LEQ,
+                    expr.data_type,
+                    [
+                        self.switch_operator(func_expr, pydop.MONTH),
+                        LiteralExpression(lit_expr.value * 3, NumericType()),
+                    ],
+                )
+
+            # e.g. QUARTER(x) > 1 <=> MONTH(X) > 3
             case (pydop.GRT, pydop.QUARTER, NumericType()) if isinstance(
                 lit_expr.value, int
-            ):
-                # QUARTER(x) > 1 <=> MONTH(X) > 3
-                if lit_expr.value in (1, 2, 3):
-                    result = CallExpression(
-                        pydop.GRT,
-                        expr.data_type,
-                        [
-                            self.switch_operator(func_expr, pydop.MONTH),
-                            LiteralExpression(lit_expr.value * 3, NumericType()),
-                        ],
-                    )
-                # QUARTER(x) > 0 <=> KEEP_IF(True, PRESENT(x))
-                elif lit_expr.value < 1:
-                    result = conditional_true
-                # QUARTER(x) > 4 <=> KEEP_IF(False, PRESENT(x))
-                elif lit_expr.value > 3:
-                    result = conditional_false
+            ) and lit_expr.value in (1, 2, 3):
+                result = CallExpression(
+                    pydop.GRT,
+                    expr.data_type,
+                    [
+                        self.switch_operator(func_expr, pydop.MONTH),
+                        LiteralExpression(lit_expr.value * 3, NumericType()),
+                    ],
+                )
+
+            # e.g. QUARTER(x) >= 3 <=> MONTH(X) >= 7
             case (pydop.GEQ, pydop.QUARTER, NumericType()) if isinstance(
                 lit_expr.value, int
-            ):
-                # QUARTER(x) >= 3 <=> MONTH(X) >= 7
-                if lit_expr.value in (2, 3, 4):
-                    result = CallExpression(
-                        pydop.GEQ,
-                        expr.data_type,
-                        [
-                            self.switch_operator(func_expr, pydop.MONTH),
-                            LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
-                        ],
-                    )
-                # QUARTER(x) >= 1 <=> KEEP_IF(True, PRESENT(x))
-                elif lit_expr.value < 2:
-                    result = conditional_true
-                # QUARTER(x) >= 6 <=> KEEP_IF(False, PRESENT(x))
-                elif lit_expr.value > 4:
-                    result = conditional_false
-            # MONTH(x) > 0 <=> KEEP_IF(True, PRESENT(x)) (same for day)
-            # MONTH(x) != -3 <=> KEEP_IF(True, PRESENT(x)) (same for day)
-            case (
-                pydop.GRT | pydop.NEQ,
-                pydop.MONTH | pydop.DAY,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value < 1:
-                result = conditional_true
-            # MONTH(x) >= 1 <=> KEEP_IF(True, PRESENT(x)) (same for day)
-            case (
-                pydop.GEQ,
-                pydop.MONTH | pydop.DAY,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 1:
-                result = conditional_true
-            # MONTH(x) < 1 <=> KEEP_IF(False, PRESENT(x)) (same for day)
-            case (
-                pydop.LET,
-                pydop.MONTH | pydop.DAY,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 1:
-                result = conditional_false
-            # MONTH(x) <= 0 <=> KEEP_IF(False, PRESENT(x)) (same for day)
-            # MONTH(x) == 0 <=> KEEP_IF(False, PRESENT(x)) (same for day)
-            case (
-                pydop.LEQ | pydop.EQU,
-                pydop.MONTH | pydop.DAY,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value < 1:
-                result = conditional_false
-            # HOUR(x) <= -1 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
-            # HOUR(x) == -1 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.LEQ | pydop.EQU,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value < 0:
-                result = conditional_false
-            # HOUR(x) < 0 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.LET,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 0:
-                result = conditional_false
-            # HOUR(x) > -1 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
-            # HOUR(x) != -1 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.GRT | pydop.NEQ,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value < 0:
-                result = conditional_true
-            # HOUR(x) >= 0 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.GEQ,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value <= 0:
-                result = conditional_true
-            # HOUR(x) > 60 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
-            # HOUR(x) == 60 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.GRT | pydop.EQU,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value >= 60:
-                result = conditional_false
-            # HOUR(x) < 61 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
-            # HOUR(x) != 61 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.LET | pydop.NEQ,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value > 60:
-                result = conditional_true
-            # HOUR(x) <= 60 <=> KEEP_IF(True, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.LEQ,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value >= 60:
-                result = conditional_true
-            # HOUR(x) >= 61 <=> KEEP_IF(False, PRESENT(x)) (same for minute/second)
-            case (
-                pydop.GEQ,
-                pydop.HOUR | pydop.MINUTE | pydop.SECOND,
-                NumericType(),
-            ) if isinstance(lit_expr.value, int) and lit_expr.value > 60:
-                result = conditional_false
+            ) and lit_expr.value in (2, 3, 4):
+                result = CallExpression(
+                    pydop.GEQ,
+                    expr.data_type,
+                    [
+                        self.switch_operator(func_expr, pydop.MONTH),
+                        LiteralExpression((lit_expr.value * 3) - 2, NumericType()),
+                    ],
+                )
+
+            # Fall back to the original expression by default.
             case _:
-                # Fall back to the original expression by default.
                 pass
         return result
 
@@ -863,7 +830,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
 
         # If the call has null propagating rules, all of the arguments are
         # non-null, the output is guaranteed to be non-null.
-        if expr.op in NULL_PROPAGATING_OPS:
+        if expr.op in NULLABLE_IF_INPUT_NULLABLE_OPS:
             if intersect_set.not_null:
                 output_predicates.not_null = True
 
@@ -993,7 +960,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
             # folded if the inputs are string literals. The boolean-returning
             # operators are always non-negative. Most of cases do not set
             # predicates because there are no predicates to infer, beyond those
-            # already accounted for with NULL_PROPAGATING_OPS.
+            # already accounted for with NULLABLE_IF_INPUT_NULLABLE_OPS.
             case pydop.LOWER:
                 if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
                     expr.inputs[0].value, str

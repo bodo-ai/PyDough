@@ -2105,6 +2105,19 @@ def get_day_of_week(
                 " s82 = HOUR(date_time) > 60,"  # KEEP_IF(False, PRESENT(datetime))
                 " s83 = MINUTE(date_time) >= 0,"  # KEEP_IF(True, PRESENT(datetime))
                 " s84 = SECOND(date_time) >= 80,"  # KEEP_IF(False, PRESENT(datetime))
+                " s85 = MONTH(date_time) == 13,"  # KEEP_IF(False, PRESENT(datetime))
+                " s86 = MONTH(date_time) != 13,"  # KEEP_IF(True, PRESENT(datetime))
+                " s87 = MONTH(date_time) > 12,"  # KEEP_IF(False, PRESENT(datetime))
+                " s88 = MONTH(date_time) >= 13,"  # KEEP_IF(False, PRESENT(datetime))
+                " s89 = MONTH(date_time) <= 12,"  # KEEP_IF(True, PRESENT(datetime))
+                " s90 = MONTH(date_time) < 13,"  # KEEP_IF(True, PRESENT(datetime))
+                " s91 = DAY(date_time) == 32,"  # KEEP_IF(False, PRESENT(datetime))
+                " s92 = DAY(date_time) != 32,"  # KEEP_IF(True, PRESENT(datetime))
+                " s93 = DAY(date_time) >= 32,"  # KEEP_IF(False, PRESENT(datetime))
+                " s94 = DAY(date_time) > 31,"  # KEEP_IF(False, PRESENT(datetime))
+                " s95 = DAY(date_time) <= 31,"  # KEEP_IF(True, PRESENT(datetime))
+                " s96 = DAY(date_time) < 32,"  # KEEP_IF(True, PRESENT(datetime))
+                " s97 = DATETIME('2025-01-31', '+1 month'),"  # 2025-02-28
                 "))",
                 "Broker",
                 lambda: pd.DataFrame(
@@ -2195,6 +2208,19 @@ def get_day_of_week(
                         "s82": [0, 0],
                         "s83": [1, 1],
                         "s84": [0, 0],
+                        "s85": [0, 0],
+                        "s86": [1, 1],
+                        "s87": [0, 0],
+                        "s88": [0, 0],
+                        "s89": [1, 1],
+                        "s90": [1, 1],
+                        "s91": [0, 0],
+                        "s92": [1, 1],
+                        "s93": [0, 0],
+                        "s94": [0, 0],
+                        "s95": [1, 1],
+                        "s96": [1, 1],
+                        "s97": ["2025-02-28", "2025-02-28"],
                     }
                 ),
                 "simplification_4",
