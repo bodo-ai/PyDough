@@ -119,8 +119,6 @@ class DatabaseDialect(Enum):
         dialect = dialect.upper()
         if dialect in DatabaseDialect.__members__:
             return DatabaseDialect.__members__[dialect]
-        elif dialect == "POSTGRESQL":
-            return DatabaseDialect.POSTGRES
         else:
             raise ValueError(f"Unsupported dialect: {dialect}")
 

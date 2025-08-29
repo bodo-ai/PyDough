@@ -26,13 +26,14 @@ if TYPE_CHECKING:
 
     import mysql.connector
     import mysql.connector.cursor
+
+    MySQLConn: TypeAlias = mysql.connector.MySQLConnection
+    MySQLCursor: TypeAlias = mysql.connector.cursor.MySQLCursor
+
     import psycopg2
 
     PostgreSQLConn: TypeAlias = psycopg2.connection  # type: ignore
     PostgreSQLCursor: TypeAlias = psycopg2.cursor  # type: ignore
-
-    MySQLConn: TypeAlias = mysql.connector.MySQLConnection
-    MySQLCursor: TypeAlias = mysql.connector.cursor.MySQLCursor
 
     # TBD: Placeholder lines to add other dialects.
     # 1. Replace with actual dialect module
@@ -47,17 +48,18 @@ if TYPE_CHECKING:
     DBCursor: TypeAlias = (
         SQLiteCursor | SnowflakeCursor | MySQLCursor | PostgreSQLCursor
     )
+
 else:
     DBConnection: TypeAlias = Any
     DBCursor: TypeAlias = Any
-    PostgreSQLConn: TypeAlias = Any
-    PostgreSQLCursor: TypeAlias = Any
     SQLiteConn: TypeAlias = Any
     SQLiteCursor: TypeAlias = Any
     SnowflakeCursor: TypeAlias = Any
     SnowflakeConn: TypeAlias = Any
     MySQLConn: TypeAlias = Any
     MySQLCursor: TypeAlias = Any
+    PostgreSQLConn: TypeAlias = Any
+    PostgreSQLCursor: TypeAlias = Any
 
 # This allows us to use these type aliases in the rest of the code
 # without worrying about whether the specific database modules are available.

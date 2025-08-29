@@ -54,48 +54,6 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     return DatabaseContext(connection, dialect)
 
 
-def load_postgres_connection(**kwargs) -> DatabaseConnection:
-    """
-    Loads a PostgreSQL database connection. This is done by providing a wrapper
-    around the DB 2.0 connect API.
-    Returns:
-        A database connection object for PostgreSQL.
-    """
-
-    try:
-        import psycopg2
-    except ImportError:
-        raise ImportError(
-            "PostgreSQL connector psycopg2 is not installed. Please install it with"
-            " `uv pip install psycopg2-binary`."
-        )
-
-    # PostgreSQL python connector
-    connection: psycopg2.extensions.connection
-    if connection := kwargs.pop("connection", None):
-        # If a connection object is provided, return it wrapped in
-        # DatabaseConnection
-        return DatabaseConnection(connection)
-
-    # PostgreSQL connection requires specific parameters:
-    # user, password, dbname.
-    # Raise an error if any of these are missing.
-    # NOTE: host, port are optional and will default to the psycopg2 defaults.
-    # See: https://www.psycopg.org/docs/module.html#psycopg2.connect
-
-    required_keys = ["user", "password", "dbname"]
-    if not all(key in kwargs for key in required_keys):
-        raise ValueError(
-            "PostgreSQL connection requires at least the following arguments: "
-            + ", ".join(required_keys)
-        )
-
-    # Connect to PostgreSQL using DB API 2.0 parameters
-    connection = psycopg2.connect(**kwargs)
-
-    return DatabaseConnection(connection)
-
-
 def load_sqlite_connection(**kwargs) -> DatabaseConnection:
     """
     Loads a SQLite database connection. This is done by providing a wrapper
@@ -246,3 +204,45 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
             attempt += 1
 
     raise ValueError(f"Failed to connect to MySQL after {attempts} attempts")
+
+
+def load_postgres_connection(**kwargs) -> DatabaseConnection:
+    """
+    Loads a PostgreSQL database connection. This is done by providing a wrapper
+    around the DB 2.0 connect API.
+    Returns:
+        A database connection object for PostgreSQL.
+    """
+
+    try:
+        import psycopg2
+    except ImportError:
+        raise ImportError(
+            "PostgreSQL connector psycopg2 is not installed. Please install it with"
+            " `uv pip install psycopg2-binary`."
+        )
+
+    # PostgreSQL python connector
+    connection: psycopg2.extensions.connection
+    if connection := kwargs.pop("connection", None):
+        # If a connection object is provided, return it wrapped in
+        # DatabaseConnection
+        return DatabaseConnection(connection)
+
+    # PostgreSQL connection requires specific parameters:
+    # user, password, dbname.
+    # Raise an error if any of these are missing.
+    # NOTE: host, port are optional and will default to the psycopg2 defaults.
+    # See: https://www.psycopg.org/docs/module.html#psycopg2.connect
+
+    required_keys = ["user", "password", "dbname"]
+    if not all(key in kwargs for key in required_keys):
+        raise ValueError(
+            "PostgreSQL connection requires at least the following arguments: "
+            + ", ".join(required_keys)
+        )
+
+    # Connect to PostgreSQL using DB API 2.0 parameters
+    connection = psycopg2.connect(**kwargs)
+
+    return DatabaseConnection(connection)
