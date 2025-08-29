@@ -10,6 +10,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.errors import PyDoughSQLException
 from pydough.types import DatetimeType, NumericType, PyDoughType, StringType
 
 from .base_transform_bindings import BaseTransformBindings
@@ -86,11 +87,11 @@ class SQLiteTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         assert len(args) == 3
         if not isinstance(args[0], sqlglot_expressions.Literal):
-            raise ValueError(
+            raise PyDoughSQLException(
                 f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
             )
         elif not args[0].is_string:
-            raise ValueError(
+            raise PyDoughSQLException(
                 f"Unsupported argument {args[0]} for DATEDIFF.It should be a string."
             )
         unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
@@ -293,7 +294,9 @@ class SQLiteTransformBindings(BaseTransformBindings):
                 )
                 return secs_diff
             case _:
-                raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
+                raise PyDoughSQLException(
+                    f"Unsupported argument '{unit}' for DATEDIFF."
+                )
 
     def convert_quarter(
         self,

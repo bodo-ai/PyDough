@@ -6,12 +6,12 @@ __all__ = ["PropertyMetadata"]
 
 from abc import abstractmethod
 
-from pydough.metadata.abstract_metadata import AbstractMetadata
-from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import (
+from pydough.errors.error_utils import (
     HasType,
     is_valid_name,
 )
+from pydough.metadata.abstract_metadata import AbstractMetadata
+from pydough.metadata.collections import CollectionMetadata
 
 
 class PropertyMetadata(AbstractMetadata):

@@ -23,6 +23,7 @@ from pydough.database_connectors import (
     empty_connection,
     load_database_context,
 )
+from pydough.errors import PyDoughTestingException
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.tpch_outputs import (
@@ -211,7 +212,7 @@ def get_sample_graph(
     @cache
     def impl(name: str) -> GraphMetadata:
         if name not in valid_sample_graph_names:
-            raise Exception(f"Unrecognized graph name '{name}'")
+            raise PyDoughTestingException(f"Unrecognized graph name '{name}'")
         return pydough.parse_json_metadata_from_file(
             file_path=sample_graph_path, graph_name=name
         )

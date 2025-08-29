@@ -7,15 +7,17 @@ protocol, and includes an associated unmasking protocol to reverse the operation
 __all__ = ["MaskedTableColumnMetadata"]
 
 
-from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import (
-    NoExtraKeys,
+from pydough.errors import (
     PyDoughMetadataException,
+    PyDoughTypeException,
+)
+from pydough.errors.error_utils import (
+    NoExtraKeys,
     extract_bool,
     extract_string,
 )
+from pydough.metadata.collections import CollectionMetadata
 from pydough.types import PyDoughType, parse_type_from_string
-from pydough.types.errors import PyDoughTypeException
 
 from .table_column_metadata import TableColumnMetadata
 
