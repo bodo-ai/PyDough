@@ -360,6 +360,42 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
+                "selected_customers = customers.WHERE("
+                " ("
+                "  PRESENT(address) &"
+                "  PRESENT(birthday) &"
+                "  (last_name != 'lopez') &"
+                "  (ENDSWITH(first_name, 'a') | ENDSWITH(first_name, 'e') | ENDSWITH(first_name, 's'))"
+                ") | (ABSENT(birthday) & ENDSWITH(phone_number, '5'))"
+                ")\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [6]}),
+                "cryptbank_filter_count_27",
+            ),
+            id="cryptbank_filter_count_27",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE("
+                + " & ".join(
+                    [
+                        "((account_type == 'retirement') | (account_type == 'savings'))",
+                        "(balance >= 5000)",
+                        "(CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail'))",
+                        "(YEAR(creation_timestamp) < 2020)",
+                    ]
+                )
+                + ")\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [12]}),
+                "cryptbank_filter_count_28",
+            ),
+            id="cryptbank_filter_count_28",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "selected_transactions = transactions.WHERE((YEAR(time_stamp) == 2022) & (MONTH(time_stamp) == 6))\n"
                 "result = CRYPTBANK.CALCULATE(n=ROUND(AVG(selected_transactions.amount), 2))",
                 "CRYPTBANK",
