@@ -2313,6 +2313,26 @@ def test_pipeline_e2e_defog_custom(
     )
 
 
+@pytest.mark.pgsql
+@pytest.mark.execute
+def test_pipeline_e2e_defog_custom_pgsql(
+    defog_custom_pipeline_test_data: PyDoughPandasTest,
+    defog_graphs: graph_fetcher,
+    postgres_conn_tpch_db_context: DatabaseContext,
+):
+    """
+    Test executing the defog analytical questions on the sqlite database,
+    comparing against the result of running the reference SQL query text on the
+    same database connector. Run on custom questions using the defog.ai
+    schemas.
+    """
+    defog_custom_pipeline_test_data.run_e2e_test(
+        defog_graphs,
+        postgres_conn_tpch_db_context,
+        coerce_types=True,
+    )
+
+
 @pytest.mark.parametrize(
     "pydough_impl, graph_name, error_message",
     [

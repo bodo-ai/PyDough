@@ -9,6 +9,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
@@ -17,7 +18,6 @@ from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
-from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
@@ -37,6 +37,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
+from .override_canonicalize import canonicalize
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
@@ -400,6 +401,8 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
         return SnowflakeDialect()
     elif dialect == DatabaseDialect.MYSQL:
         return MySQLDialect()
+    elif dialect == DatabaseDialect.POSTGRES:
+        return PostgresDialect()
     else:
         raise ValueError(f"Unsupported dialect: {dialect}")
 
