@@ -4,7 +4,7 @@ ROOT(columns=[('C_CUSTKEY', c_custkey), ('C_NAME', c_name), ('REVENUE', DEFAULT_
    SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_address': c_address, 'c_comment': c_comment, 'c_custkey': c_custkey, 'c_name': c_name, 'c_nationkey': c_nationkey, 'c_phone': c_phone})
    AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'sum_expr_1': SUM(l_extendedprice * 1:numeric - l_discount)})
     JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_FILTER, columns={'l_discount': t1.l_discount, 'l_extendedprice': t1.l_extendedprice, 'o_custkey': t0.o_custkey})
-     FILTER(condition=QUARTER(o_orderdate) == 4:numeric & YEAR(o_orderdate) == 1993:numeric, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
+     FILTER(condition=YEAR(o_orderdate) == 1993:numeric & ISIN(MONTH(o_orderdate), [10, 11, 12]:array[numeric]), columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
       SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey})
      FILTER(condition=l_returnflag == 'R':string, columns={'l_discount': l_discount, 'l_extendedprice': l_extendedprice, 'l_orderkey': l_orderkey})
       SCAN(table=tpch.LINEITEM, columns={'l_discount': l_discount, 'l_extendedprice': l_extendedprice, 'l_orderkey': l_orderkey, 'l_returnflag': l_returnflag})
