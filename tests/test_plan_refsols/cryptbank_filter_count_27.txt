@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n': COUNT()})
+  FILTER(condition=PRESENT(c_addr) & PRESENT(c_birthday) & c_lname != 'lopez':string & ENDSWITH(c_fname, 'a':string) | ENDSWITH(c_fname, 'e':string) | ENDSWITH(c_fname, 's':string) | ABSENT(c_birthday) & ENDSWITH(c_phone, '5':string), columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_addr': c_addr, 'c_birthday': c_birthday, 'c_fname': c_fname, 'c_lname': c_lname, 'c_phone': c_phone})

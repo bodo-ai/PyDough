@@ -1,0 +1,6 @@
+ROOT(columns=[('n', n)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n': COUNT()})
+  JOIN(condition=t0.c_key == t1.a_custkey, type=SEMI, cardinality=SINGULAR_FILTER, columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_key': c_key})
+   FILTER(condition=a_type != 'checking':string & a_type != 'savings':string, columns={'a_custkey': a_custkey})
+    SCAN(table=CRBNK.ACCOUNTS, columns={'a_custkey': a_custkey, 'a_type': a_type})
