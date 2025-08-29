@@ -611,9 +611,6 @@ def test_pipeline_until_sql_cryptbank(
     )
 
 
-@pytest.mark.skip(
-    reason="Skipping until masked table column relational handling is implemented"
-)
 @pytest.mark.execute
 def test_pipeline_e2e_cryptbank(
     cryptbank_pipeline_test_data: PyDoughPandasTest,

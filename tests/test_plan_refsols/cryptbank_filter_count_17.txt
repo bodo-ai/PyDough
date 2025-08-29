@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  FILTER(condition=SLICE(c_fname, 1:numeric, 2:numeric, None:unknown) == 'a':string, columns={})
+  FILTER(condition=SLICE(UNMASK::(LOWER([c_fname])), 1:numeric, 2:numeric, None:unknown) == 'a':string, columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_fname': c_fname})

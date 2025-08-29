@@ -1,6 +1,6 @@
 SELECT
   t_key AS key,
-  t_ts AS time_stamp
+  DATETIME(t_ts, '+54321 seconds') AS time_stamp
 FROM crbnk.transactions
 ORDER BY
   2 DESC

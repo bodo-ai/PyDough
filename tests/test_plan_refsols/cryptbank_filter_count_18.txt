@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  FILTER(condition=LIKE(c_email, '%.%@%mail%':string), columns={})
+  FILTER(condition=LIKE(UNMASK::(SUBSTRING([c_email], -1) || SUBSTRING([c_email], 1, LENGTH([c_email]) - 1)), '%.%@%mail%':string), columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_email': c_email})
