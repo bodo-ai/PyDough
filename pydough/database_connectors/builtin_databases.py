@@ -43,7 +43,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "mysql":
             connection = load_mysql_connection(**kwargs)
             dialect = DatabaseDialect.MYSQL
-        case "postgres" | "postgresql":
+        case "postgres" | "postgres":
             connection = load_postgres_connection(**kwargs)
             dialect = DatabaseDialect.POSTGRES
         case _:
@@ -208,28 +208,28 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
 
 def load_postgres_connection(**kwargs) -> DatabaseConnection:
     """
-    Loads a PostgreSQL database connection. This is done by providing a wrapper
+    Loads a Postgres database connection. This is done by providing a wrapper
     around the DB 2.0 connect API.
     Returns:
-        A database connection object for PostgreSQL.
+        A database connection object for Postgres.
     """
 
     try:
         import psycopg2
     except ImportError:
         raise ImportError(
-            "PostgreSQL connector psycopg2 is not installed. Please install it with"
+            "Postgres connector psycopg2 is not installed. Please install it with"
             " `uv pip install psycopg2-binary`."
         )
 
-    # PostgreSQL python connector
+    # Postgres python connector
     connection: psycopg2.extensions.connection
     if connection := kwargs.pop("connection", None):
         # If a connection object is provided, return it wrapped in
         # DatabaseConnection
         return DatabaseConnection(connection)
 
-    # PostgreSQL connection requires specific parameters:
+    # Postgres connection requires specific parameters:
     # user, password, dbname.
     # Raise an error if any of these are missing.
     # NOTE: host, port are optional and will default to the psycopg2 defaults.
@@ -238,11 +238,11 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
     required_keys = ["user", "password", "dbname"]
     if not all(key in kwargs for key in required_keys):
         raise ValueError(
-            "PostgreSQL connection requires at least the following arguments: "
+            "Postgres connection requires at least the following arguments: "
             + ", ".join(required_keys)
         )
 
-    # Connect to PostgreSQL using DB API 2.0 parameters
+    # Connect to Postgres using DB API 2.0 parameters
     connection = psycopg2.connect(**kwargs)
 
     return DatabaseConnection(connection)

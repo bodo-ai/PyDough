@@ -1,8 +1,8 @@
 """
-Definition of SQLGlot transformation bindings for the PostgreSQL dialect.
+Definition of SQLGlot transformation bindings for the Postgres dialect.
 """
 
-__all__ = ["PostgreSQLTransformBindings"]
+__all__ = ["PostgresTransformBindings"]
 
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -15,9 +15,9 @@ from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit
 
 
-class PostgreSQLTransformBindings(BaseTransformBindings):
+class PostgresTransformBindings(BaseTransformBindings):
     """
-    Subclass of BaseTransformBindings for the PostgreSQL dialect.
+    Subclass of BaseTransformBindings for the Postgres dialect.
     """
 
     PYDOP_TO_POSTGRES_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
@@ -44,7 +44,7 @@ class PostgreSQLTransformBindings(BaseTransformBindings):
     }
 
     """
-    Mapping of PyDough operators to equivalent PostgreSQL function names
+    Mapping of PyDough operators to equivalent Postgres function names
     These are used to generate anonymous function calls in SQLGlot
     """
 

@@ -2083,7 +2083,7 @@ def test_pipeline_e2e_defog_custom(
 def test_pipeline_e2e_defog_custom_pgsql(
     defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
-    postgresql_conn_tpch_db_context: DatabaseContext,
+    postgres_conn_tpch_db_context: DatabaseContext,
 ):
     """
     Test executing the defog analytical questions on the sqlite database,
@@ -2093,7 +2093,7 @@ def test_pipeline_e2e_defog_custom_pgsql(
     """
     defog_custom_pipeline_test_data.run_e2e_test(
         defog_graphs,
-        postgresql_conn_tpch_db_context,
+        postgres_conn_tpch_db_context,
         coerce_types=True,
     )
 

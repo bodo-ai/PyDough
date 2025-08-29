@@ -1390,34 +1390,34 @@ def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
 POSTGRES_ENVS = ["POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "POSTGRES_HOST"]
 
 """
-    PostgreSQL environment variables required for connection.
-    POSTGRES_USER: The username for PostgreSQL.
-    POSTGRES_PASSWORD: The password for PostgreSQL.
-    POSTGRES_DB: The database name for PostgreSQL.
-    POSTGRES_HOST: The host ip for PostgreSQL.
+    Postgres environment variables required for connection.
+    POSTGRES_USER: The username for Postgres.
+    POSTGRES_PASSWORD: The password for Postgres.
+    POSTGRES_DB: The database name for Postgres.
+    POSTGRES_HOST: The host ip for Postgres.
 """
 
 
-def is_postgresql_env_set() -> bool:
+def is_postgres_env_set() -> bool:
     """
-    Check if the PostgreSQL environment variables are set. Allowing empty strings.
+    Check if the Postgres environment variables are set. Allowing empty strings.
     Returns:
-        bool: True if all required PostgreSQL environment variables are set, False otherwise.
+        bool: True if all required Postgres environment variables are set, False otherwise.
     """
     return all(os.getenv(var) is not None for var in POSTGRES_ENVS)
 
 
 @pytest.fixture
-def postgresql_conn_tpch_db_context() -> DatabaseContext:
+def postgres_conn_tpch_db_context() -> DatabaseContext:
     """
-    This fixture is used to connect to the PostgreSQL TPCH database using
+    This fixture is used to connect to the Postgres TPCH database using
     a connection object.
-    Returns a DatabaseContext for the PostgreSQL TPCH database.
+    Returns a DatabaseContext for the Postgres TPCH database.
     """
     import psycopg2
 
-    if not is_postgresql_env_set():
-        pytest.skip("Skipping PostgreSQL tests: environment variables not set.")
+    if not is_postgres_env_set():
+        pytest.skip("Skipping Postgres tests: environment variables not set.")
 
     postgres_user: str | None = os.getenv("POSTGRES_USER")
     postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
@@ -1439,12 +1439,12 @@ def postgresql_conn_tpch_db_context() -> DatabaseContext:
 @pytest.fixture
 def postgreql_params_tpch_db_context() -> DatabaseContext:
     """
-    This fixture is used to connect to the PostgreSQL TPCH database using
+    This fixture is used to connect to the Postgres TPCH database using
     parameters instead of a connection object.
-    Returns a DatabaseContext for the PostgreSQL TPCH database.
+    Returns a DatabaseContext for the Postgres TPCH database.
     """
-    if not is_postgresql_env_set():
-        pytest.skip("Skipping PostgreSQL tests: environment variables not set.")
+    if not is_postgres_env_set():
+        pytest.skip("Skipping Postgres tests: environment variables not set.")
 
     postgres_user: str | None = os.getenv("POSTGRES_USER")
     postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")

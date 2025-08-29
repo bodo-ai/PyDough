@@ -1,4 +1,4 @@
-name: Run PostgreSQL Tests
+name: Run Postgres Tests
 
 on:
   workflow_call:
@@ -15,7 +15,7 @@ on:
 
 jobs:
   postgres-test:
-    name: PostgreSQL Tests (Python ${{ matrix.python-version }})
+    name: Postgres Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,10 +23,10 @@ jobs:
 
     # Define services here to run Docker containers alongside your job
     services:
-      postgresql:
+      postgres:
         image: juankxbodo/pydough-pgsql-tests:latest
         env:
-          # Set environment variables for PostgreSQL container
+          # Set environment variables for Postgres container
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
           POSTGRES_DB: "pydough-test"
@@ -71,14 +71,14 @@ jobs:
           uv run python -c "import sys; print(sys.path)"
           echo "Attempting direct import of dotenv:"
           uv run python -c "import dotenv; print('dotenv imported successfully!');"
-      - name: Wait for PostgreSQL to be ready
+      - name: Wait for Postgres to be ready
         run: |
           for i in $(seq 1 240); do
             pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && break || sleep 2;
           done
           pg_isready -U $POSTGRES_USER -d $POSTGRES_DB && echo "postgreSQL is running" && break || exit 1;
-      - name: Confirm PostgreSQL connector is installed
-        run: uv run python -c "import psycopg2; print('PostgreSQL connector installed')"
+      - name: Confirm Postgres connector is installed
+        run: uv run python -c "import psycopg2; print('Postgres connector installed')"
 
-      - name: Run PostgreSQL Tests
+      - name: Run Postgres Tests
         run: uv run pytest -m pgsql tests/ -rs

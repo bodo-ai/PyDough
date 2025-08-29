@@ -141,6 +141,26 @@ To run **MySQL CI tests**, add the flag `[run mysql]` to your commit message.
         export MYSQL_USERNAME="your_username"
         export MYSQL_PASSWORD="your_password"
 
+## Running Postgres Tests on CI
+To run **Postgres CI tests**, add the flag `[run pg]` to your commit message.
+
+**Running Postgres tests locally:**
+
+1. Make sure you have [**Docker Desktop**](https://www.docker.com/get-started/)
+ installed and running.
+
+2. Install the Postgres Connector for Python
+    ```bash
+    pip install psycopg2-binary
+    ```
+    
+3. Set your Postgres credentials as environment variables:
+    ```bash
+        export POSTGRES_DB="your_database"
+        export POSTGRES_USER="your_username"
+        export POSTGRES_PASSWORD="your_password"
+    ```
+
 ## Runtime Dependencies
 
 PyDough requires having the following Python modules installed to use

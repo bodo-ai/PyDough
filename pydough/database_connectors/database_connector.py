@@ -101,10 +101,10 @@ class DatabaseDialect(Enum):
     In general the dialects should"""
 
     ANSI = "ansi"
-    POSTGRES = "postgres"
     SQLITE = "sqlite"
     SNOWFLAKE = "snowflake"
     MYSQL = "mysql"
+    POSTGRES = "postgres"
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":

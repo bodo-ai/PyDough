@@ -69,13 +69,13 @@ def test_pipeline_e2e_tpch(
 def test_pipeline_e2e_pgsql_conn(
     tpch_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
-    postgresql_conn_tpch_db_context: DatabaseContext,
+    postgres_conn_tpch_db_context: DatabaseContext,
 ):
     """
-    Test executing the TPC-H queries from the original code generation on PostgreSQL.
+    Test executing the TPC-H queries from the original code generation on Postgres.
     """
     tpch_pipeline_test_data.run_e2e_test(
         get_sample_graph,
-        postgresql_conn_tpch_db_context,
+        postgres_conn_tpch_db_context,
         coerce_types=True,
     )
