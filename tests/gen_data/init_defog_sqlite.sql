@@ -802,17 +802,17 @@ VALUES
 (13, 7, 6, 1, 3, '2023-01-01', '2023-06-30', 0, 240, 'mg'),
 (14, 1, 7, 2, 4, '2023-02-01', '2023-07-31', 0, 180, 'mg'),
 (15, 2, 1, 3, 5, '2023-03-01', '2023-08-31', 0, 360, 'g'),
-(16, 1, 2, 4, 6, date('now', '-24 months', 'start of month'), date('now', '-2 months', 'start of month'), 0, 300, 'mg'),
-(17, 2, 5, 1, 8, date('now', '-12 months', 'start of month'), date('now', '-4 months', 'start of month'), 0, 80, 'mg'),
-(18, 3, 6, 2, 9, date('now', '-5 months', 'start of month'), NULL, 1, 200, 'mg'),
-(19, 1, 7, 3, 10, date('now', '-4 months', 'start of month'), NULL, 0, 150, 'g'),
-(20, 2, 1, 4, 1, date('now', '-3 months', 'start of month'), NULL, 0, 100, 'mg'),
-(21, 3, 2, 5, 2, date('now', '-2 months', 'start of month'), NULL, 0, 250, 'mg'),
-(22, 1, 3, 6, 3, date('now', '-1 month', 'start of month'), NULL, 0, 300, 'g'),
+(16, 1, 2, 4, 6, date('now', 'start of month', '-24 months'), date('now', 'start of month', '-2 months'), 0, 300, 'mg'),
+(17, 2, 5, 1, 8, date('now', 'start of month', '-12 months'), date('now', 'start of month', '-4 months'), 0, 80, 'mg'),
+(18, 3, 6, 2, 9, date('now', 'start of month', '-5 months'), NULL, 1, 200, 'mg'),
+(19, 1, 7, 3, 10, date('now', 'start of month', '-4 months'), NULL, 0, 150, 'g'),
+(20, 2, 1, 4, 1, date('now', 'start of month', '-3 months'), NULL, 0, 100, 'mg'),
+(21, 3, 2, 5, 2, date('now', 'start of month', '-2 months'), NULL, 0, 250, 'mg'),
+(22, 1, 3, 6, 3, date('now', 'start of month', '-1 month'), NULL, 0, 300, 'g'),
 (23, 2, 4, 1, 4, date('now'), NULL, 1, 200, 'mg'),
 (24, 3, 5, 2, 5, date('now'), NULL, 0, 150, 'mg'),
-(25, 9, 1, 1, 1, date('now', '-6 months'), date('now', '-3 months'), 0, 240, 'mg'),
-(26, 10, 2, 2, 2, date('now', '-5 months'), date('now', '-2 months'), 0, 180, 'mg');
+(25, 9, 1, 1, 1, case when strftime('%d', 'now', '-6 months') = strftime('%d', 'now') then date('now', '-6 months') else  date('now', '-6 months', '-' || (strftime('%d', 'now', '-6 months')) || ' days') end, case when strftime('%d', 'now', '-3 months') = strftime('%d', 'now') then date('now', '-3 months') else  date('now', '-3 months', '-' || (strftime('%d', 'now', '-3 months')) || ' days') end, 0, 240, 'mg'),
+(26, 10, 2, 2, 2, case when strftime('%d', 'now', '-5 months') = strftime('%d', 'now') then date('now', '-5 months') else  date('now', '-5 months', '-' || (strftime('%d', 'now', '-6 months')) || ' days') end, case when strftime('%d', 'now', '-2 months') = strftime('%d', 'now') then date('now', '-2 months') else  date('now', '-2 months', '-' || (strftime('%d', 'now', '-2 months')) || ' days') end, 0, 180, 'mg');
 
 INSERT INTO outcomes (outcome_id, treatment_id, assess_dt, day7_lesion_cnt, day30_lesion_cnt, day100_lesion_cnt, day7_pasi_score, day30_pasi_score, day100_pasi_score, day7_tewl, day30_tewl, day100_tewl, day7_itch_vas, day30_itch_vas, day100_itch_vas, day7_hfg, day30_hfg, day100_hfg)  
 VALUES
