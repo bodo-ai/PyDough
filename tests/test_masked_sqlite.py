@@ -77,8 +77,8 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 lambda: pd.DataFrame(
                     {
                         "key": list(range(1, 9)),
-                        "n_local_cust": [6, 6, 4, 4, 3, 4, 3, 3],
-                        "n_local_cust_local_acct": [10, 9, 6, 3, 3, 11, 3, 3],
+                        "n_local_cust": [5, 5, 4, 4, 3, 4, 2, 2],
+                        "n_local_cust_local_acct": [9, 7, 6, 3, 3, 11, 2, 2],
                     }
                 ),
                 "cryptbank_general_join_01",
@@ -93,7 +93,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 " .WHERE(HAS(account_holder.same_state_branches.WHERE(key == source_branch_key))),"
                 "))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [48]}),
+                lambda: pd.DataFrame({"n": [43]}),
                 "cryptbank_general_join_02",
             ),
             id="cryptbank_general_join_02",
@@ -293,7 +293,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday > '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [5]}),
+                lambda: pd.DataFrame({"n": [4]}),
                 "cryptbank_filter_count_20",
             ),
             id="cryptbank_filter_count_20",
@@ -303,7 +303,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday >= '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [6]}),
+                lambda: pd.DataFrame({"n": [5]}),
                 "cryptbank_filter_count_21",
             ),
             id="cryptbank_filter_count_21",
@@ -313,7 +313,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday < '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [14]}),
+                lambda: pd.DataFrame({"n": [13]}),
                 "cryptbank_filter_count_22",
             ),
             id="cryptbank_filter_count_22",
@@ -323,7 +323,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday <= '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [15]}),
+                lambda: pd.DataFrame({"n": [14]}),
                 "cryptbank_filter_count_23",
             ),
             id="cryptbank_filter_count_23",
@@ -340,7 +340,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
-                "selected_customers = customers.WHERE(birthday != '1991-11-15')\n"
+                "selected_customers = customers.WHERE(ABSENT(birthday) | (birthday != '1991-11-15'))\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [19]}),
@@ -611,9 +611,9 @@ def test_pipeline_until_sql_cryptbank(
     )
 
 
-@pytest.mark.skip(
-    reason="Skipping until masked table column relational handling is implemented"
-)
+# @pytest.mark.skip(
+#     reason="Skipping until masked table column relational handling is implemented"
+# )
 @pytest.mark.execute
 def test_pipeline_e2e_cryptbank(
     cryptbank_pipeline_test_data: PyDoughPandasTest,
