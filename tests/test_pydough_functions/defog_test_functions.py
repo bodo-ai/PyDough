@@ -1871,8 +1871,10 @@ def impl_defog_dermtreatment_basic4():
     maximum itch score. Only include patients with a registered outcome
     """
 
+    # The following is the ideal implementation, but currently runs into a
+    # bug with Snowflake. See the following GitHub issue for details:
+    # https://github.com/snowflakedb/snowflake-connector-python/issues/2511
     selected_treatments = treatments_for.WHERE(HAS(outcome_records))
-
     return (
         diagnoses.WHERE(HAS(selected_treatments)).CALCULATE(
             diagnosis_name=name,
@@ -1880,6 +1882,20 @@ def impl_defog_dermtreatment_basic4():
             max_itch_score=MAX(selected_treatments.outcome_records.day100_itch_vas),
         )
     ).TOP_K(3, by=(max_itch_score.DESC(), num_patients.DESC()))
+
+    # # The following is a less-ideal implementation that will suffice until then.
+    # return (
+    #     diagnoses.CALCULATE(diagnosis_name=name)
+    #     .treatments_for.CALCULATE(patient_id)
+    #     .outcome_records.CALCULATE(day100_itch_vas)
+    #     .PARTITION(name="diagnosis_groups", by=diagnosis_name)
+    #     .CALCULATE(
+    #         diagnosis_name=diagnosis_name,
+    #         num_patients=NDISTINCT(outcome_records.patient_id),
+    #         max_itch_score=MAX(outcome_records.day100_itch_vas),
+    #     )
+    #     .TOP_K(3, by=(max_itch_score.DESC(), num_patients.DESC()))
+    # )
 
 
 def impl_defog_dermtreatment_basic5():

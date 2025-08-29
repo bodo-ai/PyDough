@@ -4,7 +4,7 @@ WITH _s1 AS (
     treatment_id
   FROM main.outcomes
   GROUP BY
-    treatment_id
+    2
 ), _s3 AS (
   SELECT
     MAX(_s1.max_day100_itch_vas) AS max_itch_score,
@@ -14,7 +14,7 @@ WITH _s1 AS (
   JOIN _s1 AS _s1
     ON _s1.treatment_id = treatments.treatment_id
   GROUP BY
-    treatments.diag_id
+    3
 )
 SELECT
   diagnoses.diag_name AS diagnosis_name,
