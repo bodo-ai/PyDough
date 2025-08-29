@@ -429,9 +429,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             this=inputs[1],
             alias=TableAlias(this=alias_map.get(join.default_input_aliases[i], None)),
         )
-        cond: RelationalExpression = join.condition.accept_shuttle(
-            self._alias_remover
-        ).accept_shuttle(self._alias_modifier)
+        cond: RelationalExpression = join.condition.accept_shuttle(self._alias_modifier)
         cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(cond)
         join_type: str = join.join_type.value
         if join_type == "SEMI" and join.cardinality.singular:
