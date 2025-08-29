@@ -210,6 +210,27 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
     """
     Loads a Postgres database connection. This is done by providing a wrapper
     around the DB 2.0 connect API.
+
+    Args:
+        **kwargs: Either a Postgres connection object (as `connection=<object>`)
+            or the required connection parameters:
+            - user: Postgres username
+            - password: Postgres password
+            - dbname: Database name
+            Optionally, you can provide:
+            - host: Postgres server host (default: "127.0.0.1"/"localhost")
+            - port: Postgres server port (default: 5432)
+            - connect_timeout: Timeout for the connection (default: 3 seconds).
+            - attempts (not a Postgres connector parameter): Number of connection attempts (default: 3)
+            - delay (not a Postgres connector parameter): Delay between connection attempts (default: 2 seconds).
+            If a connection object is provided, it will be used directly.
+            Optional parameters such as host, port, etc. can also be provided.
+            All arguments must be accepted by the Postgres connector connect API.
+
+    Raises:
+        ImportError: If the Postgres connector is not installed.
+        ValueError: If required connection parameters are missing.
+
     Returns:
         A database connection object for Postgres.
     """
@@ -242,7 +263,34 @@ def load_postgres_connection(**kwargs) -> DatabaseConnection:
             + ", ".join(required_keys)
         )
 
-    # Connect to Postgres using DB API 2.0 parameters
-    connection = psycopg2.connect(**kwargs)
+    # Default timeout for connection
+    if "connect_timeout" not in kwargs or kwargs["connect_timeout"] <= 0:
+        kwargs["connect_timeout"] = 3
 
-    return DatabaseConnection(connection)
+    # Default attempts for connection if not given
+    if not (attempts := kwargs.pop("attempts", None)):
+        attempts = 1
+
+    # Default delay between attempts for connection if not given
+    if not (delay := kwargs.pop("delay", None)):
+        delay = 2.0
+
+    attempt: int = 1
+
+    # For each attempt a connection is tried
+    # If it fails, there is a delay before another attempt is executed
+    while attempt <= attempts:
+        try:
+            connection = psycopg2.connect(**kwargs)
+            return DatabaseConnection(connection)
+
+        except (OSError, psycopg2.Error) as err:
+            if attempt >= attempts:
+                raise ValueError(
+                    f"Failed to connect to Postgres after {attempt} attempts: {err}"
+                )
+            # Delay for another attempt
+            time.sleep(delay)
+            attempt += 1
+
+    raise ValueError(f"Failed to connect to Postgres after {attempts} attempts")
