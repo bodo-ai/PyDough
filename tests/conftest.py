@@ -11,6 +11,7 @@ from collections.abc import Callable
 from functools import cache
 
 import pandas as pd
+import psycopg2
 import pytest
 
 import pydough
@@ -610,21 +611,30 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     return _impl
 
 
-MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
-"""
-The MySQL environment variables required for connection.
-- `MYSQL_USERNAME`: The username for MySQL.
-- `MYSQL_PASSWORD`: The password for MySQL.
-"""
-
-
-@pytest.fixture(scope="session")
-def require_mysql_env() -> None:
+@pytest.fixture
+def sf_params_tpch_db_context() -> DatabaseContext:
     """
-    Checks whether all required MySQL environment variables are set.
+    This fixture is used to connect to the Snowflake TPCH database using
+    parameters instead of a connection object.
+    Return a DatabaseContext for the Snowflake TPCH database.
     """
-    if not all(os.getenv(var) is not None for var in MYSQL_ENVS):
-        pytest.skip("Skipping MySQL tests: environment variables not set.")
+    if not is_snowflake_env_set():
+        pytest.skip("Skipping Snowflake tests: environment variables not set.")
+    sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
+    sf_tpch_schema = "TPCH_SF1"
+    warehouse = "DEMO_WH"
+    password = os.getenv("SF_PASSWORD")
+    username = os.getenv("SF_USERNAME")
+    account = os.getenv("SF_ACCOUNT")
+    return load_database_context(
+        "snowflake",
+        user=username,
+        password=password,
+        account=account,
+        warehouse=warehouse,
+        database=sf_tpch_db,
+        schema=sf_tpch_schema,
+    )
 
 
 def is_ci():
@@ -654,6 +664,23 @@ def container_is_running(name: str) -> bool:
         ["docker", "ps", "--format", "{{.Names}}"], stdout=subprocess.PIPE, text=True
     )
     return name in result.stdout.splitlines()
+
+
+MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
+"""
+The MySQL environment variables required for connection.
+- `MYSQL_USERNAME`: The username for MySQL.
+- `MYSQL_PASSWORD`: The password for MySQL.
+"""
+
+
+@pytest.fixture(scope="session")
+def require_mysql_env() -> None:
+    """
+    Checks whether all required MySQL environment variables are set.
+    """
+    if not all(os.getenv(var) is not None for var in MYSQL_ENVS):
+        pytest.skip("Skipping MySQL tests: environment variables not set.")
 
 
 MYSQL_DOCKER_CONTAINER = "mysql_tpch_test"
@@ -784,32 +811,6 @@ def mysql_conn_db_context(
     return _impl
 
 
-@pytest.fixture
-def sf_params_tpch_db_context() -> DatabaseContext:
-    """
-    This fixture is used to connect to the Snowflake TPCH database using
-    parameters instead of a connection object.
-    Return a DatabaseContext for the Snowflake TPCH database.
-    """
-    if not is_snowflake_env_set():
-        pytest.skip("Skipping Snowflake tests: environment variables not set.")
-    sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
-    sf_tpch_schema = "TPCH_SF1"
-    warehouse = "DEMO_WH"
-    password = os.getenv("SF_PASSWORD")
-    username = os.getenv("SF_USERNAME")
-    account = os.getenv("SF_ACCOUNT")
-    return load_database_context(
-        "snowflake",
-        user=username,
-        password=password,
-        account=account,
-        warehouse=warehouse,
-        database=sf_tpch_db,
-        schema=sf_tpch_schema,
-    )
-
-
 @pytest.fixture(scope="session")
 def mysql_params_tpch_db_context(
     require_mysql_env, mysql_docker_setup
@@ -831,6 +832,165 @@ def mysql_params_tpch_db_context(
         password=mysql_password,
         host=mysql_host,
         database=mysql_db,
+    )
+
+
+POSTGRES_ENVS = ["POSTGRES_USER", "POSTGRES_PASSWORD"]
+"""
+    Postgres environment variables required for connection.
+    `POSTGRES_USER`: The username for Postgres.
+    `POSTGRES_PASSWORD`: The password for Postgres.
+"""
+
+
+@pytest.fixture(scope="session")
+def require_postgres_env() -> None:
+    """
+    Check if the Postgres environment variables are set. Allowing empty strings.
+    Returns:
+        bool: True if all required Postgres environment variables are set, False otherwise.
+    """
+    if not all(os.getenv(var) is not None for var in POSTGRES_ENVS):
+        pytest.skip("Skipping Postgres tests: environment variables not set.")
+
+
+POSTGRES_DOCKER_CONTAINER = "postgres_tpch_test"
+POSTGRES_DOCKER_IMAGE = "bodoai1/pydough-postgres-tpch:latest"
+POSTGRES_HOST = "127.0.0.1"
+POSTGRES_PORT = 5432
+POSTGRES_DB = "pydough_test"
+"""
+    CONSTANTS for the Postgres Docker container setup.
+    - DOCKER_CONTAINER: The name of the Docker container.
+    - DOCKER_IMAGE: The Docker image to use for the Postgres container.
+    - POSTGRES_HOST: The host address for Postgres.
+    - POSTGRES_PORT: The port on which Postgres is exposed.
+    - POSTGRES_DB: The name of the TPCH database in Postgres.
+"""
+
+
+@pytest.fixture(scope="session")
+def postgres_docker_setup() -> None:
+    """Set up the Postgres Docker container for testing."""
+    # breakpoint()
+    try:
+        if not is_ci():
+            if container_exists(POSTGRES_DOCKER_CONTAINER):
+                if not container_is_running(POSTGRES_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", POSTGRES_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        POSTGRES_DOCKER_CONTAINER,
+                        "-e",
+                        f"POSTGRES_PASSWORD={os.getenv('POSTGRES_PASSWORD')}",
+                        "-p",
+                        f"{POSTGRES_PORT}:5432",
+                        POSTGRES_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Postgres Docker container: {e}")
+
+    # Check import is successful
+    try:
+        import psycopg2
+    except ImportError as e:
+        raise RuntimeError("psycopg2 is not installed") from e
+
+    # Wait for Postgres to be ready
+    for _ in range(30):
+        try:
+            conn = psycopg2.connect(
+                host=POSTGRES_HOST,
+                port=POSTGRES_PORT,
+                user=os.getenv("POSTGRES_USER"),
+                password=os.getenv("POSTGRES_PASSWORD"),
+                database=POSTGRES_DB,
+            )
+            conn.close()
+            break
+        except psycopg2.Error as e:
+            print("Error occurred while connecting to Postgres:", e)
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", POSTGRES_DOCKER_CONTAINER])
+        pytest.fail("Postgres container did not become ready in time.")
+
+
+@pytest.fixture
+def postgres_conn_db_context(
+    require_postgres_env,
+    postgres_docker_setup,
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the Postgres TPCH database using
+    a connection object.
+    Returns a DatabaseContext for the Postgres TPCH database.
+    """
+
+    postgres_user: str | None = os.getenv("POSTGRES_USER")
+    postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
+    postgres_db: str = POSTGRES_DB
+    postgres_host: str = POSTGRES_HOST
+    postgres_port: int = POSTGRES_PORT
+
+    connection: psycopg2.extensions.connection = psycopg2.connect(
+        dbname=postgres_db,
+        user=postgres_user,
+        password=postgres_password,
+        host=postgres_host,
+        port=postgres_port,
+    )
+
+    # Loads the defog data into the Postgres engine.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    path: str = os.path.join(base_dir, "tests/gen_data/init_defog_postgres.sql")
+    with open(path) as f:
+        init_defog_script: str = f.read()
+    cursor: psycopg2.connection.PostgresCursor = connection.cursor()
+    for statement in init_defog_script.split(";\n"):
+        if statement.strip():
+            cursor.execute(statement.strip())
+    connection.commit()
+    cursor.close()
+
+    return load_database_context(
+        "postgres",
+        connection=connection,
+    )
+
+
+@pytest.fixture
+def postgres_params_tpch_db_context(
+    require_postgres_env, postgres_docker_setup
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the Postgres TPCH database using
+    parameters instead of a connection object.
+    Returns a DatabaseContext for the Postgres TPCH database.
+    """
+
+    postgres_user: str | None = os.getenv("POSTGRES_USER")
+    postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
+    postgres_tpch_db: str = POSTGRES_DB
+    postgres_host: str = POSTGRES_HOST
+    postgres_port: int = POSTGRES_PORT
+
+    return load_database_context(
+        "postgres",
+        dbname=postgres_tpch_db,
+        user=postgres_user,
+        password=postgres_password,
+        host=postgres_host,
+        port=postgres_port,
     )
 
 
@@ -1385,76 +1545,3 @@ def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
     instance of PyDoughPandasTest containing information about the test.
     """
     return request.param
-
-
-POSTGRES_ENVS = ["POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_DB", "POSTGRES_HOST"]
-
-"""
-    Postgres environment variables required for connection.
-    POSTGRES_USER: The username for Postgres.
-    POSTGRES_PASSWORD: The password for Postgres.
-    POSTGRES_DB: The database name for Postgres.
-    POSTGRES_HOST: The host ip for Postgres.
-"""
-
-
-def is_postgres_env_set() -> bool:
-    """
-    Check if the Postgres environment variables are set. Allowing empty strings.
-    Returns:
-        bool: True if all required Postgres environment variables are set, False otherwise.
-    """
-    return all(os.getenv(var) is not None for var in POSTGRES_ENVS)
-
-
-@pytest.fixture
-def postgres_conn_tpch_db_context() -> DatabaseContext:
-    """
-    This fixture is used to connect to the Postgres TPCH database using
-    a connection object.
-    Returns a DatabaseContext for the Postgres TPCH database.
-    """
-    import psycopg2
-
-    if not is_postgres_env_set():
-        pytest.skip("Skipping Postgres tests: environment variables not set.")
-
-    postgres_user: str | None = os.getenv("POSTGRES_USER")
-    postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
-    postgres_tpch_db: str | None = os.getenv("POSTGRES_DB")
-    postgres_host: str | None = os.getenv("POSTGRES_HOST")
-
-    connection: psycopg2.extensions.connection = psycopg2.connect(
-        dbname=postgres_tpch_db,
-        user=postgres_user,
-        password=postgres_password,
-        host=postgres_host,
-    )
-    return load_database_context(
-        "postgres",
-        connection=connection,
-    )
-
-
-@pytest.fixture
-def postgreql_params_tpch_db_context() -> DatabaseContext:
-    """
-    This fixture is used to connect to the Postgres TPCH database using
-    parameters instead of a connection object.
-    Returns a DatabaseContext for the Postgres TPCH database.
-    """
-    if not is_postgres_env_set():
-        pytest.skip("Skipping Postgres tests: environment variables not set.")
-
-    postgres_user: str | None = os.getenv("POSTGRES_USER")
-    postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
-    postgres_tpch_db: str | None = os.getenv("POSTGRES_DB")
-    postgres_host: str | None = os.getenv("POSTGRES_HOST")
-
-    return load_database_context(
-        "postgres",
-        dbname=postgres_tpch_db,
-        user=postgres_user,
-        password=postgres_password,
-        host=postgres_host,
-    )
