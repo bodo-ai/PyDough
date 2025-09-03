@@ -35,7 +35,9 @@ SELECT
   CASE
     WHEN LENGTH('o') = 0
     THEN 0
-    ELSE CAST(CAST(LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', '')) AS DOUBLE PRECISION) / LENGTH('o') AS BIGINT)
+    ELSE CAST(CAST((
+      LENGTH(p_name) - LENGTH(REPLACE(p_name, 'o', ''))
+    ) AS DOUBLE PRECISION) / LENGTH('o') AS BIGINT)
   END + (
     CAST((
       POSITION('o' IN p_name) - 1
@@ -44,5 +46,5 @@ SELECT
   ROUND(GREATEST(p_size, 10) ^ 0.5, 3) AS i
 FROM tpch.part
 ORDER BY
-  p_partkey NULLS FIRST
+  1 NULLS FIRST
 LIMIT 5

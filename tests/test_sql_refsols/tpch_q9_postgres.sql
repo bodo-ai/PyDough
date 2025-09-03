@@ -22,9 +22,9 @@ JOIN tpch.partsupp AS partsupp
   ON lineitem.l_partkey = partsupp.ps_partkey
   AND lineitem.l_suppkey = partsupp.ps_suppkey
 GROUP BY
-  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP)),
-  nation.n_name
+  1,
+  2
 ORDER BY
-  nation.n_name NULLS FIRST,
-  o_year DESC NULLS LAST
+  1 NULLS FIRST,
+  2 DESC NULLS LAST
 LIMIT 10

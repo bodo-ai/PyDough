@@ -5,7 +5,7 @@ WITH _s1 AS (
     coupon_id
   FROM main.wallet_transactions_daily
   GROUP BY
-    coupon_id
+    3
 )
 SELECT
   coupons.code AS coupon_code,
@@ -15,5 +15,5 @@ FROM main.coupons AS coupons
 LEFT JOIN _s1 AS _s1
   ON _s1.coupon_id = coupons.cid
 ORDER BY
-  COALESCE(_s1.count_txid, 0) DESC NULLS LAST
+  2 DESC NULLS LAST
 LIMIT 3

@@ -5,9 +5,9 @@ WITH _s1 AS (
     sbtxcustid
   FROM main.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_TRUNC('DAY', CURRENT_TIMESTAMP + INTERVAL '30 DAY')
+    sbtxdatetime >= DATE_TRUNC('DAY', CURRENT_TIMESTAMP - INTERVAL '30 DAY')
   GROUP BY
-    sbtxcustid
+    3
 )
 SELECT
   sbcustomer.sbcustcountry AS country,
@@ -17,4 +17,4 @@ FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid
 GROUP BY
-  sbcustomer.sbcustcountry
+  1

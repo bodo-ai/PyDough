@@ -872,7 +872,6 @@ POSTGRES_DB = "pydough_test"
 @pytest.fixture(scope="session")
 def postgres_docker_setup() -> None:
     """Set up the Postgres Docker container for testing."""
-    # breakpoint()
     try:
         if not is_ci():
             if container_exists(POSTGRES_DOCKER_CONTAINER):
@@ -941,7 +940,6 @@ def postgres_conn_db_context(
     postgres_db: str = POSTGRES_DB
     postgres_host: str = POSTGRES_HOST
     postgres_port: int = POSTGRES_PORT
-
     connection: psycopg2.extensions.connection = psycopg2.connect(
         dbname=postgres_db,
         user=postgres_user,
@@ -959,6 +957,7 @@ def postgres_conn_db_context(
     for statement in init_defog_script.split(";\n"):
         if statement.strip():
             cursor.execute(statement.strip())
+
     connection.commit()
     cursor.close()
 

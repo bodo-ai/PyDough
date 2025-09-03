@@ -16,7 +16,7 @@ WITH _t0 AS (
     anything_search_user_id
   FROM _t0
   GROUP BY
-    anything_search_user_id
+    2
 )
 SELECT
   users.user_name,
@@ -25,6 +25,6 @@ FROM users AS users
 JOIN _s5 AS _s5
   ON _s5.anything_search_user_id = users.user_id
 ORDER BY
-  n_cold_war_searches DESC NULLS LAST,
-  user_name NULLS FIRST
+  2 DESC NULLS LAST,
+  1 NULLS FIRST
 LIMIT 3

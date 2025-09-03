@@ -1,31 +1,29 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
     COUNT(*) AS n_rows,
     in_device_id
   FROM main.incidents
   GROUP BY
-    in_device_id
-), _s5 AS (
+    2
+), _s3 AS (
   SELECT
     COUNT(*) AS n_rows,
-    SUM(_s3.n_rows) AS sum_n_incidents,
+    SUM(_s1.n_rows) AS sum_n_incidents,
     devices.de_product_id
   FROM main.devices AS devices
-  JOIN main.products AS products
-    ON devices.de_product_id = products.pr_id
-  LEFT JOIN _s3 AS _s3
-    ON _s3.in_device_id = devices.de_id
+  LEFT JOIN _s1 AS _s1
+    ON _s1.in_device_id = devices.de_id
   GROUP BY
-    devices.de_product_id
+    3
 )
 SELECT
   products.pr_name AS product,
   products.pr_brand AS product_brand,
   products.pr_type AS product_type,
-  ROUND(CAST(COALESCE(_s5.sum_n_incidents, 0) AS DOUBLE PRECISION) / _s5.n_rows, 2) AS ir
+  ROUND(CAST(COALESCE(_s3.sum_n_incidents, 0) AS DOUBLE PRECISION) / _s3.n_rows, 2) AS ir
 FROM main.products AS products
-JOIN _s5 AS _s5
-  ON _s5.de_product_id = products.pr_id
+JOIN _s3 AS _s3
+  ON _s3.de_product_id = products.pr_id
 ORDER BY
-  ROUND(CAST(COALESCE(_s5.sum_n_incidents, 0) AS DOUBLE PRECISION) / _s5.n_rows, 2) DESC NULLS LAST
+  4 DESC NULLS LAST
 LIMIT 5

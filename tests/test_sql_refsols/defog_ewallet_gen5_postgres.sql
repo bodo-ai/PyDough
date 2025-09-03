@@ -7,7 +7,7 @@ WITH _u_0 AS (
     AND notifications.created_at >= users.created_at
     AND notifications.user_id = users.uid
   GROUP BY
-    notifications.user_id
+    1
 )
 SELECT
   users.username,

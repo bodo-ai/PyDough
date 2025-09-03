@@ -5,7 +5,7 @@ WITH _u_0 AS (
   WHERE
     LOWER(sbcustcountry) = 'usa'
   GROUP BY
-    sbcustid
+    1
 )
 SELECT
   CASE WHEN COUNT(*) > 0 THEN COUNT(*) ELSE NULL END AS n_transactions,
@@ -16,4 +16,4 @@ LEFT JOIN _u_0 AS _u_0
 WHERE
   NOT _u_0._u_1 IS NULL
   AND sbtransaction.sbtxdatetime < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP)
-  AND sbtransaction.sbtxdatetime >= DATE_TRUNC('WEEK', CURRENT_TIMESTAMP) + INTERVAL '1 WEEK'
+  AND sbtransaction.sbtxdatetime >= DATE_TRUNC('WEEK', CURRENT_TIMESTAMP) - INTERVAL '1 WEEK'

@@ -25,5 +25,5 @@ JOIN tpch.region AS region
 JOIN tpch.customer AS customer
   ON customer.c_nationkey = nation.n_nationkey
 ORDER BY
-  customer.c_custkey NULLS FIRST
+  1 NULLS FIRST
 LIMIT 10

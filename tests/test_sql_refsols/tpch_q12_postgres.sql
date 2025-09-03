@@ -19,6 +19,6 @@ WHERE
     lineitem.l_shipmode = 'MAIL' OR lineitem.l_shipmode = 'SHIP'
   )
 GROUP BY
-  lineitem.l_shipmode
+  1
 ORDER BY
-  l_shipmode NULLS FIRST
+  1 NULLS FIRST

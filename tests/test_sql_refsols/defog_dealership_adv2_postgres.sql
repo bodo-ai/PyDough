@@ -6,7 +6,7 @@ WITH _s1 AS (
   WHERE
     EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - CAST(sale_date AS TIMESTAMP)) / 86400 <= 30
   GROUP BY
-    salesperson_id
+    2
 )
 SELECT
   salespersons._id,
@@ -17,4 +17,5 @@ FROM main.salespersons AS salespersons
 JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  _s1.n_rows DESC NULLS LAST
+  4 DESC NULLS LAST,
+  1 NULLS FIRST

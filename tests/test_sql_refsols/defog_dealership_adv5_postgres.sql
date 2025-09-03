@@ -5,7 +5,7 @@ WITH _s1 AS (
     salesperson_id
   FROM main.sales
   GROUP BY
-    salesperson_id
+    3
 )
 SELECT
   salespersons.first_name,
@@ -17,4 +17,4 @@ FROM main.salespersons AS salespersons
 JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  COALESCE(_s1.sum_sale_price, 0) DESC NULLS LAST
+  3 DESC NULLS LAST

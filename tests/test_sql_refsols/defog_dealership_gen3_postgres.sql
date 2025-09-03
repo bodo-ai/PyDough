@@ -8,8 +8,8 @@ WHERE
     CURRENT_TIMESTAMP - CAST(payment_date AS TIMESTAMP)
   )) / 7 = 1
 GROUP BY
-  payment_date,
-  payment_method
+  1,
+  2
 ORDER BY
-  payment_date DESC NULLS LAST,
-  payment_method NULLS FIRST
+  1 DESC NULLS LAST,
+  2 NULLS FIRST

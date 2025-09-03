@@ -6,7 +6,7 @@ WITH _u_0 AS (
     ON payments_received.payment_method = 'cash'
     AND payments_received.sale_id = sales._id
   GROUP BY
-    sales.salesperson_id
+    1
 )
 SELECT
   salespersons._id AS salesperson_id

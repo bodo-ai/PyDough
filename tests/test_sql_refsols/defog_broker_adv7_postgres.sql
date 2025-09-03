@@ -9,13 +9,9 @@ WITH _s2 AS (
   FROM main.sbcustomer
   WHERE
     sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)
-    AND sbcustjoindate >= DATE_TRUNC('MONTH', CURRENT_TIMESTAMP + INTERVAL '6 MONTH')
+    AND sbcustjoindate >= DATE_TRUNC('MONTH', CURRENT_TIMESTAMP - INTERVAL '6 MONTH')
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
-    )
+    1
 ), _s3 AS (
   SELECT
     AVG(sbtransaction.sbtxamount) AS avg_sbtxamount,
@@ -31,13 +27,9 @@ WITH _s2 AS (
     AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   WHERE
     sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)
-    AND sbcustomer.sbcustjoindate >= DATE_TRUNC('MONTH', CURRENT_TIMESTAMP + INTERVAL '6 MONTH')
+    AND sbcustomer.sbcustjoindate >= DATE_TRUNC('MONTH', CURRENT_TIMESTAMP - INTERVAL '6 MONTH')
   GROUP BY
-    CONCAT_WS(
-      '-',
-      EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0')
-    )
+    2
 )
 SELECT
   _s2.month,

@@ -3,7 +3,7 @@ SELECT
   COUNT(*) AS count
 FROM main.wallet_transactions_daily
 GROUP BY
-  status
+  1
 ORDER BY
-  count DESC NULLS LAST
+  2 DESC NULLS LAST
 LIMIT 3

@@ -6,7 +6,7 @@ SELECT
   ) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n_buys_within_day,
   ROUND(
     CAST((
-      100.0 * SUM(sbticker.sbtickersymbol IN ('AAPL', 'AMZN')) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
+      100.0 * SUM(CASE WHEN sbticker.sbtickersymbol IN ('AAPL', 'AMZN') THEN 1 ELSE 0 END) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
     ) AS DOUBLE PRECISION) / COUNT(*) OVER (ORDER BY sbtransaction.sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS pct_apple_txns,
@@ -29,4 +29,4 @@ WHERE
   AND EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) = 2023
   AND sbtransaction.sbtxstatus = 'success'
 ORDER BY
-  sbtransaction.sbtxdatetime NULLS FIRST
+  1 NULLS FIRST

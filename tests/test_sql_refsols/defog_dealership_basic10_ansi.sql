@@ -5,7 +5,7 @@ WITH _s1 AS (
     salesperson_id
   FROM main.sales
   WHERE
-    sale_date >= DATE_ADD(CURRENT_TIMESTAMP(), -3, 'MONTH')
+    sale_date >= DATE_SUB(CURRENT_TIMESTAMP(), 3, MONTH)
   GROUP BY
     3
 )

@@ -14,7 +14,7 @@ LEFT JOIN _s1 AS _s1
 WHERE
   wallet_transactions_daily.sender_type = 0
 GROUP BY
-  _s1.country
+  1
 ORDER BY
-  COALESCE(SUM(wallet_transactions_daily.amount), 0) DESC NULLS LAST
+  3 DESC NULLS LAST
 LIMIT 5

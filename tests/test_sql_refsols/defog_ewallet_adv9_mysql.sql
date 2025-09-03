@@ -10,12 +10,12 @@ WHERE
     CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
     '%Y %c %e'
   )
-  AND created_at >= DATE_ADD(
+  AND created_at >= DATE_SUB(
     STR_TO_DATE(
       CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
       '%Y %c %e'
     ),
-    INTERVAL '-2' MONTH
+    INTERVAL '2' MONTH
   )
   AND sender_type = 0
 GROUP BY

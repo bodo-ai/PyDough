@@ -5,7 +5,7 @@ WITH _s1 AS (
     car_id
   FROM main.sales
   WHERE
-    sale_date >= DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-30' DAY)
+    sale_date >= DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '30' DAY)
   GROUP BY
     3
 )

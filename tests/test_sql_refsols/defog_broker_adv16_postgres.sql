@@ -5,9 +5,9 @@ WITH _s1 AS (
     sbtxtickerid
   FROM main.sbtransaction
   WHERE
-    sbtxdatetime >= CURRENT_TIMESTAMP + INTERVAL '1 MONTH' AND sbtxtype = 'sell'
+    sbtxdatetime >= CURRENT_TIMESTAMP - INTERVAL '1 MONTH' AND sbtxtype = 'sell'
   GROUP BY
-    sbtxtickerid
+    3
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
@@ -20,4 +20,4 @@ FROM main.sbticker AS sbticker
 JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  sbticker.sbtickersymbol NULLS FIRST
+  1 NULLS FIRST

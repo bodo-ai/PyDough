@@ -13,7 +13,7 @@ WITH _s0 AS (
     in_device_id
   FROM main.incidents
   GROUP BY
-    in_device_id
+    2
 ), _s9 AS (
   SELECT
     COUNT(*) AS n_rows,
@@ -28,8 +28,8 @@ WITH _s0 AS (
   LEFT JOIN _s7 AS _s7
     ON _s7.in_device_id = devices.de_id
   GROUP BY
-    _s3.co_id,
-    _s2.co_id
+    3,
+    4
 )
 SELECT
   _s0.co_name AS factory_country,
@@ -42,7 +42,5 @@ CROSS JOIN _s0 AS _s1
 LEFT JOIN _s9 AS _s9
   ON _s0.co_id = _s9.co_id AND _s1.co_id = _s9._id_3
 ORDER BY
-  ROUND((
-    1.0 * COALESCE(_s9.sum_n_rows, 0)
-  ) / COALESCE(_s9.n_rows, 0), 2) DESC NULLS LAST
+  3 DESC NULLS LAST
 LIMIT 5

@@ -21,4 +21,4 @@ FROM _t
 WHERE
   _w = 1
 ORDER BY
-  sbtxdatetime NULLS FIRST
+  1 NULLS FIRST

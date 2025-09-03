@@ -5,7 +5,7 @@ WITH _s1 AS (
     sbtxtickerid AS sbTxTickerId
   FROM main.sbTransaction
   WHERE
-    sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-1' MONTH)
+    sbtxdatetime >= DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '1' MONTH)
     AND sbtxtype = 'sell'
   GROUP BY
     3

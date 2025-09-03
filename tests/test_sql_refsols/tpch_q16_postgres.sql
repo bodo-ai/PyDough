@@ -13,12 +13,12 @@ JOIN tpch.part AS part
   AND part.p_partkey = partsupp.ps_partkey
   AND part.p_size IN (49, 14, 23, 45, 19, 3, 36, 9)
 GROUP BY
-  part.p_brand,
-  part.p_size,
-  part.p_type
+  1,
+  2,
+  3
 ORDER BY
-  supplier_count DESC NULLS LAST,
-  p_brand NULLS FIRST,
-  p_type NULLS FIRST,
-  p_size NULLS FIRST
+  4 DESC NULLS LAST,
+  1 NULLS FIRST,
+  2 NULLS FIRST,
+  3 NULLS FIRST
 LIMIT 10

@@ -26,4 +26,4 @@ WHERE
     CURRENT_TIMESTAMP - CAST(payments_received.payment_date AS TIMESTAMP)
   )) / 7 >= 1
 GROUP BY
-  DATE_TRUNC('WEEK', CAST(payments_received.payment_date AS TIMESTAMP))
+  1

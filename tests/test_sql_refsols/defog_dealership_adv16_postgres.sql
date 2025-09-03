@@ -4,7 +4,7 @@ WITH _s1 AS (
     salesperson_id
   FROM main.sales
   GROUP BY
-    salesperson_id
+    2
 )
 SELECT
   salespersons._id,
@@ -15,5 +15,5 @@ FROM main.salespersons AS salespersons
 LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  COALESCE(_s1.sum_sale_price, 0) DESC NULLS LAST
+  4 DESC NULLS LAST
 LIMIT 5

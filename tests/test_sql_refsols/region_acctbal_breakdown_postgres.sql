@@ -54,7 +54,7 @@ WITH _t1 AS (
     n_regionkey
   FROM _t1
   GROUP BY
-    n_regionkey
+    6
 )
 SELECT
   region.r_name AS region_name,
@@ -67,4 +67,4 @@ FROM tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.n_regionkey = region.r_regionkey
 ORDER BY
-  region.r_name NULLS FIRST
+  1 NULLS FIRST

@@ -17,7 +17,7 @@ WITH _t2 AS (
     _t4.ca_dt
   FROM _t2 AS _t4
   JOIN main.calendar AS calendar
-    ON calendar.ca_dt >= DATE_ADD(CAST(_t4.ca_dt AS TIMESTAMP), -6, 'MONTH')
+    ON calendar.ca_dt >= DATE_SUB(CAST(_t4.ca_dt AS TIMESTAMP), 6, MONTH)
   JOIN main.devices AS devices
     ON calendar.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   JOIN _t5 AS _t5

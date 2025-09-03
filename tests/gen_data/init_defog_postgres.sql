@@ -1,9 +1,9 @@
 -- Create schemas
-DROP SCHEMA IF EXISTS main CASCADE;
-CREATE SCHEMA main;
+CREATE SCHEMA IF NOT EXISTS main;
 
 
 -- Dimension tables
+DROP TABLE IF EXISTS main.sbCustomer CASCADE;
 CREATE TABLE main.sbCustomer (
   sbCustId varchar(20) PRIMARY KEY,
   sbCustName varchar(100) NOT NULL,
@@ -19,6 +19,7 @@ CREATE TABLE main.sbCustomer (
   sbCustStatus varchar(20) NOT NULL -- possible values: active, inactive, suspended, closed
 );
 
+DROP TABLE IF EXISTS main.sbTicker CASCADE;
 CREATE TABLE main.sbTicker (
   sbTickerId varchar(20) PRIMARY KEY,
   sbTickerSymbol varchar(10) NOT NULL,
@@ -31,6 +32,7 @@ CREATE TABLE main.sbTicker (
 );
 
 -- Fact tables  
+DROP TABLE IF EXISTS main.sbDailyPrice CASCADE;
 CREATE TABLE main.sbDailyPrice (
   sbDpTickerId varchar(20) NOT NULL,
   sbDpDate date NOT NULL,
@@ -43,6 +45,7 @@ CREATE TABLE main.sbDailyPrice (
   sbDpSource varchar(50)
 );
 
+DROP TABLE IF EXISTS main.sbTransaction CASCADE;
 CREATE TABLE main.sbTransaction (
   sbTxId varchar(50) PRIMARY KEY,
   sbTxCustId varchar(20) NOT NULL,
@@ -223,7 +226,7 @@ INSERT INTO main.sbTransaction (sbTxId, sbTxCustId, sbTxTickerId, sbTxDateTime, 
 ('TX055', 'C019', 'T005', DATE_TRUNC('month', NOW()) - INTERVAL '1 month' + INTERVAL '5 days', 'buy', 10, 2500.00, 25000.00, 'USD', 125.00, 15.00, 'KP055', TO_CHAR(DATE_TRUNC('month', NOW()) - INTERVAL '1 month' + INTERVAL '5 days', '%Y%m%d %H:%i:%s'), 'success'),
 ('TX056', 'C002', 'T006', DATE_TRUNC('month', NOW()) + INTERVAL '1 day', 'sell', 20, 200.00, 4000.00, 'USD', 20.00, 10.00, 'KP056', TO_CHAR(DATE_TRUNC('month', NOW()) + INTERVAL '1 day', '%Y%m%d %H:%i:%s'), 'success');
 
-
+DROP TABLE IF EXISTS main.users CASCADE;
 CREATE TABLE main.users (
   uid BIGINT PRIMARY KEY,
   username VARCHAR(50) NOT NULL,
@@ -240,6 +243,7 @@ CREATE TABLE main.users (
   kyc_verified_at TIMESTAMP
 );
 
+DROP TABLE IF EXISTS main.merchants CASCADE;
 CREATE TABLE main.merchants (
   mid BIGINT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -261,6 +265,7 @@ CREATE TABLE main.merchants (
   contact_phone VARCHAR(20)
 );
 
+DROP TABLE IF EXISTS main.coupons CASCADE;
 CREATE TABLE main.coupons (
   cid BIGINT PRIMARY KEY,
   merchant_id BIGINT NOT NULL REFERENCES main.merchants(mid),
@@ -279,6 +284,7 @@ CREATE TABLE main.coupons (
 );
 
 -- Fact Tables --
+DROP TABLE IF EXISTS main.wallet_transactions_daily CASCADE;
 CREATE TABLE main.wallet_transactions_daily (
   txid SERIAL PRIMARY KEY,
   sender_id BIGINT NOT NULL,
@@ -300,18 +306,21 @@ CREATE TABLE main.wallet_transactions_daily (
   user_agent TEXT
 );
 
+DROP TABLE IF EXISTS main.wallet_user_balance_daily CASCADE;
 CREATE TABLE main.wallet_user_balance_daily (
   user_id BIGINT,
   balance DECIMAL(10,2) NOT NULL,
   updated_at TIMESTAMP NOT NULL
 );
 
+DROP TABLE IF EXISTS main.wallet_merchant_balance_daily CASCADE;
 CREATE TABLE main.wallet_merchant_balance_daily (
   merchant_id BIGINT,
   balance DECIMAL(10,2) NOT NULL,
   updated_at TIMESTAMP NOT NULL
 );
 
+DROP TABLE IF EXISTS main.notifications CASCADE;
 CREATE TABLE main.notifications (
   id SERIAL PRIMARY KEY,
   user_id INT NOT NULL REFERENCES main.users(uid),
@@ -325,6 +334,7 @@ CREATE TABLE main.notifications (
   action_url TEXT -- can be external https or deeplink url within the app
 );  
 
+DROP TABLE IF EXISTS main.user_sessions CASCADE;
 CREATE TABLE main.user_sessions (
   user_id BIGINT NOT NULL,
   session_start_ts TIMESTAMP NOT NULL,
@@ -333,6 +343,7 @@ CREATE TABLE main.user_sessions (
   device_id VARCHAR(36)
 );
 
+DROP TABLE IF EXISTS main.user_setting_snapshot CASCADE;
 CREATE TABLE main.user_setting_snapshot (
   user_id BIGINT NOT NULL,
   snapshot_date DATE NOT NULL,
@@ -543,6 +554,7 @@ VALUES
 (1, '2023-06-01', 502.00, 1000.00, 2, 'bcryptHash($2yz9!&ka1)', '9d61c49b-8977-4914-a36b-80d1445e38fa', 'mobile_8fh2k1', '192.168.0.1', false, true, '2023-06-01 06:00:00'),
 (2, '2023-06-01', 500.00, 2500.00, 1, 'bcryptHash(qpwo9874zyGk!)', NULL, 'mobile_yjp08q', '198.51.100.233, 70.121.39.25', true, false, '2023-06-01 09:00:00');
 
+DROP TABLE IF EXISTS main.cars CASCADE;
 CREATE TABLE main.cars (
   id SERIAL PRIMARY KEY,
   make TEXT NOT NULL, -- manufacturer of the car
@@ -556,6 +568,7 @@ CREATE TABLE main.cars (
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW() -- timestamp when the car was added to the system
 );
 
+DROP TABLE IF EXISTS main.salespersons CASCADE;
 CREATE TABLE main.salespersons (
   id SERIAL PRIMARY KEY,
   first_name TEXT NOT NULL,
@@ -567,6 +580,7 @@ CREATE TABLE main.salespersons (
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+DROP TABLE IF EXISTS main.customers CASCADE;
 CREATE TABLE main.customers (
   id SERIAL PRIMARY KEY,
   first_name TEXT NOT NULL,
@@ -580,6 +594,7 @@ CREATE TABLE main.customers (
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+DROP TABLE IF EXISTS main.sales CASCADE;
 CREATE TABLE main.sales (
   id SERIAL PRIMARY KEY,
   car_id INTEGER NOT NULL REFERENCES main.cars(id),
@@ -590,6 +605,7 @@ CREATE TABLE main.sales (
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+DROP TABLE IF EXISTS main.inventory_snapshots CASCADE;
 CREATE TABLE main.inventory_snapshots (
   id SERIAL PRIMARY KEY,
   snapshot_date DATE NOT NULL,
@@ -598,6 +614,7 @@ CREATE TABLE main.inventory_snapshots (
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+DROP TABLE IF EXISTS main.payments_received CASCADE;
 CREATE TABLE main.payments_received (
   id SERIAL PRIMARY KEY,
   sale_id INTEGER NOT NULL REFERENCES main.sales(id),
@@ -607,6 +624,7 @@ CREATE TABLE main.payments_received (
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+DROP TABLE IF EXISTS main.payments_made CASCADE;
 CREATE TABLE main.payments_made (
   id SERIAL PRIMARY KEY,
   vendor_name TEXT NOT NULL,
@@ -783,6 +801,7 @@ VALUES
 
 
 -- doctor dimension table
+DROP TABLE IF EXISTS main.doctors CASCADE;
 CREATE TABLE main.doctors (
   doc_id SERIAL PRIMARY KEY,
   first_name VARCHAR(50),
@@ -797,6 +816,7 @@ CREATE TABLE main.doctors (
 );
 
 -- patient dimension table
+DROP TABLE IF EXISTS main.patients CASCADE;
 CREATE TABLE main.patients (
   patient_id SERIAL PRIMARY KEY,
   first_name VARCHAR(50),
@@ -817,6 +837,7 @@ CREATE TABLE main.patients (
 );
 
 -- drug dimension table  
+DROP TABLE IF EXISTS main.drugs CASCADE;
 CREATE TABLE main.drugs (
   drug_id SERIAL PRIMARY KEY,
   drug_name VARCHAR(100),
@@ -832,6 +853,7 @@ CREATE TABLE main.drugs (
 );
 
 -- diagnosis dimension table
+DROP TABLE IF EXISTS main.diagnoses CASCADE;
 CREATE TABLE main.diagnoses (
   diag_id SERIAL PRIMARY KEY,  
   diag_code VARCHAR(10),
@@ -840,6 +862,7 @@ CREATE TABLE main.diagnoses (
 );
 
 -- treatment fact table
+DROP TABLE IF EXISTS main.treatments CASCADE;
 CREATE TABLE main.treatments (
   treatment_id SERIAL PRIMARY KEY,
   patient_id INT REFERENCES main.patients(patient_id),
@@ -854,6 +877,7 @@ CREATE TABLE main.treatments (
 );
 
 -- outcome fact table 
+DROP TABLE IF EXISTS main.outcomes CASCADE;
 CREATE TABLE main.outcomes (
   outcome_id SERIAL PRIMARY KEY,
   treatment_id INT REFERENCES main.treatments(treatment_id),
@@ -875,6 +899,7 @@ CREATE TABLE main.outcomes (
   day100_hfg DECIMAL(4,1)
 );
 
+DROP TABLE IF EXISTS main.adverse_events CASCADE;
 CREATE TABLE main.adverse_events (
   id SERIAL PRIMARY KEY, -- 1 row per adverse event per treatment_id
   treatment_id INT REFERENCES main.treatments(treatment_id),
@@ -882,6 +907,7 @@ CREATE TABLE main.adverse_events (
   description TEXT
 );
 
+DROP TABLE IF EXISTS main.concomitant_meds CASCADE;
 CREATE TABLE main.concomitant_meds (
   id SERIAL PRIMARY KEY, -- 1 row per med per treatment_id
   treatment_id INT REFERENCES main.treatments(treatment_id),

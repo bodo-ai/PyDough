@@ -13,7 +13,7 @@ WITH _s2 AS (
     EXTRACT(YEAR FROM CAST(searches.search_ts AS TIMESTAMP)) <= 2019
     AND EXTRACT(YEAR FROM CAST(searches.search_ts AS TIMESTAMP)) >= 2010
   GROUP BY
-    searches.search_engine
+    2
 )
 SELECT
   _s2.search_engine AS engine,
@@ -22,4 +22,4 @@ FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
   ON _s2.search_engine = _s3.search_engine
 ORDER BY
-  _s2.search_engine NULLS FIRST
+  1 NULLS FIRST

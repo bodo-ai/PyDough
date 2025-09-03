@@ -5,9 +5,9 @@ WITH _s1 AS (
     car_id
   FROM main.sales
   WHERE
-    sale_date >= CURRENT_TIMESTAMP + INTERVAL '30 DAY'
+    sale_date >= CURRENT_TIMESTAMP - INTERVAL '30 DAY'
   GROUP BY
-    car_id
+    3
 )
 SELECT
   COALESCE(_s1.n_rows, 0) AS num_sales,

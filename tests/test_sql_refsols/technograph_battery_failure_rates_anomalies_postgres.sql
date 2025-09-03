@@ -6,7 +6,7 @@ WITH _s7 AS (
   JOIN main.errors AS errors
     ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
   GROUP BY
-    incidents.in_device_id
+    2
 )
 SELECT
   countries.co_name AS country_name,
@@ -20,10 +20,10 @@ JOIN main.products AS products
 LEFT JOIN _s7 AS _s7
   ON _s7.in_device_id = devices.de_id
 GROUP BY
-  countries.co_name,
-  products.pr_name
+  1,
+  2
 ORDER BY
-  ROUND(CAST(COALESCE(SUM(_s7.n_rows), 0) AS DOUBLE PRECISION) / COUNT(*), 2) DESC NULLS LAST,
-  products.pr_name NULLS FIRST,
-  countries.co_name NULLS FIRST
+  3 DESC NULLS LAST,
+  2 NULLS FIRST,
+  1 NULLS FIRST
 LIMIT 5

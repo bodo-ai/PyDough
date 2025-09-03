@@ -31,4 +31,4 @@ JOIN tpch.supplier AS supplier
 JOIN tpch.nation AS nation_2
   ON nation_2.n_nationkey = supplier.s_nationkey
 GROUP BY
-  EXTRACT(YEAR FROM CAST(orders.o_orderdate AS TIMESTAMP))
+  1

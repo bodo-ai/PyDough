@@ -17,7 +17,9 @@ SELECT
   CASE
     WHEN LENGTH('e') = 0
     THEN 0
-    ELSE CAST(CAST(LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', '')) AS DOUBLE PRECISION) / LENGTH('e') AS BIGINT)
+    ELSE CAST(CAST((
+      LENGTH(customer.c_name) - LENGTH(REPLACE(customer.c_name, 'e', ''))
+    ) AS DOUBLE PRECISION) / LENGTH('e') AS BIGINT)
   END AS count_e,
   POSITION('Alex' IN customer.c_name) - 1 AS idx_Alex
 FROM tpch.customer AS customer

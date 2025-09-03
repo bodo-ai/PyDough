@@ -1290,7 +1290,6 @@ class PyDoughPandasTest:
         if self.columns is not None:
             call_kwargs["columns"] = self.columns
         result: pd.DataFrame = to_df(root, **call_kwargs)
-
         # Extract the reference solution from the function
         refsol: pd.DataFrame = self.pd_function()
 
@@ -1318,24 +1317,12 @@ class PyDoughPandasTest:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
-        # Perform the comparison between the result and the reference solution
         if coerce_types:
             for col_name in result.columns:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
                 )
         # Perform the comparison between the result and the reference solution
-        if coerce_types:
-            for col_name in result.columns:
-                result[col_name], refsol[col_name] = harmonize_types(
-                    result[col_name], refsol[col_name]
-                )
-        # Perform the comparison between the result and the reference solution
-        if coerce_types:
-            for col_name in result.columns:
-                result[col_name], refsol[col_name] = harmonize_types(
-                    result[col_name], refsol[col_name]
-                )
         pd.testing.assert_frame_equal(
             result, refsol, check_dtype=(not coerce_types), check_exact=False, atol=1e-8
         )

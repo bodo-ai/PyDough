@@ -12,7 +12,9 @@ from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 
 from .base_transform_bindings import BaseTransformBindings
-from .sqlglot_transform_utils import DateTimeUnit
+from .sqlglot_transform_utils import (
+    DateTimeUnit,
+)
 
 
 class PostgresTransformBindings(BaseTransformBindings):
@@ -85,31 +87,21 @@ class PostgresTransformBindings(BaseTransformBindings):
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
 
-    def convert_getpart(
-        self, arg: list[SQLGlotExpression], types: list[PyDoughType]
+    def convert_get_part(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
         # Check if position is a CAST to BIGINT. If it is change it to INT.
-        pos_expr: SQLGlotExpression = arg[2]
-        if (
-            isinstance(arg[2], sqlglot_expressions.Cast)
-            and arg[2].args["to"].this == sqlglot_expressions.DataType.Type.BIGINT
-        ):
-            # Cast position to INT
-            pos_expr = sqlglot_expressions.cast(
-                expression=arg[2].args["this"],
-                to=sqlglot_expressions.DataType.build("INT"),
-            )
-        """
-        arg[2] = pos_expr
-        split_expr: SQLGlotExpression = sqlglot_expressions.Anonymous(this='SPLIT_PART', expressions=arg)
-        """
-        # Build the SPLIT_PART expr
-        split_expr: SQLGlotExpression = sqlglot_expressions.SplitPart(
-            this=arg[0],  # string expression
-            delimiter=arg[1],  # delimiter
-            part_index=pos_expr,  # position (1-based)
+
+        assert len(args) == 3
+        string_expr, delimiter_expr, index_expr = args
+
+        result: SQLGlotExpression = sqlglot_expressions.SplitPart(
+            this=string_expr,  # string expression
+            delimiter=delimiter_expr,  # delimiter
+            part_index=index_expr,  # position (1-based)
         )
-        return split_expr
+        # breakpoint()
+        return result
 
     def dialect_day_of_week(self, base: SQLGlotExpression) -> SQLGlotExpression:
         """
@@ -152,3 +144,23 @@ class PostgresTransformBindings(BaseTransformBindings):
             amt *= 3
 
         return super().apply_datetime_offset(base, amt, unit)
+
+    def convert_extract_datetime(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+        unit: DateTimeUnit,
+    ) -> SQLGlotExpression:
+        assert len(args) == 1
+
+        result = sqlglot_expressions.Extract(
+            this=sqlglot_expressions.Var(this=unit.value.upper()),
+            expression=self.make_datetime_arg(args[0]),
+        )
+
+        if unit == DateTimeUnit.SECOND:
+            result = sqlglot_expressions.Cast(
+                this=result, to=sqlglot_expressions.DataType.build("BIGINT")
+            )
+
+        return result

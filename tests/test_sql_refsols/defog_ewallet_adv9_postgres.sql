@@ -4,7 +4,7 @@ SELECT
 FROM main.wallet_transactions_daily
 WHERE
   created_at < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP)
-  AND created_at >= DATE_TRUNC('MONTH', CURRENT_TIMESTAMP) + INTERVAL '2 MONTH'
+  AND created_at >= DATE_TRUNC('MONTH', CURRENT_TIMESTAMP) - INTERVAL '2 MONTH'
   AND sender_type = 0
 GROUP BY
-  DATE_TRUNC('MONTH', CAST(created_at AS TIMESTAMP))
+  1
