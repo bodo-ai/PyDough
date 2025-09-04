@@ -7,8 +7,6 @@ all singular with regards to it.
 __all__ = ["Calculate"]
 
 
-from functools import cache
-
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
@@ -158,7 +156,6 @@ class Calculate(AugmentingChildOperator):
         return ", ".join(kwarg_strings)
 
     @property
-    @cache
     def standalone_string(self) -> str:
         return f"CALCULATE({self.calc_kwarg_strings(False)})"
 

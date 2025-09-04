@@ -6,8 +6,6 @@ by certain expression criteria.
 __all__ = ["Where"]
 
 
-from functools import cache
-
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import PyDoughExpressionQDAG
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
@@ -71,7 +69,6 @@ class Where(AugmentingChildOperator):
         return f"{self.preceding_context.key}.WHERE"
 
     @property
-    @cache
     def standalone_string(self) -> str:
         return f"WHERE({self.condition.to_string()})"
 
