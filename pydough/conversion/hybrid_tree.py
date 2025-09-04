@@ -976,3 +976,27 @@ class HybridTree:
             child.subtree.squish_backrefs_into_correl(None, levels_out + 1)
         if self.parent is not None:
             self.parent.squish_backrefs_into_correl(levels_up, levels_out)
+
+    def earliest_referenced_height(self, correl_levels: int) -> int:
+        """
+        TODO
+        """
+        result: int = -1
+        for operation in self.pipeline:
+            for expr in operation.terms.values():
+                result = max(result, expr.earliest_referenced_height(correl_levels))
+            if isinstance(operation, HybridFilter):
+                result = max(
+                    result,
+                    operation.condition.earliest_referenced_height(correl_levels),
+                )
+        for child in self.children:
+            result = max(
+                result, child.subtree.earliest_referenced_height(correl_levels + 1)
+            )
+        if self.parent is not None:
+            parent_result: int = self.parent.earliest_referenced_height(correl_levels)
+            if correl_levels > 0 and parent_result > 0:
+                parent_result += 1
+            result = max(result, parent_result)
+        return result

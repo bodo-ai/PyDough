@@ -660,6 +660,7 @@ class RelTranslation:
                 and hybrid.pipeline[0].child_idx == child_idx
             ):
                 continue
+            op: HybridOperation = hybrid.pipeline[pipeline_idx]
             if pipeline_idx == (child.max_steps - 1):
                 self.stack.append(context)
                 child_output = self.rel_translation(
@@ -669,11 +670,19 @@ class RelTranslation:
                 join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
                     child.subtree.join_keys
                 )
-                if (
-                    isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
-                    and child_idx == 0
-                ):
-                    join_keys = None
+                if isinstance(op, HybridPartition) and child_idx == 0:
+                    if join_keys is not None:
+                        new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+                        for lhs_key, rhs_key in join_keys:
+                            if not (
+                                isinstance(lhs_key, HybridRefExpr)
+                                and lhs_key.name in op.key_names
+                            ):
+                                new_join_keys.append((lhs_key, rhs_key))
+                        if len(new_join_keys) == 0:
+                            join_keys = None
+                        else:
+                            join_keys = new_join_keys
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
@@ -1152,7 +1161,7 @@ class RelTranslation:
         # expressions mapping
         return TranslationOutput(child_result.relational_node, new_expressions)
 
-    def translate_hybridroot(self, context: TranslationOutput) -> TranslationOutput:
+    def translate_root(self, context: TranslationOutput) -> TranslationOutput:
         """
         Converts a HybridRoot node into a relational tree. This method shifts
         all expressions in the given context back by one level, effectively
@@ -1299,7 +1308,7 @@ class RelTranslation:
                 result = context
             case HybridRoot():
                 assert context is not None, "Malformed HybridTree pattern."
-                result = self.translate_hybridroot(context)
+                result = self.translate_root(context)
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"

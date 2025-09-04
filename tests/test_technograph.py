@@ -450,11 +450,12 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                         "start_of_year": ["2020-01-01", "2021-01-01", "2022-01-01"] * 4,
                     }
                 ),
-                "country_x_week_combos",
+                "country_x_year_combos",
             ),
-            id="country_x_week_combos",
+            id="country_x_year_combos",
         ),
         pytest.param(
+            # TODO: fix uniqueness of de-correlation for join
             PyDoughPandasTest(
                 "global_info = TechnoGraph.CALCULATE(selected_date=products.WHERE(name == 'AmethystCopper-I').SINGULAR().release_date)\n"
                 "selected_countries = countries.WHERE(~CONTAINS(name, 'C')).CALCULATE(country_name=name).PARTITION(name='country', by=country_name).CALCULATE(country_name)\n"
@@ -476,9 +477,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                         "n": [1, 1, 0, 0, 5, 2, 1, 1, 1, 0, 0, 0],
                     }
                 ),
-                "country_x_week_analysis",
+                "country_x_year_analysis",
             ),
-            id="country_x_week_analysis",
+            id="country_x_year_analysis",
         ),
     ],
 )

@@ -1693,6 +1693,8 @@ class HybridTranslator:
             transformations.
         """
         # 1. Run the initial conversion from QDAG to Hybrid
+        print()
+        print(node.to_tree_string())
         hybrid: HybridTree = self.make_hybrid_tree(node, None)
         # 2. Eject any aggregate inputs from the hybrid tree.
         self.eject_aggregate_inputs(hybrid)
@@ -1703,7 +1705,11 @@ class HybridTranslator:
         # filters with correlated references into join conditions.
         self.run_correlation_extraction(hybrid)
         # 5. Run the de-correlation procedure.
+        print()
+        print(hybrid)
         self.run_hybrid_decorrelation(hybrid)
+        print()
+        print(hybrid)
         # 6. Run any final rewrites, such as turning MEDIAN into an average
         # of the 1-2 median rows, that must happen after de-correlation.
         self.run_rewrites(hybrid)

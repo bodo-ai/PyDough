@@ -1258,11 +1258,12 @@ class Qualifier:
         )
         # If parent is a root, then the child is qualified as a child access
         # example: a.CALCULATE(x=COUNT(CROSS(b)))
+        p2 = GlobalContext(self.graph, qualified_parent)
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child,
-            qualified_parent,
+            p2,
             isinstance(unqualified_parent, UnqualifiedRoot),
-            True,
+            False,
         )
         return qualified_child
 
