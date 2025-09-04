@@ -15,9 +15,9 @@ WITH _t6 AS (
   FROM main.links
 ), _s2 AS (
   SELECT
+    SUM(IIF(_s1.l_target IS NULL, _s0.n, CAST(_s1.l_source <> _s1.l_target AS INTEGER))) AS agg_0,
     MAX(_s0.n) AS anything_n,
-    MAX(_s0.page_rank) AS anything_page_rank_1,
-    SUM(IIF(_s1.l_target IS NULL, _s0.n, CAST(_s1.l_source <> _s1.l_target AS INTEGER))) AS sum_n_target,
+    MAX(_s0.page_rank) AS anything_page_rank,
     _s0.s_key
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
@@ -30,14 +30,14 @@ WITH _t6 AS (
       CAST(0.15 AS REAL) / _s2.anything_n
     ) + 0.85 * SUM(
       CAST((
-        CAST(_s3.l_source <> _s3.l_target OR _s3.l_target IS NULL AS INTEGER) * _s2.anything_page_rank_1
-      ) AS REAL) / COALESCE(_s2.sum_n_target, 0)
+        CAST(_s3.l_source <> _s3.l_target OR _s3.l_target IS NULL AS INTEGER) * _s2.anything_page_rank
+      ) AS REAL) / COALESCE(_s2.agg_0, 0)
     ) OVER (PARTITION BY _s5.s_key) AS page_rank_0,
+    _s2.agg_0,
     _s2.anything_n,
     _s3.l_source,
     _s3.l_target,
-    _s5.s_key,
-    _s2.sum_n_target
+    _s5.s_key
   FROM _s2 AS _s2
   JOIN _s1 AS _s3
     ON _s2.s_key = _s3.l_source
@@ -50,7 +50,7 @@ WITH _t6 AS (
     ) + 0.85 * SUM(
       CAST((
         CAST(_s7.l_source <> _s7.l_target OR _s7.l_target IS NULL AS INTEGER) * _t3.page_rank_0
-      ) AS REAL) / COALESCE(_t3.sum_n_target, 0)
+      ) AS REAL) / COALESCE(_t3.agg_0, 0)
     ) OVER (PARTITION BY _s9.s_key) AS page_rank_0_20,
     _s7.l_source,
     _s7.l_target,

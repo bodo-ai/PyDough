@@ -295,7 +295,7 @@ class Qualifier:
             # current context.
             if ancestor_name not in ancestral_names:
                 raise PyDoughUnqualifiedException(
-                    f"Per string refers to unrecognized ancestor {ancestor_name!r} of {context!r}"
+                    f"Per string refers to unrecognized ancestor {ancestor_name!r} of {context!r} (expected one of: {ancestral_names})"
                 )
             # Verify that `name` is only present exactly one time in the
             # ancestors of the current context, unless an index was provided.
@@ -1256,15 +1256,23 @@ class Qualifier:
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_parent, context, is_child, is_cross
         )
-        # If parent is a root, then the child is qualified as a child access
-        # example: a.CALCULATE(x=COUNT(CROSS(b)))
-        p2 = GlobalContext(self.graph, qualified_parent)
+
+        # Now build a GlobalContext pointing to the qualified parent as its
+        # ancestor, and use this as the new context for the child.
+        qualified_parent = GlobalContext(self.graph, qualified_parent)
+
+        if isinstance(unqualified_parent, UnqualifiedRoot):
+            qualified_parent = ChildOperatorChildAccess(qualified_parent)
+            # breakpoint()
+
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child,
-            p2,
-            isinstance(unqualified_parent, UnqualifiedRoot),
+            qualified_parent,
+            False,
+            # isinstance(unqualified_parent, UnqualifiedRoot),
             False,
         )
+
         return qualified_child
 
     def qualify_node(

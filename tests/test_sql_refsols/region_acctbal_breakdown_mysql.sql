@@ -46,11 +46,11 @@ WITH _t1 AS (
     ON CUSTOMER.c_nationkey = NATION.n_nationkey
 ), _s3 AS (
   SELECT
-    AVG(expr_5) AS median_black_acctbal,
-    AVG(expr_6) AS median_overall_acctbal,
-    AVG(expr_7) AS median_red_acctbal,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS n_black_acctbal,
-    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS n_red_acctbal,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_3,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS agg_4,
+    AVG(expr_5) AS avg_expr_5,
+    AVG(expr_6) AS avg_expr_6,
+    AVG(expr_7) AS avg_expr_7,
     n_regionkey
   FROM _t1
   GROUP BY
@@ -58,11 +58,11 @@ WITH _t1 AS (
 )
 SELECT
   REGION.r_name COLLATE utf8mb4_bin AS region_name,
-  _s3.n_red_acctbal,
-  _s3.n_black_acctbal,
-  _s3.median_red_acctbal,
-  _s3.median_black_acctbal,
-  _s3.median_overall_acctbal
+  _s3.agg_4 AS n_red_acctbal,
+  _s3.agg_3 AS n_black_acctbal,
+  _s3.avg_expr_7 AS median_red_acctbal,
+  _s3.avg_expr_5 AS median_black_acctbal,
+  _s3.avg_expr_6 AS median_overall_acctbal
 FROM tpch.REGION AS REGION
 JOIN _s3 AS _s3
   ON REGION.r_regionkey = _s3.n_regionkey

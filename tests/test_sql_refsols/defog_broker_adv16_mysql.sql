@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    SUM(sbtxtax + sbtxcommission) AS sum_expr_2,
+    SUM(sbtxtax + sbtxcommission) AS agg_1,
     SUM(sbtxamount) AS sum_sbTxAmount,
     sbtxtickerid AS sbTxTickerId
   FROM main.sbTransaction
@@ -14,7 +14,7 @@ SELECT
   sbTicker.sbtickersymbol COLLATE utf8mb4_bin AS symbol,
   (
     100.0 * (
-      COALESCE(_s1.sum_sbTxAmount, 0) - COALESCE(_s1.sum_expr_2, 0)
+      COALESCE(_s1.sum_sbTxAmount, 0) - COALESCE(_s1.agg_1, 0)
     )
   ) / COALESCE(_s1.sum_sbTxAmount, 0) AS SPM
 FROM main.sbTicker AS sbTicker

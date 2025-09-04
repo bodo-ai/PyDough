@@ -5,27 +5,22 @@ WITH _s0 AS (
   FROM main.devices
   GROUP BY
     2
-), _s1 AS (
-  SELECT
-    pr_id,
-    pr_release
-  FROM main.products
 ), _s6 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(_s1.pr_release AS DATETIME)) AS release_year,
+    EXTRACT(YEAR FROM CAST(release_date AS DATETIME)) AS release_year,
     SUM(_s0.n_rows) AS sum_n_rows
   FROM _s0 AS _s0
-  JOIN _s1 AS _s1
-    ON _s0.de_product_id = _s1.pr_id
+  JOIN main.products AS products
+    ON _s0.de_product_id = products.pr_id
   GROUP BY
     1
 ), _s7 AS (
   SELECT
     COUNT(*) AS n_rows,
-    EXTRACT(YEAR FROM CAST(_s3.pr_release AS DATETIME)) AS release_year
+    EXTRACT(YEAR FROM CAST(products.pr_release AS DATETIME)) AS release_year
   FROM main.devices AS devices
-  JOIN _s1 AS _s3
-    ON _s3.pr_id = devices.de_product_id
+  JOIN main.products AS products
+    ON devices.de_product_id = products.pr_id
   JOIN main.incidents AS incidents
     ON devices.de_id = incidents.in_device_id
   GROUP BY

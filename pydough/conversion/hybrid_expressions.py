@@ -220,12 +220,6 @@ class HybridExpr(ABC):
         """
         return self
 
-    def earliest_referenced_height(self, correl_levels: int) -> int:
-        """
-        TODO
-        """
-        return -1
-
 
 class HybridCollation:
     """
@@ -345,14 +339,6 @@ class HybridBackRefExpr(HybridExpr):
         else:
             return self
 
-    def earliest_referenced_height(self, correl_levels: int) -> int:
-        """
-        TODO
-        """
-        if correl_levels == 0:
-            return self.back_idx
-        return 0
-
 
 class HybridSidedRefExpr(HybridExpr):
     """
@@ -420,16 +406,6 @@ class HybridCorrelExpr(HybridExpr):
             return HybridSidedRefExpr(inner_expr)
         else:
             return inner_expr
-
-    def earliest_referenced_height(self, correl_levels: int) -> int:
-        """
-        TODO
-        """
-        if correl_levels <= 0:
-            return -1
-        if isinstance(self.expr, HybridRefExpr) and correl_levels == 1:
-            return 0
-        return self.expr.earliest_referenced_height(correl_levels - 1)
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -513,7 +489,7 @@ class HybridFunctionExpr(HybridExpr):
         return any(arg.contains_window_functions() for arg in self.args)
 
     def count_correlated_levels(self) -> int:
-        correl_levels: int = -1
+        correl_levels: int = 0
         for arg in self.args:
             correl_levels = max(correl_levels, arg.count_correlated_levels())
         return correl_levels
@@ -587,12 +563,6 @@ class HybridFunctionExpr(HybridExpr):
             [arg.expand_sided(shift) for arg in self.args],
             self.typ,
         )
-
-    def earliest_referenced_height(self, correl_levels: int) -> int:
-        result: int = -1
-        for arg in self.args:
-            result = max(result, arg.earliest_referenced_height(correl_levels))
-        return result
 
 
 class HybridWindowExpr(HybridExpr):
@@ -796,15 +766,3 @@ class HybridWindowExpr(HybridExpr):
             self.typ,
             self.kwargs,
         )
-
-    def earliest_referenced_height(self, correl_levels: int) -> int:
-        result: int = -1
-        for arg in self.args:
-            result = max(result, arg.earliest_referenced_height(correl_levels))
-        for part_arg in self.partition_args:
-            result = max(result, part_arg.earliest_referenced_height(correl_levels))
-        for order_arg in self.order_args:
-            result = max(
-                result, order_arg.expr.earliest_referenced_height(correl_levels)
-            )
-        return result

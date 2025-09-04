@@ -8,7 +8,6 @@ __all__ = ["PyDoughCollectionQDAG"]
 import re
 from abc import abstractmethod
 from collections.abc import Iterable
-from functools import cache, cached_property
 from typing import Union
 
 import numpy as np
@@ -37,7 +36,6 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         The name of the collection.
         """
 
-    @cache
     def get_ancestral_names(self) -> list[str]:
         """
         The names of all ancestors of the collection, starting from the top.
@@ -138,7 +136,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             return False
         return self.is_ancestor(collection.ancestor_context)
 
-    @cached_property
+    @property
     def starting_predecessor(self) -> "PyDoughCollectionQDAG":
         """
         Returns the predecessor at the start of the current chain of preceding

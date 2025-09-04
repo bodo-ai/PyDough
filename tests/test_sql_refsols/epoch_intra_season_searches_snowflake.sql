@@ -34,10 +34,10 @@ WITH _s0 AS (
     3
 ), _s16 AS (
   SELECT
-    COUNT(*) AS n_rows,
     COUNT_IF((
       NOT _s9.n_rows IS NULL AND _s9.n_rows > 0
-    )) AS sum_is_intra_season,
+    )) AS agg_2,
+    COUNT(*) AS n_rows,
     _s0.s_name
   FROM _s0 AS _s0
   JOIN searches AS searches
@@ -50,8 +50,8 @@ WITH _s0 AS (
     3
 ), _s17 AS (
   SELECT
+    COUNT_IF(_s15.s_name = _s10.s_name) AS agg_0,
     COUNT(*) AS n_rows,
-    COUNT_IF(_s15.s_name = _s10.s_name) AS sum_is_intra_season,
     _s10.s_name
   FROM _s0 AS _s10
   JOIN _s5 AS _s11
@@ -70,10 +70,10 @@ WITH _s0 AS (
 SELECT
   _s16.s_name AS season_name,
   ROUND((
-    100.0 * COALESCE(_s16.sum_is_intra_season, 0)
+    100.0 * COALESCE(_s16.agg_2, 0)
   ) / _s16.n_rows, 2) AS pct_season_searches,
   ROUND((
-    100.0 * COALESCE(_s17.sum_is_intra_season, 0)
+    100.0 * COALESCE(_s17.agg_0, 0)
   ) / COALESCE(_s17.n_rows, 0), 2) AS pct_event_searches
 FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17

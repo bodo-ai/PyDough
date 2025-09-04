@@ -38,8 +38,7 @@ WITH _t1 AS (
 ), _s17 AS (
   SELECT
     STR_TO_DATE(CONCAT(YEAR(CAST(_s3.ca_dt AS DATETIME)), ' 1 1'), '%Y %c %e') AS start_of_year,
-    SUM(_s15.n_rows) AS sum_n_rows,
-    _t3.co_name
+    SUM(_s15.n_rows) AS sum_n_rows
   FROM _t1 AS _t3
   CROSS JOIN _t4 AS _t4
   JOIN _s3 AS _s3
@@ -48,16 +47,15 @@ WITH _t1 AS (
   LEFT JOIN _s15 AS _s15
     ON _s15.ca_dt = _s3.ca_dt AND _s15.co_name = _t3.co_name
   GROUP BY
-    1,
-    3
+    _t3.co_name,
+    1
 )
 SELECT
   _t1.co_name COLLATE utf8mb4_bin AS country_name,
   _s17.start_of_year,
   COALESCE(_s17.sum_n_rows, 0) AS n_purchases
 FROM _t1 AS _t1
-LEFT JOIN _s17 AS _s17
-  ON _s17.co_name = _t1.co_name
+CROSS JOIN _s17 AS _s17
 ORDER BY
   1,
   2

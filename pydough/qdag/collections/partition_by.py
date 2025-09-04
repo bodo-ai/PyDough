@@ -7,8 +7,6 @@ child is the input data.
 __all__ = ["PartitionBy"]
 
 
-from functools import cache
-
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions import (
@@ -151,7 +149,6 @@ class PartitionBy(ChildOperator):
         return False
 
     @property
-    @cache
     def standalone_string(self) -> str:
         keys_str: str
         if len(self.keys) == 1:
@@ -160,7 +157,6 @@ class PartitionBy(ChildOperator):
             keys_str = str(tuple([expr.expr.term_name for expr in self.keys]))
         return f"Partition({self.child.to_string()}, name={self.name!r}, by={keys_str})"
 
-    @cache
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 
@@ -176,7 +172,6 @@ class PartitionBy(ChildOperator):
     def get_expression_position(self, expr_name: str) -> int:
         return self.key_name_indices[expr_name]
 
-    @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
         if term_name in self.ancestral_mapping:
             return BackReferenceExpression(

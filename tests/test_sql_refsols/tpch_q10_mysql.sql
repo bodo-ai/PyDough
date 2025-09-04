@@ -2,7 +2,7 @@ WITH _s3 AS (
   SELECT
     SUM(LINEITEM.l_extendedprice * (
       1 - LINEITEM.l_discount
-    )) AS sum_expr_1,
+    )) AS agg_0,
     ORDERS.o_custkey
   FROM tpch.ORDERS AS ORDERS
   JOIN tpch.LINEITEM AS LINEITEM
@@ -16,7 +16,7 @@ WITH _s3 AS (
 SELECT
   CUSTOMER.c_custkey AS C_CUSTKEY,
   CUSTOMER.c_name AS C_NAME,
-  COALESCE(_s3.sum_expr_1, 0) AS REVENUE,
+  COALESCE(_s3.agg_0, 0) AS REVENUE,
   CUSTOMER.c_acctbal AS C_ACCTBAL,
   NATION.n_name AS N_NAME,
   CUSTOMER.c_address AS C_ADDRESS,

@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    SUM(TIMESTAMPDIFF(SECOND, session_start_ts, session_end_ts)) AS sum_duration,
+    SUM(TIMESTAMPDIFF(SECOND, session_start_ts, session_end_ts)) AS agg_0,
     user_id
   FROM main.user_sessions
   WHERE
@@ -10,7 +10,7 @@ WITH _s1 AS (
 )
 SELECT
   users.uid,
-  _s1.sum_duration AS total_duration
+  _s1.agg_0 AS total_duration
 FROM main.users AS users
 JOIN _s1 AS _s1
   ON _s1.user_id = users.uid

@@ -29,7 +29,6 @@ from .hybrid_operations import (
     HybridFilter,
     HybridNoop,
     HybridPartition,
-    HybridRoot,
 )
 from .hybrid_tree import HybridTree
 
@@ -44,7 +43,7 @@ class HybridDecorrelater:
         self.children_indices: list[int] = []
 
     def make_decorrelate_parent(
-        self, hybrid: HybridTree, child_idx: int, max_steps: int, required_levels: int
+        self, hybrid: HybridTree, child_idx: int, max_steps: int
     ) -> tuple[HybridTree, int, int]:
         """
         Creates a snapshot of the ancestry of the hybrid tree that contains
@@ -58,9 +57,6 @@ class HybridDecorrelater:
             snapshot is being created to aid in the de-correlation of.
             `max_steps`: The index of the first pipeline operator that cannot
             occur because it depends on the correlated child.
-            `required_levels`: The number of ancestor levels above the bottom of
-            the parent that must be kept in order to ensure that all correlated
-            references in the child can be replaced with BACK references.
 
         Returns:
             A tuple where the first entry is a snapshot of `hybrid` and its
@@ -85,7 +81,6 @@ class HybridDecorrelater:
                 hybrid.parent,
                 -1,
                 len(hybrid.parent.pipeline),
-                required_levels,
             )
             return result[0], result[1] + 1, 1
         # Temporarily detach the successor of the current level, then create a
@@ -112,21 +107,7 @@ class HybridDecorrelater:
         new_hybrid._correlated_children = new_correlated_children
         new_hybrid._children = new_children
         new_hybrid._pipeline = new_hybrid._pipeline[:max_steps]
-        required_levels = max(required_levels, hybrid.earliest_referenced_height(0))
-        self.truncate_ancestry(new_hybrid, required_levels)
         return new_hybrid, 0, max_steps
-
-    def truncate_ancestry(self, hybrid: HybridTree, levels: int):
-        """
-        TODO
-        """
-        if levels == 0:
-            if isinstance(hybrid.pipeline[0], HybridRoot):
-                hybrid._parent = None
-            elif isinstance(hybrid.pipeline[0], HybridPartition):
-                hybrid._parent = HybridTree(HybridRoot(), {})
-        elif hybrid.parent is not None:
-            self.truncate_ancestry(hybrid.parent, levels - 1)
 
     def remove_correl_refs(
         self,
@@ -378,14 +359,10 @@ class HybridDecorrelater:
         # and the aggregation keys along with them.
         new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
         additional_levels: int = 0
-        current_level: HybridTree | None = new_parent
+        current_level: HybridTree | None = old_parent
         parent_agg_keys: list[HybridExpr] = []
         new_agg_keys: list[HybridExpr] = []
         rhs_shift: int = child_height - skipped_levels
-        print("*" * 80)
-        print(new_parent)
-        print("#" * 80)
-        print(child_root)
         while current_level is not None:
             partition_edge_case: bool = (
                 isinstance(current_level.pipeline[0], HybridPartition)
@@ -396,24 +373,11 @@ class HybridDecorrelater:
                 rhs_key: HybridExpr = (
                     lhs_key if partition_edge_case else lhs_key.shift_back(rhs_shift)
                 )
-                print(lhs_key, rhs_key)
-                breakpoint()
                 new_join_keys.append((lhs_key, rhs_key))
                 new_agg_keys.append(rhs_key)
                 parent_agg_keys.append(lhs_key)
             current_level = current_level.parent
             additional_levels += 1
-
-        # TODO DESCRIBE EDGE CASE
-        if (
-            old_parent.pipeline != new_parent.pipeline
-            and isinstance(old_parent.pipeline[0], HybridPartition)
-            and child is old_parent.children[0]
-        ):
-            for unique_key in sorted(old_parent.pipeline[-1].unique_exprs, key=str):
-                new_join_keys.append((unique_key, unique_key))
-                new_agg_keys.append(unique_key)
-                parent_agg_keys.append(unique_key)
 
         # Copy over all existing join/general conditions into a new filter at
         # the bottom of the child subtree, in case any new filters were pushed
@@ -538,16 +502,11 @@ class HybridDecorrelater:
                 ):
                     if original_parent is None:
                         original_parent = copy.deepcopy(hybrid)
-                    required_levels: int = (
-                        hybrid.children[child_idx].subtree.earliest_referenced_height(1)
-                        + 100
-                    )
                     new_parent, skipped_levels, preserved_steps = (
                         self.make_decorrelate_parent(
                             original_parent,
                             child_idx,
                             hybrid.children[child_idx].max_steps,
-                            required_levels,
                         )
                     )
                     child_idx = self.decorrelate_child(
