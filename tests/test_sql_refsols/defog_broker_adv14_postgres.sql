@@ -3,7 +3,9 @@ SELECT
   AVG(sbdailyprice.sbdpclose) AS ACP
 FROM main.sbticker AS sbticker
 JOIN main.sbdailyprice AS sbdailyprice
-  ON EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - CAST(sbdailyprice.sbdpdate AS TIMESTAMP)) / 86400 <= 7
+  ON (
+    CAST(CURRENT_TIMESTAMP AS DATE) - CAST(sbdailyprice.sbdpdate AS DATE)
+  ) <= 7
   AND sbdailyprice.sbdptickerid = sbticker.sbtickerid
 GROUP BY
   1

@@ -4,7 +4,13 @@ WITH _s3 AS (
     coupons.merchant_id
   FROM main.coupons AS coupons
   JOIN main.merchants AS merchants
-    ON CAST(EXTRACT(YEAR FROM AGE(CAST(coupons.created_at AS TIMESTAMP), CAST(merchants.created_at AS TIMESTAMP))) * 12 + EXTRACT(MONTH FROM AGE(CAST(coupons.created_at AS TIMESTAMP), CAST(merchants.created_at AS TIMESTAMP))) AS BIGINT) = 0
+    ON (
+      (
+        EXTRACT(YEAR FROM CAST(coupons.created_at AS TIMESTAMP)) - EXTRACT(YEAR FROM CAST(merchants.created_at AS TIMESTAMP))
+      ) * 12 + (
+        EXTRACT(MONTH FROM CAST(coupons.created_at AS TIMESTAMP)) - EXTRACT(MONTH FROM CAST(merchants.created_at AS TIMESTAMP))
+      )
+    ) = 0
     AND coupons.merchant_id = merchants.mid
   GROUP BY
     2

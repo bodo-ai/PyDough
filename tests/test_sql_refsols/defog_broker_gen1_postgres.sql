@@ -5,4 +5,6 @@ JOIN main.sbticker AS sbticker
   ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
   AND sbticker.sbtickersymbol = 'VTI'
 WHERE
-  EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - CAST(sbdailyprice.sbdpdate AS TIMESTAMP)) / 86400 <= 7
+  (
+    CAST(CURRENT_TIMESTAMP AS DATE) - CAST(sbdailyprice.sbdpdate AS DATE)
+  ) <= 7

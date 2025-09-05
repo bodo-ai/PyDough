@@ -5,7 +5,9 @@ WITH _s1 AS (
     salesperson_id
   FROM main.sales
   WHERE
-    EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - CAST(sale_date AS TIMESTAMP)) / 86400 <= 30
+    (
+      CAST(CURRENT_TIMESTAMP AS DATE) - CAST(sale_date AS DATE)
+    ) <= 30
   GROUP BY
     3
 )

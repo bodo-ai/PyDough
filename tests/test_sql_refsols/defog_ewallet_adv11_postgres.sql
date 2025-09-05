@@ -1,7 +1,9 @@
 WITH _s1 AS (
   SELECT
     SUM(
-      CAST(EXTRACT(EPOCH FROM CAST(session_end_ts AS TIMESTAMP) - CAST(session_start_ts AS TIMESTAMP)) AS BIGINT)
+      CAST(EXTRACT(EPOCH FROM CAST((
+        session_end_ts - session_start_ts
+      ) AS TIMESTAMP)) AS BIGINT)
     ) AS sum_duration,
     user_id
   FROM main.user_sessions

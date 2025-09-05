@@ -32,7 +32,7 @@ def canonicalize(
     dialect = Dialect.get_or_raise(dialect)
 
     def _canonicalize(expression: exp.Expression) -> exp.Expression:
-        expression = fix_expression_type(expression)
+        expression = fix_expression_type(expression, dialect)
         expression = add_text_to_concat(expression)
         expression = replace_date_funcs(expression)
         expression = coerce_type(expression, dialect.PROMOTE_TO_INFERRED_DATETIME_TYPE)
@@ -44,15 +44,16 @@ def canonicalize(
     return exp.replace_tree(expression, _canonicalize)
 
 
-def fix_expression_type(node: exp.Expression) -> exp.Expression:
-    if (
-        isinstance(node, exp.Extract)
-        and isinstance(node.expression, exp.Anonymous)
-        and node.expression.this == "AGE"
+def fix_expression_type(node: exp.Expression, dialect: Dialect) -> exp.Expression:
+    if isinstance(node, exp.Sub) and (
+        node.this.type.this == exp.DataType.Type.TIMESTAMP
+        or node.expression.type.this == exp.DataType.Type.TIMESTAMP
+        or isinstance(node.this, exp.TimestampTrunc)
+        or isinstance(node.expression, exp.TimestampTrunc)
     ):
-        # Replace node.expression using a new expression with the updated type
-        new_expression: exp.Expression = node.expression.copy()
-        new_expression.type = exp.DataType.Type.TIMESTAMP
-        node.expression.replace(new_expression)
+        # Replace node.type to timestamp to prevent cast in date's sub
+        # it verifies if node.this or node.expression are type TIMESTAMP or
+        # TimestampTrunc
+        node.type.set("this", exp.DataType.Type.TIMESTAMP)
 
     return node

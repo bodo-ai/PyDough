@@ -9,4 +9,6 @@ FROM main.wallet_transactions_daily AS wallet_transactions_daily
 JOIN main.users AS users
   ON users.country = 'US' AND users.uid = wallet_transactions_daily.sender_id
 WHERE
-  EXTRACT(EPOCH FROM CURRENT_TIMESTAMP - CAST(wallet_transactions_daily.created_at AS TIMESTAMP)) / 86400 <= 7
+  (
+    CAST(CURRENT_TIMESTAMP AS DATE) - CAST(wallet_transactions_daily.created_at AS DATE)
+  ) <= 7

@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    EXTRACT(EPOCH FROM CAST(events.ev_dt AS TIMESTAMP) - CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt) AS TIMESTAMP)) / 86400 AS day_gap,
+    CAST(events.ev_dt AS DATE) - CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt) AS DATE) AS day_gap,
     eras.er_end_year,
     eras.er_name,
     eras.er_start_year,
