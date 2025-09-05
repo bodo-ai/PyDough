@@ -16,8 +16,8 @@ WITH _s0 AS (
     6
 ), _t0 AS (
   SELECT
-    MAX(_s0.max_sbdphigh) AS max_sbdphigh,
-    MIN(_s0.min_sbdplow) AS min_sbdplow,
+    MAX(_s0.max_sbdphigh) AS max_max_sbdphigh,
+    MIN(_s0.min_sbdplow) AS min_min_sbdplow,
     SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
     SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
     _s0.month,
@@ -33,8 +33,8 @@ SELECT
   sbtickersymbol AS symbol,
   month,
   sum_sum_sbdpclose / sum_count_sbdpclose AS avg_close,
-  max_sbdphigh AS max_high,
-  min_sbdplow AS min_low,
+  max_max_sbdphigh AS max_high,
+  min_min_sbdplow AS min_low,
   (
     (
       sum_sum_sbdpclose / sum_count_sbdpclose

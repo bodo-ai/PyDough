@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     COUNT(*) AS n_rows,
-    COUNT_IF(sbtxstatus = 'success') AS sum_expr_2,
+    COUNT_IF(sbtxstatus = 'success') AS sum_expr,
     sbtxcustid
   FROM main.sbtransaction
   GROUP BY
@@ -10,7 +10,7 @@ WITH _t1 AS (
 SELECT
   sbcustomer.sbcustname AS name,
   (
-    100.0 * COALESCE(_t1.sum_expr_2, 0)
+    100.0 * COALESCE(_t1.sum_expr, 0)
   ) / _t1.n_rows AS success_rate
 FROM main.sbcustomer AS sbcustomer
 JOIN _t1 AS _t1

@@ -4,7 +4,7 @@ WITH _s0 AS (
   FROM tpch.part
 ), _s1 AS (
   SELECT
-    AVG(p_retailprice) AS brand_avg_price,
+    AVG(p_retailprice) AS avg_p_retailprice,
     p_brand
   FROM tpch.part
   GROUP BY
@@ -16,7 +16,7 @@ WITH _s0 AS (
   CROSS JOIN _s1 AS _s1
   JOIN tpch.part AS part
     ON _s0.avg_p_retailprice > part.p_retailprice
-    AND _s1.brand_avg_price < part.p_retailprice
+    AND _s1.avg_p_retailprice < part.p_retailprice
     AND _s1.p_brand = part.p_brand
     AND part.p_size < 3
 )

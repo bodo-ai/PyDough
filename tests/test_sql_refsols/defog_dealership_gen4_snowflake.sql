@@ -11,7 +11,7 @@ WITH _s0 AS (
     3
 ), _t1 AS (
   SELECT
-    SUM(_s0.sum_sale_price) AS sum_sale_price,
+    SUM(_s0.sum_sale_price) AS sum_sum_sale_price,
     _s0.quarter,
     customers.state
   FROM _s0 AS _s0
@@ -24,10 +24,10 @@ WITH _s0 AS (
 SELECT
   quarter,
   state AS customer_state,
-  sum_sale_price AS total_sales
+  sum_sum_sale_price AS total_sales
 FROM _t1
 WHERE
-  NOT sum_sale_price IS NULL AND sum_sale_price > 0
+  NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
 ORDER BY
   1 NULLS FIRST,
   2 NULLS FIRST
