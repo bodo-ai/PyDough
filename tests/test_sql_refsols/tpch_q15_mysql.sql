@@ -19,7 +19,7 @@ WITH _t3 AS (
     2
 ), _s2 AS (
   SELECT
-    MAX(COALESCE(_s1.sum_expr_2, 0)) AS max_revenue
+    MAX(COALESCE(_s1.sum_expr_2, 0)) AS max_total_revenue
   FROM tpch.SUPPLIER AS SUPPLIER
   JOIN _s1 AS _s1
     ON SUPPLIER.s_suppkey = _s1.l_suppkey
@@ -43,6 +43,6 @@ FROM _s2 AS _s2
 CROSS JOIN tpch.SUPPLIER AS SUPPLIER
 JOIN _s5 AS _s5
   ON SUPPLIER.s_suppkey = _s5.l_suppkey
-  AND _s2.max_revenue = COALESCE(_s5.sum_expr_3, 0)
+  AND _s2.max_total_revenue = COALESCE(_s5.sum_expr_3, 0)
 ORDER BY
   1

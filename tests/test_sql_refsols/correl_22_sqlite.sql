@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    AVG(p_retailprice) AS global_avg_price
+    AVG(p_retailprice) AS avg_p_retailprice
   FROM tpch.part
 ), _s1 AS (
   SELECT
@@ -16,7 +16,7 @@ SELECT
   COUNT(*) AS n_types
 FROM _s0 AS _s0
 JOIN _s1 AS _s1
-  ON _s0.global_avg_price < _s1.avg_p_retailprice
+  ON _s0.avg_p_retailprice < _s1.avg_p_retailprice
 GROUP BY
   1
 ORDER BY

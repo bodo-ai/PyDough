@@ -1,4 +1,4 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     MAX(searches.search_user_id) AS anything_search_user_id
   FROM searches AS searches
@@ -14,15 +14,15 @@ WITH _t0 AS (
     searches.search_id
 ), _s5 AS (
   SELECT
-    COUNT(*) AS n_cold_war_searches,
+    COUNT(*) AS n_rows,
     anything_search_user_id
-  FROM _t0
+  FROM _t1
   GROUP BY
     2
 )
 SELECT
   users.user_name,
-  _s5.n_cold_war_searches
+  _s5.n_rows AS n_cold_war_searches
 FROM users AS users
 JOIN _s5 AS _s5
   ON _s5.anything_search_user_id = users.user_id

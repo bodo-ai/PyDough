@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    COUNT(*) AS num_transactions,
+    COUNT(*) AS n_rows,
     sbtxcustid AS sbTxCustId,
     sbtxtickerid AS sbTxTickerId
   FROM main.sbTransaction
@@ -9,7 +9,7 @@ WITH _s0 AS (
     3
 ), _s2 AS (
   SELECT
-    SUM(_s0.num_transactions) AS num_transactions,
+    SUM(_s0.n_rows) AS n_rows,
     sbTicker.sbtickertype AS sbTickerType,
     _s0.sbTxCustId
   FROM _s0 AS _s0
@@ -22,7 +22,7 @@ WITH _s0 AS (
 SELECT
   sbCustomer.sbcuststate AS state,
   _s2.sbTickerType AS ticker_type,
-  SUM(_s2.num_transactions) AS num_transactions
+  SUM(_s2.n_rows) AS num_transactions
 FROM _s2 AS _s2
 JOIN main.sbCustomer AS sbCustomer
   ON _s2.sbTxCustId = sbCustomer.sbcustid

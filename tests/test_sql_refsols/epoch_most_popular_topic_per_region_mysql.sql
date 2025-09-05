@@ -1,6 +1,6 @@
 WITH _t1 AS (
   SELECT
-    COUNT(DISTINCT SEARCHES.search_id) AS n_searches,
+    COUNT(DISTINCT SEARCHES.search_id) AS ndistinct_search_id,
     EVENTS.ev_typ,
     USERS.user_region
   FROM EVENTS AS EVENTS
@@ -13,16 +13,16 @@ WITH _t1 AS (
     3
 ), _t AS (
   SELECT
-    n_searches,
+    ndistinct_search_id,
     ev_typ,
     user_region,
-    ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY CASE WHEN n_searches IS NULL THEN 1 ELSE 0 END DESC, n_searches DESC) AS _w
+    ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY CASE WHEN ndistinct_search_id IS NULL THEN 1 ELSE 0 END DESC, ndistinct_search_id DESC) AS _w
   FROM _t1
 )
 SELECT
   user_region AS region,
   ev_typ AS event_type,
-  n_searches
+  ndistinct_search_id AS n_searches
 FROM _t
 WHERE
   _w = 1

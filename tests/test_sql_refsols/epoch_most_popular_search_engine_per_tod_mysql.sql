@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    COUNT(*) AS n_searches,
+    COUNT(*) AS n_rows,
     SEARCHES.search_engine,
     TIMES.t_name
   FROM TIMES AS TIMES
@@ -12,16 +12,16 @@ WITH _t2 AS (
     3
 ), _t AS (
   SELECT
-    n_searches,
+    n_rows,
     search_engine,
     t_name,
-    ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY CASE WHEN n_searches IS NULL THEN 1 ELSE 0 END DESC, n_searches DESC, CASE WHEN search_engine COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, search_engine COLLATE utf8mb4_bin) AS _w
+    ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY CASE WHEN n_rows IS NULL THEN 1 ELSE 0 END DESC, n_rows DESC, CASE WHEN search_engine COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, search_engine COLLATE utf8mb4_bin) AS _w
   FROM _t2
 )
 SELECT
   t_name COLLATE utf8mb4_bin AS tod,
   search_engine,
-  n_searches
+  n_rows AS n_searches
 FROM _t
 WHERE
   _w = 1

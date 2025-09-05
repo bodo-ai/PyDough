@@ -20,7 +20,7 @@ WITH _t1 AS (
   WHERE
     part.p_size = 15 AND part.p_type LIKE '%BRASS'
   QUALIFY
-    RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost NULLS LAST) = 1
+    RANK() OVER (PARTITION BY ps_partkey ORDER BY partsupp.ps_supplycost NULLS LAST) = 1
 )
 SELECT
   s_acctbal AS S_ACCTBAL,

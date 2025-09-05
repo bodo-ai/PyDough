@@ -5,7 +5,7 @@ WITH _t3 AS (
   FROM tpch.customer
 ), _s1 AS (
   SELECT
-    AVG(c_acctbal) AS avg_cust_acctbal,
+    AVG(c_acctbal) AS avg_c_acctbal,
     c_nationkey
   FROM _t3
   GROUP BY
@@ -20,7 +20,7 @@ WITH _t3 AS (
   JOIN _s1 AS _s1
     ON _s1.c_nationkey = nation.n_nationkey
   JOIN _t3 AS _s3
-    ON _s1.avg_cust_acctbal < _s3.c_acctbal AND _s3.c_nationkey = nation.n_nationkey
+    ON _s1.avg_c_acctbal < _s3.c_acctbal AND _s3.c_nationkey = nation.n_nationkey
   GROUP BY
     4
 ), _s5 AS (
@@ -38,7 +38,7 @@ WITH _t3 AS (
   FROM tpch.supplier
 ), _s7 AS (
   SELECT
-    AVG(s_acctbal) AS avg_supp_acctbal,
+    AVG(s_acctbal) AS avg_s_acctbal,
     s_nationkey
   FROM _t6
   GROUP BY
@@ -51,7 +51,7 @@ WITH _t3 AS (
   JOIN _s7 AS _s7
     ON _s7.s_nationkey = nation.n_nationkey
   JOIN _t6 AS _s9
-    ON _s7.avg_supp_acctbal < _s9.s_acctbal AND _s9.s_nationkey = nation.n_nationkey
+    ON _s7.avg_s_acctbal < _s9.s_acctbal AND _s9.s_nationkey = nation.n_nationkey
   GROUP BY
     2
 )

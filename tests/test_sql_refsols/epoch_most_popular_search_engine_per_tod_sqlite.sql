@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    COUNT(*) AS n_searches,
+    COUNT(*) AS n_rows,
     searches.search_engine,
     times.t_name
   FROM times AS times
@@ -12,16 +12,16 @@ WITH _t2 AS (
     3
 ), _t AS (
   SELECT
-    n_searches,
+    n_rows,
     search_engine,
     t_name,
-    ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY n_searches DESC, search_engine) AS _w
+    ROW_NUMBER() OVER (PARTITION BY t_name ORDER BY n_rows DESC, search_engine) AS _w
   FROM _t2
 )
 SELECT
   t_name AS tod,
   search_engine,
-  n_searches
+  n_rows AS n_searches
 FROM _t
 WHERE
   _w = 1

@@ -1451,6 +1451,18 @@ def optimize_relational_tree(
     pruner: ColumnPruner = ColumnPruner()
     root = pruner.prune_unused_columns(root)
 
+    # Bubble up names from the leaf nodes to further encourage simpler naming
+    # without aliases, and also to delete duplicate columns where possible.
+    # This is done early to maximize the chances that a nicer name will be used
+    # for aggregations before projection pullup eliminates many of those names
+    # by pulling the aggregated expression inputs into the aggregate call.
+    root = bubble_column_names(root)
+
+    # Run projection pullup to move projections as far up the tree as possible.
+    # This is done as soon as possible to make joins redundant if they only
+    # exist to compute a scalar projection and then link it with the data.
+    root = confirm_root(pullup_projections(root))
+
     # Push filters down as far as possible
     root = confirm_root(push_filters(root, configs))
 
@@ -1476,8 +1488,7 @@ def optimize_relational_tree(
     # names without worrying about collisions.
     root = pruner.prune_unused_columns(root)
 
-    # Bubble up names from the leaf nodes to further encourage simpler naming
-    # without aliases, and also to delete duplicate columns where possible.
+    # Re-run column bubbling now that the columns have been pruned again.
     root = bubble_column_names(root)
 
     # Run the following pipeline twice:

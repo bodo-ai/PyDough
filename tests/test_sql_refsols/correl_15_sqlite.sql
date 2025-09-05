@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    AVG(p_retailprice) AS global_avg_price
+    AVG(p_retailprice) AS avg_p_retailprice_1
   FROM tpch.part
 ), _s5 AS (
   SELECT
@@ -29,7 +29,7 @@ JOIN tpch.part AS part
     CAST(_s5.sum_p_retailprice AS REAL) / _s5.sum_expr_1
   )
   AND part.p_retailprice < (
-    _s0.global_avg_price * 0.85
+    _s0.avg_p_retailprice_1 * 0.85
   )
   AND part.p_retailprice < (
     partsupp.ps_supplycost * 1.5

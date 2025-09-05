@@ -13,6 +13,7 @@ from pydough.relational import (
     CallExpression,
     ColumnReference,
     ColumnReferenceFinder,
+    ColumnReferenceInputNameRemover,
     Join,
     JoinType,
     LiteralExpression,
@@ -128,7 +129,7 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
     new_aggregate: Aggregate = Aggregate(node.input, node.keys, aggs)
     project_columns: dict[str, RelationalExpression] = {}
     for name, expr in node.keys.items():
-        project_columns[name] = expr
+        project_columns[name] = ColumnReference(name, expr.data_type)
     project_columns.update(
         {name: final_agg_columns[name] for name in node.aggregations}
     )
@@ -171,6 +172,8 @@ def transpose_aggregate_join(
     agg_input_name: str | None = join.default_input_aliases[agg_side]
     need_projection: bool = False
 
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    alias_remover: ColumnReferenceInputNameRemover = ColumnReferenceInputNameRemover()
     transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
         join, False
     )
@@ -234,11 +237,36 @@ def transpose_aggregate_join(
     for ref in side_keys:
         input_keys[ref.name] = ref.with_input(None)
     transposer.toggle_keep_input_names(True)
-    for agg_key in node.keys.values():
+    for agg_key_name, agg_key in node.keys.items():
+        finder.reset()
         transposed_agg_key = agg_key.accept_shuttle(transposer)
-        assert isinstance(transposed_agg_key, ColumnReference)
-        if transposed_agg_key.input_name == agg_input_name:
-            input_keys[transposed_agg_key.name] = transposed_agg_key.with_input(None)
+        transposed_agg_key.accept(finder)
+        if {col.input_name for col in finder.get_column_references()} == {
+            agg_input_name
+        }:
+            if isinstance(transposed_agg_key, ColumnReference):
+                input_keys[transposed_agg_key.name] = transposed_agg_key.accept_shuttle(
+                    alias_remover
+                )
+            else:
+                if agg_key_name in join.columns and (
+                    agg_key_name in input_keys or agg_key_name in input_aggs
+                ):
+                    # An edge cases that is theoretically possible but never
+                    # encountered so far, and where the behavior is undefined.
+                    raise NotImplementedError("Undefined behavior")
+                input_keys[agg_key_name] = transposed_agg_key.accept_shuttle(
+                    alias_remover
+                )
+                join.columns[agg_key_name] = ColumnReference(
+                    agg_key_name, agg_key.data_type, agg_input_name
+                )
+                node.keys[agg_key_name] = ColumnReference(
+                    agg_key_name, agg_key.data_type
+                )
+            projection_columns[agg_key_name] = ColumnReference(
+                agg_key_name, agg_key.data_type
+            )
 
     # Push the bottom-aggregate beneath the join
     join.inputs[agg_side] = Aggregate(agg_input, input_keys, input_aggs)
@@ -246,7 +274,7 @@ def transpose_aggregate_join(
     # Replace the aggregation above the join with the top
     # side of the aggregations
     node._aggregations = top_aggs
-    node._columns = {**node.columns, **top_aggs}
+    node._columns = {**node.keys, **top_aggs}
 
     return need_projection, count_ref
 
@@ -276,11 +304,19 @@ def attempt_join_aggregate_transpose(
         # push the aggregate down.
         return node, True
 
+    # Verify that all of the aggregation keys strictly come from one side of the
+    # join.
+    finder: ColumnReferenceFinder = ColumnReferenceFinder()
+    for key_expr in node.keys.values():
+        finder.reset()
+        key_expr.accept(finder)
+        if len({ref.input_name for ref in finder.get_column_references()}) > 1:
+            return node, True
+
     # Break down the aggregation calls by which input they refer to.
     lhs_aggs: list[str] = []
     rhs_aggs: list[str] = []
     count_aggs: list[str] = []
-    finder: ColumnReferenceFinder = ColumnReferenceFinder()
     transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
         join, True
     )
@@ -341,7 +377,10 @@ def attempt_join_aggregate_transpose(
         # If we cannot push the aggregate down into either side, we cannot
         # perform the transpose.
         return node, True
+
     if need_count_aggs and not (can_push_left and can_push_right):
+        # If we need to push down COUNT(*) aggregates, but cannot push into
+        # both sides of the join, we cannot perform the transpose.
         return node, True
 
     # Parse the join condition to identify the lists of equi-join keys
@@ -365,7 +404,7 @@ def attempt_join_aggregate_transpose(
 
     # Keep a dictionary for the projection columns that will be used to post-process
     # the output of the aggregates, if needed.
-    projection_columns: dict[str, RelationalExpression] = {**node.keys}
+    projection_columns: dict[str, RelationalExpression] = {}
     need_projection: bool = False
 
     # If we need count aggregates, add one to each side of the join.

@@ -1,5 +1,5 @@
-ROOT(columns=[('name', n_name), ('total_bal', DEFAULT_TO(sum_s_acctbal, 0:numeric))], orderings=[(ordering_0):asc_last], limit=5:numeric)
- JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'n_name': t0.n_name, 'ordering_0': t1.ordering_0, 'sum_s_acctbal': t1.sum_s_acctbal})
+ROOT(columns=[('name', n_name), ('total_bal', DEFAULT_TO(sum_s_acctbal_1, 0:numeric))], orderings=[(n_rows_1):asc_last], limit=5:numeric)
+ JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'n_name': t0.n_name, 'n_rows_1': t1.n_rows_1, 'sum_s_acctbal_1': t1.sum_s_acctbal_1})
   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
-  AGGREGATE(keys={'s_nationkey': s_nationkey}, aggregations={'ordering_0': COUNT(), 'sum_s_acctbal': SUM(s_acctbal)})
+  AGGREGATE(keys={'s_nationkey': s_nationkey}, aggregations={'n_rows_1': COUNT(), 'sum_s_acctbal_1': SUM(s_acctbal)})
    SCAN(table=tpch.SUPPLIER, columns={'s_acctbal': s_acctbal, 's_nationkey': s_nationkey})

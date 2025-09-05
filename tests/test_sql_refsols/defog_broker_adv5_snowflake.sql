@@ -1,8 +1,8 @@
 WITH _s0 AS (
   SELECT
     COUNT(sbdpclose) AS count_sbdpclose,
-    MAX(sbdphigh) AS max_high,
-    MIN(sbdplow) AS min_low,
+    MAX(sbdphigh) AS max_sbdphigh,
+    MIN(sbdplow) AS min_sbdplow,
     CONCAT_WS(
       '-',
       YEAR(CAST(sbdpdate AS TIMESTAMP)),
@@ -16,8 +16,8 @@ WITH _s0 AS (
     6
 ), _t0 AS (
   SELECT
-    MAX(_s0.max_high) AS max_high,
-    MIN(_s0.min_low) AS min_low,
+    MAX(_s0.max_sbdphigh) AS max_sbdphigh,
+    MIN(_s0.min_sbdplow) AS min_sbdplow,
     SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
     SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose,
     _s0.month,
@@ -33,8 +33,8 @@ SELECT
   sbtickersymbol AS symbol,
   month,
   sum_sum_sbdpclose / sum_count_sbdpclose AS avg_close,
-  max_high,
-  min_low,
+  max_sbdphigh AS max_high,
+  min_sbdplow AS min_low,
   (
     (
       sum_sum_sbdpclose / sum_count_sbdpclose

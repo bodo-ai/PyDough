@@ -1,5 +1,5 @@
-ROOT(columns=[('n', n)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n': NDISTINCT(s_suppkey)})
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': NDISTINCT(s_suppkey)})
   FILTER(condition=s_nationkey == n_nationkey & PERCENTILE(args=[], partition=[c_nationkey, s_suppkey], order=[(c_acctbal):asc_last, (c_custkey):asc_last], n_buckets=10000) == tile, columns={'s_suppkey': s_suppkey})
    JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=PLURAL_FILTER, columns={'c_acctbal': t1.c_acctbal, 'c_custkey': t1.c_custkey, 'c_nationkey': t1.c_nationkey, 'n_nationkey': t0.n_nationkey, 's_nationkey': t0.s_nationkey, 's_suppkey': t0.s_suppkey, 'tile': t0.tile})
     JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'n_nationkey': t0.n_nationkey, 's_nationkey': t0.s_nationkey, 's_suppkey': t0.s_suppkey, 'tile': t0.tile})

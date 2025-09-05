@@ -16,7 +16,7 @@ WITH _t3 AS (
     3
 ), _s0 AS (
   SELECT
-    LAG(avg_o_totalprice, 1) OVER (ORDER BY year, month) AS prev_month_avg_price,
+    LAG(avg_o_totalprice, 1) OVER (ORDER BY year, month) AS prev_month_avg_price_1,
     avg_o_totalprice,
     month,
     year
@@ -34,16 +34,16 @@ JOIN _t3 AS _t4
   )
   AND (
     _s0.avg_o_totalprice <= _t4.o_totalprice
-    OR _s0.prev_month_avg_price <= _t4.o_totalprice
+    OR _s0.prev_month_avg_price_1 <= _t4.o_totalprice
   )
   AND (
     _s0.avg_o_totalprice >= _t4.o_totalprice
-    OR _s0.prev_month_avg_price >= _t4.o_totalprice
+    OR _s0.prev_month_avg_price_1 >= _t4.o_totalprice
   )
   AND _s0.month = CAST(STRFTIME('%m', _t4.o_orderdate) AS INTEGER)
   AND (
-    _s0.prev_month_avg_price <= _t4.o_totalprice
-    OR _s0.prev_month_avg_price >= _t4.o_totalprice
+    _s0.prev_month_avg_price_1 <= _t4.o_totalprice
+    OR _s0.prev_month_avg_price_1 >= _t4.o_totalprice
   )
   AND _s0.year = CAST(STRFTIME('%Y', _t4.o_orderdate) AS INTEGER)
 GROUP BY
