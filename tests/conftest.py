@@ -200,6 +200,20 @@ def get_synthea_graph() -> graph_fetcher:
 
 
 @pytest.fixture(scope="session")
+def get_world_indicators_graph() -> graph_fetcher:
+    """
+    Returns the graph for world indicators database.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/world_development_indicators_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def get_mysql_defog_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database in MySQL.
@@ -576,7 +590,7 @@ def sqlite_synthea_connection() -> DatabaseContext:
     """
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    # Setup the defog database.
+    # Setup the synthea database.
     subprocess.run("cd tests/gen_data; bash setup_synthea.sh", shell=True)
     path: str = os.path.join(base_dir, "tests/gen_data/synthea.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
@@ -597,6 +611,21 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     path: str = os.path.join(base_dir, "tests/gen_data/cryptbank.db")
     connection: sqlite3.Connection = sqlite3.connect(":memory:")
     connection.execute(f"attach database '{path}' as CRBNK")
+    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture(scope="session")
+def sqlite_world_indicators_connection() -> DatabaseContext:
+    """
+    Returns the SQLITE database connection for the world development
+    indicators database.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    # Setup the world development indicators database.
+    subprocess.run("cd tests/gen_data; bash setup_world_indicators.sh", shell=True)
+    path: str = os.path.join(base_dir, "tests/gen_data/world_development_indicators.db")
+    connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
