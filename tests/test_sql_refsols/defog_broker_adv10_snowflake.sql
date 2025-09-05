@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
     MONTH(CAST(sbtxdatetime AS TIMESTAMP)) AS month_sbtxdatetime,
-    COUNT(*) AS n_rows,
     YEAR(CAST(sbtxdatetime AS TIMESTAMP)) AS year_sbtxdatetime,
-    sbtxcustid
+    sbtxcustid,
+    COUNT(*) AS n_rows
   FROM main.sbtransaction
   GROUP BY
     1,
-    3,
-    4
+    2,
+    3
 )
 SELECT
   sbcustomer.sbcustid AS _id,

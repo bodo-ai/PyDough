@@ -1,16 +1,16 @@
 WITH _s3 AS (
   SELECT
+    nation.n_regionkey,
     COUNT(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS count_negative_acctbal,
     COUNT(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS count_non_negative_acctbal,
     MEDIAN(customer.c_acctbal) AS median_c_acctbal,
     MEDIAN(CASE WHEN customer.c_acctbal < 0 THEN customer.c_acctbal ELSE NULL END) AS median_negative_acctbal,
-    MEDIAN(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS median_non_negative_acctbal,
-    nation.n_regionkey
+    MEDIAN(CASE WHEN customer.c_acctbal >= 0 THEN customer.c_acctbal ELSE NULL END) AS median_non_negative_acctbal
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   GROUP BY
-    6
+    1
 )
 SELECT
   region.r_name AS region_name,

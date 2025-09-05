@@ -7,19 +7,19 @@ WITH _t4 AS (
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) < 1994
 ), _t2 AS (
   SELECT
-    AVG(o_totalprice) AS avg_o_totalprice,
     CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month_o_orderdate,
-    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year_o_orderdate
+    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year_o_orderdate,
+    AVG(o_totalprice) AS avg_o_totalprice
   FROM _t4
   GROUP BY
-    2,
-    3
+    1,
+    2
 ), _s0 AS (
   SELECT
-    LAG(avg_o_totalprice, 1) OVER (ORDER BY year_o_orderdate, month_o_orderdate) AS prev_month_avg_price,
     avg_o_totalprice,
     month_o_orderdate,
-    year_o_orderdate
+    year_o_orderdate,
+    LAG(avg_o_totalprice, 1) OVER (ORDER BY year_o_orderdate, month_o_orderdate) AS prev_month_avg_price
   FROM _t2
 )
 SELECT

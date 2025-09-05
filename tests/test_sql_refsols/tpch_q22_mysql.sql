@@ -7,11 +7,11 @@ WITH _s0 AS (
     AND SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
 ), _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.ORDERS
   GROUP BY
-    2
+    1
 )
 SELECT
   SUBSTRING(CUSTOMER.c_phone, 1, 2) COLLATE utf8mb4_bin AS CNTRY_CODE,

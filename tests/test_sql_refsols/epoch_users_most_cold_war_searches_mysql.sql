@@ -12,11 +12,11 @@ WITH _t1 AS (
     SEARCHES.search_id
 ), _s5 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    anything_search_user_id
+    anything_search_user_id,
+    COUNT(*) AS n_rows
   FROM _t1
   GROUP BY
-    2
+    1
 )
 SELECT
   user_name COLLATE utf8mb4_bin AS user_name,

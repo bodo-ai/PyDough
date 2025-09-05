@@ -4,11 +4,11 @@ WITH _s0 AS (
   FROM tpch.part
 ), _s1 AS (
   SELECT
-    AVG(p_retailprice) AS avg_p_retailprice,
-    p_brand
+    p_brand,
+    AVG(p_retailprice) AS avg_p_retailprice
   FROM tpch.part
   GROUP BY
-    2
+    1
 ), _t0 AS (
   SELECT DISTINCT
     _s1.p_brand

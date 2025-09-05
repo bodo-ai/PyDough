@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
+    sbtxtickerid AS sbTxTickerId,
     SUM(sbtxtax + sbtxcommission) AS sum_expr,
-    SUM(sbtxamount) AS sum_sbTxAmount,
-    sbtxtickerid AS sbTxTickerId
+    SUM(sbtxamount) AS sum_sbTxAmount
   FROM main.sbTransaction
   WHERE
     sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-1' MONTH)
     AND sbtxtype = 'sell'
   GROUP BY
-    3
+    1
 )
 SELECT
   sbTicker.sbtickersymbol COLLATE utf8mb4_bin AS symbol,

@@ -1,10 +1,10 @@
 WITH _s0 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    de_product_id
+    de_product_id,
+    COUNT(*) AS n_rows
   FROM main.DEVICES
   GROUP BY
-    2
+    1
 ), _s1 AS (
   SELECT
     pr_id,
@@ -12,24 +12,24 @@ WITH _s0 AS (
   FROM main.PRODUCTS
 ), _s6 AS (
   SELECT
-    SUM(_s0.n_rows) AS sum_n_rows,
-    EXTRACT(YEAR FROM CAST(_s1.pr_release AS DATETIME)) AS year_pr_release
+    EXTRACT(YEAR FROM CAST(_s1.pr_release AS DATETIME)) AS year_pr_release,
+    SUM(_s0.n_rows) AS sum_n_rows
   FROM _s0 AS _s0
   JOIN _s1 AS _s1
     ON _s0.de_product_id = _s1.pr_id
   GROUP BY
-    2
+    1
 ), _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    EXTRACT(YEAR FROM CAST(_s3.pr_release AS DATETIME)) AS year_pr_release
+    EXTRACT(YEAR FROM CAST(_s3.pr_release AS DATETIME)) AS year_pr_release,
+    COUNT(*) AS n_rows
   FROM main.DEVICES AS DEVICES
   JOIN _s1 AS _s3
     ON DEVICES.de_product_id = _s3.pr_id
   JOIN main.INCIDENTS AS INCIDENTS
     ON DEVICES.de_id = INCIDENTS.in_device_id
   GROUP BY
-    2
+    1
 )
 SELECT
   _s6.year_pr_release AS year,

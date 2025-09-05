@@ -1,11 +1,11 @@
 WITH _t1 AS (
   SELECT
+    sbtxcustid,
     COUNT(*) AS n_rows,
-    COUNT_IF(sbtxstatus = 'success') AS sum_expr,
-    sbtxcustid
+    COUNT_IF(sbtxstatus = 'success') AS sum_expr
   FROM main.sbtransaction
   GROUP BY
-    3
+    1
 )
 SELECT
   sbcustomer.sbcustname AS name,

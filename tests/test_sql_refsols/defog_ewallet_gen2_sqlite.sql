@@ -6,14 +6,14 @@ WITH _s0 AS (
     CAST(STRFTIME('%Y', snapshot_date) AS INTEGER) = 2023
 ), _s1 AS (
   SELECT
+    snapshot_date,
     AVG(tx_limit_daily) AS avg_tx_limit_daily,
-    AVG(tx_limit_monthly) AS avg_tx_limit_monthly,
-    snapshot_date
+    AVG(tx_limit_monthly) AS avg_tx_limit_monthly
   FROM main.user_setting_snapshot
   WHERE
     CAST(STRFTIME('%Y', snapshot_date) AS INTEGER) = 2023
   GROUP BY
-    3
+    1
 )
 SELECT
   _s1.avg_tx_limit_daily AS avg_daily_limit,

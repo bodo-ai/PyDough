@@ -1,10 +1,10 @@
 WITH _t1 AS (
   SELECT
-    SUM(l_quantity) AS sum_l_quantity,
-    l_orderkey
+    l_orderkey,
+    SUM(l_quantity) AS sum_l_quantity
   FROM tpch.LINEITEM
   GROUP BY
-    2
+    1
 )
 SELECT
   CUSTOMER.c_name AS C_NAME,

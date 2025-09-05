@@ -4,12 +4,12 @@ WITH _s0 AS (
   FROM tpch.part
 ), _s1 AS (
   SELECT
-    AVG(p_retailprice) AS avg_p_retailprice,
-    p_container
+    p_container,
+    AVG(p_retailprice) AS avg_p_retailprice
   FROM tpch.part
   GROUP BY
     p_type,
-    2
+    1
 )
 SELECT
   _s1.p_container AS container,

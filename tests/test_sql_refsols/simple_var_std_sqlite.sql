@@ -1,5 +1,6 @@
 WITH _s1 AS (
   SELECT
+    s_nationkey,
     POWER(
       (
         CAST((
@@ -49,11 +50,10 @@ WITH _s1 AS (
       )
     ) AS REAL) / (
       COUNT(s_acctbal) - 1
-    ) AS sample_variance_s_acctbal,
-    s_nationkey
+    ) AS sample_variance_s_acctbal
   FROM tpch.supplier
   GROUP BY
-    5
+    1
 )
 SELECT
   nation.n_name AS name,

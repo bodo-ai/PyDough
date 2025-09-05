@@ -1,23 +1,23 @@
 WITH _s0 AS (
   SELECT
-    COUNT(*) AS n_rows,
     sbtxcustid AS sbTxCustId,
-    sbtxtickerid AS sbTxTickerId
+    sbtxtickerid AS sbTxTickerId,
+    COUNT(*) AS n_rows
   FROM main.sbTransaction
   GROUP BY
-    2,
-    3
+    1,
+    2
 ), _s2 AS (
   SELECT
-    SUM(_s0.n_rows) AS sum_n_rows,
     sbTicker.sbtickertype AS sbTickerType,
-    _s0.sbTxCustId
+    _s0.sbTxCustId,
+    SUM(_s0.n_rows) AS sum_n_rows
   FROM _s0 AS _s0
   JOIN main.sbTicker AS sbTicker
     ON _s0.sbTxTickerId = sbTicker.sbtickerid
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   sbCustomer.sbcuststate AS state,

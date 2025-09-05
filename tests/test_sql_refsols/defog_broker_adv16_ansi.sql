@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    sbtxtickerid,
     SUM(sbtxtax + sbtxcommission) AS sum_expr,
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxtickerid
+    SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH') AND sbtxtype = 'sell'
   GROUP BY
-    3
+    1
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,

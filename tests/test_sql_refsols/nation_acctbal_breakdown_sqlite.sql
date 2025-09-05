@@ -1,5 +1,7 @@
 WITH _t2 AS (
   SELECT
+    c_acctbal,
+    c_nationkey,
     CASE
       WHEN ABS(
         (
@@ -38,21 +40,19 @@ WITH _t2 AS (
       ) < 1.0
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
-    END AS expr_7,
-    c_acctbal,
-    c_nationkey
+    END AS expr_7
   FROM tpch.customer
 ), _s3 AS (
   SELECT
+    c_nationkey,
     AVG(expr_5) AS avg_expr_5,
     AVG(expr_6) AS avg_expr_6,
     AVG(expr_7) AS avg_expr_7,
     COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal,
-    c_nationkey
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal
   FROM _t2
   GROUP BY
-    6
+    1
 )
 SELECT
   nation.n_name AS nation_name,

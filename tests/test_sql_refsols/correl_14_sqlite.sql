@@ -1,13 +1,13 @@
 WITH _s3 AS (
   SELECT
+    partsupp.ps_suppkey,
     SUM(IIF(NOT part.p_retailprice IS NULL, 1, 0)) AS sum_expr,
-    SUM(part.p_retailprice) AS sum_p_retailprice,
-    partsupp.ps_suppkey
+    SUM(part.p_retailprice) AS sum_p_retailprice
   FROM tpch.partsupp AS partsupp
   JOIN tpch.part AS part
     ON part.p_partkey = partsupp.ps_partkey
   GROUP BY
-    3
+    1
 )
 SELECT
   COUNT(DISTINCT supplier.s_suppkey) AS n

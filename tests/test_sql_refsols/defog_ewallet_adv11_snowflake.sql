@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
+    user_id,
     SUM(
       DATEDIFF(SECOND, CAST(session_start_ts AS DATETIME), CAST(session_end_ts AS DATETIME))
-    ) AS sum_duration,
-    user_id
+    ) AS sum_duration
   FROM main.user_sessions
   WHERE
     session_end_ts < '2023-06-08' AND session_start_ts >= '2023-06-01'
   GROUP BY
-    2
+    1
 )
 SELECT
   users.uid,

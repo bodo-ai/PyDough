@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
     EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) AS month_sbTxDateTime,
-    COUNT(*) AS n_rows,
     EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) AS year_sbTxDateTime,
-    sbtxcustid AS sbTxCustId
+    sbtxcustid AS sbTxCustId,
+    COUNT(*) AS n_rows
   FROM main.sbTransaction
   GROUP BY
     1,
-    3,
-    4
+    2,
+    3
 )
 SELECT
   sbCustomer.sbcustid AS _id,

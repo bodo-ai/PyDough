@@ -24,9 +24,9 @@ WITH _s0 AS (
   FROM _t2
 ), _s9 AS (
   SELECT
-    COUNT(*) AS n_rows,
     _s3.month,
-    _s2.sbCustState
+    _s2.sbCustState,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s2
   CROSS JOIN _s3 AS _s3
   JOIN main.sbTransaction AS sbTransaction
@@ -44,8 +44,8 @@ WITH _s0 AS (
     ON _s2.sbCustState = sbCustomer.sbcuststate
     AND sbCustomer.sbcustid = sbTransaction.sbtxcustid
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   _s0.sbCustState COLLATE utf8mb4_bin AS state,

@@ -1,14 +1,14 @@
 WITH _s3 AS (
   SELECT
+    c_nationkey,
     COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
     COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal,
     MEDIAN(c_acctbal) AS median_c_acctbal,
     MEDIAN(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS median_negative_acctbal,
-    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS median_non_negative_acctbal,
-    c_nationkey
+    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS median_non_negative_acctbal
   FROM tpch.customer
   GROUP BY
-    6
+    1
 )
 SELECT
   nation.n_name AS nation_name,

@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    s_nationkey,
     STDDEV_POP(s_acctbal) AS population_std_s_acctbal,
     VARIANCE_POP(s_acctbal) AS population_variance_s_acctbal,
     STDDEV(s_acctbal) AS sample_std_s_acctbal,
-    VARIANCE(s_acctbal) AS sample_variance_s_acctbal,
-    s_nationkey
+    VARIANCE(s_acctbal) AS sample_variance_s_acctbal
   FROM tpch.supplier
   GROUP BY
-    5
+    1
 )
 SELECT
   nation.n_name AS name,

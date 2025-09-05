@@ -4,9 +4,9 @@ WITH _s0 AS (
   FROM main.sbTicker
 ), _s9 AS (
   SELECT
-    COUNT(*) AS n_rows,
     sbCustomer.sbcustid AS sbCustId,
-    _s2.sbTickerExchange
+    _s2.sbTickerExchange,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s2
   CROSS JOIN main.sbCustomer AS sbCustomer
   JOIN main.sbTransaction AS sbTransaction
@@ -15,8 +15,8 @@ WITH _s0 AS (
     ON _s2.sbTickerExchange = sbTicker.sbtickerexchange
     AND sbTicker.sbtickerid = sbTransaction.sbtxtickerid
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   sbCustomer.sbcuststate COLLATE utf8mb4_bin AS state,

@@ -9,12 +9,12 @@ WITH _t0 AS (
 ), _s1 AS (
   SELECT
     CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month_o_orderdate,
-    COUNT(*) AS n_rows,
-    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year_o_orderdate
+    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year_o_orderdate,
+    COUNT(*) AS n_rows
   FROM _t0
   GROUP BY
     1,
-    3
+    2
 )
 SELECT
   _s1.n_rows AS n

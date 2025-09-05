@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
     CAST(STRFTIME('%m', sbtxdatetime) AS INTEGER) AS month_sbtxdatetime,
-    COUNT(*) AS n_rows,
     CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER) AS year_sbtxdatetime,
-    sbtxcustid
+    sbtxcustid,
+    COUNT(*) AS n_rows
   FROM main.sbtransaction
   GROUP BY
     1,
-    3,
-    4
+    2,
+    3
 )
 SELECT
   sbcustomer.sbcustid AS _id,

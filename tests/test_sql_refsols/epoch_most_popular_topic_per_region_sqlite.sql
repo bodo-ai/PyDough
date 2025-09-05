@@ -1,8 +1,8 @@
 WITH _t1 AS (
   SELECT
-    COUNT(DISTINCT searches.search_id) AS ndistinct_search_id,
     events.ev_typ,
-    users.user_region
+    users.user_region,
+    COUNT(DISTINCT searches.search_id) AS ndistinct_search_id
   FROM events AS events
   JOIN searches AS searches
     ON LOWER(searches.search_string) LIKE (
@@ -11,13 +11,13 @@ WITH _t1 AS (
   JOIN users AS users
     ON searches.search_user_id = users.user_id
   GROUP BY
-    2,
-    3
+    1,
+    2
 ), _t AS (
   SELECT
-    ndistinct_search_id,
     ev_typ,
     user_region,
+    ndistinct_search_id,
     ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY ndistinct_search_id DESC) AS _w
   FROM _t1
 )

@@ -17,8 +17,8 @@ WITH _s14 AS (
     pr_name = 'GoldCopper-Star'
 ), _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    _s0.ca_dt
+    _s0.ca_dt,
+    COUNT(*) AS n_rows
   FROM _s6 AS _s0
   JOIN main.incidents AS incidents
     ON _s0.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
@@ -27,30 +27,30 @@ WITH _s14 AS (
   JOIN _t5 AS _t5
     ON _t5.pr_id = devices.de_product_id
   GROUP BY
-    2
+    1
 ), _s13 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    _s8.ca_dt
+    _s8.ca_dt,
+    COUNT(*) AS n_rows
   FROM _s6 AS _s8
   JOIN main.devices AS devices
     ON _s8.ca_dt = DATE_TRUNC('DAY', CAST(devices.de_purchase_ts AS TIMESTAMP))
   JOIN _t5 AS _t7
     ON _t7.pr_id = devices.de_product_id
   GROUP BY
-    2
+    1
 ), _s15 AS (
   SELECT
+    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS DATETIME)) AS year_ca_dt,
     SUM(_s7.n_rows) AS sum_expr_4,
-    SUM(_s13.n_rows) AS sum_n_rows,
-    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS DATETIME)) AS year_ca_dt
+    SUM(_s13.n_rows) AS sum_n_rows
   FROM _s6 AS _s6
   LEFT JOIN _s7 AS _s7
     ON _s6.ca_dt = _s7.ca_dt
   LEFT JOIN _s13 AS _s13
     ON _s13.ca_dt = _s6.ca_dt
   GROUP BY
-    3
+    1
 )
 SELECT
   _s15.year_ca_dt - EXTRACT(YEAR FROM CAST(_s14.anything_pr_release AS DATETIME)) AS years_since_release,

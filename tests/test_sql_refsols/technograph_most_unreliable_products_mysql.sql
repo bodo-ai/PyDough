@@ -1,20 +1,20 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM main.INCIDENTS
   GROUP BY
-    2
+    1
 ), _s3 AS (
   SELECT
+    DEVICES.de_product_id,
     COUNT(*) AS n_rows,
-    SUM(_s1.n_rows) AS sum_n_rows,
-    DEVICES.de_product_id
+    SUM(_s1.n_rows) AS sum_n_rows
   FROM main.DEVICES AS DEVICES
   LEFT JOIN _s1 AS _s1
     ON DEVICES.de_id = _s1.in_device_id
   GROUP BY
-    3
+    1
 )
 SELECT
   PRODUCTS.pr_name AS product,

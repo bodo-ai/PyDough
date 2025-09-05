@@ -1,16 +1,16 @@
 WITH _t0 AS (
   SELECT
-    COUNT(DISTINCT searches.search_id) AS ndistinct_search_id,
     events.ev_typ,
-    users.user_region
+    users.user_region,
+    COUNT(DISTINCT searches.search_id) AS ndistinct_search_id
   FROM events AS events
   JOIN searches AS searches
     ON CONTAINS(LOWER(searches.search_string), LOWER(events.ev_name))
   JOIN users AS users
     ON searches.search_user_id = users.user_id
   GROUP BY
-    2,
-    3
+    1,
+    2
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY COUNT(DISTINCT searches.search_id) DESC) = 1
 )

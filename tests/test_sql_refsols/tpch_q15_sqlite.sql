@@ -9,13 +9,13 @@ WITH _t3 AS (
     l_shipdate < '1996-04-01' AND l_shipdate >= '1996-01-01'
 ), _s1 AS (
   SELECT
+    l_suppkey,
     SUM(l_extendedprice * (
       1 - l_discount
-    )) AS sum_expr,
-    l_suppkey
+    )) AS sum_expr
   FROM _t3
   GROUP BY
-    2
+    1
 ), _s2 AS (
   SELECT
     MAX(COALESCE(_s1.sum_expr, 0)) AS max_total_revenue
@@ -24,13 +24,13 @@ WITH _t3 AS (
     ON _s1.l_suppkey = supplier.s_suppkey
 ), _s5 AS (
   SELECT
+    l_suppkey,
     SUM(l_extendedprice * (
       1 - l_discount
-    )) AS sum_expr,
-    l_suppkey
+    )) AS sum_expr
   FROM _t3
   GROUP BY
-    2
+    1
 )
 SELECT
   supplier.s_suppkey AS S_SUPPKEY,

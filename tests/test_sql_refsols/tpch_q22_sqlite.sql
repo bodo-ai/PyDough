@@ -7,11 +7,11 @@ WITH _s0 AS (
     AND c_acctbal > 0.0
 ), _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
-    2
+    1
 )
 SELECT
   SUBSTRING(customer.c_phone, 1, 2) AS CNTRY_CODE,
