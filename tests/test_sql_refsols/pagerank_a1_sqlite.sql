@@ -32,7 +32,7 @@ WITH _t4 AS (
       CAST((
         CAST(_s3.l_source <> _s3.l_target OR _s3.l_target IS NULL AS INTEGER) * _s2.anything_page_rank
       ) AS REAL) / COALESCE(_s2.sum_n_target, 0)
-    ) OVER (PARTITION BY _s5.s_key) AS page_rank_0,
+    ) OVER (PARTITION BY _s5.s_key) AS page_rank,
     _s3.l_source,
     _s3.l_target,
     _s5.s_key
@@ -44,7 +44,7 @@ WITH _t4 AS (
 )
 SELECT
   s_key AS key,
-  ROUND(page_rank_0, 5) AS page_rank
+  ROUND(page_rank, 5) AS page_rank
 FROM _t1
 WHERE
   NOT l_target IS NULL AND l_source = l_target

@@ -43,7 +43,7 @@ WITH _s14 AS (
   SELECT
     SUM(_s7.n_rows) AS sum_expr_4,
     SUM(_s13.n_rows) AS sum_n_rows,
-    YEAR(CAST(_s6.ca_dt AS TIMESTAMP)) AS year
+    YEAR(CAST(_s6.ca_dt AS TIMESTAMP)) AS year_ca_dt
   FROM _s6 AS _s6
   LEFT JOIN _s7 AS _s7
     ON _s6.ca_dt = _s7.ca_dt
@@ -53,31 +53,31 @@ WITH _s14 AS (
     3
 )
 SELECT
-  _s15.year - YEAR(CAST(_s14.anything_pr_release AS TIMESTAMP)) AS years_since_release,
+  _s15.year_ca_dt - YEAR(CAST(_s14.anything_pr_release AS TIMESTAMP)) AS years_since_release,
   ROUND(
-    SUM(COALESCE(_s15.sum_expr_4, 0)) OVER (ORDER BY _s15.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s15.sum_n_rows, 0)) OVER (ORDER BY _s15.year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    SUM(COALESCE(_s15.sum_expr_4, 0)) OVER (ORDER BY _s15.year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s15.sum_n_rows, 0)) OVER (ORDER BY _s15.year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS cum_ir,
   ROUND(
     (
       100.0 * (
-        COALESCE(_s15.sum_n_rows, 0) - LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year)
+        COALESCE(_s15.sum_n_rows, 0) - LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year),
+    ) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt),
     2
   ) AS pct_bought_change,
   ROUND(
     (
       100.0 * (
-        COALESCE(_s15.sum_expr_4, 0) - LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year)
+        COALESCE(_s15.sum_expr_4, 0) - LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year),
+    ) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt),
     2
   ) AS pct_incident_change,
   COALESCE(_s15.sum_n_rows, 0) AS bought,
   COALESCE(_s15.sum_expr_4, 0) AS incidents
 FROM _s14 AS _s14
 JOIN _s15 AS _s15
-  ON _s15.year >= YEAR(CAST(_s14.anything_pr_release AS TIMESTAMP))
+  ON _s15.year_ca_dt >= YEAR(CAST(_s14.anything_pr_release AS TIMESTAMP))
 ORDER BY
   1 NULLS FIRST

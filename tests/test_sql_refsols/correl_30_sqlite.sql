@@ -19,8 +19,8 @@ WITH _t2 AS (
     NOT r_name IN ('MIDDLE EAST', 'AFRICA', 'ASIA')
 ), _s12 AS (
   SELECT
+    MAX(LOWER(_t3.r_name)) AS anything_lower_r_name,
     MAX(nation.n_name) AS anything_n_name,
-    MAX(LOWER(_t3.r_name)) AS anything_region_name,
     COUNT(*) AS n_rows,
     nation.n_nationkey
   FROM tpch.nation AS nation
@@ -59,7 +59,7 @@ WITH _t2 AS (
     2
 )
 SELECT
-  _s12.anything_region_name AS region_name,
+  _s12.anything_lower_r_name AS region_name,
   _s12.anything_n_name AS nation_name,
   _s12.n_rows AS n_above_avg_customers,
   _s13.n_rows AS n_above_avg_suppliers

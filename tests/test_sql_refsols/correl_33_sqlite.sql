@@ -8,17 +8,17 @@ WITH _t0 AS (
   FROM _t0
 ), _s1 AS (
   SELECT
-    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS expr_2,
-    CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS expr_3,
-    COUNT(*) AS n_rows
+    CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month_o_orderdate,
+    COUNT(*) AS n_rows,
+    CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) AS year_o_orderdate
   FROM _t0
   GROUP BY
     1,
-    2
+    3
 )
 SELECT
   _s1.n_rows AS n
 FROM _s0 AS _s0
 LEFT JOIN _s1 AS _s1
-  ON _s1.expr_2 = CAST(STRFTIME('%Y', _s0.min_o_orderdate) AS INTEGER)
-  AND _s1.expr_3 = CAST(STRFTIME('%m', _s0.min_o_orderdate) AS INTEGER)
+  ON _s1.month_o_orderdate = CAST(STRFTIME('%m', _s0.min_o_orderdate) AS INTEGER)
+  AND _s1.year_o_orderdate = CAST(STRFTIME('%Y', _s0.min_o_orderdate) AS INTEGER)

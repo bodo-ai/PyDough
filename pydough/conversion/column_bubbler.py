@@ -48,7 +48,7 @@ def name_sort_key(name: str) -> tuple[bool, bool, str]:
     )
 
 
-def generate_cleaner_names(expr: CallExpression, current_name: str) -> list[str]:
+def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> list[str]:
     """
     Generates more readable names for an expression based on its, if applicable.
     The patterns of name generation are:
@@ -168,6 +168,16 @@ def run_column_bubbling(
                         new_ref = remapping[new_ref]
                         name = new_expr.name
                         used_names.add(name)
+                    # Try the same thing with generated alternative names
+                    else:
+                        for alt_name in generate_cleaner_names(new_expr, name):
+                            if alt_name not in used_names:
+                                remapping[new_ref] = ColumnReference(
+                                    alt_name, new_expr.data_type
+                                )
+                                new_ref = remapping[new_ref]
+                                name = alt_name
+                                used_names.add(name)
                     aliases[new_expr] = new_ref
                     output_columns[name] = new_expr
             # For limit, also transform the orderings if they exist.

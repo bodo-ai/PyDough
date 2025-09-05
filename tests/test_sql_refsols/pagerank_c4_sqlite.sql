@@ -32,7 +32,7 @@ WITH _t10 AS (
       CAST((
         CAST(_s3.l_source <> _s3.l_target OR _s3.l_target IS NULL AS INTEGER) * _s2.anything_page_rank
       ) AS REAL) / COALESCE(_s2.sum_n_target, 0)
-    ) OVER (PARTITION BY _s5.s_key) AS page_rank_0,
+    ) OVER (PARTITION BY _s5.s_key) AS page_rank,
     _s2.anything_n,
     _s3.l_source,
     _s3.l_target,
@@ -49,9 +49,9 @@ WITH _t10 AS (
       CAST(0.15 AS REAL) / _t7.anything_n
     ) + 0.85 * SUM(
       CAST((
-        CAST(_s7.l_source <> _s7.l_target OR _s7.l_target IS NULL AS INTEGER) * _t7.page_rank_0
+        CAST(_s7.l_source <> _s7.l_target OR _s7.l_target IS NULL AS INTEGER) * _t7.page_rank
       ) AS REAL) / COALESCE(_t7.sum_n_target, 0)
-    ) OVER (PARTITION BY _s9.s_key) AS page_rank_0_114,
+    ) OVER (PARTITION BY _s9.s_key) AS page_rank,
     _t7.anything_n,
     _s7.l_source,
     _s7.l_target,
@@ -70,9 +70,9 @@ WITH _t10 AS (
       CAST(0.15 AS REAL) / _t5.anything_n
     ) + 0.85 * SUM(
       CAST((
-        CAST(_s11.l_source <> _s11.l_target OR _s11.l_target IS NULL AS INTEGER) * _t5.page_rank_0_114
+        CAST(_s11.l_source <> _s11.l_target OR _s11.l_target IS NULL AS INTEGER) * _t5.page_rank
       ) AS REAL) / COALESCE(_t5.sum_n_target, 0)
-    ) OVER (PARTITION BY _s13.s_key) AS page_rank_0_124,
+    ) OVER (PARTITION BY _s13.s_key) AS page_rank,
     _t5.anything_n,
     _s11.l_source,
     _s11.l_target,
@@ -91,9 +91,9 @@ WITH _t10 AS (
       CAST(0.15 AS REAL) / _t3.anything_n
     ) + 0.85 * SUM(
       CAST((
-        CAST(_s15.l_source <> _s15.l_target OR _s15.l_target IS NULL AS INTEGER) * _t3.page_rank_0_124
+        CAST(_s15.l_source <> _s15.l_target OR _s15.l_target IS NULL AS INTEGER) * _t3.page_rank
       ) AS REAL) / COALESCE(_t3.sum_n_target, 0)
-    ) OVER (PARTITION BY _s17.s_key) AS page_rank_0_134,
+    ) OVER (PARTITION BY _s17.s_key) AS page_rank,
     _s15.l_source,
     _s15.l_target,
     _s17.s_key
@@ -107,7 +107,7 @@ WITH _t10 AS (
 )
 SELECT
   s_key AS key,
-  ROUND(page_rank_0_134, 5) AS page_rank
+  ROUND(page_rank, 5) AS page_rank
 FROM _t1
 WHERE
   NOT l_target IS NULL AND l_source = l_target

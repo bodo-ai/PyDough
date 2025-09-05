@@ -24,7 +24,7 @@ WITH _s2 AS (
   SELECT
     SUM(_s3.n_rows) AS sum_expr_3,
     SUM(_s7.n_rows) AS sum_n_rows,
-    EXTRACT(YEAR FROM CAST(_s2.ca_dt AS DATETIME)) AS year
+    EXTRACT(YEAR FROM CAST(_s2.ca_dt AS DATETIME)) AS year_ca_dt
   FROM _s2 AS _s2
   LEFT JOIN _s3 AS _s3
     ON _s2.ca_dt = _s3.ca_dt
@@ -34,25 +34,25 @@ WITH _s2 AS (
     3
 )
 SELECT
-  year AS yr,
+  year_ca_dt AS yr,
   ROUND(
-    SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(sum_expr_3) OVER (ORDER BY year NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year_ca_dt NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(sum_expr_3) OVER (ORDER BY year_ca_dt NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS cum_ir,
   ROUND(
     (
       100.0 * (
-        sum_expr_3 - LAG(sum_expr_3, 1) OVER (ORDER BY year NULLS LAST)
+        sum_expr_3 - LAG(sum_expr_3, 1) OVER (ORDER BY year_ca_dt NULLS LAST)
       )
-    ) / LAG(sum_expr_3, 1) OVER (ORDER BY year NULLS LAST),
+    ) / LAG(sum_expr_3, 1) OVER (ORDER BY year_ca_dt NULLS LAST),
     2
   ) AS pct_bought_change,
   ROUND(
     (
       100.0 * (
-        COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year NULLS LAST)
+        COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year_ca_dt NULLS LAST)
       )
-    ) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year NULLS LAST),
+    ) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year_ca_dt NULLS LAST),
     2
   ) AS pct_incident_change,
   sum_expr_3 AS bought,
