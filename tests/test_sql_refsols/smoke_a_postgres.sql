@@ -2,28 +2,12 @@ SELECT
   p_partkey AS key,
   CAST(CONCAT_WS(
     '',
-    SUBSTRING(p_brand FROM CASE WHEN (
-      LENGTH(p_brand) + -1
-    ) < 1 THEN 1 ELSE (
-      LENGTH(p_brand) + -1
-    ) END),
+    SUBSTRING(p_brand FROM CASE WHEN ABS(-2) < LENGTH(p_brand) THEN LENGTH(p_brand) + -1 ELSE 1 END),
     SUBSTRING(p_brand FROM 8),
-    SUBSTRING(p_brand FROM CASE WHEN (
-      LENGTH(p_brand) + -1
-    ) < 1 THEN 1 ELSE (
-      LENGTH(p_brand) + -1
-    ) END FOR CASE
-      WHEN (
-        LENGTH(p_brand) + 0
-      ) < 1
-      THEN 0
-      ELSE (
-        LENGTH(p_brand) + 0
-      ) - CASE WHEN (
-        LENGTH(p_brand) + -1
-      ) < 1 THEN 1 ELSE (
-        LENGTH(p_brand) + -1
-      ) END
+    SUBSTRING(p_brand FROM CASE WHEN ABS(-2) < LENGTH(p_brand) THEN LENGTH(p_brand) + -1 ELSE 1 END FOR CASE
+      WHEN ABS(-2) > LENGTH(p_brand)
+      THEN LENGTH(p_brand) + -1
+      ELSE GREATEST(1, 0)
     END)
   ) AS BIGINT) AS a,
   UPPER(LEAST(SPLIT_PART(p_name, ' ', 2), SPLIT_PART(p_name, ' ', -1))) AS b,
