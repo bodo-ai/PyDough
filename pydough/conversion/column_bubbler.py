@@ -178,6 +178,7 @@ def run_column_bubbling(
                                 new_ref = remapping[new_ref]
                                 name = alt_name
                                 used_names.add(name)
+                                break
                     aliases[new_expr] = new_ref
                     output_columns[name] = new_expr
             # For limit, also transform the orderings if they exist.

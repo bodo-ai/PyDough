@@ -754,11 +754,11 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
+                    Ident(this="b", quoted=False),
                     set_glot_alias(
                         mkglot_func(Sum, [Ident(this="a", quoted=False)]),
                         "a",
                     ),
-                    Ident(this="b", quoted=False),
                 ],
                 group_by=[Ident(this="b", quoted=False)],
                 _from=GlotFrom(
