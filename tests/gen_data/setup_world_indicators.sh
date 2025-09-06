@@ -8,4 +8,4 @@
 set -eo pipefail
 
 rm -fv world_development_indicators.db
-sqlite3 world_development_indicators.db < init_world_indicators._sqlite.sql
+sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql
