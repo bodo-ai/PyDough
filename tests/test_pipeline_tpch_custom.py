@@ -144,6 +144,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_cross_10,
     simple_cross_11,
     simple_cross_12,
+    simple_cross_13,
+    simple_cross_14,
+    simple_cross_15,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -2237,6 +2240,56 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                simple_cross_13,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["foo"],
+                        "b": ["bar"],
+                        "c": ["fizz"],
+                        "d": ["buzz"],
+                        "e": ["foobar"],
+                        "f": ["fizzbuzz"],
+                        "g": ["yay"],
+                    }
+                ),
+                "simple_cross_13",
+            ),
+            id="simple_cross_13",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_14,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "x": ["foo"] * 5,
+                        "n": [1, 3, 1, 0, 0],
+                    }
+                ),
+                "simple_cross_14",
+            ),
+            id="simple_cross_14",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_15,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["*"] * 8 + ["A"] * 8,
+                        "e": list("****EEEE") * 2,
+                        "i": list("**II") * 4,
+                        "o": list("*O") * 8,
+                    }
+                ),
+                "simple_cross_15",
+            ),
+            id="simple_cross_15",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_var_std,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2319,14 +2372,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "chain3": ["2023-10-01"],
                         "plus_1q": ["2023-04-15 12:30:45"],
                         "plus_2q": ["2023-07-15 12:30:45"],
-                        "plus_3q": ["2023-10-15 00:00:00"],
+                        "plus_3q": ["2023-10-15"],
                         "minus_1q": ["2022-10-15 12:30:45"],
                         "minus_2q": ["2022-07-15 12:30:45"],
-                        "minus_3q": ["2022-04-15 00:00:00"],
-                        "syntax1": ["2023-08-15 00:00:00"],
-                        "syntax2": ["2024-02-15 00:00:00"],
-                        "syntax3": ["2024-08-15 00:00:00"],
-                        "syntax4": ["2022-08-15 00:00:00"],
+                        "minus_3q": ["2022-04-15"],
+                        "syntax1": ["2023-08-15"],
+                        "syntax2": ["2024-02-15"],
+                        "syntax3": ["2024-08-15"],
+                        "syntax4": ["2022-08-15"],
                         "q_diff1": [1],
                         "q_diff2": [2],
                         "q_diff3": [3],
@@ -3243,7 +3296,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_5,
             None,
             re.escape(
-                "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions'. Did you mean: nations, comment, key?"
+                "Cannot have term name 'name' used in an ancestor of collection TPCH.regions.CALCULATE(name=name).TPCH.regions"
             ),
             id="bad_cross_5",
         ),

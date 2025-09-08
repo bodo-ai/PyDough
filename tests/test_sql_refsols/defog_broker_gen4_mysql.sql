@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    sbtxcustid AS sbTxCustId
+    sbtxcustid AS sbTxCustId,
+    COUNT(*) AS n_rows
   FROM main.sbTransaction
   WHERE
     CAST(CAST(sbtxdatetime AS DATETIME) AS DATE) = CAST('2023-04-01' AS DATE)
     AND sbtxtype = 'sell'
   GROUP BY
-    2
+    1
 )
 SELECT
   sbCustomer.sbcustid AS _id,

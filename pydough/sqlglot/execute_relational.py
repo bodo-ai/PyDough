@@ -105,6 +105,7 @@ def apply_sqlglot_optimizer(
         "quote_identifiers": False,
         "isolate_tables": True,
         "validate_qualify_columns": False,
+        "expand_alias_refs": False,
     }
     # Exclude Snowflake dialect to avoid some issues
     # related to name qualification
@@ -206,12 +207,14 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
         # original expression to include the collate instead.
         if expression.args.get("order") is not None:
             order_list: list[SQLGlotExpression] = expression.args["order"].expressions
-            aliases: list[str] = []
+            aliases: list[str | None] = []
             for expr in expression.expressions:
                 if isinstance(expr, Alias):
                     aliases.append(expr.alias.lower())
                 elif isinstance(expr, Column):
                     aliases.append(expr.name.lower())
+                else:
+                    aliases.append(None)
             for idx, order_expr in enumerate(order_list):
                 if order_expr.this in expressions or (
                     isinstance(order_expr.this, Column)

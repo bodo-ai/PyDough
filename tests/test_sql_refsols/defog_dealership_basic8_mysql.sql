@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    car_id,
     COUNT(*) AS n_rows,
-    SUM(sale_price) AS sum_sale_price,
-    car_id
+    SUM(sale_price) AS sum_sale_price
   FROM main.sales
   GROUP BY
-    3
+    1
 )
 SELECT
   cars.make,

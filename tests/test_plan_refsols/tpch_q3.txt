@@ -1,5 +1,5 @@
-ROOT(columns=[('L_ORDERKEY', l_orderkey), ('REVENUE', DEFAULT_TO(sum_expr_1, 0:numeric)), ('O_ORDERDATE', o_orderdate), ('O_SHIPPRIORITY', o_shippriority)], orderings=[(DEFAULT_TO(sum_expr_1, 0:numeric)):desc_last, (o_orderdate):asc_first, (l_orderkey):asc_first], limit=10:numeric)
- AGGREGATE(keys={'l_orderkey': l_orderkey, 'o_orderdate': o_orderdate, 'o_shippriority': o_shippriority}, aggregations={'sum_expr_1': SUM(l_extendedprice * 1:numeric - l_discount)})
+ROOT(columns=[('L_ORDERKEY', l_orderkey), ('REVENUE', DEFAULT_TO(sum_expr, 0:numeric)), ('O_ORDERDATE', o_orderdate), ('O_SHIPPRIORITY', o_shippriority)], orderings=[(DEFAULT_TO(sum_expr, 0:numeric)):desc_last, (o_orderdate):asc_first, (l_orderkey):asc_first], limit=10:numeric)
+ AGGREGATE(keys={'l_orderkey': l_orderkey, 'o_orderdate': o_orderdate, 'o_shippriority': o_shippriority}, aggregations={'sum_expr': SUM(l_extendedprice * 1:numeric - l_discount)})
   JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_FILTER, columns={'l_discount': t1.l_discount, 'l_extendedprice': t1.l_extendedprice, 'l_orderkey': t1.l_orderkey, 'o_orderdate': t0.o_orderdate, 'o_shippriority': t0.o_shippriority})
    JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'o_orderdate': t0.o_orderdate, 'o_orderkey': t0.o_orderkey, 'o_shippriority': t0.o_shippriority})
     FILTER(condition=o_orderdate < datetime.date(1995, 3, 15):datetime, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_orderkey': o_orderkey, 'o_shippriority': o_shippriority})

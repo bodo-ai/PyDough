@@ -1,12 +1,15 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.ORDERS
   GROUP BY
-    2
+    1
 ), _t2 AS (
   SELECT
+    CUSTOMER.c_acctbal,
+    CUSTOMER.c_nationkey,
+    _s1.n_rows,
     CASE
       WHEN ABS(
         (
@@ -27,15 +30,13 @@ WITH _s1 AS (
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC)
       THEN CUSTOMER.c_acctbal
       ELSE NULL
-    END AS expr_16,
-    CUSTOMER.c_acctbal,
-    CUSTOMER.c_nationkey,
-    _s1.n_rows
+    END AS expr_16
   FROM tpch.CUSTOMER AS CUSTOMER
   LEFT JOIN _s1 AS _s1
     ON CUSTOMER.c_custkey = _s1.o_custkey
 ), _t1 AS (
   SELECT
+    c_nationkey,
     ANY_VALUE(c_acctbal) AS anything_c_acctbal,
     AVG(c_acctbal) AS avg_c_acctbal,
     AVG(expr_15) AS avg_expr_15,
@@ -72,11 +73,10 @@ WITH _s1 AS (
       COUNT(c_acctbal) - 1
     ) AS sample_variance_c_acctbal,
     SUM(c_acctbal) AS sum_c_acctbal,
-    SUM(n_rows) AS sum_n_rows,
-    c_nationkey
+    SUM(n_rows) AS sum_n_rows
   FROM _t2
   GROUP BY
-    13
+    1
 )
 SELECT
   COALESCE(_t1.sum_c_acctbal, 0) AS sum_value,

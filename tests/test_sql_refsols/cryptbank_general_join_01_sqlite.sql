@@ -14,9 +14,9 @@ WITH _s0 AS (
       42 - (
         _s3.c_key
       )
-    ) AS key_4,
-    COUNT(*) AS n_rows,
-    _s2.b_key
+    ) AS unmask_c_key,
+    _s2.b_key,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s2
   JOIN _s1 AS _s3
     ON SUBSTRING(
@@ -82,7 +82,7 @@ WITH _s0 AS (
     )
   GROUP BY
     1,
-    3
+    2
 )
 SELECT
   _s0.b_key AS branch_key,
@@ -148,7 +148,7 @@ JOIN _s1 AS _s1
     END
   )
 LEFT JOIN _s7 AS _s7
-  ON _s0.b_key = _s7.b_key AND _s7.key_4 = (
+  ON _s0.b_key = _s7.b_key AND _s7.unmask_c_key = (
     42 - _s1.c_key
   )
 GROUP BY

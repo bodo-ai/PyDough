@@ -1,12 +1,12 @@
 WITH _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    incidents.in_device_id
+    incidents.in_device_id,
+    COUNT(*) AS n_rows
   FROM main.incidents AS incidents
   JOIN main.errors AS errors
     ON errors.er_id = incidents.in_error_id AND errors.er_name = 'Battery Failure'
   GROUP BY
-    2
+    1
 )
 SELECT
   countries.co_name AS country_name,
