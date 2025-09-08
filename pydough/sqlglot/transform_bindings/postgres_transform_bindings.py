@@ -108,17 +108,20 @@ class PostgresTransformBindings(BaseTransformBindings):
         result: SQLGlotExpression = sqlglot_expressions.SplitPart(
             this=string_expr,  # string expression
             delimiter=delimiter_expr,  # delimiter
-            part_index=sqlglot_expressions.Case(  # position (1-based)
-                ifs=[
-                    sqlglot_expressions.If(
-                        this=sqlglot_expressions.EQ(
-                            this=index_expr,
-                            expression=sqlglot_expressions.Literal.number(0),
-                        ),
-                        true=sqlglot_expressions.Literal.number(1),
-                    )
-                ],
-                default=index_expr,
+            part_index=sqlglot_expressions.Cast(
+                this=sqlglot_expressions.Case(  # position (1-based)
+                    ifs=[
+                        sqlglot_expressions.If(
+                            this=sqlglot_expressions.EQ(
+                                this=index_expr,
+                                expression=sqlglot_expressions.Literal.number(0),
+                            ),
+                            true=sqlglot_expressions.Literal.number(1),
+                        )
+                    ],
+                    default=index_expr,
+                ),
+                to=sqlglot_expressions.DataType.build("INTEGER"),
             ),
         )
         return result
@@ -375,19 +378,19 @@ class PostgresTransformBindings(BaseTransformBindings):
             case (+a, +b):
                 return SUBSTRING(x FROM a+1 FOR GREATEST(b - a, 0))
             case (-a, -b):
-                return SUBSTRING(
-                    x FROM LENGTH(x) - a + 1
-                        FOR GREATEST(LENGTH(x) - b - (LENGTH(x) - a), 0)
+                return SUBSTRING(x
+                    FROM LENGTH(x) - a + 1
+                    FOR GREATEST((LENGTH(x) + b) - GREATEST(LENGTH(x) + a, 0), 0)
                 )
             case (+a, -b):
-                return SUBSTRING(
-                    x FROM a+1
-                        FOR GREATEST(LENGTH(x) - b - a, 0)
+                return SUBSTRING(x
+                    FROM a + 1
+                    FOR GREATEST(LENGTH(x) + b - a, 0)
                 )
             case (-a, +b):
-                return SUBSTRING(
-                    x FROM LENGTH(x) - a + 1
-                        FOR GREATEST(b - (LENGTH(x) - a), 0)
+                SUBSTRING(x
+                    FROM GREATEST(LENGTH(x) + a + 1, 1)
+                    FOR b - GREATEST(LENGTH(x) + a, 0)
                 )
         """
 
@@ -455,7 +458,11 @@ class PostgresTransformBindings(BaseTransformBindings):
                 length = stop
 
             case (None, end_idx) if end_idx is not None and end_idx < 0:
-                length = sqlglot_expressions.Add(this=expr_length, expression=stop)
+                # GREATEST(LENGTH(x) - b, 0)
+                length = sqlglot_expressions.Greatest(
+                    this=sqlglot_expressions.Add(this=expr_length, expression=stop),
+                    expressions=[sql_zero],
+                )
 
             case (begin_idx, end_idx) if (
                 begin_idx is not None
@@ -474,22 +481,22 @@ class PostgresTransformBindings(BaseTransformBindings):
                 and begin_idx < 0
                 and end_idx < 0
             ):
-                length = sqlglot_expressions.Case(
-                    ifs=[
-                        sqlglot_expressions.If(
-                            this=sqlglot_expressions.LT(
-                                this=expr_length,
-                                expression=sqlglot_expressions.Abs(this=start),
-                            ),
-                            true=sqlglot_expressions.Add(
-                                this=expr_length, expression=stop
-                            ),
-                        )
-                    ],
-                    default=sqlglot_expressions.Greatest(
-                        this=sqlglot_expressions.Sub(this=stop, expression=start),
-                        expressions=[sql_zero],
+                # GREATEST((LENGTH(x) + b) - GREATEST(LENGTH(x) + a, 0), 0)
+                sub_len_b: SQLGlotExpression = sqlglot_expressions.Add(
+                    this=expr_length, expression=stop
+                )
+
+                sub_len_a: SQLGlotExpression = sqlglot_expressions.Add(
+                    this=expr_length, expression=start
+                )
+                greatest_len_a: SQLGlotExpression = sqlglot_expressions.Greatest(
+                    this=sub_len_a, expressions=[sql_zero]
+                )
+                length = sqlglot_expressions.Greatest(
+                    this=sqlglot_expressions.Sub(
+                        this=sub_len_b, expression=greatest_len_a
                     ),
+                    expressions=[sql_zero],
                 )
 
             case (begin_idx, end_idx) if (
@@ -498,6 +505,7 @@ class PostgresTransformBindings(BaseTransformBindings):
                 and begin_idx >= 0
                 and end_idx < 0
             ):
+                # GREATEST(LENGTH(x) + b - a, 0)
                 length = sqlglot_expressions.Greatest(
                     this=sqlglot_expressions.Sub(
                         this=sqlglot_expressions.Add(this=expr_length, expression=stop),
@@ -512,34 +520,32 @@ class PostgresTransformBindings(BaseTransformBindings):
                 and begin_idx < 0
                 and end_idx >= 0
             ):
-                length = sqlglot_expressions.Sub(
-                    this=stop,
-                    expression=sqlglot_expressions.Greatest(
-                        this=sqlglot_expressions.Add(
-                            this=expr_length, expression=start
+                # b - GREATEST(LENGTH(x) + a, 0)
+                length = sqlglot_expressions.Greatest(
+                    this=sqlglot_expressions.Sub(
+                        this=stop,
+                        expression=sqlglot_expressions.Greatest(
+                            this=sqlglot_expressions.Add(
+                                this=expr_length,
+                                expression=start,
+                            ),
+                            expressions=[sql_zero],
                         ),
-                        expressions=[sql_zero],
                     ),
+                    expressions=[sql_zero],
                 )
 
         # start adjustment
         if start_idx is not None and start_idx >= 0:
             start = one_index_start
         elif start_idx is not None and start_idx < 0:
-            start = sqlglot_expressions.Case(
-                ifs=[
-                    sqlglot_expressions.If(
-                        this=sqlglot_expressions.GT(
-                            this=expr_length,
-                            expression=sqlglot_expressions.Abs(this=start),
-                        ),
-                        # LENGTH(x) - a + 1
-                        true=sqlglot_expressions.Add(
-                            this=expr_length, expression=one_index_start
-                        ),
-                    )
-                ],
-                default=sql_one,
+            # GREATEST(LENGTH(x) + a + 1, 1)
+            start = sqlglot_expressions.Greatest(
+                this=sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Add(this=expr_length, expression=start),
+                    expression=sql_one,
+                ),
+                expressions=[sql_one],
             )
 
         elif start_idx is None:
@@ -550,3 +556,37 @@ class PostgresTransformBindings(BaseTransformBindings):
         )
 
         return result
+
+    def convert_round(
+        self,
+        args: list[SQLGlotExpression],
+        types: list[PyDoughType],
+    ) -> SQLGlotExpression:
+        assert len(args) == 1 or len(args) == 2
+        precision_glot: SQLGlotExpression
+        if len(args) == 1:
+            precision_glot = sqlglot_expressions.Literal.number(0)
+        else:
+            # Check if the second argument is a integer literal.
+            if (
+                not isinstance(args[1], sqlglot_expressions.Literal)
+                or args[1].is_string
+            ):
+                raise ValueError(
+                    f"Unsupported argument {args[1]} for ROUND."
+                    "The precision argument should be an integer literal."
+                )
+            try:
+                int(args[1].this)
+            except ValueError:
+                raise ValueError(
+                    f"Unsupported argument {args[1]} for ROUND."
+                    "The precision argument should be an integer literal."
+                )
+            precision_glot = args[1]
+        return sqlglot_expressions.Round(
+            this=sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("NUMERIC")
+            ),
+            decimals=precision_glot,
+        )

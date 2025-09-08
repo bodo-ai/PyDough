@@ -556,7 +556,7 @@ VALUES
 
 DROP TABLE IF EXISTS main.cars CASCADE;
 CREATE TABLE main.cars (
-  id SERIAL PRIMARY KEY,
+  _id SERIAL PRIMARY KEY,
   make TEXT NOT NULL, -- manufacturer of the car
   model TEXT NOT NULL, -- model name of the car
   year INTEGER NOT NULL, -- year of manufacture
@@ -570,7 +570,7 @@ CREATE TABLE main.cars (
 
 DROP TABLE IF EXISTS main.salespersons CASCADE;
 CREATE TABLE main.salespersons (
-  id SERIAL PRIMARY KEY,
+  _id SERIAL PRIMARY KEY,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -582,7 +582,7 @@ CREATE TABLE main.salespersons (
 
 DROP TABLE IF EXISTS main.customers CASCADE;
 CREATE TABLE main.customers (
-  id SERIAL PRIMARY KEY,
+  _id SERIAL PRIMARY KEY,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,
@@ -596,10 +596,10 @@ CREATE TABLE main.customers (
 
 DROP TABLE IF EXISTS main.sales CASCADE;
 CREATE TABLE main.sales (
-  id SERIAL PRIMARY KEY,
-  car_id INTEGER NOT NULL REFERENCES main.cars(id),
-  salesperson_id INTEGER NOT NULL REFERENCES main.salespersons(id),
-  customer_id INTEGER NOT NULL REFERENCES main.customers(id),
+  _id SERIAL PRIMARY KEY,
+  car_id INTEGER NOT NULL REFERENCES main.cars(_id),
+  salesperson_id INTEGER NOT NULL REFERENCES main.salespersons(_id),
+  customer_id INTEGER NOT NULL REFERENCES main.customers(_id),
   sale_price NUMERIC(10, 2) NOT NULL,
   sale_date DATE NOT NULL,
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW()
@@ -609,7 +609,7 @@ DROP TABLE IF EXISTS main.inventory_snapshots CASCADE;
 CREATE TABLE main.inventory_snapshots (
   id SERIAL PRIMARY KEY,
   snapshot_date DATE NOT NULL,
-  car_id INTEGER NOT NULL REFERENCES main.cars(id),
+  car_id INTEGER NOT NULL REFERENCES main.cars(_id),
   is_in_inventory BOOLEAN NOT NULL,
   crtd_ts TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -617,7 +617,7 @@ CREATE TABLE main.inventory_snapshots (
 DROP TABLE IF EXISTS main.payments_received CASCADE;
 CREATE TABLE main.payments_received (
   id SERIAL PRIMARY KEY,
-  sale_id INTEGER NOT NULL REFERENCES main.sales(id),
+  sale_id INTEGER NOT NULL REFERENCES main.sales(_id),
   payment_date DATE NOT NULL,
   payment_amount NUMERIC(10, 2) NOT NULL,
   payment_method TEXT NOT NULL, -- values: cash, check, credit_card, debit_card, financing
@@ -639,7 +639,7 @@ CREATE TABLE main.payments_made (
 
 
 -- cars
-INSERT INTO main.cars (id, make, model, year, color, vin_number, engine_type, transmission, cost)
+INSERT INTO main.cars (_id, make, model, year, color, vin_number, engine_type, transmission, cost)
 VALUES
   (1, 'Toyota', 'Camry', 2022, 'Silver', '4T1BF1FK3CU510984', 'V6', 'Automatic', 28500.00),
   (2, 'Honda', 'Civic', 2021, 'platinum/grey', '2HGFC2F53MH522780', 'Inline 4', 'CVT', 22000.00),
@@ -664,7 +664,7 @@ VALUES
   (21, 'Cadillac', 'Escalade', 2023, 'Black', '1GYS4HKJ3MR123456', 'V8', 'Automatic', 85000.00);
 
 -- salespersons
-INSERT INTO main.salespersons (id, first_name, last_name, email, phone, hire_date, termination_date)
+INSERT INTO main.salespersons (_id, first_name, last_name, email, phone, hire_date, termination_date)
 VALUES
   (1, 'John', 'Doe', 'john.doe@autonation.com', '(555)-123-4567', CURRENT_DATE - INTERVAL '2 years', NULL),
   (2, 'Jane', 'Smith', 'jane.smith@autonation.com', '(415)-987-6543', CURRENT_DATE - INTERVAL '3 years', NULL),
@@ -681,7 +681,7 @@ VALUES
   (13, 'Jessica', 'Rodriguez', 'jessica.rodriguez@directauto.com', '(555)-789-0123', '2022-06-01', NULL);
 
 -- customers
-INSERT INTO main.customers (id, first_name, last_name, email, phone, address, city, state, zip_code, crtd_ts)
+INSERT INTO main.customers (_id, first_name, last_name, email, phone, address, city, state, zip_code, crtd_ts)
 VALUES
   (1, 'William', 'Davis', 'william.davis@example.com', '555-888-9999', '123 Main St', 'New York', 'NY', '10001', NOW() - INTERVAL '5 years'),
   (2, 'Ava', 'Miller', 'ava.miller@example.com', '555-777-6666', '456 Oak Ave', 'Los Angeles', 'CA', '90001', NOW() - INTERVAL '4 years'),
@@ -698,7 +698,7 @@ VALUES
   (13, 'Michael', 'Chen', 'michael.chen@company.com', '(555)-456-7890', '123 Oak St', 'San Francisco', 'CA', '94101', NOW() - INTERVAL '3 months');
 
 -- sales
-INSERT INTO main.sales (id, car_id, salesperson_id, customer_id, sale_price, sale_date)
+INSERT INTO main.sales (_id, car_id, salesperson_id, customer_id, sale_price, sale_date)
 VALUES
   (1, 1, 2, 3, 30500.00, '2023-03-15'),
   (2, 3, 1, 5, 47000.00, '2023-03-20'),
