@@ -1,5 +1,0 @@
-ROOT(columns=[('k', k), ('p1', p1), ('p2', p2), ('p3', p3), ('p4', p4), ('p5', p5), ('p6', p6), ('p7', p7), ('p8', p8)], orderings=[(k):asc_first])
- PROJECT(columns={'k': k, 'p1': GETPART(sbCustName, ' ':string, k), 'p2': GETPART(sbCustName, ' ':string, 0:numeric - k), 'p3': GETPART(sbCustEmail, '.':string, k), 'p4': GETPART(sbCustEmail, '.':string, 0:numeric - k), 'p5': GETPART(sbCustPhone, '-':string, k), 'p6': GETPART(sbCustPhone, '-':string, 0:numeric - k), 'p7': GETPART(sbCustPostalCode, '00':string, k), 'p8': GETPART(sbCustPostalCode, '00':string, 0:numeric - k)})
-  PROJECT(columns={'k': INTEGER(sbCustId), 'sbCustEmail': sbCustEmail, 'sbCustName': sbCustName, 'sbCustPhone': sbCustPhone, 'sbCustPostalCode': sbCustPostalCode})
-   FILTER(condition=sbCustId <= 4:numeric, columns={'sbCustEmail': sbCustEmail, 'sbCustId': sbCustId, 'sbCustName': sbCustName, 'sbCustPhone': sbCustPhone, 'sbCustPostalCode': sbCustPostalCode})
-    SCAN(table=main.sbCustomer, columns={'sbCustEmail': sbCustEmail, 'sbCustId': sbCustId, 'sbCustName': sbCustName, 'sbCustPhone': sbCustPhone, 'sbCustPostalCode': sbCustPostalCode})
