@@ -77,8 +77,8 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 lambda: pd.DataFrame(
                     {
                         "key": list(range(1, 9)),
-                        "n_local_cust": [6, 6, 4, 4, 3, 4, 3, 3],
-                        "n_local_cust_local_acct": [10, 9, 6, 3, 3, 11, 3, 3],
+                        "n_local_cust": [5, 5, 4, 4, 3, 4, 2, 2],
+                        "n_local_cust_local_acct": [9, 7, 6, 3, 3, 11, 2, 2],
                     }
                 ),
                 "cryptbank_general_join_01",
@@ -93,7 +93,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 " .WHERE(HAS(account_holder.same_state_branches.WHERE(key == source_branch_key))),"
                 "))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [48]}),
+                lambda: pd.DataFrame({"n": [43]}),
                 "cryptbank_general_join_02",
             ),
             id="cryptbank_general_join_02",
@@ -293,7 +293,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday > '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [5]}),
+                lambda: pd.DataFrame({"n": [4]}),
                 "cryptbank_filter_count_20",
             ),
             id="cryptbank_filter_count_20",
@@ -303,7 +303,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday >= '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [6]}),
+                lambda: pd.DataFrame({"n": [5]}),
                 "cryptbank_filter_count_21",
             ),
             id="cryptbank_filter_count_21",
@@ -313,7 +313,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday < '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [14]}),
+                lambda: pd.DataFrame({"n": [13]}),
                 "cryptbank_filter_count_22",
             ),
             id="cryptbank_filter_count_22",
@@ -323,7 +323,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "selected_customers = customers.WHERE(birthday <= '1991-11-15')\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [15]}),
+                lambda: pd.DataFrame({"n": [14]}),
                 "cryptbank_filter_count_23",
             ),
             id="cryptbank_filter_count_23",
@@ -340,13 +340,59 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
-                "selected_customers = customers.WHERE(birthday != '1991-11-15')\n"
+                "selected_customers = customers.WHERE(ABSENT(birthday) | (birthday != '1991-11-15'))\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
                 lambda: pd.DataFrame({"n": [19]}),
                 "cryptbank_filter_count_25",
             ),
             id="cryptbank_filter_count_25",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(phone_number == '555-123-456')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [0]}),
+                "cryptbank_filter_count_26",
+            ),
+            id="cryptbank_filter_count_26",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE("
+                " ("
+                "  PRESENT(address) &"
+                "  PRESENT(birthday) &"
+                "  (last_name != 'lopez') &"
+                "  (ENDSWITH(first_name, 'a') | ENDSWITH(first_name, 'e') | ENDSWITH(first_name, 's'))"
+                ") | (ABSENT(birthday) & ENDSWITH(phone_number, '5'))"
+                ")\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [6]}),
+                "cryptbank_filter_count_27",
+            ),
+            id="cryptbank_filter_count_27",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE("
+                + " & ".join(
+                    [
+                        "((account_type == 'retirement') | (account_type == 'savings'))",
+                        "(balance >= 5000)",
+                        "(CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail'))",
+                        "(YEAR(creation_timestamp) < 2020)",
+                    ]
+                )
+                + ")\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [12]}),
+                "cryptbank_filter_count_28",
+            ),
+            id="cryptbank_filter_count_28",
         ),
         pytest.param(
             PyDoughPandasTest(

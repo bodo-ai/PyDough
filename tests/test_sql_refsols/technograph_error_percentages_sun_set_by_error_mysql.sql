@@ -1,14 +1,14 @@
 WITH _s5 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    INCIDENTS.in_error_id
+    INCIDENTS.in_error_id,
+    COUNT(*) AS n_rows
   FROM main.INCIDENTS AS INCIDENTS
   JOIN main.DEVICES AS DEVICES
     ON DEVICES.de_id = INCIDENTS.in_device_id
   JOIN main.PRODUCTS AS PRODUCTS
     ON DEVICES.de_product_id = PRODUCTS.pr_id AND PRODUCTS.pr_name = 'Sun-Set'
   GROUP BY
-    2
+    1
 )
 SELECT
   ERRORS.er_name AS error,

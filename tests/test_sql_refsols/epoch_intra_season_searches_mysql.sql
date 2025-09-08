@@ -12,9 +12,9 @@ WITH _s0 AS (
   FROM EVENTS
 ), _s9 AS (
   SELECT
-    COUNT(*) AS n_rows,
     _s2.s_name,
-    SEARCHES.search_id
+    SEARCHES.search_id,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s2
   JOIN SEARCHES AS SEARCHES
     ON _s2.s_month1 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
@@ -30,15 +30,15 @@ WITH _s0 AS (
       OR _s7.s_month3 = EXTRACT(MONTH FROM CAST(_s5.ev_dt AS DATETIME))
     )
   GROUP BY
-    2,
-    3
+    1,
+    2
 ), _s16 AS (
   SELECT
+    _s0.s_name,
     COUNT(*) AS n_rows,
     SUM((
       NOT _s9.n_rows IS NULL AND _s9.n_rows > 0
-    )) AS sum_is_intra_season,
-    _s0.s_name
+    )) AS sum_is_intra_season
   FROM _s0 AS _s0
   JOIN SEARCHES AS SEARCHES
     ON _s0.s_month1 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
@@ -47,12 +47,12 @@ WITH _s0 AS (
   LEFT JOIN _s9 AS _s9
     ON SEARCHES.search_id = _s9.search_id AND _s0.s_name = _s9.s_name
   GROUP BY
-    3
+    1
 ), _s17 AS (
   SELECT
+    _s10.s_name,
     COUNT(*) AS n_rows,
-    SUM(_s15.s_name = _s10.s_name) AS sum_is_intra_season,
-    _s10.s_name
+    SUM(_s15.s_name = _s10.s_name) AS sum_is_intra_season
   FROM _s0 AS _s10
   JOIN _s5 AS _s11
     ON _s10.s_month1 = EXTRACT(MONTH FROM CAST(_s11.ev_dt AS DATETIME))
@@ -65,7 +65,7 @@ WITH _s0 AS (
     OR _s15.s_month2 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
     OR _s15.s_month3 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
   GROUP BY
-    3
+    1
 )
 SELECT
   _s16.s_name COLLATE utf8mb4_bin AS season_name,

@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
     SUBSTRING(n_name, 1, 1) AS expr_1,
-    COUNT(*) AS n_rows,
-    n_regionkey
+    n_regionkey,
+    COUNT(*) AS n_rows
   FROM tpch.nation
   GROUP BY
     1,
-    3
+    2
 )
 SELECT
   region.r_name AS name,

@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    o_custkey,
     MIN(o_orderdate) AS min_o_orderdate,
-    COUNT(*) AS n_rows,
-    o_custkey
+    COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
-    3
+    1
 ), _t2 AS (
   SELECT
     MIN(customer.c_acctbal) OVER () AS min_bal,

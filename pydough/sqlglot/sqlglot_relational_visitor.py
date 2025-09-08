@@ -6,6 +6,7 @@ SQLGlot query.
 import warnings
 from collections import defaultdict
 
+from sqlglot.expressions import AggFunc as SQLGlotAggFunc
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -46,10 +47,11 @@ from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVi
 __all__ = ["SQLGlotRelationalVisitor"]
 
 
-def expr_sort_key(expr: SQLGlotExpression) -> str:
+def expr_sort_key(expr: SQLGlotExpression) -> tuple[bool, str]:
     """
     A key function for sorting SQLGlot expressions. This is used to
-    ensure that the expressions are sorted in a consistent order.
+    ensure that the expressions are sorted in a consistent order alphabetically,
+    with non-aggregate expressions appearing before aggregate expressions.
 
     Args:
         `expr`: The expression to sort.
@@ -57,10 +59,13 @@ def expr_sort_key(expr: SQLGlotExpression) -> str:
     Returns:
         The string representation of the expression.
     """
+    is_aggregate: bool = expr.find(SQLGlotAggFunc) is not None
+    name: str
     if isinstance(expr, SQLGlotAlias):
-        return repr(expr.alias)
+        name = repr(expr.alias)
     else:
-        return repr(expr)
+        name = repr(expr)
+    return (is_aggregate, name)
 
 
 class SQLGlotRelationalVisitor(RelationalVisitor):
@@ -226,7 +231,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             conditions.
             `sort`: If True, the existing columns in the original SELECT
             statement get sorted alphabetically by their string representation
-            (repr).
+            (repr), with non-aggregate columns appearing before aggregate
+            columns.
 
         Returns:
             A final select statement that may contain the merged columns.
@@ -331,7 +337,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             `column_exprs`: The columns to select.
             `alias`: The alias to give the subquery.
             `sort`: If True, the final select statement ordering is based on the
-                sorted string representation of input column expressions.
+                sorted string representation of input column expressions, with
+                aggregate columns appearing after non-aggregate columns.
 
         Returns:
             A select statement representing the subquery.
