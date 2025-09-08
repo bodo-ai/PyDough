@@ -3296,7 +3296,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_5,
             None,
             re.escape(
-                "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions'. Did you mean: nations, comment, key?"
+                "Cannot have term name 'name' used in an ancestor of collection TPCH.regions.CALCULATE(name=name).TPCH.regions"
             ),
             id="bad_cross_5",
         ),
