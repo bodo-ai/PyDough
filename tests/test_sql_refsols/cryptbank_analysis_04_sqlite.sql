@@ -1,12 +1,12 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    t_sourceaccount
+    t_sourceaccount,
+    COUNT(*) AS n_rows
   FROM crbnk.transactions
   WHERE
     t_amount > 9000.0
   GROUP BY
-    2
+    1
 )
 SELECT
   accounts.a_key AS key,

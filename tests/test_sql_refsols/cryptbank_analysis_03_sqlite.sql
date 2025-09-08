@@ -43,13 +43,13 @@ WITH _s0 AS (
     ON _s2.a_branchkey = _t4.b_key
 ), _s7 AS (
   SELECT
-    SUM(t_amount) AS sum_t_amount,
-    a_custkey
+    a_custkey,
+    SUM(t_amount) AS sum_t_amount
   FROM _t
   WHERE
     _w = 1
   GROUP BY
-    2
+    1
 ), _t_2 AS (
   SELECT
     _s8.a_custkey,
@@ -64,13 +64,13 @@ WITH _s0 AS (
     ON _s10.a_branchkey = _t8.b_key
 ), _s15 AS (
   SELECT
-    SUM(t_amount) AS sum_t_amount,
-    a_custkey
+    a_custkey,
+    SUM(t_amount) AS sum_t_amount
   FROM _t_2
   WHERE
     _w = 1
   GROUP BY
-    2
+    1
 )
 SELECT
   customers.c_key AS key,

@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    SUM(a_balance) AS sum_a_balance,
-    a_branchkey
+    a_branchkey,
+    SUM(a_balance) AS sum_a_balance
   FROM crbnk.accounts
   GROUP BY
-    2
+    1
 )
 SELECT
   branches.b_key AS branch_key,
