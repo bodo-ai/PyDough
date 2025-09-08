@@ -3120,7 +3120,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, key, name, address, phone, nation?"
+                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, key, name, address, phone?"
             ),
             id="bad_name_6",
         ),
@@ -3176,7 +3176,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_13,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, name, orders, address, key, phone, nation, nation_key?"
+                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, name, orders, address, key?"
             ),
             id="bad_name_13",
         ),
@@ -3200,7 +3200,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_16,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: name, key, comment, nation, orders, phone, address?"
+                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: name, key, comment, nation, orders?"
             ),
             id="bad_name_16",
         ),
