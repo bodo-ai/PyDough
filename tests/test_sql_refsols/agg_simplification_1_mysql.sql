@@ -1,5 +1,6 @@
 WITH _t1 AS (
   SELECT
+    sbtickerexchange AS sbTickerExchange,
     CASE
       WHEN ABS(
         (
@@ -150,8 +151,7 @@ WITH _t1 AS (
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) DESC)
       THEN CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
       ELSE NULL
-    END AS expr_87,
-    sbtickerexchange AS sbTickerExchange
+    END AS expr_87
   FROM main.sbTicker
 ), _t0 AS (
   SELECT

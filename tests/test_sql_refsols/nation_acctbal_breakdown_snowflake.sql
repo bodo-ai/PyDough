@@ -1,21 +1,21 @@
 WITH _s3 AS (
   SELECT
-    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_0,
-    MEDIAN(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS agg_2,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_3,
-    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS agg_4,
+    c_nationkey,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal,
     MEDIAN(c_acctbal) AS median_c_acctbal,
-    c_nationkey
+    MEDIAN(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS median_negative_acctbal,
+    MEDIAN(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS median_non_negative_acctbal
   FROM tpch.customer
   GROUP BY
-    6
+    1
 )
 SELECT
   nation.n_name AS nation_name,
-  _s3.agg_4 AS n_red_acctbal,
-  _s3.agg_3 AS n_black_acctbal,
-  _s3.agg_2 AS median_red_acctbal,
-  _s3.agg_0 AS median_black_acctbal,
+  _s3.count_negative_acctbal AS n_red_acctbal,
+  _s3.count_non_negative_acctbal AS n_black_acctbal,
+  _s3.median_negative_acctbal AS median_red_acctbal,
+  _s3.median_non_negative_acctbal AS median_black_acctbal,
   _s3.median_c_acctbal AS median_overall_acctbal
 FROM tpch.nation AS nation
 JOIN tpch.region AS region

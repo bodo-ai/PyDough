@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    SUM(sale_price) AS sum_sale_price,
-    salesperson_id
+    salesperson_id,
+    SUM(sale_price) AS sum_sale_price
   FROM main.sales
   GROUP BY
-    2
+    1
 )
 SELECT
   salespersons._id,

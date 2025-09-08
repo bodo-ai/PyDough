@@ -1,9 +1,9 @@
 WITH _t3 AS (
   SELECT
+    sbtxdatetime,
     (
       100.0 * SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP)) ORDER BY sbtxdatetime ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)
-    ) / SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))) AS pct_of_day,
-    sbtxdatetime
+    ) / SUM(sbtxshares) OVER (PARTITION BY DATE_TRUNC('DAY', CAST(sbtxdatetime AS TIMESTAMP))) AS pct_of_day
   FROM main.sbtransaction
   WHERE
     YEAR(CAST(sbtxdatetime AS TIMESTAMP)) = 2023

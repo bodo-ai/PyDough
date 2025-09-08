@@ -4,57 +4,57 @@ WITH _t2 AS (
   FROM main.INCIDENTS
 ), _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM _t2
   GROUP BY
-    2
+    1
 ), _s3 AS (
   SELECT
+    DEVICES.de_production_country_id,
     COUNT(*) AS n_rows,
-    SUM(_s1.n_rows) AS sum_n_rows,
-    DEVICES.de_production_country_id
+    SUM(_s1.n_rows) AS sum_n_rows
   FROM main.DEVICES AS DEVICES
   LEFT JOIN _s1 AS _s1
     ON DEVICES.de_id = _s1.in_device_id
   GROUP BY
-    3
+    1
 ), _s5 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM _t2
   GROUP BY
-    2
+    1
 ), _s7 AS (
   SELECT
+    DEVICES.de_purchase_country_id,
     COUNT(*) AS n_rows,
-    SUM(_s5.n_rows) AS sum_n_rows,
-    DEVICES.de_purchase_country_id
+    SUM(_s5.n_rows) AS sum_n_rows
   FROM main.DEVICES AS DEVICES
   LEFT JOIN _s5 AS _s5
     ON DEVICES.de_id = _s5.in_device_id
   GROUP BY
-    3
+    1
 ), _s11 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM _t2
   GROUP BY
-    2
+    1
 ), _s13 AS (
   SELECT
+    USERS.us_country_id,
     COUNT(*) AS n_rows,
-    SUM(_s11.n_rows) AS sum_n_rows,
-    USERS.us_country_id
+    SUM(_s11.n_rows) AS sum_n_rows
   FROM main.USERS AS USERS
   JOIN main.DEVICES AS DEVICES
     ON DEVICES.de_owner_id = USERS.us_id
   LEFT JOIN _s11 AS _s11
     ON DEVICES.de_id = _s11.in_device_id
   GROUP BY
-    3
+    1
 )
 SELECT
   COUNTRIES.co_name COLLATE utf8mb4_bin AS country_name,

@@ -9,6 +9,7 @@ WITH _s0 AS (
   LIMIT 5
 ), _t2 AS (
   SELECT
+    CUSTOMER.c_nationkey,
     CASE
       WHEN TRUNCATE(
         CAST(0.99 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
@@ -80,14 +81,14 @@ WITH _s0 AS (
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
       THEN ORDERS.o_totalprice
       ELSE NULL
-    END AS expr_9,
-    CUSTOMER.c_nationkey
+    END AS expr_9
   FROM tpch.CUSTOMER AS CUSTOMER
   JOIN tpch.ORDERS AS ORDERS
     ON CUSTOMER.c_custkey = ORDERS.o_custkey
     AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1998
 ), _s5 AS (
   SELECT
+    c_nationkey,
     MAX(expr_10) AS max_expr_10,
     MAX(expr_11) AS max_expr_11,
     MAX(expr_12) AS max_expr_12,
@@ -96,11 +97,10 @@ WITH _s0 AS (
     MAX(expr_15) AS max_expr_15,
     MAX(expr_16) AS max_expr_16,
     MAX(expr_17) AS max_expr_17,
-    MAX(expr_9) AS max_expr_9,
-    c_nationkey
+    MAX(expr_9) AS max_expr_9
   FROM _t2
   GROUP BY
-    10
+    1
 )
 SELECT
   REGION.r_name AS region_name,

@@ -1,10 +1,10 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM main.INCIDENTS
   GROUP BY
-    2
+    1
 )
 SELECT
   PRODUCTS.pr_brand COLLATE utf8mb4_bin AS brand,

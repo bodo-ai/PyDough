@@ -1,16 +1,16 @@
 WITH _t1 AS (
   SELECT
-    SUM(sbtxstatus = 'success') AS agg_1,
+    sbtxcustid AS sbTxCustId,
     COUNT(*) AS n_rows,
-    sbtxcustid AS sbTxCustId
+    SUM(sbtxstatus = 'success') AS sum_expr
   FROM main.sbTransaction
   GROUP BY
-    3
+    1
 )
 SELECT
   sbCustomer.sbcustname AS name,
   (
-    100.0 * COALESCE(_t1.agg_1, 0)
+    100.0 * COALESCE(_t1.sum_expr, 0)
   ) / _t1.n_rows AS success_rate
 FROM main.sbCustomer AS sbCustomer
 JOIN _t1 AS _t1

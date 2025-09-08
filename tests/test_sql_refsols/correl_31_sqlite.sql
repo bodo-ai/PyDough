@@ -1,5 +1,9 @@
 WITH _t1 AS (
   SELECT
+    lineitem.l_discount,
+    lineitem.l_extendedprice,
+    nation.n_name,
+    nation.n_nationkey,
     CASE
       WHEN ABS(
         (
@@ -18,11 +22,7 @@ WITH _t1 AS (
         1 - lineitem.l_discount
       )
       ELSE NULL
-    END AS expr_2,
-    lineitem.l_discount,
-    lineitem.l_extendedprice,
-    nation.n_name,
-    nation.n_nationkey
+    END AS expr_2
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'

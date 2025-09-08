@@ -5,9 +5,9 @@ WITH _s0 AS (
   FROM USERS
 ), _t2 AS (
   SELECT
+    _s0.user_id,
     ANY_VALUE(SEARCHES.search_user_id) AS anything_search_user_id,
-    ANY_VALUE(_s0.user_name) AS anything_user_name,
-    _s0.user_id
+    ANY_VALUE(_s0.user_name) AS anything_user_name
   FROM _s0 AS _s0
   JOIN SEARCHES AS SEARCHES
     ON SEARCHES.search_user_id = _s0.user_id
@@ -19,7 +19,7 @@ WITH _s0 AS (
     ON SEARCHES_2.search_user_id = _s7.user_id AND _s0.user_name <> _s7.user_name
   GROUP BY
     SEARCHES.search_id,
-    3
+    1
 )
 SELECT
   ANY_VALUE(anything_user_name) COLLATE utf8mb4_bin AS user_name,

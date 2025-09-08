@@ -1,5 +1,7 @@
 WITH _t1 AS (
   SELECT
+    CUSTOMER.c_acctbal,
+    NATION.n_regionkey,
     CASE
       WHEN ABS(
         (
@@ -38,28 +40,26 @@ WITH _t1 AS (
       ) < 1.0
       THEN CASE WHEN CUSTOMER.c_acctbal < 0 THEN CUSTOMER.c_acctbal ELSE NULL END
       ELSE NULL
-    END AS expr_7,
-    CUSTOMER.c_acctbal,
-    NATION.n_regionkey
+    END AS expr_7
   FROM tpch.NATION AS NATION
   JOIN tpch.CUSTOMER AS CUSTOMER
     ON CUSTOMER.c_nationkey = NATION.n_nationkey
 ), _s3 AS (
   SELECT
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS agg_3,
-    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS agg_4,
+    n_regionkey,
     AVG(expr_5) AS avg_expr_5,
     AVG(expr_6) AS avg_expr_6,
     AVG(expr_7) AS avg_expr_7,
-    n_regionkey
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal
   FROM _t1
   GROUP BY
-    6
+    1
 )
 SELECT
   REGION.r_name COLLATE utf8mb4_bin AS region_name,
-  _s3.agg_4 AS n_red_acctbal,
-  _s3.agg_3 AS n_black_acctbal,
+  _s3.count_negative_acctbal AS n_red_acctbal,
+  _s3.count_non_negative_acctbal AS n_black_acctbal,
   _s3.avg_expr_7 AS median_red_acctbal,
   _s3.avg_expr_5 AS median_black_acctbal,
   _s3.avg_expr_6 AS median_overall_acctbal

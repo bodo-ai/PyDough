@@ -1,5 +1,6 @@
 WITH _s5 AS (
   SELECT
+    nation.n_regionkey,
     CAST((
       SUM(CAST(customer.c_acctbal * orders.o_totalprice AS REAL) / 1000000.0) - CAST(SUM(customer.c_acctbal) * SUM(CAST(orders.o_totalprice AS REAL) / 1000000.0) AS REAL) / SUM(
         CASE
@@ -14,8 +15,7 @@ WITH _s5 AS (
         AND NOT customer.c_acctbal IS NULL
         THEN 1
       END
-    ) AS agg_0,
-    nation.n_regionkey
+    ) AS agg_0
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
     ON customer.c_mktsegment = 'BUILDING' AND customer.c_nationkey = nation.n_nationkey
@@ -24,7 +24,7 @@ WITH _s5 AS (
     AND customer.c_custkey = orders.o_custkey
     AND orders.o_orderpriority = '2-HIGH'
   GROUP BY
-    2
+    1
 )
 SELECT
   region.r_name AS region_name,

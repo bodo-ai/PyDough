@@ -17,9 +17,9 @@ WITH _t1 AS (
   FROM main.CALENDAR
 ), _s15 AS (
   SELECT
-    COUNT(*) AS n_rows,
     _s7.ca_dt,
-    _t6.co_name
+    _t6.co_name,
+    COUNT(*) AS n_rows
   FROM _t1 AS _t6
   CROSS JOIN _t4 AS _t7
   JOIN _s3 AS _s7
@@ -33,8 +33,8 @@ WITH _t1 AS (
     ON COUNTRIES.co_id = DEVICES.de_purchase_country_id
     AND COUNTRIES.co_name = _t6.co_name
   GROUP BY
-    2,
-    3
+    1,
+    2
 ), _s17 AS (
   SELECT
     STR_TO_DATE(CONCAT(YEAR(CAST(_s3.ca_dt AS DATETIME)), ' 1 1'), '%Y %c %e') AS start_of_year,

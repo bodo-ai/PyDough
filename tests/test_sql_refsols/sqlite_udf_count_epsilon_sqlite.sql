@@ -1,20 +1,20 @@
 WITH _t2 AS (
   SELECT
-    AVG(customer.c_acctbal) OVER (PARTITION BY nation.n_regionkey) AS avg_balance,
     customer.c_acctbal,
-    nation.n_regionkey
+    nation.n_regionkey,
+    AVG(customer.c_acctbal) OVER (PARTITION BY nation.n_regionkey) AS avg_balance
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
 ), _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    n_regionkey
+    n_regionkey,
+    COUNT(*) AS n_rows
   FROM _t2
   WHERE
     ABS(avg_balance - c_acctbal) <= avg_balance * 0.1
   GROUP BY
-    2
+    1
 )
 SELECT
   region.r_name AS name,

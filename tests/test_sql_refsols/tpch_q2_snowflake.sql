@@ -20,7 +20,7 @@ WITH _t1 AS (
   WHERE
     ENDSWITH(part.p_type, 'BRASS') AND part.p_size = 15
   QUALIFY
-    RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost) = 1
+    RANK() OVER (PARTITION BY ps_partkey ORDER BY partsupp.ps_supplycost) = 1
 )
 SELECT
   s_acctbal AS S_ACCTBAL,

@@ -1,13 +1,13 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    coupons.merchant_id
+    coupons.merchant_id,
+    COUNT(*) AS n_rows
   FROM main.coupons AS coupons
   JOIN main.merchants AS merchants
     ON DATEDIFF(MONTH, CAST(merchants.created_at AS DATETIME), CAST(coupons.created_at AS DATETIME)) = 0
     AND coupons.merchant_id = merchants.mid
   GROUP BY
-    2
+    1
 )
 SELECT
   merchants.mid AS merchant_id,

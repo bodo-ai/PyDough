@@ -12,7 +12,7 @@ WITH _s0 AS (
     n_name = 'GERMANY'
 ), _s8 AS (
   SELECT
-    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS agg_0
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_metric
   FROM tpch.partsupp AS partsupp
   JOIN _s0 AS _s0
     ON _s0.s_suppkey = partsupp.ps_suppkey
@@ -20,24 +20,24 @@ WITH _s0 AS (
     ON _s0.s_nationkey = _t2.n_nationkey
 ), _s9 AS (
   SELECT
-    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS agg_1,
-    partsupp.ps_partkey
+    partsupp.ps_partkey,
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr
   FROM tpch.partsupp AS partsupp
   JOIN _s0 AS _s4
     ON _s4.s_suppkey = partsupp.ps_suppkey
   JOIN _t2 AS _t4
     ON _s4.s_nationkey = _t4.n_nationkey
   GROUP BY
-    2
+    1
 )
 SELECT
   _s9.ps_partkey AS PS_PARTKEY,
-  COALESCE(_s9.agg_1, 0) AS VALUE
+  COALESCE(_s9.sum_expr, 0) AS VALUE
 FROM _s8 AS _s8
 JOIN _s9 AS _s9
   ON (
-    COALESCE(_s8.agg_0, 0) * 0.0001
-  ) < COALESCE(_s9.agg_1, 0)
+    COALESCE(_s8.sum_metric, 0) * 0.0001
+  ) < COALESCE(_s9.sum_expr, 0)
 ORDER BY
   2 DESC
 LIMIT 10

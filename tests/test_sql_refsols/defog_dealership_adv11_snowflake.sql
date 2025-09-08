@@ -1,12 +1,12 @@
 WITH _s0 AS (
   SELECT
-    SUM(sale_price) AS sum_sale_price,
-    car_id
+    car_id,
+    SUM(sale_price) AS sum_sale_price
   FROM main.sales
   WHERE
     YEAR(CAST(sale_date AS TIMESTAMP)) = 2023
   GROUP BY
-    2
+    1
 )
 SELECT
   (

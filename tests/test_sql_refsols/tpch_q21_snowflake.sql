@@ -10,20 +10,20 @@ WITH _t5 AS (
     l_commitdate < l_receiptdate
 ), _t3 AS (
   SELECT
-    ANY_VALUE(_t5.l_suppkey) AS anything_l_suppkey,
-    ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus,
     _t5.l_linenumber,
     _t5.l_orderkey,
-    orders.o_orderkey
+    orders.o_orderkey,
+    ANY_VALUE(_t5.l_suppkey) AS anything_l_suppkey,
+    ANY_VALUE(orders.o_orderstatus) AS anything_o_orderstatus
   FROM _t5 AS _t5
   JOIN tpch.orders AS orders
     ON _t5.l_orderkey = orders.o_orderkey
   JOIN tpch.lineitem AS lineitem
     ON _t5.l_suppkey <> lineitem.l_suppkey AND lineitem.l_orderkey = orders.o_orderkey
   GROUP BY
-    3,
-    4,
-    5
+    1,
+    2,
+    3
 ), _u_0 AS (
   SELECT
     _t6.l_linenumber AS _u_1,
@@ -42,8 +42,8 @@ WITH _t5 AS (
     3
 ), _s13 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    _t3.anything_l_suppkey
+    _t3.anything_l_suppkey,
+    COUNT(*) AS n_rows
   FROM _t3 AS _t3
   LEFT JOIN _u_0 AS _u_0
     ON _t3.l_linenumber = _u_0._u_1
@@ -52,7 +52,7 @@ WITH _t5 AS (
   WHERE
     _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
   GROUP BY
-    2
+    1
 )
 SELECT
   supplier.s_name AS S_NAME,
