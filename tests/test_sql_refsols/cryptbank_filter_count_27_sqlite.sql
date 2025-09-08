@@ -15,7 +15,7 @@ WHERE
     ) IS NULL
   )
   AND (
-    DATE(c_birthday, '+472 days') IS NULL OR c_lname <> UPPER('lopez')
+    DATE(c_birthday, '+472 days') IS NULL OR c_lname <> 'LOPEZ'
   )
   AND (
     LOWER(c_fname) LIKE '%a'
@@ -35,5 +35,5 @@ WHERE
   )
   AND (
     REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
-    OR c_lname <> UPPER('lopez')
+    OR c_lname <> 'LOPEZ'
   )
