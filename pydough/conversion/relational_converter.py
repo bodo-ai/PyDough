@@ -669,11 +669,20 @@ class RelTranslation:
                 join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
                     child.subtree.join_keys
                 )
+
+                # If handling the child of a partition, remove any join keys
+                # where the LHS is a simple reference, since those keys are
+                # guaranteed to be present due to the partitioning.
                 if (
                     isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
                     and child_idx == 0
                 ):
-                    join_keys = None
+                    new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+                    if join_keys is not None:
+                        for lhs_key, rhs_key in join_keys:
+                            if not isinstance(lhs_key, HybridRefExpr):
+                                new_join_keys.append((lhs_key, rhs_key))
+                    join_keys = new_join_keys if len(new_join_keys) > 0 else None
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
@@ -1461,11 +1470,7 @@ def optimize_relational_tree(
     # Run projection pullup to move projections as far up the tree as possible.
     # This is done as soon as possible to make joins redundant if they only
     # exist to compute a scalar projection and then link it with the data.
-    # print()
-    # print(root.to_tree_string())
     root = confirm_root(pullup_projections(root))
-    # print()
-    # print(root.to_tree_string())
 
     # Push filters down as far as possible
     root = confirm_root(push_filters(root, configs))
@@ -1556,14 +1561,11 @@ def convert_ast_to_relational(
     # keys.
     rel_translator: RelTranslation = RelTranslation()
     node = rel_translator.preprocess_root(node, columns)
-    # print()
-    # print(node.to_tree_string())
 
     # Convert the QDAG node to a hybrid tree, including any necessary
     # transformations such as de-correlation.
     hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
-    # print(hybrid)
 
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.

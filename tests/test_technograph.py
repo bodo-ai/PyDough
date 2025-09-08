@@ -455,7 +455,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
             id="country_x_year_combos",
         ),
         pytest.param(
-            # TODO: fix uniqueness of de-correlation for join
             PyDoughPandasTest(
                 "global_info = TechnoGraph.CALCULATE(selected_date=products.WHERE(name == 'AmethystCopper-I').SINGULAR().release_date)\n"
                 "selected_countries = countries.WHERE(~CONTAINS(name, 'C')).CALCULATE(country_name=name).PARTITION(name='country', by=country_name).CALCULATE(country_name)\n"
