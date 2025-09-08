@@ -1,0 +1,1188 @@
+[
+  {
+    "name": "FSI",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "accounts",
+        "type": "simple table",
+        "table path": "fsi.accounts",
+        "unique properties": [
+          "accountid"
+        ],
+        "properties": [
+          {
+            "name": "accountid",
+            "type": "table column",
+            "column name": "accountid",
+            "data type": "numeric",
+            "description": "The unique id for an account",
+            "sample values": [21704632, 69464903, 73933971, 27111159, 56024069],
+            "synonyms": ["account id"]
+          },
+          {
+            "name": "customerid",
+            "type": "table column",
+            "column name": "customerid",
+            "data type": "numeric",
+            "description": "ID of the customer who owns the account",
+            "sample values": [48327492, 9162074, 35890121, 77564388, 62914507],
+            "synonyms": ["customer id"]
+          },
+          {
+            "name": "accounttype",
+            "type": "table column",
+            "column name": "accounttype",
+            "data type": "string",
+            "description": "Type of the account",
+            "sample values": ["Checking", "Savings"],
+            "synonyms": ["account type"]
+          },
+          {
+            "name": "balance",
+            "type": "table column",
+            "column name": "balance",
+            "data type": "numeric",
+            "description": "Amount of money in the account",
+            "sample values": [1000.50, 14285.75, 26983.00, 7632.44],
+            "synonyms": ["account balance"]
+          },
+          {
+            "name": "currency",
+            "type": "table column",
+            "column name": "currency",
+            "data type": "string",
+            "description": "Currency of the account",
+            "sample values": ["USD", "EUR", "GBP"],
+            "synonyms": []
+          },
+          {
+            "name": "createddate",
+            "type": "table column",
+            "column name": "createddate",
+            "data type": "datetime",
+            "description": "The date the account was created",
+            "sample values": ["2021-05-23", "2025-06-15", "2023-07-01"],
+            "synonyms": ["date created", "entry date", "created on"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The current status of the account",
+            "sample values": ["Active", "Inactive"],
+            "synonyms": ["account status"]
+          }
+        ],
+        "description": "Contains information about bank accounts and its customer",
+        "synonyms": ["Financial metrics", "Banking information"]
+      },
+      {
+        "name": "loans",
+        "type": "simple table",
+        "table path": "fsi.loans",
+        "unique properties": [
+          "loanid"
+        ],
+        "properties": [
+          {
+            "name": "loanid",
+            "type": "table column",
+            "column name": "loanid",
+            "data type": "numeric",
+            "description": "The unique id for the loan",
+            "sample values": [52748912, 86320471, 19485763, 70931428],
+            "synonyms": ["loan id"]
+          },
+          {
+            "name": "customerid",
+            "type": "table column",
+            "column name": "customerid",
+            "data type": "numeric",
+            "description": "ID of the customer who owns the loan",
+            "sample values": [48327492, 9162074, 35890121, 77564388, 62914507],
+            "synonyms": ["customer id"]
+          },
+          {
+            "name": "loantype",
+            "type": "table column",
+            "column name": "loantype",
+            "data type": "string",
+            "description": "Type of the loan",
+            "sample values": ["Personal", "Mortgage", "Car", "Student"],
+            "synonyms": ["loan type"]
+          },
+          {
+            "name": "loanamount",
+            "type": "table column",
+            "column name": "loanamount",
+            "data type": "numeric",
+            "description": "The total amount of the loan",
+            "sample values": [72450.7, 15892, 89230.4, 26987],
+            "synonyms": ["loan amount"]
+          },
+          {
+            "name": "interestrate",
+            "type": "table column",
+            "column name": "interestrate",
+            "data type": "numeric",
+            "description": "The interest rate of the loan",
+            "sample values": [3.47, 7.88, 5.16, 2.93],
+            "synonyms": ["interest rate"]
+          },
+          {
+            "name": "loantermmonths",
+            "type": "table column",
+            "column name": "loantermmonths",
+            "data type": "numeric",
+            "description": "The duration of the loan in months",
+            "sample values": [12, 48, 120, 60, 240],
+            "synonyms": ["loan term", "loan period", "loan duration"]
+          },
+          {
+            "name": "monthlypayment",
+            "type": "table column",
+            "column name": "monthlypayment",
+            "data type": "numeric",
+            "description": "The monthly payment amount for the loan",
+            "sample values": [725.49, 1056.89, 805.82, 1280.02],
+            "synonyms": ["monthly payment"]
+          },
+          {
+            "name": "startdate",
+            "type": "table column",
+            "column name": "startdate",
+            "data type": "datetime",
+            "description": "The start date of the loan",
+            "sample values": ["2022-07-22", "2020-05-19", "2024-01-20"],
+            "synonyms": ["loan start date"]
+          },
+          {
+            "name": "enddate",
+            "type": "table column",
+            "column name": "enddate",
+            "data type": "datetime",
+            "description": "The end date of the loan",
+            "sample values": ["2023-02-10", "2025-03-12", "2024-10-17"],
+            "synonyms": ["loan end date"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The current status of the loan",
+            "sample values": ["Approved", "Pending", "Denied"],
+            "synonyms": []
+          }
+        ],
+        "description": "Contains information about loans and its customers",
+        "synonyms": ["loan details", "loan information"]
+      },
+      {
+        "name": "protected_customers",
+        "type": "simple table",
+        "table path": "fsi.protected_customers",
+        "unique properties": [
+          "customerid"
+        ],
+        "properties": [
+          {
+            "name": "customerid",
+            "type": "table column",
+            "column name": "customerid",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [48327492, 9162074, 35890121, 77564388, 62914507],
+            "synonyms": ["customer id"]
+          },
+          {
+            "name": "firstname",
+            "type": "masked table column",
+            "column name": "firstname",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_NAME({})",
+            "protect protocol": "PTY_PROTECT_NAME({})",
+            "description": "The first name of the customer",
+            "sample values": ["Alice", "Bob", "John", "Diana", "Ethan"],
+            "synonyms": ["customer first name"]
+          },
+          {
+            "name": "lastname",
+            "type": "masked table column",
+            "column name": "lastname",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_NAME({})",
+            "protect protocol": "PTY_PROTECT_NAME({})",
+            "description": "The last name of the customer",
+            "sample values": ["Smith", "Johnson", "Williams", "Jones", "Brown"],
+            "synonyms": ["customer last name"]
+          },
+          {
+            "name": "address",
+            "type": "masked table column",
+            "column name": "address",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT_ADDRESS({})",
+            "description": "The address of the customer",
+            "sample values": ["123 Main St", "456 Elm St", "789 Oak St"],
+            "synonyms": ["customer address"]
+          },
+          {
+            "name": "city",
+            "type": "table column",
+            "column name": "city",
+            "data type": "string",
+            "description": "The city where the customer resides",
+            "sample values": ["Amandamouth", "South Mark"],
+            "synonyms": ["customer city"]
+          },
+          {
+            "name": "state",
+            "type": "table column",
+            "column name": "state",
+            "data type": "string",
+            "description": "The state where the customer resides",
+            "sample values": ["California", "Texas", "New York"],
+            "synonyms": ["customer state"]
+          },
+          {
+            "name": "zipcode",
+            "type": "table column",
+            "column name": "zipcode",
+            "data type": "numeric",
+            "description": "The zip code of the customer",
+            "sample values": [1337, 57457, 97142],
+            "synonyms": ["zip code"]
+          },
+          {
+            "name": "email",
+            "type": "masked table column",
+            "column name": "email",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_EMAIL({})",
+            "protect protocol": "PTY_PROTECT_EMAIL({})",
+            "description": "The email address of the customer",
+            "sample values": ["alice@example.com", "bob@example.net", "john@example.org"],
+            "synonyms": ["customer email"]
+          },
+          {
+            "name": "phonenumber",
+            "type": "masked table column",
+            "column name": "phonenumber",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_PHONE({})",
+            "protect protocol": "PTY_PROTECT_PHONE({})",
+            "description": "The phone number of the customer",
+            "sample values": ["123-456-7890", "987-654-3210"],
+            "synonyms": ["customer phone number"]
+          },
+          {
+            "name": "dob",
+            "type": "table column",
+            "column name": "dob",
+            "data type": "datetime",
+            "description": "The date of birth of the customer",
+            "sample values": ["1994-02-26", "2004-12-29", "1958-01-11"],
+            "synonyms": ["birthday", "birth date", "date of birth"]
+          },
+          {
+            "name": "taxid",
+            "type": "table column",
+            "column name": "taxid",
+            "data type": "numeric",
+            "description": "The tax identification number of the customer",
+            "sample values": [123456789, 987654321, 456789123],
+            "synonyms": ["tax ID", "tax identification number"]
+          },
+          {
+            "name": "bankroutingnumber",
+            "type": "table column",
+            "column name": "bankroutingnumber",
+            "data type": "numeric",
+            "description": "The bank routing number of the customer",
+            "sample values": [852333803, 122615510, 23254333],
+            "synonyms": ["bank routing number"]
+          },
+          {
+            "name": "bankaccountnumber",
+            "type": "table column",
+            "column name": "bankaccountnumber",
+            "data type": "numeric",
+            "description": "The bank account number of the customer",
+            "sample values": [625383440462, 931906552317, 456789123456],
+            "synonyms": ["bank account number"]
+          },
+          {
+            "name": "bankaccountbalance",
+            "type": "table column",
+            "column name": "bankaccountbalance",
+            "data type": "numeric",
+            "description": "The bank account balance of the customer",
+            "sample values": [41273.00, 1371.10, 29939.51],
+            "synonyms": ["bank account balance"]
+          },
+          {
+            "name": "creditcardnumber",
+            "type": "table column",
+            "column name": "creditcardnumber",
+            "data type": "numeric",
+            "description": "The credit card number of the customer",
+            "sample values": [4532015112830366, 3587568684607485, 6011514433546201],
+            "synonyms": ["credit card number"]
+          },
+          {
+            "name": "creditcardpin",
+            "type": "table column",
+            "column name": "creditcardpin",
+            "data type": "numeric",
+            "description": "The credit card PIN of the customer",
+            "sample values": [1795, 5678, 9012],
+            "synonyms": ["credit card pin", "pin number"]
+          },
+          {
+            "name": "creditcardexpdate",
+            "type": "table column",
+            "column name": "creditcardexpdate",
+            "data type": "string",
+            "description": "The expiration date of the credit card",
+            "sample values": ["04/34", "06/26", "10/28"],
+            "synonyms": ["credit card expiration date"]
+          },
+          {
+            "name": "iban",
+            "type": "table column",
+            "column name": "iban",
+            "data type": "string",
+            "description": "International Bank Account Number of the customer",
+            "sample values": ["GB90PFYV33817537247305", "GB32ZCGT19535303068028"],
+            "synonyms": ["International Bank Account Number"]
+          },
+          {
+            "name": "swift",
+            "type": "table column",
+            "column name": "swift",
+            "data type": "string",
+            "description": "SWIFT/BIC code of the customer's bank",
+            "sample values": ["WDUNGBSBA1D", "TLVDGBR1"],
+            "synonyms": []
+          }
+        ],
+        "description": "Contains customer personal and financial information",
+        "synonyms": ["customers", "clients", "customer data"]
+      },
+      {
+        "name": "transactions",
+        "type": "simple table",
+        "table path": "fsi.transactions",
+        "unique properties": [
+          "transactionid"
+        ],
+        "properties": [
+          {
+            "name": "transactionid",
+            "type": "table column",
+            "column name": "transactionid",
+            "data type": "numeric",
+            "description": "The unique id for each transaction",
+            "sample values": [48372915, 76210483, 19583726, 89432057, 67120589],
+            "synonyms": ["transaction id"]
+          },
+          {
+            "name": "accountid",
+            "type": "table column",
+            "column name": "accountid",
+            "data type": "numeric",
+            "description": "ID of the account for the transaction",
+            "sample values": [21704632, 69464903, 73933971, 27111159, 56024069],
+            "synonyms": ["account id"]
+          },
+          {
+            "name": "transactiondate",
+            "type": "table column",
+            "column name": "transactiondate",
+            "data type": "datetime",
+            "description": "Date when the transaction occurred",
+            "sample values": [ "2025-04-17", "2025-02-07", "2025-06-10"],
+            "synonyms": ["transaction date"]
+          },
+          {
+            "name": "amount",
+            "type": "table column",
+            "column name": "amount",
+            "data type": "numeric",
+            "description": "The amount of money involved in the transaction",
+            "sample values": [-2025.12, 604.20, -1743.14, -861.13, 3800.34],
+            "synonyms": ["amount of money", "transaction amount"]
+          },
+          {
+            "name": "transactiontype",
+            "type": "table column",
+            "column name": "transactiontype",
+            "data type": "string",
+            "description": "The type of the transaction",
+            "sample values": ["Transfer", "Withdrawal", "Deposit"],
+            "synonyms": ["transaction type"]
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "A brief description of the transaction",
+            "sample values": ["Treatment throw total offer.", "Point term probably."],
+            "synonyms": ["transaction description"]
+          }
+        ],
+        "description": "Stores records of all financial transactions", 
+        "synonyms": []
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "customers_to_accounts",
+        "parent collection": "protected_customers",
+        "child collection": "accounts",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "customerid": [
+            "customerid"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "accounts_to_customers",
+        "original parent": "protected_customers",
+        "original property": "customers_to_accounts",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "protected_customers_to_accounts",
+        "parent collection": "protected_customers",
+        "child collection": "accounts",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "customerid": [
+            "customerid"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "accounts_to_protected_customers",
+        "original parent": "protected_customers",
+        "original property": "protected_customers_to_accounts",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "customers_to_loans",
+        "parent collection": "protected_customers",
+        "child collection": "loans",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "customerid": [
+            "customerid"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "loans_to_customers",
+        "original parent": "protected_customers",
+        "original property": "customers_to_loans",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "protected_customers_to_loans",
+        "parent collection": "protected_customers",
+        "child collection": "loans",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "customerid": [
+            "customerid"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "loans_to_protected_customers",
+        "original parent": "protected_customers",
+        "original property": "protected_customers_to_loans",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "accounts_to_transactions",
+        "parent collection": "accounts",
+        "child collection": "transactions",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "accountid": [
+            "accountid"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "transactions_to_accounts",
+        "original parent": "accounts",
+        "original property": "accounts_to_transactions",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      }
+    ]
+  },
+  {
+    "name": "HEALTH",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "claims",
+        "type": "simple table",
+        "table path": "health.claims",
+        "unique properties": [
+          "claim_id"
+        ],
+        "properties": [
+          {
+            "name": "claim_id",
+            "type": "table column",
+            "column name": "claim_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "patient_id",
+            "type": "table column",
+            "column name": "patient_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "claim_date",
+            "type": "table column",
+            "column name": "claim_date",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "provider_name",
+            "type": "table column",
+            "column name": "provider_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "diagnosis_code",
+            "type": "table column",
+            "column name": "diagnosis_code",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "procedure_code",
+            "type": "table column",
+            "column name": "procedure_code",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "claim_amount",
+            "type": "table column",
+            "column name": "claim_amount",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "approved_amount",
+            "type": "table column",
+            "column name": "approved_amount",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "claim_status",
+            "type": "table column",
+            "column name": "claim_status",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "insurance_plans",
+        "type": "simple table",
+        "table path": "health.insurance_plans",
+        "unique properties": [
+          "insurance_plan_id"
+        ],
+        "properties": [
+          {
+            "name": "insurance_plan_id",
+            "type": "table column",
+            "column name": "insurance_plan_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "plan_name",
+            "type": "table column",
+            "column name": "plan_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "coverage_type",
+            "type": "table column",
+            "column name": "coverage_type",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "coverage_limit",
+            "type": "table column",
+            "column name": "coverage_limit",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "co_pay_percentage",
+            "type": "table column",
+            "column name": "co_pay_percentage",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "deductible_amount",
+            "type": "table column",
+            "column name": "deductible_amount",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "protected_patients",
+        "type": "simple table",
+        "table path": "health.protected_patients",
+        "unique properties": [
+          "patient_id"
+        ],
+        "properties": [
+          {
+            "name": "patient_id",
+            "type": "table column",
+            "column name": "patient_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "first_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "last_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "date_of_birth",
+            "type": "table column",
+            "column name": "date_of_birth",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "gender",
+            "type": "table column",
+            "column name": "gender",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ssn",
+            "type": "table column",
+            "column name": "ssn",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "address",
+            "type": "table column",
+            "column name": "address",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "phone_number",
+            "type": "table column",
+            "column name": "phone_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "email",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "insurance_plan_id",
+            "type": "table column",
+            "column name": "insurance_plan_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "patients_to_claims",
+        "parent collection": "protected_patients",
+        "child collection": "claims",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "patient_id": [
+            "patient_id"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "claims_to_patients",
+        "original parent": "protected_patients",
+        "original property": "patients_to_claims",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "insurance_plans_to_protected_patients",
+        "parent collection": "insurance_plans",
+        "child collection": "protected_patients",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "insurance_plan_id": [
+            "insurance_plan_id"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "protected_patients_to_insurance_plans",
+        "original parent": "insurance_plans",
+        "original property": "insurance_plans_to_protected_patients",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      }
+    ]
+  },
+  {
+    "name": "RETAIL",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "protected_loyalty_members",
+        "type": "simple table",
+        "table path": "retail.protected_loyalty_members",
+        "unique properties": [
+          "customer_id"
+        ],
+        "properties": [
+          {
+            "name": "customer_id",
+            "type": "table column",
+            "column name": "customer_id",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "first_name",
+            "type": "table column",
+            "column name": "first_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "last_name",
+            "type": "table column",
+            "column name": "last_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "email",
+            "type": "table column",
+            "column name": "email",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "phone_number",
+            "type": "table column",
+            "column name": "phone_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "address",
+            "type": "table column",
+            "column name": "address",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "date_of_birth",
+            "type": "table column",
+            "column name": "date_of_birth",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "loyalty_card_number",
+            "type": "table column",
+            "column name": "loyalty_card_number",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "loyalty_tier",
+            "type": "table column",
+            "column name": "loyalty_tier",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "join_date",
+            "type": "table column",
+            "column name": "join_date",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "transactions",
+        "type": "simple table",
+        "table path": "retail.transactions",
+        "unique properties": [
+          "transaction_id"
+        ],
+        "properties": [
+          {
+            "name": "transaction_id",
+            "type": "table column",
+            "column name": "transaction_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "customer_id",
+            "type": "table column",
+            "column name": "customer_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "transaction_date",
+            "type": "table column",
+            "column name": "transaction_date",
+            "data type": "datetime",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "store_location",
+            "type": "table column",
+            "column name": "store_location",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "total_amount",
+            "type": "table column",
+            "column name": "total_amount",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "payment_method",
+            "type": "table column",
+            "column name": "payment_method",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "transaction_items",
+        "type": "simple table",
+        "table path": "retail.transaction_items",
+        "unique properties": [
+          "item_id"
+        ],
+        "properties": [
+          {
+            "name": "item_id",
+            "type": "table column",
+            "column name": "item_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "transaction_id",
+            "type": "table column",
+            "column name": "transaction_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "product_name",
+            "type": "table column",
+            "column name": "product_name",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "product_category",
+            "type": "table column",
+            "column name": "product_category",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "quantity",
+            "type": "table column",
+            "column name": "quantity",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "unit_price",
+            "type": "table column",
+            "column name": "unit_price",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "loyalty_members_to_transactions",
+        "parent collection": "protected_loyalty_members",
+        "child collection": "transactions",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "customer_id": [
+            "customer_id"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "transactions_to_loyalty_members",
+        "original parent": "protected_loyalty_members",
+        "original property": "loyalty_members_to_transactions",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "transactions_to_transaction_items",
+        "parent collection": "transactions",
+        "child collection": "transaction_items",
+        "singular": true,
+        "always matches": true,
+        "keys": {
+          "transaction_id": [
+            "transaction_id"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "transaction_items_to_transactions",
+        "original parent": "transactions",
+        "original property": "transactions_to_transaction_items",
+        "singular": false,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      }
+    ]
+  }
+
+]
