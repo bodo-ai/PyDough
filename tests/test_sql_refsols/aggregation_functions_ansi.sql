@@ -17,8 +17,10 @@ WITH _s1 AS (
     MEDIAN(customer.c_acctbal) AS median_c_acctbal,
     MIN(customer.c_acctbal) AS min_c_acctbal,
     COUNT(DISTINCT customer.c_acctbal) AS ndistinct_c_acctbal,
+    STDDEV_POP(customer.c_acctbal) AS population_std_c_acctbal,
+    VARIANCE_POP(customer.c_acctbal) AS population_var_c_acctbal,
     STDDEV(customer.c_acctbal) AS sample_std_c_acctbal,
-    VARIANCE(customer.c_acctbal) AS sample_variance_c_acctbal,
+    VARIANCE(customer.c_acctbal) AS sample_var_c_acctbal,
     SUM(customer.c_acctbal) AS sum_c_acctbal,
     SUM(_s1.n_rows) AS sum_n_rows
   FROM tpch.customer AS customer
@@ -37,8 +39,10 @@ SELECT
   _t1.anything_c_acctbal AS anything_value,
   _t1.count_c_acctbal AS count_value,
   _t1.ndistinct_c_acctbal AS count_distinct_value,
-  _t1.sample_variance_c_acctbal AS variance_value,
-  _t1.sample_std_c_acctbal AS stddev_value
+  _t1.sample_var_c_acctbal AS variance_s_value,
+  _t1.population_var_c_acctbal AS variance_p_value,
+  _t1.sample_std_c_acctbal AS stddev_s_value,
+  _t1.population_std_c_acctbal AS stddev_p_value
 FROM tpch.nation AS nation
 JOIN _t1 AS _t1
   ON _t1.c_nationkey = nation.n_nationkey

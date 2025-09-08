@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=c_acctbal < RELSUM(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[], order=[]) & ABSENT(n_rows), columns={})
+  FILTER(condition=ABSENT(n_rows) & c_acctbal < RELSUM(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[], order=[]), columns={})
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'c_acctbal': t0.c_acctbal, 'n_rows': t1.n_rows})
     JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'c_acctbal': t0.c_acctbal, 'c_custkey': t0.c_custkey})
      SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_nationkey': c_nationkey})

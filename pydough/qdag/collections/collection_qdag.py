@@ -5,15 +5,13 @@ Base definition of all PyDough QDAG collection types.
 __all__ = ["PyDoughCollectionQDAG"]
 
 
-import re
 from abc import abstractmethod
 from collections.abc import Iterable
 from typing import Union
 
-import numpy as np
-
+import pydough
+from pydough.errors.error_utils import find_possible_name_matches
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions.collation_expression import CollationExpression
 from pydough.qdag.expressions.expression_qdag import PyDoughExpressionQDAG
 
@@ -170,8 +168,8 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         relative_context: PyDoughCollectionQDAG = self.starting_predecessor
         for expr in exprs:
             if not expr.is_singular(relative_context):
-                raise PyDoughQDAGException(
-                    f"Expected all terms in {self.standalone_string} to be singular, but encountered a plural expression: {expr.to_string()}"
+                raise pydough.active_session.error_builder.cardinality_error(
+                    collection=self, expr=expr
                 )
 
     @abstractmethod
@@ -222,9 +220,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         """
         term = self.get_term(term_name)
         if not isinstance(term, PyDoughExpressionQDAG):
-            raise PyDoughQDAGException(
-                f"Property {term_name!r} of {self} is not an expression"
-            )
+            raise pydough.active_session.error_builder.expected_expression(term)
         return term
 
     def get_collection(self, term_name: str) -> "PyDoughCollectionQDAG":
@@ -241,9 +237,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         """
         term = self.get_term(term_name)
         if not isinstance(term, PyDoughCollectionQDAG):
-            raise PyDoughQDAGException(
-                f"Property {term_name!r} of {self} is not a collection"
-            )
+            raise pydough.active_session.error_builder.expected_collection(term)
         return term
 
     @property
@@ -360,129 +354,77 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
         """
         return "\n".join(self.to_tree_form(True).to_string_rows())
 
-    def find_possible_name_matches(self, term_name: str) -> list[str]:
-        """
-        Finds and returns a list of candidate names that closely match the
-        given name based on minimum edit distance.
-
-        Args:
-            `term_name`: The name to match against the list of candidates.
-
-        Returns:
-            A list of candidate names, based on the closest matches.
-        """
-
-        terms_distance_list: list[tuple[float, str]] = []
-
-        for term in self.all_terms:
-            # get the minimum edit distance
-            me: float = self.min_edit_distance(term_name, term)
-            terms_distance_list.append((me, term))
-
-        if terms_distance_list == []:
-            return []
-        # sort the list by minimum edit distance break ties by name
-        terms_distance_list.sort()
-
-        closest_match = terms_distance_list[0]
-
-        # List with all names that have a me <= closest_match + 2
-        matches_within_2: list[str] = []
-        # List with all names that have a me <= closest_match * 1.1
-        matches_within_10_pct: list[str] = []
-        # List with the top 3 closest matches (me) breaking ties by name
-        matches_top_3: list[str] = [name for _, name in terms_distance_list[:3]]
-
-        # filtering the result
-        for me, name in terms_distance_list:
-            # all names that have a me <= closest_match + 2
-            if me <= closest_match[0] + 2:
-                matches_within_2.append(name)
-
-            # all names that have a me <= closest_match * 1.1
-            if me <= closest_match[0] * 1.1:
-                matches_within_10_pct.append(name)
-
-        # returning the larger
-        # using
-        return max(
-            [matches_within_2, matches_within_10_pct, matches_top_3],
-            key=lambda x: (len(x), x),
-        )
-
-    @staticmethod
-    def min_edit_distance(s: str, t: str) -> float:
-        """
-        Computes the minimum edit distance between two strings using the
-        Levenshtein distance algorithm. Substituting a character for the same
-        character with different capitalization is considered 10% of the edit
-        cost of replacing it with any other character. For this implementation
-        the iterative with a 2-row array is used to save memory.
-        Link:
-        https://en.wikipedia.org/wiki/Levenshtein_distance#Iterative_with_two_matrix_rows
-
-        Args:
-            `s`: The first string.
-            `t`: The second string.
-
-        Returns:
-            The minimum edit distance between the two strings.
-        """
-        # Ensures str1 is the shorter string
-        if len(s) > len(t):
-            s, t = t, s
-        m, n = len(s), len(t)
-
-        # Use a 2 x (m + 1) array to represent an n x (m + 1) array since you only
-        # need to consider the previous row to generate the next row, therefore the
-        # same two rows can be recycled
-
-        row, previousRow = 1, 0
-        arr = np.zeros((2, m + 1), dtype=float)
-
-        # MED(X, "") = len(X)
-        arr[0, :] = np.arange(m + 1)
-
-        for i in range(1, n + 1):
-            # MED("", X) = len(X)
-            arr[row, 0] = i
-
-            # Loop over the rest of s to see if it matches with the corresponding
-            # letter of t
-            for j in range(1, m + 1):
-                substitution_cost: float
-
-                if s[j - 1] == t[i - 1]:
-                    substitution_cost = 0.0
-                elif s[j - 1].lower() == t[i - 1].lower():
-                    substitution_cost = 0.1
-                else:
-                    substitution_cost = 1.0
-
-                arr[row, j] = min(
-                    arr[row, j - 1] + 1.0,
-                    arr[previousRow, j] + 1.0,
-                    arr[previousRow, j - 1] + substitution_cost,
-                )
-
-            row, previousRow = previousRow, row
-
-        return arr[previousRow, m]  # Return the last computed row's last element
-
-    def name_mismatch_error(self, term_name: str) -> str:
+    def name_mismatch_error(
+        self,
+        term_name: str,
+        atol: int = 2,
+        rtol: float = 0.1,
+        min_names: int = 3,
+        insert_cost: float = 1.0,
+        delete_cost: float = 1.0,
+        substitution_cost: float = 1.0,
+        capital_cost: float = 0.1,
+    ) -> str:
         """
         Raises a name mismatch error with suggestions if possible.
+
         Args:
-            term_name (str): The name of the term that caused the error.
+            `term_name`: The name of the term that caused the error.
+            `atol`: The absolute tolerance for the minimum edit distance when
+            determining whether to include a term as a suggestion; any term
+            names with a minimum edit distance less than or equal to
+            `closest_match + atol` will be included as a suggestion.
+            `rtol`: The relative tolerance for the minimum edit distance when
+            determining whether to include a term as a suggestion; any term
+            names with a minimum edit distance less than or equal to
+            `closest_match * (1 + rtol)` will be included as a suggestion.
+            `min_names`: The minimum number of suggestions to include.
+            `insert_cost`: The cost of inserting a character into the first
+            string.
+            `delete_cost`: The cost of deleting a character from the first
+            string.
+            `substitution_cost`: The cost of substituting a character.
+            `capital_cost`: The cost of substituting a character with the same
+            character with different capitalization.
+
+        Returns:
+            A string describing the error, including suggestions if available.
         """
 
         error_message: str = f"Unrecognized term of {self.to_string()}: {term_name!r}."
-        suggestions: list[str] = self.find_possible_name_matches(term_name=term_name)
+        suggestions: list[str] = find_possible_name_matches(
+            term_name=term_name,
+            candidates=self.all_terms,
+            atol=atol,
+            rtol=rtol,
+            min_names=min_names,
+            max_names=5,
+            insert_cost=insert_cost,
+            delete_cost=delete_cost,
+            substitution_cost=substitution_cost,
+            capital_cost=capital_cost,
+        )
 
         # Check if there are any suggestions to add
         if len(suggestions) > 0:
             suggestions_str: str = ", ".join(suggestions)
             error_message += f" Did you mean: {suggestions_str}?"
-            re.escape(error_message)
 
         return error_message
+
+    def verify_term_exists(self, term_name: str) -> None:
+        """
+        Verifies that a term exists in the collection, and raises an exception
+        if it does not.
+
+        Args:
+            `term_name`: The name of the term to check whether it exists within
+            the collection.
+
+        Raises:
+            `PyDoughException` if the term does not exist in the collection.
+        """
+        if term_name not in self.all_terms:
+            raise pydough.active_session.error_builder.term_not_found(
+                collection=self, term_name=term_name
+            )

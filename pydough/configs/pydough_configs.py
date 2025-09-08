@@ -7,6 +7,8 @@ __all__ = ["DayOfWeek", "PyDoughConfigs"]
 from enum import Enum
 from typing import Any, Generic, TypeVar
 
+from pydough.errors import PyDoughSessionException
+
 T = TypeVar("T")
 
 
@@ -126,5 +128,5 @@ class PyDoughConfigs:
 
     def __setattr__(self, name: str, value: Any) -> None:
         if name not in dir(self):
-            raise AttributeError(f"Unrecognized PyDough config name: {name}")
+            raise PyDoughSessionException(f"Unrecognized PyDough config name: {name}")
         super().__setattr__(name, value)

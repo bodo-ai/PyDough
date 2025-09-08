@@ -548,7 +548,6 @@ def region_intra_pct() -> tuple[CollectionTestInfo, str, str]:
             )
             ** CalculateInfo(
                 [SubCollectionInfo("parts")],
-                container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
@@ -1241,7 +1240,6 @@ def test_collections_calc_terms(
             )
             ** CalculateInfo(
                 [SubCollectionInfo("parts")],
-                container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),
@@ -1259,14 +1257,14 @@ def test_collections_calc_terms(
                     ],
                 ),
             ),
-            "TPCH.Partition(parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='containers', by=container).CALCULATE(container=container, total_price=SUM(parts.retail_price)).parts.CALCULATE(part_name=name, container=container, ratio=retail_price / total_price)",
+            "TPCH.Partition(parts.ORDER_BY(retail_price.DESC(na_pos='last')), name='containers', by=container).CALCULATE(total_price=SUM(parts.retail_price)).parts.CALCULATE(part_name=name, container=container, ratio=retail_price / total_price)",
             """
 ──┬─ TPCH
   ├─┬─ Partition[name='containers', by=container]
   │ └─┬─ AccessChild
   │   ├─── TableCollection[parts]
   │   └─── OrderBy[retail_price.DESC(na_pos='last')]
-  └─┬─ Calculate[container=container, total_price=SUM($1.retail_price)]
+  └─┬─ Calculate[total_price=SUM($1.retail_price)]
     ├─┬─ AccessChild
     │ └─── PartitionChild[parts]
     ├─── PartitionChild[parts]
@@ -2188,7 +2186,6 @@ def test_collections_to_string(
             )
             ** CalculateInfo(
                 [SubCollectionInfo("parts")],
-                container=ReferenceInfo("container"),
                 total_price=FunctionInfo(
                     "SUM", [ChildReferenceExpressionInfo("retail_price", 0)]
                 ),

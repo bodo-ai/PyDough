@@ -10,9 +10,9 @@ import inspect
 import types
 from typing import Any
 
+from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GraphMetadata
 
-from .errors import PyDoughUnqualifiedException
 from .unqualified_node import UnqualifiedNode
 
 
