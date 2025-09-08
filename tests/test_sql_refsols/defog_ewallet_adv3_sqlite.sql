@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    merchant_id
+    merchant_id,
+    COUNT(*) AS n_rows
   FROM main.coupons
   GROUP BY
-    2
+    1
 )
 SELECT
   merchants.name AS merchant_name,

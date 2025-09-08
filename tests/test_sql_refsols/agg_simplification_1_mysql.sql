@@ -1,5 +1,6 @@
 WITH _t1 AS (
   SELECT
+    sbtickerexchange AS sbTickerExchange,
     CASE
       WHEN ABS(
         (
@@ -150,8 +151,7 @@ WITH _t1 AS (
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) DESC)
       THEN CHAR_LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
       ELSE NULL
-    END AS expr_87,
-    sbtickerexchange AS sbTickerExchange
+    END AS expr_87
   FROM main.sbTicker
 ), _t0 AS (
   SELECT
@@ -163,36 +163,36 @@ WITH _t1 AS (
     AVG(expr_76) AS avg_expr_76,
     AVG(expr_77) AS avg_expr_77,
     AVG(expr_79) AS avg_expr_79,
-    COUNT(*) AS count_one,
     MAX(expr_80) AS max_expr_80,
     MAX(expr_81) AS max_expr_81,
     MAX(expr_82) AS max_expr_82,
     MAX(expr_83) AS max_expr_83,
     MAX(expr_84) AS max_expr_84,
     MAX(expr_85) AS max_expr_85,
-    MAX(expr_87) AS max_expr_87
+    MAX(expr_87) AS max_expr_87,
+    COUNT(*) AS n_rows
   FROM _t1
   GROUP BY
     1
 )
 SELECT
   aug_exchange,
-  count_one AS su1,
-  count_one * 2 AS su2,
-  count_one * -1 AS su3,
-  count_one * -3 AS su4,
+  n_rows AS su1,
+  n_rows * 2 AS su2,
+  n_rows * -1 AS su3,
+  n_rows * -3 AS su4,
   0 AS su5,
-  count_one * 0.5 AS su6,
+  n_rows * 0.5 AS su6,
   0 AS su7,
   COALESCE(aug_exchange, 0) AS su8,
-  count_one AS co1,
-  count_one AS co2,
-  count_one AS co3,
-  count_one AS co4,
-  count_one AS co5,
-  count_one AS co6,
+  n_rows AS co1,
+  n_rows AS co2,
+  n_rows AS co3,
+  n_rows AS co4,
+  n_rows AS co5,
+  n_rows AS co6,
   0 AS co7,
-  count_one * CASE WHEN NOT aug_exchange IS NULL THEN 1 ELSE 0 END AS co8,
+  n_rows * CASE WHEN NOT aug_exchange IS NULL THEN 1 ELSE 0 END AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,

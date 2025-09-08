@@ -10,9 +10,9 @@ WITH _s0 AS (
   FROM crbnk.customers
 ), _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
     _s2.b_key,
-    _s3.c_key
+    _s3.c_key,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s2
   JOIN _s1 AS _s3
     ON SUBSTRING(
@@ -75,8 +75,8 @@ WITH _s0 AS (
   JOIN crbnk.accounts AS accounts
     ON _s2.b_key = accounts.a_branchkey AND _s3.c_key = accounts.a_custkey
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   _s0.b_key AS branch_key,

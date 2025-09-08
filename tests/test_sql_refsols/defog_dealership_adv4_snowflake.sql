@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    car_id,
     COUNT(*) AS n_rows,
-    SUM(sale_price) AS sum_sale_price,
-    car_id
+    SUM(sale_price) AS sum_sale_price
   FROM main.sales
   WHERE
     sale_date >= DATEADD(DAY, -30, CURRENT_TIMESTAMP())
   GROUP BY
-    3
+    1
 )
 SELECT
   COALESCE(_s1.n_rows, 0) AS num_sales,

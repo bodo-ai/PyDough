@@ -3010,6 +3010,61 @@ def simple_cross_12():
     )
 
 
+def simple_cross_13():
+    # Silly case of crossing 2+ global contexts to get shared variables
+    return (
+        TPCH.CALCULATE(a="foo")
+        .CROSS(TPCH.CALCULATE(b="bar").CROSS(TPCH.CALCULATE(c="fizz")))
+        .CROSS(
+            (TPCH.CALCULATE(d="buzz").CROSS(TPCH.CALCULATE(e="foobar"))).CROSS(
+                TPCH.CALCULATE(f="fizzbuzz").CROSS(TPCH.CALCULATE(g="yay"))
+            )
+        )
+        .CALCULATE(a, b, c, d, e, f, g)
+    )
+
+
+def simple_cross_14():
+    # Using cross to introduce global variables instead of referencing an
+    # ancestor context. In this case, for each region accesses the name, a
+    # string 'foo', and counts how many nations in that region start with
+    # either A, B, or C.
+    global_vars = CROSS(TPCH.CALCULATE(x="foo", letters=["A", "B", "C"])).SINGULAR()
+    return regions.CALCULATE(
+        region_name=name,
+        x=global_vars.x,
+        n=COUNT(nations.WHERE(ISIN(name[:1], global_vars.letters))),
+    ).ORDER_BY(region_name.ASC())
+
+
+def simple_cross_15():
+    # Crossing 2+ partition clauses to get all distinct combinations of the
+    # grouping keys, which in this case are just a binary variable. Each clause
+    # is the regions grouped on whether the name of the region contains a
+    # specified letter, and the key is that latter (if present) or '_' (if not).
+    ra = (
+        regions.CALCULATE(a=IFF(CONTAINS(name, "A"), "A", "*"))
+        .PARTITION(name="a_groups", by=a)
+        .CALCULATE(a)
+    )
+    re = (
+        regions.CALCULATE(e=IFF(CONTAINS(name, "E"), "E", "*"))
+        .PARTITION(name="e_groups", by=e)
+        .CALCULATE(e)
+    )
+    ri = (
+        regions.CALCULATE(i=IFF(CONTAINS(name, "I"), "I", "*"))
+        .PARTITION(name="i_groups", by=i)
+        .CALCULATE(i)
+    )
+    ro = (
+        regions.CALCULATE(o=IFF(CONTAINS(name, "O"), "O", "*"))
+        .PARTITION(name="o_groups", by=o)
+        .CALCULATE(o)
+    )
+    return (ra.CROSS(re)).CROSS(ri.CROSS(ro)).CALCULATE(a, e, i, o).ORDER_BY(a, e, i, o)
+
+
 def quantile_function_test_1():
     selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
     return TPCH.CALCULATE(

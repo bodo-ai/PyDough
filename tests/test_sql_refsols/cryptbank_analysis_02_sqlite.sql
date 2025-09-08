@@ -24,13 +24,13 @@ WITH _t AS (
     AND accounts_2.a_branchkey = branches.b_key
 ), _s7 AS (
   SELECT
-    SUM(t_amount) AS sum_t_amount,
-    a_custkey
+    a_custkey,
+    SUM(t_amount) AS sum_t_amount
   FROM _t
   WHERE
     _w = 1
   GROUP BY
-    2
+    1
 )
 SELECT
   customers.c_key AS key,

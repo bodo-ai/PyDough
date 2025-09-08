@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    MIN(t_ts) AS min_t_ts,
-    t_sourceaccount
+    t_sourceaccount,
+    MIN(t_ts) AS min_t_ts
   FROM crbnk.transactions
   GROUP BY
-    2
+    1
 )
 SELECT
   ROUND(

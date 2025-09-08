@@ -6,8 +6,6 @@ of a child operator, e.g. `nations` in `regions(n_nations=COUNT(nations))`.
 __all__ = ["ChildReferenceCollection"]
 
 
-from functools import cache
-
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.expressions import CollationExpression
 
@@ -82,7 +80,6 @@ class ChildReferenceCollection(ChildAccess):
     def unique_terms(self) -> list[str]:
         return self.collection.unique_terms
 
-    @cache
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # A child reference collection is singular with regards to a context
         # if and only if the collection it refers to is singular with regard

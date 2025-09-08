@@ -1,5 +1,9 @@
 WITH _t2 AS (
   SELECT
+    eras.er_end_year,
+    eras.er_name,
+    eras.er_start_year,
+    events.ev_dt,
     CAST((
       JULIANDAY(DATE(events.ev_dt, 'start of day')) - JULIANDAY(
         DATE(
@@ -7,11 +11,7 @@ WITH _t2 AS (
           'start of day'
         )
       )
-    ) AS INTEGER) AS day_gap,
-    eras.er_end_year,
-    eras.er_name,
-    eras.er_start_year,
-    events.ev_dt
+    ) AS INTEGER) AS day_gap
   FROM eras AS eras
   JOIN events AS events
     ON eras.er_end_year > CAST(STRFTIME('%Y', events.ev_dt) AS INTEGER)

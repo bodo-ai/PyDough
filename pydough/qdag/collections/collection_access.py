@@ -6,8 +6,6 @@ of the current context.
 __all__ = ["CollectionAccess"]
 
 
-from functools import cache
-
 from pydough.metadata import (
     CollectionMetadata,
     PropertyMetadata,
@@ -105,7 +103,6 @@ class CollectionAccess(ChildAccess):
             raise PyDoughQDAGException(f"Unrecognized term of {self!r}: {expr_name!r}")
         return self._calc_property_order[expr_name]
 
-    @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
         # Special handling of terms down-streamed from an ancestor CALCULATE
         # clause.

@@ -1,5 +1,5 @@
-ROOT(columns=[('user_name', anything_anything_user_name), ('n_searches', n_searches)], orderings=[(n_searches):desc_last, (anything_anything_user_name):asc_first], limit=4:numeric)
- AGGREGATE(keys={'user_id': user_id}, aggregations={'anything_anything_user_name': ANYTHING(anything_user_name), 'n_searches': COUNT()})
+ROOT(columns=[('user_name', anything_anything_user_name), ('n_searches', n_rows)], orderings=[(n_rows):desc_last, (anything_anything_user_name):asc_first], limit=4:numeric)
+ AGGREGATE(keys={'user_id': user_id}, aggregations={'anything_anything_user_name': ANYTHING(anything_user_name), 'n_rows': COUNT()})
   FILTER(condition=user_id == anything_search_user_id, columns={'anything_user_name': anything_user_name, 'user_id': user_id})
    AGGREGATE(keys={'search_id': search_id, 'user_id': user_id}, aggregations={'anything_search_user_id': ANYTHING(search_user_id), 'anything_user_name': ANYTHING(user_name)})
     JOIN(condition=t1.user_name != t0.user_name & t0.user_id_8 == t1.user_id, type=INNER, cardinality=SINGULAR_FILTER, columns={'search_id': t0.search_id, 'search_user_id': t0.search_user_id, 'user_id': t0.user_id, 'user_name': t0.user_name})

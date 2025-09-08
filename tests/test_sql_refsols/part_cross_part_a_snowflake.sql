@@ -4,9 +4,9 @@ WITH _s0 AS (
   FROM main.sbticker
 ), _s9 AS (
   SELECT
-    COUNT(*) AS n_rows,
     sbcustomer.sbcustid,
-    _s2.sbtickerexchange
+    _s2.sbtickerexchange,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s2
   CROSS JOIN main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
@@ -15,8 +15,8 @@ WITH _s0 AS (
     ON _s2.sbtickerexchange = sbticker.sbtickerexchange
     AND sbticker.sbtickerid = sbtransaction.sbtxtickerid
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   sbcustomer.sbcuststate AS state,

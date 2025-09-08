@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.ORDERS
   WHERE
     NOT o_comment LIKE '%special%requests%'
   GROUP BY
-    2
+    1
 )
 SELECT
   COALESCE(_s1.n_rows, 0) AS C_COUNT,
