@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    sbdptickerid AS sbDpTickerId,
     COUNT(sbdpclose) AS count_sbDpClose,
-    SUM(sbdpclose) AS sum_sbDpClose,
-    sbdptickerid AS sbDpTickerId
+    SUM(sbdpclose) AS sum_sbDpClose
   FROM main.sbDailyPrice
   WHERE
     DATEDIFF(CURRENT_TIMESTAMP(), sbdpdate) <= 7
   GROUP BY
-    3
+    1
 )
 SELECT
   sbTicker.sbtickertype AS ticker_type,

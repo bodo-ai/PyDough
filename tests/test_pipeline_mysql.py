@@ -201,8 +201,8 @@ def defog_mysql_test_data(
     defog_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
 ) -> PyDoughPandasTest:
     """
-    Test data for e2e tests for the TPC-H queries. Returns an instance of
-    PyDoughPandasTest containing information about the test.
+    Modify reference solution data for some Defog queries.
+    Return an instance of PyDoughPandasTest containing the modified data.
     """
     if defog_custom_pipeline_test_data.test_name == "week_offset":
         return PyDoughPandasTest(
@@ -654,6 +654,7 @@ def test_pipeline_e2e_mysql_tpch_simple_week(
 def test_pipeline_e2e_mysql_defog_custom(
     defog_mysql_test_data: PyDoughPandasTest,
     get_mysql_defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
 ):
     """
@@ -662,6 +663,7 @@ def test_pipeline_e2e_mysql_defog_custom(
     defog_mysql_test_data.run_e2e_test(
         get_mysql_defog_graphs,
         mysql_conn_db_context(defog_mysql_test_data.graph_name.lower()),
+        config=defog_config,
         coerce_types=True,
     )
 

@@ -29,12 +29,12 @@ from tests.testing_utilities import (
     [
         pytest.param(
             TableCollectionInfo("Rainbows"),
-            "Unrecognized term of TPCH: 'Rainbows'. Did you mean: lines, nations, regions, parts, orders?",
+            "Unrecognized term of TPCH: 'Rainbows'. Did you mean: lines, nations, regions, parts",
             id="table_dne",
         ),
         pytest.param(
             TableCollectionInfo("regions") ** SubCollectionInfo("postage_stamps"),
-            "Unrecognized term of TPCH.regions: 'postage_stamps'. Did you mean: comment, nations, name, key?",
+            "Unrecognized term of TPCH.regions: 'postage_stamps'. Did you mean: name, comment, key, nations?",
             id="subcollection_dne",
         ),
         pytest.param(
@@ -47,7 +47,7 @@ from tests.testing_utilities import (
             TableCollectionInfo("nations")
             ** SubCollectionInfo("suppliers")
             ** CalculateInfo([], foo=ReferenceInfo("region_key")),
-            "Unrecognized term of TPCH.nations.suppliers: 'region_key'. Did you mean: nation_key, key, lines?",
+            "Unrecognized term of TPCH.nations.suppliers: 'region_key'. Did you mean: nation_key, key, lines, phone, nation?",
             id="reference_bad_ancestry",
         ),
         pytest.param(

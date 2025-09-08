@@ -1,4 +1,4 @@
-ROOT(columns=[('cust_key', c_custkey), ('n_orders', DEFAULT_TO(agg_1, 0:numeric)), ('n_no_tax_discount', DEFAULT_TO(n_rows, 0:numeric)), ('n_part_purchases', sum_n_rows)], orderings=[(c_custkey):asc_first], limit=5:numeric)
+ROOT(columns=[('cust_key', c_custkey), ('n_orders', DEFAULT_TO(agg_1, 0:numeric)), ('n_no_tax_discount', n_rows), ('n_part_purchases', sum_n_rows)], orderings=[(c_custkey):asc_first], limit=5:numeric)
  FILTER(condition=DEFAULT_TO(agg_1, 0:numeric) > RELAVG(args=[DEFAULT_TO(agg_1, 0:numeric)], partition=[], order=[]) & n_rows > 0:numeric, columns={'agg_1': agg_1, 'c_custkey': c_custkey, 'n_rows': n_rows, 'sum_n_rows': sum_n_rows})
   JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'agg_1': t0.n_rows, 'c_custkey': t0.c_custkey, 'n_rows': t1.n_rows, 'sum_n_rows': t0.sum_n_rows})
    LIMIT(limit=20:numeric, columns={'c_custkey': c_custkey, 'n_rows': n_rows, 'sum_n_rows': sum_n_rows}, orderings=[(c_custkey):asc_first])

@@ -9,8 +9,8 @@ import pytest
 
 from pydough import parse_json_metadata_from_file
 from pydough.configs import PyDoughConfigs
-from pydough.metadata import CollectionMetadata, GraphMetadata, PyDoughMetadataException
-from pydough.types.errors import PyDoughTypeException
+from pydough.errors import PyDoughMetadataException, PyDoughTypeException
+from pydough.metadata import CollectionMetadata, GraphMetadata
 from pydough.unqualified import UnqualifiedNode, qualify_node, transform_code
 from tests.testing_utilities import graph_fetcher
 
@@ -822,7 +822,7 @@ def test_invalid_graphs(
         ),
         pytest.param(
             "parent.sub4",
-            "Malformed general join condition: 'is_prime(self.j1) != is_prime(self.j2)' (PyDough nodes is_prime is not callable. Did you mean to use a function?)",
+            "Malformed general join condition: 'is_prime(self.j1) != is_prime(self.j2)' (PyDough object is_prime is not callable. Did you mean: ISIN, LIKE, SUM, SLICE, STRIP?)",
             id="bad_syntax_3",
         ),
         pytest.param(

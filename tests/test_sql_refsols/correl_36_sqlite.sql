@@ -5,7 +5,7 @@ WITH _s1 AS (
   FROM tpch.part
 ), _t0 AS (
   SELECT DISTINCT
-    orders.o_orderkey AS key_12,
+    orders.o_orderkey AS key,
     lineitem.l_linenumber,
     lineitem.l_orderkey
   FROM tpch.lineitem AS lineitem
@@ -28,21 +28,8 @@ WITH _s1 AS (
     AND customer.c_custkey = orders_2.o_custkey
     AND orders.o_orderpriority = orders_2.o_orderpriority
   JOIN tpch.lineitem AS lineitem_2
-    ON CASE
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 3
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 1
-      THEN 1
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 6
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 4
-      THEN 2
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 9
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 7
-      THEN 3
-      WHEN CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) <= 12
-      AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) >= 10
-      THEN 4
-    END = 1
-    AND CAST(STRFTIME('%Y', lineitem_2.l_shipdate) AS INTEGER) = 1997
+    ON CAST(STRFTIME('%Y', lineitem_2.l_shipdate) AS INTEGER) = 1997
+    AND CAST(STRFTIME('%m', lineitem_2.l_shipdate) AS INTEGER) IN (1, 2, 3)
     AND lineitem_2.l_orderkey = orders_2.o_orderkey
   JOIN _s1 AS _s17
     ON _s1.p_type = _s17.p_type AND _s17.p_partkey = lineitem_2.l_partkey

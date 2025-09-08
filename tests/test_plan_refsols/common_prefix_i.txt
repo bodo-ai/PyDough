@@ -1,4 +1,4 @@
-ROOT(columns=[('name', n_name), ('n_customers', n_rows), ('n_selected_orders', DEFAULT_TO(sum_n_rows, 0:numeric))], orderings=[(n_rows):desc_last, (n_name):asc_first], limit=5:numeric)
+ROOT(columns=[('name', n_name), ('n_customers', n_rows), ('n_selected_orders', sum_n_rows)], orderings=[(n_rows):desc_last, (n_name):asc_first], limit=5:numeric)
  JOIN(condition=t0.n_nationkey == t1.c_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_name': t0.n_name, 'n_rows': t1.n_rows, 'sum_n_rows': t1.sum_n_rows})
   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
   FILTER(condition=sum_n_rows > 0:numeric, columns={'c_nationkey': c_nationkey, 'n_rows': n_rows, 'sum_n_rows': sum_n_rows})

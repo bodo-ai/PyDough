@@ -412,10 +412,10 @@ INSERT INTO `notifications` (`id`, `user_id`, `message`, `type`, `status`, `crea
  (10, 8, 'Playtime! New games and toys have arrived', 'promotion', 'archived', CAST('2023-06-01 18:00:00' AS DATETIME), 'email', NULL, 'https://kidzplayhouse.com/new-arrivals'),
  (11, 9, 'Here''s $10 to start your glow up!', 'promotion', 'unread', CAST('2023-06-01 10:15:00' AS DATETIME), 'email', NULL, 'https://beautytrending.com/new-customer'),
  (12, 10, 'Your order #ord_mjs337 is being processed', 'transaction', 'read', CAST('2023-06-04 19:31:30' AS DATETIME), 'web_app', 'web_d8180kaf', 'https://gamerush.co/orders/32e2b29c'),
- (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', NOW() - INTERVAL 7 DAY, 'email', NULL, 'https://techmart.com/promo/TECH10'),
- (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', NOW() - INTERVAL 14 DAY, 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
- (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', NOW() - INTERVAL 21 DAY, 'email', NULL, 'https://fitlifegear.com/renew'),
- (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', NOW() - INTERVAL 7 DAY + INTERVAL 2 DAY, 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
+ (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY, 'email', NULL, 'https://techmart.com/promo/TECH10'),
+ (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 14 DAY, 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
+ (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 21 DAY, 'email', NULL, 'https://fitlifegear.com/renew'),
+ (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 2 DAY, 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
 
 INSERT INTO `user_sessions` (`user_id`, `session_start_ts`, `session_end_ts`, `device_type`, `device_id`) VALUES
  (1, CAST('2023-06-01 09:45:22' AS DATETIME), CAST('2023-06-01 10:20:35' AS DATETIME), 'mobile_app', 'mobile_8fh2k1'),
@@ -553,12 +553,17 @@ INSERT INTO `sales` (`_id`, `car_id`, `salesperson_id`, `customer_id`, `sale_pri
  (14, 2, 3, 1, 23200.00, SUBDATE(CURDATE(), INTERVAL 21 DAY)),
  (15, 8, 6, 12, 43500.00, SUBDATE(CURDATE(), INTERVAL 3 DAY)),
  (16, 10, 4, 2, 29500.00, SUBDATE(CURDATE(), INTERVAL 5 DAY)),
- (17, 3, 2, 3, 46000.00, SUBDATE(CURDATE(), INTERVAL 7 DAY) + INTERVAL 1 DAY),
- (18, 3, 2, 7, 47500.00, SUBDATE(CURDATE(), INTERVAL 7 DAY)),
- (19, 3, 2, 10, 46500.00, SUBDATE(CURDATE(), INTERVAL 7 DAY) - INTERVAL 1 DAY),
- (20, 4, 1, 3, 48000.00, SUBDATE(CURDATE(), INTERVAL 56 DAY) + INTERVAL 1 DAY),
- (21, 4, 1, 7, 45000.00, SUBDATE(CURDATE(), INTERVAL 56 DAY)),
- (22, 4, 1, 10, 49000.00, SUBDATE(CURDATE(), INTERVAL 56 DAY) - INTERVAL 1 DAY);
+ -- Expression to truncate the current date to the most recent Monday in MySQL:
+ --   `DT - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY`
+ -- Reason: MySQL's DAYOFWEEK() returns 1 for Sunday, 2 for Monday, ..., 7 for
+ -- Saturday. We subtract 2 so that Monday becomes 0, Tuesday becomes 1, etc.
+ -- and Sunday becomes -1 (which becomes 6 when taken modulo 7).
+ (17, 3, 2, 3, 46000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 1 DAY),
+ (18, 3, 2, 7, 47500.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY),
+ (19, 3, 2, 10, 46500.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY - INTERVAL 1 DAY),
+ (20, 4, 1, 3, 48000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY + INTERVAL 1 DAY),
+ (21, 4, 1, 7, 45000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY),
+ (22, 4, 1, 10, 49000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY - INTERVAL 1 DAY);
 
 INSERT INTO `inventory_snapshots` (`_id`, `snapshot_date`, `car_id`, `is_in_inventory`) VALUES
  (1, '2023-03-15', 1, TRUE),
@@ -603,12 +608,13 @@ INSERT INTO `payments_received` (`_id`, `sale_id`, `payment_date`, `payment_amou
  (15, 14, SUBDATE(CURDATE(), INTERVAL 1 DAY), 17200.00, 'financing'),
  (16, 15, SUBDATE(CURDATE(), INTERVAL 1 DAY), 37500.00, 'credit_card'),
  (17, 16, SUBDATE(CURDATE(), INTERVAL 5 DAY), 26500.00, 'debit_card'),
- (18, 17, SUBDATE(CURDATE(), INTERVAL 7 DAY) + INTERVAL 1 DAY, 115000.00, 'financing'),
- (19, 18, SUBDATE(CURDATE(), INTERVAL 7 DAY), 115000.00, 'credit_card'),
- (20, 19, SUBDATE(CURDATE(), INTERVAL 7 DAY) - INTERVAL 1 DAY, 115000.00, 'debit_card'),
- (21, 20, SUBDATE(CURDATE(), INTERVAL 56 DAY) + INTERVAL 1 DAY, 115000.00, 'cash'),
- (22, 21, SUBDATE(CURDATE(), INTERVAL 56 DAY), 115000.00, 'check'),
- (23, 22, SUBDATE(CURDATE(), INTERVAL 56 DAY) - INTERVAL 1 DAY, 115000.00, 'credit_card');
+ (18, 17, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 1 DAY, 115000.00, 'financing'),
+ (19, 18, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY, 115000.00, 'credit_card'),
+ (20, 19, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY - INTERVAL 1 DAY, 115000.00, 'debit_card'),
+ (21, 20, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY + INTERVAL 1 DAY, 115000.00, 'cash'),
+ (22, 21, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY, 115000.00, 'check'),
+ (23, 22, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY - INTERVAL 1 DAY, 115000.00, 'credit_card');
+
 
 INSERT INTO `payments_made` (`_id`, `vendor_name`, `payment_date`, `payment_amount`, `payment_method`, `invoice_number`, `invoice_date`, `due_date`) VALUES
  (1, 'Car Manufacturer Inc', '2023-03-01', 150000.00, 'bank_transfer', 'INV-001', '2023-02-25', '2023-03-25'),

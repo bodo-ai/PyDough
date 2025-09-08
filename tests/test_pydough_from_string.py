@@ -120,7 +120,7 @@ def test_tpch_data_e2e_from_string(
             None,
             None,
             re.escape(
-                "Syntax error in source PyDough code:\n'(' was never closed (<unknown>, line 1)"
+                "Syntax error in source PyDough code:\nresult = TPCH.CALCULATE(n_nations=COUNT(nations)\n'(' was never closed (<unknown>, line 1)"
             ),
             id="invalid_python_code",
         ),

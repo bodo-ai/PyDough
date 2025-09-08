@@ -1,15 +1,15 @@
 WITH _s1 AS (
   SELECT
+    sbdptickerid,
     COUNT(sbdpclose) AS count_sbdpclose,
-    SUM(sbdpclose) AS sum_sbdpclose,
-    sbdptickerid
+    SUM(sbdpclose) AS sum_sbdpclose
   FROM main.sbdailyprice
   WHERE
     CAST((
       JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sbdpdate, 'start of day'))
     ) AS INTEGER) <= 7
   GROUP BY
-    3
+    1
 )
 SELECT
   sbticker.sbtickertype AS ticker_type,

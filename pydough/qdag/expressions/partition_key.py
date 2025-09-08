@@ -6,8 +6,6 @@ as keys of a PARTITION BY clause.
 __all__ = ["PartitionKey"]
 
 
-from functools import cache
-
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
 from pydough.types import PyDoughType
@@ -52,7 +50,6 @@ class PartitionKey(PyDoughExpressionQDAG):
     def is_aggregation(self) -> bool:
         return self.expr.is_aggregation
 
-    @cache
     def is_singular(self, context: PyDoughQDAG) -> bool:
         # A partition key is singular with regards to a context if and only
         # if the PARTITION BY clause it corresponds to is also singular with

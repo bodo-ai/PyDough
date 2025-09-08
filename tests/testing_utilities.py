@@ -43,23 +43,19 @@ from pydough import init_pydough_context, to_df, to_sql
 from pydough.configs import PyDoughConfigs
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
+from pydough.errors import PyDoughTestingException
 from pydough.evaluation.evaluate_unqualified import _load_column_selection
 from pydough.metadata import GraphMetadata
 from pydough.pydough_operators import get_operator_by_name
 from pydough.qdag import (
     AstNodeBuilder,
-    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
-    OrderBy,
-    PartitionBy,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
     Singular,
-    TopK,
-    Where,
 )
 from pydough.relational import (
     ColumnReference,
@@ -247,7 +243,9 @@ class WindowInfo(AstNodeTestInfo):
             case "RANKING":
                 return f"{self.name}(by=({', '.join(collation_strings)}), levels={self.levels}{kwargs_str})"
             case _:
-                raise Exception(f"Unsupported window function {self.name}")
+                raise PyDoughTestingException(
+                    f"Unsupported window function {self.name}"
+                )
 
     def build(
         self,
@@ -273,7 +271,9 @@ class WindowInfo(AstNodeTestInfo):
                     self.kwargs,
                 )
             case _:
-                raise Exception(f"Unsupported window function {self.name}")
+                raise PyDoughTestingException(
+                    f"Unsupported window function {self.name}"
+                )
 
 
 class ReferenceInfo(AstNodeTestInfo):
@@ -632,13 +632,12 @@ class CalculateInfo(ChildOperatorInfo):
             builder,
             context,
         )
-        raw_calc: Calculate = builder.build_calculate(context, children)
         args: list[tuple[str, PyDoughExpressionQDAG]] = []
         for name, info in self.args:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             args.append((name, expr))
-        return raw_calc.with_terms(args)
+        return builder.build_calculate(context, children, args)
 
 
 class WhereInfo(ChildOperatorInfo):
@@ -664,12 +663,13 @@ class WhereInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception("Must provide a context when building a WHERE clause.")
+            raise PyDoughTestingException(
+                "Must provide a context when building a WHERE clause."
+            )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_where: Where = builder.build_where(context, children)
         cond = self.condition.build(builder, context, children)
         assert isinstance(cond, PyDoughExpressionQDAG)
-        return raw_where.with_condition(cond)
+        return builder.build_where(context, children, cond)
 
 
 class SingularInfo(ChildOperatorInfo):
@@ -696,7 +696,9 @@ class SingularInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception("Must provide a context when building a Singular clause.")
+            raise PyDoughTestingException(
+                "Must provide a context when building a Singular clause."
+            )
         raw_singular: Singular = builder.build_singular(context)
         return raw_singular
 
@@ -734,17 +736,16 @@ class OrderInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception(
+            raise PyDoughTestingException(
                 "Must provide context and children_contexts when building an ORDER BY clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_order: OrderBy = builder.build_order(context, children)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
-        return raw_order.with_collation(collation)
+        return builder.build_order(context, children, collation)
 
 
 class TopKInfo(ChildOperatorInfo):
@@ -783,17 +784,16 @@ class TopKInfo(ChildOperatorInfo):
         children_contexts: list[PyDoughCollectionQDAG] | None = None,
     ) -> PyDoughCollectionQDAG:
         if context is None:
-            raise Exception(
+            raise PyDoughTestingException(
                 "Must provide context and children_contexts when building a TOPK clause."
             )
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
-        raw_top_k: TopK = builder.build_top_k(context, children, self.records_to_keep)
         collation: list[CollationExpression] = []
         for info, asc, na_last in self.collation:
             expr = info.build(builder, context, children)
             assert isinstance(expr, PyDoughExpressionQDAG)
             collation.append(CollationExpression(expr, asc, na_last))
-        return raw_top_k.with_collation(collation)
+        return builder.build_top_k(context, children, self.records_to_keep, collation)
 
 
 class PartitionInfo(ChildOperatorInfo):
@@ -828,15 +828,12 @@ class PartitionInfo(ChildOperatorInfo):
             context = builder.build_global_context()
         children: list[PyDoughCollectionQDAG] = self.build_children(builder, context)
         assert len(children) == 1
-        raw_partition: PartitionBy = builder.build_partition(
-            context, children[0], self.name
-        )
         keys: list[ChildReferenceExpression] = []
         for info in self.keys:
             expr = info.build(builder, context, children)
             assert isinstance(expr, ChildReferenceExpression)
             keys.append(expr)
-        return raw_partition.with_keys(keys)
+        return builder.build_partition(context, children[0], self.name, keys)
 
 
 def make_relational_column_reference(
@@ -1043,6 +1040,12 @@ class PyDoughSQLComparisonTest:
             result = result.sort_values(by=list(result.columns)).reset_index(drop=True)
             refsol = refsol.sort_values(by=list(refsol.columns)).reset_index(drop=True)
 
+        # Harmonize types between result and reference solution
+        if coerce_types:
+            for col_name in result.columns:
+                result[col_name], refsol[col_name] = harmonize_types(
+                    result[col_name], refsol[col_name]
+                )
         # Perform the comparison between the result and the reference solution
         if coerce_types:
             for col_name in result.columns:
@@ -1380,6 +1383,12 @@ def harmonize_types(column_a, column_b):
         return column_a.apply(lambda x: "" if pd.isna(x) else str(x)), column_b.apply(
             lambda x: "" if pd.isna(x) else str(x)
         )
+    # float vs None. Convert to nullable floats
+    if any(isinstance(elem, (float, NoneType)) for elem in column_a) and any(
+        isinstance(elem, (float, NoneType)) for elem in column_b
+    ):
+        return column_a.astype("Float64"), column_b.astype("Float64")
+
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, int) for elem in column_b
     ):
@@ -1424,7 +1433,7 @@ def harmonize_types(column_a, column_b):
 
 
 def run_e2e_error_test(
-    pydough_impl: Callable[..., UnqualifiedNode],
+    pydough_impl: Callable[[], UnqualifiedNode] | str,
     error_message: str,
     graph: GraphMetadata,
     columns: dict[str, str] | list[str] | None = None,
@@ -1437,7 +1446,8 @@ def run_e2e_error_test(
     provided `error_message`.
 
     Args:
-        `pydough_impl`: The PyDough function to be tested.
+        `pydough_impl`: The PyDough function to be tested, or the string that
+        should be evaluated to obtain the PyDough code.
         `error_message`: The error message that is expected to be raised.
         `graph`: The metadata graph to use for the test.
         `columns`: The columns argument to use for the test, if any.

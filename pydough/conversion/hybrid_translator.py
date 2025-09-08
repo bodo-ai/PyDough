@@ -9,6 +9,7 @@ from collections.abc import Iterable
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
+from pydough.errors import PyDoughSQLException
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
@@ -90,7 +91,10 @@ class HybridTranslator:
         # If True, rewrites MEDIAN calls into an average of the 1-2 median rows
         # or rewrites QUANTILE calls to select the first qualifying row,
         # both derived from window functions, otherwise leaves as-is.
-        self.rewrite_median_quantile: bool = dialect not in {DatabaseDialect.ANSI}
+        self.rewrite_median_quantile: bool = dialect not in {
+            DatabaseDialect.ANSI,
+            DatabaseDialect.SNOWFLAKE,
+        }
 
     @staticmethod
     def get_subcollection_join_keys(
@@ -807,7 +811,7 @@ class HybridTranslator:
             or not isinstance(expr.args[1].literal.value, (int, float))
             or not (0.0 <= float(expr.args[1].literal.value) <= 1.0)
         ):
-            raise ValueError(
+            raise PyDoughSQLException(
                 f"Expected second argument to QUANTILE to be a numeric literal between 0 and 1, instead received {expr.args[1]!r}"
             )
 

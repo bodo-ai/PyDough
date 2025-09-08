@@ -1,5 +1,5 @@
-ROOT(columns=[('n', n)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n': COUNT()})
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
   FILTER(condition=c_acctbal < RELAVG(args=[c_acctbal], partition=[], order=[]), columns={})
    JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'c_acctbal': t1.c_acctbal})
     FILTER(condition=YEAR(o_orderdate) == 1995:numeric, columns={'o_custkey': o_custkey})

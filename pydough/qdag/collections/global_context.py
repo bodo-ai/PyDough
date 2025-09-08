@@ -7,13 +7,13 @@ graph.
 __all__ = ["TableCollection"]
 
 
+from pydough.errors import PyDoughQDAGException
 from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
 )
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughQDAGException
-from pydough.qdag.expressions import CollationExpression
+from pydough.qdag.expressions import BackReferenceExpression, CollationExpression
 
 from .collection_qdag import PyDoughCollectionQDAG
 from .collection_tree_form import CollectionTreeForm
@@ -33,6 +33,7 @@ class GlobalContext(PyDoughCollectionQDAG):
         self._graph = graph
         self._collections: dict[str, PyDoughCollectionQDAG] = {}
         self._ancestral_mapping: dict[str, int] = {}
+        self._all_terms: set[str] = set()
         # If this collection has an ancestor, inherit its ancestors
         # and update depths, to preserve sub-collection context.
         # This ensures that downstream operations have the correct hierarchy.
@@ -44,11 +45,13 @@ class GlobalContext(PyDoughCollectionQDAG):
                         f"Name {name!r} conflicts with a collection name in the graph {graph.name!r}"
                     )
                 else:
+                    self._all_terms.add(name)
                     self._ancestral_mapping[name] = level + 1
         for collection_name in graph.get_collection_names():
             meta = graph.get_collection(collection_name)
             assert isinstance(meta, CollectionMetadata)
             self._collections[collection_name] = TableCollection(meta, self)
+            self._all_terms.add(collection_name)
 
     @property
     def graph(self) -> GraphMetadata:
@@ -98,7 +101,7 @@ class GlobalContext(PyDoughCollectionQDAG):
 
     @property
     def all_terms(self) -> set[str]:
-        return set(self.collections)
+        return self._all_terms
 
     @property
     def ordering(self) -> list[CollationExpression] | None:
@@ -109,16 +112,23 @@ class GlobalContext(PyDoughCollectionQDAG):
         return []
 
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
-        raise PyDoughQDAGException(f"Cannot call is_singular on {self!r}")
+        return (
+            self.ancestor_context is None
+            or self.ancestor_context.starting_predecessor == context
+            or self.ancestor_context.is_singular(context)
+        )
 
     def get_expression_position(self, expr_name: str) -> int:
-        raise PyDoughQDAGException(f"Cannot call get_expression_position on {self!r}")
+        raise NotImplementedError(f"Cannot call get_expression_position on {self!r}")
 
     def get_term(self, term_name: str) -> PyDoughQDAG:
-        if term_name not in self.collections:
-            raise PyDoughQDAGException(self.name_mismatch_error(term_name))
-
-        return self.collections[term_name]
+        self.verify_term_exists(term_name)
+        if term_name in self.collections:
+            return self.collections[term_name]
+        else:
+            return BackReferenceExpression(
+                self, term_name, self.ancestral_mapping[term_name]
+            )
 
     @property
     def standalone_string(self) -> str:
@@ -157,4 +167,8 @@ class GlobalContext(PyDoughCollectionQDAG):
             return self.to_tree_form_isolated(is_last)
 
     def equals(self, other: object) -> bool:
-        return isinstance(other, GlobalContext) and self.graph == other.graph
+        return (
+            isinstance(other, GlobalContext)
+            and self.graph == other.graph
+            and self.ancestor_context == other.ancestor_context
+        )
