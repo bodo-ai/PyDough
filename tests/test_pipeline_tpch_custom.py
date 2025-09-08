@@ -2256,7 +2256,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_13",
             ),
             id="simple_cross_13",
-            marks=pytest.mark.skip("Skip pending gh#423"),
         ),
         pytest.param(
             PyDoughPandasTest(
