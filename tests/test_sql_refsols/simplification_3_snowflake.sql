@@ -1,6 +1,7 @@
 WITH _t1 AS (
   SELECT
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
+    sbcustpostalcode,
     AVG(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS ravg1,
     COALESCE(
       AVG(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
@@ -20,8 +21,7 @@ WITH _t1 AS (
     COALESCE(
       SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
-    ) AS rsum2,
-    sbcustpostalcode
+    ) AS rsum2
   FROM main.sbcustomer
 )
 SELECT

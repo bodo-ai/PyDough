@@ -331,7 +331,16 @@ class PyDoughErrorBuilder:
             # `name` or `idx`.
             if msg is None:
                 if ancestor_name not in ancestral_names:
-                    msg = f"unrecognized ancestor {ancestor_name!r}"
+                    alt_names: list[str] = []
+                    for idx, alt_name in enumerate(ancestral_names):
+                        if ancestral_names.count(alt_name) == 1:
+                            alt_names.append(repr(alt_name))
+                        else:
+                            alt_idx: int = (
+                                ancestral_names[idx + 1 :].count(alt_name) + 1
+                            )
+                            alt_names.append(repr(f"{alt_name}:{alt_idx}"))
+                    msg = f"unrecognized ancestor {ancestor_name!r}; did you mean one of: {', '.join(alt_names)}"
                 elif ancestor_idx is None and ancestral_names.count(ancestor_name) > 1:
                     msg = f"per-string {ancestor_name!r} is ambiguous in this context; use the form '{ancestor_name}:index' to disambiguate, where '{ancestor_name}:1' refers to the most recent ancestor"
                 else:

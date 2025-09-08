@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    sbdptickerid AS sbDpTickerId,
     MAX(sbdphigh) AS max_sbDpHigh,
-    MIN(sbdplow) AS min_sbDpLow,
-    sbdptickerid AS sbDpTickerId
+    MIN(sbdplow) AS min_sbDpLow
   FROM main.sbDailyPrice
   WHERE
     sbdpdate <= CAST('2023-04-04' AS DATE) AND sbdpdate >= CAST('2023-04-01' AS DATE)
   GROUP BY
-    3
+    1
 )
 SELECT
   sbTicker.sbtickersymbol AS symbol,

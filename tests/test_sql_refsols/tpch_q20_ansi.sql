@@ -1,12 +1,12 @@
 WITH _s3 AS (
   SELECT
-    SUM(l_quantity) AS sum_l_quantity,
-    l_partkey
+    l_partkey,
+    SUM(l_quantity) AS sum_l_quantity
   FROM tpch.lineitem
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS DATETIME)) = 1994
   GROUP BY
-    2
+    1
 ), _s5 AS (
   SELECT
     part.p_partkey,

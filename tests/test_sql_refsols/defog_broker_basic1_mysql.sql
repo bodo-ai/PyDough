@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    sbtxcustid AS sbTxCustId,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbTxAmount,
-    sbtxcustid AS sbTxCustId
+    SUM(sbtxamount) AS sum_sbTxAmount
   FROM main.sbTransaction
   WHERE
     sbtxdatetime >= CAST(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-30' DAY) AS DATE)
   GROUP BY
-    3
+    1
 )
 SELECT
   sbCustomer.sbcustcountry AS country,

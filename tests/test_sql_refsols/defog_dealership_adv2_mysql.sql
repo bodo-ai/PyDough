@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    salesperson_id
+    salesperson_id,
+    COUNT(*) AS n_rows
   FROM main.sales
   WHERE
     DATEDIFF(CURRENT_TIMESTAMP(), sale_date) <= 30
   GROUP BY
-    2
+    1
 )
 SELECT
   salespersons._id,

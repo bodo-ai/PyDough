@@ -87,7 +87,7 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='custs'))",
-            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='custs') in context TPCH.customers.orders (unrecognized ancestor 'custs')",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='custs') in context TPCH.customers.orders (unrecognized ancestor 'custs'; did you mean one of: 'TPCH', 'customers')",
             id="bad_per_1",
         ),
         pytest.param(
@@ -124,6 +124,20 @@ from tests.testing_utilities import (
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per=-1))",
             "`per` argument must be a string",
             id="bad_per_8",
+        ),
+        pytest.param(
+            "foo = TPCH.regions.nations.customers\n"
+            "bar = TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers\n"
+            "result = foo.CROSS(bar).CALCULATE(r=RANKING(by=name.ASC(), per='TPCH'))",
+            "Error while parsing 'per' string of RANKING(by=(name.ASC(na_pos='first'), per='TPCH') in context TPCH.regions.nations.customers.TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers (per-string 'TPCH' is ambiguous in this context; use the form 'TPCH:index' to disambiguate, where 'TPCH:1' refers to the most recent ancestor)",
+            id="bad_per_9",
+        ),
+        pytest.param(
+            "foo = TPCH.regions.nations.customers\n"
+            "bar = TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers\n"
+            "result = foo.CROSS(bar).CALCULATE(r=RANKING(by=name.ASC(), per='fizz'))",
+            "Error while parsing 'per' string of RANKING(by=(name.ASC(na_pos='first'), per='fizz') in context TPCH.regions.nations.customers.TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers (unrecognized ancestor 'fizz'; did you mean one of: 'TPCH:2', 'regions', 'nations:3', 'customers:2', 'TPCH:1', 'nations:2', 'customers:1', 'orders', 'lines', 'supplier', 'nation', 'region', 'nations:1')",
+            id="bad_per_10",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",

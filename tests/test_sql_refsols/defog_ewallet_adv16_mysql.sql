@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    user_id
+    user_id,
+    COUNT(*) AS n_rows
   FROM main.notifications
   WHERE
     status = 'unread' AND type = 'promotion'
   GROUP BY
-    2
+    1
 )
 SELECT
   users.username,

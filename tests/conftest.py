@@ -487,6 +487,20 @@ def defog_graphs() -> graph_fetcher:
 
 
 @pytest.fixture(scope="session")
+def masked_graphs() -> graph_fetcher:
+    """
+    Returns the graphs for the masked databases.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/masked_graphs.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def sqlite_defog_connection() -> DatabaseContext:
     """
     Returns the SQLITE database connection for the defog database.
@@ -538,6 +552,24 @@ def sqlite_technograph_connection() -> DatabaseContext:
     gen_technograph_records(cursor)
 
     # Return the database context.
+    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture(scope="session")
+def sqlite_cryptbank_connection() -> DatabaseContext:
+    """
+    Returns the SQLITE database connection for the CRYPTBANK database.
+    """
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    # Setup the cryptbank database.
+    subprocess.run(
+        "cd tests; rm -fv gen_data/cryptbank.db; sqlite3 gen_data/cryptbank.db < gen_data/init_cryptbank.sql",
+        shell=True,
+    )
+    path: str = os.path.join(base_dir, "tests/gen_data/cryptbank.db")
+    connection: sqlite3.Connection = sqlite3.connect(":memory:")
+    connection.execute(f"attach database '{path}' as CRBNK")
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 

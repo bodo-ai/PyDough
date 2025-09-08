@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    sender_id
+    sender_id,
+    COUNT(*) AS n_rows
   FROM main.wallet_transactions_daily
   WHERE
     sender_type = 0
   GROUP BY
-    2
+    1
 )
 SELECT
   users.uid AS user_id,

@@ -1,12 +1,13 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
-    2
+    1
 ), _t1 AS (
   SELECT
+    customer.c_nationkey,
     PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
       customer.c_acctbal) AS agg_7,
     ANY_VALUE(customer.c_acctbal) AS anything_c_acctbal,
@@ -21,13 +22,12 @@ WITH _s1 AS (
     STDDEV(customer.c_acctbal) AS sample_std_c_acctbal,
     VARIANCE(customer.c_acctbal) AS sample_var_c_acctbal,
     SUM(customer.c_acctbal) AS sum_c_acctbal,
-    SUM(_s1.n_rows) AS sum_n_rows,
-    customer.c_nationkey
+    SUM(_s1.n_rows) AS sum_n_rows
   FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
   GROUP BY
-    15
+    1
 )
 SELECT
   COALESCE(_t1.sum_c_acctbal, 0) AS sum_value,
