@@ -619,7 +619,7 @@ class HybridTree:
     ) -> JoinCardinality:
         """
         Infers the cardinality of the reverse of a join from parent to child
-        based on the metadata from the parent->child relationship.
+        based on the metadata of the reverse-relationship, if one exists.
 
         Args:
             `metadata`: the metadata for the sub-collection property mapping
@@ -629,7 +629,8 @@ class HybridTree:
             The join cardinality for the connection from the child back to the
             parent, if it can be inferred. Uses `PLURAL_FILTER` as a fallback.
         """
-        # If there is no reverse, fall back to plural filter.
+        # If there is no reverse, fall back to plural filter (which is the
+        # safest default assumption).
         if (
             not isinstance(metadata, ReversiblePropertyMetadata)
             or metadata.reverse is None
@@ -639,13 +640,16 @@ class HybridTree:
         # If the reverse property exists, use its properties to
         # infer if the reverse cardinality is singular or plural
         # and whether a match always exists or not.
-        cardinality: JoinCardinality = (
-            JoinCardinality.PLURAL_ACCESS
-            if metadata.reverse.is_plural
-            else JoinCardinality.SINGULAR_ACCESS
-        )
-        if not metadata.reverse.always_matches:
-            cardinality = cardinality.add_filter()
+        cardinality: JoinCardinality
+        match (metadata.reverse.is_plural, metadata.reverse.always_matches):
+            case (False, True):
+                cardinality = JoinCardinality.SINGULAR_ACCESS
+            case (False, False):
+                cardinality = JoinCardinality.SINGULAR_FILTER
+            case (True, True):
+                cardinality = JoinCardinality.PLURAL_ACCESS
+            case (True, False):
+                cardinality = JoinCardinality.PLURAL_FILTER
         return cardinality
 
     def infer_root_reverse_cardinality(self) -> JoinCardinality:
