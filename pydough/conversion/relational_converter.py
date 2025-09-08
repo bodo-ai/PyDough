@@ -1461,7 +1461,11 @@ def optimize_relational_tree(
     # Run projection pullup to move projections as far up the tree as possible.
     # This is done as soon as possible to make joins redundant if they only
     # exist to compute a scalar projection and then link it with the data.
+    # print()
+    # print(root.to_tree_string())
     root = confirm_root(pullup_projections(root))
+    # print()
+    # print(root.to_tree_string())
 
     # Push filters down as far as possible
     root = confirm_root(push_filters(root, configs))
