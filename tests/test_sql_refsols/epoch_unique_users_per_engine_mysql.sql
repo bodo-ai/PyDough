@@ -4,8 +4,8 @@ WITH _s2 AS (
   FROM SEARCHES
 ), _s3 AS (
   SELECT
-    COUNT(DISTINCT USERS.user_id) AS ndistinct_user_id,
-    SEARCHES.search_engine
+    SEARCHES.search_engine,
+    COUNT(DISTINCT USERS.user_id) AS ndistinct_user_id
   FROM SEARCHES AS SEARCHES
   JOIN USERS AS USERS
     ON SEARCHES.search_user_id = USERS.user_id
@@ -13,7 +13,7 @@ WITH _s2 AS (
     EXTRACT(YEAR FROM CAST(SEARCHES.search_ts AS DATETIME)) <= 2019
     AND EXTRACT(YEAR FROM CAST(SEARCHES.search_ts AS DATETIME)) >= 2010
   GROUP BY
-    2
+    1
 )
 SELECT
   _s2.search_engine COLLATE utf8mb4_bin AS engine,

@@ -6,27 +6,19 @@ SELECT
     '%Y %c %e'
   ) AS ts_now_3,
   DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '1' HOUR) AS ts_now_4,
-  STR_TO_DATE(
-    CONCAT(
-      YEAR(CAST('2025-01-01 00:00:00' AS DATETIME)),
-      ' ',
-      MONTH(CAST('2025-01-01 00:00:00' AS DATETIME)),
-      ' 1'
-    ),
-    '%Y %c %e'
-  ) AS ts_now_5,
-  CAST('1995-10-08 00:00:00' AS DATETIME) AS ts_now_6,
+  CAST('2025-01-01' AS DATE) AS ts_now_5,
+  CAST('1995-10-08' AS DATE) AS ts_now_6,
   EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) AS year_col,
-  EXTRACT(YEAR FROM CAST('2020-05-01 00:00:00' AS DATETIME)) AS year_py,
-  EXTRACT(YEAR FROM CAST('1995-10-10 00:00:00' AS DATETIME)) AS year_pd,
+  2020 AS year_py,
+  1995 AS year_pd,
   EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) AS month_col,
-  EXTRACT(MONTH FROM CAST('2025-02-25' AS DATETIME)) AS month_str,
-  EXTRACT(MONTH FROM CAST('1992-01-01 12:30:45' AS DATETIME)) AS month_dt,
+  2 AS month_str,
+  1 AS month_dt,
   EXTRACT(DAY FROM CAST(o_orderdate AS DATETIME)) AS day_col,
-  EXTRACT(DAY FROM CAST('1996-11-25 10:45:00' AS DATETIME)) AS day_str,
-  HOUR('1995-12-01 23:59:59') AS hour_str,
-  MINUTE('1995-12-01 23:59:59') AS minute_str,
-  SECOND(CAST('1992-01-01 00:00:59' AS DATETIME)) AS second_ts,
+  25 AS day_str,
+  23 AS hour_str,
+  59 AS minute_str,
+  59 AS second_ts,
   DATEDIFF(CAST('1992-01-01' AS DATETIME), o_orderdate) AS dd_col_str,
   DATEDIFF(o_orderdate, CAST('1992-01-01' AS DATETIME)) AS dd_str_col,
   (
@@ -49,16 +41,21 @@ SELECT
   (
     DAYOFWEEK(o_orderdate) + -1
   ) % 7 AS dow_col,
-  (
-    DAYOFWEEK(CAST('1992-07-01' AS DATE)) + -1
-  ) % 7 AS dow_str,
-  (
-    DAYOFWEEK(CAST('1992-01-01 12:30:45' AS DATETIME)) + -1
-  ) % 7 AS dow_dt,
-  (
-    DAYOFWEEK(CAST('1995-10-10 00:00:00' AS DATETIME)) + -1
-  ) % 7 AS dow_pd,
+  3 AS dow_str1,
+  4 AS dow_str2,
+  5 AS dow_str3,
+  6 AS dow_str4,
+  0 AS dow_str5,
+  1 AS dow_str6,
+  2 AS dow_str7,
+  3 AS dow_dt,
+  2 AS dow_pd,
   DAYNAME(o_orderdate) AS dayname_col,
-  DAYNAME('1995-06-30') AS dayname_str,
-  DAYNAME(CAST('1993-08-15 00:00:00' AS DATETIME)) AS dayname_dt
+  'Monday' AS dayname_str1,
+  'Tuesday' AS dayname_str2,
+  'Wednesday' AS dayname_str3,
+  'Thursday' AS dayname_str4,
+  'Friday' AS dayname_str5,
+  'Saturday' AS dayname_str6,
+  'Sunday' AS dayname_dt
 FROM tpch.ORDERS

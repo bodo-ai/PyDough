@@ -51,15 +51,15 @@ WITH _s0 AS (
     ON _s2.a_branchkey = _t4.b_key
 ), _s7 AS (
   SELECT
+    a_custkey,
     SUM((
       1025.67 - t_amount
-    )) AS sum_amount,
-    a_custkey
+    )) AS sum_unmask_t_amount
   FROM _t
   WHERE
     _w = 1
   GROUP BY
-    2
+    1
 ), _t_2 AS (
   SELECT
     _s8.a_custkey,
@@ -82,21 +82,21 @@ WITH _s0 AS (
     ON _s10.a_branchkey = _t8.b_key
 ), _s15 AS (
   SELECT
+    a_custkey,
     SUM((
       1025.67 - t_amount
-    )) AS sum_amount,
-    a_custkey
+    )) AS sum_unmask_t_amount
   FROM _t_2
   WHERE
     _w = 1
   GROUP BY
-    2
+    1
 )
 SELECT
   42 - customers.c_key AS key,
   CONCAT_WS(' ', LOWER(customers.c_fname), LOWER(customers.c_lname)) AS name,
-  COALESCE(_s7.sum_amount, 0) AS first_sends,
-  COALESCE(_s15.sum_amount, 0) AS first_recvs
+  COALESCE(_s7.sum_unmask_t_amount, 0) AS first_sends,
+  COALESCE(_s15.sum_unmask_t_amount, 0) AS first_recvs
 FROM crbnk.customers AS customers
 LEFT JOIN _s7 AS _s7
   ON _s7.a_custkey = (
@@ -107,6 +107,6 @@ LEFT JOIN _s15 AS _s15
     42 - customers.c_key
   )
 ORDER BY
-  COALESCE(_s7.sum_amount, 0) + COALESCE(_s15.sum_amount, 0) DESC,
+  COALESCE(_s7.sum_unmask_t_amount, 0) + COALESCE(_s15.sum_unmask_t_amount, 0) DESC,
   1
 LIMIT 3

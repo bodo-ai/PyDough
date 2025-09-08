@@ -1,4 +1,4 @@
-ROOT(columns=[('n', n)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n': COUNT()})
-  FILTER(condition=UNMASK::(DATE([c_birthday], '+472 days')) != '1991-11-15':string, columns={})
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ABSENT(UNMASK::(DATE([c_birthday], '+472 days'))) | UNMASK::(DATE([c_birthday], '+472 days')) != '1991-11-15':string, columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_birthday': c_birthday})

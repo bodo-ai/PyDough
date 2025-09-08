@@ -4,8 +4,8 @@ WITH _s2 AS (
   FROM searches
 ), _s3 AS (
   SELECT
-    COUNT(DISTINCT users.user_id) AS ndistinct_user_id,
-    searches.search_engine
+    searches.search_engine,
+    COUNT(DISTINCT users.user_id) AS ndistinct_user_id
   FROM searches AS searches
   JOIN users AS users
     ON searches.search_user_id = users.user_id
@@ -13,7 +13,7 @@ WITH _s2 AS (
     EXTRACT(YEAR FROM CAST(searches.search_ts AS DATETIME)) <= 2019
     AND EXTRACT(YEAR FROM CAST(searches.search_ts AS DATETIME)) >= 2010
   GROUP BY
-    2
+    1
 )
 SELECT
   _s2.search_engine AS engine,

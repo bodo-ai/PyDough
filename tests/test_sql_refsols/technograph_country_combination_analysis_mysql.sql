@@ -9,17 +9,17 @@ WITH _s0 AS (
   FROM main.COUNTRIES
 ), _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM main.INCIDENTS
   GROUP BY
-    2
+    1
 ), _s9 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(_s7.n_rows) AS sum_n_rows,
     _s3.co_id AS _id_3,
-    _s2.co_id
+    _s2.co_id,
+    COUNT(*) AS n_rows,
+    SUM(_s7.n_rows) AS sum_n_rows
   FROM _s2 AS _s2
   CROSS JOIN _s2 AS _s3
   JOIN main.DEVICES AS DEVICES
@@ -28,8 +28,8 @@ WITH _s0 AS (
   LEFT JOIN _s7 AS _s7
     ON DEVICES.de_id = _s7.in_device_id
   GROUP BY
-    3,
-    4
+    1,
+    2
 )
 SELECT
   _s0.co_name AS factory_country,

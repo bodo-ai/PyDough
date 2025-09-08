@@ -1,5 +1,6 @@
 WITH _s1 AS (
   SELECT
+    s_nationkey,
     POWER(
       (
         (
@@ -13,7 +14,7 @@ WITH _s1 AS (
         ) / COUNT(s_acctbal)
       ),
       0.5
-    ) AS pop_std,
+    ) AS population_std_s_acctbal,
     (
       SUM((
         POWER(s_acctbal, 2)
@@ -22,7 +23,7 @@ WITH _s1 AS (
           POWER(SUM(s_acctbal), 2)
         ) / COUNT(s_acctbal)
       )
-    ) / COUNT(s_acctbal) AS pop_var,
+    ) / COUNT(s_acctbal) AS population_variance_s_acctbal,
     POWER(
       (
         (
@@ -38,7 +39,7 @@ WITH _s1 AS (
         )
       ),
       0.5
-    ) AS sample_std,
+    ) AS sample_std_s_acctbal,
     (
       SUM((
         POWER(s_acctbal, 2)
@@ -49,20 +50,19 @@ WITH _s1 AS (
       )
     ) / (
       COUNT(s_acctbal) - 1
-    ) AS sample_var,
-    s_nationkey
+    ) AS sample_variance_s_acctbal
   FROM tpch.SUPPLIER
   GROUP BY
-    5
+    1
 )
 SELECT
   NATION.n_name AS name,
-  _s1.pop_var AS var,
-  _s1.pop_std AS std,
-  _s1.sample_var,
-  _s1.sample_std,
-  _s1.pop_var,
-  _s1.pop_std
+  _s1.population_variance_s_acctbal AS var,
+  _s1.population_std_s_acctbal AS std,
+  _s1.sample_variance_s_acctbal AS sample_var,
+  _s1.sample_std_s_acctbal AS sample_std,
+  _s1.population_variance_s_acctbal AS pop_var,
+  _s1.population_std_s_acctbal AS pop_std
 FROM tpch.NATION AS NATION
 JOIN _s1 AS _s1
   ON NATION.n_nationkey = _s1.s_nationkey

@@ -3,3 +3,4 @@ SELECT
 FROM crbnk.customers
 WHERE
   DATE(c_birthday, '+472 days') <> DATE('1991-11-15')
+  OR DATE(c_birthday, '+472 days') IS NULL
