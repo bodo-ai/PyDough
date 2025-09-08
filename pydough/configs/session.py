@@ -5,6 +5,7 @@ important information like:
 - The active metadata graph.
 - Any PyDough configuration for function behavior.
 - Backend information (SQL dialect, Database connection, etc.)
+- The error builder used to create and format exceptions
 
 In the future this session will also contain other information
 such as any User Defined registration for additional backend
@@ -24,6 +25,7 @@ from pydough.database_connectors import (
     empty_connection,
     load_database_context,
 )
+from pydough.errors import PyDoughErrorBuilder
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 
 from .pydough_configs import PyDoughConfigs
@@ -47,6 +49,7 @@ class PyDoughSession:
         self._database: DatabaseContext = DatabaseContext(
             connection=empty_connection, dialect=DatabaseDialect.ANSI
         )
+        self._error_builder: PyDoughErrorBuilder = PyDoughErrorBuilder()
 
     @property
     def metadata(self) -> GraphMetadata | None:
@@ -107,6 +110,26 @@ class PyDoughSession:
             `context`: The database context to set.
         """
         self._database = context
+
+    @property
+    def error_builder(self) -> PyDoughErrorBuilder:
+        """
+        Get the active error builder.
+
+        Returns:
+           The active error builder.
+        """
+        return self._error_builder
+
+    @error_builder.setter
+    def error_builder(self, builder: PyDoughErrorBuilder) -> None:
+        """
+        Set the active error builder context.
+
+        Args:
+            The error builder to set.
+        """
+        self._error_builder = builder
 
     def connect_database(self, database_name: str, **kwargs) -> DatabaseContext:
         """

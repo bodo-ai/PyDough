@@ -243,12 +243,12 @@ def test_expression_sort_info_equals(
     [
         pytest.param(
             CallExpression(LOWER, StringType(), [ColumnReference("a", StringType())]),
-            "Call(op=Function[LOWER], inputs=[Column(name=a, type=StringType())], return_type=StringType())",
+            "Call(op=LOWER, inputs=[Column(name=a, type=StringType())], return_type=StringType())",
             id="lower",
         ),
         pytest.param(
             CallExpression(SUM, NumericType(), [ColumnReference("a", NumericType())]),
-            "Call(op=Function[SUM], inputs=[Column(name=a, type=NumericType())], return_type=NumericType())",
+            "Call(op=SUM, inputs=[Column(name=a, type=NumericType())], return_type=NumericType())",
             id="sum",
         ),
     ],
