@@ -213,6 +213,29 @@ class Qualifier:
         context: PyDoughCollectionQDAG,
         window: UnqualifiedWindow,
     ) -> tuple[str, int | None]:
+        """
+        Extracts the arguments from the `per` string of a window function to
+        identify the name of the ancestor, and the index of which ancestor
+        with that name should be chosen (if an index is provided). For example:
+        - `per="orders"` -> `("orders", None)`
+        - `per="customers:2"` -> `("customers", 2)`
+
+        Args:
+            `per`: the string to be parsed.
+            `ancestral_names`: the list of names of the ancestors of the
+            current context, in order from closest to furthest.
+            `context`: the collection QDAG whose context the expression is being
+            evaluated within.
+            `window`: the unqualified window function that the `per` string
+            corresponds to, used for error reporting.
+
+        Returns:
+            The tuple in the desired format `(ancestor_name, ancestor_index)`.
+
+        Raises:
+            `PyDoughUnqualifiedException` if the `per` string is malformed
+            or does not correspond to a valid ancestor of the current context.
+        """
         ancestor_name: str
         ancestor_idx: int | None
         # Break down the per string into its components, which is either

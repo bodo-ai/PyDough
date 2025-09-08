@@ -398,6 +398,7 @@ class PyDoughCollectionQDAG(PyDoughQDAG):
             atol=atol,
             rtol=rtol,
             min_names=min_names,
+            max_names=5,
             insert_cost=insert_cost,
             delete_cost=delete_cost,
             substitution_cost=substitution_cost,

@@ -54,7 +54,7 @@ class PyDoughErrorBuilder:
             )
         )
 
-    def down_streaming_conflict(
+    def downstream_conflict(
         self, collection: "PyDoughCollectionQDAG", term_name: str
     ) -> PyDoughException:
         """
@@ -87,7 +87,7 @@ class PyDoughErrorBuilder:
         Returns:
             An exception indicating the cardinality error.
         """
-        raise PyDoughQDAGException(
+        return PyDoughQDAGException(
             f"Expected all terms in {collection.standalone_string} to be singular, but encountered a plural expression: {expr}"
         )
 
@@ -102,6 +102,8 @@ class PyDoughErrorBuilder:
             return PyDoughQDAGException(
                 f"Expected a collection, but received an expression: {expr}"
             )
+        elif expr is None:
+            return PyDoughQDAGException("Expected a collection, but received None")
         else:
             return PyDoughQDAGException(
                 f"Expected a collection, but received {expr.__class__.__name__}:  {expr}"
@@ -118,6 +120,8 @@ class PyDoughErrorBuilder:
             return PyDoughQDAGException(
                 f"Expected an expression, but received a collection: {expr}"
             )
+        elif expr is None:
+            return PyDoughQDAGException("Expected a collection, but received None")
         else:
             return PyDoughQDAGException(
                 f"Expected an expression, but received {expr.__class__.__name__}:  {expr}"
@@ -138,7 +142,7 @@ class PyDoughErrorBuilder:
             An exception indicating the type verification failure.
         """
         arg_strings: list[str] = [str(arg) for arg in args]
-        raise PyDoughQDAGException(
+        return PyDoughQDAGException(
             f"Invalid operator invocation {operator.to_string(arg_strings)!r}: {message}"
         )
 
@@ -158,7 +162,7 @@ class PyDoughErrorBuilder:
             An exception indicating the type inference failure.
         """
         arg_strings: list[str] = [str(arg) for arg in args]
-        raise PyDoughQDAGException(
+        return PyDoughQDAGException(
             f"Unable to infer the return type of operator invocation {operator.to_string(arg_strings)!r}: {message}"
         )
 
@@ -179,6 +183,8 @@ class PyDoughErrorBuilder:
                     return PyDoughQDAGException(
                         f"Expected `columns` argument to be a list of strings, found {column.__class__.__name__}"
                     )
+            # If we reached this far, it is because the argument was an empty
+            # list.
             return PyDoughQDAGException(
                 "Expected `columns` argument to be a non-empty list"
             )
@@ -192,6 +198,8 @@ class PyDoughErrorBuilder:
                     return PyDoughQDAGException(
                         f"Expected `columns` argument to be a dictionary where the values are strings, found {column.__class__.__name__}"
                     )
+            # If we reached this far, it is because the argument was an empty
+            # dictionary.
             return PyDoughQDAGException(
                 "Expected `columns` argument to be a non-empty dictionary"
             )
@@ -277,6 +285,7 @@ class PyDoughErrorBuilder:
                 atol=2,
                 rtol=0.1,
                 min_names=3,
+                max_names=5,
                 insert_cost=0.5,
                 delete_cost=1.0,
                 substitution_cost=1.0,
@@ -288,7 +297,7 @@ class PyDoughErrorBuilder:
                 suggestions_str: str = ", ".join(suggestions)
                 error_message += f" Did you mean: {suggestions_str}?"
         else:
-            error_message += " Did you mean to use a function?"
+            error_message += " Did you mean to access an attribute or method?"
         return PyDoughUnqualifiedException(error_message)
 
     def bad_window_per(

@@ -94,7 +94,7 @@ class PartitionChild(ChildOperatorChildAccess):
             # Verify that the ancestor name is not also a name in the current
             # context.
             if term_name in self.calc_terms:
-                raise pydough.active_session.error_builder.down_streaming_conflict(
+                raise pydough.active_session.error_builder.downstream_conflict(
                     collection=self, term_name=term_name
                 )
             return BackReferenceExpression(
