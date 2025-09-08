@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n': COUNT()})
+  FILTER(condition=MONOTONIC(8000:numeric, t_amount, 9000:numeric), columns={})
+   SCAN(table=CRBNK.TRANSACTIONS, columns={'t_amount': t_amount})
