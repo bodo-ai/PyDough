@@ -34,23 +34,23 @@ class PostgresTransformBindings(BaseTransformBindings):
 
     PYDOP_TO_POSTGRES_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.ABS: "ABS",
-        pydop.AVG: "AVG",
+        # pydop.AVG: "AVG",
         pydop.CEIL: "CEIL",
-        #        pydop.COUNT: "COUNT",
+        # pydop.COUNT: "COUNT",
         pydop.FLOOR: "FLOOR",
         # pydop.GETPART: "SPLIT_PART",
         pydop.LENGTH: "LENGTH",
         pydop.LOWER: "LOWER",
-        pydop.MAX: "MAX",
+        # pydop.MAX: "MAX",
         pydop.MIN: "MIN",
         pydop.MOD: "MOD",
         pydop.POWER: "POWER",
-        #        pydop.ROUND: "ROUND",
-        #       pydop.SQRT: "SQRT",
+        # pydop.ROUND: "ROUND",
+        # pydop.SQRT: "SQRT",
         pydop.UPPER: "UPPER",
         pydop.LPAD: "LPAD",
         pydop.RPAD: "RPAD",
-        #        pydop.SIGN: "SIGN",
+        # pydop.SIGN: "SIGN",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
     }
@@ -67,10 +67,9 @@ class PostgresTransformBindings(BaseTransformBindings):
         types: list[PyDoughType],
     ) -> SQLGlotExpression:
         match operator:
-            case pydop.SUM:
-                return self.convert_sum(args, types)
-        #     case pydop.GETPART:
-        #         return self.convert_getpart(args, types)
+            case pydop.AVG:
+                return self.convert_avg(args, types)
+
         if operator in self.PYDOP_TO_POSTGRES_FUNC:
             return sqlglot_expressions.Anonymous(
                 this=self.PYDOP_TO_POSTGRES_FUNC[operator], expressions=args
@@ -589,4 +588,22 @@ class PostgresTransformBindings(BaseTransformBindings):
                 this=args[0], to=sqlglot_expressions.DataType.build("NUMERIC")
             ),
             decimals=precision_glot,
+        )
+
+    def convert_avg(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        assert len(args) == 1
+
+        return sqlglot_expressions.Avg(
+            this=sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("NUMERIC")
+            )
+        )
+
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        return sqlglot_expressions.Cast(
+            this=args[0], to=sqlglot_expressions.DataType.build("INTEGER")
         )

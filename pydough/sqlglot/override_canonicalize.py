@@ -56,4 +56,9 @@ def fix_expression_type(node: exp.Expression, dialect: Dialect) -> exp.Expressio
         # TimestampTrunc
         node.type.set("this", exp.DataType.Type.TIMESTAMP)
 
+    if isinstance(node, exp.Mul) and (
+        isinstance(node.this, exp.Window) or isinstance(node.expression, exp.Window)
+    ):
+        node.type.set("this", exp.DataType.Type.INT)
+
     return node

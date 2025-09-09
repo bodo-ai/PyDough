@@ -1278,7 +1278,6 @@ class PyDoughPandasTest:
         root: UnqualifiedNode = transform_and_exec_pydough(
             self.pydough_function, graph, self.kwargs
         )
-
         # Obtain the DataFrame result from the PyDough code
         call_kwargs: dict = {
             "metadata": graph,
