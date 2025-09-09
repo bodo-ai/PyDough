@@ -7,8 +7,8 @@ __all__ = ["SubcollectionRelationshipMetadata"]
 
 from abc import abstractmethod
 
+from pydough.errors.error_utils import HasType, is_bool
 from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import HasType, is_bool
 
 from .property_metadata import PropertyMetadata
 

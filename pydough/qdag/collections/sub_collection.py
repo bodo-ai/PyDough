@@ -6,8 +6,6 @@ a table collection.
 __all__ = ["SubCollection"]
 
 
-from functools import cache
-
 from pydough.metadata.properties import (
     SubcollectionRelationshipMetadata,
 )
@@ -66,7 +64,6 @@ class SubCollection(CollectionAccess):
         """
         self._general_condition = condition
 
-    @cache
     def is_singular(self, context: PyDoughCollectionQDAG) -> bool:
         # A subcollection is singular if the underlying subcollection property
         # is singular and the parent collection is singular relative to the

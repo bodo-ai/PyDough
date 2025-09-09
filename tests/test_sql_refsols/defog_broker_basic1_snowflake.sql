@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    sbtxcustid,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbtxamount,
-    sbtxcustid
+    SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATE_TRUNC('DAY', DATEADD(DAY, -30, CURRENT_TIMESTAMP()))
   GROUP BY
-    3
+    1
 )
 SELECT
   sbcustomer.sbcustcountry AS country,

@@ -1,12 +1,12 @@
 WITH _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    INCIDENTS.in_device_id
+    INCIDENTS.in_device_id,
+    COUNT(*) AS n_rows
   FROM main.INCIDENTS AS INCIDENTS
   JOIN main.ERRORS AS ERRORS
     ON ERRORS.er_id = INCIDENTS.in_error_id AND ERRORS.er_name = 'Battery Failure'
   GROUP BY
-    2
+    1
 )
 SELECT
   COUNTRIES.co_name COLLATE utf8mb4_bin AS country_name,

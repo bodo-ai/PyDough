@@ -1,5 +1,7 @@
 WITH _t2 AS (
   SELECT
+    nation.n_nationkey,
+    supplier.s_phone,
     CASE
       WHEN ABS(
         (
@@ -34,9 +36,7 @@ WITH _t2 AS (
       ) < 1.0
       THEN supplier.s_acctbal
       ELSE NULL
-    END AS expr_2,
-    nation.n_nationkey,
-    supplier.s_phone
+    END AS expr_2
   FROM tpch.nation AS nation
   JOIN tpch.region AS region
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'MIDDLE EAST'
@@ -44,7 +44,6 @@ WITH _t2 AS (
     ON nation.n_nationkey = supplier.s_nationkey
 ), _s5 AS (
   SELECT
-    AVG(expr_2) AS avg_expr_2,
     SUBSTRING(
       s_phone,
       CASE WHEN (
@@ -53,11 +52,12 @@ WITH _t2 AS (
         LENGTH(s_phone) + 0
       ) END
     ) AS expr_1,
-    n_nationkey
+    n_nationkey,
+    AVG(expr_2) AS avg_expr_2
   FROM _t2
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   customer.c_name AS customer_name,

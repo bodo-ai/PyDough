@@ -5,7 +5,7 @@ WITH _s3 AS (
   FROM tpch.part
 ), _s21 AS (
   SELECT DISTINCT
-    orders.o_orderkey AS key_12,
+    orders.o_orderkey AS key,
     lineitem.l_linenumber,
     lineitem.l_orderkey
   FROM tpch.lineitem AS lineitem
@@ -43,7 +43,7 @@ JOIN tpch.orders AS orders
   ON CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1998
   AND lineitem.l_orderkey = orders.o_orderkey
 JOIN _s21 AS _s21
-  ON _s21.key_12 = orders.o_orderkey
+  ON _s21.key = orders.o_orderkey
   AND _s21.l_linenumber = lineitem.l_linenumber
   AND _s21.l_orderkey = lineitem.l_orderkey
 WHERE

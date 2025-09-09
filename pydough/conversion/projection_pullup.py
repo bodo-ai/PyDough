@@ -55,10 +55,10 @@ def widen_columns(
     # to the calling site.
     substitutions: dict[RelationalExpression, RelationalExpression] = {}
 
-    # Mapping of every expression in the node's columns to a reference to the
-    # column of the node that points to it. This is used to keep track of which
-    # expressions are already present in the node's columns versus the ones that
-    # should be added to un-prune the node.
+    # Mapping of every expression in the input nodes columns to a reference to
+    # the column of the node that points to it. This is used to keep track of
+    # which expressions are already present in the node's columns versus the
+    # ones that should be added to un-prune the node.
     existing_vals: dict[RelationalExpression, RelationalExpression] = {
         expr: ColumnReference(name, expr.data_type)
         for name, expr in node.columns.items()
@@ -71,16 +71,14 @@ def widen_columns(
         input_alias: str | None = node.default_input_aliases[input_idx]
         input_node: RelationalNode = node.inputs[input_idx]
         for name, expr in input_node.columns.items():
-            # If the current node is a Join, add input names to the expression.
-            if isinstance(node, Join):
-                expr = add_input_name(expr, input_alias)
-            ref_expr: ColumnReference = ColumnReference(
+            ref_expr: RelationalExpression = ColumnReference(
                 name, expr.data_type, input_name=input_alias
             )
+
             # If the expression is not already in the node's columns, then
             # inject it so the node can use it later if a pull-up occurs that
             # would need to reference this expression.
-            if expr not in existing_vals:
+            if ref_expr not in existing_vals:
                 new_name: str = name
                 idx: int = 0
                 while new_name in node.columns:
@@ -88,11 +86,10 @@ def widen_columns(
                     new_name = f"{name}_{idx}"
                 new_ref: ColumnReference = ColumnReference(new_name, expr.data_type)
                 node.columns[new_name] = ref_expr
-                existing_vals[expr] = ref_expr
-                if ref_expr != new_ref:
-                    substitutions[ref_expr] = new_ref
-            elif ref_expr != existing_vals[expr]:
-                substitutions[ref_expr] = existing_vals[expr]
+                existing_vals[ref_expr] = new_ref
+                substitutions[ref_expr] = new_ref
+            else:
+                substitutions[ref_expr] = existing_vals[ref_expr]
 
     # Return the substitution mapping
     return substitutions
@@ -458,8 +455,8 @@ def simplify_agg(
             # Otherwise, FUNC(key) -> key
             return key_ref, None
 
-    # If running a selection aggregation on a literal, can just return the
-    # input.
+    # If running a selection aggregation on a literal or a grouping key, can
+    # just return the input.
     if (
         agg.op
         in (
@@ -473,7 +470,7 @@ def simplify_agg(
         and len(agg.inputs) >= 1
     ):
         arg = agg.inputs[0]
-        if isinstance(arg, LiteralExpression):
+        if isinstance(arg, LiteralExpression) or arg in reverse_keys:
             return arg, None
     # In all other cases, we just return the aggregation as is.
     return out_ref, agg

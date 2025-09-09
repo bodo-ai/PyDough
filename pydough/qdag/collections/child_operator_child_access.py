@@ -6,8 +6,6 @@ by a child operator, as opposed to stepping down into the child access.
 __all__ = ["ChildOperatorChildAccess"]
 
 
-from functools import cache
-
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
 
 from .child_access import ChildAccess
@@ -71,7 +69,6 @@ class ChildOperatorChildAccess(ChildAccess):
     def get_expression_position(self, expr_name: str) -> int:
         return self.child_access.get_expression_position(expr_name)
 
-    @cache
     def get_term(self, term_name: str) -> PyDoughQDAG:
         term = self.child_access.get_term(term_name)
         if isinstance(term, ChildAccess):

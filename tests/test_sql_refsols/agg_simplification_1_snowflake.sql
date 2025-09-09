@@ -1,29 +1,29 @@
 WITH _t0 AS (
   SELECT
     LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) AS aug_exchange,
-    COUNT(*) AS count_one
+    COUNT(*) AS n_rows
   FROM main.sbticker
   GROUP BY
     1
 )
 SELECT
   aug_exchange,
-  count_one AS su1,
-  count_one * 2 AS su2,
-  count_one * -1 AS su3,
-  count_one * -3 AS su4,
+  n_rows AS su1,
+  n_rows * 2 AS su2,
+  n_rows * -1 AS su3,
+  n_rows * -3 AS su4,
   0 AS su5,
-  count_one * 0.5 AS su6,
+  n_rows * 0.5 AS su6,
   0 AS su7,
   COALESCE(aug_exchange, 0) AS su8,
-  count_one AS co1,
-  count_one AS co2,
-  count_one AS co3,
-  count_one AS co4,
-  count_one AS co5,
-  count_one AS co6,
+  n_rows AS co1,
+  n_rows AS co2,
+  n_rows AS co3,
+  n_rows AS co4,
+  n_rows AS co5,
+  n_rows AS co6,
   0 AS co7,
-  count_one * IFF(NOT aug_exchange IS NULL, 1, 0) AS co8,
+  n_rows * IFF(NOT aug_exchange IS NULL, 1, 0) AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,

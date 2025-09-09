@@ -1,10 +1,10 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM main.incidents
   GROUP BY
-    2
+    1
 ), _s5 AS (
   SELECT
     COALESCE(SUM(_s3.n_rows), 0) AS sum_n_incidents,

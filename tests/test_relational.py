@@ -528,7 +528,7 @@ def test_invalid_limit(literal: LiteralExpression) -> None:
                     )
                 },
             ),
-            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=Function[SUM], inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
+            "AGGREGATE(keys={'a': Column(name=a, type=UnknownType())}, aggregations={'b': Call(op=SUM, inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
             id="key_and_agg",
         ),
         pytest.param(
@@ -556,7 +556,7 @@ def test_invalid_limit(literal: LiteralExpression) -> None:
                     ),
                 },
             ),
-            "AGGREGATE(keys={}, aggregations={'a': Call(op=Function[SUM], inputs=[Column(name=a, type=NumericType())], return_type=NumericType()), 'b': Call(op=Function[SUM], inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
+            "AGGREGATE(keys={}, aggregations={'a': Call(op=SUM, inputs=[Column(name=a, type=NumericType())], return_type=NumericType()), 'b': Call(op=SUM, inputs=[Column(name=b, type=NumericType())], return_type=NumericType())})",
             id="no_keys",
         ),
         pytest.param(

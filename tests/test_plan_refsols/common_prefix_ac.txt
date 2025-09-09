@@ -1,5 +1,5 @@
-ROOT(columns=[('n', n)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n': COUNT()})
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
   JOIN(condition=t0.o_custkey == t1.c_custkey, type=ANTI, cardinality=SINGULAR_FILTER, columns={})
    SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey})
    FILTER(condition=c_acctbal > 0.0:numeric, columns={'c_custkey': c_custkey})

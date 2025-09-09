@@ -3,7 +3,8 @@ PyDough implementation of a generic connection to database
 by leveraging PEP 249 (Python Database API Specification v2.0).
 https://peps.python.org/pep-0249/
 """
-# Copyright (C) 2024 Bodo Inc. All rights reserved.
+
+__all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
 
 from dataclasses import dataclass
 from enum import Enum
@@ -11,9 +12,10 @@ from typing import TYPE_CHECKING, cast
 
 import pandas as pd
 
-from .db_types import DBConnection, DBCursor, SnowflakeCursor
+import pydough
+from pydough.errors import PyDoughSessionException
 
-__all__ = ["DatabaseConnection", "DatabaseContext", "DatabaseDialect"]
+from .db_types import DBConnection, DBCursor, SnowflakeCursor
 
 
 class DatabaseConnection:
@@ -51,7 +53,9 @@ class DatabaseConnection:
             self.cursor.execute(sql)
         except Exception as e:
             print(f"ERROR WHILE EXECUTING QUERY:\n{sql}")
-            raise e
+            raise pydough.active_session.error_builder.sql_runtime_failure(
+                sql, e, True
+            ) from e
 
         # This is only for MyPy to pass and know about fetch_pandas_all()
         # NOTE: Code does not run in type checking mode, so we need to
@@ -119,7 +123,7 @@ class DatabaseDialect(Enum):
         if dialect in DatabaseDialect.__members__:
             return DatabaseDialect.__members__[dialect]
         else:
-            raise ValueError(f"Unsupported dialect: {dialect}")
+            raise PyDoughSessionException(f"Unsupported dialect: {dialect}")
 
 
 @dataclass
