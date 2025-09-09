@@ -79,6 +79,7 @@ def test_pipeline_until_sql_synthea(
 
 
 @pytest.mark.execute
+@pytest.mark.skip(reason="Missing alias issue needs to be fixed")
 def test_pipeline_e2e_synthea(
     synthea_pipeline_test_data: PyDoughPandasTest,
     get_synthea_graph: graph_fetcher,

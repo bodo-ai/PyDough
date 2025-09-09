@@ -16,8 +16,12 @@
             "type": "table column",
             "column name": "ITEM",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Name of the item/condition/medication measured for prevalence.",
+            "sample values": [
+              "Viral sinusitis (disorder)",
+              "Streptococcal sore throat (disorder)",
+              "Laceration of thigh"
+            ],
             "synonyms": []
           },
           {
@@ -25,8 +29,10 @@
             "type": "table column",
             "column name": "`POPULATION TYPE`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Population category used to compute prevalence.",
+            "sample values": [
+              "LIVING"
+            ],
             "synonyms": []
           },
           {
@@ -34,8 +40,12 @@
             "type": "table column",
             "column name": "OCCURRENCES",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Number of occurrences observed.",
+            "sample values": [
+              868,
+              487,
+              117
+            ],
             "synonyms": []
           },
           {
@@ -43,8 +53,10 @@
             "type": "table column",
             "column name": "`POPULATION COUNT`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Population size used as denominator.",
+            "sample values": [
+              1000
+            ],
             "synonyms": []
           },
           {
@@ -52,8 +64,12 @@
             "type": "table column",
             "column name": "`PREVALENCE RATE`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Rate of occurrence (0-1).",
+            "sample values": [
+              0.868,
+              0.487,
+              0.117
+            ],
             "synonyms": []
           },
           {
@@ -61,12 +77,16 @@
             "type": "table column",
             "column name": "`PREVALENCE PERCENTAGE`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Rate of occurrence as a percentage (0-100).",
+            "sample values": [
+              86.8,
+              48.7,
+              11.7
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Aggregated prevalence metrics for simulated conditions, procedures, and medications across the synthetic population, including counts and rates.",
         "synonyms": []
       },
       {
@@ -84,8 +104,12 @@
             "type": "table column",
             "column name": "START",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Start timestamp/date of the record.",
+            "sample values": [
+              "2/5/31",
+              "1/8/88",
+              "12/7/61"
+            ],
             "synonyms": []
           },
           {
@@ -93,8 +117,10 @@
             "type": "table column",
             "column name": "STOP",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "End timestamp/date of the record.",
+            "sample values": [
+              "5/26/08"
+            ],
             "synonyms": []
           },
           {
@@ -102,8 +128,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -111,8 +141,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "273d3878-e990-4093-a261-9593886ba01c",
+              "0f67780a-2a08-46c6-8a4a-c585fb33a80a"
+            ],
             "synonyms": []
           },
           {
@@ -120,8 +154,12 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              232347008,
+              91935009,
+              91934008
+            ],
             "synonyms": []
           },
           {
@@ -129,12 +167,16 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Dander (animal) allergy",
+              "Allergy to peanuts",
+              "Allergy to nut"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Allergy/intolerance records linked to a specific encounter and patient, with SNOMED code and description.",
         "synonyms": []
       },
       {
@@ -160,8 +202,12 @@
             "type": "table column",
             "column name": "ID",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Unique identifier.",
+            "sample values": [
+              "02b14bb0-500f-44e1-acb5-a20e9d92c747",
+              "a5ad694c-7746-490a-9d7e-df96884877c0",
+              "20ea9719-0399-41df-91d6-2d4b14444962"
+            ],
             "synonyms": []
           },
           {
@@ -169,8 +215,12 @@
             "type": "table column",
             "column name": "START",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Start timestamp/date of the record.",
+            "sample values": [
+              "1931-02-05",
+              "1987-12-27",
+              "1988-01-08"
+            ],
             "synonyms": []
           },
           {
@@ -178,8 +228,12 @@
             "type": "table column",
             "column name": "STOP",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "End timestamp/date of the record.",
+            "sample values": [
+              "2008-10-20",
+              "2008-05-25",
+              "2012-07-23"
+            ],
             "synonyms": []
           },
           {
@@ -187,8 +241,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -196,8 +254,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "273d3878-e990-4093-a261-9593886ba01c",
+              "0ad03aae-20cd-408e-a235-56b1fb96fa98"
+            ],
             "synonyms": []
           },
           {
@@ -205,8 +267,12 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              326051000000105.0,
+              58332002.0,
+              409002.0
+            ],
             "synonyms": []
           },
           {
@@ -214,8 +280,12 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Self care",
+              "Allergy education",
+              "Food allergy diet"
+            ],
             "synonyms": []
           },
           {
@@ -223,8 +293,12 @@
             "type": "table column",
             "column name": "REASONCODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Code indicating the reason for the event/record.",
+            "sample values": [
+              72892002,
+              301011002,
+              283371005
+            ],
             "synonyms": []
           },
           {
@@ -232,12 +306,16 @@
             "type": "table column",
             "column name": "REASONDESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Text describing the reason for the event/record.",
+            "sample values": [
+              "Normal pregnancy",
+              "Escherichia coli urinary tract infection",
+              "Laceration of forearm"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Care plan activities spanning a period for a patient and encounter, including reason codes.",
         "synonyms": []
       },
       {
@@ -253,8 +331,12 @@
             "type": "table column",
             "column name": "ID",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Unique identifier.",
+            "sample values": [
+              "0a66b603-1e91-4a39-8114-efaaa43b7ca3",
+              "58a729c2-8d75-4bcc-8ce2-e9114632df95",
+              "a9e7974e-23f6-4caf-bd59-10c507b3d7f4"
+            ],
             "synonyms": []
           },
           {
@@ -262,8 +344,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -271,8 +357,12 @@
             "type": "table column",
             "column name": "BILLABLEPERIOD",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Billing period start date for the claim.",
+            "sample values": [
+              "2017-10-18",
+              "2008-03-07",
+              "2009-02-22"
+            ],
             "synonyms": []
           },
           {
@@ -280,8 +370,10 @@
             "type": "table column",
             "column name": "ORGANIZATION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Submitting or responsible organization.",
+            "sample values": [
+              "temp organization"
+            ],
             "synonyms": []
           },
           {
@@ -289,8 +381,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "b2efa4a2-c481-4804-a96d-429da47b47de",
+              "38684507-7e9d-4fae-8838-60d751e450fe"
+            ],
             "synonyms": []
           },
           {
@@ -298,8 +394,12 @@
             "type": "table column",
             "column name": "DIAGNOSIS",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Primary diagnosis code/text on the claim.",
+            "sample values": [
+              "Viral sinusitis (disorder)",
+              "Normal pregnancy",
+              "Escherichia coli urinary tract infection"
+            ],
             "synonyms": []
           },
           {
@@ -307,12 +407,14 @@
             "type": "table column",
             "column name": "TOTAL",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Total amount for the claim.",
+            "sample values": [
+              100
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Billing claims associated with encounters and patients, including diagnosis and total amount.",
         "synonyms": []
       },
       {
@@ -335,8 +437,12 @@
             "type": "table column",
             "column name": "START",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Start timestamp/date of the record.",
+            "sample values": [
+              "1931-01-25",
+              "1946-05-05",
+              "2009-02-12"
+            ],
             "synonyms": []
           },
           {
@@ -344,8 +450,12 @@
             "type": "table column",
             "column name": "STOP",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "End timestamp/date of the record.",
+            "sample values": [
+              "2009-03-03",
+              "2008-10-20",
+              "2008-05-25"
+            ],
             "synonyms": []
           },
           {
@@ -353,8 +463,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -362,8 +476,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "b2efa4a2-c481-4804-a96d-429da47b47de",
+              "273d3878-e990-4093-a261-9593886ba01c"
+            ],
             "synonyms": []
           },
           {
@@ -371,8 +489,12 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              367498001,
+              38341003,
+              444814009
+            ],
             "synonyms": []
           },
           {
@@ -380,12 +502,16 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Seasonal allergic rhinitis",
+              "Hypertension",
+              "Viral sinusitis (disorder)"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Diagnosed conditions for a patient and encounter, including code and textual description.",
         "synonyms": []
       },
       {
@@ -401,8 +527,12 @@
             "type": "table column",
             "column name": "ID",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Unique identifier.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "b2efa4a2-c481-4804-a96d-429da47b47de",
+              "38684507-7e9d-4fae-8838-60d751e450fe"
+            ],
             "synonyms": []
           },
           {
@@ -410,8 +540,12 @@
             "type": "table column",
             "column name": "DATE",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Event date/time.",
+            "sample values": [
+              "2008-03-07",
+              "2009-02-22",
+              "2009-05-01"
+            ],
             "synonyms": []
           },
           {
@@ -419,8 +553,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -428,8 +566,12 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              185349003,
+              185345009,
+              308646001
+            ],
             "synonyms": []
           },
           {
@@ -437,8 +579,12 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Outpatient Encounter",
+              "Encounter for symptom",
+              "Death Certification"
+            ],
             "synonyms": []
           },
           {
@@ -446,8 +592,12 @@
             "type": "table column",
             "column name": "REASONCODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Code indicating the reason for the event/record.",
+            "sample values": [
+              444814009,
+              72892002,
+              301011002
+            ],
             "synonyms": []
           },
           {
@@ -455,12 +605,16 @@
             "type": "table column",
             "column name": "REASONDESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Text describing the reason for the event/record.",
+            "sample values": [
+              "Viral sinusitis (disorder)",
+              "Normal pregnancy",
+              "Escherichia coli urinary tract infection"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Clinical encounters (visits) for patients, including date, visit code/description, and reason codes.",
         "synonyms": []
       },
       {
@@ -479,8 +633,12 @@
             "type": "table column",
             "column name": "DATE",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Event date/time.",
+            "sample values": [
+              "2008-03-07",
+              "2009-05-01",
+              "2010-04-30"
+            ],
             "synonyms": []
           },
           {
@@ -488,8 +646,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -497,8 +659,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "38684507-7e9d-4fae-8838-60d751e450fe",
+              "294cfdf7-dffc-46cc-8b7f-ce3377b52385"
+            ],
             "synonyms": []
           },
           {
@@ -506,8 +672,11 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              140,
+              113
+            ],
             "synonyms": []
           },
           {
@@ -515,12 +684,15 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Influenza  seasonal  injectable  preservative free",
+              "Td (adult) preservative free"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Immunization events administered to a patient during an encounter.",
         "synonyms": []
       },
       {
@@ -539,8 +711,12 @@
             "type": "table column",
             "column name": "START",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Start timestamp/date of the record.",
+            "sample values": [
+              "1970-05-10",
+              "2009-02-22",
+              "1988-01-08"
+            ],
             "synonyms": []
           },
           {
@@ -548,8 +724,12 @@
             "type": "table column",
             "column name": "STOP",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "End timestamp/date of the record.",
+            "sample values": [
+              "2009-03-03",
+              "2002-07-28",
+              "2008-05-25"
+            ],
             "synonyms": []
           },
           {
@@ -557,8 +737,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -566,8 +750,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "b2efa4a2-c481-4804-a96d-429da47b47de",
+              "273d3878-e990-4093-a261-9593886ba01c"
+            ],
             "synonyms": []
           },
           {
@@ -575,8 +763,12 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              834101,
+              824184,
+              141918
+            ],
             "synonyms": []
           },
           {
@@ -584,8 +776,12 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Penicillin V Potassium 500 MG",
+              "Amoxicillin 250 MG / Clavulanate 125 MG [Augmentin]",
+              "Terfenadine 60 MG Oral Tablet"
+            ],
             "synonyms": []
           },
           {
@@ -593,8 +789,12 @@
             "type": "table column",
             "column name": "REASONCODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Code indicating the reason for the event/record.",
+            "sample values": [
+              43878008,
+              444814009,
+              301011002
+            ],
             "synonyms": []
           },
           {
@@ -602,12 +802,16 @@
             "type": "table column",
             "column name": "REASONDESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Text describing the reason for the event/record.",
+            "sample values": [
+              "Streptococcal sore throat (disorder)",
+              "Viral sinusitis (disorder)",
+              "Escherichia coli urinary tract infection"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Medications prescribed or administered to a patient, with start/stop, codes, and reasons.",
         "synonyms": []
       },
       {
@@ -631,8 +835,12 @@
             "type": "table column",
             "column name": "DATE",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Event date/time.",
+            "sample values": [
+              "2008-03-07",
+              "2009-05-01",
+              "2010-04-30"
+            ],
             "synonyms": []
           },
           {
@@ -640,8 +848,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -649,8 +861,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "38684507-7e9d-4fae-8838-60d751e450fe",
+              "294cfdf7-dffc-46cc-8b7f-ce3377b52385"
+            ],
             "synonyms": []
           },
           {
@@ -658,8 +874,12 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              "8302-2",
+              "29463-7",
+              "39156-5"
+            ],
             "synonyms": []
           },
           {
@@ -667,8 +887,12 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Body Height",
+              "Body Weight",
+              "Body Mass Index"
+            ],
             "synonyms": []
           },
           {
@@ -676,8 +900,12 @@
             "type": "table column",
             "column name": "VALUE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Measured numeric value.",
+            "sample values": [
+              174.71,
+              102.33,
+              33.53
+            ],
             "synonyms": []
           },
           {
@@ -685,12 +913,16 @@
             "type": "table column",
             "column name": "UNITS",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Units of measure for VALUE.",
+            "sample values": [
+              "cm",
+              "kg",
+              "kg/m2"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Clinical observations and measurements (e.g., vitals, labs) for a patient during an encounter.",
         "synonyms": []
       },
       {
@@ -706,8 +938,12 @@
             "type": "table column",
             "column name": "patient",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient field.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "304ef151-bcfb-4f05-94f3-a7598efac77e",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -715,8 +951,12 @@
             "type": "table column",
             "column name": "birthdate",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Date of birth.",
+            "sample values": [
+              "1927-06-18",
+              "1961-01-13",
+              "1961-03-08"
+            ],
             "synonyms": []
           },
           {
@@ -724,8 +964,12 @@
             "type": "table column",
             "column name": "deathdate",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Date of death (if any).",
+            "sample values": [
+              "2011-02-19",
+              "2010-07-05",
+              "2009-08-05"
+            ],
             "synonyms": []
           },
           {
@@ -733,8 +977,12 @@
             "type": "table column",
             "column name": "ssn",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Social Security Number (synthetic).",
+            "sample values": [
+              "999-47-5449",
+              "999-66-9307",
+              "999-57-1876"
+            ],
             "synonyms": []
           },
           {
@@ -742,8 +990,12 @@
             "type": "table column",
             "column name": "drivers",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Driver license number (synthetic).",
+            "sample values": [
+              "S99956925",
+              "S99934260",
+              "S99971477"
+            ],
             "synonyms": []
           },
           {
@@ -751,8 +1003,12 @@
             "type": "table column",
             "column name": "passport",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Passport number (synthetic).",
+            "sample values": [
+              "X76969056X",
+              "X19125077X",
+              "X20762697X"
+            ],
             "synonyms": []
           },
           {
@@ -760,8 +1016,12 @@
             "type": "table column",
             "column name": "prefix",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Name prefix (e.g., Mr., Ms.).",
+            "sample values": [
+              "Mr.",
+              "Mrs.",
+              "Ms."
+            ],
             "synonyms": []
           },
           {
@@ -769,8 +1029,12 @@
             "type": "table column",
             "column name": "first",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Given name.",
+            "sample values": [
+              "Shane",
+              "Courtney",
+              "Darin"
+            ],
             "synonyms": []
           },
           {
@@ -778,8 +1042,12 @@
             "type": "table column",
             "column name": "last",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Family name.",
+            "sample values": [
+              "Schumm",
+              "Lindgren",
+              "Weissnat"
+            ],
             "synonyms": []
           },
           {
@@ -787,7 +1055,7 @@
             "type": "table column",
             "column name": "suffix",
             "data type": "string",
-            "description": "",
+            "description": "Name suffix (e.g., Jr.).",
             "sample values": [],
             "synonyms": []
           },
@@ -796,8 +1064,12 @@
             "type": "table column",
             "column name": "maiden",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Maiden name.",
+            "sample values": [
+              "Schowalter",
+              "Cremin",
+              "McLaughlin"
+            ],
             "synonyms": []
           },
           {
@@ -805,8 +1077,11 @@
             "type": "table column",
             "column name": "marital",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Marital status.",
+            "sample values": [
+              "M",
+              "S"
+            ],
             "synonyms": []
           },
           {
@@ -814,8 +1089,12 @@
             "type": "table column",
             "column name": "race",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Race (synthetic value).",
+            "sample values": [
+              "white",
+              "asian",
+              "hispanic"
+            ],
             "synonyms": []
           },
           {
@@ -823,8 +1102,12 @@
             "type": "table column",
             "column name": "ethnicity",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Ethnicity (synthetic value).",
+            "sample values": [
+              "italian",
+              "french",
+              "chinese"
+            ],
             "synonyms": []
           },
           {
@@ -832,8 +1115,11 @@
             "type": "table column",
             "column name": "gender",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Gender.",
+            "sample values": [
+              "M",
+              "F"
+            ],
             "synonyms": []
           },
           {
@@ -841,8 +1127,12 @@
             "type": "table column",
             "column name": "birthplace",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Place of birth.",
+            "sample values": [
+              "Pittsfield MA US",
+              "Orange MA US",
+              "Lynn MA US"
+            ],
             "synonyms": []
           },
           {
@@ -850,12 +1140,16 @@
             "type": "table column",
             "column name": "address",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Postal address.",
+            "sample values": [
+              "8962 Conroy Shore Springfield MA 01109 US",
+              "379 Margaretta Extension Apt. 934 Brockton MA 02302 US",
+              "31047 McCullough Cliffs Methuen Town MA 01844 US"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Synthetic patient master records with demographics and identifiers.",
         "synonyms": []
       },
       {
@@ -879,8 +1173,12 @@
             "type": "table column",
             "column name": "DATE",
             "data type": "datetime",
-            "description": "",
-            "sample values": [],
+            "description": "Event date/time.",
+            "sample values": [
+              "2008-03-07",
+              "2009-05-01",
+              "2010-04-30"
+            ],
             "synonyms": []
           },
           {
@@ -888,8 +1186,12 @@
             "type": "table column",
             "column name": "PATIENT",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Patient identifier linking to patients.patient.",
+            "sample values": [
+              "5f615f2b-efb7-4032-8c88-dea2dc2eacbb",
+              "1d0e18c5-b47c-4196-b1d4-93b141098ae1",
+              "d3167a7a-9259-46f5-9a4c-4a8822dbcd1c"
+            ],
             "synonyms": []
           },
           {
@@ -897,8 +1199,12 @@
             "type": "table column",
             "column name": "ENCOUNTER",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Encounter identifier linking to encounters.ID.",
+            "sample values": [
+              "adfcd316-7421-4e5c-a3c5-515b5c16d35b",
+              "38684507-7e9d-4fae-8838-60d751e450fe",
+              "294cfdf7-dffc-46cc-8b7f-ce3377b52385"
+            ],
             "synonyms": []
           },
           {
@@ -906,8 +1212,12 @@
             "type": "table column",
             "column name": "CODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Coded value (often SNOMED/ICD/LOINC) representing the clinical concept.",
+            "sample values": [
+              428191000124101,
+              252160004,
+              237001001
+            ],
             "synonyms": []
           },
           {
@@ -915,8 +1225,12 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Human-readable description of the coded concept.",
+            "sample values": [
+              "Documentation of current medications",
+              "Standard pregnancy test",
+              "Augmentation of labor"
+            ],
             "synonyms": []
           },
           {
@@ -924,8 +1238,12 @@
             "type": "table column",
             "column name": "REASONCODE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Code indicating the reason for the event/record.",
+            "sample values": [
+              72892002,
+              283371005,
+              10509002
+            ],
             "synonyms": []
           },
           {
@@ -933,12 +1251,16 @@
             "type": "table column",
             "column name": "REASONDESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Text describing the reason for the event/record.",
+            "sample values": [
+              "Normal pregnancy",
+              "Laceration of forearm",
+              "Acute bronchitis (disorder)"
+            ],
             "synonyms": []
           }
         ],
-        "description": "",
+        "description": "Procedures performed on a patient during an encounter, with codes and reasons.",
         "synonyms": []
       }
     ],
@@ -955,7 +1277,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from allergies to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -965,7 +1287,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of allergies.patient.",
         "synonyms": []
       },
       {
@@ -980,7 +1302,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from allergies to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -990,7 +1312,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of allergies.encounter.",
         "synonyms": []
       },
       {
@@ -1005,7 +1327,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from careplans to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1015,7 +1337,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of careplans.patient.",
         "synonyms": []
       },
       {
@@ -1030,7 +1352,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from careplans to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -1040,7 +1362,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of careplans.encounter.",
         "synonyms": []
       },
       {
@@ -1055,7 +1377,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from claims to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1065,7 +1387,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of claims.patient.",
         "synonyms": []
       },
       {
@@ -1080,7 +1402,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from claims to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -1090,7 +1412,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of claims.encounter.",
         "synonyms": []
       },
       {
@@ -1105,7 +1427,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from conditions to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1115,7 +1437,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of conditions.patient.",
         "synonyms": []
       },
       {
@@ -1130,7 +1452,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from conditions to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -1140,7 +1462,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of conditions.encounter.",
         "synonyms": []
       },
       {
@@ -1155,7 +1477,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from encounters to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1165,7 +1487,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of encounters.patient.",
         "synonyms": []
       },
       {
@@ -1180,7 +1502,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from immunizations to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1190,7 +1512,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of immunizations.patient.",
         "synonyms": []
       },
       {
@@ -1205,7 +1527,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from immunizations to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -1215,7 +1537,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of immunizations.encounter.",
         "synonyms": []
       },
       {
@@ -1230,7 +1552,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from medications to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1240,7 +1562,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of medications.patient.",
         "synonyms": []
       },
       {
@@ -1255,7 +1577,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from medications to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -1265,7 +1587,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of medications.encounter.",
         "synonyms": []
       },
       {
@@ -1280,7 +1602,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from observations to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1290,7 +1612,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of observations.patient.",
         "synonyms": []
       },
       {
@@ -1305,7 +1627,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from observations to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -1315,7 +1637,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of observations.encounter.",
         "synonyms": []
       },
       {
@@ -1330,7 +1652,7 @@
             "patient"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from procedures to patients on PATIENT \u2192 patient.",
         "synonyms": []
       },
       {
@@ -1340,7 +1662,7 @@
         "original property": "patient",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of procedures.patient.",
         "synonyms": []
       },
       {
@@ -1355,7 +1677,7 @@
             "ID"
           ]
         },
-        "description": "",
+        "description": "one-to-one link from procedures to encounters on ENCOUNTER \u2192 ID.",
         "synonyms": []
       },
       {
@@ -1365,7 +1687,7 @@
         "original property": "encounter",
         "singular": false,
         "always matches": true,
-        "description": "",
+        "description": "Reverse one-to-many relationship of procedures.encounter.",
         "synonyms": []
       }
     ]

@@ -596,6 +596,7 @@ def sqlite_synthea_connection() -> DatabaseContext:
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
+
 @pytest.fixture(scope="session")
 def sqlite_cryptbank_connection() -> DatabaseContext:
     """

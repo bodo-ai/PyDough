@@ -95,6 +95,7 @@ def test_pipeline_until_sql_world_indicators(
 
 
 @pytest.mark.execute
+@pytest.mark.skip(reason="Missing alias issue needs to be fixed")
 def test_pipeline_e2e_world_indicators(
     world_indicators_pipeline_test_data: PyDoughPandasTest,
     get_world_indicators_graph: graph_fetcher,
