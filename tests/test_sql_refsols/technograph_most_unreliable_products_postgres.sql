@@ -20,7 +20,10 @@ SELECT
   products.pr_name AS product,
   products.pr_brand AS product_brand,
   products.pr_type AS product_type,
-  ROUND(CAST(COALESCE(_s3.sum_n_incidents, 0) AS DOUBLE PRECISION) / _s3.n_rows, 2) AS ir
+  ROUND(
+    CAST(CAST(COALESCE(_s3.sum_n_incidents, 0) AS DOUBLE PRECISION) / _s3.n_rows AS DECIMAL),
+    2
+  ) AS ir
 FROM main.products AS products
 JOIN _s3 AS _s3
   ON _s3.de_product_id = products.pr_id

@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     CASE
-      WHEN CAST(0.30000000000000004 * COUNT(orders.o_totalprice) OVER () AS BIGINT) < ROW_NUMBER() OVER (ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.30000000000000004 * COUNT(orders.o_totalprice) OVER () < ROW_NUMBER() OVER (ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_1

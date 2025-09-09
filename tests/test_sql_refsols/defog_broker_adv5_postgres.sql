@@ -6,7 +6,7 @@ WITH _s0 AS (
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbdpdate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)), 2, '0')
+      LPAD(CAST(EXTRACT(MONTH FROM CAST(sbdpdate AS TIMESTAMP)) AS TEXT), 2, '0')
     ) AS month,
     SUM(sbdpclose) AS sum_sbdpclose,
     sbdptickerid

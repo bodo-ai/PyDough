@@ -6,8 +6,8 @@ WITH _s0 AS (
     EXTRACT(YEAR FROM CAST(snapshot_date AS TIMESTAMP)) = 2023
 ), _s1 AS (
   SELECT
-    AVG(tx_limit_daily) AS avg_tx_limit_daily,
-    AVG(tx_limit_monthly) AS avg_tx_limit_monthly,
+    AVG(CAST(tx_limit_daily AS DECIMAL)) AS avg_tx_limit_daily,
+    AVG(CAST(tx_limit_monthly AS DECIMAL)) AS avg_tx_limit_monthly,
     snapshot_date
   FROM main.user_setting_snapshot
   WHERE

@@ -46,9 +46,9 @@ WITH _t1 AS (
     ON customer.c_nationkey = nation.n_nationkey
 ), _s3 AS (
   SELECT
-    AVG(expr_5) AS median_black_acctbal,
-    AVG(expr_6) AS median_overall_acctbal,
-    AVG(expr_7) AS median_red_acctbal,
+    AVG(CAST(expr_5 AS DECIMAL)) AS median_black_acctbal,
+    AVG(CAST(expr_6 AS DECIMAL)) AS median_overall_acctbal,
+    AVG(CAST(expr_7 AS DECIMAL)) AS median_red_acctbal,
     COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS n_black_acctbal,
     COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS n_red_acctbal,
     n_regionkey

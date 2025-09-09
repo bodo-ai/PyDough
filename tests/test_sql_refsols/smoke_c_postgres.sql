@@ -1,7 +1,7 @@
 WITH _t1 AS (
   SELECT
     CASE
-      WHEN CAST(0.8 * COUNT(c_acctbal) OVER () AS BIGINT) < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS LAST)
+      WHEN 0.8 * COUNT(c_acctbal) OVER () < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS LAST)
       THEN c_acctbal
       ELSE NULL
     END AS expr_30,
@@ -28,16 +28,21 @@ SELECT
   COALESCE(SUM(FLOOR(c_acctbal)), 0) AS b,
   COALESCE(SUM(CEIL(c_acctbal)), 0) AS c,
   COUNT(DISTINCT c_mktsegment) AS d,
-  ROUND(AVG(ABS(c_acctbal)), 4) AS e,
+  ROUND(CAST(AVG(CAST(ABS(c_acctbal) AS DECIMAL)) AS DECIMAL), 4) AS e,
   MIN(c_acctbal) AS f,
   MAX(c_acctbal) AS g,
   MAX(SUBSTRING(c_name FROM 1 FOR 1)) AS h,
   COUNT(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END) AS i,
   CEIL(VAR_POP(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END)) AS j,
-  ROUND(VAR_SAMP(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END), 4) AS k,
+  ROUND(CAST(VAR_SAMP(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS DECIMAL), 4) AS k,
   FLOOR(STDDEV_POP(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END)) AS l,
-  ROUND(STDDEV(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END), 4) AS m,
-  ROUND(AVG(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0)), 2) AS n,
+  ROUND(CAST(STDDEV(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END) AS DECIMAL), 4) AS m,
+  ROUND(
+    CAST(AVG(
+      CAST(COALESCE(CASE WHEN c_acctbal > 0 THEN c_acctbal ELSE NULL END, 0) AS DECIMAL)
+    ) AS DECIMAL),
+    2
+  ) AS n,
   SUM(
     CASE
       WHEN NOT CASE WHEN c_acctbal > 1000 THEN c_acctbal ELSE NULL END IS NULL
@@ -53,5 +58,5 @@ SELECT
     END
   ) AS p,
   MAX(expr_30) AS q,
-  AVG(expr_31) AS r
+  AVG(CAST(expr_31 AS DECIMAL)) AS r
 FROM _t1

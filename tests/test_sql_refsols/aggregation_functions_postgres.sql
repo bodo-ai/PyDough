@@ -21,7 +21,7 @@ WITH _s1 AS (
       ELSE NULL
     END AS expr_15,
     CASE
-      WHEN CAST(0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC NULLS LAST)
+      WHEN 0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC NULLS LAST)
       THEN customer.c_acctbal
       ELSE NULL
     END AS expr_16,
@@ -34,8 +34,8 @@ WITH _s1 AS (
 ), _t1 AS (
   SELECT
     MAX(c_acctbal) AS anything_c_acctbal,
-    AVG(c_acctbal) AS avg_c_acctbal,
-    AVG(expr_15) AS avg_expr_15,
+    AVG(CAST(c_acctbal AS DECIMAL)) AS avg_c_acctbal,
+    AVG(CAST(expr_15 AS DECIMAL)) AS avg_expr_15,
     COUNT(c_acctbal) AS count_c_acctbal,
     MAX(c_acctbal) AS max_c_acctbal,
     MAX(expr_16) AS max_expr_16,

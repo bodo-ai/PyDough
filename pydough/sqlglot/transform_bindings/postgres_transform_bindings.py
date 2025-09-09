@@ -33,24 +33,9 @@ class PostgresTransformBindings(BaseTransformBindings):
         return DayOfWeek.SUNDAY
 
     PYDOP_TO_POSTGRES_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
-        pydop.ABS: "ABS",
-        # pydop.AVG: "AVG",
         pydop.CEIL: "CEIL",
-        # pydop.COUNT: "COUNT",
         pydop.FLOOR: "FLOOR",
-        # pydop.GETPART: "SPLIT_PART",
-        pydop.LENGTH: "LENGTH",
-        pydop.LOWER: "LOWER",
-        # pydop.MAX: "MAX",
-        pydop.MIN: "MIN",
-        pydop.MOD: "MOD",
-        pydop.POWER: "POWER",
-        # pydop.ROUND: "ROUND",
-        # pydop.SQRT: "SQRT",
-        pydop.UPPER: "UPPER",
-        pydop.LPAD: "LPAD",
-        pydop.RPAD: "RPAD",
-        # pydop.SIGN: "SIGN",
+        pydop.MOD: "MOD",  # Ask Kian
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
     }
@@ -69,6 +54,10 @@ class PostgresTransformBindings(BaseTransformBindings):
         match operator:
             case pydop.AVG:
                 return self.convert_avg(args, types)
+            case pydop.LPAD:
+                return self.convert_lpad(args, types)
+            case pydop.RPAD:
+                return self.convert_rpad(args, types)
 
         if operator in self.PYDOP_TO_POSTGRES_FUNC:
             return sqlglot_expressions.Anonymous(
@@ -307,20 +296,20 @@ class PostgresTransformBindings(BaseTransformBindings):
                 return result
 
             case DateTimeUnit.SECOND:
-                # CAST(EXTRACT(EPOCH FROM (o_orderdate - TIMESTAMP '1993-05-25 12:45:36')) AS BIGINT)
+                # CAST(EXTRACT(EPOCH FROM (date2 - date1)) AS BIGINT)
                 substraction: SQLGlotExpression = sqlglot_expressions.Sub(
-                    this=date2, expression=date1
+                    this=sqlglot_expressions.Cast(
+                        this=date2, to=sqlglot_expressions.DataType.build("TIMESTAMP")
+                    ),
+                    expression=sqlglot_expressions.Cast(
+                        this=date1, to=sqlglot_expressions.DataType.build("TIMESTAMP")
+                    ),
                 )
 
-                extract_second_epoch: SQLGlotExpression = sqlglot_expressions.Extract(
+                result = sqlglot_expressions.Extract(
                     this=sqlglot_expressions.Var(this="EPOCH"),
                     expression=apply_parens(substraction),
                 )
-                result = sqlglot_expressions.Cast(
-                    this=extract_second_epoch,
-                    to=sqlglot_expressions.DataType.build("BIGINT"),
-                )
-
                 return result
             case _:
                 raise ValueError(f"Unsupported argument '{unit}' for DATEDIFF.")
@@ -607,3 +596,29 @@ class PostgresTransformBindings(BaseTransformBindings):
         return sqlglot_expressions.Cast(
             this=args[0], to=sqlglot_expressions.DataType.build("INTEGER")
         )
+
+    def convert_lpad(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        result: SQLGlotExpression = sqlglot_expressions.Pad(
+            this=sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("TEXT")
+            ),
+            expression=args[1],
+            fill_pattern=args[2],
+            is_left=True,
+        )
+        return result
+
+    def convert_rpad(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        result: SQLGlotExpression = sqlglot_expressions.Pad(
+            this=sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("TEXT")
+            ),
+            expression=args[1],
+            fill_pattern=args[2],
+            is_left=False,
+        )
+        return result

@@ -21,7 +21,7 @@ WITH _s3 AS (
 SELECT
   countries.co_name AS country,
   ROUND(
-    CAST(COALESCE(_s5.sum_n_incidents, 0) AS DOUBLE PRECISION) / COALESCE(_s5.n_rows, 0),
+    CAST(CAST(COALESCE(_s5.sum_n_incidents, 0) AS DOUBLE PRECISION) / COALESCE(_s5.n_rows, 0) AS DECIMAL),
     2
   ) AS ir
 FROM main.countries AS countries

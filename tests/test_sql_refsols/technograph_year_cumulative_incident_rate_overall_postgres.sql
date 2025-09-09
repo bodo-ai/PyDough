@@ -36,23 +36,23 @@ WITH _s2 AS (
 SELECT
   year AS yr,
   ROUND(
-    CAST(SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(COALESCE(sum_expr_3, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    CAST(CAST(SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(COALESCE(sum_expr_3, 0)) OVER (ORDER BY year ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DECIMAL),
     2
   ) AS cum_ir,
   ROUND(
-    CAST((
+    CAST(CAST((
       100.0 * (
         COALESCE(sum_expr_3, 0) - LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year),
+    ) AS DOUBLE PRECISION) / LAG(COALESCE(sum_expr_3, 0), 1) OVER (ORDER BY year) AS DECIMAL),
     2
   ) AS pct_bought_change,
   ROUND(
-    CAST((
+    CAST(CAST((
       100.0 * (
         COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year),
+    ) AS DOUBLE PRECISION) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year) AS DECIMAL),
     2
   ) AS pct_incident_change,
   COALESCE(sum_expr_3, 0) AS bought,

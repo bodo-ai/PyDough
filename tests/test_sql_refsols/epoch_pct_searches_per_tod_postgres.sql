@@ -12,9 +12,9 @@ WITH _t0 AS (
 )
 SELECT
   t_name AS tod,
-  ROUND((
+  ROUND(CAST((
     100.0 * n_rows
-  ) / SUM(n_rows) OVER (), 2) AS pct_searches
+  ) / SUM(n_rows) OVER () AS DECIMAL), 2) AS pct_searches
 FROM _t0
 ORDER BY
   anything_t_start_hour NULLS FIRST

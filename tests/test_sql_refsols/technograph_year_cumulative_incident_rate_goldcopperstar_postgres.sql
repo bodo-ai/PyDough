@@ -55,23 +55,23 @@ WITH _s14 AS (
 SELECT
   _s15.year_1 - EXTRACT(YEAR FROM CAST(_s14.release_date AS TIMESTAMP)) AS years_since_release,
   ROUND(
-    CAST(SUM(COALESCE(_s15.sum_expr_4, 0)) OVER (ORDER BY _s15.year_1 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(COALESCE(_s15.sum_n_rows, 0)) OVER (ORDER BY _s15.year_1 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    CAST(CAST(SUM(COALESCE(_s15.sum_expr_4, 0)) OVER (ORDER BY _s15.year_1 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(COALESCE(_s15.sum_n_rows, 0)) OVER (ORDER BY _s15.year_1 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DECIMAL),
     2
   ) AS cum_ir,
   ROUND(
-    CAST((
+    CAST(CAST((
       100.0 * (
         COALESCE(_s15.sum_n_rows, 0) - LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_1)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_1),
+    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_1) AS DECIMAL),
     2
   ) AS pct_bought_change,
   ROUND(
-    CAST((
+    CAST(CAST((
       100.0 * (
         COALESCE(_s15.sum_expr_4, 0) - LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_1)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_1),
+    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_1) AS DECIMAL),
     2
   ) AS pct_incident_change,
   COALESCE(_s15.sum_n_rows, 0) AS bought,

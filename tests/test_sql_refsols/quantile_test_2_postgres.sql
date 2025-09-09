@@ -10,47 +10,47 @@ WITH _s0 AS (
 ), _t1 AS (
   SELECT
     CASE
-      WHEN CAST(0.99 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.99 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_10,
     CASE
-      WHEN CAST(0.75 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.75 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_11,
     CASE
-      WHEN CAST(0.25 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.25 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_12,
     CASE
-      WHEN CAST(0.09999999999999998 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.09999999999999998 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_13,
     CASE
-      WHEN CAST(0.010000000000000009 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.010000000000000009 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_14,
     CASE
-      WHEN CAST(0.0 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.0 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_15,
     CASE
-      WHEN CAST(0.5 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.5 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_16,
     CASE
-      WHEN CAST(1.0 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 1.0 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_17,
     CASE
-      WHEN CAST(0.9 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS BIGINT) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
+      WHEN 0.9 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC NULLS LAST)
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_9,

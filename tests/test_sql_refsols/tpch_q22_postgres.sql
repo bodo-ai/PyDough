@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    AVG(c_acctbal) AS global_avg_balance
+    AVG(CAST(c_acctbal AS DECIMAL)) AS global_avg_balance
   FROM tpch.customer
   WHERE
     SUBSTRING(c_phone FROM 1 FOR 2) IN ('13', '31', '23', '29', '30', '18', '17')

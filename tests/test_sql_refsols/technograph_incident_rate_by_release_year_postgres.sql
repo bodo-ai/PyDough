@@ -33,7 +33,10 @@ WITH _s0 AS (
 )
 SELECT
   _s6.release_year AS year,
-  ROUND(CAST(COALESCE(_s7.n_rows, 0) AS DOUBLE PRECISION) / _s6.sum_n_rows, 2) AS ir
+  ROUND(
+    CAST(CAST(COALESCE(_s7.n_rows, 0) AS DOUBLE PRECISION) / _s6.sum_n_rows AS DECIMAL),
+    2
+  ) AS ir
 FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7
   ON _s6.release_year = _s7.release_year

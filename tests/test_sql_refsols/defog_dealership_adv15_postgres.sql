@@ -1,6 +1,6 @@
 WITH _s1 AS (
   SELECT
-    AVG(sale_price) AS avg_sale_price,
+    AVG(CAST(sale_price AS DECIMAL)) AS avg_sale_price,
     salesperson_id
   FROM main.sales
   GROUP BY

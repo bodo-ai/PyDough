@@ -53,10 +53,13 @@ WITH _t2 AS (
     4
 )
 SELECT
-  CONCAT_WS('-', year, LPAD(month, 2, '0')) AS month,
-  ROUND((
-    1000000.0 * COALESCE(sum_n_rows, 0)
-  ) / COALESCE(sum_expr_3, 0), 2) AS ir
+  CONCAT_WS('-', year, LPAD(CAST(month AS TEXT), 2, '0')) AS month,
+  ROUND(
+    CAST((
+      1000000.0 * COALESCE(sum_n_rows, 0)
+    ) / COALESCE(sum_expr_3, 0) AS DECIMAL),
+    2
+  ) AS ir
 FROM _t0
 ORDER BY
   1 NULLS FIRST

@@ -58,10 +58,16 @@ WITH _t2 AS (
 )
 SELECT
   countries.co_name AS country_name,
-  ROUND(CAST(COALESCE(_s3.sum_n_rows, 0) AS DOUBLE PRECISION) / _s3.n_rows, 2) AS made_ir,
-  ROUND(CAST(COALESCE(_s7.sum_n_rows, 0) AS DOUBLE PRECISION) / _s7.n_rows, 2) AS sold_ir,
   ROUND(
-    CAST(COALESCE(_s13.sum_n_rows, 0) AS DOUBLE PRECISION) / COALESCE(_s13.n_rows, 0),
+    CAST(CAST(COALESCE(_s3.sum_n_rows, 0) AS DOUBLE PRECISION) / _s3.n_rows AS DECIMAL),
+    2
+  ) AS made_ir,
+  ROUND(
+    CAST(CAST(COALESCE(_s7.sum_n_rows, 0) AS DOUBLE PRECISION) / _s7.n_rows AS DECIMAL),
+    2
+  ) AS sold_ir,
+  ROUND(
+    CAST(CAST(COALESCE(_s13.sum_n_rows, 0) AS DOUBLE PRECISION) / COALESCE(_s13.n_rows, 0) AS DECIMAL),
     2
   ) AS user_ir
 FROM main.countries AS countries

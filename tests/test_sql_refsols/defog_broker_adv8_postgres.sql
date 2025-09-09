@@ -17,13 +17,13 @@ WHERE
   NOT _u_0._u_1 IS NULL
   AND sbtransaction.sbtxdatetime < DATE_TRUNC(
     'DAY',
-    CURRENT_TIMESTAMP - MAKE_INTERVAL(days => (
+    CURRENT_TIMESTAMP - CAST((
       EXTRACT(DOW FROM CURRENT_TIMESTAMP) + 6
-    ) % 7)
+    ) % 7 || ' days' AS INTERVAL)
   )
   AND sbtransaction.sbtxdatetime >= DATE_TRUNC(
     'DAY',
-    CURRENT_TIMESTAMP - MAKE_INTERVAL(days => (
+    CURRENT_TIMESTAMP - CAST((
       EXTRACT(DOW FROM CURRENT_TIMESTAMP) + 6
-    ) % 7)
+    ) % 7 || ' days' AS INTERVAL)
   ) - INTERVAL '1 WEEK'

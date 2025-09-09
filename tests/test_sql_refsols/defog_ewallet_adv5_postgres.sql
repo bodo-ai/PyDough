@@ -1,5 +1,5 @@
 SELECT
-  AVG(balance) AS AMB
+  AVG(CAST(balance AS DECIMAL)) AS AMB
 FROM main.wallet_user_balance_daily
 WHERE
   (

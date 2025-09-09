@@ -45,6 +45,9 @@ def canonicalize(
 
 
 def fix_expression_type(node: exp.Expression, dialect: Dialect) -> exp.Expression:
+    if dialect.__class__.__name__ != "Postgres":
+        return node
+
     if isinstance(node, exp.Sub) and (
         node.this.type.this == exp.DataType.Type.TIMESTAMP
         or node.expression.type.this == exp.DataType.Type.TIMESTAMP

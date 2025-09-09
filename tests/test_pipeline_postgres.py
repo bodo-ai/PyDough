@@ -522,9 +522,7 @@ def test_pipeline_e2e_postgres_defog_custom(
     Test executing the defog analytical queries with Postgres database.
     """
     defog_postgres_test_data.run_e2e_test(
-        defog_graphs,
-        postgres_conn_db_context,
-        coerce_types=True,
+        defog_graphs, postgres_conn_db_context, coerce_types=True
     )
 
 

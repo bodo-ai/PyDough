@@ -22,5 +22,5 @@ WITH _t0 AS (
     DATE_TRUNC('DAY', CAST(wallet_merchant_balance_daily.updated_at AS TIMESTAMP)) = DATE_TRUNC('DAY', CURRENT_TIMESTAMP)
 )
 SELECT
-  AVG(expr_1) AS _expr0
+  AVG(CAST(expr_1 AS DECIMAL)) AS _expr0
 FROM _t0

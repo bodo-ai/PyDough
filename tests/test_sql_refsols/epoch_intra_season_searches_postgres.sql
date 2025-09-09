@@ -69,12 +69,18 @@ WITH _s0 AS (
 )
 SELECT
   _s16.s_name AS season_name,
-  ROUND((
-    100.0 * COALESCE(_s16.sum_is_intra_season, 0)
-  ) / _s16.n_rows, 2) AS pct_season_searches,
-  ROUND((
-    100.0 * COALESCE(_s17.sum_is_intra_season, 0)
-  ) / COALESCE(_s17.n_rows, 0), 2) AS pct_event_searches
+  ROUND(
+    CAST((
+      100.0 * COALESCE(_s16.sum_is_intra_season, 0)
+    ) / _s16.n_rows AS DECIMAL),
+    2
+  ) AS pct_season_searches,
+  ROUND(
+    CAST((
+      100.0 * COALESCE(_s17.sum_is_intra_season, 0)
+    ) / COALESCE(_s17.n_rows, 0) AS DECIMAL),
+    2
+  ) AS pct_event_searches
 FROM _s16 AS _s16
 LEFT JOIN _s17 AS _s17
   ON _s16.s_name = _s17.s_name

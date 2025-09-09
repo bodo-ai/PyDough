@@ -1,11 +1,9 @@
 SELECT
   DATE_TRUNC(
     'DAY',
-    CAST(notifications.created_at AS TIMESTAMP) - MAKE_INTERVAL(
-      days => (
-        EXTRACT(DOW FROM CAST(notifications.created_at AS TIMESTAMP)) + 6
-      ) % 7
-    )
+    CAST(notifications.created_at AS TIMESTAMP) - CAST((
+      EXTRACT(DOW FROM CAST(notifications.created_at AS TIMESTAMP)) + 6
+    ) % 7 || ' days' AS INTERVAL)
   ) AS week,
   COUNT(*) AS num_notifs,
   COALESCE(
@@ -28,15 +26,15 @@ JOIN main.users AS users
 WHERE
   notifications.created_at < DATE_TRUNC(
     'DAY',
-    CURRENT_TIMESTAMP - MAKE_INTERVAL(days => (
+    CURRENT_TIMESTAMP - CAST((
       EXTRACT(DOW FROM CURRENT_TIMESTAMP) + 6
-    ) % 7)
+    ) % 7 || ' days' AS INTERVAL)
   )
   AND notifications.created_at >= DATE_TRUNC(
     'DAY',
-    CURRENT_TIMESTAMP - MAKE_INTERVAL(days => (
+    CURRENT_TIMESTAMP - CAST((
       EXTRACT(DOW FROM CURRENT_TIMESTAMP) + 6
-    ) % 7)
+    ) % 7 || ' days' AS INTERVAL)
   ) - INTERVAL '3 WEEK'
 GROUP BY
   1

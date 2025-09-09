@@ -7,8 +7,8 @@ SELECT
   customer.c_name LIKE '%sub%' AS contains_sub,
   customer.c_name LIKE '%test%' AS matches_like,
   CONCAT_WS('::', customer.c_name, nation.n_name) AS joined_string,
-  LPAD(customer.c_name, 20, '*') AS lpad_name,
-  RPAD(customer.c_name, 20, '-') AS rpad_name,
+  LPAD(CAST(customer.c_name AS TEXT), 20, '*') AS lpad_name,
+  RPAD(CAST(customer.c_name AS TEXT), 20, '-') AS rpad_name,
   TRIM('
 	 ' FROM customer.c_name) AS stripped,
   TRIM('aeiou' FROM customer.c_name) AS stripped_vowels,

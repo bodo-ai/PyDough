@@ -19,7 +19,7 @@ SELECT
   COUNT(*) < 25 AS s17,
   COUNT(*) <= 25 AS s18,
   COUNT(*) AS s19,
-  AVG(COALESCE(LENGTH(sbcustname), 0)) AS s20,
+  AVG(CAST(COALESCE(LENGTH(sbcustname), 0) AS DECIMAL)) AS s20,
   TRUE AS s21,
   TRUE AS s22,
   TRUE AS s23

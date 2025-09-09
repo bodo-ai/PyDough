@@ -3,7 +3,7 @@ WITH _s2 AS (
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbcustjoindate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)), 2, '0')
+      LPAD(CAST(EXTRACT(MONTH FROM CAST(sbcustjoindate AS TIMESTAMP)) AS TEXT), 2, '0')
     ) AS month,
     COUNT(*) AS n_rows
   FROM main.sbcustomer
@@ -14,11 +14,15 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    AVG(sbtransaction.sbtxamount) AS avg_sbtxamount,
+    AVG(CAST(sbtransaction.sbtxamount AS DECIMAL)) AS avg_sbtxamount,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)),
-      LPAD(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)), 2, '0')
+      LPAD(
+        CAST(EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP)) AS TEXT),
+        2,
+        '0'
+      )
     ) AS month
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction

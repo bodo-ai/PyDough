@@ -1,6 +1,6 @@
 SELECT
   DATE_TRUNC('MONTH', CAST(sbtxdatetime AS TIMESTAMP)) AS month,
-  AVG(sbtxprice) AS avg_price
+  AVG(CAST(sbtxprice AS DECIMAL)) AS avg_price
 FROM main.sbtransaction
 WHERE
   EXTRACT(QUARTER FROM CAST(sbtxdatetime AS TIMESTAMP)) = 1

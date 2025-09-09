@@ -1,15 +1,15 @@
 WITH _t2 AS (
   SELECT
-    ABS(CAST(sbcustpostalcode AS BIGINT)) AS expr_13,
+    ABS(CAST(sbcustpostalcode AS INT)) AS expr_13,
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
-    AVG(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS ravg1,
+    AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER () AS ravg1,
     COALESCE(
-      AVG(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
     ) AS ravg2,
-    COUNT(CAST(sbcustpostalcode AS BIGINT)) OVER () AS rcnt1,
+    COUNT(CAST(sbcustpostalcode AS INT)) OVER () AS rcnt1,
     COALESCE(
-      COUNT(CAST(sbcustpostalcode AS BIGINT)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      COUNT(CAST(sbcustpostalcode AS INT)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rcnt2,
     COUNT(*) OVER () AS rsiz1,
@@ -17,16 +17,16 @@ WITH _t2 AS (
       COUNT(*) OVER (ORDER BY sbcustname ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING),
       0.1
     ) AS rsiz2,
-    SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER () AS rsum1,
+    SUM(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER () AS rsum1,
     COALESCE(
-      SUM(ABS(COALESCE(CAST(sbcustpostalcode AS BIGINT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      SUM(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rsum2
   FROM main.sbcustomer
 ), _t1 AS (
   SELECT
     CASE
-      WHEN CAST(0.75 * COUNT(expr_13) OVER () AS BIGINT) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC NULLS LAST)
+      WHEN 0.75 * COUNT(expr_13) OVER () < ROW_NUMBER() OVER (ORDER BY expr_13 DESC NULLS LAST)
       THEN expr_13
       ELSE NULL
     END AS expr_15,
@@ -81,15 +81,15 @@ SELECT
   FALSE AS s23,
   TRUE AS s24,
   MAX(expr_15) AS s25,
-  AVG(expr_16) AS s26,
+  AVG(CAST(expr_16 AS DECIMAL)) AS s26,
   MIN(rank) AS s27,
   MAX(rank) AS s28,
   MAX(rsum1) AS s29,
-  ROUND(SUM(rsum2), 2) AS s30,
+  ROUND(CAST(SUM(rsum2) AS DECIMAL), 2) AS s30,
   MAX(ravg1) AS s31,
-  ROUND(SUM(ravg2), 2) AS s32,
+  ROUND(CAST(SUM(ravg2) AS DECIMAL), 2) AS s32,
   MAX(rcnt1) AS s33,
-  ROUND(SUM(rcnt2), 2) AS s34,
+  ROUND(CAST(SUM(rcnt2) AS DECIMAL), 2) AS s34,
   MAX(rsiz1) AS s35,
-  ROUND(SUM(rsiz2), 2) AS s36
+  ROUND(CAST(SUM(rsiz2) AS DECIMAL), 2) AS s36
 FROM _t1

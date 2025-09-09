@@ -1,11 +1,9 @@
 SELECT
   DATE_TRUNC(
     'DAY',
-    CAST(sbtransaction.sbtxdatetime AS TIMESTAMP) - MAKE_INTERVAL(
-      days => (
-        EXTRACT(DOW FROM CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) + 6
-      ) % 7
-    )
+    CAST(sbtransaction.sbtxdatetime AS TIMESTAMP) - CAST((
+      EXTRACT(DOW FROM CAST(sbtransaction.sbtxdatetime AS TIMESTAMP)) + 6
+    ) % 7 || ' days' AS INTERVAL)
   ) AS week,
   COUNT(*) AS num_transactions,
   COALESCE(
@@ -29,15 +27,15 @@ JOIN main.sbticker AS sbticker
 WHERE
   sbtransaction.sbtxdatetime < DATE_TRUNC(
     'DAY',
-    CURRENT_TIMESTAMP - MAKE_INTERVAL(days => (
+    CURRENT_TIMESTAMP - CAST((
       EXTRACT(DOW FROM CURRENT_TIMESTAMP) + 6
-    ) % 7)
+    ) % 7 || ' days' AS INTERVAL)
   )
   AND sbtransaction.sbtxdatetime >= DATE_TRUNC(
     'DAY',
-    CURRENT_TIMESTAMP - MAKE_INTERVAL(days => (
+    CURRENT_TIMESTAMP - CAST((
       EXTRACT(DOW FROM CURRENT_TIMESTAMP) + 6
-    ) % 7)
+    ) % 7 || ' days' AS INTERVAL)
   ) - INTERVAL '8 WEEK'
 GROUP BY
   1

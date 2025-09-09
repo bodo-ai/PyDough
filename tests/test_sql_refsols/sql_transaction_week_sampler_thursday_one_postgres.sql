@@ -2,9 +2,9 @@ SELECT
   sbtxdatetime AS date_time,
   DATE_TRUNC(
     'DAY',
-    CAST(sbtxdatetime AS TIMESTAMP) - MAKE_INTERVAL(days => (
+    CAST(sbtxdatetime AS TIMESTAMP) - CAST((
       EXTRACT(DOW FROM CAST(sbtxdatetime AS TIMESTAMP)) + 3
-    ) % 7)
+    ) % 7 || ' days' AS INTERVAL)
   ) AS sow,
   CASE
     WHEN EXTRACT(DOW FROM CAST(sbtxdatetime AS TIMESTAMP)) = 0

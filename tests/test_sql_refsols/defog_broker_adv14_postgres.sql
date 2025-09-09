@@ -1,6 +1,6 @@
 SELECT
   sbticker.sbtickertype AS ticker_type,
-  AVG(sbdailyprice.sbdpclose) AS ACP
+  AVG(CAST(sbdailyprice.sbdpclose AS DECIMAL)) AS ACP
 FROM main.sbticker AS sbticker
 JOIN main.sbdailyprice AS sbdailyprice
   ON (

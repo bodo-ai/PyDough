@@ -11,9 +11,9 @@ SELECT
   ) * (
     1 + l_tax
   )), 0) AS SUM_CHARGE,
-  AVG(l_quantity) AS AVG_QTY,
-  AVG(l_extendedprice) AS AVG_PRICE,
-  AVG(l_discount) AS AVG_DISC,
+  AVG(CAST(l_quantity AS DECIMAL)) AS AVG_QTY,
+  AVG(CAST(l_extendedprice AS DECIMAL)) AS AVG_PRICE,
+  AVG(CAST(l_discount AS DECIMAL)) AS AVG_DISC,
   COUNT(*) AS COUNT_ORDER
 FROM tpch.lineitem
 WHERE
