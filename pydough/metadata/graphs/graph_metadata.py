@@ -43,6 +43,7 @@ class GraphMetadata(AbstractMetadata):
         synonyms: list[str] | None,
         extra_semantic_info: dict | None,
     ):
+        breakpoint()
         is_valid_name.verify(name, "graph name")
         self._additional_definitions: list[str] | None = additional_definitions
         self._verified_pydough_analysis: list[dict] | None = verified_pydough_analysis
