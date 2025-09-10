@@ -14,13 +14,13 @@ JOIN crbnk.customers AS customers
     42 - customers.c_key
   )
 WHERE
-  (
-    (
-      SUBSTRING(accounts.a_type, -1) || SUBSTRING(accounts.a_type, 1, LENGTH(accounts.a_type) - 1)
-    ) = 'retirement'
-    OR (
-      SUBSTRING(accounts.a_type, -1) || SUBSTRING(accounts.a_type, 1, LENGTH(accounts.a_type) - 1)
-    ) = 'savings'
-  )
-  AND CAST(STRFTIME('%Y', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER) < 2020
+  CAST(STRFTIME('%Y', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER) < 2020
   AND SQRT(accounts.a_balance) >= 5000
+  AND (
+    accounts.a_type = (
+      SUBSTRING('retirement', 2) || SUBSTRING('retirement', 1, 1)
+    )
+    OR accounts.a_type = (
+      SUBSTRING('savings', 2) || SUBSTRING('savings', 1, 1)
+    )
+  )
