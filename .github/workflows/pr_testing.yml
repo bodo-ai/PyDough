@@ -143,7 +143,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres)" -rs
 
   run-sf-tests:
     name: Snowflake Tests
@@ -184,7 +184,7 @@ jobs:
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run postgres]')) ||
-      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-postgres)
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-postgres))
     uses: ./.github/workflows/postgres_testing.yml
     secrets:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
