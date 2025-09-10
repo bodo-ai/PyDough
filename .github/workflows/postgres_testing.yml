@@ -24,7 +24,7 @@ jobs:
     # Define services here to run Docker containers alongside your job
     services:
       postgres:
-        image: juankxbodo/pydough-pgsql-tests:latest
+        image: bodoai1/pydough-postgres-tpch:latest
         env:
           # Set environment variables for Postgres container
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
@@ -81,4 +81,4 @@ jobs:
         run: uv run python -c "import psycopg2; print('Postgres connector installed')"
 
       - name: Run Postgres Tests
-        run: uv run pytest -m pgsql tests/ -rs
+        run: uv run pytest -m postgres tests/ -rs

@@ -142,7 +142,7 @@ To run **MySQL CI tests**, add the flag `[run mysql]` to your commit message.
         export MYSQL_PASSWORD="your_password"
 
 ## Running Postgres Tests on CI
-To run **Postgres CI tests**, add the flag `[run pg]` to your commit message.
+To run **Postgres CI tests**, add the flag `[run postgres]` to your commit message.
 
 **Running Postgres tests locally:**
 
