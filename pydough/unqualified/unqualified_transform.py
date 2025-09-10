@@ -10,9 +10,9 @@ import inspect
 import types
 from typing import Any
 
+from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GraphMetadata
 
-from .errors import PyDoughUnqualifiedException
 from .unqualified_node import UnqualifiedNode
 
 
@@ -468,7 +468,9 @@ def from_string(
     try:
         tree: ast.AST = ast.parse(source)
     except SyntaxError as e:
-        raise ValueError(f"Syntax error in source PyDough code:\n{str(e)}") from e
+        raise ValueError(
+            f"Syntax error in source PyDough code:\n{source}\n{str(e)}"
+        ) from e
     assert isinstance(tree, ast.AST)
     new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)

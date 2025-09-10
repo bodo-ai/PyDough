@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    sbtxtickerid
+    sbtxtickerid,
+    COUNT(*) AS n_rows
   FROM main.sbtransaction
   WHERE
     sbtxdatetime >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 10, DAY))
     AND sbtxtype = 'buy'
   GROUP BY
-    2
+    1
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,

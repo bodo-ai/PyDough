@@ -7,8 +7,8 @@ __all__ = ["ScalarAttributeMetadata"]
 
 from abc import abstractmethod
 
+from pydough.errors.error_utils import HasType, extract_array
 from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import HasType, extract_array
 from pydough.types import PyDoughType
 
 from .property_metadata import PropertyMetadata

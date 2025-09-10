@@ -1,12 +1,12 @@
 WITH _s3 AS (
   SELECT
     SUBSTRING(c_comment, 1, 1) AS expr_1,
-    COUNT(*) AS n_rows,
-    c_nationkey
+    c_nationkey,
+    COUNT(*) AS n_rows
   FROM tpch.customer
   GROUP BY
     1,
-    3
+    2
 )
 SELECT
   nation.n_name AS name,

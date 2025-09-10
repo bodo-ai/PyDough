@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    salesperson_id
+    salesperson_id,
+    COUNT(*) AS n_rows
   FROM main.sales
   WHERE
     CAST((
       JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sale_date, 'start of day'))
     ) AS INTEGER) <= 30
   GROUP BY
-    2
+    1
 )
 SELECT
   salespersons._id,

@@ -516,6 +516,7 @@ def test_pipeline_e2e_mysql_tpch_simple_week(
 def test_pipeline_e2e_mysql_defog_custom(
     defog_mysql_test_data: PyDoughPandasTest,
     get_mysql_defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
 ):
     """
@@ -524,6 +525,7 @@ def test_pipeline_e2e_mysql_defog_custom(
     defog_mysql_test_data.run_e2e_test(
         get_mysql_defog_graphs,
         mysql_conn_db_context(defog_mysql_test_data.graph_name.lower()),
+        config=defog_config,
         coerce_types=True,
     )
 

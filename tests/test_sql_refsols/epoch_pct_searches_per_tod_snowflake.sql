@@ -1,14 +1,14 @@
 WITH _t0 AS (
   SELECT
+    times.t_name,
     ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
-    COUNT(*) AS n_rows,
-    times.t_name
+    COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > HOUR(CAST(searches.search_ts AS TIMESTAMP))
     AND times.t_start_hour <= HOUR(CAST(searches.search_ts AS TIMESTAMP))
   GROUP BY
-    3
+    1
 )
 SELECT
   t_name AS tod,

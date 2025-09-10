@@ -1,5 +1,5 @@
-ROOT(columns=[('C_COUNT', num_non_special_orders), ('CUSTDIST', CUSTDIST)], orderings=[(CUSTDIST):desc_last, (num_non_special_orders):desc_last], limit=10:numeric)
- AGGREGATE(keys={'num_non_special_orders': DEFAULT_TO(n_rows, 0:numeric)}, aggregations={'CUSTDIST': COUNT()})
+ROOT(columns=[('C_COUNT', num_non_special_orders), ('CUSTDIST', n_rows)], orderings=[(n_rows):desc_last, (num_non_special_orders):desc_last], limit=10:numeric)
+ AGGREGATE(keys={'num_non_special_orders': DEFAULT_TO(n_rows, 0:numeric)}, aggregations={'n_rows': COUNT()})
   JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows})
    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey})
    AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})

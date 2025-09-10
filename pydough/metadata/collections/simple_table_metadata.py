@@ -3,10 +3,10 @@ Definition of PyDough metadata for a collection that trivially corresponds to a
 table in a relational system.
 """
 
-from pydough.metadata.errors import (
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import (
     HasPropertyWith,
     NoExtraKeys,
-    PyDoughMetadataException,
     extract_array,
     extract_string,
     is_string,

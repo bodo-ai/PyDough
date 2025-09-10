@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    receiver_id,
     COUNT(DISTINCT coupon_id) AS ndistinct_coupon_id,
-    COUNT(DISTINCT txid) AS ndistinct_txid,
-    receiver_id
+    COUNT(DISTINCT txid) AS ndistinct_txid
   FROM main.wallet_transactions_daily
   WHERE
     status = 'success'
   GROUP BY
-    3
+    1
 )
 SELECT
   merchants.name,

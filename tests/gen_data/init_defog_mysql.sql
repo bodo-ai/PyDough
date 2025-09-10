@@ -412,10 +412,10 @@ INSERT INTO `notifications` (`id`, `user_id`, `message`, `type`, `status`, `crea
  (10, 8, 'Playtime! New games and toys have arrived', 'promotion', 'archived', CAST('2023-06-01 18:00:00' AS DATETIME), 'email', NULL, 'https://kidzplayhouse.com/new-arrivals'),
  (11, 9, 'Here''s $10 to start your glow up!', 'promotion', 'unread', CAST('2023-06-01 10:15:00' AS DATETIME), 'email', NULL, 'https://beautytrending.com/new-customer'),
  (12, 10, 'Your order #ord_mjs337 is being processed', 'transaction', 'read', CAST('2023-06-04 19:31:30' AS DATETIME), 'web_app', 'web_d8180kaf', 'https://gamerush.co/orders/32e2b29c'),
- (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', NOW() - INTERVAL 7 DAY, 'email', NULL, 'https://techmart.com/promo/TECH10'),
- (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', NOW() - INTERVAL 14 DAY, 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
- (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', NOW() - INTERVAL 21 DAY, 'email', NULL, 'https://fitlifegear.com/renew'),
- (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', NOW() - INTERVAL 7 DAY + INTERVAL 2 DAY, 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
+ (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY, 'email', NULL, 'https://techmart.com/promo/TECH10'),
+ (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 14 DAY, 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
+ (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 21 DAY, 'email', NULL, 'https://fitlifegear.com/renew'),
+ (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 2 DAY, 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
 
 INSERT INTO `user_sessions` (`user_id`, `session_start_ts`, `session_end_ts`, `device_type`, `device_id`) VALUES
  (1, CAST('2023-06-01 09:45:22' AS DATETIME), CAST('2023-06-01 10:20:35' AS DATETIME), 'mobile_app', 'mobile_8fh2k1'),

@@ -1,22 +1,22 @@
 WITH _s3 AS (
   SELECT
+    orders.o_custkey,
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS sum_expr_1,
-    orders.o_custkey
+    )) AS sum_expr
   FROM tpch.orders AS orders
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
   WHERE
-    EXTRACT(QUARTER FROM CAST(orders.o_orderdate AS DATETIME)) = 4
+    EXTRACT(MONTH FROM CAST(orders.o_orderdate AS DATETIME)) IN (10, 11, 12)
     AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
   GROUP BY
-    2
+    1
 )
 SELECT
   customer.c_custkey AS C_CUSTKEY,
   customer.c_name AS C_NAME,
-  COALESCE(_s3.sum_expr_1, 0) AS REVENUE,
+  COALESCE(_s3.sum_expr, 0) AS REVENUE,
   customer.c_acctbal AS C_ACCTBAL,
   nation.n_name AS N_NAME,
   customer.c_address AS C_ADDRESS,

@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    SUM(sbtxamount) AS sum_sbTxAmount,
-    sbtxcustid AS sbTxCustId
+    sbtxcustid AS sbTxCustId,
+    SUM(sbtxamount) AS sum_sbTxAmount
   FROM main.sbTransaction
   GROUP BY
-    2
+    1
 )
 SELECT
   sbCustomer.sbcustname AS name,

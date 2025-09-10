@@ -1,5 +1,6 @@
 WITH _t1 AS (
   SELECT
+    sbtickerexchange,
     CASE
       WHEN ABS(
         (
@@ -81,19 +82,6 @@ WITH _t1 AS (
     CASE
       WHEN ABS(
         (
-          ROW_NUMBER() OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1') - 1.0
-        ) - (
-          CAST((
-            COUNT(NULL) OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) - 1.0
-          ) AS REAL) / 2.0
-        )
-      ) < 1.0
-      THEN NULL
-      ELSE NULL
-    END AS expr_78,
-    CASE
-      WHEN ABS(
-        (
           ROW_NUMBER() OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) DESC) - 1.0
         ) - (
           CAST((
@@ -137,18 +125,12 @@ WITH _t1 AS (
       ELSE NULL
     END AS expr_85,
     CASE
-      WHEN CAST(0.30000000000000004 * COUNT(NULL) OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS INTEGER) < ROW_NUMBER() OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY '1')
-      THEN NULL
-      ELSE NULL
-    END AS expr_86,
-    CASE
       WHEN CAST(0.19999999999999996 * COUNT(
         LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
       ) OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)) AS INTEGER) < ROW_NUMBER() OVER (PARTITION BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) ORDER BY LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END) DESC)
       THEN LENGTH(CASE WHEN sbtickerexchange <> 'NYSE Arca' THEN sbtickerexchange ELSE NULL END)
       ELSE NULL
-    END AS expr_87,
-    sbtickerexchange
+    END AS expr_87
   FROM main.sbticker
 ), _t0 AS (
   SELECT
@@ -159,39 +141,37 @@ WITH _t1 AS (
     AVG(expr_75) AS avg_expr_75,
     AVG(expr_76) AS avg_expr_76,
     AVG(expr_77) AS avg_expr_77,
-    AVG(expr_78) AS avg_expr_78,
     AVG(expr_79) AS avg_expr_79,
-    COUNT(*) AS count_one,
     MAX(expr_80) AS max_expr_80,
     MAX(expr_81) AS max_expr_81,
     MAX(expr_82) AS max_expr_82,
     MAX(expr_83) AS max_expr_83,
     MAX(expr_84) AS max_expr_84,
     MAX(expr_85) AS max_expr_85,
-    MAX(expr_86) AS max_expr_86,
-    MAX(expr_87) AS max_expr_87
+    MAX(expr_87) AS max_expr_87,
+    COUNT(*) AS n_rows
   FROM _t1
   GROUP BY
     1
 )
 SELECT
   aug_exchange,
-  count_one AS su1,
-  count_one * 2 AS su2,
-  count_one * -1 AS su3,
-  count_one * -3 AS su4,
+  n_rows AS su1,
+  n_rows * 2 AS su2,
+  n_rows * -1 AS su3,
+  n_rows * -3 AS su4,
   0 AS su5,
-  count_one * 0.5 AS su6,
+  n_rows * 0.5 AS su6,
   0 AS su7,
   COALESCE(aug_exchange, 0) AS su8,
-  count_one AS co1,
-  count_one AS co2,
-  count_one AS co3,
-  count_one AS co4,
-  count_one AS co5,
-  count_one AS co6,
+  n_rows AS co1,
+  n_rows AS co2,
+  n_rows AS co3,
+  n_rows AS co4,
+  n_rows AS co5,
+  n_rows AS co6,
   0 AS co7,
-  count_one * IIF(NOT aug_exchange IS NULL, 1, 0) AS co8,
+  n_rows * IIF(NOT aug_exchange IS NULL, 1, 0) AS co8,
   1 AS nd1,
   1 AS nd2,
   1 AS nd3,
@@ -238,7 +218,7 @@ SELECT
   avg_expr_75 AS me4,
   avg_expr_76 AS me5,
   avg_expr_77 AS me6,
-  avg_expr_78 AS me7,
+  NULL AS me7,
   avg_expr_79 AS me8,
   max_expr_80 AS qu1,
   max_expr_81 AS qu2,
@@ -246,7 +226,7 @@ SELECT
   max_expr_83 AS qu4,
   max_expr_84 AS qu5,
   max_expr_85 AS qu6,
-  max_expr_86 AS qu7,
+  NULL AS qu7,
   max_expr_87 AS qu8
 FROM _t0
 ORDER BY

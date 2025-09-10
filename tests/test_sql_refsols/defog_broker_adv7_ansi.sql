@@ -20,7 +20,6 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    AVG(sbtransaction.sbtxamount) AS avg_sbtxamount,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)),
@@ -34,7 +33,8 @@ WITH _s2 AS (
           )
         )
       END
-    ) AS month
+    ) AS month,
+    AVG(sbtransaction.sbtxamount) AS avg_sbtxamount
   FROM main.sbcustomer AS sbcustomer
   JOIN main.sbtransaction AS sbtransaction
     ON EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbtransaction.sbtxdatetime AS DATETIME))
@@ -44,7 +44,7 @@ WITH _s2 AS (
     sbcustomer.sbcustjoindate < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
     AND sbcustomer.sbcustjoindate >= DATE_TRUNC('MONTH', DATE_SUB(CURRENT_TIMESTAMP(), 6, MONTH))
   GROUP BY
-    2
+    1
 )
 SELECT
   _s2.month,

@@ -1,14 +1,14 @@
 WITH _t0 AS (
   SELECT
+    times.t_name,
     MAX(times.t_start_hour) AS anything_t_start_hour,
-    COUNT(*) AS n_rows,
-    times.t_name
+    COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
     AND times.t_start_hour <= CAST(STRFTIME('%H', searches.search_ts) AS INTEGER)
   GROUP BY
-    3
+    1
 )
 SELECT
   t_name AS tod,

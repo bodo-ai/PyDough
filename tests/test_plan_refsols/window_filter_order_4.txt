@@ -1,5 +1,5 @@
-ROOT(columns=[('n', n)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n': COUNT()})
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
   FILTER(condition=n_rows < RELAVG(args=[n_rows], partition=[], order=[]), columns={})
    JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows})
     JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey})

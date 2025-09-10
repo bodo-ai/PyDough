@@ -26,6 +26,7 @@ from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 
+import pydough
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseContext,
@@ -72,10 +73,11 @@ def convert_relation_to_sql(
     try:
         glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
     except SqlglotError as e:
-        print(
-            f"ERROR WHILE OPTIMIZING QUERY:\n{glot_expr.sql(sqlglot_dialect, pretty=True)}"
-        )
-        raise e
+        sql_text: str = glot_expr.sql(sqlglot_dialect, pretty=True)
+        print(f"ERROR WHILE OPTIMIZING QUERY:\n{sql_text}")
+        raise pydough.active_session.error_builder.sql_runtime_failure(
+            sql_text, e, False
+        ) from e
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
@@ -106,6 +108,7 @@ def apply_sqlglot_optimizer(
         "quote_identifiers": False,
         "isolate_tables": True,
         "validate_qualify_columns": False,
+        "expand_alias_refs": False,
     }
     # Exclude Snowflake dialect to avoid some issues
     # related to name qualification
@@ -207,12 +210,14 @@ def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
         # original expression to include the collate instead.
         if expression.args.get("order") is not None:
             order_list: list[SQLGlotExpression] = expression.args["order"].expressions
-            aliases: list[str] = []
+            aliases: list[str | None] = []
             for expr in expression.expressions:
                 if isinstance(expr, Alias):
                     aliases.append(expr.alias.lower())
                 elif isinstance(expr, Column):
                     aliases.append(expr.name.lower())
+                else:
+                    aliases.append(None)
             for idx, order_expr in enumerate(order_list):
                 if order_expr.this in expressions or (
                     isinstance(order_expr.this, Column)
@@ -404,7 +409,7 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     elif dialect == DatabaseDialect.POSTGRES:
         return PostgresDialect()
     else:
-        raise ValueError(f"Unsupported dialect: {dialect}")
+        raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
 def execute_df(

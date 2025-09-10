@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    coupon_id,
     COUNT(txid) AS count_txid,
-    SUM(amount) AS sum_amount,
-    coupon_id
+    SUM(amount) AS sum_amount
   FROM main.wallet_transactions_daily
   GROUP BY
-    3
+    1
 )
 SELECT
   coupons.code AS coupon_code,
