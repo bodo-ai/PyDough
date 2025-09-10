@@ -116,7 +116,7 @@ class GraphMetadata(AbstractMetadata):
         from pydough.metadata.collections import CollectionMetadata
 
         # Make sure the collection is actually a collection
-        HasType(CollectionMetadata).verify(collection, f"collection {collection!r}")
+        HasType(CollectionMetadata).verify(collection, "collection")
         assert isinstance(collection, CollectionMetadata)
 
         # Verify sure the collection has not already been added to the graph

@@ -85,12 +85,12 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "BAD_COLLECTION_NAME_1",
-            "name '0' must be a string that is a valid Python identifier",
+            "collection name '0' must be a string that is a valid Python identifier",
             id="BAD_COLLECTION_NAME_1",
         ),
         pytest.param(
             "BAD_COLLECTION_NAME_2",
-            "name 'Invalid name' must be a string that is a valid Python identifier",
+            "collection name 'Invalid name' must be a string that is a valid Python identifier",
             id="BAD_COLLECTION_NAME_2",
         ),
         pytest.param(
@@ -100,18 +100,23 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "BAD_PROPERTY_NAME_2",
-            "name '0' must be a string that is a valid Python identifier",
-            id="BAD_PROPERTY_NAME_2",
-        ),
-        pytest.param(
-            "BAD_COLUMN_NAME",
-            "name 'invalid column name' must be a string that is a valid Python identifier",
+            "collection name '0' must be a string that is a valid Python identifier",
             id="BAD_PROPERTY_NAME_2",
         ),
         pytest.param(
             "BAD_TABLE_NAME",
-            "name 'invalid table_name' must be a string that is a valid Python identifier",
-            id="BAD_PROPERTY_NAME_2",
+            "collection name 'invalid table_name' must be a string that is a valid Python identifier",
+            id="BAD_TABLE_NAME",
+        ),
+        pytest.param(
+            "BAD_COLUMN_NAME",
+            "property name 'invalid column name' must be a string that is a valid Python identifier",
+            id="BAD_COLUMN_NAME",
+        ),
+        pytest.param(
+            "BAD_UNIQUE_PROPERTY",
+            "property name 'invalid column name' must be a string that is a valid Python identifier",
+            id="BAD_UNIQUE_PROPERTY",
         ),
         pytest.param(
             "BAD_RELATIONSHIP_NAME",

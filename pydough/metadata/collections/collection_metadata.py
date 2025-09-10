@@ -48,8 +48,8 @@ class CollectionMetadata(AbstractMetadata):
             PropertyMetadata,
         )
 
-        is_valid_name.verify(name, f"name {name!r}")
-        HasType(GraphMetadata).verify(graph, f"graph {graph}")
+        is_valid_name.verify(name, f"collection name {name!r}")
+        HasType(GraphMetadata).verify(graph, f"graph {name!r}")
 
         self._graph: GraphMetadata = graph
         self._name: str = name
