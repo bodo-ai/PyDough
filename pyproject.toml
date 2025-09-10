@@ -34,6 +34,7 @@ dev-dependencies = [
     "pytest-repeat",
     "pydough[snowflake]",
     "pydough[mysql]",
+    "pydough[postgres]",
 ]
 
 [project.optional-dependencies]

@@ -11,7 +11,6 @@ from collections.abc import Callable
 from functools import cache
 
 import pandas as pd
-import psycopg2
 import pytest
 
 import pydough
@@ -967,6 +966,7 @@ def postgres_conn_db_context(
     a connection object.
     Returns a DatabaseContext for the Postgres TPCH database.
     """
+    import psycopg2
 
     postgres_user: str | None = os.getenv("POSTGRES_USER")
     postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
