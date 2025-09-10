@@ -125,7 +125,13 @@
           "table path": "TableName",
           "unique properties": ["key"],
           "properties": [
-            {"name": "property"}
+            {
+              "name": "column_name",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
           ]
         }
       ],
