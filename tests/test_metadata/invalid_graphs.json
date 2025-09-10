@@ -52,7 +52,7 @@
       "version": "V2",
       "collections": [
         {
-          "name": "0",
+          "name": "Invalid name",
           "type": "simple table",
           "table path": "TableName",
           "unique properties": ["key"],
@@ -66,7 +66,7 @@
       "version": "V2",
       "collections": [
         {
-          "name": "0",
+          "name": "table_name",
           "type": "simple table",
           "table path": "TableName",
           "unique properties": ["key"],
@@ -88,6 +88,44 @@
           "unique properties": ["key"],
           "properties": [
             {"name": true}
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_COLUMN_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "invalid column name",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "property"}
           ]
         }
       ],

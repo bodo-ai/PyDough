@@ -89,7 +89,6 @@ class PyDoughPredicate(ABC):
             `PyDoughMetadataException`: if `obj` did not satisfy the predicate.
         """
         if not self.accept(obj):
-            error_name = f"{error_name}: [{repr(obj)}]"
             raise PyDoughMetadataException(self.error_message(error_name))
 
 

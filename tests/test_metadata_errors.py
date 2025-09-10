@@ -53,7 +53,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "#BadGraphName",
-            "graph name must be a string that is a Python identifier",
+            "graph name '#BadGraphName' must be a string that is a valid Python identifier",
             id="#BadGraphName",
         ),
         pytest.param(
@@ -85,22 +85,32 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "BAD_COLLECTION_NAME_1",
-            "name must be a string that is a Python identifier",
+            "name '0' must be a string that is a valid Python identifier",
             id="BAD_COLLECTION_NAME_1",
         ),
         pytest.param(
             "BAD_COLLECTION_NAME_2",
-            "name must be a string that is a Python identifier",
+            "name 'Invalid name' must be a string that is a valid Python identifier",
             id="BAD_COLLECTION_NAME_2",
         ),
         pytest.param(
             "BAD_PROPERTY_NAME_1",
-            "name must be a string that is a Python identifier",
+            "property 'bad name' of simple table collection 'table_name' in graph 'BAD_PROPERTY_NAME_1' must be a JSON object containing a field 'type' and field 'type' must be a string",
             id="BAD_PROPERTY_NAME_1",
         ),
         pytest.param(
             "BAD_PROPERTY_NAME_2",
-            "name must be a string that is a Python identifier",
+            "name '0' must be a string that is a valid Python identifier",
+            id="BAD_PROPERTY_NAME_2",
+        ),
+        pytest.param(
+            "BAD_COLUMN_NAME",
+            "name 'invalid column name' must be a string that is a valid Python identifier",
+            id="BAD_PROPERTY_NAME_2",
+        ),
+        pytest.param(
+            "BAD_TABLE_NAME",
+            "name 'invalid table_name' must be a string that is a valid Python identifier",
             id="BAD_PROPERTY_NAME_2",
         ),
         pytest.param(
@@ -463,7 +473,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "BAD_FUNCTION_BAD_NAME_2",
-            "function name must be a string that is a Python identifier",
+            "function name '' must be a string that is a valid Python identifier",
             id="BAD_FUNCTION_BAD_NAME_2",
         ),
         pytest.param(
