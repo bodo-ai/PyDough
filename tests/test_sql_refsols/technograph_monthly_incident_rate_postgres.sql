@@ -13,8 +13,8 @@ WITH _t2 AS (
     co_name = 'CN'
 ), _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    _t4.ca_dt
+    _t4.ca_dt,
+    COUNT(*) AS n_rows
   FROM _t2 AS _t4
   JOIN main.calendar AS calendar
     ON calendar.ca_dt >= CAST(_t4.ca_dt AS TIMESTAMP) - INTERVAL '6 MONTH'
@@ -23,11 +23,11 @@ WITH _t2 AS (
   JOIN _t5 AS _t5
     ON _t5.co_id = devices.de_production_country_id
   GROUP BY
-    2
+    1
 ), _s15 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    _t7.ca_dt
+    _t7.ca_dt,
+    COUNT(*) AS n_rows
   FROM _t2 AS _t7
   JOIN main.incidents AS incidents
     ON _t7.ca_dt = DATE_TRUNC('DAY', CAST(incidents.in_error_report_ts AS TIMESTAMP))
@@ -36,13 +36,13 @@ WITH _t2 AS (
   JOIN _t5 AS _t8
     ON _t8.co_id = devices.de_production_country_id
   GROUP BY
-    2
+    1
 ), _t0 AS (
   SELECT
-    EXTRACT(MONTH FROM CAST(_t2.ca_dt AS TIMESTAMP)) AS month,
+    EXTRACT(MONTH FROM CAST(_t2.ca_dt AS TIMESTAMP)) AS month_ca_dt,
+    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS TIMESTAMP)) AS year_ca_dt,
     SUM(_s7.n_rows) AS sum_expr_3,
-    SUM(_s15.n_rows) AS sum_n_rows,
-    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS TIMESTAMP)) AS year
+    SUM(_s15.n_rows) AS sum_n_rows
   FROM _t2 AS _t2
   LEFT JOIN _s7 AS _s7
     ON _s7.ca_dt = _t2.ca_dt
@@ -50,10 +50,10 @@ WITH _t2 AS (
     ON _s15.ca_dt = _t2.ca_dt
   GROUP BY
     1,
-    4
+    2
 )
 SELECT
-  CONCAT_WS('-', year, LPAD(CAST(month AS TEXT), 2, '0')) AS month,
+  CONCAT_WS('-', year_ca_dt, LPAD(CAST(month_ca_dt AS TEXT), 2, '0')) AS month,
   ROUND(
     CAST((
       1000000.0 * COALESCE(sum_n_rows, 0)
@@ -62,4 +62,4 @@ SELECT
   ) AS ir
 FROM _t0
 ORDER BY
-  1 NULLS FIRST
+  month_ca_dt NULLS FIRST

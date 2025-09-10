@@ -25,6 +25,15 @@ WITH _t2 AS (
   FROM main.sbcustomer
 ), _t1 AS (
   SELECT
+    rank,
+    ravg1,
+    ravg2,
+    rcnt1,
+    rcnt2,
+    rsiz1,
+    rsiz2,
+    rsum1,
+    rsum2,
     CASE
       WHEN 0.75 * COUNT(expr_13) OVER () < ROW_NUMBER() OVER (ORDER BY expr_13 DESC NULLS LAST)
       THEN expr_13
@@ -42,16 +51,7 @@ WITH _t2 AS (
       ) < 1.0
       THEN expr_13
       ELSE NULL
-    END AS expr_16,
-    rank,
-    ravg1,
-    ravg2,
-    rcnt1,
-    rcnt2,
-    rsiz1,
-    rsiz2,
-    rsum1,
-    rsum2
+    END AS expr_16
   FROM _t2
 )
 SELECT

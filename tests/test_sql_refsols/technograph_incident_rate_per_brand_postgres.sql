@@ -1,10 +1,10 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    in_device_id
+    in_device_id,
+    COUNT(*) AS n_rows
   FROM main.incidents
   GROUP BY
-    2
+    1
 )
 SELECT
   products.pr_brand AS brand,

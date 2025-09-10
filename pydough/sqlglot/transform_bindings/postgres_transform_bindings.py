@@ -8,7 +8,6 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.configs.pydough_configs import DayOfWeek
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
 
@@ -24,18 +23,10 @@ class PostgresTransformBindings(BaseTransformBindings):
     Subclass of BaseTransformBindings for the Postgres dialect.
     """
 
-    @property
-    def dialect_start_of_week(self) -> DayOfWeek:
-        """
-        Which day of the week is considered the start of the week within the
-        SQL dialect. Individual dialects may override this.
-        """
-        return DayOfWeek.SUNDAY
-
     PYDOP_TO_POSTGRES_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.CEIL: "CEIL",
         pydop.FLOOR: "FLOOR",
-        pydop.MOD: "MOD",  # Ask Kian
+        pydop.MOD: "MOD",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
     }

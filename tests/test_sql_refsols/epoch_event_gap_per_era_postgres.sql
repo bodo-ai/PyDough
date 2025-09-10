@@ -1,10 +1,10 @@
 WITH _t2 AS (
   SELECT
-    CAST(events.ev_dt AS DATE) - CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt) AS DATE) AS day_gap,
     eras.er_end_year,
     eras.er_name,
     eras.er_start_year,
-    events.ev_dt
+    events.ev_dt,
+    CAST(events.ev_dt AS DATE) - CAST(LAG(events.ev_dt, 1) OVER (PARTITION BY eras.er_name, eras.er_name ORDER BY events.ev_dt) AS DATE) AS day_gap
   FROM eras AS eras
   JOIN events AS events
     ON eras.er_end_year > EXTRACT(YEAR FROM CAST(events.ev_dt AS TIMESTAMP))

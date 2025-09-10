@@ -516,13 +516,17 @@ def test_pipeline_e2e_postgres_tpch_simple_week(
 def test_pipeline_e2e_postgres_defog_custom(
     defog_postgres_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     postgres_conn_db_context: DatabaseContext,
 ):
     """
     Test executing the defog analytical queries with Postgres database.
     """
     defog_postgres_test_data.run_e2e_test(
-        defog_graphs, postgres_conn_db_context, coerce_types=True
+        defog_graphs,
+        postgres_conn_db_context,
+        config=defog_config,
+        coerce_types=True,
     )
 
 

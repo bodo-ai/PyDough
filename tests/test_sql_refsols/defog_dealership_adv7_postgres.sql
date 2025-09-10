@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    AVG(CAST(sale_price AS DECIMAL)) AS avg_sale_price,
-    car_id
+    car_id,
+    AVG(CAST(sale_price AS DECIMAL)) AS avg_sale_price
   FROM main.sales
   GROUP BY
-    2
+    1
 )
 SELECT
   cars.make,

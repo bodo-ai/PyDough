@@ -1,5 +1,6 @@
 WITH _t0 AS (
   SELECT
+    c_acctbal,
     CASE
       WHEN ABS(
         (
@@ -38,8 +39,7 @@ WITH _t0 AS (
       ) < 1.0
       THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
       ELSE NULL
-    END AS expr_7,
-    c_acctbal
+    END AS expr_7
   FROM tpch.customer
 )
 SELECT

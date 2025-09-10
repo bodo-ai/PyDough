@@ -980,7 +980,7 @@ def postgres_conn_db_context(
         host=postgres_host,
         port=postgres_port,
     )
-
+    connection.autocommit = True  # Avoid getting stuck when DROP/CREATE
     # Loads the defog data into the Postgres engine.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     path: str = os.path.join(base_dir, "tests/gen_data/init_defog_postgres.sql")

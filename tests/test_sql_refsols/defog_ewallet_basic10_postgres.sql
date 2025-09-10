@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
+    receiver_id,
     COUNT(*) AS n_rows,
-    SUM(amount) AS sum_amount,
-    receiver_id
+    SUM(amount) AS sum_amount
   FROM main.wallet_transactions_daily
   WHERE
     created_at >= DATE_TRUNC('DAY', CURRENT_TIMESTAMP - INTERVAL '150 DAY')
     AND receiver_type = 1
   GROUP BY
-    3
+    1
 )
 SELECT
   merchants.name AS merchant_name,

@@ -9,7 +9,7 @@ WITH _t AS (
 )
 SELECT
   sbTxDateTime AS date_time,
-  DATE_ADD(
+  DATE_SUB(
     CAST(DATE_SUB(
       CAST(sbTxDateTime AS DATETIME),
       INTERVAL (
@@ -18,7 +18,7 @@ SELECT
         ) % 7
       ) DAY
     ) AS DATE),
-    INTERVAL '-8' WEEK
+    INTERVAL '8' WEEK
   ) AS s00,
   FALSE AS s01,
   EXTRACT(MONTH FROM CAST(sbTxDateTime AS DATETIME)) IN (1, 2, 3) AS s02,

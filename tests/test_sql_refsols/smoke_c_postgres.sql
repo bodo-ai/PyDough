@@ -1,5 +1,8 @@
 WITH _t1 AS (
   SELECT
+    c_acctbal,
+    c_mktsegment,
+    c_name,
     CASE
       WHEN 0.8 * COUNT(c_acctbal) OVER () < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS LAST)
       THEN c_acctbal
@@ -17,10 +20,7 @@ WITH _t1 AS (
       ) < 1.0
       THEN c_acctbal
       ELSE NULL
-    END AS expr_31,
-    c_acctbal,
-    c_mktsegment,
-    c_name
+    END AS expr_31
   FROM tpch.customer
 )
 SELECT

@@ -1,15 +1,15 @@
 WITH _t0 AS (
   SELECT
+    times.t_name,
     MAX(times.t_start_hour) AS anything_t_start_hour,
     AVG(CAST(searches.search_num_results AS DECIMAL)) AS avg_search_num_results,
-    COUNT(*) AS n_rows,
-    times.t_name
+    COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches
     ON times.t_end_hour > EXTRACT(HOUR FROM CAST(searches.search_ts AS TIMESTAMP))
     AND times.t_start_hour <= EXTRACT(HOUR FROM CAST(searches.search_ts AS TIMESTAMP))
   GROUP BY
-    4
+    1
 )
 SELECT
   t_name AS tod,
