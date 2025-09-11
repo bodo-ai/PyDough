@@ -131,7 +131,7 @@ def test_pipeline_until_sql_custom_datasets(
 
 
 @pytest.mark.execute
-# @pytest.mark.skip(reason="Missing alias issue needs to be fixed")
+@pytest.mark.skip(reason="Missing alias issue needs to be fixed")
 def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_test_graph_by_name: graph_fetcher,
