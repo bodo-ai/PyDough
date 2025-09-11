@@ -186,28 +186,19 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
-def get_synthea_graph() -> graph_fetcher:
+def get_test_graph_by_name() -> graph_fetcher:
     """
-    Returns the graph for synthea database.
+    Returns a known test graph requested if the graph location was included in test_graph_location.
     """
+    test_graph_location: dict[str, str] = {
+        "synthea": "synthea_graph.json",
+        "world_development_indicators": "world_development_indicators_graph.json",
+    }
 
     @cache
     def impl(name: str) -> GraphMetadata:
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/synthea_graph.json"
-        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
-
-    return impl
-
-
-@pytest.fixture(scope="session")
-def get_world_indicators_graph() -> graph_fetcher:
-    """
-    Returns the graph for world indicators database.
-    """
-
-    @cache
-    def impl(name: str) -> GraphMetadata:
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/world_development_indicators_graph.json"
+        file_name: str = test_graph_location[name]
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/{file_name}"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
@@ -591,7 +582,10 @@ def sqlite_synthea_connection() -> DatabaseContext:
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     # Setup the synthea database.
-    subprocess.run("cd tests/gen_data; bash setup_synthea.sh", shell=True)
+    subprocess.run(
+        "cd tests/gen_data; rm -fv synthea.db; sqlite3 synthea.db < init_synthea_sqlite.sql",
+        shell=True,
+    )
     path: str = os.path.join(base_dir, "tests/gen_data/synthea.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
@@ -624,7 +618,10 @@ def sqlite_world_indicators_connection() -> DatabaseContext:
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     # Setup the world development indicators database.
-    subprocess.run("cd tests/gen_data; bash setup_world_indicators.sh", shell=True)
+    subprocess.run(
+        "cd tests/gen_data; rm -fv world_development_indicators.db; sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql",
+        shell=True,
+    )
     path: str = os.path.join(base_dir, "tests/gen_data/world_development_indicators.db")
     connection: sqlite3.Connection = sqlite3.connect(path)
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)

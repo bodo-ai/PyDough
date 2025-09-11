@@ -9,10 +9,6 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from tests.test_pydough_functions.world_indicators_pydough_querys import (
-    wdi_albania_footnotes_1981,
-    wdi_low_income_country_with_series,
-)
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
 
@@ -20,7 +16,12 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
     params=[
         pytest.param(
             PyDoughPandasTest(
-                wdi_low_income_country_with_series,
+                "result = world_development_indicators.Country.WHERE("
+                "    (IncomeGroup == 'Low income') &"
+                "    HAS(CountryNotes.WHERE(Series.SeriesCode == 'DT.DOD.DECT.CD'))"
+                ").CALCULATE("
+                "    country_code=CountryCode"
+                ")",
                 "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
@@ -33,7 +34,13 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
-                wdi_albania_footnotes_1981,
+                "result = world_development_indicators.Country.WHERE("
+                "    ShortName == 'Albania'"
+                ").Footnotes.WHERE("
+                "    Year == '1981'"
+                ").CALCULATE("
+                "    footnote_description=Description"
+                ")",
                 "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
@@ -56,7 +63,7 @@ def world_indicators_pipeline_test_data(request) -> PyDoughPandasTest:
 
 def test_pipeline_until_relational_world_indicators(
     world_indicators_pipeline_test_data: PyDoughPandasTest,
-    get_world_indicators_graph: graph_fetcher,
+    get_test_graph_by_name: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -68,13 +75,13 @@ def test_pipeline_until_relational_world_indicators(
         world_indicators_pipeline_test_data.test_name
     )
     world_indicators_pipeline_test_data.run_relational_test(
-        get_world_indicators_graph, file_path, update_tests
+        get_test_graph_by_name, file_path, update_tests
     )
 
 
 def test_pipeline_until_sql_world_indicators(
     world_indicators_pipeline_test_data: PyDoughPandasTest,
-    get_world_indicators_graph: graph_fetcher,
+    get_test_graph_by_name: graph_fetcher,
     empty_context_database: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
@@ -87,7 +94,7 @@ def test_pipeline_until_sql_world_indicators(
         world_indicators_pipeline_test_data.test_name, empty_context_database.dialect
     )
     world_indicators_pipeline_test_data.run_sql_test(
-        get_world_indicators_graph,
+        get_test_graph_by_name,
         file_path,
         update_tests,
         empty_context_database,
@@ -98,7 +105,7 @@ def test_pipeline_until_sql_world_indicators(
 @pytest.mark.skip(reason="Missing alias issue needs to be fixed")
 def test_pipeline_e2e_world_indicators(
     world_indicators_pipeline_test_data: PyDoughPandasTest,
-    get_world_indicators_graph: graph_fetcher,
+    get_test_graph_by_name: graph_fetcher,
     sqlite_world_indicators_connection: DatabaseContext,
 ):
     """
@@ -106,6 +113,6 @@ def test_pipeline_e2e_world_indicators(
     indicators dataset against the refsol DataFrame.
     """
     world_indicators_pipeline_test_data.run_e2e_test(
-        get_world_indicators_graph,
+        get_test_graph_by_name,
         sqlite_world_indicators_connection,
     )

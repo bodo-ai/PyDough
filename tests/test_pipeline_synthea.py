@@ -9,9 +9,6 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from tests.test_pydough_functions.synthea_pydough_querys import (
-    most_common_conditions,
-)
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
 
@@ -19,7 +16,20 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
     params=[
         pytest.param(
             PyDoughPandasTest(
-                most_common_conditions,
+                "result = patients.WHERE("
+                "    (gender == 'F') & (ethnicity == 'american')"
+                ").conditions.PARTITION("
+                "    name='condition_groups',"
+                "    by=DESCRIPTION"
+                ").CALCULATE("
+                "    condition_description=DESCRIPTION,"
+                "    occurrence_count=COUNT(conditions)"
+                ").TOP_K("
+                "    1,"
+                "    by=occurrence_count.DESC()"
+                ").CALCULATE("
+                "    condition_description"
+                ")",
                 "synthea",
                 lambda: pd.DataFrame(
                     {
@@ -42,7 +52,7 @@ def synthea_pipeline_test_data(request) -> PyDoughPandasTest:
 
 def test_pipeline_until_relational_synthea(
     synthea_pipeline_test_data: PyDoughPandasTest,
-    get_synthea_graph: graph_fetcher,
+    get_test_graph_by_name: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -52,13 +62,13 @@ def test_pipeline_until_relational_synthea(
     """
     file_path: str = get_plan_test_filename(synthea_pipeline_test_data.test_name)
     synthea_pipeline_test_data.run_relational_test(
-        get_synthea_graph, file_path, update_tests
+        get_test_graph_by_name, file_path, update_tests
     )
 
 
 def test_pipeline_until_sql_synthea(
     synthea_pipeline_test_data: PyDoughPandasTest,
-    get_synthea_graph: graph_fetcher,
+    get_test_graph_by_name: graph_fetcher,
     empty_context_database: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
@@ -71,7 +81,7 @@ def test_pipeline_until_sql_synthea(
         synthea_pipeline_test_data.test_name, empty_context_database.dialect
     )
     synthea_pipeline_test_data.run_sql_test(
-        get_synthea_graph,
+        get_test_graph_by_name,
         file_path,
         update_tests,
         empty_context_database,
@@ -82,7 +92,7 @@ def test_pipeline_until_sql_synthea(
 @pytest.mark.skip(reason="Missing alias issue needs to be fixed")
 def test_pipeline_e2e_synthea(
     synthea_pipeline_test_data: PyDoughPandasTest,
-    get_synthea_graph: graph_fetcher,
+    get_test_graph_by_name: graph_fetcher,
     sqlite_synthea_connection: DatabaseContext,
 ):
     """
@@ -90,6 +100,6 @@ def test_pipeline_e2e_synthea(
     the refsol DataFrame.
     """
     synthea_pipeline_test_data.run_e2e_test(
-        get_synthea_graph,
+        get_test_graph_by_name,
         sqlite_synthea_connection,
     )
