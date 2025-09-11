@@ -939,11 +939,15 @@ def postgres_docker_setup() -> None:
     # Wait for Postgres to be ready
     for _ in range(30):
         try:
+            env_postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
+            env_postgre_user: str | None = os.getenv("POSTGRES_USER")
+            print(env_postgre_user)
+            print(env_postgres_password is None or env_postgres_password == "")
             conn = psycopg2.connect(
                 host=POSTGRES_HOST,
                 port=POSTGRES_PORT,
-                user=os.getenv("POSTGRES_USER"),
-                password=os.getenv("POSTGRES_PASSWORD"),
+                user=env_postgre_user,
+                password=env_postgres_password,
                 database=POSTGRES_DB,
             )
             conn.close()
