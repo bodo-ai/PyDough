@@ -78,9 +78,9 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                         ],
                     }
                 ),
-                "wdi_albania_footnotes_1981",
+                "wdi_albania_footnotes_1978",
             ),
-            id="wdi_albania_footnotes_1981",
+            id="wdi_albania_footnotes_1978",
         ),
     ],
 )
