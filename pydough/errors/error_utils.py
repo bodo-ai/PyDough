@@ -32,6 +32,8 @@ __all__ = [
 ]
 
 
+import builtins
+import keyword
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -98,7 +100,12 @@ class ValidName(PyDoughPredicate):
     """
 
     def accept(self, obj: object) -> bool:
-        return isinstance(obj, str) and obj.isidentifier()
+        return (
+            isinstance(obj, str)
+            and obj.isidentifier()
+            and not keyword.iskeyword(obj)
+            and not hasattr(builtins, obj)
+        )
 
     def error_message(self, error_name: str) -> str:
         return f"{error_name} must be a string that is a valid Python identifier"

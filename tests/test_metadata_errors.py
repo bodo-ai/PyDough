@@ -119,6 +119,11 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="BAD_UNIQUE_PROPERTY",
         ),
         pytest.param(
+            "RESERVED_PROPERTY_KEYWORD",
+            "property name 'id' must be a string that is a valid Python identifier",
+            id="RESERVED_PROPERTY_KEYWORD",
+        ),
+        pytest.param(
             "BAD_RELATIONSHIP_NAME",
             "metadata for relationships within graph 'BAD_RELATIONSHIP_NAME' must be a JSON object containing a field 'type' and field 'type' must be a string",
             id="BAD_RELATIONSHIP_NAME",

@@ -160,6 +160,28 @@
       "relationships": []
     },
     {
+      "name": "RESERVED_PROPERTY_KEYWORD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["id"],
+          "properties": [
+            {
+              "name": "id",
+              "type": "table column",
+              "column name": "id",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
       "name": "BAD_RELATIONSHIP_NAME",
       "version": "V2",
       "collections": [],
