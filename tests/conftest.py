@@ -939,8 +939,6 @@ def postgres_docker_setup() -> None:
     # Wait for Postgres to be ready
     for _ in range(30):
         try:
-            print("POSTGRES_USER:", os.getenv("POSTGRES_USER"))
-            print("POSTGRES_PASSWORD set:", bool(os.getenv("POSTGRES_PASSWORD")))
             conn = psycopg2.connect(
                 host=POSTGRES_HOST,
                 port=POSTGRES_PORT,
