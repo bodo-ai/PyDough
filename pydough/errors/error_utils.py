@@ -89,7 +89,6 @@ class PyDoughPredicate(ABC):
             `PyDoughMetadataException`: if `obj` did not satisfy the predicate.
         """
         if not self.accept(obj):
-            error_name = f"{error_name}: [{repr(obj)}]"
             raise PyDoughMetadataException(self.error_message(error_name))
 
 
@@ -102,7 +101,7 @@ class ValidName(PyDoughPredicate):
         return isinstance(obj, str) and obj.isidentifier()
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a string that is a valid Python identifier"
+        return f"{error_name} must be a string that is a Python identifier"
 
 
 class NoExtraKeys(PyDoughPredicate):
