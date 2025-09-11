@@ -941,7 +941,8 @@ def postgres_docker_setup() -> None:
         try:
             env_postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
             env_postgre_user: str | None = os.getenv("POSTGRES_USER")
-            print(env_postgre_user)
+            print(env_postgre_user == "***")
+            print(env_postgre_user == "test_user")
             print(env_postgres_password is None or env_postgres_password == "")
             conn = psycopg2.connect(
                 host=POSTGRES_HOST,
