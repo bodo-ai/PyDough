@@ -51,7 +51,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
-                        "condition_description": ["Viral sinusitis (disorder)"],
+                        "country_code": ["AFG", "BFA", "HTI", "SOM", "TCD"],
                     }
                 ),
                 "wdi_low_income_country_with_series",
@@ -63,14 +63,19 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "result = world_development_indicators.Country.WHERE("
                 "    ShortName == 'Albania'"
                 ").Footnotes.WHERE("
-                "    Year == '1981'"
+                "    Year == 'YR1978'"
                 ").CALCULATE("
                 "    footnote_description=Description"
                 ")",
                 "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
-                        "condition_description": ["Viral sinusitis (disorder)"],
+                        "condition_description": [
+                            "Uncertainty bound is 3727 - 9649",
+                            "Uncertainty bound is 4457 - 12852",
+                            "Uncertainty bound is 62.6 - 167",
+                            "Uncertain bound is 52.3 - 125.9",
+                        ],
                     }
                 ),
                 "wdi_albania_footnotes_1981",
