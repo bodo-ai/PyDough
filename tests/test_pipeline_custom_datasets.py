@@ -17,7 +17,7 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         pytest.param(
             PyDoughPandasTest(
                 "result = patients.WHERE("
-                "    (gender == 'F') & (ethnicity == 'american')"
+                "    (gender == 'F') & (ethnicity == 'italian')"
                 ").conditions.PARTITION("
                 "    name='condition_groups',"
                 "    by=DESCRIPTION"
