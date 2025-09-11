@@ -575,23 +575,6 @@ def sqlite_technograph_connection() -> DatabaseContext:
 
 
 @pytest.fixture(scope="session")
-def sqlite_synthea_connection() -> DatabaseContext:
-    """
-    Returns the SQLITE database connection for the synthea database.
-    """
-    # Setup the directory to be the main PyDough directory.
-    base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    # Setup the synthea database.
-    subprocess.run(
-        "cd tests/gen_data; rm -fv synthea.db; sqlite3 synthea.db < init_synthea_sqlite.sql",
-        shell=True,
-    )
-    path: str = os.path.join(base_dir, "tests/gen_data/synthea.db")
-    connection: sqlite3.Connection = sqlite3.connect(path)
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
-
-
-@pytest.fixture(scope="session")
 def sqlite_cryptbank_connection() -> DatabaseContext:
     """
     Returns the SQLITE database connection for the CRYPTBANK database.
@@ -610,20 +593,37 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
 
 
 @pytest.fixture(scope="session")
-def sqlite_world_indicators_connection() -> DatabaseContext:
+def sqlite_custom_datasets_connection() -> DatabaseContext:
     """
-    Returns the SQLITE database connection for the world development
-    indicators database.
+    Returns the SQLITE database connection with all the custom datasets attached.
     """
+    commands: list[str] = [
+        "cd tests/gen_data",
+        "rm -fv synthea.db",
+        "rm -fv world_development_indicators.db",
+        "sqlite3 synthea.db < init_synthea.sql",
+        "sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql",
+    ]
+    # Get the shell commands required to re-create all the db files
+    shell_cmd: str = "; ".join(commands)
+
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     # Setup the world development indicators database.
-    subprocess.run(
-        "cd tests/gen_data; rm -fv world_development_indicators.db; sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql",
-        shell=True,
-    )
-    path: str = os.path.join(base_dir, "tests/gen_data/world_development_indicators.db")
-    connection: sqlite3.Connection = sqlite3.connect(path)
+    subprocess.run(shell_cmd, shell=True, check=True)
+    # Central in-memory connection
+    connection: sqlite3.Connection = sqlite3.connect(":memory:")
+
+    # Dict: schema_name → database file path
+    dbs: dict[str, str] = {
+        "synthea": "tests/gen_data/synthea.db",
+        "wdi": "tests/gen_data/world_development_indicators.db",
+    }
+
+    # Attach them all
+    for schema, path in dbs.items():
+        path = os.path.join(base_dir, path)
+        connection.execute(f"ATTACH DATABASE '{path}' AS {schema}")
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
