@@ -10,7 +10,7 @@ FROM main.patients AS patients
 JOIN _s1 AS _s1
   ON _s1.PATIENT = patients.patient
 WHERE
-  patients.ethnicity = 'american' AND patients.gender = 'F'
+  patients.ethnicity = 'italian' AND patients.gender = 'F'
 GROUP BY
   1
 ORDER BY
