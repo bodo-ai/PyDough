@@ -407,7 +407,7 @@ INSERT INTO patients VALUES
 ('690feab6-69b0-46e3-99ff-f8f94ec50af3','1985-01-28',NULL,'999-54-8298','S99918091','X74130832X','Mr.','Benny','Herzog',NULL,NULL,'M','white','polish','M','Lowell MA US','285 Zackary Neck Suite 683 Boston MA 02125 US'),
 ('2297617f-c6ce-4f63-9445-72527391a02d','1984-11-12',NULL,'999-32-9979','S99912024','X86036959X','Ms.','Sherlene','Murphy',NULL,NULL,'S','white','italian','F','Everett MA US','98840 Dietrich Club Suite 602 Marblehead MA 01945 US'),
 ('6036aaf8-8007-4182-b005-11935ae65e3c','1982-05-23',NULL,'999-64-4687','S99911323','X53631235X','Mrs.','Adena','Weissnat',NULL,'Mraz','M','white','polish','F','Braintree Town MA US','98907 Sister Green Weymouth Town MA 02188 US'),
-('0d5ab3da-4a13-41bc-8d7a-ed64bbdc93f6','1982-01-30',NULL,'999-64-5324','S99987634','FALSE','Mr.','Odell','Olson',NULL,NULL,'M','white','irish','M','Boston MA US','66481 Jana Streets Suite 282 New Bedford MA 02744 US'),
+('0d5ab3da-4a13-41bc-8d7a-ed64bbdc93f6','1982-01-30',NULL,'999-64-5324','S99987634','FALSE','Mr.','Odell','Olson',NULL,NULL,'M','white','american','M','Boston MA US','66481 Jana Streets Suite 282 New Bedford MA 02744 US'),
 ('13e0d469-3e52-425c-8078-9e9098e0a015','1981-08-11',NULL,'999-44-8675','S99966265','FALSE','Mr.','Marshall','Hagenes',NULL,NULL,'S','white','irish','M','Marlborough MA US','236 Rowe Harbor Suite 837 Newton MA 02466 US'),
 ('cd6429e9-f19d-47e1-bdff-60c7e9b06987','1981-01-27',NULL,'999-97-9015','S99981669','FALSE','Mr.','Armando','Witting',NULL,NULL,'S','white','english','M','Wilmington MA US','736 Fern Gardens Franklin Town MA 02038 US'),
 ('c4eb8448-28a2-4acd-be5b-a402242bc06e','1981-01-02',NULL,'999-99-9076','S99940071','FALSE','Mrs.','Leisha','Monahan',NULL,'Bahringer','M','hispanic','puerto_rican','F','Everett MA US','882 Alanis Forks Wrentham MA 02093 US'),
@@ -418,7 +418,7 @@ INSERT INTO patients VALUES
 ('fc5f5d8a-ae4c-4657-a1de-824519739a0d','1977-08-20',NULL,'999-65-4799','S99928158','X82641163X','Mr.','Chance','Lesch',NULL,NULL,'M','white','irish','M','South Hadley MA US','138 Langworth Square Suite 608 Leicester MA 01524 US'),
 ('00341a88-1cc1-4b39-b0f9-05b0531991a0','1972-07-16',NULL,'999-74-1348','S99955025','X13061405X','Ms.','Emmy','Waelchi',NULL,NULL,'S','black','dominican','F','Quincy MA US','5699 Reynolds Overpass Apt. 678 Waltham MA 02452 US'),
 ('2d13177b-3b5f-499f-9dbb-d3c05bb99edf','1970-09-02',NULL,'999-72-1406','S99949930','X27495587X','Mr.','Gil','Marquardt',NULL,NULL,'M','white','german','M','Lincoln MA US','16824 Bauch Lodge Northbridge MA 01534 US'),
-('405a3d5e-925c-4a1a-9a4b-14d4d214d03a','1970-02-01',NULL,'999-43-9107','S99943457','FALSE','Mr.','Dana','Bayer',NULL,NULL,'M','white','irish','M','Malden MA US','62192 Dooley Park Suite 950 Concord MA 01742 US'),
+('405a3d5e-925c-4a1a-9a4b-14d4d214d03a','1970-02-01',NULL,'999-43-9107','S99943457','FALSE','Mr.','Dana','Bayer',NULL,NULL,'M','white','american','M','Malden MA US','62192 Dooley Park Suite 950 Concord MA 01742 US'),
 ('e82d0b7f-34be-44d3-8e13-4419cef18372','1970-01-23',NULL,'999-59-5288','S99989744','FALSE','Mrs.','Pia','Oberbrunner',NULL,'Kris','M','white','irish','F','Adams MA US','61358 Pollich Points Boston MA 02228 US');
 
 INSERT INTO encounters VALUES
