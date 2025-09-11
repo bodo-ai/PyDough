@@ -943,7 +943,7 @@ def postgres_docker_setup() -> None:
                 host=POSTGRES_HOST,
                 port=POSTGRES_PORT,
                 user=os.getenv("POSTGRES_USER"),
-                password=os.getenv("MYSQL_PASSWORD"),
+                password=os.getenv("POSTGRES_PASSWORD"),
                 database=POSTGRES_DB,
             )
             conn.close()
