@@ -116,13 +116,13 @@ class ValidName(PyDoughPredicate):
             if not obj.isidentifier():
                 ret_val = "identifier"
             # Check that obj is not a Python reserved word or built-in name
-            if keyword.iskeyword(obj) or hasattr(builtins, obj):
+            elif keyword.iskeyword(obj) or hasattr(builtins, obj):
                 ret_val = "python_keyword"
             # Check that obj is not a PyDough reserved word
-            if self._is_pydough_keyword(obj):
+            elif self._is_pydough_keyword(obj):
                 ret_val = "pydough_keyword"
             # Check that obj is not a SQL reserved word
-            if self._is_sql_keyword(obj):
+            elif self._is_sql_keyword(obj):
                 ret_val = "sql_keyword"
         else:
             ret_val = "identifier"
