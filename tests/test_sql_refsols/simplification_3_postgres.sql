@@ -1,7 +1,7 @@
-WITH _t2 AS (
+WITH _t1 AS (
   SELECT
-    ABS(CAST(sbcustpostalcode AS INT)) AS expr_13,
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
+    sbcustpostalcode,
     AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER () AS ravg1,
     COALESCE(
       AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
@@ -23,36 +23,6 @@ WITH _t2 AS (
       0.1
     ) AS rsum2
   FROM main.sbcustomer
-), _t1 AS (
-  SELECT
-    rank,
-    ravg1,
-    ravg2,
-    rcnt1,
-    rcnt2,
-    rsiz1,
-    rsiz2,
-    rsum1,
-    rsum2,
-    CASE
-      WHEN 0.75 * COUNT(expr_13) OVER () < ROW_NUMBER() OVER (ORDER BY expr_13 DESC NULLS LAST)
-      THEN expr_13
-      ELSE NULL
-    END AS expr_15,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (ORDER BY expr_13 DESC NULLS LAST) - 1.0
-        ) - (
-          CAST((
-            COUNT(expr_13) OVER () - 1.0
-          ) AS DOUBLE PRECISION) / 2.0
-        )
-      ) < 1.0
-      THEN expr_13
-      ELSE NULL
-    END AS expr_16
-  FROM _t2
 )
 SELECT
   TRUE AS s00,
@@ -80,8 +50,10 @@ SELECT
   TRUE AS s22,
   FALSE AS s23,
   TRUE AS s24,
-  MAX(expr_15) AS s25,
-  AVG(CAST(expr_16 AS DECIMAL)) AS s26,
+  PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY
+    ABS(CAST(sbcustpostalcode AS INT))) AS s25,
+  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
+    ABS(CAST(sbcustpostalcode AS INT))) AS s26,
   MIN(rank) AS s27,
   MAX(rank) AS s28,
   MAX(rsum1) AS s29,

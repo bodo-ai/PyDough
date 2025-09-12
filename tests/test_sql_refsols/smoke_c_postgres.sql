@@ -1,28 +1,3 @@
-WITH _t1 AS (
-  SELECT
-    c_acctbal,
-    c_mktsegment,
-    c_name,
-    CASE
-      WHEN 0.8 * COUNT(c_acctbal) OVER () < ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS LAST)
-      THEN c_acctbal
-      ELSE NULL
-    END AS expr_30,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (ORDER BY c_acctbal DESC NULLS LAST) - 1.0
-        ) - (
-          CAST((
-            COUNT(c_acctbal) OVER () - 1.0
-          ) AS DOUBLE PRECISION) / 2.0
-        )
-      ) < 1.0
-      THEN c_acctbal
-      ELSE NULL
-    END AS expr_31
-  FROM tpch.customer
-)
 SELECT
   COUNT(*) AS a,
   COALESCE(SUM(FLOOR(c_acctbal)), 0) AS b,
@@ -57,6 +32,8 @@ SELECT
       ELSE 0
     END
   ) AS p,
-  MAX(expr_30) AS q,
-  AVG(CAST(expr_31 AS DECIMAL)) AS r
-FROM _t1
+  PERCENTILE_DISC(0.2) WITHIN GROUP (ORDER BY
+    c_acctbal) AS q,
+  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
+    c_acctbal) AS r
+FROM tpch.customer

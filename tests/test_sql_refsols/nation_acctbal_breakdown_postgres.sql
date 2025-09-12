@@ -1,56 +1,15 @@
-WITH _t2 AS (
-  SELECT
-    c_acctbal,
-    c_nationkey,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END DESC NULLS LAST) - 1.0
-        ) - (
-          CAST((
-            COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
-          ) AS DOUBLE PRECISION) / 2.0
-        )
-      ) < 1.0
-      THEN CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END
-      ELSE NULL
-    END AS expr_5,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY c_acctbal DESC NULLS LAST) - 1.0
-        ) - (
-          CAST((
-            COUNT(c_acctbal) OVER (PARTITION BY c_nationkey) - 1.0
-          ) AS DOUBLE PRECISION) / 2.0
-        )
-      ) < 1.0
-      THEN c_acctbal
-      ELSE NULL
-    END AS expr_6,
-    CASE
-      WHEN ABS(
-        (
-          ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END DESC NULLS LAST) - 1.0
-        ) - (
-          CAST((
-            COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) OVER (PARTITION BY c_nationkey) - 1.0
-          ) AS DOUBLE PRECISION) / 2.0
-        )
-      ) < 1.0
-      THEN CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END
-      ELSE NULL
-    END AS expr_7
-  FROM tpch.customer
-), _s3 AS (
+WITH _s3 AS (
   SELECT
     c_nationkey,
-    AVG(CAST(expr_5 AS DECIMAL)) AS avg_expr_5,
-    AVG(CAST(expr_6 AS DECIMAL)) AS avg_expr_6,
-    AVG(CAST(expr_7 AS DECIMAL)) AS avg_expr_7,
     COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal
-  FROM _t2
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
+      c_acctbal) AS median_c_acctbal,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
+      CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS median_negative_acctbal,
+    PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
+      CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS median_non_negative_acctbal
+  FROM tpch.customer
   GROUP BY
     1
 )
@@ -58,9 +17,9 @@ SELECT
   nation.n_name AS nation_name,
   _s3.count_negative_acctbal AS n_red_acctbal,
   _s3.count_non_negative_acctbal AS n_black_acctbal,
-  _s3.avg_expr_7 AS median_red_acctbal,
-  _s3.avg_expr_5 AS median_black_acctbal,
-  _s3.avg_expr_6 AS median_overall_acctbal
+  _s3.median_negative_acctbal AS median_red_acctbal,
+  _s3.median_non_negative_acctbal AS median_black_acctbal,
+  _s3.median_c_acctbal AS median_overall_acctbal
 FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
