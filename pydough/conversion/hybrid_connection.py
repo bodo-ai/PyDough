@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from pydough.relational import JoinType
+from pydough.relational import JoinCardinality, JoinType
 
 from .hybrid_expressions import (
     HybridFunctionExpr,
@@ -313,6 +313,8 @@ class HybridConnection:
        child can be defined at (exclusive).
     - `aggs`: a mapping of aggregation calls made onto expressions relative to the
        context of `subtree`.
+    - `reverse_cardinality`: the JoinCardinality of the connection from the
+       perspective of the child subtree back to the parent tree.
     """
 
     parent: "HybridTree"
@@ -347,6 +349,12 @@ class HybridConnection:
     joining it to the parent. The keys are the names of the aggregation calls
     within the child subtree, and the values are the corresponding aggregation
     expressions defined relative to the child subtree.
+    """
+
+    reverse_cardinality: JoinCardinality
+    """
+    The JoinCardinality of the connection from the perspective of the child
+    subtree back to the parent tree.
     """
 
     always_exists: bool | None = None
