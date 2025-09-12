@@ -386,6 +386,7 @@ def sqlite_dialects(request) -> DatabaseDialect:
         pytest.param(DatabaseDialect.SQLITE, id="sqlite"),
         pytest.param(DatabaseDialect.SNOWFLAKE, id="snowflake"),
         pytest.param(DatabaseDialect.MYSQL, id="mysql"),
+        pytest.param(DatabaseDialect.POSTGRES, id="postgres"),
     ]
 )
 def empty_context_database(request) -> DatabaseContext:
@@ -696,21 +697,30 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
     return _impl
 
 
-MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
-"""
-The MySQL environment variables required for connection.
-- `MYSQL_USERNAME`: The username for MySQL.
-- `MYSQL_PASSWORD`: The password for MySQL.
-"""
-
-
-@pytest.fixture(scope="session")
-def require_mysql_env() -> None:
+@pytest.fixture
+def sf_params_tpch_db_context() -> DatabaseContext:
     """
-    Checks whether all required MySQL environment variables are set.
+    This fixture is used to connect to the Snowflake TPCH database using
+    parameters instead of a connection object.
+    Return a DatabaseContext for the Snowflake TPCH database.
     """
-    if not all(os.getenv(var) is not None for var in MYSQL_ENVS):
-        pytest.skip("Skipping MySQL tests: environment variables not set.")
+    if not is_snowflake_env_set():
+        pytest.skip("Skipping Snowflake tests: environment variables not set.")
+    sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
+    sf_tpch_schema = "TPCH_SF1"
+    warehouse = "DEMO_WH"
+    password = os.getenv("SF_PASSWORD")
+    username = os.getenv("SF_USERNAME")
+    account = os.getenv("SF_ACCOUNT")
+    return load_database_context(
+        "snowflake",
+        user=username,
+        password=password,
+        account=account,
+        warehouse=warehouse,
+        database=sf_tpch_db,
+        schema=sf_tpch_schema,
+    )
 
 
 def is_ci():
@@ -740,6 +750,23 @@ def container_is_running(name: str) -> bool:
         ["docker", "ps", "--format", "{{.Names}}"], stdout=subprocess.PIPE, text=True
     )
     return name in result.stdout.splitlines()
+
+
+MYSQL_ENVS = ["MYSQL_USERNAME", "MYSQL_PASSWORD"]
+"""
+The MySQL environment variables required for connection.
+- `MYSQL_USERNAME`: The username for MySQL.
+- `MYSQL_PASSWORD`: The password for MySQL.
+"""
+
+
+@pytest.fixture(scope="session")
+def require_mysql_env() -> None:
+    """
+    Checks whether all required MySQL environment variables are set.
+    """
+    if not all(os.getenv(var) is not None for var in MYSQL_ENVS):
+        pytest.skip("Skipping MySQL tests: environment variables not set.")
 
 
 MYSQL_DOCKER_CONTAINER = "mysql_tpch_test"
@@ -870,32 +897,6 @@ def mysql_conn_db_context(
     return _impl
 
 
-@pytest.fixture
-def sf_params_tpch_db_context() -> DatabaseContext:
-    """
-    This fixture is used to connect to the Snowflake TPCH database using
-    parameters instead of a connection object.
-    Return a DatabaseContext for the Snowflake TPCH database.
-    """
-    if not is_snowflake_env_set():
-        pytest.skip("Skipping Snowflake tests: environment variables not set.")
-    sf_tpch_db = "SNOWFLAKE_SAMPLE_DATA"
-    sf_tpch_schema = "TPCH_SF1"
-    warehouse = "DEMO_WH"
-    password = os.getenv("SF_PASSWORD")
-    username = os.getenv("SF_USERNAME")
-    account = os.getenv("SF_ACCOUNT")
-    return load_database_context(
-        "snowflake",
-        user=username,
-        password=password,
-        account=account,
-        warehouse=warehouse,
-        database=sf_tpch_db,
-        schema=sf_tpch_schema,
-    )
-
-
 @pytest.fixture(scope="session")
 def mysql_params_tpch_db_context(
     require_mysql_env, mysql_docker_setup
@@ -917,6 +918,165 @@ def mysql_params_tpch_db_context(
         password=mysql_password,
         host=mysql_host,
         database=mysql_db,
+    )
+
+
+POSTGRES_ENVS = ["POSTGRES_USER", "POSTGRES_PASSWORD"]
+"""
+    Postgres environment variables required for connection.
+    `POSTGRES_USER`: The username for Postgres.
+    `POSTGRES_PASSWORD`: The password for Postgres.
+"""
+
+
+@pytest.fixture(scope="session")
+def require_postgres_env() -> None:
+    """
+    Check if the Postgres environment variables are set. Allowing empty strings.
+    Returns:
+        bool: True if all required Postgres environment variables are set, False otherwise.
+    """
+    if not all(os.getenv(var) is not None for var in POSTGRES_ENVS):
+        pytest.skip("Skipping Postgres tests: environment variables not set.")
+
+
+POSTGRES_DOCKER_CONTAINER = "postgres_tpch_test"
+POSTGRES_DOCKER_IMAGE = "bodoai1/pydough-postgres-tpch:latest"
+POSTGRES_HOST = "127.0.0.1"
+POSTGRES_PORT = 5432
+POSTGRES_DB = "pydough_test"
+"""
+    CONSTANTS for the Postgres Docker container setup.
+    - DOCKER_CONTAINER: The name of the Docker container.
+    - DOCKER_IMAGE: The Docker image to use for the Postgres container.
+    - POSTGRES_HOST: The host address for Postgres.
+    - POSTGRES_PORT: The port on which Postgres is exposed.
+    - POSTGRES_DB: The name of the TPCH database in Postgres.
+"""
+
+
+@pytest.fixture(scope="session")
+def postgres_docker_setup() -> None:
+    """Set up the Postgres Docker container for testing."""
+    try:
+        if not is_ci():
+            if container_exists(POSTGRES_DOCKER_CONTAINER):
+                if not container_is_running(POSTGRES_DOCKER_CONTAINER):
+                    subprocess.run(
+                        ["docker", "start", POSTGRES_DOCKER_CONTAINER], check=True
+                    )
+            else:
+                subprocess.run(
+                    [
+                        "docker",
+                        "run",
+                        "-d",
+                        "--name",
+                        POSTGRES_DOCKER_CONTAINER,
+                        "-e",
+                        f"POSTGRES_PASSWORD={os.getenv('POSTGRES_PASSWORD')}",
+                        "-p",
+                        f"{POSTGRES_PORT}:5432",
+                        POSTGRES_DOCKER_IMAGE,
+                    ],
+                    check=True,
+                )
+    except subprocess.CalledProcessError as e:
+        pytest.fail(f"Failed to set up Postgres Docker container: {e}")
+
+    # Check import is successful
+    try:
+        import psycopg2
+    except ImportError as e:
+        raise RuntimeError("psycopg2 is not installed") from e
+
+    # Wait for Postgres to be ready
+    for _ in range(30):
+        try:
+            conn = psycopg2.connect(
+                host=POSTGRES_HOST,
+                port=POSTGRES_PORT,
+                user=os.getenv("POSTGRES_USER"),
+                password=os.getenv("POSTGRES_PASSWORD"),
+                database=POSTGRES_DB,
+            )
+            conn.close()
+            break
+        except psycopg2.Error as e:
+            print("Error occurred while connecting to Postgres:", e)
+            time.sleep(1)
+    else:
+        subprocess.run(["docker", "rm", "-f", POSTGRES_DOCKER_CONTAINER])
+        pytest.fail("Postgres container did not become ready in time.")
+
+
+@pytest.fixture
+def postgres_conn_db_context(
+    require_postgres_env,
+    postgres_docker_setup,
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the Postgres TPCH database using
+    a connection object.
+    Returns a DatabaseContext for the Postgres TPCH database.
+    """
+    import psycopg2
+
+    postgres_user: str | None = os.getenv("POSTGRES_USER")
+    postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
+    postgres_db: str = POSTGRES_DB
+    postgres_host: str = POSTGRES_HOST
+    postgres_port: int = POSTGRES_PORT
+    connection: psycopg2.extensions.connection = psycopg2.connect(
+        dbname=postgres_db,
+        user=postgres_user,
+        password=postgres_password,
+        host=postgres_host,
+        port=postgres_port,
+    )
+    connection.autocommit = True  # It avoids getting stuck when DROP/CREATE
+    # Loads the defog data into the Postgres engine.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    path: str = os.path.join(base_dir, "tests/gen_data/init_defog_postgres.sql")
+    with open(path) as f:
+        init_defog_script: str = f.read()
+    cursor: psycopg2.connection.PostgresCursor = connection.cursor()
+    for statement in init_defog_script.split(";\n"):
+        if statement.strip():
+            cursor.execute(statement.strip())
+
+    connection.commit()
+    cursor.close()
+
+    return load_database_context(
+        "postgres",
+        connection=connection,
+    )
+
+
+@pytest.fixture
+def postgres_params_tpch_db_context(
+    require_postgres_env, postgres_docker_setup
+) -> DatabaseContext:
+    """
+    This fixture is used to connect to the Postgres TPCH database using
+    parameters instead of a connection object.
+    Returns a DatabaseContext for the Postgres TPCH database.
+    """
+
+    postgres_user: str | None = os.getenv("POSTGRES_USER")
+    postgres_password: str | None = os.getenv("POSTGRES_PASSWORD")
+    postgres_tpch_db: str = POSTGRES_DB
+    postgres_host: str = POSTGRES_HOST
+    postgres_port: int = POSTGRES_PORT
+
+    return load_database_context(
+        "postgres",
+        dbname=postgres_tpch_db,
+        user=postgres_user,
+        password=postgres_password,
+        host=postgres_host,
+        port=postgres_port,
     )
 
 
@@ -1469,5 +1629,144 @@ def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
     Test data for e2e tests for the 22 TPC-H queries, as well as some additional
     smoke tests to ensure various functions work as-intended. Returns an
     instance of PyDoughPandasTest containing information about the test.
+    """
+    return request.param
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(
+            PyDoughPandasTest(
+                "result = customers.CALCULATE("
+                "key,"
+                "name[:],"
+                "phone,"
+                "next_digits=phone[3:6],"
+                "country_code=phone[:3],"
+                "name_without_first_char=name[1:],"
+                "last_digit=phone[-1:],"
+                "name_without_start_and_end_char=name[1:-1],"
+                "phone_without_last_5_chars=phone[:-5],"
+                "name_second_to_last_char=name[-2:-1],"
+                "cust_number=name[-10:18]"
+                ").TOP_K(5, by=key.ASC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": list(range(1, 6)),
+                        "name": [
+                            "Customer#000000001",
+                            "Customer#000000002",
+                            "Customer#000000003",
+                            "Customer#000000004",
+                            "Customer#000000005",
+                        ],
+                        "phone": [
+                            "25-989-741-2988",
+                            "23-768-687-3665",
+                            "11-719-748-3364",
+                            "14-128-190-5944",
+                            "13-750-942-6364",
+                        ],
+                        "next_digits": [
+                            "989",
+                            "768",
+                            "719",
+                            "128",
+                            "750",
+                        ],
+                        "country_code": ["25-", "23-", "11-", "14-", "13-"],
+                        "name_without_first_char": [
+                            "ustomer#000000001",
+                            "ustomer#000000002",
+                            "ustomer#000000003",
+                            "ustomer#000000004",
+                            "ustomer#000000005",
+                        ],
+                        "last_digit": ["8", "5", "4", "4", "4"],
+                        "name_without_start_and_end_char": [
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                            "ustomer#00000000",
+                        ],
+                        "phone_without_last_5_chars": [
+                            "25-989-741",
+                            "23-768-687",
+                            "11-719-748",
+                            "14-128-190",
+                            "13-750-942",
+                        ],
+                        "name_second_to_last_char": ["0", "0", "0", "0", "0"],
+                        "cust_number": [
+                            "#000000001",
+                            "#000000002",
+                            "#000000003",
+                            "#000000004",
+                            "#000000005",
+                        ],
+                    }
+                ),
+                "slicing_test",
+            ),
+            id="slicing_test",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """result = customers.CALCULATE(
+                    key,
+                    p1=GETPART(name, "#", key),
+                    p2=GETPART(name, "0", key),
+                    p3=GETPART(address, ",", key),
+                    p4=GETPART(address, ",", -key),
+                    p5=GETPART(phone, "-", key),
+                    p6=GETPART(phone, "-", -key),
+                    p7=GETPART(comment, " ", key),
+                    p8=GETPART(comment, " ", -key),
+                    p9=GETPART(address, "!", key),
+                    p10=GETPART(market_segment, "O", -key),
+                    p11=GETPART(name, "00000000", key),
+                    p12=GETPART("^%1$$@@@##2$#&@@@*^%3$#", "@@@", -key),
+                    p13=GETPART(name, "", key),
+                    p14=GETPART("", " ", key),
+                    p15=GETPART(name, "#", 0),
+                    p16=GETPART(nation.name, nation.name, key),
+                    p17=GETPART(GETPART(phone, "-", key), "7", 2)
+                ).TOP_K(4, by=key.ASC())""",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "k": [1, 2, 3, 4],
+                        "p1": ["Customer", "000000002", None, None],
+                        "p2": ["Customer#", "", "", ""],
+                        "p3": ["IVhzIApeRb ot", "NCwDVaWNe6tEgvwfmRchLXak", None, None],
+                        "p4": ["E", "XSTf4", None, None],
+                        "p5": ["25", "768", "748", "5944"],
+                        "p6": ["2988", "687", "719", "14"],
+                        "p7": ["to", "accounts.", "eat", "regular"],
+                        "p8": ["e", "boldly:", "even", "ideas"],
+                        "p9": ["IVhzIApeRb ot,c,E", None, None, None],
+                        "p10": ["BUILDING", "M", "AUT", None],
+                        "p11": ["Customer#", "2", None, None],
+                        "p12": ["*^%3$#", "##2$#&", "^%1$$", None],
+                        "p13": ["Customer#000000001", None, None, None],
+                        "p14": [None, None, None, None],
+                        "p15": ["Customer", "Customer", "Customer", "Customer"],
+                        "p16": ["", "", None, None],
+                        "p17": [None, "68", "48", None],
+                    }
+                ),
+                "get_part_test",
+            ),
+            id="get_part_test",
+        ),
+    ],
+)
+def custom_functions_test_data(request) -> PyDoughPandasTest:
+    """
+    Test data for testing different functions of PyDough using TPCH database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
     """
     return request.param

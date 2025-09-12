@@ -5,7 +5,7 @@ WITH _s1 AS (
     SUM(sale_price) AS sum_sale_price
   FROM main.sales
   WHERE
-    sale_date >= DATE_ADD(CURRENT_TIMESTAMP(), -30, 'DAY')
+    sale_date >= DATE_SUB(CURRENT_TIMESTAMP(), 30, DAY)
   GROUP BY
     1
 )

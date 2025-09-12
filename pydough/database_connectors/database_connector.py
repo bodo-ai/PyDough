@@ -108,6 +108,7 @@ class DatabaseDialect(Enum):
     SQLITE = "sqlite"
     SNOWFLAKE = "snowflake"
     MYSQL = "mysql"
+    POSTGRES = "postgres"
 
     @staticmethod
     def from_string(dialect: str) -> "DatabaseDialect":

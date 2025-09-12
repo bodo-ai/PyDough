@@ -12,12 +12,12 @@ SELECT
       DAYOFWEEK(o_orderdate) + -1
     ) % 7
   )) AS b,
-  DATE_ADD(
+  DATE_SUB(
     DATE_ADD(
       STR_TO_DATE(CONCAT(YEAR(CAST(o_orderdate AS DATETIME)), ' 1 1'), '%Y %c %e'),
       INTERVAL '6' MONTH
     ),
-    INTERVAL '-13' DAY
+    INTERVAL '13' DAY
   ) AS c,
   DATE_ADD(
     CAST(DATE_ADD(

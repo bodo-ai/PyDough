@@ -1,0 +1,11 @@
+SELECT
+  CAST(COALESCE(SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END), 0) AS DOUBLE PRECISION) / COUNT(*) AS _expr0
+FROM main.wallet_transactions_daily
+WHERE
+  (
+    (
+      EXTRACT(YEAR FROM CURRENT_TIMESTAMP) - EXTRACT(YEAR FROM CAST(created_at AS TIMESTAMP))
+    ) * 12 + (
+      EXTRACT(MONTH FROM CURRENT_TIMESTAMP) - EXTRACT(MONTH FROM CAST(created_at AS TIMESTAMP))
+    )
+  ) = 1

@@ -11,6 +11,6 @@ JOIN main.users AS users
   ON notifications.user_id = users.uid AND users.country IN ('US', 'CA')
 WHERE
   notifications.created_at < DATE_TRUNC('WEEK', CURRENT_TIMESTAMP())
-  AND notifications.created_at >= DATE_ADD(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), -3, 'WEEK')
+  AND notifications.created_at >= DATE_SUB(DATE_TRUNC('WEEK', CURRENT_TIMESTAMP()), 3, WEEK)
 GROUP BY
   1

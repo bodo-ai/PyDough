@@ -14,9 +14,9 @@ WITH _s2 AS (
     )
     AND sbcustjoindate >= STR_TO_DATE(
       CONCAT(
-        YEAR(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        YEAR(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' ',
-        MONTH(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        MONTH(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' 1'
       ),
       '%Y %c %e'
@@ -43,9 +43,9 @@ WITH _s2 AS (
     )
     AND sbCustomer.sbcustjoindate >= STR_TO_DATE(
       CONCAT(
-        YEAR(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        YEAR(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' ',
-        MONTH(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        MONTH(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' 1'
       ),
       '%Y %c %e'

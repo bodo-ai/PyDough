@@ -485,10 +485,12 @@ class MySQLTransformBindings(BaseTransformBindings):
                 # dow1 = DAYOFWEEK(date1)
                 # dow2 = DAYOFWEEK(date2)
                 # result = INTEGER((raw_delta + dow1 - dow2) / 7)
-                raw_delta = sqlglot_expressions.DateDiff(this=date2, expression=date1)
-                dow1 = self.convert_dayofweek([date1], [types[1]])
-                dow2 = self.convert_dayofweek([date2], [types[2]])
-                divion = sqlglot_expressions.Div(
+                raw_delta: SQLGlotExpression = sqlglot_expressions.DateDiff(
+                    this=date2, expression=date1
+                )
+                dow1: SQLGlotExpression = self.convert_dayofweek([date1], [types[1]])
+                dow2: SQLGlotExpression = self.convert_dayofweek([date2], [types[2]])
+                division: SQLGlotExpression = sqlglot_expressions.Div(
                     this=apply_parens(
                         sqlglot_expressions.Add(
                             this=raw_delta,
@@ -501,7 +503,7 @@ class MySQLTransformBindings(BaseTransformBindings):
                 )
 
                 return sqlglot_expressions.Cast(
-                    this=divion, to=sqlglot_expressions.DataType.build("BIGINT")
+                    this=division, to=sqlglot_expressions.DataType.build("BIGINT")
                 )
 
             case DateTimeUnit.DAY:

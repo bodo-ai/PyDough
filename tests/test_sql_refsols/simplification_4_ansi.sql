@@ -10,7 +10,7 @@ WITH _t1 AS (
 )
 SELECT
   sbtxdatetime AS date_time,
-  DATE_ADD(DATE_TRUNC('WEEK', CAST(sbtxdatetime AS TIMESTAMP)), -8, 'WEEK') AS s00,
+  DATE_SUB(DATE_TRUNC('WEEK', CAST(sbtxdatetime AS TIMESTAMP)), 8, WEEK) AS s00,
   FALSE AS s01,
   EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) IN (1, 2, 3) AS s02,
   EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) IN (4, 5, 6) AS s03,

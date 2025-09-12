@@ -23,7 +23,7 @@ WHERE
       ) % 7
     ) DAY
   ) AS DATE)
-  AND sbTransaction.sbtxdatetime >= DATE_ADD(
+  AND sbTransaction.sbtxdatetime >= DATE_SUB(
     CAST(DATE_SUB(
       CURRENT_TIMESTAMP(),
       INTERVAL (
@@ -32,5 +32,5 @@ WHERE
         ) % 7
       ) DAY
     ) AS DATE),
-    INTERVAL '-1' WEEK
+    INTERVAL '1' WEEK
   )

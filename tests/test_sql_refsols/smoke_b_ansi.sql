@@ -27,7 +27,7 @@ SELECT
     END,
     DAY_OF_WEEK(o_orderdate)
   ) AS b,
-  DATE_ADD(DATE_ADD(DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)), 6, 'MONTH'), -13, 'DAY') AS c,
+  DATE_SUB(DATE_ADD(DATE_TRUNC('YEAR', CAST(o_orderdate AS TIMESTAMP)), 6, 'MONTH'), 13, DAY) AS c,
   DATE_ADD(
     DATE_ADD(DATE_TRUNC('QUARTER', CAST(o_orderdate AS TIMESTAMP)), 1, 'YEAR'),
     25,

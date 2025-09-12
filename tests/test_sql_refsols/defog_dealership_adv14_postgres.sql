@@ -1,0 +1,7 @@
+SELECT
+  COUNT(*) AS TSC
+FROM main.sales
+WHERE
+  (
+    CAST(CURRENT_TIMESTAMP AS DATE) - CAST(sale_date AS DATE)
+  ) <= 7
