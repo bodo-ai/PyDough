@@ -980,7 +980,7 @@ def postgres_conn_db_context(
         host=postgres_host,
         port=postgres_port,
     )
-    connection.autocommit = True  # Avoid getting stuck when DROP/CREATE
+    connection.autocommit = True  # It avoids getting stuck when DROP/CREATE
     # Loads the defog data into the Postgres engine.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
     path: str = os.path.join(base_dir, "tests/gen_data/init_defog_postgres.sql")
@@ -1709,9 +1709,10 @@ def tpch_pipeline_test_data(request) -> PyDoughPandasTest:
         ),
     ],
 )
-def tpch_functions_test_data(request) -> PyDoughPandasTest:
+def custom_functions_test_data(request) -> PyDoughPandasTest:
     """
-    Test data for e2e tests for the TPC-H. Returns an instance of
-    PyDoughPandasTest containing information about the test.
+    Test data for testing different functions of PyDough using TPCH database.
+    Returns an instance of PyDoughPandasTest containing information about the
+    test.
     """
     return request.param

@@ -409,8 +409,8 @@ def test_pipeline_e2e_mysql_tpch_16_params(
 
 @pytest.mark.mysql
 @pytest.mark.execute
-def test_pipeline_e2e_mysql_tpch_functions(
-    tpch_functions_test_data: PyDoughPandasTest,
+def test_pipeline_e2e_mysql_custom_functions(
+    custom_functions_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
 ):
@@ -420,7 +420,7 @@ def test_pipeline_e2e_mysql_tpch_functions(
     Using the  `user`, `password`, `database`, and `host`
     as keyword arguments to the DatabaseContext.
     """
-    tpch_functions_test_data.run_e2e_test(
+    custom_functions_test_data.run_e2e_test(
         get_sample_graph, mysql_conn_db_context("tpch"), coerce_types=True
     )
 

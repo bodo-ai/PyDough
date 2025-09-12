@@ -397,19 +397,20 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     Returns:
         The corresponding SQLGlot dialect.
     """
-    if dialect == DatabaseDialect.ANSI:
-        # Note: ANSI is the base dialect for SQLGlot.
-        return SQLGlotDialect()
-    elif dialect == DatabaseDialect.SQLITE:
-        return SQLiteDialect()
-    elif dialect == DatabaseDialect.SNOWFLAKE:
-        return SnowflakeDialect()
-    elif dialect == DatabaseDialect.MYSQL:
-        return MySQLDialect()
-    elif dialect == DatabaseDialect.POSTGRES:
-        return PostgresDialect()
-    else:
-        raise NotImplementedError(f"Unsupported dialect: {dialect}")
+    match dialect:
+        case DatabaseDialect.ANSI:
+            # Note: ANSI is the base dialect for SQLGlot.
+            return SQLGlotDialect()
+        case DatabaseDialect.SQLITE:
+            return SQLiteDialect()
+        case DatabaseDialect.SNOWFLAKE:
+            return SnowflakeDialect()
+        case DatabaseDialect.MYSQL:
+            return MySQLDialect()
+        case DatabaseDialect.POSTGRES:
+            return PostgresDialect()
+        case _:
+            raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
 def execute_df(

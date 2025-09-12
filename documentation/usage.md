@@ -353,7 +353,7 @@ Below is a list of all supported values for the database name:
 > pip install pydough[mysql]         # Install MySQL connector
 > pip install pydough[snowflake]    # Install Snowflake connector
 > pip install pydough[postgres]    # Install Postgres connector
-> pip install "pydough[mysql,snowflake,pg]"  # Install both at once
+> pip install "pydough[mysql,snowflake,postgres]"  # Install all of them at once
 > ```
 
 Here’s a quick reference table showing which connector is needed for each dialect:
@@ -363,7 +363,7 @@ Here’s a quick reference table showing which connector is needed for each dial
 | `sqlite`    | Already included with PyDough          |
 | `mysql`     | `mysql-connector-python`               |
 | `snowflake` | `snowflake-connector-python[pandas]`  |
-| `postgres` | `snowflake-connector-python[pandas]`  |
+| `postgres` | `psycopg2-binary`  |
 
 Below are examples of how to access the context and switch it out for a newly created one, either by manually setting it or by using `session.load_database`. These examples assume that there are two different sqlite database files located at `db_files/education.db` and `db_files/shakespeare.db`.
 
@@ -391,7 +391,7 @@ It is important to ensure that the correct database context is being used for se
 #### Examples with different supported database connectors with PyDough
 - Snowflake: You can connect to a Snowflake database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH"),
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/snowflake_sample_graphs.json", "TPCH")
     pydough.active_session.connect_database("snowflake", 
           user=snowflake_username,
           password=snowflake_password,
@@ -405,7 +405,7 @@ You can find a full example of using Snowflake database with PyDough in [this us
 
 - MySQL: You can connect to a mysql database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH"),
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
     pydough.active_session.connect_database("mysql", 
           user=mysql_username,
           password=mysql_password,
@@ -417,13 +417,25 @@ You can find a full example of using MySQL database with PyDough in [this usage 
 
 - Postgres: You can connect to a postgres database using `load_metadata_graph` and `connect_database` APIs. For example:
   ```py
-    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH"),
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
     pydough.active_session.connect_database("postgres", 
           user=postgres_username,
           password=postgres_password,
           database=postgres_db,
           host=postgres_host,
     )
+  ```
+  Example with a connection object
+  ```py
+    pydough.active_session.load_metadata_graph("../../tests/test_metadata/sample_graphs.json", "TPCH")
+    postgres_conn: psycopg2.extensions.connection = psycopg2.connect(
+        dbname=postgres_db,
+        user=postgres_user,
+        password=postgres_password,
+        host=postgres_host,
+        port=postgres_port,
+    )
+    pydough.active_session.connect_database("postgres", connection=postgres_conn)
   ```
 You can find a full example of using Postgres database with PyDough in [this usage guide](./../demos/notebooks/PG_TPCH.ipynb).
 

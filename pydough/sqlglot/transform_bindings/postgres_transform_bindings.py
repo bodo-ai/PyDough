@@ -26,7 +26,6 @@ class PostgresTransformBindings(BaseTransformBindings):
     PYDOP_TO_POSTGRES_FUNC: dict[pydop.PyDoughExpressionOperator, str] = {
         pydop.CEIL: "CEIL",
         pydop.FLOOR: "FLOOR",
-        pydop.MOD: "MOD",
         pydop.SMALLEST: "LEAST",
         pydop.LARGEST: "GREATEST",
     }
@@ -45,10 +44,6 @@ class PostgresTransformBindings(BaseTransformBindings):
         match operator:
             case pydop.AVG:
                 return self.convert_avg(args, types)
-            case pydop.LPAD:
-                return self.convert_lpad(args, types)
-            case pydop.RPAD:
-                return self.convert_rpad(args, types)
 
         if operator in self.PYDOP_TO_POSTGRES_FUNC:
             return sqlglot_expressions.Anonymous(
@@ -152,8 +147,8 @@ class PostgresTransformBindings(BaseTransformBindings):
             raise ValueError(
                 f"Unsupported argument for DATEDIFF: {args[0]!r}. It should be a string literal."
             )
-        date1 = self.make_datetime_arg(args[1])
-        date2 = self.make_datetime_arg(args[2])
+        date1: SQLGlotExpression = self.make_datetime_arg(args[1])
+        date2: SQLGlotExpression = self.make_datetime_arg(args[2])
         unit: DateTimeUnit | None = DateTimeUnit.from_string(args[0].this)
 
         if unit is None:
@@ -310,10 +305,8 @@ class PostgresTransformBindings(BaseTransformBindings):
     ) -> SQLGlotExpression:
         if unit == DateTimeUnit.WEEK:
             dow = self.days_from_start_of_week(base)
-            """
-            SELECT CAST('2025-03-14 11:00:00' AS TIMESTAMP) - 
-            CAST(EXTRACT(DOW FROM CAST('2025-03-14 11:00:00' AS TIMESTAMP)) || ' days' AS INTERVAL);
-            """
+            # The week is truncated to the start of the week
+            # base - CAST(dow || ' days' as INTERVAL)
             minus_dow: SQLGlotExpression = sqlglot_expressions.Sub(
                 this=base,
                 expression=sqlglot_expressions.Cast(

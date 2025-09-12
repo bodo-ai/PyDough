@@ -32,7 +32,7 @@ def canonicalize(
     dialect = Dialect.get_or_raise(dialect)
 
     def _canonicalize(expression: exp.Expression) -> exp.Expression:
-        expression = fix_expression_type(expression, dialect)
+        expression = fix_expression_type(expression, dialect)  # PyDough change
         expression = add_text_to_concat(expression)
         expression = replace_date_funcs(expression)
         expression = coerce_type(expression, dialect.PROMOTE_TO_INFERRED_DATETIME_TYPE)
@@ -45,6 +45,22 @@ def canonicalize(
 
 
 def fix_expression_type(node: exp.Expression, dialect: Dialect) -> exp.Expression:
+    """
+    Adjusts the data type of specific SQL expressions for the Postgres dialect.
+
+    This function, a custom extension, modifies the `DataType` of `Sub` and `Mul`
+    expressions under certain conditions to align with Postgres's type handling,
+    particularly to prevent unintended casts.
+
+    Args:
+        node: The expression node to modify.
+        dialect: The SQL dialect being used.
+
+    Returns:
+        The modified expression node if the dialect is Postgres and conditions
+        are met, otherwise the original node is returned unchanged.
+    """
+    # For every other dialect it returns the original node
     if dialect.__class__.__name__ != "Postgres":
         return node
 
@@ -62,6 +78,8 @@ def fix_expression_type(node: exp.Expression, dialect: Dialect) -> exp.Expressio
     if isinstance(node, exp.Mul) and (
         isinstance(node.this, exp.Window) or isinstance(node.expression, exp.Window)
     ):
+        # Reaplce node.type of the mul node to Integer when working with window
+        # functions
         node.type.set("this", exp.DataType.Type.INT)
 
     return node

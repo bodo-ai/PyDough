@@ -45,7 +45,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "mysql":
             connection = load_mysql_connection(**kwargs)
             dialect = DatabaseDialect.MYSQL
-        case "postgres" | "postgres":
+        case "postgres":
             connection = load_postgres_connection(**kwargs)
             dialect = DatabaseDialect.POSTGRES
         case _:

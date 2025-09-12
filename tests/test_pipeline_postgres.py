@@ -407,8 +407,8 @@ def test_pipeline_e2e_postgres_tpch_16_params(
 
 @pytest.mark.postgres
 @pytest.mark.execute
-def test_pipeline_e2e_postgres_tpch_functions(
-    tpch_functions_test_data: PyDoughPandasTest,
+def test_pipeline_e2e_postgres_custom_functions(
+    custom_functions_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     postgres_conn_db_context: DatabaseContext,
 ):
@@ -418,7 +418,7 @@ def test_pipeline_e2e_postgres_tpch_functions(
     Using the  `user`, `password`, `database`, and `host`
     as keyword arguments to the DatabaseContext.
     """
-    tpch_functions_test_data.run_e2e_test(
+    custom_functions_test_data.run_e2e_test(
         get_sample_graph,
         postgres_conn_db_context,
         coerce_types=True,

@@ -72,9 +72,9 @@ To add support for a new SQL dialect:
 For example:
 
 ```python
-class PostgresTransformBindings(BaseTransformBindings):
+class DuckDBTransformBindings(BaseTransformBindings):
     """
-    Subclass of BaseTransformBindings for the Postgres dialect.
+    Subclass of BaseTransformBindings for the DuckDB dialect.
     """
 
     def convert_call_to_sqlglot(
