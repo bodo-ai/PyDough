@@ -3,23 +3,37 @@ SELECT
 FROM crbnk.customers
 WHERE
   (
-    NOT c_addr IS NULL OR c_birthday IS NULL
+    DATE(c_birthday, '+472 days') IS NULL
+    OR LOWER(c_fname) LIKE '%a'
+    OR LOWER(c_fname) LIKE '%e'
+    OR LOWER(c_fname) LIKE '%s'
   )
   AND (
-    NOT c_addr IS NULL OR c_phone LIKE '%5'
+    DATE(c_birthday, '+472 days') IS NULL OR LOWER(c_lname) <> 'lopez'
   )
   AND (
-    NOT c_birthday IS NULL OR c_phone LIKE '%5'
+    DATE(c_birthday, '+472 days') IS NULL
+    OR NOT (
+      SUBSTRING(c_addr, -1) || SUBSTRING(c_addr, 1, LENGTH(c_addr) - 1)
+    ) IS NULL
   )
   AND (
-    c_birthday IS NULL OR c_fname LIKE '%a' OR c_fname LIKE '%e' OR c_fname LIKE '%s'
+    LOWER(c_fname) LIKE '%a'
+    OR LOWER(c_fname) LIKE '%e'
+    OR LOWER(c_fname) LIKE '%s'
+    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
   )
   AND (
-    c_birthday IS NULL OR c_lname <> 'lopez'
+    LOWER(c_lname) <> 'lopez'
+    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
   )
   AND (
-    c_fname LIKE '%a' OR c_fname LIKE '%e' OR c_fname LIKE '%s' OR c_phone LIKE '%5'
+    NOT (
+      SUBSTRING(c_addr, -1) || SUBSTRING(c_addr, 1, LENGTH(c_addr) - 1)
+    ) IS NULL
+    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
   )
   AND (
-    c_lname <> 'lopez' OR c_phone LIKE '%5'
+    NOT DATE(c_birthday, '+472 days') IS NULL
+    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
   )
