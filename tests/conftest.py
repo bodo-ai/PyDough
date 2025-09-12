@@ -186,6 +186,25 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
+def get_test_graph_by_name() -> graph_fetcher:
+    """
+    Returns a known test graph requested if the graph location was included in test_graph_location.
+    """
+    test_graph_location: dict[str, str] = {
+        "synthea": "synthea_graph.json",
+        "world_development_indicators": "world_development_indicators_graph.json",
+    }
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        file_name: str = test_graph_location[name]
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/{file_name}"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
 def get_mysql_defog_graphs() -> graph_fetcher:
     """
     Returns the graphs for the defog database in MySQL.
@@ -570,6 +589,41 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     path: str = os.path.join(base_dir, "tests/gen_data/cryptbank.db")
     connection: sqlite3.Connection = sqlite3.connect(":memory:")
     connection.execute(f"attach database '{path}' as CRBNK")
+    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture(scope="session")
+def sqlite_custom_datasets_connection() -> DatabaseContext:
+    """
+    Returns the SQLITE database connection with all the custom datasets attached.
+    """
+    commands: list[str] = [
+        "cd tests/gen_data",
+        "rm -fv synthea.db",
+        "rm -fv world_development_indicators.db",
+        "sqlite3 synthea.db < init_synthea.sql",
+        "sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql",
+    ]
+    # Get the shell commands required to re-create all the db files
+    shell_cmd: str = "; ".join(commands)
+
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+    # Setup the world development indicators database.
+    subprocess.run(shell_cmd, shell=True, check=True)
+    # Central in-memory connection
+    connection: sqlite3.Connection = sqlite3.connect(":memory:")
+
+    # Dict: schema_name → database file path
+    dbs: dict[str, str] = {
+        "synthea": "tests/gen_data/synthea.db",
+        "wdi": "tests/gen_data/world_development_indicators.db",
+    }
+
+    # Attach them all
+    for schema, path in dbs.items():
+        path = os.path.join(base_dir, path)
+        connection.execute(f"ATTACH DATABASE '{path}' AS {schema}")
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
