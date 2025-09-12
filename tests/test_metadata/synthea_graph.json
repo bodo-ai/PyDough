@@ -6,7 +6,7 @@
       {
         "name": "all_prevalences",
         "type": "simple table",
-        "table path": "main.all_prevalences",
+        "table path": "synthea.all_prevalences",
         "unique properties": [
           "ITEM"
         ],
@@ -92,7 +92,7 @@
       {
         "name": "allergies",
         "type": "simple table",
-        "table path": "main.allergies",
+        "table path": "synthea.allergies",
         "unique properties": [
           "PATIENT",
           "ENCOUNTER",
@@ -182,7 +182,7 @@
       {
         "name": "careplans",
         "type": "simple table",
-        "table path": "main.careplans",
+        "table path": "synthea.careplans",
         "unique properties": [
           [
             "ID",
@@ -321,7 +321,7 @@
       {
         "name": "claims",
         "type": "simple table",
-        "table path": "main.claims",
+        "table path": "synthea.claims",
         "unique properties": [
           "ID"
         ],
@@ -420,7 +420,7 @@
       {
         "name": "conditions",
         "type": "simple table",
-        "table path": "main.conditions",
+        "table path": "synthea.conditions",
         "unique properties": [
           [
             "START",
@@ -517,7 +517,7 @@
       {
         "name": "encounters",
         "type": "simple table",
-        "table path": "main.encounters",
+        "table path": "synthea.encounters",
         "unique properties": [
           "ID"
         ],
@@ -620,7 +620,7 @@
       {
         "name": "immunizations",
         "type": "simple table",
-        "table path": "main.immunizations",
+        "table path": "synthea.immunizations",
         "unique properties": [
           "DATE",
           "PATIENT",
@@ -698,7 +698,7 @@
       {
         "name": "medications",
         "type": "simple table",
-        "table path": "main.medications",
+        "table path": "synthea.medications",
         "unique properties": [
           "START",
           "PATIENT",
@@ -817,7 +817,7 @@
       {
         "name": "observations",
         "type": "simple table",
-        "table path": "main.observations",
+        "table path": "synthea.observations",
         "unique properties": [
           [
             "DATE",
@@ -928,7 +928,7 @@
       {
         "name": "patients",
         "type": "simple table",
-        "table path": "main.patients",
+        "table path": "synthea.patients",
         "unique properties": [
           "patient"
         ],
@@ -1155,7 +1155,7 @@
       {
         "name": "procedures",
         "type": "simple table",
-        "table path": "main.procedures",
+        "table path": "synthea.procedures",
         "unique properties": [
           [
             "DATE",

@@ -16,24 +16,23 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
     params=[
         pytest.param(
             PyDoughPandasTest(
-                "result = patients.WHERE("
-                "    (gender == 'F') & (ethnicity == 'italian')"
-                ").conditions.PARTITION("
-                "    name='condition_groups',"
-                "    by=DESCRIPTION"
-                ").CALCULATE("
-                "    condition_description=DESCRIPTION,"
-                "    occurrence_count=COUNT(conditions)"
-                ").TOP_K("
-                "    1,"
-                "    by=occurrence_count.DESC()"
-                ").CALCULATE("
-                "    condition_description"
-                ")",
+                """
+result = (
+    patients
+    .WHERE((gender == 'F') & (ethnicity == 'italian'))
+    .conditions
+    .PARTITION(name='condition_groups', by=DESCRIPTION)
+    .CALCULATE(condition_description=DESCRIPTION, occurrence_count=COUNT(conditions))
+    .TOP_K(1, by=(occurrence_count.DESC(), condition_description.ASC()))
+    .CALCULATE(condition_description)
+)
+                """,
                 "synthea",
                 lambda: pd.DataFrame(
                     {
-                        "condition_description": ["Viral sinusitis (disorder)"],
+                        "condition_description": [
+                            "Escherichia coli urinary tract infection"
+                        ],
                     }
                 ),
                 "synthea_most_common_conditions",
@@ -42,16 +41,48 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
-                "result = world_development_indicators.Country.WHERE("
-                "    (IncomeGroup == 'Low income') &"
-                "    HAS(CountryNotes.WHERE(Series.SeriesCode == 'DT.DOD.DECT.CD'))"
-                ").CALCULATE("
-                "    country_code=CountryCode"
-                ")",
+                """
+result = (
+    world_development_indicators
+    .Country
+    .WHERE((IncomeGroup == 'Low income') & HAS(CountryNotes.WHERE(Series.SeriesCode == 'DT.DOD.DECT.CD')))
+    .CALCULATE(country_code=CountryCode)
+)
+                """,
                 "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
-                        "country_code": ["AFG", "BFA", "HTI", "SOM", "TCD"],
+                        "country_code": [
+                            "AFG",
+                            "BDI",
+                            "BEN",
+                            "BFA",
+                            "CAF",
+                            "COM",
+                            "ERI",
+                            "ETH",
+                            "GIN",
+                            "GMB",
+                            "GNB",
+                            "HTI",
+                            "KHM",
+                            "LBR",
+                            "MDG",
+                            "MLI",
+                            "MOZ",
+                            "MWI",
+                            "NER",
+                            "NPL",
+                            "RWA",
+                            "SLE",
+                            "SOM",
+                            "TCD",
+                            "TGO",
+                            "TZA",
+                            "UGA",
+                            "ZAR",
+                            "ZWE",
+                        ],
                     }
                 ),
                 "wdi_low_income_country_with_series",
@@ -60,22 +91,24 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
-                "result = world_development_indicators.Country.WHERE("
-                "    ShortName == 'Albania'"
-                ").Footnotes.WHERE("
-                "    Year == 'YR1978'"
-                ").CALCULATE("
-                "    footnote_description=Description"
-                ")",
+                """
+result = (
+    world_development_indicators
+    .Country
+    .WHERE(ShortName == 'Albania')
+    .Footnotes
+    .WHERE(Year == 'YR2012')
+    .CALCULATE(footnote_description=Description)
+)
+                """,
                 "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
                         "condition_description": [
-                            "Uncertainty bound is 3727 - 9649",
-                            "Uncertainty bound is 4457 - 12852",
-                            "Uncertainty bound is 62.6 - 167",
-                            "Uncertain bound is 52.3 - 125.9",
-                        ],
+                            "As reported",
+                            "Period: 2008-2012.Grouped consumption data.Growth rates are based on survey means of 2011 PPP$.Survey reference CPI years for the initial and final years are 2008 and 2012, respectively.",
+                            "Source: Labour force survey. Coverage: Civilian. Coverage (unemployment): Not available. Age: 15-74. Coverage limitation: Excluding institutional population. Education: International Standard Classification of Education, 1997 version.",
+                        ]
                     }
                 ),
                 "wdi_albania_footnotes_1978",
@@ -131,7 +164,6 @@ def test_pipeline_until_sql_custom_datasets(
 
 
 @pytest.mark.execute
-@pytest.mark.skip(reason="Missing alias issue needs to be fixed")
 def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_test_graph_by_name: graph_fetcher,
