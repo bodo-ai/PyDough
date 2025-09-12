@@ -6,7 +6,7 @@
       {
         "name": "Country",
         "type": "simple table",
-        "table path": "main.Country",
+        "table path": "wdi.Country",
         "unique properties": [
           "CountryCode"
         ],
@@ -421,7 +421,7 @@
       {
         "name": "CountryNotes",
         "type": "simple table",
-        "table path": "main.CountryNotes",
+        "table path": "wdi.CountryNotes",
         "unique properties": [
           "Countrycode",
           "Seriescode"
@@ -473,7 +473,7 @@
       {
         "name": "Footnotes",
         "type": "simple table",
-        "table path": "main.Footnotes",
+        "table path": "wdi.Footnotes",
         "unique properties": [
           "Countrycode",
           "Seriescode",
@@ -539,7 +539,7 @@
       {
         "name": "Indicators",
         "type": "simple table",
-        "table path": "main.Indicators",
+        "table path": "wdi.Indicators",
         "unique properties": [
           "CountryCode",
           "IndicatorCode",
@@ -631,7 +631,7 @@
       {
         "name": "Series",
         "type": "simple table",
-        "table path": "main.Series",
+        "table path": "wdi.Series",
         "unique properties": [
           "SeriesCode"
         ],
@@ -903,7 +903,7 @@
       {
         "name": "SeriesNotes",
         "type": "simple table",
-        "table path": "main.SeriesNotes",
+        "table path": "wdi.SeriesNotes",
         "unique properties": [
           "Seriescode",
           "Year"
@@ -966,7 +966,7 @@
             "CountryCode"
           ]
         },
-        "description": "Relationship between CountryNotes and Country",
+        "description": "The country that the country note belongs to.",
         "synonyms": []
       },
       {
@@ -976,7 +976,7 @@
         "original property": "Country",
         "singular": false,
         "always matches": true,
-        "description": "Relationship between  and ",
+        "description": "The notes for each country.",
         "synonyms": []
       },
       {
@@ -991,7 +991,7 @@
             "SeriesCode"
           ]
         },
-        "description": "Relationship between CountryNotes and Series",
+        "description": "The series for each country note.",
         "synonyms": []
       },
       {
@@ -1001,7 +1001,7 @@
         "original property": "Series",
         "singular": false,
         "always matches": true,
-        "description": "Relationship between  and ",
+        "description": "The country notes for each series.",
         "synonyms": []
       },
       {
@@ -1016,7 +1016,7 @@
             "CountryCode"
           ]
         },
-        "description": "Relationship between Footnotes and Country",
+        "description": "The country that the footnote belongs to.",
         "synonyms": []
       },
       {
@@ -1026,7 +1026,7 @@
         "original property": "Country",
         "singular": false,
         "always matches": true,
-        "description": "Relationship between  and ",
+        "description": "The footnotes for the country.",
         "synonyms": []
       },
       {
@@ -1041,7 +1041,7 @@
             "SeriesCode"
           ]
         },
-        "description": "Relationship between Footnotes and Series",
+        "description": "The Series that the footnote belongs to.",
         "synonyms": []
       },
       {
@@ -1050,8 +1050,8 @@
         "original parent": "Footnotes",
         "original property": "Series",
         "singular": false,
-        "always matches": true,
-        "description": "Relationship between  and ",
+        "always matches": false,
+        "description": "The footnotes of the series.",
         "synonyms": []
       },
       {
@@ -1066,7 +1066,7 @@
             "CountryCode"
           ]
         },
-        "description": "Relationship between Indicators and Country",
+        "description": "The country that the indicator belongs to.",
         "synonyms": []
       },
       {
@@ -1076,7 +1076,7 @@
         "original property": "Country",
         "singular": false,
         "always matches": true,
-        "description": "Relationship between  and ",
+        "description": "The indicators for the country.",
         "synonyms": []
       },
       {
@@ -1091,7 +1091,7 @@
             "SeriesCode"
           ]
         },
-        "description": "Relationship between SeriesNotes and Series",
+        "description": "The series that the series note belongs to.",
         "synonyms": []
       },
       {
@@ -1101,7 +1101,7 @@
         "original property": "Series",
         "singular": false,
         "always matches": true,
-        "description": "Relationship between  and ",
+        "description": "The series notes for the series.",
         "synonyms": []
       }
     ]

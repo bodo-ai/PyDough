@@ -601,7 +601,7 @@ def sqlite_custom_datasets_connection() -> DatabaseContext:
         "cd tests/gen_data",
         "rm -fv synthea.db",
         "rm -fv world_development_indicators.db",
-        "sqlite3 synthea.db < init_synthea.sql",
+        "sqlite3 synthea.db < init_synthea_sqlite.sql",
         "sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql",
     ]
     # Get the shell commands required to re-create all the db files
