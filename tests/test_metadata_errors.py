@@ -119,9 +119,24 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="BAD_UNIQUE_PROPERTY",
         ),
         pytest.param(
-            "RESERVED_PROPERTY_KEYWORD",
-            "property name 'id' must be a string that is a valid Python identifier",
-            id="RESERVED_PROPERTY_KEYWORD",
+            "RESERVED_PROPERTY_KEYWORD_1",
+            "property name 'id' must be a string that is not a Python reserved word or built-in name",
+            id="RESERVED_PROPERTY_KEYWORD_1",
+        ),
+        pytest.param(
+            "RESERVED_PROPERTY_KEYWORD_2",
+            "property name 'CALCULATE' must be a string that is not a PyDough reserved word",
+            id="RESERVED_PROPERTY_KEYWORD_2",
+        ),
+        pytest.param(
+            "RESERVED_PROPERTY_KEYWORD_3",
+            "property name 'FROM' must be a string that is not a SQL reserved word",
+            id="RESERVED_PROPERTY_KEYWORD_3",
+        ),
+        pytest.param(
+            "RESERVED_PROPERTY_KEYWORD_4",
+            "collection name 'cast' must be a string that is not a SQL reserved word",
+            id="RESERVED_PROPERTY_KEYWORD_4",
         ),
         pytest.param(
             "BAD_RELATIONSHIP_NAME",
