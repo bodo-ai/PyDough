@@ -57,10 +57,6 @@ The relational_expressions module provides functionality to define and manage va
 
 - `RelationalExpressionShuttle`: Specialized form of the visitor pattern that returns a relational expression. This is used to handle the common case where we need to modify a type of input.
 
-### [column_reference_input_name_remover.py](column_reference_input_name_remover.py)
-
-- `ColumnReferenceInputNameRemover`: Shuttle implementation designed to remove the input name from any column reference whose name is not found in the given set.
-
 ### [column_reference_input_name_modifier.py](column_reference_input_name_modifier.py)
 
 - `ColumnReferenceInputNameModifier`: Shuttle implementation designed to update all uses of a column reference's input name to a new input name based on a dictionary.

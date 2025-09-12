@@ -26,8 +26,8 @@ WITH _t5 AS (
     3
 ), _s11 AS (
   SELECT
-    _t6.l_orderkey,
     _t6.l_linenumber,
+    _t6.l_orderkey,
     orders.o_orderkey
   FROM _t5 AS _t6
   JOIN tpch.orders AS orders
