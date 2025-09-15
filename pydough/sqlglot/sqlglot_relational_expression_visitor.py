@@ -16,9 +16,11 @@ from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 
+import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
+from pydough.errors import PyDoughSQLException
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -77,9 +79,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         input_types: list[PyDoughType] = [
             arg.data_type for arg in call_expression.inputs
         ]
-        output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
-            call_expression.op, input_exprs, input_types
-        )
+        try:
+            output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
+                call_expression.op, input_exprs, input_types
+            )
+        except Exception as e:
+            raise pydough.active_session.error_builder.sql_call_conversion_error(
+                call_expression, e
+            )
         self._stack.append(output_expr)
 
     @staticmethod
@@ -246,7 +253,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "PREV" | "NEXT":
                 offset = window_expression.kwargs.get("n", 1)
                 if not isinstance(offset, int):
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         f"Invalid 'n' argument to {window_expression.op.function_name}: {offset!r} (expected an integer)"
                     )
                 # By default, we use the LAG function. If doing NEXT, switch
@@ -339,7 +346,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             if isinstance(literal_expression.value, datetime.datetime):
                 dt: datetime.datetime = literal_expression.value
                 if dt.tzinfo is not None:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "PyDough does not yet support datetime values with a timezone"
                     )
                 literal = sqlglot_expressions.Cast(

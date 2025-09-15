@@ -6,7 +6,7 @@ __all__ = ["AbstractMetadata"]
 
 from abc import ABC, abstractmethod
 
-from .errors import extract_array, extract_object, extract_string
+from pydough.errors.error_utils import extract_array, extract_object, extract_string
 
 
 class AbstractMetadata(ABC):

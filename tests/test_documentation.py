@@ -3,6 +3,7 @@ Verifies that various documentation files are up to date.
 """
 
 import pydough.pydough_operators as pydop
+from pydough.errors import PyDoughTestingException
 
 
 def test_function_list():
@@ -34,6 +35,6 @@ def test_function_list():
     # any that remain
     function_names.difference_update(headers)
     if function_names:
-        raise Exception(
+        raise PyDoughTestingException(
             "The following functions are not documented: " + ", ".join(function_names)
         )

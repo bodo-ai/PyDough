@@ -1,5 +1,6 @@
 """
-TODO
+Special operators containing logic to mask or unmask data based on a masked
+table column's metadata.
 """
 
 __all__ = ["MaskedExpressionFunctionOperator"]
@@ -12,13 +13,17 @@ from pydough.pydough_operators.type_inference import (
     RequireNumArgs,
     TypeVerifier,
 )
+from pydough.types import PyDoughType
 
 from .expression_function_operators import ExpressionFunctionOperator
 
 
 class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
     """
-    TODO
+    A special expression function operator that masks or unmasks data based on
+    a masked table column's metadata. The operator contains the metadata for
+    the column, but can represent either a masking or unmasking operation
+    depending on the `is_unprotect` flag.
     """
 
     def __init__(
@@ -26,12 +31,20 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
         masking_metadata: MaskedTableColumnMetadata,
         is_unprotect: bool,
     ):
+        # Create a dummy verifier that requires exactly one argument, since all
+        # masking/unmasking operations are unary.
         verifier: TypeVerifier = RequireNumArgs(1)
-        deducer: ExpressionTypeDeducer = ConstantType(
+
+        # Create a dummy deducer that always returns the appropriate data type
+        # from the metadata based on whether this is a masking or unmasking
+        # operation.
+        target_type: PyDoughType = (
             masking_metadata.unprotected_data_type
             if is_unprotect
             else masking_metadata.data_type
         )
+        deducer: ExpressionTypeDeducer = ConstantType(target_type)
+
         super().__init__(
             "UNMASK" if is_unprotect else "MASK", False, verifier, deducer, False
         )
