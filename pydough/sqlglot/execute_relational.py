@@ -27,9 +27,8 @@ from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 
 import pydough
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.database_connectors import (
-    DatabaseContext,
     DatabaseDialect,
 )
 from pydough.logger import get_logger
@@ -48,25 +47,24 @@ from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 __all__ = ["convert_relation_to_sql", "execute_df"]
 
 
-def convert_relation_to_sql(
-    relational: RelationalRoot,
-    dialect: DatabaseDialect,
-    config: PyDoughConfigs,
-) -> str:
+def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
 
     Args:
         `relational`: The relational tree to convert.
-        `dialect`: The dialect to use for the conversion.
+        `session`: The PyDough session encapsulating the logic used to execute
+        the logic, including the PyDough configs and the database context.
 
     Returns:
         The SQL string representing the relational tree.
     """
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
-        dialect, config
+        session
     ).relational_to_sqlglot(relational)
-    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(dialect)
+    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(
+        session.database.dialect
+    )
 
     # Apply the SQLGlot optimizer to the AST.
     try:
@@ -411,8 +409,7 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
 
 def execute_df(
     relational: RelationalRoot,
-    ctx: DatabaseContext,
-    config: PyDoughConfigs,
+    session: PyDoughSession,
     display_sql: bool = False,
 ) -> pd.DataFrame:
     """
@@ -421,15 +418,16 @@ def execute_df(
 
     Args:
         `relational`: The relational tree to execute.
-        `ctx`: The database context to execute the query in.
+        `session`: The PyDough session encapsulating the logic used to execute
+        the logic, including the database context.
         `display_sql`: if True, prints out the SQL that will be run before
         it is executed.
 
     Returns:
         The result of the query as a Pandas DataFrame
     """
-    sql: str = convert_relation_to_sql(relational, ctx.dialect, config)
+    sql: str = convert_relation_to_sql(relational, session)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
-    return ctx.connection.execute_query_df(sql)
+    return session._database.connection.execute_query_df(sql)

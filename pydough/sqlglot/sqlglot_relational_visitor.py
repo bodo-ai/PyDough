@@ -15,7 +15,7 @@ from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
 
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
     Aggregate,
@@ -71,20 +71,14 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     the relational tree 1 node at a time.
     """
 
-    def __init__(
-        self,
-        dialect: DatabaseDialect,
-        config: PyDoughConfigs,
-    ) -> None:
+    def __init__(self, session: PyDoughSession) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
-        self._dialect: DatabaseDialect = dialect
+        self._session: PyDoughSession = session
         self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(
-                dialect, self._correlated_names, config, self
-            )
+            SQLGlotRelationalExpressionVisitor(self, self._correlated_names)
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
@@ -270,7 +264,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
-            if self._dialect == DatabaseDialect.SQLITE:
+            if self._session.database.dialect == DatabaseDialect.SQLITE:
                 if col.ascending:
                     if not col.nulls_first:
                         warnings.warn(

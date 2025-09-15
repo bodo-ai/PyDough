@@ -425,6 +425,7 @@ The `to_sql` API takes in PyDough code and transforms it into SQL query text wit
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+- `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
 
 Below is an example of using `pydough.to_sql` and the output (the SQL output may be outdated if PyDough's SQL conversion process has been updated):
 
@@ -434,6 +435,16 @@ european_countries = nations.WHERE(region.name == "EUROPE")
 result = european_countries.CALCULATE(name, n_custs=COUNT(customers))
 pydough.to_sql(result, columns=["name", "n_custs"])
 ```
+
+"""
+s = '''
+european_countries = nations.WHERE(region.name == "EUROPE")
+result = european_countries.CALCULATE(name, n_custs=COUNT(customers))
+'''
+pydough.active_session.load_metadata_graph("tests/test_metadata/sample_graphs.json", "TPCH")
+u = pydough.from_string(s)
+print(pydough.to_sql(result, columns=["name", "n_custs"]))
+"""
 
 ```sql
 SELECT name, COALESCE(agg_0, 0) AS n_custs
@@ -478,6 +489,7 @@ The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), b
 - `metadata`: the PyDough knowledge graph to use for the conversion (if omitted, `pydough.active_session.metadata` is used instead).
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
+- `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
 - `display_sql`: displays the sql before executing in a logger.
 
 Below is an example of using `pydough.to_df` and the output, attached to a sqlite database containing data for the TPC-H schema:
