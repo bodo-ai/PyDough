@@ -1,6 +1,6 @@
 WITH _s0 AS (
   SELECT
-    MIN(s_acctbal) AS smallest_bal
+    MIN(s_acctbal) AS min_s_acctbal
   FROM tpch.supplier
 )
 SELECT
@@ -12,7 +12,7 @@ JOIN tpch.nation AS nation
 JOIN tpch.supplier AS supplier
   ON nation.n_nationkey = supplier.s_nationkey
   AND supplier.s_acctbal <= (
-    _s0.smallest_bal + 4.0
+    _s0.min_s_acctbal + 4.0
   )
 GROUP BY
   region.r_regionkey

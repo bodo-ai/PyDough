@@ -1,13 +1,13 @@
 WITH _s1 AS (
   SELECT
+    salesperson_id,
     COUNT(*) AS n_rows,
-    SUM(sale_price) AS sum_sale_price,
-    salesperson_id
+    SUM(sale_price) AS sum_sale_price
   FROM main.sales
   WHERE
     sale_date >= DATEADD(MONTH, -3, CURRENT_TIMESTAMP())
   GROUP BY
-    3
+    1
 )
 SELECT
   salespersons.first_name,

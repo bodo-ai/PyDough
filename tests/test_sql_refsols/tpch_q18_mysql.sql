@@ -1,10 +1,10 @@
 WITH _t1 AS (
   SELECT
-    SUM(l_quantity) AS sum_l_quantity,
-    l_orderkey
+    l_orderkey,
+    SUM(l_quantity) AS sum_l_quantity
   FROM tpch.LINEITEM
   GROUP BY
-    2
+    1
 )
 SELECT
   CUSTOMER.c_name AS C_NAME,
@@ -12,7 +12,7 @@ SELECT
   ORDERS.o_orderkey AS O_ORDERKEY,
   ORDERS.o_orderdate AS O_ORDERDATE,
   ORDERS.o_totalprice AS O_TOTALPRICE,
-  COALESCE(_t1.sum_l_quantity, 0) AS TOTAL_QUANTITY
+  _t1.sum_l_quantity AS TOTAL_QUANTITY
 FROM tpch.ORDERS AS ORDERS
 JOIN tpch.CUSTOMER AS CUSTOMER
   ON CUSTOMER.c_custkey = ORDERS.o_custkey

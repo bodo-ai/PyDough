@@ -433,6 +433,53 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
             ),
             id="monthly_incident_rate",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "global_info = TechnoGraph.CALCULATE(selected_date=products.WHERE(name == 'AmethystCopper-I').SINGULAR().release_date)\n"
+                "selected_countries = countries.WHERE(~CONTAINS(name, 'C')).CALCULATE(country_name=name).PARTITION(name='country', by=country_name).CALCULATE(country_name)\n"
+                "selected_days = global_info.calendar.WHERE((calendar_day >= selected_date) & (calendar_day < DATETIME(selected_date, '+2 years'))).CALCULATE(start_of_year=DATETIME(calendar_day, 'start of year')).PARTITION(name='months', by=start_of_year)\n"
+                "combos = selected_countries.CROSS(selected_days)\n"
+                "result = combos.CALCULATE(country_name, start_of_year).ORDER_BY(country_name.ASC(), start_of_year.ASC())",
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "country_name": ["FR"] * 3
+                        + ["JP"] * 3
+                        + ["MX"] * 3
+                        + ["US"] * 3,
+                        "start_of_year": ["2020-01-01", "2021-01-01", "2022-01-01"] * 4,
+                    }
+                ),
+                "country_x_year_combos",
+            ),
+            id="country_x_year_combos",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "global_info = TechnoGraph.CALCULATE(selected_date=products.WHERE(name == 'AmethystCopper-I').SINGULAR().release_date)\n"
+                "selected_countries = countries.WHERE(~CONTAINS(name, 'C')).CALCULATE(country_name=name).PARTITION(name='country', by=country_name).CALCULATE(country_name)\n"
+                "selected_days = global_info.calendar.WHERE((calendar_day >= selected_date) & (calendar_day < DATETIME(selected_date, '+2 years'))).CALCULATE(start_of_year=DATETIME(calendar_day, 'start of year')).PARTITION(name='months', by=start_of_year)\n"
+                "combos = selected_countries.CROSS(selected_days)\n"
+                "result = combos.CALCULATE("
+                " country_name,"
+                " start_of_year,"
+                " n_purchases=COUNT(calendar.devices_sold.WHERE((product.name == 'AmethystCopper-I') & (purchase_country.name == country_name))),"
+                ").ORDER_BY(country_name.ASC(), start_of_year.ASC())",
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "country_name": ["FR"] * 3
+                        + ["JP"] * 3
+                        + ["MX"] * 3
+                        + ["US"] * 3,
+                        "start_of_year": ["2020-01-01", "2021-01-01", "2022-01-01"] * 4,
+                        "n": [1, 1, 0, 0, 5, 2, 1, 1, 1, 0, 0, 0],
+                    }
+                ),
+                "country_x_year_analysis",
+            ),
+            id="country_x_year_analysis",
+        ),
     ],
 )
 def technograph_pipeline_test_data(request) -> PyDoughPandasTest:

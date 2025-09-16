@@ -14,9 +14,9 @@ WITH _s2 AS (
     )
     AND sbcustjoindate >= STR_TO_DATE(
       CONCAT(
-        YEAR(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        YEAR(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' ',
-        MONTH(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        MONTH(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' 1'
       ),
       '%Y %c %e'
@@ -25,12 +25,12 @@ WITH _s2 AS (
     1
 ), _s3 AS (
   SELECT
-    AVG(sbTransaction.sbtxamount) AS avg_sbTxAmount,
     CONCAT_WS(
       '-',
       EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)),
       LPAD(EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)), 2, '0')
-    ) AS month
+    ) AS month,
+    AVG(sbTransaction.sbtxamount) AS avg_sbTxAmount
   FROM main.sbCustomer AS sbCustomer
   JOIN main.sbTransaction AS sbTransaction
     ON EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbTransaction.sbtxdatetime AS DATETIME))
@@ -43,15 +43,15 @@ WITH _s2 AS (
     )
     AND sbCustomer.sbcustjoindate >= STR_TO_DATE(
       CONCAT(
-        YEAR(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        YEAR(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' ',
-        MONTH(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH)),
+        MONTH(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH)),
         ' 1'
       ),
       '%Y %c %e'
     )
   GROUP BY
-    2
+    1
 )
 SELECT
   _s2.month,

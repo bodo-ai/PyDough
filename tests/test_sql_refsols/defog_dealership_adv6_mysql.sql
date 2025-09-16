@@ -6,11 +6,11 @@ WITH _t AS (
   FROM main.inventory_snapshots
 ), _s3 AS (
   SELECT
-    MAX(sale_price) AS max_sale_price,
-    car_id
+    car_id,
+    MAX(sale_price) AS max_sale_price
   FROM main.sales
   GROUP BY
-    2
+    1
 )
 SELECT
   cars.make,

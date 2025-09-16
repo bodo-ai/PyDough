@@ -915,7 +915,7 @@ def impl_defog_dealership_adv12():
     price that was sold on the same day it went out of inventory?
     """
     same_date_snapshot = car.inventory_snapshots.WHERE(
-        (snapshot_date == sale_date) & (is_in_inventory == 0)
+        (snapshot_date == sale_date) & (~is_in_inventory)
     )
 
     return (

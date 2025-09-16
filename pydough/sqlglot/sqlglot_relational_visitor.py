@@ -4,8 +4,8 @@ SQLGlot query.
 """
 
 import warnings
-from collections import defaultdict
 
+from sqlglot.expressions import AggFunc as SQLGlotAggFunc
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -22,13 +22,11 @@ from pydough.relational import (
     CallExpression,
     ColumnReference,
     ColumnReferenceInputNameModifier,
-    ColumnReferenceInputNameRemover,
     CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
     Join,
-    JoinType,
     Limit,
     LiteralExpression,
     Project,
@@ -46,10 +44,11 @@ from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVi
 __all__ = ["SQLGlotRelationalVisitor"]
 
 
-def expr_sort_key(expr: SQLGlotExpression) -> str:
+def expr_sort_key(expr: SQLGlotExpression) -> tuple[bool, str]:
     """
     A key function for sorting SQLGlot expressions. This is used to
-    ensure that the expressions are sorted in a consistent order.
+    ensure that the expressions are sorted in a consistent order alphabetically,
+    with non-aggregate expressions appearing before aggregate expressions.
 
     Args:
         `expr`: The expression to sort.
@@ -57,10 +56,13 @@ def expr_sort_key(expr: SQLGlotExpression) -> str:
     Returns:
         The string representation of the expression.
     """
+    is_aggregate: bool = expr.find(SQLGlotAggFunc) is not None
+    name: str
     if isinstance(expr, SQLGlotAlias):
-        return repr(expr.alias)
+        name = repr(expr.alias)
     else:
-        return repr(expr)
+        name = repr(expr)
+    return (is_aggregate, name)
 
 
 class SQLGlotRelationalVisitor(RelationalVisitor):
@@ -86,9 +88,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
-        )
-        self._alias_remover: ColumnReferenceInputNameRemover = (
-            ColumnReferenceInputNameRemover()
         )
         # Counter for generating unique table alias.
         self._alias_counter: int = 0
@@ -226,7 +225,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             conditions.
             `sort`: If True, the existing columns in the original SELECT
             statement get sorted alphabetically by their string representation
-            (repr).
+            (repr), with non-aggregate columns appearing before aggregate
+            columns.
 
         Returns:
             A final select statement that may contain the merged columns.
@@ -331,7 +331,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             `column_exprs`: The columns to select.
             `alias`: The alias to give the subquery.
             `sort`: If True, the final select statement ordering is based on the
-                sorted string representation of input column expressions.
+                sorted string representation of input column expressions, with
+                aggregate columns appearing after non-aggregate columns.
 
         Returns:
             A select statement representing the subquery.
@@ -392,29 +393,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
-        # Compute a dictionary to find all duplicate names.
-        seen_names: dict[str, int] = defaultdict(int)
-        for idx, input in enumerate(join.inputs):
-            occurrences: int = 1
-            if join.join_type in (JoinType.SEMI, JoinType.ANTI):
-                # For SEMI and ANTI joins, we must keep the columns input names
-                # from the left side and treat them as if they appear in the
-                # RHS.
-                occurrences = 2
-            for column in input.columns.keys():
-                seen_names[column] += occurrences
-        # Only keep duplicate names.
-        kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
             input_name = join.default_input_aliases[i]
             if input_name not in alias_map:
                 alias_map[input_name] = self._generate_table_alias()
-        self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
-            alias: col.accept_shuttle(self._alias_remover).accept_shuttle(
-                self._alias_modifier
-            )
+            alias: col.accept_shuttle(self._alias_modifier)
             for alias, col in join.columns.items()
         }
         column_exprs = [

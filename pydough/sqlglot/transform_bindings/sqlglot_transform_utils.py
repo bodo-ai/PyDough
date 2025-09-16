@@ -21,6 +21,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from pydough.errors import PyDoughSQLException
 from pydough.types import PyDoughType
 
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
@@ -167,11 +168,15 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.YEAR:
                 return "'%Y-01-01 00:00:00'"
             case DateTimeUnit.QUARTER:
-                raise ValueError("Quarter unit does not have a truncation string.")
+                raise PyDoughSQLException(
+                    "Quarter unit does not have a truncation string."
+                )
             case DateTimeUnit.MONTH:
                 return "'%Y-%m-01 00:00:00'"
             case DateTimeUnit.WEEK:
-                raise ValueError("Week unit does not have a truncation string.")
+                raise PyDoughSQLException(
+                    "Week unit does not have a truncation string."
+                )
             case DateTimeUnit.DAY:
                 return "'%Y-%m-%d 00:00:00'"
             case DateTimeUnit.HOUR:
@@ -190,7 +195,9 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.YEAR:
                 return "'%Y'"
             case DateTimeUnit.QUARTER:
-                raise ValueError("Quarter unit does not have an extraction string.")
+                raise PyDoughSQLException(
+                    "Quarter unit does not have an extraction string."
+                )
             case DateTimeUnit.MONTH:
                 return "'%m'"
             case DateTimeUnit.WEEK:
@@ -259,22 +266,24 @@ def pad_helper(
         try:
             required_len = int(args[1].this)
             if required_len < 0:
-                raise ValueError()
+                raise PyDoughSQLException(
+                    f"{pad_func} function requires the length argument to be a non-negative integer literal."
+                )
         except ValueError:
-            raise ValueError(
+            raise PyDoughSQLException(
                 f"{pad_func} function requires the length argument to be a non-negative integer literal."
             )
     else:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the length argument to be a non-negative integer literal."
         )
 
     if not isinstance(args[2], sqlglot_expressions.Literal) or not args[2].is_string:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the padding argument to be a string literal of length 1."
         )
     if len(str(args[2].this)) != 1:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the padding argument to be a string literal of length 1."
         )
 

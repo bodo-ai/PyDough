@@ -6,12 +6,11 @@ __all__ = ["parse_json_metadata_from_file"]
 
 import json
 
-from .collections import CollectionMetadata, SimpleTableMetadata
-from .errors import (
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import (
     HasPropertyWith,
     HasType,
     NoExtraKeys,
-    PyDoughMetadataException,
     extract_array,
     extract_bool,
     extract_object,
@@ -19,6 +18,8 @@ from .errors import (
     is_json_object,
     is_string,
 )
+
+from .collections import CollectionMetadata, SimpleTableMetadata
 from .graphs import GraphMetadata
 from .properties import (
     CartesianProductMetadata,
