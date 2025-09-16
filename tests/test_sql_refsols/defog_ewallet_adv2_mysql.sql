@@ -25,7 +25,7 @@ WHERE
       ) % 7
     ) DAY
   ) AS DATE)
-  AND notifications.created_at >= DATE_ADD(
+  AND notifications.created_at >= DATE_SUB(
     CAST(DATE_SUB(
       CURRENT_TIMESTAMP(),
       INTERVAL (
@@ -34,7 +34,7 @@ WHERE
         ) % 7
       ) DAY
     ) AS DATE),
-    INTERVAL '-3' WEEK
+    INTERVAL '3' WEEK
   )
 GROUP BY
   1

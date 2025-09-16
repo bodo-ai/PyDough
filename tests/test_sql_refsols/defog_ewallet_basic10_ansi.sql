@@ -5,7 +5,7 @@ WITH _s1 AS (
     SUM(amount) AS sum_amount
   FROM main.wallet_transactions_daily
   WHERE
-    created_at >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -150, 'DAY'))
+    created_at >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 150, DAY))
     AND receiver_type = 1
   GROUP BY
     1
