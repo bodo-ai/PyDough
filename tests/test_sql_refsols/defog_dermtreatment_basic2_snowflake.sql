@@ -26,8 +26,8 @@ WITH _t2 AS (
   FROM main.patients
 ), _s10 AS (
   SELECT
-    COUNT(DISTINCT _t2.patient_id) AS ndistinct_patient_id,
-    _s3.ins_type
+    _s3.ins_type,
+    COUNT(DISTINCT _t2.patient_id) AS ndistinct_patient_id
   FROM _t2 AS _t2
   LEFT JOIN _u_0 AS _u_0
     ON _t2.treatment_id = _u_0._u_1
@@ -36,7 +36,7 @@ WITH _t2 AS (
   WHERE
     NOT _u_0._u_1 IS NULL
   GROUP BY
-    2
+    1
 ), _u_2 AS (
   SELECT
     treatment_id AS _u_3
@@ -45,8 +45,8 @@ WITH _t2 AS (
     1
 ), _s11 AS (
   SELECT
-    AVG(outcomes.day100_pasi_score) AS avg_day100_pasi_score,
-    _s7.ins_type
+    _s7.ins_type,
+    AVG(outcomes.day100_pasi_score) AS avg_day100_pasi_score
   FROM _t2 AS _t5
   LEFT JOIN _u_2 AS _u_2
     ON _t5.treatment_id = _u_2._u_3
@@ -57,7 +57,7 @@ WITH _t2 AS (
   WHERE
     NOT _u_2._u_3 IS NULL
   GROUP BY
-    2
+    1
 )
 SELECT
   _s10.ins_type AS insurance_type,

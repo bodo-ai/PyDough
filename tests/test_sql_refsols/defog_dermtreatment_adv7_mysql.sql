@@ -9,10 +9,10 @@ WHERE
     CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
     '%Y %c %e'
   )
-  AND treatments.start_dt >= DATE_ADD(
+  AND treatments.start_dt >= DATE_SUB(
     STR_TO_DATE(
       CONCAT(YEAR(CURRENT_TIMESTAMP()), ' ', MONTH(CURRENT_TIMESTAMP()), ' 1'),
       '%Y %c %e'
     ),
-    INTERVAL '-6' MONTH
+    INTERVAL '6' MONTH
   )

@@ -8,4 +8,4 @@ JOIN main.drugs AS drugs
   ON NOT drugs.fda_appr_dt IS NULL AND drugs.drug_id = treatments.drug_id
 WHERE
   NOT treatments.end_dt IS NULL
-  AND treatments.end_dt >= CAST(DATE_ADD(CURRENT_TIMESTAMP(), INTERVAL '-6' MONTH) AS DATE)
+  AND treatments.end_dt >= CAST(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH) AS DATE)

@@ -1,14 +1,14 @@
 WITH _t0 AS (
   SELECT
+    DATE(start_dt, 'start of month') AS start_month,
     COUNT(*) AS n_rows,
-    COUNT(DISTINCT diag_id) AS ndistinct_diag_id,
-    DATE(start_dt, 'start of month') AS start_month
+    COUNT(DISTINCT diag_id) AS ndistinct_diag_id
   FROM main.treatments
   WHERE
     DATE('now', 'start of month', '-12 month') <= DATE(start_dt, 'start of month')
     AND DATE('now', 'start of month') > DATE(start_dt, 'start of month')
   GROUP BY
-    3
+    1
 )
 SELECT
   CONCAT_WS(

@@ -1,6 +1,5 @@
 WITH _s2 AS (
   SELECT
-    COUNT(DISTINCT patient_id) AS ndistinct_patient_id,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', start_dt) AS INTEGER),
@@ -11,16 +10,16 @@ WITH _s2 AS (
           2 * -1
         ))
       END
-    ) AS treatment_month
+    ) AS treatment_month,
+    COUNT(DISTINCT patient_id) AS ndistinct_patient_id
   FROM main.treatments
   WHERE
     start_dt < DATE('now', 'start of month')
     AND start_dt >= DATE('now', 'start of month', '-3 month')
   GROUP BY
-    2
+    1
 ), _s3 AS (
   SELECT
-    COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', treatments.start_dt) AS INTEGER),
@@ -31,7 +30,8 @@ WITH _s2 AS (
           2 * -1
         ))
       END
-    ) AS treatment_month
+    ) AS treatment_month,
+    COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
   FROM main.treatments AS treatments
   JOIN main.drugs AS drugs
     ON drugs.drug_id = treatments.drug_id AND drugs.drug_type = 'biologic'
@@ -39,7 +39,7 @@ WITH _s2 AS (
     treatments.start_dt < DATE('now', 'start of month')
     AND treatments.start_dt >= DATE('now', 'start of month', '-3 month')
   GROUP BY
-    2
+    1
 )
 SELECT
   _s2.treatment_month AS month,

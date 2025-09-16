@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS num_adverse_events,
-    treatments.drug_id
+    treatments.drug_id,
+    COUNT(*) AS n_rows
   FROM main.treatments AS treatments
   JOIN main.adverse_events AS adverse_events
     ON STR_TO_DATE(
@@ -23,12 +23,12 @@ WITH _s3 AS (
     )
     AND adverse_events.treatment_id = treatments.treatment_id
   GROUP BY
-    2
+    1
 )
 SELECT
   drugs.drug_id,
   drugs.drug_name,
-  _s3.num_adverse_events
+  _s3.n_rows AS num_adverse_events
 FROM main.drugs AS drugs
 JOIN _s3 AS _s3
   ON _s3.drug_id = drugs.drug_id

@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    drug_id,
     AVG(tot_drug_amt) AS avg_tot_drug_amt,
-    COUNT(*) AS n_rows,
-    drug_id
+    COUNT(*) AS n_rows
   FROM main.treatments
   GROUP BY
-    3
+    1
 )
 SELECT
   drugs.drug_name,

@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    COUNT(DISTINCT drug_id) AS ndistinct_drug_id,
-    doc_id
+    doc_id,
+    COUNT(DISTINCT drug_id) AS ndistinct_drug_id
   FROM main.treatments
   GROUP BY
-    2
+    1
 )
 SELECT
   doctors.doc_id,

@@ -6,4 +6,4 @@ JOIN main.patients AS patients
   AND patients.patient_id = treatments.patient_id
 WHERE
   treatments.start_dt < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
-  AND treatments.start_dt >= DATE_ADD(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), -6, 'MONTH')
+  AND treatments.start_dt >= DATE_SUB(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), 6, MONTH)
