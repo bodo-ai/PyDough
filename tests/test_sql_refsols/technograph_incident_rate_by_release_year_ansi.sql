@@ -10,15 +10,6 @@ WITH _s0 AS (
     pr_id,
     pr_release
   FROM main.products
-), _t1 AS (
-  SELECT
-    COUNT(*) AS n_rows_1,
-    ANY_VALUE(_s1.pr_release) AS pr_release
-  FROM main.devices AS devices
-  JOIN _s1 AS _s1
-    ON _s1.pr_id = devices.de_product_id
-  GROUP BY
-    devices.de_product_id
 ), _s6 AS (
   SELECT
     EXTRACT(YEAR FROM CAST(_s1.pr_release AS DATETIME)) AS year_pr_release,

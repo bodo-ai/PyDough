@@ -1,19 +1,19 @@
-WITH _t1 AS (
+WITH _s0 AS (
   SELECT
-    MAX(cars.cost) AS anything_cost,
-    SUM(sales.sale_price) AS sum_sale_price
-  FROM main.sales AS sales
-  JOIN main.cars AS cars
-    ON cars._id = sales.car_id
+    car_id,
+    SUM(sale_price) AS sum_sale_price
+  FROM main.sales
   WHERE
-    CAST(STRFTIME('%Y', sales.sale_date) AS INTEGER) = 2023
+    CAST(STRFTIME('%Y', sale_date) AS INTEGER) = 2023
   GROUP BY
-    sales.car_id
+    1
 )
 SELECT
   (
     CAST((
-      COALESCE(SUM(sum_sale_price), 0) - COALESCE(SUM(anything_cost), 0)
-    ) AS REAL) / COALESCE(SUM(anything_cost), 0)
+      COALESCE(SUM(_s0.sum_sale_price), 0) - COALESCE(SUM(cars.cost), 0)
+    ) AS REAL) / COALESCE(SUM(cars.cost), 0)
   ) * 100 AS GPM
-FROM _t1
+FROM _s0 AS _s0
+JOIN main.cars AS cars
+  ON _s0.car_id = cars._id

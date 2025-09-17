@@ -12,14 +12,12 @@ from pydough.relational import (
     ColumnReference,
     ColumnReferenceFinder,
     Join,
+    JoinCardinality,
     JoinType,
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
     RelationalShuttle,
-)
-from pydough.relational.rel_util import (
-    add_input_name,
 )
 
 
@@ -35,10 +33,25 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         self.finder.reset()
 
     def visit_join(self, node: Join) -> RelationalNode:
+        result: RelationalNode | None = None
+
+        # Attempt the transpose where the left input is an Aggregate. If it
+        # succeeded, use that as the result and recursively transform its
+        # inputs.
         if isinstance(node.inputs[0], Aggregate):
-            return self.generic_visit_inputs(
-                self.join_aggregate_transpose(node, node.inputs[0])
-            )
+            result = self.join_aggregate_transpose(node, node.inputs[0], True)
+            if result is not None:
+                return self.generic_visit_inputs(result)
+
+        # If the attempt failed, then attempt the transpose where the right
+        # input is an Aggregate. If this attempt succeeded, use that as the
+        # result and recursively transform its inputs.
+        if isinstance(node.inputs[1], Aggregate):
+            result = self.join_aggregate_transpose(node, node.inputs[1], False)
+            if result is not None:
+                return self.generic_visit_inputs(result)
+
+        # If this attempt failed, fall back to the regular implementation.
         return super().visit_join(node)
 
     def generate_name(self, base: str, used_names: Iterable[str]) -> str:
@@ -57,19 +70,22 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             i += 1
 
     def join_aggregate_transpose(
-        self, join: Join, aggregate: Aggregate
-    ) -> RelationalNode:
+        self, join: Join, aggregate: Aggregate, is_left: bool
+    ) -> RelationalNode | None:
         """
         Transposes a Join above an Aggregate into an Aggregate above a Join,
-        when possible.
+        when possible and it would be better for performance to use the join
+        first to filter some of the rows before aggregating.
 
         Args:
             `join`: the Join node above the Aggregate.
             `aggregate`: the Aggregate node that is the left input to the Join.
+            `is_left`: whether the Aggregate is the left input to the Join
+            (True) or the right input (False).
 
         Returns:
-            The new RelationalNode tree with the Join and Aggregate transposed, or
-            the original Join if the transpose is not possible.
+            The new RelationalNode tree with the Join and Aggregate transposed,
+            or None if the transpose is not possible.
         """
         # Verify that the join is an inner, left, or semi-join, and that the
         # join cardinality is singular (unless the aggregations are not affected
@@ -78,114 +94,78 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             call.op in (pydop.MIN, pydop.MAX, pydop.ANYTHING, pydop.NDISTINCT)
             for call in aggregate.aggregations.values()
         )
+
+        # The cardinality with regards to the input being considered must be
+        # singular (unless the aggregations allow plural), and must be
+        # filtering (since the point of joining before aggregation is to reduce
+        # the number of rows to aggregate).
+        cardinality: JoinCardinality = (
+            join.cardinality if is_left else join.reverse_cardinality
+        )
+
+        # Verify the cardinality meets the specified criteria, and that the join
+        # type is INNER/SEMI (since LEFT would not be filtering), where SEMI is
+        # only allowed if the aggregation is on the left.
         if not (
-            join.join_type in (JoinType.INNER, JoinType.SEMI)
-            and (join.cardinality.singular or aggs_allow_plural)
+            (
+                (join.join_type == JoinType.INNER)
+                or (join.join_type == JoinType.SEMI and is_left)
+            )
+            and cardinality.filters
+            and (cardinality.singular or aggs_allow_plural)
         ):
-            return join
+            return None
+
+        # The alias of the input to the join that corresponds to the
+        # aggregate.
+        desired_alias: str | None = (
+            join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
+        )
 
         # Find all of the columns used in the join condition that come from the
-        # left-hand side of the join.
+        # aggregate side of the join
         self.finder.reset()
         join.condition.accept(self.finder)
-        lhs_condition_columns: set[ColumnReference] = {
+        agg_condition_columns: set[ColumnReference] = {
             col
             for col in self.finder.get_column_references()
-            if col.input_name == join.default_input_aliases[0]
+            if col.input_name == desired_alias
         }
 
-        # Verify that there is at least one left hand side condition column,
-        # and all of them are grouping keys in the aggregate.
-        if len(lhs_condition_columns) == 0 or any(
-            col.name not in aggregate.keys for col in lhs_condition_columns
+        # Verify ALL of the condition columns from that side of the join are
+        # in the aggregate keys.
+        if len(agg_condition_columns) == 0 or any(
+            col.name not in aggregate.keys for col in agg_condition_columns
         ):
-            return join
-
-        reverse_join_columns: dict[str, RelationalExpression] = {}
-        for join_col_name, join_col_expr in join.columns.items():
-            assert isinstance(join_col_expr, ColumnReference)
-            reverse_join_columns[join_col_expr.name] = ColumnReference(
-                join_col_name, join_col_expr.data_type
-            )
+            return None
 
         new_join_columns: dict[str, RelationalExpression] = {}
-        new_key_columns: dict[str, RelationalExpression] = {}
-        new_aggregate_columns: dict[str, CallExpression] = {}
-        used_column_names: set[str] = set()
+        new_aggregate_aggs: dict[str, CallExpression] = {}
+        new_aggregate_keys: dict[str, RelationalExpression] = {}
 
-        for col_name, col_expr in join.columns.items():
-            self.finder.reset()
-            col_expr.accept(self.finder)
-            if all(
-                expr.input_name == join.default_input_aliases[1]
-                for expr in self.finder.get_column_references()
-            ):
-                new_join_columns[col_name] = col_expr
-                new_aggregate_columns[col_name] = CallExpression(
-                    pydop.ANYTHING,
-                    col_expr.data_type,
-                    [ColumnReference(col_name, col_expr.data_type)],
-                )
-                used_column_names.add(col_name)
-            elif not (
-                isinstance(col_expr, ColumnReference)
-                and col_expr.input_name == join.default_input_aliases[0]
-            ):
-                return join
+        new_condition: RelationalExpression = join.condition
+        agg_input: RelationalNode = aggregate.inputs[0]
+        non_agg_input: RelationalNode = join.inputs[1] if is_left else join.inputs[0]
+        new_join_inputs: list[RelationalNode] = (
+            [agg_input, non_agg_input] if is_left else [non_agg_input, agg_input]
+        )
 
-        for key_name, key_expr in aggregate.keys.items():
-            new_join_columns[key_name] = add_input_name(
-                key_expr, join.default_input_aliases[0]
-            )
-            agg_key_name: str = self.generate_name(key_name, used_column_names)
-            new_key_columns[agg_key_name] = ColumnReference(
-                key_name, col_expr.data_type
-            )
-            used_column_names.add(agg_key_name)
-
-        for agg_name, agg_expr in aggregate.aggregations.items():
-            new_inputs: list[RelationalExpression] = []
-            for input_expr in agg_expr.inputs:
-                join_name: str
-                if isinstance(input_expr, ColumnReference):
-                    join_name = self.generate_name(input_expr.name, new_join_columns)
-                else:
-                    join_name = self.generate_name("expr", new_join_columns)
-                new_join_columns[join_name] = add_input_name(
-                    input_expr, join.default_input_aliases[0]
-                )
-                new_inputs.append(ColumnReference(join_name, input_expr.data_type))
-            agg_name = self.generate_name(agg_name, used_column_names)
-            if new_inputs != agg_expr.inputs:
-                agg_expr = CallExpression(
-                    agg_expr.op,
-                    agg_expr.data_type,
-                    new_inputs,
-                )
-            new_aggregate_columns[agg_name] = agg_expr
-            used_column_names.add(agg_name)
+        # TODO: FINISH THIS
+        return None
 
         new_join: Join = Join(
-            inputs=[aggregate.inputs[0], join.inputs[1]],
-            condition=join.condition,
-            columns=new_join_columns,
-            join_type=join.join_type,
-            cardinality=join.cardinality,
+            new_join_inputs,
+            new_condition,
+            join.join_type,
+            new_join_columns,
+            join.cardinality,
+            join.reverse_cardinality,
+            join.correl_name,
         )
 
-        new_aggregate = Aggregate(
-            input=new_join, keys=new_key_columns, aggregations=new_aggregate_columns
+        new_aggregate: Aggregate = Aggregate(
+            new_join, new_aggregate_keys, new_aggregate_aggs
         )
-
-        # print()
-        # print(join.to_tree_string())
-        # print(lhs_condition_columns)
-        # print(new_join_columns)
-        # print(new_key_columns)
-        # print(new_aggregate_columns)
-        # print(new_aggregate.to_tree_string())
-        # breakpoint()
-        # return join
 
         return new_aggregate
 

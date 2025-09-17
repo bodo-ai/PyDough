@@ -65,10 +65,7 @@ SELECT
   _s13.n_rows AS n_above_avg_suppliers
 FROM _s12 AS _s12
 JOIN _s13 AS _s13
-  ON _s13.n_nationkey = anything_n_nationkey
-GROUP BY
-  nation.n_nationkey,
-  n_nationkey
+  ON _s12.n_nationkey = _s13.n_nationkey
 ORDER BY
   1,
   2
