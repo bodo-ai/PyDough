@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 import pytest
 
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.conversion.relational_converter import convert_ast_to_relational
 from pydough.qdag import AstNodeBuilder, PyDoughCollectionQDAG
 from pydough.types import (
@@ -2184,7 +2184,7 @@ def relational_test_data(request) -> tuple[CollectionTestInfo, str]:
 def test_ast_to_relational(
     relational_test_data: tuple[CollectionTestInfo, str],
     tpch_node_builder: AstNodeBuilder,
-    default_config: PyDoughConfigs,
+    empty_sqlite_tpch_session: PyDoughSession,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -2195,7 +2195,7 @@ def test_ast_to_relational(
     calc_pipeline, file_name = relational_test_data
     file_path: str = get_plan_test_filename(file_name)
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, None, default_config)
+    relational = convert_ast_to_relational(collection, None, empty_sqlite_tpch_session)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")
@@ -2320,7 +2320,7 @@ def relational_alternative_config_test_data(request) -> tuple[CollectionTestInfo
 def test_ast_to_relational_alternative_aggregation_configs(
     relational_alternative_config_test_data: tuple[CollectionTestInfo, str],
     tpch_node_builder: AstNodeBuilder,
-    default_config: PyDoughConfigs,
+    empty_sqlite_tpch_session: PyDoughSession,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -2332,10 +2332,10 @@ def test_ast_to_relational_alternative_aggregation_configs(
     """
     calc_pipeline, file_name = relational_alternative_config_test_data
     file_path: str = get_plan_test_filename(file_name)
-    default_config.sum_default_zero = False
-    default_config.avg_default_zero = True
+    empty_sqlite_tpch_session.config.sum_default_zero = False
+    empty_sqlite_tpch_session.config.avg_default_zero = True
     collection: PyDoughCollectionQDAG = calc_pipeline.build(tpch_node_builder)
-    relational = convert_ast_to_relational(collection, None, default_config)
+    relational = convert_ast_to_relational(collection, None, empty_sqlite_tpch_session)
     if update_tests:
         with open(file_path, "w") as f:
             f.write(relational.to_tree_string() + "\n")

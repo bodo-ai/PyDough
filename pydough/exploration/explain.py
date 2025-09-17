@@ -7,7 +7,7 @@ __all__ = ["explain"]
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughQDAGException
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
@@ -249,7 +249,9 @@ def explain_graph(graph: GraphMetadata, verbose: bool) -> str:
     return "\n".join(lines)
 
 
-def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
+def explain_unqualified(
+    node: UnqualifiedNode, session: PyDoughSession, verbose: bool
+) -> str:
     """
     Displays information about an unqualified node, if it is possible to
     qualify the node as a collection. If not, then `explain_term` may need to
@@ -262,6 +264,8 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
 
     Args:
         `node`: the unqualified node object being examined.
+        `session`: the session to use for the explanation. If not provided,
+        the active session will be used.
         `verbose`: if true, displays more detailed information about `node` and
         in a less compact format.
 
@@ -270,13 +274,13 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
     """
     lines: list[str] = []
     qualified_node: PyDoughQDAG | None = None
-    config: PyDoughConfigs = pydough.active_session.config
+    session = pydough.active_session if session is None else session
     # Attempt to qualify the node, dumping an appropriate message if it could
     # not be qualified
     try:
         root: UnqualifiedRoot | None = find_unqualified_root(node)
         if root is not None:
-            qualified_node = qualify_node(node, root._parcel[0], config)
+            qualified_node = qualify_node(node, session)
         else:
             # If the root is None, it means that the node was an expression
             # without information about its context.
@@ -497,7 +501,7 @@ def explain_unqualified(node: UnqualifiedNode, verbose: bool) -> str:
 def explain(
     data: AbstractMetadata | UnqualifiedNode,
     verbose: bool = False,
-    config: PyDoughConfigs | None = None,
+    session: PyDoughSession | None = None,
 ) -> str:
     """
     Displays information about a PyDough metadata object or unqualified node.
@@ -509,14 +513,14 @@ def explain(
         `data`: the metadata or unqualified node object being examined.
         `verbose`: if true, displays more detailed information about `data` and
         in a less compact format.
-        `config`: the configuration to use for the explanation. If not provided,
-        the active session's configuration will be used.
+        `session`: the session to use for the explanation. If not provided,
+        the active session will be used.
 
     Returns:
         An explanation of `data`.
     """
-    if config is None:
-        config = pydough.active_session.config
+    if session is None:
+        session = pydough.active_session
     match data:
         case GraphMetadata():
             return explain_graph(data, verbose)
@@ -525,7 +529,7 @@ def explain(
         case PropertyMetadata():
             return explain_property(data, verbose)
         case UnqualifiedNode():
-            return explain_unqualified(data, verbose)
+            return explain_unqualified(data, session, verbose)
         case _:
             raise NotImplementedError(
                 f"Cannot call pydough.explain on argument of type {data.__class__.__name__}"
