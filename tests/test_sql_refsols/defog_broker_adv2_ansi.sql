@@ -4,7 +4,7 @@ WITH _s1 AS (
     COUNT(*) AS n_rows
   FROM main.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -10, 'DAY'))
+    sbtxdatetime >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 10, DAY))
     AND sbtxtype = 'buy'
   GROUP BY
     1
