@@ -1,10 +1,5 @@
 WITH _t1 AS (
   SELECT
-    COUNT(sbdailyprice.sbdpclose) AS count_sbdpclose,
-    MAX(sbdailyprice.sbdphigh) AS max_high,
-    MIN(sbdailyprice.sbdplow) AS min_low,
-    MAX(sbticker.sbtickersymbol) AS sbtickersymbol,
-    SUM(sbdailyprice.sbdpclose) AS sum_sbdpclose,
     CONCAT_WS(
       '-',
       CAST(STRFTIME('%Y', sbdailyprice.sbdpdate) AS INTEGER),
@@ -15,35 +10,40 @@ WITH _t1 AS (
           2 * -1
         ))
       END
-    ) AS month
+    ) AS month,
+    MAX(sbticker.sbtickersymbol) AS anything_sbtickersymbol,
+    COUNT(sbdailyprice.sbdpclose) AS count_sbdpclose,
+    MAX(sbdailyprice.sbdphigh) AS max_sbdphigh,
+    MIN(sbdailyprice.sbdplow) AS min_sbdplow,
+    SUM(sbdailyprice.sbdpclose) AS sum_sbdpclose
   FROM main.sbdailyprice AS sbdailyprice
   JOIN main.sbticker AS sbticker
     ON sbdailyprice.sbdptickerid = sbticker.sbtickerid
   GROUP BY
     sbdailyprice.sbdptickerid,
-    6
+    1
 ), _t0 AS (
   SELECT
-    MAX(max_high) AS max_high,
-    MIN(min_low) AS min_low,
-    SUM(count_sbdpclose) AS sum_count_sbdpclose,
-    SUM(sum_sbdpclose) AS sum_sum_sbdpclose,
+    anything_sbtickersymbol,
     month,
-    sbtickersymbol
+    MAX(max_sbdphigh) AS max_max_sbdphigh,
+    MIN(min_sbdplow) AS min_min_sbdplow,
+    SUM(count_sbdpclose) AS sum_count_sbdpclose,
+    SUM(sum_sbdpclose) AS sum_sum_sbdpclose
   FROM _t1
   GROUP BY
-    5,
-    6
+    1,
+    2
 )
 SELECT
-  sbtickersymbol AS symbol,
+  anything_sbtickersymbol AS symbol,
   month,
   CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose AS avg_close,
-  max_high,
-  min_low,
+  max_max_sbdphigh AS max_high,
+  min_min_sbdplow AS min_low,
   CAST((
     (
       CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose
-    ) - LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
-  ) AS REAL) / LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month) AS momc
+    ) - LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY anything_sbtickersymbol ORDER BY month)
+  ) AS REAL) / LAG(CAST(sum_sum_sbdpclose AS REAL) / sum_count_sbdpclose, 1) OVER (PARTITION BY anything_sbtickersymbol ORDER BY month) AS momc
 FROM _t0

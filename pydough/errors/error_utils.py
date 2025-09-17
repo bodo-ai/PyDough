@@ -527,6 +527,7 @@ def find_possible_name_matches(
     atol: int,
     rtol: float,
     min_names: int,
+    max_names: int | None,
     insert_cost: float,
     delete_cost: float,
     substitution_cost: float,
@@ -546,6 +547,8 @@ def find_possible_name_matches(
             candidate with a minimum edit distance less than or equal to
         `closest_match * (1 + rtol)` will be included in the results.
         `min_names`: The minimum number of names to return.
+        `max_names`: The maximum number of names to return. If None, there is
+        no maximum.
         `insert_cost`: The cost of inserting a character into the first string.
         `delete_cost`: The cost of deleting a character from the first string.
         `substitution_cost`: The cost of substituting a character.
@@ -586,8 +589,12 @@ def find_possible_name_matches(
     min_matches: list[str] = [name for _, name in terms_distance_list[:min_names]]
 
     # Return whichever of the three lists is the longest, breaking ties
-    # lexicographically by the names within.
-    return max(
+    # lexicographically by the names within. If a maximum number of names
+    # is specified, truncate the list to that length.
+    best_matches: list[str] = max(
         [matches_within_atol, matches_within_rtol, min_matches],
         key=lambda x: (len(x), x),
     )
+    if max_names is not None:
+        best_matches = best_matches[:max_names]
+    return best_matches

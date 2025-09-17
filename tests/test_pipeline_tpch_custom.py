@@ -145,6 +145,9 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_cross_11,
     simple_cross_12,
     simple_cross_13,
+    simple_cross_14,
+    simple_cross_15,
+    simple_cross_16,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -2240,10 +2243,60 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
             PyDoughPandasTest(
                 simple_cross_13,
                 "TPCH",
-                lambda: pd.DataFrame({"n1": [142], "n2": [8]}),
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["foo"],
+                        "b": ["bar"],
+                        "c": ["fizz"],
+                        "d": ["buzz"],
+                        "e": ["foobar"],
+                        "f": ["fizzbuzz"],
+                        "g": ["yay"],
+                    }
+                ),
                 "simple_cross_13",
             ),
             id="simple_cross_13",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_14,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "x": ["foo"] * 5,
+                        "n": [1, 3, 1, 0, 0],
+                    }
+                ),
+                "simple_cross_14",
+            ),
+            id="simple_cross_14",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_15,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["*"] * 8 + ["A"] * 8,
+                        "e": list("****EEEE") * 2,
+                        "i": list("**II") * 4,
+                        "o": list("*O") * 8,
+                    }
+                ),
+                "simple_cross_15",
+            ),
+            id="simple_cross_15",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_16,
+                "TPCH",
+                lambda: pd.DataFrame({"n1": [142], "n2": [8]}),
+                "simple_cross_16",
+            ),
+            id="simple_cross_16",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2329,14 +2382,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "chain3": ["2023-10-01"],
                         "plus_1q": ["2023-04-15 12:30:45"],
                         "plus_2q": ["2023-07-15 12:30:45"],
-                        "plus_3q": ["2023-10-15 00:00:00"],
+                        "plus_3q": ["2023-10-15"],
                         "minus_1q": ["2022-10-15 12:30:45"],
                         "minus_2q": ["2022-07-15 12:30:45"],
-                        "minus_3q": ["2022-04-15 00:00:00"],
-                        "syntax1": ["2023-08-15 00:00:00"],
-                        "syntax2": ["2024-02-15 00:00:00"],
-                        "syntax3": ["2024-08-15 00:00:00"],
-                        "syntax4": ["2022-08-15 00:00:00"],
+                        "minus_3q": ["2022-04-15"],
+                        "syntax1": ["2023-08-15"],
+                        "syntax2": ["2024-02-15"],
+                        "syntax3": ["2024-08-15"],
+                        "syntax4": ["2022-08-15"],
                         "q_diff1": [1],
                         "q_diff2": [2],
                         "q_diff3": [3],
@@ -3067,7 +3120,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, key, name, address, phone, nation?"
+                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, key, name, address, phone?"
             ),
             id="bad_name_6",
         ),
@@ -3123,7 +3176,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_13,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, name, orders, address, key, phone, nation, nation_key?"
+                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, name, orders, address, key?"
             ),
             id="bad_name_13",
         ),
@@ -3147,7 +3200,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_16,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: name, key, comment, nation, orders, phone, address?"
+                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: name, key, comment, nation, orders?"
             ),
             id="bad_name_16",
         ),
@@ -3253,7 +3306,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_5,
             None,
             re.escape(
-                "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions'. Did you mean: nations, key, name?"
+                "nclear whether 'name' refers to a term of the current context or ancestor of collection TPCH.regions.CALCULATE(name=name).TPCH.regions"
             ),
             id="bad_cross_5",
         ),

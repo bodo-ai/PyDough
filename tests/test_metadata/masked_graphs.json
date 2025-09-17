@@ -1,0 +1,383 @@
+[
+    {
+      "name": "CRYPTBANK",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CRBNK.CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "masked table column",
+              "column name": "c_key",
+              "data type": "numeric",
+              "unprotect protocol": "(42 - ({}))",
+              "protect protocol": "(42 - ({}))",
+              "server masked": true,
+              "description": "The unique key for the customer",
+              "sample values": [1, 2, 10, 18],
+              "synonyms": ["customer id"]
+            },
+            {
+              "name": "first_name",
+              "type": "masked table column",
+              "column name": "c_fname",
+              "data type": "string",
+              "unprotect protocol": "LOWER({})",
+              "protect protocol": "UPPER({})",
+              "server masked": true,
+              "description": "The first name of the customer",
+              "sample values": ["alice", "olivia", "queenie", "james"],
+              "synonyms": ["customer name"]
+            },
+            {
+              "name": "last_name",
+              "type": "masked table column",
+              "column name": "c_lname",
+              "data type": "string",
+              "unprotect protocol": "LOWER({})",
+              "protect protocol": "UPPER({})",
+              "server masked": true,
+              "description": "The last name of the customer",
+              "sample values": ["smith", "johnson", "lee"],
+              "synonyms": ["surname"]
+            },
+            {
+              "name": "phone_number",
+              "type": "masked table column",
+              "column name": "c_phone",
+              "data type": "string",
+              "unprotect protocol": "REPLACE(REPLACE(REPLACE({}, '9', '*'), '0', '9'), '*', '0')",
+              "protect protocol": "REPLACE(REPLACE(REPLACE({}, '0', '*'), '9', '0'), '*', '9')",
+              "server masked": true,
+              "description": "The phone number of the customer",
+              "sample values": ["555-123-4567", "555-768-9012"],
+              "synonyms": ["cell number", "contact phone number"]
+            },
+            {
+              "name": "email",
+              "type": "masked table column",
+              "column name": "c_email",
+              "data type": "string",
+              "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
+              "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
+              "server masked": true,
+              "description": "The email address of the customer",
+              "sample values": ["alice_j@example.org", "m.gonzalez@ymail.com"],
+              "synonyms": ["email address", "contact email"]
+            },
+            {
+              "name": "address",
+              "type": "masked table column",
+              "column name": "c_addr",
+              "data type": "string",
+              "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
+              "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
+              "server masked": true,
+              "description": "The address of the customer, in the format 'street address;city;state;zip'",
+              "sample values": ["123 Maple St;Portland;OR;97205", "654 Cedar Blvd;San Diego;CA;92101"],
+              "synonyms": ["home address", "residential address", "residence", "location", "home"]
+            },
+            {
+              "name": "birthday",
+              "type": "masked table column",
+              "column name": "c_birthday",
+              "data type": "datetime",
+              "unprotect protocol": "DATE({}, '+472 days')",
+              "protect protocol": "DATE({}, '-472 days')",
+              "server masked": true,
+              "description": "The date the customer was born on.",
+              "synonyms": ["birth date", "date of birth", "DOB"]
+            }
+          ],
+          "description": "The customers registered with the bank.",
+          "synonyms": ["users", "clients", "account holders"]
+        },
+        {
+          "name": "branches",
+          "type": "simple table",
+          "table path": "CRBNK.BRANCHES",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "b_key",
+              "data type": "numeric",
+              "description": "The unique key for the branch",
+              "sample values": [1, 4, 6, 7],
+              "synonyms": ["branch id"]
+            },
+            {
+              "name": "name",
+              "type": "table column",
+              "column name": "b_name",
+              "data type": "string",
+              "description": "The name of the branch.",
+              "sample values": ["San Francisco Financial Branch", "Tucson University Branch"],
+              "synonyms": ["location name", "branch name"]
+            },
+            {
+              "name": "address",
+              "type": "table column",
+              "column name": "b_addr",
+              "data type": "string",
+              "description": "The address of the branch, in the format 'street address;city;state;zip'",
+              "sample values": ["900 Speedway Blvd;Tucson;AZ;85719", "850 River Rd;Eugene;OR;97401"],
+              "synonyms": ["branch address", "location address", "branch location"]
+            }
+          ],
+          "description": "The various branches of the bank.",
+          "synonyms": ["locations", "offices", "bank branches"]
+        },
+        {
+          "name": "accounts",
+          "type": "simple table",
+          "table path": "CRBNK.ACCOUNTS",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "masked table column",
+              "column name": "a_key",
+              "data type": "numeric",
+              "unprotect protocol": "CASE WHEN {0} = 0 THEN 0 ELSE (CASE WHEN {0} > 0 THEN 1 ELSE -1 END) * CAST(SUBSTRING({0}, 1 + INSTR({0}, '-'), LENGTH({0}) / 2) AS INTEGER) END",
+              "protect protocol": "CAST(STRING({0}) || STRING(ABS({0})) AS INTEGER)",
+              "server masked": true,
+              "description": "The unique key for the account",
+              "sample values": [5, 17, 35, 58],
+              "synonyms": ["account id", "account number"]
+            },
+            {
+              "name": "customer_key",
+              "type": "table column",
+              "column name": "a_custkey",
+              "data type": "numeric",
+              "description": "The key of the customer who owns the account",
+              "sample values": [1, 2, 4, 12],
+              "synonyms": ["owner key", "customer id", "account holder id"]
+            },
+            {
+              "name": "branch_key",
+              "type": "table column",
+              "column name": "a_branchkey",
+              "data type": "numeric",
+              "description": "The key of the branch where the account is held",
+              "sample values": [1, 2, 3, 7, 8],
+              "synonyms": ["branch id", "branch identifier", "branch number"]
+            },
+            {
+              "name": "balance",
+              "type": "masked table column",
+              "column name": "a_balance",
+              "data type": "numeric",
+              "unprotect protocol": "SQRT({})",
+              "protect protocol": "({0} * {0})",
+              "server masked": true,
+              "description": "The current balance of the account",
+              "sample values": [2450.75, 520.10, 22500.00],
+              "synonyms": ["money in account", "account balance", "funds available"]
+            },
+            {
+              "name": "account_type",
+              "type": "masked table column",
+              "column name": "a_type",
+              "data type": "string",
+              "unprotect protocol": "SUBSTRING({0}, -1) || SUBSTRING({0}, 1, LENGTH({0}) - 1)",
+              "protect protocol": "SUBSTRING({0}, 2) || SUBSTRING({0}, 1, 1)",
+              "server masked": true,
+              "description": "The type of account, which is one of: checking, savings, retirement, business, or mma",
+              "sample values": ["checking", "savings", "retirement", "business", "mma"],
+              "synonyms": ["category"]
+            },
+            {
+              "name": "creation_timestamp",
+              "type": "masked table column",
+              "column name": "a_open_ts",
+              "data type": "datetime",
+              "unprotect protocol": "DATETIME({}, '+123456789 seconds')",
+              "protect protocol": "DATETIME({}, '-123456789 seconds')",
+              "server masked": true,
+              "description": "The timestamp when the account was opened at the branch",
+              "synonyms": ["datetime of opening", "account creation date", "account open timestamp"]
+            }
+          ],
+          "description": "All of the accounts held by customers at the bank.",
+          "synonyms": ["bank accounts", "financial accounts", "customer accounts"]
+        },
+        {
+          "name": "transactions",
+          "type": "simple table",
+          "table path": "CRBNK.TRANSACTIONS",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "t_key",
+              "data type": "numeric",
+              "description": "The unique key for the transaction",
+              "sample values": [10, 76, 103, 265],
+              "synonyms": ["transaction id", "transaction number"]
+            },
+            {
+              "name": "source_account_key",
+              "type": "table column",
+              "column name": "t_sourceaccount",
+              "data type": "numeric",
+              "description": "The account key for the account from which the transaction originated",
+              "sample values": [1, 17, 18, 30],
+              "synonyms": ["sending account key", "source account id"]
+            },
+            {
+              "name": "destination_account_key",
+              "type": "table column",
+              "column name": "t_destaccount",
+              "data type": "numeric",
+              "description": "The account key for the account to which the transaction was sent",
+              "sample values": [2, 16, 20, 45],
+              "synonyms": ["receiving account key", "destination account id"]
+            },
+            {
+              "name": "amount",
+              "type": "masked table column",
+              "column name": "t_amount",
+              "data type": "numeric",
+              "unprotect protocol": "(1025.67 - ({}))",
+              "protect protocol": "(1025.67 - ({}))",
+              "server masked": true,
+              "description": "The amount of money transferred in the transaction",
+              "sample values": [2753.92, 322.67, 5278.45],
+              "synonyms": ["amount wired", "transaction amount", "money transferred"]
+            },
+            {
+              "name": "time_stamp",
+              "type": "masked table column",
+              "column name": "t_ts",
+              "data type": "datetime",
+              "unprotect protocol": "DATETIME({}, '+54321 seconds')",
+              "protect protocol": "DATETIME({}, '-54321 seconds')",
+              "server masked": true,
+              "description": "The timestamp when the transaction occurred",
+              "synonyms": ["transaction datetime", "transaction time", "datetime of transfer"]
+            }
+          ],
+          "description": "All of the monetary transactions made between accounts held at the bank",
+          "synonyms": ["transfers", "money wirings", "financial transactions"]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "accounts_held",
+          "type": "simple join",
+          "parent collection": "customers",
+          "child collection": "accounts",
+          "singular": false,
+          "always matches": false,
+          "keys": {"key": ["customer_key"]},
+          "description": "The accounts held by the customer at the bank",
+          "synonyms": ["bank accounts"]
+        },
+        {
+          "name": "account_holder",
+          "type": "reverse",
+          "original parent": "customers",
+          "original property": "accounts_held",
+          "singular": true,
+          "always matches": true,
+          "description": "The customer who owns the account",
+          "synonyms": ["customer", "client", "owner"]
+        },
+        {
+          "name": "accounts_managed",
+          "type": "simple join",
+          "parent collection": "branches",
+          "child collection": "accounts",
+          "singular": false,
+          "always matches": true,
+          "keys": {"key": ["branch_key"]},
+          "description": "The accounts managed by the branch",
+          "synonyms": ["accounts", "accounts held at branch"]
+        },
+        {
+          "name": "branch",
+          "type": "reverse",
+          "original parent": "branches",
+          "original property": "accounts_managed",
+          "singular": true,
+          "always matches": true,
+          "description": "The branch where the account is located",
+          "synonyms": ["bank branch", "managing location", "owning office"]
+        },
+        {
+          "name": "transactions_sent",
+          "type": "simple join",
+          "parent collection": "accounts",
+          "child collection": "transactions",
+          "singular": false,
+          "always matches": false,
+          "keys": {"key": ["source_account_key"]},
+          "description": "The transactions sent from the account",
+          "synonyms": ["outgoing transactions", "sent transfers", "money sent"]
+        },
+        {
+          "name": "sender_account",
+          "type": "reverse",
+          "original parent": "accounts",
+          "original property": "transactions_sent",
+          "singular": true,
+          "always matches": true,
+          "description": "The account that sent the transaction",
+          "synonyms": ["sending account", "originating account", "source"]
+        },
+        {
+          "name": "transactions_received",
+          "type": "simple join",
+          "parent collection": "accounts",
+          "child collection": "transactions",
+          "singular": false,
+          "always matches": false,
+          "keys": {"key": ["destination_account_key"]},
+          "description": "The transactions received by the account",
+          "synonyms": ["incoming transactions", "received transfers", "money received"]
+        },
+        {
+          "name": "receiver_account",
+          "type": "reverse",
+          "original parent": "accounts",
+          "original property": "transactions_received",
+          "singular": true,
+          "always matches": true,
+          "description": "The account that received the transaction",
+          "synonyms": ["receiving account", "destination", "target"]
+        },
+        {
+          "name": "same_state_customers",
+          "type": "general join",
+          "parent collection": "branches",
+          "child collection": "customers",
+          "singular": false,
+          "always matches": true,
+          "condition": "self.address[-8:-6] == other.address[-8:-6]",
+          "description": "All customers who live in the same state as the branch",
+          "synonyms": ["customers in same state", "local customers"]
+        },
+        {
+          "name": "same_state_branches",
+          "type": "reverse",
+          "original parent": "branches",
+          "original property": "same_state_customers",
+          "singular": false,
+          "always matches": true,
+          "description": "All branches located in the same state as the customer",
+          "synonyms": ["branches in same state", "local branches"]
+        }
+      ],
+      "additional definitions": [],
+      "verified pydough analysis": [],
+      "extra semantic info": {}
+    }
+  ]

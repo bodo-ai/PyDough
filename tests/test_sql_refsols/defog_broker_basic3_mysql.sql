@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    sbtxtickerid AS sbTxTickerId,
     COUNT(*) AS n_rows,
-    SUM(sbtxamount) AS sum_sbTxAmount,
-    sbtxtickerid AS sbTxTickerId
+    SUM(sbtxamount) AS sum_sbTxAmount
   FROM main.sbTransaction
   GROUP BY
-    3
+    1
 )
 SELECT
   sbTicker.sbtickersymbol AS symbol,

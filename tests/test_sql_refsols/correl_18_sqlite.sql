@@ -8,14 +8,14 @@ WITH _t3 AS (
     CAST(STRFTIME('%Y', o_orderdate) AS INTEGER) = 1993
 ), _t1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    SUM(o_totalprice) AS sum_o_totalprice,
     o_custkey,
-    o_orderdate
+    o_orderdate,
+    COUNT(*) AS n_rows,
+    SUM(o_totalprice) AS sum_o_totalprice
   FROM _t3
   GROUP BY
-    3,
-    4
+    1,
+    2
 )
 SELECT
   COUNT(*) AS n

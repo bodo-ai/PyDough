@@ -1,0 +1,10 @@
+SELECT
+  sbcustcountry AS country,
+  100 * (
+    COALESCE(COUNT_IF(sbcuststatus = 'active'), 0) / COUNT(*)
+  ) AS ar
+FROM main.sbcustomer
+WHERE
+  sbcustjoindate <= '2022-12-31' AND sbcustjoindate >= '2022-01-01'
+GROUP BY
+  1

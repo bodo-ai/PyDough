@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow on custom queries using the defog.ai
 schemas.
 """
 
+import datetime
 import re
 from collections.abc import Callable
 
@@ -540,18 +541,13 @@ def get_day_of_week(
                             "TX015",
                             "TX021",
                             "TX025",
-                            "TX031",
-                            "TX033",
-                            "TX035",
                             "TX044",
                             "TX045",
                             "TX049",
-                            "TX051",
-                            "TX055",
                         ],
-                        "_expr0": [9, 12, 9, 12, 9, 12, 0, 0, 0, 10, 10, 16, 0, 0],
-                        "_expr1": [30, 30, 30, 30, 30, 30, 0, 0, 0, 0, 30, 0, 0, 0],
-                        "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        "_expr0": [9, 12, 9, 12, 9, 12, 10, 10, 16],
+                        "_expr1": [30, 30, 30, 30, 30, 30, 0, 30, 0],
+                        "_expr2": [0, 0, 0, 0, 0, 0, 0, 0, 0],
                     }
                 ),
                 "hour_minute_day",
@@ -2011,6 +2007,236 @@ def get_day_of_week(
             ),
             id="simplification_3",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " transactions"
+                " .WHERE(YEAR(date_time) == 2023)"
+                " .WHERE((RANKING(by=date_time.ASC()) == 1) | (RANKING(by=date_time.DESC()) == 1))"
+                " .CALCULATE("
+                " date_time,"
+                " s00 = DATETIME(DATETIME(date_time, 'start of week'), '-8 weeks'),"  # -> DATETIME(date_time, 'start of week', '-8 weeks')
+                " s01 = QUARTER(date_time) == 0,"  # KEEP_IF(False, PRESENT(date_time))
+                " s02 = 1 == QUARTER(date_time),"  # ISIN(MONTH(date_time), [1,2,3])
+                " s03 = QUARTER(date_time) == 2,"  # ISIN(MONTH(date_time), [4,5,6])
+                " s04 = 3 == QUARTER(date_time),"  # ISIN(MONTH(date_time), [7,8,9])
+                " s05 = QUARTER(date_time) == 4,"  # ISIN(MONTH(date_time), [10,11,12])
+                " s06 = 5 == QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s07 = 1 > QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s08 = QUARTER(date_time) < 2,"  # MONTH(date_time) < 4
+                " s09 = 3 > QUARTER(date_time),"  # MONTH(date_time) < 7
+                " s10 = QUARTER(date_time) < 4,"  # MONTH(date_time) < 10
+                " s11 = 5 > QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s12 = QUARTER(date_time) <= 0,"  # KEEP_IF(False, PRESENT(date_time))
+                " s13 = 1 >= QUARTER(date_time),"  # MONTH(date_time) <= 3
+                " s14 = QUARTER(date_time) <= 2,"  # MONTH(date_time) <= 6
+                " s15 = 3 >= QUARTER(date_time),"  # MONTH(date_time) <= 9
+                " s16 = QUARTER(date_time) <= 4,"  # KEEP_IF(True, PRESENT(date_time))
+                " s17 = 0 < QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s18 = QUARTER(date_time) > 1,"  # MONTH(date_time) > 3
+                " s19 = 2 < QUARTER(date_time),"  # MONTH(date_time) > 6
+                " s20 = QUARTER(date_time) > 3,"  # MONTH(date_time) > 9
+                " s21 = 4 < QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s22 = 1 <= QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s23 = QUARTER(date_time) >= 2,"  # MONTH(date_time) >= 4
+                " s24 = 3 <= QUARTER(date_time),"  # MONTH(date_time) >= 7
+                " s25 = QUARTER(date_time) >= 4,"  # MONTH(date_time) >= 10
+                " s26 = 5 <= QUARTER(date_time),"  # KEEP_IF(False, PRESENT(date_time))
+                " s27 = QUARTER(date_time) != 0,"  # KEEP_IF(True, PRESENT(date_time))
+                " s28 = 1 != QUARTER(date_time),"  # NOT(ISIN(MONTH(date_time), [1,2,3]))
+                " s29 = QUARTER(date_time) != 2,"  # NOT(ISIN(MONTH(date_time), [4,5,6]))
+                " s30 = 3 != QUARTER(date_time),"  # NOT(ISIN(MONTH(date_time), [7,8,9]))
+                " s31 = QUARTER(date_time) != 4,"  # NOT(ISIN(MONTH(date_time), [10,11,12]))
+                " s32 = 5 != QUARTER(date_time),"  # KEEP_IF(True, PRESENT(date_time))
+                " s33 = YEAR('2024-08-13 12:45:59'),"  # 2024
+                " s34 = QUARTER('2024-08-13 12:45:59'),"  # 3
+                " s35 = MONTH('2024-08-13 12:45:59'),"  # 8
+                " s36 = DAY('2024-08-13 12:45:59'),"  # 13
+                " s37 = HOUR('2024-08-13 12:45:59'),"  # 12
+                " s38 = MINUTE('2024-08-13 12:45:59'),"  # 45
+                " s39 = SECOND('2024-08-13 12:45:59'),"  # 59
+                " s40 = YEAR(datetime.date(2020, 1, 31)),"  # 2024
+                " s41 = QUARTER(datetime.date(2020, 1, 31)),"  # 1
+                " s42 = MONTH(datetime.date(2020, 1, 31)),"  # 1
+                " s43 = DAY(datetime.date(2020, 1, 31)),"  # 31
+                " s44 = HOUR(datetime.date(2020, 1, 31)),"  # 0
+                " s45 = MINUTE(datetime.date(2020, 1, 31)),"  # 0
+                " s46 = SECOND(datetime.date(2020, 1, 31)),"  # 0
+                " s47 = YEAR(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 2023
+                " s48 = QUARTER(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 3
+                " s49 = MONTH(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 7
+                " s50 = DAY(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 4
+                " s51 = HOUR(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 6
+                " s52 = MINUTE(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 55
+                " s53 = SECOND(datetime.datetime(2023, 7, 4, 6, 55, 0)),"  # 0
+                " s54 = YEAR(pd.Timestamp('1999-12-31 23:59:58')),"  # 1999
+                " s55 = QUARTER(pd.Timestamp('1999-12-31 23:59:58')),"  # 4
+                " s56 = MONTH(pd.Timestamp('1999-12-31 23:59:58')),"  # 12
+                " s57 = DAY(pd.Timestamp('1999-12-31 23:59:58')),"  # 31
+                " s58 = HOUR(pd.Timestamp('1999-12-31 23:59:58')),"  # 23
+                " s59 = MINUTE(pd.Timestamp('1999-12-31 23:59:58')),"  # 59
+                " s60 = SECOND(pd.Timestamp('1999-12-31 23:59:58')),"  # 58
+                " s61 = MONTH(date_time) == 0,"  # KEEP_IF(False, PRESENT(datetime))
+                " s62 = MONTH(date_time) < 1,"  # KEEP_IF(False, PRESENT(datetime))
+                " s63 = MONTH(date_time) <= 0,"  # KEEP_IF(False, PRESENT(datetime))
+                " s64 = MONTH(date_time) != 0,"  # KEEP_IF(True, PRESENT(datetime))
+                " s65 = MONTH(date_time) > 0,"  # KEEP_IF(True, PRESENT(datetime))
+                " s66 = MONTH(date_time) >= 1,"  # KEEP_IF(True, PRESENT(datetime))
+                " s67 = 0 == DAY(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s68 = 1 > DAY(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s69 = 0 >= DAY(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s70 = 0 != DAY(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s71 = 0 < DAY(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s72 = 0 <= DAY(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s73 = HOUR(date_time) == -1,"  # KEEP_IF(False, PRESENT(datetime))
+                " s74 = 61 == MINUTE(date_time),"  # KEEP_IF(False, PRESENT(datetime))
+                " s75 = -2 != SECOND(date_time),"  # KEEP_IF(True, PRESENT(datetime))
+                " s76 = HOUR(date_time) != 62,"  # KEEP_IF(True, PRESENT(datetime))
+                " s77 = MINUTE(date_time) < 0,"  # KEEP_IF(False, PRESENT(datetime))
+                " s78 = SECOND(date_time) < 61,"  # KEEP_IF(True, PRESENT(datetime))
+                " s79 = HOUR(date_time) <= -1,"  # KEEP_IF(False, PRESENT(datetime))
+                " s80 = MINUTE(date_time) <= 60,"  # KEEP_IF(True, PRESENT(datetime))
+                " s81 = SECOND(date_time) > -5,"  # KEEP_IF(True, PRESENT(datetime))
+                " s82 = HOUR(date_time) > 60,"  # KEEP_IF(False, PRESENT(datetime))
+                " s83 = MINUTE(date_time) >= 0,"  # KEEP_IF(True, PRESENT(datetime))
+                " s84 = SECOND(date_time) >= 80,"  # KEEP_IF(False, PRESENT(datetime))
+                " s85 = MONTH(date_time) == 13,"  # KEEP_IF(False, PRESENT(datetime))
+                " s86 = MONTH(date_time) != 13,"  # KEEP_IF(True, PRESENT(datetime))
+                " s87 = MONTH(date_time) > 12,"  # KEEP_IF(False, PRESENT(datetime))
+                " s88 = MONTH(date_time) >= 13,"  # KEEP_IF(False, PRESENT(datetime))
+                " s89 = MONTH(date_time) <= 12,"  # KEEP_IF(True, PRESENT(datetime))
+                " s90 = MONTH(date_time) < 13,"  # KEEP_IF(True, PRESENT(datetime))
+                " s91 = DAY(date_time) == 32,"  # KEEP_IF(False, PRESENT(datetime))
+                " s92 = DAY(date_time) != 32,"  # KEEP_IF(True, PRESENT(datetime))
+                " s93 = DAY(date_time) >= 32,"  # KEEP_IF(False, PRESENT(datetime))
+                " s94 = DAY(date_time) > 31,"  # KEEP_IF(False, PRESENT(datetime))
+                " s95 = DAY(date_time) <= 31,"  # KEEP_IF(True, PRESENT(datetime))
+                " s96 = DAY(date_time) < 32,"  # KEEP_IF(True, PRESENT(datetime))
+                " s97 = DATETIME('2025-01-31', '+1 month'),"  # 2025-02-28
+                " s98 = DATETIME('2025-01-01', 'start of week'),"  # 2025-12-29
+                " s99 = DATETIME('2025-01-02', 'start of week'),"  # 2025-12-29
+                " s100 = DATETIME('2025-01-03', 'start of week'),"  # 2025-12-29
+                " s101 = DATETIME('2025-01-04', 'start of week'),"  # 2025-12-29
+                " s102 = DATETIME('2025-01-05', 'start of week'),"  # 2025-01-05
+                " s103 = DATETIME('2025-01-06', 'start of week'),"  # 2025-01-05
+                " s104 = DATETIME('2025-01-07', 'start of week'),"  # 2025-01-05
+                "))",
+                "Broker",
+                lambda: pd.DataFrame(
+                    {
+                        "date_time": ["2023-01-15 10:00:00", "2023-04-03 16:15:00"],
+                        "s00": ["2022-11-14", "2023-02-06"],
+                        "s01": [0, 0],
+                        "s02": [1, 0],
+                        "s03": [0, 1],
+                        "s04": [0, 0],
+                        "s05": [0, 0],
+                        "s06": [0, 0],
+                        "s07": [0, 0],
+                        "s08": [1, 0],
+                        "s09": [1, 1],
+                        "s10": [1, 1],
+                        "s11": [1, 1],
+                        "s12": [0, 0],
+                        "s13": [1, 0],
+                        "s14": [1, 1],
+                        "s15": [1, 1],
+                        "s16": [1, 1],
+                        "s17": [1, 1],
+                        "s18": [0, 1],
+                        "s19": [0, 0],
+                        "s20": [0, 0],
+                        "s21": [0, 0],
+                        "s22": [1, 1],
+                        "s23": [0, 1],
+                        "s24": [0, 0],
+                        "s25": [0, 0],
+                        "s26": [0, 0],
+                        "s27": [1, 1],
+                        "s28": [0, 1],
+                        "s29": [1, 0],
+                        "s30": [1, 1],
+                        "s31": [1, 1],
+                        "s32": [1, 1],
+                        "s33": [2024, 2024],
+                        "s34": [3, 3],
+                        "s35": [8, 8],
+                        "s36": [13, 13],
+                        "s37": [12, 12],
+                        "s38": [45, 45],
+                        "s39": [59, 59],
+                        "s40": [2020, 2020],
+                        "s41": [1, 1],
+                        "s42": [1, 1],
+                        "s43": [31, 31],
+                        "s44": [0, 0],
+                        "s45": [0, 0],
+                        "s46": [0, 0],
+                        "s47": [2023, 2023],
+                        "s48": [3, 3],
+                        "s49": [7, 7],
+                        "s50": [4, 4],
+                        "s51": [6, 6],
+                        "s52": [55, 55],
+                        "s53": [0, 0],
+                        "s54": [1999, 1999],
+                        "s55": [4, 4],
+                        "s56": [12, 12],
+                        "s57": [31, 31],
+                        "s58": [23, 23],
+                        "s59": [59, 59],
+                        "s60": [58, 58],
+                        "s61": [0, 0],
+                        "s62": [0, 0],
+                        "s63": [0, 0],
+                        "s64": [1, 1],
+                        "s65": [1, 1],
+                        "s66": [1, 1],
+                        "s67": [0, 0],
+                        "s68": [0, 0],
+                        "s69": [0, 0],
+                        "s70": [1, 1],
+                        "s71": [1, 1],
+                        "s72": [1, 1],
+                        "s73": [0, 0],
+                        "s74": [0, 0],
+                        "s75": [1, 1],
+                        "s76": [1, 1],
+                        "s77": [0, 0],
+                        "s78": [1, 1],
+                        "s79": [0, 0],
+                        "s80": [1, 1],
+                        "s81": [1, 1],
+                        "s82": [0, 0],
+                        "s83": [1, 1],
+                        "s84": [0, 0],
+                        "s85": [0, 0],
+                        "s86": [1, 1],
+                        "s87": [0, 0],
+                        "s88": [0, 0],
+                        "s89": [1, 1],
+                        "s90": [1, 1],
+                        "s91": [0, 0],
+                        "s92": [1, 1],
+                        "s93": [0, 0],
+                        "s94": [0, 0],
+                        "s95": [1, 1],
+                        "s96": [1, 1],
+                        "s97": ["2025-02-28", "2025-02-28"],
+                        "s98": ["2024-12-30", "2024-12-30"],
+                        "s99": ["2024-12-30", "2024-12-30"],
+                        "s100": ["2024-12-30", "2024-12-30"],
+                        "s101": ["2024-12-30", "2024-12-30"],
+                        "s102": ["2024-12-30", "2024-12-30"],
+                        "s103": ["2025-01-06", "2025-01-06"],
+                        "s104": ["2025-01-06", "2025-01-06"],
+                    }
+                ),
+                "simplification_4",
+                kwargs={"pd": pd, "datetime": datetime},
+            ),
+            id="simplification_4",
+        ),
     ],
 )
 def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -2025,6 +2251,7 @@ def defog_custom_pipeline_test_data(request) -> PyDoughPandasTest:
 def test_pipeline_until_relational_defog_custom(
     defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ):
@@ -2035,7 +2262,7 @@ def test_pipeline_until_relational_defog_custom(
     """
     file_path: str = get_plan_test_filename(defog_custom_pipeline_test_data.test_name)
     defog_custom_pipeline_test_data.run_relational_test(
-        defog_graphs, file_path, update_tests
+        defog_graphs, file_path, update_tests, config=defog_config
     )
 
 
@@ -2067,6 +2294,7 @@ def test_pipeline_until_sql_defog_custom(
 def test_pipeline_e2e_defog_custom(
     defog_custom_pipeline_test_data: PyDoughPandasTest,
     defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     sqlite_defog_connection: DatabaseContext,
 ):
     """
@@ -2075,7 +2303,9 @@ def test_pipeline_e2e_defog_custom(
     same database connector. Run on custom questions using the defog.ai
     schemas.
     """
-    defog_custom_pipeline_test_data.run_e2e_test(defog_graphs, sqlite_defog_connection)
+    defog_custom_pipeline_test_data.run_e2e_test(
+        defog_graphs, sqlite_defog_connection, config=defog_config
+    )
 
 
 @pytest.mark.parametrize(

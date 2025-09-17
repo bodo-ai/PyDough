@@ -6,8 +6,6 @@ partitioned in a PARTITION clause.
 __all__ = ["PartitionChild"]
 
 
-from functools import cache
-
 import pydough
 from pydough.qdag.expressions import (
     BackReferenceExpression,
@@ -88,7 +86,6 @@ class PartitionChild(ChildOperatorChildAccess):
     def inherited_downstreamed_terms(self) -> set[str]:
         return self._inherited_downstreamed_terms
 
-    @cache
     def get_term(self, term_name: str):
         self.verify_term_exists(term_name)
         # Special handling of terms down-streamed from an ancestor of the
@@ -97,7 +94,7 @@ class PartitionChild(ChildOperatorChildAccess):
             # Verify that the ancestor name is not also a name in the current
             # context.
             if term_name in self.calc_terms:
-                raise pydough.active_session.error_builder.down_streaming_conflict(
+                raise pydough.active_session.error_builder.downstream_conflict(
                     collection=self, term_name=term_name
                 )
             return BackReferenceExpression(
@@ -130,7 +127,6 @@ class PartitionChild(ChildOperatorChildAccess):
     def standalone_string(self) -> str:
         return self.partition_child_name
 
-    @cache
     def to_string(self) -> str:
         return f"{self.ancestor_context.to_string()}.{self.standalone_string}"
 

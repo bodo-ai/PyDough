@@ -18,9 +18,9 @@ WITH _s0 AS (
   FROM _t2
 ), _s9 AS (
   SELECT
-    COUNT(*) AS n_rows,
     _s3.month,
-    _s2.sbcuststate
+    _s2.sbcuststate,
+    COUNT(*) AS n_rows
   FROM _s0 AS _s2
   CROSS JOIN _s3 AS _s3
   JOIN main.sbtransaction AS sbtransaction
@@ -30,8 +30,8 @@ WITH _s0 AS (
     ON _s2.sbcuststate = sbcustomer.sbcuststate
     AND sbcustomer.sbcustid = sbtransaction.sbtxcustid
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   _s0.sbcuststate AS state,

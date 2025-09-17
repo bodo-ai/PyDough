@@ -1,12 +1,15 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    o_custkey
+    o_custkey,
+    COUNT(*) AS n_rows
   FROM tpch.ORDERS
   GROUP BY
-    2
+    1
 ), _t2 AS (
   SELECT
+    CUSTOMER.c_acctbal,
+    CUSTOMER.c_nationkey,
+    _s1.n_rows,
     CASE
       WHEN ABS(
         (
@@ -27,10 +30,7 @@ WITH _s1 AS (
       ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC)
       THEN CUSTOMER.c_acctbal
       ELSE NULL
-    END AS expr_18,
-    CUSTOMER.c_acctbal,
-    CUSTOMER.c_nationkey,
-    _s1.n_rows
+    END AS expr_18
   FROM tpch.CUSTOMER AS CUSTOMER
   LEFT JOIN _s1 AS _s1
     ON CUSTOMER.c_custkey = _s1.o_custkey
@@ -95,29 +95,25 @@ WITH _s1 AS (
       COUNT(c_acctbal) - 1
     ) AS sample_var_c_acctbal,
     SUM(c_acctbal) AS sum_c_acctbal,
-    SUM(n_rows) AS sum_n_rows,
-    c_nationkey
+    SUM(n_rows) AS sum_n_rows
   FROM _t2
   GROUP BY
-    15
+    c_nationkey
 )
 SELECT
-  COALESCE(_t1.sum_c_acctbal, 0) AS sum_value,
-  _t1.avg_c_acctbal AS avg_value,
-  _t1.avg_expr_17 AS median_value,
-  _t1.min_c_acctbal AS min_value,
-  _t1.max_c_acctbal AS max_value,
-  _t1.max_expr_18 AS quantile_value,
-  _t1.anything_c_acctbal AS anything_value,
-  _t1.count_c_acctbal AS count_value,
-  _t1.ndistinct_c_acctbal AS count_distinct_value,
-  _t1.sample_var_c_acctbal AS variance_s_value,
-  _t1.population_var_c_acctbal AS variance_p_value,
-  _t1.sample_std_c_acctbal AS stddev_s_value,
-  _t1.population_std_c_acctbal AS stddev_p_value
-FROM tpch.NATION AS NATION
-JOIN _t1 AS _t1
-  ON NATION.n_nationkey = _t1.c_nationkey
-  AND (
-    _t1.sum_n_rows = 0 OR _t1.sum_n_rows IS NULL
-  )
+  COALESCE(sum_c_acctbal, 0) AS sum_value,
+  avg_c_acctbal AS avg_value,
+  avg_expr_17 AS median_value,
+  min_c_acctbal AS min_value,
+  max_c_acctbal AS max_value,
+  max_expr_18 AS quantile_value,
+  anything_c_acctbal AS anything_value,
+  count_c_acctbal AS count_value,
+  ndistinct_c_acctbal AS count_distinct_value,
+  sample_var_c_acctbal AS variance_s_value,
+  population_var_c_acctbal AS variance_p_value,
+  sample_std_c_acctbal AS stddev_s_value,
+  population_std_c_acctbal AS stddev_p_value
+FROM _t1
+WHERE
+  sum_n_rows = 0 OR sum_n_rows IS NULL

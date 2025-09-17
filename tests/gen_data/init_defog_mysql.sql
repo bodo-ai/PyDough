@@ -202,19 +202,19 @@ INSERT INTO `sbTransaction` (`sbTxId`, `sbTxCustId`, `sbTxTickerId`, `sbTxDateTi
 ('TX028', 'C008', 'T008', CAST('2023-04-03 14:45:00' AS DATETIME), 'sell', 90, 132.75, 11947.50, 'USD', 59.74, 7.50, 'KP028', '20230403 14:45:00', 'success'),
 ('TX029', 'C009', 'T009', CAST('2023-04-03 15:30:00' AS DATETIME), 'buy', 40, 222.25, 8890.00, 'USD', 44.45, 10.00, 'KP029', '20230403 15:30:00', 'success'),
 ('TX030', 'C010', 'T010', CAST('2023-04-03 16:15:00' AS DATETIME), 'sell', 70, 142.50, 9975.00, 'USD', 49.88, 10.00, 'KP030', '20230403 16:15:00', 'success'),
-('TX031', 'C001', 'T001', SUBDATE(CURDATE(), INTERVAL 9 DAY), 'buy', 100, 150.00, 15000.00, 'USD', 75.00, 10.00, 'KP031', NULL, 'fail'),
-('TX032', 'C002', 'T002', SUBDATE(CURDATE(), INTERVAL 8 DAY), 'sell', 80, 280.00, 14000.00, 'USD', 70.00, 10.00, 'KP032', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX033', 'C003', 'T001', SUBDATE(CURDATE(), INTERVAL 7 DAY), 'buy', 120, 200.00, 24000.00, 'USD', 120.00, 15.00, 'KP033', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 7 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX034', 'C004', 'T004', SUBDATE(CURDATE(), INTERVAL 6 DAY), 'sell', 90, 320.00, 28800.00, 'USD', 144.00, 12.00, 'KP034', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 6 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX035', 'C005', 'T001', SUBDATE(CURDATE(), INTERVAL 5 DAY), 'buy', 150, 180.00, 27000.00, 'USD', 135.00, 20.00, 'KP035', NULL, 'fail'),
-('TX036', 'C006', 'T006', SUBDATE(CURDATE(), INTERVAL 4 DAY), 'sell', 70, 300.00, 21000.00, 'USD', 105.00, 15.00, 'KP036', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 4 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX037', 'C007', 'T007', SUBDATE(CURDATE(), INTERVAL 3 DAY), 'buy', 110, 220.00, 24200.00, 'USD', 121.00, 10.00, 'KP037', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 3 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX038', 'C008', 'T008', SUBDATE(CURDATE(), INTERVAL 2 DAY), 'sell', 100, 350.00, 35000.00, 'USD', 175.00, 25.00, 'KP038', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 2 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX039', 'C009', 'T007', SUBDATE(CURDATE(), INTERVAL 1 DAY), 'buy', 80, 230.00, 18400.00, 'USD', 92.00, 18.00, 'KP039', NULL, 'pending'),
-('TX040', 'C001', 'T011', SUBDATE(CURDATE(), INTERVAL 10 DAY), 'buy', 50, 400.00, 20000.00, 'USD', 100.00, 20.00, 'KP040', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 10 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX041', 'C002', 'T012', SUBDATE(CURDATE(), INTERVAL 9 DAY), 'sell', 30, 320.00, 9600.00, 'USD', 48.00, 15.00, 'KP041', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 9 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX042', 'C003', 'T013', SUBDATE(CURDATE(), INTERVAL 8 DAY), 'buy', 80, 180.00, 14400.00, 'USD', 72.00, 10.00, 'KP042', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX043', 'C004', 'T014', SUBDATE(CURDATE(), INTERVAL 7 DAY), 'sell', 60, 220.00, 13200.00, 'USD', 66.00, 12.00, 'KP043', NULL, 'pending'),
+('TX031', 'C001', 'T001', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 9 DAY), 'buy', 100, 150.00, 15000.00, 'USD', 75.00, 10.00, 'KP031', NULL, 'fail'),
+('TX032', 'C002', 'T002', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 8 DAY), 'sell', 80, 280.00, 14000.00, 'USD', 70.00, 10.00, 'KP032', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX033', 'C003', 'T001', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), 'buy', 120, 200.00, 24000.00, 'USD', 120.00, 15.00, 'KP033', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 7 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX034', 'C004', 'T004', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 6 DAY), 'sell', 90, 320.00, 28800.00, 'USD', 144.00, 12.00, 'KP034', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 6 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX035', 'C005', 'T001', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 5 DAY), 'buy', 150, 180.00, 27000.00, 'USD', 135.00, 20.00, 'KP035', NULL, 'fail'),
+('TX036', 'C006', 'T006', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 4 DAY), 'sell', 70, 300.00, 21000.00, 'USD', 105.00, 15.00, 'KP036', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 4 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX037', 'C007', 'T007', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 3 DAY), 'buy', 110, 220.00, 24200.00, 'USD', 121.00, 10.00, 'KP037', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 3 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX038', 'C008', 'T008', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 2 DAY), 'sell', 100, 350.00, 35000.00, 'USD', 175.00, 25.00, 'KP038', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 2 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX039', 'C009', 'T007', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 1 DAY), 'buy', 80, 230.00, 18400.00, 'USD', 92.00, 18.00, 'KP039', NULL, 'pending'),
+('TX040', 'C001', 'T011', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 10 DAY), 'buy', 50, 400.00, 20000.00, 'USD', 100.00, 20.00, 'KP040', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 10 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX041', 'C002', 'T012', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 9 DAY), 'sell', 30, 320.00, 9600.00, 'USD', 48.00, 15.00, 'KP041', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 9 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX042', 'C003', 'T013', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 8 DAY), 'buy', 80, 180.00, 14400.00, 'USD', 72.00, 10.00, 'KP042', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX043', 'C004', 'T014', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), 'sell', 60, 220.00, 13200.00, 'USD', 66.00, 12.00, 'KP043', NULL, 'pending'),
 ('TX044', 'C012', 'T001', CAST('2023-01-15 10:00:00' AS DATETIME), 'buy', 80, 155.00, 12400.00, 'USD', 62.00, 10.00, 'KP044', '20230115 10:00:00', 'success'),
 ('TX045', 'C012', 'T001', CAST('2023-01-16 10:30:00' AS DATETIME), 'buy', 80, 155.00, 12400.00, 'USD', 62.00, 10.00, 'KP045', '20230116 10:30:00', 'success'),
 ('TX046', 'C013', 'T002', CAST('2023-02-20 11:30:00' AS DATETIME), 'sell', 60, 285.00, 17100.00, 'USD', 85.50, 15.00, 'KP046', '20230220 11:30:00', 'success'),
@@ -412,10 +412,10 @@ INSERT INTO `notifications` (`id`, `user_id`, `message`, `type`, `status`, `crea
  (10, 8, 'Playtime! New games and toys have arrived', 'promotion', 'archived', CAST('2023-06-01 18:00:00' AS DATETIME), 'email', NULL, 'https://kidzplayhouse.com/new-arrivals'),
  (11, 9, 'Here''s $10 to start your glow up!', 'promotion', 'unread', CAST('2023-06-01 10:15:00' AS DATETIME), 'email', NULL, 'https://beautytrending.com/new-customer'),
  (12, 10, 'Your order #ord_mjs337 is being processed', 'transaction', 'read', CAST('2023-06-04 19:31:30' AS DATETIME), 'web_app', 'web_d8180kaf', 'https://gamerush.co/orders/32e2b29c'),
- (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', NOW() - INTERVAL 7 DAY, 'email', NULL, 'https://techmart.com/promo/TECH10'),
- (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', NOW() - INTERVAL 14 DAY, 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
- (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', NOW() - INTERVAL 21 DAY, 'email', NULL, 'https://fitlifegear.com/renew'),
- (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', NOW() - INTERVAL 7 DAY + INTERVAL 2 DAY, 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
+ (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY, 'email', NULL, 'https://techmart.com/promo/TECH10'),
+ (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 14 DAY, 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
+ (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 21 DAY, 'email', NULL, 'https://fitlifegear.com/renew'),
+ (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 2 DAY, 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
 
 INSERT INTO `user_sessions` (`user_id`, `session_start_ts`, `session_end_ts`, `device_type`, `device_id`) VALUES
  (1, CAST('2023-06-01 09:45:22' AS DATETIME), CAST('2023-06-01 10:20:35' AS DATETIME), 'mobile_app', 'mobile_8fh2k1'),
@@ -553,12 +553,17 @@ INSERT INTO `sales` (`_id`, `car_id`, `salesperson_id`, `customer_id`, `sale_pri
  (14, 2, 3, 1, 23200.00, SUBDATE(CURDATE(), INTERVAL 21 DAY)),
  (15, 8, 6, 12, 43500.00, SUBDATE(CURDATE(), INTERVAL 3 DAY)),
  (16, 10, 4, 2, 29500.00, SUBDATE(CURDATE(), INTERVAL 5 DAY)),
- (17, 3, 2, 3, 46000.00, SUBDATE(CURDATE(), INTERVAL 7 DAY) + INTERVAL 1 DAY),
- (18, 3, 2, 7, 47500.00, SUBDATE(CURDATE(), INTERVAL 7 DAY)),
- (19, 3, 2, 10, 46500.00, SUBDATE(CURDATE(), INTERVAL 7 DAY) - INTERVAL 1 DAY),
- (20, 4, 1, 3, 48000.00, SUBDATE(CURDATE(), INTERVAL 56 DAY) + INTERVAL 1 DAY),
- (21, 4, 1, 7, 45000.00, SUBDATE(CURDATE(), INTERVAL 56 DAY)),
- (22, 4, 1, 10, 49000.00, SUBDATE(CURDATE(), INTERVAL 56 DAY) - INTERVAL 1 DAY);
+ -- Expression to truncate the current date to the most recent Monday in MySQL:
+ --   `DT - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY`
+ -- Reason: MySQL's DAYOFWEEK() returns 1 for Sunday, 2 for Monday, ..., 7 for
+ -- Saturday. We subtract 2 so that Monday becomes 0, Tuesday becomes 1, etc.
+ -- and Sunday becomes -1 (which becomes 6 when taken modulo 7).
+ (17, 3, 2, 3, 46000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 1 DAY),
+ (18, 3, 2, 7, 47500.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY),
+ (19, 3, 2, 10, 46500.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY - INTERVAL 1 DAY),
+ (20, 4, 1, 3, 48000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY + INTERVAL 1 DAY),
+ (21, 4, 1, 7, 45000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY),
+ (22, 4, 1, 10, 49000.00, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY - INTERVAL 1 DAY);
 
 INSERT INTO `inventory_snapshots` (`_id`, `snapshot_date`, `car_id`, `is_in_inventory`) VALUES
  (1, '2023-03-15', 1, TRUE),
@@ -603,12 +608,13 @@ INSERT INTO `payments_received` (`_id`, `sale_id`, `payment_date`, `payment_amou
  (15, 14, SUBDATE(CURDATE(), INTERVAL 1 DAY), 17200.00, 'financing'),
  (16, 15, SUBDATE(CURDATE(), INTERVAL 1 DAY), 37500.00, 'credit_card'),
  (17, 16, SUBDATE(CURDATE(), INTERVAL 5 DAY), 26500.00, 'debit_card'),
- (18, 17, SUBDATE(CURDATE(), INTERVAL 7 DAY) + INTERVAL 1 DAY, 115000.00, 'financing'),
- (19, 18, SUBDATE(CURDATE(), INTERVAL 7 DAY), 115000.00, 'credit_card'),
- (20, 19, SUBDATE(CURDATE(), INTERVAL 7 DAY) - INTERVAL 1 DAY, 115000.00, 'debit_card'),
- (21, 20, SUBDATE(CURDATE(), INTERVAL 56 DAY) + INTERVAL 1 DAY, 115000.00, 'cash'),
- (22, 21, SUBDATE(CURDATE(), INTERVAL 56 DAY), 115000.00, 'check'),
- (23, 22, SUBDATE(CURDATE(), INTERVAL 56 DAY) - INTERVAL 1 DAY, 115000.00, 'credit_card');
+ (18, 17, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY + INTERVAL 1 DAY, 115000.00, 'financing'),
+ (19, 18, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY, 115000.00, 'credit_card'),
+ (20, 19, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 7 DAY - INTERVAL 1 DAY, 115000.00, 'debit_card'),
+ (21, 20, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY + INTERVAL 1 DAY, 115000.00, 'cash'),
+ (22, 21, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY, 115000.00, 'check'),
+ (23, 22, CURRENT_DATE - INTERVAL ((DAYOFWEEK(CURRENT_DATE) - 2) % 7) DAY - INTERVAL 56 DAY - INTERVAL 1 DAY, 115000.00, 'credit_card');
+
 
 INSERT INTO `payments_made` (`_id`, `vendor_name`, `payment_date`, `payment_amount`, `payment_method`, `invoice_number`, `invoice_date`, `due_date`) VALUES
  (1, 'Car Manufacturer Inc', '2023-03-01', 150000.00, 'bank_transfer', 'INV-001', '2023-02-25', '2023-03-25'),

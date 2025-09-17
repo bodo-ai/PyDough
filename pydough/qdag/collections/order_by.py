@@ -6,8 +6,6 @@ by certain collation keys.
 __all__ = ["OrderBy"]
 
 
-from functools import cache
-
 from pydough.qdag.expressions import CollationExpression
 from pydough.qdag.has_hasnot_rewrite import has_hasnot_rewrite
 
@@ -51,7 +49,6 @@ class OrderBy(AugmentingChildOperator):
         return self.collation
 
     @property
-    @cache
     def standalone_string(self) -> str:
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
         return f"ORDER_BY({collation_str})"

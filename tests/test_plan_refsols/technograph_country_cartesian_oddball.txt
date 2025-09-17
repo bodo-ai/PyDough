@@ -1,5 +1,5 @@
-ROOT(columns=[('name', co_name), ('n_other_countries', n_other_countries)], orderings=[(co_name):asc_first])
- JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, columns={'co_name': t0.co_name, 'n_other_countries': t1.n_other_countries})
+ROOT(columns=[('name', co_name), ('n_other_countries', n_rows)], orderings=[(co_name):asc_first])
+ JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'co_name': t0.co_name, 'n_rows': t1.n_rows})
   SCAN(table=main.COUNTRIES, columns={'co_name': co_name})
-  AGGREGATE(keys={}, aggregations={'n_other_countries': COUNT()})
+  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
    SCAN(table=main.COUNTRIES, columns={})

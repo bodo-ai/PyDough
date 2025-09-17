@@ -600,7 +600,7 @@ class UnqualifiedOperator(UnqualifiedNode):
         elif isinstance(self._parcel[0], pydop.ExpressionFunctionOperator):
             return call_function_operator(self._parcel[0], operands, **kwargs)
         else:
-            raise NotImplementedError(
+            raise PyDoughUnqualifiedException(
                 f"Unsupported operator type: {self._parcel[0].__class__.__name__}"
             )
 

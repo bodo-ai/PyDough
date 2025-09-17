@@ -230,6 +230,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             order_exprs.append(sqlglot_expressions.convert("1"))
         this: SQLGlotExpression
         window_spec: sqlglot_expressions.WindowSpec | None = None
+        input_types: list[PyDoughType] = [
+            arg.data_type for arg in window_expression.inputs
+        ]
         match window_expression.op.function_name:
             case "PERCENTILE":
                 # Extract the number of buckets to use for the percentile
@@ -270,7 +273,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                     )
                 this = func(**lag_args)
             case "RELSUM":
-                this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
+                this = self._bindings.convert_call_to_sqlglot(
+                    pydop.SUM, arg_exprs, input_types
+                )
                 window_spec = self.get_window_spec(window_expression.kwargs)
             case "RELAVG":
                 this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)

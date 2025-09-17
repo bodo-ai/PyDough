@@ -1,15 +1,11 @@
-<<<<<<< HEAD
-WITH _s1 AS (
-=======
 WITH _s0 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    de_product_id
+    de_product_id,
+    COUNT(*) AS n_rows
   FROM main.devices
   GROUP BY
-    2
+    1
 ), _s1 AS (
->>>>>>> kian/error_handler
   SELECT
     pr_id,
     pr_release
@@ -25,32 +21,30 @@ WITH _s0 AS (
     devices.de_product_id
 ), _s6 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(pr_release AS DATETIME)) AS release_year,
-    SUM(n_rows_1) AS sum_n_rows
-  FROM _t1
+    EXTRACT(YEAR FROM CAST(_s1.pr_release AS DATETIME)) AS year_pr_release,
+    SUM(_s0.n_rows) AS sum_n_rows
+  FROM _s0 AS _s0
+  JOIN _s1 AS _s1
+    ON _s0.de_product_id = _s1.pr_id
   GROUP BY
-<<<<<<< HEAD
-    EXTRACT(YEAR FROM CAST(pr_release AS DATETIME))
-=======
     1
->>>>>>> kian/error_handler
 ), _s7 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    EXTRACT(YEAR FROM CAST(_s3.pr_release AS DATETIME)) AS release_year
+    EXTRACT(YEAR FROM CAST(_s3.pr_release AS DATETIME)) AS year_pr_release,
+    COUNT(*) AS n_rows
   FROM main.devices AS devices
   JOIN _s1 AS _s3
     ON _s3.pr_id = devices.de_product_id
   JOIN main.incidents AS incidents
     ON devices.de_id = incidents.in_device_id
   GROUP BY
-    2
+    1
 )
 SELECT
-  _s6.release_year AS year,
+  _s6.year_pr_release AS year,
   ROUND(COALESCE(_s7.n_rows, 0) / _s6.sum_n_rows, 2) AS ir
 FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7
-  ON _s6.release_year = _s7.release_year
+  ON _s6.year_pr_release = _s7.year_pr_release
 ORDER BY
   1

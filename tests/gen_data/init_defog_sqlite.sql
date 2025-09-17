@@ -198,19 +198,19 @@ INSERT INTO sbTransaction (sbTxId, sbTxCustId, sbTxTickerId, sbTxDateTime, sbTxT
 ('TX028', 'C008', 'T008', '2023-04-03 14:45:00', 'sell', 90, 132.75, 11947.50, 'USD', 59.74, 7.50, 'KP028', '20230403 14:45:00', 'success'),
 ('TX029', 'C009', 'T009', '2023-04-03 15:30:00', 'buy', 40, 222.25, 8890.00, 'USD', 44.45, 10.00, 'KP029', '20230403 15:30:00', 'success'),
 ('TX030', 'C010', 'T010', '2023-04-03 16:15:00', 'sell', 70, 142.50, 9975.00, 'USD', 49.88, 10.00, 'KP030', '20230403 16:15:00', 'success'),
-('TX031', 'C001', 'T001', DATE('now', '-9 days'), 'buy', 100, 150.00, 15000.00, 'USD', 75.00, 10.00, 'KP031', NULL, 'fail'),
-('TX032', 'C002', 'T002', DATE('now', '-8 days'), 'sell', 80, 280.00, 14000.00, 'USD', 70.00, 10.00, 'KP032', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-8 days')), 'success'),
-('TX033', 'C003', 'T001', DATE('now', '-7 days'), 'buy', 120, 200.00, 24000.00, 'USD', 120.00, 15.00, 'KP033', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-7 days')), 'success'),
-('TX034', 'C004', 'T004', DATE('now', '-6 days'), 'sell', 90, 320.00, 28800.00, 'USD', 144.00, 12.00, 'KP034', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-6 days')), 'success'),
-('TX035', 'C005', 'T001', DATE('now', '-5 days'), 'buy', 150, 180.00, 27000.00, 'USD', 135.00, 20.00, 'KP035', NULL, 'fail'),
-('TX036', 'C006', 'T006', DATE('now', '-4 days'), 'sell', 70, 300.00, 21000.00, 'USD', 105.00, 15.00, 'KP036', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-4 days')), 'success'),
-('TX037', 'C007', 'T007', DATE('now', '-3 days'), 'buy', 110, 220.00, 24200.00, 'USD', 121.00, 10.00, 'KP037', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-3 days')), 'success'),
-('TX038', 'C008', 'T008', DATE('now', '-2 days'), 'sell', 100, 350.00, 35000.00, 'USD', 175.00, 25.00, 'KP038', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-2 days')), 'success'),
-('TX039', 'C009', 'T007', DATE('now', '-1 day'), 'buy', 80, 230.00, 18400.00, 'USD', 92.00, 18.00, 'KP039', NULL, 'pending'),
-('TX040', 'C001', 'T011', DATE('now', '-10 days'), 'buy', 50, 400.00, 20000.00, 'USD', 100.00, 20.00, 'KP040', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-10 days')), 'success'),
-('TX041', 'C002', 'T012', DATE('now', '-9 days'), 'sell', 30, 320.00, 9600.00, 'USD', 48.00, 15.00, 'KP041', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-9 days')), 'success'),
-('TX042', 'C003', 'T013', DATE('now', '-8 days'), 'buy', 80, 180.00, 14400.00, 'USD', 72.00, 10.00, 'KP042', STRFTIME('%Y%m%d %H:%i:%s', DATE('NOW', '-8 days')), 'success'),
-('TX043', 'C004', 'T014', DATE('now', '-7 days'), 'sell', 60, 220.00, 13200.00, 'USD', 66.00, 12.00, 'KP043', NULL, 'pending'),
+('TX031', 'C001', 'T001', DATETIME('now', '-9 days'), 'buy', 100, 150.00, 15000.00, 'USD', 75.00, 10.00, 'KP031', NULL, 'fail'),
+('TX032', 'C002', 'T002', DATETIME('now', '-8 days'), 'sell', 80, 280.00, 14000.00, 'USD', 70.00, 10.00, 'KP032', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-8 days')), 'success'),
+('TX033', 'C003', 'T001', DATETIME('now', '-7 days'), 'buy', 120, 200.00, 24000.00, 'USD', 120.00, 15.00, 'KP033', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-7 days')), 'success'),
+('TX034', 'C004', 'T004', DATETIME('now', '-6 days'), 'sell', 90, 320.00, 28800.00, 'USD', 144.00, 12.00, 'KP034', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-6 days')), 'success'),
+('TX035', 'C005', 'T001', DATETIME('now', '-5 days'), 'buy', 150, 180.00, 27000.00, 'USD', 135.00, 20.00, 'KP035', NULL, 'fail'),
+('TX036', 'C006', 'T006', DATETIME('now', '-4 days'), 'sell', 70, 300.00, 21000.00, 'USD', 105.00, 15.00, 'KP036', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-4 days')), 'success'),
+('TX037', 'C007', 'T007', DATETIME('now', '-3 days'), 'buy', 110, 220.00, 24200.00, 'USD', 121.00, 10.00, 'KP037', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-3 days')), 'success'),
+('TX038', 'C008', 'T008', DATETIME('now', '-2 days'), 'sell', 100, 350.00, 35000.00, 'USD', 175.00, 25.00, 'KP038', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-2 days')), 'success'),
+('TX039', 'C009', 'T007', DATETIME('now', '-1 day'), 'buy', 80, 230.00, 18400.00, 'USD', 92.00, 18.00, 'KP039', NULL, 'pending'),
+('TX040', 'C001', 'T011', DATETIME('now', '-10 days'), 'buy', 50, 400.00, 20000.00, 'USD', 100.00, 20.00, 'KP040', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-10 days')), 'success'),
+('TX041', 'C002', 'T012', DATETIME('now', '-9 days'), 'sell', 30, 320.00, 9600.00, 'USD', 48.00, 15.00, 'KP041', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-9 days')), 'success'),
+('TX042', 'C003', 'T013', DATETIME('now', '-8 days'), 'buy', 80, 180.00, 14400.00, 'USD', 72.00, 10.00, 'KP042', STRFTIME('%Y%m%d %H:%i:%s', DATETIME('NOW', '-8 days')), 'success'),
+('TX043', 'C004', 'T014', DATETIME('now', '-7 days'), 'sell', 60, 220.00, 13200.00, 'USD', 66.00, 12.00, 'KP043', NULL, 'pending'),
 ('TX044', 'C012', 'T001', '2023-01-15 10:00:00', 'buy', 80, 155.00, 12400.00, 'USD', 62.00, 10.00, 'KP044', '20230115 10:00:00', 'success'),
 ('TX045', 'C012', 'T001', '2023-01-16 10:30:00', 'buy', 80, 155.00, 12400.00, 'USD', 62.00, 10.00, 'KP045', '20230116 10:30:00', 'success'),
 ('TX046', 'C013', 'T002', '2023-02-20 11:30:00', 'sell', 60, 285.00, 17100.00, 'USD', 85.50, 15.00, 'KP046', '20230220 11:30:00', 'success'),
@@ -270,8 +270,8 @@ CREATE TABLE user_setting_snapshot (user_id INTEGER NOT NULL, snapshot_date DATE
  verified_devices TEXT /* comma separated list of device ids */, verified_ips TEXT /* comma separated list of IP addresses */, mfa_enabled INTEGER, marketing_opt_in INTEGER, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP);
 
 INSERT INTO users (uid, username, email, phone_number, created_at, user_type, status, country, address_billing, address_delivery, kyc_status) VALUES
- (1, 'john_doe', 'john.doe@email.com', '+1234567890', DATETIME('now', '-1 month'), 'individual', 'active', 'US', '123 Main St, Anytown US 12345', '123 Main St, Anytown US 12345', 'approved'),
- (2, 'jane_smith', 'jane.smith@email.com', '+9876543210', DATETIME('now', '-2 months'), 'individual', 'active', 'CA', '456 Oak Rd, Toronto ON M1M2M2', '456 Oak Rd, Toronto ON M1M2M2', 'approved'),
+ (1, 'john_doe', 'john.doe@email.com', '+1234567890', DATE('now', 'start of month', '-1 month'), 'individual', 'active', 'US', '123 Main St, Anytown US 12345', '123 Main St, Anytown US 12345', 'approved'),
+ (2, 'jane_smith', 'jane.smith@email.com', '+9876543210', DATE('now', 'start of month', '-2 months'), 'individual', 'active', 'CA', '456 Oak Rd, Toronto ON M1M2M2', '456 Oak Rd, Toronto ON M1M2M2', 'approved'),
  (3, 'bizuser', 'contact@business.co', '+1234509876', '2021-06-01 09:15:00', 'business', 'active', 'FR', '12 Rue Baptiste, Paris 75001', NULL, 'approved'),
  (4, 'david_miller', 'dave@personal.email', '+4477788899', '2023-03-20 18:45:00', 'individual', 'inactive', 'GB', '25 London Road, Manchester M12 4XY', '25 London Road, Manchester M12 4XY', 'pending'),
  (5, 'emily_wilson', 'emily.w@gmail.com', '+8091017161', '2021-11-03 22:10:00', 'individual', 'suspended', 'AU', '72 Collins St, Melbourne VIC 3000', '19 Smith St, Brunswick VIC 3056', 'rejected'),
@@ -398,10 +398,10 @@ INSERT INTO notifications (id, user_id, message, type, status, created_at, devic
  (10, 8, 'Playtime! New games and toys have arrived', 'promotion', 'archived', '2023-06-01 18:00:00', 'email', NULL, 'https://kidzplayhouse.com/new-arrivals'),
  (11, 9, 'Here''s $10 to start your glow up!', 'promotion', 'unread', '2023-06-01 10:15:00', 'email', NULL, 'https://beautytrending.com/new-customer'),
  (12, 10, 'Your order #ord_mjs337 is being processed', 'transaction', 'read', '2023-06-04 19:31:30', 'web_app', 'web_d8180kaf', 'https://gamerush.co/orders/32e2b29c'),
- (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', DATETIME('now', '-7 days'), 'email', NULL, 'https://techmart.com/promo/TECH10'),
- (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', DATETIME('now', '-14 days'), 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
- (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', DATETIME('now', '-21 days'), 'email', NULL, 'https://fitlifegear.com/renew'),
- (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', DATETIME('now', '-7 days', '+2 day'), 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
+ (13, 1, 'New promotion: Get 10% off your next order!', 'promotion', 'unread', DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER)+6) % 7 + 7*1) || ' days'), 'email', NULL, 'https://techmart.com/promo/TECH10'),
+ (14, 1, 'Your order #456def has been delivered', 'transaction', 'unread', DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER)+6) % 7 + 7*2) || ' days'), 'mobile_app', 'mobile_8fh2k1', 'app://orders/456def'),
+ (15, 2, 'Reminder: Your FitLife membership expires in 7 days', 'general', 'unread', DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER)+6) % 7 + 7*3) || ' days'), 'email', NULL, 'https://fitlifegear.com/renew'),
+ (16, 2, 'Weekend Flash Sale: 25% off all activewear!', 'promotion', 'unread', DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER)+6) % 7 + 7*1 - 2) || ' days'), 'mobile_app', 'mobile_yjp08q', 'app://shop/activewear');
 
 INSERT INTO user_sessions (user_id, session_start_ts, session_end_ts, device_type, device_id) VALUES
  (1, '2023-06-01 09:45:22', '2023-06-01 10:20:35', 'mobile_app', 'mobile_8fh2k1'),
@@ -531,12 +531,12 @@ INSERT INTO sales (_id, car_id, salesperson_id, customer_id, sale_price, sale_da
  (14, 2, 3, 1, 23200.00, DATE('now', '-21 days')),
  (15, 8, 6, 12, 43500.00, DATE('now', '-3 days')),
  (16, 10, 4, 2, 29500.00, DATE('now', '-5 days')),
- (17, 3, 2, 3, 46000.00, DATE('now', '-7 days', '+1 day')),
- (18, 3, 2, 7, 47500.00, DATE('now', '-7 days')),
- (19, 3, 2, 10, 46500.00, DATE('now', '-7 days', '-1 day')),
- (20, 4, 1, 3, 48000.00, DATE('now', '-56 days', '+1 day')),
- (21, 4, 1, 7, 45000.00, DATE('now', '-56 days')),
- (22, 4, 1, 10, 49000.00, DATE('now', '-56 days', '-1 day'));
+ (17, 3, 2, 3, 46000.00, DATE('now', '-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*1 - 1) || ' days')),
+ (18, 3, 2, 7, 47500.00, DATE('now', '-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*1) || ' days')),
+ (19, 3, 2, 10, 46500.00, DATE('now', '-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*1 + 1) || ' days')),
+ (20, 4, 1, 3, 48000.00, DATE('now', '-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*8 - 1) || ' days')),
+ (21, 4, 1, 7, 45000.00, DATE('now', '-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*8 ) || ' days')),
+ (22, 4, 1, 10, 49000.00, DATE('now', '-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*8 + 1) || ' days'));
 
 INSERT INTO inventory_snapshots (_id, snapshot_date, car_id, is_in_inventory) VALUES
  (1, '2023-03-15', 1, TRUE),
@@ -581,12 +581,12 @@ INSERT INTO payments_received (_id, sale_id, payment_date, payment_amount, payme
  (15, 14, DATE('now', '-1 days'), 17200.00, 'financing'),
  (16, 15, DATE('now', '-1 days'), 37500.00, 'credit_card'),
  (17, 16, DATE('now', '-5 days'), 26500.00, 'debit_card'),
- (18, 17, DATE('now', '-7 days', '+1 day'), 115000.00, 'financing'),
- (19, 18, DATE('now', '-7 days'), 115000.00, 'credit_card'),
- (20, 19, DATE('now', '-7 days', '-1 day'), 115000.00, 'debit_card'),
- (21, 20, DATE('now', '-56 days', '+1 day'), 115000.00, 'cash'),
- (22, 21, DATE('now', '-56 days'), 115000.00, 'check'),
- (23, 22, DATE('now', '-56 days', '-1 day'), 115000.00, 'credit_card');
+ (18, 17, DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*1 - 1) || ' days'), 115000.00, 'financing'),
+ (19, 18, DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*1) || ' days'), 115000.00, 'credit_card'),
+ (20, 19, DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*1 + 1) || ' days'), 115000.00, 'debit_card'),
+ (21, 20, DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*8 - 1) || ' days'), 115000.00, 'cash'),
+ (22, 21, DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*8) || ' days'), 115000.00, 'check'),
+ (23, 22, DATE('now','-' || ((CAST(STRFTIME('%w','now') AS INTEGER) + 6) % 7 + 7*8 + 1) || ' days'), 115000.00, 'credit_card');
 
 INSERT INTO payments_made (_id, vendor_name, payment_date, payment_amount, payment_method, invoice_number, invoice_date, due_date) VALUES
  (1, 'Car Manufacturer Inc', '2023-03-01', 150000.00, 'bank_transfer', 'INV-001', '2023-02-25', '2023-03-25'),

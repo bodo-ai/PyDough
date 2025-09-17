@@ -24,12 +24,12 @@ from tests.testing_utilities import (
     [
         pytest.param(
             "result = nations.CALCULATE(nation_name=name, total_balance=SUM(account_balance))",
-            "Unrecognized term of TPCH.nations: 'account_balance'. Did you mean: name, comment, key, region, customers, region_key?",
+            "Unrecognized term of TPCH.nations: 'account_balance'. Did you mean: name, comment, key, region, customers?",
             id="bad_name",
         ),
         pytest.param(
             "result = nations.CALCULATE(nation_name=FIZZBUZZ(name))",
-            "PyDough object FIZZBUZZ is not callable. Did you mean: FIND, ABS, MIN, SUM, HOUR, IFF, LIKE, MINUTE, SIGN, AVG, CEIL, COUNT, DAY, FLOAT, FLOOR, HAS, ISIN, MAX, NOT, ROUND, STD, VAR, LPAD, NEXT, PREV, RELSUM, RPAD, SLICE, SQRT, YEAR?",
+            "PyDough object FIZZBUZZ is not callable. Did you mean: FIND, ABS, MIN, SUM, HOUR?",
             id="non_function",
         ),
         pytest.param(
@@ -54,7 +54,7 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "lines.CALCULATE(v=MUL(extended_price, SUB(1, discount)))",
-            "PyDough object SUB is not callable. Did you mean: SUM, STD, ABS, AVG, DAY, HAS, HOUR, IFF, ISIN, MAX, MIN, NOT, SIGN, SQRT, VAR?",
+            "PyDough object SUB is not callable. Did you mean: SUM, STD, ABS, AVG, DAY?",
             id="binop_function_call",
         ),
         pytest.param(
@@ -87,7 +87,7 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             "result = customers.orders.CALCULATE(RANKING(by=key.ASC(), per='custs'))",
-            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='custs') in context TPCH.customers.orders (unrecognized ancestor 'custs')",
+            "Error while parsing 'per' string of RANKING(by=(key.ASC(na_pos='first'), per='custs') in context TPCH.customers.orders (unrecognized ancestor 'custs'; did you mean one of: 'TPCH', 'customers')",
             id="bad_per_1",
         ),
         pytest.param(
@@ -126,23 +126,37 @@ from tests.testing_utilities import (
             id="bad_per_8",
         ),
         pytest.param(
+            "foo = TPCH.regions.nations.customers\n"
+            "bar = TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers\n"
+            "result = foo.CROSS(bar).CALCULATE(r=RANKING(by=name.ASC(), per='TPCH'))",
+            "Error while parsing 'per' string of RANKING(by=(name.ASC(na_pos='first'), per='TPCH') in context TPCH.regions.nations.customers.TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers (per-string 'TPCH' is ambiguous in this context; use the form 'TPCH:index' to disambiguate, where 'TPCH:1' refers to the most recent ancestor)",
+            id="bad_per_9",
+        ),
+        pytest.param(
+            "foo = TPCH.regions.nations.customers\n"
+            "bar = TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers\n"
+            "result = foo.CROSS(bar).CALCULATE(r=RANKING(by=name.ASC(), per='fizz'))",
+            "Error while parsing 'per' string of RANKING(by=(name.ASC(na_pos='first'), per='fizz') in context TPCH.regions.nations.customers.TPCH.nations.customers.orders.lines.supplier.nation.region.nations.customers (unrecognized ancestor 'fizz'; did you mean one of: 'TPCH:2', 'regions', 'nations:3', 'customers:2', 'TPCH:1', 'nations:2', 'customers:1', 'orders', 'lines', 'supplier', 'nation', 'region', 'nations:1')",
+            id="bad_per_10",
+        ),
+        pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",
-            "PyDough object SAMPLE_VAR is not callable. Did you mean: YEAR, SUM, UPPER, VAR, AVG, LPAD, PREV, RPAD, DAY, FLOAT, FLOOR, HAS, LOWER, MAX, POWER, SLICE, SMALLEST, SQRT, STD, ABS, CEIL, GETPART, HOUR, LIKE, MEDIAN, NEXT, QUARTER, RELAVG, REPLACE, SECOND, SIGN, STRIP?",
+            "PyDough object SAMPLE_VAR is not callable. Did you mean: YEAR, SUM, UPPER, VAR, AVG?",
             id="kwargfunc_1",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_VAR(suppliers.account_balance))",
-            "PyDough object SAMPLE_VAR is not callable. Did you mean: YEAR, SUM, UPPER, VAR, AVG, LPAD, PREV, RPAD, DAY, FLOAT, FLOOR, HAS, LOWER, MAX, POWER, SLICE, SMALLEST, SQRT, STD, ABS, CEIL, GETPART, HOUR, LIKE, MEDIAN, NEXT, QUARTER, RELAVG, REPLACE, SECOND, SIGN, STRIP?",
+            "PyDough object SAMPLE_VAR is not callable. Did you mean: YEAR, SUM, UPPER, VAR, AVG?",
             id="kwargfunc_2",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, var=SAMPLE_STD(suppliers.account_balance))",
-            "PyDough object SAMPLE_STD is not callable. Did you mean: SMALLEST, STD, HAS, LARGEST, SUM, ABS, LPAD, NEXT, RPAD, SECOND, SQRT, ABSENT, DAY, FLOAT, MAX, NOT, SLICE, UPPER, VAR?",
+            "PyDough object SAMPLE_STD is not callable. Did you mean: SMALLEST, STD, HAS, LARGEST, SUM?",
             id="kwargfunc_3",
         ),
         pytest.param(
             "result = nations.CALCULATE(name=name, std=POPULATION_STD(suppliers.account_balance))",
-            "COUNT, ROUND, CONTAINS, FIND, LPAD, RPAD, FLOAT, HAS, MIN, MONTH, NOT, STD, HASNOT, HOUR, ISIN, MINUTE, SECOND, SIGN, ABS, DAY, DEFAULT_TO, FLOOR, LARGEST, MAX, MONOTONIC, NDISTINCT, POWER, PRESENT, QUANTILE, RELCOUNT, REPLACE, SLICE, STRING, SUM, VAR?",
+            "PyDough object POPULATION_STD is not callable. Did you mean: COUNT, ROUND, CONTAINS, FIND, LPAD?",
             id="kwargfunc_4",
         ),
         pytest.param(

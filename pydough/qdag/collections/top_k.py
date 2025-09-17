@@ -7,8 +7,6 @@ ordering.
 __all__ = ["TopK"]
 
 
-from functools import cache
-
 from pydough.qdag.expressions.collation_expression import CollationExpression
 
 from .collection_qdag import PyDoughCollectionQDAG
@@ -42,7 +40,6 @@ class TopK(OrderBy):
         return f"{self.preceding_context.key}.TOPK"
 
     @property
-    @cache
     def standalone_string(self):
         collation_str: str = ", ".join([expr.to_string() for expr in self.collation])
         return f"TOP_K({self.records_to_keep}, {collation_str})"

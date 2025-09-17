@@ -1,5 +1,5 @@
 ROOT(columns=[('okey', o_orderkey), ('lavg', DEFAULT_TO(sum_l_extendedprice, 0:numeric) / count_l_extendedprice)], orderings=[])
- JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, columns={'count_l_extendedprice': t1.count_l_extendedprice, 'o_orderkey': t0.o_orderkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
+ JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'count_l_extendedprice': t1.count_l_extendedprice, 'o_orderkey': t0.o_orderkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
   SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey})
   AGGREGATE(keys={'l_orderkey': l_orderkey}, aggregations={'count_l_extendedprice': COUNT(l_extendedprice), 'sum_l_extendedprice': SUM(l_extendedprice)})
    SCAN(table=tpch.LINEITEM, columns={'l_extendedprice': l_extendedprice, 'l_orderkey': l_orderkey})

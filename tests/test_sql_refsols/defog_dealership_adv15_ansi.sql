@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    AVG(sale_price) AS avg_sale_price,
-    salesperson_id
+    salesperson_id,
+    AVG(sale_price) AS avg_sale_price
   FROM main.sales
   GROUP BY
-    2
+    1
 )
 SELECT
   salespersons.first_name,

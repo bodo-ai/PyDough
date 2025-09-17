@@ -91,7 +91,11 @@ class HybridTranslator:
         # If True, rewrites MEDIAN calls into an average of the 1-2 median rows
         # or rewrites QUANTILE calls to select the first qualifying row,
         # both derived from window functions, otherwise leaves as-is.
-        self.rewrite_median_quantile: bool = dialect not in {DatabaseDialect.ANSI}
+        self.rewrite_median_quantile: bool = dialect not in {
+            DatabaseDialect.ANSI,
+            DatabaseDialect.SNOWFLAKE,
+            DatabaseDialect.POSTGRES,
+        }
 
     @staticmethod
     def get_subcollection_join_keys(
