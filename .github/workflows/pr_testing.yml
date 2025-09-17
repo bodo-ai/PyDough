@@ -36,6 +36,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-postgres:
+        description: "Run Postgres Tests"
+        type: boolean
+        required: false
+        default: false        
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -138,7 +143,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres)" -rs
 
   run-sf-tests:
     name: Snowflake Tests
@@ -164,10 +169,26 @@ jobs:
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run mysql]')) ||
       (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-mysql))
-    uses: ./.github/workflows/mysql_testing.yml # Path to MySQL workflow file
+    uses: ./.github/workflows/mysql_testing.yml
     secrets:
       MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-postgres-tests:
+    name: Postgres Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run postgres]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-postgres))
+    uses: ./.github/workflows/postgres_testing.yml
+    secrets:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix

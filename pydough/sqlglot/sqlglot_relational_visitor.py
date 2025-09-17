@@ -4,7 +4,6 @@ SQLGlot query.
 """
 
 import warnings
-from collections import defaultdict
 
 from sqlglot.expressions import AggFunc as SQLGlotAggFunc
 from sqlglot.expressions import Alias as SQLGlotAlias
@@ -23,13 +22,11 @@ from pydough.relational import (
     CallExpression,
     ColumnReference,
     ColumnReferenceInputNameModifier,
-    ColumnReferenceInputNameRemover,
     CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
     Join,
-    JoinType,
     Limit,
     LiteralExpression,
     Project,
@@ -91,9 +88,6 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
-        )
-        self._alias_remover: ColumnReferenceInputNameRemover = (
-            ColumnReferenceInputNameRemover()
         )
         # Counter for generating unique table alias.
         self._alias_counter: int = 0
@@ -399,29 +393,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
-        # Compute a dictionary to find all duplicate names.
-        seen_names: dict[str, int] = defaultdict(int)
-        for idx, input in enumerate(join.inputs):
-            occurrences: int = 1
-            if join.join_type in (JoinType.SEMI, JoinType.ANTI):
-                # For SEMI and ANTI joins, we must keep the columns input names
-                # from the left side and treat them as if they appear in the
-                # RHS.
-                occurrences = 2
-            for column in input.columns.keys():
-                seen_names[column] += occurrences
-        # Only keep duplicate names.
-        kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
             input_name = join.default_input_aliases[i]
             if input_name not in alias_map:
                 alias_map[input_name] = self._generate_table_alias()
-        self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
-            alias: col.accept_shuttle(self._alias_remover).accept_shuttle(
-                self._alias_modifier
-            )
+            alias: col.accept_shuttle(self._alias_modifier)
             for alias, col in join.columns.items()
         }
         column_exprs = [
@@ -436,9 +414,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             this=inputs[1],
             alias=TableAlias(this=alias_map.get(join.default_input_aliases[i], None)),
         )
-        cond: RelationalExpression = join.condition.accept_shuttle(
-            self._alias_remover
-        ).accept_shuttle(self._alias_modifier)
+        cond: RelationalExpression = join.condition.accept_shuttle(self._alias_modifier)
         cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(cond)
         join_type: str = join.join_type.value
         if join_type == "SEMI" and join.cardinality.singular:

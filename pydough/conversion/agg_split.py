@@ -13,7 +13,6 @@ from pydough.relational import (
     CallExpression,
     ColumnReference,
     ColumnReferenceFinder,
-    ColumnReferenceInputNameRemover,
     Join,
     JoinType,
     LiteralExpression,
@@ -23,6 +22,7 @@ from pydough.relational import (
 )
 from pydough.relational.rel_util import (
     ExpressionTranspositionShuttle,
+    add_input_name,
     extract_equijoin_keys,
     fetch_or_insert,
 )
@@ -173,7 +173,6 @@ def transpose_aggregate_join(
     need_projection: bool = False
 
     finder: ColumnReferenceFinder = ColumnReferenceFinder()
-    alias_remover: ColumnReferenceInputNameRemover = ColumnReferenceInputNameRemover()
     transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
         join, False
     )
@@ -245,8 +244,8 @@ def transpose_aggregate_join(
             agg_input_name
         }:
             if isinstance(transposed_agg_key, ColumnReference):
-                input_keys[transposed_agg_key.name] = transposed_agg_key.accept_shuttle(
-                    alias_remover
+                input_keys[transposed_agg_key.name] = add_input_name(
+                    transposed_agg_key, None
                 )
             else:
                 if agg_key_name in join.columns and (
@@ -255,9 +254,7 @@ def transpose_aggregate_join(
                     # An edge cases that is theoretically possible but never
                     # encountered so far, and where the behavior is undefined.
                     raise NotImplementedError("Undefined behavior")
-                input_keys[agg_key_name] = transposed_agg_key.accept_shuttle(
-                    alias_remover
-                )
+                input_keys[agg_key_name] = add_input_name(transposed_agg_key, None)
                 join.columns[agg_key_name] = ColumnReference(
                     agg_key_name, agg_key.data_type, agg_input_name
                 )
