@@ -5,7 +5,7 @@ WITH _s1 AS (
     SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -30, 'DAY'))
+    sbtxdatetime >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 30, DAY))
   GROUP BY
     1
 )

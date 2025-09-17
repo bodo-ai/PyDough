@@ -1830,13 +1830,16 @@ def hour_minute_day():
     """
     Return the transaction IDs with the hour, minute, and second extracted from
     transaction timestamps for specific ticker symbols ("AAPL","GOOGL","NFLX"),
-    ordered by transaction ID in ascending order.
+    ordered by transaction ID in ascending order. Only considered transactions
+    from 2023.
     """
     return (
         transactions.CALCULATE(
             transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
         )
-        .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
+        .WHERE(
+            ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")) & (YEAR(date_time) == 2023)
+        )
         .ORDER_BY(transaction_id.ASC())
     )
 
