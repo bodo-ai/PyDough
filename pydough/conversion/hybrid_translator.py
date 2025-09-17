@@ -94,6 +94,7 @@ class HybridTranslator:
         self.rewrite_median_quantile: bool = session.database.dialect not in {
             DatabaseDialect.ANSI,
             DatabaseDialect.SNOWFLAKE,
+            DatabaseDialect.POSTGRES,
         }
 
     @staticmethod
