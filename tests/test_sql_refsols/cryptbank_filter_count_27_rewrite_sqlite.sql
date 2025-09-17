@@ -9,22 +9,18 @@ WHERE
     OR LOWER(c_fname) LIKE '%s'
   )
   AND (
-    DATE(c_birthday, '+472 days') IS NULL OR LOWER(c_lname) <> 'lopez'
-  )
-  AND (
     DATE(c_birthday, '+472 days') IS NULL
     OR NOT (
       SUBSTRING(c_addr, -1) || SUBSTRING(c_addr, 1, LENGTH(c_addr) - 1)
     ) IS NULL
   )
   AND (
+    DATE(c_birthday, '+472 days') IS NULL OR c_lname <> UPPER('lopez')
+  )
+  AND (
     LOWER(c_fname) LIKE '%a'
     OR LOWER(c_fname) LIKE '%e'
     OR LOWER(c_fname) LIKE '%s'
-    OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
-  )
-  AND (
-    LOWER(c_lname) <> 'lopez'
     OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
   )
   AND (
@@ -36,4 +32,8 @@ WHERE
   AND (
     NOT DATE(c_birthday, '+472 days') IS NULL
     OR REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
+  )
+  AND (
+    REPLACE(REPLACE(REPLACE(c_phone, '9', '*'), '0', '9'), '*', '0') LIKE '%5'
+    OR c_lname <> UPPER('lopez')
   )
