@@ -1,4 +1,0 @@
-ROOT(columns=[('n', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=c_birthday == '1985-04-12':string, columns={})
-   SCAN(table=CRBNK.CUSTOMERS, columns={'c_birthday': c_birthday})
