@@ -135,7 +135,7 @@ result = cast_.WHERE(
                         "id2": [1],
                         "fk1_select": ["2 select reserved word"],
                         "fk1_as": ["2 as reserved word"],
-                        "fk2_two_words": ["1 two words field name"]
+                        "fk2_two_words": ["1 two words field name"],
                     }
                 ),
                 "keywords_cast_alias_and_missing_alias",
