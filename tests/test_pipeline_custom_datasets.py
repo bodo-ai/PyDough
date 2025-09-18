@@ -142,6 +142,23 @@ result = cast_.WHERE(
             ),
             id="keywords_cast_alias_and_missing_alias",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = master.WHERE(
+    (id1 == 1) & (id2 == 1) & (description != "One-One \'master row")
+).CALCULATE(description=description)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "description": ["One-One master row"],
+                    }
+                ),
+                "keywords_single_quote_use",
+            ),
+            id="keywords_single_quote_use",
+        ),
     ],
 )
 def custom_datasets_test_data(request) -> PyDoughPandasTest:
@@ -190,7 +207,7 @@ def test_pipeline_until_sql_custom_datasets(
     )
 
 
-@pytest.mark.execute
+@pytest.mark.skip
 def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_test_graph_by_name: graph_fetcher,

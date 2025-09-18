@@ -899,94 +899,6 @@
         "synonyms": []
       },
       {
-        "name": "table1",
-        "type": "simple table",
-        "table path": "keywords.TABLE1",
-        "unique properties": [
-          "id1",
-          "id2"
-        ],
-        "properties": [
-          {
-            "name": "id1",
-            "type": "table column",
-            "column name": "ID1",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "id2",
-            "type": "table column",
-            "column name": "ID2",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "description",
-            "type": "table column",
-            "column name": "DESCRIPTION",
-            "data type": "string",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          }
-        ],
-        "description": "",
-        "synonyms": []
-      },
-      {
-        "name": "table2",
-        "type": "simple table",
-        "table path": "keywords.TABLE2",
-        "unique properties": [
-          "key_"
-        ],
-        "properties": [
-          {
-            "name": "key_",
-            "type": "table column",
-            "column name": "\"KEY\"",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "id1",
-            "type": "table column",
-            "column name": "ID1",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "id2",
-            "type": "table column",
-            "column name": "ID2",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "description",
-            "type": "table column",
-            "column name": "DESCRIPTION",
-            "data type": "string",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          }
-        ],
-        "description": "",
-        "synonyms": []
-      },
-      {
         "name": "uppercase_master",
         "type": "simple table",
         "table path": "keywords.UPPERCASE_MASTER",
@@ -1846,34 +1758,6 @@
         "name": "calculate_collection",
         "original parent": "calculate_",
         "original property": "partition__2",
-        "singular": true,
-        "always matches": true,
-        "description": "",
-        "synonyms": []
-      },
-      {
-        "type": "simple join",
-        "name": "table2",
-        "parent collection": "table1",
-        "child collection": "table2",
-        "singular": false,
-        "always matches": false,
-        "keys": {
-          "id1": [
-            "id1"
-          ],
-          "id2": [
-            "id2"
-          ]
-        },
-        "description": "",
-        "synonyms": []
-      },
-      {
-        "type": "reverse",
-        "name": "table1",
-        "original parent": "table1",
-        "original property": "table2",
         "singular": true,
         "always matches": true,
         "description": "",
