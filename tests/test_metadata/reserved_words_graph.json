@@ -1,0 +1,1808 @@
+[
+  {
+    "name": "keywords",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "quoted_table_name",
+        "type": "simple table",
+        "table path": "keywords.`\"QUOTED TABLE_NAME\"`",
+        "unique properties": [
+          "id_"
+        ],
+        "properties": [
+          {
+            "name": "id_",
+            "type": "table column",
+            "column name": "ID",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cast_",
+            "type": "table column",
+            "column name": "```cast```",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "quote_",
+            "type": "table column",
+            "column name": "`= \"QUOTE\"`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "```name\"[`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "calculate_",
+        "type": "simple table",
+        "table path": "keywords.CALCULATE",
+        "unique properties": [
+          "where_"
+        ],
+        "properties": [
+          {
+            "name": "where_",
+            "type": "table column",
+            "column name": "`.WHERE`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "lower",
+            "type": "table column",
+            "column name": "LOWER",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "upper",
+            "type": "table column",
+            "column name": "UPPER",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "length",
+            "type": "table column",
+            "column name": "LENGTH",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "startswith",
+            "type": "table column",
+            "column name": "STARTSWITH",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "endswith",
+            "type": "table column",
+            "column name": "ENDSWITH",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "contains",
+            "type": "table column",
+            "column name": "CONTAINS",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "like_",
+            "type": "table column",
+            "column name": "`LIKE`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "join_strings",
+            "type": "table column",
+            "column name": "JOIN_STRINGS",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "lpad",
+            "type": "table column",
+            "column name": "LPAD",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "rpad",
+            "type": "table column",
+            "column name": "RPAD",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "find",
+            "type": "table column",
+            "column name": "FIND",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "strip",
+            "type": "table column",
+            "column name": "STRIP",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "replace_",
+            "type": "table column",
+            "column name": "REPLACE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "strcount",
+            "type": "table column",
+            "column name": "STRCOUNT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "getpart",
+            "type": "table column",
+            "column name": "GETPART",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "datetime",
+            "type": "table column",
+            "column name": "DATETIME",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "year",
+            "type": "table column",
+            "column name": "YEAR",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "quarter",
+            "type": "table column",
+            "column name": "QUARTER",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "month",
+            "type": "table column",
+            "column name": "MONTH",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "day",
+            "type": "table column",
+            "column name": "DAY",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "hour",
+            "type": "table column",
+            "column name": "HOUR",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "minute",
+            "type": "table column",
+            "column name": "MINUTE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "second",
+            "type": "table column",
+            "column name": "SECOND",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "datediff",
+            "type": "table column",
+            "column name": "DATEDIFF",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "dayofweek",
+            "type": "table column",
+            "column name": "DAYOFWEEK",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "dayname",
+            "type": "table column",
+            "column name": "DAYNAME",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "cast_",
+        "type": "simple table",
+        "table path": "keywords.\"CAST\"",
+        "unique properties": [
+          "pk_field_name"
+        ],
+        "properties": [
+          {
+            "name": "pk_field_name",
+            "type": "table column",
+            "column name": "PK_FIELD_NAME",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "id_",
+            "type": "table column",
+            "column name": "ID",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "id2",
+            "type": "table column",
+            "column name": "ID2",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "is_active",
+            "type": "table column",
+            "column name": "is_active",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "count",
+        "type": "simple table",
+        "table path": "keywords.COUNT",
+        "unique properties": [
+          "this",
+          "class_"
+        ],
+        "properties": [
+          {
+            "name": "this",
+            "type": "table column",
+            "column name": "this",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "class_",
+            "type": "table column",
+            "column name": "class",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "import_",
+            "type": "table column",
+            "column name": "import",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "def_",
+            "type": "table column",
+            "column name": "def",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "pydough_percentage",
+            "type": "table column",
+            "column name": "\"%%pydough\"",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "load_ext_percentage",
+            "type": "table column",
+            "column name": "\"%load_ext\"",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "unknown_column_6",
+            "type": "table column",
+            "column name": "`\",`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "unknown_column_7",
+            "type": "table column",
+            "column name": "`.`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "bool_",
+            "type": "table column",
+            "column name": "bool",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "call",
+            "type": "table column",
+            "column name": "__call__",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "int_",
+            "type": "table column",
+            "column name": "int",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "float_",
+            "type": "table column",
+            "column name": "FLOAT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "init",
+            "type": "table column",
+            "column name": "__init__",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "new",
+            "type": "table column",
+            "column name": "new",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "del_",
+            "type": "table column",
+            "column name": "del",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "col",
+            "type": "table column",
+            "column name": "__col__",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "col1",
+            "type": "table column",
+            "column name": "__col1__",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "class___20",
+            "type": "table column",
+            "column name": "__class__",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "str_",
+            "type": "table column",
+            "column name": "str",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "dict_",
+            "type": "table column",
+            "column name": "dict",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "add_",
+            "type": "table column",
+            "column name": "__add__",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "mul",
+            "type": "table column",
+            "column name": "__mul__",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "mixedcase_1_1",
+        "type": "simple table",
+        "table path": "keywords.\"MixedCase_1:1\"",
+        "unique properties": [
+          "id_"
+        ],
+        "properties": [
+          {
+            "name": "id_",
+            "type": "table column",
+            "column name": "Id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "parentheses",
+            "type": "table column",
+            "column name": "`(parentheses)`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "in_",
+            "type": "table column",
+            "column name": "\"In\"",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "lowercaseid",
+            "type": "table column",
+            "column name": "LowerCaseId",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "partition_",
+        "type": "simple table",
+        "table path": "keywords.\"PARTITION\"",
+        "unique properties": [
+          "order_by_"
+        ],
+        "properties": [
+          {
+            "name": "order_by_",
+            "type": "table column",
+            "column name": "ORDER_BY",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "calculate_",
+            "type": "table column",
+            "column name": "CALCULATE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "where_",
+            "type": "table column",
+            "column name": "\"WHERE\"",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "top_k",
+            "type": "table column",
+            "column name": "TOP_K",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "singular",
+            "type": "table column",
+            "column name": "SINGULAR",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "best",
+            "type": "table column",
+            "column name": "BEST",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cross_",
+            "type": "table column",
+            "column name": "\"CROSS\"",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ranking",
+            "type": "table column",
+            "column name": "RANKING",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "percentile",
+            "type": "table column",
+            "column name": "PERCENTILE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "prev",
+            "type": "table column",
+            "column name": "PREV",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "next_",
+            "type": "table column",
+            "column name": "NEXT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "relsum",
+            "type": "table column",
+            "column name": "RELSUM",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "relavg",
+            "type": "table column",
+            "column name": "RELAVG",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "relcount",
+            "type": "table column",
+            "column name": "RELCOUNT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "relsize",
+            "type": "table column",
+            "column name": "RELSIZE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "string",
+            "type": "table column",
+            "column name": "STRING",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "integer",
+            "type": "table column",
+            "column name": "INTEGER",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "float_",
+            "type": "table column",
+            "column name": "FLOAT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "numeric",
+            "type": "table column",
+            "column name": "NUMERIC",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "decimal",
+            "type": "table column",
+            "column name": "DECIMAL",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "char",
+            "type": "table column",
+            "column name": "CHAR",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "varchar",
+            "type": "table column",
+            "column name": "VARCHAR",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "uppercase_master",
+        "type": "simple table",
+        "table path": "keywords.UPPERCASE_MASTER",
+        "unique properties": [
+          "id_"
+        ],
+        "properties": [
+          {
+            "name": "id_",
+            "type": "table column",
+            "column name": "ID",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "NAME",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "cast_",
+            "type": "table column",
+            "column name": "\"CAST\"",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "where_",
+            "type": "table column",
+            "column name": "\"WHERE\"",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "from_",
+            "type": "table column",
+            "column name": "\"FROM\"",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "varchar",
+            "type": "table column",
+            "column name": "VARCHAR",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "integer",
+            "type": "table column",
+            "column name": "INTEGER",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "two_words",
+            "type": "table column",
+            "column name": "`TWO WORDS`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "order_by_",
+            "type": "table column",
+            "column name": "`ORDER BY`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "where_",
+        "type": "simple table",
+        "table path": "keywords.\"WHERE\"",
+        "unique properties": [
+          "calculate_"
+        ],
+        "properties": [
+          {
+            "name": "calculate_",
+            "type": "table column",
+            "column name": "`.CALCULATE`",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "iff",
+            "type": "table column",
+            "column name": "IFF",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "isin",
+            "type": "table column",
+            "column name": "ISIN",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "default_to",
+            "type": "table column",
+            "column name": "DEFAULT_TO",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "present",
+            "type": "table column",
+            "column name": "PRESENT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "absent",
+            "type": "table column",
+            "column name": "ABSENT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "keep_if",
+            "type": "table column",
+            "column name": "KEEP_IF",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "monotonic",
+            "type": "table column",
+            "column name": "MONOTONIC",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "abs_",
+            "type": "table column",
+            "column name": "ABS",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "round_",
+            "type": "table column",
+            "column name": "ROUND",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ceil",
+            "type": "table column",
+            "column name": "CEIL",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "floor",
+            "type": "table column",
+            "column name": "FLOOR",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "power",
+            "type": "table column",
+            "column name": "POWER",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sqrt",
+            "type": "table column",
+            "column name": "SQRT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sign",
+            "type": "table column",
+            "column name": "SIGN",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "smallest",
+            "type": "table column",
+            "column name": "SMALLEST",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "largest",
+            "type": "table column",
+            "column name": "LARGEST",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "sum_",
+            "type": "table column",
+            "column name": "SUM",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "avg",
+            "type": "table column",
+            "column name": "AVG",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "median",
+            "type": "table column",
+            "column name": "MEDIAN",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "min_",
+            "type": "table column",
+            "column name": "MIN",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "max_",
+            "type": "table column",
+            "column name": "MAX",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "quantile",
+            "type": "table column",
+            "column name": "QUANTILE",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "anything",
+            "type": "table column",
+            "column name": "ANYTHING",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "count",
+            "type": "table column",
+            "column name": "COUNT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "ndistinct",
+            "type": "table column",
+            "column name": "NDISTINCT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "has",
+            "type": "table column",
+            "column name": "HAS",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "hasnot",
+            "type": "table column",
+            "column name": "HASNOT",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "var",
+            "type": "table column",
+            "column name": "VAR",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "std",
+            "type": "table column",
+            "column name": "STD",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "detail1",
+        "type": "simple table",
+        "table path": "keywords.detail1",
+        "unique properties": [
+          "key_"
+        ],
+        "properties": [
+          {
+            "name": "key_",
+            "type": "table column",
+            "column name": "\"key\"",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "id1",
+            "type": "table column",
+            "column name": "id1",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "id2",
+            "type": "table column",
+            "column name": "id2",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "detail2",
+        "type": "simple table",
+        "table path": "keywords.detail2",
+        "unique properties": [
+          "key_"
+        ],
+        "properties": [
+          {
+            "name": "key_",
+            "type": "table column",
+            "column name": "\"key\"",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "alt_key1",
+            "type": "table column",
+            "column name": "alt_key1",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "alt_key2",
+            "type": "table column",
+            "column name": "alt_key2",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "lowercase_detail",
+        "type": "simple table",
+        "table path": "keywords.lowercase_detail",
+        "unique properties": [
+          "id_"
+        ],
+        "properties": [
+          {
+            "name": "id_",
+            "type": "table column",
+            "column name": "id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "master_id",
+            "type": "table column",
+            "column name": "master_id",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "two_words",
+            "type": "table column",
+            "column name": "`two words`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "select_",
+            "type": "table column",
+            "column name": "`select`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "as_",
+            "type": "table column",
+            "column name": "`as`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "_0_0_and",
+            "type": "table column",
+            "column name": "`0 = 0 and '`",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "result",
+            "type": "table column",
+            "column name": "result",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "is_active",
+            "type": "table column",
+            "column name": "is_active",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "name": "master",
+        "type": "simple table",
+        "table path": "keywords.master",
+        "unique properties": [
+          "id1",
+          "id2"
+        ],
+        "properties": [
+          {
+            "name": "id1",
+            "type": "table column",
+            "column name": "ID1",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "id2",
+            "type": "table column",
+            "column name": "ID2",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "alt_key1",
+            "type": "table column",
+            "column name": "ALT_KEY1",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "alt_key2",
+            "type": "table column",
+            "column name": "ALT_KEY2",
+            "data type": "numeric",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "DESCRIPTION",
+            "data type": "string",
+            "description": "",
+            "sample values": [],
+            "synonyms": []
+          }
+        ],
+        "description": "",
+        "synonyms": []
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "quoted_table_name",
+        "parent collection": "lowercase_detail",
+        "child collection": "quoted_table_name",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "name"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "lowercase_detail",
+        "original parent": "lowercase_detail",
+        "original property": "quoted_table_name",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "quoted_table_name_2",
+        "parent collection": "lowercase_detail",
+        "child collection": "quoted_table_name",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "quote_"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "lowercase_detail_2",
+        "original parent": "lowercase_detail",
+        "original property": "quoted_table_name_2",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "quoted_table_name_3",
+        "parent collection": "uppercase_master",
+        "child collection": "quoted_table_name",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "cast_"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "uppercase_master",
+        "original parent": "uppercase_master",
+        "original property": "quoted_table_name_3",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "cast_",
+        "parent collection": "lowercase_detail",
+        "child collection": "cast_",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "id2"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "lowercase_detail_3",
+        "original parent": "lowercase_detail",
+        "original property": "cast_",
+        "singular": true,
+        "always matches": false,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "cast__2",
+        "parent collection": "lowercase_detail",
+        "child collection": "cast_",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "id_"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "lowercase_detail_4",
+        "original parent": "lowercase_detail",
+        "original property": "cast__2",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "count",
+        "parent collection": "cast_",
+        "child collection": "count",
+        "singular": true,
+        "always matches": false,
+        "keys": {
+          "pk_field_name": [
+            "this"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "cast_",
+        "original parent": "cast_",
+        "original property": "count",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "mixedcase_1_1",
+        "parent collection": "lowercase_detail",
+        "child collection": "mixedcase_1_1",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "lowercaseid"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "lowercase_detail_5",
+        "original parent": "lowercase_detail",
+        "original property": "mixedcase_1_1",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "mixedcase_1_1_2",
+        "parent collection": "uppercase_master",
+        "child collection": "mixedcase_1_1",
+        "singular": true,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "id_"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "uppercase_master_2",
+        "original parent": "uppercase_master",
+        "original property": "mixedcase_1_1_2",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "partition_",
+        "parent collection": "where_",
+        "child collection": "partition_",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "calculate_": [
+            "where_"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "where_collection",
+        "original parent": "where_",
+        "original property": "partition_",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "partition__2",
+        "parent collection": "calculate_",
+        "child collection": "partition_",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "where_": [
+            "calculate_"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "calculate_collection",
+        "original parent": "calculate_",
+        "original property": "partition__2",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "where_collection",
+        "parent collection": "calculate_",
+        "child collection": "where_",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "where_": [
+            "calculate_"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "calculate__2",
+        "original parent": "calculate_",
+        "original property": "where_collection",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "detail1",
+        "parent collection": "master",
+        "child collection": "detail1",
+        "singular": true,
+        "always matches": false,
+        "keys": {
+          "id1": [
+            "id1"
+          ],
+          "id2": [
+            "id2"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "master",
+        "original parent": "master",
+        "original property": "detail1",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "detail2",
+        "parent collection": "master",
+        "child collection": "detail2",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id1": [
+            "alt_key1"
+          ],
+          "id2": [
+            "alt_key2"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "master_2",
+        "original parent": "master",
+        "original property": "detail2",
+        "singular": true,
+        "always matches": false,
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "lowercase_detail",
+        "parent collection": "uppercase_master",
+        "child collection": "lowercase_detail",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "master_id"
+          ]
+        },
+        "description": "",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "uppercase_master_3",
+        "original parent": "uppercase_master",
+        "original property": "lowercase_detail",
+        "singular": true,
+        "always matches": true,
+        "description": "",
+        "synonyms": []
+      }
+    ]
+  }
+]

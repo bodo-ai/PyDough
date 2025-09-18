@@ -113,6 +113,145 @@ result = (
             ),
             id="wdi_albania_footnotes_1978",
         ),
+        #  uncomment and align to reproduce SQL query optimization failed. SQL generation works for SQLite
+        #         pytest.param(
+        #             PyDoughPandasTest(
+        #                 r"""
+        # result = cast_.WHERE(
+        #     (lowercase_detail_3._0_0_and == '2 "0 = 0 and \'" field name') & (lowercase_detail_4.id_ == 1)
+        # ).CALCULATE(
+        #     id1=id2,
+        #     id2=id_,
+        #     # uncomment to reproduce ERROR WHILE OPTIMIZING QUERY one more time
+        #     # fk1_select=lowercase_detail_3.select_,
+        #     # fk1_as=lowercase_detail_3.as_,
+        #     fk2_two_words=lowercase_detail_4.two_words
+        # )
+        #                 """,
+        #                 "keywords",
+        #                 lambda: pd.DataFrame(
+        #                     {
+        #                         "id1": [2],
+        #                         "id2": [1],
+        #                         # "fk1_select": ["2 select reserved word"],
+        #                         # "fk1_as": ["2 as reserved word"],
+        #                         "fk2_two_words": ["1 two words field name"],
+        #                     }
+        #                 ),
+        #                 "keywords_cast_alias_and_missing_alias",
+        #             ),
+        #             id="keywords_cast_alias_and_missing_alias",
+        #         ),
+        pytest.param(
+            PyDoughPandasTest(
+                r"""
+result = master.WHERE(
+    (id1 == 1) & (id2 == 1) & (description != 'One-One \'master row')
+).CALCULATE(description=description)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "description": ["One-One master row"],
+                    }
+                ),
+                "keywords_single_quote_use",
+            ),
+            id="keywords_single_quote_use",
+        ),
+        #  uncomment and align to reproduce SQL query optimization failed. SQL execution works for SQLite
+        #         pytest.param(
+        #             PyDoughPandasTest(
+        #                 r'''
+        # result = mixedcase_1_1.WHERE(
+        #     (parentheses == '5 (parentheses)') & (lowercase_detail_5.as_ == '10 as reserved word')
+        # ).CALCULATE(
+        #     id_=id_,
+        #     LowerCaseID=lowercaseid,
+        #     integer=uppercase_master_2.integer,
+        #     # uncomment to reproduce ERROR WHILE OPTIMIZING QUERY one more time
+        #     #as_=lowercase_detail_5.as_,
+        #     # replace order_ to order to reproduce column alias reserved issue
+        #     order_=uppercase_master_2.order_by_
+        # )
+        #                 ''',
+        #                 "keywords",
+        #                 lambda: pd.DataFrame(
+        #                     {
+        #                         "id_": [5],
+        #                         "LowerCaseID": [10],
+        #                         "INTEGER": ["5 INTEGER RESERVED WORD"],
+        #                         # "as_": ["10 as reserved word"],
+        #                         "order_": ["5 TWO WORDS RESERVED"],
+        #                     }
+        #                 ),
+        #                 "keywords_column_alias_reserved",
+        #             ),
+        #             id="keywords_column_alias_reserved",
+        #         ),
+        pytest.param(
+            PyDoughPandasTest(
+                r"""
+result = count.WHERE(
+    int_==8051
+).CALCULATE(
+    #dbl_quote_dot=unknown_column_6,
+    dot=unknown_column_7,
+    addition=(unknown_column_7+DEFAULT_TO(float_,str_,1)),
+    col=col, 
+    col1=col1,
+    def_=def_,
+    __del__=del_,
+    __init__=init
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        # "dbl_quote_dot": [5051],
+                        "dot": [6051],
+                        "addition": [6052],
+                        "col": [10051],
+                        "col1": [11051],
+                        "def_": [2051],
+                        "__del__": [None],
+                        "__init__": [7051],
+                    }
+                ),
+                "keywords_python_sql_reserved",
+            ),
+            id="keywords_python_sql_reserved",
+        ),
+        #  uncomment and align to reproduce SQL query optimization failed. SQL generation works for SQLite
+        #         pytest.param(
+        #             PyDoughPandasTest(
+        #                 r"""
+        # result = where_.WHERE(
+        #     (calculate_ == 4) & ABSENT(present)
+        # ).CALCULATE(
+        #     calculate=DEFAULT_TO(default_to,calculate_),
+        #     _where=calculate__2.where_,
+        #     _like=calculate__2.like_,
+        #     datetime=calculate__2.datetime,
+        #     abs=abs_,
+        #     has=has
+        # )
+        #                 """,
+        #                 "keywords",
+        #                 lambda: pd.DataFrame(
+        #                     {
+        #                         "calculate": [4],
+        #                         "_where": [4],
+        #                         "_like": [None],
+        #                         "DATETIME": [None],
+        #                         "ABS": [None],
+        #                         "HAS": [None],
+        #                     }
+        #                 ),
+        #                 "keywords_alias_reserved_word",
+        #             ),
+        #             id="keywords_alias_reserved_word",
+        #         ),
     ],
 )
 def custom_datasets_test_data(request) -> PyDoughPandasTest:
@@ -166,6 +305,7 @@ def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_test_graph_by_name: graph_fetcher,
     sqlite_custom_datasets_connection: DatabaseContext,
+    coerce_types=True,
 ):
     """
     Test executing the the custom queries with the custom datasets against the

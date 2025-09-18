@@ -193,6 +193,7 @@ def get_test_graph_by_name() -> graph_fetcher:
     test_graph_location: dict[str, str] = {
         "synthea": "synthea_graph.json",
         "world_development_indicators": "world_development_indicators_graph.json",
+        "keywords": "reserved_words_graph.json",
     }
 
     @cache
@@ -618,10 +619,10 @@ def sqlite_custom_datasets_connection() -> DatabaseContext:
     """
     commands: list[str] = [
         "cd tests/gen_data",
-        "rm -fv synthea.db",
-        "rm -fv world_development_indicators.db",
+        "rm -fv synthea.db world_development_indicators.db reserved_words.db",
         "sqlite3 synthea.db < init_synthea_sqlite.sql",
         "sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql",
+        "sqlite3 reserved_words.db < init_reserved_words_sqlite.sql",
     ]
     # Get the shell commands required to re-create all the db files
     shell_cmd: str = "; ".join(commands)
@@ -637,6 +638,7 @@ def sqlite_custom_datasets_connection() -> DatabaseContext:
     dbs: dict[str, str] = {
         "synthea": "tests/gen_data/synthea.db",
         "wdi": "tests/gen_data/world_development_indicators.db",
+        "keywords": "tests/gen_data/reserved_words.db",
     }
 
     # Attach them all
