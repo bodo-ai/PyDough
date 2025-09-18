@@ -115,6 +115,33 @@ result = (
             ),
             id="wdi_albania_footnotes_1978",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = cast_.WHERE(
+    (lowercase_detail_3._0_0_and == '2 "0 = 0 and ''" field name') & (lowercase_detail_4.id_ == 1)
+).CALCULATE(
+    id1=id2,
+    id2=id_,
+    fk1_select=lowercase_detail_3.select_,
+    fk1_as=lowercase_detail_3.as_,
+    fk2_two_words=lowercase_detail_4.two_words
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "id1": [2],
+                        "id2": [1],
+                        "fk1_select": ["2 select reserved word"],
+                        "fk1_as": ["2 as reserved word"],
+                        "fk2_two_words": ["1 two words field name"]
+                    }
+                ),
+                "keywords_cast_alias_and_missing_alias",
+            ),
+            id="keywords_cast_alias_and_missing_alias",
+        ),
     ],
 )
 def custom_datasets_test_data(request) -> PyDoughPandasTest:
