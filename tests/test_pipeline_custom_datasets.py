@@ -144,9 +144,9 @@ result = cast_.WHERE(
         ),
         pytest.param(
             PyDoughPandasTest(
-                """
+                r"""
 result = master.WHERE(
-    (id1 == 1) & (id2 == 1) & (description != "One-One \'master row")
+    (id1 == 1) & (id2 == 1) & (description != 'One-One \'master row')
 ).CALCULATE(description=description)
                 """,
                 "keywords",
@@ -207,7 +207,7 @@ def test_pipeline_until_sql_custom_datasets(
     )
 
 
-@pytest.mark.skip
+# @pytest.mark.skip
 def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_test_graph_by_name: graph_fetcher,
