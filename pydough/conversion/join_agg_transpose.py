@@ -14,6 +14,7 @@ from pydough.relational import (
     Join,
     JoinCardinality,
     JoinType,
+    Project,
     RelationalExpression,
     RelationalNode,
     RelationalRoot,
@@ -139,6 +140,10 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         ):
             return None
 
+        # A mapping that will be used to map every expression with regards to
+        # the original join looking at its input expressions to what the
+        # expression will be in the output columns of the new aggregate
+
         new_join_columns: dict[str, RelationalExpression] = {}
         new_aggregate_aggs: dict[str, CallExpression] = {}
         new_aggregate_keys: dict[str, RelationalExpression] = {}
@@ -149,6 +154,10 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         new_join_inputs: list[RelationalNode] = (
             [agg_input, non_agg_input] if is_left else [non_agg_input, agg_input]
         )
+
+        project_columns: dict[str, RelationalExpression] = {}
+
+        assert False
 
         # TODO: FINISH THIS
         return None
@@ -167,7 +176,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             new_join, new_aggregate_keys, new_aggregate_aggs
         )
 
-        return new_aggregate
+        return Project(new_aggregate, project_columns)
 
 
 def pull_joins_after_aggregates(node: RelationalRoot) -> RelationalNode:
