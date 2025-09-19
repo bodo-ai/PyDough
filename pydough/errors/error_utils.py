@@ -164,7 +164,9 @@ class ValidSQLName(PyDoughPredicate):
     """
 
     # Regex for unquoted SQL identifiers
-    _UNQUOTED_SQL_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    _UNQUOTED_SQL_IDENTIFIER = re.compile(
+        r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$"
+    )
 
     def __init__(self):
         self.error_messages: dict[str, str] = {
