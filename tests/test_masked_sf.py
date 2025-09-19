@@ -6,7 +6,11 @@ import pytest
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from tests.testing_utilities import graph_fetcher
 
-from .testing_sf_masked_utilities import PyDoughSnowflakeMaskedTest
+from .testing_sf_masked_utilities import (
+    PyDoughSnowflakeMaskedTest,
+    get_sf_masked_graphs,  # noqa: F401
+    sf_masked_context,  # noqa: F401
+)
 
 
 @pytest.fixture(
@@ -451,7 +455,7 @@ def sf_masked_test_data(
 @pytest.mark.masked_snowflake
 def test_pipeline_until_relational_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
-    get_sf_masked_graphs: graph_fetcher,
+    get_sf_masked_graphs: graph_fetcher,  # noqa: F811
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -471,8 +475,8 @@ def test_pipeline_until_relational_masked_sf(
 @pytest.mark.masked_snowflake
 def test_pipeline_until_sql_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
-    get_sf_masked_graphs: graph_fetcher,
-    sf_masked_context: Callable[[str, str, str], DatabaseContext],
+    get_sf_masked_graphs: graph_fetcher,  # noqa: F811
+    sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ):
@@ -501,8 +505,8 @@ def test_pipeline_until_sql_masked_sf(
 def test_pipeline_e2e_masked_sf(
     account_type: str,
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
-    get_sf_masked_graphs: graph_fetcher,
-    sf_masked_context: Callable[[str, str, str], DatabaseContext],
+    get_sf_masked_graphs: graph_fetcher,  # noqa: F811
+    sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
 ) -> None:
     """
     End-to-end test for Snowflake with masked columns.
