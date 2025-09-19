@@ -115,7 +115,7 @@ result = (
             ),
             id="wdi_albania_footnotes_1978",
         ),
-        #  uncomment to reproduce SQL query optimization failed. This pydough code runs on notebook
+        #  uncomment and align to reproduce SQL query optimization failed. SQL generation works for SQLite
         #         pytest.param(
         #             PyDoughPandasTest(
         #                 r"""
@@ -161,7 +161,7 @@ result = master.WHERE(
             ),
             id="keywords_single_quote_use",
         ),
-        #  uncomment to reproduce SQL query optimization failed. This pydough code runs on notebook
+        #  uncomment and align to reproduce SQL query optimization failed. SQL execution works for SQLite
         #         pytest.param(
         #             PyDoughPandasTest(
         #                 r'''
@@ -210,6 +210,7 @@ result = count.WHERE(
                 "keywords",
                 lambda: pd.DataFrame(
                     {
+                        # "dbl_quote_dot": [5051],
                         "dot": [6051],
                         "addition": [6052],
                         "col": [10051],
@@ -223,6 +224,36 @@ result = count.WHERE(
             ),
             id="keywords_python_sql_reserved",
         ),
+        #  uncomment and align to reproduce SQL query optimization failed. SQL generation works for SQLite
+        #         pytest.param(
+        #             PyDoughPandasTest(
+        #                 r"""
+        # result = where_.WHERE(
+        #     (calculate_ == 4) & ABSENT(present)
+        # ).CALCULATE(
+        #     calculate=DEFAULT_TO(default_to,calculate_),
+        #     _where=calculate__2.where_,
+        #     _like=calculate__2.like_,
+        #     datetime=calculate__2.datetime,
+        #     abs=abs_,
+        #     has=has
+        # )
+        #                 """,
+        #                 "keywords",
+        #                 lambda: pd.DataFrame(
+        #                     {
+        #                         "calculate": [4],
+        #                         "_where": [4],
+        #                         "_like": [None],
+        #                         "DATETIME": [None],
+        #                         "ABS": [None],
+        #                         "HAS": [None],
+        #                     }
+        #                 ),
+        #                 "keywords_alias_reserved_word",
+        #             ),
+        #             id="keywords_alias_reserved_word",
+        #         ),
     ],
 )
 def custom_datasets_test_data(request) -> PyDoughPandasTest:

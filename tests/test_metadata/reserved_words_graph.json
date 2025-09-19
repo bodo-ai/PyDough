@@ -61,45 +61,6 @@
         "synonyms": []
       },
       {
-        "name": "CALCULATE",
-        "type": "simple table",
-        "table path": "keywords.CALCULATE",
-        "unique properties": [
-          "WHERE"
-        ],
-        "properties": [
-          {
-            "name": "WHERE",
-            "type": "table column",
-            "column name": "`.WHERE`",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "cast_",
-            "type": "table column",
-            "column name": "CAST",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "upper",
-            "type": "table column",
-            "column name": "UPPER",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          }
-        ],
-        "description": "",
-        "synonyms": []
-      },
-      {
         "name": "calculate_",
         "type": "simple table",
         "table path": "keywords.CALCULATE",
@@ -975,7 +936,7 @@
           {
             "name": "calculate_",
             "type": "table column",
-            "column name": "\".CALCULATE\"",
+            "column name": "`.CALCULATE`",
             "data type": "numeric",
             "description": "",
             "sample values": [],
