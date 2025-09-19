@@ -1,6 +1,6 @@
 from fastapi import Body, FastAPI
 
-app = FastAPI()
+app: FastAPI = FastAPI()
 
 
 @app.post("/v1/predicates/evaluate")
