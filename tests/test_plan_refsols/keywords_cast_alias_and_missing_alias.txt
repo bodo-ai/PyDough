@@ -1,0 +1,8 @@
+ROOT(columns=[('id1', ID2), ('id2', ID), ('fk2_two_words', `two words`)], orderings=[])
+ JOIN(condition=t0.ID == t1.id, type=INNER, cardinality=SINGULAR_FILTER, columns={'ID': t0.ID, 'ID2': t0.ID2, '`two words`': t1.`two words`})
+  JOIN(condition=t0.ID2 == t1.id, type=INNER, cardinality=SINGULAR_FILTER, columns={'ID': t0.ID, 'ID2': t0.ID2})
+   SCAN(table=keywords."CAST", columns={'ID': ID, 'ID2': ID2})
+   FILTER(condition=`0 = 0 and '` == '2 "0 = 0 and \'" field name':string, columns={'id': id})
+    SCAN(table=keywords.lowercase_detail, columns={"`0 = 0 and '`": `0 = 0 and '`, 'id': id})
+  FILTER(condition=id == 1:numeric, columns={'`two words`': `two words`, 'id': id})
+   SCAN(table=keywords.lowercase_detail, columns={'`two words`': `two words`, 'id': id})
