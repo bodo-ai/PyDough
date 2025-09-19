@@ -795,7 +795,7 @@ def supplier_pct_national_qty():
         .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
-            nation_name=name,
+            nation_name=nation_name,
             supplier_quantity=supp_qty,
             national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
         )
