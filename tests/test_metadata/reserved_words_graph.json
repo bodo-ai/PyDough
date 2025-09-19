@@ -6,7 +6,7 @@
       {
         "name": "quoted_table_name",
         "type": "simple table",
-        "table path": "`keywords.\"QUOTED TABLE_NAME\"`",
+        "table path": "keywords.`\"QUOTED TABLE_NAME\"`",
         "unique properties": [
           "id_"
         ],
@@ -23,7 +23,7 @@
           {
             "name": "cast_",
             "type": "table column",
-            "column name": "`cast`",
+            "column name": "```cast```",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -173,7 +173,7 @@
           {
             "name": "like_",
             "type": "table column",
-            "column name": "\"LIKE\"",
+            "column name": "`LIKE`",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -227,7 +227,7 @@
           {
             "name": "replace_",
             "type": "table column",
-            "column name": "\"REPLACE\"",
+            "column name": "REPLACE",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -468,7 +468,7 @@
           {
             "name": "unknown_column_6",
             "type": "table column",
-            "column name": "\"\"\",\"",
+            "column name": "`\",`",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -477,7 +477,7 @@
           {
             "name": "unknown_column_7",
             "type": "table column",
-            "column name": "\".\"",
+            "column name": "`.`",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -486,7 +486,7 @@
           {
             "name": "bool_",
             "type": "table column",
-            "column name": "__bool__",
+            "column name": "bool",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -502,36 +502,9 @@
             "synonyms": []
           },
           {
-            "name": "floor",
-            "type": "table column",
-            "column name": "__floor__",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "ceil",
-            "type": "table column",
-            "column name": "__ceil__",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
-            "name": "trunc",
-            "type": "table column",
-            "column name": "__trunc__",
-            "data type": "numeric",
-            "description": "",
-            "sample values": [],
-            "synonyms": []
-          },
-          {
             "name": "int_",
             "type": "table column",
-            "column name": "__int__",
+            "column name": "int",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -540,7 +513,7 @@
           {
             "name": "float_",
             "type": "table column",
-            "column name": "__float__",
+            "column name": "FLOAT",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -558,7 +531,7 @@
           {
             "name": "new",
             "type": "table column",
-            "column name": "__new__",
+            "column name": "new",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -567,7 +540,7 @@
           {
             "name": "del_",
             "type": "table column",
-            "column name": "__del__",
+            "column name": "del",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -603,7 +576,7 @@
           {
             "name": "str_",
             "type": "table column",
-            "column name": "__str__",
+            "column name": "str",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -612,7 +585,7 @@
           {
             "name": "dict_",
             "type": "table column",
-            "column name": "__dict__",
+            "column name": "dict",
             "data type": "numeric",
             "description": "",
             "sample values": [],
@@ -660,7 +633,7 @@
           {
             "name": "parentheses",
             "type": "table column",
-            "column name": "\"(parentheses)\"",
+            "column name": "`(parentheses)`",
             "data type": "string",
             "description": "",
             "sample values": [],
@@ -981,7 +954,7 @@
           {
             "name": "order_by_",
             "type": "table column",
-            "column name": "\"ORDER BY\"",
+            "column name": "`ORDER BY`",
             "data type": "string",
             "description": "",
             "sample values": [],
