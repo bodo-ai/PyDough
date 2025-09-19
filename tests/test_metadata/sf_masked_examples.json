@@ -20,18 +20,24 @@
           },
           {
             "name": "customer_key",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "customerid",
             "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
             "description": "ID of the customer who owns the account",
             "sample values": [4251700, 88847535, 25275502],
             "synonyms": ["customer id", "customer key", "customer number"]
           },
           {
             "name": "account_type",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "accounttype",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
             "description": "Type of the account (either 'Checking' or 'Savings')",
             "sample values": ["Checking", "Savings"],
             "synonyms": ["account type", "account category", "type of account"]
@@ -47,27 +53,36 @@
           },
           {
             "name": "currency",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "currency",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
             "description": "Currency of the account (either 'USD', 'EUR', or 'GBP')",
             "sample values": ["USD", "EUR", "GBP"],
             "synonyms": ["account currency", "currency type", "currency code"]
           },
           {
             "name": "creation_date",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "createddate",
             "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_DOB({})",
+            "protect protocol": "PTY_PROTECT_DOB({})",
             "description": "The date the account was created",
             "sample values": ["2021-05-23", "2024-10-30", "2025-05-10"],
             "synonyms": ["date created", "entry date", "created on"]
           },
           {
             "name": "status",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "status",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
             "description": "The current status of the account (either 'Active' or 'Inactive')",
             "sample values": ["Active", "Inactive"],
             "synonyms": ["account status", "status of account", "current status"]
@@ -181,14 +196,17 @@
       {
         "name": "customers",
         "type": "simple table",
-        "table path": "bodo.fsi.protected_customers",
+        "table path": "bodo.fsi.customers",
         "unique properties": [ "key" ],
         "properties": [
           {
             "name": "key",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "customerid",
             "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
             "description": "The unique id for the customer",
             "sample values": [3771902, 44112875, 84721881],
             "synonyms": ["customer id", "customer key", "customer number"]
@@ -233,18 +251,24 @@
           },
           {
             "name": "city",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "city",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT_ADDRESS({})",
             "description": "The city where the customer resides",
             "sample values": ["Kyleport", "Port Maurice", "New Rachel"],
             "synonyms": ["customer city"]
           },
           {
             "name": "state",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "state",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT_ADDRESS({})",
             "description": "The state where the customer resides",
             "sample values": ["California", "Texas", "New York"],
             "synonyms": ["customer state"]
@@ -272,7 +296,7 @@
             "synonyms": ["customer email", "email address", "contact email"]
           },
           {
-            "name": "phonenumber",
+            "name": "phone_number",
             "type": "masked table column",
             "column name": "phonenumber",
             "data type": "string",
@@ -285,9 +309,12 @@
           },
           {
             "name": "date_of_birth",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "dob",
             "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_DOB({})",
+            "protect protocol": "PTY_PROTECT_DOB({})",
             "description": "The date of birth of the customer",
             "sample values": ["1994-02-26", "2004-12-29", "1958-01-11"],
             "synonyms": ["birthday", "birth date", "date of birth"]
@@ -330,9 +357,12 @@
           },
           {
             "name": "credit_card_number",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "creditcardnumber",
             "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_CCN({})",
+            "protect protocol": "PTY_PROTECT_CCN({})",
             "description": "The credit card number of the customer",
             "sample values": [4532015112830366, 3587568684607485, 6011514433546201],
             "synonyms": ["credit card number"]
@@ -481,7 +511,7 @@
         "type": "reverse",
         "name": "customer",
         "original parent": "customers",
-        "original property": "customers_to_loans",
+        "original property": "loans",
         "singular": true,
         "always matches": true,
         "description": "Customer who owns the loan",
@@ -506,7 +536,7 @@
         "type": "reverse",
         "name": "account",
         "original parent": "accounts",
-        "original property": "accounts_to_transactions",
+        "original property": "transactions",
         "singular": true,
         "always matches": true,
         "description": "Account that owns the transaction",
@@ -537,27 +567,36 @@
           },
           {
             "name": "patient_key",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "patient_id",
             "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",            
             "description": "The id of the patient who filed the claim",
             "sample values": [335709984, 106664586, 987945266],
             "synonyms": ["patient id", "patient key", "patient number", "patient medical record"]
           },
           {
             "name": "claim_date",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "claim_date",
             "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_DOB({})",
+            "protect protocol": "PTY_PROTECT_DOB({})",            
             "description": "The date when the claim was filed",
             "sample values": ["2024-08-07", "2024-12-14", "2023-10-17"],
             "synonyms": ["date of claim", "claim filing date"]
           },
           {
             "name": "provider_name",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "provider_name",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_NAME({})",
+            "protect protocol": "PTY_PROTECT_NAME({})",
             "description": "The name of the healthcare provider",
             "sample values": ["Mccoy-Smith", "Graves-Todd", "Black, Rodriguez and Rivas"],
             "synonyms": ["provider name", "healthcare provider name", "doctor name", "hospital name"]
@@ -600,9 +639,12 @@
           },
           {
             "name": "claim_status",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "claim_status",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
             "description": "The current status of the claim (either 'Pending', 'Approved', or 'Denied')",
             "sample values": ["Pending", "Approved", "Denied"],
             "synonyms": ["claim state", "claim status", "status of claim"]
@@ -682,16 +724,19 @@
       {
         "name": "patients",
         "type": "simple table",
-        "table path": "bodo.health.protected_patients",
+        "table path": "bodo.health.patients",
         "unique properties": [
           "key"
         ],
         "properties": [
           {
             "name": "key",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "patient_id",
-            "data type": "string",
+            "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",            
             "description": "The unique id for the patient",
             "sample values": [119951292, 903465140, 861676065],
             "synonyms": ["patient id", "patient key", "patient number", "patient medical record"]
@@ -722,9 +767,12 @@
           },
           {
             "name": "date_of_birth",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "date_of_birth",
             "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_DOB({})",
+            "protect protocol": "PTY_PROTECT_DOB({})",
             "description": "The date of birth of the patient",
             "sample values": ["1981-12-29", "2003-03-13", "1995-04-29"],
             "synonyms": ["patient date of birth", "DOB", "birthday", "birth date", "born on"]
@@ -740,9 +788,12 @@
           },
           {
             "name": "ssn",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "ssn",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_SSN({})",
+            "protect protocol": "PTY_PROTECT_SSN({})",
             "description": "The social security number of the patient",
             "sample values": ["377-44-6263", "353-39-5665", "763-80-7096"],
             "synonyms": ["patient SSN", "social security number"]
@@ -763,9 +814,12 @@
           },
           {
             "name": "phone_number",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "phone_number",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_PHONE({})",
+            "protect protocol": "PTY_PROTECT_PHONE({})",
             "description": "The phone number of the patient",
             "sample values": ["995.431.8476x392", "7437471930", "(881)740-5571x378"],
             "synonyms": ["patient phone number", "phone number", "contact number"]
@@ -801,11 +855,11 @@
     "relationships": [
       {
         "type": "simple join",
-        "name": "claims",
+        "name": "filed_claims",
         "parent collection": "patients",
         "child collection": "claims",
         "singular": false,
-        "always matches": true,
+        "always matches": false,
         "keys": {
           "key": [
             "patient_key"
@@ -818,7 +872,7 @@
         "type": "reverse",
         "name": "patient",
         "original parent": "patients",
-        "original property": "claims",
+        "original property": "filed_claims",
         "singular": true,
         "always matches": true,
         "description": "The patient who filed the claim",
@@ -830,7 +884,7 @@
         "parent collection": "insurance_plans",
         "child collection": "patients",
         "singular": false,
-        "always matches": false,
+        "always matches": true,
         "keys": {
           "key": [
             "insurance_plan_key"
@@ -845,8 +899,8 @@
         "name": "insurance_plan",
         "original parent": "insurance_plans",
         "original property": "patients",
-        "singular": false,
-        "always matches": false,
+        "singular": true,
+        "always matches": true,
         "description": "The insurance plan that the patient is enrolled in",
         "synonyms": ["insurance plan", "health plan", "medical plan"]
       }
@@ -859,7 +913,7 @@
       {
         "name": "loyalty_members",
         "type": "simple table",
-        "table path": "bodo.retail.protected_loyalty_members",
+        "table path": "bodo.retail.loyalty_members",
         "unique properties": [
           "key"
         ],
@@ -868,7 +922,7 @@
             "name": "key",
             "type": "table column",
             "column name": "customer_id",
-            "data type": "string",
+            "data type": "numeric",
             "description": "The unique id for the loyalty member",
             "sample values": [305069388, 271104022, 938589648],
             "synonyms": ["loyalty member id", "customer id"]
@@ -920,7 +974,7 @@
           },
           {
             "name": "address",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "address",
             "data type": "string",
             "server masked": true,
@@ -934,9 +988,12 @@
           },
           {
             "name": "date_of_birth",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "date_of_birth",
             "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_DOB({})",
+            "protect protocol": "PTY_PROTECT_DOB({})",
             "description": "Birthdate of the loyalty member",
             "sample values": ["1934-12-06", "2006-09-24", "1990-01-08"],
             "synonyms": ["birthday", "dob", "birth date", "date of birth"]
@@ -1001,18 +1058,24 @@
           },
           {
             "name": "transaction_date",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "transaction_date",
             "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_TS({})",
+            "protect protocol": "PTY_PROTECT_TS({})",
             "description": "The date when the transaction occurred",
             "sample values": ["2024-12-21", "2021-01-31", "2020-09-14"],
             "synonyms": ["sale date", "order date", "transaction date", "purchase date"]
           },
           {
             "name": "store_location",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "store_location",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT_ADDRESS({})",            
             "description": "The location of the store where the transaction took place",
             "sample values": ["West April", "Lake Jesse", "East Richard"],
             "synonyms": ["store address", "store city", "store region"]
@@ -1028,9 +1091,12 @@
           },
           {
             "name": "payment_method",
-            "type": "table column",
+            "type": "masked table column",
             "column name": "payment_method",
             "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
             "description": "The method used for payment (either 'Cash', 'Credit Card', 'Gift Card', or 'Mobile Payment')",
             "sample values": ["Cash", "Credit Card", "Gift Card", "Mobile Payment"],
             "synonyms": ["payment type", "payment method", "method of payment"]
@@ -1139,7 +1205,7 @@
         "parent collection": "transactions",
         "child collection": "transaction_items",
         "singular": false,
-        "always matches": true,
+        "always matches": false,
         "keys": {
           "key": [
             "transaction_key"
