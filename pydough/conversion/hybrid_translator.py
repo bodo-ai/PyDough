@@ -66,6 +66,7 @@ from .hybrid_operations import (
     HybridCollectionAccess,
     HybridFilter,
     HybridLimit,
+    HybridNoop,
     HybridOperation,
     HybridPartition,
     HybridPartitionChild,
@@ -421,6 +422,7 @@ class HybridTranslator:
                 if (
                     name in hybrid.ancestral_mapping
                     or name in hybrid.pipeline[-1].terms
+                    or subtree.ancestral_mapping[name] == 0
                 ):
                     continue
                 hybrid_back_expr = self.make_hybrid_expr(
@@ -867,96 +869,101 @@ class HybridTranslator:
 
         return max_call
 
-    def make_hybrid_correl_expr(
-        self,
-        back_expr: BackReferenceExpression,
-        collection: PyDoughCollectionQDAG,
-        steps_taken_so_far: int,
-        down_shift: int,
-    ) -> HybridCorrelExpr:
-        """
-        Converts a BACK reference into a correlated reference when the number
-        of BACK levels exceeds the height of the current subtree.
+    # def make_hybrid_correl_expr(
+    #     self,
+    #     back_expr: BackReferenceExpression,
+    #     collection: PyDoughCollectionQDAG,
+    #     steps_taken_so_far: int,
+    #     down_shift: int,
+    # ) -> HybridCorrelExpr:
+    #     """
+    #     Converts a BACK reference into a correlated reference when the number
+    #     of BACK levels exceeds the height of the current subtree.
 
-        Args:
-            `back_expr`: the original BACK reference to be converted.
-            `collection`: the collection at the top of the current subtree,
-            before we have run out of BACK levels to step up out of.
-            `steps_taken_so_far`: the number of steps already taken to step
-            up from the BACK node. This is needed so we know how many steps
-            still need to be taken upward once we have stepped out of the child
-            subtree back into the parent subtree.
-            `down_shift`: a factor that should be subtracted from the final
-            back shift when creating a term in the form CORREL(BACK(n).x), to
-            account for edge cases involving PARTITION nodes. Starts as 0, and
-            is incremented as-needed.
-        """
-        if len(self.stack) == 0:
-            raise ValueError("Back reference steps too far back")
-        # Identify the parent subtree that the BACK reference is stepping back
-        # into, out of the child.
-        parent_tree: HybridTree = self.stack.pop()
-        remaining_steps_back: int = back_expr.back_levels - steps_taken_so_far - 1
-        parent_result: HybridExpr
-        new_expr: PyDoughExpressionQDAG
-        # Special case: stepping out of the data argument of PARTITION back
-        # into its ancestor. For example:
-        # TPCH.CALCULATE(x=...).PARTITION(data.WHERE(y > BACK(1).x), ...)
-        partition_edge_case: bool = len(parent_tree.pipeline) == 1 and isinstance(
-            parent_tree.pipeline[0], HybridPartition
-        )
-        if partition_edge_case:
-            next_hybrid: HybridTree
-            if parent_tree.parent is not None:
-                # If the parent tree has a parent, then we can step back
-                # into the parent tree's parent, which is the context for
-                # the partition.
-                next_hybrid = parent_tree.parent
-            else:
-                assert len(self.stack) > 0, "Back reference steps too far back"
-                next_hybrid = self.stack[-1]
-            # Treat the partition's parent as the context for the back
-            # to step into, as opposed to the partition itself (so the back
-            # levels are consistent)
-            self.stack.append(next_hybrid)
-            parent_result = self.make_hybrid_correl_expr(
-                back_expr, collection, steps_taken_so_far, down_shift + 1
-            ).expr
-            self.stack.pop()
-        elif remaining_steps_back == 0:
-            # If there are no more steps back to be made, then the correlated
-            # reference is to a reference from the current context.
-            if back_expr.term_name in parent_tree.ancestral_mapping:
-                new_expr = BackReferenceExpression(
-                    collection,
-                    back_expr.term_name,
-                    parent_tree.ancestral_mapping[back_expr.term_name] - down_shift,
-                )
-                parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
-            elif back_expr.term_name in parent_tree.pipeline[-1].terms:
-                parent_name: str = parent_tree.pipeline[-1].renamings.get(
-                    back_expr.term_name, back_expr.term_name
-                )
-                parent_result = HybridRefExpr(parent_name, back_expr.pydough_type)
-            else:
-                raise ValueError(
-                    f"Back reference to {back_expr.term_name} not found in parent"
-                )
-        else:
-            # Otherwise, a back reference needs to be made from the current
-            # collection a number of steps back based on how many steps still
-            # need to be taken, and it must be recursively converted to a
-            # hybrid expression that gets wrapped in a correlated reference.
-            new_expr = BackReferenceExpression(
-                collection, back_expr.term_name, remaining_steps_back
-            )
-            parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
-        # Restore parent_tree back onto the stack, since evaluating `back_expr`
-        # does not change the program's current placement in the subtrees.
-        self.stack.append(parent_tree)
-        # Create the correlated reference to the expression with regards to
-        # the parent tree, which could also be a correlated expression.
-        return HybridCorrelExpr(parent_result)
+    #     Args:
+    #         `back_expr`: the original BACK reference to be converted.
+    #         `collection`: the collection at the top of the current subtree,
+    #         before we have run out of BACK levels to step up out of.
+    #         `steps_taken_so_far`: the number of steps already taken to step
+    #         up from the BACK node. This is needed so we know how many steps
+    #         still need to be taken upward once we have stepped out of the child
+    #         subtree back into the parent subtree.
+    #         `down_shift`: a factor that should be subtracted from the final
+    #         back shift when creating a term in the form CORREL(BACK(n).x), to
+    #         account for edge cases involving PARTITION nodes. Starts as 0, and
+    #         is incremented as-needed.
+    #     """
+    #     if len(self.stack) == 0:
+    #         raise ValueError("Back reference steps too far back")
+    #     # Identify the parent subtree that the BACK reference is stepping back
+    #     # into, out of the child.
+    #     parent_tree: HybridTree = self.stack.pop()
+    #     remaining_steps_back: int = back_expr.back_levels - steps_taken_so_far
+    #     parent_result: HybridExpr
+    #     new_expr: PyDoughExpressionQDAG
+    #     # Special case: stepping out of the data argument of PARTITION back
+    #     # into its ancestor. For example:
+    #     # TPCH.CALCULATE(x=...).PARTITION(data.WHERE(y > BACK(1).x), ...)
+    #     partition_edge_case: bool = len(parent_tree.pipeline) == 1 and isinstance(
+    #         parent_tree.pipeline[0], HybridPartition
+    #     )
+    #     if partition_edge_case:
+    #         next_hybrid: HybridTree
+    #         if parent_tree.parent is not None:
+    #             # If the parent tree has a parent, then we can step back
+    #             # into the parent tree's parent, which is the context for
+    #             # the partition.
+    #             next_hybrid = parent_tree.parent
+    #         else:
+    #             assert len(self.stack) > 0, "Back reference steps too far back"
+    #             next_hybrid = self.stack[-1]
+    #         # Treat the partition's parent as the context for the back
+    #         # to step into, as opposed to the partition itself (so the back
+    #         # levels are consistent)
+    #         self.stack.append(next_hybrid)
+    #         if remaining_steps_back == 0:
+    #             # down_shift += 1
+    #             pass
+    #         else:
+    #             steps_taken_so_far += 1
+    #         parent_result = self.make_hybrid_correl_expr(
+    #             back_expr, collection, steps_taken_so_far, down_shift
+    #         ).expr
+    #         self.stack.pop()
+    #     if remaining_steps_back == 0:
+    #         # If there are no more steps back to be made, then the correlated
+    #         # reference is to a reference from the current context.
+    #         if back_expr.term_name in parent_tree.ancestral_mapping:
+    #             new_expr = BackReferenceExpression(
+    #                 collection,
+    #                 back_expr.term_name,
+    #                 parent_tree.ancestral_mapping[back_expr.term_name],
+    #             )
+    #             parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
+    #         elif back_expr.term_name in parent_tree.pipeline[-1].terms:
+    #             parent_name: str = parent_tree.pipeline[-1].renamings.get(
+    #                 back_expr.term_name, back_expr.term_name
+    #             )
+    #             parent_result = HybridRefExpr(parent_name, back_expr.pydough_type)
+    #         else:
+    #             raise ValueError(
+    #                 f"Back reference to {back_expr.term_name} not found in parent"
+    #             )
+    #     else:
+    #         # Otherwise, a back reference needs to be made from the current
+    #         # collection a number of steps back based on how many steps still
+    #         # need to be taken, and it must be recursively converted to a
+    #         # hybrid expression that gets wrapped in a correlated reference.
+    #         new_expr = BackReferenceExpression(
+    #             collection, back_expr.term_name, remaining_steps_back
+    #         )
+    #         parent_result = self.make_hybrid_expr(parent_tree, new_expr, {}, False)
+    #     # Restore parent_tree back onto the stack, since evaluating `back_expr`
+    #     # does not change the program's current placement in the subtrees.
+    #     self.stack.append(parent_tree)
+    #     # Create the correlated reference to the expression with regards to
+    #     # the parent tree, which could also be a correlated expression.
+    #     return HybridCorrelExpr(parent_result)
 
     def add_unique_terms(
         self,
@@ -1046,6 +1053,74 @@ class HybridTranslator:
                 child_idx,
             )
 
+    def translate_back_reference(
+        self, hybrid: HybridTree, expr: BackReferenceExpression
+    ) -> HybridExpr:
+        """
+        Perform the logic used to translate a BACK reference in QDAG into a
+        back reference in hybrid, or a correlated reference if the back
+        reference steps back further than the height of the current hybrid
+        tree.
+
+        Args:
+            `hybrid`: the hybrid tree that should be used to derive the
+            translation of `expr`, as it is the context in which the `expr`
+            will live.
+            `expr`: the BACK reference to be converted.
+
+        Returns:
+            The HybridExpr node corresponding to `expr`.
+        """
+        back_levels: int = 0
+        correl_levels: int = 0
+        new_stack: list[HybridTree] = []
+        ancestor_tree: HybridTree = hybrid
+        expr_name: str = expr.term_name
+        # Start with the current context and hunt for an ancestor with
+        # that name pinned by a CALCULATE (so it is in the ancestral
+        # mapping), and make sure it is within the height bounds of the
+        # current tree. If not, then pop the previous tree from the
+        # stack and look there, repeating until one is found or the
+        # stack is exhausted. Keep track of how many times we step
+        # outward, since this is how many CORREL() layers we need to
+        # wrap the final expression in.
+        while True:
+            if (
+                expr.term_name in ancestor_tree.ancestral_mapping
+                and ancestor_tree.ancestral_mapping[expr.term_name]
+                < ancestor_tree.get_tree_height()
+            ):
+                back_levels = ancestor_tree.ancestral_mapping[expr.term_name]
+                for _ in range(back_levels):
+                    assert ancestor_tree.parent is not None
+                    ancestor_tree = ancestor_tree.parent
+                expr_name = ancestor_tree.pipeline[-1].renamings.get(
+                    expr_name, expr_name
+                )
+                break
+            elif len(self.stack) > 0:
+                ancestor_tree = self.stack.pop()
+                new_stack.append(ancestor_tree)
+                correl_levels += 1
+            else:
+                raise ValueError("Cannot find ancestor with name " + str(expr))
+        for tree in reversed(new_stack):
+            self.stack.append(tree)
+
+        # The final expression is a regular or back reference depending
+        # on how many back levels it is from the identified ancestor.
+        result: HybridExpr
+        if back_levels == 0:
+            result = HybridRefExpr(expr_name, expr.pydough_type)
+        else:
+            result = HybridBackRefExpr(expr_name, back_levels, expr.pydough_type)
+
+        # Then, wrap it in the necessary number of CORREL() layers.
+        for _ in range(correl_levels):
+            result = HybridCorrelExpr(result)
+
+        return result
+
     def make_hybrid_expr(
         self,
         hybrid: HybridTree,
@@ -1074,7 +1149,6 @@ class HybridTranslator:
         child_connection: HybridConnection
         args: list[HybridExpr] = []
         hybrid_arg: HybridExpr
-        ancestor_tree: HybridTree
         collection: PyDoughCollectionQDAG
         match expr:
             case PartitionKey():
@@ -1105,30 +1179,8 @@ class HybridTranslator:
                 else:
                     return HybridRefExpr(expr.term_name, expr.pydough_type)
             case BackReferenceExpression():
-                # A reference to an expression from an ancestor becomes a
-                # reference to one of the terms of a parent level of the hybrid
-                # tree. If the BACK goes far enough that it must step outside
-                # a child subtree into the parent, a correlated reference is
-                # created.
-                ancestor_tree = hybrid
-                true_steps_back: int = 0
-                # Keep stepping backward until `expr.back_levels` non-hidden
-                # steps have been taken.
-                collection = expr.collection
-                while true_steps_back < expr.back_levels:
-                    assert collection.ancestor_context is not None
-                    collection = collection.ancestor_context
-                    if ancestor_tree.parent is None:
-                        return self.make_hybrid_correl_expr(
-                            expr, collection, true_steps_back, 0
-                        )
-                    ancestor_tree = ancestor_tree.parent
-                    if not ancestor_tree.is_hidden_level:
-                        true_steps_back += 1
-                expr_name = ancestor_tree.pipeline[-1].renamings.get(
-                    expr.term_name, expr.term_name
-                )
-                return HybridBackRefExpr(expr_name, expr.back_levels, expr.pydough_type)
+                return self.translate_back_reference(hybrid, expr)
+
             case Reference():
                 if hybrid.ancestral_mapping.get(expr.term_name, 0) > 0:
                     collection = expr.collection
@@ -1497,6 +1549,8 @@ class HybridTranslator:
                         hybrid.pipeline[-1].orderings,
                     )
                 )
+                for name in new_expressions:
+                    hybrid.ancestral_mapping[name] = 0
                 return hybrid
             case Singular():
                 # a Singular node is just used to annotate the preceding context
@@ -1551,6 +1605,11 @@ class HybridTranslator:
                 ].subtree
                 partition_child.agg_keys = key_exprs
                 partition_child.join_keys = [(k, k) for k in key_exprs]
+                # Add a dummy no-op after the partition to ensure a
+                # buffer in the max_steps for other children.
+                successor_hybrid.add_operation(
+                    HybridNoop(successor_hybrid.pipeline[-1])
+                )
                 return successor_hybrid
             case OrderBy() | TopK():
                 hybrid = self.make_hybrid_tree(
@@ -1630,6 +1689,11 @@ class HybridTranslator:
                         successor_hybrid.children[
                             partition_child_idx
                         ].subtree.agg_keys = key_exprs
+                        # Add a dummy no-op after the partition to ensure a
+                        # buffer in the max_steps for other children.
+                        successor_hybrid.add_operation(
+                            HybridNoop(successor_hybrid.pipeline[-1])
+                        )
                     case GlobalContext():
                         # This is a special case where the child access
                         # is a global context, which means that the child is
