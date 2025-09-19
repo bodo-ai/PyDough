@@ -113,35 +113,38 @@ result = (
             ),
             id="wdi_albania_footnotes_1978",
         ),
-        #  uncomment and align to reproduce SQL query optimization failed. SQL generation works for SQLite
-        #         pytest.param(
-        #             PyDoughPandasTest(
-        #                 r"""
-        # result = cast_.WHERE(
-        #     (lowercase_detail_3._0_0_and == '2 "0 = 0 and \'" field name') & (lowercase_detail_4.id_ == 1)
-        # ).CALCULATE(
-        #     id1=id2,
-        #     id2=id_,
-        #     # uncomment to reproduce ERROR WHILE OPTIMIZING QUERY one more time
-        #     # fk1_select=lowercase_detail_3.select_,
-        #     # fk1_as=lowercase_detail_3.as_,
-        #     fk2_two_words=lowercase_detail_4.two_words
-        # )
-        #                 """,
-        #                 "keywords",
-        #                 lambda: pd.DataFrame(
-        #                     {
-        #                         "id1": [2],
-        #                         "id2": [1],
-        #                         # "fk1_select": ["2 select reserved word"],
-        #                         # "fk1_as": ["2 as reserved word"],
-        #                         "fk2_two_words": ["1 two words field name"],
-        #                     }
-        #                 ),
-        #                 "keywords_cast_alias_and_missing_alias",
-        #             ),
-        #             id="keywords_cast_alias_and_missing_alias",
-        #         ),
+        pytest.param(
+            PyDoughPandasTest(
+                r"""
+result = cast_.WHERE(
+    (lowercase_detail_3._0_0_and == '2 "0 = 0 and \'" field name') & (lowercase_detail_4.id_ == 1)
+).CALCULATE(
+    id1=id2,
+    id2=id_,
+    fk1_select=lowercase_detail_3.select_,
+    fk1_as=lowercase_detail_3.as_,
+    fk2_two_words=lowercase_detail_4.two_words
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "id1": [2],
+                        "id2": [1],
+                        "fk1_select": ["2 select reserved word"],
+                        "fk1_as": ["2 as reserved word"],
+                        "fk2_two_words": ["1 two words field name"],
+                    }
+                ),
+                "keywords_cast_alias_and_missing_alias",
+            ),
+            id="keywords_cast_alias_and_missing_alias",
+            marks=pytest.mark.skip(
+                "TODO (gh #432, #435): fix issues with"
+                " table alias name when it is reserved, and related optimization"
+                " error"
+            ),
+        ),
         pytest.param(
             PyDoughPandasTest(
                 r"""
@@ -159,43 +162,44 @@ result = master.WHERE(
             ),
             id="keywords_single_quote_use",
         ),
-        #  uncomment and align to reproduce SQL query optimization failed. SQL execution works for SQLite
-        #         pytest.param(
-        #             PyDoughPandasTest(
-        #                 r'''
-        # result = mixedcase_1_1.WHERE(
-        #     (parentheses == '5 (parentheses)') & (lowercase_detail_5.as_ == '10 as reserved word')
-        # ).CALCULATE(
-        #     id_=id_,
-        #     LowerCaseID=lowercaseid,
-        #     integer=uppercase_master_2.integer,
-        #     # uncomment to reproduce ERROR WHILE OPTIMIZING QUERY one more time
-        #     #as_=lowercase_detail_5.as_,
-        #     # replace order_ to order to reproduce column alias reserved issue
-        #     order_=uppercase_master_2.order_by_
-        # )
-        #                 ''',
-        #                 "keywords",
-        #                 lambda: pd.DataFrame(
-        #                     {
-        #                         "id_": [5],
-        #                         "LowerCaseID": [10],
-        #                         "INTEGER": ["5 INTEGER RESERVED WORD"],
-        #                         # "as_": ["10 as reserved word"],
-        #                         "order_": ["5 TWO WORDS RESERVED"],
-        #                     }
-        #                 ),
-        #                 "keywords_column_alias_reserved",
-        #             ),
-        #             id="keywords_column_alias_reserved",
-        #         ),
         pytest.param(
             PyDoughPandasTest(
-                r"""
+                """
+result = mixedcase_1_1.WHERE(
+    (parentheses == '5 (parentheses)') & (lowercase_detail_5.as_ == '10 as reserved word')
+).CALCULATE(
+    id_=id_,
+    LowerCaseID=lowercaseid,
+    integer=uppercase_master_2.integer,
+    as_=lowercase_detail_5.as_,
+    order=uppercase_master_2.order_by_
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "id_": [5],
+                        "LowerCaseID": [10],
+                        "INTEGER": ["5 INTEGER RESERVED WORD"],
+                        "as_": ["10 as reserved word"],
+                        "order": ["5 TWO WORDS RESERVED"],
+                    }
+                ),
+                "keywords_column_alias_reserved",
+            ),
+            id="keywords_column_alias_reserved",
+            marks=pytest.mark.skip(
+                "TODO (gh #433, #435): fix issues with"
+                " invalid double escape to names already escaped in metadata"
+            ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
 result = count.WHERE(
     int_==8051
 ).CALCULATE(
-    #dbl_quote_dot=unknown_column_6,
+    dbl_quote_dot=unknown_column_6,
     dot=unknown_column_7,
     addition=(unknown_column_7+DEFAULT_TO(float_,str_,1)),
     col=col, 
@@ -208,7 +212,7 @@ result = count.WHERE(
                 "keywords",
                 lambda: pd.DataFrame(
                     {
-                        # "dbl_quote_dot": [5051],
+                        "dbl_quote_dot": [5051],
                         "dot": [6051],
                         "addition": [6052],
                         "col": [10051],
@@ -220,38 +224,46 @@ result = count.WHERE(
                 ),
                 "keywords_python_sql_reserved",
             ),
-            id="keywords_python_sql_reserved",
+            marks=pytest.mark.skip(
+                "TODO (gh #434, #435): fix issues with"
+                " invalid SQL when a column or table name includes a quoting"
+                " character"
+            ),
         ),
-        #  uncomment and align to reproduce SQL query optimization failed. SQL generation works for SQLite
-        #         pytest.param(
-        #             PyDoughPandasTest(
-        #                 r"""
-        # result = where_.WHERE(
-        #     (calculate_ == 4) & ABSENT(present)
-        # ).CALCULATE(
-        #     calculate=DEFAULT_TO(default_to,calculate_),
-        #     _where=calculate__2.where_,
-        #     _like=calculate__2.like_,
-        #     datetime=calculate__2.datetime,
-        #     abs=abs_,
-        #     has=has
-        # )
-        #                 """,
-        #                 "keywords",
-        #                 lambda: pd.DataFrame(
-        #                     {
-        #                         "calculate": [4],
-        #                         "_where": [4],
-        #                         "_like": [None],
-        #                         "DATETIME": [None],
-        #                         "ABS": [None],
-        #                         "HAS": [None],
-        #                     }
-        #                 ),
-        #                 "keywords_alias_reserved_word",
-        #             ),
-        #             id="keywords_alias_reserved_word",
-        #         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = where_.WHERE(
+    (calculate_ == 4) & ABSENT(present)
+).CALCULATE(
+    calculate=DEFAULT_TO(default_to,calculate_),
+    _where=calculate__2.where_,
+    _like=calculate__2.like_,
+    datetime=calculate__2.datetime,
+    abs=abs_,
+    has=has
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "calculate": [4],
+                        "_where": [4],
+                        "_like": [None],
+                        "DATETIME": [None],
+                        "ABS": [None],
+                        "HAS": [None],
+                    }
+                ),
+                "keywords_alias_reserved_word",
+            ),
+            id="keywords_alias_reserved_word",
+            marks=pytest.mark.skip(
+                "TODO (gh #432, #435): fix issues with"
+                " table alias name when it is reserved, and related optimization"
+                " error"
+            ),
+        ),
     ],
 )
 def custom_datasets_test_data(request) -> PyDoughPandasTest:

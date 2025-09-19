@@ -1,8 +1,0 @@
-ROOT(columns=[('id_', Id), ('LowerCaseID', LowerCaseId), ('integer', INTEGER), ('order_', `ORDER BY`)], orderings=[])
- JOIN(condition=t0.Id == t1.ID, type=INNER, cardinality=SINGULAR_ACCESS, columns={'INTEGER': t1.INTEGER, 'Id': t0.Id, 'LowerCaseId': t0.LowerCaseId, '`ORDER BY`': t1.`ORDER BY`})
-  JOIN(condition=t0.LowerCaseId == t1.id, type=INNER, cardinality=SINGULAR_FILTER, columns={'Id': t0.Id, 'LowerCaseId': t0.LowerCaseId})
-   FILTER(condition=`(parentheses)` == '5 (parentheses)':string, columns={'Id': Id, 'LowerCaseId': LowerCaseId})
-    SCAN(table=keywords."MixedCase_1:1", columns={'Id': Id, 'LowerCaseId': LowerCaseId, '`(parentheses)`': `(parentheses)`})
-   FILTER(condition=`as` == '10 as reserved word':string, columns={'id': id})
-    SCAN(table=keywords.lowercase_detail, columns={'`as`': `as`, 'id': id})
-  SCAN(table=keywords.UPPERCASE_MASTER, columns={'ID': ID, 'INTEGER': INTEGER, '`ORDER BY`': `ORDER BY`})
