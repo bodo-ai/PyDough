@@ -16,8 +16,12 @@
             "type": "table column",
             "column name": "ID",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID'",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -25,8 +29,12 @@
             "type": "table column",
             "column name": "```cast```",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'CAST'",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -34,8 +42,12 @@
             "type": "table column",
             "column name": "`= \"QUOTE\"`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`= \"QUOTE\"`'",
+            "sample values": [
+              2,
+              4,
+              6
+            ],
             "synonyms": []
           },
           {
@@ -43,8 +55,12 @@
             "type": "table column",
             "column name": "```name\"[`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '```name\"[`'",
+            "sample values": [
+              11,
+              9,
+              7
+            ],
             "synonyms": []
           },
           {
@@ -52,8 +68,12 @@
             "type": "table column",
             "column name": "description",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table `\"QUOTED TABLE_NAME\"`",
+            "sample values": [
+              "RECORD 1",
+              "RECORD 2",
+              "RECORD 3"
+            ],
             "synonyms": []
           }
         ],
@@ -73,8 +93,12 @@
             "type": "table column",
             "column name": "`.WHERE`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`.WHERE`'",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -82,8 +106,10 @@
             "type": "table column",
             "column name": "LOWER",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'LOWER'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -91,8 +117,10 @@
             "type": "table column",
             "column name": "UPPER",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'UPPER'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -100,8 +128,10 @@
             "type": "table column",
             "column name": "LENGTH",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'LENGTH'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -109,8 +139,10 @@
             "type": "table column",
             "column name": "STARTSWITH",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'STARTSWITH'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -118,8 +150,10 @@
             "type": "table column",
             "column name": "ENDSWITH",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'ENDSWITH'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -127,8 +161,10 @@
             "type": "table column",
             "column name": "CONTAINS",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'CONTAINS'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -136,8 +172,10 @@
             "type": "table column",
             "column name": "`LIKE`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'LIKE'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -145,8 +183,10 @@
             "type": "table column",
             "column name": "JOIN_STRINGS",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'JOIN_STRINGS'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -154,8 +194,10 @@
             "type": "table column",
             "column name": "LPAD",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'LPAD'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -163,8 +205,10 @@
             "type": "table column",
             "column name": "RPAD",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'RPAD'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -172,8 +216,10 @@
             "type": "table column",
             "column name": "FIND",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'FIND'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -181,8 +227,10 @@
             "type": "table column",
             "column name": "STRIP",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'STRIP'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -190,8 +238,10 @@
             "type": "table column",
             "column name": "REPLACE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'REPLACE'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -199,8 +249,10 @@
             "type": "table column",
             "column name": "STRCOUNT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'STRCOUNT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -208,8 +260,10 @@
             "type": "table column",
             "column name": "GETPART",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'GETPART'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -217,8 +271,10 @@
             "type": "table column",
             "column name": "DATETIME",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'DATETIME'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -226,8 +282,10 @@
             "type": "table column",
             "column name": "YEAR",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'YEAR'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -235,8 +293,10 @@
             "type": "table column",
             "column name": "QUARTER",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'QUARTER'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -244,8 +304,10 @@
             "type": "table column",
             "column name": "MONTH",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'MONTH'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -253,8 +315,10 @@
             "type": "table column",
             "column name": "DAY",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'DAY'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -262,8 +326,10 @@
             "type": "table column",
             "column name": "HOUR",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'HOUR'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -271,8 +337,10 @@
             "type": "table column",
             "column name": "MINUTE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'MINUTE'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -280,8 +348,10 @@
             "type": "table column",
             "column name": "SECOND",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'SECOND'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -289,8 +359,10 @@
             "type": "table column",
             "column name": "DATEDIFF",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'DATEDIFF'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -298,8 +370,10 @@
             "type": "table column",
             "column name": "DAYOFWEEK",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'DAYOFWEEK'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -307,8 +381,10 @@
             "type": "table column",
             "column name": "DAYNAME",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'DAYNAME'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           }
         ],
@@ -328,8 +404,12 @@
             "type": "table column",
             "column name": "PK_FIELD_NAME",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Primary key column for table CAST",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -337,8 +417,12 @@
             "type": "table column",
             "column name": "ID",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID' (foreign key referencing lowercase_detail.id)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -346,8 +430,12 @@
             "type": "table column",
             "column name": "ID2",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID2' (foreign key referencing lowercase_detail.id)",
+            "sample values": [
+              2,
+              4,
+              6
+            ],
             "synonyms": []
           },
           {
@@ -355,8 +443,11 @@
             "type": "table column",
             "column name": "is_active",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table CAST",
+            "sample values": [
+              1,
+              0
+            ],
             "synonyms": []
           }
         ],
@@ -377,8 +468,12 @@
             "type": "table column",
             "column name": "this",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table COUNT (part of PRIMARY KEY) (foreign key referencing CAST.PK_FIELD_NAME)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -386,8 +481,10 @@
             "type": "table column",
             "column name": "class",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from Python reserved word 'class' (part of PRIMARY KEY)",
+            "sample values": [
+              1
+            ],
             "synonyms": []
           },
           {
@@ -395,8 +492,12 @@
             "type": "table column",
             "column name": "import",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from Python reserved word 'IMPORT'",
+            "sample values": [
+              1011,
+              1021,
+              1031
+            ],
             "synonyms": []
           },
           {
@@ -404,8 +505,12 @@
             "type": "table column",
             "column name": "def",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from Python reserved word 'DEF'",
+            "sample values": [
+              2011,
+              2021,
+              2031
+            ],
             "synonyms": []
           },
           {
@@ -413,8 +518,12 @@
             "type": "table column",
             "column name": "\"%%pydough\"",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '\"%%pydough\"'",
+            "sample values": [
+              3011,
+              3021,
+              3031
+            ],
             "synonyms": []
           },
           {
@@ -422,8 +531,12 @@
             "type": "table column",
             "column name": "\"%load_ext\"",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '\"%load_ext\"'",
+            "sample values": [
+              4011,
+              4021,
+              4031
+            ],
             "synonyms": []
           },
           {
@@ -431,8 +544,12 @@
             "type": "table column",
             "column name": "`\",`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`\",`'",
+            "sample values": [
+              5011,
+              5021,
+              5031
+            ],
             "synonyms": []
           },
           {
@@ -440,8 +557,12 @@
             "type": "table column",
             "column name": "`.`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`.`'",
+            "sample values": [
+              6011,
+              6021,
+              6031
+            ],
             "synonyms": []
           },
           {
@@ -449,8 +570,12 @@
             "type": "table column",
             "column name": "bool",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from Python reserved word 'bool'",
+            "sample values": [
+              7011,
+              7021,
+              7031
+            ],
             "synonyms": []
           },
           {
@@ -458,8 +583,12 @@
             "type": "table column",
             "column name": "__call__",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from '__call__'",
+            "sample values": [
+              8011,
+              8021,
+              8031
+            ],
             "synonyms": []
           },
           {
@@ -467,8 +596,12 @@
             "type": "table column",
             "column name": "int",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL and python reserved word 'int'",
+            "sample values": [
+              9011,
+              9021,
+              9031
+            ],
             "synonyms": []
           },
           {
@@ -476,8 +609,12 @@
             "type": "table column",
             "column name": "FLOAT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL and Python reserved word 'float'",
+            "sample values": [
+              10011,
+              10021,
+              10031
+            ],
             "synonyms": []
           },
           {
@@ -485,8 +622,12 @@
             "type": "table column",
             "column name": "__init__",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from '__init__'",
+            "sample values": [
+              11011,
+              11021,
+              11031
+            ],
             "synonyms": []
           },
           {
@@ -494,8 +635,10 @@
             "type": "table column",
             "column name": "new",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table COUNT",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -503,8 +646,10 @@
             "type": "table column",
             "column name": "del",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from 'del'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -512,8 +657,10 @@
             "type": "table column",
             "column name": "__col__",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from predicate format reserved word '__col__'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -521,8 +668,10 @@
             "type": "table column",
             "column name": "__col1__",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from predicate format reserved word '__col1__'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -530,8 +679,10 @@
             "type": "table column",
             "column name": "__class__",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from '__class__. Normalized original name collides with class property'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -539,8 +690,10 @@
             "type": "table column",
             "column name": "str",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from Python reserved word 'str'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -548,8 +701,10 @@
             "type": "table column",
             "column name": "dict",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from Python reserved word 'dict'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -557,8 +712,10 @@
             "type": "table column",
             "column name": "__add__",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from reserved word '__add__'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -566,8 +723,10 @@
             "type": "table column",
             "column name": "__mul__",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from reserved word '__mul__'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           }
         ],
@@ -587,8 +746,10 @@
             "type": "table column",
             "column name": "Id",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID' (foreign key referencing UPPERCASE_MASTER.ID)",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -596,8 +757,10 @@
             "type": "table column",
             "column name": "`(parentheses)`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`(parentheses)`'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -605,8 +768,10 @@
             "type": "table column",
             "column name": "\"In\"",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'IN'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -614,8 +779,10 @@
             "type": "table column",
             "column name": "LowerCaseId",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from mixedcase_1_1 (foreign key referencing lowercase_detail.id)",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           }
         ],
@@ -635,8 +802,12 @@
             "type": "table column",
             "column name": "ORDER_BY",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'ORDER_BY'",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -644,8 +815,12 @@
             "type": "table column",
             "column name": "CALCULATE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'CALCULATE' (foreign key referencing CALCULATE..WHERE)",
+            "sample values": [
+              2,
+              3,
+              4
+            ],
             "synonyms": []
           },
           {
@@ -653,8 +828,12 @@
             "type": "table column",
             "column name": "\"WHERE\"",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'WHERE' (foreign key referencing WHERE..CALCULATE)",
+            "sample values": [
+              5,
+              1,
+              2
+            ],
             "synonyms": []
           },
           {
@@ -662,8 +841,10 @@
             "type": "table column",
             "column name": "TOP_K",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'TOP_K'",
+            "sample values": [
+              1
+            ],
             "synonyms": []
           },
           {
@@ -671,8 +852,10 @@
             "type": "table column",
             "column name": "SINGULAR",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'SINGULAR'",
+            "sample values": [
+              1
+            ],
             "synonyms": []
           },
           {
@@ -680,8 +863,10 @@
             "type": "table column",
             "column name": "BEST",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'BEST'",
+            "sample values": [
+              1
+            ],
             "synonyms": []
           },
           {
@@ -689,8 +874,10 @@
             "type": "table column",
             "column name": "\"CROSS\"",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'CROSS'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -698,8 +885,10 @@
             "type": "table column",
             "column name": "RANKING",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'RANKING'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -707,8 +896,10 @@
             "type": "table column",
             "column name": "PERCENTILE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'PERCENTILE'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -716,8 +907,10 @@
             "type": "table column",
             "column name": "PREV",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'PREV'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -725,8 +918,10 @@
             "type": "table column",
             "column name": "NEXT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'NEXT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -734,8 +929,10 @@
             "type": "table column",
             "column name": "RELSUM",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'RELSUM'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -743,8 +940,10 @@
             "type": "table column",
             "column name": "RELAVG",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'RELAVG'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -752,8 +951,10 @@
             "type": "table column",
             "column name": "RELCOUNT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'RELCOUNT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -761,8 +962,10 @@
             "type": "table column",
             "column name": "RELSIZE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'RELSIZE'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -770,8 +973,10 @@
             "type": "table column",
             "column name": "STRING",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'STRING'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -779,8 +984,10 @@
             "type": "table column",
             "column name": "INTEGER",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'INTEGER'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -788,8 +995,10 @@
             "type": "table column",
             "column name": "FLOAT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'FLOAT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -797,8 +1006,10 @@
             "type": "table column",
             "column name": "NUMERIC",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'NUMERIC'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -806,8 +1017,10 @@
             "type": "table column",
             "column name": "DECIMAL",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'DECIMAL'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -815,8 +1028,10 @@
             "type": "table column",
             "column name": "CHAR",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'CHAR'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -824,8 +1039,10 @@
             "type": "table column",
             "column name": "VARCHAR",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'VARCHAR'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           }
         ],
@@ -845,8 +1062,12 @@
             "type": "table column",
             "column name": "ID",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID'",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -854,8 +1075,12 @@
             "type": "table column",
             "column name": "NAME",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'NAME'",
+            "sample values": [
+              "FIRST_RECORD",
+              "SECOND_RECORD",
+              "THIRD_RECORD"
+            ],
             "synonyms": []
           },
           {
@@ -863,8 +1088,12 @@
             "type": "table column",
             "column name": "\"CAST\"",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'CAST'",
+            "sample values": [
+              "1 CAST RESERVED WORD",
+              "2 CAST RESERVED WORD",
+              "3 CAST RESERVED WORD"
+            ],
             "synonyms": []
           },
           {
@@ -872,8 +1101,12 @@
             "type": "table column",
             "column name": "\"WHERE\"",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'WHERE'",
+            "sample values": [
+              "1 WHERE RESERVED WORD",
+              "2 WHERE RESERVED WORD",
+              "3 WHERE RESERVED WORD"
+            ],
             "synonyms": []
           },
           {
@@ -881,8 +1114,12 @@
             "type": "table column",
             "column name": "\"FROM\"",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'FROM'",
+            "sample values": [
+              "1 FROM RESERVED WORD",
+              "2 FROM RESERVED WORD",
+              "3 FROM RESERVED WORD"
+            ],
             "synonyms": []
           },
           {
@@ -890,8 +1127,12 @@
             "type": "table column",
             "column name": "VARCHAR",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'VARCHAR'",
+            "sample values": [
+              "1 VARCHAR RESERVED WORD",
+              "2 VARCHAR RESERVED WORD",
+              "3 VARCHAR RESERVED WORD"
+            ],
             "synonyms": []
           },
           {
@@ -899,8 +1140,12 @@
             "type": "table column",
             "column name": "INTEGER",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'INTEGER'",
+            "sample values": [
+              "1 INTEGER RESERVED WORD",
+              "2 INTEGER RESERVED WORD",
+              "3 INTEGER RESERVED WORD"
+            ],
             "synonyms": []
           },
           {
@@ -908,8 +1153,12 @@
             "type": "table column",
             "column name": "`TWO WORDS`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`TWO WORDS`'",
+            "sample values": [
+              "1 TWO WORDS FIELD NAME",
+              "2 TWO WORDS FIELD NAME",
+              "3 TWO WORDS FIELD NAME"
+            ],
             "synonyms": []
           },
           {
@@ -917,8 +1166,12 @@
             "type": "table column",
             "column name": "`ORDER BY`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`ORDER BY`'",
+            "sample values": [
+              "1 TWO WORDS RESERVED",
+              "2 TWO WORDS RESERVED",
+              "3 TWO WORDS RESERVED"
+            ],
             "synonyms": []
           }
         ],
@@ -938,8 +1191,12 @@
             "type": "table column",
             "column name": "`.CALCULATE`",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`.CALCULATE`' (foreign key referencing CALCULATE..WHERE)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -947,8 +1204,10 @@
             "type": "table column",
             "column name": "IFF",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'IFF'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -956,8 +1215,10 @@
             "type": "table column",
             "column name": "ISIN",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'ISIN'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -965,8 +1226,10 @@
             "type": "table column",
             "column name": "DEFAULT_TO",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'DEFAULT_TO'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -974,8 +1237,10 @@
             "type": "table column",
             "column name": "PRESENT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'PRESENT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -983,8 +1248,10 @@
             "type": "table column",
             "column name": "ABSENT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'ABSENT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -992,8 +1259,10 @@
             "type": "table column",
             "column name": "KEEP_IF",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'KEEP_IF'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1001,8 +1270,10 @@
             "type": "table column",
             "column name": "MONOTONIC",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'MONOTONIC'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1010,8 +1281,10 @@
             "type": "table column",
             "column name": "ABS",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'ABS'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1019,8 +1292,10 @@
             "type": "table column",
             "column name": "ROUND",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'ROUND'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1028,8 +1303,10 @@
             "type": "table column",
             "column name": "CEIL",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'CEIL'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1037,8 +1314,10 @@
             "type": "table column",
             "column name": "FLOOR",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'FLOOR'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1046,8 +1325,10 @@
             "type": "table column",
             "column name": "POWER",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'POWER'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1055,8 +1336,10 @@
             "type": "table column",
             "column name": "SQRT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'SQRT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1064,8 +1347,10 @@
             "type": "table column",
             "column name": "SIGN",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'SIGN'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1073,8 +1358,10 @@
             "type": "table column",
             "column name": "SMALLEST",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'SMALLEST'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1082,8 +1369,10 @@
             "type": "table column",
             "column name": "LARGEST",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'LARGEST'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1091,8 +1380,10 @@
             "type": "table column",
             "column name": "SUM",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'SUM'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1100,8 +1391,10 @@
             "type": "table column",
             "column name": "AVG",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'AVG'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1109,8 +1402,10 @@
             "type": "table column",
             "column name": "MEDIAN",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'MEDIAN'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1118,8 +1413,10 @@
             "type": "table column",
             "column name": "MIN",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'MIN'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1127,8 +1424,10 @@
             "type": "table column",
             "column name": "MAX",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'MAX'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1136,8 +1435,10 @@
             "type": "table column",
             "column name": "QUANTILE",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'QUANTILE'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1145,8 +1446,10 @@
             "type": "table column",
             "column name": "ANYTHING",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'ANYTHING'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1154,8 +1457,10 @@
             "type": "table column",
             "column name": "COUNT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'COUNT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1163,8 +1468,10 @@
             "type": "table column",
             "column name": "NDISTINCT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'NDISTINCT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1172,8 +1479,10 @@
             "type": "table column",
             "column name": "HAS",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'HAS'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1181,8 +1490,10 @@
             "type": "table column",
             "column name": "HASNOT",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'HASNOT'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1190,8 +1501,10 @@
             "type": "table column",
             "column name": "VAR",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'VAR'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           },
           {
@@ -1199,8 +1512,10 @@
             "type": "table column",
             "column name": "STD",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from PyDough reserved word 'STD'",
+            "sample values": [
+              null
+            ],
             "synonyms": []
           }
         ],
@@ -1220,8 +1535,12 @@
             "type": "table column",
             "column name": "\"key\"",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'KEY' (part of PRIMARY KEY)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -1229,8 +1548,12 @@
             "type": "table column",
             "column name": "id1",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table detail1 (part of UNIQUE constraint) (foreign key referencing master.ID1)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -1238,8 +1561,11 @@
             "type": "table column",
             "column name": "id2",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table detail1 (part of UNIQUE constraint) (foreign key referencing master.ID2)",
+            "sample values": [
+              1,
+              2
+            ],
             "synonyms": []
           },
           {
@@ -1247,8 +1573,12 @@
             "type": "table column",
             "column name": "description",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table detail1",
+            "sample values": [
+              "1 One-One AK-PK",
+              "2 One-Two AK-PK",
+              "3 Two-One AK-PK"
+            ],
             "synonyms": []
           }
         ],
@@ -1268,8 +1598,12 @@
             "type": "table column",
             "column name": "\"key\"",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'KEY' (part of PRIMARY KEY)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -1277,8 +1611,12 @@
             "type": "table column",
             "column name": "alt_key1",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table detail2 (foreign key referencing master.ALT_KEY1)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -1286,8 +1624,11 @@
             "type": "table column",
             "column name": "alt_key2",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table detail2 (foreign key referencing master.ALT_KEY2)",
+            "sample values": [
+              1,
+              2
+            ],
             "synonyms": []
           },
           {
@@ -1295,8 +1636,12 @@
             "type": "table column",
             "column name": "description",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table detail2",
+            "sample values": [
+              "1 One-One FK-PK",
+              "2 One-Two FK-PK",
+              "3 Two-One FK-PK"
+            ],
             "synonyms": []
           }
         ],
@@ -1316,8 +1661,12 @@
             "type": "table column",
             "column name": "id",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID'",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -1325,8 +1674,12 @@
             "type": "table column",
             "column name": "master_id",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table lowercase_detail (foreign key referencing UPPERCASE_MASTER.ID)",
+            "sample values": [
+              1,
+              3,
+              4
+            ],
             "synonyms": []
           },
           {
@@ -1334,8 +1687,12 @@
             "type": "table column",
             "column name": "`two words`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`two words`'",
+            "sample values": [
+              "1 two words field name",
+              "2 two words field name",
+              "3 two words field name"
+            ],
             "synonyms": []
           },
           {
@@ -1343,8 +1700,12 @@
             "type": "table column",
             "column name": "`select`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'SELECT'",
+            "sample values": [
+              "1 select reserved word",
+              "2 select reserved word",
+              "3 select reserved word"
+            ],
             "synonyms": []
           },
           {
@@ -1352,8 +1713,12 @@
             "type": "table column",
             "column name": "`as`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'AS'",
+            "sample values": [
+              "1 as reserved word",
+              "2 as reserved word",
+              "3 as reserved word"
+            ],
             "synonyms": []
           },
           {
@@ -1361,8 +1726,12 @@
             "type": "table column",
             "column name": "`0 = 0 and '`",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from unusual identifier '`0 = 0 and '`'",
+            "sample values": [
+              "1 \"0 = 0 and '\" field name",
+              "2 \"0 = 0 and '\" field name",
+              "3 \"0 = 0 and '\" field name"
+            ],
             "synonyms": []
           },
           {
@@ -1370,8 +1739,12 @@
             "type": "table column",
             "column name": "result",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table lowercase_detail",
+            "sample values": [
+              1234.56,
+              2345.67,
+              3456.78
+            ],
             "synonyms": []
           },
           {
@@ -1379,8 +1752,11 @@
             "type": "table column",
             "column name": "is_active",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column from table lowercase_detail",
+            "sample values": [
+              1,
+              0
+            ],
             "synonyms": []
           }
         ],
@@ -1401,8 +1777,12 @@
             "type": "table column",
             "column name": "ID1",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID1' (part of PRIMARY KEY)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -1410,8 +1790,11 @@
             "type": "table column",
             "column name": "ID2",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ID2' (part of PRIMARY KEY)",
+            "sample values": [
+              1,
+              2
+            ],
             "synonyms": []
           },
           {
@@ -1419,8 +1802,12 @@
             "type": "table column",
             "column name": "ALT_KEY1",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ALT_KEY1' (part of UNIQUE constraint)",
+            "sample values": [
+              1,
+              2,
+              3
+            ],
             "synonyms": []
           },
           {
@@ -1428,8 +1815,11 @@
             "type": "table column",
             "column name": "ALT_KEY2",
             "data type": "numeric",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'ALT_KEY2' (part of UNIQUE constraint)",
+            "sample values": [
+              1,
+              2
+            ],
             "synonyms": []
           },
           {
@@ -1437,8 +1827,12 @@
             "type": "table column",
             "column name": "DESCRIPTION",
             "data type": "string",
-            "description": "",
-            "sample values": [],
+            "description": "Column name normalized from SQL reserved word 'DESCRIPTION'",
+            "sample values": [
+              "One-One master row",
+              "One-Two master row",
+              "Two-One master row"
+            ],
             "synonyms": []
           }
         ],
@@ -1459,7 +1853,7 @@
             "name"
           ]
         },
-        "description": "",
+        "description": "Relationship between lowercase_detail and quoted_table_name",
         "synonyms": []
       },
       {
@@ -1469,7 +1863,7 @@
         "original property": "quoted_table_name",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between lowercase_detail and quoted_table_name",
         "synonyms": []
       },
       {
@@ -1484,7 +1878,7 @@
             "quote_"
           ]
         },
-        "description": "",
+        "description": "Relationship between lowercase_detail and quoted_table_name",
         "synonyms": []
       },
       {
@@ -1494,7 +1888,7 @@
         "original property": "quoted_table_name_2",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between lowercase_detail and quoted_table_name",
         "synonyms": []
       },
       {
@@ -1509,7 +1903,7 @@
             "cast_"
           ]
         },
-        "description": "",
+        "description": "Relationship between uppercase_master and quoted_table_name",
         "synonyms": []
       },
       {
@@ -1519,7 +1913,7 @@
         "original property": "quoted_table_name_3",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between uppercase_master and quoted_table_name",
         "synonyms": []
       },
       {
@@ -1534,7 +1928,7 @@
             "id2"
           ]
         },
-        "description": "",
+        "description": "Relationship between lowercase_detail and cast_",
         "synonyms": []
       },
       {
@@ -1544,7 +1938,7 @@
         "original property": "cast_",
         "singular": true,
         "always matches": false,
-        "description": "",
+        "description": "reverse for relationship between lowercase_detail and cast_",
         "synonyms": []
       },
       {
@@ -1559,7 +1953,7 @@
             "id_"
           ]
         },
-        "description": "",
+        "description": "Relationship between lowercase_detail and cast_",
         "synonyms": []
       },
       {
@@ -1569,7 +1963,7 @@
         "original property": "cast__2",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between lowercase_detail and cast_",
         "synonyms": []
       },
       {
@@ -1584,7 +1978,7 @@
             "this"
           ]
         },
-        "description": "",
+        "description": "Relationship between cast_ and count",
         "synonyms": []
       },
       {
@@ -1594,7 +1988,7 @@
         "original property": "count",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between cast_ and count",
         "synonyms": []
       },
       {
@@ -1609,7 +2003,7 @@
             "lowercaseid"
           ]
         },
-        "description": "",
+        "description": "Relationship between lowercase_detail and mixedcase_1_1",
         "synonyms": []
       },
       {
@@ -1619,7 +2013,7 @@
         "original property": "mixedcase_1_1",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between lowercase_detail and mixedcase_1_1",
         "synonyms": []
       },
       {
@@ -1634,7 +2028,7 @@
             "id_"
           ]
         },
-        "description": "",
+        "description": "Relationship between uppercase_master and mixedcase_1_1",
         "synonyms": []
       },
       {
@@ -1644,7 +2038,7 @@
         "original property": "mixedcase_1_1_2",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between uppercase_maste and mixedcase_1_1",
         "synonyms": []
       },
       {
@@ -1659,7 +2053,7 @@
             "where_"
           ]
         },
-        "description": "",
+        "description": "Relationship between where_ and partition_",
         "synonyms": []
       },
       {
@@ -1669,7 +2063,7 @@
         "original property": "partition_",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between where_ and partition_",
         "synonyms": []
       },
       {
@@ -1684,7 +2078,7 @@
             "calculate_"
           ]
         },
-        "description": "",
+        "description": "Relationship between calculate_ and partition_",
         "synonyms": []
       },
       {
@@ -1694,7 +2088,7 @@
         "original property": "partition__2",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between calculate_ and partition_",
         "synonyms": []
       },
       {
@@ -1709,7 +2103,7 @@
             "calculate_"
           ]
         },
-        "description": "",
+        "description": "Relationship between calculate_ and where_",
         "synonyms": []
       },
       {
@@ -1719,7 +2113,7 @@
         "original property": "where_collection",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between calculate_ and where_",
         "synonyms": []
       },
       {
@@ -1737,7 +2131,7 @@
             "id2"
           ]
         },
-        "description": "",
+        "description": "Relationship between master and detail1",
         "synonyms": []
       },
       {
@@ -1747,7 +2141,7 @@
         "original property": "detail1",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between master and detail1",
         "synonyms": []
       },
       {
@@ -1765,7 +2159,7 @@
             "alt_key2"
           ]
         },
-        "description": "",
+        "description": "Relationship between master and detail2",
         "synonyms": []
       },
       {
@@ -1775,7 +2169,7 @@
         "original property": "detail2",
         "singular": true,
         "always matches": false,
-        "description": "",
+        "description": "reverse for relationship between master and detail2",
         "synonyms": []
       },
       {
@@ -1790,7 +2184,7 @@
             "master_id"
           ]
         },
-        "description": "",
+        "description": "Relationship between uppercase_master and lowercase_detail",
         "synonyms": []
       },
       {
@@ -1800,7 +2194,7 @@
         "original property": "lowercase_detail",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "reverse for relationship between uppercase_master and lowercase_detail",
         "synonyms": []
       }
     ]
