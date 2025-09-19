@@ -129,14 +129,44 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="RESERVED_PROPERTY_KEYWORD_2",
         ),
         pytest.param(
-            "RESERVED_PROPERTY_KEYWORD_3",
-            "property name 'FROM' must be a string that is not a SQL reserved word",
-            id="RESERVED_PROPERTY_KEYWORD_3",
+            "COLUMN_NAME_RESERVED_KEYWORD",
+            "table column property 'FROM_RESERVED_SQL_WORD' of simple table collection 'table_name' in graph 'COLUMN_NAME_RESERVED_KEYWORD' must have a SQL name that is not a reserved word",
+            id="COLUMN_NAME_RESERVED_KEYWORD",
         ),
         pytest.param(
-            "RESERVED_PROPERTY_KEYWORD_4",
-            "collection name 'cast' must be a string that is not a SQL reserved word",
-            id="RESERVED_PROPERTY_KEYWORD_4",
+            "TABLE_PATH_RESERVED_KEYWORD",
+            "simple table collection 'cast_reserved_sql_word' in graph 'TABLE_PATH_RESERVED_KEYWORD' must have a SQL name that is not a reserved word",
+            id="TABLE_PATH_RESERVED_KEYWORD",
+        ),
+        pytest.param(
+            "COLUMN_NAME_INVALID_NAME_1",
+            "table column property 'invalid_column_name' of simple table collection 'table_name' in graph 'COLUMN_NAME_INVALID_NAME_1' must have a SQL name that is a valid SQL identifier",
+            id="COLUMN_NAME_INVALID_NAME_1",
+        ),
+        pytest.param(
+            "COLUMN_NAME_INVALID_NAME_2",
+            "table column property 'invalid_column_name' of simple table collection 'table_name' in graph 'COLUMN_NAME_INVALID_NAME_2' must have a SQL name that is a valid SQL identifier",
+            id="COLUMN_NAME_INVALID_NAME_2",
+        ),
+        pytest.param(
+            "COLUMN_NAME_INVALID_NAME_3",
+            "table column property 'invalid_column_name' of simple table collection 'table_name' in graph 'COLUMN_NAME_INVALID_NAME_3' must have a SQL name that is a valid SQL identifier",
+            id="COLUMN_NAME_INVALID_NAME_3",
+        ),
+        pytest.param(
+            "TABLE_PATH_INVALID_NAME_1",
+            "simple table collection 'invalid_table_path' in graph 'TABLE_PATH_INVALID_NAME_1' must have a SQL name that is a valid SQL identifier",
+            id="TABLE_PATH_INVALID_NAME_1",
+        ),
+        pytest.param(
+            "TABLE_PATH_INVALID_NAME_2",
+            "simple table collection 'invalid_table_path' in graph 'TABLE_PATH_INVALID_NAME_2' must have a SQL name that is a valid SQL identifier",
+            id="TABLE_PATH_INVALID_NAME_2",
+        ),
+        pytest.param(
+            "TABLE_PATH_INVALID_NAME_3",
+            "simple table collection 'invalid_table_path' in graph 'TABLE_PATH_INVALID_NAME_3' must have a SQL name that is a valid SQL identifier",
+            id="TABLE_PATH_INVALID_NAME_3",
         ),
         pytest.param(
             "BAD_RELATIONSHIP_NAME",

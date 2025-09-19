@@ -11,6 +11,7 @@ from pydough.errors.error_utils import (
     NoExtraKeys,
     extract_string,
     is_string,
+    is_valid_sql_name,
 )
 from pydough.metadata.collections import CollectionMetadata
 from pydough.types import PyDoughType, parse_type_from_string
@@ -99,6 +100,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         except PyDoughTypeException as e:
             raise PyDoughMetadataException(*e.args)
         column_name: str = extract_string(property_json, "column name", error_name)
+        is_valid_sql_name.verify(column_name, error_name)
 
         NoExtraKeys(TableColumnMetadata.allowed_fields).verify(
             property_json, error_name

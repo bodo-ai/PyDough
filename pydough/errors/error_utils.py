@@ -27,6 +27,7 @@ __all__ = [
     "is_positive_int",
     "is_string",
     "is_valid_name",
+    "is_valid_sql_name",
     "simple_join_keys_predicate",
     "unique_properties_predicate",
 ]
@@ -34,6 +35,7 @@ __all__ = [
 
 import builtins
 import keyword
+import re
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -121,9 +123,6 @@ class ValidName(PyDoughPredicate):
             # Check that obj is not a PyDough reserved word
             elif self._is_pydough_keyword(obj):
                 ret_val = "pydough_keyword"
-            # Check that obj is not a SQL reserved word
-            elif self._is_sql_keyword(obj):
-                ret_val = "sql_keyword"
         else:
             ret_val = "identifier"
 
@@ -146,49 +145,122 @@ class ValidName(PyDoughPredicate):
         }
         return name in PYDOUGH_RESERVED
 
-    def _is_sql_keyword(self, name: str) -> bool:
-        """
-        helper: Verifies if name is a SQL reserved word.
-                Extend with SQL reserved words if required.
-        """
-        # fmt: off
-        SQL_RESERVED_KEYWORDS: set[str] = {
-            # Query & DML
-            "select", "from", "where", "group", "having", "distinct", "as", 
-            "join", "inner", "union", "intersect", "except",
-
-            # DDL & schema
-            "create", "alter", "drop", "table", "view", "index", "sequence",
-            "trigger", "schema", "database", "column", "constraint",
-
-            # DML
-            "insert", "update", "delete", "into", "values", "set",
-
-            # Control flow & logical
-            "and", "or", "not", "in", "is", "like", "between", "case", "when",
-            "then", "else", "end", "exists",
-
-            # Transaction & session
-            "begin", "commit", "rollback", "savepoint", "transaction",
-            "lock", "grant", "revoke",
-
-            # Data types
-            "int", "integer", "bigint", "smallint", "decimal", "numeric",
-            "float", "real", "double", "char", "varchar", "text",
-            "timestamp", "boolean", "null",
-
-            # Functions
-            "cast",
-        }
-        # fmt: on
-        return name.lower() in SQL_RESERVED_KEYWORDS
-
     def accept(self, obj: object) -> bool:
         return self._error_code(obj) is None
 
     def error_message(self, error_name: str) -> str:
         # Generic fallback (since we don't have the object here)
         return f"{error_name} must be a valid identifier and not a reserved word"
+
+    def verify(self, obj: object, error_name: str) -> None:
+        code: str | None = self._error_code(obj)
+        if code is not None:
+            raise PyDoughMetadataException(f"{error_name} {self.error_messages[code]}")
+
+
+class ValidSQLName(PyDoughPredicate):
+    """Predicate class to check that an object is a string that can be used
+    as the name for a SQL table path/column name.
+    """
+
+    # Regex for unquoted SQL identifiers
+    _UNQUOTED_SQL_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+    def __init__(self):
+        self.error_messages: dict[str, str] = {
+            "identifier": "must have a SQL name that is a valid SQL identifier",
+            "sql_keyword": "must have a SQL name that is not a reserved word",
+        }
+
+    def _error_code(self, obj: object) -> str | None:
+        """Return an error code if invalid, or None if valid."""
+        ret_val: str | None = None
+        # Check that obj is a string
+        if isinstance(obj, str):
+            # Check that obj is a valid SQL identifier
+            if not self.is_valid_sql_identifier(obj):
+                ret_val = "identifier"
+            # Check that obj is not a SQL reserved word
+            elif self._is_sql_keyword(obj):
+                ret_val = "sql_keyword"
+        else:
+            ret_val = "identifier"
+
+        return ret_val
+
+    def is_valid_sql_identifier(self, name: str) -> bool:
+        """
+        Check if a string is a valid SQL identifier.
+
+        - Unquoted: starts with letter/underscore, then letters, digits, underscores.
+        - Double-quoted: allows any chars, but `""` is the only valid way to include a quote.
+        - Backtick-quoted: allows any chars, but `` `` `` is the only valid way to include a backtick.
+        """
+        if not name:
+            return False
+
+        # Case 1: unquoted
+        if self._UNQUOTED_SQL_IDENTIFIER.match(name):
+            return True
+
+        # Case 2: double quoted
+        if name.startswith('"') and name.endswith('"'):
+            inner = name[1:-1]
+            # Any " must be escaped as ""
+            return '"' not in inner.replace('""', "")
+
+        # Case 3: backtick quoted
+        if name.startswith("`") and name.endswith("`"):
+            inner = name[1:-1]
+            # Any ` must be escaped as ``
+            return "`" not in inner.replace("``", "")
+
+        return False
+
+    # fmt: off
+    SQL_RESERVED_KEYWORDS: set[str] = {
+        # Query & DML
+        "select", "from", "where", "group", "having", "distinct", "as", 
+        "join", "inner", "union", "intersect", "except",
+
+        # DDL & schema
+        "create", "alter", "drop", "table", "view", "index", "sequence",
+        "trigger", "schema", "database", "column", "constraint",
+
+        # DML
+        "insert", "update", "delete", "into", "values", "set",
+
+        # Control flow & logical
+        "and", "or", "not", "in", "is", "like", "between", "case", "when",
+        "then", "else", "end", "exists",
+
+        # Transaction & session
+        "begin", "commit", "rollback", "savepoint", "transaction",
+        "lock", "grant", "revoke",
+
+        # Data types
+        "int", "integer", "bigint", "smallint", "decimal", "numeric",
+        "float", "real", "double", "char", "varchar", "text",
+        "timestamp", "boolean", "null",
+
+        # Functions
+        "cast",
+    }
+    # fmt: on
+
+    def _is_sql_keyword(self, name: str) -> bool:
+        """
+        helper: Verifies if name is a SQL reserved word.
+                Extend with SQL reserved words if required.
+        """
+        return name.lower() in self.SQL_RESERVED_KEYWORDS
+
+    def accept(self, obj: object) -> bool:
+        return self._error_code(obj) is None
+
+    def error_message(self, error_name: str) -> str:
+        # Generic fallback (since we don't have the object here)
+        return f"{error_name} must be a valid SQL identifier and not a reserved word"
 
     def verify(self, obj: object, error_name: str) -> None:
         code: str | None = self._error_code(obj)
@@ -396,6 +468,7 @@ class PositiveInteger(PyDoughPredicate):
 ###############################################################################
 
 is_valid_name: PyDoughPredicate = ValidName()
+is_valid_sql_name: PyDoughPredicate = ValidSQLName()
 is_integer = HasType(int, "integer")
 is_string = HasType(str, "string")
 is_bool = HasType(bool, "boolean")

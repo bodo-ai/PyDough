@@ -84,7 +84,7 @@
         {
           "name": "0",
           "type": "simple table",
-          "table path": "TableName",
+          "table path": "`Table Name`",
           "unique properties": ["key"],
           "properties": [
             {"name": true}
@@ -150,7 +150,7 @@
             {
               "name": "invalid column name",
               "type": "table column",
-              "column name": "column_name",
+              "column name": "\"column name\"",
               "data type": "string",
               "description": "column description"
             }
@@ -166,7 +166,7 @@
         {
           "name": "collection",
           "type": "simple table",
-          "table path": "TableName",
+          "table path": "\"Table Name\"",
           "unique properties": ["id"],
           "properties": [
             {
@@ -188,7 +188,7 @@
         {
           "name": "table_name",
           "type": "simple table",
-          "table path": "TableName",
+          "table path": "`Table Name`",
           "unique properties": ["CALCULATE"],
           "properties": [
             {
@@ -204,17 +204,39 @@
       "relationships": []
     },
     {
-      "name": "RESERVED_PROPERTY_KEYWORD_3",
+      "name": "COLUMN_NAME_RESERVED_KEYWORD",
       "version": "V2",
       "collections": [
         {
           "name": "table_name",
           "type": "simple table",
           "table path": "TableName",
-          "unique properties": ["FROM"],
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
           "properties": [
             {
-              "name": "FROM",
+              "name": "FROM_RESERVED_SQL_WORD",
+              "type": "table column",
+              "column name": "FROM",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_RESERVED_KEYWORD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "cast_reserved_sql_word",
+          "type": "simple table",
+          "table path": "cast",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
               "type": "table column",
               "column name": "column_name",
               "data type": "string",
@@ -226,13 +248,123 @@
       "relationships": []
     },
     {
-      "name": "RESERVED_PROPERTY_KEYWORD_4",
+      "name": "COLUMN_NAME_INVALID_NAME_1",
       "version": "V2",
       "collections": [
         {
-          "name": "cast",
+          "name": "table_name",
           "type": "simple table",
           "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "column name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "\"column\"name\"",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "`column`name`",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "table name",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "\"table\"name\"",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "`table`name`",
           "unique properties": ["_id"],
           "properties": [
             {
