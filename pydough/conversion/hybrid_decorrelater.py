@@ -68,7 +68,10 @@ class HybridDecorrelater:
             to the PARTITION edge case. The third entry is how many operators
             in the pipeline were copied over from the root.
         """
-        if isinstance(hybrid.pipeline[0], HybridPartition) and child_idx == 0:
+        if (
+            isinstance(hybrid.pipeline[0], HybridPartition)
+            and hybrid.children[child_idx].max_steps == 1
+        ):
             # Special case: if the correlated child is the data argument of a
             # partition operation, then the parent to snapshot is actually the
             # parent of the level containing the partition operation. In this

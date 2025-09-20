@@ -246,6 +246,14 @@ class HybridTree:
         """
         self._general_join_condition = condition
 
+    def get_tree_height(self) -> int:
+        """
+        Returns the number of levels in the hybrid tree, starting from the
+        current level and counting upward.
+        """
+        parent_height: int = 0 if self.parent is None else self.parent.get_tree_height()
+        return parent_height + 1
+
     def add_operation(self, operation: HybridOperation) -> None:
         """
         Appends a new hybrid operation to the end of the hybrid tree's pipeline.

@@ -756,7 +756,10 @@ class RelTranslation:
             # If handling the data for a partition, pull every aggregation key
             # into the current context since it is now accessible as a normal
             # ref instead of a child ref.
-            if isinstance(hybrid.pipeline[pipeline_idx], HybridPartition):
+            if (
+                isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
+                and child_idx == 0
+            ):
                 partition = hybrid.pipeline[pipeline_idx]
                 assert isinstance(partition, HybridPartition)
                 for key_name in partition.key_names:
