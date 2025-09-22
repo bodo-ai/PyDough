@@ -452,7 +452,7 @@ def sf_masked_test_data(
     return request.param
 
 
-@pytest.mark.masked_snowflake
+@pytest.mark.sf_masked
 def test_pipeline_until_relational_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
@@ -472,7 +472,7 @@ def test_pipeline_until_relational_masked_sf(
 @pytest.mark.skip(
     reason="Skipping until masked table column relational handling is implemented"
 )
-@pytest.mark.masked_snowflake
+@pytest.mark.sf_masked
 def test_pipeline_until_sql_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
@@ -500,7 +500,7 @@ def test_pipeline_until_sql_masked_sf(
     reason="Skipping until masked table column relational handling is implemented"
 )
 @pytest.mark.execute
-@pytest.mark.masked_snowflake
+@pytest.mark.sf_masked
 @pytest.mark.parametrize("account_type", ["NONE", "PARTIAL", "FULL"])
 def test_pipeline_e2e_masked_sf(
     account_type: str,
