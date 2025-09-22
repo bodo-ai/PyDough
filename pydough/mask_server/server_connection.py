@@ -1,6 +1,6 @@
 """
-Connection module for the mask server. It contains the data structures
-and the main class to interact with the mask server.
+Connection module for the server. It contains the data structures
+and the main class to interact with a server.
 """
 
 __all__ = ["RequestMethod", "ServerConnection", "ServerRequest"]
@@ -15,7 +15,7 @@ from httpx import Response
 
 class RequestMethod(Enum):
     """
-    Class to represent the type of request to the MaskServer.
+    Class to represent the type of request to the Server.
     """
 
     GET = "GET"
@@ -27,12 +27,12 @@ class RequestMethod(Enum):
 @dataclass
 class ServerRequest:
     """
-    Dataclass for the request of the MaskServer.
+    Dataclass for the request of the Server.
     """
 
     path: str = ""
     """
-    The path to the endpoint, e.g. /v1/predicates/evaluate
+    The path to the endpoint.
     """
 
     payload: dict = field(default_factory=dict)
@@ -53,16 +53,17 @@ class ServerRequest:
 
 class ServerConnection:
     """
-    Class to manage the connection to the mask server.
+    Class to manage the connection to the server.
     """
 
     def __init__(self, base_url: str, token: str | None = None):
         """
-        Initialize the MaskServerConnection with the given server URL.
+        Initialize the server connection with the given base URL and token if
+        given.
 
         Args:
             `base_url`: The URL of the mask server.
-            `token`: The Token to use for authentication.
+            `token`: The Token to use for authentication (optional).
         """
         self.base_url = base_url.rstrip("/")
         self.token = token
@@ -89,36 +90,38 @@ class ServerConnection:
 
     def send_server_request(self, request: ServerRequest) -> dict:
         """
-        Send a request to the mask server.
+        Send a request to the server.
 
         Args:
             `request`: The request to send to the server.
 
         Returns:
             The response from the server as a dictionary.
+
+        TODO: Add better error handling
         """
 
         try:
             method: Callable[..., Response] = self.method_mapping(request.method)
-            request_url: str = f"{self.base_url}{request.path}"
 
-            # choose params vs json depending on method
             headers = request.headers.copy() if request.headers else {}
             if self.token:
                 headers.setdefault("Authorization", f"Bearer {self.token}")
-
             kwargs = {"headers": headers}
+
+            # choose params vs json depending on method
             if request.method in (RequestMethod.GET, RequestMethod.DELETE):
                 kwargs["params"] = request.payload
             else:  # POST, PUT
                 kwargs["json"] = request.payload
 
-            print(f"Making {request.method} request to {request_url} with {kwargs}")
-            response: Response = method(request.path, **kwargs)
-            return response.json()
+            server_response: Response = method(request.path, **kwargs)
+            # chack for HTTP status
+            return server_response.json()
 
         except httpx.RequestError as e:
             return {"error": f"Request failed: {e}"}
+
         except httpx.HTTPStatusError as e:
             return {
                 "error": f"Bad response {e.response.status_code}: {e.response.text}"

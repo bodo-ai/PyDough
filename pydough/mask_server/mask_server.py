@@ -23,17 +23,18 @@ class MaskServerReponse(Enum):
 
     IN_ARRAY = "IN_ARRAY"
     """
-    TODO
+    The mask server returned an "IN" response.
     """
 
     NOT_IN_ARRAY = "NOT_IN_ARRAY"
     """
-    TODO
+    The mask server returned an "NOT_IN" response.
     """
 
     UNSUPPORTED = "UNSUPPORTED"
     """
-    An error occurred during predicate evaluation.
+    The mask server returned an "UNSUPPORTED" response. Or the response is not 
+    one of the supported cases.
     """
 
 
@@ -45,12 +46,12 @@ class MaskServerInput:
 
     table_path: str
     """
-    The fully qualified SQL table path, which we get from the metadata.
+    The fully qualified SQL table path, given from the metadata.
     """
 
     column_name: str
     """
-    The SQL column name, which we get from the metadata.
+    The SQL column name, given from the metadata.
     """
 
     expression: list[str | int | float]
@@ -65,7 +66,7 @@ class MaskServerOutput:
     Output data structure for the MaskServer.
 
     If the value returned from the server is not one of our supported cases,
-    we return an output with UNSUPPORTED + a None payload
+    it returns an output with UNSUPPORTED + a None payload
     """
 
     response_case: MaskServerReponse
@@ -92,13 +93,21 @@ class MaskServer:
         Initialize the MaskServer with the given server URL.
 
         Args:
-            `server_url`: The URL of the mask server.
+            `base_url`: The URL of the mask server.
+            `token`: Optional authentication token for the server.
         """
-        self.connection = ServerConnection(base_url=base_url, token=token)
+        self.connection: ServerConnection = ServerConnection(
+            base_url=base_url, token=token
+        )
 
     def get_server_response(self, server_case: str) -> MaskServerReponse:
         """
         Mapping from server response strings to MaskServerReponse enum values.
+
+        Args:
+            `server_case`: The response string from the server.
+        Returns:
+            The corresponding MaskServerReponse enum value.
         """
         match server_case:
             case "IN":
@@ -115,11 +124,15 @@ class MaskServer:
         Evaluate the predicate expression against the specified table and column.
 
         Args:
-            `input_data`: The input data containing table path, column name, and expression.
+            `batch`: The list of inputs to be sent to the server.
+            `path`: The API endpoint path.
+            `method`: The HTTP method to use for the request.
 
         Returns:
-            A MaskServerOutput containing the response case and payload.
+            An output list containing the response case and payload.
         """
+        assert batch != [], "Batch cannot be empty."
+
         request: ServerRequest = self.generate_request(batch, path, method)
 
         response_json = self.connection.send_server_request(request)
@@ -131,13 +144,27 @@ class MaskServer:
         self, batch: list[MaskServerInput], path: str, method: RequestMethod
     ) -> ServerRequest:
         """
-        Generate a ServerRequest object for the given batch of MaskServerInput.
+        Generate a server request for the given batch of server inputs and path.
         Args:
             `batch`: A list of MaskServerInput objects.
             `path`: The API endpoint path.
 
         Returns:
-            A ServerRequest including payload to be sent.
+            A server request including payload to be sent.
+
+        Example payload:
+        {
+            "items": [
+                {
+                    "column_reference": "srv.analytics.tbl.col",
+                    "predicate": ["EQUAL", 2, "__col__", 1],
+                    "mode": "dynamic",
+                    "dry_run": false
+                },
+                ...
+            ],
+            "expression_format": {"name": "linear", "version": "0.2.0"}
+        }
         """
 
         payload: dict = {
@@ -158,24 +185,50 @@ class MaskServer:
 
     def generate_result(self, response: dict) -> list[MaskServerOutput]:
         """
-        Generate a list of MaskServerOutput from the server response.
+        Generate a list of server outputs from the server response.
 
         Args:
             `response`: The response from the mask server.
 
         Returns:
-            A list of MaskServerOutput objects.
+            A list of server outputs objects.
+
+        Example response:
+        {
+            "result": "SUCCESS",
+            "items": [
+                {
+                    "index": 0,
+                    "result": "SUCCESS",
+                    "decision": {"strategy": "values", "reason": "mock"},
+                    "predicate_hash": "hash0",
+                    "encryption_mode": "clear",
+                    "materialization": {
+                        "type": "literal",
+                        "operator": "IN",
+                        "values": [0],
+                        "count": 1
+                    }
+                },
+                ...
+            ]
+        }
         """
         result: list[MaskServerOutput] = []
 
         for item in response.get("items", []):
             if item.get("result") == "SUCCESS":
-                operator: str = item.get("materialization", {}).get("operator", "")
+                operator: str = item.get("materialization", {}).get("operator", "ERROR")
+                payload: Any = (
+                    item.get("materialization", {}).get("values", [])
+                    if operator != "ERROR"
+                    else None
+                )
 
                 result.append(
                     MaskServerOutput(
                         response_case=self.get_server_response(operator),
-                        payload=item.get("materialization", {}).get("values", []),
+                        payload=payload,
                     )
                 )
             else:
