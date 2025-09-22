@@ -795,7 +795,7 @@ def supplier_pct_national_qty():
         .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
-            nation_name=name,
+            nation_name=nation_name,
             supplier_quantity=supp_qty,
             national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
         )
@@ -1830,13 +1830,16 @@ def hour_minute_day():
     """
     Return the transaction IDs with the hour, minute, and second extracted from
     transaction timestamps for specific ticker symbols ("AAPL","GOOGL","NFLX"),
-    ordered by transaction ID in ascending order.
+    ordered by transaction ID in ascending order. Only considered transactions
+    from 2023.
     """
     return (
         transactions.CALCULATE(
             transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
         )
-        .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
+        .WHERE(
+            ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")) & (YEAR(date_time) == 2023)
+        )
         .ORDER_BY(transaction_id.ASC())
     )
 
@@ -3063,6 +3066,17 @@ def simple_cross_15():
         .CALCULATE(o)
     )
     return (ra.CROSS(re)).CROSS(ri.CROSS(ro)).CALCULATE(a, e, i, o).ORDER_BY(a, e, i, o)
+
+
+def simple_cross_16():
+    # Strange way to count how many customers have the an account balance
+    # within 10 of the global minimum, and how many suppliers have an account
+    # balance within 10 of the global maximum.
+    glob1 = TPCH.CALCULATE(min_balance=MIN(customers.account_balance))
+    cust = customers.WHERE(account_balance <= (CROSS(glob1).min_balance + 10.0))
+    glob2 = TPCH.CALCULATE(max_balance=MAX(suppliers.account_balance))
+    supp = suppliers.WHERE(account_balance >= (CROSS(glob2).max_balance - 10.0))
+    return TPCH.CALCULATE(n1=COUNT(cust), n2=COUNT(supp))
 
 
 def quantile_function_test_1():

@@ -8,6 +8,7 @@ __all__ = ["explain"]
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.errors import PyDoughQDAGException
 from pydough.metadata.abstract_metadata import AbstractMetadata
 from pydough.metadata.collections import CollectionMetadata, SimpleTableMetadata
 from pydough.metadata.graphs import GraphMetadata
@@ -33,7 +34,6 @@ from pydough.qdag import (
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
-    PyDoughQDAGException,
     Reference,
     SubCollection,
     TableCollection,
@@ -130,7 +130,7 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
                         for cond_str in conditions:
                             lines.append(f"  {cond_str}")
                     case _:
-                        raise ValueError(
+                        raise NotImplementedError(
                             f"Unrecognized type of property: {property.__class__.__name__}"
                         )
             else:
@@ -138,7 +138,7 @@ def explain_property(property: PropertyMetadata, verbose: bool) -> str:
                     f"Use pydough.explain(graph['{collection_name}']['{property_name}'], verbose=True) to learn more details."
                 )
         case _:
-            raise ValueError(
+            raise NotImplementedError(
                 f"Unrecognized type of property: {property.__class__.__name__}"
             )
     return "\n".join(lines)
@@ -183,7 +183,7 @@ def explain_collection(collection: CollectionMetadata, verbose: bool) -> str:
                 f"Unique properties of collection: {collection.unique_properties}"
             )
     else:
-        raise ValueError(
+        raise NotImplementedError(
             f"Unrecognized type of collection: {collection.__class__.__name__}"
         )
     if len(scalar_properties) == 0:
@@ -527,6 +527,6 @@ def explain(
         case UnqualifiedNode():
             return explain_unqualified(data, verbose)
         case _:
-            raise ValueError(
+            raise NotImplementedError(
                 f"Cannot call pydough.explain on argument of type {data.__class__.__name__}"
             )

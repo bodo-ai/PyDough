@@ -10,6 +10,7 @@ __all__ = ["explain_term", "find_unqualified_root"]
 import pydough
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughConfigs
+from pydough.errors import PyDoughQDAGException
 from pydough.qdag import (
     BackReferenceExpression,
     ChildReferenceExpression,
@@ -18,7 +19,6 @@ from pydough.qdag import (
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
     PyDoughQDAG,
-    PyDoughQDAGException,
     Reference,
 )
 from pydough.unqualified import (

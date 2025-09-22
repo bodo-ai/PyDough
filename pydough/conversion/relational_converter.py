@@ -669,11 +669,20 @@ class RelTranslation:
                 join_keys: list[tuple[HybridExpr, HybridExpr]] | None = (
                     child.subtree.join_keys
                 )
+
+                # If handling the child of a partition, remove any join keys
+                # where the LHS is a simple reference, since those keys are
+                # guaranteed to be present due to the partitioning.
                 if (
                     isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
                     and child_idx == 0
                 ):
-                    join_keys = None
+                    new_join_keys: list[tuple[HybridExpr, HybridExpr]] = []
+                    if join_keys is not None:
+                        for lhs_key, rhs_key in join_keys:
+                            if not isinstance(lhs_key, HybridRefExpr):
+                                new_join_keys.append((lhs_key, rhs_key))
+                    join_keys = new_join_keys if len(new_join_keys) > 0 else None
                 child_expr: HybridExpr
                 match child.connection_type:
                     case (
@@ -741,7 +750,10 @@ class RelTranslation:
             # If handling the data for a partition, pull every aggregation key
             # into the current context since it is now accessible as a normal
             # ref instead of a child ref.
-            if isinstance(hybrid.pipeline[pipeline_idx], HybridPartition):
+            if (
+                isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
+                and child_idx == 0
+            ):
                 partition = hybrid.pipeline[pipeline_idx]
                 assert isinstance(partition, HybridPartition)
                 for key_name in partition.key_names:
@@ -1337,8 +1349,7 @@ class RelTranslation:
                 column_typ: PyDoughType = node.get_expr(column).pydough_type
                 final_terms.append((column, Reference(node, column, column_typ)))
         children: list[PyDoughCollectionQDAG] = []
-        final_calc: Calculate = Calculate(node, children).with_terms(final_terms)
-        return final_calc
+        return Calculate(node, children, final_terms)
 
 
 def make_relational_ordering(
@@ -1461,11 +1472,7 @@ def optimize_relational_tree(
     # Run projection pullup to move projections as far up the tree as possible.
     # This is done as soon as possible to make joins redundant if they only
     # exist to compute a scalar projection and then link it with the data.
-    # print()
-    # print(root.to_tree_string())
     root = confirm_root(pullup_projections(root))
-    # print()
-    # print(root.to_tree_string())
 
     # Push filters down as far as possible
     root = confirm_root(push_filters(root, configs))

@@ -7,5 +7,7 @@ FROM main.sbtransaction AS sbtransaction
 JOIN main.sbticker AS sbticker
   ON sbticker.sbtickerid = sbtransaction.sbtxtickerid
   AND sbticker.sbtickersymbol IN ('AAPL', 'GOOGL', 'NFLX')
+WHERE
+  EXTRACT(YEAR FROM CAST(sbtransaction.sbtxdatetime AS DATETIME)) = 2023
 ORDER BY
   1

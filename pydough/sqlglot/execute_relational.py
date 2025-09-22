@@ -9,6 +9,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
@@ -17,7 +18,6 @@ from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
-from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
@@ -26,6 +26,7 @@ from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 
+import pydough
 from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import (
     DatabaseContext,
@@ -37,6 +38,7 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
+from .override_canonicalize import canonicalize
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
@@ -71,10 +73,11 @@ def convert_relation_to_sql(
     try:
         glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
     except SqlglotError as e:
-        print(
-            f"ERROR WHILE OPTIMIZING QUERY:\n{glot_expr.sql(sqlglot_dialect, pretty=True)}"
-        )
-        raise e
+        sql_text: str = glot_expr.sql(sqlglot_dialect, pretty=True)
+        print(f"ERROR WHILE OPTIMIZING QUERY:\n{sql_text}")
+        raise pydough.active_session.error_builder.sql_runtime_failure(
+            sql_text, e, False
+        ) from e
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
@@ -394,17 +397,20 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     Returns:
         The corresponding SQLGlot dialect.
     """
-    if dialect == DatabaseDialect.ANSI:
-        # Note: ANSI is the base dialect for SQLGlot.
-        return SQLGlotDialect()
-    elif dialect == DatabaseDialect.SQLITE:
-        return SQLiteDialect()
-    elif dialect == DatabaseDialect.SNOWFLAKE:
-        return SnowflakeDialect()
-    elif dialect == DatabaseDialect.MYSQL:
-        return MySQLDialect()
-    else:
-        raise ValueError(f"Unsupported dialect: {dialect}")
+    match dialect:
+        case DatabaseDialect.ANSI:
+            # Note: ANSI is the base dialect for SQLGlot.
+            return SQLGlotDialect()
+        case DatabaseDialect.SQLITE:
+            return SQLiteDialect()
+        case DatabaseDialect.SNOWFLAKE:
+            return SnowflakeDialect()
+        case DatabaseDialect.MYSQL:
+            return MySQLDialect()
+        case DatabaseDialect.POSTGRES:
+            return PostgresDialect()
+        case _:
+            raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
 def execute_df(

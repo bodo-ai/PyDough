@@ -455,8 +455,8 @@ def simplify_agg(
             # Otherwise, FUNC(key) -> key
             return key_ref, None
 
-    # If running a selection aggregation on a literal, can just return the
-    # input.
+    # If running a selection aggregation on a literal or a grouping key, can
+    # just return the input.
     if (
         agg.op
         in (
@@ -470,7 +470,7 @@ def simplify_agg(
         and len(agg.inputs) >= 1
     ):
         arg = agg.inputs[0]
-        if isinstance(arg, LiteralExpression):
+        if isinstance(arg, LiteralExpression) or arg in reverse_keys:
             return arg, None
     # In all other cases, we just return the aggregation as is.
     return out_ref, agg
