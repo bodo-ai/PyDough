@@ -38,8 +38,8 @@ def evaluate(request: dict = Body(...)):
 def batch_evaluate(request: RequestPayload):
     responses = []
     for item in request.items:
+        item["column_reference"]
         key = (item.column_reference, tuple(item.predicate))
-        print("USING KEY: ", key)
         response = LOOKUP_TABLE.get(key, {"result": "KEY NOT FOUND"})
         responses.append(response)
 

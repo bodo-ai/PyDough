@@ -97,8 +97,6 @@ class ServerConnection:
 
         Returns:
             The response from the server as a dictionary.
-
-        TODO: Add better error handling
         """
 
         try:
@@ -109,20 +107,24 @@ class ServerConnection:
                 headers.setdefault("Authorization", f"Bearer {self.token}")
             kwargs = {"headers": headers}
 
-            # choose params vs json depending on method
+            # Choose params vs json depending on method
             if request.method in (RequestMethod.GET, RequestMethod.DELETE):
                 kwargs["params"] = request.payload
             else:  # POST, PUT
                 kwargs["json"] = request.payload
 
             server_response: Response = method(request.path, **kwargs)
-            # chack for HTTP status
+            server_response.raise_for_status()  # goes to except HTTPStatusError
+
             return server_response.json()
 
         except httpx.RequestError as e:
-            return {"error": f"Request failed: {e}"}
+            # Errors if something goes wrong before get a valid HTTP response.
+            # such as network problems, DNS failure, etc.
+            raise RuntimeError(f"Request failed: {e}") from e
 
         except httpx.HTTPStatusError as e:
-            return {
-                "error": f"Bad response {e.response.status_code}: {e.response.text}"
-            }
+            # HTTP error status codes (4xx, 5xx)
+            raise RuntimeError(
+                f"Bad response {e.response.status_code}: {e.response.text}"
+            ) from e
