@@ -33,9 +33,9 @@ WITH _s0 AS (
 )
 SELECT
   _s6.year_pr_release AS year,
-  ROUND(COALESCE(_s7.n_rows, 0) / _s6.sum_n_rows, 2) AS ir
+  ROUND(_s7.n_rows / _s6.sum_n_rows, 2) AS ir
 FROM _s6 AS _s6
-LEFT JOIN _s7 AS _s7
+JOIN _s7 AS _s7
   ON _s6.year_pr_release = _s7.year_pr_release
 ORDER BY
   1 NULLS FIRST

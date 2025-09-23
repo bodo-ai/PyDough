@@ -1,21 +1,9 @@
-WITH _u_0 AS (
-  SELECT
-    sbcustid AS _u_1
-  FROM main.sbCustomer
-  WHERE
-    LOWER(sbcustcountry) = 'usa'
-  GROUP BY
-    1
-)
 SELECT
   CASE WHEN COUNT(*) > 0 THEN COUNT(*) ELSE NULL END AS n_transactions,
-  COALESCE(SUM(sbTransaction.sbtxamount), 0) AS total_amount
-FROM main.sbTransaction AS sbTransaction
-LEFT JOIN _u_0 AS _u_0
-  ON _u_0._u_1 = sbTransaction.sbtxcustid
+  COALESCE(SUM(sbtxamount), 0) AS total_amount
+FROM main.sbTransaction
 WHERE
-  NOT _u_0._u_1 IS NULL
-  AND sbTransaction.sbtxdatetime < CAST(DATE_SUB(
+  sbtxdatetime < CAST(DATE_SUB(
     CURRENT_TIMESTAMP(),
     INTERVAL (
       (
@@ -23,7 +11,7 @@ WHERE
       ) % 7
     ) DAY
   ) AS DATE)
-  AND sbTransaction.sbtxdatetime >= DATE_SUB(
+  AND sbtxdatetime >= DATE_SUB(
     CAST(DATE_SUB(
       CURRENT_TIMESTAMP(),
       INTERVAL (

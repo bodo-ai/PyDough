@@ -37,7 +37,7 @@ SELECT
   CONCAT_WS(' ', customers.c_fname, customers.c_lname) AS name,
   COALESCE(_s7.sum_t_amount, 0) AS first_sends
 FROM crbnk.customers AS customers
-LEFT JOIN _s7 AS _s7
+JOIN _s7 AS _s7
   ON _s7.a_custkey = customers.c_key
 ORDER BY
   3 DESC,

@@ -1,5 +1,5 @@
 ROOT(columns=[('transaction_id', sbTxId), ('n_ticker_type_trans', n_rows), ('n_ticker_trans', sum_n_rows_1), ('n_type_trans', sum_n_rows)], orderings=[(n_rows):asc_first, (sbTxId):asc_first])
- JOIN(condition=t0.sbTxTickerId == t1.sbTxTickerId & t0.sbTxType == t1.sbTxType, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'n_rows': t0.n_rows, 'sbTxId': t1.sbTxId, 'sum_n_rows': t0.sum_n_rows, 'sum_n_rows_1': t0.sum_n_rows_1})
+ JOIN(condition=t0.sbTxTickerId == t1.sbTxTickerId & t0.sbTxType == t1.sbTxType, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'n_rows': t0.n_rows, 'sbTxId': t1.sbTxId, 'sum_n_rows': t0.sum_n_rows, 'sum_n_rows_1': t0.sum_n_rows_1})
   JOIN(condition=t1.n_rows / t0.n_rows < 0.2:numeric & t0.sbTxType == t1.sbTxType, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows, 'sbTxTickerId': t1.sbTxTickerId, 'sbTxType': t1.sbTxType, 'sum_n_rows': t0.n_rows, 'sum_n_rows_1': t1.sum_n_rows})
    AGGREGATE(keys={'sbTxType': sbTxType}, aggregations={'n_rows': COUNT()})
     SCAN(table=main.sbTransaction, columns={'sbTxType': sbTxType})

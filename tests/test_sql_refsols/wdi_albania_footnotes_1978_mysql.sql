@@ -1,7 +1,5 @@
 SELECT
-  Footnotes.description AS footnote_description
-FROM wdi.Country AS Country
-JOIN wdi.Footnotes AS Footnotes
-  ON Country.countrycode = Footnotes.countrycode AND Footnotes.year = 'YR2012'
+  description AS footnote_description
+FROM wdi.Footnotes
 WHERE
-  Country.shortname = 'Albania'
+  year = 'YR2012'

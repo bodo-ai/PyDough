@@ -1,5 +1,5 @@
 ROOT(columns=[('nation_name', n_name), ('a1', r_name), ('a2', r_name), ('a3', r_regionkey), ('a4', IFF(PRESENT(KEEP_IF(r_regionkey, r_name != 'AMERICA':string)), 1:numeric, 0:numeric)), ('a5', 1:numeric), ('a6', r_regionkey), ('a7', r_name), ('a8', r_regionkey)], orderings=[(n_name):asc_first])
- JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'n_name': t0.n_name, 'r_name': t1.r_name, 'r_regionkey': t1.r_regionkey})
+ JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_name': t0.n_name, 'r_name': t1.r_name, 'r_regionkey': t1.r_regionkey})
   LIMIT(limit=2:numeric, columns={'n_name': n_name, 'n_regionkey': n_regionkey}, orderings=[(n_name):asc_first])
    SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})
   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})

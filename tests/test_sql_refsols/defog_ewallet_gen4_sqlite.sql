@@ -26,9 +26,9 @@ SELECT
   _s1.min_start_date AS earliest_coupon_start_date,
   _s3.max_cid AS earliest_coupon_id
 FROM main.merchants AS merchants
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON _s1.merchant_id = merchants.mid
-LEFT JOIN _s3 AS _s3
+JOIN _s3 AS _s3
   ON _s1.min_start_date = _s3.start_date AND _s3.merchant_id = merchants.mid
 JOIN _t0 AS _s5
   ON _s5.merchant_id = merchants.mid

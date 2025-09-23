@@ -1,10 +1,6 @@
 SELECT
-  conditions.description AS condition_description
-FROM synthea.patients AS patients
-JOIN synthea.conditions AS conditions
-  ON conditions.patient = patients.patient
-WHERE
-  patients.ethnicity = 'italian' AND patients.gender = 'F'
+  description AS condition_description
+FROM synthea.conditions
 GROUP BY
   1
 ORDER BY

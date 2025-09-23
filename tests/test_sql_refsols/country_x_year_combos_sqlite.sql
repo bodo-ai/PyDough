@@ -19,7 +19,7 @@ SELECT
   _t1.co_name AS country_name,
   _s5.start_of_year
 FROM _t1 AS _t1
-LEFT JOIN _s5 AS _s5
+JOIN _s5 AS _s5
   ON _s5.co_name = _t1.co_name
 ORDER BY
   1,

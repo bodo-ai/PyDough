@@ -7,22 +7,22 @@ WITH _s3 AS (
     1
 ), _s5 AS (
   SELECT
-    COALESCE(SUM(_s3.n_rows), 0) AS sum_n_incidents,
     devices.de_production_country_id,
-    COUNT(*) AS n_rows
+    COUNT(*) AS n_rows,
+    SUM(_s3.n_rows) AS sum_n_rows
   FROM main.devices AS devices
   JOIN main.products AS products
     ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
-  LEFT JOIN _s3 AS _s3
+  JOIN _s3 AS _s3
     ON _s3.in_device_id = devices.de_id
   GROUP BY
-    2
+    1
 )
 SELECT
   countries.co_name AS country,
-  ROUND(CAST(COALESCE(_s5.sum_n_incidents, 0) AS REAL) / COALESCE(_s5.n_rows, 0), 2) AS ir
+  ROUND(CAST(_s5.sum_n_rows AS REAL) / _s5.n_rows, 2) AS ir
 FROM main.countries AS countries
-LEFT JOIN _s5 AS _s5
+JOIN _s5 AS _s5
   ON _s5.de_production_country_id = countries.co_id
 ORDER BY
   1

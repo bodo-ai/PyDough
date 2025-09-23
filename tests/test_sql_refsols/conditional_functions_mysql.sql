@@ -14,7 +14,7 @@ SELECT
   _s1.min_o_totalprice IS NULL AS no_acct_bal,
   CASE WHEN CUSTOMER.c_acctbal > 0 THEN CUSTOMER.c_acctbal ELSE NULL END AS no_debt_bal
 FROM tpch.CUSTOMER AS CUSTOMER
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON CUSTOMER.c_custkey = _s1.o_custkey
 WHERE
   CUSTOMER.c_acctbal <= 1000 AND CUSTOMER.c_acctbal >= 100

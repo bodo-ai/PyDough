@@ -1,13 +1,10 @@
 SELECT
-  orders.o_orderpriority AS O_ORDERPRIORITY,
+  o_orderpriority AS O_ORDERPRIORITY,
   COUNT(*) AS ORDER_COUNT
-FROM tpch.orders AS orders
-JOIN tpch.lineitem AS lineitem
-  ON lineitem.l_commitdate < lineitem.l_receiptdate
-  AND lineitem.l_orderkey = orders.o_orderkey
+FROM tpch.orders
 WHERE
-  EXTRACT(MONTH FROM CAST(orders.o_orderdate AS DATETIME)) IN (7, 8, 9)
-  AND EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1993
+  EXTRACT(MONTH FROM CAST(o_orderdate AS DATETIME)) IN (7, 8, 9)
+  AND EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) = 1993
 GROUP BY
   1
 ORDER BY

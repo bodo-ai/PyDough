@@ -1,5 +1,5 @@
-ROOT(columns=[('original_order_key', o_orderkey), ('n_other_orders', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(DEFAULT_TO(n_rows, 0:numeric)):desc_last, (o_orderkey):asc_first], limit=5:numeric)
- JOIN(condition=t0.o_orderkey == t1.o_orderkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'o_orderkey': t0.o_orderkey})
+ROOT(columns=[('original_order_key', o_orderkey), ('n_other_orders', n_rows)], orderings=[(n_rows):desc_last, (o_orderkey):asc_first], limit=5:numeric)
+ JOIN(condition=t0.o_orderkey == t1.o_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'o_orderkey': t0.o_orderkey})
   FILTER(condition=o_orderstatus == 'P':string, columns={'o_orderkey': o_orderkey})
    SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey, 'o_orderstatus': o_orderstatus})
   AGGREGATE(keys={'o_orderkey': o_orderkey}, aggregations={'n_rows': COUNT()})

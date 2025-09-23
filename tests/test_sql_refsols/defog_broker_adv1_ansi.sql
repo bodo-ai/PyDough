@@ -10,7 +10,7 @@ SELECT
   sbcustomer.sbcustname AS name,
   COALESCE(_s1.sum_sbtxamount, 0) AS total_amount
 FROM main.sbcustomer AS sbcustomer
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
   2 DESC

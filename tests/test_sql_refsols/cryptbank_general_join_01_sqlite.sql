@@ -81,7 +81,7 @@ WITH _s0 AS (
 SELECT
   _s0.b_key AS branch_key,
   COUNT(*) AS n_local_cust,
-  COALESCE(SUM(_s7.n_rows), 0) AS n_local_cust_local_acct
+  SUM(_s7.n_rows) AS n_local_cust_local_acct
 FROM _s0 AS _s0
 JOIN _s1 AS _s1
   ON SUBSTRING(
@@ -141,7 +141,7 @@ JOIN _s1 AS _s1
       END
     END
   )
-LEFT JOIN _s7 AS _s7
+JOIN _s7 AS _s7
   ON _s0.b_key = _s7.b_key AND _s1.c_key = _s7.c_key
 GROUP BY
   1

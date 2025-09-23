@@ -11,13 +11,13 @@ WITH _s7 AS (
 SELECT
   COUNTRIES.co_name COLLATE utf8mb4_bin AS country_name,
   PRODUCTS.pr_name COLLATE utf8mb4_bin AS product_name,
-  ROUND(COALESCE(SUM(_s7.n_rows), 0) / COUNT(*), 2) AS ir
+  ROUND(SUM(_s7.n_rows) / COUNT(*), 2) AS ir
 FROM main.COUNTRIES AS COUNTRIES
 JOIN main.DEVICES AS DEVICES
   ON COUNTRIES.co_id = DEVICES.de_production_country_id
 JOIN main.PRODUCTS AS PRODUCTS
   ON DEVICES.de_product_id = PRODUCTS.pr_id
-LEFT JOIN _s7 AS _s7
+JOIN _s7 AS _s7
   ON DEVICES.de_id = _s7.in_device_id
 GROUP BY
   1,

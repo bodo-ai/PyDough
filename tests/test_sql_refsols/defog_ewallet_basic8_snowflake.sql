@@ -9,10 +9,10 @@ WITH _s1 AS (
 )
 SELECT
   coupons.code AS coupon_code,
-  COALESCE(_s1.count_txid, 0) AS redemption_count,
+  _s1.count_txid AS redemption_count,
   COALESCE(_s1.sum_amount, 0) AS total_discount
 FROM main.coupons AS coupons
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON _s1.coupon_id = coupons.cid
 ORDER BY
   2 DESC NULLS LAST

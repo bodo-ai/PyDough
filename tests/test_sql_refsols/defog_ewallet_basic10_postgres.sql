@@ -12,10 +12,10 @@ WITH _s1 AS (
 )
 SELECT
   merchants.name AS merchant_name,
-  COALESCE(_s1.n_rows, 0) AS total_transactions,
+  _s1.n_rows AS total_transactions,
   COALESCE(_s1.sum_amount, 0) AS total_amount
 FROM main.merchants AS merchants
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON _s1.receiver_id = merchants.mid
 ORDER BY
   3 DESC NULLS LAST

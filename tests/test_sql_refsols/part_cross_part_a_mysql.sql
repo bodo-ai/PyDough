@@ -21,10 +21,10 @@ WITH _s0 AS (
 SELECT
   sbCustomer.sbcuststate COLLATE utf8mb4_bin AS state,
   _s0.sbTickerExchange COLLATE utf8mb4_bin AS exchange,
-  COALESCE(SUM(_s9.n_rows), 0) AS n
+  SUM(_s9.n_rows) AS n
 FROM _s0 AS _s0
 CROSS JOIN main.sbCustomer AS sbCustomer
-LEFT JOIN _s9 AS _s9
+JOIN _s9 AS _s9
   ON _s0.sbTickerExchange = _s9.sbTickerExchange
   AND _s9.sbCustId = sbCustomer.sbcustid
 GROUP BY

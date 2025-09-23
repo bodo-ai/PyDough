@@ -12,14 +12,11 @@ WITH _s5 AS (
 )
 SELECT
   errors.er_name AS error,
-  ROUND(
-    CAST((
-      100.0 * COALESCE(_s5.n_rows, 0)
-    ) / SUM(COALESCE(_s5.n_rows, 0)) OVER () AS DECIMAL),
-    2
-  ) AS pct
+  ROUND(CAST((
+    100.0 * _s5.n_rows
+  ) / SUM(_s5.n_rows) OVER () AS DECIMAL), 2) AS pct
 FROM main.errors AS errors
-LEFT JOIN _s5 AS _s5
+JOIN _s5 AS _s5
   ON _s5.in_error_id = errors.er_id
 ORDER BY
   2 DESC NULLS LAST

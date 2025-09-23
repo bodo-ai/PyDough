@@ -26,9 +26,9 @@ WITH _s2 AS (
     SUM(_s3.n_rows) AS sum_expr_3,
     SUM(_s7.n_rows) AS sum_n_rows
   FROM _s2 AS _s2
-  LEFT JOIN _s3 AS _s3
+  JOIN _s3 AS _s3
     ON _s2.ca_dt = _s3.ca_dt
-  LEFT JOIN _s7 AS _s7
+  JOIN _s7 AS _s7
     ON _s2.ca_dt = _s7.ca_dt
   GROUP BY
     1
@@ -36,7 +36,7 @@ WITH _s2 AS (
 SELECT
   year_ca_dt AS yr,
   ROUND(
-    CAST(CAST(SUM(COALESCE(sum_n_rows, 0)) OVER (ORDER BY year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(sum_expr_3) OVER (ORDER BY year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DECIMAL),
+    CAST(CAST(SUM(sum_n_rows) OVER (ORDER BY year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(sum_expr_3) OVER (ORDER BY year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DECIMAL),
     2
   ) AS cum_ir,
   ROUND(
@@ -50,15 +50,15 @@ SELECT
   ROUND(
     CAST(CAST((
       100.0 * (
-        COALESCE(sum_n_rows, 0) - LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year_ca_dt)
+        sum_n_rows - LAG(sum_n_rows, 1) OVER (ORDER BY year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(sum_n_rows, 0), 1) OVER (ORDER BY year_ca_dt) AS DECIMAL),
+    ) AS DOUBLE PRECISION) / LAG(sum_n_rows, 1) OVER (ORDER BY year_ca_dt) AS DECIMAL),
     2
   ) AS pct_incident_change,
   sum_expr_3 AS bought,
-  COALESCE(sum_n_rows, 0) AS incidents
+  sum_n_rows AS incidents
 FROM _t1
 WHERE
-  NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
+  sum_expr_3 > 0
 ORDER BY
   1 NULLS FIRST

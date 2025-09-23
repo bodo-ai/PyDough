@@ -13,9 +13,9 @@ WITH _s1 AS (
 SELECT
   sbCustomer.sbcustid AS _id,
   sbCustomer.sbcustname AS name,
-  COALESCE(_s1.n_rows, 0) AS num_transactions
+  _s1.n_rows AS num_transactions
 FROM main.sbCustomer AS sbCustomer
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON _s1.month_sbTxDateTime = EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME))
   AND _s1.sbTxCustId = sbCustomer.sbcustid
   AND _s1.year_sbTxDateTime = EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME))

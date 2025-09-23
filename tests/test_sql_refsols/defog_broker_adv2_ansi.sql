@@ -11,9 +11,9 @@ WITH _s1 AS (
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
-  COALESCE(_s1.n_rows, 0) AS tx_count
+  _s1.n_rows AS tx_count
 FROM main.sbticker AS sbticker
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
   2 DESC

@@ -50,10 +50,10 @@ WITH _s0 AS (
 SELECT
   _s0.sbCustState COLLATE utf8mb4_bin AS state,
   _s1.month AS month_of_year,
-  SUM(COALESCE(_s9.n_rows, 0)) OVER (PARTITION BY _s0.sbCustState ORDER BY _s1.month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n
+  SUM(_s9.n_rows) OVER (PARTITION BY _s0.sbCustState ORDER BY _s1.month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS n
 FROM _s0 AS _s0
 CROSS JOIN _s1 AS _s1
-LEFT JOIN _s9 AS _s9
+JOIN _s9 AS _s9
   ON _s0.sbCustState = _s9.sbCustState AND _s1.month = _s9.month
 ORDER BY
   1,

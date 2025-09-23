@@ -1,19 +1,16 @@
-WITH _s1 AS (
+WITH _t1 AS (
   SELECT
-    o_custkey,
     COUNT(*) AS n_rows
   FROM tpch.ORDERS
   WHERE
     NOT o_comment LIKE '%special%requests%'
   GROUP BY
-    1
+    o_custkey
 )
 SELECT
-  COALESCE(_s1.n_rows, 0) AS C_COUNT,
+  n_rows AS C_COUNT,
   COUNT(*) AS CUSTDIST
-FROM tpch.CUSTOMER AS CUSTOMER
-LEFT JOIN _s1 AS _s1
-  ON CUSTOMER.c_custkey = _s1.o_custkey
+FROM _t1
 GROUP BY
   1
 ORDER BY

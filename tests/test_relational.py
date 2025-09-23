@@ -1249,7 +1249,7 @@ def test_root_duplicate_columns() -> None:
                     "b": make_relational_column_reference("b", input_name="t1"),
                 },
             ),
-            "JOIN(condition=Literal(value=True, type=BooleanType()), type=INNER, columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
+            "JOIN(condition=Literal(value=True, type=BooleanType()), type=INNER, cardinality=UNKNOWN_ACCESS, reverse_cardinality=UNKNOWN_ACCESS, columns={'a': Column(input=t0, name=a, type=UnknownType()), 'b': Column(input=t1, name=b, type=UnknownType())})",
             id="inner_join",
         ),
         pytest.param(
