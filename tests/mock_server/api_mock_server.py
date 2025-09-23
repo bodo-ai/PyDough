@@ -1,11 +1,11 @@
-from fastapi import Body, FastAPI
-from lookup_table import LOOKUP_TABLE
+from fastapi import FastAPI
 from pydantic import BaseModel
+
+from .lookup_table import LOOKUP_TABLE
 
 app: FastAPI = FastAPI()
 
 
-# defines
 class EvaluateRequest(BaseModel):
     column_reference: str
     predicate: list[str | int | float]
@@ -18,29 +18,17 @@ class RequestPayload(BaseModel):
     expression_format: dict[str, str] = {"name": "linear", "version": "0.2.0"}
 
 
-@app.post("/v1/predicates/evaluate")
-def evaluate(request: dict = Body(...)):
-    return {
-        "result": "SUCCESS",
-        "decision": {"strategy": "values", "reason": "mock"},
-        "predicate_hash": "mockhash",
-        "encryption_mode": "clear",
-        "materialization": {
-            "type": "literal",
-            "operator": "IN",
-            "values": [1, 2],
-            "count": 2,
-        },
-    }
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 @app.post("/v1/predicates/batch-evaluate")
 def batch_evaluate(request: RequestPayload):
     responses = []
     for item in request.items:
-        item["column_reference"]
         key = (item.column_reference, tuple(item.predicate))
-        response = LOOKUP_TABLE.get(key, {"result": "KEY NOT FOUND"})
+        response: dict = LOOKUP_TABLE.get(key, {"result": "UNSUPPORTED"})
         responses.append(response)
 
     return {"result": "SUCCESS", "items": responses}

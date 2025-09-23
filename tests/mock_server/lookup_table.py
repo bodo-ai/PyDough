@@ -3,7 +3,7 @@ A lookup table for the mock server to return predefined responses based on
 request paths and payloads.
 """
 
-LOOKUP_TABLE = {
+LOOKUP_TABLE: dict = {
     # key: (column_reference, tuple(predicate))
     ("srv.analytics.tbl.col", ("EQUAL", 2, "__col__", 1)): {
         "index": 1,
@@ -26,8 +26,12 @@ LOOKUP_TABLE = {
         "encryption_mode": "clear",
         "materialization": {
             "type": "literal",
-            "operator": "IN",
-            "values": ["value1", "value2", "value3", "value4", "value5"],
+            "operator": "NOT_IN",
+            "values": [
+                "value1",
+                "value2",
+                "value3",
+            ],
             "count": 1,
         },
     },
