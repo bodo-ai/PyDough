@@ -7,7 +7,7 @@ __all__ = ["HybridTranslator", "HybridTree"]
 from collections.abc import Iterable
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.database_connectors import DatabaseDialect
 from pydough.errors import PyDoughSQLException
 from pydough.metadata import (
@@ -81,8 +81,8 @@ class HybridTranslator:
     Class used to translate PyDough QDAG nodes into the HybridTree structure.
     """
 
-    def __init__(self, configs: PyDoughConfigs, dialect: DatabaseDialect):
-        self.configs = configs
+    def __init__(self, session: PyDoughSession):
+        self.session = session
         # An index used for creating fake column names for aliases
         self.alias_counter: int = 0
         # A stack where each element is a hybrid tree being derived
@@ -92,7 +92,7 @@ class HybridTranslator:
         # If True, rewrites MEDIAN calls into an average of the 1-2 median rows
         # or rewrites QUANTILE calls to select the first qualifying row,
         # both derived from window functions, otherwise leaves as-is.
-        self.rewrite_median_quantile: bool = dialect not in {
+        self.rewrite_median_quantile: bool = session.database.dialect not in {
             DatabaseDialect.ANSI,
             DatabaseDialect.SNOWFLAKE,
             DatabaseDialect.POSTGRES,
@@ -484,8 +484,8 @@ class HybridTranslator:
         # COUNT/NDISTINCT for left joins since the semantics of those functions
         # never allow returning NULL.
         if (
-            (agg_call.operator == pydop.SUM and self.configs.sum_default_zero)
-            or (agg_call.operator == pydop.AVG and self.configs.avg_default_zero)
+            (agg_call.operator == pydop.SUM and self.session.config.sum_default_zero)
+            or (agg_call.operator == pydop.AVG and self.session.config.avg_default_zero)
             or (
                 agg_call.operator in (pydop.COUNT, pydop.NDISTINCT)
                 and joins_can_nullify

@@ -6,7 +6,7 @@ __all__ = ["push_filters"]
 
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -66,7 +66,7 @@ class FilterPushdownShuttle(RelationalShuttle):
     cannot be pushed further.
     """
 
-    def __init__(self, configs: PyDoughConfigs):
+    def __init__(self, session: PyDoughSession):
         # The set of filters that are currently being pushed down. When
         # visit_xxx is called, it is presumed that the set of conditions in
         # self.filters are the conditions that can be pushed down as far as the
@@ -76,7 +76,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         # simplification logic to aid in advanced filter predicate inference,
         # such as determining that a left join is redundant because if the RHS
         # column is null then the filter will always be false.
-        self.simplifier: SimplificationShuttle = SimplificationShuttle(configs)
+        self.simplifier: SimplificationShuttle = SimplificationShuttle(session)
 
     def reset(self):
         self.filters = set()
@@ -300,7 +300,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         return self.flush_remaining_filters(empty_singleton, self.filters, set())
 
 
-def push_filters(node: RelationalNode, configs: PyDoughConfigs) -> RelationalNode:
+def push_filters(node: RelationalNode, session: PyDoughSession) -> RelationalNode:
     """
     Transpose filter conditions down as far as possible.
 
@@ -314,5 +314,5 @@ def push_filters(node: RelationalNode, configs: PyDoughConfigs) -> RelationalNod
         the node or into one of its inputs, or possibly both if there are
         multiple filters.
     """
-    pusher: FilterPushdownShuttle = FilterPushdownShuttle(configs)
+    pusher: FilterPushdownShuttle = FilterPushdownShuttle(session)
     return node.accept_shuttle(pusher)

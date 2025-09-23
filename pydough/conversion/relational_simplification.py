@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import pandas as pd
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -212,11 +212,11 @@ class SimplificationShuttle(RelationalExpressionShuttle):
       simplifying their inputs and placing their predicate sets on the stack.
     """
 
-    def __init__(self, configs: PyDoughConfigs):
+    def __init__(self, session: PyDoughSession):
         self.stack: list[PredicateSet] = []
         self._input_predicates: dict[RelationalExpression, PredicateSet] = {}
         self._no_group_aggregate: bool = False
-        self._configs: PyDoughConfigs = configs
+        self._session: PyDoughSession = session
 
     @property
     def input_predicates(self) -> dict[RelationalExpression, PredicateSet]:
@@ -247,18 +247,18 @@ class SimplificationShuttle(RelationalExpressionShuttle):
         self._no_group_aggregate = value
 
     @property
-    def configs(self) -> PyDoughConfigs:
+    def session(self) -> PyDoughSession:
         """
-        Returns the PyDough configuration settings.
+        Returns the PyDough session used by the simplifier.
         """
-        return self._configs
+        return self._session
 
-    @configs.setter
-    def configs(self, value: PyDoughConfigs) -> None:
+    @session.setter
+    def session(self, value: PyDoughSession) -> None:
         """
-        Sets the PyDough configuration settings.
+        Sets the PyDough session used by the simplifier.
         """
-        self._configs = value
+        self._session = value
 
     def reset(self) -> None:
         self.stack = []
@@ -659,9 +659,9 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                 # Derive the day of week as an integer, adjusting based on the
                 # configured start of the week.
                 dow: int = timestamp_value.weekday()
-                dow -= self.configs.start_of_week.pandas_dow
+                dow -= self.session.config.start_of_week.pandas_dow
                 dow %= 7
-                if not self.configs.start_week_as_zero:
+                if not self.session.config.start_week_as_zero:
                     dow += 1
                 return LiteralExpression(dow, NumericType())
             case _:
@@ -740,7 +740,7 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         # (accounting for the session configs) and subtract that
                         # many days from the normalized timestamp.
                         dow: int = timestamp_value.weekday()
-                        dow -= self.configs.start_of_week.pandas_dow
+                        dow -= self.session.config.start_of_week.pandas_dow
                         dow %= 7
                         timestamp_value = timestamp_value.normalize() - pd.Timedelta(
                             days=dow
@@ -1423,11 +1423,11 @@ class SimplificationVisitor(RelationalVisitor):
 
     def __init__(
         self,
-        configs: PyDoughConfigs,
+        session: PyDoughSession,
         additional_shuttles: list[RelationalExpressionShuttle],
     ):
         self.stack: list[dict[RelationalExpression, PredicateSet]] = []
-        self.shuttle: SimplificationShuttle = SimplificationShuttle(configs)
+        self.shuttle: SimplificationShuttle = SimplificationShuttle(session)
         self.additional_shuttles: list[RelationalExpressionShuttle] = (
             additional_shuttles
         )
@@ -1660,7 +1660,7 @@ class SimplificationVisitor(RelationalVisitor):
 
 def simplify_expressions(
     node: RelationalNode,
-    configs: PyDoughConfigs,
+    session: PyDoughSession,
     additional_shuttles: list[RelationalExpressionShuttle],
 ) -> None:
     """
@@ -1669,13 +1669,13 @@ def simplify_expressions(
 
     Args:
         `node`: The relational node to perform simplification on.
-        `configs`: The PyDough configuration settings.
+        `session`: The PyDough session used during the simplification.
         `additional_shuttles`: A list of additional shuttles to apply to the
         expressions of the node and its descendants. These shuttles are applied
         after the simplification shuttle, and can be used to perform additional
         transformations on the expressions.
     """
     simplifier: SimplificationVisitor = SimplificationVisitor(
-        configs, additional_shuttles
+        session, additional_shuttles
     )
     node.accept(simplifier)

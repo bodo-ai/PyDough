@@ -9,7 +9,7 @@ from collections.abc import Iterable
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GeneralJoinMetadata, GraphMetadata
 from pydough.pydough_operators.expression_operators import (
@@ -59,10 +59,10 @@ from .unqualified_transform import transform_cell
 
 
 class Qualifier:
-    def __init__(self, graph: GraphMetadata, configs: PyDoughConfigs):
-        self._graph: GraphMetadata = graph
-        self._configs: PyDoughConfigs = configs
-        self._builder: AstNodeBuilder = AstNodeBuilder(graph)
+    def __init__(self, session: PyDoughSession):
+        self._session: PyDoughSession = session
+        assert session.metadata is not None
+        self._builder: AstNodeBuilder = AstNodeBuilder(session.metadata)
 
     @property
     def graph(self) -> GraphMetadata:
@@ -70,7 +70,8 @@ class Qualifier:
         The metadata for the PyDough graph in which is used to identify
         collections and properties.
         """
-        return self._graph
+        assert self._session.metadata is not None
+        return self._session.metadata
 
     @property
     def builder(self) -> AstNodeBuilder:
@@ -744,8 +745,8 @@ class Qualifier:
         Returns:
             The modified list of collation terms.
         """
-        is_collation_propagated: bool = self._configs.propagate_collation
-        is_prev_asc: bool = self._configs.collation_default_asc
+        is_collation_propagated: bool = self._session.config.propagate_collation
+        is_prev_asc: bool = self._session.config.collation_default_asc
         modified_terms: list[UnqualifiedNode] = []
         for idx, term in enumerate(terms):
             if isinstance(term, UnqualifiedCollation):
@@ -1330,16 +1331,15 @@ class Qualifier:
         return answer
 
 
-def qualify_node(
-    unqualified: UnqualifiedNode, graph: GraphMetadata, configs: PyDoughConfigs
-) -> PyDoughQDAG:
+def qualify_node(unqualified: UnqualifiedNode, session: PyDoughSession) -> PyDoughQDAG:
     """
     Transforms an UnqualifiedNode into a qualified node.
 
     Args:
         `unqualified`: the UnqualifiedNode instance to be transformed.
-        `graph`: the metadata for the graph that the PyDough computations
-        are occurring within.
+        `session`: the session whose information should be used to derive
+        necessary information for the qualification, such as the graph and
+        configurations.
 
     Returns:
         The PyDough QDAG object for the qualified node. The result can be either
@@ -1350,14 +1350,14 @@ def qualify_node(
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    qual: Qualifier = Qualifier(graph, configs)
+    qual: Qualifier = Qualifier(session)
     return qual.qualify_node(
         unqualified, qual.builder.build_global_context(), [], False
     )
 
 
 def qualify_term(
-    collection: PyDoughCollectionQDAG, term: UnqualifiedNode, graph: GraphMetadata
+    collection: PyDoughCollectionQDAG, term: UnqualifiedNode, session: PyDoughSession
 ) -> tuple[list[PyDoughCollectionQDAG], PyDoughQDAG]:
     """
     Transforms an UnqualifiedNode into a qualified node within the context of
@@ -1369,8 +1369,9 @@ def qualify_term(
         context in which the term is being qualified.
         `term`: the UnqualifiedNode instance to be transformed into a qualified
         node within the context of `collection`.
-        `graph`: the metadata for the graph that the PyDough computations
-        are occurring within.
+        `session`: the session whose information should be used to derive
+        necessary information for the qualification, such as the graph and
+        configurations.
 
     Returns:
         A tuple where the second entry is the PyDough QDAG object for the
@@ -1383,7 +1384,6 @@ def qualify_term(
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    configs: PyDoughConfigs = pydough.active_session.config
-    qual: Qualifier = Qualifier(graph, configs)
+    qual: Qualifier = Qualifier(session)
     children: list[PyDoughCollectionQDAG] = []
     return children, qual.qualify_node(term, collection, children, True)
