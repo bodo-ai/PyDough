@@ -5,7 +5,7 @@ request column reference and predicate.
 
 LOOKUP_TABLE: dict = {
     # key: (column_reference, tuple(predicate))
-    ("srv.analytics.tbl.col", ("EQUAL", 2, "__col__", 0)): {
+    ("srv.db.tbl.col", ("EQUAL", 2, "__col__", 0)): {
         "index": 1,
         "result": "SUCCESS",
         "decision": {"strategy": "values", "reason": "mock"},
@@ -23,7 +23,7 @@ LOOKUP_TABLE: dict = {
         },
     },
     (
-        "srv.analytics.orders.order_date",
+        "srv.db.orders.order_date",
         ("BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"),
     ): {
         "index": 1,
@@ -44,7 +44,7 @@ LOOKUP_TABLE: dict = {
             "count": 5,
         },
     },
-    ("srv.analytics.tbl.col", ("NOT_EQUAL", 2, "__col__", 0)): {
+    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", 0)): {
         "index": 2,
         "result": "SUCCESS",
         "decision": {"strategy": "none", "reason": "no_match"},

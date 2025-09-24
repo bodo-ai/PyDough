@@ -10,50 +10,46 @@ from pydough.mask_server.mask_server import (
     MaskServer,
     MaskServerInput,
     MaskServerOutput,
-    MaskServerReponse,
+    MaskServerResponse,
 )
-from pydough.mask_server.server_connection import RequestMethod
 
 
 @pytest.mark.server
 @pytest.mark.parametrize(
-    "base_url, token, path, method, batch, answer",
+    "token, batch, answer",
     [
         pytest.param(
-            "http://localhost:8000",
             None,
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["EQUAL", 2, "__col__", 0],
                 ),
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 ),
                 MaskServerInput(
-                    table_path="srv.analytics.orders",
+                    table_path="srv.db.orders",
                     column_name="order_date",
                     expression=["BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"],
                 ),
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["GT", 2, "__col__", 100],
                 ),
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["NOT_EQUAL", 2, "__col__", 0],
                 ),
             ],
             [
                 MaskServerOutput(
-                    response_case=MaskServerReponse.NOT_IN_ARRAY,
+                    response_case=MaskServerResponse.NOT_IN_ARRAY,
                     payload=[
                         "value1",
                         "value2",
@@ -61,11 +57,11 @@ from pydough.mask_server.server_connection import RequestMethod
                     ],
                 ),
                 MaskServerOutput(
-                    response_case=MaskServerReponse.UNSUPPORTED,
+                    response_case=MaskServerResponse.UNSUPPORTED,
                     payload=None,
                 ),
                 MaskServerOutput(
-                    response_case=MaskServerReponse.IN_ARRAY,
+                    response_case=MaskServerResponse.IN_ARRAY,
                     payload=[
                         "2025-01-01",
                         "2025-01-02",
@@ -75,30 +71,27 @@ from pydough.mask_server.server_connection import RequestMethod
                     ],
                 ),
                 MaskServerOutput(
-                    response_case=MaskServerReponse.UNSUPPORTED,
+                    response_case=MaskServerResponse.UNSUPPORTED,
                     payload=None,
                 ),
                 MaskServerOutput(
-                    response_case=MaskServerReponse.NOT_IN_ARRAY, payload=[0]
+                    response_case=MaskServerResponse.NOT_IN_ARRAY, payload=[0]
                 ),
             ],
             id="alternated_supported_response",
         ),
         pytest.param(
-            "http://localhost:8000",
             None,
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["EQUAL", 2, "__col__", 0],
                 ),
             ],
             [
                 MaskServerOutput(
-                    response_case=MaskServerReponse.NOT_IN_ARRAY,
+                    response_case=MaskServerResponse.NOT_IN_ARRAY,
                     payload=[
                         "value1",
                         "value2",
@@ -109,40 +102,34 @@ from pydough.mask_server.server_connection import RequestMethod
             id="single_supported_response",
         ),
         pytest.param(
-            "http://localhost:8000",
             None,
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 ),
             ],
             [
                 MaskServerOutput(
-                    response_case=MaskServerReponse.UNSUPPORTED,
+                    response_case=MaskServerResponse.UNSUPPORTED,
                     payload=None,
                 ),
             ],
             id="single_unsupported_response",
         ),
         pytest.param(
-            "http://localhost:8000",
             "test-token-123",
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [
                 MaskServerInput(
-                    table_path="srv.analytics.orders",
+                    table_path="srv.db.orders",
                     column_name="order_date",
                     expression=["BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"],
                 ),
             ],
             [
                 MaskServerOutput(
-                    response_case=MaskServerReponse.IN_ARRAY,
+                    response_case=MaskServerResponse.IN_ARRAY,
                     payload=[
                         "2025-01-01",
                         "2025-01-02",
@@ -156,11 +143,8 @@ from pydough.mask_server.server_connection import RequestMethod
         ),
     ],
 )
-def test_mask_server(
-    base_url: str,
-    token: str | None,
-    path: str,
-    method: RequestMethod,
+def test_mock_mask_server(
+    token: str,
     batch: list[MaskServerInput],
     answer: list[MaskServerOutput],
     mock_server_setup,
@@ -170,13 +154,11 @@ def test_mask_server(
     for the mock server and parse the response correctly.
     """
 
-    mask_server: MaskServer = MaskServer(base_url=base_url, token=token)
+    mask_server: MaskServer = MaskServer(base_url="http://localhost:8000", token=token)
 
     # Doing the request
     response: list[MaskServerOutput] = mask_server.simplify_simple_expression_batch(
         batch=batch,
-        path=path,
-        method=method,
     )
 
     assert response == answer, (
@@ -186,13 +168,11 @@ def test_mask_server(
 
 @pytest.mark.server
 @pytest.mark.parametrize(
-    "base_url, token, path, method, batch, error_msg",
+    "base_url, token, batch, error_msg",
     [
         pytest.param(
             "http://localhost:8000",
             None,
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [],
             "Batch cannot be empty.",
             id="empty_list_request",
@@ -200,11 +180,9 @@ def test_mask_server(
         pytest.param(
             "http://localhost:8000",
             "bad_token_123",
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 )
@@ -213,28 +191,11 @@ def test_mask_server(
             id="wrong_token",
         ),
         pytest.param(
-            "http://localhost:8000",
-            None,
-            "v1/predicates/wrong-path",
-            RequestMethod.POST,
-            [
-                MaskServerInput(
-                    table_path="srv.analytics.tbl",
-                    column_name="col",
-                    expression=["OR", 2, "__col__", 5],
-                )
-            ],
-            "Bad response 404: Not Found",
-            id="wrong_path",
-        ),
-        pytest.param(
             "http://localhost:8080",
             None,
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 )
@@ -243,13 +204,11 @@ def test_mask_server(
             id="wrong_port",
         ),
         pytest.param(
-            "http://12.34.56.78:8000",
+            "http://127.168.1.1:8000",
             None,
-            "v1/predicates/batch-evaluate",
-            RequestMethod.POST,
             [
                 MaskServerInput(
-                    table_path="srv.analytics.tbl",
+                    table_path="srv.db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 )
@@ -259,11 +218,9 @@ def test_mask_server(
         ),
     ],
 )
-def test_mask_server_errors(
+def test_mock_mask_server_errors(
     base_url: str,
     token: str | None,
-    path: str,
-    method: RequestMethod,
     batch: list[MaskServerInput],
     error_msg: str,
     mock_server_setup,
@@ -278,6 +235,4 @@ def test_mask_server_errors(
         # Doing the request
         mask_server.simplify_simple_expression_batch(
             batch=batch,
-            path=path,
-            method=method,
         )

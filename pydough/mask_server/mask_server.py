@@ -3,7 +3,7 @@ Interface for the mask server. This API includes the MaskServer class and relate
 data structures including the MaskServerInput and MaskServerOutput dataclasses.
 """
 
-__all__ = ["MaskServer", "MaskServerInput", "MaskServerOutput"]
+__all__ = ["MaskServer", "MaskServerInput", "MaskServerOutput", "MaskServerResponse"]
 
 from dataclasses import dataclass
 from enum import Enum
@@ -16,7 +16,7 @@ from pydough.mask_server.server_connection import (
 )
 
 
-class MaskServerReponse(Enum):
+class MaskServerResponse(Enum):
     """
     Enum to represent the type of response from the MaskServer.
     """
@@ -69,7 +69,7 @@ class MaskServerOutput:
     it returns an output with UNSUPPORTED + a None payload
     """
 
-    response_case: MaskServerReponse
+    response_case: MaskServerResponse
     """
     The type of response from the server.
     """
@@ -100,43 +100,44 @@ class MaskServer:
             base_url=base_url, token=token
         )
 
-    def get_server_response(self, server_case: str) -> MaskServerReponse:
+    def get_server_response_case(self, server_case: str) -> MaskServerResponse:
         """
-        Mapping from server response strings to MaskServerReponse enum values.
+        Mapping from server response strings to MaskServerResponse enum values.
 
         Args:
             `server_case`: The response string from the server.
         Returns:
-            The corresponding MaskServerReponse enum value.
+            The corresponding MaskServerResponse enum value.
         """
         match server_case:
             case "IN":
-                return MaskServerReponse.IN_ARRAY
+                return MaskServerResponse.IN_ARRAY
             case "NOT_IN":
-                return MaskServerReponse.NOT_IN_ARRAY
+                return MaskServerResponse.NOT_IN_ARRAY
             case _:
-                return MaskServerReponse.UNSUPPORTED
+                return MaskServerResponse.UNSUPPORTED
 
     def simplify_simple_expression_batch(
-        self, batch: list[MaskServerInput], path: str, method: RequestMethod
+        self, batch: list[MaskServerInput]
     ) -> list[MaskServerOutput]:
         """
         Sends a batch of predicate expressions to the mask server for evaluation.
 
-        Each input in the batch specifies a table, column, and predicate expression.
-        The method constructs a request, sends it to the server, and parses the response
-        into a list of MaskServerOutput objects, each indicating the server's decision
-        for the corresponding input.
+        Each input in the batch specifies a table, column, and predicate
+        expression.The method constructs a request, sends it to the server,
+        and parses the response into a list of MaskServerOutput objects, each
+        indicating the server's decision for the corresponding input.
 
         Args:
             `batch`: The list of inputs to be sent to the server.
-            `path`: The API endpoint path.
-            `method`: The HTTP method to use for the request.
 
         Returns:
             An output list containing the response case and payload.
         """
         assert batch != [], "Batch cannot be empty."
+
+        path: str = "v1/predicates/batch-evaluate"
+        method: RequestMethod = RequestMethod.POST
 
         request: ServerRequest = self.generate_request(batch, path, method)
 
@@ -162,7 +163,7 @@ class MaskServer:
         {
             "items": [
                 {
-                    "column_reference": "srv.analytics.tbl.col",
+                    "column_reference": "srv.db.tbl.col",
                     "predicate": ["EQUAL", 2, "__col__", 1],
                     "mode": "dynamic",
                     "dry_run": false
@@ -223,25 +224,36 @@ class MaskServer:
         result: list[MaskServerOutput] = []
 
         for item in response.get("items", []):
-            if item.get("result") == "SUCCESS":
-                operator: str = item.get("materialization", {}).get("operator", "ERROR")
-                payload: Any = (
-                    item.get("materialization", {}).get("values", [])
-                    if operator != "ERROR"
-                    else None
-                )
-
+            """
+            Case on whether operator is ERROR or not
+                If ERROR, then response_case is unsupported and payload is None
+                Otherwise, call self.get_server_response(operator) to get the enum, store in a variable, then case on this variable to obtain the payload (use item.get("materialization", {}).get("values", []) if it is IN_ARRAY or NOT_IN_ARRAY, otherwise None)
+            """
+            if item.get("result") == "ERROR":
                 result.append(
                     MaskServerOutput(
-                        response_case=self.get_server_response(operator),
-                        payload=payload,
+                        response_case=MaskServerResponse.UNSUPPORTED,
+                        payload=None,
                     )
                 )
             else:
+                materialization: dict = item.get("materialization", {})
+                response_case: MaskServerResponse = self.get_server_response_case(
+                    materialization.get("operator", "ERROR")
+                )
+
+                payload: Any = None
+
+                if response_case in (
+                    MaskServerResponse.IN_ARRAY,
+                    MaskServerResponse.NOT_IN_ARRAY,
+                ):
+                    payload = materialization.get("values", [])
+
                 result.append(
                     MaskServerOutput(
-                        response_case=MaskServerReponse.UNSUPPORTED,
-                        payload=None,
+                        response_case=response_case,
+                        payload=payload,
                     )
                 )
 
