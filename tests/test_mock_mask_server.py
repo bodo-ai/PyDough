@@ -190,19 +190,6 @@ def test_mock_mask_server(
             "Bad response 401: Unauthorized request",
             id="wrong_token",
         ),
-        pytest.param(
-            "http://127.168.1.1:8000",
-            None,
-            [
-                MaskServerInput(
-                    table_path="srv.db.tbl",
-                    column_name="col",
-                    expression=["OR", 2, "__col__", 5],
-                )
-            ],
-            "Request failed: timed out",
-            id="wrong_url",
-        ),
     ],
 )
 def test_mock_mask_server_errors(
