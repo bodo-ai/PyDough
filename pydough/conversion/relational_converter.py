@@ -766,6 +766,21 @@ class RelTranslation:
                     context.expressions[hybrid_ref] = context.expressions[key_expr]
         return context
 
+    def is_masked_column(self, expr: HybridExpr) -> bool:
+        """
+        Checks if a given expression is a masked column expression.
+
+        Args:
+            `expr`: the expression to check.
+
+        Returns:
+            True if the expression is a masked column expression, False
+            otherwise.
+        """
+        return isinstance(expr, HybridColumnExpr) and isinstance(
+            expr.column.column_property, MaskedTableColumnMetadata
+        )
+
     def build_simple_table_scan(
         self, node: HybridCollectionAccess
     ) -> TranslationOutput:
@@ -813,16 +828,14 @@ class RelTranslation:
 
         # If any of the columns are masked, insert a projection on top to unmask
         # them.
-        if any(
-            isinstance(expr, HybridColumnExpr)
-            and isinstance(expr.column.column_property, MaskedTableColumnMetadata)
-            for expr in node.terms.values()
-        ):
+        if any(self.is_masked_column(expr) for expr in node.terms.values()):
             unmask_columns: dict[str, RelationalExpression] = {}
             for name, hybrid_expr in node.terms.items():
-                if isinstance(hybrid_expr, HybridColumnExpr) and isinstance(
-                    hybrid_expr.column.column_property, MaskedTableColumnMetadata
-                ):
+                if self.is_masked_column(hybrid_expr):
+                    assert isinstance(hybrid_expr, HybridColumnExpr)
+                    assert isinstance(
+                        hybrid_expr.column.column_property, MaskedTableColumnMetadata
+                    )
                     unmask_columns[name] = CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
                             hybrid_expr.column.column_property, True
