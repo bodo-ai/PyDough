@@ -27,7 +27,7 @@ class RequestMethod(Enum):
 @dataclass
 class ServerRequest:
     """
-    Dataclass for the request of the Server.
+    Dataclass that represents a general server request
     """
 
     path: str = ""
@@ -37,7 +37,7 @@ class ServerRequest:
 
     payload: dict = field(default_factory=dict)
     """
-    The payload of the request.
+    The payload request. This is the data to be sent in the request body.
     """
 
     method: RequestMethod = RequestMethod.GET
@@ -53,7 +53,7 @@ class ServerRequest:
 
 class ServerConnection:
     """
-    Class to manage the connection to the server.
+    Class that manages the connection to the server.
     """
 
     def __init__(self, base_url: str, token: str | None = None):

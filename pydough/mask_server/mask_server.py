@@ -1,6 +1,6 @@
 """
 Interface for the mask server. This API includes the MaskServer class and related
-data structures. Also includes MaskServerInput and MaskServerOutput dataclasses.
+data structures including the MaskServerInput and MaskServerOutput dataclasses.
 """
 
 __all__ = ["MaskServer", "MaskServerInput", "MaskServerOutput"]
@@ -121,7 +121,12 @@ class MaskServer:
         self, batch: list[MaskServerInput], path: str, method: RequestMethod
     ) -> list[MaskServerOutput]:
         """
-        Evaluate the predicate expression against the specified table and column.
+        Sends a batch of predicate expressions to the mask server for evaluation.
+
+        Each input in the batch specifies a table, column, and predicate expression.
+        The method constructs a request, sends it to the server, and parses the response
+        into a list of MaskServerOutput objects, each indicating the server's decision
+        for the corresponding input.
 
         Args:
             `batch`: The list of inputs to be sent to the server.
@@ -144,7 +149,8 @@ class MaskServer:
         self, batch: list[MaskServerInput], path: str, method: RequestMethod
     ) -> ServerRequest:
         """
-        Generate a server request for the given batch of server inputs and path.
+        Generate a server request from the given batch of server inputs and path.
+
         Args:
             `batch`: A list of MaskServerInput objects.
             `path`: The API endpoint path.

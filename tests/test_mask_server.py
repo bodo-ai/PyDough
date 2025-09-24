@@ -13,9 +13,6 @@ from pydough.mask_server.mask_server import (
 from pydough.mask_server.server_connection import RequestMethod
 
 
-# what we need:
-# base url, path, method, input batch
-# expected output batch
 @pytest.mark.execute
 @pytest.mark.server
 @pytest.mark.parametrize(

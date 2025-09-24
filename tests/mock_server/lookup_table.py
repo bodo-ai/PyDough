@@ -1,6 +1,6 @@
 """
 A lookup table for the mock server to return predefined responses based on
-request paths and payloads.
+request column reference and predicate.
 """
 
 LOOKUP_TABLE: dict = {
