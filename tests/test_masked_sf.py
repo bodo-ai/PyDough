@@ -412,34 +412,6 @@ from .testing_sf_masked_utilities import (
             ),
             id="fsi_customers_accounts_join",
         ),
-        # Unrecognized term of HEALTH.Partition(...) 'claim_amount'.
-        # pytest.param(
-        #     PyDoughSnowflakeMaskedTest(
-        #         "claims_info= claims.CALCULATE("
-        #         " patient_name=JOIN_STRINGS(' ', patient.first_name, patient.last_name)"
-        #         " ).PARTITION(name='claim_status', by=claim_status)\n"
-        #         "result = claims_info.BEST(per='claim_status', by=claim_amount.DESC())"
-        #         ".CALCULATE(\n"
-        #         "    claim_status,\n"
-        #         "    claim_amount,\n"
-        #         "    patient_name\n"
-        #         ")",
-        #         "HEALTH",
-        #         "health_claims_agg_best",
-        #         order_sensitive=True,
-        #         answers={
-        #             "NONE": None,
-        #             "PARTIAL": None,
-        #             "FULL": pd.DataFrame({
-        #                 # note: these account types are masked values
-        #                 "acct_type": ["Checking", "Checking", "Savings", "Savings", "Savings"],
-        #                 "balance": [0.23, 0.22, 0.20, 0.19, 0.18],
-        #                 "name": [0.23, 0.22, 0.20, 0.19, 0.18]
-        #             })
-        #         },
-        #     ),
-        #     id="health_claims_agg_best",
-        # ),
     ],
 )
 def sf_masked_test_data(

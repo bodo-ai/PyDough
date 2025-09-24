@@ -55,7 +55,7 @@ class PyDoughSnowflakeMaskedTest(PyDoughPandasTest):
 
 def is_sf_masked_env(account_type: str = "FULL") -> bool:
     """Check if the environment variables for Snowflake masked tests are set."""
-    required_vars = [
+    required_vars: list[str] = [
         "SF_MASKED_ACCOUNT",
     ]
     required_vars += [
@@ -82,7 +82,7 @@ def sf_masked_context() -> Callable[[str, str, str], DatabaseContext]:
         database_name: str, schema_name: str, account_type: str
     ) -> DatabaseContext:
         account_type = account_type.upper()
-        account_lists = {"FULL", "PARTIAL", "NONE"}
+        account_lists: list[str] = ["FULL", "PARTIAL", "NONE"]
         if account_type not in account_lists:
             pytest.skip(
                 f"Skipping Snowflake masked tests: Unknown account_type {account_type}"
@@ -93,11 +93,11 @@ def sf_masked_context() -> Callable[[str, str, str], DatabaseContext]:
             )
         import snowflake.connector as sf_connector
 
-        env_var_prefix = f"SF_{account_type}"
-        warehouse = "BODO_WH"
-        password = os.getenv(f"{env_var_prefix}_PASSWORD")
-        username = os.getenv(f"{env_var_prefix}_USERNAME")
-        account = os.getenv("SF_MASKED_ACCOUNT")
+        env_var_prefix: str = f"SF_{account_type}"
+        warehouse: str = "BODO_WH"
+        password: str | None = os.getenv(f"{env_var_prefix}_PASSWORD")
+        username: str | None = os.getenv(f"{env_var_prefix}_USERNAME")
+        account: str | None = os.getenv("SF_MASKED_ACCOUNT")
         connection: sf_connector.connection.SnowflakeConnection = sf_connector.connect(
             user=username,
             password=password,
