@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
 from .lookup_table import LOOKUP_TABLE
@@ -18,15 +18,25 @@ class RequestPayload(BaseModel):
     expression_format: dict[str, str] = {"name": "linear", "version": "0.2.0"}
 
 
+def verify_token(request: Request):
+    auth_header = request.headers.get("Authorization", None)
+    if auth_header:
+        if auth_header != "Bearer test-token-123":
+            raise HTTPException(status_code=401, detail="Unauthorized request")
+    return True
+
+
 @app.get("/health")
-def health():
+def health(request: Request, authorized: bool = Depends(verify_token)):
     return {"status": "ok"}
 
 
 @app.post("/v1/predicates/batch-evaluate")
-def batch_evaluate(request: RequestPayload):
+def batch_evaluate(
+    request: Request, payload: RequestPayload, authorized: bool = Depends(verify_token)
+):
     responses = []
-    for item in request.items:
+    for item in payload.items:
         key = (item.column_reference, tuple(item.predicate))
         response: dict = LOOKUP_TABLE.get(key, {"result": "UNSUPPORTED"})
         responses.append(response)

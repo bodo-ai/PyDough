@@ -69,6 +69,15 @@ class ServerConnection:
         self.token = token
         self._client = httpx.Client(base_url=self.base_url)
 
+    def set_timeout(self, timeout: float) -> None:
+        """
+        Set the timeout for the HTTP client.
+
+        Args:
+            `timeout`: The timeout value in seconds.
+        """
+        self._client.timeout = timeout
+
     def method_mapping(self, request_method: RequestMethod) -> Callable[..., Response]:
         """
         Map of endpoints to their request methods.
@@ -125,6 +134,12 @@ class ServerConnection:
 
         except httpx.HTTPStatusError as e:
             # HTTP error status codes (4xx, 5xx)
+            try:
+                # Parse JSON and get the "detail" field
+                error_detail = e.response.json().get("detail", e.response.text)
+            except ValueError:
+                # Response body is not JSON
+                error_detail = e.response.text
             raise RuntimeError(
-                f"Bad response {e.response.status_code}: {e.response.text}"
+                f"Bad response {e.response.status_code}: {error_detail}"
             ) from e

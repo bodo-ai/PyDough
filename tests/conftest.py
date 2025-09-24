@@ -1774,7 +1774,7 @@ def custom_functions_test_data(request) -> PyDoughPandasTest:
 
 
 @pytest.fixture(scope="session")
-def setup_mock_server():
+def mock_server_setup():
     # Run FastAPI dev server in background
     proc = subprocess.Popen(
         [
