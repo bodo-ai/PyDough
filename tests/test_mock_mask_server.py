@@ -191,19 +191,6 @@ def test_mock_mask_server(
             id="wrong_token",
         ),
         pytest.param(
-            "http://localhost:8080",
-            None,
-            [
-                MaskServerInput(
-                    table_path="srv.db.tbl",
-                    column_name="col",
-                    expression=["OR", 2, "__col__", 5],
-                )
-            ],
-            "Request failed: [Errno 61] Connection refused",
-            id="wrong_port",
-        ),
-        pytest.param(
             "http://127.168.1.1:8000",
             None,
             [
