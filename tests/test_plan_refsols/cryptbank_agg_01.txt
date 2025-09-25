@@ -1,4 +1,0 @@
-ROOT(columns=[('n', ROUND(avg_t_amount, 2:numeric))], orderings=[])
- AGGREGATE(keys={}, aggregations={'avg_t_amount': AVG(t_amount)})
-  FILTER(condition=MONTH(t_ts) == 6:numeric & YEAR(t_ts) == 2022:numeric, columns={'t_amount': t_amount})
-   SCAN(table=CRBNK.TRANSACTIONS, columns={'t_amount': t_amount, 't_ts': t_ts})

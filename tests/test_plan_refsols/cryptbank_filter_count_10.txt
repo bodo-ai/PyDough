@@ -1,4 +1,0 @@
-ROOT(columns=[('n', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=MONOTONIC('2021-05-10 12:00:00':string, t_ts, '2021-05-20 12:00:00':string), columns={})
-   SCAN(table=CRBNK.TRANSACTIONS, columns={'t_ts': t_ts})

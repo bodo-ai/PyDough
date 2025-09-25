@@ -58,6 +58,7 @@ __all__ = [
     "MONOTONIC",
     "MONTH",
     "MUL",
+    "MaskedExpressionFunctionOperator",
     "NDISTINCT",
     "NEQ",
     "NEXT",
@@ -107,6 +108,7 @@ from .expression_function_operators import ExpressionFunctionOperator
 from .expression_operator import PyDoughExpressionOperator
 from .expression_window_operators import ExpressionWindowOperator
 from .keyword_branching_operators import KeywordBranchingExpressionFunctionOperator
+from .masked_expression_function_operator import MaskedExpressionFunctionOperator
 from .registered_expression_operators import (
     ABS,
     ABSENT,
