@@ -1,4 +1,0 @@
-ROOT(columns=[('n', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=loyalty_tier == 'Platinum':string, columns={})
-   SCAN(table=bodo.retail.loyalty_members, columns={'loyalty_tier': loyalty_tier})

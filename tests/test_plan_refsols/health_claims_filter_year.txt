@@ -1,4 +1,0 @@
-ROOT(columns=[('n', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=YEAR(claim_date) > 2020:numeric, columns={})
-   SCAN(table=bodo.health.claims, columns={'claim_date': claim_date})

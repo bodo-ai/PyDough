@@ -1,0 +1,2 @@
+ROOT(columns=[('first_name', UNMASK::(PTY_UNPROTECT([firstname], 'name'))), ('last_name', UNMASK::(PTY_UNPROTECT([lastname], 'name'))), ('city', UNMASK::(PTY_UNPROTECT_ADDRESS([city]))), ('zipcode', zipcode), ('date_of_birth', UNMASK::(PTY_UNPROTECT([dob], 'dob')))], orderings=[(UNMASK::(PTY_UNPROTECT([lastname], 'name'))):asc_first], limit=5:numeric)
+ SCAN(table=bodo.fsi.protected_customers, columns={'city': city, 'dob': dob, 'firstname': firstname, 'lastname': lastname, 'zipcode': zipcode})
