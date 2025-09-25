@@ -51,7 +51,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
         # fall back to the original.
         if (
             not isinstance(call_arg.op, pydop.MaskedExpressionFunctionOperator)
-            or not call_arg.op.is_unprotect
+            or not call_arg.op.is_unmask
         ):
             return original_call
 
@@ -59,7 +59,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
 
         if original_call.op in (pydop.EQU, pydop.NEQ):
             # If the operation is equality or inequality, we can simply wrap the
-            # literal in a call to MASK by toggling is_unprotect to False.
+            # literal in a call to MASK by toggling is_unmask to False.
             masked_literal = CallExpression(
                 pydop.MaskedExpressionFunctionOperator(
                     call_arg.op.masking_metadata, False
