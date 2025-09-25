@@ -41,6 +41,11 @@ on:
         type: boolean
         required: false
         default: false        
+      run-sf_masked:
+        description: "Run Snowflake Masked Tests"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -143,7 +148,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked)" -rs
 
   run-sf-tests:
     name: Snowflake Tests
@@ -189,6 +194,27 @@ jobs:
     secrets:
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-sf-masked-tests:
+    name: Masked Snowflake Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf_masked]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf_masked))
+    uses: ./.github/workflows/sf_masked_testing.yml
+    secrets:
+      SF_FULL_USERNAME: ${{ secrets.SF_FULL_USERNAME }}
+      SF_FULL_PASSWORD: ${{ secrets.SF_FULL_PASSWORD }}
+      SF_PARTIAL_USERNAME: ${{ secrets.SF_PARTIAL_USERNAME }}
+      SF_PARTIAL_PASSWORD: ${{ secrets.SF_PARTIAL_PASSWORD }}
+      SF_NONE_USERNAME: ${{ secrets.SF_NONE_USERNAME }}
+      SF_NONE_PASSWORD: ${{ secrets.SF_NONE_PASSWORD }}
+      SF_MASKED_ACCOUNT: ${{ secrets.SF_MASKED_ACCOUNT }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
