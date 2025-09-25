@@ -1,0 +1,5 @@
+ROOT(columns=[('store_location', store_location), ('total_amount', total_amount), ('name', JOIN_STRINGS(' ':string, first_name, last_name))], orderings=[(total_amount):desc_last], limit=5:numeric)
+ FILTER(condition=RANKING(args=[], partition=[store_location], order=[(total_amount):desc_first], allow_ties=False) == 1:numeric, columns={'first_name': first_name, 'last_name': last_name, 'store_location': store_location, 'total_amount': total_amount})
+  JOIN(condition=t0.customer_id == t1.customer_id, type=INNER, cardinality=SINGULAR_ACCESS, columns={'first_name': t1.first_name, 'last_name': t1.last_name, 'store_location': t0.store_location, 'total_amount': t0.total_amount})
+   SCAN(table=bodo.retail.transactions, columns={'customer_id': customer_id, 'store_location': store_location, 'total_amount': total_amount})
+   SCAN(table=bodo.retail.loyalty_members, columns={'customer_id': customer_id, 'first_name': first_name, 'last_name': last_name})

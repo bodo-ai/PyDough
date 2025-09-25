@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ENDSWITH(email, 'gmail.com':string), columns={})
+   SCAN(table=bodo.health.patients, columns={'email': email})
