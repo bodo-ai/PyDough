@@ -37,6 +37,7 @@ import builtins
 import keyword
 import re
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 
 import numpy as np
 
@@ -167,10 +168,8 @@ class ValidSQLName(PyDoughPredicate):
     as the name for a SQL table path/column name.
     """
 
-    # Regex for unquoted SQL identifiers
-    _UNQUOTED_SQL_IDENTIFIER = re.compile(
-        r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$"
-    )
+    # Single-part unquoted SQL identifier (no dots here).
+    _UNQUOTED_SQL_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
     def __init__(self):
         self.error_messages: dict[str, str] = {
@@ -178,17 +177,113 @@ class ValidSQLName(PyDoughPredicate):
             "sql_keyword": "must have a SQL name that is not a reserved word",
         }
 
+    def _split_identifier(self, name: str) -> list[str]:
+        """
+        Split a potentially qualified SQL identifier into parts.
+
+        Behavior:
+        - Dots (.) **outside** quotes/backticks separate parts.
+        - Escaped double quotes "" are allowed inside a quoted name ("...").
+        - Escaped backticks `` are allowed inside a backtick name (`...`).
+        - Dots inside quoted/backtick names are literal characters and do not split.
+        - Returned parts include their surrounding quotes/backticks if present.
+        (This is intentional, since quoted and unquoted names will be validated differently later.)
+        - Empty parts may be returned for cases like:
+            * ".field"   → ["", "field"]
+            * "schema." → ["schema", ""]
+            * "db..tbl" → ["db", "", "tbl"]
+        (Validation will decide if empty parts are allowed.)
+
+        Notes:
+        - After closing a quoted/backtick identifier, parsing continues in the same token
+        until a dot (.) is seen or the string ends. Quotes themselves do not trigger splitting.
+        - If spaces or other invalid characters appear in a part, the validator will
+        reject that token later.
+
+        Examples:
+            >>> _split_identifier('schema.table')
+            ['schema', 'table']
+
+            >>> _split_identifier('"foo"."bar"')
+            ['"foo"', '"bar"']
+
+            >>> _split_identifier('db."table.name"')
+            ['db', '"table.name"']
+
+            >>> _split_identifier('`a``b`.`c``d`')
+            ['`a``b`', '`c``d`']
+
+            >>> _split_identifier('.field')
+            ['', 'field']
+
+            >>> _split_identifier('field.')
+            ['field', '']
+        """
+
+        class split_states(Enum):
+            START = auto()
+            UNQUOTED = auto()
+            DOUBLE_QUOTE = auto()
+            BACKTICK = auto()
+
+        parts: list[str] = []
+        start_idx: int = 0
+        state: split_states = split_states.START
+        length = len(name)
+        ii: int = 0
+
+        while ii < length:
+            ch: str = name[ii]
+            match state:
+                case split_states.START:
+                    match ch:
+                        case '"':
+                            state = split_states.DOUBLE_QUOTE
+                            ii += 1
+                        case "`":
+                            state = split_states.BACKTICK
+                            ii += 1
+                        case _:
+                            state = split_states.UNQUOTED
+                case split_states.UNQUOTED:
+                    if ch == ".":
+                        parts.append(name[start_idx:ii])
+                        start_idx = ii + 1
+                        state = split_states.START
+                    ii += 1
+                case split_states.DOUBLE_QUOTE:
+                    if ch == '"':
+                        if (ii + 1 < length) and (name[ii + 1] == '"'):
+                            ii += 1
+                        else:
+                            state = split_states.UNQUOTED
+                    ii += 1
+                case split_states.BACKTICK:
+                    if ch == "`":
+                        if (ii + 1 < length) and (name[ii + 1] == "`"):
+                            ii += 1
+                        else:
+                            state = split_states.UNQUOTED
+                    ii += 1
+        parts.append(name[start_idx:ii])
+        return parts
+
     def _error_code(self, obj: object) -> str | None:
         """Return an error code if invalid, or None if valid."""
         ret_val: str | None = None
         # Check that obj is a string
         if isinstance(obj, str):
-            # Check that obj is a valid SQL identifier
-            if not self.is_valid_sql_identifier(obj):
-                ret_val = "identifier"
-            # Check that obj is not a SQL reserved word
-            elif self._is_sql_keyword(obj):
-                ret_val = "sql_keyword"
+            # Check each part of a qualified name: db.schema.table
+            for part in self._split_identifier(obj):
+                # Check that obj is a valid SQL identifier
+                # Empty parts (e.g., leading/trailing dots) are invalid
+                if not part or not self.is_valid_sql_identifier(part):
+                    ret_val = "identifier"
+                    break
+                # Check that obj is not a SQL reserved word
+                if self._is_sql_keyword(part):
+                    ret_val = "sql_keyword"
+                    break
         else:
             ret_val = "identifier"
 

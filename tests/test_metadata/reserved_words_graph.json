@@ -594,7 +594,7 @@
           {
             "name": "int_",
             "type": "table column",
-            "column name": "int",
+            "column name": "\"int\"",
             "data type": "numeric",
             "description": "Column name normalized from SQL and python reserved word 'int'",
             "sample values": [
@@ -607,7 +607,7 @@
           {
             "name": "float_",
             "type": "table column",
-            "column name": "FLOAT",
+            "column name": "\"FLOAT\"",
             "data type": "numeric",
             "description": "Column name normalized from SQL and Python reserved word 'float'",
             "sample values": [
@@ -982,7 +982,7 @@
           {
             "name": "integer",
             "type": "table column",
-            "column name": "INTEGER",
+            "column name": "\"INTEGER\"",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'INTEGER'",
             "sample values": [
@@ -993,7 +993,7 @@
           {
             "name": "float_",
             "type": "table column",
-            "column name": "FLOAT",
+            "column name": "\"FLOAT\"",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'FLOAT'",
             "sample values": [
@@ -1004,7 +1004,7 @@
           {
             "name": "numeric",
             "type": "table column",
-            "column name": "NUMERIC",
+            "column name": "\"NUMERIC\"",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'NUMERIC'",
             "sample values": [
@@ -1015,7 +1015,7 @@
           {
             "name": "decimal",
             "type": "table column",
-            "column name": "DECIMAL",
+            "column name": "\"DECIMAL\"",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'DECIMAL'",
             "sample values": [
@@ -1026,7 +1026,7 @@
           {
             "name": "char",
             "type": "table column",
-            "column name": "CHAR",
+            "column name": "\"CHAR\"",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'CHAR'",
             "sample values": [
@@ -1037,7 +1037,7 @@
           {
             "name": "varchar",
             "type": "table column",
-            "column name": "VARCHAR",
+            "column name": "\"VARCHAR\"",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'VARCHAR'",
             "sample values": [
@@ -1125,7 +1125,7 @@
           {
             "name": "varchar",
             "type": "table column",
-            "column name": "VARCHAR",
+            "column name": "\"VARCHAR\"",
             "data type": "string",
             "description": "Column name normalized from SQL reserved word 'VARCHAR'",
             "sample values": [
@@ -1138,7 +1138,7 @@
           {
             "name": "integer",
             "type": "table column",
-            "column name": "INTEGER",
+            "column name": "\"INTEGER\"",
             "data type": "numeric",
             "description": "Column name normalized from SQL reserved word 'INTEGER'",
             "sample values": [

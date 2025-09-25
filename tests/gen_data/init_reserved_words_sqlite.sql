@@ -18,16 +18,16 @@ CREATE TABLE lowercase_detail (
     "as" VARCHAR(30),
     "0 = 0 and '" varchar(30),
     result NUMERIC(10,2),
-    is_active tinyint,
+    is_active smallint,
     CONSTRAINT lowercase_to_UPPERCASE FOREIGN KEY (master_id) REFERENCES UPPERCASE_MASTER(ID)
 );
 
 CREATE TABLE "MixedCase_1:1" (
     Id BIGINT NOT NULL PRIMARY KEY,
     "(parentheses)" VARCHAR(30),
-    "In" tinyint,
+    "In" smallint,
     LowerCaseId BIGINT NOT NULL,
-    CONSTRAINT "MixedCase_1:1_to_UPPERCASE" FOREIGN KEY (Id) REFERENCES UPPERCASE_MASTER(ID)  
+    CONSTRAINT "MixedCase_1:1_to_UPPERCASE" FOREIGN KEY (Id) REFERENCES UPPERCASE_MASTER(ID),
     CONSTRAINT "MixedCase_1:1_to_lowercase_detail" FOREIGN KEY (LowerCaseId) REFERENCES lowercase_detail(id)
 );
 
@@ -35,7 +35,7 @@ CREATE TABLE "CAST" (
     PK_FIELD_NAME BIGINT NOT NULL PRIMARY KEY,
     ID BIGINT NOT NULL,
     ID2 BIGINT,
-    is_active tinyint,
+    is_active smallint,
     CONSTRAINT CAST_to_lowercase_detail1 FOREIGN KEY (ID) REFERENCES lowercase_detail(id),
     CONSTRAINT CAST_to_lowercase_detail2 FOREIGN KEY (ID2) REFERENCES lowercase_detail(id)
 );
@@ -48,7 +48,7 @@ CREATE TABLE """QUOTED TABLE_NAME""" (
     description VARCHAR(30),
     CONSTRAINT QUOTED_UNIQUE UNIQUE ("`cast`"),
     CONSTRAINT QUOTED_to_UPPERCASE_MASTER FOREIGN KEY ("`cast`") REFERENCES UPPERCASE_MASTER(ID),
-    CONSTRAINT QUOTED_to_lowercase_detail1 FOREIGN KEY ("= ""QUOTE""") REFERENCES lowercase_detail(id)
+    CONSTRAINT QUOTED_to_lowercase_detail1 FOREIGN KEY ("= ""QUOTE""") REFERENCES lowercase_detail(id),
     CONSTRAINT QUOTED_to_lowercase_detail2 FOREIGN KEY ("`name""[") REFERENCES lowercase_detail(id)
 );
 
@@ -186,7 +186,7 @@ CREATE TABLE detail1 (
     id2 INT NOT NULL,
     description VARCHAR(30),
     CONSTRAINT PK_detail1 PRIMARY KEY ("key"),
-    CONSTRAINT FK_detail1_to_master FOREIGN KEY (id1, id2) REFERENCES master(ID1, ID2)
+    CONSTRAINT FK_detail1_to_master FOREIGN KEY (id1, id2) REFERENCES master(ID1, ID2),
     CONSTRAINT AK_detail1_1 UNIQUE (id1, id2)
 );
 
