@@ -54,7 +54,7 @@ class MaskServerInput:
     The SQL column name, given from the metadata.
     """
 
-    expression: list[str | int | float]
+    expression: list[str | int | float | None | bool]
     """"
     The linear serialization of the predicate expression.
     """

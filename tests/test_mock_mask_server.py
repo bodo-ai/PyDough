@@ -39,12 +39,12 @@ from pydough.mask_server.mask_server import (
                 MaskServerInput(
                     table_path="srv.db.tbl",
                     column_name="col",
-                    expression=["GT", 2, "__col__", 100],
+                    expression=["GT", 2, "__col__", 45.67],
                 ),
                 MaskServerInput(
                     table_path="srv.db.tbl",
                     column_name="col",
-                    expression=["NOT_EQUAL", 2, "__col__", 0],
+                    expression=["NOT_EQUAL", 2, "__col__", "LOWER", 1, "Smith"],
                 ),
             ],
             [
@@ -75,7 +75,7 @@ from pydough.mask_server.mask_server import (
                     payload=None,
                 ),
                 MaskServerOutput(
-                    response_case=MaskServerResponse.NOT_IN_ARRAY, payload=[0]
+                    response_case=MaskServerResponse.NOT_IN_ARRAY, payload=["smith"]
                 ),
             ],
             id="alternated_supported_response",
@@ -140,6 +140,94 @@ from pydough.mask_server.mask_server import (
                 ),
             ],
             id="with_token",
+        ),
+        pytest.param(
+            "test-token-123",
+            [
+                MaskServerInput(
+                    table_path="srv.db.tbl",
+                    column_name="col",
+                    expression=["NOT_EQUAL", 2, "__col__", True],
+                ),
+            ],
+            [
+                MaskServerOutput(
+                    response_case=MaskServerResponse.IN_ARRAY,
+                    payload=[False],
+                ),
+            ],
+            id="booleans",
+        ),
+        pytest.param(
+            None,
+            [
+                MaskServerInput(
+                    table_path="srv.db.tbl",
+                    column_name="col",
+                    expression=["LT", 2, "__col__", "123.654445"],
+                ),
+                MaskServerInput(
+                    table_path="srv.db.tbl",
+                    column_name="col",
+                    expression=[
+                        "AND",
+                        2,
+                        "NOT_EQUAL",
+                        2,
+                        "__col__",
+                        None,
+                        "GT",
+                        2,
+                        "__col__",
+                        "$45.00",
+                    ],
+                ),
+            ],
+            [
+                MaskServerOutput(
+                    response_case=MaskServerResponse.IN_ARRAY,
+                    payload=["123.121123", "123.654444", "123.654445"],
+                ),
+                MaskServerOutput(
+                    response_case=MaskServerResponse.NOT_IN_ARRAY,
+                    payload=[None, "$44.50", "$43.20", "$44.99"],
+                ),
+            ],
+            id="decimal_and_money",
+        ),
+        pytest.param(
+            None,
+            [
+                MaskServerInput(
+                    table_path="srv.db.tbl",
+                    column_name="col",
+                    expression=[
+                        "OR",
+                        2,
+                        "AND",
+                        2,
+                        "REGEXP",
+                        2,
+                        "__col__",
+                        "^[A-Z][a-z]+$",
+                        "NOT_EQUAL",
+                        2,
+                        "__col__",
+                        "SGVsbG9Xb3JsZA==",
+                        "EQUAL",
+                        2,
+                        "__col__",
+                        '"Hello World"',
+                    ],
+                ),
+            ],
+            [
+                MaskServerOutput(
+                    response_case=MaskServerResponse.IN_ARRAY,
+                    payload=['"Hello"', "HelloWorld", "SGVsbG9Xb3JsZA=="],
+                ),
+            ],
+            id="nested_string",
         ),
     ],
 )

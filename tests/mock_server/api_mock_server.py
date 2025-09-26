@@ -8,7 +8,7 @@ app: FastAPI = FastAPI()
 
 class EvaluateRequest(BaseModel):
     column_reference: str
-    predicate: list[str | int | float]
+    predicate: list[str | int | float | None | bool]
     mode: str = "dynamic"
     dry_run: bool = False
 
@@ -39,6 +39,8 @@ def batch_evaluate(
     for item in payload.items:
         key = (item.column_reference, tuple(item.predicate))
         response: dict = LOOKUP_TABLE.get(key, {"result": "UNSUPPORTED"})
+        # Adding the index
+        response["index"] = payload.items.index(item) + 1
         responses.append(response)
 
     return {"result": "SUCCESS", "items": responses}
