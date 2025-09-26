@@ -11,13 +11,6 @@ import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.metadata import GraphMetadata
-from pydough.unqualified import UnqualifiedNode
-from tests.test_pydough_functions.bad_pydough_functions import (
-    bad_sqlite_udf_1,
-    bad_sqlite_udf_2,
-    bad_sqlite_udf_3,
-    bad_sqlite_udf_4,
-)
 from tests.test_pydough_functions.udf_pydough_functions import (
     sqlite_udf_combine_strings,
     sqlite_udf_count_epsilon,
@@ -412,32 +405,42 @@ def test_pipeline_e2e_tpch_sqlite_udf(
 
 
 @pytest.mark.parametrize(
-    "pydough_impl, error_message",
+    "pydough_text, error_message",
     [
         pytest.param(
-            bad_sqlite_udf_1,
+            # Calling a UDF that requires 2 arguments with only 1 argument
+            "result = orders.CALCULATE(x=FORMAT_DATETIME('%Y'))",
             "Invalid operator invocation \"FORMAT_DATETIME('%Y')\": Expected 2 arguments, received 1",
             id="bad_sqlite_udf_1",
         ),
         pytest.param(
-            bad_sqlite_udf_2,
+            # Calling a UDF that requires 2 arguments with 3 arguments
+            "result = orders.CALCULATE(x=FORMAT_DATETIME('%Y', order_date, 'foo'))",
             "Invalid operator invocation \"FORMAT_DATETIME('%Y', order_date, 'foo')\": Expected 2 arguments, received 3",
             id="bad_sqlite_udf_2",
         ),
         pytest.param(
-            bad_sqlite_udf_3,
+            # Calling a UDF that requires 1-2 arguments with 0 arguments
+            "result = nations.CALCULATE(x=GCAT(by=name.ASC()))",
             "Invalid operator invocation 'GCAT()': Expected between 1 and 2 arguments inclusive, received 0",
             id="bad_sqlite_udf_3",
         ),
         pytest.param(
-            bad_sqlite_udf_4,
+            # Calling a UDF that requires 1-2 arguments with 3 arguments
+            "result = nations.CALCULATE(x=GCAT(name, ';', 'bar', by=name.ASC()))",
             "Invalid operator invocation \"GCAT(name, ';', 'bar')\": Expected between 1 and 2 arguments inclusive, received 3.",
             id="bad_sqlite_udf_4",
+        ),
+        pytest.param(
+            # Calling a UDF function that doesn't exist
+            "result = order.CALCULATE(x=FORMATDATETIME('%Y', order_date))",
+            "PyDough object FORMATDATETIME is not callable. Did you mean: FORMAT_DATETIME, DATETIME, FLOAT?",
+            id="bad_sqlite_udf_5",
         ),
     ],
 )
 def test_pipeline_tpch_sqlite_udf_errors(
-    pydough_impl: Callable[..., UnqualifiedNode],
+    pydough_text: str,
     error_message: str,
     get_udf_graph: graph_fetcher,
 ):
@@ -446,7 +449,7 @@ def test_pipeline_tpch_sqlite_udf_errors(
     """
     graph: GraphMetadata = get_udf_graph("TPCH_SQLITE_UDFS")
     run_e2e_error_test(
-        pydough_impl,
+        pydough_text,
         re.escape(error_message),
         graph,
     )

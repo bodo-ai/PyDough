@@ -1,14 +1,14 @@
 WITH _s3 AS (
   SELECT
+    drug_id,
     AVG(
       tot_drug_amt / DATEDIFF(CAST(end_dt AS DATETIME), CAST(start_dt AS DATETIME), DAY)
-    ) AS avg_ddd,
-    drug_id
+    ) AS avg_ddd
   FROM main.treatments
   WHERE
     NOT end_dt IS NULL
   GROUP BY
-    2
+    1
 )
 SELECT
   drugs.drug_name,

@@ -6,11 +6,14 @@ based on the database type.
 import sqlite3
 import time
 
+from pydough.errors import PyDoughSessionException
+
 from .database_connector import DatabaseConnection, DatabaseContext, DatabaseDialect
 
 __all__ = [
     "load_database_context",
     "load_mysql_connection",
+    "load_postgres_connection",
     "load_snowflake_connection",
     "load_sqlite_connection",
 ]
@@ -21,7 +24,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     Load the database context with the appropriate connection and dialect.
 
     Args:
-        `database`: The name of the database to connect to.
+        `database_name`: The name of the database to connect to.
         `**kwargs`: Additional keyword arguments to pass to the connection.
             All arguments must be accepted using the supported connect API
             for the dialect.
@@ -29,7 +32,7 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
     Returns:
         The database context object.
     """
-    supported_databases = {"sqlite", "snowflake", "mysql"}
+    supported_databases = {"postgres", "mysql", "sqlite", "snowflake"}
     connection: DatabaseConnection
     dialect: DatabaseDialect
     match database_name.lower():
@@ -42,8 +45,11 @@ def load_database_context(database_name: str, **kwargs) -> DatabaseContext:
         case "mysql":
             connection = load_mysql_connection(**kwargs)
             dialect = DatabaseDialect.MYSQL
+        case "postgres":
+            connection = load_postgres_connection(**kwargs)
+            dialect = DatabaseDialect.POSTGRES
         case _:
-            raise ValueError(
+            raise PyDoughSessionException(
                 f"Unsupported database: {database_name}. The supported databases are: {supported_databases}."
                 "Any other database must be created manually by specifying the connection and dialect."
             )
@@ -59,7 +65,7 @@ def load_sqlite_connection(**kwargs) -> DatabaseConnection:
         A database connection object for SQLite.
     """
     if "database" not in kwargs:
-        raise ValueError("SQLite connection requires a database path.")
+        raise PyDoughSessionException("SQLite connection requires a database path.")
     connection: sqlite3.Connection = sqlite3.connect(**kwargs)
     return DatabaseConnection(connection)
 
@@ -200,3 +206,93 @@ def load_mysql_connection(**kwargs) -> DatabaseConnection:
             attempt += 1
 
     raise ValueError(f"Failed to connect to MySQL after {attempts} attempts")
+
+
+def load_postgres_connection(**kwargs) -> DatabaseConnection:
+    """
+    Loads a Postgres database connection. This is done by providing a wrapper
+    around the DB 2.0 connect API.
+
+    Args:
+        **kwargs: Either a Postgres connection object (as `connection=<object>`)
+            or the required connection parameters:
+            - user: Postgres username
+            - password: Postgres password
+            - dbname: Database name
+            Optionally, you can provide:
+            - host: Postgres server host (default: "127.0.0.1"/"localhost")
+            - port: Postgres server port (default: 5432)
+            - connect_timeout: Timeout for the connection (default: 3 seconds).
+            - attempts (not a Postgres connector parameter): Number of connection attempts (default: 3)
+            - delay (not a Postgres connector parameter): Delay between connection attempts (default: 2 seconds).
+            If a connection object is provided, it will be used directly.
+            Optional parameters such as host, port, etc. can also be provided.
+            All arguments must be accepted by the Postgres connector connect API.
+
+    Raises:
+        ImportError: If the Postgres connector is not installed.
+        ValueError: If required connection parameters are missing.
+
+    Returns:
+        A database connection object for Postgres.
+    """
+
+    try:
+        import psycopg2
+    except ImportError:
+        raise ImportError(
+            "Postgres connector psycopg2 is not installed. Please install it with"
+            " `uv pip install psycopg2-binary`."
+        )
+
+    # Postgres python connector
+    connection: psycopg2.extensions.connection
+    if connection := kwargs.pop("connection", None):
+        # If a connection object is provided, return it wrapped in
+        # DatabaseConnection
+        return DatabaseConnection(connection)
+
+    # Postgres connection requires specific parameters:
+    # user, password, dbname.
+    # Raise an error if any of these are missing.
+    # NOTE: host, port are optional and will default to the psycopg2 defaults.
+    # See: https://www.psycopg.org/docs/module.html#psycopg2.connect
+
+    required_keys = ["user", "password", "dbname"]
+    if not all(key in kwargs for key in required_keys):
+        raise ValueError(
+            "Postgres connection requires at least the following arguments: "
+            + ", ".join(required_keys)
+        )
+
+    # Default timeout for connection
+    if "connect_timeout" not in kwargs or kwargs["connect_timeout"] <= 0:
+        kwargs["connect_timeout"] = 3
+
+    # Default attempts for connection if not given
+    if not (attempts := kwargs.pop("attempts", None)):
+        attempts = 1
+
+    # Default delay between attempts for connection if not given
+    if not (delay := kwargs.pop("delay", None)):
+        delay = 2.0
+
+    attempt: int = 1
+
+    # For each attempt a connection is tried
+    # If it fails, there is a delay before another attempt is executed
+    while attempt <= attempts:
+        try:
+            connection = psycopg2.connect(**kwargs)
+            return DatabaseConnection(connection)
+
+        except (OSError, psycopg2.Error) as err:
+            if attempt >= attempts:
+                raise ValueError(
+                    f"Failed to connect to Postgres after {attempt} attempts: {err}"
+                )
+            # Delay for another attempt
+            time.sleep(delay)
+            attempt += 1
+
+    raise ValueError(f"Failed to connect to Postgres after {attempts} attempts")

@@ -1,13 +1,13 @@
 WITH _s3 AS (
   SELECT
-    SUM(IIF(NOT part.p_retailprice IS NULL, 1, 0)) AS sum_expr_1,
-    SUM(part.p_retailprice) AS sum_p_retailprice,
-    partsupp.ps_suppkey
+    partsupp.ps_suppkey,
+    SUM(IIF(NOT part.p_retailprice IS NULL, 1, 0)) AS sum_expr,
+    SUM(part.p_retailprice) AS sum_p_retailprice
   FROM tpch.partsupp AS partsupp
   JOIN tpch.part AS part
     ON part.p_partkey = partsupp.ps_partkey
   GROUP BY
-    3
+    1
 )
 SELECT
   COUNT(DISTINCT supplier.s_suppkey) AS n
@@ -20,7 +20,7 @@ JOIN tpch.part AS part
   ON part.p_container = 'LG DRUM'
   AND part.p_partkey = partsupp.ps_partkey
   AND part.p_retailprice < (
-    CAST(_s3.sum_p_retailprice AS REAL) / _s3.sum_expr_1
+    CAST(_s3.sum_p_retailprice AS REAL) / _s3.sum_expr
   )
   AND part.p_retailprice < (
     partsupp.ps_supplycost * 1.5

@@ -8,6 +8,8 @@ __all__ = ["CollectionTreeForm"]
 
 from typing import Union
 
+from pydough.errors import PyDoughQDAGException
+
 
 class CollectionTreeForm:
     """
@@ -82,7 +84,7 @@ class CollectionTreeForm:
                 case (True, True):
                     answer = [f"{self.ROOT_PARENT_PREDECESSOR} {self.item_str}"]
                 case _:
-                    raise Exception("Malformed collection tree form")
+                    raise PyDoughQDAGException("Malformed collection tree form")
         else:
             answer = (
                 [] if self.predecessor is None else self.predecessor.to_string_rows()
@@ -97,7 +99,7 @@ class CollectionTreeForm:
                 case (True, True):
                     answer.append(f"{prefix}{self.SUCCESSOR_PARENT} {self.item_str}")
                 case _:
-                    raise Exception("Malformed collection tree form")
+                    raise PyDoughQDAGException("Malformed collection tree form")
         new_prefix: str = f"{prefix}{self.CHILD_SPACER if self.has_successor else self.PREDECESSOR_SPACER}"
         for idx, child in enumerate(self.nested_trees):
             is_last_child: bool = idx == len(self.nested_trees) - 1

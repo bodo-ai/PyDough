@@ -8,17 +8,17 @@ WITH _u_0 AS (
     1
 ), _s3 AS (
   SELECT
+    drug_id,
     AVG(
       CAST(tot_drug_amt AS REAL) / CAST((
         JULIANDAY(DATE(end_dt, 'start of day')) - JULIANDAY(DATE(start_dt, 'start of day'))
       ) AS INTEGER)
-    ) AS avg_ddd,
-    drug_id
+    ) AS avg_ddd
   FROM main.treatments
   WHERE
     NOT end_dt IS NULL
   GROUP BY
-    2
+    1
 )
 SELECT
   drugs.drug_name,

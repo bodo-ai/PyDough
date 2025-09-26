@@ -8,7 +8,6 @@ from collections.abc import Callable
 import pandas as pd
 import pytest
 
-from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from tests.test_pydough_functions.technograph_pydough_functions import (
     battery_failure_rates_anomalies,
@@ -433,6 +432,194 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
             ),
             id="monthly_incident_rate",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "global_info = TechnoGraph.CALCULATE(selected_date=products.WHERE(name == 'AmethystCopper-I').SINGULAR().release_date)\n"
+                "selected_countries = countries.WHERE(~CONTAINS(name, 'C')).CALCULATE(country_name=name).PARTITION(name='country', by=country_name).CALCULATE(country_name)\n"
+                "selected_days = global_info.calendar.WHERE((calendar_day >= selected_date) & (calendar_day < DATETIME(selected_date, '+2 years'))).CALCULATE(start_of_year=DATETIME(calendar_day, 'start of year')).PARTITION(name='months', by=start_of_year)\n"
+                "combos = selected_countries.CROSS(selected_days)\n"
+                "result = combos.CALCULATE(country_name, start_of_year).ORDER_BY(country_name.ASC(), start_of_year.ASC())",
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "country_name": ["FR"] * 3
+                        + ["JP"] * 3
+                        + ["MX"] * 3
+                        + ["US"] * 3,
+                        "start_of_year": ["2020-01-01", "2021-01-01", "2022-01-01"] * 4,
+                    }
+                ),
+                "country_x_year_combos",
+            ),
+            id="country_x_year_combos",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "global_info = TechnoGraph.CALCULATE(selected_date=products.WHERE(name == 'AmethystCopper-I').SINGULAR().release_date)\n"
+                "selected_countries = countries.WHERE(~CONTAINS(name, 'C')).CALCULATE(country_name=name).PARTITION(name='country', by=country_name).CALCULATE(country_name)\n"
+                "selected_days = global_info.calendar.WHERE((calendar_day >= selected_date) & (calendar_day < DATETIME(selected_date, '+2 years'))).CALCULATE(start_of_year=DATETIME(calendar_day, 'start of year')).PARTITION(name='months', by=start_of_year)\n"
+                "combos = selected_countries.CROSS(selected_days)\n"
+                "result = combos.CALCULATE("
+                " country_name,"
+                " start_of_year,"
+                " n_purchases=COUNT(calendar.devices_sold.WHERE((product.name == 'AmethystCopper-I') & (purchase_country.name == country_name))),"
+                ").ORDER_BY(country_name.ASC(), start_of_year.ASC())",
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "country_name": ["FR"] * 3
+                        + ["JP"] * 3
+                        + ["MX"] * 3
+                        + ["US"] * 3,
+                        "start_of_year": ["2020-01-01", "2021-01-01", "2022-01-01"] * 4,
+                        "n": [1, 1, 0, 0, 5, 2, 1, 1, 1, 0, 0, 0],
+                    }
+                ),
+                "country_x_year_analysis",
+            ),
+            id="country_x_year_analysis",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+global_info = TechnoGraph.CALCULATE(
+    selected_date=products.WHERE(name == "RubyCopper-Star").SINGULAR().release_date,
+    selected_country=countries.WHERE(name == "CN").SINGULAR()._id,
+)
+
+quarters_collection = (
+    global_info
+    .calendar.WHERE(
+        (calendar_day >= selected_date) & 
+        (calendar_day < DATETIME(selected_date, '+2 years', 'start of quarter'))
+    )
+    .CALCULATE(quarter=DATETIME(calendar_day, 'start of quarter'))
+    .PARTITION(name="quarters", by=quarter)
+)
+
+quarter_data = (
+    quarters_collection
+    .CALCULATE(
+        n_incidents=NDISTINCT(
+            calendar
+            .incidents_reported
+            .WHERE(
+                (repair_country_id == selected_country) & 
+                (device.product_id == 800544)
+            )
+            .device_id
+        ),
+        n_sold=COUNT(
+            calendar.devices_sold
+            .WHERE(product_id == 800544)
+        ),
+    )
+)
+
+result = (
+    quarter_data
+    .CALCULATE(
+        quarter,
+        n_incidents,
+        n_sold,
+        quarter_cum=ROUND(RELSUM(n_incidents, by=quarter.ASC(), cumulative=True)/RELSUM(n_sold, by=quarter.ASC(), cumulative=True), 2)
+    )
+    .ORDER_BY(quarter.ASC())
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "quarter": [
+                            "2017-07-01",
+                            "2017-10-01",
+                            "2018-01-01",
+                            "2018-04-01",
+                            "2018-07-01",
+                            "2018-10-01",
+                            "2019-01-01",
+                            "2019-04-01",
+                        ],
+                        "n_incidents": [0, 0, 0, 0, 1, 2, 1, 1],
+                        "n_sold": [0, 0, 0, 2, 1, 0, 0, 2],
+                        "quarter_cum": [None, None, None, 0.00, 0.33, 1.00, 1.33, 1.00],
+                    }
+                ),
+                "quarter_cum_ir_analysis",
+            ),
+            id="quarter_cum_ir_analysis",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+global_info = TechnoGraph.CALCULATE(
+    selected_date=products.WHERE(name == "RubyCopper-Star").SINGULAR().release_date,
+    selected_product_id=products.WHERE(name == "RubyCopper-Star").SINGULAR()._id,
+    selected_country=countries.WHERE(name == "CN").SINGULAR()._id,
+)
+global_vars = CROSS(global_info).SINGULAR()
+
+quarters_collection = (
+    calendar.WHERE(
+        (calendar_day >= global_vars.selected_date) & 
+        (calendar_day < DATETIME(global_vars.selected_date, '+2 years', 'start of quarter'))
+    )
+    .CALCULATE(quarter=DATETIME(calendar_day, 'start of quarter'))
+    .PARTITION(name="quarters", by=quarter)
+)
+
+quarter_data = (
+    quarters_collection
+    .CALCULATE(
+        n_incidents=NDISTINCT(
+            calendar
+            .incidents_reported
+            .WHERE(
+                (repair_country_id == global_vars.selected_country) & 
+                (device.product_id == global_vars.selected_product_id)
+            )
+            .device_id
+        ),
+        n_sold=COUNT(
+            calendar.devices_sold
+            .WHERE(product_id == global_vars.selected_product_id)
+        ),
+    )
+)
+
+result = (
+    quarter_data
+    .CALCULATE(
+        quarter,
+        n_incidents,
+        n_sold,
+        quarter_cum=ROUND(RELSUM(n_incidents, by=quarter.ASC(), cumulative=True)/RELSUM(n_sold, by=quarter.ASC(), cumulative=True), 2)
+    )
+    .ORDER_BY(quarter.ASC())
+)
+                """,
+                "TechnoGraph",
+                lambda: pd.DataFrame(
+                    {
+                        "quarter": [
+                            "2017-07-01",
+                            "2017-10-01",
+                            "2018-01-01",
+                            "2018-04-01",
+                            "2018-07-01",
+                            "2018-10-01",
+                            "2019-01-01",
+                            "2019-04-01",
+                        ],
+                        "n_incidents": [0, 0, 0, 0, 1, 2, 1, 1],
+                        "n_sold": [0, 0, 0, 2, 1, 0, 0, 2],
+                        "quarter_cum": [None, None, None, 0.00, 0.33, 1.00, 1.33, 1.00],
+                    }
+                ),
+                "alternative_quarter_cum_ir_analysis",
+            ),
+            id="alternative_quarter_cum_ir_analysis",
+        ),
     ],
 )
 def technograph_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -463,7 +650,6 @@ def test_pipeline_until_sql_technograph(
     technograph_pipeline_test_data: PyDoughPandasTest,
     get_sample_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
-    defog_config: PyDoughConfigs,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
 ):

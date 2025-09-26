@@ -8,13 +8,13 @@ WITH _u_0 AS (
     1
 ), _s3 AS (
   SELECT
-    AVG(tot_drug_amt / DATEDIFF(end_dt, start_dt)) AS avg_ddd,
-    drug_id
+    drug_id,
+    AVG(tot_drug_amt / DATEDIFF(end_dt, start_dt)) AS avg_ddd
   FROM main.treatments
   WHERE
     NOT end_dt IS NULL
   GROUP BY
-    2
+    1
 )
 SELECT
   drugs.drug_name,

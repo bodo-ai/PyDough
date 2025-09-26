@@ -511,6 +511,7 @@ def defog_sf_test_data(
 def test_pipeline_sf_e2e_defog_custom(
     defog_sf_test_data: PyDoughPandasTest,
     get_sf_defog_graphs: graph_fetcher,
+    defog_config: PyDoughConfigs,
     sf_conn_db_context: DatabaseContext,
 ):
     """
@@ -519,6 +520,7 @@ def test_pipeline_sf_e2e_defog_custom(
     defog_sf_test_data.run_e2e_test(
         get_sf_defog_graphs,
         sf_conn_db_context("DEFOG", defog_sf_test_data.graph_name),
+        config=defog_config,
         coerce_types=True,
     )
 

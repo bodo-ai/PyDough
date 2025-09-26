@@ -1,35 +1,22 @@
 WITH _s3 AS (
   SELECT
+    orders.o_custkey,
     SUM(lineitem.l_extendedprice * (
       1 - lineitem.l_discount
-    )) AS sum_expr_1,
-    orders.o_custkey
+    )) AS sum_expr
   FROM tpch.orders AS orders
   JOIN tpch.lineitem AS lineitem
     ON lineitem.l_orderkey = orders.o_orderkey AND lineitem.l_returnflag = 'R'
   WHERE
-    CASE
-      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 3
-      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 1
-      THEN 1
-      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 6
-      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 4
-      THEN 2
-      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 9
-      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 7
-      THEN 3
-      WHEN CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) <= 12
-      AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) >= 10
-      THEN 4
-    END = 4
-    AND CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1993
+    CAST(STRFTIME('%Y', orders.o_orderdate) AS INTEGER) = 1993
+    AND CAST(STRFTIME('%m', orders.o_orderdate) AS INTEGER) IN (10, 11, 12)
   GROUP BY
-    2
+    1
 )
 SELECT
   customer.c_custkey AS C_CUSTKEY,
   customer.c_name AS C_NAME,
-  COALESCE(_s3.sum_expr_1, 0) AS REVENUE,
+  COALESCE(_s3.sum_expr, 0) AS REVENUE,
   customer.c_acctbal AS C_ACCTBAL,
   nation.n_name AS N_NAME,
   customer.c_address AS C_ADDRESS,

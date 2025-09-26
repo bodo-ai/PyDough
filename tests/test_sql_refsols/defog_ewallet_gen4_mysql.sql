@@ -5,20 +5,20 @@ WITH _t0 AS (
   FROM main.coupons
 ), _s1 AS (
   SELECT
-    MIN(start_date) AS min_start_date,
-    merchant_id
+    merchant_id,
+    MIN(start_date) AS min_start_date
   FROM _t0
   GROUP BY
-    2
+    1
 ), _s3 AS (
   SELECT
-    MAX(cid) AS max_cid,
     merchant_id,
-    start_date
+    start_date,
+    MAX(cid) AS max_cid
   FROM main.coupons
   GROUP BY
-    2,
-    3
+    1,
+    2
 )
 SELECT
   merchants.mid AS merchants_id,

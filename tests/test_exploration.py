@@ -1161,7 +1161,7 @@ PyDough collection representing the following logic:
     ├─┬─ Partition[name='part_types', by=part_type]
     │ └─┬─ AccessChild
     │   └─── TableCollection[parts]
-    ├─┬─ Calculate[part_type=part_type, avg_price=AVG($1.retail_price)]
+    ├─┬─ Calculate[avg_price=AVG($1.retail_price)]
     │ └─┬─ AccessChild
     │   └─── PartitionChild[parts]
     └─┬─ Where[avg_price >= 27.5]
@@ -1222,13 +1222,13 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_collections_impl,
                 """
-Unrecognized term of TPCH: 'line_items'. Did you mean: lines, nations, regions, suppliers?
+Unrecognized term of TPCH: 'line_items'. Did you mean: lines, parts, regions?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Unrecognized term of TPCH: 'line_items'. Did you mean: lines, nations, regions, suppliers?
+Unrecognized term of TPCH: 'line_items'. Did you mean: lines, parts, regions?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?

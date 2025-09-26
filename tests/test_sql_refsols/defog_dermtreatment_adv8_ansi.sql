@@ -1,14 +1,14 @@
 WITH _t0 AS (
   SELECT
+    DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP)) AS start_month,
     COUNT(*) AS n_rows,
-    COUNT(DISTINCT diag_id) AS ndistinct_diag_id,
-    DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP)) AS start_month
+    COUNT(DISTINCT diag_id) AS ndistinct_diag_id
   FROM main.treatments
   WHERE
-    DATE_ADD(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), -12, 'MONTH') <= DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP))
+    DATE_SUB(DATE_TRUNC('MONTH', CURRENT_TIMESTAMP()), 12, MONTH) <= DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP))
     AND DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP)) < DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())
   GROUP BY
-    3
+    1
 )
 SELECT
   CONCAT_WS(

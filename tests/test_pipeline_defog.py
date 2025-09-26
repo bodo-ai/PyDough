@@ -1194,6 +1194,7 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "DermTreatment",
                 defog_sql_text_dermtreatment_basic4,
                 "dermtreatment_basic4",
+                order_sensitive=True,
             ),
             id="dermtreatment_basic4",
         ),

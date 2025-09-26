@@ -22,4 +22,4 @@ FROM main.doctors AS doctors
 LEFT JOIN _s1 AS _s1
   ON _s1.doc_id = doctors.doc_id
 WHERE
-  doctors.year_reg = EXTRACT(YEAR FROM DATE_ADD(CURRENT_TIMESTAMP(), -2, 'YEAR'))
+  doctors.year_reg = EXTRACT(YEAR FROM DATE_SUB(CURRENT_TIMESTAMP(), 2, YEAR))

@@ -7,7 +7,5 @@ JOIN main.diagnoses AS diagnoses
 JOIN main.drugs AS drugs
   ON NOT drugs.fda_appr_dt IS NULL AND drugs.drug_id = treatments.drug_id
 WHERE
-  CAST((
-    JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(treatments.end_dt, 'start of day'))
-  ) AS INTEGER) <= 180
-  AND NOT treatments.end_dt IS NULL
+  NOT treatments.end_dt IS NULL
+  AND treatments.end_dt >= DATE(DATETIME('now', '-6 month'), 'start of day')

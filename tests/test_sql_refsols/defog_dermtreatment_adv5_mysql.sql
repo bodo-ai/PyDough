@@ -6,15 +6,15 @@ WITH _u_0 AS (
     1
 ), _s3 AS (
   SELECT
-    MIN(EXTRACT(YEAR FROM CAST(start_dt AS DATETIME))) AS min_start_year,
-    patient_id
+    patient_id,
+    MIN(EXTRACT(YEAR FROM CAST(start_dt AS DATETIME))) AS min_year_start_dt
   FROM main.treatments
   GROUP BY
-    2
+    1
 ), _t0 AS (
   SELECT
-    COUNT(*) AS number_of_new_patients,
-    _s3.min_start_year
+    _s3.min_year_start_dt,
+    COUNT(*) AS n_rows
   FROM main.patients AS patients
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = patients.patient_id
@@ -23,21 +23,21 @@ WITH _u_0 AS (
   WHERE
     NOT _u_0._u_1 IS NULL
   GROUP BY
-    2
+    1
 )
 SELECT
-  CAST(min_start_year AS CHAR) COLLATE utf8mb4_bin AS year,
-  number_of_new_patients,
+  CAST(min_year_start_dt AS CHAR) COLLATE utf8mb4_bin AS year,
+  n_rows AS number_of_new_patients,
   CASE
     WHEN (
-      number_of_new_patients - COALESCE(
-        LAG(number_of_new_patients, 1) OVER (ORDER BY CASE WHEN min_start_year IS NULL THEN 1 ELSE 0 END, min_start_year),
-        number_of_new_patients
+      n_rows - COALESCE(
+        LAG(n_rows, 1) OVER (ORDER BY CASE WHEN min_year_start_dt IS NULL THEN 1 ELSE 0 END, min_year_start_dt),
+        n_rows
       )
     ) <> 0
-    THEN number_of_new_patients - COALESCE(
-      LAG(number_of_new_patients, 1) OVER (ORDER BY CASE WHEN min_start_year IS NULL THEN 1 ELSE 0 END, min_start_year),
-      number_of_new_patients
+    THEN n_rows - COALESCE(
+      LAG(n_rows, 1) OVER (ORDER BY CASE WHEN min_year_start_dt IS NULL THEN 1 ELSE 0 END, min_year_start_dt),
+      n_rows
     )
     ELSE NULL
   END AS npi
