@@ -575,6 +575,24 @@ def sqlite_technograph_connection() -> DatabaseContext:
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
+@pytest.fixture(
+    params=[
+        pytest.param(("0", "raw"), id="raw"),
+        pytest.param(("1", "rewrite"), id="rewrite"),
+    ]
+)
+def enable_mask_rewrites(request):
+    """
+    Temporarily enable the mask rewrites by setting the environment variable to
+    the specified value, returning the name that should be used to identify
+    the situation ("raw" for disabled, "rewrite" for enabled).
+    """
+    old_value: str = os.environ.get("PYDOUGH_ENABLE_MASK_REWRITES", "0")
+    os.environ["PYDOUGH_ENABLE_MASK_REWRITES"] = request.param[0]
+    yield request.param[1]
+    os.environ["PYDOUGH_ENABLE_MASK_REWRITES"] = old_value
+
+
 @pytest.fixture(scope="session")
 def sqlite_cryptbank_connection() -> DatabaseContext:
     """

@@ -1,0 +1,7 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.customerid == t1.customerid, type=INNER, cardinality=SINGULAR_FILTER, columns={})
+   FILTER(condition=currency != 'GBP':string & balance < 20000:numeric, columns={'customerid': customerid})
+    SCAN(table=bodo.fsi.accounts, columns={'balance': balance, 'currency': currency, 'customerid': customerid})
+   FILTER(condition=state == 'California':string, columns={'customerid': customerid})
+    SCAN(table=bodo.fsi.protected_customers, columns={'customerid': customerid, 'state': state})

@@ -1,0 +1,4 @@
+ROOT(columns=[('n', ROUND(avg_total_amount, 2:numeric))], orderings=[])
+ AGGREGATE(keys={}, aggregations={'avg_total_amount': AVG(total_amount)})
+  FILTER(condition=MONTH(transaction_date) == 7:numeric & YEAR(transaction_date) == 2025:numeric, columns={'total_amount': total_amount})
+   SCAN(table=bodo.retail.transactions, columns={'total_amount': total_amount, 'transaction_date': transaction_date})

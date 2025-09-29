@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=join_date > '2026-01-01':string, columns={})
+   SCAN(table=bodo.retail.protected_loyalty_members, columns={'join_date': join_date})
