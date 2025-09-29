@@ -72,7 +72,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_customers))",
                 "FSI",
                 "fsi_customers_filter_isin",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -87,7 +86,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_customers))",
                 "FSI",
                 "fsi_customers_filter_not_isin",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -102,7 +100,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_equals",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -117,7 +114,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_not_equals",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -132,7 +128,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_patients_filter_startswith",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -147,7 +142,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_patients_filter_endswith",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -162,7 +156,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_claims_filter_year",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -177,7 +170,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_accounts))",
                 "FSI",
                 "health_accounts_filter_monotonic",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -192,7 +184,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_datetime",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -207,7 +198,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_name_endswith",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -222,7 +212,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_slice",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -237,7 +226,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_email_like",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -252,7 +240,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_email_contains",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -267,7 +254,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_patients_filter_absent",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -282,7 +268,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=ROUND(AVG(selected_transactions.total_amount), 2))",
                 "RETAIL",
                 "retail_transactions_filter",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -297,7 +282,6 @@ from .testing_sf_masked_utilities import (
                 "result = acc_typs.CALCULATE(account_type, n=COUNT(accounts), avg_bal=ROUND(AVG(accounts.balance), 2))\n",
                 "FSI",
                 "fsi_accounts_partition_agg",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -320,7 +304,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(avg_secs=ROUND(AVG(DATEDIFF('seconds', account_info.first_transaction_sent, account_info.join_date)), 2))",
                 "RETAIL",
                 "retail_members_agg",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -404,7 +387,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(num_customers_checking_accounts=COUNT(selected_customers))",
                 "FSI",
                 "fsi_customers_accounts_join",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -469,7 +451,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_a",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -484,7 +465,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_b",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -499,7 +479,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_c",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -514,7 +493,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_d",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -529,7 +507,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_a",
-                order_sensitive=True,
                 kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
@@ -545,7 +522,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_b",
-                order_sensitive=True,
                 kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
@@ -561,7 +537,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_c",
-                order_sensitive=True,
                 kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
@@ -577,7 +552,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_d",
-                order_sensitive=True,
                 kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
@@ -593,7 +567,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_e",
-                order_sensitive=True,
                 kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
@@ -609,7 +582,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_f",
-                order_sensitive=True,
                 kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
@@ -625,8 +597,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_g",
-                order_sensitive=True,
-                kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -641,7 +611,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_compound_h",
-                order_sensitive=True,
                 kwargs={"datetime": datetime},
                 answers={
                     "NONE": None,
@@ -650,6 +619,98 @@ from .testing_sf_masked_utilities import (
                 },
             ),
             id="retail_members_compound_h",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "state_groups = customers.PARTITION(name='states', by=state).CALCULATE(state).TOP_K(5, by=state.ASC())\n"
+                "best_acct = state_groups.customers.CALCULATE(first_name, last_name).accounts.BEST(per='states', by=balance.DESC())\n"
+                "result = best_acct.CALCULATE(state, balance, first_name, last_name).ORDER_BY(state.ASC())\n",
+                "FSI",
+                "fsi_best_account_customers_per_state",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame(
+                        {
+                            "state": [
+                                "Alabama",
+                                "Alaska",
+                                "Arizona",
+                                "Arkansas",
+                                "California",
+                            ],
+                            "balance": [
+                                26755.10,
+                                26933.38,
+                                26228.85,
+                                13977.68,
+                                27905.88,
+                            ],
+                            "first_name": [
+                                "Eugene",
+                                "Michelle",
+                                "Ryan",
+                                "Kara",
+                                "Gloria",
+                            ],
+                            "last_name": [
+                                "Spence",
+                                "Moore",
+                                "Brown",
+                                "Schwartz",
+                                "Miller",
+                            ],
+                        }
+                    ),
+                },
+            ),
+            id="fsi_best_account_customers_per_state",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = accounts.WHERE((currency != 'GBP') & (customer.state == 'California') & (balance < 20000))\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_members))",
+                "FSI",
+                "fsi_accounts_customers_compound_a",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [6]}),
+                },
+            ),
+            id="fsi_accounts_customers_compound_a",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = accounts.WHERE(ISIN(currency, ('USD', 'GPB', 'EUR', 'JPY', 'AUD')) & ~ISIN(customer.first_name, ['Jennifer', 'Julio', 'Johnson', 'Jameson', 'Michael', 'Robert']) & ISIN(customer.state, ('Georgia', 'Alabama', 'Mississippi', 'Arkansas', 'Louisiana', 'Florida', 'South Carolina', 'North Carolina', 'Texas', 'Tennessee', 'Missouri')) & (YEAR(creation_date) <= 2022))\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_members))",
+                "FSI",
+                "fsi_accounts_customers_compound_b",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [33]}),
+                },
+            ),
+            id="fsi_accounts_customers_compound_b",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = accounts.WHERE(MONOTONIC('2020-01-31', creation_date, '2020-03-13') | MONOTONIC('2022-12-25', creation_date, '2023-01-15') | MONOTONIC('2024-08-04', creation_date, '2024-11-08') | MONOTONIC('2025-06-07', creation_date, '2026-03-07'))\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_members))",
+                "FSI",
+                "fsi_accounts_customers_compound_c",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [28]}),
+                },
+            ),
+            id="fsi_accounts_customers_compound_c",
         ),
     ],
 )
