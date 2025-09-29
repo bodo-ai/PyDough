@@ -11,8 +11,8 @@ SELECT
     AVG(
       DATEDIFF(
         SECOND,
-        CAST(_s1.min_transaction_date AS DATETIME),
-        CAST(protected_loyalty_members.join_date AS DATETIME)
+        CAST(protected_loyalty_members.join_date AS DATETIME),
+        CAST(_s1.min_transaction_date AS DATETIME)
       )
     ),
     2

@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import Callable
 
 import pandas as pd
@@ -71,7 +72,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_customers))",
                 "FSI",
                 "fsi_customers_filter_isin",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -86,7 +86,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_customers))",
                 "FSI",
                 "fsi_customers_filter_not_isin",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -101,7 +100,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_equals",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -116,7 +114,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_not_equals",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -131,7 +128,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_patients_filter_startswith",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -146,7 +142,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_patients_filter_endswith",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -161,14 +156,41 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_claims_filter_year",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"N": [2804]}),
+                    "FULL": pd.DataFrame({"N": [6000]}),
                 },
             ),
             id="health_claims_filter_year",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = claims.WHERE(MONTH(claim_date) == 12)\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_claims_filter_month",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"N": [502]}),
+                },
+            ),
+            id="health_claims_filter_month",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = claims.WHERE(DAY(claim_date) == 31)\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "health_claims_filter_day",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"N": [117]}),
+                },
+            ),
+            id="health_claims_filter_day",
         ),
         pytest.param(
             PyDoughSnowflakeMaskedTest(
@@ -176,7 +198,6 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(n=COUNT(selected_accounts))",
                 "FSI",
                 "health_accounts_filter_monotonic",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -191,7 +212,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_datetime",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -202,15 +222,28 @@ from .testing_sf_masked_utilities import (
         ),
         pytest.param(
             PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(join_date > '2026-01-01')\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_filter_never",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"N": [0]}),
+                },
+            ),
+            id="retail_members_filter_never",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
                 "selected_members = loyalty_members.WHERE(ENDSWITH(first_name, 'e') | ENDSWITH(last_name, 'e'))\n"
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_name_endswith",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"N": [53]}),
+                    "FULL": pd.DataFrame({"N": [87]}),
                 },
             ),
             id="retail_members_filter_name_endswith",
@@ -221,7 +254,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_slice",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -236,7 +268,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_email_like",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -251,7 +282,6 @@ from .testing_sf_masked_utilities import (
                 "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
                 "RETAIL",
                 "retail_members_filter_email_contains",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -266,7 +296,6 @@ from .testing_sf_masked_utilities import (
                 "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
                 "HEALTH",
                 "health_patients_filter_absent",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
@@ -277,15 +306,14 @@ from .testing_sf_masked_utilities import (
         ),
         pytest.param(
             PyDoughSnowflakeMaskedTest(
-                "selected_transactions = transactions.WHERE((YEAR(transaction_date) == 2022) & (MONTH(transaction_date) == 8))\n"
+                "selected_transactions = transactions.WHERE((YEAR(transaction_date) == 2025) & (MONTH(transaction_date) == 7))\n"
                 "result = RETAIL.CALCULATE(n=ROUND(AVG(selected_transactions.total_amount), 2))",
                 "RETAIL",
                 "retail_transactions_filter",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"n": [277.13]}),
+                    "FULL": pd.DataFrame({"n": [252.9]}),
                 },
             ),
             id="retail_transactions_filter",
@@ -296,13 +324,18 @@ from .testing_sf_masked_utilities import (
                 "result = acc_typs.CALCULATE(account_type, n=COUNT(accounts), avg_bal=ROUND(AVG(accounts.balance), 2))\n",
                 "FSI",
                 "fsi_accounts_partition_agg",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
-                    "PARTIAL": None,
+                    "PARTIAL": pd.DataFrame(
+                        {
+                            "account_type": ["Ch**king", "Sa*ings"],
+                            "n": [153, 144],
+                            "avg_bal": [14868.66, 15613.95],
+                        }
+                    ),
                     "FULL": pd.DataFrame(
                         {
-                            "account_type": ["HPlnssRN", "XADfRcm"],
+                            "account_type": ["Checking", "Savings"],
                             "n": [153, 144],
                             "avg_bal": [14868.66, 15613.95],
                         }
@@ -316,14 +349,13 @@ from .testing_sf_masked_utilities import (
                 "account_info= loyalty_members.CALCULATE("
                 " first_transaction_sent=MIN(transactions.transaction_date),"
                 ")\n"
-                "result = RETAIL.CALCULATE(avg_secs=ROUND(AVG(DATEDIFF('seconds', account_info.first_transaction_sent, account_info.join_date)), 2))",
+                "result = RETAIL.CALCULATE(avg_secs=ROUND(AVG(DATEDIFF('seconds', account_info.join_date, account_info.first_transaction_sent)), 2))",
                 "RETAIL",
                 "retail_members_agg",
-                order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"avg_secs": [32116724632.07]}),
+                    "FULL": pd.DataFrame({"avg_secs": [24121125.35]}),
                 },
             ),
             id="retail_members_agg",
@@ -403,14 +435,383 @@ from .testing_sf_masked_utilities import (
                 "result = FSI.CALCULATE(num_customers_checking_accounts=COUNT(selected_customers))",
                 "FSI",
                 "fsi_customers_accounts_join",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"NUM_CUSTOMERS_CHECKING_ACCOUNTS": [297]}),
+                },
+            ),
+            id="fsi_customers_accounts_join",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "result = claims.TOP_K(2, by=claim_amount.DESC())",
+                "HEALTH",
+                "health_claim_scan_topk",
+                order_sensitive=True,
+                answers={
+                    "NONE": pd.DataFrame(
+                        {
+                            "claim_id": [318700265, 521118761],
+                            "patient_id": [None, None],
+                            "claim_date": [None, None],
+                            "provider_name": [None, None],
+                            "diagnosis_code": ["lIg80", "IkU93"],
+                            "procedure_code": ["nw235", "hk915"],
+                            "claim_amount": [9999.53, 9997.96],
+                            "approved_amount": [3505.62, 3000.31],
+                            "claim_status": [None, None],
+                        }
+                    ),
+                    "PARTIAL": pd.DataFrame(
+                        {
+                            "claim_id": [318700265, 521118761],
+                            "patient_id": ["62***6815", "65***3879"],
+                            "claim_date": [None, None],
+                            "provider_name": [None, None],
+                            "diagnosis_code": ["lIg80", "IkU93"],
+                            "procedure_code": ["nw235", "hk915"],
+                            "claim_amount": [9999.53, 9997.96],
+                            "approved_amount": [3505.62, 3000.31],
+                            "claim_status": ["Pe*ding", "Ap**oved"],
+                        }
+                    ),
+                    "FULL": pd.DataFrame(
+                        {
+                            "claim_id": [318700265, 521118761],
+                            "patient_id": ["622136815", "651103879"],
+                            "claim_date": ["2023-09-15", "2023-07-25"],
+                            "provider_name": ["Carr, Martinez and Fuller", "Weeks Ltd"],
+                            "diagnosis_code": ["lIg80", "IkU93"],
+                            "procedure_code": ["nw235", "hk915"],
+                            "claim_amount": [9999.53, 9997.96],
+                            "approved_amount": [3505.62, 3000.31],
+                            "claim_status": ["Pending", "Approved"],
+                        }
+                    ),
+                },
+            ),
+            id="health_claim_scan_topk",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "coverage_groups = insurance_plans.PARTITION(name='coverage_types', by=coverage_type)\n"
+                "oldest_patient = insurance_plans.patients.BEST(per='coverage_types', by=(date_of_birth.ASC(), key.ASC()))\n"
+                "result = coverage_groups.CALCULATE(coverage_type, oldest_patient.first_name, oldest_patient.last_name, oldest_patient.date_of_birth).ORDER_BY(coverage_type.ASC())",
+                "HEALTH",
+                "health_first_patient_by_coverage_type",
                 order_sensitive=True,
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"NUM_CUSTOMERS_CHECKING_ACCOUNTS": [268]}),
+                    "FULL": pd.DataFrame(
+                        {
+                            "coverage_type": ["EPO", "HMO", "PPO"],
+                            "first_name": ["Christian", "Kathleen", "Shelby"],
+                            "last_name": ["Russell", "Greene", "Davis"],
+                            "date_of_birth": ["1934-10-10", "1934-08-31", "1934-12-24"],
+                        }
+                    ),
                 },
             ),
-            id="fsi_customers_accounts_join",
+            id="health_first_patient_by_coverage_type",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_transactions = transactions.WHERE(payment_method == 'Cash')\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
+                "RETAIL",
+                "retail_transactions_payment_method_cmp_a",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [860]}),
+                },
+            ),
+            id="retail_transactions_payment_method_cmp_a",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_transactions = transactions.WHERE(payment_method != 'Credit Card')\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
+                "RETAIL",
+                "retail_transactions_payment_method_cmp_b",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [2544]}),
+                },
+            ),
+            id="retail_transactions_payment_method_cmp_b",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_transactions = transactions.WHERE(ISIN(payment_method, ('Cash', 'Gift Card')))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
+                "RETAIL",
+                "retail_transactions_payment_method_cmp_c",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [1704]}),
+                },
+            ),
+            id="retail_transactions_payment_method_cmp_c",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_transactions = transactions.WHERE(~ISIN(payment_method, ('Mobile Payment', 'Gift Card')))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_transactions))",
+                "RETAIL",
+                "retail_transactions_payment_method_cmp_d",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [1716]}),
+                },
+            ),
+            id="retail_transactions_payment_method_cmp_d",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(ISIN(last_name, ('Johnson', 'Robinson')) & (date_of_birth >= datetime.date(2002, 1, 1)))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_a",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [4]}),
+                },
+            ),
+            id="retail_members_compound_a",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE((last_name != 'Smith') & (date_of_birth == datetime.date(1979, 3, 7)))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_b",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [2]}),
+                },
+            ),
+            id="retail_members_compound_b",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE((last_name < 'Cross') & (date_of_birth > datetime.date(1995, 12, 22)))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_c",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [9]}),
+                },
+            ),
+            id="retail_members_compound_c",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE((last_name <= 'Zuniga') & (date_of_birth >= datetime.date(2000, 1, 1)))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_d",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [55]}),
+                },
+            ),
+            id="retail_members_compound_d",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE((datetime.date(1983, 1, 10) <= date_of_birth) & (date_of_birth < datetime.date(1983, 1, 30)))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_e",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [2]}),
+                },
+            ),
+            id="retail_members_compound_e",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE((datetime.date(1976, 7, 1) < date_of_birth) & (date_of_birth <= datetime.date(1976, 7, 28)))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_f",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [2]}),
+                },
+            ),
+            id="retail_members_compound_f",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(ISIN(YEAR(date_of_birth), (1960, 1970, 1980, 1990, 2000)) & ISIN(MONTH(date_of_birth), (1, 2, 5, 10, 12)) & (DAY(date_of_birth) <= 13) & (DAY(date_of_birth) > 3))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_g",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [7]}),
+                },
+            ),
+            id="retail_members_compound_g",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE((last_name >= 'Cross') & (date_of_birth < datetime.date(2007, 1, 1)))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_h",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [399]}),
+                },
+            ),
+            id="retail_members_compound_h",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(ISIN(UPPER(last_name)[1:3], ('UA', 'CO', 'AY', 'AL')))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_i",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [25]}),
+                },
+            ),
+            id="retail_members_compound_i",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(CONTAINS(LOWER(last_name), 'hu'))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_members_compound_j",
+                kwargs={"datetime": datetime},
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [7]}),
+                },
+            ),
+            id="retail_members_compound_j",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "state_groups = customers.PARTITION(name='states', by=state).CALCULATE(state).TOP_K(5, by=state.ASC())\n"
+                "best_acct = state_groups.customers.CALCULATE(first_name, last_name).accounts.BEST(per='states', by=balance.DESC())\n"
+                "result = best_acct.CALCULATE(state, balance, first_name, last_name).ORDER_BY(state.ASC())\n",
+                "FSI",
+                "fsi_best_account_customers_per_state",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame(
+                        {
+                            "state": [
+                                "Alabama",
+                                "Alaska",
+                                "Arizona",
+                                "Arkansas",
+                                "California",
+                            ],
+                            "balance": [
+                                26755.10,
+                                26933.38,
+                                26228.85,
+                                13977.68,
+                                27905.88,
+                            ],
+                            "first_name": [
+                                "Eugene",
+                                "Michelle",
+                                "Ryan",
+                                "Kara",
+                                "Gloria",
+                            ],
+                            "last_name": [
+                                "Spence",
+                                "Moore",
+                                "Brown",
+                                "Schwartz",
+                                "Miller",
+                            ],
+                        }
+                    ),
+                },
+            ),
+            id="fsi_best_account_customers_per_state",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = accounts.WHERE((currency != 'GBP') & (customer.state == 'California') & (balance < 20000))\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_members))",
+                "FSI",
+                "fsi_accounts_customers_compound_a",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [6]}),
+                },
+            ),
+            id="fsi_accounts_customers_compound_a",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = accounts.WHERE(ISIN(currency, ('USD', 'GPB', 'EUR', 'JPY', 'AUD')) & ~ISIN(customer.first_name, ['Jennifer', 'Julio', 'Johnson', 'Jameson', 'Michael', 'Robert']) & ISIN(customer.state, ('Georgia', 'Alabama', 'Mississippi', 'Arkansas', 'Louisiana', 'Florida', 'South Carolina', 'North Carolina', 'Texas', 'Tennessee', 'Missouri')) & (YEAR(creation_date) <= 2022))\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_members))",
+                "FSI",
+                "fsi_accounts_customers_compound_b",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [16]}),
+                },
+            ),
+            id="fsi_accounts_customers_compound_b",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = accounts.WHERE(MONOTONIC('2020-01-31', creation_date, '2020-03-13') | MONOTONIC('2022-12-25', creation_date, '2023-01-15') | MONOTONIC('2024-08-04', creation_date, '2024-11-08') | MONOTONIC('2025-06-07', creation_date, '2026-03-07'))\n"
+                "result = FSI.CALCULATE(n=COUNT(selected_members))",
+                "FSI",
+                "fsi_accounts_customers_compound_c",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [28]}),
+                },
+            ),
+            id="fsi_accounts_customers_compound_c",
         ),
     ],
 )
