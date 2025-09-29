@@ -1,4 +1,4 @@
 ROOT(columns=[('n', ROUND(avg_total_amount, 2:numeric))], orderings=[])
  AGGREGATE(keys={}, aggregations={'avg_total_amount': AVG(total_amount)})
-  FILTER(condition=MONTH(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == 8:numeric & YEAR(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == 2022:numeric, columns={'total_amount': total_amount})
+  FILTER(condition=MONTH(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == 7:numeric & YEAR(UNMASK::(PTY_UNPROTECT_TS([transaction_date]))) == 2025:numeric, columns={'total_amount': total_amount})
    SCAN(table=bodo.retail.transactions, columns={'total_amount': total_amount, 'transaction_date': transaction_date})

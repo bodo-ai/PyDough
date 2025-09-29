@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=ABSENT(UNMASK::(PTY_UNPROTECT([date_of_birth], 'dob'))) | UNMASK::(PTY_UNPROTECT([date_of_birth], 'dob')) > '2003-06-29':string, columns={})
+  FILTER(condition=ABSENT(UNMASK::(PTY_UNPROTECT([date_of_birth], 'deDOB'))) | UNMASK::(PTY_UNPROTECT([date_of_birth], 'deDOB')) > '2003-06-29':string, columns={})
    SCAN(table=bodo.health.protected_patients, columns={'date_of_birth': date_of_birth})

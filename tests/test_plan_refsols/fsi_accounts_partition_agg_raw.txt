@@ -1,3 +1,3 @@
 ROOT(columns=[('account_type', unmask_accounttype), ('n', n_rows), ('avg_bal', ROUND(avg_balance, 2:numeric))], orderings=[])
- AGGREGATE(keys={'unmask_accounttype': UNMASK::(PTY_UNPROTECT([accounttype], 'account'))}, aggregations={'avg_balance': AVG(balance), 'n_rows': COUNT()})
+ AGGREGATE(keys={'unmask_accounttype': UNMASK::(PTY_UNPROTECT([accounttype], 'deAccount'))}, aggregations={'avg_balance': AVG(balance), 'n_rows': COUNT()})
   SCAN(table=bodo.fsi.accounts, columns={'accounttype': accounttype, 'balance': balance})

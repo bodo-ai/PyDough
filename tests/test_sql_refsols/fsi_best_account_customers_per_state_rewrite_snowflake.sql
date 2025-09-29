@@ -1,6 +1,6 @@
 WITH _t3 AS (
   SELECT DISTINCT
-    PTY_UNPROTECT(state, 'address') AS unmask_state
+    PTY_UNPROTECT(state, 'deAddress') AS unmask_state
   FROM bodo.fsi.protected_customers
 ), _s0 AS (
   SELECT
@@ -17,17 +17,17 @@ WITH _t3 AS (
     _s0.unmask_state
   FROM _s0 AS _s0
   JOIN bodo.fsi.protected_customers AS protected_customers
-    ON _s0.unmask_state = PTY_UNPROTECT(protected_customers.state, 'address')
+    ON _s0.unmask_state = PTY_UNPROTECT(protected_customers.state, 'deAddress')
   JOIN bodo.fsi.accounts AS accounts
-    ON PTY_UNPROTECT(protected_customers.customerid, 'account') = PTY_UNPROTECT_ACCOUNT(accounts.customerid)
+    ON PTY_UNPROTECT(protected_customers.customerid, 'deAccount') = PTY_UNPROTECT_ACCOUNT(accounts.customerid)
   QUALIFY
     ROW_NUMBER() OVER (PARTITION BY unmask_state ORDER BY accounts.balance DESC) = 1
 )
 SELECT
   unmask_state AS state,
   balance,
-  PTY_UNPROTECT(firstname, 'name') AS first_name,
-  PTY_UNPROTECT(lastname, 'name') AS last_name
+  PTY_UNPROTECT(firstname, 'deName') AS first_name,
+  PTY_UNPROTECT(lastname, 'deName') AS last_name
 FROM _t1
 ORDER BY
   1 NULLS FIRST

@@ -159,7 +159,7 @@ from .testing_sf_masked_utilities import (
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"N": [2804]}),
+                    "FULL": pd.DataFrame({"N": [6000]}),
                 },
             ),
             id="health_claims_filter_year",
@@ -201,7 +201,7 @@ from .testing_sf_masked_utilities import (
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"N": [53]}),
+                    "FULL": pd.DataFrame({"N": [87]}),
                 },
             ),
             id="retail_members_filter_name_endswith",
@@ -264,14 +264,14 @@ from .testing_sf_masked_utilities import (
         ),
         pytest.param(
             PyDoughSnowflakeMaskedTest(
-                "selected_transactions = transactions.WHERE((YEAR(transaction_date) == 2022) & (MONTH(transaction_date) == 8))\n"
+                "selected_transactions = transactions.WHERE((YEAR(transaction_date) == 2025) & (MONTH(transaction_date) == 7))\n"
                 "result = RETAIL.CALCULATE(n=ROUND(AVG(selected_transactions.total_amount), 2))",
                 "RETAIL",
                 "retail_transactions_filter",
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"n": [277.13]}),
+                    "FULL": pd.DataFrame({"n": [252.9]}),
                 },
             ),
             id="retail_transactions_filter",
@@ -284,10 +284,16 @@ from .testing_sf_masked_utilities import (
                 "fsi_accounts_partition_agg",
                 answers={
                     "NONE": None,
-                    "PARTIAL": None,
+                    "PARTIAL": pd.DataFrame(
+                        {
+                            "account_type": ["Ch**king", "Sa*ings"],
+                            "n": [153, 144],
+                            "avg_bal": [14868.66, 15613.95],
+                        }
+                    ),
                     "FULL": pd.DataFrame(
                         {
-                            "account_type": ["HPlnssRN", "XADfRcm"],
+                            "account_type": ["Checking", "Savings"],
                             "n": [153, 144],
                             "avg_bal": [14868.66, 15613.95],
                         }
@@ -301,13 +307,13 @@ from .testing_sf_masked_utilities import (
                 "account_info= loyalty_members.CALCULATE("
                 " first_transaction_sent=MIN(transactions.transaction_date),"
                 ")\n"
-                "result = RETAIL.CALCULATE(avg_secs=ROUND(AVG(DATEDIFF('seconds', account_info.first_transaction_sent, account_info.join_date)), 2))",
+                "result = RETAIL.CALCULATE(avg_secs=ROUND(AVG(DATEDIFF('seconds', account_info.join_date, account_info.first_transaction_sent)), 2))",
                 "RETAIL",
                 "retail_members_agg",
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"avg_secs": [32116724632.07]}),
+                    "FULL": pd.DataFrame({"avg_secs": [24121125.35]}),
                 },
             ),
             id="retail_members_agg",
@@ -390,7 +396,7 @@ from .testing_sf_masked_utilities import (
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"NUM_CUSTOMERS_CHECKING_ACCOUNTS": [268]}),
+                    "FULL": pd.DataFrame({"NUM_CUSTOMERS_CHECKING_ACCOUNTS": [297]}),
                 },
             ),
             id="fsi_customers_accounts_join",
@@ -431,7 +437,7 @@ from .testing_sf_masked_utilities import (
                     "FULL": pd.DataFrame(
                         {
                             "claim_id": [318700265, 521118761],
-                            "patient_id": [622136815, 651103879],
+                            "patient_id": ["622136815", "651103879"],
                             "claim_date": ["2023-09-15", "2023-07-25"],
                             "provider_name": ["Carr, Martinez and Fuller", "Weeks Ltd"],
                             "diagnosis_code": ["lIg80", "IkU93"],
@@ -692,7 +698,7 @@ from .testing_sf_masked_utilities import (
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"n": [33]}),
+                    "FULL": pd.DataFrame({"n": [16]}),
                 },
             ),
             id="fsi_accounts_customers_compound_b",

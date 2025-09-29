@@ -13,7 +13,7 @@ WITH _t1 AS (
 SELECT
   PTY_UNPROTECT_ADDRESS(store_location) AS store_location,
   total_amount,
-  CONCAT_WS(' ', PTY_UNPROTECT(first_name, 'name'), PTY_UNPROTECT_NAME(last_name)) AS name
+  CONCAT_WS(' ', PTY_UNPROTECT(first_name, 'deName'), PTY_UNPROTECT_NAME(last_name)) AS name
 FROM _t1
 ORDER BY
   2 DESC NULLS LAST

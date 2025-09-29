@@ -7,7 +7,7 @@ WITH _s1 AS (
     1
 )
 SELECT
-  PTY_UNPROTECT(accounts.accounttype, 'account') AS acct_type,
+  PTY_UNPROTECT(accounts.accounttype, 'deAccount') AS acct_type,
   ROUND(COALESCE(_s1.sum_amount, 0) / SUM(COALESCE(_s1.sum_amount, 0)) OVER (), 2) AS pct_total_txn
 FROM bodo.fsi.accounts AS accounts
 JOIN _s1 AS _s1

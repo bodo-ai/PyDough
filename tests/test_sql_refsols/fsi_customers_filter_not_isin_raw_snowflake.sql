@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.fsi.protected_customers
 WHERE
-  NOT PTY_UNPROTECT(lastname, 'name') IN ('Barnes', 'Hernandez', 'Moore')
+  NOT PTY_UNPROTECT(lastname, 'deName') IN ('Barnes', 'Hernandez', 'Moore')
