@@ -1381,13 +1381,17 @@ def harmonize_types(column_a, column_b):
     if any(isinstance(elem, Decimal) for elem in column_a) and any(
         isinstance(elem, float) for elem in column_b
     ):
-        return column_a.apply(lambda x: pd.NA if pd.isna(x) else float(x)), column_b
+        return column_a.apply(
+            lambda x: pd.NA if pd.isna(x) else float(x)
+        ), column_b.apply(lambda x: pd.NA if pd.isna(x) else x)
 
     # float vs Decimal
     if any(isinstance(elem, float) for elem in column_a) and any(
         isinstance(elem, Decimal) for elem in column_b
     ):
-        return column_a, column_b.apply(lambda x: pd.NA if pd.isna(x) else float(x))
+        return column_a.apply(lambda x: pd.NA if pd.isna(x) else x), column_b.apply(
+            lambda x: pd.NA if pd.isna(x) else float(x)
+        )
 
     if any(isinstance(elem, (str, NoneType)) for elem in column_a) and any(
         isinstance(elem, (str, NoneType)) for elem in column_b
