@@ -65,7 +65,7 @@ def is_sf_masked_env(account_type: str = "FULL") -> bool:
     return all(os.getenv(var) is not None for var in required_vars)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def sf_masked_context() -> Callable[[str, str, str], DatabaseContext]:
     """Fixture for creating a Snowflake DatabaseContext with masked columns.
 
@@ -78,6 +78,7 @@ def sf_masked_context() -> Callable[[str, str, str], DatabaseContext]:
         A function that takes the above arguments and returns a DatabaseContext.
     """
 
+    @cache
     def _impl(
         database_name: str, schema_name: str, account_type: str
     ) -> DatabaseContext:

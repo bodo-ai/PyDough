@@ -430,20 +430,20 @@ def test_pipeline_until_relational_masked_sf(
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
+    enable_mask_rewrites: str,
 ) -> None:
     """
     Tests the conversion of the PyDough queries on the masked dataset
     into relational plans.
     """
-    file_path: str = get_plan_test_filename(sf_masked_test_data.test_name)
+    file_path: str = get_plan_test_filename(
+        f"{sf_masked_test_data.test_name}_{enable_mask_rewrites}"
+    )
     sf_masked_test_data.run_relational_test(
         get_sf_masked_graphs, file_path, update_tests
     )
 
 
-@pytest.mark.skip(
-    reason="Skipping until masked table column relational handling is implemented"
-)
 @pytest.mark.sf_masked
 def test_pipeline_until_sql_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
@@ -451,6 +451,7 @@ def test_pipeline_until_sql_masked_sf(
     sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
+    enable_mask_rewrites: str,
 ):
     """
     Tests the conversion of the PyDough queries on the custom masked dataset
@@ -458,7 +459,7 @@ def test_pipeline_until_sql_masked_sf(
     """
     sf_data = sf_masked_context("BODO", sf_masked_test_data.graph_name, "FULL")
     file_path: str = get_sql_test_filename(
-        sf_masked_test_data.test_name, sf_data.dialect
+        f"{sf_masked_test_data.test_name}_{enable_mask_rewrites}", sf_data.dialect
     )
     sf_masked_test_data.run_sql_test(
         get_sf_masked_graphs,
@@ -479,6 +480,7 @@ def test_pipeline_e2e_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
     sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
+    enable_mask_rewrites: str,  # noqa: F811
 ) -> None:
     """
     End-to-end test for Snowflake with masked columns.

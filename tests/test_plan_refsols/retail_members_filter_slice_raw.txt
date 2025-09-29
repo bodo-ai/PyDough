@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=SLICE(first_name, 1:numeric, 2:numeric, None:unknown) == 'a':string, columns={})
+   SCAN(table=bodo.retail.protected_loyalty_members, columns={'first_name': first_name})

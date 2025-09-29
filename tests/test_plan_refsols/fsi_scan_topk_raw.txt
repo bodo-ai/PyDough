@@ -1,0 +1,2 @@
+ROOT(columns=[('first_name', firstname), ('last_name', lastname), ('city', city), ('zipcode', zipcode), ('date_of_birth', dob)], orderings=[(lastname):asc_first], limit=5:numeric)
+ SCAN(table=bodo.fsi.protected_customers, columns={'city': city, 'dob': dob, 'firstname': firstname, 'lastname': lastname, 'zipcode': zipcode})
