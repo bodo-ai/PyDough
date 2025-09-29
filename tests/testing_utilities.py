@@ -1046,6 +1046,7 @@ class PyDoughSQLComparisonTest:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
                 )
+
         # Perform the comparison between the result and the reference solution
         pd.testing.assert_frame_equal(result, refsol, rtol=1.0e-5, atol=1.0e-5)
 

@@ -1,0 +1,7 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=UNMASK::(PTY_UNPROTECT_ACCOUNT([t0.customerid])) == UNMASK::(PTY_UNPROTECT([t1.customerid], 'deAccount')), type=INNER, cardinality=SINGULAR_FILTER, columns={})
+   FILTER(condition=YEAR(UNMASK::(PTY_UNPROTECT_DOB([createddate]))) <= 2022:numeric & ISIN(UNMASK::(PTY_UNPROTECT_ACCOUNT([currency])), ['USD', 'GPB', 'EUR', 'JPY', 'AUD']:array[unknown]), columns={'customerid': customerid})
+    SCAN(table=bodo.fsi.accounts, columns={'createddate': createddate, 'currency': currency, 'customerid': customerid})
+   FILTER(condition=ISIN(UNMASK::(PTY_UNPROTECT([state], 'deAddress')), ['Georgia', 'Alabama', 'Mississippi', 'Arkansas', 'Louisiana', 'Florida', 'South Carolina', 'North Carolina', 'Texas', 'Tennessee', 'Missouri']:array[unknown]) & NOT(ISIN(UNMASK::(PTY_UNPROTECT([firstname], 'deName')), ['Jennifer', 'Julio', 'Johnson', 'Jameson', 'Michael', 'Robert']:array[unknown])), columns={'customerid': customerid})
+    SCAN(table=bodo.fsi.protected_customers, columns={'customerid': customerid, 'firstname': firstname, 'state': state})
