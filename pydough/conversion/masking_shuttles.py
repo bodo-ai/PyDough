@@ -12,6 +12,7 @@ from pydough.relational import (
     RelationalExpression,
     RelationalExpressionShuttle,
 )
+from pydough.types import ArrayType, PyDoughType, UnknownType
 
 
 class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
@@ -73,6 +74,11 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
             # If the operation is containment, and the literal is a list/tuple,
             # we need to build a list by wrapping each element of the tuple in
             # a MASK call.
+            inner_type: PyDoughType
+            if isinstance(literal_arg.data_type, ArrayType):
+                inner_type = literal_arg.data_type.elem_type
+            else:
+                inner_type = UnknownType()
             masked_literal = LiteralExpression(
                 [
                     CallExpression(
@@ -80,7 +86,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
                             call_arg.op.masking_metadata, False
                         ),
                         call_arg.data_type,
-                        [LiteralExpression(v, literal_arg.data_type)],
+                        [LiteralExpression(v, inner_type)],
                     )
                     for v in literal_arg.value
                 ],
