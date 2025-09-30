@@ -50,7 +50,7 @@ SELECT
 FROM _s0 AS _s0
 JOIN tpch.region AS region
   ON _s0.n_regionkey = region.r_regionkey
-JOIN _s5 AS _s5
+LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
   2

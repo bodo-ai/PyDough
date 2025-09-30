@@ -52,11 +52,11 @@ WITH _t5 AS (
 )
 SELECT
   supplier.s_name AS S_NAME,
-  _s13.n_rows AS NUMWAIT
+  COALESCE(_s13.n_rows, 0) AS NUMWAIT
 FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
-JOIN _s13 AS _s13
+LEFT JOIN _s13 AS _s13
   ON _s13.anything_l_suppkey = supplier.s_suppkey
 ORDER BY
   2 DESC,

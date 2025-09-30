@@ -1,5 +1,5 @@
 ROOT(columns=[('part_name', p_name), ('revenue_generated', ROUND(DEFAULT_TO(sum_revenue, 0:numeric), 2:numeric))], orderings=[(ROUND(DEFAULT_TO(sum_revenue, 0:numeric), 2:numeric)):asc_first, (p_name):asc_first], limit=8:numeric)
- JOIN(condition=t0.ps_partkey == t1.ps_partkey & t0.ps_suppkey == t1.ps_suppkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'p_name': t0.p_name, 'sum_revenue': t1.sum_revenue})
+ JOIN(condition=t0.ps_partkey == t1.ps_partkey & t0.ps_suppkey == t1.ps_suppkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'p_name': t0.p_name, 'sum_revenue': t1.sum_revenue})
   JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'p_name': t1.p_name, 'ps_partkey': t0.ps_partkey, 'ps_suppkey': t0.ps_suppkey})
    JOIN(condition=t0.ps_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'ps_partkey': t0.ps_partkey, 'ps_suppkey': t0.ps_suppkey})
     SCAN(table=tpch.PARTSUPP, columns={'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey})

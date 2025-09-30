@@ -30,7 +30,7 @@ SELECT
   region.r_name AS region_name,
   ROUND(_s5.agg_0, 3) AS cvp_ab_otp
 FROM tpch.region AS region
-JOIN _s5 AS _s5
+LEFT JOIN _s5 AS _s5
   ON _s5.n_regionkey = region.r_regionkey
 ORDER BY
   1

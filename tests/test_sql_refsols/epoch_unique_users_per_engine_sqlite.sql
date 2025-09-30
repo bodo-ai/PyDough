@@ -17,9 +17,9 @@ WITH _s2 AS (
 )
 SELECT
   _s2.search_engine AS engine,
-  _s3.ndistinct_user_id AS n_users
+  COALESCE(_s3.ndistinct_user_id, 0) AS n_users
 FROM _s2 AS _s2
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s2.search_engine = _s3.search_engine
 ORDER BY
   1

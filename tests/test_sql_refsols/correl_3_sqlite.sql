@@ -28,9 +28,9 @@ WITH _s4 AS (
 )
 SELECT
   _s4.r_name AS region_name,
-  _s5.n_rows AS n_nations
+  COALESCE(_s5.n_rows, 0) AS n_nations
 FROM _s4 AS _s4
-JOIN _s5 AS _s5
+LEFT JOIN _s5 AS _s5
   ON _s4.r_regionkey = _s5.r_regionkey
 ORDER BY
   1

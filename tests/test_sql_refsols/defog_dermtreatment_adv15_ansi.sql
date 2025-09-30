@@ -16,5 +16,5 @@ SELECT
 FROM main.drugs AS drugs
 JOIN main.treatments AS treatments
   ON NOT treatments.end_dt IS NULL AND drugs.drug_id = treatments.drug_id
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s3.drug_id = drugs.drug_id

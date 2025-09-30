@@ -45,9 +45,9 @@ WITH _s14 AS (
     SUM(_s7.n_rows) AS sum_expr_4,
     SUM(_s13.n_rows) AS sum_n_rows
   FROM _s6 AS _s6
-  JOIN _s7 AS _s7
+  LEFT JOIN _s7 AS _s7
     ON _s6.ca_dt = _s7.ca_dt
-  JOIN _s13 AS _s13
+  LEFT JOIN _s13 AS _s13
     ON _s13.ca_dt = _s6.ca_dt
   GROUP BY
     1
@@ -55,27 +55,27 @@ WITH _s14 AS (
 SELECT
   _s15.year_ca_dt - EXTRACT(YEAR FROM CAST(_s14.anything_pr_release AS DATETIME)) AS years_since_release,
   ROUND(
-    SUM(_s15.sum_expr_4) OVER (ORDER BY _s15.year_ca_dt NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(_s15.sum_n_rows) OVER (ORDER BY _s15.year_ca_dt NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    SUM(COALESCE(_s15.sum_expr_4, 0)) OVER (ORDER BY _s15.year_ca_dt NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s15.sum_n_rows, 0)) OVER (ORDER BY _s15.year_ca_dt NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS cum_ir,
   ROUND(
     (
       100.0 * (
-        _s15.sum_n_rows - LAG(_s15.sum_n_rows, 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST)
+        COALESCE(_s15.sum_n_rows, 0) - LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST)
       )
-    ) / LAG(_s15.sum_n_rows, 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST),
+    ) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST),
     2
   ) AS pct_bought_change,
   ROUND(
     (
       100.0 * (
-        _s15.sum_expr_4 - LAG(_s15.sum_expr_4, 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST)
+        COALESCE(_s15.sum_expr_4, 0) - LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST)
       )
-    ) / LAG(_s15.sum_expr_4, 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST),
+    ) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt NULLS LAST),
     2
   ) AS pct_incident_change,
-  _s15.sum_n_rows AS bought,
-  _s15.sum_expr_4 AS incidents
+  COALESCE(_s15.sum_n_rows, 0) AS bought,
+  COALESCE(_s15.sum_expr_4, 0) AS incidents
 FROM _s14 AS _s14
 JOIN _s15 AS _s15
   ON _s15.year_ca_dt >= EXTRACT(YEAR FROM CAST(_s14.anything_pr_release AS DATETIME))

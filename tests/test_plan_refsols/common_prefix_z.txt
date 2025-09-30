@@ -1,5 +1,5 @@
 ROOT(columns=[('name', c_name), ('nation_name', n_name)], orderings=[(c_name):asc_first], limit=5:numeric)
- JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'c_name': t0.c_name, 'n_name': t1.n_name})
+ JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'c_name': t0.c_name, 'n_name': t1.n_name})
   SCAN(table=tpch.CUSTOMER, columns={'c_name': c_name, 'c_nationkey': c_nationkey})
   JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=SEMI, columns={'n_name': t0.n_name, 'n_nationkey': t0.n_nationkey})
    SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})

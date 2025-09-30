@@ -43,7 +43,7 @@ WITH _t1 AS (
   CROSS JOIN _t4 AS _t4
   JOIN _s3 AS _s3
     ON _s3.ca_dt < DATETIME(_t4.pr_release, '2 year') AND _s3.ca_dt >= _t4.pr_release
-  JOIN _s15 AS _s15
+  LEFT JOIN _s15 AS _s15
     ON _s15.ca_dt = _s3.ca_dt AND _s15.co_name = _t3.co_name
   GROUP BY
     1,
@@ -52,9 +52,9 @@ WITH _t1 AS (
 SELECT
   _t1.co_name AS country_name,
   _s17.start_of_year,
-  _s17.sum_n_rows AS n_purchases
+  COALESCE(_s17.sum_n_rows, 0) AS n_purchases
 FROM _t1 AS _t1
-JOIN _s17 AS _s17
+LEFT JOIN _s17 AS _s17
   ON _s17.co_name = _t1.co_name
 ORDER BY
   1,

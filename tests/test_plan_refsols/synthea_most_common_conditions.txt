@@ -1,3 +1,6 @@
 ROOT(columns=[('condition_description', DESCRIPTION)], orderings=[(n_rows):desc_last, (DESCRIPTION):asc_first], limit=1:numeric)
  AGGREGATE(keys={'DESCRIPTION': DESCRIPTION}, aggregations={'n_rows': COUNT()})
-  SCAN(table=synthea.conditions, columns={'DESCRIPTION': DESCRIPTION})
+  JOIN(condition=t0.patient == t1.PATIENT, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'DESCRIPTION': t1.DESCRIPTION})
+   FILTER(condition=ethnicity == 'italian':string & gender == 'F':string, columns={'patient': patient})
+    SCAN(table=synthea.patients, columns={'ethnicity': ethnicity, 'gender': gender, 'patient': patient})
+   SCAN(table=synthea.conditions, columns={'DESCRIPTION': DESCRIPTION, 'PATIENT': PATIENT})

@@ -1,9 +1,13 @@
 WITH _t AS (
   SELECT
-    l_extendedprice,
-    l_quantity,
-    AVG(l_quantity) OVER (PARTITION BY l_partkey) AS _w
-  FROM tpch.lineitem
+    lineitem.l_extendedprice,
+    lineitem.l_quantity,
+    AVG(lineitem.l_quantity) OVER (PARTITION BY lineitem.l_partkey) AS _w
+  FROM tpch.part AS part
+  JOIN tpch.lineitem AS lineitem
+    ON lineitem.l_partkey = part.p_partkey
+  WHERE
+    part.p_brand = 'Brand#23' AND part.p_container = 'MED BOX'
 )
 SELECT
   CAST(COALESCE(SUM(l_extendedprice), 0) AS DOUBLE PRECISION) / 7.0 AS AVG_YEARLY

@@ -14,7 +14,7 @@ SELECT
   cars.vin_number,
   _s1.avg_sale_price
 FROM main.cars AS cars
-JOIN _s1 AS _s1
+LEFT JOIN _s1 AS _s1
   ON _s1.car_id = cars._id
 WHERE
   CONTAINS(LOWER(cars.make), 'fords') OR CONTAINS(LOWER(cars.model), 'mustang')

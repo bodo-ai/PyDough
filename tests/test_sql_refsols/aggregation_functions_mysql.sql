@@ -32,7 +32,7 @@ WITH _s1 AS (
       ELSE NULL
     END AS expr_18
   FROM tpch.CUSTOMER AS CUSTOMER
-  JOIN _s1 AS _s1
+  LEFT JOIN _s1 AS _s1
     ON CUSTOMER.c_custkey = _s1.o_custkey
 ), _t1 AS (
   SELECT
@@ -116,4 +116,4 @@ SELECT
   population_std_c_acctbal AS stddev_p_value
 FROM _t1
 WHERE
-  sum_n_rows = 0
+  sum_n_rows = 0 OR sum_n_rows IS NULL

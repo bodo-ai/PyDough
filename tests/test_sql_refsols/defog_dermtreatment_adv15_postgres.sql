@@ -26,7 +26,7 @@ SELECT
 FROM main.drugs AS drugs
 LEFT JOIN _u_0 AS _u_0
   ON _u_0._u_1 = drugs.drug_id
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s3.drug_id = drugs.drug_id
 WHERE
   NOT _u_0._u_1 IS NULL

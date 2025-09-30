@@ -1,5 +1,5 @@
 ROOT(columns=[('name', n_name), ('region_name', r_name)], orderings=[])
- JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_name': t0.n_name, 'r_name': t1.r_name})
+ JOIN(condition=t0.n_regionkey == t1.r_regionkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'n_name': t0.n_name, 'r_name': t1.r_name})
   SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})
   FILTER(condition=r_name != 'ASIA':string, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
    SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})

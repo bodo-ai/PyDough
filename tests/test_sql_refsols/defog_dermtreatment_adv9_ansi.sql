@@ -47,9 +47,9 @@ WITH _s2 AS (
 SELECT
   _s2.treatment_month AS month,
   _s2.ndistinct_patient_id AS patient_count,
-  _s3.ndistinct_patient_id AS biologic_treatment_count
+  COALESCE(_s3.ndistinct_patient_id, 0) AS biologic_treatment_count
 FROM _s2 AS _s2
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s2.treatment_month = _s3.treatment_month
 ORDER BY
   1 DESC

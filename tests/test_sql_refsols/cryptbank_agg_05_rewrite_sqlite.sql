@@ -20,7 +20,7 @@ SELECT
     2
   ) AS avg_secs
 FROM crbnk.accounts AS accounts
-JOIN _s1 AS _s1
+LEFT JOIN _s1 AS _s1
   ON _s1.t_sourceaccount = CASE
     WHEN accounts.a_key = 0
     THEN 0

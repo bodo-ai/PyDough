@@ -44,9 +44,9 @@ WITH _t2 AS (
     SUM(_s7.n_rows) AS sum_expr_3,
     SUM(_s15.n_rows) AS sum_n_rows
   FROM _t2 AS _t2
-  JOIN _s7 AS _s7
+  LEFT JOIN _s7 AS _s7
     ON _s7.ca_dt = _t2.ca_dt
-  JOIN _s15 AS _s15
+  LEFT JOIN _s15 AS _s15
     ON _s15.ca_dt = _t2.ca_dt
   GROUP BY
     1,
@@ -55,8 +55,8 @@ WITH _t2 AS (
 SELECT
   CONCAT_WS('-', year_ca_dt, LPAD(month_ca_dt, 2, '0')) AS month,
   ROUND((
-    1000000.0 * sum_n_rows
-  ) / sum_expr_3, 2) AS ir
+    1000000.0 * COALESCE(sum_n_rows, 0)
+  ) / COALESCE(sum_expr_3, 0), 2) AS ir
 FROM _t0
 ORDER BY
   month_ca_dt NULLS FIRST

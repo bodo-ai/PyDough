@@ -523,6 +523,18 @@ class RelTranslation:
             # Cartesian join case
             out_rel.condition = LiteralExpression(True, BooleanType())
 
+        # If the join type is non-ANTI but the condition is always True,
+        # then just promote to an INNER join, and remove the filtering aspect
+        # from the cardinality in both directions
+        if (
+            join_type != JoinType.ANTI
+            and isinstance(out_rel.condition, LiteralExpression)
+            and bool(out_rel.condition.value)
+        ):
+            out_rel._join_type = JoinType.INNER
+            out_rel._cardinality = out_rel._cardinality.remove_filter()
+            out_rel._reverse_cardinality = out_rel._reverse_cardinality.remove_filter()
+
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
         # the back levels of the reference by 1. If the join is being done to

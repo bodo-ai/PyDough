@@ -23,7 +23,7 @@ SELECT
   CUSTOMER.c_phone AS C_PHONE,
   CUSTOMER.c_comment AS C_COMMENT
 FROM tpch.CUSTOMER AS CUSTOMER
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON CUSTOMER.c_custkey = _s3.o_custkey
 JOIN tpch.NATION AS NATION
   ON CUSTOMER.c_nationkey = NATION.n_nationkey

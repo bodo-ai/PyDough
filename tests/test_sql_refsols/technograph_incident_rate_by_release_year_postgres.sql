@@ -33,9 +33,12 @@ WITH _s0 AS (
 )
 SELECT
   _s6.year_pr_release AS year,
-  ROUND(CAST(CAST(_s7.n_rows AS DOUBLE PRECISION) / _s6.sum_n_rows AS DECIMAL), 2) AS ir
+  ROUND(
+    CAST(CAST(COALESCE(_s7.n_rows, 0) AS DOUBLE PRECISION) / _s6.sum_n_rows AS DECIMAL),
+    2
+  ) AS ir
 FROM _s6 AS _s6
-JOIN _s7 AS _s7
+LEFT JOIN _s7 AS _s7
   ON _s6.year_pr_release = _s7.year_pr_release
 ORDER BY
   1 NULLS FIRST

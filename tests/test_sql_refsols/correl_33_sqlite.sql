@@ -19,6 +19,6 @@ WITH _t0 AS (
 SELECT
   _s1.n_rows AS n
 FROM _s0 AS _s0
-JOIN _s1 AS _s1
+LEFT JOIN _s1 AS _s1
   ON _s1.month_o_orderdate = CAST(STRFTIME('%m', _s0.min_o_orderdate) AS INTEGER)
   AND _s1.year_o_orderdate = CAST(STRFTIME('%Y', _s0.min_o_orderdate) AS INTEGER)

@@ -1,5 +1,5 @@
-ROOT(columns=[('customer_key', c_custkey), ('n_orders', n_rows)], orderings=[(n_rows):desc_last, (c_custkey):asc_first], limit=5:numeric)
- JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'c_custkey': t0.c_custkey, 'n_rows': t1.n_rows})
+ROOT(columns=[('customer_key', c_custkey), ('n_orders', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(DEFAULT_TO(n_rows, 0:numeric)):desc_last, (c_custkey):asc_first], limit=5:numeric)
+ JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_custkey': t0.c_custkey, 'n_rows': t1.n_rows})
   SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey})
   AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})
    SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey})

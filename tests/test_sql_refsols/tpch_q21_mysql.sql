@@ -56,11 +56,11 @@ WITH _t5 AS (
 )
 SELECT
   SUPPLIER.s_name COLLATE utf8mb4_bin AS S_NAME,
-  _s13.n_rows AS NUMWAIT
+  COALESCE(_s13.n_rows, 0) AS NUMWAIT
 FROM tpch.SUPPLIER AS SUPPLIER
 JOIN tpch.NATION AS NATION
   ON NATION.n_name = 'SAUDI ARABIA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
-JOIN _s13 AS _s13
+LEFT JOIN _s13 AS _s13
   ON SUPPLIER.s_suppkey = _s13.anything_l_suppkey
 ORDER BY
   2 DESC,

@@ -36,5 +36,5 @@ SELECT
   _s2.n_rows AS customer_signups,
   _s3.avg_sbtxamount AS avg_tx_amount
 FROM _s2 AS _s2
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s2.month = _s3.month

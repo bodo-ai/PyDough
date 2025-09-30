@@ -10,6 +10,7 @@ WITH _s1 AS (
     PERCENTILE_DISC(0.8) WITHIN GROUP (ORDER BY
       customer.c_acctbal) AS agg_7,
     ANY_VALUE(customer.c_acctbal) AS anything_c_acctbal,
+    AVG(customer.c_acctbal) AS avg_c_acctbal,
     COUNT(customer.c_acctbal) AS count_c_acctbal,
     MAX(customer.c_acctbal) AS max_c_acctbal,
     MEDIAN(customer.c_acctbal) AS median_c_acctbal,
@@ -22,14 +23,14 @@ WITH _s1 AS (
     SUM(customer.c_acctbal) AS sum_c_acctbal,
     SUM(_s1.n_rows) AS sum_n_rows
   FROM tpch.customer AS customer
-  JOIN _s1 AS _s1
+  LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
   GROUP BY
     customer.c_nationkey
 )
 SELECT
   COALESCE(sum_c_acctbal, 0) AS sum_value,
-  sum_c_acctbal / count_c_acctbal AS avg_value,
+  avg_c_acctbal AS avg_value,
   median_c_acctbal AS median_value,
   min_c_acctbal AS min_value,
   max_c_acctbal AS max_value,
@@ -43,4 +44,4 @@ SELECT
   population_std_c_acctbal AS stddev_p_value
 FROM _t1
 WHERE
-  sum_n_rows = 0
+  sum_n_rows = 0 OR sum_n_rows IS NULL

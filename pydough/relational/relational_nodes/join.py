@@ -7,7 +7,6 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 from pydough.relational.relational_expressions import (
-    LiteralExpression,
     RelationalExpression,
 )
 from pydough.types.boolean_type import BooleanType
@@ -191,18 +190,6 @@ class Join(RelationalNode):
         self._cardinality: JoinCardinality = cardinality
         self._reverse_cardinality: JoinCardinality = reverse_cardinality
         self._correl_name: str | None = correl_name
-
-        # If the join type is LEFT (or INNER) but the condition is always True,
-        # then just promote to an INNER join, and remove the filtering aspect
-        # from the cardinality in both directions
-        if (
-            join_type in (JoinType.INNER, JoinType.LEFT)
-            and isinstance(condition, LiteralExpression)
-            and bool(condition.value)
-        ):
-            self._join_type = JoinType.INNER
-            self._cardinality = self._cardinality.remove_filter()
-            self._reverse_cardinality = self._reverse_cardinality.remove_filter()
 
     @property
     def correl_name(self) -> str | None:

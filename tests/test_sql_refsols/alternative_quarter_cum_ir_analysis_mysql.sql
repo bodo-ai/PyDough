@@ -111,16 +111,16 @@ WITH _s0 AS (
 )
 SELECT
   _s12.quarter,
-  _s13.ndistinct_in_device_id AS n_incidents,
-  _s21.n_rows AS n_sold,
+  COALESCE(_s13.ndistinct_in_device_id, 0) AS n_incidents,
+  COALESCE(_s21.n_rows, 0) AS n_sold,
   ROUND(
-    SUM(_s13.ndistinct_in_device_id) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(_s21.n_rows) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    SUM(COALESCE(_s13.ndistinct_in_device_id, 0)) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s21.n_rows, 0)) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS quarter_cum
 FROM _s12 AS _s12
-JOIN _s13 AS _s13
+LEFT JOIN _s13 AS _s13
   ON _s12.quarter = _s13.quarter
-JOIN _s21 AS _s21
+LEFT JOIN _s21 AS _s21
   ON _s12.quarter = _s21.quarter
 ORDER BY
   1

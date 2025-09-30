@@ -1,14 +1,19 @@
-WITH _t1 AS (
+WITH _s3 AS (
   SELECT
+    patient_id,
     MIN(EXTRACT(YEAR FROM CAST(start_dt AS DATETIME))) AS min_year_start_dt
   FROM main.treatments
   GROUP BY
-    patient_id
+    1
 ), _t0 AS (
   SELECT
-    min_year_start_dt,
+    _s3.min_year_start_dt,
     COUNT(*) AS n_rows
-  FROM _t1
+  FROM main.patients AS patients
+  JOIN main.treatments AS treatments
+    ON patients.patient_id = treatments.patient_id
+  LEFT JOIN _s3 AS _s3
+    ON _s3.patient_id = patients.patient_id
   GROUP BY
     1
 )

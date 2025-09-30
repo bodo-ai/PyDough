@@ -18,5 +18,5 @@ SELECT
     2
   ) AS avg_secs
 FROM bodo.retail.protected_loyalty_members AS protected_loyalty_members
-JOIN _s1 AS _s1
+LEFT JOIN _s1 AS _s1
   ON _s1.customer_id = protected_loyalty_members.customer_id

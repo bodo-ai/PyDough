@@ -1,18 +1,20 @@
 WITH _s1 AS (
   SELECT
     o_custkey,
-    MIN(o_orderdate) AS min_o_orderdate
+    MIN(o_orderdate) AS min_o_orderdate,
+    COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
     1
-), _t1 AS (
+), _t2 AS (
   SELECT
     MIN(customer.c_acctbal) OVER () AS min_bal,
     customer.c_acctbal,
     customer.c_mktsegment,
-    _s1.min_o_orderdate
+    _s1.min_o_orderdate,
+    _s1.n_rows
   FROM tpch.customer AS customer
-  JOIN _s1 AS _s1
+  LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
 )
 SELECT
@@ -35,4 +37,6 @@ SELECT
     ) AS REAL) / COUNT(*),
     2
   ) AS p
-FROM _t1
+FROM _t2
+WHERE
+  n_rows > 0

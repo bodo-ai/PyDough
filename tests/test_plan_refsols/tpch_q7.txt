@@ -8,7 +8,7 @@ ROOT(columns=[('SUPP_NATION', n_name), ('CUST_NATION', cust_nation), ('L_YEAR', 
      SCAN(table=tpch.SUPPLIER, columns={'s_nationkey': s_nationkey, 's_suppkey': s_suppkey})
      SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
    JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_name': t1.n_name, 'o_orderkey': t0.o_orderkey})
-    JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'c_nationkey': t1.c_nationkey, 'o_orderkey': t0.o_orderkey})
+    JOIN(condition=t0.o_custkey == t1.c_custkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'c_nationkey': t1.c_nationkey, 'o_orderkey': t0.o_orderkey})
      SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
      SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
     SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})

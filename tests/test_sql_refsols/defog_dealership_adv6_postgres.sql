@@ -19,7 +19,7 @@ SELECT
 FROM main.cars AS cars
 JOIN _t AS _t
   ON NOT _t.is_in_inventory AND _t._w = 1 AND _t.car_id = cars._id
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s3.car_id = cars._id
 ORDER BY
   3 DESC NULLS LAST

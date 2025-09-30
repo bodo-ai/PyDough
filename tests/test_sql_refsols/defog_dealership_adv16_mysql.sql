@@ -12,7 +12,7 @@ SELECT
   salespersons.last_name,
   COALESCE(_s1.sum_sale_price, 0) AS total
 FROM main.salespersons AS salespersons
-JOIN _s1 AS _s1
+LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
   4 DESC

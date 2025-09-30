@@ -8,7 +8,7 @@ WITH _s1 AS (
 ), _s3 AS (
   SELECT
     treatments.diag_id,
-    MAX(_s1.max_day100_itch_vas) AS max_max_itch_score,
+    MAX(_s1.max_day100_itch_vas) AS max_max_day100_itch_vas,
     COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
   FROM main.treatments AS treatments
   JOIN _s1 AS _s1
@@ -19,7 +19,7 @@ WITH _s1 AS (
 SELECT
   diagnoses.diag_name AS diagnosis_name,
   _s3.ndistinct_patient_id AS num_patients,
-  _s3.max_max_itch_score AS max_itch_score
+  _s3.max_max_day100_itch_vas AS max_itch_score
 FROM main.diagnoses AS diagnoses
 JOIN _s3 AS _s3
   ON _s3.diag_id = diagnoses.diag_id

@@ -16,9 +16,9 @@ WITH _s3 AS (
 SELECT
   merchants.mid AS merchant_id,
   merchants.name AS merchant_name,
-  _s3.n_rows AS coupons_per_merchant
+  COALESCE(_s3.n_rows, 0) AS coupons_per_merchant
 FROM main.merchants AS merchants
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s3.merchant_id = merchants.mid
 ORDER BY
   3 DESC

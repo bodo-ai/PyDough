@@ -1,5 +1,5 @@
 ROOT(columns=[('name', c_name), ('avg_diff', avg_day_diff)], orderings=[(avg_day_diff):desc_last], limit=5:numeric)
- JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'avg_day_diff': t1.avg_day_diff, 'c_name': t0.c_name})
+ JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'avg_day_diff': t1.avg_day_diff, 'c_name': t0.c_name})
   JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey, 'c_name': t0.c_name})
    SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name, 'c_nationkey': c_nationkey})
    FILTER(condition=n_name == 'JAPAN':string, columns={'n_nationkey': n_nationkey})

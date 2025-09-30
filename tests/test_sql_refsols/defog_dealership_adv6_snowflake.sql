@@ -20,7 +20,7 @@ SELECT
 FROM main.cars AS cars
 JOIN _t1 AS _t1
   ON _t1.car_id = cars._id
-JOIN _s3 AS _s3
+LEFT JOIN _s3 AS _s3
   ON _s3.car_id = cars._id
 ORDER BY
   3 DESC NULLS LAST

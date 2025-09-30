@@ -30,7 +30,7 @@ WITH _t2 AS (
   JOIN _s1 AS _s1
     ON _s1.ca_dt < DATE_TRUNC('QUARTER', DATE_ADD(CAST(_t2.pr_release AS TIMESTAMP), 2, 'YEAR'))
     AND _s1.ca_dt >= _t2.pr_release
-  JOIN _s7 AS _s7
+  LEFT JOIN _s7 AS _s7
     ON _s1.ca_dt = _s7.ca_dt
   GROUP BY
     1
@@ -70,14 +70,14 @@ WITH _t2 AS (
 )
 SELECT
   _s22.quarter,
-  _s23.ndistinct_in_device_id AS n_incidents,
-  _s22.sum_n_rows AS n_sold,
+  COALESCE(_s23.ndistinct_in_device_id, 0) AS n_incidents,
+  COALESCE(_s22.sum_n_rows, 0) AS n_sold,
   ROUND(
-    SUM(_s23.ndistinct_in_device_id) OVER (ORDER BY _s22.quarter NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(_s22.sum_n_rows) OVER (ORDER BY _s22.quarter NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    SUM(COALESCE(_s23.ndistinct_in_device_id, 0)) OVER (ORDER BY _s22.quarter NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s22.sum_n_rows, 0)) OVER (ORDER BY _s22.quarter NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS quarter_cum
 FROM _s22 AS _s22
-JOIN _s23 AS _s23
+LEFT JOIN _s23 AS _s23
   ON _s22.quarter = _s23.quarter
 ORDER BY
   1

@@ -5,14 +5,22 @@ WITH _t AS (
     treatment_id,
     ROW_NUMBER() OVER (PARTITION BY doc_id ORDER BY start_dt) AS _w
   FROM main.treatments
+), _s1 AS (
+  SELECT
+    doc_id,
+    start_dt,
+    treatment_id
+  FROM _t
+  WHERE
+    _w = 1
 )
 SELECT
   doctors.last_name,
   doctors.year_reg,
-  _t.start_dt AS first_treatment_date,
-  _t.treatment_id AS first_treatment_id
+  _s1.start_dt AS first_treatment_date,
+  _s1.treatment_id AS first_treatment_id
 FROM main.doctors AS doctors
-JOIN _t AS _t
-  ON _t._w = 1 AND _t.doc_id = doctors.doc_id
+LEFT JOIN _s1 AS _s1
+  ON _s1.doc_id = doctors.doc_id
 WHERE
   doctors.year_reg = EXTRACT(YEAR FROM CURRENT_TIMESTAMP - INTERVAL '2 YEAR')

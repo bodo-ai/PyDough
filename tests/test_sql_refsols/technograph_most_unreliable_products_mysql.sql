@@ -11,7 +11,7 @@ WITH _s1 AS (
     COUNT(*) AS n_rows,
     SUM(_s1.n_rows) AS sum_n_rows
   FROM main.DEVICES AS DEVICES
-  JOIN _s1 AS _s1
+  LEFT JOIN _s1 AS _s1
     ON DEVICES.de_id = _s1.in_device_id
   GROUP BY
     1
@@ -20,7 +20,7 @@ SELECT
   PRODUCTS.pr_name AS product,
   PRODUCTS.pr_brand AS product_brand,
   PRODUCTS.pr_type AS product_type,
-  ROUND(_s3.sum_n_rows / _s3.n_rows, 2) AS ir
+  ROUND(COALESCE(_s3.sum_n_rows, 0) / _s3.n_rows, 2) AS ir
 FROM main.PRODUCTS AS PRODUCTS
 JOIN _s3 AS _s3
   ON PRODUCTS.pr_id = _s3.de_product_id

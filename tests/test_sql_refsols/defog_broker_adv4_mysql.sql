@@ -13,7 +13,7 @@ SELECT
   sbTicker.sbtickersymbol AS symbol,
   _s1.max_sbDpHigh - _s1.min_sbDpLow AS price_change
 FROM main.sbTicker AS sbTicker
-JOIN _s1 AS _s1
+LEFT JOIN _s1 AS _s1
   ON _s1.sbDpTickerId = sbTicker.sbtickerid
 ORDER BY
   2 DESC

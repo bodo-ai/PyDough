@@ -35,10 +35,10 @@ WITH _s0 AS (
 )
 SELECT
   _s0.sbcuststate AS state,
-  MAX(_s9.n_rows) AS max_n
+  MAX(COALESCE(_s9.n_rows, 0)) AS max_n
 FROM _s0 AS _s0
 CROSS JOIN _s1 AS _s1
-JOIN _s9 AS _s9
+LEFT JOIN _s9 AS _s9
   ON _s0.sbcuststate = _s9.sbcuststate AND _s1.month = _s9.month
 GROUP BY
   1
