@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=DAY(date_of_birth) <= 13:numeric & DAY(date_of_birth) > 3:numeric & ISIN(MONTH(date_of_birth), [1, 2, 5, 10, 12]:array[unknown]) & ISIN(YEAR(date_of_birth), [1960, 1970, 1980, 1990, 2000]:array[unknown]), columns={})
+  FILTER(condition=DAY(UNMASK::(PTY_UNPROTECT([date_of_birth], 'deDOB'))) <= 13:numeric & DAY(UNMASK::(PTY_UNPROTECT([date_of_birth], 'deDOB'))) > 3:numeric & ISIN(MONTH(UNMASK::(PTY_UNPROTECT([date_of_birth], 'deDOB'))), [1, 2, 5, 10, 12]:array[unknown]) & ISIN(YEAR(UNMASK::(PTY_UNPROTECT([date_of_birth], 'deDOB'))), [1960, 1970, 1980, 1990, 2000]:array[unknown]), columns={})
    SCAN(table=bodo.retail.protected_loyalty_members, columns={'date_of_birth': date_of_birth})

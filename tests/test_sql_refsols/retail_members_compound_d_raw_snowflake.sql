@@ -2,4 +2,5 @@ SELECT
   COUNT(*) AS n
 FROM bodo.retail.protected_loyalty_members
 WHERE
-  date_of_birth >= CAST('2000-01-01' AS DATE) AND last_name <= 'Zuniga'
+  PTY_UNPROTECT(date_of_birth, 'deDOB') >= CAST('2000-01-01' AS DATE)
+  AND PTY_UNPROTECT_NAME(last_name) <= 'Zuniga'

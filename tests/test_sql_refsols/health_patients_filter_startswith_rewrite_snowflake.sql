@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.health.protected_patients
 WHERE
-  STARTSWITH(phone_number, '001')
+  STARTSWITH(PTY_UNPROTECT(phone_number, 'dePhone'), '001')

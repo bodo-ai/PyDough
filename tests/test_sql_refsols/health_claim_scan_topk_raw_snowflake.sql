@@ -1,13 +1,13 @@
 SELECT
   claim_id AS key,
-  patient_id AS patient_key,
-  claim_date,
-  provider_name,
+  PTY_UNPROTECT(patient_id, 'deAccount') AS patient_key,
+  PTY_UNPROTECT_DOB(claim_date) AS claim_date,
+  PTY_UNPROTECT(provider_name, 'deName') AS provider_name,
   diagnosis_code,
   procedure_code,
   claim_amount,
   approved_amount,
-  claim_status
+  PTY_UNPROTECT(claim_status, 'deAccount') AS claim_status
 FROM bodo.health.claims
 ORDER BY
   7 DESC NULLS LAST

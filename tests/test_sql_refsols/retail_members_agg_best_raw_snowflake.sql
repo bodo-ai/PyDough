@@ -8,12 +8,12 @@ WITH _t1 AS (
   JOIN bodo.retail.protected_loyalty_members AS protected_loyalty_members
     ON protected_loyalty_members.customer_id = transactions.customer_id
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY store_location ORDER BY transactions.total_amount DESC) = 1
+    ROW_NUMBER() OVER (PARTITION BY PTY_UNPROTECT_ADDRESS(store_location) ORDER BY transactions.total_amount DESC) = 1
 )
 SELECT
-  store_location,
+  PTY_UNPROTECT_ADDRESS(store_location) AS store_location,
   total_amount,
-  CONCAT_WS(' ', first_name, last_name) AS name
+  CONCAT_WS(' ', PTY_UNPROTECT(first_name, 'deName'), PTY_UNPROTECT_NAME(last_name)) AS name
 FROM _t1
 ORDER BY
   2 DESC NULLS LAST

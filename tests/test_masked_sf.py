@@ -870,9 +870,6 @@ def test_pipeline_until_sql_masked_sf(
     )
 
 
-@pytest.mark.skip(
-    reason="Skipping until masked table column relational handling is implemented"
-)
 @pytest.mark.execute
 @pytest.mark.sf_masked
 @pytest.mark.parametrize("account_type", ["NONE", "PARTIAL", "FULL"])

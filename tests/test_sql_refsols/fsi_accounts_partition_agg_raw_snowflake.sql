@@ -1,5 +1,5 @@
 SELECT
-  accounttype AS account_type,
+  PTY_UNPROTECT(accounttype, 'deAccount') AS account_type,
   COUNT(*) AS n,
   ROUND(AVG(balance), 2) AS avg_bal
 FROM bodo.fsi.accounts

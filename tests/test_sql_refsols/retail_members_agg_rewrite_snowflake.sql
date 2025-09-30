@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     customer_id,
-    MIN(transaction_date) AS min_transaction_date
+    MIN(PTY_UNPROTECT_TS(transaction_date)) AS min_unmask_transaction_date
   FROM bodo.retail.transactions
   GROUP BY
     1
@@ -12,7 +12,7 @@ SELECT
       DATEDIFF(
         SECOND,
         CAST(protected_loyalty_members.join_date AS DATETIME),
-        CAST(_s1.min_transaction_date AS DATETIME)
+        CAST(_s1.min_unmask_transaction_date AS DATETIME)
       )
     ),
     2
