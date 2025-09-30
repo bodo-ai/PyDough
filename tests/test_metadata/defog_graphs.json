@@ -3398,15 +3398,15 @@
     "version": "V2",
     "collections": [
       {
-        "name": "author",
+        "name": "authors",
         "type": "simple table",
         "table path": "main.author",
         "unique properties": [
-          "aid"
+          "author_id"
         ],
         "properties": [
           {
-            "name": "aid",
+            "name": "author_id",
             "type": "table column",
             "column name": "aid",
             "data type": "numeric",
@@ -3433,7 +3433,7 @@
             "synonyms": ["full name"]
           },
           {
-            "name": "org_id",
+            "name": "organization_id",
             "type": "table column",
             "column name": "oid",
             "data type": "numeric",
@@ -3477,11 +3477,11 @@
         "synonyms": ["citations", "references"]
       },
       {
-        "name": "conference",
+        "name": "conferences",
         "type": "simple table",
         "table path": "main.conference",
         "unique properties": [
-          "cid"
+          "conference_id"
         ],
         "properties": [
           {
@@ -3550,12 +3550,12 @@
         "type": "simple table",
         "table path": "main.domain_author",
         "unique properties": [
-          "aid",
-          "did"
+          "author_id",
+          "domain_id"
         ],
         "properties": [
           {
-            "name": "aid",
+            "name": "author_id",
             "type": "table column",
             "column name": "aid",
             "data type": "numeric",
@@ -3564,16 +3564,16 @@
             "synonyms": ["author id"]
           },
           {
-            "name": "did",
+            "name": "domain_id",
             "type": "table column",
             "column name": "did",
             "data type": "numeric",
             "description": "The id of the domain",
-            "sample values": [],
-            "synonyms": []
+            "sample values": [1, 2, 3],
+            "synonyms": ["domain id"]
           }
         ],
-        "description": "A junction table linking authors to the domains they are associated with (Many-to-Many relationship).",
+        "description": "The records of each author being associated with domains.",
         "synonyms": ["author domains"]
       },
       {
@@ -3937,12 +3937,12 @@
         "type": "simple table",
         "table path": "main.writes",
         "unique properties": [
-          "aid",
+          "author_id",
           "pid"
         ],
         "properties": [
           {
-            "name": "aid",
+            "name": "author_id",
             "type": "table column",
             "column name": "aid",
             "data type": "numeric",
@@ -3971,7 +3971,7 @@
         "parent collection": "author",
         "child collection": "organization",
         "singular": true,
-        "always matches": true,
+        "always matches": false,
         "keys": {
           "oid": [
             "oid"
@@ -3986,7 +3986,7 @@
         "original parent": "author",
         "original property": "organization",
         "singular": false,
-        "always matches": true,
+        "always matches": false,
         "description": "The authors who are affiliated with this organization.",
         "synonyms": []
       },
@@ -4010,7 +4010,7 @@
         "name": "cite",
         "original parent": "cite",
         "original property": "publication",
-        "singular": false,
+        "singular": true,
         "always matches": true,
         "description": "The citations this publication makes to other papers.",
         "synonyms": []
@@ -4048,8 +4048,8 @@
         "singular": true,
         "always matches": true,
         "keys": {
-          "aid": [
-            "aid"
+          "author_id": [
+            "author_id"
           ]
         },
         "description": "The author associated with a specific domain.",
@@ -4057,7 +4057,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain_author",
+        "name": "domain_authors",
         "original parent": "domain_author",
         "original property": "author",
         "singular": false,
@@ -4398,8 +4398,8 @@
         "singular": true,
         "always matches": true,
         "keys": {
-          "aid": [
-            "aid"
+          "author_id": [
+            "author_id"
           ]
         },
         "description": "The author who wrote the publication.",
