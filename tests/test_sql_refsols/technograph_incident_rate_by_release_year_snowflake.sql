@@ -1,4 +1,11 @@
-WITH _s1 AS (
+WITH _s0 AS (
+  SELECT
+    de_product_id,
+    COUNT(*) AS n_rows
+  FROM main.devices
+  GROUP BY
+    1
+), _s1 AS (
   SELECT
     pr_id,
     pr_release
@@ -6,10 +13,10 @@ WITH _s1 AS (
 ), _s6 AS (
   SELECT
     YEAR(CAST(_s1.pr_release AS TIMESTAMP)) AS year_pr_release,
-    COUNT(*) AS n_rows
-  FROM main.devices AS devices
+    SUM(_s0.n_rows * 1) AS n_rows
+  FROM _s0 AS _s0
   JOIN _s1 AS _s1
-    ON _s1.pr_id = devices.de_product_id
+    ON _s0.de_product_id = _s1.pr_id
   GROUP BY
     1
 ), _s7 AS (

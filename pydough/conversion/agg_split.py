@@ -344,8 +344,8 @@ def attempt_join_aggregate_transpose(
                 return node, True
 
     need_count_aggs: bool = len(count_aggs) > 0
-    can_push_left: bool = len(lhs_aggs) > 0  # or need_count_aggs
-    can_push_right: bool = len(rhs_aggs) > 0  # or need_count_aggs
+    can_push_left: bool = len(lhs_aggs) > 0 or need_count_aggs
+    can_push_right: bool = len(rhs_aggs) > 0 or need_count_aggs
     # If the join is not INNER, we cannot push the aggregate down into the
     # right side.
     if join.join_type != JoinType.INNER:
@@ -406,14 +406,14 @@ def attempt_join_aggregate_transpose(
         idx: int = 0
         while True:
             lhs_agg_name = f"agg_{idx}"
-            if lhs_agg_name not in node.columns:
-                break
             idx += 1
+            if lhs_agg_name not in node.columns and lhs_agg_name not in join.columns:
+                break
         while True:
             rhs_agg_name = f"agg_{idx}"
-            if rhs_agg_name not in node.columns:
-                break
             idx += 1
+            if rhs_agg_name not in node.columns and rhs_agg_name not in join.columns:
+                break
         node.aggregations[lhs_agg_name] = CallExpression(
             pydop.COUNT,
             NumericType(),
@@ -424,7 +424,7 @@ def attempt_join_aggregate_transpose(
             NumericType(),
             [],
         )
-        rhs_aggs.append(lhs_agg_name)
+        lhs_aggs.append(lhs_agg_name)
         rhs_aggs.append(rhs_agg_name)
 
     # Loop over both inputs and perform the pushdown into whichever one(s)
@@ -453,6 +453,7 @@ def attempt_join_aggregate_transpose(
     # For each COUNT(*) aggregate, replace with the product of the calls that
     # were pushed into each side of the join.
     for count_call_name in count_aggs:
+        # breakpoint()
         if len(count_refs) > 1:
             product: RelationalExpression = CallExpression(
                 pydop.MUL, NumericType(), count_refs
