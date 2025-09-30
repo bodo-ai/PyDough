@@ -1,0 +1,5 @@
+ROOT(columns=[('branch_key', b_key), ('pct_total_wealth', ROUND(DEFAULT_TO(sum_unmask_a_balance, 0:numeric) / RELSUM(args=[DEFAULT_TO(sum_unmask_a_balance, 0:numeric)], partition=[], order=[]), 2:numeric))], orderings=[])
+ JOIN(condition=t0.b_key == t1.a_branchkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'b_key': t0.b_key, 'sum_unmask_a_balance': t1.sum_unmask_a_balance})
+  SCAN(table=CRBNK.BRANCHES, columns={'b_key': b_key})
+  AGGREGATE(keys={'a_branchkey': a_branchkey}, aggregations={'sum_unmask_a_balance': SUM(UNMASK::(SQRT([a_balance])))})
+   SCAN(table=CRBNK.ACCOUNTS, columns={'a_balance': a_balance, 'a_branchkey': a_branchkey})

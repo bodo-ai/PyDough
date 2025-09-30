@@ -1,0 +1,1229 @@
+[
+  {
+    "name": "FSI",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "accounts",
+        "type": "simple table",
+        "table path": "bodo.fsi.accounts",
+        "unique properties": [ "key" ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "accountid",
+            "data type": "numeric",
+            "description": "The unique id for an account",
+            "sample values": [68040167, 21742074, 77544212],
+            "synonyms": ["account id", "account key", "account number"]
+          },
+          {
+            "name": "customer_key",
+            "type": "masked table column",
+            "column name": "customerid",
+            "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
+            "description": "ID of the customer who owns the account",
+            "sample values": [4251700, 88847535, 25275502],
+            "synonyms": ["customer id", "customer key", "customer number"]
+          },
+          {
+            "name": "account_type",
+            "type": "masked table column",
+            "column name": "accounttype",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deAccount')",
+            "protect protocol": "PTY_PROTECT({}, 'deAccount')",
+            "description": "Type of the account (either 'Checking' or 'Savings')",
+            "sample values": ["Checking", "Savings"],
+            "synonyms": ["account type", "account category", "type of account"]
+          },
+          {
+            "name": "balance",
+            "type": "table column",
+            "column name": "balance",
+            "data type": "numeric",
+            "description": "Amount of money in the account",
+            "sample values": [13440.20, 3411.01, 20862.27],
+            "synonyms": ["account balance", "balance amount", "current balance"]
+          },
+          {
+            "name": "currency",
+            "type": "masked table column",
+            "column name": "currency",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT({}, 'deAccount')",
+            "description": "Currency of the account (either 'USD', 'EUR', or 'GBP')",
+            "sample values": ["USD", "EUR", "GBP"],
+            "synonyms": ["account currency", "currency type", "currency code"]
+          },
+          {
+            "name": "creation_date",
+            "type": "masked table column",
+            "column name": "createddate",
+            "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_DOB({})",
+            "protect protocol": "PTY_PROTECT_DOB({})",
+            "description": "The date the account was created",
+            "sample values": ["2021-05-23", "2024-10-30", "2025-05-10"],
+            "synonyms": ["date created", "entry date", "created on"]
+          },
+          {
+            "name": "status",
+            "type": "masked table column",
+            "column name": "status",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT({}, 'deAccount')",
+            "description": "The current status of the account (either 'Active' or 'Inactive')",
+            "sample values": ["Active", "Inactive"],
+            "synonyms": ["account status", "status of account", "current status"]
+          }
+        ],
+        "description": "Contains information about bank accounts and its customer",
+        "synonyms": ["Financial metrics", "Banking information"]
+      },
+      {
+        "name": "loans",
+        "type": "simple table",
+        "table path": "bodo.fsi.loans",
+        "unique properties": [ "key" ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "loanid",
+            "data type": "numeric",
+            "description": "The unique id for the loan",
+            "sample values": [89250054, 18093147, 72516601],
+            "synonyms": ["loan id", "loan key", "loan number"]
+          },
+          {
+            "name": "customer_key",
+            "type": "table column",
+            "column name": "customerid",
+            "data type": "numeric",
+            "description": "ID of the customer who owns the loan",
+            "sample values": [93990792, 51207180, 27229696],
+            "synonyms": ["customer id", "customer key", "customer number"]
+          },
+          {
+            "name": "type",
+            "type": "table column",
+            "column name": "loantype",
+            "data type": "string",
+            "description": "Type of the loan (either 'Personal', 'Mortgage', 'Car', or 'Student')",
+            "sample values": ["Personal", "Mortgage", "Car", "Student"],
+            "synonyms": ["loan type", "type of loan", "category of loan"]
+          },
+          {
+            "name": "amount",
+            "type": "table column",
+            "column name": "loanamount",
+            "data type": "numeric",
+            "description": "The total amount of the loan",
+            "sample values": [91274.75, 72353.26, 31917.97],
+            "synonyms": ["loan amount", "amount of loan", "total loan amount"]
+          },
+          {
+            "name": "interest_rate",
+            "type": "table column",
+            "column name": "interestrate",
+            "data type": "numeric",
+            "description": "The interest rate of the loan",
+            "sample values": [7.93, 8.60, 2.44],
+            "synonyms": ["interest rate", "loan interest rate", "rate of interest"]
+          },
+          {
+            "name": "term_months",
+            "type": "table column",
+            "column name": "loantermmonths",
+            "data type": "numeric",
+            "description": "The duration of the loan in months (from 12 to 240 months)",
+            "sample values": [12, 48, 120, 60, 240],
+            "synonyms": ["loan term", "loan period", "loan duration"]
+          },
+          {
+            "name": "monthly_payment",
+            "type": "table column",
+            "column name": "monthlypayment",
+            "data type": "numeric",
+            "description": "The monthly payment amount for the loan",
+            "sample values": [186.55, 1370.85,1090.49],
+            "synonyms": ["monthly payment", "monthly installment", "monthly amount"]
+          },
+          {
+            "name": "start_date",
+            "type": "table column",
+            "column name": "startdate",
+            "data type": "datetime",
+            "description": "The start date of the loan",
+            "sample values": ["2021-08-25", "2020-11-15", "2025-01-06"],
+            "synonyms": ["loan start date", "loan first payment date", "loan beginning date", 
+                "start of loan date", "loan initial date"]
+          },
+          {
+            "name": "end_date",
+            "type": "table column",
+            "column name": "enddate",
+            "data type": "datetime",
+            "description": "The end date of the loan",
+            "sample values": ["2022-05-28", "2021-01-06", "2025-04-26"],
+            "synonyms": ["loan end date", "last payment date", "loan ending date", 
+                "maturity date", "end of loan date", "loan final date"]
+          },
+          {
+            "name": "status",
+            "type": "table column",
+            "column name": "status",
+            "data type": "string",
+            "description": "The current status of the loan (either 'Approved', 'Pending', or 'Denied')",
+            "sample values": ["Approved", "Pending", "Denied"],
+            "synonyms": ["loan status", "application status", "decision status"]
+          }
+        ],
+        "description": "Contains information about loans and its customers",
+        "synonyms": ["loan details", "loan information"]
+      },
+      {
+        "name": "customers",
+        "type": "simple table",
+        "table path": "bodo.fsi.protected_customers",
+        "unique properties": [ "key" ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "masked table column",
+            "column name": "customerid",
+            "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deAccount')",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
+            "description": "The unique id for the customer",
+            "sample values": [3771902, 44112875, 84721881],
+            "synonyms": ["customer id", "customer key", "customer number"]
+          },
+          {
+            "name": "first_name",
+            "type": "masked table column",
+            "column name": "firstname",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deName')",
+            "protect protocol": "PTY_PROTECT({}, 'deName)",
+            "description": "The first name of the customer",
+            "sample values": ["Julie", "Melissa", "Gary"],
+            "synonyms": ["customer first name", "given name"]
+          },
+          {
+            "name": "last_name",
+            "type": "masked table column",
+            "column name": "lastname",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deName')",
+            "protect protocol": "PTY_PROTECT_NAME({})",
+            "description": "The last name of the customer",
+            "sample values": ["Davis", "Lawrence", "Villanueva"],
+            "synonyms": ["customer last name", "customer surname"]
+          },
+          {
+            "name": "address",
+            "type": "masked table column",
+            "column name": "address",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT({}, 'deAddress')",
+            "description": "The address of the customer",
+            "sample values": ["PSC 7485, Box 3069, APO AE 01108",
+            "05481 Kramer Loop, Taylorberg, MT 51375",
+            "USCGC Jones, FPO AP 20691"],
+            "synonyms": ["customer address", "residential address", "home address"]
+          },
+          {
+            "name": "city",
+            "type": "masked table column",
+            "column name": "city",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT_ADDRESS({})",
+            "description": "The city where the customer resides",
+            "sample values": ["Kyleport", "Port Maurice", "New Rachel"],
+            "synonyms": ["customer city"]
+          },
+          {
+            "name": "state",
+            "type": "masked table column",
+            "column name": "state",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deAddress')",
+            "protect protocol": "PTY_PROTECT({}, 'deAddress')",
+            "description": "The state where the customer resides",
+            "sample values": ["California", "Texas", "New York"],
+            "synonyms": ["customer state"]
+          },
+          {
+            "name": "zipcode",
+            "type": "table column",
+            "column name": "zipcode",
+            "data type": "numeric",
+            "description": "The zip code of the customer",
+            "sample values": [83101, 54040, 15312],
+            "synonyms": ["zip code", "postal code"]
+          },
+          {
+            "name": "email",
+            "type": "masked table column",
+            "column name": "email",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deEmail')",
+            "protect protocol": "PTY_PROTECT_EMAIL({})",
+            "description": "The email address of the customer",
+            "sample values": ["xhensley@example.org", "leeadam@example.com",
+                "maria38@example.net", "fryan@example.org"],
+            "synonyms": ["customer email", "email address", "contact email"]
+          },
+          {
+            "name": "phone_number",
+            "type": "masked table column",
+            "column name": "phonenumber",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_PHONE({})",
+            "protect protocol": "PTY_PROTECT({}, 'dePhone')",
+            "description": "The phone number of the customer",
+            "sample values": ["(811)525-8277", "+1-931-241-5194x606", "001-360-242-4262"],
+            "synonyms": ["customer phone number", "phone number", "contact number"]
+          },
+          {
+            "name": "date_of_birth",
+            "type": "masked table column",
+            "column name": "dob",
+            "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deDOB')",
+            "protect protocol": "PTY_PROTECT({}, 'deDOB')",
+            "description": "The date of birth of the customer",
+            "sample values": ["1994-02-26", "2004-12-29", "1958-01-11"],
+            "synonyms": ["birthday", "birth date", "date of birth"]
+          },
+          {
+            "name": "taxid",
+            "type": "table column",
+            "column name": "taxid",
+            "data type": "numeric",
+            "description": "The tax identification number of the customer",
+            "sample values": [123456789, 987654321, 456789123],
+            "synonyms": ["tax ID", "tax identification number"]
+          },
+          {
+            "name": "routing_number",
+            "type": "table column",
+            "column name": "bankroutingnumber",
+            "data type": "numeric",
+            "description": "The bank routing number of the customer",
+            "sample values": [852333803, 122615510, 23254333],
+            "synonyms": ["bank routing number"]
+          },
+          {
+            "name": "account_number",
+            "type": "table column",
+            "column name": "bankaccountnumber",
+            "data type": "numeric",
+            "description": "The bank account number of the customer",
+            "sample values": [625383440462, 931906552317, 456789123456],
+            "synonyms": ["bank account number"]
+          },
+          {
+            "name": "account_balance",
+            "type": "table column",
+            "column name": "bankaccountbalance",
+            "data type": "numeric",
+            "description": "The bank account balance of the customer",
+            "sample values": [41273.00, 1371.10, 29939.51],
+            "synonyms": ["bank account balance"]
+          },
+          {
+            "name": "credit_card_number",
+            "type": "masked table column",
+            "column name": "creditcardnumber",
+            "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_CCN({})",
+            "protect protocol": "PTY_PROTECT_CCN({})",
+            "description": "The credit card number of the customer",
+            "sample values": [4532015112830366, 3587568684607485, 6011514433546201],
+            "synonyms": ["credit card number"]
+          },
+          {
+            "name": "credit_card_pin",
+            "type": "table column",
+            "column name": "creditcardpin",
+            "data type": "numeric",
+            "description": "The credit card PIN of the customer",
+            "sample values": [1795, 5678, 9012],
+            "synonyms": ["credit card pin", "pin number", "credit card password", "pin"]
+          },
+          {
+            "name": "credit_card_expiration_date",
+            "type": "table column",
+            "column name": "creditcardexpdate",
+            "data type": "string",
+            "description": "The expiration date of the credit card",
+            "sample values": ["04/34", "06/26", "10/28"],
+            "synonyms": ["credit card expiration date"]
+          },
+          {
+            "name": "iban",
+            "type": "table column",
+            "column name": "iban",
+            "data type": "string",
+            "description": "International Bank Account Number of the customer",
+            "sample values": ["GB90PFYV33817537247305", "GB32ZCGT19535303068028"],
+            "synonyms": ["International Bank Account Number"]
+          },
+          {
+            "name": "swift",
+            "type": "table column",
+            "column name": "swift",
+            "data type": "string",
+            "description": "SWIFT/BIC code of the customer's bank",
+            "sample values": ["WDUNGBSBA1D", "TLVDGBR1"],
+            "synonyms": ["SWIFT code", "BIC code"]
+          }
+        ],
+        "description": "Contains customer personal and financial information",
+        "synonyms": ["customers", "clients", "customer data"]
+      },
+      {
+        "name": "transactions",
+        "type": "simple table",
+        "table path": "bodo.fsi.transactions",
+        "unique properties": [ "key" ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "transactionid",
+            "data type": "numeric",
+            "description": "The unique id for each transaction",
+            "sample values": [48372915, 76210483, 19583726, 89432057, 67120589],
+            "synonyms": ["transaction id"]
+          },
+          {
+            "name": "account_key",
+            "type": "table column",
+            "column name": "accountid",
+            "data type": "numeric",
+            "description": "ID of the account for the transaction",
+            "sample values": [21704632, 69464903, 73933971, 27111159, 56024069],
+            "synonyms": ["account id"]
+          },
+          {
+            "name": "transaction_date",
+            "type": "table column",
+            "column name": "transactiondate",
+            "data type": "datetime",
+            "description": "Date when the transaction occurred",
+            "sample values": [ "2025-04-17", "2025-02-07", "2025-06-10"],
+            "synonyms": ["transaction date"]
+          },
+          {
+            "name": "amount",
+            "type": "table column",
+            "column name": "amount",
+            "data type": "numeric",
+            "description": "The amount of money involved in the transaction",
+            "sample values": [-2025.12, 604.20, -1743.14, -861.13, 3800.34],
+            "synonyms": ["amount of money", "transaction amount"]
+          },
+          {
+            "name": "transaction_type",
+            "type": "table column",
+            "column name": "transactiontype",
+            "data type": "string",
+            "description": "The type of the transaction (either 'Transfer', 'Withdrawal', or 'Deposit')",
+            "sample values": ["Transfer", "Withdrawal", "Deposit"],
+            "synonyms": ["transaction type"]
+          },
+          {
+            "name": "description",
+            "type": "table column",
+            "column name": "description",
+            "data type": "string",
+            "description": "A brief description of the transaction",
+            "sample values": ["Treatment throw total offer.", "Point term probably."],
+            "synonyms": ["transaction description"]
+          }
+        ],
+        "description": "Stores records of all financial transactions", 
+        "synonyms": ["financial transactions", "bank transactions", "transaction records"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "accounts",
+        "parent collection": "customers",
+        "child collection": "accounts",
+        "singular": false,
+        "always matches": true,
+        "keys": { "key": [ "customer_key" ] },
+        "description": "The accounts held by the customer at the bank",
+        "synonyms": ["bank accounts", "customer accounts"]
+      },
+      {
+        "type": "reverse",
+        "name": "customer",
+        "original parent": "customers",
+        "original property": "accounts",
+        "singular": true,
+        "always matches": true,
+        "description": "Customer who owns the account",
+        "synonyms": ["customer", "client", "account owner", "owner", "account holder"]
+      },
+      {
+        "type": "simple join",
+        "name": "loans",
+        "parent collection": "customers",
+        "child collection": "loans",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "key": [ "customer_key" ]
+        },
+        "description": "The loans held by the customer at the bank",
+        "synonyms": ["customer loans", "bank loans"]
+      },
+      {
+        "type": "reverse",
+        "name": "customer",
+        "original parent": "customers",
+        "original property": "loans",
+        "singular": true,
+        "always matches": true,
+        "description": "Customer who owns the loan",
+        "synonyms": ["customer", "client", "loan owner", "owner", "loan holder"]
+      },
+      {
+        "type": "simple join",
+        "name": "transactions",
+        "parent collection": "accounts",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": true,
+        "keys": {
+          "key": [
+            "account_key"
+          ]
+        },
+        "description": "Transactions done on the account",
+        "synonyms": ["account transactions", "transactions" , "financial transactions"]
+      },
+      {
+        "type": "reverse",
+        "name": "account",
+        "original parent": "accounts",
+        "original property": "transactions",
+        "singular": true,
+        "always matches": true,
+        "description": "Account that owns the transaction",
+        "synonyms": ["account", "account holder", "owner", "account owner"]
+      }
+    ]
+  },
+  {
+    "name": "HEALTH",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "claims",
+        "type": "simple table",
+        "table path": "bodo.health.claims",
+        "unique properties": [
+          "key"
+        ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "claim_id",
+            "data type": "numeric",
+            "description": "The unique id for each claim",
+            "sample values": [642749928, 305614337, 186594528],
+            "synonyms": ["claim id", "claim key", "claim number", "claim reference"]
+          },
+          {
+            "name": "patient_key",
+            "type": "masked table column",
+            "column name": "patient_id",
+            "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deAccount')",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",            
+            "description": "The id of the patient who filed the claim",
+            "sample values": [335709984, 106664586, 987945266],
+            "synonyms": ["patient id", "patient key", "patient number", "patient medical record"]
+          },
+          {
+            "name": "claim_date",
+            "type": "masked table column",
+            "column name": "claim_date",
+            "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_DOB({})",
+            "protect protocol": "PTY_PROTECT({}, 'deDOB')",
+            "description": "The date when the claim was filed",
+            "sample values": ["2024-08-07", "2024-12-14", "2023-10-17"],
+            "synonyms": ["date of claim", "claim filing date"]
+          },
+          {
+            "name": "provider_name",
+            "type": "masked table column",
+            "column name": "provider_name",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deName')",
+            "protect protocol": "PTY_PROTECT({}, 'deName')",
+            "description": "The name of the healthcare provider",
+            "sample values": ["Mccoy-Smith", "Graves-Todd", "Black, Rodriguez and Rivas"],
+            "synonyms": ["provider name", "healthcare provider name", "doctor name", "hospital name"]
+          },
+          {
+            "name": "diagnosis_code",
+            "type": "table column",
+            "column name": "diagnosis_code",
+            "data type": "string",
+            "description": "The code for the diagnosis associated with the claim",
+            "sample values": ["OPe23", "SIi71", "aPr63", "ucC88"],
+            "synonyms": ["diagnosis id", "diagnosis key", "diagnosis number", "diagnosis reference"]
+          },
+          {
+            "name": "procedure_code",
+            "type": "table column",
+            "column name": "procedure_code",
+            "data type": "string",
+            "description": "The code for the procedure associated with the claim",
+            "sample values": ["Gg127", "dy698", "Qy283"],
+            "synonyms": ["procedure id", "procedure key", "procedure number"]
+          },
+          {
+            "name": "claim_amount",
+            "type": "table column",
+            "column name": "claim_amount",
+            "data type": "numeric",
+            "description": "The total amount claimed",
+            "sample values": [2457.46, 8202.14, 8893.90],
+            "synonyms": ["claim total amount", "total claim amount", "amount claimed"]
+          },
+          {
+            "name": "approved_amount",
+            "type": "table column",
+            "column name": "approved_amount",
+            "data type": "numeric",
+            "description": "The amount approved for the claim",
+            "sample values": [6930.00, 3827.40, 216.75],
+            "synonyms": ["approved claim amount", "amount approved"]
+          },
+          {
+            "name": "claim_status",
+            "type": "masked table column",
+            "column name": "claim_status",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deAccount')",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
+            "description": "The current status of the claim (either 'Pending', 'Approved', or 'Denied')",
+            "sample values": ["Pending", "Approved", "Denied"],
+            "synonyms": ["claim state", "claim status", "status of claim"]
+          }
+        ],
+        "description": "The claims filed by patients for healthcare services",
+        "synonyms": ["healthcare claims", "medical claims", "insurance claims", "request", "application"]
+      },
+      {
+        "name": "insurance_plans",
+        "type": "simple table",
+        "table path": "bodo.health.insurance_plans",
+        "unique properties": [
+          "key"
+        ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "insurance_plan_id",
+            "data type": "numeric",
+            "description": "The unique id for insurance plans",
+            "sample values": [738804706, 861748297, 804587680],
+            "synonyms": ["insurance plan id", "insurance plan number", 
+                "insurance plan reference"]
+          },
+          {
+            "name": "plan_name",
+            "type": "table column",
+            "column name": "plan_name",
+            "data type": "string",
+            "description": "The name of the insurance plan",
+            "sample values": ["Horizon Silver PPO", "Cigna Essential Health Plan", 
+                "Anthem Value Silver"],
+            "synonyms": ["insurance plan name", "health plan name"]
+          },
+          {
+            "name": "coverage_type",
+            "type": "table column",
+            "column name": "coverage_type",
+            "data type": "string",
+            "description": "The type of coverage provided by the insurance plan (either 'HMO', 'PPO', or 'EPO')",
+            "sample values": ["HMO", "PPO", "EPO"],
+            "synonyms": ["type of coverage", "coverage category", "policy type", "health plan option"]
+          },
+          {
+            "name": "coverage_limit",
+            "type": "table column",
+            "column name": "coverage_limit",
+            "data type": "numeric",
+            "description": "The maximum amount the insurance plan will pay for covered services",
+            "sample values": [145167.95, 136595.74, 75116.82],
+            "synonyms": ["insurance coverage limit", "policy limit", "maximum coverage amount"]
+          },
+          {
+            "name": "co_pay_percentage",
+            "type": "table column",
+            "column name": "co_pay_percentage",
+            "data type": "numeric",
+            "description": "The copayment percentage for the insurance plan",
+            "sample values": [0.24, 0.10, 0.30],
+            "synonyms": ["copayment percentage", "co-pay rate", "copay percentage"]
+          },
+          {
+            "name": "deductible_amount",
+            "type": "table column",
+            "column name": "deductible_amount",
+            "data type": "numeric",
+            "description": "The deductible amount for the insurance plan",
+            "sample values": [2890.50, 1765.89, 3385.79],
+            "synonyms": ["deductible", "insurance deductible", "deductible amount"]
+          }
+        ],
+        "description": "Information about insurance plans offered to patients",
+        "synonyms": ["health insurance plans", "medical insurance plans"]
+      },
+      {
+        "name": "patients",
+        "type": "simple table",
+        "table path": "bodo.health.protected_patients",
+        "unique properties": [
+          "key"
+        ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "masked table column",
+            "column name": "patient_id",
+            "data type": "numeric",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",            
+            "description": "The unique id for the patient",
+            "sample values": [119951292, 903465140, 861676065],
+            "synonyms": ["patient id", "patient key", "patient number", "patient medical record"]
+          },
+          {
+            "name": "first_name",
+            "type": "masked table column",
+            "column name": "first_name",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_NAME({})",
+            "protect protocol": "PTY_PROTECT({}, 'deName')",
+            "description": "The first name of the patient",
+            "sample values": ["Julie", "Michael", "Amanda"],
+            "synonyms": ["patient first name"]
+          },
+          {
+            "name": "last_name",
+            "type": "masked table column",
+            "column name": "last_name",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deName')",
+            "protect protocol": "PTY_PROTECT({}, 'deName')",
+            "description": "The last name of the patient",
+            "sample values": ["James", "Cole", "Mahoney"],
+            "synonyms": ["patient last name", "patient surname"]
+          },
+          {
+            "name": "date_of_birth",
+            "type": "masked table column",
+            "column name": "date_of_birth",
+            "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deDOB')",
+            "protect protocol": "PTY_PROTECT_DOB({})",
+            "description": "The date of birth of the patient",
+            "sample values": ["1981-12-29", "2003-03-13", "1995-04-29"],
+            "synonyms": ["patient date of birth", "DOB", "birthday", "birth date", "born on"]
+          },
+          {
+            "name": "gender",
+            "type": "table column",
+            "column name": "gender",
+            "data type": "string",
+            "description": "The gender of the patient (either 'Female', 'Male', or 'Other')",
+            "sample values": ["Female", "Male", "Other"],
+            "synonyms": ["patient gender", "gender identity", "personal identiy"]
+          },
+          {
+            "name": "ssn",
+            "type": "masked table column",
+            "column name": "ssn",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_SSN({})",
+            "protect protocol": "PTY_PROTECT_SSN({})",
+            "description": "The social security number of the patient",
+            "sample values": ["377-44-6263", "353-39-5665", "763-80-7096"],
+            "synonyms": ["patient SSN", "social security number"]
+          },
+          {
+            "name": "address",
+            "type": "masked table column",
+            "column name": "address",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT({}, 'deAddress')",
+            "description": "The address of the patient",
+            "sample values": ["PSC 8258, Box 1406, APO AP 06683",
+              "Unit 2705 Box 6430, DPO AE 51164",
+              "853 Torres Cliffs, Jacksonside, NH 35518"],
+            "synonyms": ["patient address", "residential address", "home address"]
+          },
+          {
+            "name": "phone_number",
+            "type": "masked table column",
+            "column name": "phone_number",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'dePhone')",
+            "protect protocol": "PTY_PROTECT({}, 'dePhone')",
+            "description": "The phone number of the patient",
+            "sample values": ["995.431.8476x392", "7437471930", "(881)740-5571x378"],
+            "synonyms": ["patient phone number", "phone number", "contact number"]
+          },
+          {
+            "name": "email",
+            "type": "masked table column",
+            "column name": "email",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deEmail')",
+            "protect protocol": "PTY_PROTECT({}, 'deEmail')",
+            "description": "The email address of the patient",
+            "sample values": ["lindsay.moore@gmail.com", "mary.davis@yahoo.com",
+                "jacob.harris@hotmail.com"],
+            "synonyms": ["patient email", "email address", "contact email"]
+          },
+          {
+            "name": "insurance_plan_key",
+            "type": "table column",
+            "column name": "insurance_plan_id",
+            "data type": "numeric",
+            "description": "The id of the insurance plan the patient is enrolled in",
+            "sample values": [861748297, 125051905, 331566499],
+            "synonyms": ["insurance plan id", "insurance plan number", 
+                "insurance plan reference"]
+          }
+        ],
+        "description": "Patient information including personal details and insurance plan",
+        "synonyms": ["patient information", "patient data", "patient records"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "filed_claims",
+        "parent collection": "patients",
+        "child collection": "claims",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "key": [
+            "patient_key"
+          ]
+        },
+        "description": "The claims filed by patients for healthcare services",
+        "synonyms": ["healthcare claims", "medical claims", "insurance claims"]
+      },
+      {
+        "type": "reverse",
+        "name": "patient",
+        "original parent": "patients",
+        "original property": "filed_claims",
+        "singular": true,
+        "always matches": true,
+        "description": "The patient who filed the claim",
+        "synonyms": ["claimant", "patient", "client", "claim owner"]
+      },
+      {
+        "type": "simple join",
+        "name": "patients",
+        "parent collection": "insurance_plans",
+        "child collection": "patients",
+        "singular": false,
+        "always matches": true,
+        "keys": {
+          "key": [
+            "insurance_plan_key"
+          ]
+        },
+        "description": "The patients who are under this insurance plan",
+        "synonyms": ["enrolled patients", "insured patients", "plan members", 
+            "subscribers", "policyholders", "covered individuals"]
+      },
+      {
+        "type": "reverse",
+        "name": "insurance_plan",
+        "original parent": "insurance_plans",
+        "original property": "patients",
+        "singular": true,
+        "always matches": true,
+        "description": "The insurance plan that the patient is enrolled in",
+        "synonyms": ["insurance plan", "health plan", "medical plan"]
+      }
+    ]
+  },
+  {
+    "name": "RETAIL",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "loyalty_members",
+        "type": "simple table",
+        "table path": "bodo.retail.protected_loyalty_members",
+        "unique properties": [
+          "key"
+        ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "customer_id",
+            "data type": "numeric",
+            "description": "The unique id for the loyalty member",
+            "sample values": [305069388, 271104022, 938589648],
+            "synonyms": ["loyalty member id", "customer id"]
+          },
+          {
+            "name": "first_name",
+            "type": "masked table column",
+            "column name": "first_name",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deName')",
+            "protect protocol": "PTY_PROTECT_NAME({})",
+            "description": "The first name of the loyalty member",
+            "sample values": ["Angela", "Joanne","Travis"],
+            "synonyms": ["first name", "given name", "member first name"]
+          },
+          {
+            "name": "last_name",
+            "type": "masked table column",
+            "column name": "last_name",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_NAME({})",
+            "protect protocol": "PTY_PROTECT({}, 'deName')",
+            "description": "The last name of the loyalty member",
+            "sample values": ["Taylor", "Hernandez", "Ramos"],
+            "synonyms": ["last name", "family name", "surname", "member last name"]
+          },
+          {
+            "name": "email",
+            "type": "masked table column",
+            "column name": "email",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_EMAIL({})",
+            "protect protocol": "PTY_PROTECT_EMAIL({})",
+            "description": "The email address of the loyalty member",
+            "sample values": ["diana.tucker@yahoo.com", "john.barnes@hotmail.com"],
+            "synonyms": ["member email", "email address", "contact email"]
+          },
+          {
+            "name": "phone_number",
+            "type": "table column",
+            "column name": "phone_number",
+            "data type": "string",
+            "description": "The phone number of the loyalty member",
+            "sample values": ["708-715-0448x3719", "569-762-5136", "+1-450-364-5223"],
+            "synonyms": ["member phone number", "contact number"]
+          },
+          {
+            "name": "address",
+            "type": "masked table column",
+            "column name": "address",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deAddress')",
+            "protect protocol": "PTY_PROTECT({}, 'deAddress')",
+            "description": "The address of the loyalty member",
+            "sample values": ["2593 Andrea Common Apt. 242, South Mark, AR 75399",
+              "USNS Greene, FPO AP 18877",
+              "Unit 2400 Box 8404, DPO AP 67233"],
+            "synonyms": ["member address", "residential address", "home address"]
+          },
+          {
+            "name": "date_of_birth",
+            "type": "masked table column",
+            "column name": "date_of_birth",
+            "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT({}, 'deDOB')",
+            "protect protocol": "PTY_PROTECT({}, 'deDOB')",
+            "description": "Birthdate of the loyalty member",
+            "sample values": ["1934-12-06", "2006-09-24", "1990-01-08"],
+            "synonyms": ["birthday", "dob", "birth date", "date of birth"]
+          },
+          {
+            "name": "loyalty_card_number",
+            "type": "table column",
+            "column name": "loyalty_card_number",
+            "data type": "string",
+            "description": "The card number of the loyalty member",
+            "sample values": [591123016, 670238831, 171735220],
+            "synonyms": ["loyalty card number", "membership card number", "card number"]
+          },
+          {
+            "name": "loyalty_tier",
+            "type": "table column",
+            "column name": "loyalty_tier",
+            "data type": "string",
+            "description": "The tier of the loyalty program (either 'Bronze', 'Silver', 'Gold', or 'Platinum')",
+            "sample values": ["Gold", "Silver", "Bronze", "Platinum"],
+            "synonyms": ["loyalty tier", "membership tier", "program tier", 
+                    "tier level", "status level"]
+          },
+          {
+            "name": "join_date",
+            "type": "table column",
+            "column name": "join_date",
+            "data type": "datetime",
+            "description": "The date when the member joined the loyalty program",
+            "sample values": ["2024-12-21", "2021-01-31", "2020-09-14"],
+            "synonyms": ["join date", "membership start date", "enrollment date", "anniversary date"]
+          }
+        ],
+        "description": "The loyalty member information including personal details and membership info",
+        "synonyms": ["member information", "member data", "member records"]
+      },
+      {
+        "name": "transactions",
+        "type": "simple table",
+        "table path": "bodo.retail.transactions",
+        "unique properties": [
+          "key"
+        ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "transaction_id",
+            "data type": "numeric",
+            "description": "The unique id for each transaction",
+            "sample values": [690425887, 854668265, 194442795],
+            "synonyms": ["transaction id", "transaction key", "transaction number", "transaction reference"]
+          },
+          {
+            "name": "member_key",
+            "type": "table column",
+            "column name": "customer_id",
+            "data type": "numeric",
+            "description": "The key of the loyalty member who made the transaction",
+            "sample values": [872865759, 118422848, 211979130],
+            "synonyms": ["loyalty member id", "customer id", "member id"]
+          },
+          {
+            "name": "transaction_date",
+            "type": "masked table column",
+            "column name": "transaction_date",
+            "data type": "datetime",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_TS({})",
+            "protect protocol": "PTY_PROTECT_TS({})",
+            "description": "The date when the transaction occurred",
+            "sample values": ["2024-12-21", "2021-01-31", "2020-09-14"],
+            "synonyms": ["sale date", "order date", "transaction date", "purchase date"]
+          },
+          {
+            "name": "store_location",
+            "type": "masked table column",
+            "column name": "store_location",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ADDRESS({})",
+            "protect protocol": "PTY_PROTECT({}, 'deAddress')",            
+            "description": "The location of the store where the transaction took place",
+            "sample values": ["West April", "Lake Jesse", "East Richard"],
+            "synonyms": ["store address", "store city", "store region"]
+          },
+          {
+            "name": "total_amount",
+            "type": "table column",
+            "column name": "total_amount",
+            "data type": "numeric",
+            "description": "The total amount for the transaction",
+            "sample values": [29.20, 367.95, 176.28],
+            "synonyms": ["total sale amount", "total purchase amount", "amount paid"]
+          },
+          {
+            "name": "payment_method",
+            "type": "masked table column",
+            "column name": "payment_method",
+            "data type": "string",
+            "server masked": true,
+            "unprotect protocol": "PTY_UNPROTECT_ACCOUNT({})",
+            "protect protocol": "PTY_PROTECT_ACCOUNT({})",
+            "description": "The method used for payment (either 'Cash', 'Credit Card', 'Gift Card', or 'Mobile Payment')",
+            "sample values": ["Cash", "Credit Card", "Gift Card", "Mobile Payment"],
+            "synonyms": ["payment type", "payment method", "method of payment"]
+          }
+        ],
+        "description": "The transactions done by loyalty members",
+        "synonyms": ["transaction information", "transaction data", "transaction records"]
+      },
+      {
+        "name": "transaction_items",
+        "type": "simple table",
+        "table path": "bodo.retail.transaction_items",
+        "unique properties": [
+          "key"
+        ],
+        "properties": [
+          {
+            "name": "key",
+            "type": "table column",
+            "column name": "item_id",
+            "data type": "numeric",
+            "description": "The unique id for each item in the transaction",
+            "sample values": [140036879, 627807125, 251513013],
+            "synonyms": ["line item id", "transaction item id"]
+          },
+          {
+            "name": "transaction_key",
+            "type": "table column",
+            "column name": "transaction_id",
+            "data type": "numeric",
+            "description": "The unique id for the transaction",
+            "sample values": [322205842, 854841583, 939934699],
+            "synonyms": ["transaction id", "transaction key", "transaction number", "transaction reference"]
+          },
+          {
+            "name": "product_name",
+            "type": "table column",
+            "column name": "product_name",
+            "data type": "string",
+            "description": "The name of the product",
+            "sample values": ["Among", "Stand", "Wear", "Nation", "Medical"],
+            "synonyms": ["item name", "product title", "item title"]
+          },
+          {
+            "name": "product_category",
+            "type": "table column",
+            "column name": "product_category",
+            "data type": "string",
+            "description": "The category of the product (e.g., 'Electronics', 'Books', 'Home', 'Apparel', 'Toys', 'Grocery', 'Beauty')",
+            "sample values": ["Electronics", "Books", "Home", "Apparel", 
+            "Toys", "Grocery", "Beauty"],
+            "synonyms": ["item category", "product type", "item type"]
+          },
+          {
+            "name": "quantity",
+            "type": "table column",
+            "column name": "quantity",
+            "data type": "numeric",
+            "description": "Number of items purchased in the transaction",
+            "sample values": [1, 2, 3, 4, 5],
+            "synonyms": ["item quantity", "number of items"]
+          },
+          {
+            "name": "unit_price",
+            "type": "table column",
+            "column name": "unit_price",
+            "data type": "numeric",
+            "description": "The price per unit of the item",
+            "sample values": [195.32, 5.24, 146.28],
+            "synonyms": ["item price", "product price", "price per unit"]
+          }
+        ],
+        "description": "The items included in each transaction",
+        "synonyms": ["transaction line items", "purchased items", "transaction products"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "transactions",
+        "parent collection": "loyalty_members",
+        "child collection": "transactions",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "key": [
+            "member_key"
+          ]
+        },
+        "description": "The transactions done by loyalty members",
+        "synonyms": ["member transactions", "member purchases", "customer transactions"]
+      },
+      {
+        "type": "reverse",
+        "name": "member",
+        "original parent": "loyalty_members",
+        "original property": "transactions",
+        "singular": true,
+        "always matches": true,
+        "description": "Member who has made the transaction",
+        "synonyms": ["member", "customer", "client", "transaction owner", "buyer"]
+      },
+      {
+        "type": "simple join",
+        "name": "transaction_items",
+        "parent collection": "transactions",
+        "child collection": "transaction_items",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "key": [
+            "transaction_key"
+          ]
+        },
+        "description": "The items included in each transaction",
+        "synonyms": ["transaction items", "purchased items", "items in transaction"]
+      },
+      {
+        "type": "reverse",
+        "name": "transaction",
+        "original parent": "transactions",
+        "original property": "transaction_items",
+        "singular": false,
+        "always matches": true,
+        "description": "The transaction that includes the item",
+        "synonyms": ["transaction", "sale", "order", "purchase"]
+      }
+    ]
+  }
+]

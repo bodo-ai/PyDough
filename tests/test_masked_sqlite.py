@@ -624,12 +624,15 @@ def test_pipeline_until_relational_cryptbank(
     masked_graphs: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
+    enable_mask_rewrites: str,
 ) -> None:
     """
     Tests the conversion of the PyDough queries on the custom cryptbank dataset
     into relational plans.
     """
-    file_path: str = get_plan_test_filename(cryptbank_pipeline_test_data.test_name)
+    file_path: str = get_plan_test_filename(
+        f"{cryptbank_pipeline_test_data.test_name}_{enable_mask_rewrites}"
+    )
     cryptbank_pipeline_test_data.run_relational_test(
         masked_graphs, file_path, update_tests
     )
@@ -641,13 +644,15 @@ def test_pipeline_until_sql_cryptbank(
     sqlite_tpch_db_context: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
+    enable_mask_rewrites: str,
 ):
     """
     Tests the conversion of the PyDough queries on the custom cryptbank dataset
     into SQL text.
     """
     file_path: str = get_sql_test_filename(
-        cryptbank_pipeline_test_data.test_name, sqlite_tpch_db_context.dialect
+        f"{cryptbank_pipeline_test_data.test_name}_{enable_mask_rewrites}",
+        sqlite_tpch_db_context.dialect,
     )
     cryptbank_pipeline_test_data.run_sql_test(
         masked_graphs,
@@ -657,14 +662,12 @@ def test_pipeline_until_sql_cryptbank(
     )
 
 
-# @pytest.mark.skip(
-#     reason="Skipping until masked table column relational handling is implemented"
-# )
 @pytest.mark.execute
 def test_pipeline_e2e_cryptbank(
     cryptbank_pipeline_test_data: PyDoughPandasTest,
     masked_graphs: graph_fetcher,
     sqlite_cryptbank_connection: DatabaseContext,
+    enable_mask_rewrites: str,
 ):
     """
     Test executing the the custom queries with the custom cryptbank dataset
