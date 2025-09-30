@@ -29,7 +29,7 @@ WITH _s1 AS (
     _s10.c_nationkey,
     _s10.o_orderpriority,
     _s11.p_type,
-    SUM(_s10.n_rows * 1) AS n_rows
+    SUM(_s10.n_rows) AS sum_n_rows
   FROM _s10 AS _s10
   JOIN _s1 AS _s11
     ON _s10.l_partkey = _s11.p_partkey
@@ -53,7 +53,7 @@ JOIN _t3 AS _t3
   ON _s1.p_type = _t3.p_type
   AND _t3.c_custkey = orders.o_custkey
   AND _t3.c_nationkey = supplier.s_nationkey
-  AND _t3.n_rows > 0
   AND _t3.o_orderpriority = orders.o_orderpriority
+  AND _t3.sum_n_rows > 0
 WHERE
   CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1998

@@ -11,7 +11,7 @@ WITH _s0 AS (
   SELECT
     sbTicker.sbtickertype AS sbTickerType,
     _s0.sbTxCustId,
-    SUM(_s0.n_rows * 1) AS agg_0
+    SUM(_s0.n_rows) AS sum_n_rows
   FROM _s0 AS _s0
   JOIN main.sbTicker AS sbTicker
     ON _s0.sbTxTickerId = sbTicker.sbtickerid
@@ -22,7 +22,7 @@ WITH _s0 AS (
 SELECT
   sbCustomer.sbcuststate AS state,
   _s2.sbTickerType AS ticker_type,
-  SUM(_s2.agg_0 * 1) AS num_transactions
+  SUM(_s2.sum_n_rows) AS num_transactions
 FROM _s2 AS _s2
 JOIN main.sbCustomer AS sbCustomer
   ON _s2.sbTxCustId = sbCustomer.sbcustid

@@ -884,6 +884,16 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     not_null=True, not_negative=True
                 )
 
+            # INTEGER(x) -> x if x is a literal integer. Also simplify for
+            # booleans.
+            case pydop.INTEGER:
+                if isinstance(expr.inputs[0], LiteralExpression) and isinstance(
+                    expr.inputs[0].value, (int, bool)
+                ):
+                    output_expr = LiteralExpression(
+                        int(expr.inputs[0].value), expr.data_type
+                    )
+
             # The result of addition is non-negative or positive if all the
             # operands are. It is also positive if all the operands are
             # non-negative and at least one of them is positive.
@@ -895,11 +905,33 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     output_predicates.positive = True
 
             # The result of multiplication is non-negative or positive if all
-            # the operands are.
+            # the operands are. Also, simplify when any argument is 0 to the
+            # output being 0, and remove any arguments that are 1.
             case pydop.MUL:
                 output_predicates |= intersect_set & PredicateSet(
                     not_negative=True, positive=True
                 )
+                remaining_args: list[RelationalExpression] = [
+                    arg
+                    for arg in expr.inputs
+                    if not (
+                        isinstance(arg, LiteralExpression)
+                        and arg.value in (1, 1.0, True)
+                    )
+                ]
+                if len(remaining_args) < 2:
+                    output_expr = expr.inputs[0]
+                elif len(remaining_args) < len(expr.inputs):
+                    output_expr = CallExpression(
+                        pydop.MUL, expr.data_type, remaining_args
+                    )
+                for arg in expr.inputs:
+                    if isinstance(arg, LiteralExpression) and arg.value in (
+                        0,
+                        0.0,
+                        False,
+                    ):
+                        output_expr = LiteralExpression(0, expr.data_type)
 
             # The result of division is non-negative or positive if all the
             # operands are, and is also non-null if both operands are non-null
