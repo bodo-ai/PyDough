@@ -1,4 +1,12 @@
-WITH _s1 AS (
+WITH _u_0 AS (
+  SELECT
+    drug_id AS _u_1
+  FROM main.treatments
+  WHERE
+    NOT end_dt IS NULL
+  GROUP BY
+    1
+), _s3 AS (
   SELECT
     drug_id,
     AVG(tot_drug_amt / DATEDIFF(end_dt, start_dt)) AS avg_ddd
@@ -10,7 +18,11 @@ WITH _s1 AS (
 )
 SELECT
   drugs.drug_name,
-  _s1.avg_ddd
+  _s3.avg_ddd
 FROM main.drugs AS drugs
-JOIN _s1 AS _s1
-  ON _s1.drug_id = drugs.drug_id
+LEFT JOIN _u_0 AS _u_0
+  ON _u_0._u_1 = drugs.drug_id
+JOIN _s3 AS _s3
+  ON _s3.drug_id = drugs.drug_id
+WHERE
+  NOT _u_0._u_1 IS NULL

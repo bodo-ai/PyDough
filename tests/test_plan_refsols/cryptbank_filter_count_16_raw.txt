@@ -1,3 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  SCAN(table=CRBNK.CUSTOMERS, columns={})
+  JOIN(condition=UNMASK::((42 - ([t0.c_key]))) == t1.a_custkey, type=SEMI, columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_key': c_key})
+   FILTER(condition=UNMASK::(SUBSTRING([a_type], -1) || SUBSTRING([a_type], 1, LENGTH([a_type]) - 1)) != 'checking':string & UNMASK::(SUBSTRING([a_type], -1) || SUBSTRING([a_type], 1, LENGTH([a_type]) - 1)) != 'savings':string, columns={'a_custkey': a_custkey})
+    SCAN(table=CRBNK.ACCOUNTS, columns={'a_custkey': a_custkey, 'a_type': a_type})

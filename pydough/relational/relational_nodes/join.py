@@ -192,11 +192,11 @@ class Join(RelationalNode):
         self._reverse_cardinality: JoinCardinality = reverse_cardinality
         self._correl_name: str | None = correl_name
 
-        # If the join type is non-ANTI but the condition is always True,
+        # If the join type is LEFT (or INNER) but the condition is always True,
         # then just promote to an INNER join, and remove the filtering aspect
         # from the cardinality in both directions
         if (
-            join_type != JoinType.ANTI
+            join_type in (JoinType.INNER, JoinType.LEFT)
             and isinstance(condition, LiteralExpression)
             and bool(condition.value)
         ):
