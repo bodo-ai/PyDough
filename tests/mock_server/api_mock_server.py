@@ -1,3 +1,13 @@
+"""
+Mock FastAPI server for testing Mask Server interface.
+
+This server provides endpoints to:
+- Check server health with optional token authentication.
+- Batch evaluate predicates using a lookup table for deterministic responses.
+
+Intended for use in unit and integration tests.
+"""
+
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
@@ -20,9 +30,10 @@ class RequestPayload(BaseModel):
 
 def verify_token(request: Request):
     auth_header = request.headers.get("Authorization", None)
-    if auth_header:
-        if auth_header != "Bearer test-token-123":
-            raise HTTPException(status_code=401, detail="Unauthorized request")
+
+    if auth_header and auth_header != "Bearer test-token-123":
+        raise HTTPException(status_code=401, detail="Unauthorized request")
+
     return True
 
 
@@ -35,7 +46,7 @@ def health(request: Request, authorized: bool = Depends(verify_token)):
 def batch_evaluate(
     request: Request, payload: RequestPayload, authorized: bool = Depends(verify_token)
 ):
-    responses = []
+    responses: list[dict] = []
     for item in payload.items:
         key = (item.column_reference, tuple(item.predicate))
         response: dict = LOOKUP_TABLE.get(key, {"result": "UNSUPPORTED"})

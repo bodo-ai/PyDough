@@ -55,7 +55,7 @@ class MaskServerInput:
     """
 
     expression: list[str | int | float | None | bool]
-    """"
+    """
     The linear serialization of the predicate expression.
     """
 
@@ -65,8 +65,8 @@ class MaskServerOutput:
     """
     Output data structure for the MaskServer.
 
-    If the value returned from the server is not one of our supported cases,
-    it returns an output with UNSUPPORTED + a None payload
+    If the server returns an unsupported value, it returns an output with
+    UNSUPPORTED + a None payload.
     """
 
     response_case: MaskServerResponse
@@ -77,7 +77,7 @@ class MaskServerOutput:
     payload: Any
     """
     The payload of the response. This can be the result of the predicate evaluation
-    or None if an error ocurred.
+    or None if an error occurred.
     """
 
 
@@ -180,13 +180,13 @@ class MaskServer:
         }
 
         for item in batch:
-            evalute_request: dict = {
+            evaluate_request: dict = {
                 "column_reference": f"{item.table_path}.{item.column_name}",
                 "predicate": item.expression,
                 "mode": "dynamic",
                 "dry_run": False,
             }
-            payload["items"].append(evalute_request)
+            payload["items"].append(evaluate_request)
 
         return ServerRequest(path=path, payload=payload, method=method)
 

@@ -82,7 +82,7 @@ LOOKUP_TABLE: dict = {
             "type": "literal",
             "operator": "IN",
             "values": ["123.121123", "123.654444", "123.654445"],
-            "count": 1,
+            "count": 3,
         },
     },
     # json embedded
@@ -113,7 +113,7 @@ LOOKUP_TABLE: dict = {
             "type": "literal",
             "operator": "NOT_IN",
             "values": [None, "$44.50", "$43.20", "$44.99"],
-            "count": 1,
+            "count": 4,
         },
     },
     # Result with Regex, Bytea, Backslash in really nested expression.
@@ -147,7 +147,7 @@ LOOKUP_TABLE: dict = {
             "type": "literal",
             "operator": "IN",
             "values": ['"Hello"', "HelloWorld", "SGVsbG9Xb3JsZA=="],
-            "count": 1,
+            "count": 3,
         },
     },
 }
