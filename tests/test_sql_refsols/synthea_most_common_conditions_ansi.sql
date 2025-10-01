@@ -1,8 +1,12 @@
 WITH _s1 AS (
-  SELECT DISTINCT
+  SELECT
     description,
-    patient
+    patient,
+    COUNT(*) AS n_rows
   FROM synthea.conditions
+  GROUP BY
+    1,
+    2
 )
 SELECT
   _s1.description AS condition_description
@@ -14,6 +18,6 @@ WHERE
 GROUP BY
   1
 ORDER BY
-  COUNT(*) DESC,
+  SUM(_s1.n_rows) DESC,
   1
 LIMIT 1

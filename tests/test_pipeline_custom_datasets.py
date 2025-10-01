@@ -30,9 +30,7 @@ result = (
                 "synthea",
                 lambda: pd.DataFrame(
                     {
-                        "condition_description": [
-                            "Escherichia coli urinary tract infection"
-                        ],
+                        "condition_description": ["Normal pregnancy"],
                     }
                 ),
                 "synthea_most_common_conditions",

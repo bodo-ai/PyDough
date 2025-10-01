@@ -991,6 +991,8 @@ class PyDoughSQLComparisonTest:
         config: PyDoughConfigs | None = None,
         reference_database: DatabaseContext | None = None,
         coerce_types: bool = False,
+        rtol: float = 1.0e-5,
+        atol: float = 1.0e-5,
     ):
         """
         Runs an end-to-end test using the data in the SQL comparison test,
@@ -1046,8 +1048,9 @@ class PyDoughSQLComparisonTest:
                 result[col_name], refsol[col_name] = harmonize_types(
                     result[col_name], refsol[col_name]
                 )
+
         # Perform the comparison between the result and the reference solution
-        pd.testing.assert_frame_equal(result, refsol, rtol=1.0e-5, atol=1.0e-5)
+        pd.testing.assert_frame_equal(result, refsol, rtol=rtol, atol=atol)
 
 
 @dataclass

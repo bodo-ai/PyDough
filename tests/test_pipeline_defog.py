@@ -1503,5 +1503,5 @@ def test_defog_e2e(
     same database connector. Run on the defog.ai queries.
     """
     defog_pipeline_test_data.run_e2e_test(
-        defog_graphs, sqlite_defog_connection, defog_config
+        defog_graphs, sqlite_defog_connection, defog_config, coerce_types=True
     )
