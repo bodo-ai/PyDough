@@ -9,11 +9,6 @@ WITH _s0 AS (
   LIMIT 5
 ), _t1 AS (
   SELECT
-    CASE
-      WHEN CAST(1.0 AS INTEGER) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC)
-      THEN orders.o_totalprice
-      ELSE NULL
-    END AS expr_17,
     customer.c_nationkey,
     orders.o_totalprice,
     CASE
@@ -46,6 +41,11 @@ WITH _s0 AS (
       THEN orders.o_totalprice
       ELSE NULL
     END AS expr_16,
+    CASE
+      WHEN CAST(COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC)
+      THEN orders.o_totalprice
+      ELSE NULL
+    END AS expr_17,
     CASE
       WHEN CAST(0.9 * COUNT(orders.o_totalprice) OVER (PARTITION BY customer.c_nationkey) AS INTEGER) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY orders.o_totalprice DESC)
       THEN orders.o_totalprice

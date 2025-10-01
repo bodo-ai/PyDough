@@ -453,7 +453,6 @@ def attempt_join_aggregate_transpose(
     # For each COUNT(*) aggregate, replace with the product of the calls that
     # were pushed into each side of the join.
     for count_call_name in count_aggs:
-        # breakpoint()
         if len(count_refs) > 1:
             product: RelationalExpression = CallExpression(
                 pydop.MUL, NumericType(), count_refs

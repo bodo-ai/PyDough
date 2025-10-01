@@ -919,8 +919,10 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         and arg.value in (1, 1.0, True)
                     )
                 ]
-                if len(remaining_args) < 2:
+                if len(remaining_args) == 0:
                     output_expr = expr.inputs[0]
+                elif len(remaining_args) == 1:
+                    output_expr = remaining_args[0]
                 elif len(remaining_args) < len(expr.inputs):
                     output_expr = CallExpression(
                         pydop.MUL, expr.data_type, remaining_args

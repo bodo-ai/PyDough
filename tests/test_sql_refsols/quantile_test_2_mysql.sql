@@ -9,11 +9,6 @@ WITH _s0 AS (
   LIMIT 5
 ), _t2 AS (
   SELECT
-    CASE
-      WHEN TRUNCATE(CAST(1.0 AS FLOAT), 0) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
-      THEN ORDERS.o_totalprice
-      ELSE NULL
-    END AS expr_17,
     CUSTOMER.c_nationkey,
     ORDERS.o_totalprice,
     CASE
@@ -64,6 +59,14 @@ WITH _s0 AS (
       THEN ORDERS.o_totalprice
       ELSE NULL
     END AS expr_16,
+    CASE
+      WHEN TRUNCATE(
+        CAST(COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
+        0
+      ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY ORDERS.o_totalprice DESC)
+      THEN ORDERS.o_totalprice
+      ELSE NULL
+    END AS expr_17,
     CASE
       WHEN TRUNCATE(
         CAST(0.9 * COUNT(ORDERS.o_totalprice) OVER (PARTITION BY CUSTOMER.c_nationkey) AS FLOAT),
