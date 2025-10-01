@@ -116,7 +116,7 @@
             "synonyms": ["customer id", "customer key", "customer number"]
           },
           {
-            "name": "_type",
+            "name": "loan_type",
             "type": "table column",
             "column name": "loantype",
             "data type": "string",
