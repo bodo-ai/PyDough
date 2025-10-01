@@ -35,9 +35,7 @@ SELECT
   _s0.co_name AS factory_country,
   _s1.co_name AS purchase_country,
   ROUND(
-    CAST((
-      1.0 * COALESCE(_s9.sum_n_rows, 0)
-    ) / COALESCE(_s9.n_rows, 0) AS DECIMAL),
+    CAST(CAST(COALESCE(_s9.sum_n_rows, 0) AS DOUBLE PRECISION) / COALESCE(_s9.n_rows, 0) AS DECIMAL),
     2
   ) AS ir
 FROM _s0 AS _s0

@@ -11,9 +11,7 @@ WITH _s1 AS (
 )
 SELECT
   merchants.name,
-  CAST((
-    _s1.ndistinct_coupon_id * 1.0
-  ) AS REAL) / _s1.ndistinct_txid AS CPUR
+  CAST(_s1.ndistinct_coupon_id AS REAL) / _s1.ndistinct_txid AS CPUR
 FROM main.merchants AS merchants
 JOIN _s1 AS _s1
   ON _s1.receiver_id = merchants.mid
