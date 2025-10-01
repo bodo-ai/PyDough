@@ -169,7 +169,10 @@ class ValidSQLName(PyDoughPredicate):
     """
 
     # Single-part unquoted SQL identifier (no dots here).
-    _UNQUOTED_SQL_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    UNQUOTED_SQL_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    """
+    Regex pattern for a single-part unquoted SQL identifier (without dots).
+    """
 
     def __init__(self):
         self.error_messages: dict[str, str] = {
@@ -304,7 +307,7 @@ class ValidSQLName(PyDoughPredicate):
             return False
 
         # Case 1: unquoted
-        if self._UNQUOTED_SQL_IDENTIFIER.match(name):
+        if self.UNQUOTED_SQL_IDENTIFIER.match(name):
             return True
 
         # Case 2: double quoted
