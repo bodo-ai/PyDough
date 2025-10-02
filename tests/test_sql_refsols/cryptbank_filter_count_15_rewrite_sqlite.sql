@@ -3,9 +3,9 @@ WITH _u_0 AS (
     a_custkey AS _u_1
   FROM crbnk.accounts
   WHERE
-    (
-      SUBSTRING(a_type, -1) || SUBSTRING(a_type, 1, LENGTH(a_type) - 1)
-    ) = 'retirement'
+    a_type = (
+      SUBSTRING('retirement', 2) || SUBSTRING('retirement', 1, 1)
+    )
   GROUP BY
     1
 )
