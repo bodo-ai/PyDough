@@ -3,7 +3,7 @@ Mask server API client.
 """
 
 __all__ = [
-    "MaskServer",
+    "MaskServerInfo",
     "MaskServerInput",
     "MaskServerOutput",
     "MaskServerResponse",
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 from .mask_server import (
-    MaskServer,
+    MaskServerInfo,
     MaskServerInput,
     MaskServerOutput,
     MaskServerResponse,

@@ -7,7 +7,7 @@ import re
 import pytest
 
 from pydough.mask_server.mask_server import (
-    MaskServer,
+    MaskServerInfo,
     MaskServerInput,
     MaskServerOutput,
     MaskServerResponse,
@@ -242,7 +242,9 @@ def test_mock_mask_server(
     for the mock server and parse the response correctly.
     """
 
-    mask_server: MaskServer = MaskServer(base_url="http://localhost:8000", token=token)
+    mask_server: MaskServerInfo = MaskServerInfo(
+        base_url="http://localhost:8000", token=token
+    )
 
     # Doing the request
     response: list[MaskServerOutput] = mask_server.simplify_simple_expression_batch(
@@ -291,7 +293,7 @@ def test_mock_mask_server_errors(
     Testing that the MaskServer raises an exception with the expected error message
     """
     with pytest.raises(Exception, match=re.escape(error_msg)):
-        mask_server: MaskServer = MaskServer(base_url=base_url, token=token)
+        mask_server: MaskServerInfo = MaskServerInfo(base_url=base_url, token=token)
         mask_server.connection.set_timeout(0.5)
 
         # Doing the request

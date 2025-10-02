@@ -1,9 +1,14 @@
 """
-Interface for the mask server. This API includes the MaskServer class and related
+Interface for the mask server. This API includes the MaskServerInfo class and related
 data structures including the MaskServerInput and MaskServerOutput dataclasses.
 """
 
-__all__ = ["MaskServer", "MaskServerInput", "MaskServerOutput", "MaskServerResponse"]
+__all__ = [
+    "MaskServerInfo",
+    "MaskServerInput",
+    "MaskServerOutput",
+    "MaskServerResponse",
+]
 
 from dataclasses import dataclass
 from enum import Enum
@@ -81,16 +86,16 @@ class MaskServerOutput:
     """
 
 
-class MaskServer:
+class MaskServerInfo:
     """
-    The MaskServer class is responsible for evaluating predicates against a
+    The MaskServeraInfo class is responsible for evaluating predicates against a
     given table and column. It interacts with an external mask server to
     perform the evaluation.
     """
 
     def __init__(self, base_url: str, token: str | None = None):
         """
-        Initialize the MaskServer with the given server URL.
+        Initialize the MaskServerInfo with the given server URL.
 
         Args:
             `base_url`: The URL of the mask server.
