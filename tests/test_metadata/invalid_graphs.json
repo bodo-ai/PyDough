@@ -248,7 +248,7 @@
       "relationships": []
     },
     {
-      "name": "TABLE_PATH_RESERVED_KEYWORD",
+      "name": "TABLE_PATH_RESERVED_KEYWORD1",
       "version": "V2",
       "collections": [
         {
@@ -261,6 +261,28 @@
               "name": "_id",
               "type": "table column",
               "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_RESERVED_KEYWORD2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "order_qualified_SQL_name",
+          "type": "simple table",
+          "table path": "main.order",
+          "unique properties": ["order_id"],
+          "properties": [
+            {
+              "name": "order_id",
+              "type": "table column",
+              "column name": "order_id",
               "data type": "string",
               "description": "column description"
             }
