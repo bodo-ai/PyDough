@@ -7,6 +7,7 @@ from collections.abc import Callable
 import pytest
 
 import pydough
+from pydough.configs import PyDoughSession
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
 from tests.test_pydough_functions.exploration_examples import (
@@ -1317,6 +1318,7 @@ def test_unqualified_node_exploration(
     ],
     verbose: bool,
     get_sample_graph: graph_fetcher,
+    empty_sqlite_tpch_session: PyDoughSession,
 ) -> None:
     """
     Verifies that `pydough.explain` called on unqualified nodes produces the
@@ -1327,7 +1329,9 @@ def test_unqualified_node_exploration(
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
     node: UnqualifiedNode = pydough.init_pydough_context(graph)(test_impl)()
-    answer: str = pydough.explain(node, verbose=verbose)
+    answer: str = pydough.explain(
+        node, verbose=verbose, session=empty_sqlite_tpch_session
+    )
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert answer == expected_answer, (
         "Mismatch between produced string and expected answer"
@@ -1875,6 +1879,7 @@ def test_unqualified_term_exploration(
     ],
     verbose: bool,
     get_sample_graph: graph_fetcher,
+    empty_sqlite_tpch_session: PyDoughSession,
 ) -> None:
     """
     Verifies that `pydough.explain` called on unqualified nodes produces the
@@ -1885,7 +1890,9 @@ def test_unqualified_term_exploration(
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
     node, term = pydough.init_pydough_context(graph)(test_impl)()
-    answer: str = pydough.explain_term(node, term, verbose=verbose)
+    answer: str = pydough.explain_term(
+        node, term, verbose=verbose, session=empty_sqlite_tpch_session
+    )
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert answer == expected_answer, (
         "Mismatch between produced string and expected answer"

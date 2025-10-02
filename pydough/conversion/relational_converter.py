@@ -10,8 +10,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseDialect
+from pydough.configs import PyDoughSession
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
@@ -1477,7 +1476,7 @@ def confirm_root(node: RelationalNode) -> RelationalRoot:
 
 def optimize_relational_tree(
     root: RelationalRoot,
-    configs: PyDoughConfigs,
+    session: PyDoughSession,
     additional_shuttles: list[RelationalExpressionShuttle],
 ) -> RelationalRoot:
     """
@@ -1486,7 +1485,7 @@ def optimize_relational_tree(
 
     Args:
         `root`: the relational root to optimize.
-        `configs`: the configuration settings to use during optimization.
+        `configs`: PyDough session used during optimization.
         `additional_shuttles`: additional relational expression shuttles to use
         for expression simplification.
 
@@ -1515,7 +1514,7 @@ def optimize_relational_tree(
     root = confirm_root(pullup_projections(root))
 
     # Push filters down as far as possible
-    root = confirm_root(push_filters(root, configs))
+    root = confirm_root(push_filters(root, session))
 
     # Merge adjacent projections, unless it would result in excessive duplicate
     # subexpression computations.
@@ -1523,7 +1522,7 @@ def optimize_relational_tree(
 
     # Split aggregations on top of joins so part of the aggregate happens
     # underneath the join.
-    root = confirm_root(split_partial_aggregates(root, configs))
+    root = confirm_root(split_partial_aggregates(root, session))
 
     # Delete aggregations that are inferred to be redundant due to operating on
     # already unique data.
@@ -1554,8 +1553,8 @@ def optimize_relational_tree(
     # pullup and pushdown and so on.
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
-        simplify_expressions(root, configs, additional_shuttles)
-        root = confirm_root(push_filters(root, configs))
+        simplify_expressions(root, session, additional_shuttles)
+        root = confirm_root(push_filters(root, session))
         root = pruner.prune_unused_columns(root)
 
     # Re-run projection merging, without pushing into joins. This will allow
@@ -1577,8 +1576,7 @@ def optimize_relational_tree(
 def convert_ast_to_relational(
     node: PyDoughCollectionQDAG,
     columns: list[tuple[str, str]] | None,
-    configs: PyDoughConfigs,
-    dialect: DatabaseDialect = DatabaseDialect.ANSI,
+    session: PyDoughSession,
 ) -> RelationalRoot:
     """
     Main API for converting from the collection QDAG form into relational
@@ -1590,8 +1588,8 @@ def convert_ast_to_relational(
         describing every column that should be in the output, in the order
         they should appear, and the alias they should be given. If None, uses
         the most recent CALCULATE in the node to determine the columns.
-        `configs`: the configuration settings to use during translation.
-        `dialect`: the database dialect being used.
+        `session`: the PyDough session used to fetch configuration settings
+        and SQL dialect information.
 
     Returns:
         The RelationalRoot for the entire PyDough calculation that the
@@ -1606,7 +1604,7 @@ def convert_ast_to_relational(
 
     # Convert the QDAG node to a hybrid tree, including any necessary
     # transformations such as de-correlation.
-    hybrid_translator: HybridTranslator = HybridTranslator(configs, dialect)
+    hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
 
     # Then, invoke relational conversion procedure. The first element in the
@@ -1622,7 +1620,7 @@ def convert_ast_to_relational(
     # Invoke the optimization procedures on the result to clean up the tree.
     additional_shuttles: list[RelationalExpressionShuttle] = []
     optimized_result: RelationalRoot = optimize_relational_tree(
-        raw_result, configs, additional_shuttles
+        raw_result, session, additional_shuttles
     )
 
     return optimized_result

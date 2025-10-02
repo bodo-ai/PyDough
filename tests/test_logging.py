@@ -4,8 +4,7 @@ from contextlib import redirect_stdout
 
 import pytest
 
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseContext
+from pydough.configs import PyDoughSession
 from pydough.logger import get_logger
 from pydough.sqlglot import execute_df
 from tests.test_pydough_functions.tpch_relational_plans import (
@@ -159,10 +158,7 @@ def test_get_logger_invalid_env_level(monkeypatch):
         get_logger(name="logger_invalid_env_level_test_logger")
 
 
-def test_execute_df_logging(
-    sqlite_tpch_db_context: DatabaseContext,
-    default_config: PyDoughConfigs,
-) -> None:
+def test_execute_df_logging(sqlite_tpch_session: PyDoughSession) -> None:
     """
     Test the example TPC-H relational trees executed on a
     SQLite database, and capture any SQL or output printed to stdout.
@@ -172,12 +168,7 @@ def test_execute_df_logging(
     output_capture = io.StringIO()
     # Redirect stdout to the buffer
     with redirect_stdout(output_capture):
-        execute_df(
-            root,
-            sqlite_tpch_db_context,
-            default_config,
-            display_sql=True,
-        )
+        execute_df(root, sqlite_tpch_session, display_sql=True)
     # Retrieve the output from the buffer
     captured_output = output_capture.getvalue()
     required_op = """
