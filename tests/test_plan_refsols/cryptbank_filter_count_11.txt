@@ -1,0 +1,8 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  JOIN(condition=t0.t_sourceaccount == t1.a_key, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={})
+   SCAN(table=CRBNK.TRANSACTIONS, columns={'t_sourceaccount': t_sourceaccount})
+   JOIN(condition=t0.a_custkey == t1.c_key, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'a_key': t0.a_key})
+    SCAN(table=CRBNK.ACCOUNTS, columns={'a_custkey': a_custkey, 'a_key': a_key})
+    FILTER(condition=c_fname == 'alice':string, columns={'c_key': c_key})
+     SCAN(table=CRBNK.CUSTOMERS, columns={'c_fname': c_fname, 'c_key': c_key})

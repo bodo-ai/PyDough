@@ -1,5 +1,5 @@
 ROOT(columns=[('region_name', r_name), ('n_prefix_nations', DEFAULT_TO(n_rows, 0:numeric))], orderings=[(r_name):asc_first])
- JOIN(condition=SLICE(t0.r_name, None:unknown, 1:numeric, None:unknown) == t1.expr_1 & t0.r_regionkey == t1.n_regionkey, type=LEFT, cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows, 'r_name': t0.r_name})
+ JOIN(condition=SLICE(t0.r_name, None:unknown, 1:numeric, None:unknown) == t1.expr_1 & t0.r_regionkey == t1.n_regionkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows, 'r_name': t0.r_name})
   SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
   AGGREGATE(keys={'expr_1': SLICE(n_name, None:unknown, 1:numeric, None:unknown), 'n_regionkey': n_regionkey}, aggregations={'n_rows': COUNT()})
    SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_regionkey': n_regionkey})
