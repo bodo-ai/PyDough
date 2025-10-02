@@ -3546,7 +3546,7 @@
         "synonyms": ["field", "subject"]
       },
       {
-        "name": "domain_authors",
+        "name": "domains_authors",
         "type": "simple table",
         "table path": "main.domain_author",
         "unique properties": [
@@ -3577,7 +3577,7 @@
         "synonyms": []
       },
       {
-        "name": "domain_conferences",
+        "name": "domains_conferences",
         "type": "simple table",
         "table path": "main.domain_conference",
         "unique properties": [
@@ -3608,7 +3608,7 @@
         "synonyms": ["conference subject"]
       },
       {
-        "name": "domain_journals",
+        "name": "domains_journals",
         "type": "simple table",
         "table path": "main.domain_journal",
         "unique properties": [
@@ -3639,7 +3639,7 @@
         "synonyms": ["journal domain", "journal field"]
       },
       {
-        "name": "domain_keywords",
+        "name": "domains_keywords",
         "type": "simple table",
         "table path": "main.domain_keyword",
         "unique properties": [
@@ -3670,7 +3670,7 @@
         "synonyms": ["keyword domain"]
       },
       {
-        "name": "domain_publications",
+        "name": "domains_publications",
         "type": "simple table",
         "table path": "main.domain_publication",
         "unique properties": [
@@ -3902,7 +3902,7 @@
         "synonyms": []
       },
       {
-        "name": "publication_keywords",
+        "name": "publications_keywords",
         "type": "simple table",
         "table path": "main.publication_keyword",
         "unique properties": [
@@ -3992,7 +3992,7 @@
       },
       {
         "type": "simple join",
-        "name": "citing",
+        "name": "references",
         "parent collection": "publications",
         "child collection": "citations",
         "singular": true,
@@ -4007,9 +4007,9 @@
       },
       {
         "type": "reverse",
-        "name": "publication",
+        "name": "publication_citing",
         "original parent": "publications",
-        "original property": "citations",
+        "original property": "references",
         "singular": true,
         "always matches": true,
         "description": "The publication citing",
@@ -4017,7 +4017,7 @@
       },
       {
         "type": "simple join",
-        "name": "cited",
+        "name": "cited_by",
         "parent collection": "publications",
         "child collection": "citations",
         "singular": false,
@@ -4034,7 +4034,7 @@
         "type": "reverse",
         "name": "publication_cited",
         "original parent": "publications",
-        "original property": "citations",
+        "original property": "cited_by",
         "singular": true,
         "always matches": true,
         "description": "The publication cited",
@@ -4044,7 +4044,7 @@
         "type": "simple join",
         "name": "domain_authors",
         "parent collection": "domains",
-        "child collection": "domain_authors",
+        "child collection": "domains_authors",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4057,9 +4057,9 @@
       },
       {
         "type": "reverse",
-        "name": "domain",
+        "name": "authors_domain",
         "original parent": "domains",
-        "original property": "domain_author",
+        "original property": "domain_authors",
         "singular": true,
         "always matches": true,
         "description": "The domain related to the author id",
@@ -4067,10 +4067,10 @@
       },
       {
         "type": "simple join",
-        "name": "domains_author",
+        "name": "author_domains",
         "parent collection": "authors",
-        "child collection": "domain_author",
-        "singular": true,
+        "child collection": "domains_authors",
+        "singular": false,
         "always matches": false,
         "keys": {
           "author_id": [
@@ -4082,9 +4082,9 @@
       },
       {
         "type": "reverse",
-        "name": "author",
+        "name": "domains_author",
         "original parent": "authors",
-        "original property": "domain_author",
+        "original property": "author_domains",
         "singular": true,
         "always matches": true,
         "description": "The author related to this domain_author",
@@ -4094,7 +4094,7 @@
         "type": "simple join",
         "name": "domain_conferences",
         "parent collection": "domains",
-        "child collection": "domain_conferences",
+        "child collection": "domains_conferences",
         "singular": false,
         "always matches": true,
         "keys": {
@@ -4107,7 +4107,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain",
+        "name": "conference_domain",
         "original parent": "domains",
         "original property": "domain_conferences",
         "singular": true,
@@ -4117,9 +4117,9 @@
       },
       {
         "type": "simple join",
-        "name": "domain_conferences",
+        "name": "conference_domains",
         "parent collection": "conferences",
-        "child collection": "domain_conferences",
+        "child collection": "domains_conferences",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4132,9 +4132,9 @@
       },
       {
         "type": "reverse",
-        "name": "conference",
+        "name": "domain_conference",
         "original parent": "conferences",
-        "original property": "domain_conferences",
+        "original property": "conference_domains",
         "singular": true,
         "always matches": true,
         "description": "The conference related to the domain_conference",
@@ -4142,9 +4142,9 @@
       },
       {
         "type": "simple join",
-        "name": "domains_journal",
+        "name": "journal_domains",
         "parent collection": "journals",
-        "child collection": "domain_journals",
+        "child collection": "domains_journals",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4157,9 +4157,9 @@
       },
       {
         "type": "reverse",
-        "name": "journal",
+        "name": "domain_journal",
         "original parent": "journals",
-        "original property": "domain_journals",
+        "original property": "journal_domains",
         "singular": true,
         "always matches": true,
         "description": "The journal related to the domain_journal",
@@ -4169,7 +4169,7 @@
         "type": "simple join",
         "name": "domain_journals",
         "parent collection": "domains",
-        "child collection": "domain_journals",
+        "child collection": "domains_journals",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4182,7 +4182,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain",
+        "name": "jornal_domain",
         "original parent": "domains",
         "original property": "domain_journals",
         "singular": true,
@@ -4192,9 +4192,9 @@
       },
       {
         "type": "simple join",
-        "name": "domain_keywords",
-        "parent collection": "keyword",
-        "child collection": "domain_keywords",
+        "name": "keyword_domains",
+        "parent collection": "keywords",
+        "child collection": "domains_keywords",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4207,9 +4207,9 @@
       },
       {
         "type": "reverse",
-        "name": "keyword",
+        "name": "domain_keyword",
         "original parent": "keywords",
-        "original property": "domain_keywords",
+        "original property": "keyword_domains",
         "singular": true,
         "always matches": true,
         "description": "The keyword related to the domain_keyword",
@@ -4217,9 +4217,9 @@
       },
       {
         "type": "simple join",
-        "name": "domain_keyword",
+        "name": "domain_keywords",
         "parent collection": "domains",
-        "child collection": "domain_keywords",
+        "child collection": "domains_keywords",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4232,7 +4232,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain",
+        "name": "keyword_domain",
         "original parent": "domains",
         "original property": "domain_keywords",
         "singular": true,
@@ -4242,10 +4242,10 @@
       },
       {
         "type": "simple join",
-        "name": "domain_publications",
+        "name": "publication_domains",
         "parent collection": "publications",
-        "child collection": "domain_publications",
-        "singular": true,
+        "child collection": "domains_publications",
+        "singular": false,
         "always matches": false,
         "keys": {
           "publication_id": [
@@ -4257,9 +4257,9 @@
       },
       {
         "type": "reverse",
-        "name": "publication",
+        "name": "domain_publication",
         "original parent": "publications",
-        "original property": "domain_publications",
+        "original property": "publication_domains",
         "singular": true,
         "always matches": true,
         "description": "The publication related to the domain_publication",
@@ -4267,9 +4267,9 @@
       },
       {
         "type": "simple join",
-        "name": "domain_publicatios",
+        "name": "domain_publications",
         "parent collection": "domains",
-        "child collection": "domain_publications",
+        "child collection": "domains_publications",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4282,7 +4282,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain",
+        "name": "publication_domain",
         "original parent": "domains",
         "original property": "domain_publications",
         "singular": true,
@@ -4292,7 +4292,7 @@
       },
       {
         "type": "simple join",
-        "name": "publications",
+        "name": "archives",
         "parent collection": "journals",
         "child collection": "publications",
         "singular": false,
@@ -4307,9 +4307,9 @@
       },
       {
         "type": "reverse",
-        "name": "journal",
+        "name": "publisher",
         "original parent": "journals",
-        "original property": "publications",
+        "original property": "archives",
         "singular": true,
         "always matches": true,
         "description": "The journal the published the publication",
@@ -4317,7 +4317,7 @@
       },
       {
         "type": "simple join",
-        "name": "publications",
+        "name": "proceedings",
         "parent collection": "conferences",
         "child collection": "publications",
         "singular": false,
@@ -4334,7 +4334,7 @@
         "type": "reverse",
         "name": "conference",
         "original parent": "conferences",
-        "original property": "publications",
+        "original property": "proceedings",
         "singular": true,
         "always matches": false,
         "description": "The conference where the publication was presented",
@@ -4342,9 +4342,9 @@
       },
       {
         "type": "simple join",
-        "name": "publication_keywords",
+        "name": "keyword_publications",
         "parent collection": "keywords",
-        "child collection": "publication_keywords",
+        "child collection": "publications_keywords",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4357,9 +4357,9 @@
       },
       {
         "type": "reverse",
-        "name": "keywords",
+        "name": "publication_keyword",
         "original parent": "keywords",
-        "original property": "publication_keywords",
+        "original property": "keyword_publications",
         "singular": true,
         "always matches": true,
         "description": "The keyword linked to the publication_keyword",
@@ -4369,7 +4369,7 @@
         "type": "simple join",
         "name": "publication_keywords",
         "parent collection": "publications",
-        "child collection": "publication_keywords",
+        "child collection": "publications_keywords",
         "singular": false,
         "always matches": false,
         "keys": {
@@ -4382,7 +4382,7 @@
       },
       {
         "type": "reverse",
-        "name": "publication",
+        "name": "keyword_publication",
         "original parent": "publications",
         "original property": "publication_keywords",
         "singular": true,
@@ -4392,7 +4392,7 @@
       },
       {
         "type": "simple join",
-        "name": "writes",
+        "name": "publication_authors",
         "parent collection": "publications",
         "child collection": "writes",
         "singular": false,
@@ -4407,9 +4407,9 @@
       },
       {
         "type": "reverse",
-        "name": "publication",
+        "name": "author_publication",
         "original parent": "publications",
-        "original property": "writes",
+        "original property": "publication_authors",
         "singular": true,
         "always matches": true,
         "description": "The publication linked to the writes",
@@ -4417,7 +4417,7 @@
       },
       {
         "type": "simple join",
-        "name": "writes",
+        "name": "author_publications",
         "parent collection": "authors",
         "child collection": "writes",
         "singular": false,
@@ -4432,9 +4432,9 @@
       },
       {
         "type": "reverse",
-        "name": "author",
+        "name": "publication_author",
         "original parent": "authors",
-        "original property": "writes",
+        "original property": "author_publications",
         "singular": true,
         "always matches": true,
         "description": "The author related to the written",

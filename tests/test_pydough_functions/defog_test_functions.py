@@ -2440,7 +2440,10 @@ def impl_defog_academic_gen1():
     Which authors have written publications in both the domain
     'Machine Learning' and the domain 'Data Science'?
     """
-    return
+    selected_domains = domains.CALCULATE(domain_id).WHERE(
+        ISIN(name, ("Data Science", "Machine Learning"))
+    )
+    return writes.publication_authors.CALCULATE(name).PARTITION(name="authors", by=name)
 
 
 def impl_defog_academic_gen2() -> str:

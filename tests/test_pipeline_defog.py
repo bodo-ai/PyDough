@@ -14,6 +14,7 @@ from pydough.unqualified import (
     UnqualifiedNode,
 )
 from tests.test_pydough_functions.defog_outputs import (
+    defog_sql_text_academic_gen1,
     defog_sql_text_broker_adv1,
     defog_sql_text_broker_adv2,
     defog_sql_text_broker_adv3,
@@ -140,6 +141,7 @@ from tests.test_pydough_functions.defog_outputs import (
     defog_sql_text_ewallet_gen5,
 )
 from tests.test_pydough_functions.defog_test_functions import (
+    impl_defog_academic_gen1,
     impl_defog_broker_adv1,
     impl_defog_broker_adv2,
     impl_defog_broker_adv3,
@@ -1440,6 +1442,15 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "dermtreatment_gen5",
             ),
             id="dermtreatment_gen5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen1,
+                "Academic",
+                defog_sql_text_academic_gen1,
+                "academic_gen1",
+            ),
+            id="academic_gen1",
         ),
     ],
 )

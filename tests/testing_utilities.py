@@ -1047,6 +1047,7 @@ class PyDoughSQLComparisonTest:
                     result[col_name], refsol[col_name]
                 )
         # Perform the comparison between the result and the reference solution
+        breakpoint()
         pd.testing.assert_frame_equal(result, refsol, rtol=1.0e-5, atol=1.0e-5)
 
 
