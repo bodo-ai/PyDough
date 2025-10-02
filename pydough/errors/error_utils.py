@@ -328,11 +328,14 @@ class ValidSQLName(PyDoughPredicate):
     SQL_RESERVED_KEYWORDS: set[str] = {
         # Query & DML
         "select", "from", "where", "group", "having", "distinct", "as", 
-        "join", "inner", "union", "intersect", "except",
+        "join", "inner", "union", "intersect", "except", "order",
+        "limit", "with", "range", "window", "pivot", "unpivot", "fetch",
+        "cross", "outer", "full", 
 
         # DDL & schema
         "create", "alter", "drop", "table", "view", "index", "sequence",
         "trigger", "schema", "database", "column", "constraint",
+        "partition"
 
         # DML
         "insert", "update", "delete", "into", "values", "set",
