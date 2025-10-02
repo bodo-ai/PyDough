@@ -3670,7 +3670,7 @@
         "synonyms": ["keyword domain"]
       },
       {
-        "name": "domain_publication",
+        "name": "domain_publications",
         "type": "simple table",
         "table path": "main.domain_publication",
         "unique properties": [
@@ -4033,7 +4033,7 @@
       {
         "type": "reverse",
         "name": "publication_cited",
-        "original parent": "publication",
+        "original parent": "publications",
         "original property": "citations",
         "singular": true,
         "always matches": true,
@@ -4043,7 +4043,7 @@
       {
         "type": "simple join",
         "name": "domain_authors",
-        "parent collection": "domain",
+        "parent collection": "domains",
         "child collection": "domain_authors",
         "singular": false,
         "always matches": false,
@@ -4058,7 +4058,7 @@
       {
         "type": "reverse",
         "name": "domain",
-        "original parent": "domain",
+        "original parent": "domains",
         "original property": "domain_author",
         "singular": true,
         "always matches": true,
@@ -4068,7 +4068,7 @@
       {
         "type": "simple join",
         "name": "domains_author",
-        "parent collection": "author",
+        "parent collection": "authors",
         "child collection": "domain_author",
         "singular": true,
         "always matches": false,
@@ -4077,367 +4077,367 @@
             "author_id"
           ]
         },
-        "description": "",
+        "description": "The domains id for this author",
         "synonyms": []
       },
       {
         "type": "reverse",
         "name": "author",
-        "original parent": "author",
-        "original property": "domain_author_2",
+        "original parent": "authors",
+        "original property": "domain_author",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The author related to this domain_author",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "domain_conference",
-        "parent collection": "domain",
-        "child collection": "domain_conference",
-        "singular": true,
-        "always matches": false,
+        "name": "domain_conferences",
+        "parent collection": "domains",
+        "child collection": "domain_conferences",
+        "singular": false,
+        "always matches": true,
         "keys": {
-          "did": [
-            "did"
+          "domain_id": [
+            "domain_id"
           ]
         },
-        "description": "",
+        "description": "The domain_conferences related to the domain",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "domain_2",
-        "original parent": "domain",
-        "original property": "domain_conference",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_conferences",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The domain related to the domain_conference",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "domain_conference_2",
-        "parent collection": "conference",
-        "child collection": "domain_conference",
-        "singular": true,
+        "name": "domain_conferences",
+        "parent collection": "conferences",
+        "child collection": "domain_conferences",
+        "singular": false,
         "always matches": false,
         "keys": {
-          "cid": [
-            "cid"
+          "conference_id": [
+            "conference_id"
           ]
         },
-        "description": "",
+        "description": "The domain_conference related to the conference",
         "synonyms": []
       },
       {
         "type": "reverse",
         "name": "conference",
-        "original parent": "conference",
-        "original property": "domain_conference_2",
+        "original parent": "conferences",
+        "original property": "domain_conferences",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The conference related to the domain_conference",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "domain_journal",
-        "parent collection": "journal",
-        "child collection": "domain_journal",
-        "singular": true,
+        "name": "domains_journal",
+        "parent collection": "journals",
+        "child collection": "domain_journals",
+        "singular": false,
         "always matches": false,
         "keys": {
-          "jid": [
-            "jid"
+          "journal_id": [
+            "journal_id"
           ]
         },
-        "description": "",
+        "description": "The domains_journal related to the journal",
         "synonyms": []
       },
       {
         "type": "reverse",
         "name": "journal",
-        "original parent": "journal",
-        "original property": "domain_journal",
+        "original parent": "journals",
+        "original property": "domain_journals",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The journal related to the domain_journal",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "domain_journal_2",
-        "parent collection": "domain",
-        "child collection": "domain_journal",
-        "singular": true,
+        "name": "domain_journals",
+        "parent collection": "domains",
+        "child collection": "domain_journals",
+        "singular": false,
         "always matches": false,
         "keys": {
-          "did": [
-            "did"
+          "domain_id": [
+            "domain_id"
           ]
         },
-        "description": "",
+        "description": "The domain_journal related to the domain",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "domain_3",
-        "original parent": "domain",
-        "original property": "domain_journal_2",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_journals",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The domain linked with the domain_journal",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "domain_keyword",
+        "name": "domain_keywords",
         "parent collection": "keyword",
-        "child collection": "domain_keyword",
-        "singular": true,
+        "child collection": "domain_keywords",
+        "singular": false,
         "always matches": false,
         "keys": {
-          "kid": [
-            "kid"
+          "keyword_id": [
+            "keyword_id"
           ]
         },
-        "description": "",
+        "description": "The domain_keywords related to the keyword",
         "synonyms": []
       },
       {
         "type": "reverse",
         "name": "keyword",
-        "original parent": "keyword",
-        "original property": "domain_keyword",
+        "original parent": "keywords",
+        "original property": "domain_keywords",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The keyword related to the domain_keyword",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "domain_keyword_2",
-        "parent collection": "domain",
-        "child collection": "domain_keyword",
-        "singular": true,
+        "name": "domain_keyword",
+        "parent collection": "domains",
+        "child collection": "domain_keywords",
+        "singular": false,
         "always matches": false,
         "keys": {
-          "did": [
-            "did"
+          "domain_id": [
+            "domain_id"
           ]
         },
-        "description": "",
+        "description": "The domain_keywords related to the domain",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "domain_4",
-        "original parent": "domain",
-        "original property": "domain_keyword_2",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_keywords",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The keyword linked to the domain_keyword",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "domain_publication",
-        "parent collection": "publication",
-        "child collection": "domain_publication",
+        "name": "domain_publications",
+        "parent collection": "publications",
+        "child collection": "domain_publications",
         "singular": true,
         "always matches": false,
         "keys": {
-          "pid": [
-            "pid"
+          "publication_id": [
+            "publication_id"
           ]
         },
-        "description": "",
+        "description": "The domain_publications related to the publication",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "publication_3",
-        "original parent": "publication",
-        "original property": "domain_publication",
-        "singular": true,
-        "always matches": true,
-        "description": "",
-        "synonyms": []
-      },
-      {
-        "type": "simple join",
-        "name": "domain_publication_2",
-        "parent collection": "domain",
-        "child collection": "domain_publication",
-        "singular": true,
-        "always matches": false,
-        "keys": {
-          "did": [
-            "did"
-          ]
-        },
-        "description": "",
-        "synonyms": []
-      },
-      {
-        "type": "reverse",
-        "name": "domain_5",
-        "original parent": "domain",
-        "original property": "domain_publication_2",
-        "singular": true,
-        "always matches": true,
-        "description": "",
-        "synonyms": []
-      },
-      {
-        "type": "simple join",
         "name": "publication",
-        "parent collection": "journal",
-        "child collection": "publication",
+        "original parent": "publications",
+        "original property": "domain_publications",
+        "singular": true,
+        "always matches": true,
+        "description": "The publication related to the domain_publication",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "domain_publicatios",
+        "parent collection": "domains",
+        "child collection": "domain_publications",
         "singular": false,
         "always matches": false,
         "keys": {
-          "jid": [
-            "jid"
+          "domain_id": [
+            "domain_id"
           ]
         },
-        "description": "",
+        "description": "The domain_publications related to the domain",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "journal_2",
-        "original parent": "journal",
-        "original property": "publication",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_publications",
         "singular": true,
-        "always matches": false,
-        "description": "",
+        "always matches": true,
+        "description": "The domain related to the domain_publication",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "publication_2",
-        "parent collection": "conference",
-        "child collection": "publication",
+        "name": "publications",
+        "parent collection": "journals",
+        "child collection": "publications",
         "singular": false,
         "always matches": false,
         "keys": {
-          "cid": [
-            "cid"
+          "journal_id": [
+            "journal_id"
           ]
         },
-        "description": "",
+        "description": "The publications related to the journal",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "conference_2",
-        "original parent": "conference",
-        "original property": "publication_2",
+        "name": "journal",
+        "original parent": "journals",
+        "original property": "publications",
         "singular": true,
-        "always matches": false,
-        "description": "",
+        "always matches": true,
+        "description": "The journal the published the publication",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "publication_keyword",
-        "parent collection": "keyword",
-        "child collection": "publication_keyword",
-        "singular": true,
+        "name": "publications",
+        "parent collection": "conferences",
+        "child collection": "publications",
+        "singular": false,
         "always matches": false,
         "keys": {
-          "kid": [
-            "kid"
+          "conference_id": [
+            "conference_id"
           ]
         },
-        "description": "",
+        "description": "The publications presented in the conference",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "keyword_2",
-        "original parent": "keyword",
-        "original property": "publication_keyword",
+        "name": "conference",
+        "original parent": "conferences",
+        "original property": "publications",
         "singular": true,
-        "always matches": true,
-        "description": "",
+        "always matches": false,
+        "description": "The conference where the publication was presented",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "publication_keyword_2",
-        "parent collection": "publication",
-        "child collection": "publication_keyword",
-        "singular": true,
+        "name": "publication_keywords",
+        "parent collection": "keywords",
+        "child collection": "publication_keywords",
+        "singular": false,
         "always matches": false,
         "keys": {
-          "pid": [
-            "pid"
+          "keyword_id": [
+            "keyword_id"
           ]
         },
-        "description": "",
+        "description": "All publication_keywords related to the keyword",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "publication_4",
-        "original parent": "publication",
-        "original property": "publication_keyword_2",
+        "name": "keywords",
+        "original parent": "keywords",
+        "original property": "publication_keywords",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The keyword linked to the publication_keyword",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "publication_keywords",
+        "parent collection": "publications",
+        "child collection": "publication_keywords",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "publication_id": [
+            "publication_id"
+          ]
+        },
+        "description": "All publication_keywords related to the publication",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "publication",
+        "original parent": "publications",
+        "original property": "publication_keywords",
+        "singular": true,
+        "always matches": true,
+        "description": "The publication linked to the publication_keyword",
         "synonyms": []
       },
       {
         "type": "simple join",
         "name": "writes",
-        "parent collection": "publication",
+        "parent collection": "publications",
         "child collection": "writes",
-        "singular": true,
+        "singular": false,
         "always matches": false,
         "keys": {
-          "pid": [
-            "pid"
+          "publication_id": [
+            "publication_id"
           ]
         },
-        "description": "",
+        "description": "All authors id related to the publication",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "publication_5",
-        "original parent": "publication",
+        "name": "publication",
+        "original parent": "publications",
         "original property": "writes",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The publication linked to the writes",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "writes_2",
-        "parent collection": "author",
+        "name": "writes",
+        "parent collection": "authors",
         "child collection": "writes",
-        "singular": true,
+        "singular": false,
         "always matches": false,
         "keys": {
-          "aid": [
-            "aid"
+          "author_id": [
+            "author_id"
           ]
         },
-        "description": "",
+        "description": "The publications' id of the write related to the author",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "author_2",
-        "original parent": "author",
-        "original property": "writes_2",
+        "name": "author",
+        "original parent": "authors",
+        "original property": "writes",
         "singular": true,
         "always matches": true,
-        "description": "",
+        "description": "The author related to the written",
         "synonyms": []
       }
     ]
