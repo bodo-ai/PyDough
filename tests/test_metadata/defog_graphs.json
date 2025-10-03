@@ -223,7 +223,7 @@
             "synonyms": ["record datetime", "price update date"]
           },
           {
-            "name": "open",
+            "name": "_open",
             "type": "table column",
             "column name": "sbDpOpen",
             "data type": "numeric",
