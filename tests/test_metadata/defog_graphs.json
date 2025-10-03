@@ -3450,8 +3450,8 @@
         "type": "simple table",
         "table path": "main.cite",
         "unique properties": [
-          "cited",
-          "citing"
+          ["cited",
+          "citing"]
         ],
         "properties": [
           {
@@ -3550,8 +3550,8 @@
         "type": "simple table",
         "table path": "main.domain_author",
         "unique properties": [
-          "author_id",
-          "domain_id"
+          ["author_id",
+          "domain_id"]
         ],
         "properties": [
           {
@@ -3581,8 +3581,8 @@
         "type": "simple table",
         "table path": "main.domain_conference",
         "unique properties": [
-          "conference_id",
-          "domain_id"
+          ["conference_id",
+          "domain_id"]
         ],
         "properties": [
           {
@@ -3612,8 +3612,8 @@
         "type": "simple table",
         "table path": "main.domain_journal",
         "unique properties": [
-          "domain_id",
-          "journal_id"
+          ["domain_id",
+          "journal_id"]
         ],
         "properties": [
           {
@@ -3643,8 +3643,8 @@
         "type": "simple table",
         "table path": "main.domain_keyword",
         "unique properties": [
-          "domain_id",
-          "keyword_id"
+          ["domain_id",
+          "keyword_id"]
         ],
         "properties": [
           {
@@ -3673,10 +3673,7 @@
         "name": "domains_publications",
         "type": "simple table",
         "table path": "main.domain_publication",
-        "unique properties": [
-          "domain_id",
-          "publication_id"
-        ],
+        "unique properties": [["domain_id", "publication_id"]],
         "properties": [
           {
             "name": "domain_id",
@@ -3905,10 +3902,7 @@
         "name": "publications_keywords",
         "type": "simple table",
         "table path": "main.publication_keyword",
-        "unique properties": [
-          "publication_id",
-          "keyword_id"
-        ],
+        "unique properties": [["publication_id", "keyword_id"]],
         "properties": [
           {
             "name": "publication_id",
@@ -3936,10 +3930,7 @@
         "name": "writes",
         "type": "simple table",
         "table path": "main.writes",
-        "unique properties": [
-          "author_id",
-          "publication_id"
-        ],
+        "unique properties": [["author_id", "publication_id"]],
         "properties": [
           {
             "name": "author_id",

@@ -15,6 +15,17 @@ from pydough.unqualified import (
 )
 from tests.test_pydough_functions.defog_outputs import (
     defog_sql_text_academic_gen1,
+    defog_sql_text_academic_gen2,
+    defog_sql_text_academic_gen3,
+    defog_sql_text_academic_gen4,
+    defog_sql_text_academic_gen5,
+    defog_sql_text_academic_gen6,
+    defog_sql_text_academic_gen7,
+    defog_sql_text_academic_gen8,
+    defog_sql_text_academic_gen9,
+    defog_sql_text_academic_gen10,
+    defog_sql_text_academic_gen11,
+    defog_sql_text_academic_gen12,
     defog_sql_text_broker_adv1,
     defog_sql_text_broker_adv2,
     defog_sql_text_broker_adv3,
@@ -142,6 +153,17 @@ from tests.test_pydough_functions.defog_outputs import (
 )
 from tests.test_pydough_functions.defog_test_functions import (
     impl_defog_academic_gen1,
+    impl_defog_academic_gen2,
+    impl_defog_academic_gen3,
+    impl_defog_academic_gen4,
+    impl_defog_academic_gen5,
+    impl_defog_academic_gen6,
+    impl_defog_academic_gen7,
+    impl_defog_academic_gen8,
+    impl_defog_academic_gen9,
+    impl_defog_academic_gen10,
+    impl_defog_academic_gen11,
+    impl_defog_academic_gen12,
     impl_defog_broker_adv1,
     impl_defog_broker_adv2,
     impl_defog_broker_adv3,
@@ -1451,6 +1473,109 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "academic_gen1",
             ),
             id="academic_gen1",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen2,
+                "Academic",
+                defog_sql_text_academic_gen2,
+                "academic_gen2",
+            ),
+            id="academic_gen2",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen3,
+                "Academic",
+                defog_sql_text_academic_gen3,
+                "academic_gen3",
+            ),
+            id="academic_gen3",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen4,
+                "Academic",
+                defog_sql_text_academic_gen4,
+                "academic_gen4",
+            ),
+            id="academic_gen4",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen5,
+                "Academic",
+                defog_sql_text_academic_gen5,
+                "academic_gen5",
+            ),
+            id="academic_gen5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen6,
+                "Academic",
+                defog_sql_text_academic_gen6,
+                "academic_gen6",
+            ),
+            id="academic_gen6",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen7,
+                "Academic",
+                defog_sql_text_academic_gen7,
+                "academic_gen7",
+                order_sensitive=True,
+            ),
+            id="academic_gen7",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen8,
+                "Academic",
+                defog_sql_text_academic_gen8,
+                "academic_gen8",
+                order_sensitive=True,
+            ),
+            id="academic_gen8",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen9,
+                "Academic",
+                defog_sql_text_academic_gen9,
+                "academic_gen9",
+                order_sensitive=True,
+            ),
+            id="academic_gen9",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen10,
+                "Academic",
+                defog_sql_text_academic_gen10,
+                "academic_gen10",
+                order_sensitive=True,
+            ),
+            id="academic_gen10",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen11,
+                "Academic",
+                defog_sql_text_academic_gen11,
+                "academic_gen11",
+            ),
+            id="academic_gen11",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_academic_gen12,
+                "Academic",
+                defog_sql_text_academic_gen12,
+                "academic_gen12",
+            ),
+            id="academic_gen12",
         ),
     ],
 )

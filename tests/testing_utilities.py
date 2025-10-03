@@ -1031,6 +1031,7 @@ class PyDoughSQLComparisonTest:
 
         # If the query does not care about column names, update the answer to use
         # the column names in the refsol.
+        breakpoint()
         if self.fix_column_names:
             assert len(result.columns) == len(refsol.columns)
             result.columns = refsol.columns
@@ -1047,7 +1048,6 @@ class PyDoughSQLComparisonTest:
                     result[col_name], refsol[col_name]
                 )
         # Perform the comparison between the result and the reference solution
-        breakpoint()
         pd.testing.assert_frame_equal(result, refsol, rtol=1.0e-5, atol=1.0e-5)
 
 

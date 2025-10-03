@@ -2440,33 +2440,40 @@ def impl_defog_academic_gen1():
     Which authors have written publications in both the domain
     'Machine Learning' and the domain 'Data Science'?
     """
-    selected_domains = domains.CALCULATE(domain_id).WHERE(
-        ISIN(name, ("Data Science", "Machine Learning"))
+    selected_domains = author_publications.author_publication.publication_domains.WHERE(
+        ISIN(publication_domain.name, ("Data Science", "Machine Learning"))
     )
-    return writes.publication_authors.CALCULATE(name).PARTITION(name="authors", by=name)
+
+    return authors.WHERE(NDISTINCT(selected_domains.domain_id) == 2).CALCULATE(name)
 
 
-def impl_defog_academic_gen2() -> str:
+def impl_defog_academic_gen2():
     """
     PyDough implementation of the following question for the Academic
     graph:
 
     What is the total number of citations received by each author?
     """
-    return
+    publications = author_publications.author_publication
+
+    return authors.WHERE(HAS(publications)).CALCULATE(
+        name, total_citations=SUM(publications.citation_num)
+    )
 
 
-def impl_defog_academic_gen3() -> str:
+def impl_defog_academic_gen3():
     """
     PyDough implementation of the following question for the Academic
     graph:
 
     What is the total number of publications published in each year?
     """
-    return
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year, COUNT(publications)
+    )
 
 
-def impl_defog_academic_gen4() -> str:
+def impl_defog_academic_gen4():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2474,20 +2481,25 @@ def impl_defog_academic_gen4() -> str:
     What is the average number of references cited by publications in each
     domain name?
     """
-    return
+    return domains.CALCULATE(
+        name,
+        average_references=AVG(domain_publications.domain_publication.reference_num),
+    )
 
 
-def impl_defog_academic_gen5() -> str:
+def impl_defog_academic_gen5():
     """
     PyDough implementation of the following question for the Academic
     graph:
 
     What is the average number of citations received by publications in each year?
     """
-    return
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year, average_citations=AVG(publications.citation_num)
+    )
 
 
-def impl_defog_academic_gen6() -> str:
+def impl_defog_academic_gen6():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2495,10 +2507,10 @@ def impl_defog_academic_gen6() -> str:
     What is the title of the publication that has received the highest number of
     citations?
     """
-    return
+    return publications.CALCULATE(title).TOP_K(1, by=citation_num.DESC())
 
 
-def impl_defog_academic_gen7() -> str:
+def impl_defog_academic_gen7():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2506,10 +2518,14 @@ def impl_defog_academic_gen7() -> str:
     What are the top 5 domains with the highest number of authors associated
     with them?
     """
-    return
+    return (
+        domains.PARTITION(name="names", by=name)
+        .CALCULATE(name, author_count=NDISTINCT(domains.domain_authors.author_id))
+        .TOP_K(5, by=author_count)
+    )
 
 
-def impl_defog_academic_gen8() -> str:
+def impl_defog_academic_gen8():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2518,30 +2534,30 @@ def impl_defog_academic_gen8() -> str:
     of references cited, ordered by the number of references cited in descending
     order?
     """
-    return
+    return publications.CALCULATE(title).TOP_K(3, by=reference_num.DESC())
 
 
-def impl_defog_academic_gen9() -> str:
+def impl_defog_academic_gen9():
     """
     PyDough implementation of the following question for the Academic
     graph:
 
     What are the top 3 publications with the highest number of citations?
     """
-    return
+    return publications.CALCULATE(title, citation_num).TOP_K(3, by=citation_num.DESC())
 
 
-def impl_defog_academic_gen10() -> str:
+def impl_defog_academic_gen10():
     """
     PyDough implementation of the following question for the Academic
     graph:
 
     What are the titles of all publications ordered alphabetically?
     """
-    return
+    return publications.CALCULATE(title).ORDER_BY(title.ASC())
 
 
-def impl_defog_academic_gen11() -> str:
+def impl_defog_academic_gen11():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2549,10 +2565,12 @@ def impl_defog_academic_gen11() -> str:
 
     What is the ratio of publications to authors in the database?
     """
-    return
+    return publications.CALCULATE(
+        publication_to_author_ratio=NDISTINCT(publication_id) / NDISTINCT(author_id)
+    )
 
 
-def impl_defog_academic_gen12() -> str:
+def impl_defog_academic_gen12():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2560,10 +2578,12 @@ def impl_defog_academic_gen12() -> str:
     What is the ratio of publications presented in conferences to publications
     published in journals?
     """
-    return
+    return Academic.CALCULATE(
+        ratio=NDISTINCT(publications.conference_id) / NDISTINCT(publications.journal_id)
+    )
 
 
-def impl_defog_academic_gen13() -> str:
+def impl_defog_academic_gen13():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2574,7 +2594,7 @@ def impl_defog_academic_gen13() -> str:
     return
 
 
-def impl_defog_academic_gen14() -> str:
+def impl_defog_academic_gen14():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2585,7 +2605,7 @@ def impl_defog_academic_gen14() -> str:
     return
 
 
-def impl_defog_academic_gen15() -> str:
+def impl_defog_academic_gen15():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2595,7 +2615,7 @@ def impl_defog_academic_gen15() -> str:
     return
 
 
-def impl_defog_academic_gen16() -> str:
+def impl_defog_academic_gen16():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2606,7 +2626,7 @@ def impl_defog_academic_gen16() -> str:
     return
 
 
-def impl_defog_academic_gen17() -> str:
+def impl_defog_academic_gen17():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2616,7 +2636,7 @@ def impl_defog_academic_gen17() -> str:
     return
 
 
-def impl_defog_academic_gen18() -> str:
+def impl_defog_academic_gen18():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2627,7 +2647,7 @@ def impl_defog_academic_gen18() -> str:
     return
 
 
-def impl_defog_academic_gen19() -> str:
+def impl_defog_academic_gen19():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2639,7 +2659,7 @@ def impl_defog_academic_gen19() -> str:
     return
 
 
-def impl_defog_academic_gen20() -> str:
+def impl_defog_academic_gen20():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2650,7 +2670,7 @@ def impl_defog_academic_gen20() -> str:
     return
 
 
-def impl_defog_academic_gen21() -> str:
+def impl_defog_academic_gen21():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2661,7 +2681,7 @@ def impl_defog_academic_gen21() -> str:
     return
 
 
-def impl_defog_academic_gen22() -> str:
+def impl_defog_academic_gen22():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2672,7 +2692,7 @@ def impl_defog_academic_gen22() -> str:
     return
 
 
-def impl_defog_academic_gen23() -> str:
+def impl_defog_academic_gen23():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2682,7 +2702,7 @@ def impl_defog_academic_gen23() -> str:
     return
 
 
-def impl_defog_academic_gen24() -> str:
+def impl_defog_academic_gen24():
     """
     PyDough implementation of the following question for the Academic
     graph:
@@ -2693,7 +2713,7 @@ def impl_defog_academic_gen24() -> str:
     return
 
 
-def impl_defog_academic_gen25() -> str:
+def impl_defog_academic_gen25():
     """
     PyDough implementation of the following question for the Academic
     graph:
