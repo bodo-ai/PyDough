@@ -25,7 +25,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
     - `UNMASK(x) IN (literal1, ..., literalN)`  -> `x IN (MASK(literal1), ..., MASK(literalN))`
     """
 
-    def protect_literal_comparison(
+    def rewrite_masked_literal_comparison(
         self,
         original_call: CallExpression,
         call_arg: CallExpression,
@@ -116,7 +116,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
             if isinstance(call_expression.inputs[0], CallExpression) and isinstance(
                 call_expression.inputs[1], LiteralExpression
             ):
-                call_expression = self.protect_literal_comparison(
+                call_expression = self.rewrite_masked_literal_comparison(
                     call_expression,
                     call_expression.inputs[0],
                     call_expression.inputs[1],
@@ -124,7 +124,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
             if isinstance(call_expression.inputs[1], CallExpression) and isinstance(
                 call_expression.inputs[0], LiteralExpression
             ):
-                call_expression = self.protect_literal_comparison(
+                call_expression = self.rewrite_masked_literal_comparison(
                     call_expression,
                     call_expression.inputs[1],
                     call_expression.inputs[0],
@@ -138,7 +138,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
             and isinstance(call_expression.inputs[0], CallExpression)
             and isinstance(call_expression.inputs[1], LiteralExpression)
         ):
-            call_expression = self.protect_literal_comparison(
+            call_expression = self.rewrite_masked_literal_comparison(
                 call_expression, call_expression.inputs[0], call_expression.inputs[1]
             )
 
