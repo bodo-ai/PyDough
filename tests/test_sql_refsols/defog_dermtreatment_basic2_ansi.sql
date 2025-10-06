@@ -29,19 +29,27 @@ WITH _t2 AS (
     ON _s3.patient_id = _t2.patient_id
   GROUP BY
     1
-), _s11 AS (
+), _s9 AS (
   SELECT
-    _s7.ins_type,
-    AVG(outcomes.day100_pasi_score) AS avg_day100_pasi_score
-  FROM _t2 AS _t5
-  JOIN _t3 AS _t6
-    ON _t5.treatment_id = _t6.treatment_id
-  JOIN _s3 AS _s7
-    ON _s7.patient_id = _t5.patient_id
-  JOIN main.outcomes AS outcomes
-    ON _t5.treatment_id = outcomes.treatment_id
+    treatment_id,
+    COUNT(day100_pasi_score) AS count_day100_pasi_score,
+    SUM(day100_pasi_score) AS sum_day100_pasi_score
+  FROM main.outcomes
   GROUP BY
     1
+), _s11 AS (
+  SELECT
+    SUM(_s9.sum_day100_pasi_score) / SUM(_s9.count_day100_pasi_score) AS avg_day100_pasi_score,
+    _s7.ins_type
+  FROM _t2 AS _t6
+  JOIN _t3 AS _t7
+    ON _t6.treatment_id = _t7.treatment_id
+  JOIN _s3 AS _s7
+    ON _s7.patient_id = _t6.patient_id
+  JOIN _s9 AS _s9
+    ON _s9.treatment_id = _t6.treatment_id
+  GROUP BY
+    2
 )
 SELECT
   _s10.ins_type AS insurance_type,

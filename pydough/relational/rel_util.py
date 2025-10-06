@@ -601,15 +601,26 @@ def bubble_uniqueness(
                 break
         if can_add:
             output_uniqueness.add(frozenset(new_uniqueness_set))
+    # Build a mapping of each expression to the list of all output column names
+    # that have that expression as their value.
+    reverse_map: dict[RelationalExpression, list[str]] = {}
+    for name, col in columns.items():
+        reverse_map[col] = reverse_map.get(col, [])
+        reverse_map[col].append(name)
     # Build a mapping of each output column name to the set of all other
     # output column names that have identical values, then use this to build
     # any isomorphic uniqueness sets.
     isomorphisms: dict[str, set[str]] = {}
-    for name1, col1 in columns.items():
-        for name2, col2 in columns.items():
-            if name1 != name2 and col1 == col2:
-                isomorphisms[name1] = isomorphisms.get(name1, set()).union({name2})
-                isomorphisms[name2] = isomorphisms.get(name2, set()).union({name1})
+    for col_names in reverse_map.values():
+        if len(col_names) > 1:
+            for i in range(len(col_names)):
+                for j in range(i + 1, len(col_names)):
+                    name1 = col_names[i]
+                    name2 = col_names[j]
+                    isomorphisms[name1] = isomorphisms.get(name1, set())
+                    isomorphisms[name1].add(name2)
+                    isomorphisms[name2] = isomorphisms.get(name2, set())
+                    isomorphisms[name2].add(name1)
     include_isomorphisms(output_uniqueness, isomorphisms)
     return output_uniqueness
 

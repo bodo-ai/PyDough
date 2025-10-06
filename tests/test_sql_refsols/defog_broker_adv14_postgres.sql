@@ -1,11 +1,21 @@
+WITH _s1 AS (
+  SELECT
+    sbdptickerid,
+    COUNT(sbdpclose) AS count_sbdpclose,
+    SUM(sbdpclose) AS sum_sbdpclose
+  FROM main.sbdailyprice
+  WHERE
+    (
+      CAST(CURRENT_TIMESTAMP AS DATE) - CAST(sbdpdate AS DATE)
+    ) <= 7
+  GROUP BY
+    1
+)
 SELECT
   sbticker.sbtickertype AS ticker_type,
-  AVG(CAST(sbdailyprice.sbdpclose AS DECIMAL)) AS ACP
+  CAST(SUM(_s1.sum_sbdpclose) AS DOUBLE PRECISION) / SUM(_s1.count_sbdpclose) AS ACP
 FROM main.sbticker AS sbticker
-JOIN main.sbdailyprice AS sbdailyprice
-  ON (
-    CAST(CURRENT_TIMESTAMP AS DATE) - CAST(sbdailyprice.sbdpdate AS DATE)
-  ) <= 7
-  AND sbdailyprice.sbdptickerid = sbticker.sbtickerid
+JOIN _s1 AS _s1
+  ON _s1.sbdptickerid = sbticker.sbtickerid
 GROUP BY
   1

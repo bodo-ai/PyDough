@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable
 from functools import cache
 
+import httpx
 import pandas as pd
 import pytest
 
@@ -1795,3 +1796,42 @@ def custom_functions_test_data(request) -> PyDoughPandasTest:
     test.
     """
     return request.param
+
+
+@pytest.fixture(scope="session")
+def mock_server_setup():
+    # Run FastAPI dev server in background
+    proc = subprocess.Popen(
+        [
+            "uvicorn",
+            "tests.mock_server.api_mock_server:app",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=os.environ.copy(),
+        text=True,
+    )
+
+    server_url: str = "http://127.0.0.1:8000"
+
+    # Wait until server is ready
+    for _ in range(20):
+        try:
+            r: httpx.Response = httpx.get(server_url + "/health", timeout=1)
+            if r.status_code == 200:
+                break
+        except Exception:
+            time.sleep(0.5)
+    else:
+        proc.terminate()
+        raise RuntimeError("Mock server failed to start")
+
+    yield server_url
+
+    # Cleanup after tests
+    proc.terminate()
+    proc.wait()
