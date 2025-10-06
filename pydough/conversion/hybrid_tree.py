@@ -628,8 +628,9 @@ class HybridTree:
         metadata: SubcollectionRelationshipMetadata,
     ) -> JoinCardinality:
         """
-        Infers the cardinality of the reverse of a join from parent to child
+        Infers the cardinality of the reverse of a join (child → parent)
         based on the metadata of the reverse-relationship, if one exists.
+        If no reverse metadata exists, defaults to PLURAL_FILTER (safest assumption)
 
         Args:
             `metadata`: the metadata for the sub-collection property mapping
@@ -665,7 +666,7 @@ class HybridTree:
     def infer_root_reverse_cardinality(self, context: "HybridTree") -> JoinCardinality:
         """
         Infers the cardinality of the join connecting the root of the hybrid
-        tree to its parent context.
+        tree back to its parent context.
 
         Args:
             `context`: the parent context that the root of the hybrid tree is
@@ -680,24 +681,22 @@ class HybridTree:
             return self.parent.infer_root_reverse_cardinality(context)
 
         # Once we find the root, infer the cardinality of the join that would
-        # connect just this node to the parent context. The rest of the nodes in
-        # the tree don't matter since they will not affect how many matches
-        # there are back to the parent context, or whether there is always a
-        # match or not for each record in the current context.
+        # connect just this node to the parent context. 
+        # At the root, only this node’s type matters for reverse cardinality.
+        # Deeper nodes do not affect parent-child match guarantees.
         match self.pipeline[0]:
             case HybridRoot():
                 # If the parent of the child is a root, it means a cross join
-                # is occurring, so the cardinality depends on the size of the
-                # parent.
+                # is occurring, so the cardinality depends on whether
+                # the parent context is singular or plural.
                 return (
                     JoinCardinality.SINGULAR_ACCESS
                     if context.is_singular()
                     else JoinCardinality.PLURAL_ACCESS
                 )
             case HybridCollectionAccess():
-                # For collection accesses, that are not a sub-collection, just
-                # use plural access. If they are a sub-collection, infer what
-                # is the cardinality based on the reverse property.
+                # For non sub-collection accesses, use plural access. 
+                # For a sub-collection, infer from the reverse property.
                 if isinstance(self.pipeline[0].collection, SubCollection):
                     return self.infer_metadata_reverse_cardinality(
                         self.pipeline[0].collection.subcollection_property
