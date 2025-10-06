@@ -6,7 +6,9 @@ This node is responsible for holding all types of joins.
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from pydough.relational.relational_expressions import RelationalExpression
+from pydough.relational.relational_expressions import (
+    RelationalExpression,
+)
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
@@ -71,6 +73,20 @@ class JoinCardinality(Enum):
             return JoinCardinality.PLURAL_UNKNOWN
         elif self == JoinCardinality.UNKNOWN_ACCESS:
             return JoinCardinality.UNKNOWN_UNKNOWN
+        else:
+            return self
+
+    def remove_filter(self) -> "JoinCardinality":
+        """
+        Returns a new JoinCardinality referring to the current value but without
+        the possibility of filtering.
+        """
+        if self in (JoinCardinality.SINGULAR_FILTER, JoinCardinality.SINGULAR_UNKNOWN):
+            return JoinCardinality.SINGULAR_ACCESS
+        elif self in (JoinCardinality.PLURAL_FILTER, JoinCardinality.PLURAL_UNKNOWN):
+            return JoinCardinality.PLURAL_ACCESS
+        elif self in (JoinCardinality.UNKNOWN_FILTER, JoinCardinality.UNKNOWN_UNKNOWN):
+            return JoinCardinality.UNKNOWN_ACCESS
         else:
             return self
 

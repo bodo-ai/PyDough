@@ -149,7 +149,7 @@ class ColumnPruner:
 
         # Special case: replace LEFT join where RHS is unused with LHS (only
         # possible if the join is used to bring 1:1 data into the rows of the
-        # LHS, which is unecessary if no data is being brought). Also do the
+        # LHS, which is unnecessary if no data is being brought). Also do the
         # same for inner joins that meet certain criteria. Do the same with
         # inner joins where the left side is unused and the data is singular
         # and non-filtering with regards to the right side.

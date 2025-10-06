@@ -1,6 +1,10 @@
-ROOT(columns=[('branch_key', b_key), ('n_local_cust', n_rows), ('n_local_cust_local_acct', DEFAULT_TO(sum_n_rows, 0:numeric))], orderings=[])
+ROOT(columns=[('branch_key', b_key), ('n_local_cust', n_rows), ('n_local_cust_local_acct', sum_n_rows)], orderings=[])
  AGGREGATE(keys={'b_key': b_key}, aggregations={'n_rows': COUNT(), 'sum_n_rows': SUM(n_rows)})
+<<<<<<< HEAD
   JOIN(condition=t0.b_key == t1.b_key & t0.c_key == t1.c_key, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'b_key': t0.b_key, 'n_rows': t1.n_rows})
+=======
+  JOIN(condition=t0.b_key == t1.b_key & t0.c_key == t1.c_key, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'b_key': t0.b_key, 'n_rows': t1.n_rows})
+>>>>>>> main
    JOIN(condition=SLICE(t0.b_addr, -8:numeric, -6:numeric, None:unknown) == SLICE(t1.c_addr, -8:numeric, -6:numeric, None:unknown), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'b_key': t0.b_key, 'c_key': t1.c_key})
     SCAN(table=CRBNK.BRANCHES, columns={'b_addr': b_addr, 'b_key': b_key})
     SCAN(table=CRBNK.CUSTOMERS, columns={'c_addr': c_addr, 'c_key': c_key})

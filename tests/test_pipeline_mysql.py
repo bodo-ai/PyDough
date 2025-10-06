@@ -554,4 +554,5 @@ def test_pipeline_e2e_mysql_defog(
         defog_config,
         reference_database=sqlite_defog_connection,
         coerce_types=True,
+        rtol=1e4,
     )

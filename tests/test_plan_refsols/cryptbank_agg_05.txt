@@ -1,6 +1,10 @@
 ROOT(columns=[('avg_secs', ROUND(avg_expr, 2:numeric))], orderings=[])
  AGGREGATE(keys={}, aggregations={'avg_expr': AVG(DATEDIFF('seconds':string, a_open_ts, min_t_ts))})
+<<<<<<< HEAD
   JOIN(condition=t0.a_key == t1.t_sourceaccount, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'a_open_ts': t0.a_open_ts, 'min_t_ts': t1.min_t_ts})
+=======
+  JOIN(condition=t0.a_key == t1.t_sourceaccount, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'a_open_ts': t0.a_open_ts, 'min_t_ts': t1.min_t_ts})
+>>>>>>> main
    SCAN(table=CRBNK.ACCOUNTS, columns={'a_key': a_key, 'a_open_ts': a_open_ts})
    AGGREGATE(keys={'t_sourceaccount': t_sourceaccount}, aggregations={'min_t_ts': MIN(t_ts)})
     SCAN(table=CRBNK.TRANSACTIONS, columns={'t_sourceaccount': t_sourceaccount, 't_ts': t_ts})

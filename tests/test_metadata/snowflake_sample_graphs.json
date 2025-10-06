@@ -7,7 +7,7 @@
         "name": "regions",
         "type": "simple table",
         "table path": "TPCH_SF1.REGION",
-        "unique properties": ["key"],
+        "unique properties": ["key", "name"],
         "properties": [
           {
             "name": "key",
@@ -41,7 +41,7 @@
         "name": "nations",
         "type": "simple table",
         "table path": "TPCH_SF1.NATION",
-        "unique properties": ["key"],
+        "unique properties": ["key", "name"],
         "properties": [
           {
             "name": "key",
@@ -83,7 +83,7 @@
         "name": "parts",
         "type": "simple table",
         "table path": "TPCH_SF1.PART",
-        "unique properties": ["key"],
+        "unique properties": ["key", "name"],
         "properties": [
           {
             "name": "key",
@@ -170,7 +170,7 @@
         "name": "suppliers",
         "type": "simple table",
         "table path": "TPCH_SF1.SUPPLIER",
-        "unique properties": ["key", "name"],
+        "unique properties": ["key", "name", "phone", "address"],
         "properties": [
           {
             "name": "key",
@@ -527,7 +527,7 @@
         "name": "customers",
         "type": "simple table",
         "table path": "TPCH_SF1.CUSTOMER",
-        "unique properties": ["key", "name"],
+        "unique properties": ["key", "name", "address"],
         "properties": [
           {
             "name": "key",

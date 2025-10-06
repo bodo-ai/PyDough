@@ -27,12 +27,17 @@ __all__ = [
     "is_positive_int",
     "is_string",
     "is_valid_name",
+    "is_valid_sql_name",
     "simple_join_keys_predicate",
     "unique_properties_predicate",
 ]
 
 
+import builtins
+import keyword
+import re
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 
 import numpy as np
 
@@ -97,11 +102,286 @@ class ValidName(PyDoughPredicate):
     as the name of a PyDough graph/collection/property.
     """
 
+    def __init__(self):
+        self.error_messages: dict[str, str] = {
+            "identifier": "must be a string that is a valid Python identifier",
+            "python_keyword": "must be a string that is not a Python reserved word or built-in name",
+            "pydough_keyword": "must be a string that is not a PyDough reserved word",
+            "sql_keyword": "must be a string that is not a SQL reserved word",
+        }
+
+    def _error_code(self, obj: object) -> str | None:
+        """Return an error code if invalid, or None if valid."""
+        ret_val: str | None = None
+        # Check that obj is a string
+        if isinstance(obj, str):
+            # Check that obj is a valid Python identifier
+            if not obj.isidentifier():
+                ret_val = "identifier"
+            # Check that obj is not a Python reserved word or built-in name
+            elif keyword.iskeyword(obj) or hasattr(builtins, obj):
+                ret_val = "python_keyword"
+            # Check that obj is not a PyDough reserved word
+            elif self._is_pydough_keyword(obj):
+                ret_val = "pydough_keyword"
+        else:
+            ret_val = "identifier"
+
+        return ret_val
+
+    def _is_pydough_keyword(self, name: str) -> bool:
+        """
+        helper: Verifies if name is a PyDough reserved word.
+                Extend with new PyDough reserved words if required.
+        """
+        # Dictionary of all registered operators pre-built from the PyDough source
+        from pydough.pydough_operators import builtin_registered_operators
+
+        # Set of collection operators
+        PYDOUGH_RESERVED: set[str] = {
+            "CALCULATE",
+            "WHERE",
+            "ORDER_BY",
+            "TOP_K",
+            "PARTITION",
+            "SINGULAR",
+            "BEST",
+            "CROSS",
+        }
+        return (name in PYDOUGH_RESERVED) or (name in builtin_registered_operators())
+
     def accept(self, obj: object) -> bool:
-        return isinstance(obj, str) and obj.isidentifier()
+        return self._error_code(obj) is None
 
     def error_message(self, error_name: str) -> str:
-        return f"{error_name} must be a string that is a Python identifier"
+        # Generic fallback (since we don't have the object here)
+        return f"{error_name} must be a valid identifier and not a reserved word"
+
+    def verify(self, obj: object, error_name: str) -> None:
+        code: str | None = self._error_code(obj)
+        if code is not None:
+            raise PyDoughMetadataException(f"{error_name} {self.error_messages[code]}")
+
+
+class ValidSQLName(PyDoughPredicate):
+    """Predicate class to check that an object is a string that can be used
+    as the name for a SQL table path/column name.
+    """
+
+    # Single-part unquoted SQL identifier (no dots here).
+    UNQUOTED_SQL_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+    """
+    Regex pattern for a single-part unquoted SQL identifier (without dots).
+    """
+
+    def __init__(self):
+        self.error_messages: dict[str, str] = {
+            "identifier": "must have a SQL name that is a valid SQL identifier",
+            "sql_keyword": "must have a SQL name that is not a reserved word",
+        }
+
+    def _split_identifier(self, name: str) -> list[str]:
+        """
+        Split a potentially qualified SQL identifier into parts.
+
+        Behavior:
+        - Dots (.) **outside** quotes/backticks separate parts.
+        - Escaped double quotes "" are allowed inside a quoted name ("...").
+        - Escaped backticks `` are allowed inside a backtick name (`...`).
+        - Dots inside quoted/backtick names are literal characters and do not split.
+        - Returned parts include their surrounding quotes/backticks if present.
+        (This is intentional, since quoted and unquoted names will be validated differently later.)
+        - Empty parts may be returned for cases like:
+            * ".field"   → ["", "field"]
+            * "schema." → ["schema", ""]
+            * "db..tbl" → ["db", "", "tbl"]
+        (Validation will decide if empty parts are allowed.)
+
+        Notes:
+        - After closing a quoted/backtick identifier, parsing continues in the same token
+        until a dot (.) is seen or the string ends. Quotes themselves do not trigger splitting.
+        - If spaces or other invalid characters appear in a part, the validator will
+        reject that token later.
+
+        Examples:
+            >>> _split_identifier('schema.table')
+            ['schema', 'table']
+
+            >>> _split_identifier('"foo"."bar"')
+            ['"foo"', '"bar"']
+
+            >>> _split_identifier('db."table.name"')
+            ['db', '"table.name"']
+
+            >>> _split_identifier('`a``b`.`c``d`')
+            ['`a``b`', '`c``d`']
+
+            >>> _split_identifier('.field')
+            ['', 'field']
+
+            >>> _split_identifier('field.')
+            ['field', '']
+        """
+
+        class split_states(Enum):
+            START = auto()
+            UNQUOTED = auto()
+            DOUBLE_QUOTE = auto()
+            BACKTICK = auto()
+
+        parts: list[str] = []
+        start_idx: int = 0
+        state: split_states = split_states.START
+        length = len(name)
+        ii: int = 0
+
+        while ii < length:
+            ch: str = name[ii]
+            match state:
+                case split_states.START:
+                    match ch:
+                        case '"':
+                            state = split_states.DOUBLE_QUOTE
+                            ii += 1
+                        case "`":
+                            state = split_states.BACKTICK
+                            ii += 1
+                        case _:
+                            state = split_states.UNQUOTED
+                case split_states.UNQUOTED:
+                    if ch == ".":
+                        parts.append(name[start_idx:ii])
+                        start_idx = ii + 1
+                        state = split_states.START
+                    ii += 1
+                case split_states.DOUBLE_QUOTE:
+                    if ch == '"':
+                        if (ii + 1 < length) and (name[ii + 1] == '"'):
+                            ii += 1
+                        else:
+                            state = split_states.UNQUOTED
+                    ii += 1
+                case split_states.BACKTICK:
+                    if ch == "`":
+                        if (ii + 1 < length) and (name[ii + 1] == "`"):
+                            ii += 1
+                        else:
+                            state = split_states.UNQUOTED
+                    ii += 1
+        parts.append(name[start_idx:ii])
+        return parts
+
+    def _error_code(self, obj: object) -> str | None:
+        """Return an error code if invalid, or None if valid."""
+        ret_val: str | None = None
+        # Check that obj is a string
+        if isinstance(obj, str):
+            # Check each part of a qualified name: db.schema.table
+            for part in self._split_identifier(obj):
+                # Check that obj is a valid SQL identifier
+                # Empty parts (e.g., leading/trailing dots) are invalid
+                if not part or not self.is_valid_sql_identifier(part):
+                    ret_val = "identifier"
+                    break
+                # Check that obj is not a SQL reserved word
+                if self._is_sql_keyword(part):
+                    ret_val = "sql_keyword"
+                    break
+        else:
+            ret_val = "identifier"
+
+        return ret_val
+
+    def is_valid_sql_identifier(self, name: str) -> bool:
+        """
+        Check if a string is a valid SQL identifier.
+
+        - Unquoted: starts with letter/underscore, then letters, digits,
+            underscores.
+        - Double-quoted: allows any chars, but " "" " is the only valid way to
+            include a double-quote char.
+        - Backtick-quoted: allows any chars, but `` `` `` is the only valid
+            way to include a backtick char.
+        """
+        if not name:
+            return False
+
+        # Case 1: unquoted
+        if self.UNQUOTED_SQL_IDENTIFIER.match(name):
+            return True
+
+        # Case 2: double quoted
+        if name.startswith('"') and name.endswith('"'):
+            inner = name[1:-1]
+            # Any " must be escaped as ""
+            return '"' not in inner.replace('""', "")
+
+        # Case 3: backtick quoted
+        if name.startswith("`") and name.endswith("`"):
+            inner = name[1:-1]
+            # Any ` must be escaped as ``
+            return "`" not in inner.replace("``", "")
+
+        return False
+
+    # fmt: off
+    SQL_RESERVED_KEYWORDS: set[str] = {
+        # Query & DML
+        "select", "from", "where", "group", "having", "distinct", "as", 
+        "join", "inner", "union", "intersect", "except",
+
+        # DDL & schema
+        "create", "alter", "drop", "table", "view", "index", "sequence",
+        "trigger", "schema", "database", "column", "constraint",
+
+        # DML
+        "insert", "update", "delete", "into", "values", "set",
+
+        # Control flow & logical
+        "and", "or", "not", "in", "is", "like", "between", "case", "when",
+        "then", "else", "end", "exists",
+
+        # Transaction & session
+        "begin", "commit", "rollback", "savepoint", "transaction",
+        "lock", "grant", "revoke",
+
+        # Data types
+        "int", "integer", "bigint", "smallint", "decimal", "numeric",
+        "float", "real", "double", "char", "varchar", "text",
+        "timestamp", "boolean", "null",
+
+        # Functions
+        "cast",
+    }
+    """
+    Set of SQL reserved keywords that may cause conflicts when used as table or
+    column names. This list was compiled from commonly reserved terms across
+    multiple SQL dialects (e.g., PostgreSQL, SQLite, MySQL), with emphasis on
+    keywords that are likely to appear in generated SQL statements.
+    If any of these are used as identifiers, they must be properly escaped to
+    avoid syntax errors.
+    """
+    # fmt: on
+
+    def _is_sql_keyword(self, name: str) -> bool:
+        """
+        helper: Verifies if name is a SQL reserved word.
+                Uses SQL_RESERVED_KEYWORDS set.
+                Extend with new SQL reserved words if required.
+        """
+        return name.lower() in self.SQL_RESERVED_KEYWORDS
+
+    def accept(self, obj: object) -> bool:
+        return self._error_code(obj) is None
+
+    def error_message(self, error_name: str) -> str:
+        # Generic fallback (since we don't have the object here)
+        return f"{error_name} must be a valid SQL identifier and not a reserved word"
+
+    def verify(self, obj: object, error_name: str) -> None:
+        code: str | None = self._error_code(obj)
+        if code is not None:
+            raise PyDoughMetadataException(f"{error_name} {self.error_messages[code]}")
 
 
 class NoExtraKeys(PyDoughPredicate):
@@ -304,6 +584,7 @@ class PositiveInteger(PyDoughPredicate):
 ###############################################################################
 
 is_valid_name: PyDoughPredicate = ValidName()
+is_valid_sql_name: PyDoughPredicate = ValidSQLName()
 is_integer = HasType(int, "integer")
 is_string = HasType(str, "string")
 is_bool = HasType(bool, "boolean")

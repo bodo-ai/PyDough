@@ -15,6 +15,7 @@ from pydough.database_connectors import DatabaseDialect
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
+    MaskedTableColumnMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
 )
@@ -523,6 +524,18 @@ class RelTranslation:
             # Cartesian join case
             out_rel.condition = LiteralExpression(True, BooleanType())
 
+        # If the join type is non-ANTI but the condition is always True,
+        # then just promote to an INNER join, and remove the filtering aspect
+        # from the cardinality in both directions
+        if (
+            join_type != JoinType.ANTI
+            and isinstance(out_rel.condition, LiteralExpression)
+            and bool(out_rel.condition.value)
+        ):
+            out_rel._join_type = JoinType.INNER
+            out_rel._cardinality = out_rel._cardinality.remove_filter()
+            out_rel._reverse_cardinality = out_rel._reverse_cardinality.remove_filter()
+
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
         # the back levels of the reference by 1. If the join is being done to
@@ -757,7 +770,10 @@ class RelTranslation:
             # If handling the data for a partition, pull every aggregation key
             # into the current context since it is now accessible as a normal
             # ref instead of a child ref.
-            if isinstance(hybrid.pipeline[pipeline_idx], HybridPartition):
+            if (
+                isinstance(hybrid.pipeline[pipeline_idx], HybridPartition)
+                and child_idx == 0
+            ):
                 partition = hybrid.pipeline[pipeline_idx]
                 assert isinstance(partition, HybridPartition)
                 for key_name in partition.key_names:
@@ -768,6 +784,21 @@ class RelTranslation:
                     )
                     context.expressions[hybrid_ref] = context.expressions[key_expr]
         return context
+
+    def is_masked_column(self, expr: HybridExpr) -> bool:
+        """
+        Checks if a given expression is a masked column expression.
+
+        Args:
+            `expr`: the expression to check.
+
+        Returns:
+            True if the expression is a masked column expression, False
+            otherwise.
+        """
+        return isinstance(expr, HybridColumnExpr) and isinstance(
+            expr.column.column_property, MaskedTableColumnMetadata
+        )
 
     def build_simple_table_scan(
         self, node: HybridCollectionAccess
@@ -810,7 +841,31 @@ class RelTranslation:
                 assert isinstance(expr, ColumnReference)
                 real_names.add(expr.name)
             uniqueness.add(frozenset(real_names))
-        answer = Scan(node.collection.collection.table_path, scan_columns, uniqueness)
+        answer: RelationalNode = Scan(
+            node.collection.collection.table_path, scan_columns, uniqueness
+        )
+
+        # If any of the columns are masked, insert a projection on top to unmask
+        # them.
+        if any(self.is_masked_column(expr) for expr in node.terms.values()):
+            unmask_columns: dict[str, RelationalExpression] = {}
+            for name, hybrid_expr in node.terms.items():
+                if self.is_masked_column(hybrid_expr):
+                    assert isinstance(hybrid_expr, HybridColumnExpr)
+                    assert isinstance(
+                        hybrid_expr.column.column_property, MaskedTableColumnMetadata
+                    )
+                    unmask_columns[name] = CallExpression(
+                        pydop.MaskedExpressionFunctionOperator(
+                            hybrid_expr.column.column_property, True
+                        ),
+                        hybrid_expr.column.column_property.unprotected_data_type,
+                        [ColumnReference(name, hybrid_expr.typ)],
+                    )
+                else:
+                    unmask_columns[name] = ColumnReference(name, hybrid_expr.typ)
+            answer = Project(answer, unmask_columns)
+
         return TranslationOutput(answer, out_columns)
 
     def translate_sub_collection(
@@ -856,7 +911,7 @@ class RelTranslation:
         )
 
         # Infer the cardinality of the join from the perspective of the new
-        # collection to the existing data. Also, if the parent has any
+        # collection to the parent. Also, if the parent has any
         # additional filters on its side that means a row may not always
         # exist, then update the reverse cardinality since it may be filtering.
         reverse_cardinality: JoinCardinality = (

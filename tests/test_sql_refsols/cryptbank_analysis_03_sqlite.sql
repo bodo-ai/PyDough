@@ -78,9 +78,9 @@ SELECT
   COALESCE(_s7.sum_t_amount, 0) AS first_sends,
   COALESCE(_s15.sum_t_amount, 0) AS first_recvs
 FROM crbnk.customers AS customers
-LEFT JOIN _s7 AS _s7
+JOIN _s7 AS _s7
   ON _s7.a_custkey = customers.c_key
-LEFT JOIN _s15 AS _s15
+JOIN _s15 AS _s15
   ON _s15.a_custkey = customers.c_key
 ORDER BY
   COALESCE(_s7.sum_t_amount, 0) + COALESCE(_s15.sum_t_amount, 0) DESC,

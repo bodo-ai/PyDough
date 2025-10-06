@@ -157,10 +157,10 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
 
         project_columns: dict[str, RelationalExpression] = {}
 
-        assert False
-
         # TODO: FINISH THIS
         return None
+
+        assert False
 
         new_join: Join = Join(
             new_join_inputs,
