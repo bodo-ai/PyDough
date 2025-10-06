@@ -53,7 +53,7 @@ def batch_evaluate(
 
         response: dict = {
             "index": payload.items.index(item) + 1,
-            "result": "SUCCESS" if materialization is not None else "UNSUPPORTED",
+            "result": "SUCCESS" if materialization != {} else "UNSUPPORTED",
             "decision": {"strategy": "values", "reason": "mock"},
             "predicate_hash": "hash1",
             "encryption_mode": "clear",
