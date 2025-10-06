@@ -11,13 +11,21 @@ WITH _s2 AS (
     ON domain.did = domain_author.did
   GROUP BY
     1
+), _t0 AS (
+  SELECT
+    _s2.name,
+    _s3.ndistinct_aid
+  FROM _s2 AS _s2
+  LEFT JOIN _s3 AS _s3
+    ON _s2.name = _s3.name
+  ORDER BY
+    COALESCE(ndistinct_aid, 0) NULLS FIRST
+  LIMIT 5
 )
 SELECT
-  _s2.name,
-  COALESCE(_s3.ndistinct_aid, 0) AS author_count
-FROM _s2 AS _s2
-LEFT JOIN _s3 AS _s3
-  ON _s2.name = _s3.name
+  name,
+  COALESCE(ndistinct_aid, 0) AS author_count
+FROM _t0
 ORDER BY
-  2 NULLS FIRST
-LIMIT 5
+  2 DESC NULLS LAST,
+  1 DESC NULLS LAST

@@ -2522,6 +2522,7 @@ def impl_defog_academic_gen7():
         domains.PARTITION(name="names", by=name)
         .CALCULATE(name, author_count=NDISTINCT(domains.domain_authors.author_id))
         .TOP_K(5, by=author_count)
+        .ORDER_BY(author_count.DESC(), name.DESC())
     )
 
 
@@ -2565,8 +2566,9 @@ def impl_defog_academic_gen11():
 
     What is the ratio of publications to authors in the database?
     """
-    return publications.CALCULATE(
-        publication_to_author_ratio=NDISTINCT(publication_id) / NDISTINCT(author_id)
+    return Academic.CALCULATE(
+        publication_to_author_ratio=NDISTINCT(publications.publication_id)
+        / NDISTINCT(authors.author_id)
     )
 
 
@@ -2591,7 +2593,16 @@ def impl_defog_academic_gen13():
     What is the ratio of the total number of publications to the total number of
     keywords within each domain ID? Show all domain IDs.
     """
-    return
+
+    ratio_calc = IFF(
+        HAS(domains_publications.publication_domain.domain_keywords),
+        COUNT(domains_publications.domain_publication)
+        / COUNT(domains_publications.publication_domain.domain_keywords),
+        None,
+    )
+    return domains_publications.PARTITION(name="domains", by=domain_id).CALCULATE(
+        domain_id, ratio=ratio_calc
+    )
 
 
 def impl_defog_academic_gen14():
@@ -2602,7 +2613,20 @@ def impl_defog_academic_gen14():
     How does the ratio of publications to journals change over the years? Return
     the annual numbers of publications and journals as well.
     """
-    return
+    return (
+        publications.PARTITION(name="years", by=year)
+        .CALCULATE(
+            year,
+            num_publications=NDISTINCT(publications.publication_id),
+            num_journals=NDISTINCT(publications.journal_id),
+        )
+        .CALCULATE(
+            year,
+            num_publications,
+            num_journals,
+            ratio=IFF(num_journals > 0, num_publications / num_journals, None),
+        )
+    )
 
 
 def impl_defog_academic_gen15():
@@ -2612,7 +2636,19 @@ def impl_defog_academic_gen15():
 
     How does the ratio of authors to organizations differ by continent?
     """
-    return
+    return (
+        organizations.PARTITION(name="continents", by=continent)
+        .CALCULATE(
+            continent,
+            ratio=IFF(
+                HAS(organizations.authors),
+                NDISTINCT(organizations.authors.author_id)
+                / NDISTINCT(organizations.organization_id),
+                0,
+            ),
+        )
+        .ORDER_BY(ratio.DESC())
+    )
 
 
 def impl_defog_academic_gen16():
@@ -2623,7 +2659,17 @@ def impl_defog_academic_gen16():
     Which author had the most publications in the year 2021 and how many
     publications did he/she have that year?
     """
-    return
+    return (
+        writes.CALCULATE(author_name=publication_author.name)
+        .PARTITION(name="authors", by=author_name)
+        .CALCULATE(
+            name=author_name,
+            count_publication=NDISTINCT(
+                writes.WHERE(author_publication.year == 2021).publication_id
+            ),
+        )
+        .TOP_K(1, by=count_publication.DESC())
+    )
 
 
 def impl_defog_academic_gen17():
@@ -2633,7 +2679,9 @@ def impl_defog_academic_gen17():
 
     What is the total number of publications presented in each conference?
     """
-    return
+    return conferences.CALCULATE(name, count_publications=COUNT(proceedings)).ORDER_BY(
+        count_publications.DESC(), name.DESC()
+    )
 
 
 def impl_defog_academic_gen18():
@@ -2644,7 +2692,9 @@ def impl_defog_academic_gen18():
     What is the total number of publications in each journal, ordered by the
     number of publications in descending order?
     """
-    return
+    return journals.CALCULATE(
+        name, jid=journal_id, num_publications=COUNT(archives)
+    ).ORDER_BY(num_publications.DESC())
 
 
 def impl_defog_academic_gen19():
@@ -2656,7 +2706,9 @@ def impl_defog_academic_gen19():
     number of publications in descending order? Give the names of the conferences
     and their corresponding number of publications.
     """
-    return
+    return conferences.CALCULATE(name, num_publications=COUNT(proceedings)).ORDER_BY(
+        num_publications.DESC(), name
+    )
 
 
 def impl_defog_academic_gen20():
@@ -2667,7 +2719,8 @@ def impl_defog_academic_gen20():
     How many publications were published in journals whose names start with the
     letter 'J'?
     """
-    return
+    selected_publications = publications.WHERE(STARTSWITH(LOWER(publisher.name), "j"))
+    return Academic.CALCULATE(n=COUNT(selected_publications))
 
 
 def impl_defog_academic_gen21():
