@@ -681,7 +681,7 @@ class HybridTree:
             return self.parent.infer_root_reverse_cardinality(context)
 
         # Once we find the root, infer the cardinality of the join that would
-        # connect just this node to the parent context. 
+        # connect just this node to the parent context.
         # At the root, only this node’s type matters for reverse cardinality.
         # Deeper nodes do not affect parent-child match guarantees.
         match self.pipeline[0]:
@@ -695,7 +695,7 @@ class HybridTree:
                     else JoinCardinality.PLURAL_ACCESS
                 )
             case HybridCollectionAccess():
-                # For non sub-collection accesses, use plural access. 
+                # For non sub-collection accesses, use plural access.
                 # For a sub-collection, infer from the reverse property.
                 if isinstance(self.pipeline[0].collection, SubCollection):
                     return self.infer_metadata_reverse_cardinality(
