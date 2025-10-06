@@ -49,9 +49,17 @@ def batch_evaluate(
     responses: list[dict] = []
     for item in payload.items:
         key = (item.column_reference, tuple(item.predicate))
-        response: dict = LOOKUP_TABLE.get(key, {"result": "UNSUPPORTED"})
+        materialization: dict = LOOKUP_TABLE.get(key, {})
+
+        response: dict = {
+            "index": payload.items.index(item) + 1,
+            "result": "SUCCESS" if materialization is not None else "UNSUPPORTED",
+            "decision": {"strategy": "values", "reason": "mock"},
+            "predicate_hash": "hash1",
+            "encryption_mode": "clear",
+            "materialization": materialization,
+        }
         # Adding the index
-        response["index"] = payload.items.index(item) + 1
         responses.append(response)
 
     return {"result": "SUCCESS", "items": responses}
