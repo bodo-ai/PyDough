@@ -1,6 +1,4 @@
 ROOT(columns=[('num_customers_checking_accounts', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  JOIN(condition=UNMASK::(PTY_UNPROTECT([t0.customerid], 'deAccount')) == UNMASK::(PTY_UNPROTECT_ACCOUNT([t1.customerid])), type=INNER, cardinality=PLURAL_FILTER, columns={})
-   SCAN(table=bodo.fsi.protected_customers, columns={'customerid': customerid})
-   FILTER(condition=UNMASK::(PTY_UNPROTECT([accounttype], 'deAccount')) != 'checking':string, columns={'customerid': customerid})
-    SCAN(table=bodo.fsi.accounts, columns={'accounttype': accounttype, 'customerid': customerid})
+  FILTER(condition=UNMASK::(PTY_UNPROTECT([accounttype], 'deAccount')) != 'checking':string, columns={})
+   SCAN(table=bodo.fsi.accounts, columns={'accounttype': accounttype})
