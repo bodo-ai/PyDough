@@ -355,6 +355,7 @@ def attempt_join_aggregate_transpose(
     # if joining first will reduce the number of rows that get aggregated.
     if join.cardinality.filters:
         can_push_left = False
+    if join.reverse_cardinality.filters:
         can_push_right = False
 
     # If any of the aggregations to either side cannot be pushed down, then
@@ -468,6 +469,9 @@ def attempt_join_aggregate_transpose(
             )
             node.aggregations[count_call_name] = regular_sum
             node.columns[count_call_name] = regular_sum
+        projection_columns[count_call_name] = ColumnReference(
+            count_call_name, NumericType()
+        )
 
     # If the node requires projection at the end, create a new Project node on
     # top of the top aggregate.

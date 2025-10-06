@@ -10,6 +10,7 @@ import time
 from collections.abc import Callable
 from functools import cache
 
+import httpx
 import pandas as pd
 import pytest
 
@@ -193,6 +194,7 @@ def get_test_graph_by_name() -> graph_fetcher:
     test_graph_location: dict[str, str] = {
         "synthea": "synthea_graph.json",
         "world_development_indicators": "world_development_indicators_graph.json",
+        "keywords": "reserved_words_graph.json",
     }
 
     @cache
@@ -616,13 +618,24 @@ def sqlite_custom_datasets_connection() -> DatabaseContext:
     """
     Returns the SQLITE database connection with all the custom datasets attached.
     """
-    commands: list[str] = [
-        "cd tests/gen_data",
-        "rm -fv synthea.db",
-        "rm -fv world_development_indicators.db",
-        "sqlite3 synthea.db < init_synthea_sqlite.sql",
-        "sqlite3 world_development_indicators.db < init_world_indicators_sqlite.sql",
+    gen_data_path: str = "tests/gen_data"
+    # Dataset tuple format: (schema_name, db_file_name, init_sql_file_name)
+    SQLite_datasets: list[tuple[str, str, str]] = [
+        ("synthea", "synthea.db", "init_synthea_sqlite.sql"),
+        ("wdi", "world_development_indicators.db", "init_world_indicators_sqlite.sql"),
+        ("keywords", "reserved_words.db", "init_reserved_words_sqlite.sql"),
     ]
+
+    # List of shell commands required to re-create all the db files
+    commands: list[str] = [f"cd {gen_data_path}"]
+    # Collect all db_file_names into the rm command
+    rm_command: str = "rm -fv " + " ".join(
+        db_file for (_, db_file, _) in SQLite_datasets
+    )
+    commands.append(rm_command)
+    # Add one sqlite3 command per dataset
+    for _, db_file, init_sql in SQLite_datasets:
+        commands.append(f"sqlite3 {db_file} < {init_sql}")
     # Get the shell commands required to re-create all the db files
     shell_cmd: str = "; ".join(commands)
 
@@ -633,16 +646,11 @@ def sqlite_custom_datasets_connection() -> DatabaseContext:
     # Central in-memory connection
     connection: sqlite3.Connection = sqlite3.connect(":memory:")
 
-    # Dict: schema_name → database file path
-    dbs: dict[str, str] = {
-        "synthea": "tests/gen_data/synthea.db",
-        "wdi": "tests/gen_data/world_development_indicators.db",
-    }
-
-    # Attach them all
-    for schema, path in dbs.items():
-        path = os.path.join(base_dir, path)
+    # Use (schema_name, db_file_name info) on SQLite_datasets to ATTACH DBs
+    for schema, db_file, _ in SQLite_datasets:
+        path: str = os.path.join(base_dir, gen_data_path, db_file)
         connection.execute(f"ATTACH DATABASE '{path}' AS {schema}")
+
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
@@ -1788,3 +1796,42 @@ def custom_functions_test_data(request) -> PyDoughPandasTest:
     test.
     """
     return request.param
+
+
+@pytest.fixture(scope="session")
+def mock_server_setup():
+    # Run FastAPI dev server in background
+    proc = subprocess.Popen(
+        [
+            "uvicorn",
+            "tests.mock_server.api_mock_server:app",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            "8000",
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=os.environ.copy(),
+        text=True,
+    )
+
+    server_url: str = "http://127.0.0.1:8000"
+
+    # Wait until server is ready
+    for _ in range(20):
+        try:
+            r: httpx.Response = httpx.get(server_url + "/health", timeout=1)
+            if r.status_code == 200:
+                break
+        except Exception:
+            time.sleep(0.5)
+    else:
+        proc.terminate()
+        raise RuntimeError("Mock server failed to start")
+
+    yield server_url
+
+    # Cleanup after tests
+    proc.terminate()
+    proc.wait()

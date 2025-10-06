@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  JOIN(condition=t0.o_custkey == t1.o_custkey & t0.o_orderdate == t1.o_orderdate & t1.o_totalprice >= 0.5:numeric * DEFAULT_TO(t0.sum_o_totalprice, 0:numeric), type=INNER, cardinality=PLURAL_FILTER, columns={})
+  JOIN(condition=t0.o_custkey == t1.o_custkey & t0.o_orderdate == t1.o_orderdate & t1.o_totalprice >= 0.5:numeric * DEFAULT_TO(t0.sum_o_totalprice, 0:numeric), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={})
    FILTER(condition=n_rows > 1:numeric, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'sum_o_totalprice': sum_o_totalprice})
     AGGREGATE(keys={'o_custkey': o_custkey, 'o_orderdate': o_orderdate}, aggregations={'n_rows': COUNT(), 'sum_o_totalprice': SUM(o_totalprice)})
      FILTER(condition=YEAR(o_orderdate) == 1993:numeric, columns={'o_custkey': o_custkey, 'o_orderdate': o_orderdate, 'o_totalprice': o_totalprice})

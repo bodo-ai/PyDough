@@ -1,5 +1,5 @@
 ROOT(columns=[('order_priority', o_orderpriority), ('market_segment', c_mktsegment)], orderings=[(o_orderpriority):asc_first, (c_mktsegment):asc_first])
- JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, columns={'c_mktsegment': t1.c_mktsegment, 'o_orderpriority': t0.o_orderpriority})
+ JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'c_mktsegment': t1.c_mktsegment, 'o_orderpriority': t0.o_orderpriority})
   AGGREGATE(keys={'o_orderpriority': o_orderpriority}, aggregations={})
    SCAN(table=tpch.ORDERS, columns={'o_orderpriority': o_orderpriority})
   AGGREGATE(keys={'c_mktsegment': c_mktsegment}, aggregations={})

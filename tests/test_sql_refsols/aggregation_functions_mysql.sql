@@ -36,7 +36,6 @@ WITH _s1 AS (
     ON CUSTOMER.c_custkey = _s1.o_custkey
 ), _t1 AS (
   SELECT
-    c_nationkey,
     ANY_VALUE(c_acctbal) AS anything_c_acctbal,
     AVG(c_acctbal) AS avg_c_acctbal,
     AVG(expr_17) AS avg_expr_17,
@@ -99,25 +98,22 @@ WITH _s1 AS (
     SUM(n_rows) AS sum_n_rows
   FROM _t2
   GROUP BY
-    1
+    c_nationkey
 )
 SELECT
-  COALESCE(_t1.sum_c_acctbal, 0) AS sum_value,
-  _t1.avg_c_acctbal AS avg_value,
-  _t1.avg_expr_17 AS median_value,
-  _t1.min_c_acctbal AS min_value,
-  _t1.max_c_acctbal AS max_value,
-  _t1.max_expr_18 AS quantile_value,
-  _t1.anything_c_acctbal AS anything_value,
-  _t1.count_c_acctbal AS count_value,
-  _t1.ndistinct_c_acctbal AS count_distinct_value,
-  _t1.sample_var_c_acctbal AS variance_s_value,
-  _t1.population_var_c_acctbal AS variance_p_value,
-  _t1.sample_std_c_acctbal AS stddev_s_value,
-  _t1.population_std_c_acctbal AS stddev_p_value
-FROM tpch.NATION AS NATION
-JOIN _t1 AS _t1
-  ON NATION.n_nationkey = _t1.c_nationkey
-  AND (
-    _t1.sum_n_rows = 0 OR _t1.sum_n_rows IS NULL
-  )
+  COALESCE(sum_c_acctbal, 0) AS sum_value,
+  avg_c_acctbal AS avg_value,
+  avg_expr_17 AS median_value,
+  min_c_acctbal AS min_value,
+  max_c_acctbal AS max_value,
+  max_expr_18 AS quantile_value,
+  anything_c_acctbal AS anything_value,
+  count_c_acctbal AS count_value,
+  ndistinct_c_acctbal AS count_distinct_value,
+  sample_var_c_acctbal AS variance_s_value,
+  population_var_c_acctbal AS variance_p_value,
+  sample_std_c_acctbal AS stddev_s_value,
+  population_std_c_acctbal AS stddev_p_value
+FROM _t1
+WHERE
+  sum_n_rows = 0 OR sum_n_rows IS NULL

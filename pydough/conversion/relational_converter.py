@@ -431,6 +431,7 @@ class RelTranslation:
         rhs_result: TranslationOutput,
         join_type: JoinType,
         join_cardinality: JoinCardinality,
+        reverse_join_cardinality: JoinCardinality,
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None,
         join_cond: HybridExpr | None,
         child_idx: int | None,
@@ -447,6 +448,8 @@ class RelTranslation:
             onto `rhs_result`.
             `join_cardinality`: the cardinality of the join to be used to connect
             `lhs_result` onto `rhs_result`.
+            `reverse_join_cardinality`: the cardinality of the join from the
+            perspective of `rhs_result`.
             `join_keys`: a list of tuples in the form `(lhs_key, rhs_key)` that
             represent the equi-join keys used for the join from either side.
             This can be None if the `join_cond` is provided instead.
@@ -491,6 +494,7 @@ class RelTranslation:
             join_type,
             join_columns,
             join_cardinality,
+            reverse_join_cardinality,
             correl_name=lhs_result.correlated_name,
         )
         input_aliases: list[str | None] = out_rel.default_input_aliases
@@ -520,6 +524,18 @@ class RelTranslation:
         else:
             # Cartesian join case
             out_rel.condition = LiteralExpression(True, BooleanType())
+
+        # If the join type is non-ANTI but the condition is always True,
+        # then just promote to an INNER join, and remove the filtering aspect
+        # from the cardinality in both directions
+        if (
+            join_type != JoinType.ANTI
+            and isinstance(out_rel.condition, LiteralExpression)
+            and bool(out_rel.condition.value)
+        ):
+            out_rel._join_type = JoinType.INNER
+            out_rel._cardinality = out_rel._cardinality.remove_filter()
+            out_rel._reverse_cardinality = out_rel._reverse_cardinality.remove_filter()
 
         # Propagate all of the references from the left hand side. If the join
         # is being done to step down from a parent into a child then promote
@@ -712,6 +728,7 @@ class RelTranslation:
                             child_output,
                             child.connection_type.join_type,
                             cardinality,
+                            child.reverse_cardinality,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -726,6 +743,7 @@ class RelTranslation:
                             child_output,
                             child.connection_type.join_type,
                             JoinCardinality.SINGULAR_FILTER,
+                            child.reverse_cardinality,
                             join_keys,
                             child.subtree.general_join_condition,
                             child_idx,
@@ -893,6 +911,18 @@ class RelTranslation:
             else cardinality.add_filter()
         )
 
+        # Infer the cardinality of the join from the perspective of the new
+        # collection to the parent. Also, if the parent has any
+        # additional filters on its side that means a row may not always
+        # exist, then update the reverse cardinality since it may be filtering.
+        reverse_cardinality: JoinCardinality = (
+            HybridTree.infer_metadata_reverse_cardinality(
+                collection_access.subcollection_property
+            )
+        )
+        if (not reverse_cardinality.filters) and (not parent.always_exists()):
+            reverse_cardinality = reverse_cardinality.add_filter()
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         join_cond: HybridExpr | None = None
         match collection_access.subcollection_property:
@@ -922,6 +952,7 @@ class RelTranslation:
             rhs_output,
             JoinType.INNER,
             cardinality,
+            reverse_cardinality,
             join_keys,
             join_cond,
             None,
@@ -1107,6 +1138,7 @@ class RelTranslation:
         self,
         node: HybridPartitionChild,
         context: TranslationOutput | None,
+        preceding_hybrid: HybridTree | None,
     ) -> TranslationOutput:
         """
         Converts a step into the child of a PARTITION node into a join between
@@ -1118,6 +1150,8 @@ class RelTranslation:
             `context`: the data structure storing information used by the
             conversion, such as bindings of already translated terms from
             preceding contexts.
+            `preceding_hybrid`: the previous layer in the hybrid tree above the
+            current level.
 
         Returns:
             The TranslationOutput payload containing expressions for both the
@@ -1153,6 +1187,9 @@ class RelTranslation:
             child_output,
             JoinType.INNER,
             JoinCardinality.PLURAL_FILTER,
+            JoinCardinality.SINGULAR_ACCESS
+            if preceding_hybrid is not None and preceding_hybrid.always_exists()
+            else JoinCardinality.SINGULAR_FILTER,
             join_keys,
             None,
             None,
@@ -1313,6 +1350,7 @@ class RelTranslation:
                             result,
                             JoinType.INNER,
                             JoinCardinality.PLURAL_ACCESS,
+                            JoinCardinality.SINGULAR_ACCESS,
                             join_keys,
                             None,
                             None,
@@ -1329,7 +1367,11 @@ class RelTranslation:
                     else:
                         result = self.build_simple_table_scan(operation)
             case HybridPartitionChild():
-                result = self.translate_partition_child(operation, context)
+                result = self.translate_partition_child(
+                    operation,
+                    context,
+                    preceding_hybrid[0] if preceding_hybrid is not None else None,
+                )
             case HybridCalculate():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_calculate(operation, context)

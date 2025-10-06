@@ -1,6 +1,5 @@
 SELECT
   COUNT(*) AS num_customers_checking_accounts
-FROM bodo.fsi.protected_customers AS protected_customers
-JOIN bodo.fsi.accounts AS accounts
-  ON PTY_UNPROTECT(protected_customers.customerid, 'deAccount') = PTY_UNPROTECT_ACCOUNT(accounts.customerid)
-  AND accounts.accounttype <> PTY_PROTECT('checking', 'deAccount')
+FROM bodo.fsi.accounts
+WHERE
+  accounttype <> PTY_PROTECT('checking', 'deAccount')
