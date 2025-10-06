@@ -731,12 +731,6 @@ class RelTranslation:
                             child.subtree.general_join_condition,
                             child_idx,
                         )
-                        # if isinstance(context.relational_node, Join) and context.relational_node.join_type == JoinType.INNER and context.relational_node.condition == LiteralExpression(True, BooleanType()) and context.relational_node.cardinality == JoinCardinality.SINGULAR_ACCESS and context.relational_node.reverse_cardinality == JoinCardinality.PLURAL_ACCESS:
-                        #     print()
-                        #     print(context.relational_node.to_tree_string())
-                        #     print()
-                        #     print(child_output.relational_node.to_tree_string())
-                        #     breakpoint()
                     case (
                         ConnectionType.NO_MATCH_SINGULAR
                         | ConnectionType.NO_MATCH_AGGREGATION
@@ -916,7 +910,7 @@ class RelTranslation:
         )
 
         # Infer the cardinality of the join from the perspective of the new
-        # collection to the existing data. Also, if the parent has any
+        # collection to the parent. Also, if the parent has any
         # additional filters on its side that means a row may not always
         # exist, then update the reverse cardinality since it may be filtering.
         reverse_cardinality: JoinCardinality = (
@@ -1549,8 +1543,6 @@ def optimize_relational_tree(
     # objects inside the plan.
     pruner: ColumnPruner = ColumnPruner()
     root = pruner.prune_unused_columns(root)
-    # print()
-    # print(root.to_tree_string())
 
     # Bubble up names from the leaf nodes to further encourage simpler naming
     # without aliases, and also to delete duplicate columns where possible.
