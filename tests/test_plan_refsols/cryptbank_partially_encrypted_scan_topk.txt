@@ -1,2 +1,0 @@
-ROOT(columns=[('key', t_key), ('time_stamp', t_ts)], orderings=[(t_ts):desc_last], limit=5:numeric)
- SCAN(table=CRBNK.TRANSACTIONS, columns={'t_key': t_key, 't_ts': t_ts})

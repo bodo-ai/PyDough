@@ -223,7 +223,7 @@
             "synonyms": ["record datetime", "price update date"]
           },
           {
-            "name": "open",
+            "name": "_open",
             "type": "table column",
             "column name": "sbDpOpen",
             "data type": "numeric",
@@ -1564,7 +1564,7 @@
           {
             "name": "_id",
             "type": "table column",
-            "column name": "diagnosis_id",
+            "column name": "diag_id",
             "data type": "numeric",
             "description": "The unique identifier for each diagnosis in the system",
             "sample values": [1, 3, 5, 7, 9],
@@ -1646,7 +1646,7 @@
           {
             "name": "diagnosis_id",
             "type": "table column",
-            "column name": "diagnosis_id",
+            "column name": "diag_id",
             "data type": "numeric",
             "description": "The id of the diagnosis the patient is being treated for",
             "sample values": [2, 4, 5, 6, 8],

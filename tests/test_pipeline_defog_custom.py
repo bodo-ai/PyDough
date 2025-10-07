@@ -2304,7 +2304,7 @@ def test_pipeline_e2e_defog_custom(
     schemas.
     """
     defog_custom_pipeline_test_data.run_e2e_test(
-        defog_graphs, sqlite_defog_connection, config=defog_config
+        defog_graphs, sqlite_defog_connection, config=defog_config, coerce_types=True
     )
 
 

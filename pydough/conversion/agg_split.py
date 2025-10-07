@@ -355,6 +355,7 @@ def attempt_join_aggregate_transpose(
     # if joining first will reduce the number of rows that get aggregated.
     if join.cardinality.filters:
         can_push_left = False
+    if join.reverse_cardinality.filters:
         can_push_right = False
 
     # If any of the aggregations to either side cannot be pushed down, then
@@ -373,11 +374,6 @@ def attempt_join_aggregate_transpose(
     if not can_push_left and not can_push_right:
         # If we cannot push the aggregate down into either side, we cannot
         # perform the transpose.
-        return node, True
-
-    if need_count_aggs and not (can_push_left and can_push_right):
-        # If we need to push down COUNT(*) aggregates, but cannot push into
-        # both sides of the join, we cannot perform the transpose.
         return node, True
 
     # Parse the join condition to identify the lists of equi-join keys
@@ -406,21 +402,31 @@ def attempt_join_aggregate_transpose(
 
     # If we need count aggregates, add one to each side of the join.
     if need_count_aggs:
-        assert len(count_aggs) > 0
-        lhs_aggs.append(count_aggs.pop())
-        new_agg_name: str
+        lhs_agg_name: str
+        rhs_agg_name: str
         idx: int = 0
         while True:
-            new_agg_name = f"agg_{idx}"
-            if new_agg_name not in node.columns:
-                break
+            lhs_agg_name = f"agg_{idx}"
             idx += 1
-        node.aggregations[new_agg_name] = CallExpression(
+            if lhs_agg_name not in node.columns and lhs_agg_name not in join.columns:
+                break
+        while True:
+            rhs_agg_name = f"agg_{idx}"
+            idx += 1
+            if rhs_agg_name not in node.columns and rhs_agg_name not in join.columns:
+                break
+        node.aggregations[lhs_agg_name] = CallExpression(
             pydop.COUNT,
             NumericType(),
             [],
         )
-        rhs_aggs.append(new_agg_name)
+        node.aggregations[rhs_agg_name] = CallExpression(
+            pydop.COUNT,
+            NumericType(),
+            [],
+        )
+        lhs_aggs.append(lhs_agg_name)
+        rhs_aggs.append(rhs_agg_name)
 
     # Loop over both inputs and perform the pushdown into whichever one(s)
     # will allow an aggregate to be pushed into them.
@@ -445,20 +451,35 @@ def attempt_join_aggregate_transpose(
         if side_count_ref is not None:
             count_refs.append(side_count_ref)
 
-    # For each COUNT(*) aggregate, replace with the product of the COUNT(*)
-    # calls that were pushed into each side of the join.
+    # For each COUNT(*) aggregate, replace with the product of the calls that
+    # were pushed into each side of the join.
     for count_call_name in count_aggs:
-        assert len(count_refs) > 1
-        product: RelationalExpression = CallExpression(
-            pydop.MUL, NumericType(), count_refs
+        if len(count_refs) > 1:
+            product: RelationalExpression = CallExpression(
+                pydop.MUL, NumericType(), count_refs
+            )
+            product_sum: CallExpression = CallExpression(
+                pydop.SUM, NumericType(), [product]
+            )
+            node.aggregations[count_call_name] = product_sum
+            node.columns[count_call_name] = product_sum
+        elif len(count_refs) == 1:
+            regular_sum: CallExpression = CallExpression(
+                pydop.SUM, NumericType(), [count_refs[0]]
+            )
+            node.aggregations[count_call_name] = regular_sum
+            node.columns[count_call_name] = regular_sum
+        projection_columns[count_call_name] = ColumnReference(
+            count_call_name, NumericType()
         )
-        projection_columns[count_call_name] = product
-        need_projection = True
 
     # If the node requires projection at the end, create a new Project node on
     # top of the top aggregate.
     if need_projection:
-        return Project(node, projection_columns), True
+        new_node: RelationalNode = node.copy(
+            inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+        )
+        return Project(new_node, projection_columns), False
     else:
         return node, True
 

@@ -94,7 +94,7 @@ Call pydough.explain_structure(graph) to see how all of the collections in the g
                 """
 PyDough collection: customers
 Table path: tpch.CUSTOMER
-Unique properties of collection: ['key', 'name']
+Unique properties of collection: ['key', 'name', 'address']
 Scalar properties:
   account_balance
   address
@@ -124,7 +124,7 @@ Call pydough.explain(graph['customers'][property_name]) to learn more about any 
                 """
 PyDough collection: regions
 Table path: tpch.REGION
-Unique properties of collection: ['key']
+Unique properties of collection: ['key', 'name']
 Scalar properties:
   comment
   key

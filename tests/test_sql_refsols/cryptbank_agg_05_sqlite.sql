@@ -20,5 +20,5 @@ SELECT
     2
   ) AS avg_secs
 FROM crbnk.accounts AS accounts
-LEFT JOIN _s1 AS _s1
+JOIN _s1 AS _s1
   ON _s1.t_sourceaccount = accounts.a_key
