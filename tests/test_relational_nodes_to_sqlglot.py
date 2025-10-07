@@ -32,8 +32,6 @@ from sqlglot.expressions import (
 )
 from sqlglot.expressions import Identifier as Ident
 
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseDialect
 from pydough.pydough_operators import (
     ABS,
     ADD,
@@ -73,10 +71,9 @@ from tests.testing_utilities import (
 )
 
 
-@pytest.fixture(scope="module")
-def sqlglot_relational_visitor() -> SQLGlotRelationalVisitor:
-    config: PyDoughConfigs = PyDoughConfigs()
-    return SQLGlotRelationalVisitor(DatabaseDialect.SQLITE, config)
+@pytest.fixture
+def sqlglot_relational_visitor(empty_sqlite_tpch_session) -> SQLGlotRelationalVisitor:
+    return SQLGlotRelationalVisitor(empty_sqlite_tpch_session)
 
 
 @dataclass

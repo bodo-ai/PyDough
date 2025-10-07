@@ -18,7 +18,6 @@ from sqlglot.expressions import Star as SQLGlotStar
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.errors import PyDoughSQLException
 from pydough.relational import (
@@ -47,20 +46,19 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     def __init__(
         self,
-        dialect: DatabaseDialect,
-        correlated_names: dict[str, str],
-        config: PyDoughConfigs,
         relational_visitor: "SQLGlotRelationalVisitor",
+        correlated_names: dict[str, str],
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
-        self._dialect: DatabaseDialect = dialect
+        self._dialect: DatabaseDialect = relational_visitor._session.database.dialect
         self._correlated_names: dict[str, str] = correlated_names
-        self._config: PyDoughConfigs = config
         self._relational_visitor: SQLGlotRelationalVisitor = relational_visitor
         self._bindings: BaseTransformBindings = bindings_from_dialect(
-            dialect, config, self._relational_visitor
+            relational_visitor._session.database.dialect,
+            relational_visitor._session.config,
+            self._relational_visitor,
         )
 
     def reset(self) -> None:

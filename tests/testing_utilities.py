@@ -40,7 +40,7 @@ import pytest
 import pydough
 import pydough.pydough_operators as pydop
 from pydough import init_pydough_context, to_df, to_sql
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughConfigs, PyDoughSession
 from pydough.conversion import convert_ast_to_relational
 from pydough.database_connectors import DatabaseContext
 from pydough.errors import PyDoughTestingException
@@ -1175,14 +1175,15 @@ class PyDoughPandasTest:
 
         # Run the PyDough code through the pipeline up until it is converted to
         # a relational plan.
-        if config is None:
-            config = pydough.active_session.config
-        qualified: PyDoughQDAG = qualify_node(root, graph, config)
+        session: PyDoughSession = PyDoughSession()
+        session.metadata = graph
+        session.config = config if config is not None else pydough.active_session.config
+        qualified: PyDoughQDAG = qualify_node(root, session)
         assert isinstance(qualified, PyDoughCollectionQDAG), (
             "Expected qualified answer to be a collection, not an expression"
         )
         relational: RelationalRoot = convert_ast_to_relational(
-            qualified, _load_column_selection({"columns": self.columns}), config
+            qualified, _load_column_selection({"columns": self.columns}), session
         )
 
         # Either update the reference solution, or compare the generated
