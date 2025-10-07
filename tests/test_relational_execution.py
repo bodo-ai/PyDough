@@ -7,8 +7,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
-from pydough.configs import PyDoughConfigs
-from pydough.database_connectors import DatabaseContext
+from pydough.configs import PyDoughSession
 from pydough.pydough_operators import (
     EQU,
     SUM,
@@ -32,10 +31,7 @@ from tests.testing_utilities import (
 pytestmark = [pytest.mark.execute]
 
 
-def test_person_total_salary(
-    sqlite_people_jobs_context: DatabaseContext,
-    default_config: PyDoughConfigs,
-) -> None:
+def test_person_total_salary(sqlite_people_jobs_session: PyDoughSession) -> None:
     """
     Tests a simple join and aggregate to compute the total salary for each
     person in the PEOPLE table.
@@ -91,7 +87,7 @@ def test_person_total_salary(
             join_type=JoinType.LEFT,
         ),
     )
-    output: list[Any] = execute_df(result, sqlite_people_jobs_context, default_config)
+    output: list[Any] = execute_df(result, sqlite_people_jobs_session)
     people_results: list[str] = [f"Person {i}" for i in range(10)]
     salary_results: list[float] = [
         sum((i + j + 5.7) * 1000 for j in range(2)) for i in range(10)
