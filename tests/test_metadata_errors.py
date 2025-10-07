@@ -8,7 +8,7 @@ import re
 import pytest
 
 from pydough import parse_json_metadata_from_file
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughMetadataException, PyDoughTypeException
 from pydough.metadata import CollectionMetadata, GraphMetadata
 from pydough.unqualified import UnqualifiedNode, qualify_node, transform_code
@@ -936,7 +936,6 @@ def test_invalid_general_join_conditions(
     invalid_graph_path: str,
     pydough_string: str,
     error_message: str,
-    default_config: PyDoughConfigs,
 ) -> None:
     with pytest.raises(Exception, match=re.escape(error_message)):
         graph: GraphMetadata = parse_json_metadata_from_file(
@@ -949,4 +948,6 @@ def test_invalid_general_join_conditions(
         exec(pydough_string, {}, local_variables)
         pydough_code = local_variables["answer"]
         assert isinstance(pydough_code, UnqualifiedNode)
-        qualify_node(pydough_code, graph, default_config)
+        session: PyDoughSession = PyDoughSession()
+        session.metadata = graph
+        qualify_node(pydough_code, session)

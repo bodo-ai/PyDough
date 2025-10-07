@@ -8,14 +8,10 @@ import re
 import pytest
 
 import pydough
-from pydough.configs import PyDoughConfigs
-from pydough.metadata import GraphMetadata
+from pydough.configs import PyDoughSession
 from pydough.unqualified import (
     UnqualifiedNode,
     qualify_node,
-)
-from tests.testing_utilities import (
-    graph_fetcher,
 )
 
 
@@ -209,7 +205,7 @@ from tests.testing_utilities import (
 def test_qualify_error(
     pydough_text: str,
     error_msg: str,
-    get_sample_graph: graph_fetcher,
+    empty_sqlite_tpch_session: PyDoughSession,
 ) -> None:
     """
     Tests that the qualification process correctly raises the expected error
@@ -219,10 +215,10 @@ def test_qualify_error(
     multiple lines, but must end with storing the answers in a variable
     called `result`.
     """
-    graph: GraphMetadata = get_sample_graph("TPCH")
-    default_config: PyDoughConfigs = pydough.active_session.config
     with pytest.raises(Exception, match=re.escape(error_msg)):
         unqualified: UnqualifiedNode = pydough.from_string(
-            pydough_text, answer_variable="result", metadata=graph
+            pydough_text,
+            answer_variable="result",
+            metadata=empty_sqlite_tpch_session.metadata,
         )
-        qualify_node(unqualified, graph, default_config)
+        qualify_node(unqualified, empty_sqlite_tpch_session)
