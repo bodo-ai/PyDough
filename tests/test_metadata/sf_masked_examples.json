@@ -218,7 +218,7 @@
             "data type": "string",
             "server masked": true,
             "unprotect protocol": "PTY_UNPROTECT({}, 'deName')",
-            "protect protocol": "PTY_PROTECT({}, 'deName)",
+            "protect protocol": "PTY_PROTECT({}, 'deName')",
             "description": "The first name of the customer",
             "sample values": ["Julie", "Melissa", "Gary"],
             "synonyms": ["customer first name", "given name"]

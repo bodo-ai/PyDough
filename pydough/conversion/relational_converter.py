@@ -6,6 +6,7 @@ nodes as an intermediary representation.
 __all__ = ["convert_ast_to_relational"]
 
 
+import os
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -84,6 +85,7 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
+from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
 from .relational_simplification import simplify_expressions
@@ -1661,6 +1663,10 @@ def convert_ast_to_relational(
 
     # Invoke the optimization procedures on the result to clean up the tree.
     additional_shuttles: list[RelationalExpressionShuttle] = []
+    # Add the mask literal comparison shuttle if the environment variable
+    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1.
+    if os.getenv("PYDOUGH_ENABLE_MASK_REWRITES") == "1":
+        additional_shuttles.append(MaskLiteralComparisonShuttle())
     optimized_result: RelationalRoot = optimize_relational_tree(
         raw_result, session, additional_shuttles
     )
