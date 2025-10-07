@@ -1,12 +1,17 @@
-WITH _s3 AS (
+WITH _s1 AS (
   SELECT
-    domain.did,
+    did,
     COUNT(*) AS n_rows
-  FROM main.domain AS domain
-  JOIN main.domain_keyword AS domain_keyword
-    ON domain.did = domain_keyword.did
+  FROM main.domain_keyword
   GROUP BY
     1
+), _s3 AS (
+  SELECT
+    domain.did,
+    _s1.n_rows
+  FROM main.domain AS domain
+  JOIN _s1 AS _s1
+    ON _s1.did = domain.did
 )
 SELECT
   domain_publication.did AS domain_id,

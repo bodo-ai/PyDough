@@ -22,7 +22,7 @@ WITH _s1 AS (
     1
 )
 SELECT
-  _s6.name,
+  _s6.name AS author_name,
   COALESCE(_s7.ndistinct_pid, 0) AS count_publication
 FROM _s6 AS _s6
 LEFT JOIN _s7 AS _s7

@@ -4048,7 +4048,7 @@
       },
       {
         "type": "reverse",
-        "name": "authors_domain",
+        "name": "domain",
         "original parent": "domains",
         "original property": "domain_authors",
         "singular": true,
@@ -4073,7 +4073,7 @@
       },
       {
         "type": "reverse",
-        "name": "domains_author",
+        "name": "author",
         "original parent": "authors",
         "original property": "author_domains",
         "singular": true,
@@ -4098,7 +4098,7 @@
       },
       {
         "type": "reverse",
-        "name": "conference_domain",
+        "name": "domain",
         "original parent": "domains",
         "original property": "domain_conferences",
         "singular": true,
@@ -4123,7 +4123,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain_conference",
+        "name": "conference",
         "original parent": "conferences",
         "original property": "conference_domains",
         "singular": true,
@@ -4148,7 +4148,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain_journal",
+        "name": "journal",
         "original parent": "journals",
         "original property": "journal_domains",
         "singular": true,
@@ -4173,7 +4173,7 @@
       },
       {
         "type": "reverse",
-        "name": "jornal_domain",
+        "name": "domain",
         "original parent": "domains",
         "original property": "domain_journals",
         "singular": true,
@@ -4198,7 +4198,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain_keyword",
+        "name": "keyword",
         "original parent": "keywords",
         "original property": "keyword_domains",
         "singular": true,
@@ -4223,7 +4223,7 @@
       },
       {
         "type": "reverse",
-        "name": "keyword_domain",
+        "name": "domain",
         "original parent": "domains",
         "original property": "domain_keywords",
         "singular": true,
@@ -4248,7 +4248,7 @@
       },
       {
         "type": "reverse",
-        "name": "domain_publication",
+        "name": "publication",
         "original parent": "publications",
         "original property": "publication_domains",
         "singular": true,
@@ -4273,7 +4273,7 @@
       },
       {
         "type": "reverse",
-        "name": "publication_domain",
+        "name": "domain",
         "original parent": "domains",
         "original property": "domain_publications",
         "singular": true,
@@ -4348,7 +4348,7 @@
       },
       {
         "type": "reverse",
-        "name": "publication_keyword",
+        "name": "keyword",
         "original parent": "keywords",
         "original property": "keyword_publications",
         "singular": true,
@@ -4373,7 +4373,7 @@
       },
       {
         "type": "reverse",
-        "name": "keyword_publication",
+        "name": "publication",
         "original parent": "publications",
         "original property": "publication_keywords",
         "singular": true,
@@ -4398,7 +4398,7 @@
       },
       {
         "type": "reverse",
-        "name": "author_publication",
+        "name": "publication",
         "original parent": "publications",
         "original property": "publication_authors",
         "singular": true,
@@ -4423,7 +4423,7 @@
       },
       {
         "type": "reverse",
-        "name": "publication_author",
+        "name": "author",
         "original parent": "authors",
         "original property": "author_publications",
         "singular": true,

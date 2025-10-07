@@ -2440,8 +2440,8 @@ def impl_defog_academic_gen1():
     Which authors have written publications in both the domain
     'Machine Learning' and the domain 'Data Science'?
     """
-    selected_domains = author_publications.author_publication.publication_domains.WHERE(
-        ISIN(publication_domain.name, ("Data Science", "Machine Learning"))
+    selected_domains = author_publications.publication.publication_domains.WHERE(
+        ISIN(domain.name, ("Data Science", "Machine Learning"))
     )
 
     return authors.WHERE(NDISTINCT(selected_domains.domain_id) == 2).CALCULATE(name)
@@ -2454,10 +2454,10 @@ def impl_defog_academic_gen2():
 
     What is the total number of citations received by each author?
     """
-    publications = author_publications.author_publication
+    publications_selected = author_publications.publication
 
-    return authors.WHERE(HAS(publications)).CALCULATE(
-        name, total_citations=SUM(publications.citation_num)
+    return authors.WHERE(HAS(publications_selected)).CALCULATE(
+        name, total_citations=SUM(publications_selected.citation_num)
     )
 
 
@@ -2483,7 +2483,7 @@ def impl_defog_academic_gen4():
     """
     return domains.CALCULATE(
         name,
-        average_references=AVG(domain_publications.domain_publication.reference_num),
+        average_references=AVG(domain_publications.publication.reference_num),
     )
 
 
@@ -2595,9 +2595,9 @@ def impl_defog_academic_gen13():
     """
 
     ratio_calc = IFF(
-        HAS(domains_publications.publication_domain.domain_keywords),
-        COUNT(domains_publications.domain_publication)
-        / COUNT(domains_publications.publication_domain.domain_keywords),
+        HAS(domains_publications.domain.domain_keywords),
+        COUNT(domains_publications.publication)
+        / COUNT(domains_publications.domain.domain_keywords),
         None,
     )
     return domains_publications.PARTITION(name="domains", by=domain_id).CALCULATE(
@@ -2660,12 +2660,12 @@ def impl_defog_academic_gen16():
     publications did he/she have that year?
     """
     return (
-        writes.CALCULATE(author_name=publication_author.name)
+        writes.CALCULATE(author_name=author.name)
         .PARTITION(name="authors", by=author_name)
         .CALCULATE(
-            name=author_name,
+            author_name,
             count_publication=NDISTINCT(
-                writes.WHERE(author_publication.year == 2021).publication_id
+                writes.WHERE(publication.year == 2021).publication_id
             ),
         )
         .TOP_K(1, by=count_publication.DESC())
@@ -2731,7 +2731,14 @@ def impl_defog_academic_gen21():
     Which organizations have authors who have written publications in the
     domain 'Machine Learning'?
     """
-    return
+    ml_publications = (
+        authors.author_publications.publication.publication_domains.domain.WHERE(
+            name == "Machine Learning"
+        )
+    )
+    return organizations.CALCULATE(
+        oranization_name=name, organization_id=organization_id
+    ).WHERE(HAS(ml_publications))
 
 
 def impl_defog_academic_gen22():
@@ -2742,7 +2749,11 @@ def impl_defog_academic_gen22():
     Which authors belong to the same domain as Martin?,Always filter names using
     LIKE with percent sign wildcards
     """
-    return
+    martin_domains = author_domains.domain.domain_authors.author.WHERE(
+        CONTAINS(LOWER(name), "martin")
+    )
+
+    return authors.WHERE(HAS(martin_domains)).CALCULATE(name, author_id)
 
 
 def impl_defog_academic_gen23():
@@ -2752,7 +2763,7 @@ def impl_defog_academic_gen23():
 
     Which authors are not part of any organization?
     """
-    return
+    return authors.WHERE(HASNOT(organization)).CALCULATE(name, author_id)
 
 
 def impl_defog_academic_gen24():
@@ -2763,7 +2774,15 @@ def impl_defog_academic_gen24():
     What are the publications written by authors from the 'Sociology' domain and
     presented at conferences in the year 2020?
     """
-    return
+
+    sociology_author = publication_authors.author.author_domains.domain.WHERE(
+        CONTAINS(LOWER(name), "sociology")
+    ).domain_conferences.WHERE((conference_id == publication_conference_id))
+    return (
+        publications.CALCULATE(publication_conference_id=conference_id)
+        .WHERE((year == 2020) & HAS(sociology_author))
+        .CALCULATE(title)
+    )
 
 
 def impl_defog_academic_gen25():
@@ -2774,4 +2793,11 @@ def impl_defog_academic_gen25():
     What are the names of the authors who have written publications in the
     domain 'Computer Science'?
     """
-    return
+    return (
+        authors.CALCULATE(author_name=name)
+        .author_publications.publication.publication_domains.domain.WHERE(
+            name == "Computer Science"
+        )
+        .PARTITION(name="authors", by=author_name)
+        .CALCULATE(author_name)
+    )

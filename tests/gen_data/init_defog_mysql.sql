@@ -908,9 +908,9 @@ VALUES
 (15, 14, 'Hydrocortisone cream', '2023-02-25', '2023-03-07', 10, 'g', 12);
 
 
-DROP DATABASE IF EXISTS `Academic`;
-CREATE DATABASE `Academic`;
-USE `Academic`;
+DROP DATABASE IF EXISTS `academic`;
+CREATE DATABASE `academic`;
+USE `academic`;
 
 CREATE TABLE `author` (
   `aid` BIGINT NOT NULL,

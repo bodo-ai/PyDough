@@ -1,12 +1,12 @@
 WITH _s3 AS (
   SELECT
-    CAST(SUM(publication.reference_num) AS DOUBLE PRECISION) / SUM(CASE WHEN NOT publication.reference_num IS NULL THEN 1 ELSE 0 END) AS avg_reference_num,
-    domain_publication.did
+    domain_publication.did,
+    AVG(CAST(publication.reference_num AS DECIMAL)) AS avg_reference_num
   FROM main.domain_publication AS domain_publication
   JOIN main.publication AS publication
     ON domain_publication.pid = publication.pid
   GROUP BY
-    2
+    1
 )
 SELECT
   domain.name,
