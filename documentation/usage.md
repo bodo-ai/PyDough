@@ -788,7 +788,9 @@ The `explain` API is a more generic explanation interface that can be called on 
 - A specific property within a specific collection within a metadata graph object (can be accessed as `graph["collection_name"]["property_name"]`)
 - The PyDough code for a collection that could have `to_sql` or `to_df` called on it.
 
-The `explain` API also has an optional `verbose` argument (default=False) that enables displaying additional information. It also has an optional `session` argument to specify what configs etc. to use when explaining certain terms (if not provided, uses `pydough.active_session`).
+The `explain` API has the following optional arguments:
+* `verbose` (default False): specifies whether to include a more detailed explanation, as opposed to a more compact summary. 
+* `session` (default None): if provided, specifies what configs etc. to use when explaining PyDough code objects (if not provided, uses `pydough.active_session`).
 
 Below are examples of each of these behaviors, using a knowledge graph for the TPCH schema.
 
@@ -1006,8 +1008,9 @@ The `explain` API is limited in that it can only be called on complete PyDough c
 
 To handle cases where you need to learn about a term within a collection, you can use the `explain_term` API. The first argument to `explain_term` is PyDough code for a collection, which can have `explain` called on it, and the second is PyDough code for a term that can be evaluated within the context of that collection (e.g. a scalar term of the collection, or one of its sub-collections).
 
-The `explain_term` API also has a `verbose` keyword argument (default False) to specify whether to include a more detailed explanation, as opposed to a more compact summary. The `explain_term` API also has an optional `verbose` argument (default=False) that enables displaying additional information. It also has an optional `session` argument to specify what configs etc. to use when explaining certain terms (if not provided, uses `pydough.active_session`).
-
+The `explain_term` API has the following optional arguments:
+* `verbose` (default False): specifies whether to include a more detailed explanation, as opposed to a more compact summary. 
+* `session` (default None): if provided, specifies what configs etc. to use when explaining certain terms (if not provided, uses `pydough.active_session`).
 
 Below are examples of using `explain_term`, using a knowledge graph for the TPCH schema. For each of these examples, `european_countries` is the "context" collection, which could have `to_sql` or `to_df` called on it, and `term` is the term being explained with regards to `european_countries`.
 

@@ -477,7 +477,7 @@ def attempt_join_aggregate_transpose(
     # top of the top aggregate.
     if need_projection:
         new_node: RelationalNode = node.copy(
-            inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+            inputs=[split_partial_aggregates(input, session) for input in node.inputs]
         )
         return Project(new_node, projection_columns), False
     else:
