@@ -2707,7 +2707,12 @@ def defog_sql_text_academic_gen14() -> str:
     SELECT publication.year, 
         COUNT(DISTINCT publication.pid) AS num_publications, 
         COUNT(DISTINCT publication.jid) AS num_journals, 
-        CAST(COUNT(DISTINCT publication.pid) AS REAL) / NULLIF(COUNT(DISTINCT publication.jid), 0) AS ratio 
+        CAST(
+            COUNT(DISTINCT publication.pid) AS REAL
+        ) / NULLIF(
+            COUNT(
+            DISTINCT publication.jid), 0
+        ) AS ratio 
     FROM publication 
     GROUP BY publication.year 
     ORDER BY publication.year NULLS LAST;
@@ -2722,7 +2727,11 @@ def defog_sql_text_academic_gen15() -> str:
     """
     return """
     SELECT organization.continent, 
-        CAST(COUNT(DISTINCT author.aid) AS REAL) / NULLIF(COUNT(DISTINCT organization.oid), 0) AS ratio 
+        CAST(
+            COUNT(DISTINCT author.aid) AS REAL
+        ) / NULLIF(
+            COUNT(DISTINCT organization.oid), 0
+        ) AS ratio 
     FROM organization 
         LEFT JOIN author ON author.oid = organization.oid 
     GROUP BY organization.continent 

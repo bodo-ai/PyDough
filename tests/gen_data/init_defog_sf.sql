@@ -820,9 +820,6 @@ VALUES
 -- For the Academic SCHEMA
 -- https://github.com/defog-ai/defog-data/blob/main/defog_data/academic/academic.sql
 
--- Snowflake dialect compatibility replace:
---    - SERIAL PRIMARY KEY -> INTEGER AUTOINCREMENT PRIMARY KEY
---    - NOW() -> CURRENT_TIMESTAMP
 -------------------------------------------------------------------------------
 CREATE SCHEMA ACADEMIC;
 
