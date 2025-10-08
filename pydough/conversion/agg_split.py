@@ -7,7 +7,7 @@ __all__ = ["split_partial_aggregates"]
 
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -51,7 +51,7 @@ aggregations.
 """
 
 
-def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> RelationalNode:
+def decompose_aggregations(node: Aggregate, session: PyDoughSession) -> RelationalNode:
     """
     Splits up an aggregate node into an aggregate followed by a projection when
     the aggregate contains 1+ calls to functions that can be split into 1+
@@ -59,7 +59,7 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
 
     Args:
         `node`: the aggregate node to be decomposed.
-        `config`: the current configuration settings.
+        `session`: the PyDough session used during the transformation.
 
     Returns:
         The projection node on top of the new aggregate, overall containing the
@@ -110,7 +110,7 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
             )
             # If the config specifies that the default value for AVG should be
             # zero, wrap the division in a DEFAULT_TO call.
-            if config.avg_default_zero:
+            if session.config.avg_default_zero:
                 avg_call = CallExpression(
                     pydop.DEFAULT_TO,
                     agg.data_type,
@@ -277,7 +277,7 @@ def transpose_aggregate_join(
 
 
 def attempt_join_aggregate_transpose(
-    node: Aggregate, join: Join, config: PyDoughConfigs
+    node: Aggregate, join: Join, session: PyDoughSession
 ) -> tuple[RelationalNode, bool]:
     """
     Determine whether the aggregate join transpose operation can occur, and if
@@ -392,7 +392,7 @@ def attempt_join_aggregate_transpose(
     for col in node.aggregations.values():
         if col.op in decomposable_aggfuncs:
             return split_partial_aggregates(
-                decompose_aggregations(node, config), config
+                decompose_aggregations(node, session), session
             ), False
 
     # Keep a dictionary for the projection columns that will be used to post-process
@@ -477,7 +477,7 @@ def attempt_join_aggregate_transpose(
     # top of the top aggregate.
     if need_projection:
         new_node: RelationalNode = node.copy(
-            inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+            inputs=[split_partial_aggregates(input, session) for input in node.inputs]
         )
         return Project(new_node, projection_columns), False
     else:
@@ -485,7 +485,7 @@ def attempt_join_aggregate_transpose(
 
 
 def split_partial_aggregates(
-    node: RelationalNode, config: PyDoughConfigs
+    node: RelationalNode, session: PyDoughSession
 ) -> RelationalNode:
     """
     Splits partial aggregates above joins into two aggregates, one above the
@@ -494,7 +494,7 @@ def split_partial_aggregates(
 
     Args:
         `node`: the root node of the relational plan to be transformed.
-        `config`: the current configuration settings.
+        `session`: the PyDough session used during the transformation.
 
     Returns:
         The transformed node. The transformation is also done-in-place.
@@ -502,11 +502,13 @@ def split_partial_aggregates(
     # If the aggregate+join pattern is detected, attempt to do the transpose.
     handle_inputs: bool = True
     if isinstance(node, Aggregate) and isinstance(node.input, Join):
-        node, handle_inputs = attempt_join_aggregate_transpose(node, node.input, config)
+        node, handle_inputs = attempt_join_aggregate_transpose(
+            node, node.input, session
+        )
 
     # If needed, recursively invoke the procedure on all inputs to the node.
     if handle_inputs:
         node = node.copy(
-            inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+            inputs=[split_partial_aggregates(input, session) for input in node.inputs]
         )
     return node
