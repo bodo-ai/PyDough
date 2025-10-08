@@ -330,7 +330,7 @@ class ValidSQLName(PyDoughPredicate):
         "select", "from", "where", "group", "having", "distinct", "as", 
         "join", "inner", "union", "intersect", "except", "order",
         "limit", "with", "range", "window", "pivot", "unpivot", "fetch",
-        "cross", "outer", "full", 
+        "cross", "outer", "full", "count"
 
         # DDL & schema
         "create", "alter", "drop", "table", "view", "index", "sequence",

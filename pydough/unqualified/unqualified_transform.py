@@ -6,6 +6,7 @@ variables with unqualified nodes by prepending with with `_ROOT.`.
 __all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]
 
 import ast
+import builtins
 import inspect
 import types
 from typing import Any
@@ -155,7 +156,7 @@ class AddRootVisitor(ast.NodeTransformer):
         unrecognized_var: bool = False
         if not any(node.id in scope for scope in self._scope_stack):
             try:
-                eval(node.id)
+                eval(node.id, globals={"__builtins__": builtins}, locals={})
             except NameError:
                 unrecognized_var = True
         if unrecognized_var:

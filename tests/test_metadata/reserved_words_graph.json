@@ -449,6 +449,18 @@
               0
             ],
             "synonyms": []
+          },
+          {
+            "name": "types",
+            "type": "table column",
+            "column name": "types",
+            "data type": "string",
+            "description": "Column from table CAST",
+            "sample values": [
+              1,
+              0
+            ],
+            "synonyms": []
           }
         ],
         "description": "",
@@ -457,10 +469,9 @@
       {
         "name": "count",
         "type": "simple table",
-        "table path": "keywords.COUNT",
+        "table path": "keywords.\"COUNT\"",
         "unique properties": [
-          "this",
-          "class_"
+          ["this", "class_"]
         ],
         "properties": [
           {
@@ -527,11 +538,11 @@
             "synonyms": []
           },
           {
-            "name": "load_ext_percentage",
+            "name": "node",
             "type": "table column",
-            "column name": "\"%load_ext\"",
+            "column name": "node",
             "data type": "numeric",
-            "description": "Column name normalized from unusual identifier '\"%load_ext\"'",
+            "description": "Column name with locals() variable 'node'",
             "sample values": [
               4011,
               4021,
@@ -1455,7 +1466,7 @@
           {
             "name": "count",
             "type": "table column",
-            "column name": "COUNT",
+            "column name": "`COUNT`",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'COUNT'",
             "sample values": [
@@ -1768,8 +1779,7 @@
         "type": "simple table",
         "table path": "keywords.master",
         "unique properties": [
-          "id1",
-          "id2"
+          ["id1", "id2"]
         ],
         "properties": [
           {

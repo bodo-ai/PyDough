@@ -36,6 +36,7 @@ CREATE TABLE "CAST" (
     ID BIGINT NOT NULL,
     ID2 BIGINT,
     is_active smallint,
+    types VARCHAR(30),
     CONSTRAINT CAST_to_lowercase_detail1 FOREIGN KEY (ID) REFERENCES lowercase_detail(id),
     CONSTRAINT CAST_to_lowercase_detail2 FOREIGN KEY (ID2) REFERENCES lowercase_detail(id)
 );
@@ -149,7 +150,7 @@ CREATE TABLE "COUNT" (
     "import" INTEGER,
     "def" INTEGER,
     "%%pydough" INTEGER,
-    "%load_ext" INTEGER,
+    "node" INTEGER,
     """," INTEGER,
     "." INTEGER,
     "bool" INTEGER,
@@ -228,29 +229,29 @@ INSERT INTO "MixedCase_1:1" (Id, "(parentheses)", "In", LowerCaseId) VALUES
 (4, '4 (parentheses)', 1, 8),
 (5, '5 (parentheses)', 1, 10);
 
-INSERT INTO "CAST" (PK_FIELD_NAME, ID, ID2, is_active) VALUES
-(1, 1, 2, 1),
-(2, 2, 4, 0),
-(3, 3, 6, 1),
-(4, 4, 8, 0),
-(5, 5, 10, 1),
-(6, 6, 11, 0),
-(7, 7, 9, 1),
-(8, 8, 7, 0),
-(9, 9, 5, 1),
-(10, 10, 3, 0),
-(11, 11, 1, 1),
-(12, 1, 11, 0),
-(13, 2, 9, 1),
-(14, 3, 7, 0),
-(15, 4, 5, 1),
-(16, 5, 3, 0),
-(17, 6, 1, 1),
-(18, 7, 2, 0),
-(19, 8, 4, 1),
-(20, 9, 6, 0),
-(21, 10, 8, 1),
-(22, 11, 10, 0);
+INSERT INTO "CAST" (PK_FIELD_NAME, ID, ID2, is_active, types) VALUES
+(1, 1, 2, 1, '1_types_#438'),
+(2, 2, 4, 0, '2_types_#438'),
+(3, 3, 6, 1, '3_types_#438'),
+(4, 4, 8, 0, '4_types_#438'),
+(5, 5, 10, 1, '5_types_#438'),
+(6, 6, 11, 0, '6_types_#438'),
+(7, 7, 9, 1, '7_types_#438'),
+(8, 8, 7, 0, '8_types_#438'),
+(9, 9, 5, 1, '9_types_#438'),
+(10, 10, 3, 0, '10_types_#438'),
+(11, 11, 1, 1, '11_types_#438'),
+(12, 1, 11, 0, '12_types_#438'),
+(13, 2, 9, 1, '13_types_#438'),
+(14, 3, 7, 0, '14_types_#438'),
+(15, 4, 5, 1, '15_types_#438'),
+(16, 5, 3, 0, '16_types_#438'),
+(17, 6, 1, 1, '17_types_#438'),
+(18, 7, 2, 0, '18_types_#438'),
+(19, 8, 4, 1, '19_types_#438'), 
+(20, 9, 6, 0, '20_types_#438'),
+(21, 10, 8, 1, '21_types_#438'),
+(22, 11, 10, 0, '22_types_#438');
 
 INSERT INTO """QUOTED TABLE_NAME""" (ID, "`cast`", "= ""QUOTE""", "`name""[", description) VALUES
 (1, 1, 1, 11, 'RECORD 1'),
@@ -285,7 +286,7 @@ INSERT INTO "PARTITION" ("ORDER_BY", "CALCULATE", "WHERE", "TOP_K", "SINGULAR", 
 (9, 2, 4, 1, 1, 1),
 (10, 1, 3, 1, 1, 1);
 
-INSERT INTO "COUNT" ("this", "class", "import", "def", "%%pydough", "%load_ext", """,", ".", "__init__", "int", "dict", "__col__", "__col1__") VALUES
+INSERT INTO "COUNT" ("this", "class", "import", "def", "%%pydough", "node", """,", ".", "__init__", "int", "dict", "__col__", "__col1__") VALUES
 (1, 1, 1011, 2011, 3011, 4011, 5011, 6011, 7011, 8011, 9011, 10011, 11011),
 (2, 1, 1021, 2021, 3021, 4021, 5021, 6021, 7021, 8021, 9021, 10021, 11021),
 (3, 1, 1031, 2031, 3031, 4031, 5031, 6031, 7031, 8031, 9031, 10031, 11031),
