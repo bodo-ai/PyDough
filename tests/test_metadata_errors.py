@@ -149,6 +149,11 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="TABLE_PATH_RESERVED_KEYWORD2",
         ),
         pytest.param(
+            "SCHEMA_RESERVED_KEYWORD",
+            "simple table collection 'count_schema_reserved_SQL_name' in graph 'SCHEMA_RESERVED_KEYWORD' must have a SQL name that is not a reserved word",
+            id="SCHEMA_RESERVED_KEYWORD",
+        ),
+        pytest.param(
             "COLUMN_NAME_INVALID_NAME_1",
             "table column property 'invalid_column_name' of simple table collection 'table_name' in graph 'COLUMN_NAME_INVALID_NAME_1' must have a SQL name that is a valid SQL identifier",
             id="COLUMN_NAME_INVALID_NAME_1",

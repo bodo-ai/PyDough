@@ -457,8 +457,9 @@
             "data type": "string",
             "description": "Column from table CAST",
             "sample values": [
-              1,
-              0
+              "1_types_#438",
+              "2_types_#438",
+              "3_types_#438"
             ],
             "synonyms": []
           }

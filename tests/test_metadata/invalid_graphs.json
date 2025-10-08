@@ -292,6 +292,28 @@
       "relationships": []
     },
     {
+      "name": "SCHEMA_RESERVED_KEYWORD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "count_schema_reserved_SQL_name",
+          "type": "simple table",
+          "table path": "count.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
       "name": "COLUMN_NAME_INVALID_NAME_1",
       "version": "V2",
       "collections": [

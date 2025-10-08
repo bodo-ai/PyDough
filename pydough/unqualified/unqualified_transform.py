@@ -156,7 +156,7 @@ class AddRootVisitor(ast.NodeTransformer):
         unrecognized_var: bool = False
         if not any(node.id in scope for scope in self._scope_stack):
             try:
-                eval(node.id, globals={"__builtins__": builtins}, locals={})
+                eval(node.id, {"__builtins__": builtins}, {})
             except NameError:
                 unrecognized_var = True
         if unrecognized_var:
