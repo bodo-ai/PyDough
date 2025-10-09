@@ -1872,4 +1872,6 @@ def mock_server_info(mock_server_setup) -> MaskServerInfo:
     """
     TODO: add description
     """
-    return MaskServerInfo(base_url="http://localhost:8000", token=None)
+    return MaskServerInfo(
+        base_url="http://localhost:8000", server_address="srv", token=None
+    )

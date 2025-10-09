@@ -95,10 +95,6 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
                     expression=self.convert_to_server_expression(expr),
                 )
             )
-            print()
-            print(
-                f"BATCH ITEM: ({mask_op.table_path}.{mask_op.masking_metadata.column_name}): {batch[-1].expression}"
-            )
         responses: list[MaskServerOutput] = (
             self.server_info.simplify_simple_expression_batch(batch)
         )
