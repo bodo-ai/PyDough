@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM crbnk.customers
 WHERE
-  LOWER(c_fname) LIKE '%e' OR LOWER(c_lname) LIKE '%e'
+  c_fname IN ('ALICE', 'GRACE', 'LUKE', 'QUEENIE') OR c_lname IN ('LEE', 'MOORE')

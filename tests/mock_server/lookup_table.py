@@ -223,29 +223,128 @@ LOOKUP_TABLE: dict = {
         "values": ["LOPEZ"],
         "count": 1,
     },
+    ("CRBNK.CUSTOMERS.c_lname", ("NOT_EQUAL", 2, "__col__", "lee")): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": ["LEE"],
+        "count": 1,
+    },
+    ("CRBNK.CUSTOMERS.c_lname", ("IN", 3, "__col__", "lee", "smith", "rodriguez")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["LEE", "SMITH", "RODRIGUEZ"],
+        "count": 3,
+    },
+    (
+        "CRBNK.CUSTOMERS.c_lname",
+        ("NOT", 1, "IN", 3, "__col__", "lee", "smith", "rodriguez"),
+    ): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": ["LEE", "SMITH", "RODRIGUEZ"],
+        "count": 3,
+    },
+    ("CRBNK.CUSTOMERS.c_phone", ("STARTSWITH", 2, "__col__", "555-8")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["555-809-1234", "555-870-9123"],
+        "count": 2,
+    },
+    ("CRBNK.CUSTOMERS.c_email", ("ENDSWITH", 2, "__col__", "gmail.com")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "livia.a22@gmail.como",
+            "ob.smith77@gmail.comb",
+            "ob_moore78@gmail.comr",
+            "opez.luke99@gmail.coml",
+        ],
+        "count": 4,
+    },
+    ("CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "YEAR", 1, "__col__", 1978)): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["1976-10-27", "1976-12-02"],
+        "count": 2,
+    },
+    ("CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "__col__", "1985-04-12")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["1983-12-27"],
+        "count": 1,
+    },
+    ("CRBNK.CUSTOMERS.c_fname", ("ENDSWITH", 2, "__col__", "e")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["ALICE", "GRACE", "LUKE", "QUEENIE"],
+        "count": 4,
+    },
+    ("CRBNK.CUSTOMERS.c_lname", ("ENDSWITH", 2, "__col__", "e")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["LEE", "MOORE"],
+        "count": 2,
+    },
+    (
+        "CRBNK.ACCOUNTS.a_type",
+        (
+            "AND",
+            2,
+            "NOT_EQUAL",
+            2,
+            "__col__",
+            "checking",
+            "NOT_EQUAL",
+            2,
+            "__col__",
+            "savings",
+        ),
+    ): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": ["avingss", "heckingc"],
+        "count": 2,
+    },
+    ("CRBNK.CUSTOMERS.c_birthday", ("NOT_EQUAL", 2, "__col__", "1991-11-15")): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": ["1990-07-31"],
+        "count": 1,
+    },
+    ("CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1991-11-15")): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
+        "count": 4,
+    },
+    ("CRBNK.CUSTOMERS.c_birthday", ("GT", 2, "__col__", "1991-11-15")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
+        "count": 4,
+    },
+    ("CRBNK.CUSTOMERS.c_birthday", ("LT", 2, "__col__", "1991-11-15")): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": [
+            "1990-07-31",
+            "1991-03-13",
+            "1992-05-06",
+            "1993-01-01",
+            "1994-06-15",
+        ],
+        "count": 4,
+    },
+    ("CRBNK.CUSTOMERS.c_birthday", ("GTE", 2, "__col__", "1991-11-15")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "1990-07-31",
+            "1991-03-13",
+            "1992-05-06",
+            "1993-01-01",
+            "1994-06-15",
+        ],
+        "count": 4,
+    },
 }
-
-"""
-DONE:
-- agg_01
-- analysis_04
-- filter_count_27
-- filter_count_28
-
-select c_birthday
-from customers
-where STRFTIME('%Y', DATE(c_birthday, '+472 days')) IN ('1980', '1981', '1982', '1983', '1984', '1985')
-ORDER BY 1
-;
-
-
-SELECT c_fname
-FROM customers
-WHERE c_fname LIKE '%A' OR c_fname LIKE '%E'
-ORDER BY 1;
-
-SELECT c_fname
-FROM customers
-WHERE c_fname LIKE '%S'
-ORDER BY 1;
-"""
