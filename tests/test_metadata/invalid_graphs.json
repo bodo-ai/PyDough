@@ -446,6 +446,50 @@
       "relationships": []
     },
     {
+      "name": "SPECIAL_RESERVED_KEYWORD_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "special_reserved_keyword_1",
+          "type": "simple table",
+          "table path": "schema_name.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "builtins",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "SPECIAL_RESERVED_KEYWORD_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "_graph",
+          "type": "simple table",
+          "table path": "schema_name.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
       "name": "BAD_RELATIONSHIP_NAME",
       "version": "V2",
       "collections": [],
