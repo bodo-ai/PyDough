@@ -465,7 +465,8 @@ def from_string(
 
     # Transform PyDough code into valid Python code
     known_names: set[str] = set(environment.keys())
-    visitor: ast.NodeTransformer = AddRootVisitor("graph", known_names)
+    graph_name: str = "_graph"
+    visitor: ast.NodeTransformer = AddRootVisitor(graph_name, known_names)
     try:
         tree: ast.AST = ast.parse(source)
     except SyntaxError as e:
@@ -482,7 +483,7 @@ def from_string(
         compile_ast = compile(transformed_code, filename="<ast>", mode="exec")
     except SyntaxError as e:
         raise ValueError(f"Syntax error in transformed PyDough code:\n{str(e)}") from e
-    execution_context: dict[str, Any] = environment | {"graph": metadata}
+    execution_context: dict[str, Any] = environment | {graph_name: metadata}
     exec(compile_ast, {}, execution_context)
 
     # Check if answer_variable exists in execution_context after code execution

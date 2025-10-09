@@ -184,6 +184,16 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="TABLE_PATH_INVALID_NAME_3",
         ),
         pytest.param(
+            "SPECIAL_RESERVED_KEYWORD_1",
+            "property name 'builtins' must be a string that is not a Python reserved word or built-in name",
+            id="SPECIAL_RESERVED_KEYWORD_1",
+        ),
+        pytest.param(
+            "SPECIAL_RESERVED_KEYWORD_2",
+            "collection name '_graph' must be a string that is not a PyDough reserved word",
+            id="SPECIAL_RESERVED_KEYWORD_2",
+        ),
+        pytest.param(
             "BAD_RELATIONSHIP_NAME",
             "metadata for relationships within graph 'BAD_RELATIONSHIP_NAME' must be a JSON object containing a field 'type' and field 'type' must be a string",
             id="BAD_RELATIONSHIP_NAME",
