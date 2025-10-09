@@ -25,6 +25,7 @@ from pydough.database_connectors import (
     load_database_context,
 )
 from pydough.errors import PyDoughTestingException
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.tpch_outputs import (
@@ -1864,3 +1865,11 @@ def mock_server_setup():
     # Cleanup after tests
     proc.terminate()
     proc.wait()
+
+
+@pytest.fixture(scope="session")
+def mock_server_info(mock_server_setup) -> MaskServerInfo:
+    """
+    TODO: add description
+    """
+    return MaskServerInfo(base_url="http://localhost:8000", token=None)

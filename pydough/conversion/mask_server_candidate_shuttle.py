@@ -45,6 +45,9 @@ class MaskServerCandidateShuttle(RelationalExpressionShuttle):
         pydop.MUL,
         pydop.DIV,
     }
+    """
+    TODO: ADD DESCRIPTION
+    """
 
     def __init__(self) -> None:
         # TODO ADD COMMENTS
@@ -54,7 +57,11 @@ class MaskServerCandidateShuttle(RelationalExpressionShuttle):
         ] = {}
         self.processed_candidates: set[RelationalExpression] = set()
         self.stack: list[
-            tuple[pydop.MaskedExpressionFunctionOperator, RelationalExpression] | None
+            tuple[
+                tuple[pydop.MaskedExpressionFunctionOperator, RelationalExpression]
+                | None,
+                bool,
+            ]
         ] = []
 
     def reset(self):
@@ -67,19 +74,20 @@ class MaskServerCandidateShuttle(RelationalExpressionShuttle):
         mask_ops: set[
             tuple[pydop.MaskedExpressionFunctionOperator, RelationalExpression]
         ] = set()
+        disallowed: bool = False
         for _ in range(len(expr.inputs)):
-            stack_term: (
-                tuple[pydop.MaskedExpressionFunctionOperator, RelationalExpression]
-                | None
-            ) = self.stack.pop()
+            stack_term, arg_disallowed = self.stack.pop()
             if stack_term is not None:
                 mask_ops.add(stack_term)
+            disallowed |= arg_disallowed
 
         if (
             isinstance(expr.op, pydop.MaskedExpressionFunctionOperator)
             and expr.op.is_unmask
         ):
-            self.stack.append((expr.op, expr.inputs[0]))
+            self.stack.append(((expr.op, expr.inputs[0]), False))
+        elif disallowed:
+            self.stack.append((None, True))
         elif len(mask_ops) == 1 and expr.op in self.ALLOWED_MASK_OPERATORS:
             input_term: tuple[
                 pydop.MaskedExpressionFunctionOperator, RelationalExpression
@@ -87,19 +95,21 @@ class MaskServerCandidateShuttle(RelationalExpressionShuttle):
             if expr not in self.processed_candidates:
                 self.candidate_pool[expr] = input_term
                 self.processed_candidates.add(expr)
-            self.stack.append(input_term)
+            self.stack.append((input_term, False))
         else:
-            self.stack.append(None)
+            self.stack.append((None, True))
         return expr
 
     def visit_column_reference(
         self, column_reference: ColumnReference
     ) -> RelationalExpression:
-        self.stack.append(None)
+        self.stack.append((None, True))
         return column_reference
 
-    def visit_literal(self, literal: LiteralExpression) -> RelationalExpression:
-        self.stack.append(None)
+    def visit_literal_expression(
+        self, literal: LiteralExpression
+    ) -> RelationalExpression:
+        self.stack.append((None, False))
         return literal
 
     def visit_window_expression(
@@ -108,5 +118,5 @@ class MaskServerCandidateShuttle(RelationalExpressionShuttle):
         result: RelationalExpression = super().visit_window_expression(
             window_expression
         )
-        self.stack.append(None)
+        self.stack.append((None, True))
         return result

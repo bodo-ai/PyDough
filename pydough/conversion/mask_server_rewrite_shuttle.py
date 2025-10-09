@@ -37,7 +37,6 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         pydop.GEQ: "GTE",
         pydop.LET: "LT",
         pydop.LEQ: "LTE",
-        pydop.ISIN: "IN",
         pydop.STARTSWITH: "STARTSWITH",
         pydop.ENDSWITH: "ENDSWITH",
         pydop.LOWER: "LOWER",
@@ -51,6 +50,11 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         pydop.MUL: "MUL",
         pydop.DIV: "DIV",
     }
+    """
+    TODO: ADD DESCRIPTION
+
+    NOTE: ISIN is handled separately.
+    """
 
     def __init__(
         self, server_info: MaskServerInfo, candidate_shuttle: MaskServerCandidateShuttle
@@ -195,8 +199,6 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         match response.response_case:
             case MaskServerResponse.IN_ARRAY | MaskServerResponse.NOT_IN_ARRAY:
                 result = self.build_in_array_expression(input_expr, response)
-                if response.response_case == MaskServerResponse.NOT_IN_ARRAY:
-                    result = CallExpression(pydop.NOT, BooleanType(), [result])
             case _:
                 raise ValueError(
                     f"Unsupported mask server response case: {response.response_case}"
@@ -214,7 +216,34 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
             MaskServerResponse.NOT_IN_ARRAY,
         )
         assert isinstance(response.payload, list)
-        array_literal: LiteralExpression = LiteralExpression(
-            response.payload, ArrayType(UnknownType())
-        )
-        return CallExpression(pydop.ISIN, BooleanType(), [input_expr, array_literal])
+        if len(response.payload) == 0:
+            # If the payload is empty, we can return a literal true/false
+            # depending on whether it is IN or NOT IN
+            return LiteralExpression(
+                response.response_case == MaskServerResponse.NOT_IN_ARRAY, BooleanType()
+            )
+        elif len(response.payload) == 1:
+            # If the payload has one element, we can return a simple equality
+            # or inequality, depending on whether it is IN or NOT IN
+            return CallExpression(
+                pydop.EQU
+                if response.response_case == MaskServerResponse.IN_ARRAY
+                else pydop.NEQ,
+                BooleanType(),
+                [
+                    input_expr,
+                    LiteralExpression(response.payload[0], UnknownType()),
+                ],
+            )
+        else:
+            # Otherwise, we need to return an ISIN expression with an array
+            # literal, and if doing NOT IN then negate the whole thing.
+            array_literal: LiteralExpression = LiteralExpression(
+                response.payload, ArrayType(UnknownType())
+            )
+            result: RelationalExpression = CallExpression(
+                pydop.ISIN, BooleanType(), [input_expr, array_literal]
+            )
+            if response.response_case == MaskServerResponse.NOT_IN_ARRAY:
+                result = CallExpression(pydop.NOT, BooleanType(), [result])
+            return result

@@ -94,4 +94,11 @@ LOOKUP_TABLE: dict = {
         "values": ['"Hello"', "HelloWorld", "SGVsbG9Xb3JsZA=="],
         "count": 3,
     },
+    # CRYPTBANK hardcoded responses
+    ("CRBNK.CUSTOMERS.c_lname", ("EQUAL", 2, "__col__", "lee")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["LEE"],
+        "count": 1,
+    },
 }

@@ -145,7 +145,6 @@ class MaskServerInfo:
         method: RequestMethod = RequestMethod.POST
 
         request: ServerRequest = self.generate_request(batch, path, method)
-
         response_json = self.connection.send_server_request(request)
         result: list[MaskServerOutput] = self.generate_result(response_json)
 
