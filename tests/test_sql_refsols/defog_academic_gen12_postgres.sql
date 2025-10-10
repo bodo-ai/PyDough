@@ -1,0 +1,3 @@
+SELECT
+  CAST(COUNT(DISTINCT cid) AS DOUBLE PRECISION) / COUNT(DISTINCT jid) AS ratio
+FROM main.publication
