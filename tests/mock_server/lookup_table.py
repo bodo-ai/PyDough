@@ -353,4 +353,28 @@ LOOKUP_TABLE: dict = {
         ],
         "count": 4,
     },
+    ("srv.CRBNK.TRANSACTIONS.t_amount", ("LT", 2, "__col__", 0)): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [],
+        "count": 0,
+    },
+    ("srv.CRBNK.TRANSACTIONS.t_amount", ("GT", 2, "__col__", 0)): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": [],
+        "count": 0,
+    },
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1925-01-01")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [],
+        "count": 0,
+    },
+    ("srv.CRBNK.CUSTOMERS.c_phone", ("EQUAL", 2, "__col__", "555-123-456")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [],
+        "count": 0,
+    },
 }
