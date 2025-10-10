@@ -85,6 +85,8 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
+from .mask_server_candidate_shuttle import MaskServerCandidateShuttle
+from .mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
@@ -857,7 +859,9 @@ class RelTranslation:
                     )
                     unmask_columns[name] = CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
-                            hybrid_expr.column.column_property, True
+                            hybrid_expr.column.column_property,
+                            node.collection.collection.table_path,
+                            True,
                         ),
                         hybrid_expr.column.column_property.unprotected_data_type,
                         [ColumnReference(name, hybrid_expr.typ)],
@@ -1664,8 +1668,15 @@ def convert_ast_to_relational(
     # Invoke the optimization procedures on the result to clean up the tree.
     additional_shuttles: list[RelationalExpressionShuttle] = []
     # Add the mask literal comparison shuttle if the environment variable
-    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1.
+    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1. If a masking rewrite server has
+    # been attached to the session, include the shuttles for that as well.
     if os.getenv("PYDOUGH_ENABLE_MASK_REWRITES") == "1":
+        if session.mask_server is not None:
+            candidate_shuttle: MaskServerCandidateShuttle = MaskServerCandidateShuttle()
+            additional_shuttles.append(candidate_shuttle)
+            additional_shuttles.append(
+                MaskServerRewriteShuttle(session.mask_server, candidate_shuttle)
+            )
         additional_shuttles.append(MaskLiteralComparisonShuttle())
     optimized_result: RelationalRoot = optimize_relational_tree(
         raw_result, session, additional_shuttles

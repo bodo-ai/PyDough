@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
+from pydough.mask_server import MaskServerInfo
 from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
 
 
@@ -396,6 +397,16 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday <= '1925-01-01')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [0]}),
+                "cryptbank_filter_count_29",
+            ),
+            id="cryptbank_filter_count_29",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "selected_transactions = transactions.WHERE((YEAR(time_stamp) == 2022) & (MONTH(time_stamp) == 6))\n"
                 "result = CRYPTBANK.CALCULATE(n=ROUND(AVG(selected_transactions.amount), 2))",
                 "CRYPTBANK",
@@ -495,6 +506,15 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "cryptbank_agg_05",
             ),
             id="cryptbank_agg_05",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = CRYPTBANK.CALCULATE(n_neg=SUM(transactions.amount < 0), n_positive=SUM(transactions.amount > 0))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n_neg": [0], "n_positive": [300]}),
+                "cryptbank_agg_06",
+            ),
+            id="cryptbank_agg_06",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -625,6 +645,7 @@ def test_pipeline_until_relational_cryptbank(
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
 ) -> None:
     """
     Tests the conversion of the PyDough queries on the custom cryptbank dataset
@@ -634,7 +655,7 @@ def test_pipeline_until_relational_cryptbank(
         f"{cryptbank_pipeline_test_data.test_name}_{enable_mask_rewrites}"
     )
     cryptbank_pipeline_test_data.run_relational_test(
-        masked_graphs, file_path, update_tests
+        masked_graphs, file_path, update_tests, mask_server=mock_server_info
     )
 
 
@@ -645,6 +666,7 @@ def test_pipeline_until_sql_cryptbank(
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
 ):
     """
     Tests the conversion of the PyDough queries on the custom cryptbank dataset
@@ -659,6 +681,7 @@ def test_pipeline_until_sql_cryptbank(
         file_path,
         update_tests,
         sqlite_tpch_db_context,
+        mask_server=mock_server_info,
     )
 
 
@@ -668,6 +691,7 @@ def test_pipeline_e2e_cryptbank(
     masked_graphs: graph_fetcher,
     sqlite_cryptbank_connection: DatabaseContext,
     enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
 ):
     """
     Test executing the the custom queries with the custom cryptbank dataset
@@ -676,4 +700,5 @@ def test_pipeline_e2e_cryptbank(
     cryptbank_pipeline_test_data.run_e2e_test(
         masked_graphs,
         sqlite_cryptbank_connection,
+        mask_server=mock_server_info,
     )
