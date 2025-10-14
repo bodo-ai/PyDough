@@ -2482,7 +2482,8 @@ def impl_defog_academic_gen4():
     domain name?
     """
     return domains.CALCULATE(
-        name, average_references=AVG(domain_publications.publication.reference_num)
+        name,
+        average_references=AVG(domain_publications.publication.reference_num)
     )
 
 
