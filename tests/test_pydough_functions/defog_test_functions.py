@@ -2468,8 +2468,10 @@ def impl_defog_academic_gen3():
 
     What is the total number of publications published in each year?
     """
-    return publications.PARTITION(name="years", by=year).CALCULATE(
-        year, COUNT(publications)
+    return (
+      publications
+      .PARTITION(name="years", by=year)
+      .CALCULATE(year, COUNT(publications))
     )
 
 
