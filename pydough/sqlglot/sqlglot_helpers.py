@@ -3,9 +3,16 @@ This file contains functionality for interacting with SQLGlot expressions
 that can act as wrappers around the internal implementation of SQLGlot.
 """
 
-from sqlglot.expressions import Alias as SQLGlotAlias
+from sqlglot.expressions import (
+    Alias as SQLGlotAlias,
+)
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier
+from sqlglot.expressions import (
+    Identifier,
+    Window,
+    maybe_copy,
+    maybe_parse,
+)
 
 __all__ = ["get_glot_name", "set_glot_alias", "unwrap_alias"]
 
@@ -45,13 +52,64 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
     Returns:
         The updated expression.
     """
+
     if alias is None:
         return expr
     old_name = get_glot_name(expr)
     if old_name == alias:
         return expr
     else:
-        return expr.as_(alias)
+        # result = expr.as_(alias)
+        result = generate_glot_alias(expr, alias, False)
+        return result
+
+
+def generate_glot_alias(
+    expr: SQLGlotExpression, alias: str, quoted: bool
+) -> SQLGlotAlias:
+    """
+    Generates a SQLGlot Alias expression for the given expression
+    and alias.
+
+    Args:
+        `expr`: The expression to wrap in an alias.
+        `alias`: The alias to use.
+
+    Returns:
+        The generated Alias expression.
+    """
+    exp = maybe_parse(expr, dialect=None, copy=True)
+    alias = generate_identifier(alias, quoted=quoted)
+
+    # We don't set the "alias" arg for Window expressions, because that would add an IDENTIFIER node in
+    # the AST, representing a "named_window" [1] construct (eg. bigquery). What we want is an ALIAS node
+    # for the complete Window expression.
+    #
+    # [1]: https://cloud.google.com/bigquery/docs/reference/standard-sql/window-function-calls
+
+    if "alias" in exp.arg_types and not isinstance(exp, Window):
+        exp.set("alias", alias)
+        return exp
+
+    return SQLGlotAlias(this=exp, alias=alias)
+
+
+def generate_identifier(name, quoted=None, copy=True):
+    if name is None:
+        return None
+
+    if isinstance(name, Identifier):
+        identifier = maybe_copy(name, copy)
+    elif isinstance(name, str):
+        identifier = Identifier(
+            this=name,
+            quoted=quoted if quoted is not None else False,
+        )
+    else:
+        raise ValueError(
+            f"Name needs to be a string or an Identifier, got: {name.__class__}"
+        )
+    return identifier
 
 
 def unwrap_alias(expr: SQLGlotExpression) -> SQLGlotExpression:

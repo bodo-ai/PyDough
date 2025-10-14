@@ -139,11 +139,6 @@ result = cast_.WHERE(
                 "keywords_cast_alias_and_missing_alias",
             ),
             id="keywords_cast_alias_and_missing_alias",
-            marks=pytest.mark.skip(
-                "TODO (gh #432, #435): fix issues with"
-                " table alias name when it is reserved, and related optimization"
-                " error"
-            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -224,6 +219,7 @@ result = count.WHERE(
                 ),
                 "keywords_python_sql_reserved",
             ),
+            id="keywords_python_sql_reserved",
             marks=pytest.mark.skip(
                 "TODO (gh #434, #435): fix issues with"
                 " invalid SQL when a column or table name includes a quoting"
