@@ -2580,8 +2580,10 @@ def impl_defog_academic_gen12():
     What is the ratio of publications presented in conferences to publications
     published in journals?
     """
+    n_confs = SUM(PRESENT(publications.conference_id))
+    n_jours = SUM(PRESENT(publications.journal_id))
     return Academic.CALCULATE(
-        ratio=NDISTINCT(publications.conference_id) / NDISTINCT(publications.journal_id)
+        ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0)
     )
 
 
