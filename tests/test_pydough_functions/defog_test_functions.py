@@ -2517,12 +2517,9 @@ def impl_defog_academic_gen7():
     What are the top 5 domains with the highest number of authors associated
     with them?
     """
-    return (
-        domains.PARTITION(name="names", by=name)
-        .CALCULATE(name, author_count=NDISTINCT(domains.domain_authors.author_id))
-        .TOP_K(5, by=author_count)
-        .ORDER_BY(author_count.DESC(), name.DESC())
-    )
+    return domains.CALCULATE(
+        name, author_count=NDISTINCT(domains.domain_authors.author_id)
+    ).TOP_K(5, by=(author_count.DESC(), name.DESC()))
 
 
 def impl_defog_academic_gen8():
@@ -2565,9 +2562,10 @@ def impl_defog_academic_gen11():
 
     What is the ratio of publications to authors in the database?
     """
+    n_pub = COUNT(publications)
+    n_auth = COUNT(authors)
     return Academic.CALCULATE(
-        publication_to_author_ratio=NDISTINCT(publications.publication_id)
-        / NDISTINCT(authors.author_id)
+        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth > 0)
     )
 
 
@@ -2579,9 +2577,9 @@ def impl_defog_academic_gen12():
     What is the ratio of publications presented in conferences to publications
     published in journals?
     """
-    return Academic.CALCULATE(
-        ratio=NDISTINCT(publications.conference_id) / NDISTINCT(publications.journal_id)
-    )
+    n_confs = SUM(PRESENT(publications.conference_id))
+    n_jours = SUM(PRESENT(publications.journal_id))
+    return Academic.CALCULATE(ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0))
 
 
 def impl_defog_academic_gen13():
@@ -2593,15 +2591,9 @@ def impl_defog_academic_gen13():
     keywords within each domain ID? Show all domain IDs.
     """
 
-    ratio_calc = IFF(
-        HAS(domains_publications.domain.domain_keywords),
-        COUNT(domains_publications.publication)
-        / COUNT(domains_publications.domain.domain_keywords),
-        None,
-    )
-    return domains_publications.PARTITION(name="domains", by=domain_id).CALCULATE(
-        domain_id, ratio=ratio_calc
-    )
+    n_pubs = COUNT(domains_publications)
+    n_keys = COUNT(domain_keywords)
+    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys > 0))
 
 
 def impl_defog_academic_gen14():
@@ -2612,19 +2604,13 @@ def impl_defog_academic_gen14():
     How does the ratio of publications to journals change over the years? Return
     the annual numbers of publications and journals as well.
     """
-    return (
-        publications.PARTITION(name="years", by=year)
-        .CALCULATE(
-            year,
-            num_publications=NDISTINCT(publications.publication_id),
-            num_journals=NDISTINCT(publications.journal_id),
-        )
-        .CALCULATE(
-            year,
-            num_publications,
-            num_journals,
-            ratio=IFF(num_journals > 0, num_publications / num_journals, None),
-        )
+    n_pubs = COUNT(publications)
+    n_jours = NDISTINCT(publications.journal_id)
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year,
+        num_publications=n_pubs,
+        num_journals=n_jours,
+        ratio=num_pubs / KEEP_IF(n_jours, n_jours > 0),
     )
 
 
@@ -2639,12 +2625,7 @@ def impl_defog_academic_gen15():
         organizations.PARTITION(name="continents", by=continent)
         .CALCULATE(
             continent,
-            ratio=IFF(
-                HAS(organizations.authors),
-                NDISTINCT(organizations.authors.author_id)
-                / NDISTINCT(organizations.organization_id),
-                0,
-            ),
+            ratio=COUNT(organizations.authors) / COUNT(organizations),
         )
         .ORDER_BY(ratio.DESC())
     )
@@ -2658,14 +2639,12 @@ def impl_defog_academic_gen16():
     Which author had the most publications in the year 2021 and how many
     publications did he/she have that year?
     """
+    selected_pubs = writes.publication.WHERE(year == 2021)
     return (
-        writes.CALCULATE(author_name=author.name)
-        .PARTITION(name="authors", by=author_name)
+        authors.WHERE(HAS(selected_pubs))
         .CALCULATE(
-            author_name,
-            count_publication=NDISTINCT(
-                writes.WHERE(publication.year == 2021).publication_id
-            ),
+            name,
+            count_publication=NDISTINCT(selected_pubs.publication_id),
         )
         .TOP_K(1, by=count_publication.DESC())
     )
@@ -2692,7 +2671,7 @@ def impl_defog_academic_gen18():
     number of publications in descending order?
     """
     return journals.CALCULATE(
-        name, jid=journal_id, num_publications=COUNT(archives)
+        name, journal_id, num_publications=COUNT(archives)
     ).ORDER_BY(num_publications.DESC())
 
 
@@ -2706,7 +2685,7 @@ def impl_defog_academic_gen19():
     and their corresponding number of publications.
     """
     return conferences.CALCULATE(name, num_publications=COUNT(proceedings)).ORDER_BY(
-        num_publications.DESC(), name
+        num_publications.DESC(), name.ASC()
     )
 
 
