@@ -2582,9 +2582,7 @@ def impl_defog_academic_gen12():
     """
     n_confs = SUM(PRESENT(publications.conference_id))
     n_jours = SUM(PRESENT(publications.journal_id))
-    return Academic.CALCULATE(
-        ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0)
-    )
+    return Academic.CALCULATE(ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0))
 
 
 def impl_defog_academic_gen13():
