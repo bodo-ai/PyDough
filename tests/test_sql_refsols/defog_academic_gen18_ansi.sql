@@ -8,7 +8,7 @@ WITH _s1 AS (
 )
 SELECT
   journal.name,
-  journal.jid,
+  journal.jid AS journal_id,
   COALESCE(_s1.n_rows, 0) AS num_publications
 FROM main.journal AS journal
 LEFT JOIN _s1 AS _s1

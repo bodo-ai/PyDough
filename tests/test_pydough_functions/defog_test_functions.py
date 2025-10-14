@@ -2518,7 +2518,7 @@ def impl_defog_academic_gen7():
     with them?
     """
     return domains.CALCULATE(
-        name, author_count=NDISTINCT(domains.domain_authors.author_id)
+        name, author_count=NDISTINCT(domain_authors.author_id)
     ).TOP_K(5, by=(author_count.DESC(), name.DESC()))
 
 
@@ -2579,7 +2579,7 @@ def impl_defog_academic_gen12():
     """
     n_confs = SUM(PRESENT(publications.conference_id))
     n_jours = SUM(PRESENT(publications.journal_id))
-    return Academic.CALCULATE(ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0))
+    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours > 0))
 
 
 def impl_defog_academic_gen13():
@@ -2591,7 +2591,7 @@ def impl_defog_academic_gen13():
     keywords within each domain ID? Show all domain IDs.
     """
 
-    n_pubs = COUNT(domains_publications)
+    n_pubs = COUNT(domain_publications)
     n_keys = COUNT(domain_keywords)
     return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys > 0))
 
@@ -2610,7 +2610,7 @@ def impl_defog_academic_gen14():
         year,
         num_publications=n_pubs,
         num_journals=n_jours,
-        ratio=num_pubs / KEEP_IF(n_jours, n_jours > 0),
+        ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0),
     )
 
 
@@ -2639,7 +2639,7 @@ def impl_defog_academic_gen16():
     Which author had the most publications in the year 2021 and how many
     publications did he/she have that year?
     """
-    selected_pubs = writes.publication.WHERE(year == 2021)
+    selected_pubs = author_publications.publication.WHERE(year == 2021)
     return (
         authors.WHERE(HAS(selected_pubs))
         .CALCULATE(

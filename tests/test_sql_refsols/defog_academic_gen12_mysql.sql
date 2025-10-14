@@ -1,3 +1,3 @@
 SELECT
-  COUNT(DISTINCT cid) / COUNT(DISTINCT jid) AS ratio
+  SUM(NOT cid IS NULL) / CASE WHEN SUM(NOT jid IS NULL) > 0 THEN SUM(NOT jid IS NULL) ELSE NULL END AS ratio
 FROM main.publication

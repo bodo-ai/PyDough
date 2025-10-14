@@ -1,31 +1,18 @@
-WITH _s2 AS (
-  SELECT DISTINCT
-    name
-  FROM main.domain
-), _s3 AS (
+WITH _s1 AS (
   SELECT
-    domain.name,
-    COUNT(DISTINCT domain_author.aid) AS ndistinct_aid
-  FROM main.domain AS domain
-  JOIN main.domain_author AS domain_author
-    ON domain.did = domain_author.did
+    did,
+    COUNT(DISTINCT aid) AS ndistinct_aid
+  FROM main.domain_author
   GROUP BY
     1
-), _t0 AS (
-  SELECT
-    _s2.name,
-    _s3.ndistinct_aid
-  FROM _s2 AS _s2
-  LEFT JOIN _s3 AS _s3
-    ON _s2.name = _s3.name
-  ORDER BY
-    COALESCE(ndistinct_aid, 0) NULLS FIRST
-  LIMIT 5
 )
 SELECT
-  name,
-  COALESCE(ndistinct_aid, 0) AS author_count
-FROM _t0
+  domain.name,
+  COALESCE(_s1.ndistinct_aid, 0) AS author_count
+FROM main.domain AS domain
+LEFT JOIN _s1 AS _s1
+  ON _s1.did = domain.did
 ORDER BY
   2 DESC NULLS LAST,
   1 DESC NULLS LAST
+LIMIT 5

@@ -1,37 +1,18 @@
-WITH _t1 AS (
+WITH _s1 AS (
   SELECT
-    continent,
-    oid
-  FROM main.organization
-), _s2 AS (
-  SELECT
-    continent,
-    COUNT(DISTINCT oid) AS ndistinct_oid
-  FROM _t1
-  GROUP BY
-    1
-), _s3 AS (
-  SELECT
-    _s0.continent,
-    COUNT(*) AS n_rows,
-    COUNT(DISTINCT author.aid) AS ndistinct_aid
-  FROM _t1 AS _s0
-  JOIN main.author AS author
-    ON _s0.oid = author.oid
+    oid,
+    COUNT(*) AS n_rows
+  FROM main.author
   GROUP BY
     1
 )
 SELECT
-  _s2.continent,
-  CASE
-    WHEN (
-      NOT _s3.n_rows IS NULL AND _s3.n_rows > 0
-    )
-    THEN CAST(COALESCE(_s3.ndistinct_aid, 0) AS DOUBLE PRECISION) / _s2.ndistinct_oid
-    ELSE 0
-  END AS ratio
-FROM _s2 AS _s2
-LEFT JOIN _s3 AS _s3
-  ON _s2.continent = _s3.continent
+  organization.continent,
+  CAST(COALESCE(SUM(_s1.n_rows), 0) AS DOUBLE PRECISION) / COUNT(*) AS ratio
+FROM main.organization AS organization
+LEFT JOIN _s1 AS _s1
+  ON _s1.oid = organization.oid
+GROUP BY
+  1
 ORDER BY
   2 DESC NULLS LAST
