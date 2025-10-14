@@ -2565,9 +2565,10 @@ def impl_defog_academic_gen11():
 
     What is the ratio of publications to authors in the database?
     """
+    n_pub = COUNT(publications)
+    n_auth = COUNT(authors)
     return Academic.CALCULATE(
-        publication_to_author_ratio=NDISTINCT(publications.publication_id)
-        / NDISTINCT(authors.author_id)
+        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth > 0)
     )
 
 
