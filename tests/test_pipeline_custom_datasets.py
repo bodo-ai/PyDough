@@ -264,6 +264,32 @@ result = where_.WHERE(
                 " error"
             ),
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+import math
+result = count.WHERE(node == 4071).CALCULATE(
+    node,
+    cast_.types,
+    expr=math.sqrt(4)
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "node": [4071],
+                        "types": ["7_types_#438"],
+                        "expr": [2],
+                    }
+                ),
+                "keywords_locals_globals_eval",
+            ),
+            id="keywords_locals_globals_eval",
+            marks=pytest.mark.skip(
+                "TODO (gh #432): fix issues with"
+                " join table, select & join expr alias name when it is reserved"
+            ),
+        ),
     ],
 )
 def custom_datasets_test_data(request) -> PyDoughPandasTest:

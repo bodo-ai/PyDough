@@ -139,9 +139,19 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="COLUMN_NAME_RESERVED_KEYWORD",
         ),
         pytest.param(
-            "TABLE_PATH_RESERVED_KEYWORD",
-            "simple table collection 'cast_reserved_sql_word' in graph 'TABLE_PATH_RESERVED_KEYWORD' must have a SQL name that is not a reserved word",
-            id="TABLE_PATH_RESERVED_KEYWORD",
+            "TABLE_PATH_RESERVED_KEYWORD1",
+            "simple table collection 'cast_reserved_sql_word' in graph 'TABLE_PATH_RESERVED_KEYWORD1' must have a SQL name that is not a reserved word",
+            id="TABLE_PATH_RESERVED_KEYWORD1",
+        ),
+        pytest.param(
+            "TABLE_PATH_RESERVED_KEYWORD2",
+            "simple table collection 'order_qualified_SQL_name' in graph 'TABLE_PATH_RESERVED_KEYWORD2' must have a SQL name that is not a reserved word",
+            id="TABLE_PATH_RESERVED_KEYWORD2",
+        ),
+        pytest.param(
+            "SCHEMA_RESERVED_KEYWORD",
+            "simple table collection 'count_schema_reserved_SQL_name' in graph 'SCHEMA_RESERVED_KEYWORD' must have a SQL name that is not a reserved word",
+            id="SCHEMA_RESERVED_KEYWORD",
         ),
         pytest.param(
             "COLUMN_NAME_INVALID_NAME_1",
