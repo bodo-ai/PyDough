@@ -1868,10 +1868,8 @@ def mock_server_setup():
 
 
 @pytest.fixture(scope="session")
-def mock_server_info(mock_server_setup) -> MaskServerInfo:
+def mock_server_info(mock_server_setup: str) -> MaskServerInfo:
     """
-    TODO: add description
+    Returns the MaskServerInfo for the mock server.
     """
-    return MaskServerInfo(
-        base_url="http://localhost:8000", server_address="srv", token=None
-    )
+    return MaskServerInfo(base_url=mock_server_setup, server_address="srv", token=None)

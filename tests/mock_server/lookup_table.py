@@ -234,7 +234,7 @@ LOOKUP_TABLE: dict = {
     },
     (
         "srv.CRBNK.CUSTOMERS.c_lname",
-        ("IN", 3, "__col__", "lee", "smith", "rodriguez"),
+        ("IN", 4, "__col__", "lee", "smith", "rodriguez"),
     ): {
         "type": "literal",
         "operator": "IN",
@@ -243,7 +243,7 @@ LOOKUP_TABLE: dict = {
     },
     (
         "srv.CRBNK.CUSTOMERS.c_lname",
-        ("NOT", 1, "IN", 3, "__col__", "lee", "smith", "rodriguez"),
+        ("NOT", 1, "IN", 4, "__col__", "lee", "smith", "rodriguez"),
     ): {
         "type": "literal",
         "operator": "NOT_IN",

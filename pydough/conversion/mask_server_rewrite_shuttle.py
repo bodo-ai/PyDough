@@ -1,5 +1,6 @@
 """
-TODO
+Logic for the shuttle that performs Mask Server rewrite conversion on candidates
+identified by the candidate visitor.
 """
 
 __all__ = ["MaskServerRewriteShuttle"]
@@ -19,12 +20,15 @@ from pydough.relational import (
 )
 from pydough.types import ArrayType, BooleanType, UnknownType
 
-from .mask_server_candidate_shuttle import MaskServerCandidateShuttle
+from .mask_server_candidate_visitor import MaskServerCandidateVisitor
 
 
 class MaskServerRewriteShuttle(RelationalExpressionShuttle):
     """
-    TODO
+    A shuttle that rewrites candidate expressions for Mask Server conversion
+    identified by a `MaskServerCandidateVisitor`, by batching requests to the
+    Mask Server and replacing the candidate expressions with the appropriate
+    responses from the server.
     """
 
     OPERATORS_TO_SERVER_NAMES: dict[pydop.PyDoughExpressionOperator, str] = {
@@ -57,17 +61,17 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
     """
 
     def __init__(
-        self, server_info: MaskServerInfo, candidate_shuttle: MaskServerCandidateShuttle
+        self, server_info: MaskServerInfo, candidate_visitor: MaskServerCandidateVisitor
     ) -> None:
         self.server_info: MaskServerInfo = server_info
-        self.candidate_shuttle: MaskServerCandidateShuttle = candidate_shuttle
+        self.candidate_visitor: MaskServerCandidateVisitor = candidate_visitor
         self.responses: dict[
             RelationalExpression, tuple[RelationalExpression, MaskServerOutput] | None
         ] = {}
 
     def visit_call_expression(self, expr: CallExpression) -> RelationalExpression:
         # TODO: ADD COMMENTS
-        if expr in self.candidate_shuttle.candidate_pool:
+        if expr in self.candidate_visitor.candidate_pool:
             self.process_batch()
 
         response: tuple[RelationalExpression, MaskServerOutput] | None = (
@@ -79,20 +83,21 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
 
     def process_batch(self) -> None:
         """
-        TODO
+        TODO: ADD COMMENTS
         """
         batch: list[MaskServerInput] = []
         ancillary_info: list[tuple[RelationalExpression, RelationalExpression]] = []
         for expr, (
             mask_op,
             input_expr,
-        ) in self.candidate_shuttle.candidate_pool.items():
+            expression_list,
+        ) in self.candidate_visitor.candidate_pool.items():
             ancillary_info.append((expr, input_expr))
             batch.append(
                 MaskServerInput(
                     table_path=mask_op.table_path,
                     column_name=mask_op.masking_metadata.column_name,
-                    expression=self.convert_to_server_expression(expr),
+                    expression=expression_list,
                 )
             )
         responses: list[MaskServerOutput] = (
@@ -104,96 +109,14 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
                 self.responses[expr] = (input_expr, response)
             else:
                 self.responses[expr] = None
-            self.candidate_shuttle.processed_candidates.add(expr)
-        self.candidate_shuttle.candidate_pool.clear()
-
-    def convert_literal_to_server_expression(
-        self, literal: LiteralExpression
-    ) -> list[str | int | float | None | bool]:
-        """
-        TODO
-        """
-        if literal.value is None:
-            return ["NULL"]
-        elif isinstance(literal.value, bool):
-            return ["TRUE" if literal.value else "FALSE"]
-        elif isinstance(literal.value, (int, float)):
-            return [literal.value]
-        elif isinstance(literal.value, str):
-            return [literal.value]
-        else:
-            raise ValueError(
-                f"Unsupported literal type for mask server conversion: {type(literal.value)}"
-            )
-
-    def convert_to_server_expression(
-        self, expr: RelationalExpression
-    ) -> list[str | int | float | None | bool]:
-        """
-        TODO
-        """
-        if isinstance(expr, LiteralExpression):
-            return self.convert_literal_to_server_expression(expr)
-        elif isinstance(expr, CallExpression):
-            if isinstance(expr.op, pydop.MaskedExpressionFunctionOperator):
-                return ["__col__"]
-            elif expr.op in self.OPERATORS_TO_SERVER_NAMES:
-                return self.convert_call_to_server_expression(
-                    self.OPERATORS_TO_SERVER_NAMES[expr.op], expr.inputs
-                )
-            elif expr.op == pydop.ISIN:
-                return self.convert_isin_call_to_server_expression(expr.inputs)
-            else:
-                raise ValueError(
-                    f"Unsupported operator for mask server conversion: {expr.op}"
-                )
-        else:
-            raise ValueError(
-                f"Unsupported expression type for mask server conversion: {type(expr)}"
-            )
-
-    def convert_call_to_server_expression(
-        self, operator_name: str, inputs: list[RelationalExpression]
-    ) -> list[str | int | float | None | bool]:
-        """
-        TODO
-        """
-        result: list[str | int | float | None | bool] = [operator_name]
-        result.append(len(inputs))
-        for inp in inputs:
-            result.extend(self.convert_to_server_expression(inp))
-        return result
-
-    def convert_isin_call_to_server_expression(
-        self, inputs: list[RelationalExpression]
-    ) -> list[str | int | float | None | bool]:
-        """
-        TODO
-        """
-        if len(inputs) != 2:
-            raise ValueError("ISIN operator requires exactly two inputs.")
-        result: list[str | int | float | None | bool] = ["IN"]
-        args: list[str | int | float | None | bool] = self.convert_to_server_expression(
-            inputs[0]
-        )
-        assert isinstance(inputs[1], LiteralExpression) and isinstance(
-            inputs[1].value, (list, tuple)
-        ), "ISIN right-hand side must be a list or tuple literal."
-        for v in inputs[1].value:
-            args.extend(
-                self.convert_literal_to_server_expression(
-                    LiteralExpression(v, UnknownType())
-                )
-            )
-        result.append(len(inputs[1].value))
-        result.extend(args)
-        return result
+            self.candidate_visitor.processed_candidates.add(expr)
+        self.candidate_visitor.candidate_pool.clear()
 
     def convert_response_to_relational(
         self, input_expr: RelationalExpression, response: MaskServerOutput
     ) -> RelationalExpression:
         """
-        TODO
+        TODO: ADD COMMENTS
         """
         result: RelationalExpression
         match response.response_case:
@@ -209,7 +132,7 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         self, input_expr: RelationalExpression, response: MaskServerOutput
     ) -> RelationalExpression:
         """
-        TODO
+        TODO: ADD COMMENTS
         """
         assert response.response_case in (
             MaskServerResponse.IN_ARRAY,

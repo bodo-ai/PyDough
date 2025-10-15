@@ -88,7 +88,7 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
-from .mask_server_candidate_shuttle import MaskServerCandidateShuttle
+from .mask_server_candidate_visitor import MaskServerCandidateVisitor
 from .mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
@@ -1685,7 +1685,7 @@ def convert_ast_to_relational(
     # been attached to the session, include the shuttles for that as well.
     if os.getenv("PYDOUGH_ENABLE_MASK_REWRITES") == "1":
         if session.mask_server is not None:
-            candidate_shuttle: MaskServerCandidateShuttle = MaskServerCandidateShuttle()
+            candidate_shuttle: MaskServerCandidateVisitor = MaskServerCandidateVisitor()
             additional_shuttles.append(candidate_shuttle)
             additional_shuttles.append(
                 MaskServerRewriteShuttle(session.mask_server, candidate_shuttle)
