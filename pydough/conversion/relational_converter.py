@@ -44,7 +44,9 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalExpression,
+    RelationalExpressionDispatcher,
     RelationalExpressionShuttle,
+    RelationalExpressionShuttleDispatcher,
     RelationalExpressionVisitor,
     RelationalNode,
     RelationalRoot,
@@ -1594,7 +1596,7 @@ def optimize_relational_tree(
 
     # Run the following pipeline twice:
     #   A: projection pullup
-    #   B: expression simplification
+    #   B: expression simplification (followed by additional shuttles)
     #   C: filter pushdown
     #   D: column pruning
     # This is done because pullup will create more opportunities for expression
@@ -1604,7 +1606,13 @@ def optimize_relational_tree(
     # pullup and pushdown and so on.
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
-        simplify_expressions(root, session, additional_shuttles)
+        simplify_expressions(root, session)
+        # Run all of the other shuttles/visitors over the entire tree.
+        for shuttle_or_visitor in additional_shuttles:
+            if isinstance(shuttle_or_visitor, RelationalExpressionShuttle):
+                root.accept(RelationalExpressionShuttleDispatcher(shuttle_or_visitor))
+            else:
+                root.accept(RelationalExpressionDispatcher(shuttle_or_visitor, True))
         root = confirm_root(push_filters(root, session))
         root = pruner.prune_unused_columns(root)
 

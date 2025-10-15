@@ -1,5 +1,6 @@
 """
-TODO
+Implementation of a visitor that works by applying a shuttle to every expression
+for each node.
 """
 
 from pydough.relational.relational_expressions import (
@@ -34,7 +35,8 @@ class RelationalExpressionShuttleDispatcher(RelationalVisitor):
 
     def visit_common(self, node: RelationalNode) -> None:
         """
-        Applies a visit common to each node.
+        Applies the basic logic to transform all the expressions in a node's
+        column list, as well as transforming the inputs to the node.
         """
         self.visit_inputs(node)
         for name, expr in node.columns.items():

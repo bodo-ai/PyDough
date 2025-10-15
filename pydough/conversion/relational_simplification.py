@@ -30,9 +30,7 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalExpression,
-    RelationalExpressionDispatcher,
     RelationalExpressionShuttle,
-    RelationalExpressionVisitor,
     RelationalNode,
     RelationalRoot,
     RelationalVisitor,
@@ -41,9 +39,6 @@ from pydough.relational import (
 )
 from pydough.relational.rel_util import (
     add_input_name,
-)
-from pydough.relational.relational_nodes.relational_expression_shuttle_dispatcher import (
-    RelationalExpressionShuttleDispatcher,
 )
 from pydough.sqlglot.transform_bindings.sqlglot_transform_utils import (
     DateTimeUnit,
@@ -1681,9 +1676,6 @@ class SimplificationVisitor(RelationalVisitor):
 def simplify_expressions(
     node: RelationalNode,
     session: PyDoughSession,
-    additional_shuttles: list[
-        RelationalExpressionShuttle | RelationalExpressionVisitor
-    ],
 ) -> None:
     """
     Transforms the current node and all of its descendants in-place to simplify
@@ -1692,17 +1684,6 @@ def simplify_expressions(
     Args:
         `node`: The relational node to perform simplification on.
         `session`: The PyDough session used during the simplification.
-        `additional_shuttles`: A list of additional shuttles or visitors to
-        apply to the expressions of the node and its descendants. These shuttles
-        and visitors are applied after the simplification shuttle, and can be
-        used to perform additional transformations on the expressions.
     """
     simplifier: SimplificationVisitor = SimplificationVisitor(session)
     node.accept(simplifier)
-
-    # Run all of the other shuttles/visitors over the entire tree.
-    for shuttle_or_visitor in additional_shuttles:
-        if isinstance(shuttle_or_visitor, RelationalExpressionShuttle):
-            node.accept(RelationalExpressionShuttleDispatcher(shuttle_or_visitor))
-        else:
-            node.accept(RelationalExpressionDispatcher(shuttle_or_visitor, True))
