@@ -88,8 +88,6 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
             input_expr,
         ) in self.candidate_shuttle.candidate_pool.items():
             ancillary_info.append((expr, input_expr))
-            print()
-            print(self.convert_to_server_expression(expr))
             batch.append(
                 MaskServerInput(
                     table_path=mask_op.table_path,

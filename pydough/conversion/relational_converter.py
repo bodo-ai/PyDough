@@ -45,6 +45,7 @@ from pydough.relational import (
     Project,
     RelationalExpression,
     RelationalExpressionShuttle,
+    RelationalExpressionVisitor,
     RelationalNode,
     RelationalRoot,
     Scan,
@@ -1525,7 +1526,9 @@ def confirm_root(node: RelationalNode) -> RelationalRoot:
 def optimize_relational_tree(
     root: RelationalRoot,
     session: PyDoughSession,
-    additional_shuttles: list[RelationalExpressionShuttle],
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ],
 ) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
@@ -1534,8 +1537,8 @@ def optimize_relational_tree(
     Args:
         `root`: the relational root to optimize.
         `configs`: PyDough session used during optimization.
-        `additional_shuttles`: additional relational expression shuttles to use
-        for expression simplification.
+        `additional_shuttles`: additional relational expression shuttles or
+        visitors to use for expression simplification.
 
     Returns:
         The optimized relational root.
@@ -1666,7 +1669,9 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    additional_shuttles: list[RelationalExpressionShuttle] = []
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ] = []
     # Add the mask literal comparison shuttle if the environment variable
     # PYDOUGH_ENABLE_MASK_REWRITES is set to 1. If a masking rewrite server has
     # been attached to the session, include the shuttles for that as well.
