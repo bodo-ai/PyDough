@@ -6,13 +6,14 @@ that can act as wrappers around the internal implementation of SQLGlot.
 from sqlglot.expressions import (
     Alias as SQLGlotAlias,
 )
-from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import (
+    Column,
     Identifier,
     Window,
     maybe_copy,
     maybe_parse,
 )
+from sqlglot.expressions import Expression as SQLGlotExpression
 
 __all__ = ["get_glot_name", "set_glot_alias", "unwrap_alias"]
 
@@ -59,9 +60,21 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
     if old_name == alias:
         return expr
     else:
-        # result = expr.as_(alias)
-        result = generate_glot_alias(expr, alias, False)
-        return result
+        quoted: bool = False
+
+        if (
+            (alias.startswith('"') and alias.endswith('"'))
+            or (alias.startswith("'") and alias.endswith("'"))
+            or (alias.startswith("`") and alias.endswith("`"))
+        ):
+            alias = alias[1:-1]
+
+            if isinstance(expr, Identifier):
+                quoted = expr.args.get("quoted", False)
+            elif isinstance(expr, Column):
+                quoted = expr.this.args.get("quoted", False)
+
+        return generate_glot_alias(expr, alias, quoted=quoted)
 
 
 def generate_glot_alias(

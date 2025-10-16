@@ -1,12 +1,12 @@
 SELECT
-  COALESCE(where.default_to, ".calculate") AS calculate,
-  ".where" AS _where,
-  "like" AS _like,
+  COALESCE("where".default_to, "where".".calculate") AS calculate,
+  calculate.".where" AS _where,
+  calculate."like" AS _like,
   calculate.datetime,
-  where.abs,
-  where.has
-FROM keywords."where" AS where
+  "where".abs,
+  "where".has
+FROM keywords."where" AS "where"
 JOIN keywords.calculate AS calculate
-  ON calculate.".where" = where.".calculate"
+  ON "where".".calculate" = calculate.".where"
 WHERE
-  where.".calculate" = 4 AND where.present IS NULL
+  "where".".calculate" = 4 AND "where".present IS NULL
