@@ -14,6 +14,7 @@ from sqlglot.expressions import (
     Abs,
     Add,
     Binary,
+    Column,
     Expression,
     From,
     Length,
@@ -983,7 +984,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    set_glot_alias(Ident(this="_s0.a", quoted=False), "a"),
+                    set_glot_alias(
+                        Column(
+                            this=Ident(this="a", quoted=False),
+                            table=Ident(this="_s0", quoted=False),
+                        ),
+                        "a",
+                    ),
                 ],
                 _from=GlotFrom(
                     mkglot(
@@ -1011,8 +1018,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_s0.a", quoted=False),
-                            Ident(this="_s1.a", quoted=False),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s0", quoted=False),
+                            ),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s1", quoted=False),
+                            ),
                         ],
                     ),
                     join_type="semi",
@@ -1038,7 +1051,13 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
             ),
             mkglot(
                 expressions=[
-                    set_glot_alias(Ident(this="_s0.a", quoted=False), "a"),
+                    set_glot_alias(
+                        Column(
+                            this=Ident(this="a", quoted=False),
+                            table=Ident(this="_s0", quoted=False),
+                        ),
+                        "a",
+                    ),
                 ],
                 _from=GlotFrom(
                     mkglot(
@@ -1066,8 +1085,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_s0.a", quoted=False),
-                            Ident(this="_s1.a", quoted=False),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s0", quoted=False),
+                            ),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s1", quoted=False),
+                            ),
                         ],
                     ),
                     join_type="anti",
@@ -1110,12 +1135,32 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 },
             ),
             mkglot(
-                expressions=[set_glot_alias(Ident(this="_s2.b", quoted=False), "d")],
+                expressions=[
+                    set_glot_alias(
+                        Column(
+                            this=Ident(this="b", quoted=False),
+                            table=Ident(this="_s2", quoted=False),
+                        ),
+                        "d",
+                    )
+                ],
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            set_glot_alias(Ident(this="_s0.a", quoted=False), "a"),
-                            set_glot_alias(Ident(this="_s1.b", quoted=False), "b"),
+                            set_glot_alias(
+                                Column(
+                                    this=Ident(this="a", quoted=False),
+                                    table=Ident(this="_s0", quoted=False),
+                                ),
+                                "a",
+                            ),
+                            set_glot_alias(
+                                Column(
+                                    this=Ident(this="b", quoted=False),
+                                    table=Ident(this="_s1", quoted=False),
+                                ),
+                                "b",
+                            ),
                         ],
                         _from=GlotFrom(
                             mkglot(
@@ -1145,8 +1190,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                             on=mkglot_func(
                                 EQ,
                                 [
-                                    Ident(this="_s0.a", quoted=False),
-                                    Ident(this="_s1.a", quoted=False),
+                                    Column(
+                                        this=Ident(this="a", quoted=False),
+                                        table=Ident(this="_s0", quoted=False),
+                                    ),
+                                    Column(
+                                        this=Ident(this="a", quoted=False),
+                                        table=Ident(this="_s1", quoted=False),
+                                    ),
                                 ],
                             ),
                             join_type="inner",
@@ -1170,8 +1221,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_s2.a", quoted=False),
-                            Ident(this="_s3.a", quoted=False),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s2", quoted=False),
+                            ),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s3", quoted=False),
+                            ),
                         ],
                     ),
                     join_type="left",
@@ -1217,8 +1274,20 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
-                            set_glot_alias(Ident(this="_s0.a", quoted=False), "a"),
-                            set_glot_alias(Ident(this="_s1.b", quoted=False), "b"),
+                            set_glot_alias(
+                                Column(
+                                    this=Ident(this="a", quoted=False),
+                                    table=Ident(this="_s0", quoted=False),
+                                ),
+                                "a",
+                            ),
+                            set_glot_alias(
+                                Column(
+                                    this=Ident(this="b", quoted=False),
+                                    table=Ident(this="_s1", quoted=False),
+                                ),
+                                "b",
+                            ),
                         ],
                         _from=GlotFrom(
                             mkglot(
@@ -1248,8 +1317,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                             on=mkglot_func(
                                 EQ,
                                 [
-                                    Ident(this="_s0.a", quoted=False),
-                                    Ident(this="_s1.a", quoted=False),
+                                    Column(
+                                        this=Ident(this="a", quoted=False),
+                                        table=Ident(this="_s0", quoted=False),
+                                    ),
+                                    Column(
+                                        this=Ident(this="a", quoted=False),
+                                        table=Ident(this="_s1", quoted=False),
+                                    ),
                                 ],
                             ),
                             join_type="inner",
@@ -1570,7 +1645,15 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                 ],
             ),
             mkglot(
-                expressions=[set_glot_alias(Ident(this="_s1.b", quoted=False), "b")],
+                expressions=[
+                    set_glot_alias(
+                        Column(
+                            this=Ident(this="b", quoted=False),
+                            table=Ident(this="_s1", quoted=False),
+                        ),
+                        "b",
+                    )
+                ],
                 _from=GlotFrom(
                     mkglot(
                         expressions=[
@@ -1597,8 +1680,14 @@ def mkglot_func(op: type[Expression], args: list[Expression]) -> Expression:
                     on=mkglot_func(
                         EQ,
                         [
-                            Ident(this="_s0.a", quoted=False),
-                            Ident(this="_s1.a", quoted=False),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s0", quoted=False),
+                            ),
+                            Column(
+                                this=Ident(this="a", quoted=False),
+                                table=Ident(this="_s1", quoted=False),
+                            ),
                         ],
                     ),
                     join_type="inner",
