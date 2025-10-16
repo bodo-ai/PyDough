@@ -1455,22 +1455,13 @@ class SimplificationVisitor(RelationalVisitor):
     the current node are placed on the stack.
     """
 
-    def __init__(
-        self,
-        session: PyDoughSession,
-        additional_shuttles: list[RelationalExpressionShuttle],
-    ):
+    def __init__(self, session: PyDoughSession):
         self.stack: list[dict[RelationalExpression, PredicateSet]] = []
         self.shuttle: SimplificationShuttle = SimplificationShuttle(session)
-        self.additional_shuttles: list[RelationalExpressionShuttle] = (
-            additional_shuttles
-        )
 
     def reset(self):
         self.stack.clear()
         self.shuttle.reset()
-        for shuttle in self.additional_shuttles:
-            shuttle.reset()
 
     def get_input_predicates(
         self, node: RelationalNode
@@ -1535,8 +1526,6 @@ class SimplificationVisitor(RelationalVisitor):
             ref_expr = ColumnReference(name, expr.data_type)
             expr = expr.accept_shuttle(self.shuttle)
             output_predicates[ref_expr] = self.shuttle.stack.pop()
-            for shuttle in self.additional_shuttles:
-                expr = expr.accept_shuttle(shuttle)
             node.columns[name] = expr
         return output_predicates
 
@@ -1615,8 +1604,6 @@ class SimplificationVisitor(RelationalVisitor):
         # Transform the filter condition in-place.
         node._condition = node.condition.accept_shuttle(self.shuttle)
         self.shuttle.stack.pop()
-        for shuttle in self.additional_shuttles:
-            node._condition = node.condition.accept_shuttle(shuttle)
         self.infer_null_predicates_from_condition(
             output_predicates,
             node.condition,
@@ -1631,8 +1618,6 @@ class SimplificationVisitor(RelationalVisitor):
         # Transform the join condition in-place.
         node._condition = node.condition.accept_shuttle(self.shuttle)
         self.shuttle.stack.pop()
-        for shuttle in self.additional_shuttles:
-            node._condition = node.condition.accept_shuttle(shuttle)
         # If the join is not an inner join, remove any not-null predicates
         # from the RHS of the join.
         if node.join_type != JoinType.INNER:
@@ -1659,8 +1644,6 @@ class SimplificationVisitor(RelationalVisitor):
         for ordering_expr in node.orderings:
             ordering_expr.expr = ordering_expr.expr.accept_shuttle(self.shuttle)
             self.shuttle.stack.pop()
-            for shuttle in self.additional_shuttles:
-                ordering_expr.expr = ordering_expr.expr.accept_shuttle(shuttle)
         self.stack.append(output_predicates)
 
     def visit_root(self, node: RelationalRoot) -> None:
@@ -1674,8 +1657,6 @@ class SimplificationVisitor(RelationalVisitor):
         for ordering_expr in node.orderings:
             ordering_expr.expr = ordering_expr.expr.accept_shuttle(self.shuttle)
             self.shuttle.stack.pop()
-            for shuttle in self.additional_shuttles:
-                ordering_expr.expr = ordering_expr.expr.accept_shuttle(shuttle)
         self.stack.append(output_predicates)
 
     def visit_aggregate(self, node: Aggregate) -> None:
@@ -1695,7 +1676,6 @@ class SimplificationVisitor(RelationalVisitor):
 def simplify_expressions(
     node: RelationalNode,
     session: PyDoughSession,
-    additional_shuttles: list[RelationalExpressionShuttle],
 ) -> None:
     """
     Transforms the current node and all of its descendants in-place to simplify
@@ -1704,12 +1684,6 @@ def simplify_expressions(
     Args:
         `node`: The relational node to perform simplification on.
         `session`: The PyDough session used during the simplification.
-        `additional_shuttles`: A list of additional shuttles to apply to the
-        expressions of the node and its descendants. These shuttles are applied
-        after the simplification shuttle, and can be used to perform additional
-        transformations on the expressions.
     """
-    simplifier: SimplificationVisitor = SimplificationVisitor(
-        session, additional_shuttles
-    )
+    simplifier: SimplificationVisitor = SimplificationVisitor(session)
     node.accept(simplifier)

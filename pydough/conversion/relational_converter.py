@@ -44,7 +44,10 @@ from pydough.relational import (
     LiteralExpression,
     Project,
     RelationalExpression,
+    RelationalExpressionDispatcher,
     RelationalExpressionShuttle,
+    RelationalExpressionShuttleDispatcher,
+    RelationalExpressionVisitor,
     RelationalNode,
     RelationalRoot,
     Scan,
@@ -85,6 +88,8 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
+from .mask_server_candidate_visitor import MaskServerCandidateVisitor
+from .mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
@@ -857,7 +862,9 @@ class RelTranslation:
                     )
                     unmask_columns[name] = CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
-                            hybrid_expr.column.column_property, True
+                            hybrid_expr.column.column_property,
+                            node.collection.collection.table_path,
+                            True,
                         ),
                         hybrid_expr.column.column_property.unprotected_data_type,
                         [ColumnReference(name, hybrid_expr.typ)],
@@ -1521,7 +1528,9 @@ def confirm_root(node: RelationalNode) -> RelationalRoot:
 def optimize_relational_tree(
     root: RelationalRoot,
     session: PyDoughSession,
-    additional_shuttles: list[RelationalExpressionShuttle],
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ],
 ) -> RelationalRoot:
     """
     Runs optimize on the relational tree, including pushing down filters and
@@ -1530,8 +1539,8 @@ def optimize_relational_tree(
     Args:
         `root`: the relational root to optimize.
         `configs`: PyDough session used during optimization.
-        `additional_shuttles`: additional relational expression shuttles to use
-        for expression simplification.
+        `additional_shuttles`: additional relational expression shuttles or
+        visitors to use for expression simplification.
 
     Returns:
         The optimized relational root.
@@ -1587,7 +1596,7 @@ def optimize_relational_tree(
 
     # Run the following pipeline twice:
     #   A: projection pullup
-    #   B: expression simplification
+    #   B: expression simplification (followed by additional shuttles)
     #   C: filter pushdown
     #   D: column pruning
     # This is done because pullup will create more opportunities for expression
@@ -1597,7 +1606,13 @@ def optimize_relational_tree(
     # pullup and pushdown and so on.
     for _ in range(2):
         root = confirm_root(pullup_projections(root))
-        simplify_expressions(root, session, additional_shuttles)
+        simplify_expressions(root, session)
+        # Run all of the other shuttles/visitors over the entire tree.
+        for shuttle_or_visitor in additional_shuttles:
+            if isinstance(shuttle_or_visitor, RelationalExpressionShuttle):
+                root.accept(RelationalExpressionShuttleDispatcher(shuttle_or_visitor))
+            else:
+                root.accept(RelationalExpressionDispatcher(shuttle_or_visitor, True))
         root = confirm_root(push_filters(root, session))
         root = pruner.prune_unused_columns(root)
 
@@ -1662,10 +1677,19 @@ def convert_ast_to_relational(
     raw_result: RelationalRoot = postprocess_root(node, columns, hybrid, output)
 
     # Invoke the optimization procedures on the result to clean up the tree.
-    additional_shuttles: list[RelationalExpressionShuttle] = []
+    additional_shuttles: list[
+        RelationalExpressionShuttle | RelationalExpressionVisitor
+    ] = []
     # Add the mask literal comparison shuttle if the environment variable
-    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1.
+    # PYDOUGH_ENABLE_MASK_REWRITES is set to 1. If a masking rewrite server has
+    # been attached to the session, include the shuttles for that as well.
     if os.getenv("PYDOUGH_ENABLE_MASK_REWRITES") == "1":
+        if session.mask_server is not None:
+            candidate_shuttle: MaskServerCandidateVisitor = MaskServerCandidateVisitor()
+            additional_shuttles.append(candidate_shuttle)
+            additional_shuttles.append(
+                MaskServerRewriteShuttle(session.mask_server, candidate_shuttle)
+            )
         additional_shuttles.append(MaskLiteralComparisonShuttle())
     optimized_result: RelationalRoot = optimize_relational_tree(
         raw_result, session, additional_shuttles
