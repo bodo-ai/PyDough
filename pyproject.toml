@@ -60,9 +60,7 @@ lint.extend-select = [
     "TID", # flake8-tidy-imports
 ]
 
-lint.ignore = [
-    "UP038",
-]
+lint.ignore = []
 # Don't run ruff on any ipython notebooks as they may have
 # names that don't statically resolve.
 exclude = ["**/*.ipynb"]
