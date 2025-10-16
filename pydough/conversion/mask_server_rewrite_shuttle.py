@@ -31,37 +31,6 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
     responses from the server.
     """
 
-    OPERATORS_TO_SERVER_NAMES: dict[pydop.PyDoughExpressionOperator, str] = {
-        pydop.BAN: "AND",
-        pydop.BOR: "OR",
-        pydop.NOT: "NOT",
-        pydop.EQU: "EQUAL",
-        pydop.NEQ: "NOT_EQUAL",
-        pydop.GRT: "GT",
-        pydop.GEQ: "GTE",
-        pydop.LET: "LT",
-        pydop.LEQ: "LTE",
-        pydop.STARTSWITH: "STARTSWITH",
-        pydop.ENDSWITH: "ENDSWITH",
-        pydop.LOWER: "LOWER",
-        pydop.UPPER: "UPPER",
-        pydop.MONOTONIC: "BETWEEN",
-        pydop.YEAR: "YEAR",
-        pydop.MONTH: "MONTH",
-        pydop.DAY: "DAY",
-        pydop.ADD: "ADD",
-        pydop.SUB: "SUB",
-        pydop.MUL: "MUL",
-        pydop.DIV: "DIV",
-    }
-    """
-    A mapping of all PyDough operators that can be handled by the Mask Server,
-    mapping each such operator to the string name used in the linear string
-    serialization format recognized by the Mask Server.
-
-    Note: ISIN is handled separately.
-    """
-
     def __init__(
         self, server_info: MaskServerInfo, candidate_visitor: MaskServerCandidateVisitor
     ) -> None:
