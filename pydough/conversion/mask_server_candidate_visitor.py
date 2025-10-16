@@ -20,7 +20,21 @@ from pydough.types import UnknownType
 
 class MaskServerCandidateVisitor(RelationalExpressionVisitor):
     """
-    TODO
+    A relational expression visitor that identifies candidate expressions for
+    Mask Server rewrite conversion, and stores them in a candidate pool for
+    later processing by a `MaskServerRewriteShuttle`. The candidate pool
+    contains expressions with the following criteria, including both
+    atomic instances of the patterns, and larger expressions that contain
+    these patterns as sub-expressions:
+    1. An expression that contains exactly one unique unmasking operator (i.e. a
+       `MaskedExpressionFunctionOperator` with `is_unmask=True`). The contents
+       of the unmasking operator can be any valid expression.
+    2. Literals are allowed anywhere in the expression.
+    3. No other expressions are allowed (outside the contents of the unmasking
+       operator) except for function calls used to combine other valid
+       expressions, where the function calls must be one of the operators
+       supported by the Mask Server (see `OPERATORS_TO_SERVER_NAMES`, as well as
+       the `ISIN` operator).
     """
 
     OPERATORS_TO_SERVER_NAMES: dict[pydop.PyDoughExpressionOperator, str] = {
