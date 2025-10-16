@@ -55,9 +55,11 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         pydop.DIV: "DIV",
     }
     """
-    TODO: ADD DESCRIPTION
+    A mapping of all PyDough operators that can be handled by the Mask Server,
+    mapping each such operator to the string name used in the linear string
+    serialization format recognized by the Mask Server.
 
-    NOTE: ISIN is handled separately.
+    Note: ISIN is handled separately.
     """
 
     def __init__(
@@ -65,28 +67,48 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
     ) -> None:
         self.server_info: MaskServerInfo = server_info
         self.candidate_visitor: MaskServerCandidateVisitor = candidate_visitor
-        self.responses: dict[
-            RelationalExpression, tuple[RelationalExpression, MaskServerOutput] | None
-        ] = {}
+        self.responses: dict[RelationalExpression, RelationalExpression | None] = {}
+        """
+        A mapping of relational expressions from the candidate visitor that have
+        been processed by the Mask Server. Each expression maps to either None
+        (if the server could not handle it) or the rewritten expression based on
+        the outcome of the server request.
+        """
 
     def visit_call_expression(self, expr: CallExpression) -> RelationalExpression:
-        # TODO: ADD COMMENTS
+        # If this expression is in the candidate pool, process all of the
+        # candidates in the pool in a batch sent to the Mask Server. The
+        # candidate pool will then be cleared, preventing duplicate processing
+        # of the same expression. The responses will be stored in self.responses
+        # for later lookup.
         if expr in self.candidate_visitor.candidate_pool:
             self.process_batch()
 
-        response: tuple[RelationalExpression, MaskServerOutput] | None = (
-            self.responses.get(expr, None)
-        )
+        # If a Mask Server response has been stored for this expression,
+        # utilize it to convert the expression to its simplified form.
+        response: RelationalExpression | None = self.responses.get(expr, None)
         if response is not None:
-            return self.convert_response_to_relational(*response)
+            return response
+
+        # Otherwise, use the regular process to recursively transform the inputs
+        # to the function call.
         return super().visit_call_expression(expr)
 
     def process_batch(self) -> None:
         """
-        TODO: ADD COMMENTS
+        Invokes the logic to dump the contents of the candidate pool to the
+        Mask Server in a single batch, and process the responses to store them
+        in self.responses for later lookup.
         """
         batch: list[MaskServerInput] = []
         ancillary_info: list[tuple[RelationalExpression, RelationalExpression]] = []
+
+        # Loop over every candidate in the pool, building up the batch request
+        # by adding the MaskServerInput for each candidate, and storing the
+        # tuple of the original expression and the underlying input that is
+        # being unmasked for later use when processing the response. The two
+        # lists, the batch and ancillary info, remain in sync by index so they
+        # can be zipped together later.
         for expr, (
             mask_op,
             input_expr,
@@ -100,39 +122,74 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
                     expression=expression_list,
                 )
             )
+
+        # Send the batch to the Mask Server, and process each response
+        # alongside the ancillary info. Afterwards, self.responses should
+        # contain an entry for every candidate that was in the pool, mapping it
+        # to None in the case of failure, or the rewritten expression in the
+        # case of success.
         responses: list[MaskServerOutput] = (
             self.server_info.simplify_simple_expression_batch(batch)
         )
         assert len(responses) == len(ancillary_info)
         for (expr, input_expr), response in zip(ancillary_info, responses):
             if response.response_case != MaskServerResponse.UNSUPPORTED:
-                self.responses[expr] = (input_expr, response)
+                self.responses[expr] = self.convert_response_to_relational(
+                    input_expr, response
+                )
             else:
                 self.responses[expr] = None
             self.candidate_visitor.processed_candidates.add(expr)
+
+        # Wipe the candidate pool to prevent duplicate processing, since every
+        # candidate already in the pool has now been added to self.responses.
         self.candidate_visitor.candidate_pool.clear()
 
     def convert_response_to_relational(
         self, input_expr: RelationalExpression, response: MaskServerOutput
-    ) -> RelationalExpression:
+    ) -> RelationalExpression | None:
         """
-        TODO: ADD COMMENTS
+        Takes in the original input expression that is being unmasked within
+        a larger candidate expression for Mask Server rewrite, as well as the
+        response from the Mask Server, and converts it to a relational
+        expression that can be used to replace the original candidate
+        expression.
+
+        Args:
+            `input_expr`: The original input expression that is being unmasked.
+            `response`: The response from the Mask Server for the candidate.
+
+        Returns:
+            A relational expression that can be used to replace the original
+            candidate expression. Alternatively, returns None if the response
+            could not be converted (e.g. it is a pattern PyDough does not yet
+            support).
         """
         result: RelationalExpression
         match response.response_case:
             case MaskServerResponse.IN_ARRAY | MaskServerResponse.NOT_IN_ARRAY:
                 result = self.build_in_array_expression(input_expr, response)
             case _:
-                raise ValueError(
-                    f"Unsupported mask server response case: {response.response_case}"
-                )
+                return None
         return result
 
     def build_in_array_expression(
         self, input_expr: RelationalExpression, response: MaskServerOutput
     ) -> RelationalExpression:
         """
-        TODO: ADD COMMENTS
+        Implements the logic of `convert_response_to_relational` specifically
+        for the case where the Mask Server response indicates that the original
+        expression, containing the input expression, can be replaced with an
+        IN or NOT IN expression with a list of literals.
+
+        Args:
+            `input_expr`: The original input expression that is being unmasked.
+            `response`: The response from the Mask Server for the candidate.
+            This response is assumed to be of type IN_ARRAY or NOT_IN_ARRAY.
+
+        Returns:
+            A relational expression that can be used to replace the original
+            candidate expression.
         """
         assert response.response_case in (
             MaskServerResponse.IN_ARRAY,
