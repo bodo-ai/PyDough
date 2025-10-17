@@ -1,4 +1,4 @@
-WITH _t2 AS (
+WITH _s3 AS (
   SELECT
     c_acctbal,
     c_nationkey,
@@ -42,29 +42,20 @@ WITH _t2 AS (
       ELSE NULL
     END AS expr_7
   FROM tpch.customer
-), _s3 AS (
-  SELECT
-    c_nationkey,
-    AVG(expr_5) AS avg_expr_5,
-    AVG(expr_6) AS avg_expr_6,
-    AVG(expr_7) AS avg_expr_7,
-    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal
-  FROM _t2
-  GROUP BY
-    1
 )
 SELECT
-  nation.n_name AS nation_name,
-  _s3.count_negative_acctbal AS n_red_acctbal,
-  _s3.count_non_negative_acctbal AS n_black_acctbal,
-  _s3.avg_expr_7 AS median_red_acctbal,
-  _s3.avg_expr_5 AS median_black_acctbal,
-  _s3.avg_expr_6 AS median_overall_acctbal
+  MAX(nation.n_name) AS nation_name,
+  COUNT(CASE WHEN _s3.c_acctbal < 0 THEN _s3.c_acctbal ELSE NULL END) AS n_red_acctbal,
+  COUNT(CASE WHEN _s3.c_acctbal >= 0 THEN _s3.c_acctbal ELSE NULL END) AS n_black_acctbal,
+  AVG(_s3.expr_7) AS median_red_acctbal,
+  AVG(_s3.expr_5) AS median_black_acctbal,
+  AVG(_s3.expr_6) AS median_overall_acctbal
 FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'
 JOIN _s3 AS _s3
   ON _s3.c_nationkey = nation.n_nationkey
+GROUP BY
+  _s3.c_nationkey
 ORDER BY
   1

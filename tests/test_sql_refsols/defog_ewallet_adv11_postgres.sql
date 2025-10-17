@@ -1,22 +1,16 @@
-WITH _s1 AS (
-  SELECT
-    user_id,
-    SUM(
-      EXTRACT(EPOCH FROM (
-        CAST(session_end_ts AS TIMESTAMP) - CAST(session_start_ts AS TIMESTAMP)
-      ))
-    ) AS sum_duration
-  FROM main.user_sessions
-  WHERE
-    session_end_ts < '2023-06-08' AND session_start_ts >= '2023-06-01'
-  GROUP BY
-    1
-)
 SELECT
-  users.uid,
-  _s1.sum_duration AS total_duration
+  MAX(users.uid) AS uid,
+  SUM(
+    EXTRACT(EPOCH FROM (
+      CAST(user_sessions.session_end_ts AS TIMESTAMP) - CAST(user_sessions.session_start_ts AS TIMESTAMP)
+    ))
+  ) AS total_duration
 FROM main.users AS users
-JOIN _s1 AS _s1
-  ON _s1.user_id = users.uid
+JOIN main.user_sessions AS user_sessions
+  ON user_sessions.session_end_ts < '2023-06-08'
+  AND user_sessions.session_start_ts >= '2023-06-01'
+  AND user_sessions.user_id = users.uid
+GROUP BY
+  user_sessions.user_id
 ORDER BY
   2 DESC NULLS LAST

@@ -55,7 +55,6 @@ from pydough.types.pydough_type import PyDoughType
 
 from .agg_removal import remove_redundant_aggs
 from .agg_split import split_partial_aggregates
-from .aggregate_join_transpose import pull_aggregates_above_joins
 from .column_bubbler import bubble_column_names
 from .filter_pushdown import push_filters
 from .hybrid_connection import ConnectionType, HybridConnection
@@ -86,6 +85,7 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
+from .join_aggregate_transpose import pull_aggregates_above_joins
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
@@ -1546,9 +1546,6 @@ def optimize_relational_tree(
     pruner: ColumnPruner = ColumnPruner()
     root = pruner.prune_unused_columns(root)
 
-    print()
-    print(root.to_tree_string())
-
     # Bubble up names from the leaf nodes to further encourage simpler naming
     # without aliases, and also to delete duplicate columns where possible.
     # This is done early to maximize the chances that a nicer name will be used
@@ -1656,9 +1653,6 @@ def convert_ast_to_relational(
     # transformations such as de-correlation.
     hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
-
-    print()
-    print(hybrid)
 
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.
