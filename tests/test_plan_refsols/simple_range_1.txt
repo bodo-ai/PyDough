@@ -1,0 +1,2 @@
+ROOT(columns=[('value', value)], orderings=[])
+ GENERATED_TABLE(table=simple_range, columns={'value': value})

@@ -13,6 +13,7 @@ from pydough.relational import (
     ColumnReference,
     EmptySingleton,
     Filter,
+    GeneratedTable,
     Join,
     JoinCardinality,
     JoinType,
@@ -305,6 +306,11 @@ class FilterPushdownShuttle(RelationalShuttle):
         # Materialize all filters before the empty singleton, since they
         # cannot be pushed down any further.
         return self.flush_remaining_filters(empty_singleton, self.filters, set())
+
+    def visit_generated_table(self, generated_table: GeneratedTable) -> RelationalNode:
+        # Materialize all filters before the user generated table, since they
+        # cannot be pushed down any further.
+        return self.flush_remaining_filters(generated_table, self.filters, set())
 
 
 def push_filters(node: RelationalNode, session: PyDoughSession) -> RelationalNode:

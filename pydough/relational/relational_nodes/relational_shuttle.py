@@ -6,6 +6,8 @@ input. Shuttles are defined to be stateless by default.
 
 from abc import ABC
 
+from pydough.relational import GeneratedTable
+
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
@@ -109,6 +111,15 @@ class RelationalShuttle(ABC):
             `singleton`: The empty singleton node to visit.
         """
         return singleton
+
+    def visit_generated_table(self, generated_table: GeneratedTable) -> RelationalNode:
+        """
+        Visit a user GeneratedTable node.
+
+        Args:
+            `generated_table`: The generated table node to visit.
+        """
+        return self.generic_visit_inputs(generated_table)
 
     def visit_root(self, root: RelationalRoot) -> RelationalNode:
         """

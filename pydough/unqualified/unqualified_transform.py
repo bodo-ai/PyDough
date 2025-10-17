@@ -1,6 +1,6 @@
 """
 Logic for transforming raw Python code into PyDough code by replacing undefined
-variables with unqualified nodes by prepending with with `_ROOT.`.
+variables with unqualified nodes by prepending it with `_ROOT.`.
 """
 
 __all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]
@@ -365,8 +365,8 @@ def transform_code(
     source: str, graph_dict: dict[str, GraphMetadata], known_names: set[str]
 ) -> ast.AST:
     """
-    Transforms the source code into a new Python QDAG that has had the PyDough
-    decorator removed, had the definition of `_ROOT` injected at the top of the
+    Transforms the source code into a new Python QDAG that has the PyDough
+    decorator removed, has the definition of `_ROOT` injected at the top of the
     function body, and prepend unknown variables with `_ROOT.`
 
     Args:

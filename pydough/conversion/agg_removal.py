@@ -12,6 +12,7 @@ from pydough.relational import (
     CallExpression,
     EmptySingleton,
     Filter,
+    GeneratedTable,
     Join,
     JoinType,
     Limit,
@@ -276,7 +277,7 @@ def aggregation_uniqueness_helper(
             )
             return node, final_uniqueness
         # Empty singletons don't have uniqueness information.
-        case EmptySingleton():
+        case EmptySingleton() | GeneratedTable():
             return node, set()
         case _:
             raise NotImplementedError(

@@ -43,6 +43,7 @@ from .unqualified_node import (
     UnqualifiedCalculate,
     UnqualifiedCollation,
     UnqualifiedCross,
+    UnqualifiedGeneratedCollection,
     UnqualifiedLiteral,
     UnqualifiedNode,
     UnqualifiedOperation,
@@ -1259,6 +1260,41 @@ class Qualifier:
         )
 
         return qualified_child
+
+    def qualify_generated_collection(
+        self,
+        unqualified: UnqualifiedGeneratedCollection,
+        context: PyDoughCollectionQDAG,
+        is_child: bool,
+        is_cross: bool,
+    ) -> PyDoughCollectionQDAG:
+        """
+        Transforms an `UnqualifiedGeneratedCollection` into a PyDoughCollectionQDAG node.
+
+        Args:
+            `unqualified`: the UnqualifiedGeneratedCollection instance to be transformed.
+            `context`: the collection QDAG whose context the collection is being
+            evaluated within.
+            `is_child`: whether the collection is being qualified as a child
+            of a child operator context, such as CALCULATE or PARTITION.
+            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
+
+        Returns:
+            The PyDough QDAG object for the qualified collection node.
+
+        """
+
+        generated_collection_qdag: PyDoughCollectionQDAG = (
+            self.builder.build_generated_collection(
+                context,
+                unqualified._parcel[0],
+            )
+        )
+        if is_child:
+            generated_collection_qdag = ChildOperatorChildAccess(
+                generated_collection_qdag
+            )
+        return generated_collection_qdag
 
     def qualify_node(
         self,
