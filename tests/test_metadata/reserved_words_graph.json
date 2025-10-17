@@ -27,7 +27,7 @@
           {
             "name": "cast_",
             "type": "table column",
-            "column name": "\"`cast`\"",
+            "column name": "```cast```",
             "data type": "numeric",
             "description": "Column name normalized from SQL reserved word 'CAST'",
             "sample values": [

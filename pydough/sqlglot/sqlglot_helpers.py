@@ -62,13 +62,12 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
     else:
         quoted: bool = False
 
-        if (
-            (alias.startswith('"') and alias.endswith('"'))
-            or (alias.startswith("'") and alias.endswith("'"))
-            or (alias.startswith("`") and alias.endswith("`"))
+        if (alias.startswith('"') and alias.endswith('"')) or (
+            alias.startswith("`") and alias.endswith("`")
         ):
             alias = alias[1:-1]
             alias = alias.replace('""', '"')
+            alias = alias.replace("``", "`")
 
             if isinstance(expr, Identifier):
                 quoted = expr.args.get("quoted", False)
@@ -85,6 +84,8 @@ def generate_glot_alias(
     Generates a SQLGlot Alias expression for the given expression
     and alias.
 
+    This is the overridden and simplified version of sqlglot.expressions.alias().
+
     Args:
         `expr`: The expression to wrap in an alias.
         `alias`: The alias to use.
@@ -94,6 +95,11 @@ def generate_glot_alias(
     """
     exp = maybe_parse(expr, dialect=None, copy=True)
     alias = generate_identifier(alias, quoted=quoted)
+
+    # Part of this code is ommitted because por this particular case the table
+    # argument is not provided and not needed. The omitted code handles
+    # the case where a table argument is provided to set column aliases.
+    # if table: ...
 
     # We don't set the "alias" arg for Window expressions, because that would add an IDENTIFIER node in
     # the AST, representing a "named_window" [1] construct (eg. bigquery). What we want is an ALIAS node
@@ -109,6 +115,20 @@ def generate_glot_alias(
 
 
 def generate_identifier(name, quoted=None, copy=True):
+    """
+    Generates a SQLGlot Identifier expression for the given name.
+
+    This is the overridden of sqlglot.expressions.to_identifier(). This function
+    simplifies the original by removing the SAFE_IDENTIFIER_RE check.
+
+    Args:
+        name: The name to turn into an identifier.
+        quoted: Whether to force quote the identifier.
+        copy: Whether to copy name if it's an Identifier.
+
+    Returns:
+        The identifier ast node.
+    """
     if name is None:
         return None
 
@@ -117,6 +137,8 @@ def generate_identifier(name, quoted=None, copy=True):
     elif isinstance(name, str):
         identifier = Identifier(
             this=name,
+            # originally was:
+            # quoted=not SAFE_IDENTIFIER_RE.match(name) if quoted is None else quoted,
             quoted=quoted if quoted is not None else False,
         )
     else:
