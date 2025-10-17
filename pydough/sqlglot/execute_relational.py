@@ -116,7 +116,6 @@ def apply_sqlglot_optimizer(
         kwargs["dialect"] = dialect
 
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
-    # GENERATES THE TABLE ALIAS HERE
     glot_expr = qualify(glot_expr, **kwargs)
 
     # Rewrite sqlglot AST to remove unused columns projections.
