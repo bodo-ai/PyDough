@@ -1,5 +1,5 @@
 """
-Overridden version of the qualify.py file from sqlglot.
+Overridden version of the qualify.py and qualify_tables.py file from sqlglot.
 """
 
 from __future__ import annotations
@@ -29,6 +29,10 @@ from sqlglot.schema import Schema, ensure_schema
 
 if t.TYPE_CHECKING:
     from sqlglot._typing import E
+
+# ruff: noqa
+# mypy: ignore-errors
+# ruff & mypy should not try to typecheck or verify any of this
 
 
 def qualify(
@@ -205,7 +209,7 @@ def qualify_tables(
                     if pivots and pivots[0].alias == name:
                         name = source.name
 
-                    # FIX: preserve quoting of original table name
+                    # CHANGE: preserve quoting of original table name
                     # Example: keywords."CAST" should become keywords."CAST" AS "CAST"
                     quoted = source.this.quoted
 

@@ -183,10 +183,6 @@ result = mixedcase_1_1.WHERE(
                 "keywords_column_alias_reserved",
             ),
             id="keywords_column_alias_reserved",
-            # marks=pytest.mark.skip(
-            #     "TODO (gh #433, #435): fix issues with"
-            #     " invalid double escape to names already escaped in metadata"
-            # ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -220,11 +216,6 @@ result = count.WHERE(
                 "keywords_python_sql_reserved",
             ),
             id="keywords_python_sql_reserved",
-            # marks=pytest.mark.skip(
-            #     "TODO (gh #434, #435): fix issues with"
-            #     " invalid SQL when a column or table name includes a quoting"
-            #     " character"
-            # ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -254,11 +245,6 @@ result = where_.WHERE(
                 "keywords_alias_reserved_word",
             ),
             id="keywords_alias_reserved_word",
-            # marks=pytest.mark.skip(
-            #     "TODO (gh #432, #435): fix issues with"
-            #     " table alias name when it is reserved, and related optimization"
-            #     " error"
-            # ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -281,10 +267,33 @@ result = count.WHERE(node == 4071).CALCULATE(
                 "keywords_locals_globals_eval",
             ),
             id="keywords_locals_globals_eval",
-            # marks=pytest.mark.skip(
-            #     "TODO (gh #432): fix issues with"
-            #     " join table, select & join expr alias name when it is reserved"
-            # ),
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = quoted_table_name.WHERE(
+    (name == 7) & (quote_ == 4)
+).CALCULATE(
+    cast_,
+    name,
+    quote_,
+    lowercase_detail._0_0_and,
+    lowercase_detail.as_
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "cast_": [3],
+                        "name": [7],
+                        "quote_": [4],
+                        "_0_0_and": ['7 "0 = 0 and \'" field name'],
+                        "as_": ["7 as reserved word"],
+                    }
+                ),
+                "keywords_quoted_table_name",
+            ),
+            id="keywords_quoted_table_name",
         ),
     ],
 )

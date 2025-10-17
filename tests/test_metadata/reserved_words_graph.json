@@ -6,7 +6,7 @@
       {
         "name": "quoted_table_name",
         "type": "simple table",
-        "table path": "keywords.`\"QUOTED TABLE_NAME\"`",
+        "table path": "keywords.\"\"\"QUOTED TABLE_NAME\"\"\"",
         "unique properties": [
           "id_"
         ],
@@ -27,7 +27,7 @@
           {
             "name": "cast_",
             "type": "table column",
-            "column name": "```cast```",
+            "column name": "\"`cast`\"",
             "data type": "numeric",
             "description": "Column name normalized from SQL reserved word 'CAST'",
             "sample values": [
@@ -53,7 +53,7 @@
           {
             "name": "name",
             "type": "table column",
-            "column name": "```name\"[`",
+            "column name": "\"`name\"\"[\"",
             "data type": "numeric",
             "description": "Column name normalized from unusual identifier '```name\"[`'",
             "sample values": [

@@ -377,18 +377,21 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         quoted: bool = False
 
         if (column_name.startswith('"') and column_name.endswith('"')) or (
-            column_name.startswith("'") and column_name.endswith("'")
+            column_name.startswith("'")
+            and column_name.endswith("'")
+            or (column_name.startswith("`") and column_name.endswith("`"))
         ):
-            # This deletes the quotes around the column name, if the column name
-            # has quotes in the name this will keep it.
-            # Example: ""colum name"" -> "colum name"
-            # Ensure the column name is sorrounded by quotes specally if the
-            # name has quotes that sorround it.
+            # Strip one layer of surrounding quotes or backticks from the column
+            # name. For example: ""column name"" -> "column name"
+            #
+            # This ensures that the internal representation does not include
+            # redundant quote characters, while marking the name as requiring
+            # quoting in the generated SQL.
             column_name = column_name[1:-1]
-            quoted = True
-
-        if column_name.startswith("`") and column_name.endswith("`"):
-            column_name = column_name[1:-1]
+            # Deteles the escaped quotes inside the name because sqlglot takes
+            # care of re-escaping them when generating SQL.
+            column_name = column_name.replace('""', '"')
+            # Quoted because the final sql should have quotes around it.
             quoted = True
 
         column_ident: Column = Identifier(this=column_name, quoted=quoted)

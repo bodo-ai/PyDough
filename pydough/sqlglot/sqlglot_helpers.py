@@ -68,6 +68,7 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
             or (alias.startswith("`") and alias.endswith("`"))
         ):
             alias = alias[1:-1]
+            alias = alias.replace('""', '"')
 
             if isinstance(expr, Identifier):
                 quoted = expr.args.get("quoted", False)
