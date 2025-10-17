@@ -315,14 +315,12 @@ class ValidSQLName(PyDoughPredicate):
             inner = name[1:-1]
             # Any " must be escaped as ""
             return '"' not in inner.replace('""', "")
-            # return True
 
         # Case 3: backtick quoted
         if name.startswith("`") and name.endswith("`"):
             inner = name[1:-1]
             # Any ` must be escaped as ``
             return "`" not in inner.replace("``", "")
-            # return True
 
         return False
 
