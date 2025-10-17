@@ -20,7 +20,11 @@ from pydough.relational import (
     RelationalRoot,
     RelationalShuttle,
 )
-from pydough.relational.rel_util import add_input_name, apply_substitution
+from pydough.relational.rel_util import (
+    add_input_name,
+    apply_substitution,
+    extract_equijoin_keys,
+)
 
 
 class JoinAggregateTransposeShuttle(RelationalShuttle):
@@ -125,7 +129,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         )
 
         # Find all of the columns used in the join condition that come from the
-        # aggregate side of the join
+        # aggregate side of the join, and the other side as well.
         self.finder.reset()
         join.condition.accept(self.finder)
         agg_condition_columns: set[ColumnReference] = {
@@ -179,6 +183,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
 
         agg_columns_remapped: dict[RelationalExpression, RelationalExpression] = {}
         join_sub: dict[RelationalExpression, RelationalExpression] = {}
+        agg_key_names: dict[str, str] = {}
 
         for col_name, col_expr in join.columns.items():
             assert isinstance(col_expr, ColumnReference)
@@ -192,6 +197,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                     new_aggregate_keys[agg_name] = ColumnReference(
                         join_name, col_expr.data_type
                     )
+                    agg_key_names[col_name] = agg_name
                     agg_columns_remapped[aggregate.keys[col_expr.name]] = (
                         ColumnReference(join_name, col_expr.data_type)
                     )
@@ -227,6 +233,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 join_name = self.generate_name(agg_key_name, new_join_columns)
                 agg_name = self.generate_name(agg_key_name, new_agg_names)
                 new_join_columns[join_name] = add_input_name(agg_key_expr, agg_alias)
+                agg_key_names[agg_key_name] = agg_name
                 new_aggregate_keys[agg_name] = ColumnReference(
                     join_name, agg_key_expr.data_type
                 )
@@ -249,18 +256,25 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             new_join, new_aggregate_keys, new_aggregate_aggs
         )
 
+        # Create a mapping from the join keys on the non-aggregate side to those
+        # on the aggregate side, so that the non-aggregate keys are not used
+        # in the output.
+        agg_key_refs, non_agg_key_refs = extract_equijoin_keys(join)
+        if not is_left:
+            agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
+
+        rev_join_map: dict[RelationalExpression, str] = {
+            expr: name for name, expr in join.columns.items()
+        }
+        for agg_key, non_agg_key in zip(agg_key_refs, non_agg_key_refs):
+            agg_key_name_lookup: str = agg_key_names[agg_key.name]
+            non_agg_key_name: str | None = rev_join_map.get(non_agg_key, None)
+            if agg_key_name_lookup is not None and non_agg_key_name is not None:
+                project_columns[non_agg_key_name] = ColumnReference(
+                    agg_key_name_lookup, agg_key.data_type
+                )
+
         new_project: Project = Project(new_aggregate, project_columns)
-
-        # print()
-        # print(join.to_tree_string())
-
-        # print()
-        # print(new_join.to_tree_string())
-
-        # print()
-        # print(new_project.to_tree_string())
-
-        # breakpoint()
 
         return new_project
 
