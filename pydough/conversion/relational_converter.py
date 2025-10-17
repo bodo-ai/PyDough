@@ -1546,6 +1546,9 @@ def optimize_relational_tree(
     pruner: ColumnPruner = ColumnPruner()
     root = pruner.prune_unused_columns(root)
 
+    print()
+    print(root.to_tree_string())
+
     # Bubble up names from the leaf nodes to further encourage simpler naming
     # without aliases, and also to delete duplicate columns where possible.
     # This is done early to maximize the chances that a nicer name will be used
@@ -1653,6 +1656,9 @@ def convert_ast_to_relational(
     # transformations such as de-correlation.
     hybrid_translator: HybridTranslator = HybridTranslator(session)
     hybrid: HybridTree = hybrid_translator.convert_qdag_to_hybrid(node)
+
+    print()
+    print(hybrid)
 
     # Then, invoke relational conversion procedure. The first element in the
     # returned list is the final relational tree.

@@ -20,6 +20,7 @@ from pydough.relational import (
     RelationalRoot,
     RelationalShuttle,
 )
+from pydough.relational.rel_util import add_input_name, apply_substitution
 
 
 class JoinAggregateTransposeShuttle(RelationalShuttle):
@@ -148,29 +149,54 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         new_aggregate_aggs: dict[str, CallExpression] = {}
         new_aggregate_keys: dict[str, RelationalExpression] = {}
 
-        new_condition: RelationalExpression = join.condition
         agg_input: RelationalNode = aggregate.inputs[0]
         non_agg_input: RelationalNode = join.inputs[1] if is_left else join.inputs[0]
         new_join_inputs: list[RelationalNode] = (
             [agg_input, non_agg_input] if is_left else [non_agg_input, agg_input]
         )
 
+        join_reverse_map: dict[RelationalExpression, set[str]] = {}
+        for col_name, expr in join.columns.items():
+            if expr not in join_reverse_map:
+                join_reverse_map[expr] = set()
+            join_reverse_map[expr].add(col_name)
+
         project_columns: dict[str, RelationalExpression] = {}
 
-        # TODO: FINISH THIS
-        return None
+        new_cardinality: JoinCardinality = join.cardinality
+        new_reverse_cardinality: JoinCardinality = join.reverse_cardinality
+        if is_left:
+            new_reverse_cardinality = new_reverse_cardinality.add_plural()
+        else:
+            new_cardinality = new_cardinality.add_plural()
 
-        assert False
+        agg_alias: str | None = (
+            join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
+        )
+        (join.default_input_aliases[1] if is_left else join.default_input_aliases[0])
+        agg_key_substitution: dict[RelationalExpression, RelationalExpression] = {}
+        for key_name, key_expr in aggregate.keys.items():
+            sided_key: RelationalExpression = ColumnReference(
+                key_name, key_expr.data_type, agg_alias
+            )
+            agg_key_substitution[sided_key] = add_input_name(key_expr, agg_alias)
+        new_condition: RelationalExpression = apply_substitution(
+            join.condition, agg_key_substitution, {}
+        )
 
         new_join: Join = Join(
             new_join_inputs,
             new_condition,
             join.join_type,
             new_join_columns,
-            join.cardinality,
-            join.reverse_cardinality,
+            new_cardinality,
+            new_reverse_cardinality,
             join.correl_name,
         )
+
+        return None
+        breakpoint()
+        assert False
 
         new_aggregate: Aggregate = Aggregate(
             new_join, new_aggregate_keys, new_aggregate_aggs

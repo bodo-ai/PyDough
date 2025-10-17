@@ -8,22 +8,19 @@ WITH _t3 AS (
   WHERE
     l_shipdate < CAST('1996-04-01' AS DATE)
     AND l_shipdate >= CAST('1996-01-01' AS DATE)
-), _s1 AS (
+), _t1 AS (
   SELECT
-    l_suppkey,
     SUM(l_extendedprice * (
       1 - l_discount
     )) AS sum_expr
   FROM _t3
   GROUP BY
-    1
-), _s2 AS (
+    l_suppkey
+), _s0 AS (
   SELECT
-    MAX(COALESCE(_s1.sum_expr, 0)) AS max_total_revenue
-  FROM tpch.SUPPLIER AS SUPPLIER
-  JOIN _s1 AS _s1
-    ON SUPPLIER.s_suppkey = _s1.l_suppkey
-), _s5 AS (
+    MAX(COALESCE(sum_expr, 0)) AS max_total_revenue
+  FROM _t1
+), _s3 AS (
   SELECT
     l_suppkey,
     SUM(l_extendedprice * (
@@ -38,11 +35,11 @@ SELECT
   SUPPLIER.s_name AS S_NAME,
   SUPPLIER.s_address AS S_ADDRESS,
   SUPPLIER.s_phone AS S_PHONE,
-  COALESCE(_s5.sum_expr, 0) AS TOTAL_REVENUE
-FROM _s2 AS _s2
+  COALESCE(_s3.sum_expr, 0) AS TOTAL_REVENUE
+FROM _s0 AS _s0
 CROSS JOIN tpch.SUPPLIER AS SUPPLIER
-JOIN _s5 AS _s5
-  ON SUPPLIER.s_suppkey = _s5.l_suppkey
-  AND _s2.max_total_revenue = COALESCE(_s5.sum_expr, 0)
+JOIN _s3 AS _s3
+  ON SUPPLIER.s_suppkey = _s3.l_suppkey
+  AND _s0.max_total_revenue = COALESCE(_s3.sum_expr, 0)
 ORDER BY
   1
