@@ -10,8 +10,8 @@ import warnings
 from typing import TYPE_CHECKING
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.expressions import Column, Identifier
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
@@ -362,7 +362,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     @staticmethod
     def make_sqlglot_column(
         column_reference: ColumnReference,
-    ) -> Identifier:
+    ) -> Column:
         """
         Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
@@ -372,11 +372,34 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Returns:
             The output identifier.
         """
+        assert column_reference.name is not None
+        column_name: str = column_reference.name
+        quoted: bool = False
+
+        if (column_name.startswith('"') and column_name.endswith('"')) or (
+            column_name.startswith("`") and column_name.endswith("`")
+        ):
+            # Strip one layer of surrounding quotes or backticks from the column
+            # name. For example: ""column name"" -> "column name"
+            #
+            # This ensures that the internal representation does not include
+            # redundant quote characters, while marking the name as requiring
+            # quoting in the generated SQL.
+            column_name = column_name[1:-1]
+            # Deteles the escaped quotes inside the name because sqlglot takes
+            # care of re-escaping them when generating SQL.
+            column_name = column_name.replace('""', '"')
+            column_name = column_name.replace("``", "`")
+            # Quoted because the final sql should have quotes around it.
+            quoted = True
+
+        column_ident: Column = Identifier(this=column_name, quoted=quoted)
+
         if column_reference.input_name is not None:
-            full_name = f"{column_reference.input_name}.{column_reference.name}"
-        else:
-            full_name = column_reference.name
-        return Identifier(this=full_name, quoted=False)
+            table_ident = Identifier(this=column_reference.input_name, quoted=False)
+            return Column(this=column_ident, table=table_ident)
+
+        return column_ident
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         self._stack.append(self.make_sqlglot_column(column_reference))
