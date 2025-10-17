@@ -18,7 +18,6 @@ from sqlglot.expressions import Star as SQLGlotStar
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
 from pydough.errors import PyDoughSQLException
 from pydough.relational import (
@@ -47,20 +46,19 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     def __init__(
         self,
-        dialect: DatabaseDialect,
-        correlated_names: dict[str, str],
-        config: PyDoughConfigs,
         relational_visitor: "SQLGlotRelationalVisitor",
+        correlated_names: dict[str, str],
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
-        self._dialect: DatabaseDialect = dialect
+        self._dialect: DatabaseDialect = relational_visitor._session.database.dialect
         self._correlated_names: dict[str, str] = correlated_names
-        self._config: PyDoughConfigs = config
         self._relational_visitor: SQLGlotRelationalVisitor = relational_visitor
         self._bindings: BaseTransformBindings = bindings_from_dialect(
-            dialect, config, self._relational_visitor
+            relational_visitor._session.database.dialect,
+            relational_visitor._session.config,
+            self._relational_visitor,
         )
 
     def reset(self) -> None:
@@ -312,9 +310,22 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed
         # and types do not represent implicit casts.
-        literal: SQLGlotExpression = sqlglot_expressions.convert(
-            literal_expression.value
-        )
+        literal: SQLGlotExpression
+        if isinstance(literal_expression.value, (tuple, list)):
+            # If the literal is a list or tuple, convert each element
+            # individually and create an array literal.
+            elements: list[SQLGlotExpression] = []
+            for element in literal_expression.value:
+                element_expr: SQLGlotExpression
+                if isinstance(element, RelationalExpression):
+                    element.accept(self)
+                    element_expr = self._stack.pop()
+                else:
+                    element_expr = sqlglot_expressions.convert(element)
+                elements.append(element_expr)
+            literal = sqlglot_expressions.Array(expressions=elements)
+        else:
+            literal = sqlglot_expressions.convert(literal_expression.value)
 
         # Special handling: insert cast calls for ansi casting of date/time
         # instead of relying on SQLGlot conversion functions. This is because

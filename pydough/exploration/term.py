@@ -9,7 +9,7 @@ __all__ = ["explain_term", "find_unqualified_root"]
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.errors import PyDoughQDAGException
 from pydough.qdag import (
     BackReferenceExpression,
@@ -97,7 +97,7 @@ def explain_term(
     node: UnqualifiedNode,
     term: UnqualifiedNode,
     verbose: bool = False,
-    config: PyDoughConfigs | None = None,
+    session: PyDoughSession | None = None,
 ) -> str:
     """
     Displays information about an unqualified node as it exists within
@@ -120,8 +120,8 @@ def explain_term(
         `node`. This term could be an expression or a collection.
         `verbose`: if true, displays more detailed information about `node` and
         `term` in a less compact format.
-        `config`: the configuration to use for the explanation. If not provided,
-        the active session's configuration will be used.
+        `config`: the PyDough session used for the explanation. If not provided,
+        the active session will be used.
 
     Returns:
         An explanation of `term` as it exists within the context of `node`.
@@ -130,15 +130,15 @@ def explain_term(
     lines: list[str] = []
     root: UnqualifiedRoot | None = find_unqualified_root(node)
     qualified_node: PyDoughQDAG | None = None
-    if config is None:
-        config = pydough.active_session.config
+    if session is None:
+        session = pydough.active_session
     try:
         if root is None:
             lines.append(
                 f"Invalid first argument to pydough.explain_term: {display_raw(node)}"
             )
         else:
-            qualified_node = qualify_node(node, root._parcel[0], config)
+            qualified_node = qualify_node(node, session)
     except PyDoughQDAGException as e:
         if "Unrecognized term" in str(e):
             lines.append(
@@ -158,9 +158,7 @@ def explain_term(
         lines.append(f" {qualified_node.to_string()}")
     elif qualified_node is not None and root is not None:
         assert isinstance(qualified_node, PyDoughCollectionQDAG)
-        new_children, qualified_term = qualify_term(
-            qualified_node, term, root._parcel[0]
-        )
+        new_children, qualified_term = qualify_term(qualified_node, term, session)
         if verbose:
             lines.append("Collection:")
             for line in qualified_node.to_tree_string().splitlines():

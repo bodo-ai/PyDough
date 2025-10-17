@@ -16,7 +16,7 @@ import pytest
 
 import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import DayOfWeek, PyDoughConfigs
+from pydough.configs import DayOfWeek, PyDoughConfigs, PyDoughSession
 from pydough.database_connectors import (
     DatabaseConnection,
     DatabaseContext,
@@ -110,6 +110,21 @@ def defog_config() -> PyDoughConfigs:
     config.start_of_week = DayOfWeek.MONDAY
     config.start_week_as_zero = True
     return config
+
+
+@pytest.fixture
+def empty_sqlite_tpch_session(
+    sample_graph_path: str, default_config: PyDoughConfigs
+) -> PyDoughSession:
+    """
+    A PyDough session with an empty SQLite TPCH database connection and
+    the TPCH graph loaded.
+    """
+    session: PyDoughSession = PyDoughSession()
+    session.load_metadata_graph(sample_graph_path, "TPCH")
+    session.config = default_config
+    session.database = DatabaseContext(empty_connection, DatabaseDialect.SQLITE)
+    return session
 
 
 @pytest.fixture(
@@ -452,14 +467,16 @@ def sqlite_people_jobs() -> DatabaseConnection:
 
 
 @pytest.fixture
-def sqlite_people_jobs_context(
+def sqlite_people_jobs_session(
     sqlite_people_jobs: DatabaseConnection, sqlite_dialects: DatabaseDialect
-) -> DatabaseContext:
+) -> PyDoughSession:
     """
     Returns a DatabaseContext for the SQLite PEOPLE and JOBS tables
     with the given dialect.
     """
-    return DatabaseContext(sqlite_people_jobs, sqlite_dialects)
+    session: PyDoughSession = PyDoughSession()
+    session.database = DatabaseContext(sqlite_people_jobs, sqlite_dialects)
+    return session
 
 
 @pytest.fixture(scope="module")
@@ -486,11 +503,23 @@ def sqlite_tpch_db(sqlite_tpch_db_path: str) -> sqlite3.Connection:
 
 
 @pytest.fixture
-def sqlite_tpch_db_context(sqlite_tpch_db_path: str, sqlite_tpch_db) -> DatabaseContext:
+def sqlite_tpch_db_context(sqlite_tpch_db) -> DatabaseContext:
     """
     Return a DatabaseContext for the SQLite TPCH database.
     """
     return DatabaseContext(DatabaseConnection(sqlite_tpch_db), DatabaseDialect.SQLITE)
+
+
+@pytest.fixture
+def sqlite_tpch_session(
+    empty_sqlite_tpch_session: PyDoughSession, sqlite_tpch_db_context: DatabaseContext
+) -> PyDoughSession:
+    """
+    Returns a variant of the `empty_sqlite_tpch_session` fixture, but with the
+    database context set to the actual TPCH database connection.
+    """
+    empty_sqlite_tpch_session.database = sqlite_tpch_db_context
+    return empty_sqlite_tpch_session
 
 
 @pytest.fixture(scope="session")

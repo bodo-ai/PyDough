@@ -12,7 +12,7 @@ JOIN crbnk.accounts AS accounts
     ) AS INTEGER)
   END
 JOIN crbnk.customers AS customers
-  ON LOWER(customers.c_fname) = 'alice'
-  AND accounts.a_custkey = (
+  ON accounts.a_custkey = (
     42 - customers.c_key
   )
+  AND customers.c_fname = UPPER('alice')
