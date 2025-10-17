@@ -1,22 +1,23 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS num_sales,
-    salesperson_id
+    salesperson_id,
+    COUNT(*) AS n_rows
   FROM main.sales
   WHERE
     CAST((
       JULIANDAY(DATE(DATETIME('now'), 'start of day')) - JULIANDAY(DATE(sale_date, 'start of day'))
     ) AS INTEGER) <= 30
   GROUP BY
-    salesperson_id
+    1
 )
 SELECT
   salespersons._id,
   salespersons.first_name,
   salespersons.last_name,
-  _s1.num_sales
+  _s1.n_rows AS num_sales
 FROM main.salespersons AS salespersons
 JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  num_sales DESC
+  4 DESC,
+  1

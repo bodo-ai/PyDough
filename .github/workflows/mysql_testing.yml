@@ -1,0 +1,74 @@
+name: Run MySQL Tests
+
+on:
+  workflow_call:
+    inputs:
+      python-versions:
+        description: "JSON string of Python versions"
+        type: string
+        required: true
+    secrets:
+      MYSQL_USERNAME:
+        required: true
+      MYSQL_PASSWORD:
+        required: true
+
+jobs:
+  mysql-tests:
+    name: MySQL Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJSON(inputs.python-versions) }}
+
+    # Define services here to run Docker containers alongside your job
+    services:
+      mysql:
+        image: bodoai1/pydough-mysql-tpch:latest
+        env:
+          # Set environment variables for MySQL container
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_DATABASE: tpch
+        ports:
+          - 3306:3306
+    env:
+      MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      MYSQL_DATABASE: tpch
+      MYSQL_HOST: 127.0.0.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[mysql]" 
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in $(seq 1 10); do
+            mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p${{ env.MYSQL_PASSWORD }} && break
+            echo "Waiting for MySQL... ($i/10)"
+            sleep 5
+          done
+          mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p${{ env.MYSQL_PASSWORD }} || exit 1
+
+      - name: Confirm MySQL connector is installed
+        run: uv run python -c "import mysql.connector; print('MySQL connector installed')"
+
+      - name: Run MySQL Tests
+
+        run: uv run pytest -m mysql tests/ -rs

@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
-    SUM(amount) AS sum_amount,
-    receiver_id
+    receiver_id,
+    SUM(amount) AS sum_amount
   FROM main.wallet_transactions_daily
   WHERE
     receiver_type = 1 AND status = 'success'
   GROUP BY
-    receiver_id
+    1
 )
 SELECT
   merchants.mid AS merchants_id,

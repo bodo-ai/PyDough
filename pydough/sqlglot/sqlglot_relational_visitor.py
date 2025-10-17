@@ -4,8 +4,8 @@ SQLGlot query.
 """
 
 import warnings
-from collections import defaultdict
 
+from sqlglot.expressions import AggFunc as SQLGlotAggFunc
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
@@ -17,24 +17,23 @@ from sqlglot.expressions import (
     values,
 )
 from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 from sqlglot.expressions import convert as sqlglot_convert
 
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.database_connectors import DatabaseDialect
 from pydough.relational import (
     Aggregate,
     CallExpression,
     ColumnReference,
     ColumnReferenceInputNameModifier,
-    ColumnReferenceInputNameRemover,
     CorrelatedReference,
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
     GeneratedTable,
     Join,
-    JoinType,
     Limit,
     LiteralExpression,
     Project,
@@ -46,16 +45,17 @@ from pydough.relational import (
 )
 
 from .sqlglot_helpers import get_glot_name, set_glot_alias, unwrap_alias
-from .sqlglot_identifier_finder import find_identifiers, find_identifiers_in_list
+from .sqlglot_identifier_finder import find_identifiers_in_list
 from .sqlglot_relational_expression_visitor import SQLGlotRelationalExpressionVisitor
 
 __all__ = ["SQLGlotRelationalVisitor"]
 
 
-def expr_sort_key(expr: SQLGlotExpression) -> str:
+def expr_sort_key(expr: SQLGlotExpression) -> tuple[bool, str]:
     """
     A key function for sorting SQLGlot expressions. This is used to
-    ensure that the expressions are sorted in a consistent order.
+    ensure that the expressions are sorted in a consistent order alphabetically,
+    with non-aggregate expressions appearing before aggregate expressions.
 
     Args:
         `expr`: The expression to sort.
@@ -63,10 +63,13 @@ def expr_sort_key(expr: SQLGlotExpression) -> str:
     Returns:
         The string representation of the expression.
     """
+    is_aggregate: bool = expr.find(SQLGlotAggFunc) is not None
+    name: str
     if isinstance(expr, SQLGlotAlias):
-        return repr(expr.alias)
+        name = repr(expr.alias)
     else:
-        return repr(expr)
+        name = repr(expr)
+    return (is_aggregate, name)
 
 
 class SQLGlotRelationalVisitor(RelationalVisitor):
@@ -75,26 +78,17 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
     the relational tree 1 node at a time.
     """
 
-    def __init__(
-        self,
-        dialect: DatabaseDialect,
-        config: PyDoughConfigs,
-    ) -> None:
+    def __init__(self, session: PyDoughSession) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[Select] = []
-        self._dialect: DatabaseDialect = dialect
+        self._session: PyDoughSession = session
         self._correlated_names: dict[str, str] = {}
         self._expr_visitor: SQLGlotRelationalExpressionVisitor = (
-            SQLGlotRelationalExpressionVisitor(
-                dialect, self._correlated_names, config, self
-            )
+            SQLGlotRelationalExpressionVisitor(self, self._correlated_names)
         )
         self._alias_modifier: ColumnReferenceInputNameModifier = (
             ColumnReferenceInputNameModifier()
-        )
-        self._alias_remover: ColumnReferenceInputNameRemover = (
-            ColumnReferenceInputNameRemover()
         )
         # Counter for generating unique table alias.
         self._alias_counter: int = 0
@@ -232,7 +226,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             conditions.
             `sort`: If True, the existing columns in the original SELECT
             statement get sorted alphabetically by their string representation
-            (repr).
+            (repr), with non-aggregate columns appearing before aggregate
+            columns.
 
         Returns:
             A final select statement that may contain the merged columns.
@@ -266,9 +261,17 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             glot_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
                 col.expr
             )
+            # Skip ordering keys that are literals or NULL.
+            if isinstance(glot_expr, (SQLGlotLiteral, SQLGlotNull)):
+                continue
+            # Invoke the binding's conversion for ordering arguments to
+            # postprocess as needed (e.g. adding collations).
+            glot_expr = self._expr_visitor._bindings.convert_ordering(
+                glot_expr, col.expr.data_type
+            )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
-            if self._dialect == DatabaseDialect.SQLITE:
+            if self._session.database.dialect == DatabaseDialect.SQLITE:
                 if col.ascending:
                     if not col.nulls_first:
                         warnings.warn(
@@ -329,7 +332,8 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             `column_exprs`: The columns to select.
             `alias`: The alias to give the subquery.
             `sort`: If True, the final select statement ordering is based on the
-                sorted string representation of input column expressions.
+                sorted string representation of input column expressions, with
+                aggregate columns appearing after non-aggregate columns.
 
         Returns:
             A select statement representing the subquery.
@@ -390,29 +394,13 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self.visit_inputs(join)
         inputs: list[Select] = [self._stack.pop() for _ in range(len(join.inputs))]
         inputs.reverse()
-        # Compute a dictionary to find all duplicate names.
-        seen_names: dict[str, int] = defaultdict(int)
-        for idx, input in enumerate(join.inputs):
-            occurrences: int = 1
-            if join.join_type in (JoinType.SEMI, JoinType.ANTI):
-                # For SEMI and ANTI joins, we must keep the columns input names
-                # from the left side and treat them as if they appear in the
-                # RHS.
-                occurrences = 2
-            for column in input.columns.keys():
-                seen_names[column] += occurrences
-        # Only keep duplicate names.
-        kept_names = {key for key, value in seen_names.items() if value > 1}
         for i in range(len(join.inputs)):
             input_name = join.default_input_aliases[i]
             if input_name not in alias_map:
                 alias_map[input_name] = self._generate_table_alias()
-        self._alias_remover.set_kept_names(kept_names)
         self._alias_modifier.set_map(alias_map)
         columns = {
-            alias: col.accept_shuttle(self._alias_remover).accept_shuttle(
-                self._alias_modifier
-            )
+            alias: col.accept_shuttle(self._alias_modifier)
             for alias, col in join.columns.items()
         }
         column_exprs = [
@@ -427,11 +415,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             this=inputs[1],
             alias=TableAlias(this=alias_map.get(join.default_input_aliases[i], None)),
         )
-        cond: RelationalExpression = join.condition.accept_shuttle(
-            self._alias_remover
-        ).accept_shuttle(self._alias_modifier)
+        cond: RelationalExpression = join.condition.accept_shuttle(self._alias_modifier)
         cond_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(cond)
         join_type: str = join.join_type.value
+        if join_type == "SEMI" and join.cardinality.singular:
+            join_type == "INNER"
         query = query.join(subquery, on=cond_expr, join_type=join_type)
         self._stack.append(query)
 
@@ -464,23 +452,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             # QUALIFY.
             query = self._build_subquery(query, exprs)
         else:
-            # TODO: (gh #151) Refactor a simpler way to check dependent expressions.
-            if (
-                "group" in input_expr.args
-                or "distinct" in input_expr.args
-                or "where" in input_expr.args
-                or "qualify" in input_expr.args
-                or "order" in input_expr.args
-                or "limit" in input_expr.args
-            ):
-                # Check if we already have a where clause or limit. We
-                # cannot merge these yet.
-                # TODO: (gh #151) Consider allowing combining where if
-                # limit isn't present?
-                query = self._build_subquery(input_expr, exprs)
-            else:
-                # Try merge the column sections
-                query = self._merge_selects(exprs, input_expr, find_identifiers(cond))
+            query = self._build_subquery(input_expr, exprs)
             query = query.where(cond)
         self._stack.append(query)
 
@@ -513,9 +485,15 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             if aggregations:
                 grouping_keys: list[SQLGlotExpression] = []
                 for key in sorted(keys, key=repr):
+                    # Unwrap aliases to get the original expression, since
+                    # the grouping keys cannot contain `AS` clauses.
                     while isinstance(key, SQLGlotAlias):
                         key = key.this
-                    if key not in grouping_keys:
+                    # Skip if the key is already in the grouping keys, or is
+                    # a literal or NULL.
+                    if key not in grouping_keys and not isinstance(
+                        key, (SQLGlotLiteral, SQLGlotNull)
+                    ):
                         grouping_keys.append(key)
                 query = query.group_by(*grouping_keys)
             else:
@@ -590,6 +568,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
             query = self._build_subquery(input_expr, exprs, sort=False)
         if ordering_exprs:
             query = query.order_by(*ordering_exprs)
+        if root.limit is not None:
+            limit_expr: SQLGlotExpression = self._expr_visitor.relational_to_sqlglot(
+                root.limit
+            )
+            query = query.limit(limit_expr)
         self._stack.append(query)
 
     def visit_generated_table(self, generated_table: "GeneratedTable") -> None:

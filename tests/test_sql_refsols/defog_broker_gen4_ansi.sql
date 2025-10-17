@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    sbtxcustid
+    sbtxcustid,
+    COUNT(*) AS n_rows
   FROM main.sbtransaction
   WHERE
     CAST(sbtxdatetime AS TIMESTAMP) < CAST('2023-04-02' AS DATE)
     AND CAST(sbtxdatetime AS TIMESTAMP) >= CAST('2023-04-01' AS DATE)
     AND sbtxtype = 'sell'
   GROUP BY
-    sbtxcustid
+    1
 )
 SELECT
   sbcustomer.sbcustid AS _id,
@@ -18,5 +18,5 @@ FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
   ON _s1.sbtxcustid = sbcustomer.sbcustid
 ORDER BY
-  num_tx DESC
+  3 DESC
 LIMIT 1

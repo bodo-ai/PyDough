@@ -569,7 +569,7 @@ def test_unqualified_to_string(
     ],
 )
 def test_init_pydough_context(
-    func: Callable[[], UnqualifiedNode],
+    func: Callable[..., UnqualifiedNode],
     as_string: str,
     get_sample_graph: graph_fetcher,
 ) -> None:
@@ -579,7 +579,7 @@ def test_init_pydough_context(
     at least based on string representation.
     """
     sample_graph: GraphMetadata = get_sample_graph("TPCH")
-    new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
+    new_func: Callable[..., UnqualifiedNode] = init_pydough_context(sample_graph)(func)
     answer: UnqualifiedNode = new_func()
     assert repr(answer) == as_string, (
         "Mismatch between string representation of unqualified nodes and expected output"
@@ -740,15 +740,14 @@ def test_init_pydough_context(
         pytest.param(
             bad_unsupported_kwarg3,
             re.escape(
-                "PyDough function call SUM does not support "
-                "keyword arguments at this time."
+                "PyDough function SUM does not support keyword arguments at this time."
             ),
             id="bad_unsupported_kwarg3",
         ),
     ],
 )
 def test_unqualified_errors(
-    func: Callable[[], UnqualifiedNode],
+    func: Callable[..., UnqualifiedNode],
     error_msg: str,
     get_sample_graph: graph_fetcher,
 ) -> None:
@@ -757,6 +756,6 @@ def test_unqualified_errors(
     exception during the conversion to unqualified nodes.
     """
     sample_graph: GraphMetadata = get_sample_graph("TPCH")
-    new_func: Callable[[], UnqualifiedNode] = init_pydough_context(sample_graph)(func)
+    new_func: Callable[..., UnqualifiedNode] = init_pydough_context(sample_graph)(func)
     with pytest.raises(Exception, match=error_msg):
         new_func()

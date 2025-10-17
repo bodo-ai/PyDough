@@ -52,7 +52,7 @@
       "version": "V2",
       "collections": [
         {
-          "name": "0",
+          "name": "Invalid name",
           "type": "simple table",
           "table path": "TableName",
           "unique properties": ["key"],
@@ -66,7 +66,7 @@
       "version": "V2",
       "collections": [
         {
-          "name": "0",
+          "name": "table_name",
           "type": "simple table",
           "table path": "TableName",
           "unique properties": ["key"],
@@ -84,10 +84,406 @@
         {
           "name": "0",
           "type": "simple table",
-          "table path": "TableName",
+          "table path": "`Table Name`",
           "unique properties": ["key"],
           "properties": [
             {"name": true}
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_TABLE_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["column_name"],
+          "properties": [
+            {
+              "name": "column_name",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_COLUMN_NAME",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "invalid column name",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_UNIQUE_PROPERTY",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["invalid column name"],
+          "properties": [
+            {
+              "name": "invalid column name",
+              "type": "table column",
+              "column name": "\"column name\"",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "RESERVED_PROPERTY_KEYWORD_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "\"Table Name\"",
+          "unique properties": ["id"],
+          "properties": [
+            {
+              "name": "id",
+              "type": "table column",
+              "column name": "id",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "RESERVED_PROPERTY_KEYWORD_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "`Table Name`",
+          "unique properties": ["CALCULATE"],
+          "properties": [
+            {
+              "name": "CALCULATE",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "RESERVED_PROPERTY_KEYWORD_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "table_name",
+          "unique properties": ["MONOTONIC"],
+          "properties": [
+            {
+              "name": "MONOTONIC",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_RESERVED_KEYWORD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "FROM_RESERVED_SQL_WORD",
+              "type": "table column",
+              "column name": "FROM",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_RESERVED_KEYWORD1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "cast_reserved_sql_word",
+          "type": "simple table",
+          "table path": "cast",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_RESERVED_KEYWORD2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "order_qualified_SQL_name",
+          "type": "simple table",
+          "table path": "main.order",
+          "unique properties": ["order_id"],
+          "properties": [
+            {
+              "name": "order_id",
+              "type": "table column",
+              "column name": "order_id",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "SCHEMA_RESERVED_KEYWORD",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "count_schema_reserved_SQL_name",
+          "type": "simple table",
+          "table path": "count.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "column name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "\"column\"name\"",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "COLUMN_NAME_INVALID_NAME_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "table_name",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["FROM_RESERVED_SQL_WORD"],
+          "properties": [
+            {
+              "name": "invalid_column_name",
+              "type": "table column",
+              "column name": "`column`name`",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "table name",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "\"table\"name\"",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "TABLE_PATH_INVALID_NAME_3",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "invalid_table_path",
+          "type": "simple table",
+          "table path": "`table`name`",
+          "unique properties": ["_id"],
+          "properties": [
+            {
+              "name": "_id",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "SPECIAL_RESERVED_KEYWORD_1",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "special_reserved_keyword_1",
+          "type": "simple table",
+          "table path": "schema_name.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "builtins",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "SPECIAL_RESERVED_KEYWORD_2",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "_graph",
+          "type": "simple table",
+          "table path": "schema_name.table_name",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "key",
+              "data type": "numeric",
+              "description": "column description"
+            }
           ]
         }
       ],
@@ -2836,6 +3232,279 @@
           "requires order": false,
           "allows frame": true,
           "output signature": {"type": "select argument", "value": 0, "foo": "bar"}
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_COLUMN_NAME",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": true,
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "strdatmeric",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_PROTECTED_DATA_TYPE",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "protected data type": "num",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": [0, 1, 2],
+              "protect protocol": "LOWER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": 1,
+              "server masked": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_BAD_SERVER_MASKED",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "key", "type": "table column", "column name": "c_key", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": "not a boolean"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
+      "version": "V2",
+      "relationships": [],
+      "collections": [
+        {
+          "name": "customers",
+          "type": "simple table",
+          "table path": "CUSTOMERS",
+          "unique properties": ["key"],
+          "properties": [
+            {"name": "c_key", "type": "table column", "column name": "customer_id", "data type": "numeric"},
+            {
+              "name": "name",
+              "type": "masked table column",
+              "column name": "c_name",
+              "data type": "string",
+              "unprotect protocol": "UPPER({})",
+              "protect protocol": "LOWER({})",
+              "server masked": false,
+              "foo": "bar"
+            }
+          ]
         }
       ]
     },

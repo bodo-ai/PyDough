@@ -795,7 +795,7 @@ def supplier_pct_national_qty():
         .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
-            nation_name=name,
+            nation_name=nation_name,
             supplier_quantity=supp_qty,
             national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
         )
@@ -1830,13 +1830,16 @@ def hour_minute_day():
     """
     Return the transaction IDs with the hour, minute, and second extracted from
     transaction timestamps for specific ticker symbols ("AAPL","GOOGL","NFLX"),
-    ordered by transaction ID in ascending order.
+    ordered by transaction ID in ascending order. Only considered transactions
+    from 2023.
     """
     return (
         transactions.CALCULATE(
             transaction_id, HOUR(date_time), MINUTE(date_time), SECOND(date_time)
         )
-        .WHERE(ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")))
+        .WHERE(
+            ISIN(ticker.symbol, ("AAPL", "GOOGL", "NFLX")) & (YEAR(date_time) == 2023)
+        )
         .ORDER_BY(transaction_id.ASC())
     )
 
@@ -1937,7 +1940,7 @@ def abs_round_magic_method():
 def years_months_days_hours_datediff():
     y1_datetime = datetime.datetime(2025, 5, 2, 11, 00, 0)
     return (
-        transactions.WHERE((YEAR(date_time) < 2025))
+        transactions.WHERE((YEAR(date_time) < 2025) & (MONTH(date_time) > 3))
         .CALCULATE(
             x=date_time,
             y1=y1_datetime,
@@ -1956,7 +1959,7 @@ def years_months_days_hours_datediff():
             c_hours_diff=DATEDIFF("HOURS", date_time, y1_datetime),
             c_h_diff=DATEDIFF("H", date_time, y1_datetime),
         )
-        .TOP_K(30, by=years_diff.ASC())
+        .TOP_K(30, by=x.ASC())
     )
 
 
@@ -1985,6 +1988,46 @@ def simple_week_sampler():
     y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
     y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
     return Broker.CALCULATE(
+        weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
+        sow1=DATETIME(y_dt, "start of week"),
+        sow2=DATETIME(y_dt2, "start of week"),
+        sow3=DATETIME(y_dt3, "start of week"),
+        sow4=DATETIME(y_dt4, "start of week"),
+        sow5=DATETIME(y_dt5, "start of week"),
+        sow6=DATETIME(y_dt6, "start of week"),
+        sow7=DATETIME(y_dt7, "start of week"),
+        sow8=DATETIME(y_dt8, "start of week"),
+        dayname1=DAYNAME(y_dt),
+        dayname2=DAYNAME(y_dt2),
+        dayname3=DAYNAME(y_dt3),
+        dayname4=DAYNAME(y_dt4),
+        dayname5=DAYNAME(y_dt5),
+        dayname6=DAYNAME(y_dt6),
+        dayname7=DAYNAME(y_dt7),
+        dayname8=DAYNAME(y_dt8),
+        dayofweek1=DAYOFWEEK(y_dt),
+        dayofweek2=DAYOFWEEK(y_dt2),
+        dayofweek3=DAYOFWEEK(y_dt3),
+        dayofweek4=DAYOFWEEK(y_dt4),
+        dayofweek5=DAYOFWEEK(y_dt5),
+        dayofweek6=DAYOFWEEK(y_dt6),
+        dayofweek7=DAYOFWEEK(y_dt7),
+        dayofweek8=DAYOFWEEK(y_dt8),
+    )
+
+
+def simple_week_sampler_tpch():
+    x_dt = datetime.datetime(2025, 3, 10, 11, 00, 0)
+    y_dt = datetime.datetime(2025, 3, 14, 11, 00, 0)
+    y_dt2 = datetime.datetime(2025, 3, 15, 11, 00, 0)
+    y_dt3 = datetime.datetime(2025, 3, 16, 11, 00, 0)
+    y_dt4 = datetime.datetime(2025, 3, 17, 11, 00, 0)
+    y_dt5 = datetime.datetime(2025, 3, 18, 11, 00, 0)
+    y_dt6 = datetime.datetime(2025, 3, 19, 11, 00, 0)
+    y_dt7 = datetime.datetime(2025, 3, 20, 11, 00, 0)
+    y_dt8 = datetime.datetime(2025, 3, 21, 11, 00, 0)
+
+    return TPCH.CALCULATE(
         weeks_diff=DATEDIFF("weeks", x_dt, y_dt),
         sow1=DATETIME(y_dt, "start of week"),
         sow2=DATETIME(y_dt2, "start of week"),
@@ -2970,6 +3013,72 @@ def simple_cross_12():
     )
 
 
+def simple_cross_13():
+    # Silly case of crossing 2+ global contexts to get shared variables
+    return (
+        TPCH.CALCULATE(a="foo")
+        .CROSS(TPCH.CALCULATE(b="bar").CROSS(TPCH.CALCULATE(c="fizz")))
+        .CROSS(
+            (TPCH.CALCULATE(d="buzz").CROSS(TPCH.CALCULATE(e="foobar"))).CROSS(
+                TPCH.CALCULATE(f="fizzbuzz").CROSS(TPCH.CALCULATE(g="yay"))
+            )
+        )
+        .CALCULATE(a, b, c, d, e, f, g)
+    )
+
+
+def simple_cross_14():
+    # Using cross to introduce global variables instead of referencing an
+    # ancestor context. In this case, for each region accesses the name, a
+    # string 'foo', and counts how many nations in that region start with
+    # either A, B, or C.
+    global_vars = CROSS(TPCH.CALCULATE(x="foo", letters=["A", "B", "C"])).SINGULAR()
+    return regions.CALCULATE(
+        region_name=name,
+        x=global_vars.x,
+        n=COUNT(nations.WHERE(ISIN(name[:1], global_vars.letters))),
+    ).ORDER_BY(region_name.ASC())
+
+
+def simple_cross_15():
+    # Crossing 2+ partition clauses to get all distinct combinations of the
+    # grouping keys, which in this case are just a binary variable. Each clause
+    # is the regions grouped on whether the name of the region contains a
+    # specified letter, and the key is that latter (if present) or '_' (if not).
+    ra = (
+        regions.CALCULATE(a=IFF(CONTAINS(name, "A"), "A", "*"))
+        .PARTITION(name="a_groups", by=a)
+        .CALCULATE(a)
+    )
+    re = (
+        regions.CALCULATE(e=IFF(CONTAINS(name, "E"), "E", "*"))
+        .PARTITION(name="e_groups", by=e)
+        .CALCULATE(e)
+    )
+    ri = (
+        regions.CALCULATE(i=IFF(CONTAINS(name, "I"), "I", "*"))
+        .PARTITION(name="i_groups", by=i)
+        .CALCULATE(i)
+    )
+    ro = (
+        regions.CALCULATE(o=IFF(CONTAINS(name, "O"), "O", "*"))
+        .PARTITION(name="o_groups", by=o)
+        .CALCULATE(o)
+    )
+    return (ra.CROSS(re)).CROSS(ri.CROSS(ro)).CALCULATE(a, e, i, o).ORDER_BY(a, e, i, o)
+
+
+def simple_cross_16():
+    # Strange way to count how many customers have the an account balance
+    # within 10 of the global minimum, and how many suppliers have an account
+    # balance within 10 of the global maximum.
+    glob1 = TPCH.CALCULATE(min_balance=MIN(customers.account_balance))
+    cust = customers.WHERE(account_balance <= (CROSS(glob1).min_balance + 10.0))
+    glob2 = TPCH.CALCULATE(max_balance=MAX(suppliers.account_balance))
+    supp = suppliers.WHERE(account_balance >= (CROSS(glob2).max_balance - 10.0))
+    return TPCH.CALCULATE(n1=COUNT(cust), n2=COUNT(supp))
+
+
 def quantile_function_test_1():
     selected_orders = customers.orders.WHERE(YEAR(order_date) == 1998)
     return TPCH.CALCULATE(
@@ -3029,4 +3138,202 @@ def quantile_function_test_4():
         orders_90_percent=QUANTILE(selected_orders.total_price, 0.90),
         orders_99_percent=QUANTILE(selected_orders.total_price, 0.99),
         orders_max=QUANTILE(selected_orders.total_price, 1.0),
+    )
+
+
+def double_cross():
+    # For each of the first 10 weeks of orders, identify the ratio between the
+    # cumulative number of lines returned via train versus the cumulative numbe
+    # of urgent orders with status F. Also return the numbers of orders/lines in
+    # each week.
+    global_info = TPCH.CALCULATE(min_date=MIN(orders.order_date))
+    order_week_info = (
+        global_info.orders.CALCULATE(ord_wk=DATEDIFF("week", min_date, order_date))
+        .WHERE((ord_wk < 10) & (order_status == "F") & (order_priority == "1-URGENT"))
+        .PARTITION(name="weeks", by=ord_wk)
+        .CALCULATE(ord_wk, n_orders=COUNT(orders))
+    )
+    line_week_info = (
+        global_info.lines.CALCULATE(line_wk=DATEDIFF("week", min_date, receipt_date))
+        .WHERE(
+            (line_wk < 10)
+            & (return_flag == "R")
+            & (YEAR(receipt_date) == 1992)
+            & (ship_mode == "RAIL")
+        )
+        .PARTITION(name="weeks", by=line_wk)
+        .CALCULATE(line_wk, n_lines=COUNT(lines))
+    )
+    return (
+        order_week_info.CROSS(line_week_info)
+        .WHERE(ord_wk == line_wk)
+        .CALCULATE(
+            wk=ord_wk,
+            n_lines=n_lines,
+            n_orders=n_orders,
+            lpo=ROUND(
+                RELSUM(n_lines, by=line_wk.ASC(), cumulative=True)
+                / RELSUM(n_orders, by=ord_wk.ASC(), cumulative=True),
+                4,
+            ),
+        )
+        .ORDER_BY(wk.ASC())
+    )
+
+
+def pagerank(n_iters):
+    """
+    Computes the PageRank computation on the PAGERANK graph, starting with the
+    base page_rank values with an even distribution of 1.0 / n, where n is the
+    number of sites in the graph, then iteratively updates the page_rank values
+    based on the outgoing links and the damping factor d. Repeats the process
+    for n_iters iterations, returning the final page_rank values for each site,
+    rounded to 5 decimal places. Makes the following assumptions:
+
+    - If a site has no outgoing links, then it has a single entry in
+      `outgoing_links` where `target_key` is null.
+    - If there is a site with no incoming links, and there are no sites w/o
+      any outgoing links, the site w/o the incoming link has a dummy link where
+      the source & target key are the same, which should be ignored in the
+      PageRank calculation.
+    """
+
+    # The dampening factor
+    d = 0.85
+
+    # The expression used to determine the number of sites the graph links to,
+    # accounting for sites without links (which implicitly link to everything)
+    # and sites with a dummy link to themselves (which should be ignored).
+    n_out_expr = SUM(
+        outgoing_links.CALCULATE(
+            n_target=IFF(ABSENT(target_key), n, INTEGER((source_key != target_key)))
+        ).n_target
+    )
+
+    # The seed value for the PageRank computation, which is evenly distributed.
+    # Also computes the number of sites in the graph & the number of sites each
+    # site links to, which are both used downstream.
+    source = sites.CALCULATE(n=RELSIZE()).CALCULATE(page_rank=1.0 / n)
+
+    if n_iters > 0:
+        source = source.CALCULATE(n_out=n_out_expr, damp_modifier=0.15 / n)
+
+    # Repeats the following procedure for n_iters iterations to build the next
+    # generation of PageRank values from the current generation.
+    for i in range(n_iters):
+        # For each site, find all sites that it links to and accumulate the
+        # PageRank values from the current site (divided by the # of links) in
+        # those linked sites, while also considering the damping factor. Uses
+        # RELSUM after partitioning on the destination site to perform the
+        # accumulation, then filters to only keep the one row of the
+        # destination site that came from the self-link. This ensures that each
+        # site is included once after each iteration, and the `n_out` value for
+        # that site is daisy-chained to the next iteration.
+        source = (
+            source.outgoing_links.CALCULATE(
+                dummy_link=PRESENT(target_key) & (source_key == target_key),
+                consider_link=INTEGER(ABSENT(target_key) | (source_key != target_key)),
+            )
+            .target_site.PARTITION(name=f"s{i}", by=key)
+            .target_site.CALCULATE(
+                damp_modifier,
+                n_out,
+                page_rank=damp_modifier
+                + d * RELSUM(consider_link * page_rank / n_out, per=f"s{i}"),
+            )
+            .WHERE(dummy_link)
+        )
+
+    # Output the final PageRank values, rounded to 5 decimal places,
+    return source.CALCULATE(key, page_rank=ROUND(page_rank, 5)).ORDER_BY(key.ASC())
+
+
+def agg_simplification_1():
+    # Partition the tickers on the value
+    # `LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))`, then for every
+    # combination of 1, 2, -1, -3, 0, 0.5, null, and the partition key, call
+    # the aggregation functions SUM, COUNT, NDISTINCT, AVG, MIN, MAX,
+    # ANYTHING, and MEDIAN, and QUANTILE on each of the inputs.
+    kwargs = {}
+    args = [
+        tickers.one,
+        tickers.two,
+        tickers.negative_one,
+        tickers.negative_three,
+        tickers.zero,
+        tickers.half,
+        tickers.null,
+        tickers.aug_exchange,
+    ]
+    functions = [
+        ("su", SUM),
+        ("co", COUNT),
+        ("nd", NDISTINCT),
+        ("av", AVG),
+        ("mi", MIN),
+        ("ma", MAX),
+        ("an", ANYTHING),
+        ("me", MEDIAN),
+    ]
+    for prefix, func in functions:
+        for idx, arg in enumerate(args):
+            kwargs[f"{prefix}{idx + 1}"] = func(arg)
+    for idx, arg in enumerate(args):
+        kwargs[f"qu{idx + 1}"] = QUANTILE(arg, (idx + 1) / 10)
+    return (
+        tickers.CALCULATE(
+            aug_exchange=LENGTH(KEEP_IF(exchange, exchange != "NYSE Arca"))
+        )
+        .CALCULATE(
+            one=1,
+            two=2,
+            negative_one=-1,
+            negative_three=-3,
+            zero=0,
+            half=0.5,
+            null=None,
+        )
+        .PARTITION(name="exchanges", by=aug_exchange)
+        .CALCULATE(
+            aug_exchange,
+            **kwargs,
+        )
+        .ORDER_BY(aug_exchange.ASC())
+    )
+
+
+def agg_simplification_2():
+    # Partition the customers by city/state then by state to compute the
+    # following aggregations per-state:
+    # 1. Number of cities pers state
+    # 2. Total number of customers per state
+    # 3. Total postal code sum per state
+    # 4. Total number of customers with names starting with "j" per state
+    # 5. Minimum phone number per state
+    # 6. Maximum phone number per state
+    # 7-9: Convoluted ways to pass around the lowercase state name
+    return (
+        customers.PARTITION(name="cities", by=(city, state))
+        .CALCULATE(
+            n=COUNT(customers),
+            nj=COUNT(KEEP_IF(customers.name, STARTSWITH(LOWER(customers.name), "j"))),
+            sz=SUM(INTEGER(customers.postal_code)),
+            minp=MIN(customers.phone),
+            maxp=MAX(customers.phone),
+            anys=ANYTHING(LOWER(customers.state)),
+        )
+        .PARTITION(name="states", by=state)
+        .CALCULATE(
+            state,
+            a1=COUNT(cities),
+            a2=SUM(cities.n),
+            a3=SUM(cities.nj),
+            a4=SUM(cities.sz),
+            a5=MIN(cities.minp),
+            a6=MAX(cities.maxp),
+            a7=MIN(cities.anys),
+            a8=MAX(cities.anys),
+            a9=ANYTHING(cities.anys),
+        )
+        .ORDER_BY(state.ASC())
     )

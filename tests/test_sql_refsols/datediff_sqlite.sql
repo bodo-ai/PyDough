@@ -28,5 +28,5 @@ FROM main.sbtransaction
 WHERE
   CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER) < 2025
 ORDER BY
-  years_diff
+  4
 LIMIT 30

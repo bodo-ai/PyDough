@@ -1,5 +1,2 @@
-ROOT(columns=[('high', sbDpHigh), ('high_neg', high_neg), ('high_zero', high_zero), ('sign_high', sign_high), ('sign_high_neg', sign_high_neg), ('sign_high_zero', sign_high_zero)], orderings=[(sbDpHigh):asc_first])
- PROJECT(columns={'high_neg': high_neg, 'high_zero': high_zero, 'sbDpHigh': sbDpHigh, 'sign_high': SIGN(sbDpHigh), 'sign_high_neg': SIGN(high_neg), 'sign_high_zero': SIGN(high_zero)})
-  LIMIT(limit=Literal(value=5, type=NumericType()), columns={'high_neg': high_neg, 'high_zero': high_zero, 'sbDpHigh': sbDpHigh}, orderings=[(sbDpHigh):asc_first])
-   PROJECT(columns={'high_neg': -1:numeric * sbDpHigh, 'high_zero': 0:numeric * sbDpHigh, 'sbDpHigh': sbDpHigh})
-    SCAN(table=main.sbDailyPrice, columns={'sbDpHigh': sbDpHigh})
+ROOT(columns=[('high', sbDpHigh), ('high_neg', -1:numeric * sbDpHigh), ('high_zero', 0:numeric), ('sign_high', SIGN(sbDpHigh)), ('sign_high_neg', SIGN(-1:numeric * sbDpHigh)), ('sign_high_zero', SIGN(0:numeric))], orderings=[(sbDpHigh):asc_first], limit=5:numeric)
+ SCAN(table=main.sbDailyPrice, columns={'sbDpHigh': sbDpHigh})

@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    MIN(o_totalprice) AS min_o_totalprice,
-    o_custkey
+    o_custkey,
+    MIN(o_totalprice) AS min_o_totalprice
   FROM tpch.orders
   GROUP BY
-    o_custkey
+    1
 )
 SELECT
   IIF(customer.c_acctbal > 1000, 'High', 'Low') AS iff_col,

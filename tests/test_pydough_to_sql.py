@@ -33,7 +33,6 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     floor_and_ceil,
     floor_and_ceil_2,
     get_part_multiple,
-    get_part_single,
     global_acctbal_breakdown,
     hour_minute_day,
     nation_acctbal_breakdown,
@@ -235,7 +234,7 @@ from tests.testing_utilities import (
     ],
 )
 def test_pydough_to_sql_tpch(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     test_name: str,
     get_sample_graph: graph_fetcher,
@@ -310,15 +309,12 @@ def test_pydough_to_sql_tpch(
             id="window_sliding_frame_relsum",
         ),
         pytest.param(
-            get_part_single, "get_part_single", "Broker", id="get_part_single"
-        ),
-        pytest.param(
             get_part_multiple, "get_part_multiple", "Broker", id="get_part_multiple"
         ),
     ],
 )
 def test_pydough_to_sql_defog(
-    pydough_code: Callable[[], UnqualifiedNode],
+    pydough_code: Callable[..., UnqualifiedNode],
     test_name: str,
     graph_name: str,
     defog_graphs: graph_fetcher,

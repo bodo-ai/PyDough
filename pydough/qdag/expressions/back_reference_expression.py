@@ -4,8 +4,8 @@ context.
 """
 
 __all__ = ["BackReferenceExpression"]
+from pydough.errors import PyDoughQDAGException
 from pydough.qdag.collections.collection_qdag import PyDoughCollectionQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.types import PyDoughType
 
 from .expression_qdag import PyDoughExpressionQDAG
@@ -43,7 +43,7 @@ class BackReferenceExpression(Reference):
     @property
     def expression(self) -> PyDoughExpressionQDAG:
         """
-        The expression that the ChildReferenceExpression refers to.
+        The expression that the BackReferenceExpression refers to.
         """
         return self._expression
 

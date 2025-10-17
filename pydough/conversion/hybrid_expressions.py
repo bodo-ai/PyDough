@@ -176,6 +176,50 @@ class HybridExpr(ABC):
         """
         return False
 
+    def get_conjunction(self) -> list["HybridExpr"]:
+        """
+        Returns a list of expressions that are part of the conjunction of this
+        expression, if it is a conjunction. If it is not a conjunction, returns
+        a list containing just this expression.
+        """
+        return [self]
+
+    def strip_correl(self, sided_ref: bool, shift: int) -> "HybridExpr":
+        """
+        Removes any correlated references from the expression, returning a
+        version of the expression that does not contain any correlated
+        references.
+
+        Args:
+            `sided_ref`: if True, converts any correlated references to
+            HybridSidedRefExpr, which are references to the parent side of a
+            join condition. If False, converts them to HybridRefExpr, which are
+            references to a term from a preceding HybridOperation.
+            `shift`: the number of levels to shift the correlated references
+            back by. This is used to adjust the correlated references to point
+            to the correct level in the hybrid tree after the correlation
+            extraction.
+
+        Returns:
+            The expression with all correlated references removed.
+        """
+        return self
+
+    def expand_sided(self, shift: int) -> "HybridExpr":
+        """
+        Returns a modified version of the expression that converts any sided
+        references to regular expressions shifted by the specified number of
+        levels.
+
+        Args:
+            `shift`: the number of levels to shift the sided references back by.
+
+        Returns:
+            The expression with all sided references expanded to regular
+            expressions shifted by the specified number of levels.
+        """
+        return self
+
 
 class HybridCollation:
     """
@@ -302,12 +346,15 @@ class HybridSidedRefExpr(HybridExpr):
     the parent side of the join (similar to a correlated reference).
     """
 
-    def __init__(self, name: str, typ: PyDoughType):
-        super().__init__(typ)
-        self.name: str = name
+    def __init__(self, expr: HybridExpr):
+        super().__init__(expr.typ)
+        self.expr: HybridExpr = expr
 
     def to_string(self):
-        return f"PARENT.{self.name}"
+        return f"SIDED({self.expr})"
+
+    def expand_sided(self, shift: int) -> HybridExpr:
+        return self.expr.shift_back(shift)
 
 
 class HybridCorrelExpr(HybridExpr):
@@ -350,6 +397,15 @@ class HybridCorrelExpr(HybridExpr):
             return HybridCorrelExpr(self)
         else:
             return self
+
+    def strip_correl(self, sided_ref: bool, shift: int) -> HybridExpr:
+        inner_expr: HybridExpr = self.expr.strip_correl(sided_ref, shift).shift_back(
+            shift
+        )
+        if sided_ref:
+            return HybridSidedRefExpr(inner_expr)
+        else:
+            return inner_expr
 
 
 class HybridLiteralExpr(HybridExpr):
@@ -485,6 +541,28 @@ class HybridFunctionExpr(HybridExpr):
                 )
             case _:
                 return False
+
+    def get_conjunction(self) -> list[HybridExpr]:
+        if self.operator == pydop.BAN:
+            result: list[HybridExpr] = []
+            for arg in self.args:
+                result.extend(arg.get_conjunction())
+            return result
+        return super().get_conjunction()
+
+    def strip_correl(self, sided_ref: bool, shift: int) -> HybridExpr:
+        return HybridFunctionExpr(
+            self.operator,
+            [arg.strip_correl(sided_ref, shift) for arg in self.args],
+            self.typ,
+        )
+
+    def expand_sided(self, shift: int) -> HybridExpr:
+        return HybridFunctionExpr(
+            self.operator,
+            [arg.expand_sided(shift) for arg in self.args],
+            self.typ,
+        )
 
 
 class HybridWindowExpr(HybridExpr):
@@ -650,4 +728,41 @@ class HybridWindowExpr(HybridExpr):
                 order_arg.expr.has_correlated_window_function(levels)
                 for order_arg in self.order_args
             )
+        )
+
+    def strip_correl(self, sided_ref: bool, shift: int) -> HybridExpr:
+        return HybridWindowExpr(
+            self.window_func,
+            [arg.strip_correl(sided_ref, shift) for arg in self.args],
+            [
+                part_arg.strip_correl(sided_ref, shift)
+                for part_arg in self.partition_args
+            ],
+            [
+                HybridCollation(
+                    order_arg.expr.strip_correl(sided_ref, shift),
+                    order_arg.asc,
+                    order_arg.na_first,
+                )
+                for order_arg in self.order_args
+            ],
+            self.typ,
+            self.kwargs,
+        )
+
+    def expand_sided(self, shift: int) -> HybridExpr:
+        return HybridWindowExpr(
+            self.window_func,
+            [arg.expand_sided(shift) for arg in self.args],
+            [part_arg.expand_sided(shift) for part_arg in self.partition_args],
+            [
+                HybridCollation(
+                    order_arg.expr.expand_sided(shift),
+                    order_arg.asc,
+                    order_arg.na_first,
+                )
+                for order_arg in self.order_args
+            ],
+            self.typ,
+            self.kwargs,
         )

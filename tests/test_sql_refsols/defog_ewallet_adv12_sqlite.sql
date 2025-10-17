@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    SUM(amount) AS sum_amount,
-    coupon_id
+    coupon_id,
+    SUM(amount) AS sum_amount
   FROM main.wallet_transactions_daily
   GROUP BY
-    coupon_id
+    1
 )
 SELECT
   coupons.cid AS coupon_id,

@@ -107,7 +107,7 @@ def test_get_property_names(
             "TPCH",
             "regions",
             "tpch.REGION",
-            ["key"],
+            ["key", "name"],
             id="tpch-region",
         ),
         pytest.param(

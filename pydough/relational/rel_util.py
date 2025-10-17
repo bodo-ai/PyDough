@@ -3,7 +3,9 @@ A mixture of utility functions for relational nodes and expressions.
 """
 
 __all__ = [
+    "ExpressionTranspositionShuttle",
     "add_expr_uses",
+    "add_input_name",
     "apply_substitution",
     "bubble_uniqueness",
     "build_filter",
@@ -15,12 +17,10 @@ __all__ = [
     "only_references_columns",
     "partition_expressions",
     "passthrough_column_mapping",
-    "remap_join_condition",
-    "transpose_expression",
 ]
 
 from collections import defaultdict
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable
 
 import pydough.pydough_operators as pydop
 from pydough.types import BooleanType
@@ -32,12 +32,14 @@ from .relational_expressions import (
     ExpressionSortInfo,
     LiteralExpression,
     RelationalExpression,
+    RelationalExpressionShuttle,
     WindowCallExpression,
 )
 from .relational_nodes import (
     Filter,
     Join,
     JoinType,
+    Project,
     RelationalNode,
 )
 
@@ -52,6 +54,15 @@ null_propagating_operators = {
     pydop.STARTSWITH,
     pydop.ENDSWITH,
     pydop.CONTAINS,
+    pydop.REPLACE,
+    pydop.FIND,
+    pydop.GETPART,
+    pydop.LPAD,
+    pydop.RPAD,
+    pydop.STRCOUNT,
+    pydop.INTEGER,
+    pydop.FLOAT,
+    pydop.STRING,
     pydop.LIKE,
     pydop.LOWER,
     pydop.UPPER,
@@ -70,11 +81,68 @@ null_propagating_operators = {
     pydop.SUB,
     pydop.MUL,
     pydop.DIV,
+    pydop.ABS,
+    pydop.FLOOR,
+    pydop.LARGEST,
+    pydop.SMALLEST,
+    pydop.CEIL,
+    pydop.MONOTONIC,
+    pydop.POW,
+    pydop.POWER,
+    pydop.SQRT,
+    pydop.ROUND,
+    pydop.SLICE,
 }
 """
 A set of operators with the property that the output is null if any of the
-inputs are null.
+column inputs are null.
 """
+
+
+class ExpressionTranspositionShuttle(RelationalExpressionShuttle):
+    """
+    Relational shuttle implementation that rewrites an expression by replacing
+    its column references based on a given node's column mapping, allowing the
+    expression to be pushed beneath the node that introduced the mapping. For
+    example, if a node renamed columns, this shuttle translates the expression
+    from the new column names back to the original names.
+    """
+
+    def __init__(self, node: RelationalNode, keep_input_names: bool) -> None:
+        """
+        Args:
+            `node`: The node whose column mapping to use for rewriting the
+            expressions. It is assumed that the expressions being rewritten are
+            for a relational node directly above `node` (e.g. using its output
+            columns as their inputs), and the goal is to instead use the inputs
+            of `node` within the expression so it can be pushed into or beneath
+            `node`.
+            `keep_input_names`: Whether the shuttle should keep the input names
+            for column references from the inputs to `node`. This will be true
+            only when the transposition is being done to push an expression into
+            the columns or condition of a join node (rather than beneath it),
+            and false otherwise.
+        """
+        self.node: RelationalNode = node
+        self.keep_input_names: bool = keep_input_names
+
+    def toggle_keep_input_names(self, value: bool) -> None:
+        """
+        Sets whether the shuttle should keep the input names or not.
+        """
+        self.keep_input_names = value
+
+    def visit_column_reference(
+        self, column_reference: ColumnReference
+    ) -> RelationalExpression:
+        result: RelationalExpression = self.node.columns[column_reference.name]
+        if (
+            isinstance(result, ColumnReference)
+            and result.input_name is not None
+            and not self.keep_input_names
+        ):
+            result = result.with_input(None)
+        return result
 
 
 def get_conjunctions(expr: RelationalExpression) -> set[RelationalExpression]:
@@ -244,7 +312,9 @@ def passthrough_column_mapping(node: RelationalNode) -> dict[str, RelationalExpr
 
 
 def build_filter(
-    node: RelationalNode, filters: set[RelationalExpression]
+    node: RelationalNode,
+    filters: set[RelationalExpression],
+    columns: dict[str, RelationalExpression] | None = None,
 ) -> RelationalNode:
     """
     Build a filter node with the given filters on top of an input node.
@@ -252,17 +322,34 @@ def build_filter(
     Args:
         `node`: The input node to build the filter on top of.
         `filters`: The set of filters to apply.
+        `columns`: An optional mapping of the column mapping to use on the
+        built filter node. If not provided, uses the passthrough column mapping
+        of `node`.
 
     Returns:
         A filter node with the given filters applied on top of `node`. If
         the set of filters is empty, just returns `node`. Ignores any filter
         condition that is always True.
     """
-    # Remove literal True conditions from the filters, and just return the
-    # input if there are no filters left.
+    # Remove literal True conditions from the filters
     filters.discard(LiteralExpression(True, BooleanType()))
-    condition: RelationalExpression
+
+    # Remove any of the filters that are also present in the input if it is a
+    # join or filter node.
+    transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
+        node, keep_input_names=True
+    )
+    if isinstance(node, (Join, Filter)):
+        condition_filters: set[RelationalExpression] = get_conjunctions(node.condition)
+        for expr in list(filters):
+            if expr.accept_shuttle(transposer) in condition_filters:
+                filters.discard(expr)
+
+    # Just return the input if there are no filters left.
     if len(filters) == 0:
+        # If columns was provided, use it to create a Project node
+        if columns is not None:
+            return Project(node, columns)
         return node
 
     # Detect whether the filter can be pushed into a join condition. If so,
@@ -276,14 +363,12 @@ def build_filter(
             for pred in filters
         ):
             push_into_join = True
-            filters = {
-                transpose_expression(exp, node.columns, keep_input_names=True)
-                for exp in filters
-            }
+            filters = {exp.accept_shuttle(transposer) for exp in filters}
             filters.add(node.condition)
             filters.discard(LiteralExpression(True, BooleanType()))
 
     # Build the new filter condition by forming the conjunction.
+    condition: RelationalExpression
     if len(filters) == 1:
         condition = filters.pop()
     else:
@@ -296,155 +381,16 @@ def build_filter(
         new_join: RelationalNode = node.copy()
         assert isinstance(new_join, Join)
         new_join.condition = condition
-        new_join.cardinality = new_join.cardinality.add_potential_filter()
+        new_join.cardinality = new_join.cardinality.add_filter()
+        if columns is not None:
+            return Project(new_join, columns)
         return new_join
 
     # Otherwise, just return a new filter node with the new condition on top
     # of the existing node.
-    return Filter(node, condition, passthrough_column_mapping(node))
-
-
-def transpose_expression(
-    expr: RelationalExpression,
-    columns: Mapping[str, RelationalExpression],
-    keep_input_names: bool = False,
-) -> RelationalExpression:
-    """
-    Rewrites an expression by replacing its column references based on a given
-    column mapping, allowing the expression to be pushed beneath the node that
-    introduced the mapping. For example, if a node renamed columns, this
-    function translates the expression from the new column names back to the
-    original names.
-
-    Args:
-        `expr`: The expression to transposed.
-        `columns`: The mapping of column names to their corresponding
-        expressions.
-        `keep_input_names`: If True, keeps the input names in the column
-        references.
-
-    Returns:
-        The transposed expression with updated column references.
-    """
-    match expr:
-        case LiteralExpression() | CorrelatedReference():
-            return expr
-        case ColumnReference():
-            new_column = columns[expr.name]
-            if (
-                isinstance(new_column, ColumnReference)
-                and new_column.input_name is not None
-                and not keep_input_names
-            ):
-                new_column = new_column.with_input(None)
-            return new_column
-        case CallExpression():
-            return CallExpression(
-                expr.op,
-                expr.data_type,
-                [
-                    transpose_expression(arg, columns, keep_input_names)
-                    for arg in expr.inputs
-                ],
-            )
-        case WindowCallExpression():
-            return WindowCallExpression(
-                expr.op,
-                expr.data_type,
-                [
-                    transpose_expression(arg, columns, keep_input_names)
-                    for arg in expr.inputs
-                ],
-                [
-                    transpose_expression(arg, columns, keep_input_names)
-                    for arg in expr.partition_inputs
-                ],
-                [
-                    ExpressionSortInfo(
-                        transpose_expression(order_arg.expr, columns),
-                        order_arg.ascending,
-                        order_arg.nulls_first,
-                    )
-                    for order_arg in expr.order_inputs
-                ],
-                expr.kwargs,
-            )
-        case _:
-            raise NotImplementedError(
-                f"transpose_expression not implemented for {expr.__class__.__name__}"
-            )
-
-
-def remap_join_condition(
-    expr: RelationalExpression,
-    left_columns: dict[str, RelationalExpression],
-    right_columns: dict[str, RelationalExpression],
-    input_names: list[str | None],
-) -> RelationalExpression:
-    """
-    Same idea as `transpose_expression`, but for transforming an expression
-    that will be used as the join condition of a join node.
-
-
-    Args:
-        `expr`: The expression to transposed.
-        `left_columns`: The mapping of column names from the lhs to their
-        corresponding expressions.
-        `right_columns`: The mapping of column names from the rhs to their
-        corresponding expressions.
-        `input_names`: The names of the two inputs to the join node.
-
-    Returns:
-        The transposed join condition expression with updated column
-        references.
-    """
-    match expr:
-        case LiteralExpression() | CorrelatedReference():
-            return expr
-        case ColumnReference():
-            if expr.input_name == input_names[0]:
-                return left_columns.get(expr.name, expr)
-            elif expr.input_name == input_names[1]:
-                return right_columns.get(expr.name, expr)
-            else:
-                raise ValueError(f"Unexpected input name: {expr.input_name}")
-        case CallExpression():
-            return CallExpression(
-                expr.op,
-                expr.data_type,
-                [
-                    remap_join_condition(arg, left_columns, right_columns, input_names)
-                    for arg in expr.inputs
-                ],
-            )
-        case WindowCallExpression():
-            return WindowCallExpression(
-                expr.op,
-                expr.data_type,
-                [
-                    remap_join_condition(arg, left_columns, right_columns, input_names)
-                    for arg in expr.inputs
-                ],
-                [
-                    remap_join_condition(arg, left_columns, right_columns, input_names)
-                    for arg in expr.partition_inputs
-                ],
-                [
-                    ExpressionSortInfo(
-                        remap_join_condition(
-                            order_arg.expr, left_columns, right_columns, input_names
-                        ),
-                        order_arg.ascending,
-                        order_arg.nulls_first,
-                    )
-                    for order_arg in expr.order_inputs
-                ],
-                expr.kwargs,
-            )
-        case _:
-            raise NotImplementedError(
-                f"remap_join_condition not implemented for {expr.__class__.__name__}"
-            )
+    if columns is None:
+        columns = passthrough_column_mapping(node)
+    return Filter(node, condition, columns)
 
 
 def add_expr_uses(
@@ -655,15 +601,26 @@ def bubble_uniqueness(
                 break
         if can_add:
             output_uniqueness.add(frozenset(new_uniqueness_set))
+    # Build a mapping of each expression to the list of all output column names
+    # that have that expression as their value.
+    reverse_map: dict[RelationalExpression, list[str]] = {}
+    for name, col in columns.items():
+        reverse_map[col] = reverse_map.get(col, [])
+        reverse_map[col].append(name)
     # Build a mapping of each output column name to the set of all other
     # output column names that have identical values, then use this to build
     # any isomorphic uniqueness sets.
     isomorphisms: dict[str, set[str]] = {}
-    for name1, col1 in columns.items():
-        for name2, col2 in columns.items():
-            if name1 != name2 and col1 == col2:
-                isomorphisms[name1] = isomorphisms.get(name1, set()).union({name2})
-                isomorphisms[name2] = isomorphisms.get(name2, set()).union({name1})
+    for col_names in reverse_map.values():
+        if len(col_names) > 1:
+            for i in range(len(col_names)):
+                for j in range(i + 1, len(col_names)):
+                    name1 = col_names[i]
+                    name2 = col_names[j]
+                    isomorphisms[name1] = isomorphisms.get(name1, set())
+                    isomorphisms[name1].add(name2)
+                    isomorphisms[name2] = isomorphisms.get(name2, set())
+                    isomorphisms[name2].add(name1)
     include_isomorphisms(output_uniqueness, isomorphisms)
     return output_uniqueness
 
@@ -741,6 +698,54 @@ def apply_substitution(
                     apply_substitution(
                         order_arg.expr, substitutions, correl_substitutions
                     ),
+                    order_arg.ascending,
+                    order_arg.nulls_first,
+                )
+                for order_arg in expr.order_inputs
+            ],
+            expr.kwargs,
+        )
+
+    # For all other cases, just return the expression as is.
+    return expr
+
+
+def add_input_name(
+    expr: RelationalExpression, input_name: str | None
+) -> RelationalExpression:
+    """
+    Adds an input name to all column references inside the given expression.
+
+    Args:
+        `expr`: The expression to add the input name to its contents.
+        `input_name`: The input name to add.
+
+    Returns:
+        The expression with the input name added to all contents, if
+        applicable.
+    """
+    if isinstance(expr, ColumnReference):
+        return expr.with_input(input_name)
+
+    # For call expressions, recursively transform the inputs.
+    if isinstance(expr, CallExpression):
+        return CallExpression(
+            expr.op,
+            expr.data_type,
+            [add_input_name(arg, input_name) for arg in expr.inputs],
+        )
+
+    # For window call expressions, recursively transform the inputs, partition
+    # inputs, and order inputs.
+    if isinstance(expr, WindowCallExpression):
+        return WindowCallExpression(
+            expr.op,
+            expr.data_type,
+            [add_input_name(arg, input_name) for arg in expr.inputs],
+            [add_input_name(arg, input_name) for arg in expr.partition_inputs],
+            [
+                ExpressionSortInfo(
+                    add_input_name(order_arg.expr, input_name),
                     order_arg.ascending,
                     order_arg.nulls_first,
                 )

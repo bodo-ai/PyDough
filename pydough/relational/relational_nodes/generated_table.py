@@ -3,6 +3,8 @@ This file contains the relational implementation for a "generatedtable" node,
 which generally represents user generated table.
 """
 
+from typing import TYPE_CHECKING
+
 from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
@@ -10,6 +12,9 @@ from pydough.relational.relational_expressions.column_reference import ColumnRef
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .abstract_node import RelationalNode
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
 
 
 class GeneratedTable(RelationalNode):
@@ -47,10 +52,13 @@ class GeneratedTable(RelationalNode):
         return self._collection
 
     def node_equals(self, other: RelationalNode) -> bool:
-        return isinstance(other, GeneratedTable) and self.name == other.name
+        return isinstance(other, GeneratedTable) and self.collection == other.collection
 
     def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
         visitor.visit_generated_table(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_generated_table(self)
 
     def to_string(self, compact=False) -> str:
         return f"GENERATED_TABLE(table={self.name}, columns={self.make_column_string(self.columns, compact)})"

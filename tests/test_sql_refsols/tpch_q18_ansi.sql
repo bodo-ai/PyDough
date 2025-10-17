@@ -1,10 +1,10 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
-    SUM(l_quantity) AS sum_l_quantity,
-    l_orderkey
+    l_orderkey,
+    SUM(l_quantity) AS sum_l_quantity
   FROM tpch.lineitem
   GROUP BY
-    l_orderkey
+    1
 )
 SELECT
   customer.c_name AS C_NAME,
@@ -12,15 +12,15 @@ SELECT
   orders.o_orderkey AS O_ORDERKEY,
   orders.o_orderdate AS O_ORDERDATE,
   orders.o_totalprice AS O_TOTALPRICE,
-  COALESCE(_t0.sum_l_quantity, 0) AS TOTAL_QUANTITY
+  _t1.sum_l_quantity AS TOTAL_QUANTITY
 FROM tpch.orders AS orders
 JOIN tpch.customer AS customer
   ON customer.c_custkey = orders.o_custkey
-JOIN _t0 AS _t0
-  ON NOT _t0.sum_l_quantity IS NULL
-  AND _t0.l_orderkey = orders.o_orderkey
-  AND _t0.sum_l_quantity > 300
+JOIN _t1 AS _t1
+  ON NOT _t1.sum_l_quantity IS NULL
+  AND _t1.l_orderkey = orders.o_orderkey
+  AND _t1.sum_l_quantity > 300
 ORDER BY
-  o_totalprice DESC,
-  o_orderdate
+  5 DESC,
+  4
 LIMIT 10

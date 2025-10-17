@@ -21,6 +21,9 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Binary, Case, Concat, Is, Paren, Unary
 from sqlglot.expressions import Expression as SQLGlotExpression
 
+from pydough.errors import PyDoughSQLException
+from pydough.types import PyDoughType
+
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
 """
 The types of SQLGlot expressions that need to be wrapped in parenthesis for the
@@ -165,11 +168,15 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.YEAR:
                 return "'%Y-01-01 00:00:00'"
             case DateTimeUnit.QUARTER:
-                raise ValueError("Quarter unit does not have a truncation string.")
+                raise PyDoughSQLException(
+                    "Quarter unit does not have a truncation string."
+                )
             case DateTimeUnit.MONTH:
                 return "'%Y-%m-01 00:00:00'"
             case DateTimeUnit.WEEK:
-                raise ValueError("Week unit does not have a truncation string.")
+                raise PyDoughSQLException(
+                    "Week unit does not have a truncation string."
+                )
             case DateTimeUnit.DAY:
                 return "'%Y-%m-%d 00:00:00'"
             case DateTimeUnit.HOUR:
@@ -188,7 +195,9 @@ class DateTimeUnit(Enum):
             case DateTimeUnit.YEAR:
                 return "'%Y'"
             case DateTimeUnit.QUARTER:
-                raise ValueError("Quarter unit does not have an extraction string.")
+                raise PyDoughSQLException(
+                    "Quarter unit does not have an extraction string."
+                )
             case DateTimeUnit.MONTH:
                 return "'%m'"
             case DateTimeUnit.WEEK:
@@ -257,22 +266,24 @@ def pad_helper(
         try:
             required_len = int(args[1].this)
             if required_len < 0:
-                raise ValueError()
+                raise PyDoughSQLException(
+                    f"{pad_func} function requires the length argument to be a non-negative integer literal."
+                )
         except ValueError:
-            raise ValueError(
+            raise PyDoughSQLException(
                 f"{pad_func} function requires the length argument to be a non-negative integer literal."
             )
     else:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the length argument to be a non-negative integer literal."
         )
 
     if not isinstance(args[2], sqlglot_expressions.Literal) or not args[2].is_string:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the padding argument to be a string literal of length 1."
         )
     if len(str(args[2].this)) != 1:
-        raise ValueError(
+        raise PyDoughSQLException(
             f"{pad_func} function requires the padding argument to be a string literal of length 1."
         )
 
@@ -281,3 +292,97 @@ def pad_helper(
     required_len_glot = sqlglot_expressions.convert(required_len)
     pad_string_glot = sqlglot_expressions.convert(str(args[2].this) * required_len)
     return col_glot, col_len_glot, required_len_glot, pad_string_glot, required_len
+
+
+def expand_variance(
+    args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+) -> SQLGlotExpression:
+    """
+    Converts a variance calculation (population or sample) to an equivalent
+    SQLGlot expression.
+
+    Args:
+        `args`: The arguments to the variance function.
+        `types`: The types of the arguments.
+        `type`: The type of variance to calculate.
+
+    Returns:
+        The SQLGlot expression to calculate the population variance
+        of the argument.
+    """
+    arg = args[0]
+    # Formula: (SUM(X*X) - (SUM(X)*SUM(X) / COUNT(X))) / COUNT(X) for population variance
+    # For sample variance, divide by (COUNT(X) - 1) instead of COUNT(X)
+
+    # SUM(X*X)
+    square_expr = apply_parens(
+        sqlglot_expressions.Pow(
+            this=arg, expression=sqlglot_expressions.Literal.number(2)
+        )
+    )
+    sum_squares_expr = sqlglot_expressions.Sum(this=square_expr)
+
+    # SUM(X)
+    sum_expr = sqlglot_expressions.Sum(this=arg)
+
+    # COUNT(X)
+    count_expr = sqlglot_expressions.Count(this=arg)
+
+    # (SUM(X)*SUM(X))
+    sum_squared_expr = sqlglot_expressions.Pow(
+        this=sum_expr, expression=sqlglot_expressions.Literal.number(2)
+    )
+
+    # ((SUM(X)*SUM(X)) / COUNT(X))
+    mean_sum_squared_expr = apply_parens(
+        sqlglot_expressions.Div(
+            this=apply_parens(sum_squared_expr), expression=apply_parens(count_expr)
+        )
+    )
+
+    # (SUM(X*X) - (SUM(X)*SUM(X) / COUNT(X)))
+    numerator = sqlglot_expressions.Sub(
+        this=sum_squares_expr, expression=apply_parens(mean_sum_squared_expr)
+    )
+
+    if type == "population":
+        # Divide by COUNT(X)
+        return apply_parens(
+            sqlglot_expressions.Div(
+                this=apply_parens(numerator), expression=apply_parens(count_expr)
+            )
+        )
+    elif type == "sample":
+        # Divide by (COUNT(X) - 1)
+        denominator = sqlglot_expressions.Sub(
+            this=count_expr, expression=sqlglot_expressions.Literal.number(1)
+        )
+        return apply_parens(
+            sqlglot_expressions.Div(
+                this=apply_parens(numerator), expression=apply_parens(denominator)
+            )
+        )
+    else:
+        raise ValueError(f"Unsupported type: {type}")
+
+
+def expand_std(
+    args: list[SQLGlotExpression], types: list[PyDoughType], type: str
+) -> SQLGlotExpression:
+    """
+    Converts a standard deviation calculation to an equivalent
+    SQLGlot expression.
+
+    Args:
+        `args`: The arguments to the standard deviation function.
+        `types`: The types of the arguments.
+        `type`: The type of standard deviation to calculate.
+
+    Returns:
+        The SQLGlot expression to calculate the standard deviation
+        of the argument.
+    """
+    variance = expand_variance(args, types, type)
+    return sqlglot_expressions.Pow(
+        this=variance, expression=sqlglot_expressions.Literal.number(0.5)
+    )

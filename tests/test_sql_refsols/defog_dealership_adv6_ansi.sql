@@ -7,11 +7,11 @@ WITH _t1 AS (
     AND ROW_NUMBER() OVER (PARTITION BY car_id ORDER BY snapshot_date DESC NULLS FIRST) = 1
 ), _s3 AS (
   SELECT
-    MAX(sale_price) AS max_sale_price,
-    car_id
+    car_id,
+    MAX(sale_price) AS max_sale_price
   FROM main.sales
   GROUP BY
-    car_id
+    1
 )
 SELECT
   cars.make,
@@ -23,4 +23,4 @@ JOIN _t1 AS _t1
 LEFT JOIN _s3 AS _s3
   ON _s3.car_id = cars._id
 ORDER BY
-  _s3.max_sale_price DESC
+  3 DESC

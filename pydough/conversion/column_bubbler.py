@@ -7,6 +7,8 @@ while also removing duplicate calculations.
 __all__ = ["bubble_column_names"]
 
 
+import re
+
 from pydough.relational import (
     Aggregate,
     CallExpression,
@@ -46,36 +48,42 @@ def name_sort_key(name: str) -> tuple[bool, bool, str]:
     )
 
 
-def generate_agg_name(agg_expr: CallExpression) -> str | None:
+def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> list[str]:
     """
-    Generates a more readable name for an aggregation expression based on its
-    function name and input column, if applicable. The two patterns of name
-    generation are:
+    Generates more readable names for an expression based on its, if applicable.
+    The patterns of name generation are:
 
-    - If the aggregation has a single input that is a column reference, the
+    - If a function has a single input that is a column reference, the
       name is generated as `<function_name>_<column_name>`. For example,
       `SUM(sales)` would become `sum_sales`, and `AVG(num_cars_owned)`
       would become `avg_num_cars_owned`.
-    - If the aggregation is a `COUNT` with no inputs, the name is simply
+    - If an aggregation is a `COUNT` with no inputs, the name is simply
       `n_rows`, indicating the number of rows counted.
+    - If the current name is in the form `name_idx`, try suggesting just `name`.
 
-    If neither of these conditions are met, the function returns `None`.
+    If none of these conditions are met, the function returns an empty list.
 
     Args:
-        `agg_expr`: The function call expression for which to generate a name,
-        which is presumed to be an aggregation call.
+        `expr`: The function call expression for which to generate
+        alternative names.
+        `current_name`: The current name of the expression.
 
     Returns:
-        A string representing the generated name, or `None` if no suitable
-        name can be generated based on the provided conditions.
+        A list of strings string representing the candidate generated names.
     """
-    if len(agg_expr.inputs) == 1:
-        input_expr = agg_expr.inputs[0]
-        if isinstance(input_expr, ColumnReference):
-            return f"{agg_expr.op.function_name.lower()}_{input_expr.name}"
-    if len(agg_expr.inputs) == 0 and agg_expr.op.function_name.lower() == "count":
-        return "n_rows"
-    return None
+    result: list[str] = []
+    if isinstance(expr, CallExpression):
+        if len(expr.inputs) == 1:
+            input_expr = expr.inputs[0]
+            if isinstance(input_expr, ColumnReference):
+                result.append(f"{expr.op.function_name.lower()}_{input_expr.name}")
+        if len(expr.inputs) == 0 and expr.op.function_name.lower() == "count":
+            result.append("n_rows")
+
+    if not (current_name.startswith("agg") or current_name.startswith("expr")):
+        if re.match(r"^(.*)_[0-9]+$", current_name):
+            result.append(re.findall(r"^(.*)_[0-9]+$", current_name)[0])
+    return result
 
 
 def run_column_bubbling(
@@ -160,6 +168,17 @@ def run_column_bubbling(
                         new_ref = remapping[new_ref]
                         name = new_expr.name
                         used_names.add(name)
+                    # Try the same thing with generated alternative names
+                    else:
+                        for alt_name in generate_cleaner_names(new_expr, name):
+                            if alt_name not in used_names:
+                                remapping[new_ref] = ColumnReference(
+                                    alt_name, new_expr.data_type
+                                )
+                                new_ref = remapping[new_ref]
+                                name = alt_name
+                                used_names.add(name)
+                                break
                     aliases[new_expr] = new_ref
                     output_columns[name] = new_expr
             # For limit, also transform the orderings if they exist.
@@ -188,16 +207,19 @@ def run_column_bubbling(
             # For aggregate, do the same as projection but run separately for
             # keys and aggregations.
             new_input, input_mapping = run_column_bubbling(node.input, corr_remap)
-            new_keys: dict[str, ColumnReference] = {}
+            new_keys: dict[str, RelationalExpression] = {}
             new_aggs: dict[str, CallExpression] = {}
             for name, key_expr in node.keys.items():
                 new_expr = apply_substitution(key_expr, input_mapping, corr_remap)
-                assert isinstance(new_expr, ColumnReference)
                 new_ref = ColumnReference(name, key_expr.data_type)
                 if new_expr in aliases:
                     remapping[new_ref] = aliases[new_expr]
                 else:
-                    if new_expr.name != name and new_expr.name not in used_names:
+                    if (
+                        isinstance(new_expr, ColumnReference)
+                        and new_expr.name != name
+                        and new_expr.name not in used_names
+                    ):
                         used_names.add(new_expr.name)
                         alt_ref = ColumnReference(new_expr.name, new_expr.data_type)
                         remapping[new_ref] = alt_ref
@@ -215,14 +237,14 @@ def run_column_bubbling(
                     # Special case for aggregations: if the existing name is
                     # bad, try to replace it with a better name based on the
                     # function name and input column, if applicable.
-                    if name.startswith("agg") or name.startswith("expr"):
-                        alt_name: str | None = generate_agg_name(new_expr)
-                        if alt_name is not None and alt_name not in used_names:
+                    for alt_name in generate_cleaner_names(new_expr, name):
+                        if alt_name not in used_names:
                             used_names.add(alt_name)
                             alt_ref = ColumnReference(alt_name, call_expr.data_type)
                             remapping[new_ref] = alt_ref
                             new_ref = alt_ref
                             name = alt_name
+                            break
                     aliases[new_expr] = new_ref
                     new_aggs[name] = new_expr
             return Aggregate(new_input, new_keys, new_aggs), remapping
@@ -333,4 +355,4 @@ def bubble_column_names(root: RelationalRoot) -> RelationalRoot:
                     ordering.nulls_first,
                 )
             )
-    return RelationalRoot(new_input, new_ordered_columns, new_orderings)
+    return RelationalRoot(new_input, new_ordered_columns, new_orderings, root.limit)

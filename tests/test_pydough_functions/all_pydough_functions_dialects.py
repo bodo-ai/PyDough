@@ -130,11 +130,22 @@ def datetime_functions():
         dd_dt_str=DATEDIFF("weeks", "1992-01-01", specific_dt),
         # DAYOFWEEK / DAYNAME: all types
         dow_col=DAYOFWEEK(order_date),
-        dow_str=DAYOFWEEK("1992-07-01"),
+        dow_str1=DAYOFWEEK("1992-07-01"),
+        dow_str2=DAYOFWEEK("1992-07-02"),
+        dow_str3=DAYOFWEEK("1992-07-03"),
+        dow_str4=DAYOFWEEK("1992-07-04"),
+        dow_str5=DAYOFWEEK("1992-07-05"),
+        dow_str6=DAYOFWEEK("1992-07-06"),
+        dow_str7=DAYOFWEEK("1992-07-07"),
         dow_dt=DAYOFWEEK(specific_dt),
         dow_pd=DAYOFWEEK(today),
         dayname_col=DAYNAME(order_date),
-        dayname_str=DAYNAME("1995-06-30"),
+        dayname_str1=DAYNAME("1995-06-26"),
+        dayname_str2=DAYNAME("1995-06-27"),
+        dayname_str3=DAYNAME("1995-06-28"),
+        dayname_str4=DAYNAME("1995-06-29"),
+        dayname_str5=DAYNAME("1995-06-30"),
+        dayname_str6=DAYNAME("1995-07-01"),
         dayname_dt=DAYNAME(datetime.datetime(1993, 8, 15)),
     )
 
@@ -187,8 +198,10 @@ def aggregation_functions():
         anything_value=ANYTHING(customers.account_balance),
         count_value=COUNT(customers.account_balance),
         count_distinct_value=NDISTINCT(customers.account_balance),
-        variance_value=VAR(customers.account_balance, type="sample"),
-        stddev_value=STD(customers.account_balance, type="sample"),
+        variance_s_value=VAR(customers.account_balance, type="sample"),
+        variance_p_value=VAR(customers.account_balance, type="population"),
+        stddev_s_value=STD(customers.account_balance, type="sample"),
+        stddev_p_value=STD(customers.account_balance, type="population"),
     ).WHERE(HAS(customers) & HASNOT(customers.orders))
 
 

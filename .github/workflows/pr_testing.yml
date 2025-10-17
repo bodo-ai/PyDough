@@ -16,6 +16,11 @@ on:
         description: "Python 3.12"
         type: boolean
         default: true
+      run-all:
+        description: "Run All Tests"
+        type: boolean
+        required: false
+        default: false
       run-python:
         description: "Run Main PyDough Tests"
         type: boolean
@@ -23,6 +28,21 @@ on:
         default: true
       run-sf:
         description: "Run Snowflake Tests"
+        type: boolean
+        required: false
+        default: false
+      run-mysql:
+        description: "Run MySQL Tests"
+        type: boolean
+        required: false
+        default: false
+      run-postgres:
+        description: "Run Postgres Tests"
+        type: boolean
+        required: false
+        default: false        
+      run-sf_masked:
+        description: "Run Snowflake Masked Tests"
         type: boolean
         required: false
         default: false
@@ -96,8 +116,9 @@ jobs:
     # https://docs.github.com/en/actions/learn-github-actions/expressions#contains
     # contains is case-insensitive
     if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run ci]')) ||
-      (github.event_name == 'workflow_dispatch' && inputs.run-python)
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-python))
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -127,19 +148,73 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not snowflake" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked)" -rs
 
   run-sf-tests:
     name: Snowflake Tests
     needs: [get-msg, get-py-ver-matrix]
     if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
-      (github.event_name == 'workflow_dispatch' && inputs.run-sf)
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
     uses: ./.github/workflows/sf_testing.yml
     secrets:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
       SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
       SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-mysql-tests:
+    name: MySQL Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run mysql]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-mysql))
+    uses: ./.github/workflows/mysql_testing.yml
+    secrets:
+      MYSQL_USERNAME: ${{ secrets.MYSQL_USERNAME }}
+      MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-postgres-tests:
+    name: Postgres Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run postgres]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-postgres))
+    uses: ./.github/workflows/postgres_testing.yml
+    secrets:
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-sf-masked-tests:
+    name: Masked Snowflake Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf_masked]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf_masked))
+    uses: ./.github/workflows/sf_masked_testing.yml
+    secrets:
+      SF_FULL_USERNAME: ${{ secrets.SF_FULL_USERNAME }}
+      SF_FULL_PASSWORD: ${{ secrets.SF_FULL_PASSWORD }}
+      SF_PARTIAL_USERNAME: ${{ secrets.SF_PARTIAL_USERNAME }}
+      SF_PARTIAL_PASSWORD: ${{ secrets.SF_PARTIAL_PASSWORD }}
+      SF_NONE_USERNAME: ${{ secrets.SF_NONE_USERNAME }}
+      SF_NONE_PASSWORD: ${{ secrets.SF_NONE_PASSWORD }}
+      SF_MASKED_ACCOUNT: ${{ secrets.SF_MASKED_ACCOUNT }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix

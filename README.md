@@ -97,8 +97,69 @@ script must be run so that the `defog.db` file is located in the `tests` directo
 
 ## Running CI Tests
 
-To run our CI tests on your PR, you must include the flag `[run CI]` in latest
-commit message.
+When submitting a PR, you can control which CI tests run by adding special flags
+to your **latest commit message**.
+
+**Note:** All flags are **case-insensitive**.
+
+- To run **PyDough CI tests**, add: `[run CI]` (only runs **SQLite tests**, no other SQL dialects)  
+- To run **PyDough and all dialect tests**, add: `[run all]`  
+- To run **specific dialect tests**, use the corresponding flag as described below.
+
+### Running Snowflake Tests on CI
+To run **Snowflake CI tests**, add the flag `[run SF]` to your commit message.
+
+**Running Snowflake tests locally:**
+
+1. Install the Snowflake Connector for Python with Pandas support
+    ```bash
+    pip install "snowflake-connector-python[pandas]"
+    ```
+
+2. Set your Snowflake credentials as environment variables:
+    ```bash
+        export SF_USERNAME="your_username"
+        export SF_PASSWORD="your_password"
+        export SF_ACCOUNT="your_account"
+    ```
+
+### Running MySQL Tests on CI
+To run **MySQL CI tests**, add the flag `[run mysql]` to your commit message.
+
+**Running MySQL tests locally:**
+
+1. Make sure you have [**Docker Desktop**](https://www.docker.com/get-started/)
+ installed and running.
+
+2. Install the MySQL Connector for Python
+    ```bash
+    pip install mysql-connector-python
+    ```
+
+3. Set your MySQL credentials as environment variables:
+    ```bash
+        export MYSQL_USERNAME="your_username"
+        export MYSQL_PASSWORD="your_password"
+
+## Running Postgres Tests on CI
+To run **Postgres CI tests**, add the flag `[run postgres]` to your commit message.
+
+**Running Postgres tests locally:**
+
+1. Make sure you have [**Docker Desktop**](https://www.docker.com/get-started/)
+ installed and running.
+
+2. Install the Postgres Connector for Python
+    ```bash
+    pip install psycopg2-binary
+    ```
+    
+3. Set your Postgres credentials as environment variables:
+    ```bash
+        export POSTGRES_DB="your_database"
+        export POSTGRES_USER="your_username"
+        export POSTGRES_PASSWORD="your_password"
+    ```
 
 ## Runtime Dependencies
 

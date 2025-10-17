@@ -7,7 +7,7 @@ WITH _s0 AS (
   SELECT
     GROUP_CONCAT(SUBSTRING(n_name, 1, 1), '') AS agg_2
   FROM tpch.nation
-), _t5 AS (
+), _t2 AS (
   SELECT DISTINCT
     o_orderpriority
   FROM tpch.orders
@@ -16,7 +16,7 @@ WITH _s0 AS (
 ), _s3 AS (
   SELECT
     GROUP_CONCAT(SUBSTRING(o_orderpriority, 3), ' <=> ') AS agg_3
-  FROM _t5
+  FROM _t2
 )
 SELECT
   _s0.combine_strings_r_name AS s1,
@@ -25,5 +25,4 @@ SELECT
   _s3.agg_3 AS s4
 FROM _s0 AS _s0
 CROSS JOIN _s1 AS _s1
-LEFT JOIN _s3 AS _s3
-  ON TRUE
+CROSS JOIN _s3 AS _s3

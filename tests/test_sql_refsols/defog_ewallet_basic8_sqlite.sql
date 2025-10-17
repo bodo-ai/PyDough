@@ -1,11 +1,11 @@
 WITH _s1 AS (
   SELECT
+    coupon_id,
     COUNT(txid) AS count_txid,
-    SUM(amount) AS sum_amount,
-    coupon_id
+    SUM(amount) AS sum_amount
   FROM main.wallet_transactions_daily
   GROUP BY
-    coupon_id
+    1
 )
 SELECT
   coupons.code AS coupon_code,
@@ -15,5 +15,5 @@ FROM main.coupons AS coupons
 LEFT JOIN _s1 AS _s1
   ON _s1.coupon_id = coupons.cid
 ORDER BY
-  redemption_count DESC
+  2 DESC
 LIMIT 3

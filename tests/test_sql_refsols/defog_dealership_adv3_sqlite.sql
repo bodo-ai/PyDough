@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    car_id
+    car_id,
+    COUNT(*) AS n_rows
   FROM main.sales
   GROUP BY
-    car_id
+    1
 )
 SELECT
   cars.make,

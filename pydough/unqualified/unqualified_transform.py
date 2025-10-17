@@ -6,13 +6,14 @@ variables with unqualified nodes by prepending it with `_ROOT.`.
 __all__ = ["from_string", "init_pydough_context", "transform_cell", "transform_code"]
 
 import ast
+import builtins
 import inspect
 import types
 from typing import Any
 
+from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GraphMetadata
 
-from .errors import PyDoughUnqualifiedException
 from .unqualified_node import UnqualifiedNode
 
 
@@ -155,7 +156,7 @@ class AddRootVisitor(ast.NodeTransformer):
         unrecognized_var: bool = False
         if not any(node.id in scope for scope in self._scope_stack):
             try:
-                eval(node.id)
+                eval(node.id, {"__builtins__": builtins}, {})
             except NameError:
                 unrecognized_var = True
         if unrecognized_var:
@@ -464,11 +465,14 @@ def from_string(
 
     # Transform PyDough code into valid Python code
     known_names: set[str] = set(environment.keys())
-    visitor: ast.NodeTransformer = AddRootVisitor("graph", known_names)
+    graph_name: str = "_graph"
+    visitor: ast.NodeTransformer = AddRootVisitor(graph_name, known_names)
     try:
         tree: ast.AST = ast.parse(source)
     except SyntaxError as e:
-        raise ValueError(f"Syntax error in source PyDough code:\n{str(e)}") from e
+        raise ValueError(
+            f"Syntax error in source PyDough code:\n{source}\n{str(e)}"
+        ) from e
     assert isinstance(tree, ast.AST)
     new_tree: ast.AST = ast.fix_missing_locations(visitor.visit(tree))
     assert isinstance(new_tree, ast.AST)
@@ -479,7 +483,7 @@ def from_string(
         compile_ast = compile(transformed_code, filename="<ast>", mode="exec")
     except SyntaxError as e:
         raise ValueError(f"Syntax error in transformed PyDough code:\n{str(e)}") from e
-    execution_context: dict[str, Any] = environment | {"graph": metadata}
+    execution_context: dict[str, Any] = environment | {graph_name: metadata}
     exec(compile_ast, {}, execution_context)
 
     # Check if answer_variable exists in execution_context after code execution

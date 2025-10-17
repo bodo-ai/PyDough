@@ -5,27 +5,30 @@ the query on the database.
 """
 
 import pandas as pd
+import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
+from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Postgres as PostgresDialect
+from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import Alias, Column, Select, Table, With
+from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
-from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
 from sqlglot.optimizer.qualify import qualify
-from sqlglot.optimizer.simplify import simplify
-from sqlglot.optimizer.unnest_subqueries import unnest_subqueries
+from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 
-from pydough.configs import PyDoughConfigs
+import pydough
+from pydough.configs import PyDoughSession
 from pydough.database_connectors import (
-    DatabaseContext,
     DatabaseDialect,
 )
 from pydough.logger import get_logger
@@ -34,42 +37,45 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
+from .override_canonicalize import canonicalize
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
+from .override_simplify import simplify
+from .override_unnest_subqueries import unnest_subqueries
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
 
 
-def convert_relation_to_sql(
-    relational: RelationalRoot,
-    dialect: DatabaseDialect,
-    config: PyDoughConfigs,
-) -> str:
+def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
 
     Args:
         `relational`: The relational tree to convert.
-        `dialect`: The dialect to use for the conversion.
+        `session`: The PyDough session encapsulating the logic used to execute
+        the logic, including the PyDough configs and the database context.
 
     Returns:
         The SQL string representing the relational tree.
     """
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
-        dialect, config
+        session
     ).relational_to_sqlglot(relational)
-    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(dialect)
+    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(
+        session.database.dialect
+    )
 
     # Apply the SQLGlot optimizer to the AST.
     try:
         glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
     except SqlglotError as e:
-        print(
-            f"ERROR WHILE OPTIMIZING QUERY:\n{glot_expr.sql(sqlglot_dialect, pretty=True)}"
-        )
-        raise e
+        sql_text: str = glot_expr.sql(sqlglot_dialect, pretty=True)
+        print(f"ERROR WHILE OPTIMIZING QUERY:\n{sql_text}")
+        raise pydough.active_session.error_builder.sql_runtime_failure(
+            sql_text, e, False
+        ) from e
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
@@ -96,14 +102,19 @@ def apply_sqlglot_optimizer(
 
     # Apply each rule explicitly with appropriate kwargs
 
+    kwargs = {
+        "quote_identifiers": False,
+        "isolate_tables": True,
+        "validate_qualify_columns": False,
+        "expand_alias_refs": False,
+    }
+    # Exclude Snowflake dialect to avoid some issues
+    # related to name qualification
+    if not isinstance(dialect, SnowflakeDialect):
+        kwargs["dialect"] = dialect
+
     # Rewrite sqlglot AST to have normalized and qualified tables and columns.
-    glot_expr = qualify(
-        glot_expr,
-        dialect=dialect,
-        quote_identifiers=False,
-        isolate_tables=True,
-        validate_qualify_columns=False,
-    )
+    glot_expr = qualify(glot_expr, **kwargs)
 
     # Rewrite sqlglot AST to remove unused columns projections.
     glot_expr = pushdown_projections(glot_expr)
@@ -156,10 +167,126 @@ def apply_sqlglot_optimizer(
     # match the alias in the relational tree.
     fix_column_case(glot_expr, relational.ordered_columns)
 
+    # Replaces any grouping or ordering keys that point to a clause in the
+    # SELECT with an index (e.g. ORDER BY 1, GROUP BY 1, 2)
+    replace_keys_with_indices(glot_expr)
+
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
 
     return glot_expr
+
+
+def replace_keys_with_indices(glot_expr: SQLGlotExpression) -> None:
+    """
+    Runs a transformation postprocessing pass on the SQLGlot AST to make the
+    following changes:
+    - Replace ORDER BY keys that are in the select clause with indices, and if
+      they have a COLLATE, move the COLLATE from the ORDER BY key to the
+      operation in the select clause.
+    - Replace GROUP BY keys that are in the select clause with indices, unless
+      the key appears multiple times in the select clause (e.g. as a top level
+      expression and as a subexpression in other scalar expressions).
+    - If any window function ordering key expressions have become literals,
+      delete and/or replace them with '1'
+    """
+    assert isinstance(glot_expr, Select)
+
+    for scope in traverse_scope(glot_expr):
+        expression = scope.expression
+
+        # Obtain all the raw expressions in the SELECT clause, without aliases.
+        expressions: list[SQLGlotExpression] = [
+            expr.this if isinstance(expr, Alias) else expr
+            for expr in expression.expressions
+        ]
+        expr_idx: int
+
+        # Replace ORDER BY keys that are in the select clause with indices. This
+        # includes cases where the entire ORDER BY key is in the select clause,
+        # or a subexpression inside COLLATE is. If it is a collate, change the
+        # original expression to include the collate instead.
+        if expression.args.get("order") is not None:
+            order_list: list[SQLGlotExpression] = expression.args["order"].expressions
+            aliases: list[str | None] = []
+            for expr in expression.expressions:
+                if isinstance(expr, Alias):
+                    aliases.append(expr.alias.lower())
+                elif isinstance(expr, Column):
+                    aliases.append(expr.name.lower())
+                else:
+                    aliases.append(None)
+            for idx, order_expr in enumerate(order_list):
+                if order_expr.this in expressions or (
+                    isinstance(order_expr.this, Column)
+                    and order_expr.this.name.lower() in aliases
+                ):
+                    if order_expr.this in expressions:
+                        expr_idx = expressions.index(order_expr.this)
+                    else:
+                        expr_idx = aliases.index(order_expr.this.name.lower())
+                    order_list[idx].set(
+                        "this",
+                        sqlglot_expressions.convert(expr_idx + 1),
+                    )
+                elif isinstance(order_expr.this, SQLGlotCollate) and (
+                    order_expr.this.this in expressions
+                    or (
+                        isinstance(order_expr.this.this, Column)
+                        and order_expr.this.this.name.lower() in aliases
+                    )
+                ):
+                    collate: SQLGlotExpression = order_expr.this
+                    if order_expr.this.this in expressions:
+                        expr_idx = expressions.index(collate.this)
+                    else:
+                        expr_idx = aliases.index(collate.this.this.name.lower())
+                    # Remove the COLLATE from the order expression, but change
+                    # the original expression to include the collate.
+                    order_list[idx].set(
+                        "this",
+                        sqlglot_expressions.convert(expr_idx + 1),
+                    )
+                    if isinstance(expression.expressions[expr_idx], Alias):
+                        expression.expressions[expr_idx].set("this", collate)
+                    else:
+                        expression.expressions[expr_idx] = collate
+
+        # Replace GROUP BY keys that are in the select clause with indices.
+        if expression.args.get("group") is not None:
+            keys_list: list[SQLGlotExpression] = expression.args["group"].expressions
+            for idx, key_expr in enumerate(keys_list):
+                # Only replace with the index if the key expression appears in
+                # the select list exactly once. Otherwise, replace with the
+                # alias.
+                if key_expr in expressions:
+                    expr_idx = expressions.index(key_expr)
+                    n_match: int = 0
+                    for select_elem in expressions:
+                        if not select_elem.find(sqlglot_expressions.AggFunc):
+                            for exp in walk_in_scope(select_elem):
+                                if exp == key_expr:
+                                    n_match += 1
+                    if n_match <= 1:
+                        keys_list[idx] = sqlglot_expressions.convert(expr_idx + 1)
+                    elif isinstance(expression.expressions[expr_idx], Alias):
+                        keys_list[idx] = sqlglot_expressions.Identifier(
+                            this=expression.expressions[expr_idx].alias, quoted=False
+                        )
+            keys_list.sort(key=repr)
+
+    # Now iterate through all window functions and replace any ordering keys
+    # that are literals with '1'.
+    for window_expr in glot_expr.find_all(sqlglot_expressions.Window):
+        if window_expr.args.get("order") is not None:
+            exprs: list[SQLGlotExpression] = window_expr.args.get("order").expressions
+            original_length: int = len(exprs)
+            for idx in range(len(exprs) - 1, -1, -1):
+                order_expr = exprs[idx]
+                if isinstance(order_expr.this, sqlglot_expressions.Literal):
+                    exprs.pop(idx)
+            if len(exprs) == 0 and original_length > 0:
+                exprs.append(sqlglot_expressions.convert("1"))
 
 
 def fix_column_case(
@@ -268,19 +395,25 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     Returns:
         The corresponding SQLGlot dialect.
     """
-    if dialect == DatabaseDialect.ANSI:
-        # Note: ANSI is the base dialect for SQLGlot.
-        return SQLGlotDialect()
-    elif dialect == DatabaseDialect.SQLITE:
-        return SQLiteDialect()
-    else:
-        raise ValueError(f"Unsupported dialect: {dialect}")
+    match dialect:
+        case DatabaseDialect.ANSI:
+            # Note: ANSI is the base dialect for SQLGlot.
+            return SQLGlotDialect()
+        case DatabaseDialect.SQLITE:
+            return SQLiteDialect()
+        case DatabaseDialect.SNOWFLAKE:
+            return SnowflakeDialect()
+        case DatabaseDialect.MYSQL:
+            return MySQLDialect()
+        case DatabaseDialect.POSTGRES:
+            return PostgresDialect()
+        case _:
+            raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
 def execute_df(
     relational: RelationalRoot,
-    ctx: DatabaseContext,
-    config: PyDoughConfigs,
+    session: PyDoughSession,
     display_sql: bool = False,
 ) -> pd.DataFrame:
     """
@@ -289,15 +422,16 @@ def execute_df(
 
     Args:
         `relational`: The relational tree to execute.
-        `ctx`: The database context to execute the query in.
+        `session`: The PyDough session encapsulating the logic used to execute
+        the logic, including the database context.
         `display_sql`: if True, prints out the SQL that will be run before
         it is executed.
 
     Returns:
         The result of the query as a Pandas DataFrame
     """
-    sql: str = convert_relation_to_sql(relational, ctx.dialect, config)
+    sql: str = convert_relation_to_sql(relational, session)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
-    return ctx.connection.execute_query_df(sql)
+    return session._database.connection.execute_query_df(sql)

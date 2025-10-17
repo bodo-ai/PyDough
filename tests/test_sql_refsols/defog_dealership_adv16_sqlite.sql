@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    SUM(sale_price) AS sum_sale_price,
-    salesperson_id
+    salesperson_id,
+    SUM(sale_price) AS sum_sale_price
   FROM main.sales
   GROUP BY
-    salesperson_id
+    1
 )
 SELECT
   salespersons._id,
@@ -15,5 +15,5 @@ FROM main.salespersons AS salespersons
 LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  total DESC
+  4 DESC
 LIMIT 5

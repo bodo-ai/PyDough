@@ -1,22 +1,23 @@
 WITH _s1 AS (
   SELECT
-    (
-      100.0 * (
-        COALESCE(SUM(sbtxamount), 0) - COALESCE(SUM(sbtxtax + sbtxcommission), 0)
-      )
-    ) / COALESCE(SUM(sbtxamount), 0) AS spm,
-    sbtxtickerid
+    sbtxtickerid,
+    SUM(sbtxtax + sbtxcommission) AS sum_expr,
+    SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH') AND sbtxtype = 'sell'
+    sbtxdatetime >= DATE_SUB(CURRENT_TIMESTAMP(), 1, MONTH) AND sbtxtype = 'sell'
   GROUP BY
-    sbtxtickerid
+    1
 )
 SELECT
   sbticker.sbtickersymbol AS symbol,
-  _s1.spm AS SPM
+  (
+    100.0 * (
+      COALESCE(_s1.sum_sbtxamount, 0) - COALESCE(_s1.sum_expr, 0)
+    )
+  ) / COALESCE(_s1.sum_sbtxamount, 0) AS SPM
 FROM main.sbticker AS sbticker
 JOIN _s1 AS _s1
   ON _s1.sbtxtickerid = sbticker.sbtickerid
 ORDER BY
-  sbticker.sbtickersymbol
+  1

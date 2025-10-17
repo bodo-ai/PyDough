@@ -1,12 +1,12 @@
 WITH _s1 AS (
   SELECT
+    o_custkey,
     MIN(o_orderdate) AS min_o_orderdate,
-    COUNT(*) AS n_rows,
-    o_custkey
+    COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
-    o_custkey
-), _t3 AS (
+    1
+), _t2 AS (
   SELECT
     MIN(customer.c_acctbal) OVER () AS min_bal,
     customer.c_acctbal,
@@ -37,6 +37,6 @@ SELECT
     ) AS REAL) / COUNT(*),
     2
   ) AS p
-FROM _t3
+FROM _t2
 WHERE
   n_rows > 0

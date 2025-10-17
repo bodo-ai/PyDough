@@ -8,17 +8,16 @@ __all__ = ["qualify_node"]
 from collections.abc import Iterable
 
 import pydough
-from pydough.configs import PyDoughConfigs
+import pydough.pydough_operators as pydop
+from pydough.configs import PyDoughSession
+from pydough.errors import PyDoughUnqualifiedException
 from pydough.metadata import GeneralJoinMetadata, GraphMetadata
-from pydough.pydough_operators import get_operator_by_name
 from pydough.pydough_operators.expression_operators import (
-    BinOp,
     ExpressionFunctionOperator,
     ExpressionWindowOperator,
 )
 from pydough.qdag import (
     AstNodeBuilder,
-    Calculate,
     ChildOperatorChildAccess,
     ChildReferenceExpression,
     CollationExpression,
@@ -26,7 +25,6 @@ from pydough.qdag import (
     ExpressionFunctionCall,
     GlobalContext,
     Literal,
-    OrderBy,
     PartitionBy,
     PyDoughCollectionQDAG,
     PyDoughExpressionQDAG,
@@ -34,13 +32,10 @@ from pydough.qdag import (
     Reference,
     SidedReference,
     SubCollection,
-    TopK,
-    Where,
     WindowCall,
 )
 from pydough.types import PyDoughType
 
-from .errors import PyDoughUnqualifiedException
 from .unqualified_node import (
     UnqualifiedAccess,
     UnqualifiedBest,
@@ -65,10 +60,10 @@ from .unqualified_transform import transform_cell
 
 
 class Qualifier:
-    def __init__(self, graph: GraphMetadata, configs: PyDoughConfigs):
-        self._graph: GraphMetadata = graph
-        self._configs: PyDoughConfigs = configs
-        self._builder: AstNodeBuilder = AstNodeBuilder(graph)
+    def __init__(self, session: PyDoughSession):
+        self._session: PyDoughSession = session
+        assert session.metadata is not None
+        self._builder: AstNodeBuilder = AstNodeBuilder(session.metadata)
 
     @property
     def graph(self) -> GraphMetadata:
@@ -76,7 +71,8 @@ class Qualifier:
         The metadata for the PyDough graph in which is used to identify
         collections and properties.
         """
-        return self._graph
+        assert self._session.metadata is not None
+        return self._session.metadata
 
     @property
     def builder(self) -> AstNodeBuilder:
@@ -148,9 +144,7 @@ class Qualifier:
         # if that fails specifically because the result would be a collection,
         # then attempt to qualify it as a collection.
         for node in unqualified_operands:
-            operand: PyDoughQDAG = self.qualify_node(
-                node, context, children, True, False
-            )
+            operand: PyDoughQDAG = self.qualify_node(node, context, children, True)
             if isinstance(operand, PyDoughExpressionQDAG):
                 qualified_operands.append(
                     self.qualify_expression(node, context, children)
@@ -200,10 +194,7 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        # Iterate across all the values of the BinOp enum to figure out which
-        # one correctly matches the BinOp specified by the operator.
-        operation: str = BinOp.from_string(unqualified._parcel[0]).name
-        operator = get_operator_by_name(operation)
+        operator: pydop.BinaryOperator = unqualified._parcel[0]
         # Independently qualify the LHS and RHS arguments
         unqualified_lhs: UnqualifiedNode = unqualified._parcel[1]
         unqualified_rhs: UnqualifiedNode = unqualified._parcel[2]
@@ -216,6 +207,82 @@ class Qualifier:
         return self.builder.build_expression_function_call(
             operator, [qualified_lhs, qualified_rhs]
         )
+
+    def extract_window_per_args(
+        self,
+        per: str,
+        ancestral_names: list[str],
+        context: PyDoughCollectionQDAG,
+        window: UnqualifiedWindow,
+    ) -> tuple[str, int | None]:
+        """
+        Extracts the arguments from the `per` string of a window function to
+        identify the name of the ancestor, and the index of which ancestor
+        with that name should be chosen (if an index is provided). For example:
+        - `per="orders"` -> `("orders", None)`
+        - `per="customers:2"` -> `("customers", 2)`
+
+        Args:
+            `per`: the string to be parsed.
+            `ancestral_names`: the list of names of the ancestors of the
+            current context, in order from closest to furthest.
+            `context`: the collection QDAG whose context the expression is being
+            evaluated within.
+            `window`: the unqualified window function that the `per` string
+            corresponds to, used for error reporting.
+
+        Returns:
+            The tuple in the desired format `(ancestor_name, ancestor_index)`.
+
+        Raises:
+            `PyDoughUnqualifiedException` if the `per` string is malformed
+            or does not correspond to a valid ancestor of the current context.
+        """
+        ancestor_name: str
+        ancestor_idx: int | None
+        # Break down the per string into its components, which is either
+        # `[name]`, or `[name, index]`, where `index` must be a positive
+        # integer.
+        components: list[str] = per.split(":")
+        if len(components) == 1:
+            ancestor_name = components[0]
+            ancestor_idx = None
+        elif len(components) == 2:
+            ancestor_name = components[0]
+            if not components[1].isdigit():
+                raise pydough.active_session.error_builder.bad_window_per(
+                    per, ancestral_names, context, window
+                )
+            ancestor_idx = int(components[1])
+            if ancestor_idx <= 0:
+                raise pydough.active_session.error_builder.bad_window_per(
+                    per, ancestral_names, context, window
+                )
+        else:
+            raise pydough.active_session.error_builder.bad_window_per(
+                per, ancestral_names, context, window
+            )
+        # Verify that `name` corresponds to one of the ancestors of the
+        # current context.
+        if ancestor_name not in ancestral_names:
+            raise pydough.active_session.error_builder.bad_window_per(
+                per, ancestral_names, context, window
+            )
+        # Verify that `name` is only present exactly one time in the
+        # ancestors of the current context, unless an index was provided.
+        if ancestor_idx is None:
+            if ancestral_names.count(ancestor_name) > 1:
+                # TODO: potentially add a default value of 1?
+                raise pydough.active_session.error_builder.bad_window_per(
+                    per, ancestral_names, context, window
+                )
+        elif ancestral_names.count(ancestor_name) < ancestor_idx:
+            # If an index was provided, ensure that there are that many
+            # ancestors with that name.
+            raise pydough.active_session.error_builder.bad_window_per(
+                per, ancestral_names, context, window
+            )
+        return ancestor_name, ancestor_idx
 
     def qualify_window(
         self,
@@ -268,51 +335,9 @@ class Qualifier:
         # the number of ancestor levels to go up to).
         if per is not None:
             ancestral_names: list[str] = context.get_ancestral_names()
-            ancestor_name: str
-            ancestor_idx: int | None
-            # Break down the per string into its components, which is either
-            # `[name]`, or `[name, index]`, where `index` must be a positive
-            # integer.
-            components: list[str] = per.split(":")
-            if len(components) == 1:
-                ancestor_name = components[0]
-                ancestor_idx = None
-            elif len(components) == 2:
-                ancestor_name = components[0]
-                if not components[1].isdigit():
-                    raise PyDoughUnqualifiedException(
-                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
-                    )
-                ancestor_idx = int(components[1])
-                if ancestor_idx <= 0:
-                    raise PyDoughUnqualifiedException(
-                        f"Malformed per string: {per!r} (expected the index after ':' to be a positive integer)"
-                    )
-            else:
-                raise PyDoughUnqualifiedException(
-                    f"Malformed per string: {per!r} (expected 0 or 1 ':', found {len(components) - 1})"
-                )
-            # Verify that `name` corresponds to one of the ancestors of the
-            # current context.
-            if ancestor_name not in ancestral_names:
-                raise PyDoughUnqualifiedException(
-                    f"Per string refers to unrecognized ancestor {ancestor_name!r} of {context!r}"
-                )
-            # Verify that `name` is only present exactly one time in the
-            # ancestors of the current context, unless an index was provided.
-            if ancestor_idx is None:
-                if ancestral_names.count(ancestor_name) > 1:
-                    # TODO: potentially add a default value of 1?
-                    raise PyDoughUnqualifiedException(
-                        f"Per string {per!r} is ambiguous for {context!r}. Use the form '{per}:index' to disambiguate, where '{per}:1' refers to the most recent ancestor."
-                    )
-            elif ancestral_names.count(ancestor_name) < ancestor_idx:
-                # If an index was provided, ensure that there are that many
-                # ancestors with that name.
-                raise PyDoughUnqualifiedException(
-                    f"Per string {per!r} invalid as there are not {ancestor_idx} ancestors of the current context with name {ancestor_name!r}."
-                )
-
+            ancestor_name, ancestor_idx = self.extract_window_per_args(
+                per, ancestral_names, context, unqualified
+            )
             # Find how many levels upward need to be traversed to find the
             # targeted ancestor by finding the nth ancestor matching the
             # name, at the end of the ancestral_names.
@@ -444,7 +469,6 @@ class Qualifier:
             The PyDough QDAG object for the qualified expression node for
             `condition`.
         """
-        operation: str | None = None
         raw_term: PyDoughQDAG
         term: PyDoughExpressionQDAG
         term_name: str
@@ -457,8 +481,7 @@ class Qualifier:
                 # qualification of binary operators except with using
                 # `qualify_join_condition` on the inputs instead of
                 # `qualify_expression`.
-                operation = BinOp.from_string(condition._parcel[0]).name
-                operator = get_operator_by_name(operation)
+                binop: pydop.BinaryOperator = condition._parcel[0]
                 qualified_lhs: PyDoughExpressionQDAG = self.qualify_join_condition(
                     condition._parcel[1], access, self_name, other_name
                 )
@@ -466,14 +489,14 @@ class Qualifier:
                     condition._parcel[2], access, self_name, other_name
                 )
                 return self.builder.build_expression_function_call(
-                    operator, [qualified_lhs, qualified_rhs]
+                    binop, [qualified_lhs, qualified_rhs]
                 )
             case UnqualifiedOperation():
                 # For function calls, invoke the same logic as for normal
                 # qualification of function calls except with using
                 # `qualify_join_condition` on the inputs instead of
                 # `qualify_expression`.
-                operator = condition._parcel[0]
+                operator: pydop.PyDoughExpressionOperator = condition._parcel[0]
                 unqualified_operands: list[UnqualifiedNode] = condition._parcel[1]
                 qualified_operands: list[PyDoughQDAG] = []
                 for node in unqualified_operands:
@@ -538,7 +561,6 @@ class Qualifier:
         context: PyDoughCollectionQDAG,
         children: list[PyDoughCollectionQDAG],
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughQDAG:
         """
         Transforms an `UnqualifiedAccess` into a PyDough QDAG node, either as
@@ -553,7 +575,6 @@ class Qualifier:
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection or expression
@@ -567,24 +588,16 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         name: str = unqualified._parcel[1]
         term: PyDoughQDAG
+
         # First, qualify the parent collection.
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
-        # That's how we know we are at the root of the graph.
-        if is_cross and isinstance(unqualified_parent, UnqualifiedRoot):
-            qualified_parent = GlobalContext(
-                unqualified_parent._parcel[0], qualified_parent
-            )
-            if is_child:
-                # If the access is a child operator child access, then
-                # wrap the qualified parent in a ChildOperatorChildAccess.
-                qualified_parent = ChildOperatorChildAccess(qualified_parent)
-                is_child = False
 
         if (
             isinstance(qualified_parent, GlobalContext)
             and name == qualified_parent.graph.name
+            and not is_child
         ) or (
             isinstance(qualified_parent, ChildOperatorChildAccess)
             and isinstance(qualified_parent.child_access, GlobalContext)
@@ -640,7 +653,6 @@ class Qualifier:
         unqualified: UnqualifiedCalculate,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedCalculate` into a PyDoughCollectionQDAG node.
@@ -652,7 +664,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -665,7 +676,7 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         unqualified_terms: list[tuple[str, UnqualifiedNode]] = unqualified._parcel[1]
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
         # Qualify all of the CALCULATE terms, storing the children built along
         # the way.
@@ -675,15 +686,13 @@ class Qualifier:
             qualified_term = self.qualify_expression(term, qualified_parent, children)
             qualified_terms.append((name, qualified_term))
         # Use the qualified children & terms to create a new CALCULATE node.
-        calculate: Calculate = self.builder.build_calculate(qualified_parent, children)
-        return calculate.with_terms(qualified_terms)
+        return self.builder.build_calculate(qualified_parent, children, qualified_terms)
 
     def qualify_where(
         self,
         unqualified: UnqualifiedWhere,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedWhere` into a PyDoughCollectionQDAG node.
@@ -695,7 +704,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -708,7 +716,7 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         unqualified_cond: UnqualifiedNode = unqualified._parcel[1]
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
         # Qualify the condition of the WHERE clause, storing the children
         # built along the way.
@@ -717,8 +725,7 @@ class Qualifier:
             unqualified_cond, qualified_parent, children
         )
         # Use the qualified children & condition to create a new WHERE node.
-        where: Where = self.builder.build_where(qualified_parent, children)
-        return where.with_condition(qualified_cond)
+        return self.builder.build_where(qualified_parent, children, qualified_cond)
 
     def _expressions_to_collations(
         self, terms: Iterable[UnqualifiedNode] | list[UnqualifiedNode]
@@ -739,8 +746,8 @@ class Qualifier:
         Returns:
             The modified list of collation terms.
         """
-        is_collation_propagated: bool = self._configs.propagate_collation
-        is_prev_asc: bool = self._configs.collation_default_asc
+        is_collation_propagated: bool = self._session.config.propagate_collation
+        is_prev_asc: bool = self._session.config.collation_default_asc
         modified_terms: list[UnqualifiedNode] = []
         for idx, term in enumerate(terms):
             if isinstance(term, UnqualifiedCollation):
@@ -759,7 +766,6 @@ class Qualifier:
         unqualified: UnqualifiedOrderBy,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedOrderBy` into a PyDoughCollectionQDAG node.
@@ -771,7 +777,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -786,7 +791,7 @@ class Qualifier:
         unqualified_terms = self._expressions_to_collations(unqualified_terms)
 
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
         # Qualify all of the collation terms, storing the children built along
         # the way.
@@ -803,15 +808,15 @@ class Qualifier:
             raise PyDoughUnqualifiedException(
                 "ORDER BY requires a 'by' clause to be specified."
             )
-        orderby: OrderBy = self.builder.build_order(qualified_parent, children)
-        return orderby.with_collation(qualified_collations)
+        return self.builder.build_order(
+            qualified_parent, children, qualified_collations
+        )
 
     def qualify_top_k(
         self,
         unqualified: UnqualifiedTopK,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedTopK` into a PyDoughCollectionQDAG node.
@@ -823,7 +828,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -843,7 +847,7 @@ class Qualifier:
         unqualified_terms: list[UnqualifiedNode] = unqualified._parcel[2]
         unqualified_terms = self._expressions_to_collations(unqualified_terms)
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
         # Qualify all of the collation terms, storing the children built along
         # the way.
@@ -860,10 +864,9 @@ class Qualifier:
                 "TopK requires a 'by' clause to be specified."
             )
         # Use the qualified children & collation to create a new TOP K node.
-        topk: TopK = self.builder.build_top_k(
-            qualified_parent, children, records_to_keep
+        return self.builder.build_top_k(
+            qualified_parent, children, records_to_keep, qualified_collations
         )
-        return topk.with_collation(qualified_collations)
 
     def split_partition_ancestry(
         self, node: UnqualifiedNode, partition_ancestor: str | None = None
@@ -883,7 +886,7 @@ class Qualifier:
         Returns:
             A tuple where the first element is the ancestor of all the data
             being partitioned, the second is the data being partitioned which
-            now points to an root instead of hte original ancestor, and the
+            now points to an root instead of the original ancestor, and the
             third is a list of the ancestor names.
         """
 
@@ -905,6 +908,8 @@ class Qualifier:
                 | UnqualifiedOrderBy()
                 | UnqualifiedSingular()
                 | UnqualifiedPartition()
+                | UnqualifiedBest()
+                | UnqualifiedCross()
             ):
                 parent: UnqualifiedNode = node._parcel[0]
                 new_ancestry, new_child, ancestry_names = self.split_partition_ancestry(
@@ -965,6 +970,10 @@ class Qualifier:
                 build_node[0] = UnqualifiedOrderBy(build_node[0], *node._parcel[1:])
             case UnqualifiedSingular():
                 build_node[0] = UnqualifiedSingular(build_node[0], *node._parcel[1:])
+            case UnqualifiedBest():
+                build_node[0] = UnqualifiedBest(build_node[0], *node._parcel[1:])
+            case UnqualifiedCross():
+                build_node[0] = UnqualifiedCross(build_node[0], *node._parcel[1:])
             case _:
                 # Any other unqualified node would mean something is malformed.
                 raise PyDoughUnqualifiedException(
@@ -983,7 +992,6 @@ class Qualifier:
         unqualified: UnqualifiedPartition,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedPartition` into a PyDoughCollectionQDAG node.
@@ -995,7 +1003,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -1015,10 +1022,10 @@ class Qualifier:
             unqualified_parent, None
         )
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, True, is_cross
+            unqualified_parent, context, is_child
         )
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_child, qualified_parent, True, is_cross
+            unqualified_child, qualified_parent, True
         )
         # Qualify all of the partitioning keys (which, for now, can only be
         # references to expressions in the child), storing the children built
@@ -1038,9 +1045,8 @@ class Qualifier:
             child_references.append(child_ref)
         # Use the qualified child & keys to create a new PARTITION node.
         partition: PartitionBy = self.builder.build_partition(
-            qualified_parent, qualified_child, child_name
+            qualified_parent, qualified_child, child_name, child_references
         )
-        partition = partition.with_keys(child_references)
         # Special case: if accessing as a child, wrap in a
         # ChildOperatorChildAccess term.
         if isinstance(unqualified_parent, UnqualifiedRoot) and is_child:
@@ -1052,7 +1058,6 @@ class Qualifier:
         unqualified: UnqualifiedNode,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedNode` into a PyDoughCollectionQDAG node.
@@ -1064,7 +1069,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -1074,13 +1078,9 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        answer: PyDoughQDAG = self.qualify_node(
-            unqualified, context, [], is_child, is_cross
-        )
+        answer: PyDoughQDAG = self.qualify_node(unqualified, context, [], is_child)
         if not isinstance(answer, PyDoughCollectionQDAG):
-            raise PyDoughUnqualifiedException(
-                f"Expected a collection, but received an expression: {answer}"
-            )
+            raise pydough.active_session.error_builder.expected_collection(answer)
         return answer
 
     def qualify_expression(
@@ -1107,13 +1107,9 @@ class Qualifier:
             goes wrong during the qualification process, e.g. a term cannot be
             qualified or is not recognized.
         """
-        answer: PyDoughQDAG = self.qualify_node(
-            unqualified, context, children, True, False
-        )
+        answer: PyDoughQDAG = self.qualify_node(unqualified, context, children, True)
         if not isinstance(answer, PyDoughExpressionQDAG):
-            raise PyDoughUnqualifiedException(
-                f"Expected an expression, but received a collection: {answer}"
-            )
+            raise pydough.active_session.error_builder.expected_expression(answer)
         return answer
 
     def qualify_singular(
@@ -1121,7 +1117,6 @@ class Qualifier:
         unqualified: UnqualifiedSingular,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedSingular` into a PyDoughCollectionQDAG node.
@@ -1132,14 +1127,13 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified singular node.
         """
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         answer: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
         return self.builder.build_singular(answer)
 
@@ -1148,7 +1142,6 @@ class Qualifier:
         unqualified: UnqualifiedBest,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedBEST` into a PyDoughCollectionQDAG node by
@@ -1161,7 +1154,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified singular node.
@@ -1176,7 +1168,7 @@ class Qualifier:
         # Qualify the parent context, then qualify the child data with regards
         # to the parent.
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
 
         # Generate the ranking/comparison call to append an appropriate WHERE
@@ -1184,7 +1176,7 @@ class Qualifier:
         kwargs: dict[str, object] = {"by": by, "allow_ties": allow_ties}
         if per:
             kwargs["per"] = per
-        rank: UnqualifiedNode = UnqualifiedOperator("RANKING")(**kwargs)
+        rank: UnqualifiedNode = UnqualifiedOperator(pydop.RANKING)(**kwargs)
         unqualified_cond: UnqualifiedNode = (
             (rank == n_best) if n_best == 1 else (rank <= n_best)
         )
@@ -1195,8 +1187,8 @@ class Qualifier:
 
         # Build the final expanded window-based filter
         qualified_child: PyDoughCollectionQDAG = self.builder.build_where(
-            qualified_parent, children
-        ).with_condition(qualified_cond)
+            qualified_parent, children, qualified_cond
+        )
 
         # Extract the `levels` argument from the condition
         assert isinstance(qualified_cond, ExpressionFunctionCall)
@@ -1230,7 +1222,6 @@ class Qualifier:
         unqualified: UnqualifiedCross,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """Qualifies the UnqualifiedCross node into a PyDoughCollectionQDAG
         by transforming its parent and child nodes into their own
@@ -1241,7 +1232,6 @@ class Qualifier:
             `context`: The context in which the qualification is happening.
             `is_child`: Whether the node is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: Whether the qualification is for a CROSS JOIN operation.
 
         Returns:
             The qualified collection node.
@@ -1249,17 +1239,26 @@ class Qualifier:
         unqualified_parent: UnqualifiedNode = unqualified._parcel[0]
         unqualified_child: UnqualifiedNode = unqualified._parcel[1]
         qualified_parent: PyDoughCollectionQDAG = self.qualify_collection(
-            unqualified_parent, context, is_child, is_cross
+            unqualified_parent, context, is_child
         )
-        # If parent is a root, then the child is qualified as a child access
-        # example: a.CALCULATE(x=COUNT(CROSS(b)))
-        #
+
+        # Now build a GlobalContext pointing to the qualified parent as its
+        # ancestor, and use this as the new context for the child.
+        qualified_parent = GlobalContext(self.graph, qualified_parent)
+
+        # If the parent is the root, then the child access is a child operator
+        # child access.
+        if isinstance(unqualified_parent, UnqualifiedRoot):
+            qualified_parent = ChildOperatorChildAccess(qualified_parent)
+
+        # Qualify the child collection with the (augmented) parent as its
+        # context.
         qualified_child: PyDoughCollectionQDAG = self.qualify_collection(
             unqualified_child,
             qualified_parent,
-            isinstance(unqualified_parent, UnqualifiedRoot),
-            True,
+            False,
         )
+
         return qualified_child
 
     def qualify_generated_collection(
@@ -1303,7 +1302,6 @@ class Qualifier:
         context: PyDoughCollectionQDAG,
         children: list[PyDoughCollectionQDAG],
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughQDAG:
         """
         Transforms an UnqualifiedNode into a PyDoughQDAG node that can be either
@@ -1317,7 +1315,6 @@ class Qualifier:
             as children of `context` should be appended.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified node. The result can be either
@@ -1335,24 +1332,18 @@ class Qualifier:
                 # to refer to the context variable that was passed in.
                 answer = context
             case UnqualifiedAccess():
-                answer = self.qualify_access(
-                    unqualified, context, children, is_child, is_cross
-                )
+                answer = self.qualify_access(unqualified, context, children, is_child)
 
             case UnqualifiedCalculate():
-                answer = self.qualify_calculate(
-                    unqualified, context, is_child, is_cross
-                )
+                answer = self.qualify_calculate(unqualified, context, is_child)
             case UnqualifiedWhere():
-                answer = self.qualify_where(unqualified, context, is_child, is_cross)
+                answer = self.qualify_where(unqualified, context, is_child)
             case UnqualifiedOrderBy():
-                answer = self.qualify_order_by(unqualified, context, is_child, is_cross)
+                answer = self.qualify_order_by(unqualified, context, is_child)
             case UnqualifiedTopK():
-                answer = self.qualify_top_k(unqualified, context, is_child, is_cross)
+                answer = self.qualify_top_k(unqualified, context, is_child)
             case UnqualifiedPartition():
-                answer = self.qualify_partition(
-                    unqualified, context, is_child, is_cross
-                )
+                answer = self.qualify_partition(unqualified, context, is_child)
             case UnqualifiedLiteral():
                 answer = self.qualify_literal(unqualified)
             case UnqualifiedOperation():
@@ -1364,15 +1355,11 @@ class Qualifier:
             case UnqualifiedCollation():
                 answer = self.qualify_collation(unqualified, context, children)
             case UnqualifiedSingular():
-                answer = self.qualify_singular(unqualified, context, is_child, is_cross)
+                answer = self.qualify_singular(unqualified, context, is_child)
             case UnqualifiedBest():
-                answer = self.qualify_best(unqualified, context, is_child, is_cross)
+                answer = self.qualify_best(unqualified, context, is_child)
             case UnqualifiedCross():
-                answer = self.qualify_cross(unqualified, context, is_child, is_cross)
-            case UnqualifiedGeneratedCollection():
-                answer = self.qualify_generated_collection(
-                    unqualified, context, is_child, is_cross
-                )
+                answer = self.qualify_cross(unqualified, context, is_child)
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"
@@ -1380,16 +1367,15 @@ class Qualifier:
         return answer
 
 
-def qualify_node(
-    unqualified: UnqualifiedNode, graph: GraphMetadata, configs: PyDoughConfigs
-) -> PyDoughQDAG:
+def qualify_node(unqualified: UnqualifiedNode, session: PyDoughSession) -> PyDoughQDAG:
     """
     Transforms an UnqualifiedNode into a qualified node.
 
     Args:
         `unqualified`: the UnqualifiedNode instance to be transformed.
-        `graph`: the metadata for the graph that the PyDough computations
-        are occurring within.
+        `session`: the session whose information should be used to derive
+        necessary information for the qualification, such as the graph and
+        configurations.
 
     Returns:
         The PyDough QDAG object for the qualified node. The result can be either
@@ -1400,14 +1386,14 @@ def qualify_node(
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    qual: Qualifier = Qualifier(graph, configs)
+    qual: Qualifier = Qualifier(session)
     return qual.qualify_node(
-        unqualified, qual.builder.build_global_context(), [], False, False
+        unqualified, qual.builder.build_global_context(), [], False
     )
 
 
 def qualify_term(
-    collection: PyDoughCollectionQDAG, term: UnqualifiedNode, graph: GraphMetadata
+    collection: PyDoughCollectionQDAG, term: UnqualifiedNode, session: PyDoughSession
 ) -> tuple[list[PyDoughCollectionQDAG], PyDoughQDAG]:
     """
     Transforms an UnqualifiedNode into a qualified node within the context of
@@ -1419,8 +1405,9 @@ def qualify_term(
         context in which the term is being qualified.
         `term`: the UnqualifiedNode instance to be transformed into a qualified
         node within the context of `collection`.
-        `graph`: the metadata for the graph that the PyDough computations
-        are occurring within.
+        `session`: the session whose information should be used to derive
+        necessary information for the qualification, such as the graph and
+        configurations.
 
     Returns:
         A tuple where the second entry is the PyDough QDAG object for the
@@ -1433,7 +1420,6 @@ def qualify_term(
         goes wrong during the qualification process, e.g. a term cannot be
         qualified or is not recognized.
     """
-    configs: PyDoughConfigs = pydough.active_session.config
-    qual: Qualifier = Qualifier(graph, configs)
+    qual: Qualifier = Qualifier(session)
     children: list[PyDoughCollectionQDAG] = []
-    return children, qual.qualify_node(term, collection, children, True, False)
+    return children, qual.qualify_node(term, collection, children, True)

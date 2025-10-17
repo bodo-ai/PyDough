@@ -5,10 +5,11 @@ WITH _s0 AS (
     n_regionkey
   FROM tpch.nation
   ORDER BY
-    n_name
+    1
   LIMIT 5
 ), _s5 AS (
   SELECT
+    customer.c_nationkey,
     PERCENTILE_DISC(0.1) WITHIN GROUP (ORDER BY
       orders.o_totalprice NULLS LAST) AS agg_0,
     PERCENTILE_DISC(0.01) WITHIN GROUP (ORDER BY
@@ -26,14 +27,13 @@ WITH _s0 AS (
     PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY
       orders.o_totalprice NULLS LAST) AS agg_7,
     PERCENTILE_DISC(0.0) WITHIN GROUP (ORDER BY
-      orders.o_totalprice NULLS LAST) AS agg_8,
-    customer.c_nationkey
+      orders.o_totalprice NULLS LAST) AS agg_8
   FROM tpch.customer AS customer
   JOIN tpch.orders AS orders
     ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1998
     AND customer.c_custkey = orders.o_custkey
   GROUP BY
-    customer.c_nationkey
+    1
 )
 SELECT
   region.r_name AS region_name,
@@ -53,4 +53,4 @@ JOIN tpch.region AS region
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 ORDER BY
-  _s0.n_name
+  2

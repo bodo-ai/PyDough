@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    AVG(sale_price) AS avg_sale_price,
-    salesperson_id
+    salesperson_id,
+    AVG(sale_price) AS avg_sale_price
   FROM main.sales
   GROUP BY
-    salesperson_id
+    1
 )
 SELECT
   salespersons.first_name,
@@ -14,5 +14,5 @@ FROM main.salespersons AS salespersons
 LEFT JOIN _s1 AS _s1
   ON _s1.salesperson_id = salespersons._id
 ORDER BY
-  _s1.avg_sale_price DESC
+  3 DESC
 LIMIT 3

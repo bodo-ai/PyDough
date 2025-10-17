@@ -1,14 +1,14 @@
 WITH _s1 AS (
   SELECT
+    receiver_id,
     COUNT(*) AS n_rows,
-    SUM(amount) AS sum_amount,
-    receiver_id
+    SUM(amount) AS sum_amount
   FROM main.wallet_transactions_daily
   WHERE
-    created_at >= DATE_TRUNC('DAY', DATE_ADD(CURRENT_TIMESTAMP(), -150, 'DAY'))
+    created_at >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 150, DAY))
     AND receiver_type = 1
   GROUP BY
-    receiver_id
+    1
 )
 SELECT
   merchants.name AS merchant_name,
@@ -18,5 +18,5 @@ FROM main.merchants AS merchants
 LEFT JOIN _s1 AS _s1
   ON _s1.receiver_id = merchants.mid
 ORDER BY
-  total_amount DESC
+  3 DESC
 LIMIT 2

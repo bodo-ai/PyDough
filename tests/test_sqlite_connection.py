@@ -13,6 +13,7 @@ from pydough.database_connectors import (
     DatabaseDialect,
     load_database_context,
 )
+from pydough.errors import PyDoughSessionException
 
 
 def test_query_execution(sqlite_people_jobs: DatabaseConnection) -> None:
@@ -54,7 +55,9 @@ def test_sqlite_context_no_path() -> None:
     """
     Test that we error if a Database path is not provided.
     """
-    with pytest.raises(ValueError, match="SQLite connection requires a database path."):
+    with pytest.raises(
+        PyDoughSessionException, match="SQLite connection requires a database path."
+    ):
         load_database_context("sqlite")
 
 
@@ -62,7 +65,7 @@ def test_sqlite_context_wrong_name() -> None:
     """
     Test that we error if the database name is incorrect.
     """
-    with pytest.raises(ValueError, match="Unsupported database: sqlite3"):
+    with pytest.raises(PyDoughSessionException, match="Unsupported database: sqlite3"):
         load_database_context("sqlite3", database=":memory:")
 
 
@@ -90,7 +93,7 @@ def test_unsupported_database() -> None:
     """
     Test that we error if an unsupported database is provided.
 
-    TODO: Remove when we support mysql or move to a more generic file.
+    TODO: Remove when we support duckdb or move to a more generic file.
     """
-    with pytest.raises(ValueError):
-        load_database_context("mysql", database=":memory:")
+    with pytest.raises(PyDoughSessionException):
+        load_database_context("duckdb", database=":memory:")

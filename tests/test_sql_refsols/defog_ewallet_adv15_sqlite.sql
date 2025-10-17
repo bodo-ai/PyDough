@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
-    COUNT(*) AS n_rows,
-    coupons.merchant_id
+    coupons.merchant_id,
+    COUNT(*) AS n_rows
   FROM main.coupons AS coupons
   JOIN main.merchants AS merchants
     ON (
@@ -11,7 +11,7 @@ WITH _s3 AS (
     ) = 0
     AND coupons.merchant_id = merchants.mid
   GROUP BY
-    coupons.merchant_id
+    1
 )
 SELECT
   merchants.mid AS merchant_id,
@@ -21,5 +21,5 @@ FROM main.merchants AS merchants
 LEFT JOIN _s3 AS _s3
   ON _s3.merchant_id = merchants.mid
 ORDER BY
-  coupons_per_merchant DESC
+  3 DESC
 LIMIT 1

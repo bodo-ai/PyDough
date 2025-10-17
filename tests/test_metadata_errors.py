@@ -8,9 +8,9 @@ import re
 import pytest
 
 from pydough import parse_json_metadata_from_file
-from pydough.configs import PyDoughConfigs
-from pydough.metadata import CollectionMetadata, GraphMetadata, PyDoughMetadataException
-from pydough.types.errors import PyDoughTypeException
+from pydough.configs import PyDoughSession
+from pydough.errors import PyDoughMetadataException, PyDoughTypeException
+from pydough.metadata import CollectionMetadata, GraphMetadata
 from pydough.unqualified import UnqualifiedNode, qualify_node, transform_code
 from tests.testing_utilities import graph_fetcher
 
@@ -53,7 +53,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "#BadGraphName",
-            "graph name must be a string that is a Python identifier",
+            "graph name '#BadGraphName' must be a string that is a valid Python identifier",
             id="#BadGraphName",
         ),
         pytest.param(
@@ -85,23 +85,113 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "BAD_COLLECTION_NAME_1",
-            "name must be a string that is a Python identifier",
+            "collection name '0' must be a string that is a valid Python identifier",
             id="BAD_COLLECTION_NAME_1",
         ),
         pytest.param(
             "BAD_COLLECTION_NAME_2",
-            "name must be a string that is a Python identifier",
+            "collection name 'Invalid name' must be a string that is a valid Python identifier",
             id="BAD_COLLECTION_NAME_2",
         ),
         pytest.param(
             "BAD_PROPERTY_NAME_1",
-            "name must be a string that is a Python identifier",
+            "property 'bad name' of simple table collection 'table_name' in graph 'BAD_PROPERTY_NAME_1' must be a JSON object containing a field 'type' and field 'type' must be a string",
             id="BAD_PROPERTY_NAME_1",
         ),
         pytest.param(
             "BAD_PROPERTY_NAME_2",
-            "name must be a string that is a Python identifier",
+            "collection name '0' must be a string that is a valid Python identifier",
             id="BAD_PROPERTY_NAME_2",
+        ),
+        pytest.param(
+            "BAD_TABLE_NAME",
+            "collection name 'invalid table_name' must be a string that is a valid Python identifier",
+            id="BAD_TABLE_NAME",
+        ),
+        pytest.param(
+            "BAD_COLUMN_NAME",
+            "property name 'invalid column name' must be a string that is a valid Python identifier",
+            id="BAD_COLUMN_NAME",
+        ),
+        pytest.param(
+            "BAD_UNIQUE_PROPERTY",
+            "property name 'invalid column name' must be a string that is a valid Python identifier",
+            id="BAD_UNIQUE_PROPERTY",
+        ),
+        pytest.param(
+            "RESERVED_PROPERTY_KEYWORD_1",
+            "property name 'id' must be a string that is not a Python reserved word or built-in name",
+            id="RESERVED_PROPERTY_KEYWORD_1",
+        ),
+        pytest.param(
+            "RESERVED_PROPERTY_KEYWORD_2",
+            "property name 'CALCULATE' must be a string that is not a PyDough reserved word",
+            id="RESERVED_PROPERTY_KEYWORD_2",
+        ),
+        pytest.param(
+            "RESERVED_PROPERTY_KEYWORD_3",
+            "property name 'MONOTONIC' must be a string that is not a PyDough reserved word",
+            id="RESERVED_PROPERTY_KEYWORD_3",
+        ),
+        pytest.param(
+            "COLUMN_NAME_RESERVED_KEYWORD",
+            "table column property 'FROM_RESERVED_SQL_WORD' of simple table collection 'table_name' in graph 'COLUMN_NAME_RESERVED_KEYWORD' must have a SQL name that is not a reserved word",
+            id="COLUMN_NAME_RESERVED_KEYWORD",
+        ),
+        pytest.param(
+            "TABLE_PATH_RESERVED_KEYWORD1",
+            "simple table collection 'cast_reserved_sql_word' in graph 'TABLE_PATH_RESERVED_KEYWORD1' must have a SQL name that is not a reserved word",
+            id="TABLE_PATH_RESERVED_KEYWORD1",
+        ),
+        pytest.param(
+            "TABLE_PATH_RESERVED_KEYWORD2",
+            "simple table collection 'order_qualified_SQL_name' in graph 'TABLE_PATH_RESERVED_KEYWORD2' must have a SQL name that is not a reserved word",
+            id="TABLE_PATH_RESERVED_KEYWORD2",
+        ),
+        pytest.param(
+            "SCHEMA_RESERVED_KEYWORD",
+            "simple table collection 'count_schema_reserved_SQL_name' in graph 'SCHEMA_RESERVED_KEYWORD' must have a SQL name that is not a reserved word",
+            id="SCHEMA_RESERVED_KEYWORD",
+        ),
+        pytest.param(
+            "COLUMN_NAME_INVALID_NAME_1",
+            "table column property 'invalid_column_name' of simple table collection 'table_name' in graph 'COLUMN_NAME_INVALID_NAME_1' must have a SQL name that is a valid SQL identifier",
+            id="COLUMN_NAME_INVALID_NAME_1",
+        ),
+        pytest.param(
+            "COLUMN_NAME_INVALID_NAME_2",
+            "table column property 'invalid_column_name' of simple table collection 'table_name' in graph 'COLUMN_NAME_INVALID_NAME_2' must have a SQL name that is a valid SQL identifier",
+            id="COLUMN_NAME_INVALID_NAME_2",
+        ),
+        pytest.param(
+            "COLUMN_NAME_INVALID_NAME_3",
+            "table column property 'invalid_column_name' of simple table collection 'table_name' in graph 'COLUMN_NAME_INVALID_NAME_3' must have a SQL name that is a valid SQL identifier",
+            id="COLUMN_NAME_INVALID_NAME_3",
+        ),
+        pytest.param(
+            "TABLE_PATH_INVALID_NAME_1",
+            "simple table collection 'invalid_table_path' in graph 'TABLE_PATH_INVALID_NAME_1' must have a SQL name that is a valid SQL identifier",
+            id="TABLE_PATH_INVALID_NAME_1",
+        ),
+        pytest.param(
+            "TABLE_PATH_INVALID_NAME_2",
+            "simple table collection 'invalid_table_path' in graph 'TABLE_PATH_INVALID_NAME_2' must have a SQL name that is a valid SQL identifier",
+            id="TABLE_PATH_INVALID_NAME_2",
+        ),
+        pytest.param(
+            "TABLE_PATH_INVALID_NAME_3",
+            "simple table collection 'invalid_table_path' in graph 'TABLE_PATH_INVALID_NAME_3' must have a SQL name that is a valid SQL identifier",
+            id="TABLE_PATH_INVALID_NAME_3",
+        ),
+        pytest.param(
+            "SPECIAL_RESERVED_KEYWORD_1",
+            "property name 'builtins' must be a string that is not a Python reserved word or built-in name",
+            id="SPECIAL_RESERVED_KEYWORD_1",
+        ),
+        pytest.param(
+            "SPECIAL_RESERVED_KEYWORD_2",
+            "collection name '_graph' must be a string that is not a PyDough reserved word",
+            id="SPECIAL_RESERVED_KEYWORD_2",
         ),
         pytest.param(
             "BAD_RELATIONSHIP_NAME",
@@ -463,7 +553,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         ),
         pytest.param(
             "BAD_FUNCTION_BAD_NAME_2",
-            "function name must be a string that is a Python identifier",
+            "function name '' must be a string that is a valid Python identifier",
             id="BAD_FUNCTION_BAD_NAME_2",
         ),
         pytest.param(
@@ -732,6 +822,63 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             ),
             id="BAD_FUNCTION_SELECT_ARGUMENT_DEDUCER_EXTRA_FIELD",
         ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME' must be a JSON object containing a field 'column name' and field 'column name' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_COLUMN_NAME",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_COLUMN_NAME",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_COLUMN_NAME' must be a JSON object containing a field 'column name' and field 'column name' must be a string",
+            id="MASKED_TABLE_COLUMN_BAD_COLUMN_NAME",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_DATA_TYPE",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_DATA_TYPE' must be a JSON object containing a field 'data type' and field 'data type' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_DATA_TYPE",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
+            "Unrecognized type string 'strdatmeric'",
+            id="MASKED_TABLE_COLUMN_BAD_DATA_TYPE",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_PROTECTED_DATA_TYPE",
+            "Unrecognized type string 'num'",
+            id="MASKED_TABLE_COLUMN_BAD_PROTECTED_DATA_TYPE",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL' must be a JSON object containing a field 'unprotect protocol' and field 'unprotect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_UNPROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL' must be a JSON object containing a field 'unprotect protocol' and field 'unprotect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_BAD_UNPROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL' must be a JSON object containing a field 'protect protocol' and field 'protect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_MISSING_PROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL' must be a JSON object containing a field 'protect protocol' and field 'protect protocol' must be a string",
+            id="MASKED_TABLE_COLUMN_BAD_PROTECT_PROTOCOL",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_BAD_SERVER_MASKED",
+            "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_BAD_SERVER_MASKED' must be a JSON object containing a field 'server masked' and field 'server masked' must be a boolean",
+            id="MASKED_TABLE_COLUMN_BAD_SERVER_MASKED",
+        ),
+        pytest.param(
+            "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
+            re.escape(
+                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'protected data type', 'sample values', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
+            ),
+            id="MASKED_TABLE_COLUMN_EXTRA_FIELDS",
+        ),
     ],
 )
 def test_invalid_graphs(
@@ -765,7 +912,7 @@ def test_invalid_graphs(
         ),
         pytest.param(
             "parent.sub4",
-            "Malformed general join condition: 'is_prime(self.j1) != is_prime(self.j2)' (PyDough nodes is_prime is not callable. Did you mean to use a function?)",
+            "Malformed general join condition: 'is_prime(self.j1) != is_prime(self.j2)' (PyDough object is_prime is not callable. Did you mean: ISIN, LIKE, SUM, SLICE, STRIP?)",
             id="bad_syntax_3",
         ),
         pytest.param(
@@ -809,7 +956,6 @@ def test_invalid_general_join_conditions(
     invalid_graph_path: str,
     pydough_string: str,
     error_message: str,
-    default_config: PyDoughConfigs,
 ) -> None:
     with pytest.raises(Exception, match=re.escape(error_message)):
         graph: GraphMetadata = parse_json_metadata_from_file(
@@ -822,4 +968,6 @@ def test_invalid_general_join_conditions(
         exec(pydough_string, {}, local_variables)
         pydough_code = local_variables["answer"]
         assert isinstance(pydough_code, UnqualifiedNode)
-        qualify_node(pydough_code, graph, default_config)
+        session: PyDoughSession = PyDoughSession()
+        session.metadata = graph
+        qualify_node(pydough_code, session)

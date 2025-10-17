@@ -4,11 +4,18 @@ This node is responsible for holding all types of joins.
 """
 
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from pydough.relational.relational_expressions import RelationalExpression
+from pydough.relational.relational_expressions import (
+    RelationalExpression,
+)
 from pydough.types.boolean_type import BooleanType
 
 from .abstract_node import RelationalNode
+
+if TYPE_CHECKING:
+    from .relational_shuttle import RelationalShuttle
+    from .relational_visitor import RelationalVisitor
 
 
 class JoinType(Enum):
@@ -66,6 +73,20 @@ class JoinCardinality(Enum):
             return JoinCardinality.PLURAL_UNKNOWN
         elif self == JoinCardinality.UNKNOWN_ACCESS:
             return JoinCardinality.UNKNOWN_UNKNOWN
+        else:
+            return self
+
+    def remove_filter(self) -> "JoinCardinality":
+        """
+        Returns a new JoinCardinality referring to the current value but without
+        the possibility of filtering.
+        """
+        if self in (JoinCardinality.SINGULAR_FILTER, JoinCardinality.SINGULAR_UNKNOWN):
+            return JoinCardinality.SINGULAR_ACCESS
+        elif self in (JoinCardinality.PLURAL_FILTER, JoinCardinality.PLURAL_UNKNOWN):
+            return JoinCardinality.PLURAL_ACCESS
+        elif self in (JoinCardinality.UNKNOWN_FILTER, JoinCardinality.UNKNOWN_UNKNOWN):
+            return JoinCardinality.UNKNOWN_ACCESS
         else:
             return self
 
@@ -155,6 +176,7 @@ class Join(RelationalNode):
         join_type: JoinType,
         columns: dict[str, RelationalExpression],
         cardinality: JoinCardinality = JoinCardinality.UNKNOWN_UNKNOWN,
+        reverse_cardinality: JoinCardinality = JoinCardinality.UNKNOWN_UNKNOWN,
         correl_name: str | None = None,
     ) -> None:
         super().__init__(columns)
@@ -166,6 +188,7 @@ class Join(RelationalNode):
         self._condition: RelationalExpression = condition
         self._join_type: JoinType = join_type
         self._cardinality: JoinCardinality = cardinality
+        self._reverse_cardinality: JoinCardinality = reverse_cardinality
         self._correl_name: str | None = correl_name
 
     @property
@@ -207,7 +230,7 @@ class Join(RelationalNode):
     @property
     def cardinality(self) -> JoinCardinality:
         """
-        The type of the joins.
+        The cardinality of the join, from the perspective of the first input.
         """
         return self._cardinality
 
@@ -217,6 +240,20 @@ class Join(RelationalNode):
         The setter for the join cardinality.
         """
         self._cardinality = cardinality
+
+    @property
+    def reverse_cardinality(self) -> JoinCardinality:
+        """
+        The cardinality of the join, from the perspective of the second input.
+        """
+        return self._reverse_cardinality
+
+    @reverse_cardinality.setter
+    def reverse_cardinality(self, cardinality: JoinCardinality) -> None:
+        """
+        The setter for the reverse join cardinality.
+        """
+        self._reverse_cardinality = cardinality
 
     @property
     def inputs(self) -> list[RelationalNode]:
@@ -254,12 +291,22 @@ class Join(RelationalNode):
         cardinality_suffix: str = (
             ""
             if self.cardinality == JoinCardinality.UNKNOWN_UNKNOWN
+            or self.join_type in (JoinType.SEMI, JoinType.ANTI)
             else f", cardinality={self.cardinality.name}"
         )
-        return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
+        reverse_cardinality_suffix: str = (
+            ""
+            if self.reverse_cardinality == JoinCardinality.UNKNOWN_UNKNOWN
+            or self.join_type in (JoinType.SEMI, JoinType.ANTI)
+            else f", reverse_cardinality={self.reverse_cardinality.name}"
+        )
+        return f"JOIN(condition={self.condition.to_string(compact)}, type={self.join_type.name}{cardinality_suffix}{reverse_cardinality_suffix}, columns={self.make_column_string(self.columns, compact)}{correl_suffix})"
 
-    def accept(self, visitor: "RelationalVisitor") -> None:  # type: ignore # noqa
+    def accept(self, visitor: "RelationalVisitor") -> None:
         visitor.visit_join(self)
+
+    def accept_shuttle(self, shuttle: "RelationalShuttle") -> RelationalNode:
+        return shuttle.visit_join(self)
 
     def node_copy(
         self,
@@ -272,5 +319,6 @@ class Join(RelationalNode):
             self.join_type,
             columns,
             self.cardinality,
+            self.reverse_cardinality,
             self.correl_name,
         )

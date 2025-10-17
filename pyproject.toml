@@ -27,7 +27,22 @@ dependencies = ["pytz", "sqlglot==26.7.0", "pandas>=2.0.0", "jupyterlab"]
 Repository = "https://github.com/bodo-ai/PyDough"
 
 [tool.uv]
-dev-dependencies = ["pre-commit", "pytest", "ruff==0.6.7", "pytest-repeat"]
+dev-dependencies = [
+    "pre-commit",
+    "pytest",
+    "ruff==0.6.7",
+    "pytest-repeat",
+    "pydough[snowflake]",
+    "pydough[mysql]",
+    "pydough[postgres]",
+    "pydough[server]",
+]
+
+[project.optional-dependencies]
+snowflake = ["snowflake-connector-python[pandas]"]
+mysql = ["mysql-connector-python"]
+postgres = ["psycopg2-binary"]
+server = ["fastapi", "httpx", "uvicorn"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
@@ -44,13 +59,13 @@ lint.extend-select = [
     "C4",  # flake8-comprehensions
     "TID", # flake8-tidy-imports
 ]
-# Don't run ruff on any ipython notebooks as they may have
-# names that don't statically resolve.
-exclude = ["**/*.ipynb"]
 
 lint.ignore = [
     "UP038",
 ]
+# Don't run ruff on any ipython notebooks as they may have
+# names that don't statically resolve.
+exclude = ["**/*.ipynb"]
 
 [tool.mypy]
 # Don't run mypy on any ipython notebooks

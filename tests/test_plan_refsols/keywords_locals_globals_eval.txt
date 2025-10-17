@@ -1,0 +1,5 @@
+ROOT(columns=[('node', node), ('types', types), ('expr', 2.0:numeric)], orderings=[])
+ JOIN(condition=t0.this == t1.PK_FIELD_NAME, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_FILTER, columns={'node': t0.node, 'types': t1.types})
+  FILTER(condition=node == 4071:numeric, columns={'node': node, 'this': this})
+   SCAN(table=keywords."COUNT", columns={'node': node, 'this': this})
+  SCAN(table=keywords."CAST", columns={'PK_FIELD_NAME': PK_FIELD_NAME, 'types': types})

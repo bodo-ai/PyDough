@@ -1,4 +1,4 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     nation.n_name,
     part.p_mfgr,
@@ -20,7 +20,7 @@ WITH _t0 AS (
   WHERE
     part.p_size = 15 AND part.p_type LIKE '%BRASS'
   QUALIFY
-    RANK() OVER (PARTITION BY partsupp.ps_partkey ORDER BY partsupp.ps_supplycost NULLS LAST) = 1
+    RANK() OVER (PARTITION BY ps_partkey ORDER BY partsupp.ps_supplycost NULLS LAST) = 1
 )
 SELECT
   s_acctbal AS S_ACCTBAL,
@@ -31,10 +31,10 @@ SELECT
   s_address AS S_ADDRESS,
   s_phone AS S_PHONE,
   s_comment AS S_COMMENT
-FROM _t0
+FROM _t1
 ORDER BY
-  s_acctbal DESC,
-  n_name,
-  s_name,
-  p_partkey
+  1 DESC,
+  3,
+  2,
+  4
 LIMIT 10

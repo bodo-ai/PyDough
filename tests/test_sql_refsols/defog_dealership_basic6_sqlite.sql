@@ -6,7 +6,7 @@ FROM main.sales AS sales
 JOIN main.customers AS customers
   ON customers._id = sales.customer_id
 GROUP BY
-  customers.state
+  1
 ORDER BY
-  total_revenue DESC
+  3 DESC
 LIMIT 5

@@ -1,10 +1,10 @@
 WITH _s1 AS (
   SELECT
-    MIN(sbtxdatetime) AS min_sbtxdatetime,
-    sbtxcustid
+    sbtxcustid,
+    MIN(sbtxdatetime) AS min_sbtxdatetime
   FROM main.sbtransaction
   GROUP BY
-    sbtxcustid
+    1
 )
 SELECT
   sbcustomer.sbcustid AS cust_id,

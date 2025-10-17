@@ -5,9 +5,9 @@ WITH _s0 AS (
   FROM users
 ), _t2 AS (
   SELECT
-    MAX(_s0.user_id) AS anything_user_id,
-    MAX(_s0.user_name) AS anything_user_name,
-    COUNT(*) AS n_rows
+    _s0.user_id,
+    MAX(searches.search_user_id) AS anything_search_user_id,
+    MAX(_s0.user_name) AS anything_user_name
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.user_id = searches.search_user_id
@@ -23,17 +23,17 @@ WITH _s0 AS (
     ON _s0.user_name <> _s7.user_name AND _s7.user_id = searches_2.search_user_id
   GROUP BY
     searches.search_id,
-    _s0.user_id
+    1
 )
 SELECT
   MAX(anything_user_name) AS user_name,
   COUNT(*) AS n_searches
 FROM _t2
 WHERE
-  n_rows > 0
+  anything_search_user_id = user_id
 GROUP BY
-  anything_user_id
+  user_id
 ORDER BY
-  n_searches DESC,
-  MAX(anything_user_name)
+  2 DESC,
+  1
 LIMIT 4

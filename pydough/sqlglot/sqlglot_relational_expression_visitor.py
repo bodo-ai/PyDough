@@ -12,11 +12,14 @@ from typing import TYPE_CHECKING
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import Identifier
+from sqlglot.expressions import Literal as SQLGlotLiteral
+from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 
+import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
+from pydough.errors import PyDoughSQLException
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -43,20 +46,19 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     def __init__(
         self,
-        dialect: DatabaseDialect,
-        correlated_names: dict[str, str],
-        config: PyDoughConfigs,
         relational_visitor: "SQLGlotRelationalVisitor",
+        correlated_names: dict[str, str],
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
-        self._dialect: DatabaseDialect = dialect
+        self._dialect: DatabaseDialect = relational_visitor._session.database.dialect
         self._correlated_names: dict[str, str] = correlated_names
-        self._config: PyDoughConfigs = config
         self._relational_visitor: SQLGlotRelationalVisitor = relational_visitor
         self._bindings: BaseTransformBindings = bindings_from_dialect(
-            dialect, config, self._relational_visitor
+            relational_visitor._session.database.dialect,
+            relational_visitor._session.config,
+            self._relational_visitor,
         )
 
     def reset(self) -> None:
@@ -75,9 +77,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         input_types: list[PyDoughType] = [
             arg.data_type for arg in call_expression.inputs
         ]
-        output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
-            call_expression.op, input_exprs, input_types
-        )
+        try:
+            output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
+                call_expression.op, input_exprs, input_types
+            )
+        except Exception as e:
+            raise pydough.active_session.error_builder.sql_call_conversion_error(
+                call_expression, e
+            )
         self._stack.append(output_expr)
 
     @staticmethod
@@ -183,6 +190,16 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         for order_arg in window_expression.order_inputs:
             order_arg.expr.accept(self)
             glot_expr: SQLGlotExpression = self._stack.pop()
+            # Skip ordering keys that are literals or NULL.
+            if isinstance(glot_expr, (SQLGlotLiteral, SQLGlotNull)):
+                continue
+            # Invoke the binding's conversion for ordering arguments to
+            # postprocess as needed (e.g. adding collations).
+            # For example, when a string column is sorted in MySQL, we add
+            # collations
+            glot_expr = self._bindings.convert_ordering(
+                glot_expr, order_arg.expr.data_type
+            )
             # Ignore non-default na first/last positions for SQLite dialect
             na_first: bool
             if self._dialect == DatabaseDialect.SQLITE:
@@ -205,8 +222,15 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             else:
                 glot_expr = glot_expr.desc(nulls_first=na_first)
             order_exprs.append(glot_expr)
+        # Special case: if we removed all of the order inputs, but the window
+        # call originally had an order, add `ORDER BY 1` as a placeholder.
+        if len(window_expression.order_inputs) > 0 and len(order_exprs) == 0:
+            order_exprs.append(sqlglot_expressions.convert("1"))
         this: SQLGlotExpression
         window_spec: sqlglot_expressions.WindowSpec | None = None
+        input_types: list[PyDoughType] = [
+            arg.data_type for arg in window_expression.inputs
+        ]
         match window_expression.op.function_name:
             case "PERCENTILE":
                 # Extract the number of buckets to use for the percentile
@@ -227,7 +251,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "PREV" | "NEXT":
                 offset = window_expression.kwargs.get("n", 1)
                 if not isinstance(offset, int):
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         f"Invalid 'n' argument to {window_expression.op.function_name}: {offset!r} (expected an integer)"
                     )
                 # By default, we use the LAG function. If doing NEXT, switch
@@ -247,7 +271,9 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                     )
                 this = func(**lag_args)
             case "RELSUM":
-                this = sqlglot_expressions.Sum.from_arg_list(arg_exprs)
+                this = self._bindings.convert_call_to_sqlglot(
+                    pydop.SUM, arg_exprs, input_types
+                )
                 window_spec = self.get_window_spec(window_expression.kwargs)
             case "RELAVG":
                 this = sqlglot_expressions.Avg.from_arg_list(arg_exprs)
@@ -284,9 +310,22 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     def visit_literal_expression(self, literal_expression: LiteralExpression) -> None:
         # Note: This assumes each literal has an associated type that can be parsed
         # and types do not represent implicit casts.
-        literal: SQLGlotExpression = sqlglot_expressions.convert(
-            literal_expression.value
-        )
+        literal: SQLGlotExpression
+        if isinstance(literal_expression.value, (tuple, list)):
+            # If the literal is a list or tuple, convert each element
+            # individually and create an array literal.
+            elements: list[SQLGlotExpression] = []
+            for element in literal_expression.value:
+                element_expr: SQLGlotExpression
+                if isinstance(element, RelationalExpression):
+                    element.accept(self)
+                    element_expr = self._stack.pop()
+                else:
+                    element_expr = sqlglot_expressions.convert(element)
+                elements.append(element_expr)
+            literal = sqlglot_expressions.Array(expressions=elements)
+        else:
+            literal = sqlglot_expressions.convert(literal_expression.value)
 
         # Special handling: insert cast calls for ansi casting of date/time
         # instead of relying on SQLGlot conversion functions. This is because
@@ -305,7 +344,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             if isinstance(literal_expression.value, datetime.datetime):
                 dt: datetime.datetime = literal_expression.value
                 if dt.tzinfo is not None:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "PyDough does not yet support datetime values with a timezone"
                     )
                 literal = sqlglot_expressions.Cast(

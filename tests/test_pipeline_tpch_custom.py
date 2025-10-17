@@ -90,6 +90,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     datetime_current,
     datetime_relative,
     deep_best_analysis,
+    double_cross,
     double_partition,
     dumb_aggregation,
     extract_colors,
@@ -143,6 +144,10 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     simple_cross_10,
     simple_cross_11,
     simple_cross_12,
+    simple_cross_13,
+    simple_cross_14,
+    simple_cross_15,
+    simple_cross_16,
     simple_filter_top_five,
     simple_int_float_string_cast,
     simple_scan,
@@ -2244,6 +2249,65 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                simple_cross_13,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["foo"],
+                        "b": ["bar"],
+                        "c": ["fizz"],
+                        "d": ["buzz"],
+                        "e": ["foobar"],
+                        "f": ["fizzbuzz"],
+                        "g": ["yay"],
+                    }
+                ),
+                "simple_cross_13",
+            ),
+            id="simple_cross_13",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_14,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "name": ["AFRICA", "AMERICA", "ASIA", "EUROPE", "MIDDLE EAST"],
+                        "x": ["foo"] * 5,
+                        "n": [1, 3, 1, 0, 0],
+                    }
+                ),
+                "simple_cross_14",
+            ),
+            id="simple_cross_14",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_15,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "a": ["*"] * 8 + ["A"] * 8,
+                        "e": list("****EEEE") * 2,
+                        "i": list("**II") * 4,
+                        "o": list("*O") * 8,
+                    }
+                ),
+                "simple_cross_15",
+            ),
+            id="simple_cross_15",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_cross_16,
+                "TPCH",
+                lambda: pd.DataFrame({"n1": [142], "n2": [8]}),
+                "simple_cross_16",
+            ),
+            id="simple_cross_16",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 simple_var_std,
                 "TPCH",
                 lambda: pd.DataFrame(
@@ -2326,14 +2390,14 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "chain3": ["2023-10-01"],
                         "plus_1q": ["2023-04-15 12:30:45"],
                         "plus_2q": ["2023-07-15 12:30:45"],
-                        "plus_3q": ["2023-10-15 00:00:00"],
+                        "plus_3q": ["2023-10-15"],
                         "minus_1q": ["2022-10-15 12:30:45"],
                         "minus_2q": ["2022-07-15 12:30:45"],
-                        "minus_3q": ["2022-04-15 00:00:00"],
-                        "syntax1": ["2023-08-15 00:00:00"],
-                        "syntax2": ["2024-02-15 00:00:00"],
-                        "syntax3": ["2024-08-15 00:00:00"],
-                        "syntax4": ["2022-08-15 00:00:00"],
+                        "minus_3q": ["2022-04-15"],
+                        "syntax1": ["2023-08-15"],
+                        "syntax2": ["2024-02-15"],
+                        "syntax3": ["2024-08-15"],
+                        "syntax4": ["2022-08-15"],
                         "q_diff1": [1],
                         "q_diff2": [2],
                         "q_diff3": [3],
@@ -2374,6 +2438,32 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "order_quarter_test",
             ),
             id="order_quarter_test",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                double_cross,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "wk": list(range(1, 10)),
+                        "n_lines": [9, 23, 58, 143, 195, 274, 348, 393, 503],
+                        "n_orders": [891, 847, 870, 918, 893, 850, 854, 863, 824],
+                        "lpo": [
+                            0.0101,
+                            0.0184,
+                            0.0345,
+                            0.0661,
+                            0.0969,
+                            0.1332,
+                            0.1715,
+                            0.2066,
+                            0.2492,
+                        ],
+                    }
+                ),
+                "double_cross",
+            ),
+            id="double_cross",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -3067,13 +3157,13 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             simple_scan,
             [],
-            "Column selection must not be empty",
+            "Expected `columns` argument to be a non-empty list",
             id="bad_columns_1",
         ),
         pytest.param(
             simple_scan,
             {},
-            "Column selection must not be empty",
+            "Expected `columns` argument to be a non-empty dictionary",
             id="bad_columns_2",
         ),
         pytest.param(
@@ -3102,7 +3192,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_1,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'c_name'. Did you mean: name, comment, phone?"
+                "Unrecognized term of TPCH.customers: 'c_name'. Did you mean: name, key, phone?"
             ),
             id="bad_name_1",
         ),
@@ -3118,7 +3208,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_3,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz'. Did you mean: fizz, BUZZ, bar?"
+                "Unrecognized term of TPCH.CALCULATE(foo=1, bar=2, fizz=3, BUZZ=4): 'fizzbuzz'. Did you mean: fizz, BUZZ, foo?"
             ),
             id="bad_name_3",
         ),
@@ -3126,7 +3216,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_4,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers.orders: 'totalPrice'. Did you mean: total_price, clerk, lines?"
+                "Unrecognized term of TPCH.customers.orders: 'totalPrice'. Did you mean: total_price, clerk, key?"
             ),
             id="bad_name_4",
         ),
@@ -3134,7 +3224,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_5,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers.orders: 'c_name'. Did you mean: clerk, comment, customer, lines, key, order_date?"
+                "Unrecognized term of TPCH.customers.orders: 'c_name'. Did you mean: key, lines, clerk, comment, customer?"
             ),
             id="bad_name_5",
         ),
@@ -3142,7 +3232,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, address, phone, comment, key, name, nation?"
+                "Unrecognized term of TPCH.customers: 'suppliers'. Did you mean: orders, key, name, address, phone?"
             ),
             id="bad_name_6",
         ),
@@ -3158,7 +3248,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_8,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'n123ame'. Did you mean: name, nation, phone?"
+                "Unrecognized term of TPCH.customers: 'n123ame'. Did you mean: name, key, phone?"
             ),
             id="bad_name_8",
         ),
@@ -3166,7 +3256,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_9,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: '__phone__'. Did you mean: phone, nation, address?"
+                "Unrecognized term of TPCH.customers: '__phone__'. Did you mean: phone, key, name?"
             ),
             id="bad_name_9",
         ),
@@ -3198,7 +3288,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_13,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, account_balance, nation_key, address?"
+                "Unrecognized term of TPCH.customers: 'thisisareallylargename_that_exceeds_the_system_limit'. Did you mean: market_segment, name, orders, address, key?"
             ),
             id="bad_name_13",
         ),
@@ -3206,7 +3296,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_14,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'keyname'. Did you mean: name, key, phone?"
+                "Unrecognized term of TPCH.customers: 'keyname'. Did you mean: key, name, phone?"
             ),
             id="bad_name_14",
         ),
@@ -3214,7 +3304,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_15,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'namekey'. Did you mean: name, key, nation, nation_key?"
+                "Unrecognized term of TPCH.customers: 'namekey'. Did you mean: name, key, nation?"
             ),
             id="bad_name_15",
         ),
@@ -3222,7 +3312,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_16,
             None,
             re.escape(
-                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: comment, name, nation, orders, address, key, phone?"
+                "Unrecognized term of TPCH.customers: 'no_exist'. Did you mean: name, key, comment, nation, orders?"
             ),
             id="bad_name_16",
         ),
@@ -3238,7 +3328,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_18,
             None,
             re.escape(
-                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'nords'. Did you mean: n_orders, lines, clerk, key, year?"
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'nords'. Did you mean: n_orders, key, lines, year, clerk?"
             ),
             id="bad_name_18",
         ),
@@ -3254,7 +3344,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_20,
             None,
             re.escape(
-                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'orders'. Did you mean: n_orders, clerk, lines?"
+                "Unrecognized term of TPCH.Partition(orders.CALCULATE(year=YEAR(order_date)), name='years', by=year).CALCULATE(n_orders=COUNT(orders)).orders: 'orders'. Did you mean: n_orders, clerk, key, lines, year?"
             ),
             id="bad_name_20",
         ),
@@ -3270,7 +3360,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_22,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'Over_Intellectual_Ization'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, De_Institutionalizations?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'Over_Intellectual_Ization'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, PROFESSION_alization?"
             ),
             id="bad_name_22",
         ),
@@ -3278,7 +3368,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_23,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'paio_eo_aliz_ation'. Did you mean: PROFESSION_alization, over_intellect_ualiz_ation, anthro_pomorph_IZATION?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'paio_eo_aliz_ation'. Did you mean: PROFESSION_alization, nations, parts, regions?"
             ),
             id="bad_name_23",
         ),
@@ -3286,7 +3376,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_24,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): '_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_'. Did you mean: anthro_pomorph_IZATION, over_intellect_ualiz_ation, De_Institutionalizations?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): '_a_r_h_x_n_t_p_o_q__z_m_o_p_i__a_o_n_z_'. Did you mean: nations, parts, anthro_pomorph_IZATION, lines, regions?"
             ),
             id="bad_name_24",
         ),
@@ -3294,7 +3384,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_name_25,
             None,
             re.escape(
-                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'anthropomorphization_and_overintellectualization_and_ultrarevolutionaries'. Did you mean: over_intellect_ualiz_ation, OVERIN_tellectualizers, anthro_pomorph_IZATION, ultra_revolution_aries, De_Institutionalizations?"
+                "Unrecognized term of TPCH.CALCULATE(anthro_pomorph_IZATION=1, counte_rintelligence=2, OVERIN_tellectualizers=3, ultra_revolution_aries=4, PROFESSION_alization=5, De_Institutionalizations=6, over_intellect_ualiz_ation=7): 'anthropomorphization_and_overintellectualization_and_ultrarevolutionaries'. Did you mean: over_intellect_ualiz_ation, anthro_pomorph_IZATION, OVERIN_tellectualizers, ultra_revolution_aries?"
             ),
             id="bad_name_25",
         ),
@@ -3328,7 +3418,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_5,
             None,
             re.escape(
-                "Unrecognized term of TPCH.regions.CALCULATE(name=name).TPCH.regions.CALCULATE(name=name): 'regions'. Did you mean: nations, comment, key?"
+                "nclear whether 'name' refers to a term of the current context or ancestor of collection TPCH.regions.CALCULATE(name=name).TPCH.regions"
             ),
             id="bad_cross_5",
         ),
@@ -3336,11 +3426,10 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_6,
             None,
             re.escape(
-                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: lines, supply_records, container, size, comment, key, name?"
+                "Unrecognized term of TPCH.suppliers.TPCH.parts: 'suppliers'. Did you mean: size, lines, key, name, supply_records?"
             ),
             id="bad_cross_6",
         ),
-        # NOTE: raised exception with an empty message
         pytest.param(
             bad_cross_7,
             None,
@@ -3351,7 +3440,7 @@ def test_pipeline_e2e_tpch_custom(
             bad_cross_8,
             None,
             re.escape(
-                "Unrecognized term of TPCH.regions.CALCULATE(r1=name).TPCH.nations: 'r_key'. Did you mean: key, name, r1?"
+                "Unrecognized term of TPCH.regions.CALCULATE(r1=name).TPCH.nations: 'r_key'. Did you mean: key, r1, name?"
             ),
             id="bad_cross_8",
         ),
@@ -3370,7 +3459,7 @@ def test_pipeline_e2e_tpch_custom(
         pytest.param(
             bad_cross_11,
             None,
-            "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, nations, key?",
+            "Unrecognized term of TPCH.nations.TPCH.regions: 'customers'. Did you mean: comment, name, key, nations?",
             id="bad_cross_11",
         ),
         pytest.param(
@@ -3424,7 +3513,7 @@ def test_pipeline_e2e_tpch_custom(
     ],
 )
 def test_pipeline_e2e_errors(
-    pydough_impl: Callable[[], UnqualifiedNode],
+    pydough_impl: Callable[..., UnqualifiedNode],
     columns: dict[str, str] | list[str] | None,
     error_message: str,
     get_sample_graph: graph_fetcher,

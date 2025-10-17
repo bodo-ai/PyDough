@@ -18,6 +18,7 @@ __all__ = [
     "RelationalExpressionDispatcher",
     "RelationalNode",
     "RelationalRoot",
+    "RelationalShuttle",
     "RelationalVisitor",
     "Scan",
 ]
@@ -33,5 +34,6 @@ from .limit import Limit
 from .project import Project
 from .relational_expression_dispatcher import RelationalExpressionDispatcher
 from .relational_root import RelationalRoot
+from .relational_shuttle import RelationalShuttle
 from .relational_visitor import RelationalVisitor
 from .scan import Scan

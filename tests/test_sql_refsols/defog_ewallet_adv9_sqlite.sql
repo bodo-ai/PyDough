@@ -7,4 +7,4 @@ WHERE
   AND created_at >= DATE('now', 'start of month', '-2 month')
   AND sender_type = 0
 GROUP BY
-  DATE(created_at, 'start of month')
+  1
