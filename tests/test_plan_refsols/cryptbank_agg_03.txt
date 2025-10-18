@@ -1,5 +1,0 @@
-ROOT(columns=[('account_type', a_type), ('balance', a_balance), ('name', JOIN_STRINGS(' ':string, c_fname, c_lname))], orderings=[])
- FILTER(condition=RANKING(args=[], partition=[a_type], order=[(a_balance):desc_first], allow_ties=False) == 1:numeric, columns={'a_balance': a_balance, 'a_type': a_type, 'c_fname': c_fname, 'c_lname': c_lname})
-  JOIN(condition=t0.a_custkey == t1.c_key, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'a_balance': t0.a_balance, 'a_type': t0.a_type, 'c_fname': t1.c_fname, 'c_lname': t1.c_lname})
-   SCAN(table=CRBNK.ACCOUNTS, columns={'a_balance': a_balance, 'a_custkey': a_custkey, 'a_type': a_type})
-   SCAN(table=CRBNK.CUSTOMERS, columns={'c_fname': c_fname, 'c_key': c_key, 'c_lname': c_lname})

@@ -698,7 +698,26 @@ def common_prefix_al():
     # For each remaining customer, list their key, number of orders made, and
     # number of lineitems without tax/discount made. When choosing the top 10
     # customers, pick the 10 with the lowest key values.
-    selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    selected_lines = orders.lines.WHERE(
+        (tax == 0)
+        & (discount == 0)
+        & ISIN(
+            part_key,
+            (
+                53360,
+                123069,
+                132776,
+                62217,
+                67393,
+                87784,
+                148252,
+                176947,
+                196620,
+                103099,
+                169275,
+            ),
+        )
+    )
     selected_part_purchase = selected_lines.part.WHERE(size < 15)
     return (
         nations.customers.CALCULATE(n_orders=COUNT(orders))
