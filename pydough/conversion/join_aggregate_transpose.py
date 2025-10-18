@@ -93,13 +93,6 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             The new RelationalNode tree with the Join and Aggregate transposed,
             or None if the transpose is not possible.
         """
-        # Verify that the join is an inner, left, or semi-join, and that the
-        # join cardinality is singular (unless the aggregations are not affected
-        # by a change in cardinality).
-        aggs_allow_plural: bool = all(
-            call.op in (pydop.MIN, pydop.MAX, pydop.ANYTHING, pydop.NDISTINCT)
-            for call in aggregate.aggregations.values()
-        )
 
         # The cardinality with regards to the input being considered must be
         # singular (unless the aggregations allow plural), and must be
@@ -118,7 +111,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 or (join.join_type == JoinType.SEMI and is_left)
             )
             and cardinality.filters
-            and (cardinality.singular or aggs_allow_plural)
+            and cardinality.singular
         ):
             return None
 
@@ -249,7 +242,6 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
 
         # TODO ADD COMMENTS
         new_project: Project = Project(new_aggregate, new_project_columns)
-
         return new_project
 
 

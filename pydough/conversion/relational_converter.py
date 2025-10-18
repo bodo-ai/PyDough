@@ -1591,7 +1591,8 @@ def optimize_relational_tree(
     #   B: expression simplification
     #   C: filter pushdown
     #   D: join-aggregate transpose
-    #   E: column pruning
+    #   E: redundant aggregation removal
+    #   F: column pruning
     # This is done because pullup will create more opportunities for expression
     # simplification, which will allow more filters to be pushed further down,
     # and the combination of those together will create more opportunities for
@@ -1602,6 +1603,7 @@ def optimize_relational_tree(
         simplify_expressions(root, session, additional_shuttles)
         root = confirm_root(push_filters(root, session))
         root = confirm_root(pull_aggregates_above_joins(root))
+        root = remove_redundant_aggs(root)
         root = pruner.prune_unused_columns(root)
 
     # Re-run projection merging, without pushing into joins. This will allow
