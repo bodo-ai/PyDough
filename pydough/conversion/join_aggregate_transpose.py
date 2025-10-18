@@ -204,7 +204,9 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
 
         for col_name, col_expr in non_agg_input.columns.items():
             join_name = self.generate_name(col_name, new_join_columns)
-            new_join_columns[join_name] = add_input_name(col_expr, non_agg_alias)
+            new_join_columns[join_name] = ColumnReference(
+                col_name, col_expr.data_type, non_agg_alias
+            )
             agg_name = self.generate_name(col_name, new_agg_names)
             new_aggregate_aggs[agg_name] = CallExpression(
                 pydop.ANYTHING,
