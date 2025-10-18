@@ -4,8 +4,8 @@ WITH _s0 AS (
   FROM tpch.part
 ), _s6 AS (
   SELECT
-    partsupp.ps_suppkey,
     MAX(_s0.avg_p_retailprice) AS anything_avg_p_retailprice,
+    MAX(supplier.s_suppkey) AS anything_s_suppkey,
     AVG(part.p_retailprice) AS supplier_avg_price
   FROM _s0 AS _s0
   JOIN tpch.supplier AS supplier
@@ -15,13 +15,13 @@ WITH _s0 AS (
   JOIN tpch.part AS part
     ON part.p_partkey = partsupp.ps_partkey
   GROUP BY
-    1
+    partsupp.ps_suppkey
 )
 SELECT
-  COUNT(DISTINCT _s6.ps_suppkey) AS n
+  COUNT(DISTINCT _s6.anything_s_suppkey) AS n
 FROM _s6 AS _s6
 JOIN tpch.partsupp AS partsupp
-  ON _s6.ps_suppkey = partsupp.ps_suppkey
+  ON _s6.anything_s_suppkey = partsupp.ps_suppkey
 JOIN tpch.part AS part
   ON _s6.supplier_avg_price > part.p_retailprice
   AND part.p_container = 'LG DRUM'

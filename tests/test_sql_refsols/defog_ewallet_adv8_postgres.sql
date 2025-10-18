@@ -1,5 +1,5 @@
 SELECT
-  wallet_transactions_daily.receiver_id AS merchants_id,
+  MAX(merchants.mid) AS merchants_id,
   MAX(merchants.name) AS merchants_name,
   MAX(merchants.category) AS category,
   COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_revenue,
@@ -10,4 +10,4 @@ JOIN main.wallet_transactions_daily AS wallet_transactions_daily
   AND wallet_transactions_daily.receiver_type = 1
   AND wallet_transactions_daily.status = 'success'
 GROUP BY
-  1
+  wallet_transactions_daily.receiver_id

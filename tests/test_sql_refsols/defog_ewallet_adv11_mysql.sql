@@ -1,5 +1,5 @@
 SELECT
-  user_sessions.user_id AS uid,
+  ANY_VALUE(users.uid) AS uid,
   SUM(
     TIMESTAMPDIFF(SECOND, user_sessions.session_start_ts, user_sessions.session_end_ts)
   ) AS total_duration
@@ -9,6 +9,6 @@ JOIN main.user_sessions AS user_sessions
   AND user_sessions.session_start_ts >= '2023-06-01'
   AND user_sessions.user_id = users.uid
 GROUP BY
-  1
+  user_sessions.user_id
 ORDER BY
   2 DESC

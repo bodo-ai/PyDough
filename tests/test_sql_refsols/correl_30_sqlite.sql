@@ -30,9 +30,8 @@ WITH _t2 AS (
   GROUP BY
     1
 ), _s13 AS (
-  SELECT
-    nation.n_nationkey,
-    COUNT(*) AS n_rows
+  SELECT DISTINCT
+    nation.n_nationkey
   FROM tpch.nation AS nation
   JOIN _s7 AS _s7
     ON _s7.s_nationkey = nation.n_nationkey
@@ -40,14 +39,12 @@ WITH _t2 AS (
     ON _t6.r_regionkey = nation.n_regionkey
   JOIN _t5 AS _s11
     ON _s11.s_acctbal > _s7.avg_s_acctbal AND _s11.s_nationkey = nation.n_nationkey
-  GROUP BY
-    1
 )
 SELECT
   MAX(LOWER(_t3.r_name)) AS region_name,
   MAX(nation.n_name) AS nation_name,
   COUNT(*) AS n_above_avg_customers,
-  MAX(_s13.n_rows) AS n_above_avg_suppliers
+  MAX(COUNT(*)) AS n_above_avg_suppliers
 FROM tpch.nation AS nation
 JOIN _s1 AS _s1
   ON _s1.c_nationkey = nation.n_nationkey

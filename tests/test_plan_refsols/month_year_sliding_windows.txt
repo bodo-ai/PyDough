@@ -1,7 +1,7 @@
 ROOT(columns=[('year', year_o_orderdate), ('month', month_o_orderdate)], orderings=[(year_o_orderdate):asc_first, (month_o_orderdate):asc_first])
  FILTER(condition=DEFAULT_TO(sum_o_totalprice, 0:numeric) > NEXT(args=[DEFAULT_TO(sum_o_totalprice, 0:numeric)], partition=[], order=[(year_o_orderdate):asc_last, (month_o_orderdate):asc_last], default=0.0) & DEFAULT_TO(sum_o_totalprice, 0:numeric) > PREV(args=[DEFAULT_TO(sum_o_totalprice, 0:numeric)], partition=[], order=[(year_o_orderdate):asc_last, (month_o_orderdate):asc_last], default=0.0), columns={'month_o_orderdate': month_o_orderdate, 'year_o_orderdate': year_o_orderdate})
   AGGREGATE(keys={'month_o_orderdate': MONTH(o_orderdate), 'year_o_orderdate': YEAR(o_orderdate)}, aggregations={'sum_o_totalprice': SUM(o_totalprice)})
-   JOIN(condition=t0.year_o_orderdate == t1.year_o_orderdate, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'o_orderdate': t1.o_orderdate, 'o_totalprice': t1.o_totalprice})
+   JOIN(condition=t0.year_o_orderdate == YEAR(t1.o_orderdate), type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'o_orderdate': t1.o_orderdate, 'o_totalprice': t1.o_totalprice})
     FILTER(condition=DEFAULT_TO(sum_o_totalprice, 0:numeric) > next_year_total_spent, columns={'year_o_orderdate': year_o_orderdate})
      PROJECT(columns={'next_year_total_spent': NEXT(args=[DEFAULT_TO(sum_o_totalprice, 0:numeric)], partition=[], order=[(year_o_orderdate):asc_last], default=0.0), 'sum_o_totalprice': sum_o_totalprice, 'year_o_orderdate': year_o_orderdate})
       AGGREGATE(keys={'year_o_orderdate': YEAR(o_orderdate)}, aggregations={'sum_o_totalprice': SUM(o_totalprice)})

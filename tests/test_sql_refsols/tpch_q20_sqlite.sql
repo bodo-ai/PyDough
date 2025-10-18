@@ -1,6 +1,6 @@
 WITH _s5 AS (
   SELECT
-    lineitem.l_partkey,
+    MAX(part.p_partkey) AS anything_p_partkey,
     SUM(lineitem.l_quantity) AS sum_l_quantity
   FROM tpch.part AS part
   JOIN tpch.lineitem AS lineitem
@@ -9,7 +9,7 @@ WITH _s5 AS (
   WHERE
     part.p_name LIKE 'forest%'
   GROUP BY
-    1
+    lineitem.l_partkey
 )
 SELECT
   MAX(supplier.s_name) AS S_NAME,
@@ -20,7 +20,7 @@ JOIN tpch.nation AS nation
 JOIN tpch.partsupp AS partsupp
   ON partsupp.ps_suppkey = supplier.s_suppkey
 JOIN _s5 AS _s5
-  ON _s5.l_partkey = partsupp.ps_partkey
+  ON _s5.anything_p_partkey = partsupp.ps_partkey
   AND partsupp.ps_availqty > (
     0.5 * COALESCE(_s5.sum_l_quantity, 0)
   )

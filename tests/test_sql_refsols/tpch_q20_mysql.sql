@@ -1,6 +1,6 @@
 WITH _s5 AS (
   SELECT
-    LINEITEM.l_partkey,
+    ANY_VALUE(PART.p_partkey) AS anything_p_partkey,
     SUM(LINEITEM.l_quantity) AS sum_l_quantity
   FROM tpch.PART AS PART
   JOIN tpch.LINEITEM AS LINEITEM
@@ -9,7 +9,7 @@ WITH _s5 AS (
   WHERE
     PART.p_name LIKE 'forest%'
   GROUP BY
-    1
+    LINEITEM.l_partkey
 )
 SELECT
   ANY_VALUE(SUPPLIER.s_name) COLLATE utf8mb4_bin AS S_NAME,
@@ -23,7 +23,7 @@ JOIN _s5 AS _s5
   ON PARTSUPP.ps_availqty > (
     0.5 * COALESCE(_s5.sum_l_quantity, 0)
   )
-  AND PARTSUPP.ps_partkey = _s5.l_partkey
+  AND PARTSUPP.ps_partkey = _s5.anything_p_partkey
 GROUP BY
   PARTSUPP.ps_suppkey
 ORDER BY
