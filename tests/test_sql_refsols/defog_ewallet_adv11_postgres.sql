@@ -1,5 +1,5 @@
 SELECT
-  MAX(users.uid) AS uid,
+  user_sessions.user_id AS uid,
   SUM(
     EXTRACT(EPOCH FROM (
       CAST(user_sessions.session_end_ts AS TIMESTAMP) - CAST(user_sessions.session_start_ts AS TIMESTAMP)
@@ -11,6 +11,6 @@ JOIN main.user_sessions AS user_sessions
   AND user_sessions.session_start_ts >= '2023-06-01'
   AND user_sessions.user_id = users.uid
 GROUP BY
-  user_sessions.user_id
+  1
 ORDER BY
   2 DESC NULLS LAST

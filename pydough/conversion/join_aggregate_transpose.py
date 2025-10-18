@@ -23,6 +23,7 @@ from pydough.relational import (
 from pydough.relational.rel_util import (
     add_input_name,
     apply_substitution,
+    extract_equijoin_keys,
 )
 
 
@@ -144,6 +145,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         ):
             return None
 
+        # TODO ADD COMMENTS
         agg_alias: str | None = (
             join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
         )
@@ -160,10 +162,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         else:
             new_cardinality = new_cardinality.add_plural()
 
-        # A mapping that will be used to map every expression with regards to
-        # the original join looking at its input expressions to what the
-        # expression will be in the output columns of the new aggregate
-
+        # TODO ADD COMMENTS
         new_join_columns: dict[str, RelationalExpression] = {}
         new_aggregate_keys: dict[str, RelationalExpression] = dict(aggregate.keys)
         new_aggregate_aggs: dict[str, CallExpression] = dict(aggregate.aggregations)
@@ -175,6 +174,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 add_input_name(key_expr, agg_alias)
             )
 
+        # TODO ADD COMMENTS
         agg_input: RelationalNode = aggregate.inputs[0]
         non_agg_input: RelationalNode = join.inputs[1] if is_left else join.inputs[0]
         new_join_inputs: list[RelationalNode] = (
@@ -202,6 +202,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 ColumnReference(col_name, col_expr.data_type)
             )
 
+        # TODO ADD COMMENTS
         for col_name, col_expr in non_agg_input.columns.items():
             join_name = self.generate_name(col_name, new_join_columns)
             new_join_columns[join_name] = ColumnReference(
@@ -218,80 +219,19 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 ColumnReference(agg_name, col_expr.data_type)
             )
 
-        # for key_name, key_expr in aggregate.keys.items():
-        #     agg_name: str = self.generate_name(key_name, new_agg_names)
-        #     new_aggregate_keys[agg_name] = ColumnReference(
-        #         self.generate_name(key_name, new_join_columns),
-        #         key_expr.data_type,
-        #     )
-        #     new_agg_names.add(agg_name)
+        # For each join key from the non-aggregate side, alter its substitution
+        # to map it to the corresponding key from the aggregate side.
+        agg_key_refs, non_agg_key_refs = extract_equijoin_keys(join)
+        if not is_left:
+            agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
+        for agg_key, non_agg_key in zip(agg_key_refs, non_agg_key_refs):
+            join_sub[non_agg_key] = join_sub[agg_key]
 
-        # join_name: str
-        # agg_name: str
-
-        # agg_columns_remapped: dict[RelationalExpression, RelationalExpression] = {}
-        # agg_key_names: dict[str, str] = {}
-
-        # for col_name, col_expr in join.columns.items():
-        #     assert isinstance(col_expr, ColumnReference)
-        #     join_name = self.generate_name(col_name, new_join_columns)
-        #     agg_name = self.generate_name(col_name, new_agg_names)
-        #     if col_expr.input_name == agg_alias:
-        #         if col_expr.name in aggregate.keys:
-        #             new_join_columns[join_name] = add_input_name(
-        #                 aggregate.keys[col_expr.name], agg_alias
-        #             )
-        #             new_aggregate_keys[agg_name] = ColumnReference(
-        #                 join_name, col_expr.data_type
-        #             )
-        #             agg_key_names[col_name] = agg_name
-        #             agg_columns_remapped[aggregate.keys[col_expr.name]] = (
-        #                 ColumnReference(join_name, col_expr.data_type)
-        #             )
-        #         else:
-        #             sub_agg_name: str
-        #             current_agg: CallExpression = aggregate.aggregations[col_expr.name]
-        #             for arg in current_agg.inputs:
-        #                 sub_agg_name = self.generate_name("expr", new_join_columns)
-        #                 new_join_columns[sub_agg_name] = add_input_name(arg, agg_alias)
-        #                 agg_columns_remapped[arg] = ColumnReference(
-        #                     sub_agg_name, arg.data_type
-        #                 )
-        #             new_call = apply_substitution(
-        #                 aggregate.aggregations[col_expr.name], agg_columns_remapped, {}
-        #             )
-        #             assert isinstance(new_call, CallExpression)
-        #             new_aggregate_aggs[agg_name] = new_call
-        #         new_agg_names.add(agg_name)
-        #     else:
-        #         new_join_columns[join_name] = ColumnReference(
-        #             col_expr.name, col_expr.data_type, non_agg_alias
-        #         )
-        #         new_aggregate_aggs[agg_name] = CallExpression(
-        #             pydop.ANYTHING,
-        #             col_expr.data_type,
-        #             [ColumnReference(join_name, col_expr.data_type)],
-        #         )
-        #         new_agg_names.add(agg_name)
-        #     project_columns[col_name] = ColumnReference(agg_name, col_expr.data_type)
-
-        # for agg_key_name, agg_key_expr in aggregate.keys.items():
-        #     if agg_key_name not in new_aggregate_keys:
-        #         join_name = self.generate_name(agg_key_name, new_join_columns)
-        #         agg_name = self.generate_name(agg_key_name, new_agg_names)
-        #         new_join_columns[join_name] = add_input_name(agg_key_expr, agg_alias)
-        #         agg_key_names[agg_key_name] = agg_name
-        #         new_aggregate_keys[agg_name] = ColumnReference(
-        #             join_name, agg_key_expr.data_type
-        #         )
-        #         new_agg_names.add(agg_name)
-        #         join_sub[
-        #             ColumnReference(agg_key_name, agg_key_expr.data_type, agg_alias)
-        #         ] = new_join_columns[join_name]
-
+        # TODO ADD COMMENTS
         for col_name, col_expr in join.columns.items():
             new_project_columns[col_name] = apply_substitution(col_expr, join_sub, {})
 
+        # TODO ADD COMMENTS
         new_join: Join = Join(
             new_join_inputs,
             apply_substitution(join.condition, join_cond_sub, {}),
@@ -302,35 +242,13 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             join.correl_name,
         )
 
+        # TODO ADD COMMENTS
         new_aggregate: Aggregate = Aggregate(
             new_join, new_aggregate_keys, new_aggregate_aggs
         )
 
-        # # Create a mapping from the join keys on the non-aggregate side to those
-        # # on the aggregate side, so that the non-aggregate keys are not used
-        # # in the output.
-        # agg_key_refs, non_agg_key_refs = extract_equijoin_keys(join)
-        # if not is_left:
-        #     agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
-
-        # rev_join_map: dict[RelationalExpression, str] = {
-        #     expr: name for name, expr in join.columns.items()
-        # }
-        # for agg_key, non_agg_key in zip(agg_key_refs, non_agg_key_refs):
-        #     agg_key_name_lookup: str = agg_key_names[agg_key.name]
-        #     non_agg_key_name: str | None = rev_join_map.get(non_agg_key, None)
-        #     if agg_key_name_lookup is not None and non_agg_key_name is not None:
-        #         new_project_columns[non_agg_key_name] = ColumnReference(
-        #             agg_key_name_lookup, agg_key.data_type
-        #         )
-
+        # TODO ADD COMMENTS
         new_project: Project = Project(new_aggregate, new_project_columns)
-
-        print()
-        print(join.to_tree_string())
-
-        print()
-        print(new_project.to_tree_string())
 
         return new_project
 
