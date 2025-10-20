@@ -6,14 +6,13 @@ that can act as wrappers around the internal implementation of SQLGlot.
 from sqlglot.expressions import (
     Alias as SQLGlotAlias,
 )
+from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import (
-    Column,
     Identifier,
     Window,
     maybe_copy,
     maybe_parse,
 )
-from sqlglot.expressions import Expression as SQLGlotExpression
 
 __all__ = ["get_glot_name", "set_glot_alias", "unwrap_alias"]
 
@@ -60,20 +59,7 @@ def set_glot_alias(expr: SQLGlotExpression, alias: str | None) -> SQLGlotExpress
     if old_name == alias:
         return expr
     else:
-        quoted: bool = False
-
-        if (alias.startswith('"') and alias.endswith('"')) or (
-            alias.startswith("`") and alias.endswith("`")
-        ):
-            alias = alias[1:-1]
-            alias = alias.replace('""', '"')
-            alias = alias.replace("``", "`")
-
-            if isinstance(expr, Identifier):
-                quoted = expr.args.get("quoted", False)
-            elif isinstance(expr, Column):
-                quoted = expr.this.args.get("quoted", False)
-
+        quoted, alias = normalize_column_name(alias)
         return generate_glot_alias(expr, alias, quoted=quoted)
 
 
@@ -96,15 +82,15 @@ def generate_glot_alias(
     exp = maybe_parse(expr, dialect=None, copy=True)
     alias = generate_identifier(alias, quoted=quoted)
 
-    # Part of this code is ommitted because por this particular case the table
+    # Part of this code is omitted because for this particular case the table
     # argument is not provided and not needed. The omitted code handles
     # the case where a table argument is provided to set column aliases.
     # if table: ...
 
-    # We don't set the "alias" arg for Window expressions, because that would add an IDENTIFIER node in
-    # the AST, representing a "named_window" [1] construct (eg. bigquery). What we want is an ALIAS node
-    # for the complete Window expression.
-    #
+    # We don't set the "alias" arg for Window expressions, because that would
+    # add an IDENTIFIER node in the AST, representing a "named_window" [1]
+    # construct (eg. bigquery). What we want is an ALIAS node for the complete
+    # Window expression.
     # [1]: https://cloud.google.com/bigquery/docs/reference/standard-sql/window-function-calls
 
     if "alias" in exp.arg_types and not isinstance(exp, Window):
@@ -137,7 +123,9 @@ def generate_identifier(name, quoted=None, copy=True):
     elif isinstance(name, str):
         identifier = Identifier(
             this=name,
-            # originally was:
+            # PYDOUGH CHANGE: not checking SAFE_IDENTIFIER_RE and just using the
+            # quoted arg because PyDough is handling reserved words in metadata
+            # validation. Originally was:
             # quoted=not SAFE_IDENTIFIER_RE.match(name) if quoted is None else quoted,
             quoted=quoted if quoted is not None else False,
         )
@@ -161,3 +149,37 @@ def unwrap_alias(expr: SQLGlotExpression) -> SQLGlotExpression:
         The unwrapped expression.
     """
     return expr.this if isinstance(expr, SQLGlotAlias) else expr
+
+
+def normalize_column_name(column_name: str) -> tuple[bool, str]:
+    """
+    Strip one layer of surrounding quotes or backticks from the column
+    name. Also, deletes the escaped quotes inside the name because sqlglot takes
+    care of re-escaping them when generating SQL.
+    For example: ""column name"" -> "column name"
+    Finally marks the name as requiring quoting in the generated SQL.
+    Example:
+        ""column name"" -> "column name"
+        ``col`` -> `col`
+        "simple" -> simple
+    Args:
+        `column_name`: The column name to normalize.
+    Returns:
+        A boolean indicating whether the name is quoted, and the normalized
+        column name.
+    """
+    quoted: bool = False
+    if column_name.startswith('"') and column_name.endswith('"'):
+        # This gets rid of the surrounding quotes and unescapes internal quotes
+        column_name = column_name[1:-1].replace('""', '"')
+        # Mark that the name needs to be quoted
+        quoted = True
+
+    elif column_name.startswith("`") and column_name.endswith("`"):
+        # This gets rid of the surrounding backticks and unescapes internal
+        # backticks
+        column_name = column_name[1:-1].replace("``", "`")
+        # Mark that the name needs to be quoted
+        quoted = True
+
+    return quoted, column_name

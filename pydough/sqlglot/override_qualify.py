@@ -209,11 +209,12 @@ def qualify_tables(
                     if pivots and pivots[0].alias == name:
                         name = source.name
 
-                    # CHANGE: preserve quoting of original table name
+                    # PYDOUGH CHANGE: preserve quoting from the original table name
                     # Example: keywords."CAST" should become keywords."CAST" AS "CAST"
                     quoted = source.this.quoted
 
                     # Mutates the source by attaching an alias to it
+                    # PYDOUGH CHANGE: pass along quoting information
                     alias(
                         source,
                         name or source.name or next_alias_name(),

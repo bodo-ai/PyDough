@@ -31,7 +31,7 @@ from pydough.relational import (
 )
 from pydough.types import PyDoughType
 
-from .sqlglot_helpers import set_glot_alias
+from .sqlglot_helpers import normalize_column_name, set_glot_alias
 from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
 if TYPE_CHECKING:
@@ -374,24 +374,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         """
         assert column_reference.name is not None
         column_name: str = column_reference.name
-        quoted: bool = False
-
-        if (column_name.startswith('"') and column_name.endswith('"')) or (
-            column_name.startswith("`") and column_name.endswith("`")
-        ):
-            # Strip one layer of surrounding quotes or backticks from the column
-            # name. For example: ""column name"" -> "column name"
-            #
-            # This ensures that the internal representation does not include
-            # redundant quote characters, while marking the name as requiring
-            # quoting in the generated SQL.
-            column_name = column_name[1:-1]
-            # Deteles the escaped quotes inside the name because sqlglot takes
-            # care of re-escaping them when generating SQL.
-            column_name = column_name.replace('""', '"')
-            column_name = column_name.replace("``", "`")
-            # Quoted because the final sql should have quotes around it.
-            quoted = True
+        quoted, column_name = normalize_column_name(column_name)
 
         column_ident: Column = Identifier(this=column_name, quoted=quoted)
 
