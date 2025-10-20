@@ -2443,7 +2443,6 @@ def impl_defog_academic_gen1():
     selected_domains = author_publications.publication.publication_domains.WHERE(
         ISIN(domain.name, ("Data Science", "Machine Learning"))
     )
-
     return authors.WHERE(NDISTINCT(selected_domains.domain_id) == 2).CALCULATE(name)
 
 
@@ -2455,7 +2454,6 @@ def impl_defog_academic_gen2():
     What is the total number of citations received by each author?
     """
     publications_selected = author_publications.publication
-
     return authors.WHERE(HAS(publications_selected)).CALCULATE(
         name, total_citations=SUM(publications_selected.citation_num)
     )

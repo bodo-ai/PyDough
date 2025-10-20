@@ -3443,7 +3443,7 @@
           }
         ],
         "description": "Contains details about the authors, including their id, name, homepage, and organization id.",
-        "synonyms": []
+        "synonyms": ["writer", "researcher"]
       },
       {
         "name": "citations",
@@ -3461,7 +3461,7 @@
             "data type": "numeric",
             "description": "The id of the publication being referenced or cited.",
             "sample values": [1, 2, 4],
-            "synonyms": []
+            "synonyms": ["reference"]
           },
           {
             "name": "citing",
@@ -3470,11 +3470,11 @@
             "data type": "numeric",
             "description": "The id of the publication that is doing the referencing (the source paper that contains the citation).",
             "sample values": [1, 2, 3],
-            "synonyms": []
+            "synonyms": ["source paper"]
           }
         ],
         "description": "Records of citation relationships between publications.",
-        "synonyms": []
+        "synonyms": ["citation records", "references"]
       },
       {
         "name": "conferences",
@@ -3509,7 +3509,7 @@
             "data type": "string",
             "description": "The full name or abbreviation of the conference.",
             "sample values": ["ISA", "ICML"],
-            "synonyms": []
+            "synonyms": ["conference name", "abbreviation"]
           }
         ],
         "description": "Contains details about academic conferences.",
@@ -3530,7 +3530,7 @@
             "data type": "numeric",
             "description": "Unique identifier for the academic domain or field.",
             "sample values": [1, 3, 5],
-            "synonyms": []
+            "synonyms": ["identification", "domain key"]
           },
           {
             "name": "name",
@@ -3561,7 +3561,7 @@
             "data type": "numeric",
             "description": "The id of the author related to this domain",
             "sample values": [1, 3, 5],
-            "synonyms": []
+            "synonyms": ["author key" ]
           },
           {
             "name": "domain_id",
@@ -3570,11 +3570,11 @@
             "data type": "numeric",
             "description": "The id of the domain related to the author",
             "sample values": [1, 3, 5],
-            "synonyms": []
+            "synonyms": ["domain key"]
           }
         ],
         "description": "The records of each author being associated with domains",
-        "synonyms": []
+        "synonyms": ["author field", "author subject"]
       },
       {
         "name": "domains_conferences",
@@ -3592,7 +3592,7 @@
             "data type": "numeric",
             "description": "The id for the conference related to this domain",
             "sample values": [1, 2, 3],
-            "synonyms": []
+            "synonyms": ["conference key"]
           },
           {
             "name": "domain_id",
@@ -3601,7 +3601,7 @@
             "data type": "numeric",
             "description": "The id for the domain related to the conference.",
             "sample values": [2, 4, 5],
-            "synonyms": []
+            "synonyms": ["domain key"]
           }
         ],
         "description": "Describes the domains related to the different conferences",
@@ -3623,7 +3623,7 @@
             "data type": "numeric",
             "description": "The id of the domain realated to this journal",
             "sample values": [1,2,5],
-            "synonyms": []
+            "synonyms": ["domain key"]
           },
           {
             "name": "journal_id",
@@ -3632,7 +3632,7 @@
             "data type": "numeric",
             "description": "The id of the jornal that published about this domain",
             "sample values": [2, 3, 4],
-            "synonyms": []
+            "synonyms": ["journal id", "journal key"]
           }
         ],
         "description": "Records of domains being used by a journal",
@@ -3654,7 +3654,7 @@
             "data type": "numeric",
             "description": "The id of the domain which is related to this keyword",
             "sample values": [1, 2],
-            "synonyms": []
+            "synonyms": ["domain key"]
           },
           {
             "name": "keyword_id",
@@ -3663,7 +3663,7 @@
             "data type": "numeric",
             "description": "The id of the keyword used or connected to this domain or field",
             "sample values": [2, 3],
-            "synonyms": []
+            "synonyms": ["keyword key"]
           }
         ],
         "description": "Contains records of keywords that is related to a domain",
@@ -3682,7 +3682,7 @@
             "data type": "numeric",
             "description": "The id of the domain related to this publication",
             "sample values": [1, 2, 3],
-            "synonyms": []
+            "synonyms": ["domain key"]
           },
           {
             "name": "publication_id",
@@ -3691,7 +3691,7 @@
             "data type": "numeric",
             "description": "The id of the publication about this domain",
             "sample values": [2, 4, 5],
-            "synonyms": []
+            "synonyms": ["publication key"]
           }
         ],
         "description": "Records of the publication and its related domain or field",
@@ -3730,7 +3730,7 @@
             "data type": "string",
             "description": "The name of the journal",
             "sample values": ["Nature", "Journal of Machine Learning Research"],
-            "synonyms": []
+            "synonyms": ["journal title", "journal name"]
           }
         ],
         "description": "Contains details about the journals",
@@ -3751,7 +3751,7 @@
             "data type": "string",
             "description": "The keyword itself",
             "sample values": ["Neuroscience", "AI"],
-            "synonyms": []
+            "synonyms": ["topic", "subject"]
           },
           {
             "name": "keyword_id",
@@ -3764,7 +3764,7 @@
           }
         ],
         "description": "Collection of keywords used in publications and domains",
-        "synonyms": []
+        "synonyms": ["keyword collection", "topics"]
       },
       {
         "name": "organizations",
@@ -3838,7 +3838,7 @@
             "data type": "numeric",
             "description": "The id of the conference related to this publication",
             "sample values": [1, 2, 3],
-            "synonyms": []
+            "synonyms": ["presented at conference"]
           },
           {
             "name": "citation_num",
@@ -3847,7 +3847,7 @@
             "data type": "numeric",
             "description": "The number of times this publication was cited",
             "sample values": [4, 2, 0],
-            "synonyms": []
+            "synonyms": ["number of citations"]
           },
           {
             "name": "journal_id",
@@ -3856,16 +3856,16 @@
             "data type": "numeric",
             "description": "The id of the journal that publish this publication",
             "sample values": [1, 2, 4],
-            "synonyms": []
+            "synonyms": ["journal id", "journal key"]
           },
           {
             "name": "publication_id",
             "type": "table column",
             "column name": "pid",
             "data type": "numeric",
-            "description": "The unique idetifier for the publication",
+            "description": "The unique identifier for the publication",
             "sample values": [1, 2, 5],
-            "synonyms": []
+            "synonyms": ["publication id"]
           },
           {
             "name": "reference_num",
@@ -3874,7 +3874,7 @@
             "data type": "numeric",
             "description": "The total number of external references made by this publication.",
             "sample values": [0, 1, 4],
-            "synonyms": []
+            "synonyms": ["number of references"]
           },
           {
             "name": "title",
@@ -3883,7 +3883,7 @@
             "data type": "string",
             "description": "The title of the paper or article.",
             "sample values": ["Attention is all you need", "Optimizing GPU Throughput"],
-            "synonyms": []
+            "synonyms": ["paper title", "article title"]
           },
           {
             "name": "year",
@@ -3892,11 +3892,11 @@
             "data type": "numeric",
             "description": "The year when the publication was published",
             "sample values": [2021, 2020],
-            "synonyms": []
+            "synonyms": ["year of publication"]
           }
         ],
         "description": "Stores core information about academic papers, articles, or other publications.",
-        "synonyms": []
+        "synonyms": ["articles", "papers"]
       },
       {
         "name": "publications_keywords",
@@ -3911,7 +3911,7 @@
             "data type": "numeric",
             "description": "The id of the publication related to the keyword",
             "sample values": [1, 2],
-            "synonyms": []
+            "synonyms": ["publication key"]
           },
           {
             "name": "keyword_id",
@@ -3920,11 +3920,11 @@
             "data type": "numeric",
             "description": "The id of the keyword used in the publication",
             "sample values": [2, 3],
-            "synonyms": []
+            "synonyms": ["keyword id"]
           }
         ],
         "description": "Records of keyword used in publication",
-        "synonyms": []
+        "synonyms": ["keyword usage"]
       },
       {
         "name": "writes",
@@ -3939,7 +3939,7 @@
             "data type": "numeric",
             "description": "The author or co-author of the publication",
             "sample values": [1, 2, 3],
-            "synonyms": []
+            "synonyms": ["author", "co-author"]
           },
           {
             "name": "publication_id",
@@ -3948,11 +3948,11 @@
             "data type": "numeric",
             "description": "The publication related to the author",
             "sample values": [1, 2, 3],
-            "synonyms": []
+            "synonyms": ["publication key"]
           }
         ],
         "description": "Records of authors and its publications",
-        "synonyms": []
+        "synonyms": ["publication authors", "authorship"]
       }
     ],
     "relationships": [
@@ -3969,7 +3969,7 @@
           ]
         },
         "description": "All authors that belongs to this organization",
-        "synonyms": []
+        "synonyms": ["authors of the organization"]
       },
       {
         "type": "reverse",
@@ -3978,8 +3978,8 @@
         "original property": "authors",
         "singular": true,
         "always matches": false,
-        "description": "The oranization that the author belongs to",
-        "synonyms": []
+        "description": "The organization that the author belongs to",
+        "synonyms": ["organization of the author"]
       },
       {
         "type": "simple join",
@@ -3994,7 +3994,7 @@
           ]
         },
         "description": "All the citations this publication contains",
-        "synonyms": []
+        "synonyms": ["references made", "outgoing citations", "cited works"]
       },
       {
         "type": "reverse",
@@ -4004,7 +4004,7 @@
         "singular": true,
         "always matches": true,
         "description": "The publication citing",
-        "synonyms": []
+        "synonyms": ["citing publication", "source publication"]
       },
       {
         "type": "simple join",
@@ -4019,7 +4019,7 @@
           ]
         },
         "description": "All citations of the publication",
-        "synonyms": []
+        "synonyms": ["incoming citations", "referenced by", "cited by publications"]
       },
       {
         "type": "reverse",
@@ -4029,7 +4029,7 @@
         "singular": true,
         "always matches": true,
         "description": "The publication cited",
-        "synonyms": []
+        "synonyms": ["referenced publication", "cited work"]
       },
       {
         "type": "simple join",
@@ -4044,7 +4044,7 @@
           ]
         },
         "description": "The id of the authors related to the domain",
-        "synonyms": []
+        "synonyms": ["authors in domain", "domain's authors"]
       },
       {
         "type": "reverse",
@@ -4054,7 +4054,7 @@
         "singular": true,
         "always matches": true,
         "description": "The domain related to the author id",
-        "synonyms": []
+        "synonyms": ["author's domain", "field of author"]
       },
       {
         "type": "simple join",
@@ -4069,7 +4069,7 @@
           ]
         },
         "description": "The domains id for this author",
-        "synonyms": []
+        "synonyms": ["fields of author", "author's domains"]
       },
       {
         "type": "reverse",
@@ -4079,7 +4079,7 @@
         "singular": true,
         "always matches": true,
         "description": "The author related to this domain_author",
-        "synonyms": []
+        "synonyms": ["domain's author", "field researcher"]
       },
       {
         "type": "simple join",
@@ -4094,7 +4094,7 @@
           ]
         },
         "description": "The domain_conferences related to the domain",
-        "synonyms": []
+        "synonyms": ["conferences in domain", "domain's conferences"]
       },
       {
         "type": "reverse",
@@ -4104,7 +4104,7 @@
         "singular": true,
         "always matches": true,
         "description": "The domain related to the domain_conference",
-        "synonyms": []
+        "synonyms": ["conference's domain", "field of conference"]
       },
       {
         "type": "simple join",
@@ -4119,7 +4119,7 @@
           ]
         },
         "description": "The domain_conference related to the conference",
-        "synonyms": []
+        "synonyms": ["conference fields", "conference domains"]
       },
       {
         "type": "reverse",
@@ -4129,7 +4129,7 @@
         "singular": true,
         "always matches": true,
         "description": "The conference related to the domain_conference",
-        "synonyms": []
+        "synonyms": ["domain's conference", "field conference"]
       },
       {
         "type": "simple join",
@@ -4144,7 +4144,7 @@
           ]
         },
         "description": "The domains_journal related to the journal",
-        "synonyms": []
+        "synonyms": ["journal fields", "journal domains"]
       },
       {
         "type": "reverse",
@@ -4154,7 +4154,7 @@
         "singular": true,
         "always matches": true,
         "description": "The journal related to the domain_journal",
-        "synonyms": []
+        "synonyms": ["domain's journal", "field journal"]
       },
       {
         "type": "simple join",
@@ -4169,7 +4169,7 @@
           ]
         },
         "description": "The domain_journal related to the domain",
-        "synonyms": []
+        "synonyms": ["journals in domain", "domain's journals"]
       },
       {
         "type": "reverse",
@@ -4179,7 +4179,7 @@
         "singular": true,
         "always matches": true,
         "description": "The domain linked with the domain_journal",
-        "synonyms": []
+        "synonyms": ["journal's domain", "field of journal"]
       },
       {
         "type": "simple join",
@@ -4194,7 +4194,7 @@
           ]
         },
         "description": "The domain_keywords related to the keyword",
-        "synonyms": []
+        "synonyms": ["keyword fields", "domains for keyword"]
       },
       {
         "type": "reverse",
@@ -4204,7 +4204,7 @@
         "singular": true,
         "always matches": true,
         "description": "The keyword related to the domain_keyword",
-        "synonyms": []
+        "synonyms": ["domain's keyword", "field keyword"]
       },
       {
         "type": "simple join",
@@ -4219,7 +4219,7 @@
           ]
         },
         "description": "The domain_keywords related to the domain",
-        "synonyms": []
+        "synonyms": ["keywords in domain", "domain's keywords"]
       },
       {
         "type": "reverse",
@@ -4229,7 +4229,7 @@
         "singular": true,
         "always matches": true,
         "description": "The keyword linked to the domain_keyword",
-        "synonyms": []
+        "synonyms": ["keyword's domain", "field for keyword"]
       },
       {
         "type": "simple join",
@@ -4244,7 +4244,7 @@
           ]
         },
         "description": "The domain_publications related to the publication",
-        "synonyms": []
+        "synonyms": ["fields of publication", "publication domains"]
       },
       {
         "type": "reverse",
@@ -4254,7 +4254,7 @@
         "singular": true,
         "always matches": true,
         "description": "The publication related to the domain_publication",
-        "synonyms": []
+        "synonyms": ["domain's publication", "field publication"]
       },
       {
         "type": "simple join",
@@ -4269,7 +4269,7 @@
           ]
         },
         "description": "The domain_publications related to the domain",
-        "synonyms": []
+        "synonyms": ["publications in domain", "domain's publications"]
       },
       {
         "type": "reverse",
@@ -4279,7 +4279,7 @@
         "singular": true,
         "always matches": true,
         "description": "The domain related to the domain_publication",
-        "synonyms": []
+        "synonyms": ["publication's domain", "field for publication"]
       },
       {
         "type": "simple join",
@@ -4294,7 +4294,7 @@
           ]
         },
         "description": "The publications related to the journal",
-        "synonyms": []
+        "synonyms": ["journal publications", "journal articles"]
       },
       {
         "type": "reverse",
@@ -4304,7 +4304,7 @@
         "singular": true,
         "always matches": true,
         "description": "The journal the published the publication",
-        "synonyms": []
+        "synonyms": ["publication's journal", "article publisher"]
       },
       {
         "type": "simple join",
@@ -4319,7 +4319,7 @@
           ]
         },
         "description": "The publications presented in the conference",
-        "synonyms": []
+        "synonyms": ["conference papers", "conference proceedings"]
       },
       {
         "type": "reverse",
@@ -4329,7 +4329,7 @@
         "singular": true,
         "always matches": false,
         "description": "The conference where the publication was presented",
-        "synonyms": []
+        "synonyms": ["publication's conference", "presenting conference"]
       },
       {
         "type": "simple join",
@@ -4344,7 +4344,7 @@
           ]
         },
         "description": "All publication_keywords related to the keyword",
-        "synonyms": []
+        "synonyms": ["publications with keyword", "keyword usage in publications"]
       },
       {
         "type": "reverse",
@@ -4354,7 +4354,7 @@
         "singular": true,
         "always matches": true,
         "description": "The keyword linked to the publication_keyword",
-        "synonyms": []
+        "synonyms": ["publication's keyword", "used keyword"]
       },
       {
         "type": "simple join",
@@ -4369,7 +4369,7 @@
           ]
         },
         "description": "All publication_keywords related to the publication",
-        "synonyms": []
+        "synonyms": ["keywords in publication", "publication's keywords"]
       },
       {
         "type": "reverse",
@@ -4379,7 +4379,7 @@
         "singular": true,
         "always matches": true,
         "description": "The publication linked to the publication_keyword",
-        "synonyms": []
+        "synonyms": ["keyword's publication", "keyworded publication"]
       },
       {
         "type": "simple join",
@@ -4394,7 +4394,7 @@
           ]
         },
         "description": "All authors id related to the publication",
-        "synonyms": []
+        "synonyms": ["authors of publication", "publication's authors"]
       },
       {
         "type": "reverse",
@@ -4404,7 +4404,7 @@
         "singular": true,
         "always matches": true,
         "description": "The publication linked to the writes",
-        "synonyms": []
+        "synonyms": ["author's publication", "written publication"]
       },
       {
         "type": "simple join",
@@ -4419,7 +4419,7 @@
           ]
         },
         "description": "The publications' id of the write related to the author",
-        "synonyms": []
+        "synonyms": ["publications by author", "author's works"]
       },
       {
         "type": "reverse",
@@ -4429,7 +4429,7 @@
         "singular": true,
         "always matches": true,
         "description": "The author related to the written",
-        "synonyms": []
+        "synonyms": ["publication's author", "work's author"]
       }
     ]
   }
