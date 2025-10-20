@@ -119,7 +119,7 @@ class ValidName(PyDoughPredicate):
             if not obj.isidentifier():
                 ret_val = "identifier"
             # Check that obj is not a Python reserved word or built-in name
-            elif keyword.iskeyword(obj) or hasattr(builtins, obj):
+            elif self._is_python_keyword(obj):
                 ret_val = "python_keyword"
             # Check that obj is not a PyDough reserved word
             elif self._is_pydough_keyword(obj):
@@ -128,6 +128,18 @@ class ValidName(PyDoughPredicate):
             ret_val = "identifier"
 
         return ret_val
+
+    def _is_python_keyword(self, name: str) -> bool:
+        # Set of special python keywords not in keyword module or builtins set
+        SPECIAL_RESERVED: set[str] = {
+            "builtins",
+            "__builtins__",
+        }
+        return (
+            keyword.iskeyword(name)
+            or hasattr(builtins, name)
+            or (name in SPECIAL_RESERVED)
+        )
 
     def _is_pydough_keyword(self, name: str) -> bool:
         """
@@ -148,7 +160,18 @@ class ValidName(PyDoughPredicate):
             "BEST",
             "CROSS",
         }
-        return (name in PYDOUGH_RESERVED) or (name in builtin_registered_operators())
+
+        # Set of special reserved words from the local and global scope
+        SPECIAL_RESERVED: set[str] = {
+            "_graph",
+            "UnqualifiedRoot",
+            "_ROOT",
+        }
+        return (
+            (name in PYDOUGH_RESERVED)
+            or (name in builtin_registered_operators())
+            or (name in SPECIAL_RESERVED)
+        )
 
     def accept(self, obj: object) -> bool:
         return self._error_code(obj) is None
@@ -330,12 +353,12 @@ class ValidSQLName(PyDoughPredicate):
         "select", "from", "where", "group", "having", "distinct", "as", 
         "join", "inner", "union", "intersect", "except", "order",
         "limit", "with", "range", "window", "pivot", "unpivot", "fetch",
-        "cross", "outer", "full", 
+        "cross", "outer", "full", "count",
 
         # DDL & schema
         "create", "alter", "drop", "table", "view", "index", "sequence",
         "trigger", "schema", "database", "column", "constraint",
-        "partition"
+        "partition",
 
         # DML
         "insert", "update", "delete", "into", "values", "set",
