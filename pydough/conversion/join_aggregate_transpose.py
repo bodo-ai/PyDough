@@ -33,7 +33,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
     """
 
     left_join_case_ops = {
-        # pydop.COUNT,
+        pydop.COUNT,
         pydop.MIN,
         pydop.MAX,
         pydop.SUM,

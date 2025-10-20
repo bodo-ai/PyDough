@@ -1,24 +1,22 @@
 WITH _s1 AS (
   SELECT
-    EXTRACT(MONTH FROM CAST(sbtxdatetime AS TIMESTAMP)) AS month_sbtxdatetime,
-    EXTRACT(YEAR FROM CAST(sbtxdatetime AS TIMESTAMP)) AS year_sbtxdatetime,
     sbtxcustid,
-    COUNT(*) AS n_rows
+    sbtxdatetime
   FROM main.sbtransaction
-  GROUP BY
-    1,
-    2,
-    3
 )
 SELECT
-  sbcustomer.sbcustid AS _id,
-  sbcustomer.sbcustname AS name,
-  COALESCE(_s1.n_rows, 0) AS num_transactions
+  _s1.sbtxcustid AS _id,
+  MAX(sbcustomer.sbcustname) AS name,
+  COUNT(*) AS num_transactions
 FROM main.sbcustomer AS sbcustomer
 LEFT JOIN _s1 AS _s1
-  ON _s1.month_sbtxdatetime = EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
+  ON EXTRACT(MONTH FROM CAST(_s1.sbtxdatetime AS TIMESTAMP)) = EXTRACT(MONTH FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
+  AND EXTRACT(YEAR FROM CAST(_s1.sbtxdatetime AS TIMESTAMP)) = EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
   AND _s1.sbtxcustid = sbcustomer.sbcustid
-  AND _s1.year_sbtxdatetime = EXTRACT(YEAR FROM CAST(sbcustomer.sbcustjoindate AS TIMESTAMP))
+GROUP BY
+  EXTRACT(MONTH FROM CAST(_s1.sbtxdatetime AS TIMESTAMP)),
+  EXTRACT(YEAR FROM CAST(_s1.sbtxdatetime AS TIMESTAMP)),
+  1
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 1

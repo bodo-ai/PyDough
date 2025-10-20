@@ -36,23 +36,23 @@ WITH _t2 AS (
     ON _s5.in_device_id = devices.de_id
   GROUP BY
     1
-), _s11 AS (
+), _t5 AS (
   SELECT
-    in_device_id,
+    MAX(users.us_country_id) AS anything_us_country_id,
     COUNT(*) AS n_rows
-  FROM _t2
-  GROUP BY
-    1
-), _s13 AS (
-  SELECT
-    users.us_country_id,
-    COUNT(*) AS n_rows,
-    SUM(_s11.n_rows) AS sum_n_rows
   FROM main.users AS users
   JOIN main.devices AS devices
     ON devices.de_owner_id = users.us_id
-  LEFT JOIN _s11 AS _s11
+  LEFT JOIN _t2 AS _s11
     ON _s11.in_device_id = devices.de_id
+  GROUP BY
+    _s11.in_device_id
+), _s13 AS (
+  SELECT
+    anything_us_country_id,
+    COUNT(*) AS n_rows,
+    SUM(n_rows) AS sum_n_rows
+  FROM _t5
   GROUP BY
     1
 )
@@ -67,6 +67,6 @@ JOIN _s3 AS _s3
 JOIN _s7 AS _s7
   ON _s7.de_purchase_country_id = countries.co_id
 LEFT JOIN _s13 AS _s13
-  ON _s13.us_country_id = countries.co_id
+  ON _s13.anything_us_country_id = countries.co_id
 ORDER BY
   1
