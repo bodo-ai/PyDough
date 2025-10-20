@@ -32,6 +32,23 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
     TODO
     """
 
+    left_join_case_ops = {
+        # pydop.COUNT,
+        pydop.MIN,
+        pydop.MAX,
+        pydop.SUM,
+        pydop.ANYTHING,
+        pydop.MEDIAN,
+        pydop.QUANTILE,
+        pydop.SAMPLE_VAR,
+        pydop.SAMPLE_STD,
+        pydop.POPULATION_VAR,
+        pydop.POPULATION_STD,
+    }
+    """
+    TODO: add description
+    """
+
     def __init__(self):
         self.finder: ColumnReferenceFinder = ColumnReferenceFinder()
 
@@ -102,6 +119,15 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             join.cardinality if is_left else join.reverse_cardinality
         )
 
+        left_join_case = (
+            join.join_type == JoinType.LEFT
+            and not is_left
+            and all(
+                agg.op in JoinAggregateTransposeShuttle.left_join_case_ops
+                for agg in aggregate.aggregations.values()
+            )
+        )
+
         # Verify the cardinality meets the specified criteria, and that the join
         # type is INNER/SEMI (since LEFT would not be filtering), where SEMI is
         # only allowed if the aggregation is on the left.
@@ -109,6 +135,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             (
                 (join.join_type == JoinType.INNER)
                 or (join.join_type == JoinType.SEMI and is_left)
+                or left_join_case
             )
             and cardinality.filters
             and cardinality.singular

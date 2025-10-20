@@ -1,4 +1,4 @@
-WITH _t1 AS (
+WITH _t2 AS (
   SELECT
     car_id
   FROM main.inventory_snapshots
@@ -8,19 +8,19 @@ WITH _t1 AS (
 ), _s3 AS (
   SELECT
     car_id,
-    MAX(sale_price) AS max_sale_price
+    sale_price
   FROM main.sales
-  GROUP BY
-    1
 )
 SELECT
-  cars.make,
-  cars.model,
-  _s3.max_sale_price AS highest_sale_price
+  ANY_VALUE(cars.make) AS make,
+  ANY_VALUE(cars.model) AS model,
+  MAX(_s3.sale_price) AS highest_sale_price
 FROM main.cars AS cars
-JOIN _t1 AS _t1
-  ON _t1.car_id = cars._id
+JOIN _t2 AS _t2
+  ON _t2.car_id = cars._id
 LEFT JOIN _s3 AS _s3
   ON _s3.car_id = cars._id
+GROUP BY
+  _s3.car_id
 ORDER BY
   3 DESC NULLS LAST
