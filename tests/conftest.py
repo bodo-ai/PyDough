@@ -210,6 +210,7 @@ def get_test_graph_by_name() -> graph_fetcher:
         "synthea": "synthea_graph.json",
         "world_development_indicators": "world_development_indicators_graph.json",
         "keywords": "reserved_words_graph.json",
+        "keywords_case_insensitive": "reserved_words_graph.json",
     }
 
     @cache

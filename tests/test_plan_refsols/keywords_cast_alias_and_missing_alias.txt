@@ -3,6 +3,6 @@ ROOT(columns=[('id1', ID2), ('id2', ID), ('fk1_select', `select`), ('fk1_as', `a
   JOIN(condition=t0.ID2 == t1.id, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ID': t0.ID, 'ID2': t0.ID2, '`as`': t1.`as`, '`select`': t1.`select`})
    SCAN(table=keywords."CAST", columns={'ID': ID, 'ID2': ID2})
    FILTER(condition=`0 = 0 and '` == '2 "0 = 0 and \'" field name':string, columns={'`as`': `as`, '`select`': `select`, 'id': id})
-    SCAN(table=keywords.lowercase_detail, columns={"`0 = 0 and '`": `0 = 0 and '`, '`as`': `as`, '`select`': `select`, 'id': id})
+    SCAN(table=keywords."lowercase_detail", columns={"`0 = 0 and '`": `0 = 0 and '`, '`as`': `as`, '`select`': `select`, 'id': id})
   FILTER(condition=id == 1:numeric, columns={'`two words`': `two words`, 'id': id})
-   SCAN(table=keywords.lowercase_detail, columns={'`two words`': `two words`, 'id': id})
+   SCAN(table=keywords."lowercase_detail", columns={'`two words`': `two words`, 'id': id})

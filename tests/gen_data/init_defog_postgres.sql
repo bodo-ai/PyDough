@@ -1058,3 +1058,337 @@ VALUES
 (13, 12, 'Vitamin D', '2022-12-01', NULL, 1000, 'IU', 24),
 (14, 13, 'Acetaminophen', '2023-01-08', '2023-01-14', 500, 'mg', 6),
 (15, 14, 'Hydrocortisone cream', '2023-02-25', '2023-03-07', 10, 'g', 12);
+
+CREATE SCHEMA IF NOT EXISTS keywords;
+
+DROP TABLE IF EXISTS keywords."UPPERCASE_MASTER" CASCADE;
+CREATE TABLE keywords."UPPERCASE_MASTER"(
+  ID BIGINT NOT NULL PRIMARY KEY,
+  NAME VARCHAR(30) NOT NULL,
+  "CAST" VARCHAR(30),
+  "WHERE" VARCHAR(30),
+  "FROM" VARCHAR(30),
+  "VARCHAR" VARCHAR(30),
+  "INTEGER" VARCHAR(30),
+  "TWO WORDS" VARCHAR(30),
+  "ORDER BY" VARCHAR(30)
+);
+
+DROP TABLE IF EXISTS keywords.lowercase_detail CASCADE;
+CREATE TABLE keywords.lowercase_detail (
+  id BIGINT NOT NULL PRIMARY KEY,
+  master_id BIGINT NOT NULL,
+  "two words" VARCHAR(30),
+  "select" VARCHAR(30),
+  "as" VARCHAR(30),
+  "0 = 0 and '" VARCHAR(30),
+  result NUMERIC(10,2),
+  is_active smallint,
+  CONSTRAINT lowercase_to_UPPERCASE FOREIGN KEY (master_id) REFERENCES keywords."UPPERCASE_MASTER"(ID)
+);
+
+DROP TABLE IF EXISTS keywords."MixedCase_1:1" CASCADE;
+CREATE TABLE keywords."MixedCase_1:1" (
+  "Id" BIGINT NOT NULL PRIMARY KEY,
+  "(parentheses)" VARCHAR(30),
+  "In" smallint,
+  "LowerCaseId" BIGINT NOT NULL,
+  CONSTRAINT "MixedCase_1:1_to_UPPERCASE" FOREIGN KEY ("Id") REFERENCES keywords."UPPERCASE_MASTER"(ID),
+  CONSTRAINT "MixedCase_1:1_to_lowercase_detail" FOREIGN KEY ("LowerCaseId") REFERENCES keywords.lowercase_detail(id)
+);
+
+DROP TABLE IF EXISTS keywords."CAST" CASCADE;
+CREATE TABLE keywords."CAST" (
+  PK_FIELD_NAME BIGINT NOT NULL PRIMARY KEY,
+  ID BIGINT NOT NULL,
+  ID2 BIGINT,
+  is_active smallint,
+  types VARCHAR(30),
+  CONSTRAINT CAST_to_lowercase_detail1 FOREIGN KEY (ID) REFERENCES keywords.lowercase_detail(id),
+  CONSTRAINT CAST_to_lowercase_detail2 FOREIGN KEY (ID2) REFERENCES keywords.lowercase_detail(id)
+);
+
+DROP TABLE IF EXISTS keywords."""QUOTED TABLE_NAME""" CASCADE;
+CREATE TABLE keywords."""QUOTED TABLE_NAME""" (
+  ID BIGINT NOT NULL PRIMARY KEY,
+  "`cast`" BIGINT NOT NULL,
+  "= ""QUOTE""" BIGINT NOT NULL,
+  "`name""[" BIGINT NOT NULL,
+  description VARCHAR(30),
+  CONSTRAINT QUOTED_UNIQUE UNIQUE ("`cast`"),
+  CONSTRAINT QUOTED_to_UPPERCASE_MASTER FOREIGN KEY ("`cast`") REFERENCES keywords."UPPERCASE_MASTER"(ID),
+  CONSTRAINT QUOTED_to_lowercase_detail1 FOREIGN KEY ("= ""QUOTE""") REFERENCES keywords.lowercase_detail(id),
+  CONSTRAINT QUOTED_to_lowercase_detail2 FOREIGN KEY ("`name""[") REFERENCES keywords.lowercase_detail(id)
+);
+
+DROP TABLE IF EXISTS keywords.CALCULATE CASCADE;
+CREATE TABLE keywords.CALCULATE (
+  ".WHERE" BIGINT NOT NULL PRIMARY KEY,
+  "LOWER" INTEGER,
+  "UPPER" INTEGER,
+  "LENGTH" INTEGER,
+  "STARTSWITH" INTEGER,
+  "ENDSWITH" INTEGER,
+  "CONTAINS" INTEGER,
+  "LIKE" INTEGER,
+  "JOIN_STRINGS" INTEGER,
+  "LPAD" INTEGER,
+  "RPAD" INTEGER,
+  "FIND" INTEGER,
+  "STRIP" INTEGER,
+  "REPLACE" INTEGER,
+  "STRCOUNT" INTEGER,
+  "GETPART" INTEGER,
+  DATETIME INTEGER,
+  "YEAR" INTEGER,
+  "QUARTER" INTEGER,
+  "MONTH" INTEGER,
+  "DAY" INTEGER,
+  "HOUR" INTEGER,
+  "MINUTE" INTEGER,
+  "SECOND" INTEGER,
+  "DATEDIFF" INTEGER,
+  "DAYOFWEEK" INTEGER,
+  "DAYNAME" INTEGER
+);
+
+DROP TABLE IF EXISTS keywords."WHERE" CASCADE;
+CREATE TABLE keywords."WHERE" (
+  ".CALCULATE" BIGINT NOT NULL PRIMARY KEY,
+  "IFF" INTEGER,
+  "ISIN" INTEGER,
+  DEFAULT_TO INTEGER,
+  PRESENT INTEGER,
+  "ABSENT" INTEGER,
+  "KEEP_IF" INTEGER,
+  "MONOTONIC" INTEGER,
+  ABS INTEGER,
+  "ROUND" INTEGER,
+  "CEIL" INTEGER,
+  "FLOOR" INTEGER,
+  "POWER" INTEGER,
+  "SQRT" INTEGER,
+  "SIGN" INTEGER,
+  "SMALLEST" INTEGER,
+  "LARGEST" INTEGER,
+  "SUM" INTEGER,
+  "AVG" INTEGER,
+  "MEDIAN" INTEGER,
+  "MIN" INTEGER,
+  "MAX" INTEGER,
+  "QUANTILE" INTEGER,
+  "ANYTHING" INTEGER,
+  "COUNT" INTEGER,
+  "NDISTINCT" INTEGER,
+  HAS INTEGER,
+  "HASNOT" INTEGER,
+  "VAR" INTEGER,
+  "STD" INTEGER,
+  CONSTRAINT WHERE_to_CALCULATE FOREIGN KEY (".CALCULATE") REFERENCES keywords.CALCULATE(".WHERE")
+);
+
+DROP TABLE IF EXISTS keywords."PARTITION" CASCADE;
+CREATE TABLE keywords."PARTITION" (
+  "ORDER_BY" BIGINT NOT NULL PRIMARY KEY,
+  "CALCULATE" BIGINT NOT NULL,
+  "WHERE" BIGINT NOT NULL,
+  "TOP_K" INTEGER,
+  "SINGULAR" INTEGER,
+  "BEST" INTEGER,
+  "CROSS" INTEGER,
+  "RANKING" INTEGER,
+  "PERCENTILE" INTEGER,
+  "PREV" INTEGER,
+  "NEXT" INTEGER,
+  "RELSUM" INTEGER,
+  "RELAVG" INTEGER,
+  "RELCOUNT" INTEGER,
+  "RELSIZE" INTEGER,
+  "STRING" INTEGER,
+  "INTEGER" INTEGER,
+  "FLOAT" INTEGER,
+  "NUMERIC" INTEGER,
+  "DECIMAL" INTEGER,
+  "CHAR" INTEGER,
+  "VARCHAR" INTEGER,
+  CONSTRAINT PARTITION_to_CALCULATE FOREIGN KEY ("CALCULATE") REFERENCES keywords.CALCULATE(".WHERE"),
+  CONSTRAINT PARTITION_to_WHERE FOREIGN KEY ("WHERE") REFERENCES keywords."WHERE"(".CALCULATE")
+);
+
+DROP TABLE IF EXISTS keywords."COUNT" CASCADE;
+CREATE TABLE keywords."COUNT" (
+  "this" BIGINT NOT NULL,
+  "class" BIGINT NOT NULL,
+  "import" INTEGER,
+  "def" INTEGER,
+  "%%pydough" INTEGER,
+  "node" INTEGER,
+  """," INTEGER,
+  "." INTEGER,
+  "bool" INTEGER,
+  "__call__" INTEGER,
+  "int" INTEGER,
+  "FLOAT" INTEGER,
+  "__init__" INTEGER,
+  "new" INTEGER,
+  "del" INTEGER,
+  "__col__" INTEGER,
+  "__col1__" INTEGER,
+  "__class__" INTEGER,
+  "str" INTEGER,
+  "dict" INTEGER,
+  "__add__" INTEGER,
+  "__mul__" INTEGER,
+  CONSTRAINT "PK_COUNT" PRIMARY KEY ("this","class"),
+  CONSTRAINT COUNT_to_CAST FOREIGN KEY ("this") REFERENCES keywords."CAST"(PK_FIELD_NAME)
+);
+
+DROP TABLE IF EXISTS keywords.master CASCADE;
+CREATE TABLE keywords.master (
+    id1 INT NOT NULL,
+    id2 INT NOT NULL,
+    alt_key1 INT NOT NULL,
+    alt_key2 INT NOT NULL,
+    description VARCHAR(30),
+    CONSTRAINT PK_master PRIMARY KEY (id1, id2),
+    CONSTRAINT AK_master_1 UNIQUE (alt_key1, alt_key2)
+);
+
+DROP TABLE IF EXISTS keywords.detail1 CASCADE;
+CREATE TABLE keywords.detail1 (
+    "key" INT,
+    id1 INT NOT NULL,
+    id2 INT NOT NULL,
+    description VARCHAR(30),
+    CONSTRAINT PK_detail1 PRIMARY KEY ("key"),
+    CONSTRAINT FK_detail1_to_master FOREIGN KEY (id1, id2) REFERENCES keywords.master(id1, id2),
+    CONSTRAINT AK_detail1_1 UNIQUE (id1, id2)
+);
+
+DROP TABLE IF EXISTS keywords.detail2 CASCADE;
+CREATE TABLE keywords.detail2 (
+    "key" INT,
+    alt_key1 INT NULL,
+    alt_key2 INT NULL,
+    description VARCHAR(30),
+    CONSTRAINT PK_detail2 PRIMARY KEY ("key"),
+    CONSTRAINT FK_detail2_to_master FOREIGN KEY (alt_key1, alt_key2) REFERENCES keywords.master(alt_key1, alt_key2)
+);
+
+INSERT INTO keywords."UPPERCASE_MASTER" (ID, NAME, "CAST", "WHERE", "FROM", "VARCHAR", "INTEGER", "TWO WORDS", "ORDER BY") VALUES
+(1, 'FIRST_RECORD', '1 CAST RESERVED WORD', '1 WHERE RESERVED WORD', '1 FROM RESERVED WORD', '1 VARCHAR RESERVED WORD', '1 INTEGER RESERVED WORD', '1 TWO WORDS FIELD NAME', '1 TWO WORDS RESERVED'),
+(2, 'SECOND_RECORD', '2 CAST RESERVED WORD', '2 WHERE RESERVED WORD', '2 FROM RESERVED WORD', '2 VARCHAR RESERVED WORD', '2 INTEGER RESERVED WORD', '2 TWO WORDS FIELD NAME', '2 TWO WORDS RESERVED'),
+(3, 'THIRD_RECORD', '3 CAST RESERVED WORD', '3 WHERE RESERVED WORD', '3 FROM RESERVED WORD', '3 VARCHAR RESERVED WORD', '3 INTEGER RESERVED WORD', '3 TWO WORDS FIELD NAME', '3 TWO WORDS RESERVED'),
+(4, 'FOURTH_RECORD', '4 CAST RESERVED WORD', '4 WHERE RESERVED WORD', '4 FROM RESERVED WORD', '4 VARCHAR RESERVED WORD', '4 INTEGER RESERVED WORD', '4 TWO WORDS FIELD NAME', '4 TWO WORDS RESERVED'),
+(5, 'FIFTH_RECORD', '5 CAST RESERVED WORD', '5 WHERE RESERVED WORD', '5 FROM RESERVED WORD', '5 VARCHAR RESERVED WORD', '5 INTEGER RESERVED WORD', '5 TWO WORDS FIELD NAME', '5 TWO WORDS RESERVED');
+
+INSERT INTO keywords.lowercase_detail (id, master_id, "two words", "select", "as", "0 = 0 and '", result, is_active) VALUES
+(1, 1, '1 two words field name', '1 select reserved word', '1 as reserved word', '1 "0 = 0 and ''" field name', 1234.56, 1),
+(2, 1, '2 two words field name', '2 select reserved word', '2 as reserved word', '2 "0 = 0 and ''" field name', 2345.67, 1),
+(3, 1, '3 two words field name', '3 select reserved word', '3 as reserved word', '3 "0 = 0 and ''" field name', 3456.78, 1),
+(4, 3, '4 two words field name', '4 select reserved word', '4 as reserved word', '4 "0 = 0 and ''" field name', 456.78, 0),
+(5, 3, '5 two words field name', '5 select reserved word', '5 as reserved word', '5 "0 = 0 and ''" field name', 567.89, 0),
+(6, 3, '6 two words field name', '6 select reserved word', '6 as reserved word', '6 "0 = 0 and ''" field name', 678.90, 0),
+(7, 4, '7 two words field name', '7 select reserved word', '7 as reserved word', '7 "0 = 0 and ''" field name', 789.01, 0),
+(8, 5, '8 two words field name', '8 select reserved word', '8 as reserved word', '8 "0 = 0 and ''" field name', 8910.11, 1),
+(9, 5, '9 two words field name', '9 select reserved word', '9 as reserved word', '9 "0 = 0 and ''" field name', 910.11, 0),
+(10, 5, '10 two words field name', '10 select reserved word', '10 as reserved word', '10 "0 = 0 and ''" field name', 1011.12, 1),
+(11, 5, '11 two words field name', '11 select reserved word', '11 as reserved word', '11 "0 = 0 and ''" field name', 1112.13, 0);
+
+INSERT INTO keywords."MixedCase_1:1" ("Id", "(parentheses)", "In", "LowerCaseId") VALUES
+(1, '1 (parentheses)', 1, 2),
+(2, '2 (parentheses)', 1, 4),
+(3, '3 (parentheses)', 1, 6),
+(4, '4 (parentheses)', 1, 8),
+(5, '5 (parentheses)', 1, 10);
+
+INSERT INTO keywords."CAST" (PK_FIELD_NAME, ID, ID2, is_active, types) VALUES
+(1, 1, 2, 1, '1_types_#438'),
+(2, 2, 4, 0, '2_types_#438'),
+(3, 3, 6, 1, '3_types_#438'),
+(4, 4, 8, 0, '4_types_#438'),
+(5, 5, 10, 1, '5_types_#438'),
+(6, 6, 11, 0, '6_types_#438'),
+(7, 7, 9, 1, '7_types_#438'),
+(8, 8, 7, 0, '8_types_#438'),
+(9, 9, 5, 1, '9_types_#438'),
+(10, 10, 3, 0, '10_types_#438'),
+(11, 11, 1, 1, '11_types_#438'),
+(12, 1, 11, 0, '12_types_#438'),
+(13, 2, 9, 1, '13_types_#438'),
+(14, 3, 7, 0, '14_types_#438'),
+(15, 4, 5, 1, '15_types_#438'),
+(16, 5, 3, 0, '16_types_#438'),
+(17, 6, 1, 1, '17_types_#438'),
+(18, 7, 2, 0, '18_types_#438'),
+(19, 8, 4, 1, '19_types_#438'), 
+(20, 9, 6, 0, '20_types_#438'),
+(21, 10, 8, 1, '21_types_#438'),
+(22, 11, 10, 0, '22_types_#438');
+
+INSERT INTO keywords."""QUOTED TABLE_NAME""" (ID, "`cast`", "= ""QUOTE""", "`name""[", description) VALUES
+(1, 1, 1, 11, 'RECORD 1'),
+(2, 2, 2, 9, 'RECORD 2'),
+(3, 3, 4, 7, 'RECORD 3'),
+(4, 4, 6, 5, 'RECORD 4'),
+(5, 5, 8, 3, 'RECORD 5');
+
+INSERT INTO keywords.CALCULATE (".WHERE", "LOWER", "UPPER", "LENGTH", "STARTSWITH", "ENDSWITH", "CONTAINS", "LIKE", "JOIN_STRINGS", "LPAD", "RPAD", "FIND", "STRIP", "REPLACE", "STRCOUNT", "GETPART", DATETIME, "YEAR", "QUARTER", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND", "DATEDIFF", "DAYOFWEEK", "DAYNAME") VALUES
+(1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+INSERT INTO keywords."WHERE" (".CALCULATE", "IFF", "ISIN", DEFAULT_TO, PRESENT, "ABSENT", "KEEP_IF", "MONOTONIC", ABS, "ROUND", "CEIL", "FLOOR", "POWER", "SQRT", "SIGN", "SMALLEST", "LARGEST", "SUM", "AVG", "MEDIAN", "MIN", "MAX", "QUANTILE", "ANYTHING", "COUNT", "NDISTINCT", HAS, "HASNOT", "VAR", "STD") VALUES
+(1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+INSERT INTO keywords."PARTITION" ("ORDER_BY", "CALCULATE", "WHERE", "TOP_K", "SINGULAR", "BEST", "CROSS", "RANKING", "PERCENTILE", "PREV", "NEXT", "RELSUM", "RELAVG", "RELCOUNT", "RELSIZE", "STRING", "INTEGER", "FLOAT", "NUMERIC", "DECIMAL", "CHAR", "VARCHAR") VALUES
+(1, 2, 5, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 3, 1, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, 4, 2, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, 5, 3, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, 1, 4, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(6, 5, 2, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(7, 4, 1, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(8, 3, 5, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(9, 2, 4, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL),
+(10, 1, 3, 1, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, NULL, NULL, NULL, NULL, NULL, NULL);
+
+INSERT INTO keywords."COUNT" ("this", "class", "import", "def", "%%pydough", "node", """,", ".", "bool", "__call__", "int", "FLOAT", "__init__", "new", "del", "__col__", "__col1__", "__class__", "str", "dict", "__add__", "__mul__") VALUES
+(1, 1, 1011, 2011, 3011, 4011, 5011, 6011, NULL, NULL, 8011, NULL, 7011, NULL, NULL, 10011, 11011, NULL, NULL, 9011, NULL, NULL),
+(2, 1, 1021, 2021, 3021, 4021, 5021, 6021, NULL, NULL, 8021, NULL, 7021, NULL, NULL, 10021, 11021, NULL, NULL, 9021, NULL, NULL),
+(3, 1, 1031, 2031, 3031, 4031, 5031, 6031, NULL, NULL, 8031, NULL, 7031, NULL, NULL, 10031, 11031, NULL, NULL, 9031, NULL, NULL),
+(4, 1, 1041, 2041, 3041, 4041, 5041, 6041, NULL, NULL, 8041, NULL, 7041, NULL, NULL, 10041, 11041, NULL, NULL, 9041, NULL, NULL),
+(5, 1, 1051, 2051, 3051, 4051, 5051, 6051, NULL, NULL, 8051, NULL, 7051, NULL, NULL, 10051, 11051, NULL, NULL, 9051, NULL, NULL),
+(6, 1, 1061, 2061, 3061, 4061, 5061, 6061, NULL, NULL, 8061, NULL, 7061, NULL, NULL, 10061, 11061, NULL, NULL, 9061, NULL, NULL),
+(7, 1, 1071, 2071, 3071, 4071, 5071, 6071, NULL, NULL, 8071, NULL, 7071, NULL, NULL, 10071, 11071, NULL, NULL, 9071, NULL, NULL),
+(8, 1, 1081, 2081, 3081, 4081, 5081, 6081, NULL, NULL, 8081, NULL, 7081, NULL, NULL, 10081, 11081, NULL, NULL, 9081, NULL, NULL),
+(10, 1, 1091, 2091, 3091, 4091, 5091, 6091, NULL, NULL, 8091, NULL, 7091, NULL, NULL, 10091, 11091, NULL, NULL, 9091, NULL, NULL),
+(11, 1, 1101, 2101, 3101, 4101, 5101, 6101, NULL, NULL, 8101, NULL, 7101, NULL, NULL, 10101, 11101, NULL, NULL, 9101, NULL, NULL);
+
+INSERT INTO keywords.master (id1, id2, alt_key1, alt_key2, description) VALUES
+(1, 1, 1, 1, 'One-One master row'),
+(1, 2, 1, 2, 'One-Two master row'),
+(2, 1, 2, 1, 'Two-One master row'),
+(2, 2, 2, 2, 'Two-Two master row'),
+(3, 1, 3, 1, 'Three-One master row');
+
+INSERT INTO keywords.detail1 ("key", id1, id2, description) VALUES 
+(1, 1, 1, '1 One-One AK-PK'),
+(2, 1, 2, '2 One-Two AK-PK'),
+(3, 2, 1, '3 Two-One AK-PK'),
+(4, 3, 1, '4 Three-One AK-PK');
+
+INSERT INTO keywords.detail2 ("key", alt_key1, alt_key2, description) VALUES 
+(1, 1, 1, '1 One-One FK-PK'),
+(2, 1, 2, '2 One-Two FK-PK'),
+(3, 2, 1, '3 Two-One FK-PK'),
+(4, 3, 1, '4 Three-One FK-PK'),
+(5, 3, 1, '5 Three-One FK-PK'),
+(6, 1, 1, '6 One-One FK-PK'),
+(7, 1, 1, '7 One-One FK-PK');

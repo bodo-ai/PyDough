@@ -1,4 +1,4 @@
-ROOT(columns=[('calculate', DEFAULT_TO(DEFAULT_TO, `.CALCULATE`)), ('_where', `.WHERE`), ('_like', `LIKE`), ('datetime', DATETIME), ('abs', ABS), ('has', HAS)], orderings=[])
+ROOT(columns=[('calculate2', DEFAULT_TO(DEFAULT_TO, `.CALCULATE`)), ('_where', `.WHERE`), ('_like', `LIKE`), ('datetime', DATETIME), ('abs', ABS), ('has', HAS)], orderings=[])
  JOIN(condition=t0.`.CALCULATE` == t1.`.WHERE`, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_FILTER, columns={'ABS': t0.ABS, 'DATETIME': t1.DATETIME, 'DEFAULT_TO': t0.DEFAULT_TO, 'HAS': t0.HAS, '`.CALCULATE`': t0.`.CALCULATE`, '`.WHERE`': t1.`.WHERE`, '`LIKE`': t1.`LIKE`})
   FILTER(condition=ABSENT(PRESENT) & `.CALCULATE` == 4:numeric, columns={'ABS': ABS, 'DEFAULT_TO': DEFAULT_TO, 'HAS': HAS, '`.CALCULATE`': `.CALCULATE`})
    SCAN(table=keywords."WHERE", columns={'ABS': ABS, 'DEFAULT_TO': DEFAULT_TO, 'HAS': HAS, 'PRESENT': PRESENT, '`.CALCULATE`': `.CALCULATE`})

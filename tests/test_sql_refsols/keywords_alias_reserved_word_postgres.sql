@@ -1,5 +1,5 @@
 SELECT
-  COALESCE("WHERE".default_to, "WHERE".".CALCULATE") AS calculate,
+  COALESCE("WHERE".default_to, "WHERE".".CALCULATE") AS calculate2,
   calculate.".WHERE" AS _where,
   calculate."LIKE" AS _like,
   calculate.datetime,

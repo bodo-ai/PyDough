@@ -223,7 +223,7 @@ result = count.WHERE(
 result = where_.WHERE(
     (calculate_ == 4) & ABSENT(present)
 ).CALCULATE(
-    calculate=DEFAULT_TO(default_to,calculate_),
+    calculate2=DEFAULT_TO(default_to,calculate_),
     _where=calculate__2.where_,
     _like=calculate__2.like_,
     datetime=calculate__2.datetime,
