@@ -1,0 +1,3 @@
+ROOT(columns=[('dbl_quote_dot', `",`), ('dot', `.`), ('addition', `.` + DEFAULT_TO("FLOAT", str, 1:numeric)), ('col', "__col__"), ('col1', "__col1__"), ('def_', def), ('__del__', del), ('__init__', "__init__")], orderings=[])
+ FILTER(condition="int" == 8051:numeric, columns={'"FLOAT"': "FLOAT", '"__col1__"': "__col1__", '"__col__"': "__col__", '"__init__"': "__init__", '`",`': `",`, '`.`': `.`, 'def': def, 'del': del, 'str': str})
+  SCAN(table=keywords."COUNT", columns={'"FLOAT"': "FLOAT", '"__col1__"': "__col1__", '"__col__"': "__col__", '"__init__"': "__init__", '"int"': "int", '`",`': `",`, '`.`': `.`, 'def': def, 'del': del, 'str': str})

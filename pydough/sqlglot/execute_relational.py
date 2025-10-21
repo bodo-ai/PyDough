@@ -4,6 +4,8 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
+from typing import Any
+
 import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
@@ -23,7 +25,6 @@ from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
-from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 
 import pydough
@@ -41,6 +42,7 @@ from .override_canonicalize import canonicalize
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
+from .override_qualify import qualify
 from .override_simplify import simplify
 from .override_unnest_subqueries import unnest_subqueries
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
@@ -102,7 +104,7 @@ def apply_sqlglot_optimizer(
 
     # Apply each rule explicitly with appropriate kwargs
 
-    kwargs = {
+    kwargs: dict[str, Any] = {
         "quote_identifiers": False,
         "isolate_tables": True,
         "validate_qualify_columns": False,

@@ -30,6 +30,7 @@ from tests.testing_utilities import (
 )
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data
 from .test_pipeline_defog import defog_pipeline_test_data
+from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 
 from .testing_utilities import PyDoughPandasTest
 from pydough import init_pydough_context, to_df, to_sql
@@ -550,3 +551,25 @@ def test_defog_e2e(
         reference_database=sqlite_defog_connection,
         coerce_types=True,
     )
+
+
+@pytest.mark.snowflake
+@pytest.mark.execute
+def test_pipeline_e2e_snowflake_custom_datasets(
+    custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
+    get_test_graph_by_name: graph_fetcher,
+    sf_conn_db_context: DatabaseContext,
+):
+    """
+    Test executing the the custom queries with the custom datasets against the
+    refsol DataFrame.
+    """
+    # Just run the "keywords" tests
+    if custom_datasets_test_data.graph_name.lower() == "keywords":
+        custom_datasets_test_data.run_e2e_test(
+            get_test_graph_by_name,
+            sf_conn_db_context("DEFOG", custom_datasets_test_data.graph_name),
+            coerce_types=True,
+        )
+    else:
+        pytest.skip("Skipping non-keywords custom dataset tests for Snowflake.")

@@ -139,11 +139,6 @@ result = cast_.WHERE(
                 "keywords_cast_alias_and_missing_alias",
             ),
             id="keywords_cast_alias_and_missing_alias",
-            marks=pytest.mark.skip(
-                "TODO (gh #432, #435): fix issues with"
-                " table alias name when it is reserved, and related optimization"
-                " error"
-            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -172,7 +167,7 @@ result = mixedcase_1_1.WHERE(
     LowerCaseID=lowercaseid,
     integer=uppercase_master_2.integer,
     as_=lowercase_detail_5.as_,
-    order=uppercase_master_2.order_by_
+    order_=uppercase_master_2.order_by_
 )
                 """,
                 "keywords",
@@ -182,16 +177,12 @@ result = mixedcase_1_1.WHERE(
                         "LowerCaseID": [10],
                         "INTEGER": ["5 INTEGER RESERVED WORD"],
                         "as_": ["10 as reserved word"],
-                        "order": ["5 TWO WORDS RESERVED"],
+                        "order_": ["5 TWO WORDS RESERVED"],
                     }
                 ),
                 "keywords_column_alias_reserved",
             ),
             id="keywords_column_alias_reserved",
-            marks=pytest.mark.skip(
-                "TODO (gh #433, #435): fix issues with"
-                " invalid double escape to names already escaped in metadata"
-            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -224,11 +215,7 @@ result = count.WHERE(
                 ),
                 "keywords_python_sql_reserved",
             ),
-            marks=pytest.mark.skip(
-                "TODO (gh #434, #435): fix issues with"
-                " invalid SQL when a column or table name includes a quoting"
-                " character"
-            ),
+            id="keywords_python_sql_reserved",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -236,7 +223,7 @@ result = count.WHERE(
 result = where_.WHERE(
     (calculate_ == 4) & ABSENT(present)
 ).CALCULATE(
-    calculate=DEFAULT_TO(default_to,calculate_),
+    calculate2=DEFAULT_TO(default_to,calculate_),
     _where=calculate__2.where_,
     _like=calculate__2.like_,
     datetime=calculate__2.datetime,
@@ -258,11 +245,6 @@ result = where_.WHERE(
                 "keywords_alias_reserved_word",
             ),
             id="keywords_alias_reserved_word",
-            marks=pytest.mark.skip(
-                "TODO (gh #432, #435): fix issues with"
-                " table alias name when it is reserved, and related optimization"
-                " error"
-            ),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -285,10 +267,33 @@ result = count.WHERE(node == 4071).CALCULATE(
                 "keywords_locals_globals_eval",
             ),
             id="keywords_locals_globals_eval",
-            marks=pytest.mark.skip(
-                "TODO (gh #432): fix issues with"
-                " join table, select & join expr alias name when it is reserved"
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = quoted_table_name.WHERE(
+    (name == 7) & (quote_ == 4)
+).CALCULATE(
+    cast_,
+    name,
+    quote_,
+    lowercase_detail._0_0_and,
+    lowercase_detail.as_
+)
+                """,
+                "keywords",
+                lambda: pd.DataFrame(
+                    {
+                        "cast_": [3],
+                        "name": [7],
+                        "quote_": [4],
+                        "_0_0_and": ['7 "0 = 0 and \'" field name'],
+                        "as_": ["7 as reserved word"],
+                    }
+                ),
+                "keywords_quoted_table_name",
             ),
+            id="keywords_quoted_table_name",
         ),
     ],
 )
@@ -343,13 +348,11 @@ def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_test_graph_by_name: graph_fetcher,
     sqlite_custom_datasets_connection: DatabaseContext,
-    coerce_types=True,
 ):
     """
     Test executing the the custom queries with the custom datasets against the
     refsol DataFrame.
     """
     custom_datasets_test_data.run_e2e_test(
-        get_test_graph_by_name,
-        sqlite_custom_datasets_connection,
+        get_test_graph_by_name, sqlite_custom_datasets_connection, coerce_types=True
     )
