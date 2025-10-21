@@ -20,7 +20,7 @@ WITH _u_0 AS (
   WHERE
     NOT _u_0._u_1 IS NULL
   GROUP BY
-    _s3.patient_id
+    patients.patient_id
 ), _t0 AS (
   SELECT
     min_year_start_dt,

@@ -20,6 +20,6 @@ JOIN _t AS _t
 LEFT JOIN _s3 AS _s3
   ON _s3.car_id = cars._id
 GROUP BY
-  _s3.car_id
+  cars._id
 ORDER BY
   3 DESC

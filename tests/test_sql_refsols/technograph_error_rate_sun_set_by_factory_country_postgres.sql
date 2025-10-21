@@ -4,21 +4,20 @@ WITH _s3 AS (
   FROM main.incidents
 ), _t1 AS (
   SELECT
-    _s3.in_device_id,
     MAX(devices.de_production_country_id) AS anything_de_production_country_id,
-    COUNT(*) AS n_rows
+    COUNT(_s3.in_device_id) AS count_in_device_id
   FROM main.devices AS devices
   JOIN main.products AS products
     ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
   LEFT JOIN _s3 AS _s3
     ON _s3.in_device_id = devices.de_id
   GROUP BY
-    1
+    devices.de_id
 ), _s5 AS (
   SELECT
     anything_de_production_country_id,
     COUNT(*) AS n_rows,
-    SUM(n_rows * CASE WHEN NOT in_device_id IS NULL THEN 1 ELSE 0 END) AS sum_n_incidents
+    SUM(count_in_device_id) AS sum_count_in_device_id
   FROM _t1
   GROUP BY
     1
@@ -26,7 +25,7 @@ WITH _s3 AS (
 SELECT
   countries.co_name AS country,
   ROUND(
-    CAST(CAST(COALESCE(_s5.sum_n_incidents, 0) AS DOUBLE PRECISION) / COALESCE(_s5.n_rows, 0) AS DECIMAL),
+    CAST(CAST(COALESCE(_s5.sum_count_in_device_id, 0) AS DOUBLE PRECISION) / COALESCE(_s5.n_rows, 0) AS DECIMAL),
     2
   ) AS ir
 FROM main.countries AS countries

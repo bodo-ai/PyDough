@@ -1,28 +1,24 @@
 WITH _s1 AS (
   SELECT
+    EXTRACT(MONTH FROM CAST(sbtxdatetime AS DATETIME)) AS month_sbTxDateTime,
+    EXTRACT(YEAR FROM CAST(sbtxdatetime AS DATETIME)) AS year_sbTxDateTime,
     sbtxcustid AS sbTxCustId,
-    sbtxdatetime AS sbTxDateTime
-  FROM main.sbTransaction
-), _t0 AS (
-  SELECT
-    _s1.sbTxCustId,
-    ANY_VALUE(sbCustomer.sbcustname) AS anything_sbCustName,
     COUNT(*) AS n_rows
-  FROM main.sbCustomer AS sbCustomer
-  LEFT JOIN _s1 AS _s1
-    ON EXTRACT(MONTH FROM CAST(_s1.sbTxDateTime AS DATETIME)) = EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME))
-    AND EXTRACT(YEAR FROM CAST(_s1.sbTxDateTime AS DATETIME)) = EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME))
-    AND _s1.sbTxCustId = sbCustomer.sbcustid
+  FROM main.sbTransaction
   GROUP BY
-    EXTRACT(MONTH FROM CAST(_s1.sbTxDateTime AS DATETIME)),
-    EXTRACT(YEAR FROM CAST(_s1.sbTxDateTime AS DATETIME)),
-    1
+    1,
+    2,
+    3
 )
 SELECT
-  sbTxCustId AS _id,
-  anything_sbCustName AS name,
-  n_rows * CASE WHEN NOT sbTxCustId IS NULL THEN 1 ELSE 0 END AS num_transactions
-FROM _t0
+  sbCustomer.sbcustid AS _id,
+  sbCustomer.sbcustname AS name,
+  COALESCE(_s1.n_rows, 0) AS num_transactions
+FROM main.sbCustomer AS sbCustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.month_sbTxDateTime = EXTRACT(MONTH FROM CAST(sbCustomer.sbcustjoindate AS DATETIME))
+  AND _s1.sbTxCustId = sbCustomer.sbcustid
+  AND _s1.year_sbTxDateTime = EXTRACT(YEAR FROM CAST(sbCustomer.sbcustjoindate AS DATETIME))
 ORDER BY
   3 DESC
 LIMIT 1

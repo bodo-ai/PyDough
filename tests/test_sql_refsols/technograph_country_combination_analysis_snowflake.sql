@@ -13,10 +13,9 @@ WITH _s0 AS (
   FROM main.incidents
 ), _t1 AS (
   SELECT
-    _s7.in_device_id,
     ANY_VALUE(_s3.co_id) AS anything__id_3,
     ANY_VALUE(_s2.co_id) AS anything_co_id,
-    COUNT(*) AS n_rows
+    COUNT(_s7.in_device_id) AS count_in_device_id
   FROM _s2 AS _s2
   CROSS JOIN _s2 AS _s3
   JOIN main.devices AS devices
@@ -25,13 +24,13 @@ WITH _s0 AS (
   LEFT JOIN _s7 AS _s7
     ON _s7.in_device_id = devices.de_id
   GROUP BY
-    1
+    devices.de_id
 ), _s9 AS (
   SELECT
     anything__id_3,
     anything_co_id,
     COUNT(*) AS n_rows,
-    SUM(n_rows * IFF(NOT in_device_id IS NULL, 1, 0)) AS sum_n_rows
+    SUM(count_in_device_id) AS sum_count_in_device_id
   FROM _t1
   GROUP BY
     1,
@@ -40,7 +39,7 @@ WITH _s0 AS (
 SELECT
   _s0.co_name AS factory_country,
   _s1.co_name AS purchase_country,
-  ROUND(COALESCE(_s9.sum_n_rows, 0) / COALESCE(_s9.n_rows, 0), 2) AS ir
+  ROUND(COALESCE(_s9.sum_count_in_device_id, 0) / COALESCE(_s9.n_rows, 0), 2) AS ir
 FROM _s0 AS _s0
 CROSS JOIN _s0 AS _s1
 LEFT JOIN _s9 AS _s9

@@ -30,9 +30,8 @@ WITH _s0 AS (
     )
 ), _t1 AS (
   SELECT
-    _s9.s_name,
-    _s9.search_id,
-    COUNT(*) AS n_rows
+    _s0.s_name,
+    COUNT(_s9.search_id) AS count_search_id
   FROM _s0 AS _s0
   JOIN SEARCHES AS SEARCHES
     ON _s0.s_month1 = EXTRACT(MONTH FROM CAST(SEARCHES.search_ts AS DATETIME))
@@ -41,15 +40,13 @@ WITH _s0 AS (
   LEFT JOIN _s9 AS _s9
     ON SEARCHES.search_id = _s9.search_id AND _s0.s_name = _s9.s_name
   GROUP BY
-    1,
-    2
+    SEARCHES.search_id,
+    1
 ), _s16 AS (
   SELECT
     s_name,
     COUNT(*) AS n_rows,
-    SUM((
-      n_rows * CASE WHEN NOT search_id IS NULL THEN 1 ELSE 0 END
-    ) > 0) AS sum_is_intra_season
+    SUM(count_search_id > 0) AS sum_is_intra_season
   FROM _t1
   GROUP BY
     1

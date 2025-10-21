@@ -6,23 +6,16 @@ WITH _s1 AS (
   WHERE
     created_at >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 150, DAY))
     AND receiver_type = 1
-), _t0 AS (
-  SELECT
-    _s1.receiver_id,
-    ANY_VALUE(merchants.name) AS anything_name,
-    COUNT(*) AS n_rows,
-    SUM(_s1.amount) AS sum_amount
-  FROM main.merchants AS merchants
-  LEFT JOIN _s1 AS _s1
-    ON _s1.receiver_id = merchants.mid
-  GROUP BY
-    1
 )
 SELECT
-  anything_name AS merchant_name,
-  n_rows * CASE WHEN NOT receiver_id IS NULL THEN 1 ELSE 0 END AS total_transactions,
-  COALESCE(sum_amount, 0) AS total_amount
-FROM _t0
+  ANY_VALUE(merchants.name) AS merchant_name,
+  COUNT(_s1.receiver_id) AS total_transactions,
+  COALESCE(SUM(_s1.amount), 0) AS total_amount
+FROM main.merchants AS merchants
+LEFT JOIN _s1 AS _s1
+  ON _s1.receiver_id = merchants.mid
+GROUP BY
+  merchants.mid
 ORDER BY
   3 DESC
 LIMIT 2

@@ -13,7 +13,7 @@ FROM main.coupons AS coupons
 LEFT JOIN _s1 AS _s1
   ON _s1.coupon_id = coupons.cid
 GROUP BY
-  _s1.coupon_id
+  coupons.cid
 ORDER BY
   2 DESC NULLS LAST
 LIMIT 3

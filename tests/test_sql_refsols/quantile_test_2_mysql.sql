@@ -17,8 +17,8 @@ WITH _s0 AS (
     AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1998
 ), _t1 AS (
   SELECT
-    _s5.c_nationkey,
     _s0.n_name,
+    _s0.n_nationkey,
     _s5.o_totalprice,
     REGION.r_name,
     CASE
@@ -102,6 +102,6 @@ SELECT
   MAX(o_totalprice) AS orders_max
 FROM _t1
 GROUP BY
-  c_nationkey
+  n_nationkey
 ORDER BY
   2

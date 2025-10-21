@@ -43,6 +43,6 @@ JOIN tpch.region AS region
 LEFT JOIN _s5 AS _s5
   ON _s0.n_nationkey = _s5.c_nationkey
 GROUP BY
-  _s5.c_nationkey
+  _s0.n_nationkey
 ORDER BY
   2 NULLS FIRST

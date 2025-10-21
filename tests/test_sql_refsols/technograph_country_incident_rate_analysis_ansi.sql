@@ -38,21 +38,20 @@ WITH _t2 AS (
     1
 ), _t5 AS (
   SELECT
-    _s11.in_device_id,
     ANY_VALUE(users.us_country_id) AS anything_us_country_id,
-    COUNT(*) AS n_rows
+    COUNT(_s11.in_device_id) AS count_in_device_id
   FROM main.users AS users
   JOIN main.devices AS devices
     ON devices.de_owner_id = users.us_id
   LEFT JOIN _t2 AS _s11
     ON _s11.in_device_id = devices.de_id
   GROUP BY
-    1
+    devices.de_id
 ), _s13 AS (
   SELECT
     anything_us_country_id,
     COUNT(*) AS n_rows,
-    SUM(n_rows * CASE WHEN NOT in_device_id IS NULL THEN 1 ELSE 0 END) AS sum_n_rows
+    SUM(count_in_device_id) AS sum_count_in_device_id
   FROM _t5
   GROUP BY
     1
@@ -61,7 +60,7 @@ SELECT
   countries.co_name AS country_name,
   ROUND(COALESCE(_s3.sum_n_rows, 0) / _s3.n_rows, 2) AS made_ir,
   ROUND(COALESCE(_s7.sum_n_rows, 0) / _s7.n_rows, 2) AS sold_ir,
-  ROUND(COALESCE(_s13.sum_n_rows, 0) / COALESCE(_s13.n_rows, 0), 2) AS user_ir
+  ROUND(COALESCE(_s13.sum_count_in_device_id, 0) / COALESCE(_s13.n_rows, 0), 2) AS user_ir
 FROM main.countries AS countries
 JOIN _s3 AS _s3
   ON _s3.de_production_country_id = countries.co_id

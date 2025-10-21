@@ -50,23 +50,17 @@ WITH _t5 AS (
     AND _t3.o_orderkey = _u_0._u_3
   WHERE
     _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
-), _t0 AS (
-  SELECT
-    _s13.anything_l_suppkey,
-    ANY_VALUE(SUPPLIER.s_name) AS anything_s_name,
-    COUNT(*) AS n_rows
-  FROM tpch.SUPPLIER AS SUPPLIER
-  JOIN tpch.NATION AS NATION
-    ON NATION.n_name = 'SAUDI ARABIA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
-  LEFT JOIN _s13 AS _s13
-    ON SUPPLIER.s_suppkey = _s13.anything_l_suppkey
-  GROUP BY
-    1
 )
 SELECT
-  anything_s_name COLLATE utf8mb4_bin AS S_NAME,
-  n_rows * CASE WHEN NOT anything_l_suppkey IS NULL THEN 1 ELSE 0 END AS NUMWAIT
-FROM _t0
+  ANY_VALUE(SUPPLIER.s_name) COLLATE utf8mb4_bin AS S_NAME,
+  COUNT(_s13.anything_l_suppkey) AS NUMWAIT
+FROM tpch.SUPPLIER AS SUPPLIER
+JOIN tpch.NATION AS NATION
+  ON NATION.n_name = 'SAUDI ARABIA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
+LEFT JOIN _s13 AS _s13
+  ON SUPPLIER.s_suppkey = _s13.anything_l_suppkey
+GROUP BY
+  SUPPLIER.s_suppkey
 ORDER BY
   2 DESC,
   1

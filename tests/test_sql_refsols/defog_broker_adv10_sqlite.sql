@@ -1,28 +1,24 @@
 WITH _s1 AS (
   SELECT
+    CAST(STRFTIME('%m', sbtxdatetime) AS INTEGER) AS month_sbtxdatetime,
+    CAST(STRFTIME('%Y', sbtxdatetime) AS INTEGER) AS year_sbtxdatetime,
     sbtxcustid,
-    sbtxdatetime
-  FROM main.sbtransaction
-), _t0 AS (
-  SELECT
-    _s1.sbtxcustid,
-    MAX(sbcustomer.sbcustname) AS anything_sbcustname,
     COUNT(*) AS n_rows
-  FROM main.sbcustomer AS sbcustomer
-  LEFT JOIN _s1 AS _s1
-    ON CAST(STRFTIME('%Y', _s1.sbtxdatetime) AS INTEGER) = CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER)
-    AND CAST(STRFTIME('%m', _s1.sbtxdatetime) AS INTEGER) = CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER)
-    AND _s1.sbtxcustid = sbcustomer.sbcustid
+  FROM main.sbtransaction
   GROUP BY
-    CAST(STRFTIME('%Y', _s1.sbtxdatetime) AS INTEGER),
-    CAST(STRFTIME('%m', _s1.sbtxdatetime) AS INTEGER),
-    1
+    1,
+    2,
+    3
 )
 SELECT
-  sbtxcustid AS _id,
-  anything_sbcustname AS name,
-  n_rows * IIF(NOT sbtxcustid IS NULL, 1, 0) AS num_transactions
-FROM _t0
+  sbcustomer.sbcustid AS _id,
+  sbcustomer.sbcustname AS name,
+  COALESCE(_s1.n_rows, 0) AS num_transactions
+FROM main.sbcustomer AS sbcustomer
+LEFT JOIN _s1 AS _s1
+  ON _s1.month_sbtxdatetime = CAST(STRFTIME('%m', sbcustomer.sbcustjoindate) AS INTEGER)
+  AND _s1.sbtxcustid = sbcustomer.sbcustid
+  AND _s1.year_sbtxdatetime = CAST(STRFTIME('%Y', sbcustomer.sbcustjoindate) AS INTEGER)
 ORDER BY
   3 DESC
 LIMIT 1

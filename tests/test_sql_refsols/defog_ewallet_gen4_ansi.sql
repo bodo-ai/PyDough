@@ -18,8 +18,8 @@ WITH _t1 AS (
   FROM main.coupons
 ), _s4 AS (
   SELECT
-    _s3.merchant_id,
-    _s3.start_date,
+    merchants.mid,
+    _s1.min_start_date,
     ANY_VALUE(merchants.created_at) AS anything_created_at,
     MAX(_s3.cid) AS max_cid
   FROM main.merchants AS merchants
@@ -32,11 +32,11 @@ WITH _t1 AS (
     2
 )
 SELECT
-  _s4.merchant_id AS merchants_id,
+  _s4.mid AS merchants_id,
   _s4.anything_created_at AS merchant_registration_date,
-  _s4.start_date AS earliest_coupon_start_date,
+  _s4.min_start_date AS earliest_coupon_start_date,
   _s4.max_cid AS earliest_coupon_id
 FROM _s4 AS _s4
 JOIN _t1 AS _s5
-  ON _s4.merchant_id = _s5.merchant_id
+  ON _s4.mid = _s5.merchant_id
   AND _s5.start_date <= DATE_ADD(CAST(_s4.anything_created_at AS TIMESTAMP), 1, 'YEAR')

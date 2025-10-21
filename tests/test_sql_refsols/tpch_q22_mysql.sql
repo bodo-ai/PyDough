@@ -5,34 +5,25 @@ WITH _s0 AS (
   WHERE
     c_acctbal > 0.0
     AND SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
-), _s3 AS (
+), _u_0 AS (
   SELECT
-    o_custkey
+    o_custkey AS _u_1
   FROM tpch.ORDERS
-), _t2 AS (
-  SELECT
-    _s3.o_custkey,
-    ANY_VALUE(CUSTOMER.c_acctbal) AS anything_c_acctbal,
-    ANY_VALUE(CUSTOMER.c_phone) AS anything_c_phone,
-    COUNT(*) AS n_rows
-  FROM _s0 AS _s0
-  JOIN tpch.CUSTOMER AS CUSTOMER
-    ON CUSTOMER.c_acctbal > _s0.avg_c_acctbal
-    AND SUBSTRING(CUSTOMER.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
-  LEFT JOIN _s3 AS _s3
-    ON CUSTOMER.c_custkey = _s3.o_custkey
   GROUP BY
     1
 )
 SELECT
-  SUBSTRING(anything_c_phone, 1, 2) COLLATE utf8mb4_bin AS CNTRY_CODE,
+  SUBSTRING(CUSTOMER.c_phone, 1, 2) COLLATE utf8mb4_bin AS CNTRY_CODE,
   COUNT(*) AS NUM_CUSTS,
-  COALESCE(SUM(anything_c_acctbal), 0) AS TOTACCTBAL
-FROM _t2
+  COALESCE(SUM(CUSTOMER.c_acctbal), 0) AS TOTACCTBAL
+FROM _s0 AS _s0
+JOIN tpch.CUSTOMER AS CUSTOMER
+  ON CUSTOMER.c_acctbal > _s0.avg_c_acctbal
+  AND SUBSTRING(CUSTOMER.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
+LEFT JOIN _u_0 AS _u_0
+  ON CUSTOMER.c_custkey = _u_0._u_1
 WHERE
-  (
-    n_rows * CASE WHEN NOT o_custkey IS NULL THEN 1 ELSE 0 END
-  ) = 0
+  _u_0._u_1 IS NULL
 GROUP BY
   1
 ORDER BY

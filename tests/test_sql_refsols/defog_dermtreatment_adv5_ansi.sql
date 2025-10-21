@@ -12,7 +12,7 @@ WITH _s3 AS (
   LEFT JOIN _s3 AS _s3
     ON _s3.patient_id = patients.patient_id
   GROUP BY
-    _s3.patient_id
+    patients.patient_id
 ), _t0 AS (
   SELECT
     min_year_start_dt,

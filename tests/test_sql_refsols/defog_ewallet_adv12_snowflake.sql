@@ -5,7 +5,7 @@ WITH _s1 AS (
   FROM main.wallet_transactions_daily
 )
 SELECT
-  _s1.coupon_id,
+  coupons.cid AS coupon_id,
   COALESCE(SUM(_s1.amount), 0) AS total_discount
 FROM main.coupons AS coupons
 LEFT JOIN _s1 AS _s1

@@ -177,12 +177,13 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # Now that the transpose is deemed possible, if in the left join
         # scenario, transform any `COUNT(*)` calls into `COUNT(col)`, where
         # `col` is one of the aggregation keys. If this is not possible, then
-        # abort.
+        # abort. Also abort if any of the aggregation keys are not used as
+        # equi-join keys.
         if left_join_case and any(
             agg.op == pydop.COUNT and len(agg.inputs) == 0
             for agg in aggregate.aggregations.values()
         ):
-            if len(agg_key_refs) == 0:
+            if (len(agg_key_refs) == 0) or (len(agg_key_refs) < len(aggregate.keys)):
                 return None
             key_expr: RelationalExpression = aggregate.keys[agg_key_refs[0].name]
             new_call: CallExpression = CallExpression(
@@ -269,6 +270,17 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # For each join key from the non-aggregate side, alter its substitution
         # to map it to the corresponding key from the aggregate side.
         for agg_key, non_agg_key in zip(agg_key_refs, non_agg_key_refs):
+            # If in the left join situation, also switch the aggregation key
+            # to point to the equivalent value from the non-aggregate side of
+            # the left join.
+            if left_join_case:
+                lhs_join_key_ref = join_sub[non_agg_key]
+                assert isinstance(lhs_join_key_ref, ColumnReference)
+                lhs_join_key_agg: CallExpression = new_aggregate_aggs[
+                    lhs_join_key_ref.name
+                ]
+                assert lhs_join_key_agg.op == pydop.ANYTHING
+                new_aggregate_keys[agg_key.name] = lhs_join_key_agg.inputs[0]
             join_sub[non_agg_key] = join_sub[agg_key]
 
         # TODO ADD COMMENTS

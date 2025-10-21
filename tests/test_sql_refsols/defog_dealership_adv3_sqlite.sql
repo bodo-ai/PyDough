@@ -2,22 +2,15 @@ WITH _s1 AS (
   SELECT
     car_id
   FROM main.sales
-), _t0 AS (
-  SELECT
-    _s1.car_id,
-    MAX(cars.make) AS anything_make,
-    MAX(cars.model) AS anything_model,
-    COUNT(*) AS n_rows
-  FROM main.cars AS cars
-  LEFT JOIN _s1 AS _s1
-    ON _s1.car_id = cars._id
-  WHERE
-    LOWER(cars.vin_number) LIKE '%m5%'
-  GROUP BY
-    1
 )
 SELECT
-  anything_make AS make,
-  anything_model AS model,
-  n_rows * IIF(NOT car_id IS NULL, 1, 0) AS num_sales
-FROM _t0
+  MAX(cars.make) AS make,
+  MAX(cars.model) AS model,
+  COUNT(_s1.car_id) AS num_sales
+FROM main.cars AS cars
+LEFT JOIN _s1 AS _s1
+  ON _s1.car_id = cars._id
+WHERE
+  LOWER(cars.vin_number) LIKE '%m5%'
+GROUP BY
+  cars._id

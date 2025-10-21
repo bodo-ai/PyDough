@@ -478,7 +478,7 @@ def test_unqualified_to_string(
         ),
         pytest.param(
             impl_tpch_q22,
-            "TPCH.CALCULATE(global_avg_balance=AVG(customers.CALCULATE(cntry_code=SLICE(phone, None, 2, None)).WHERE(ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17'])).WHERE((account_balance > 0.0)).account_balance)).customers.CALCULATE(cntry_code=SLICE(phone, None, 2, None)).WHERE(((ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance)) & (COUNT(orders) == 0))).PARTITION(name='countries', by=(cntry_code)).CALCULATE(CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT(customers), TOTACCTBAL=SUM(customers.account_balance)).ORDER_BY(CNTRY_CODE.ASC(na_pos='first'))",
+            "TPCH.CALCULATE(global_avg_balance=AVG(customers.CALCULATE(cntry_code=SLICE(phone, None, 2, None)).WHERE(ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17'])).WHERE((account_balance > 0.0)).account_balance)).customers.CALCULATE(cntry_code=SLICE(phone, None, 2, None)).WHERE(((ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance)) & HASNOT(orders))).PARTITION(name='countries', by=(cntry_code)).CALCULATE(CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT(customers), TOTACCTBAL=SUM(customers.account_balance)).ORDER_BY(CNTRY_CODE.ASC(na_pos='first'))",
             id="tpch_q22",
         ),
         pytest.param(

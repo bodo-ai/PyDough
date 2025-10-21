@@ -17,4 +17,4 @@ LEFT JOIN _s1 AS _s1
 WHERE
   customer.c_acctbal <= 1000 AND customer.c_acctbal >= 100
 GROUP BY
-  _s1.o_custkey
+  customer.c_custkey

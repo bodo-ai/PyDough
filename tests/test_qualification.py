@@ -544,7 +544,7 @@ from tests.test_pydough_functions.tpch_test_functions import (
   │ └─┬─ AccessChild
   │   ├─── TableCollection[customers]
   │   ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
-  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance) & (COUNT($1) == 0)]
+  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance) & HASNOT($1)]
   │     └─┬─ AccessChild
   │       └─── SubCollection[orders]
   ├─┬─ Calculate[CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT($1), TOTACCTBAL=SUM($1.account_balance)]
