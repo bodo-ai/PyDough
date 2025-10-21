@@ -25,6 +25,7 @@ from pydough.relational.rel_util import (
     apply_substitution,
     extract_equijoin_keys,
 )
+from pydough.types import NumericType
 
 
 class JoinAggregateTransposeShuttle(RelationalShuttle):
@@ -110,6 +111,8 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             The new RelationalNode tree with the Join and Aggregate transposed,
             or None if the transpose is not possible.
         """
+        join_name: str
+        agg_name: str
 
         # The cardinality with regards to the input being considered must be
         # singular (unless the aggregations allow plural), and must be
@@ -165,6 +168,32 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         ):
             return None
 
+        # Extract the join key references from both sides of the join in the
+        # order they appear in the join condition.
+        agg_key_refs, non_agg_key_refs = extract_equijoin_keys(join)
+        if not is_left:
+            agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
+
+        # Now that the transpose is deemed possible, if in the left join
+        # scenario, transform any `COUNT(*)` calls into `COUNT(col)`, where
+        # `col` is one of the aggregation keys. If this is not possible, then
+        # abort.
+        if left_join_case and any(
+            agg.op == pydop.COUNT and len(agg.inputs) == 0
+            for agg in aggregate.aggregations.values()
+        ):
+            if len(agg_key_refs) == 0:
+                return None
+            key_expr: RelationalExpression = aggregate.keys[agg_key_refs[0].name]
+            new_call: CallExpression = CallExpression(
+                pydop.COUNT,
+                NumericType(),
+                [key_expr],
+            )
+            for agg_name, agg in aggregate.aggregations.items():
+                if agg.op == pydop.COUNT and len(agg.inputs) == 0:
+                    aggregate.aggregations[agg_name] = new_call
+
         # TODO ADD COMMENTS
         agg_alias: str | None = (
             join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
@@ -207,8 +236,6 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # into the join's columns so that the aggregate keys/aggregations can
         # refer to them with the same names, without any renaming caused by
         # conflicts.
-        join_name: str
-        agg_name: str
         for col_name, col_expr in agg_input.columns.items():
             join_name = self.generate_name(col_name, new_join_columns)
             new_join_columns[join_name] = add_input_name(col_expr, agg_alias)
@@ -241,9 +268,6 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
 
         # For each join key from the non-aggregate side, alter its substitution
         # to map it to the corresponding key from the aggregate side.
-        agg_key_refs, non_agg_key_refs = extract_equijoin_keys(join)
-        if not is_left:
-            agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
         for agg_key, non_agg_key in zip(agg_key_refs, non_agg_key_refs):
             join_sub[non_agg_key] = join_sub[agg_key]
 

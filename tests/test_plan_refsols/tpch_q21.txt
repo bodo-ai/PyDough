@@ -1,4 +1,4 @@
-ROOT(columns=[('S_NAME', anything_s_name), ('NUMWAIT', n_rows)], orderings=[(n_rows):desc_last, (anything_s_name):asc_first], limit=10:numeric)
+ROOT(columns=[('S_NAME', anything_s_name), ('NUMWAIT', n_rows * IFF(PRESENT(anything_l_suppkey), 1:numeric, 0:numeric))], orderings=[(n_rows * IFF(PRESENT(anything_l_suppkey), 1:numeric, 0:numeric)):desc_last, (anything_s_name):asc_first], limit=10:numeric)
  AGGREGATE(keys={'anything_l_suppkey': anything_l_suppkey}, aggregations={'anything_s_name': ANYTHING(s_name), 'n_rows': COUNT()})
   JOIN(condition=t0.s_suppkey == t1.anything_l_suppkey, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'anything_l_suppkey': t1.anything_l_suppkey, 's_name': t0.s_name})
    JOIN(condition=t0.s_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'s_name': t0.s_name, 's_suppkey': t0.s_suppkey})

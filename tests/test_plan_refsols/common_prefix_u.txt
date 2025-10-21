@@ -6,7 +6,7 @@ ROOT(columns=[('name', c_name), ('total_qty', DEFAULT_TO(sum_sum_l_quantity, 0:n
    FILTER(condition=n_name == 'INDIA':string, columns={'n_nationkey': n_nationkey})
     SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
   FILTER(condition=sum_n_rows > 0:numeric, columns={'anything_o_custkey': anything_o_custkey, 'sum_sum_l_quantity': sum_sum_l_quantity})
-   AGGREGATE(keys={'anything_o_custkey': anything_o_custkey}, aggregations={'sum_n_rows': SUM(n_rows), 'sum_sum_l_quantity': SUM(sum_l_quantity)})
+   AGGREGATE(keys={'anything_o_custkey': anything_o_custkey}, aggregations={'sum_n_rows': SUM(n_rows * IFF(PRESENT(l_orderkey), 1:numeric, 0:numeric)), 'sum_sum_l_quantity': SUM(sum_l_quantity)})
     AGGREGATE(keys={'l_orderkey': l_orderkey}, aggregations={'anything_o_custkey': ANYTHING(o_custkey), 'n_rows': COUNT(), 'sum_l_quantity': SUM(l_quantity)})
      JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'l_orderkey': t1.l_orderkey, 'l_quantity': t1.l_quantity, 'o_custkey': t0.o_custkey})
       SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})

@@ -50,17 +50,23 @@ WITH _t5 AS (
     AND _t3.o_orderkey = _u_0._u_3
   WHERE
     _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
+), _t0 AS (
+  SELECT
+    _s13.anything_l_suppkey,
+    MAX(supplier.s_name) AS anything_s_name,
+    COUNT(*) AS n_rows
+  FROM tpch.supplier AS supplier
+  JOIN tpch.nation AS nation
+    ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
+  LEFT JOIN _s13 AS _s13
+    ON _s13.anything_l_suppkey = supplier.s_suppkey
+  GROUP BY
+    1
 )
 SELECT
-  MAX(supplier.s_name) AS S_NAME,
-  COUNT(*) AS NUMWAIT
-FROM tpch.supplier AS supplier
-JOIN tpch.nation AS nation
-  ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
-LEFT JOIN _s13 AS _s13
-  ON _s13.anything_l_suppkey = supplier.s_suppkey
-GROUP BY
-  _s13.anything_l_suppkey
+  anything_s_name AS S_NAME,
+  n_rows * IIF(NOT anything_l_suppkey IS NULL, 1, 0) AS NUMWAIT
+FROM _t0
 ORDER BY
   2 DESC,
   1

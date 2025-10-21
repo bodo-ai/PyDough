@@ -46,17 +46,23 @@ WITH _t5 AS (
     AND _s11.o_orderkey = _t3.o_orderkey
   WHERE
     _t3.anything_o_orderstatus = 'F'
+), _t0 AS (
+  SELECT
+    _s13.anything_l_suppkey,
+    ANY_VALUE(supplier.s_name) AS anything_s_name,
+    COUNT(*) AS n_rows
+  FROM tpch.supplier AS supplier
+  JOIN tpch.nation AS nation
+    ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
+  LEFT JOIN _s13 AS _s13
+    ON _s13.anything_l_suppkey = supplier.s_suppkey
+  GROUP BY
+    1
 )
 SELECT
-  ANY_VALUE(supplier.s_name) AS S_NAME,
-  COUNT(*) AS NUMWAIT
-FROM tpch.supplier AS supplier
-JOIN tpch.nation AS nation
-  ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
-LEFT JOIN _s13 AS _s13
-  ON _s13.anything_l_suppkey = supplier.s_suppkey
-GROUP BY
-  _s13.anything_l_suppkey
+  anything_s_name AS S_NAME,
+  n_rows * CASE WHEN NOT anything_l_suppkey IS NULL THEN 1 ELSE 0 END AS NUMWAIT
+FROM _t0
 ORDER BY
   2 DESC,
   1

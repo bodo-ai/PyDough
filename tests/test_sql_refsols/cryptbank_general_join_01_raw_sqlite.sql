@@ -75,75 +75,89 @@ WITH _s0 AS (
     ON _s2.b_key = accounts.a_branchkey AND accounts.a_custkey = (
       42 - _s3.c_key
     )
+), _t0 AS (
+  SELECT
+    _s7.b_key,
+    COUNT(*) AS n_rows
+  FROM _s0 AS _s0
+  JOIN _s1 AS _s1
+    ON SUBSTRING(
+      SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1),
+      CASE
+        WHEN (
+          LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
+        ) < 1
+        THEN 1
+        ELSE (
+          LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
+        )
+      END,
+      CASE
+        WHEN (
+          LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -5
+        ) < 1
+        THEN 0
+        ELSE (
+          LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -5
+        ) - CASE
+          WHEN (
+            LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
+          ) < 1
+          THEN 1
+          ELSE (
+            LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
+          )
+        END
+      END
+    ) = SUBSTRING(
+      _s0.b_addr,
+      CASE
+        WHEN (
+          LENGTH(_s0.b_addr) + -7
+        ) < 1
+        THEN 1
+        ELSE (
+          LENGTH(_s0.b_addr) + -7
+        )
+      END,
+      CASE
+        WHEN (
+          LENGTH(_s0.b_addr) + -5
+        ) < 1
+        THEN 0
+        ELSE (
+          LENGTH(_s0.b_addr) + -5
+        ) - CASE
+          WHEN (
+            LENGTH(_s0.b_addr) + -7
+          ) < 1
+          THEN 1
+          ELSE (
+            LENGTH(_s0.b_addr) + -7
+          )
+        END
+      END
+    )
+  LEFT JOIN _s7 AS _s7
+    ON (
+      42 - _s1.c_key
+    ) = (
+      42 - _s7.c_key
+    ) AND _s0.b_key = _s7.b_key
+  GROUP BY
+    1,
+    (
+      42 - (
+        _s7.c_key
+      )
+    )
 )
 SELECT
-  _s7.b_key AS branch_key,
-  COUNT(DISTINCT 42 - _s7.c_key) AS n_local_cust,
-  COUNT(*) AS n_local_cust_local_acct
-FROM _s0 AS _s0
-JOIN _s1 AS _s1
-  ON SUBSTRING(
-    SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1),
-    CASE
-      WHEN (
-        LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
-      ) < 1
-      THEN 1
-      ELSE (
-        LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
-      )
-    END,
-    CASE
-      WHEN (
-        LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -5
-      ) < 1
-      THEN 0
-      ELSE (
-        LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -5
-      ) - CASE
-        WHEN (
-          LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
-        ) < 1
-        THEN 1
-        ELSE (
-          LENGTH(SUBSTRING(_s1.c_addr, -1) || SUBSTRING(_s1.c_addr, 1, LENGTH(_s1.c_addr) - 1)) + -7
-        )
-      END
-    END
-  ) = SUBSTRING(
-    _s0.b_addr,
-    CASE
-      WHEN (
-        LENGTH(_s0.b_addr) + -7
-      ) < 1
-      THEN 1
-      ELSE (
-        LENGTH(_s0.b_addr) + -7
-      )
-    END,
-    CASE
-      WHEN (
-        LENGTH(_s0.b_addr) + -5
-      ) < 1
-      THEN 0
-      ELSE (
-        LENGTH(_s0.b_addr) + -5
-      ) - CASE
-        WHEN (
-          LENGTH(_s0.b_addr) + -7
-        ) < 1
-        THEN 1
-        ELSE (
-          LENGTH(_s0.b_addr) + -7
-        )
-      END
-    END
-  )
-LEFT JOIN _s7 AS _s7
-  ON (
-    42 - _s1.c_key
-  ) = (
-    42 - _s7.c_key
-  ) AND _s0.b_key = _s7.b_key
+  b_key AS branch_key,
+  COUNT(*) AS n_local_cust,
+  SUM(n_rows * IIF(NOT (
+    b_key IS NULL
+  ), 1, 0)) AS n_local_cust_local_acct
+FROM _t0
 GROUP BY
   1

@@ -38,6 +38,7 @@ WITH _t2 AS (
     1
 ), _t5 AS (
   SELECT
+    _s11.in_device_id,
     MAX(users.us_country_id) AS anything_us_country_id,
     COUNT(*) AS n_rows
   FROM main.users AS users
@@ -46,12 +47,12 @@ WITH _t2 AS (
   LEFT JOIN _t2 AS _s11
     ON _s11.in_device_id = devices.de_id
   GROUP BY
-    _s11.in_device_id
+    1
 ), _s13 AS (
   SELECT
     anything_us_country_id,
     COUNT(*) AS n_rows,
-    SUM(n_rows) AS sum_n_rows
+    SUM(n_rows * CASE WHEN NOT in_device_id IS NULL THEN 1 ELSE 0 END) AS sum_n_rows
   FROM _t5
   GROUP BY
     1

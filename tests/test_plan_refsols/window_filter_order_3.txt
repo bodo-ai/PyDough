@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=n_rows < RELAVG(args=[n_rows], partition=[], order=[]), columns={})
+  FILTER(condition=n_rows * IFF(PRESENT(o_custkey), 1:numeric, 0:numeric) < RELAVG(args=[n_rows * IFF(PRESENT(o_custkey), 1:numeric, 0:numeric)], partition=[], order=[]) & n_rows * IFF(PRESENT(o_custkey), 1:numeric, 0:numeric) > 0:numeric, columns={})
    AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})
     JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'o_custkey': t1.o_custkey})
      JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey})

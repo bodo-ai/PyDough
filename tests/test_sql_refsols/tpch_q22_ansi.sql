@@ -11,6 +11,7 @@ WITH _s0 AS (
   FROM tpch.orders
 ), _t2 AS (
   SELECT
+    _s3.o_custkey,
     ANY_VALUE(customer.c_acctbal) AS anything_c_acctbal,
     ANY_VALUE(customer.c_phone) AS anything_c_phone,
     COUNT(*) AS n_rows
@@ -21,7 +22,7 @@ WITH _s0 AS (
   LEFT JOIN _s3 AS _s3
     ON _s3.o_custkey = customer.c_custkey
   GROUP BY
-    _s3.o_custkey
+    1
 )
 SELECT
   SUBSTRING(anything_c_phone, 1, 2) AS CNTRY_CODE,
@@ -29,7 +30,9 @@ SELECT
   COALESCE(SUM(anything_c_acctbal), 0) AS TOTACCTBAL
 FROM _t2
 WHERE
-  n_rows = 0
+  (
+    n_rows * CASE WHEN NOT o_custkey IS NULL THEN 1 ELSE 0 END
+  ) = 0
 GROUP BY
   1
 ORDER BY

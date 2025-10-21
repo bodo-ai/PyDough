@@ -13,6 +13,7 @@ WITH _s0 AS (
   FROM main.incidents
 ), _t1 AS (
   SELECT
+    _s7.in_device_id,
     ANY_VALUE(_s3.co_id) AS anything__id_3,
     ANY_VALUE(_s2.co_id) AS anything_co_id,
     COUNT(*) AS n_rows
@@ -24,13 +25,13 @@ WITH _s0 AS (
   LEFT JOIN _s7 AS _s7
     ON _s7.in_device_id = devices.de_id
   GROUP BY
-    _s7.in_device_id
+    1
 ), _s9 AS (
   SELECT
     anything__id_3,
     anything_co_id,
     COUNT(*) AS n_rows,
-    SUM(n_rows) AS sum_n_rows
+    SUM(n_rows * IFF(NOT in_device_id IS NULL, 1, 0)) AS sum_n_rows
   FROM _t1
   GROUP BY
     1,
