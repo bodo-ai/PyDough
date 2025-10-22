@@ -727,8 +727,9 @@ def impl_defog_dealership_adv3():
     model names, engine_type and vin_number, match case-insensitively and allow
     partial matches using LIKE with wildcards.
     """
-    return cars.WHERE(CONTAINS(LOWER(vin_number), "m5")).CALCULATE(
-        make, model, num_sales=COUNT(sale_records)
+    selected_cars = cars.WHERE(CONTAINS(LOWER(vin_number), "m5"))
+    return selected_cars.PARTITION(name="car_models", by=(make, model)).CALCULATE(
+        make, model, num_sales=COUNT(cars.sale_records)
     )
 
 
