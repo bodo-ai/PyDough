@@ -1,6 +1,6 @@
 SELECT
   MAX(conference.name) AS name,
-  COALESCE(NULLIF(COUNT(publication.cid), 0), 0) AS num_publications
+  COUNT(publication.cid) AS num_publications
 FROM main.conference AS conference
 LEFT JOIN main.publication AS publication
   ON conference.cid = publication.cid

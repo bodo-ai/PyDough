@@ -7,7 +7,7 @@ WITH _s1 AS (
     sale_date >= DATETIME('now', '-30 day')
 )
 SELECT
-  COALESCE(NULLIF(COUNT(_s1.car_id), 0), 0) AS num_sales,
+  COUNT(_s1.car_id) AS num_sales,
   CASE
     WHEN (
       NOT NULLIF(COUNT(_s1.car_id), 0) IS NULL AND NULLIF(COUNT(_s1.car_id), 0) > 0

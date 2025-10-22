@@ -1,6 +1,6 @@
 SELECT
   ANY_VALUE(conference.name) COLLATE utf8mb4_bin AS name,
-  COALESCE(NULLIF(COUNT(publication.cid), 0), 0) AS count_publications
+  COUNT(publication.cid) AS count_publications
 FROM main.conference AS conference
 LEFT JOIN main.publication AS publication
   ON conference.cid = publication.cid
