@@ -1,17 +1,16 @@
 WITH _s1 AS (
   SELECT
-    cid,
-    COUNT(*) AS n_rows
+    cid
   FROM main.publication
-  GROUP BY
-    1
 )
 SELECT
-  name COLLATE utf8mb4_bin AS name,
-  COALESCE(_s1.n_rows, 0) AS count_publications
+  ANY_VALUE(conference.name) COLLATE utf8mb4_bin AS name,
+  COUNT(_s1.cid) AS count_publications
 FROM main.conference AS conference
 LEFT JOIN _s1 AS _s1
   ON _s1.cid = conference.cid
+GROUP BY
+  conference.cid
 ORDER BY
   2 DESC,
   1 DESC
