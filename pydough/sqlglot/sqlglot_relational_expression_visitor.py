@@ -10,8 +10,8 @@ import warnings
 from typing import TYPE_CHECKING
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.expressions import Column, Identifier
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
@@ -31,7 +31,7 @@ from pydough.relational import (
 )
 from pydough.types import PyDoughType
 
-from .sqlglot_helpers import set_glot_alias
+from .sqlglot_helpers import normalize_column_name, set_glot_alias
 from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
 if TYPE_CHECKING:
@@ -362,7 +362,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     @staticmethod
     def make_sqlglot_column(
         column_reference: ColumnReference,
-    ) -> Identifier:
+    ) -> Column:
         """
         Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
@@ -372,11 +372,17 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Returns:
             The output identifier.
         """
+        assert column_reference.name is not None
+        column_name: str = column_reference.name
+        quoted, column_name = normalize_column_name(column_name)
+
+        column_ident: Column = Identifier(this=column_name, quoted=quoted)
+
         if column_reference.input_name is not None:
-            full_name = f"{column_reference.input_name}.{column_reference.name}"
-        else:
-            full_name = column_reference.name
-        return Identifier(this=full_name, quoted=False)
+            table_ident = Identifier(this=column_reference.input_name, quoted=False)
+            return Column(this=column_ident, table=table_ident)
+
+        return column_ident
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         self._stack.append(self.make_sqlglot_column(column_reference))
