@@ -47,6 +47,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         keys: dict[str, list[str]],
         description: str | None = None,
         synonyms: list[str] | None = None,
+        additional_definitions: list[str] | None = None,
         extra_semantic_info: dict | None = None,
     ):
         super().__init__(
@@ -57,6 +58,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             always_matches,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )
         simple_join_keys_predicate.verify(keys, self.error_name)
@@ -190,6 +192,7 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
         always_matches: bool,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ) -> ReversiblePropertyMetadata:
         # Invert the keys dictionary, mapping each string that was in any of
@@ -212,5 +215,6 @@ class SimpleJoinMetadata(ReversiblePropertyMetadata):
             reverse_keys,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )

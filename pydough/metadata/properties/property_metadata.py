@@ -34,6 +34,7 @@ class PropertyMetadata(AbstractMetadata):
         "type",
         "description",
         "synonyms",
+        "additional definitions",
         "extra semantic info",
     }
 
@@ -43,13 +44,16 @@ class PropertyMetadata(AbstractMetadata):
         collection: CollectionMetadata,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ):
         is_valid_name.verify(name, f"property name {name!r}")
         HasType(CollectionMetadata).verify(collection, f"collection {name}")
         self._name: str = name
         self._collection: CollectionMetadata = collection
-        super().__init__(description, synonyms, extra_semantic_info)
+        super().__init__(
+            description, synonyms, additional_definitions, extra_semantic_info
+        )
 
     @property
     def name(self) -> str:

@@ -28,9 +28,17 @@ class ScalarAttributeMetadata(PropertyMetadata):
         sample_values: list | None,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ):
-        super().__init__(name, collection, description, synonyms, extra_semantic_info)
+        super().__init__(
+            name,
+            collection,
+            description,
+            synonyms,
+            additional_definitions,
+            extra_semantic_info,
+        )
         HasType(PyDoughType).verify(data_type, "data_type")
         self._sample_values: list | None = sample_values
         self._data_type: PyDoughType = data_type

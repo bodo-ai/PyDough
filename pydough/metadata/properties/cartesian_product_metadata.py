@@ -40,6 +40,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         always_matches: bool,
         description: str | None = None,
         synonyms: list[str] | None = None,
+        additional_definitions: list[str] | None = None,
         extra_semantic_info: dict | None = None,
     ):
         super().__init__(
@@ -50,6 +51,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
             always_matches,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )
 
@@ -128,6 +130,7 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
         always_matches: bool,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ) -> ReversiblePropertyMetadata:
         return CartesianProductMetadata(
@@ -137,5 +140,6 @@ class CartesianProductMetadata(ReversiblePropertyMetadata):
             always_matches,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )

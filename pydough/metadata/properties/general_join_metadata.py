@@ -48,6 +48,7 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         other_name: str,
         description: str | None = None,
         synonyms: list[str] | None = None,
+        additional_definitions: list[str] | None = None,
         extra_semantic_info: dict | None = None,
     ):
         super().__init__(
@@ -58,6 +59,7 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
             always_matches,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )
         self._condition: str = condition
@@ -180,6 +182,7 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
         always_matches: bool,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ) -> ReversiblePropertyMetadata:
         return GeneralJoinMetadata(
@@ -193,5 +196,6 @@ class GeneralJoinMetadata(ReversiblePropertyMetadata):
             self.self_name,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )

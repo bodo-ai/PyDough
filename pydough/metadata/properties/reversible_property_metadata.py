@@ -30,6 +30,7 @@ class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
         always_matches: bool,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ) -> "ReversiblePropertyMetadata":
         """
@@ -42,6 +43,7 @@ class ReversiblePropertyMetadata(SubcollectionRelationshipMetadata):
             `always_matches`: whether the reverse property always matches.
             `description`: the description of the reverse property.
             `synonyms`: the synonyms of the reverse property.
+            `additional_definitions`: the additional definitions of the reverse property.
             `extra_semantic_info`: any extra semantic information for the
             reverse property.
 

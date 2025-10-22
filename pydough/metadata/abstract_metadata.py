@@ -24,10 +24,12 @@ class AbstractMetadata(ABC):
         self,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ):
         self._description: str | None = description
         self._synonyms: list[str] | None = synonyms
+        self._additional_definitions: list[str] | None = additional_definitions
         self._extra_semantic_info: dict | None = extra_semantic_info
 
     def parse_optional_properties(self, meta_json: dict) -> None:
@@ -45,6 +47,10 @@ class AbstractMetadata(ABC):
             )
         if "synonyms" in meta_json:
             self._synonyms = extract_array(meta_json, "synonyms", self.error_name)
+        if "additional definitions" in meta_json:
+            self._additional_definitions = extract_array(
+                meta_json, "additional definitions", self.error_name
+            )
         if "extra semantic info" in meta_json:
             self._extra_semantic_info = extract_object(
                 meta_json, "extra semantic info", self.error_name
@@ -93,6 +99,13 @@ class AbstractMetadata(ABC):
         The list of synonyms names for the metadata object, if they exist.
         """
         return self._synonyms
+
+    @property
+    def additional_definitions(self) -> list[str] | None:
+        """
+        The list of additional definitions of the metadata object, if they exist.
+        """
+        return self._additional_definitions
 
     @property
     def extra_semantic_info(self) -> dict | None:

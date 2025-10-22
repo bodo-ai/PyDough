@@ -28,10 +28,16 @@ class SubcollectionRelationshipMetadata(PropertyMetadata):
         always_matches: bool,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ):
         super().__init__(
-            name, parent_collection, description, synonyms, extra_semantic_info
+            name,
+            parent_collection,
+            description,
+            synonyms,
+            additional_definitions,
+            extra_semantic_info,
         )
         HasType(CollectionMetadata).verify(
             child_collection,

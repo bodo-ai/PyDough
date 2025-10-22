@@ -33,6 +33,7 @@ class CollectionMetadata(AbstractMetadata):
         "properties",
         "description",
         "synonyms",
+        "additional definitions",
         "extra semantic info",
     }
 
@@ -42,6 +43,7 @@ class CollectionMetadata(AbstractMetadata):
         graph: GraphMetadata,
         description: str | None,
         synonyms: list[str] | None,
+        additional_definitions: list[str] | None,
         extra_semantic_info: dict | None,
     ):
         from pydough.metadata.properties import (
@@ -55,7 +57,9 @@ class CollectionMetadata(AbstractMetadata):
         self._name: str = name
         self._properties: dict[str, PropertyMetadata] = {}
         self._definition_order: dict[str, int] = {}
-        super().__init__(description, synonyms, extra_semantic_info)
+        super().__init__(
+            description, synonyms, additional_definitions, extra_semantic_info
+        )
 
     @property
     def graph(self) -> GraphMetadata:

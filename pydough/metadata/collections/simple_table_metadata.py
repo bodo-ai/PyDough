@@ -43,9 +43,17 @@ class SimpleTableMetadata(CollectionMetadata):
         unique_properties: list[str | list[str]],
         description: str | None = None,
         synonyms: list[str] | None = None,
+        additional_definitions: list[str] | None = None,
         extra_semantic_info: dict | None = None,
     ):
-        super().__init__(name, graph, description, synonyms, extra_semantic_info)
+        super().__init__(
+            name,
+            graph,
+            description,
+            synonyms,
+            additional_definitions,
+            extra_semantic_info,
+        )
         is_string.verify(table_path, f"Property 'table_path' of {self.error_name}")
         unique_properties_predicate.verify(
             unique_properties, f"property 'unique_properties' of {self.error_name}"

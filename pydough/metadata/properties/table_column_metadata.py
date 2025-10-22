@@ -43,6 +43,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
         sample_values: list | None = None,
         description: str | None = None,
         synonyms: list[str] | None = None,
+        additional_definitions: list[str] | None = None,
         extra_semantic_info: dict | None = None,
     ):
         super().__init__(
@@ -52,6 +53,7 @@ class TableColumnMetadata(ScalarAttributeMetadata):
             sample_values,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )
         is_string.verify(column_name, "column name")

@@ -298,6 +298,9 @@ def create_reverse_relationship(
     reverse_collection: CollectionMetadata = original_property.child_collection
     description: str | None = relationship_json.get("description", None)
     synonyms: list[str] | None = relationship_json.get("synonyms", None)
+    additional_definitions: list[str] | None = relationship_json.get(
+        "additional definitions", None
+    )
     extra_semantic_info: dict | None = relationship_json.get(
         "extra semantic info", None
     )
@@ -309,6 +312,7 @@ def create_reverse_relationship(
             always_matches,
             description,
             synonyms,
+            additional_definitions,
             extra_semantic_info,
         )
     )
