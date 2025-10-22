@@ -11,7 +11,7 @@ WITH _t2 AS (
     DEVICES.de_id
 ), _s5 AS (
   SELECT
-    COALESCE(SUM(CASE WHEN count_in_device_id <> 0 THEN count_in_device_id ELSE NULL END), 0) AS sum_n_incidents,
+    COALESCE(SUM(NULLIF(count_in_device_id, 0)), 0) AS sum_n_incidents,
     anything_de_production_country_id,
     COUNT(*) AS n_rows
   FROM _t2

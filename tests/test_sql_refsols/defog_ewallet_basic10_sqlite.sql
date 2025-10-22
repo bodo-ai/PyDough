@@ -9,7 +9,7 @@ WITH _s1 AS (
 )
 SELECT
   MAX(merchants.name) AS merchant_name,
-  COALESCE(CASE WHEN COUNT(_s1.receiver_id) <> 0 THEN COUNT(_s1.receiver_id) ELSE NULL END, 0) AS total_transactions,
+  COALESCE(NULLIF(COUNT(_s1.receiver_id), 0), 0) AS total_transactions,
   COALESCE(SUM(_s1.amount), 0) AS total_amount
 FROM main.merchants AS merchants
 LEFT JOIN _s1 AS _s1

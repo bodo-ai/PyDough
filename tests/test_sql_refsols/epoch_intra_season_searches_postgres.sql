@@ -49,8 +49,7 @@ WITH _s0 AS (
     SUM(
       CASE
         WHEN (
-          CASE WHEN count_search_id <> 0 THEN count_search_id ELSE NULL END > 0
-          AND NOT CASE WHEN count_search_id <> 0 THEN count_search_id ELSE NULL END IS NULL
+          NOT NULLIF(count_search_id, 0) IS NULL AND NULLIF(count_search_id, 0) > 0
         )
         THEN 1
         ELSE 0

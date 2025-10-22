@@ -46,12 +46,9 @@ WITH _s0 AS (
   SELECT
     s_name,
     COUNT(*) AS n_rows,
-    COUNT_IF(
-      (
-        CASE WHEN count_search_id <> 0 THEN count_search_id ELSE NULL END > 0
-        AND NOT CASE WHEN count_search_id <> 0 THEN count_search_id ELSE NULL END IS NULL
-      )
-    ) AS sum_is_intra_season
+    COUNT_IF((
+      NOT NULLIF(count_search_id, 0) IS NULL AND NULLIF(count_search_id, 0) > 0
+    )) AS sum_is_intra_season
   FROM _t1
   GROUP BY
     1

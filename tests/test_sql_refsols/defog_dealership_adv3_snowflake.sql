@@ -14,7 +14,7 @@ WITH _t1 AS (
 SELECT
   anything_make AS make,
   anything_model AS model,
-  COALESCE(SUM(CASE WHEN count_car_id <> 0 THEN count_car_id ELSE NULL END), 0) AS num_sales
+  COALESCE(SUM(NULLIF(count_car_id, 0)), 0) AS num_sales
 FROM _t1
 GROUP BY
   1,

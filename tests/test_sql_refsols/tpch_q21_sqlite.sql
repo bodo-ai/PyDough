@@ -53,14 +53,7 @@ WITH _t5 AS (
 )
 SELECT
   MAX(supplier.s_name) AS S_NAME,
-  COALESCE(
-    CASE
-      WHEN COUNT(_s13.anything_l_suppkey) <> 0
-      THEN COUNT(_s13.anything_l_suppkey)
-      ELSE NULL
-    END,
-    0
-  ) AS NUMWAIT
+  COUNT(_s13.anything_l_suppkey) AS NUMWAIT
 FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey

@@ -26,6 +26,7 @@ from sqlglot.optimizer.simplify import (
     extract_date,
     extract_type,
     flatten,
+    is_null,
     logger,
     propagate_constants,
     remove_complements,
@@ -125,7 +126,8 @@ def simplify(
         node = simplify_conditionals(node)
 
         # PyDough Change: new pre-order transformations
-        node = rewrite_case_nullif(node)
+        node = rewrite_case_to_nullif(node)
+        node = rewrite_coalesce_nullif(node)
 
         if constant_propagation:
             node = propagate_constants(node, root)
@@ -230,7 +232,7 @@ def simplify_datetrunc(expression: exp.Expression, dialect: Dialect) -> exp.Expr
     return expression
 
 
-def rewrite_case_nullif(expr: exp.Expression) -> exp.Expression:
+def rewrite_case_to_nullif(expr: exp.Expression) -> exp.Expression:
     """
     Rewrite expressions like `CASE WHEN x != y THEN x ELSE NULL END` to
     `NULLIF(x, y)`
@@ -244,5 +246,69 @@ def rewrite_case_nullif(expr: exp.Expression) -> exp.Expression:
     if not isinstance(expr, exp.Case):
         return expr
 
-    # breakpoint()
+    if (
+        not (expr.args.get("this") is None and is_null(expr.args.get("default", None)))
+        and len(expr.args.get("ifs", [])) == 1
+    ):
+        return expr
+
+    if_expr = expr.args["ifs"][0]
+    condition = if_expr.args.get("this")
+    result = if_expr.args.get("true")
+
+    if not isinstance(condition, exp.NEQ):
+        return expr
+
+    lhs = condition.args.get("this")
+    rhs = condition.args.get("expression")
+
+    if lhs == result:
+        return exp.Nullif(this=lhs, expression=rhs, copy=False)
+
+    if rhs == result:
+        return exp.Nullif(this=rhs, expression=lhs, copy=False)
+
     return expr
+
+
+def rewrite_coalesce_nullif(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite expressions like `COALESCE(NULLIF(x, y), z)` to
+    `CASE WHEN x = y THEN z ELSE x END`, or if `y` and `z` are the same then
+    just to `x`.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Coalesce):
+        return expr
+
+    if len(expr.expressions) != 1 or expr.args.get("is_nvl"):
+        return expr
+
+    first = expr.this
+    second = expr.expressions[0]
+
+    if not isinstance(first, exp.Nullif):
+        return expr
+
+    lhs = first.args.get("this")
+    rhs = first.args.get("expression")
+
+    if rhs == second:
+        return lhs
+
+    return exp.Case(
+        whens=[
+            exp.When(
+                this=exp.EQ(this=lhs, expression=rhs, copy=False),
+                true=second,
+                copy=False,
+            )
+        ],
+        default=lhs,
+        copy=False,
+    )

@@ -53,14 +53,7 @@ WITH _t5 AS (
 )
 SELECT
   ANY_VALUE(SUPPLIER.s_name) COLLATE utf8mb4_bin AS S_NAME,
-  COALESCE(
-    CASE
-      WHEN COUNT(_s13.anything_l_suppkey) <> 0
-      THEN COUNT(_s13.anything_l_suppkey)
-      ELSE NULL
-    END,
-    0
-  ) AS NUMWAIT
+  COALESCE(NULLIF(COUNT(_s13.anything_l_suppkey), 0), 0) AS NUMWAIT
 FROM tpch.SUPPLIER AS SUPPLIER
 JOIN tpch.NATION AS NATION
   ON NATION.n_name = 'SAUDI ARABIA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
