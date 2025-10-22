@@ -428,12 +428,14 @@ def common_prefix_x():
 
 
 def common_prefix_y():
-    # For each customer who has NEVER made a zero-tax purchase, count how
-    # many total orders they have made. Keep the top 5 customers by number
-    # of orders, breaking ties by customer name.
+    # For each customer who has NEVER made a zero-tax purchase through clerk
+    # number 1, count how many total orders they have made through that clerk.
+    # Keep the top 5 customers by number of orders, breaking ties by customer
+    # name.
+    clerk_one_orders = orders.WHERE(clerk == "Clerk#000000001")
     return (
-        customers.WHERE(HASNOT(orders.lines.WHERE(tax == 0)))
-        .CALCULATE(name, n_orders=COUNT(orders))
+        customers.WHERE(HASNOT(clerk_one_orders.lines.WHERE(tax == 0)))
+        .CALCULATE(name, n_orders=COUNT(clerk_one_orders))
         .TOP_K(5, by=(n_orders.DESC(), name.ASC()))
     )
 
