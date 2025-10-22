@@ -7,11 +7,11 @@ WITH _s1 AS (
     sale_date >= DATE_SUB(CURRENT_TIMESTAMP(), 30, DAY)
 )
 SELECT
-  COALESCE(CASE WHEN COUNT(_s1.car_id) > 0 THEN COUNT(_s1.car_id) ELSE NULL END, 0) AS num_sales,
+  COALESCE(CASE WHEN COUNT(_s1.car_id) <> 0 THEN COUNT(_s1.car_id) ELSE NULL END, 0) AS num_sales,
   CASE
     WHEN (
-      CASE WHEN COUNT(_s1.car_id) > 0 THEN COUNT(_s1.car_id) ELSE NULL END > 0
-      AND NOT CASE WHEN COUNT(_s1.car_id) > 0 THEN COUNT(_s1.car_id) ELSE NULL END IS NULL
+      CASE WHEN COUNT(_s1.car_id) <> 0 THEN COUNT(_s1.car_id) ELSE NULL END > 0
+      AND NOT CASE WHEN COUNT(_s1.car_id) <> 0 THEN COUNT(_s1.car_id) ELSE NULL END IS NULL
     )
     THEN COALESCE(SUM(_s1.sale_price), 0)
     ELSE NULL

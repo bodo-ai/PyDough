@@ -51,7 +51,7 @@ WITH _t2 AS (
   SELECT
     anything_us_country_id,
     COUNT(*) AS n_rows,
-    SUM(CASE WHEN count_in_device_id > 0 THEN count_in_device_id ELSE NULL END) AS sum_n_rows
+    SUM(CASE WHEN count_in_device_id <> 0 THEN count_in_device_id ELSE NULL END) AS sum_n_rows
   FROM _t5
   GROUP BY
     1

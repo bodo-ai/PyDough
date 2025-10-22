@@ -124,6 +124,9 @@ def simplify(
         node = simplify_concat(node)
         node = simplify_conditionals(node)
 
+        # PyDough Change: new pre-order transformations
+        node = rewrite_case_nullif(node)
+
         if constant_propagation:
             node = propagate_constants(node, root)
 
@@ -225,3 +228,21 @@ def simplify_datetrunc(expression: exp.Expression, dialect: Dialect) -> exp.Expr
             )
 
     return expression
+
+
+def rewrite_case_nullif(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite expressions like `CASE WHEN x != y THEN x ELSE NULL END` to
+    `NULLIF(x, y)`
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Case):
+        return expr
+
+    # breakpoint()
+    return expr

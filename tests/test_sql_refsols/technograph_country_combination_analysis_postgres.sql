@@ -26,7 +26,7 @@ WITH _s0 AS (
     anything__id_3,
     anything_co_id,
     COUNT(*) AS n_rows,
-    SUM(CASE WHEN count_in_device_id > 0 THEN count_in_device_id ELSE NULL END) AS sum_n_rows
+    SUM(CASE WHEN count_in_device_id <> 0 THEN count_in_device_id ELSE NULL END) AS sum_n_rows
   FROM _t1
   GROUP BY
     1,

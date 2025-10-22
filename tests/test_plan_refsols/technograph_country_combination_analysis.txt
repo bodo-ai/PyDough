@@ -3,7 +3,7 @@ ROOT(columns=[('factory_country', co_name), ('purchase_country', name_2), ('ir',
   JOIN(condition=True:bool, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'_id_1': t1.co_id, 'co_id': t0.co_id, 'co_name': t0.co_name, 'name_2': t1.co_name})
    SCAN(table=main.COUNTRIES, columns={'co_id': co_id, 'co_name': co_name})
    SCAN(table=main.COUNTRIES, columns={'co_id': co_id, 'co_name': co_name})
-  AGGREGATE(keys={'anything__id_3': anything__id_3, 'anything_co_id': anything_co_id}, aggregations={'n_rows': COUNT(), 'sum_n_rows': SUM(KEEP_IF(count_in_device_id, count_in_device_id > 0:numeric))})
+  AGGREGATE(keys={'anything__id_3': anything__id_3, 'anything_co_id': anything_co_id}, aggregations={'n_rows': COUNT(), 'sum_n_rows': SUM(KEEP_IF(count_in_device_id, count_in_device_id != 0:numeric))})
    AGGREGATE(keys={'de_id': de_id}, aggregations={'anything__id_3': ANYTHING(_id_3), 'anything_co_id': ANYTHING(co_id), 'count_in_device_id': COUNT(in_device_id)})
     JOIN(condition=t0.de_id == t1.in_device_id, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'_id_3': t0._id_3, 'co_id': t0.co_id, 'de_id': t0.de_id, 'in_device_id': t1.in_device_id})
      JOIN(condition=t0._id_3 == t1.de_purchase_country_id & t1.de_production_country_id == t0.co_id, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'_id_3': t0._id_3, 'co_id': t0.co_id, 'de_id': t1.de_id})

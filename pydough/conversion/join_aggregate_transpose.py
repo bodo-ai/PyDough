@@ -322,7 +322,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # NULL if the sentinel column is zero, indicating no matching row.
         if left_join_case and sentinel_column is not None:
             sentinel_cmp: RelationalExpression = CallExpression(
-                pydop.GRT,
+                pydop.NEQ,
                 BooleanType(),
                 [sentinel_column, LiteralExpression(0, NumericType())],
             )

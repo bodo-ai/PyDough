@@ -6,7 +6,7 @@ ROOT(columns=[('cust_key', c_custkey), ('n_orders', DEFAULT_TO(n_rows_1, 0:numer
      SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
      AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})
       SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey})
-  FILTER(condition=sum_n_rows > 0:numeric, columns={'n_rows': n_rows, 'o_custkey': o_custkey})
+  FILTER(condition=sum_n_rows != 0:numeric & sum_n_rows > 0:numeric, columns={'n_rows': n_rows, 'o_custkey': o_custkey})
    AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT(), 'sum_n_rows': SUM(n_rows)})
     JOIN(condition=t0.l_partkey == t1.p_partkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'n_rows': t1.n_rows, 'o_custkey': t0.o_custkey})
      JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'l_partkey': t1.l_partkey, 'o_custkey': t0.o_custkey})

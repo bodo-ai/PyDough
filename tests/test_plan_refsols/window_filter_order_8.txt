@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=ABSENT(KEEP_IF(count_o_custkey, count_o_custkey > 0:numeric)) & anything_c_acctbal < RELSUM(args=[DEFAULT_TO(KEEP_IF(count_o_custkey, count_o_custkey > 0:numeric), 0:numeric)], partition=[], order=[]), columns={})
+  FILTER(condition=ABSENT(KEEP_IF(count_o_custkey, count_o_custkey != 0:numeric)) & anything_c_acctbal < RELSUM(args=[DEFAULT_TO(KEEP_IF(count_o_custkey, count_o_custkey != 0:numeric), 0:numeric)], partition=[], order=[]), columns={})
    AGGREGATE(keys={'c_custkey': c_custkey}, aggregations={'anything_c_acctbal': ANYTHING(c_acctbal), 'count_o_custkey': COUNT(o_custkey)})
     JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_acctbal': t0.c_acctbal, 'c_custkey': t0.c_custkey, 'o_custkey': t1.o_custkey})
      JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_acctbal': t0.c_acctbal, 'c_custkey': t0.c_custkey})

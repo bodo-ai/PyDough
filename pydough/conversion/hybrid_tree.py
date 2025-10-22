@@ -323,7 +323,7 @@ class HybridTree:
         condition: HybridExpr
         if is_semi:
             condition = HybridFunctionExpr(
-                pydop.GRT,
+                pydop.NEQ,
                 [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
                 BooleanType(),
             )

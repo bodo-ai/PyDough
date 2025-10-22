@@ -51,7 +51,7 @@ SELECT
   ANY_VALUE(supplier.s_name) AS S_NAME,
   COALESCE(
     CASE
-      WHEN COUNT(_s13.anything_l_suppkey) > 0
+      WHEN COUNT(_s13.anything_l_suppkey) <> 0
       THEN COUNT(_s13.anything_l_suppkey)
       ELSE NULL
     END,
