@@ -9,7 +9,7 @@ WITH _s1 AS (
 )
 SELECT
   ANY_VALUE(merchants.name) AS merchant_name,
-  COUNT(_s1.receiver_id) AS total_transactions,
+  COALESCE(CASE WHEN COUNT(_s1.receiver_id) > 0 THEN COUNT(_s1.receiver_id) ELSE NULL END, 0) AS total_transactions,
   COALESCE(SUM(_s1.amount), 0) AS total_amount
 FROM main.merchants AS merchants
 LEFT JOIN _s1 AS _s1

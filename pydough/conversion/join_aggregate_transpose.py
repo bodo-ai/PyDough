@@ -14,6 +14,7 @@ from pydough.relational import (
     Join,
     JoinCardinality,
     JoinType,
+    LiteralExpression,
     Project,
     RelationalExpression,
     RelationalNode,
@@ -25,7 +26,7 @@ from pydough.relational.rel_util import (
     apply_substitution,
     extract_equijoin_keys,
 )
-from pydough.types import NumericType
+from pydough.types import BooleanType, NumericType
 
 
 class JoinAggregateTransposeShuttle(RelationalShuttle):
@@ -174,11 +175,21 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         if not is_left:
             agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
 
+        # TODO ADD COMMENTS
+        agg_alias: str | None = (
+            join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
+        )
+        non_agg_alias: str | None = (
+            join.default_input_aliases[1] if is_left else join.default_input_aliases[0]
+        )
+
         # Now that the transpose is deemed possible, if in the left join
         # scenario, transform any `COUNT(*)` calls into `COUNT(col)`, where
         # `col` is one of the aggregation keys. If this is not possible, then
         # abort. Also abort if any of the aggregation keys are not used as
         # equi-join keys.
+        sentinel_column: RelationalExpression | None = None
+        existing_sentinel: str | None = None
         if left_join_case and any(
             agg.op == pydop.COUNT and len(agg.inputs) == 0
             for agg in aggregate.aggregations.values()
@@ -193,15 +204,39 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             )
             for agg_name, agg in aggregate.aggregations.items():
                 if agg.op == pydop.COUNT and len(agg.inputs) == 0:
+                    existing_sentinel = agg_name
                     aggregate.aggregations[agg_name] = new_call
 
-        # TODO ADD COMMENTS
-        agg_alias: str | None = (
-            join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
-        )
-        non_agg_alias: str | None = (
-            join.default_input_aliases[1] if is_left else join.default_input_aliases[0]
-        )
+        # Similarly, insert a COUNT(*) expression as a sentinel column to use
+        # to know when there was no matching row from the aggregate side.
+        if left_join_case and any(
+            agg.op == pydop.COUNT for agg in aggregate.aggregations.values()
+        ):
+            sentinel_join_name: str | None = None
+            if existing_sentinel is not None:
+                for col_name, col_expr in join.columns.items():
+                    if (
+                        isinstance(col_expr, ColumnReference)
+                        and col_expr.name == existing_sentinel
+                    ):
+                        sentinel_join_name = col_name
+                        break
+            else:
+                agg_name = self.generate_name("n_rows", aggregate.columns)
+                aggregate.columns[agg_name] = aggregate.aggregations[agg_name] = (
+                    CallExpression(
+                        pydop.COUNT,
+                        NumericType(),
+                        [],
+                    )
+                )
+                join_name = self.generate_name("n_rows", join.columns)
+                join.columns[join_name] = ColumnReference(
+                    agg_name, NumericType(), agg_alias
+                )
+                sentinel_join_name = join_name
+            assert sentinel_join_name is not None
+            sentinel_column = ColumnReference(sentinel_join_name, NumericType())
 
         # Identify the new cardinality of the join if the aggregate is no longer
         # happening before the join.
@@ -282,6 +317,27 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 assert lhs_join_key_agg.op == pydop.ANYTHING
                 new_aggregate_keys[agg_key.name] = lhs_join_key_agg.inputs[0]
             join_sub[non_agg_key] = join_sub[agg_key]
+
+        # In the left join case, transform any COUNT(col) or COUNT(*) col to
+        # NULL if the sentinel column is zero, indicating no matching row.
+        if left_join_case and sentinel_column is not None:
+            sentinel_cmp: RelationalExpression = CallExpression(
+                pydop.GRT,
+                BooleanType(),
+                [sentinel_column, LiteralExpression(0, NumericType())],
+            )
+
+            def sentinel_fn(expr: RelationalExpression) -> RelationalExpression:
+                return CallExpression(
+                    pydop.KEEP_IF, expr.data_type, [expr, sentinel_cmp]
+                )
+
+            for col_name, col_expr in aggregate.aggregations.items():
+                if col_expr.op == pydop.COUNT:
+                    agg_ref_expr: ColumnReference = ColumnReference(
+                        col_name, col_expr.data_type, agg_alias
+                    )
+                    join_sub[agg_ref_expr] = sentinel_fn(join_sub[agg_ref_expr])
 
         # TODO ADD COMMENTS
         for col_name, col_expr in join.columns.items():

@@ -51,7 +51,7 @@ WITH _t2 AS (
   SELECT
     anything_us_country_id,
     COUNT(*) AS n_rows,
-    SUM(count_in_device_id) AS sum_count_in_device_id
+    SUM(CASE WHEN count_in_device_id > 0 THEN count_in_device_id ELSE NULL END) AS sum_n_rows
   FROM _t5
   GROUP BY
     1
@@ -67,7 +67,7 @@ SELECT
     2
   ) AS sold_ir,
   ROUND(
-    CAST(CAST(COALESCE(_s13.sum_count_in_device_id, 0) AS DOUBLE PRECISION) / COALESCE(_s13.n_rows, 0) AS DECIMAL),
+    CAST(CAST(COALESCE(_s13.sum_n_rows, 0) AS DOUBLE PRECISION) / COALESCE(_s13.n_rows, 0) AS DECIMAL),
     2
   ) AS user_ir
 FROM main.countries AS countries

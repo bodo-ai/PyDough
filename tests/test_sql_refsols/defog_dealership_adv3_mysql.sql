@@ -1,4 +1,4 @@
-WITH _t0 AS (
+WITH _t1 AS (
   SELECT
     ANY_VALUE(cars.make) AS anything_make,
     ANY_VALUE(cars.model) AS anything_model,
@@ -14,8 +14,8 @@ WITH _t0 AS (
 SELECT
   anything_make AS make,
   anything_model AS model,
-  SUM(count_car_id) AS num_sales
-FROM _t0
+  COALESCE(SUM(CASE WHEN count_car_id > 0 THEN count_car_id ELSE NULL END), 0) AS num_sales
+FROM _t1
 GROUP BY
   1,
   2

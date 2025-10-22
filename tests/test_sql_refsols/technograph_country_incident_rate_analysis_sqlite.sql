@@ -51,7 +51,7 @@ WITH _t2 AS (
   SELECT
     anything_us_country_id,
     COUNT(*) AS n_rows,
-    SUM(count_in_device_id) AS sum_count_in_device_id
+    SUM(CASE WHEN count_in_device_id > 0 THEN count_in_device_id ELSE NULL END) AS sum_n_rows
   FROM _t5
   GROUP BY
     1
@@ -60,10 +60,7 @@ SELECT
   countries.co_name AS country_name,
   ROUND(CAST(COALESCE(_s3.sum_n_rows, 0) AS REAL) / _s3.n_rows, 2) AS made_ir,
   ROUND(CAST(COALESCE(_s7.sum_n_rows, 0) AS REAL) / _s7.n_rows, 2) AS sold_ir,
-  ROUND(
-    CAST(COALESCE(_s13.sum_count_in_device_id, 0) AS REAL) / COALESCE(_s13.n_rows, 0),
-    2
-  ) AS user_ir
+  ROUND(CAST(COALESCE(_s13.sum_n_rows, 0) AS REAL) / COALESCE(_s13.n_rows, 0), 2) AS user_ir
 FROM main.countries AS countries
 JOIN _s3 AS _s3
   ON _s3.de_production_country_id = countries.co_id

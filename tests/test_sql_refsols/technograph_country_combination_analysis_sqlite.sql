@@ -26,7 +26,7 @@ WITH _s0 AS (
     anything__id_3,
     anything_co_id,
     COUNT(*) AS n_rows,
-    SUM(count_in_device_id) AS sum_count_in_device_id
+    SUM(CASE WHEN count_in_device_id > 0 THEN count_in_device_id ELSE NULL END) AS sum_n_rows
   FROM _t1
   GROUP BY
     1,
@@ -35,7 +35,7 @@ WITH _s0 AS (
 SELECT
   _s0.co_name AS factory_country,
   _s1.co_name AS purchase_country,
-  ROUND(CAST(COALESCE(_s9.sum_count_in_device_id, 0) AS REAL) / COALESCE(_s9.n_rows, 0), 2) AS ir
+  ROUND(CAST(COALESCE(_s9.sum_n_rows, 0) AS REAL) / COALESCE(_s9.n_rows, 0), 2) AS ir
 FROM _s0 AS _s0
 CROSS JOIN _s0 AS _s1
 LEFT JOIN _s9 AS _s9
