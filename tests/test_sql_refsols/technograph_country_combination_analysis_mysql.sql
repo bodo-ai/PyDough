@@ -7,22 +7,18 @@ WITH _s0 AS (
   SELECT
     co_id
   FROM main.COUNTRIES
-), _s7 AS (
-  SELECT
-    in_device_id
-  FROM main.INCIDENTS
 ), _t1 AS (
   SELECT
     ANY_VALUE(_s3.co_id) AS anything__id_3,
     ANY_VALUE(_s2.co_id) AS anything_co_id,
-    COUNT(_s7.in_device_id) AS count_in_device_id
+    COUNT(INCIDENTS.in_device_id) AS count_in_device_id
   FROM _s2 AS _s2
   CROSS JOIN _s2 AS _s3
   JOIN main.DEVICES AS DEVICES
     ON DEVICES.de_production_country_id = _s2.co_id
     AND DEVICES.de_purchase_country_id = _s3.co_id
-  LEFT JOIN _s7 AS _s7
-    ON DEVICES.de_id = _s7.in_device_id
+  LEFT JOIN main.INCIDENTS AS INCIDENTS
+    ON DEVICES.de_id = INCIDENTS.in_device_id
   GROUP BY
     DEVICES.de_id
 ), _s9 AS (

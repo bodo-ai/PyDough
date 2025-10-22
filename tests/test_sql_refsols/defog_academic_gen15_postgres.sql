@@ -1,14 +1,10 @@
-WITH _s1 AS (
-  SELECT
-    oid
-  FROM main.author
-), _t1 AS (
+WITH _t1 AS (
   SELECT
     MAX(organization.continent) AS anything_continent,
-    COUNT(_s1.oid) AS count_oid
+    COUNT(author.oid) AS count_oid
   FROM main.organization AS organization
-  LEFT JOIN _s1 AS _s1
-    ON _s1.oid = organization.oid
+  LEFT JOIN main.author AS author
+    ON author.oid = organization.oid
   GROUP BY
     organization.oid
 )

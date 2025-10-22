@@ -10,23 +10,17 @@ WITH _t1 AS (
   FROM _t1
   GROUP BY
     1
-), _s3 AS (
-  SELECT
-    cid,
-    merchant_id,
-    start_date
-  FROM main.coupons
 ), _s4 AS (
   SELECT
     merchants.mid,
     _s1.min_start_date,
     ANY_VALUE(merchants.created_at) AS anything_created_at,
-    MAX(_s3.cid) AS max_cid
+    MAX(coupons.cid) AS max_cid
   FROM main.merchants AS merchants
   LEFT JOIN _s1 AS _s1
     ON _s1.merchant_id = merchants.mid
-  LEFT JOIN _s3 AS _s3
-    ON _s1.min_start_date = _s3.start_date AND _s3.merchant_id = merchants.mid
+  LEFT JOIN main.coupons AS coupons
+    ON _s1.min_start_date = coupons.start_date AND coupons.merchant_id = merchants.mid
   GROUP BY
     1,
     2

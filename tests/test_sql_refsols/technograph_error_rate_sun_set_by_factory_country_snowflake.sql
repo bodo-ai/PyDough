@@ -1,16 +1,12 @@
-WITH _s3 AS (
-  SELECT
-    in_device_id
-  FROM main.incidents
-), _t1 AS (
+WITH _t1 AS (
   SELECT
     ANY_VALUE(devices.de_production_country_id) AS anything_de_production_country_id,
-    COUNT(_s3.in_device_id) AS count_in_device_id
+    COUNT(incidents.in_device_id) AS count_in_device_id
   FROM main.devices AS devices
   JOIN main.products AS products
     ON devices.de_product_id = products.pr_id AND products.pr_name = 'Sun-Set'
-  LEFT JOIN _s3 AS _s3
-    ON _s3.in_device_id = devices.de_id
+  LEFT JOIN main.incidents AS incidents
+    ON devices.de_id = incidents.in_device_id
   GROUP BY
     devices.de_id
 ), _s5 AS (

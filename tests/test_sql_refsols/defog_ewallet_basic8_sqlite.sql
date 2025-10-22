@@ -1,17 +1,10 @@
-WITH _s1 AS (
-  SELECT
-    amount,
-    coupon_id,
-    txid
-  FROM main.wallet_transactions_daily
-)
 SELECT
   MAX(coupons.code) AS coupon_code,
-  COUNT(_s1.txid) AS redemption_count,
-  COALESCE(SUM(_s1.amount), 0) AS total_discount
+  COUNT(wallet_transactions_daily.txid) AS redemption_count,
+  COALESCE(SUM(wallet_transactions_daily.amount), 0) AS total_discount
 FROM main.coupons AS coupons
-LEFT JOIN _s1 AS _s1
-  ON _s1.coupon_id = coupons.cid
+LEFT JOIN main.wallet_transactions_daily AS wallet_transactions_daily
+  ON coupons.cid = wallet_transactions_daily.coupon_id
 GROUP BY
   coupons.cid
 ORDER BY
