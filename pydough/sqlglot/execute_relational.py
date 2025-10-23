@@ -46,6 +46,7 @@ from .override_qualify import qualify
 from .override_simplify import simplify
 from .override_unnest_subqueries import unnest_subqueries
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
+from .sqlglot_to_relational import convert_sqlglot_to_relational
 
 __all__ = ["convert_relation_to_sql", "execute_df"]
 
@@ -62,9 +63,8 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
     Returns:
         The SQL string representing the relational tree.
     """
-    glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
-        session
-    ).relational_to_sqlglot(relational)
+    glot_visitor = SQLGlotRelationalVisitor(session)
+    glot_expr: SQLGlotExpression = glot_visitor.relational_to_sqlglot(relational)
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(
         session.database.dialect
     )
@@ -72,6 +72,10 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
     # Apply the SQLGlot optimizer to the AST.
     try:
         glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
+        # Convert the expressions within the AST back to relational expressions
+        # and optimize them using the relational optimizations, before
+        # converting back to the SQLGlot AST.
+        glot_expr = rel_simplify(glot_expr, glot_visitor, sqlglot_dialect, session)
     except SqlglotError as e:
         sql_text: str = glot_expr.sql(sqlglot_dialect, pretty=True)
         print(f"ERROR WHILE OPTIMIZING QUERY:\n{sql_text}")
@@ -81,6 +85,51 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
+
+
+def rel_simplify(
+    glot_expr: SQLGlotExpression,
+    glot_visitor: SQLGlotRelationalVisitor,
+    dialect: SQLGlotDialect,
+    session: PyDoughSession,
+) -> SQLGlotExpression:
+    """
+    Simplify the expressions within the SQLGlot AST using relational
+    optimizations.
+
+    Args:
+        `glot_expr`: The SQLGlot expression to simplify.
+        `glot_visitor`: The SQLGlotRelationalVisitor used to convert between
+        relational expressions and SQLGlot expressions.
+        `dialect`: The SQLGlot dialect to use for the simplification.
+        `session`: The PyDough session encapsulating the logic used to execute
+
+    Returns:
+        The simplified SQLGlot expression.
+    """
+    from pydough.conversion.relational_simplification import SimplificationShuttle
+
+    simplifier: SimplificationShuttle = SimplificationShuttle(session)
+    for expr in glot_expr.find_all(sqlglot_expressions.Select):
+        simplifier.no_group_aggregate = (
+            expr.args.get("group") is None
+            or expr.find(sqlglot_expressions.AggFunc) is None
+        )
+        for select_expr in expr.expressions:
+            # TODO FIX THIS
+            rel_expr: RelationalExpression | None = convert_sqlglot_to_relational(
+                select_expr
+            )
+            if rel_expr is not None:
+                print(select_expr, rel_expr)
+                rel_expr.accept_shuttle(simplifier)
+                glot_visitor._expr_visitor.reset()
+                rel_expr.accept(glot_visitor._expr_visitor)
+                optimized_glot_expr: SQLGlotExpression = (
+                    glot_visitor._expr_visitor.get_sqlglot_result()
+                )
+                select_expr.replace(optimized_glot_expr)
+    return glot_expr
 
 
 def apply_sqlglot_optimizer(
