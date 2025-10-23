@@ -59,9 +59,9 @@ jobs:
 
       - name: Wait for MySQL to be ready
         run: |
-          for i in $(seq 1 10); do
+          for i in $(seq 1 60); do
             mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p${{ env.MYSQL_PASSWORD }} && break
-            echo "Waiting for MySQL... ($i/10)"
+            echo "Waiting for MySQL... ($i/60)"
             sleep 5
           done
           mysqladmin ping -h 127.0.0.1 -P 3306 -u root -p${{ env.MYSQL_PASSWORD }} || exit 1
