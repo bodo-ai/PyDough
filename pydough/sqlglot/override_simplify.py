@@ -128,6 +128,7 @@ def simplify(
         # PyDough Change: new pre-order transformations
         node = rewrite_case_to_nullif(node)
         node = rewrite_coalesce_nullif(node)
+        node = rewrite_sum_nullif(node)
 
         if constant_propagation:
             node = propagate_constants(node, root)
@@ -312,3 +313,29 @@ def rewrite_coalesce_nullif(expr: exp.Expression) -> exp.Expression:
         default=lhs,
         copy=False,
     )
+
+
+def rewrite_sum_nullif(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite `SUM(NULLIF(x, 0))` to `SUM(x)`.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Sum):
+        return expr
+
+    arg = expr.this
+    if not isinstance(arg, exp.Nullif):
+        return expr
+
+    lhs = arg.args.get("this")
+    rhs = arg.args.get("expression")
+
+    if isinstance(rhs, exp.Literal) and rhs.is_number and float(rhs.this) == 0:
+        return exp.Sum(this=lhs, copy=False)
+
+    return expr

@@ -10,7 +10,7 @@ WITH _t1 AS (
 )
 SELECT
   anything_continent AS continent,
-  COALESCE(SUM(NULLIF(count_oid, 0)), 0) / COUNT(*) AS ratio
+  COALESCE(SUM(count_oid), 0) / COUNT(*) AS ratio
 FROM _t1
 GROUP BY
   1
