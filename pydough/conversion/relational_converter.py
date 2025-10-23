@@ -1586,7 +1586,7 @@ def optimize_relational_tree(
     # Re-run column bubbling now that the columns have been pruned again.
     root = bubble_column_names(root)
 
-    # Run the following pipeline three times:
+    # Run the following pipeline twice:
     #   A: projection pullup
     #   B: expression simplification
     #   C: filter pushdown
