@@ -14,7 +14,7 @@ ROOT(columns=[('country_name', co_name), ('made_ir', ROUND(DEFAULT_TO(sum_n_rows
      AGGREGATE(keys={'in_device_id': in_device_id}, aggregations={'n_rows': COUNT()})
       SCAN(table=main.INCIDENTS, columns={'in_device_id': in_device_id})
   AGGREGATE(keys={'anything_us_country_id': anything_us_country_id}, aggregations={'n_rows': COUNT(), 'sum_n_rows': SUM(KEEP_IF(count_in_device_id, count_in_device_id != 0:numeric))})
-   AGGREGATE(keys={'de_id': de_id}, aggregations={'anything_us_country_id': ANYTHING(us_country_id), 'count_in_device_id': COUNT(in_device_id)})
+   AGGREGATE(keys={'in_device_id': de_id}, aggregations={'anything_us_country_id': ANYTHING(us_country_id), 'count_in_device_id': COUNT(in_device_id)})
     JOIN(condition=t0.de_id == t1.in_device_id, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'de_id': t0.de_id, 'in_device_id': t1.in_device_id, 'us_country_id': t0.us_country_id})
      JOIN(condition=t0.us_id == t1.de_owner_id, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'de_id': t1.de_id, 'us_country_id': t0.us_country_id})
       SCAN(table=main.USERS, columns={'us_country_id': us_country_id, 'us_id': us_id})

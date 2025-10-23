@@ -1,7 +1,7 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
   FILTER(condition=KEEP_IF(count_o_custkey, count_o_custkey != 0:numeric) != 0:numeric & DEFAULT_TO(KEEP_IF(count_o_custkey, count_o_custkey != 0:numeric), 0:numeric) < RELAVG(args=[DEFAULT_TO(KEEP_IF(count_o_custkey, count_o_custkey != 0:numeric), 0:numeric)], partition=[], order=[]), columns={})
-   AGGREGATE(keys={'c_custkey': c_custkey}, aggregations={'count_o_custkey': COUNT(o_custkey)})
+   AGGREGATE(keys={'o_custkey': c_custkey}, aggregations={'count_o_custkey': COUNT(o_custkey)})
     JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'c_custkey': t0.c_custkey, 'o_custkey': t1.o_custkey})
      JOIN(condition=t0.c_nationkey == t1.n_nationkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'c_custkey': t0.c_custkey})
       SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_nationkey': c_nationkey})

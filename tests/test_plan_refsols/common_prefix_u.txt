@@ -7,7 +7,7 @@ ROOT(columns=[('name', c_name), ('total_qty', DEFAULT_TO(sum_sum_l_quantity, 0:n
     SCAN(table=tpch.NATION, columns={'n_name': n_name, 'n_nationkey': n_nationkey})
   FILTER(condition=sum_n_rows != 0:numeric, columns={'anything_o_custkey': anything_o_custkey, 'sum_sum_l_quantity': sum_sum_l_quantity})
    AGGREGATE(keys={'anything_o_custkey': anything_o_custkey}, aggregations={'sum_n_rows': SUM(KEEP_IF(count_l_orderkey, count_l_orderkey != 0:numeric)), 'sum_sum_l_quantity': SUM(sum_l_quantity)})
-    AGGREGATE(keys={'o_orderkey': o_orderkey}, aggregations={'anything_o_custkey': ANYTHING(o_custkey), 'count_l_orderkey': COUNT(l_orderkey), 'sum_l_quantity': SUM(l_quantity)})
+    AGGREGATE(keys={'l_orderkey': o_orderkey}, aggregations={'anything_o_custkey': ANYTHING(o_custkey), 'count_l_orderkey': COUNT(l_orderkey), 'sum_l_quantity': SUM(l_quantity)})
      JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=LEFT, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'l_orderkey': t1.l_orderkey, 'l_quantity': t1.l_quantity, 'o_custkey': t0.o_custkey, 'o_orderkey': t0.o_orderkey})
       SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey, 'o_orderkey': o_orderkey})
       FILTER(condition=l_shipmode == 'RAIL':string & l_tax == 0:numeric, columns={'l_orderkey': l_orderkey, 'l_quantity': l_quantity})
