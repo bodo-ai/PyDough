@@ -55,10 +55,15 @@ SELECT
   CONCAT_WS(' ', LOWER(customers.c_fname), LOWER(customers.c_lname)) AS name,
   COALESCE(_s7.sum_unmask_t_amount, 0) AS first_sends
 FROM crbnk.customers AS customers
+<<<<<<< HEAD
 LEFT JOIN _s7 AS _s7
   ON _s7.a_custkey = (
     42 - customers.c_key
   )
+=======
+JOIN _s7 AS _s7
+  ON _s7.a_custkey = customers.c_key
+>>>>>>> main
 ORDER BY
   3 DESC,
   1

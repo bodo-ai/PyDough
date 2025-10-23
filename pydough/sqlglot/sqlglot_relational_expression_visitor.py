@@ -10,15 +10,16 @@ import warnings
 from typing import TYPE_CHECKING
 
 import sqlglot.expressions as sqlglot_expressions
+from sqlglot.expressions import Column, Identifier
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
 
+import pydough
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
 from pydough.database_connectors import DatabaseDialect
+from pydough.errors import PyDoughSQLException
 from pydough.relational import (
     CallExpression,
     ColumnReference,
@@ -30,7 +31,7 @@ from pydough.relational import (
 )
 from pydough.types import PyDoughType
 
-from .sqlglot_helpers import set_glot_alias
+from .sqlglot_helpers import normalize_column_name, set_glot_alias
 from .transform_bindings import BaseTransformBindings, bindings_from_dialect
 
 if TYPE_CHECKING:
@@ -45,20 +46,19 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
 
     def __init__(
         self,
-        dialect: DatabaseDialect,
-        correlated_names: dict[str, str],
-        config: PyDoughConfigs,
         relational_visitor: "SQLGlotRelationalVisitor",
+        correlated_names: dict[str, str],
     ) -> None:
         # Keep a stack of SQLGlot expressions so we can build up
         # intermediate results.
         self._stack: list[SQLGlotExpression] = []
-        self._dialect: DatabaseDialect = dialect
+        self._dialect: DatabaseDialect = relational_visitor._session.database.dialect
         self._correlated_names: dict[str, str] = correlated_names
-        self._config: PyDoughConfigs = config
         self._relational_visitor: SQLGlotRelationalVisitor = relational_visitor
         self._bindings: BaseTransformBindings = bindings_from_dialect(
-            dialect, config, self._relational_visitor
+            relational_visitor._session.database.dialect,
+            relational_visitor._session.config,
+            self._relational_visitor,
         )
 
     def reset(self) -> None:
@@ -77,9 +77,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         input_types: list[PyDoughType] = [
             arg.data_type for arg in call_expression.inputs
         ]
-        output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
-            call_expression.op, input_exprs, input_types
-        )
+        try:
+            output_expr: SQLGlotExpression = self._bindings.convert_call_to_sqlglot(
+                call_expression.op, input_exprs, input_types
+            )
+        except Exception as e:
+            raise pydough.active_session.error_builder.sql_call_conversion_error(
+                call_expression, e
+            )
         self._stack.append(output_expr)
 
     @staticmethod
@@ -246,7 +251,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             case "PREV" | "NEXT":
                 offset = window_expression.kwargs.get("n", 1)
                 if not isinstance(offset, int):
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         f"Invalid 'n' argument to {window_expression.op.function_name}: {offset!r} (expected an integer)"
                     )
                 # By default, we use the LAG function. If doing NEXT, switch
@@ -339,7 +344,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
             if isinstance(literal_expression.value, datetime.datetime):
                 dt: datetime.datetime = literal_expression.value
                 if dt.tzinfo is not None:
-                    raise ValueError(
+                    raise PyDoughSQLException(
                         "PyDough does not yet support datetime values with a timezone"
                     )
                 literal = sqlglot_expressions.Cast(
@@ -357,7 +362,7 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
     @staticmethod
     def make_sqlglot_column(
         column_reference: ColumnReference,
-    ) -> Identifier:
+    ) -> Column:
         """
         Generate an identifier for a column reference. This is split into a
         separate static method to ensure consistency across multiple visitors.
@@ -367,11 +372,17 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         Returns:
             The output identifier.
         """
+        assert column_reference.name is not None
+        column_name: str = column_reference.name
+        quoted, column_name = normalize_column_name(column_name)
+
+        column_ident: Column = Identifier(this=column_name, quoted=quoted)
+
         if column_reference.input_name is not None:
-            full_name = f"{column_reference.input_name}.{column_reference.name}"
-        else:
-            full_name = column_reference.name
-        return Identifier(this=full_name, quoted=False)
+            table_ident = Identifier(this=column_reference.input_name, quoted=False)
+            return Column(this=column_ident, table=table_ident)
+
+        return column_ident
 
     def visit_column_reference(self, column_reference: ColumnReference) -> None:
         self._stack.append(self.make_sqlglot_column(column_reference))

@@ -18,11 +18,13 @@ import pydough.pydough_operators as pydop
 from pydough.metadata import (
     SubcollectionRelationshipMetadata,
 )
+from pydough.metadata.properties import ReversiblePropertyMetadata
 from pydough.qdag import (
     Literal,
     SubCollection,
     TableCollection,
 )
+from pydough.relational import JoinCardinality
 from pydough.types import BooleanType, NumericType
 
 from .hybrid_connection import ConnectionType, HybridConnection
@@ -243,6 +245,14 @@ class HybridTree:
         Assigns the general join condition to a hybrid tree.
         """
         self._general_join_condition = condition
+
+    def get_tree_height(self) -> int:
+        """
+        Returns the number of levels in the hybrid tree, starting from the
+        current level and counting upward.
+        """
+        parent_height: int = 0 if self.parent is None else self.parent.get_tree_height()
+        return parent_height + 1
 
     def add_operation(self, operation: HybridOperation) -> None:
         """
@@ -571,12 +581,28 @@ class HybridTree:
                 # Return the index of the existing child.
                 return idx
 
+        # Infer the cardinality of the join from the perspective of the new
+        # collection to the existing data.
+        reverse_cardinality: JoinCardinality = child.infer_root_reverse_cardinality(
+            self
+        )
+
         # Create and insert the new child connection.
         new_child_idx = len(self.children)
         connection: HybridConnection = HybridConnection(
-            self, child, connection_type, min_steps, max_steps, {}
+            self,
+            child,
+            connection_type,
+            min_steps,
+            max_steps,
+            {},
+            reverse_cardinality,
         )
         self._children.append(connection)
+
+        # Augment the reverse cardinality if the parent does not always exist.
+        if (not reverse_cardinality.filters) and (not self.always_exists()):
+            connection.reverse_cardinality = reverse_cardinality.add_filter()
 
         # If an operation prevents the child's presence from directly
         # filtering the current level, update its connection type to be either
@@ -597,6 +623,96 @@ class HybridTree:
         # Return the index of the newly created child.
         return new_child_idx
 
+    @staticmethod
+    def infer_metadata_reverse_cardinality(
+        metadata: SubcollectionRelationshipMetadata,
+    ) -> JoinCardinality:
+        """
+        Infers the cardinality of the reverse of a join (child → parent)
+        based on the metadata of the reverse-relationship, if one exists.
+        If no reverse metadata exists, defaults to PLURAL_FILTER (safest assumption)
+
+        Args:
+            `metadata`: the metadata for the sub-collection property mapping
+            the parent to the child.
+
+        Returns:
+            The join cardinality for the connection from the child back to the
+            parent, if it can be inferred. Uses `PLURAL_FILTER` as a fallback.
+        """
+        # If there is no reverse, fall back to plural filter (which is the
+        # safest default assumption).
+        if (
+            not isinstance(metadata, ReversiblePropertyMetadata)
+            or metadata.reverse is None
+        ):
+            return JoinCardinality.PLURAL_FILTER
+
+        # If the reverse property exists, use its properties to
+        # infer if the reverse cardinality is singular or plural
+        # and whether a match always exists or not.
+        cardinality: JoinCardinality
+        match (metadata.reverse.is_plural, metadata.reverse.always_matches):
+            case (False, True):
+                cardinality = JoinCardinality.SINGULAR_ACCESS
+            case (False, False):
+                cardinality = JoinCardinality.SINGULAR_FILTER
+            case (True, True):
+                cardinality = JoinCardinality.PLURAL_ACCESS
+            case (True, False):
+                cardinality = JoinCardinality.PLURAL_FILTER
+        return cardinality
+
+    def infer_root_reverse_cardinality(self, context: "HybridTree") -> JoinCardinality:
+        """
+        Infers the cardinality of the join connecting the root of the hybrid
+        tree back to its parent context.
+
+        Args:
+            `context`: the parent context that the root of the hybrid tree is
+            being connected to.
+
+        Returns:
+            The inferred cardinality of the join connecting the root of the
+            hybrid tree to its parent context.
+        """
+        # Keep traversing upward until we find the root of the current tree.
+        if self.parent is not None:
+            return self.parent.infer_root_reverse_cardinality(context)
+
+        # Once we find the root, infer the cardinality of the join that would
+        # connect just this node to the parent context.
+        # At the root, only this node’s type matters for reverse cardinality.
+        # Deeper nodes do not affect parent-child match guarantees.
+        match self.pipeline[0]:
+            case HybridRoot():
+                # If the parent of the child is a root, it means a cross join
+                # is occurring, so the cardinality depends on whether
+                # the parent context is singular or plural.
+                return (
+                    JoinCardinality.SINGULAR_ACCESS
+                    if context.is_singular()
+                    else JoinCardinality.PLURAL_ACCESS
+                )
+            case HybridCollectionAccess():
+                # For non sub-collection accesses, use plural access.
+                # For a sub-collection, infer from the reverse property.
+                if isinstance(self.pipeline[0].collection, SubCollection):
+                    return self.infer_metadata_reverse_cardinality(
+                        self.pipeline[0].collection.subcollection_property
+                    )
+                else:
+                    return JoinCardinality.PLURAL_ACCESS
+            # For partition & partition child, infer from the underlying child.
+            case HybridPartition():
+                return self.children[0].subtree.infer_root_reverse_cardinality(context)
+            case HybridPartitionChild():
+                return self.pipeline[0].subtree.infer_root_reverse_cardinality(context)
+            case _:
+                raise NotImplementedError(
+                    f"Invalid start of pipeline: {self.pipeline[0].__class__.__name__}"
+                )
+
     def add_successor(self, successor: "HybridTree") -> None:
         """
         Marks two hybrid trees in a predecessor-successor relationship.
@@ -605,7 +721,7 @@ class HybridTree:
             `successor`: the HybridTree to be marked as one level below `self`.
         """
         if self._successor is not None:
-            raise Exception("Duplicate successor")
+            raise ValueError("Duplicate successor")
         self._successor = successor
         successor._parent = self
         # Shift the aggregation keys and rhs of join keys back by 1 level to
@@ -715,7 +831,7 @@ class HybridTree:
         match self.pipeline[0]:
             case HybridCollectionAccess():
                 if isinstance(self.pipeline[0].collection, TableCollection):
-                    pass
+                    return False
                 else:
                     assert isinstance(self.pipeline[0].collection, SubCollection)
                     meta: SubcollectionRelationshipMetadata = self.pipeline[
@@ -726,6 +842,8 @@ class HybridTree:
             case HybridChildPullUp():
                 if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
                     return False
+            case HybridRoot():
+                pass
             case _:
                 return False
         # The current level is fine, so check any levels above it next.

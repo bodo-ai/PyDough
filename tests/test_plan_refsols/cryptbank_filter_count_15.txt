@@ -1,6 +1,10 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+<<<<<<< HEAD
   JOIN(condition=UNMASK::((42 - ([t0.c_key]))) == t1.a_custkey, type=SEMI, cardinality=SINGULAR_FILTER, columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_key': c_key})
    FILTER(condition=a_type == MASK::(SUBSTRING(['retirement':string], 2) || SUBSTRING(['retirement':string], 1, 1)), columns={'a_custkey': a_custkey})
     SCAN(table=CRBNK.ACCOUNTS, columns={'a_custkey': a_custkey, 'a_type': a_type})
+=======
+  SCAN(table=CRBNK.CUSTOMERS, columns={})
+>>>>>>> main

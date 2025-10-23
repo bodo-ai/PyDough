@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=NOT(ISIN(payment_method, [Call(op=MASK, inputs=[Literal(value='Mobile Payment', type=UnknownType())], return_type=StringType()), Call(op=MASK, inputs=[Literal(value='Gift Card', type=UnknownType())], return_type=StringType())]:bool)), columns={})
+   SCAN(table=bodo.retail.transactions, columns={'payment_method': payment_method})

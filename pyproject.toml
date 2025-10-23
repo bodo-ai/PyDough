@@ -34,11 +34,15 @@ dev-dependencies = [
     "pytest-repeat",
     "pydough[snowflake]",
     "pydough[mysql]",
+    "pydough[postgres]",
+    "pydough[server]",
 ]
 
 [project.optional-dependencies]
 snowflake = ["snowflake-connector-python[pandas]"]
 mysql = ["mysql-connector-python"]
+postgres = ["psycopg2-binary"]
+server = ["fastapi", "httpx", "uvicorn"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

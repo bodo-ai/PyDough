@@ -1,4 +1,4 @@
 ROOT(columns=[('name', c_name)], orderings=[])
- JOIN(condition=t0.c_custkey == t1.o_custkey, type=SEMI, cardinality=SINGULAR_FILTER, columns={'c_name': t0.c_name})
+ JOIN(condition=t0.c_custkey == t1.o_custkey, type=SEMI, columns={'c_name': t0.c_name})
   SCAN(table=tpch.CUSTOMER, columns={'c_custkey': c_custkey, 'c_name': c_name})
   SCAN(table=tpch.ORDERS, columns={'o_custkey': o_custkey})

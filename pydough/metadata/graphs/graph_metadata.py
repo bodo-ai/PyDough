@@ -4,8 +4,9 @@ Definition of PyDough metadata for a graph.
 
 from typing import TYPE_CHECKING
 
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import HasType, is_valid_name
 from pydough.metadata.abstract_metadata import AbstractMetadata
-from pydough.metadata.errors import HasType, PyDoughMetadataException, is_valid_name
 
 if TYPE_CHECKING:
     from pydough.pydough_operators import (
@@ -42,7 +43,7 @@ class GraphMetadata(AbstractMetadata):
         synonyms: list[str] | None,
         extra_semantic_info: dict | None,
     ):
-        is_valid_name.verify(name, "graph name")
+        is_valid_name.verify(name, f"graph name {name!r}")
         self._additional_definitions: list[str] | None = additional_definitions
         self._verified_pydough_analysis: list[dict] | None = verified_pydough_analysis
         self._name: str = name
@@ -178,7 +179,7 @@ class GraphMetadata(AbstractMetadata):
             `PyDoughMetadataException`: if `function` cannot be inserted
             into the graph because of a name collision.
         """
-        is_valid_name.verify(name, "function name")
+        is_valid_name.verify(name, f"function name {name!r}")
         if name == self.name:
             raise PyDoughMetadataException(
                 f"Function name {name!r} cannot be the same as the graph name {self.name!r}"

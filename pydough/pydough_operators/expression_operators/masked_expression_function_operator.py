@@ -1,5 +1,6 @@
 """
-TODO
+Special operators containing logic to mask or unmask data based on a masked
+table column's metadata.
 """
 
 __all__ = ["MaskedExpressionFunctionOperator"]
@@ -12,31 +13,43 @@ from pydough.pydough_operators.type_inference import (
     RequireNumArgs,
     TypeVerifier,
 )
+from pydough.types import PyDoughType
 
 from .expression_function_operators import ExpressionFunctionOperator
 
 
 class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
     """
-    TODO
+    A special expression function operator that masks or unmasks data based on
+    a masked table column's metadata. The operator contains the metadata for
+    the column, but can represent either a masking or unmasking operation
+    depending on the `is_unmask` flag.
     """
 
     def __init__(
         self,
         masking_metadata: MaskedTableColumnMetadata,
-        is_unprotect: bool,
+        is_unmask: bool,
     ):
+        # Create a dummy verifier that requires exactly one argument, since all
+        # masking/unmasking operations are unary.
         verifier: TypeVerifier = RequireNumArgs(1)
-        deducer: ExpressionTypeDeducer = ConstantType(
+
+        # Create a dummy deducer that always returns the appropriate data type
+        # from the metadata based on whether this is a masking or unmasking
+        # operation.
+        target_type: PyDoughType = (
             masking_metadata.unprotected_data_type
-            if is_unprotect
+            if is_unmask
             else masking_metadata.data_type
         )
+        deducer: ExpressionTypeDeducer = ConstantType(target_type)
+
         super().__init__(
-            "UNMASK" if is_unprotect else "MASK", False, verifier, deducer, False
+            "UNMASK" if is_unmask else "MASK", False, verifier, deducer, False
         )
         self._masking_metadata: MaskedTableColumnMetadata = masking_metadata
-        self._is_unprotect: bool = is_unprotect
+        self._is_unmask: bool = is_unmask
 
     @property
     def masking_metadata(self) -> MaskedTableColumnMetadata:
@@ -46,11 +59,11 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
         return self._masking_metadata
 
     @property
-    def is_unprotect(self) -> bool:
+    def is_unmask(self) -> bool:
         """
         Whether this operator is unprotecting (True) or protecting (False).
         """
-        return self._is_unprotect
+        return self._is_unmask
 
     @property
     def format_string(self) -> str:
@@ -60,12 +73,12 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
         """
         return (
             self.masking_metadata.unprotect_protocol
-            if self.is_unprotect
+            if self.is_unmask
             else self.masking_metadata.protect_protocol
         )
 
     def to_string(self, arg_strings: list[str]) -> str:
-        name: str = "UNMASK" if self.is_unprotect else "MASK"
+        name: str = "UNMASK" if self.is_unmask else "MASK"
         arg_strings = [f"[{s}]" for s in arg_strings]
         return f"{name}::({self.format_string.format(*arg_strings)})"
 
@@ -73,6 +86,6 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
         return (
             isinstance(other, MaskedExpressionFunctionOperator)
             and self.masking_metadata == other.masking_metadata
-            and self.is_unprotect == other.is_unprotect
+            and self.is_unmask == other.is_unmask
             and super().equals(other)
         )

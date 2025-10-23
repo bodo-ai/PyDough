@@ -20,6 +20,7 @@ SELECT
     2
   ) AS avg_secs
 FROM crbnk.accounts AS accounts
+<<<<<<< HEAD
 LEFT JOIN _s1 AS _s1
   ON _s1.t_sourceaccount = CASE
     WHEN accounts.a_key = 0
@@ -30,3 +31,7 @@ LEFT JOIN _s1 AS _s1
       CAST(LENGTH(accounts.a_key) AS REAL) / 2
     ) AS INTEGER)
   END
+=======
+JOIN _s1 AS _s1
+  ON _s1.t_sourceaccount = accounts.a_key
+>>>>>>> main

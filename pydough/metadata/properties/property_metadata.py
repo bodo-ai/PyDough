@@ -6,12 +6,12 @@ __all__ = ["PropertyMetadata"]
 
 from abc import abstractmethod
 
-from pydough.metadata.abstract_metadata import AbstractMetadata
-from pydough.metadata.collections import CollectionMetadata
-from pydough.metadata.errors import (
+from pydough.errors.error_utils import (
     HasType,
     is_valid_name,
 )
+from pydough.metadata.abstract_metadata import AbstractMetadata
+from pydough.metadata.collections import CollectionMetadata
 
 
 class PropertyMetadata(AbstractMetadata):
@@ -45,8 +45,8 @@ class PropertyMetadata(AbstractMetadata):
         synonyms: list[str] | None,
         extra_semantic_info: dict | None,
     ):
-        is_valid_name.verify(name, "name")
-        HasType(CollectionMetadata).verify(collection, "collection")
+        is_valid_name.verify(name, f"property name {name!r}")
+        HasType(CollectionMetadata).verify(collection, f"collection {name}")
         self._name: str = name
         self._collection: CollectionMetadata = collection
         super().__init__(description, synonyms, extra_semantic_info)

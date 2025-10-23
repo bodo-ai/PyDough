@@ -3,13 +3,14 @@ Definition of PyDough metadata for a collection that trivially corresponds to a
 table in a relational system.
 """
 
-from pydough.metadata.errors import (
+from pydough.errors import PyDoughMetadataException
+from pydough.errors.error_utils import (
     HasPropertyWith,
     NoExtraKeys,
-    PyDoughMetadataException,
     extract_array,
     extract_string,
     is_string,
+    is_valid_sql_name,
     unique_properties_predicate,
 )
 from pydough.metadata.graphs import GraphMetadata
@@ -146,6 +147,7 @@ class SimpleTableMetadata(CollectionMetadata):
         # Extract the relevant properties from the JSON to build the new
         # collection, then add it to the graph.
         table_path: str = extract_string(collection_json, "table path", error_name)
+        is_valid_sql_name.verify(table_path, error_name)
         HasPropertyWith("unique properties", unique_properties_predicate).verify(
             collection_json, error_name
         )
@@ -161,8 +163,6 @@ class SimpleTableMetadata(CollectionMetadata):
         )
         # Parse the optional common semantic properties like the description.
         new_collection.parse_optional_properties(collection_json)
-        properties: list = extract_array(
-            collection_json, "properties", new_collection.error_name
-        )
+        properties: list = extract_array(collection_json, "properties", error_name)
         new_collection.add_properties_from_json(properties)
         graph.add_collection(new_collection)

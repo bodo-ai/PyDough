@@ -7,13 +7,12 @@ __all__ = ["split_partial_aggregates"]
 
 
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
+from pydough.configs import PyDoughSession
 from pydough.relational import (
     Aggregate,
     CallExpression,
     ColumnReference,
     ColumnReferenceFinder,
-    ColumnReferenceInputNameRemover,
     Join,
     JoinType,
     LiteralExpression,
@@ -23,6 +22,7 @@ from pydough.relational import (
 )
 from pydough.relational.rel_util import (
     ExpressionTranspositionShuttle,
+    add_input_name,
     extract_equijoin_keys,
     fetch_or_insert,
 )
@@ -51,7 +51,7 @@ aggregations.
 """
 
 
-def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> RelationalNode:
+def decompose_aggregations(node: Aggregate, session: PyDoughSession) -> RelationalNode:
     """
     Splits up an aggregate node into an aggregate followed by a projection when
     the aggregate contains 1+ calls to functions that can be split into 1+
@@ -59,7 +59,7 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
 
     Args:
         `node`: the aggregate node to be decomposed.
-        `config`: the current configuration settings.
+        `session`: the PyDough session used during the transformation.
 
     Returns:
         The projection node on top of the new aggregate, overall containing the
@@ -110,7 +110,7 @@ def decompose_aggregations(node: Aggregate, config: PyDoughConfigs) -> Relationa
             )
             # If the config specifies that the default value for AVG should be
             # zero, wrap the division in a DEFAULT_TO call.
-            if config.avg_default_zero:
+            if session.config.avg_default_zero:
                 avg_call = CallExpression(
                     pydop.DEFAULT_TO,
                     agg.data_type,
@@ -173,7 +173,6 @@ def transpose_aggregate_join(
     need_projection: bool = False
 
     finder: ColumnReferenceFinder = ColumnReferenceFinder()
-    alias_remover: ColumnReferenceInputNameRemover = ColumnReferenceInputNameRemover()
     transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
         join, False
     )
@@ -245,8 +244,8 @@ def transpose_aggregate_join(
             agg_input_name
         }:
             if isinstance(transposed_agg_key, ColumnReference):
-                input_keys[transposed_agg_key.name] = transposed_agg_key.accept_shuttle(
-                    alias_remover
+                input_keys[transposed_agg_key.name] = add_input_name(
+                    transposed_agg_key, None
                 )
             else:
                 if agg_key_name in join.columns and (
@@ -255,9 +254,7 @@ def transpose_aggregate_join(
                     # An edge cases that is theoretically possible but never
                     # encountered so far, and where the behavior is undefined.
                     raise NotImplementedError("Undefined behavior")
-                input_keys[agg_key_name] = transposed_agg_key.accept_shuttle(
-                    alias_remover
-                )
+                input_keys[agg_key_name] = add_input_name(transposed_agg_key, None)
                 join.columns[agg_key_name] = ColumnReference(
                     agg_key_name, agg_key.data_type, agg_input_name
                 )
@@ -280,7 +277,7 @@ def transpose_aggregate_join(
 
 
 def attempt_join_aggregate_transpose(
-    node: Aggregate, join: Join, config: PyDoughConfigs
+    node: Aggregate, join: Join, session: PyDoughSession
 ) -> tuple[RelationalNode, bool]:
     """
     Determine whether the aggregate join transpose operation can occur, and if
@@ -358,6 +355,7 @@ def attempt_join_aggregate_transpose(
     # if joining first will reduce the number of rows that get aggregated.
     if join.cardinality.filters:
         can_push_left = False
+    if join.reverse_cardinality.filters:
         can_push_right = False
 
     # If any of the aggregations to either side cannot be pushed down, then
@@ -378,11 +376,6 @@ def attempt_join_aggregate_transpose(
         # perform the transpose.
         return node, True
 
-    if need_count_aggs and not (can_push_left and can_push_right):
-        # If we need to push down COUNT(*) aggregates, but cannot push into
-        # both sides of the join, we cannot perform the transpose.
-        return node, True
-
     # Parse the join condition to identify the lists of equi-join keys
     # from the LHS and RHS, and verify that all of the columns used by
     # the condition are in those lists.
@@ -399,7 +392,7 @@ def attempt_join_aggregate_transpose(
     for col in node.aggregations.values():
         if col.op in decomposable_aggfuncs:
             return split_partial_aggregates(
-                decompose_aggregations(node, config), config
+                decompose_aggregations(node, session), session
             ), False
 
     # Keep a dictionary for the projection columns that will be used to post-process
@@ -409,21 +402,31 @@ def attempt_join_aggregate_transpose(
 
     # If we need count aggregates, add one to each side of the join.
     if need_count_aggs:
-        assert len(count_aggs) > 0
-        lhs_aggs.append(count_aggs.pop())
-        new_agg_name: str
+        lhs_agg_name: str
+        rhs_agg_name: str
         idx: int = 0
         while True:
-            new_agg_name = f"agg_{idx}"
-            if new_agg_name not in node.columns:
-                break
+            lhs_agg_name = f"agg_{idx}"
             idx += 1
-        node.aggregations[new_agg_name] = CallExpression(
+            if lhs_agg_name not in node.columns and lhs_agg_name not in join.columns:
+                break
+        while True:
+            rhs_agg_name = f"agg_{idx}"
+            idx += 1
+            if rhs_agg_name not in node.columns and rhs_agg_name not in join.columns:
+                break
+        node.aggregations[lhs_agg_name] = CallExpression(
             pydop.COUNT,
             NumericType(),
             [],
         )
-        rhs_aggs.append(new_agg_name)
+        node.aggregations[rhs_agg_name] = CallExpression(
+            pydop.COUNT,
+            NumericType(),
+            [],
+        )
+        lhs_aggs.append(lhs_agg_name)
+        rhs_aggs.append(rhs_agg_name)
 
     # Loop over both inputs and perform the pushdown into whichever one(s)
     # will allow an aggregate to be pushed into them.
@@ -448,26 +451,41 @@ def attempt_join_aggregate_transpose(
         if side_count_ref is not None:
             count_refs.append(side_count_ref)
 
-    # For each COUNT(*) aggregate, replace with the product of the COUNT(*)
-    # calls that were pushed into each side of the join.
+    # For each COUNT(*) aggregate, replace with the product of the calls that
+    # were pushed into each side of the join.
     for count_call_name in count_aggs:
-        assert len(count_refs) > 1
-        product: RelationalExpression = CallExpression(
-            pydop.MUL, NumericType(), count_refs
+        if len(count_refs) > 1:
+            product: RelationalExpression = CallExpression(
+                pydop.MUL, NumericType(), count_refs
+            )
+            product_sum: CallExpression = CallExpression(
+                pydop.SUM, NumericType(), [product]
+            )
+            node.aggregations[count_call_name] = product_sum
+            node.columns[count_call_name] = product_sum
+        elif len(count_refs) == 1:
+            regular_sum: CallExpression = CallExpression(
+                pydop.SUM, NumericType(), [count_refs[0]]
+            )
+            node.aggregations[count_call_name] = regular_sum
+            node.columns[count_call_name] = regular_sum
+        projection_columns[count_call_name] = ColumnReference(
+            count_call_name, NumericType()
         )
-        projection_columns[count_call_name] = product
-        need_projection = True
 
     # If the node requires projection at the end, create a new Project node on
     # top of the top aggregate.
     if need_projection:
-        return Project(node, projection_columns), True
+        new_node: RelationalNode = node.copy(
+            inputs=[split_partial_aggregates(input, session) for input in node.inputs]
+        )
+        return Project(new_node, projection_columns), False
     else:
         return node, True
 
 
 def split_partial_aggregates(
-    node: RelationalNode, config: PyDoughConfigs
+    node: RelationalNode, session: PyDoughSession
 ) -> RelationalNode:
     """
     Splits partial aggregates above joins into two aggregates, one above the
@@ -476,7 +494,7 @@ def split_partial_aggregates(
 
     Args:
         `node`: the root node of the relational plan to be transformed.
-        `config`: the current configuration settings.
+        `session`: the PyDough session used during the transformation.
 
     Returns:
         The transformed node. The transformation is also done-in-place.
@@ -484,11 +502,13 @@ def split_partial_aggregates(
     # If the aggregate+join pattern is detected, attempt to do the transpose.
     handle_inputs: bool = True
     if isinstance(node, Aggregate) and isinstance(node.input, Join):
-        node, handle_inputs = attempt_join_aggregate_transpose(node, node.input, config)
+        node, handle_inputs = attempt_join_aggregate_transpose(
+            node, node.input, session
+        )
 
     # If needed, recursively invoke the procedure on all inputs to the node.
     if handle_inputs:
         node = node.copy(
-            inputs=[split_partial_aggregates(input, config) for input in node.inputs]
+            inputs=[split_partial_aggregates(input, session) for input in node.inputs]
         )
     return node

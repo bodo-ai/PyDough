@@ -4,11 +4,14 @@ of PyDough, which is either returns the SQL text or executes
 the query on the database.
 """
 
+from typing import Any
+
 import pandas as pd
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot import parse_one
 from sqlglot.dialects import Dialect as SQLGlotDialect
 from sqlglot.dialects import MySQL as MySQLDialect
+from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
@@ -17,18 +20,16 @@ from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
 from sqlglot.optimizer.annotate_types import annotate_types
-from sqlglot.optimizer.canonicalize import canonicalize
 from sqlglot.optimizer.eliminate_ctes import eliminate_ctes
 from sqlglot.optimizer.eliminate_joins import eliminate_joins
 from sqlglot.optimizer.eliminate_subqueries import eliminate_subqueries
 from sqlglot.optimizer.normalize import normalize
 from sqlglot.optimizer.optimize_joins import optimize_joins
-from sqlglot.optimizer.qualify import qualify
 from sqlglot.optimizer.scope import traverse_scope, walk_in_scope
 
-from pydough.configs import PyDoughConfigs
+import pydough
+from pydough.configs import PyDoughSession
 from pydough.database_connectors import (
-    DatabaseContext,
     DatabaseDialect,
 )
 from pydough.logger import get_logger
@@ -37,9 +38,11 @@ from pydough.relational.relational_expressions import (
     RelationalExpression,
 )
 
+from .override_canonicalize import canonicalize
 from .override_merge_subqueries import merge_subqueries
 from .override_pushdown_predicates import pushdown_predicates
 from .override_pushdown_projections import pushdown_projections
+from .override_qualify import qualify
 from .override_simplify import simplify
 from .override_unnest_subqueries import unnest_subqueries
 from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
@@ -47,34 +50,34 @@ from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 __all__ = ["convert_relation_to_sql", "execute_df"]
 
 
-def convert_relation_to_sql(
-    relational: RelationalRoot,
-    dialect: DatabaseDialect,
-    config: PyDoughConfigs,
-) -> str:
+def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
 
     Args:
         `relational`: The relational tree to convert.
-        `dialect`: The dialect to use for the conversion.
+        `session`: The PyDough session encapsulating the logic used to execute
+        the logic, including the PyDough configs and the database context.
 
     Returns:
         The SQL string representing the relational tree.
     """
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
-        dialect, config
+        session
     ).relational_to_sqlglot(relational)
-    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(dialect)
+    sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(
+        session.database.dialect
+    )
 
     # Apply the SQLGlot optimizer to the AST.
     try:
         glot_expr = apply_sqlglot_optimizer(glot_expr, relational, sqlglot_dialect)
     except SqlglotError as e:
-        print(
-            f"ERROR WHILE OPTIMIZING QUERY:\n{glot_expr.sql(sqlglot_dialect, pretty=True)}"
-        )
-        raise e
+        sql_text: str = glot_expr.sql(sqlglot_dialect, pretty=True)
+        print(f"ERROR WHILE OPTIMIZING QUERY:\n{sql_text}")
+        raise pydough.active_session.error_builder.sql_runtime_failure(
+            sql_text, e, False
+        ) from e
 
     # Convert the optimized AST back to a SQL string.
     return glot_expr.sql(sqlglot_dialect, pretty=True)
@@ -101,7 +104,7 @@ def apply_sqlglot_optimizer(
 
     # Apply each rule explicitly with appropriate kwargs
 
-    kwargs = {
+    kwargs: dict[str, Any] = {
         "quote_identifiers": False,
         "isolate_tables": True,
         "validate_qualify_columns": False,
@@ -394,23 +397,25 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
     Returns:
         The corresponding SQLGlot dialect.
     """
-    if dialect == DatabaseDialect.ANSI:
-        # Note: ANSI is the base dialect for SQLGlot.
-        return SQLGlotDialect()
-    elif dialect == DatabaseDialect.SQLITE:
-        return SQLiteDialect()
-    elif dialect == DatabaseDialect.SNOWFLAKE:
-        return SnowflakeDialect()
-    elif dialect == DatabaseDialect.MYSQL:
-        return MySQLDialect()
-    else:
-        raise ValueError(f"Unsupported dialect: {dialect}")
+    match dialect:
+        case DatabaseDialect.ANSI:
+            # Note: ANSI is the base dialect for SQLGlot.
+            return SQLGlotDialect()
+        case DatabaseDialect.SQLITE:
+            return SQLiteDialect()
+        case DatabaseDialect.SNOWFLAKE:
+            return SnowflakeDialect()
+        case DatabaseDialect.MYSQL:
+            return MySQLDialect()
+        case DatabaseDialect.POSTGRES:
+            return PostgresDialect()
+        case _:
+            raise NotImplementedError(f"Unsupported dialect: {dialect}")
 
 
 def execute_df(
     relational: RelationalRoot,
-    ctx: DatabaseContext,
-    config: PyDoughConfigs,
+    session: PyDoughSession,
     display_sql: bool = False,
 ) -> pd.DataFrame:
     """
@@ -419,15 +424,16 @@ def execute_df(
 
     Args:
         `relational`: The relational tree to execute.
-        `ctx`: The database context to execute the query in.
+        `session`: The PyDough session encapsulating the logic used to execute
+        the logic, including the database context.
         `display_sql`: if True, prints out the SQL that will be run before
         it is executed.
 
     Returns:
         The result of the query as a Pandas DataFrame
     """
-    sql: str = convert_relation_to_sql(relational, ctx.dialect, config)
+    sql: str = convert_relation_to_sql(relational, session)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")
-    return ctx.connection.execute_query_df(sql)
+    return session._database.connection.execute_query_df(sql)

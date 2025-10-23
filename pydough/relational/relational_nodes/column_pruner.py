@@ -149,32 +149,57 @@ class ColumnPruner:
 
         # Special case: replace LEFT join where RHS is unused with LHS (only
         # possible if the join is used to bring 1:1 data into the rows of the
-        # LHS, which is unecessary if no data is being brought). Also do the
-        # same for inner joins that meet certain criteria.
-        if isinstance(output, Join) and (
-            (output.join_type == JoinType.LEFT)
-            or (
+        # LHS, which is unnecessary if no data is being brought). Also do the
+        # same for inner joins that meet certain criteria. Do the same with
+        # inner joins where the left side is unused and the data is singular
+        # and non-filtering with regards to the right side.
+        if isinstance(output, Join):
+            prune_left: bool = (
+                output.join_type == JoinType.INNER
+                and output.reverse_cardinality == JoinCardinality.SINGULAR_ACCESS
+            )
+            prune_right: bool = (output.join_type == JoinType.LEFT) or (
                 output.join_type == JoinType.INNER
                 and output.cardinality == JoinCardinality.SINGULAR_ACCESS
             )
-        ):
-            uses_rhs: bool = False
-            for column in output.columns.values():
-                if (
-                    isinstance(column, ColumnReference)
-                    and column.input_name == output.default_input_aliases[1]
-                ):
-                    uses_rhs = True
-                    break
-            if not uses_rhs:
+            if prune_left or prune_right:
+                uses_lhs: bool = False
+                uses_rhs: bool = False
+                for column in output.columns.values():
+                    if (
+                        isinstance(column, ColumnReference)
+                        and column.input_name == output.default_input_aliases[0]
+                    ):
+                        uses_lhs = True
+                    if (
+                        isinstance(column, ColumnReference)
+                        and column.input_name == output.default_input_aliases[1]
+                    ):
+                        uses_rhs = True
+                    if uses_lhs and uses_rhs:
+                        break
+
                 new_columns: dict[str, RelationalExpression] = {}
-                for column_name, column_val in output.columns.items():
-                    assert isinstance(column_val, ColumnReference)
-                    new_columns[column_name] = output.inputs[0].columns[column_val.name]
-                if isinstance(output.inputs[0], Aggregate):
-                    for key in output.inputs[0].keys:
-                        new_columns[key] = output.inputs[0].keys[key]
-                output = output.inputs[0].copy(columns=new_columns)
+                if prune_right and not uses_rhs:
+                    for column_name, column_val in output.columns.items():
+                        assert isinstance(column_val, ColumnReference)
+                        new_columns[column_name] = output.inputs[0].columns[
+                            column_val.name
+                        ]
+                    if isinstance(output.inputs[0], Aggregate):
+                        for key in output.inputs[0].keys:
+                            new_columns[key] = output.inputs[0].keys[key]
+                    output = output.inputs[0].copy(columns=new_columns)
+                elif prune_left and not uses_lhs:
+                    for column_name, column_val in output.columns.items():
+                        assert isinstance(column_val, ColumnReference)
+                        new_columns[column_name] = output.inputs[1].columns[
+                            column_val.name
+                        ]
+                    if isinstance(output.inputs[1], Aggregate):
+                        for key in output.inputs[1].keys:
+                            new_columns[key] = output.inputs[1].keys[key]
+                    output = output.inputs[1].copy(columns=new_columns)
 
         return output, correl_refs
 

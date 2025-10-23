@@ -7,7 +7,7 @@
         "name": "regions",
         "type": "simple table",
         "table path": "main.REGION",
-        "unique properties": ["key"],
+        "unique properties": ["key", "name"],
         "properties": [
           {
             "name": "key",
@@ -41,7 +41,7 @@
         "name": "nations",
         "type": "simple table",
         "table path": "main.NATION",
-        "unique properties": ["key"],
+        "unique properties": ["key", "name"],
         "properties": [
           {
             "name": "key",
@@ -83,7 +83,7 @@
         "name": "parts",
         "type": "simple table",
         "table path": "main.PART",
-        "unique properties": ["key"],
+        "unique properties": ["key", "name"],
         "properties": [
           {
             "name": "key",
@@ -170,7 +170,7 @@
         "name": "suppliers",
         "type": "simple table",
         "table path": "main.SUPPLIER",
-        "unique properties": ["key", "name"],
+        "unique properties": ["key", "name", "phone", "address"],
         "properties": [
           {
             "name": "key",
@@ -527,7 +527,7 @@
         "name": "customers",
         "type": "simple table",
         "table path": "main.CUSTOMER",
-        "unique properties": ["key", "name"],
+        "unique properties": ["key", "name", "address"],
         "properties": [
           {
             "name": "key",
@@ -813,6 +813,9 @@
         "description": "The orders that a customer has placed, each of which contains one or more line items",
         "synonyms": ["transactions", "purchases"]
       }
-    ]
+    ],
+    "additional definitions": [],
+    "verified pydough analysis": [],
+    "extra semantic info": {}
   }
 ]

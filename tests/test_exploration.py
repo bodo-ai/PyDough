@@ -7,6 +7,7 @@ from collections.abc import Callable
 import pytest
 
 import pydough
+from pydough.configs import PyDoughSession
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import UnqualifiedNode
 from tests.test_pydough_functions.exploration_examples import (
@@ -93,7 +94,7 @@ Call pydough.explain_structure(graph) to see how all of the collections in the g
                 """
 PyDough collection: customers
 Table path: tpch.CUSTOMER
-Unique properties of collection: ['key', 'name']
+Unique properties of collection: ['key', 'name', 'address']
 Scalar properties:
   account_balance
   address
@@ -123,7 +124,7 @@ Call pydough.explain(graph['customers'][property_name]) to learn more about any 
                 """
 PyDough collection: regions
 Table path: tpch.REGION
-Unique properties of collection: ['key']
+Unique properties of collection: ['key', 'name']
 Scalar properties:
   comment
   key
@@ -1161,7 +1162,7 @@ PyDough collection representing the following logic:
     ├─┬─ Partition[name='part_types', by=part_type]
     │ └─┬─ AccessChild
     │   └─── TableCollection[parts]
-    ├─┬─ Calculate[part_type=part_type, avg_price=AVG($1.retail_price)]
+    ├─┬─ Calculate[avg_price=AVG($1.retail_price)]
     │ └─┬─ AccessChild
     │   └─── PartitionChild[parts]
     └─┬─ Where[avg_price >= 27.5]
@@ -1222,13 +1223,13 @@ Did you mean to use pydough.explain_term?
                 "TPCH",
                 contextless_collections_impl,
                 """
-Unrecognized term of TPCH: 'line_items'. Did you mean: lines, nations, regions, suppliers?
+Unrecognized term of TPCH: 'line_items'. Did you mean: lines, parts, regions?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
                 """,
                 """
-Unrecognized term of TPCH: 'line_items'. Did you mean: lines, nations, regions, suppliers?
+Unrecognized term of TPCH: 'line_items'. Did you mean: lines, parts, regions?
 This could mean you accessed a property using a name that does not exist, or
 that you need to place your PyDough code into a context for it to make sense.
 Did you mean to use pydough.explain_term?
@@ -1317,6 +1318,7 @@ def test_unqualified_node_exploration(
     ],
     verbose: bool,
     get_sample_graph: graph_fetcher,
+    empty_sqlite_tpch_session: PyDoughSession,
 ) -> None:
     """
     Verifies that `pydough.explain` called on unqualified nodes produces the
@@ -1327,7 +1329,9 @@ def test_unqualified_node_exploration(
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
     node: UnqualifiedNode = pydough.init_pydough_context(graph)(test_impl)()
-    answer: str = pydough.explain(node, verbose=verbose)
+    answer: str = pydough.explain(
+        node, verbose=verbose, session=empty_sqlite_tpch_session
+    )
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert answer == expected_answer, (
         "Mismatch between produced string and expected answer"
@@ -1875,6 +1879,7 @@ def test_unqualified_term_exploration(
     ],
     verbose: bool,
     get_sample_graph: graph_fetcher,
+    empty_sqlite_tpch_session: PyDoughSession,
 ) -> None:
     """
     Verifies that `pydough.explain` called on unqualified nodes produces the
@@ -1885,7 +1890,9 @@ def test_unqualified_term_exploration(
     )
     graph: GraphMetadata = get_sample_graph(graph_name)
     node, term = pydough.init_pydough_context(graph)(test_impl)()
-    answer: str = pydough.explain_term(node, term, verbose=verbose)
+    answer: str = pydough.explain_term(
+        node, term, verbose=verbose, session=empty_sqlite_tpch_session
+    )
     expected_answer: str = verbose_answer if verbose else non_verbose_answer
     assert answer == expected_answer, (
         "Mismatch between produced string and expected answer"

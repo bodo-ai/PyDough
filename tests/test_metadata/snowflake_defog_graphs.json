@@ -223,7 +223,7 @@
             "synonyms": ["record datetime", "price update date"]
           },
           {
-            "name": "open",
+            "name": "_open",
             "type": "table column",
             "column name": "sbDpOpen",
             "data type": "numeric",
@@ -3392,5 +3392,1045 @@
     "additional definitions": [],
     "verified pydough analysis": [],
     "extra semantic info": {}
+  },
+  {
+    "name": "Academic",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "authors",
+        "type": "simple table",
+        "table path": "ACADEMIC.author",
+        "unique properties": [
+          "author_id"
+        ],
+        "properties": [
+          {
+            "name": "author_id",
+            "type": "table column",
+            "column name": "aid",
+            "data type": "numeric",
+            "description": "Unique identifier for each author",
+            "sample values": [1, 3, 5],
+            "synonyms": ["author id", "author identification"]
+          },
+          {
+            "name": "homepage",
+            "type": "table column",
+            "column name": "homepage",
+            "data type": "string",
+            "description": "The hostname used for the author's website",
+            "sample values": ["www.larry.com", "www.noam.com"],
+            "synonyms": ["author url", "author website"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "name",
+            "data type": "string",
+            "description": "The name and lastname of the author",
+            "sample values": ["Larry Summers", "Noam Shazeer"],
+            "synonyms": ["full name"]
+          },
+          {
+            "name": "organization_id",
+            "type": "table column",
+            "column name": "oid",
+            "data type": "numeric",
+            "description": "The id of the organization the author is related to",
+            "sample values": [1, 2, 5],
+            "synonyms": ["oid", "org_id"]
+          }
+        ],
+        "description": "Contains details about the authors, including their id, name, homepage, and organization id.",
+        "synonyms": []
+      },
+      {
+        "name": "citations",
+        "type": "simple table",
+        "table path": "ACADEMIC.cite",
+        "unique properties": [
+          ["cited",
+          "citing"]
+        ],
+        "properties": [
+          {
+            "name": "cited",
+            "type": "table column",
+            "column name": "cited",
+            "data type": "numeric",
+            "description": "The id of the publication being referenced or cited.",
+            "sample values": [1, 2, 4],
+            "synonyms": []
+          },
+          {
+            "name": "citing",
+            "type": "table column",
+            "column name": "citing",
+            "data type": "numeric",
+            "description": "The id of the publication that is doing the referencing (the source paper that contains the citation).",
+            "sample values": [1, 2, 3],
+            "synonyms": []
+          }
+        ],
+        "description": "Records of citation relationships between publications.",
+        "synonyms": []
+      },
+      {
+        "name": "conferences",
+        "type": "simple table",
+        "table path": "ACADEMIC.conference",
+        "unique properties": [
+          "conference_id"
+        ],
+        "properties": [
+          {
+            "name": "conference_id",
+            "type": "table column",
+            "column name": "cid",
+            "data type": "numeric",
+            "description": "Unique identifier for the conference.",
+            "sample values": [1, 2, 3],
+            "synonyms": ["conference id"]
+          },
+          {
+            "name": "homepage",
+            "type": "table column",
+            "column name": "homepage",
+            "data type": "string",
+            "description": "The URL or homepage of the conference.",
+            "sample values": ["www.isa.com", "www.icml.com"],
+            "synonyms": ["conference website"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "name",
+            "data type": "string",
+            "description": "The full name or abbreviation of the conference.",
+            "sample values": ["ISA", "ICML"],
+            "synonyms": []
+          }
+        ],
+        "description": "Contains details about academic conferences.",
+        "synonyms": ["meeting", "symposium"]
+      },
+      {
+        "name": "domains",
+        "type": "simple table",
+        "table path": "ACADEMIC.domain",
+        "unique properties": [
+          "domain_id"
+        ],
+        "properties": [
+          {
+            "name": "domain_id",
+            "type": "table column",
+            "column name": "did",
+            "data type": "numeric",
+            "description": "Unique identifier for the academic domain or field.",
+            "sample values": [1, 3, 5],
+            "synonyms": []
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "name",
+            "data type": "string",
+            "description": "The name of the academic domain",
+            "sample values": ["Data Science", "Computer Science"],
+            "synonyms": ["field name", "subject"]
+          }
+        ],
+        "description": "Records of different academic domains or areas of study",
+        "synonyms": ["field", "subject"]
+      },
+      {
+        "name": "domains_authors",
+        "type": "simple table",
+        "table path": "ACADEMIC.domain_author",
+        "unique properties": [
+          ["author_id",
+          "domain_id"]
+        ],
+        "properties": [
+          {
+            "name": "author_id",
+            "type": "table column",
+            "column name": "aid",
+            "data type": "numeric",
+            "description": "The id of the author related to this domain",
+            "sample values": [1, 3, 5],
+            "synonyms": []
+          },
+          {
+            "name": "domain_id",
+            "type": "table column",
+            "column name": "did",
+            "data type": "numeric",
+            "description": "The id of the domain related to the author",
+            "sample values": [1, 3, 5],
+            "synonyms": []
+          }
+        ],
+        "description": "The records of each author being associated with domains",
+        "synonyms": []
+      },
+      {
+        "name": "domains_conferences",
+        "type": "simple table",
+        "table path": "ACADEMIC.domain_conference",
+        "unique properties": [
+          ["conference_id",
+          "domain_id"]
+        ],
+        "properties": [
+          {
+            "name": "conference_id",
+            "type": "table column",
+            "column name": "cid",
+            "data type": "numeric",
+            "description": "The id for the conference related to this domain",
+            "sample values": [1, 2, 3],
+            "synonyms": []
+          },
+          {
+            "name": "domain_id",
+            "type": "table column",
+            "column name": "did",
+            "data type": "numeric",
+            "description": "The id for the domain related to the conference.",
+            "sample values": [2, 4, 5],
+            "synonyms": []
+          }
+        ],
+        "description": "Describes the domains related to the different conferences",
+        "synonyms": ["conference subject"]
+      },
+      {
+        "name": "domains_journals",
+        "type": "simple table",
+        "table path": "ACADEMIC.domain_journal",
+        "unique properties": [
+          ["domain_id",
+          "journal_id"]
+        ],
+        "properties": [
+          {
+            "name": "domain_id",
+            "type": "table column",
+            "column name": "did",
+            "data type": "numeric",
+            "description": "The id of the domain realated to this journal",
+            "sample values": [1,2,5],
+            "synonyms": []
+          },
+          {
+            "name": "journal_id",
+            "type": "table column",
+            "column name": "jid",
+            "data type": "numeric",
+            "description": "The id of the jornal that published about this domain",
+            "sample values": [2, 3, 4],
+            "synonyms": []
+          }
+        ],
+        "description": "Records of domains being used by a journal",
+        "synonyms": ["journal domain", "journal field"]
+      },
+      {
+        "name": "domains_keywords",
+        "type": "simple table",
+        "table path": "ACADEMIC.domain_keyword",
+        "unique properties": [
+          ["domain_id",
+          "keyword_id"]
+        ],
+        "properties": [
+          {
+            "name": "domain_id",
+            "type": "table column",
+            "column name": "did",
+            "data type": "numeric",
+            "description": "The id of the domain which is related to this keyword",
+            "sample values": [1, 2],
+            "synonyms": []
+          },
+          {
+            "name": "keyword_id",
+            "type": "table column",
+            "column name": "kid",
+            "data type": "numeric",
+            "description": "The id of the keyword used or connected to this domain or field",
+            "sample values": [2, 3],
+            "synonyms": []
+          }
+        ],
+        "description": "Contains records of keywords that is related to a domain",
+        "synonyms": ["keyword domain"]
+      },
+      {
+        "name": "domains_publications",
+        "type": "simple table",
+        "table path": "ACADEMIC.domain_publication",
+        "unique properties": [["domain_id", "publication_id"]],
+        "properties": [
+          {
+            "name": "domain_id",
+            "type": "table column",
+            "column name": "did",
+            "data type": "numeric",
+            "description": "The id of the domain related to this publication",
+            "sample values": [1, 2, 3],
+            "synonyms": []
+          },
+          {
+            "name": "publication_id",
+            "type": "table column",
+            "column name": "pid",
+            "data type": "numeric",
+            "description": "The id of the publication about this domain",
+            "sample values": [2, 4, 5],
+            "synonyms": []
+          }
+        ],
+        "description": "Records of the publication and its related domain or field",
+        "synonyms": ["publication field"]
+      },
+      {
+        "name": "journals",
+        "type": "simple table",
+        "table path": "ACADEMIC.journal",
+        "unique properties": [
+          "journal_id"
+        ],
+        "properties": [
+          {
+            "name": "homepage",
+            "type": "table column",
+            "column name": "homepage",
+            "data type": "string",
+            "description": "The url of the journal",
+            "sample values": ["www.aijournal.com", "www.ml.com"],
+            "synonyms": ["website", "url"]
+          },
+          {
+            "name": "journal_id",
+            "type": "table column",
+            "column name": "jid",
+            "data type": "numeric",
+            "description": "The id of the journal",
+            "sample values": [1, 2, 3],
+            "synonyms": ["journal id", "identification"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "name",
+            "data type": "string",
+            "description": "The name of the journal",
+            "sample values": ["Nature", "Journal of Machine Learning Research"],
+            "synonyms": []
+          }
+        ],
+        "description": "Contains details about the journals",
+        "synonyms": ["magazines", "newspapers"]
+      },
+      {
+        "name": "keywords",
+        "type": "simple table",
+        "table path": "ACADEMIC.keyword",
+        "unique properties": [
+          "keyword_id"
+        ],
+        "properties": [
+          {
+            "name": "keyword",
+            "type": "table column",
+            "column name": "keyword",
+            "data type": "string",
+            "description": "The keyword itself",
+            "sample values": ["Neuroscience", "AI"],
+            "synonyms": []
+          },
+          {
+            "name": "keyword_id",
+            "type": "table column",
+            "column name": "kid",
+            "data type": "numeric",
+            "description": "The identificator of the keyword",
+            "sample values": [1, 2, 4],
+            "synonyms": ["keyword id"]
+          }
+        ],
+        "description": "Collection of keywords used in publications and domains",
+        "synonyms": []
+      },
+      {
+        "name": "organizations",
+        "type": "simple table",
+        "table path": "ACADEMIC.organization",
+        "unique properties": [
+          "organization_id"
+        ],
+        "properties": [
+          {
+            "name": "continent",
+            "type": "table column",
+            "column name": "continent",
+            "data type": "string",
+            "description": "The continent where the organization resides",
+            "sample values": ["North America", "Asia"],
+            "synonyms": ["location"]
+          },
+          {
+            "name": "homepage",
+            "type": "table column",
+            "column name": "homepage",
+            "data type": "string",
+            "description": "The url of the organization's website",
+            "sample values": ["www.organization2.com", "www.epfl.com"],
+            "synonyms": ["website link"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "name",
+            "data type": "string",
+            "description": "The name of the organization",
+            "sample values": ["École Polytechnique Fédérale de Lausanne 4", "Organization 2"],
+            "synonyms": ["oranization name"]
+          },
+          {
+            "name": "organization_id",
+            "type": "table column",
+            "column name": "oid",
+            "data type": "numeric",
+            "description": "The identifier for the organization",
+            "sample values": [1, 3, 5],
+            "synonyms": ["id", "oid"]
+          }
+        ],
+        "description": "Records of the existing organizations, including continent, name, homepage and id",
+        "synonyms": ["institutions"]
+      },
+      {
+        "name": "publications",
+        "type": "simple table",
+        "table path": "ACADEMIC.publication",
+        "unique properties": [
+          "publication_id"
+        ],
+        "properties": [
+          {
+            "name": "abstract",
+            "type": "table column",
+            "column name": "abstract",
+            "data type": "string",
+            "description": "Summary of the publication",
+            "sample values": ["Abstract 1", "Abstract 2"],
+            "synonyms": ["summary"]
+          },
+          {
+            "name": "conference_id",
+            "type": "table column",
+            "column name": "cid",
+            "data type": "numeric",
+            "description": "The id of the conference related to this publication",
+            "sample values": [1, 2, 3],
+            "synonyms": []
+          },
+          {
+            "name": "citation_num",
+            "type": "table column",
+            "column name": "citation_num",
+            "data type": "numeric",
+            "description": "The number of times this publication was cited",
+            "sample values": [4, 2, 0],
+            "synonyms": []
+          },
+          {
+            "name": "journal_id",
+            "type": "table column",
+            "column name": "jid",
+            "data type": "numeric",
+            "description": "The id of the journal that publish this publication",
+            "sample values": [1, 2, 4],
+            "synonyms": []
+          },
+          {
+            "name": "publication_id",
+            "type": "table column",
+            "column name": "pid",
+            "data type": "numeric",
+            "description": "The unique idetifier for the publication",
+            "sample values": [1, 2, 5],
+            "synonyms": []
+          },
+          {
+            "name": "reference_num",
+            "type": "table column",
+            "column name": "reference_num",
+            "data type": "numeric",
+            "description": "The total number of external references made by this publication.",
+            "sample values": [0, 1, 4],
+            "synonyms": []
+          },
+          {
+            "name": "title",
+            "type": "table column",
+            "column name": "title",
+            "data type": "string",
+            "description": "The title of the paper or article.",
+            "sample values": ["Attention is all you need", "Optimizing GPU Throughput"],
+            "synonyms": []
+          },
+          {
+            "name": "year",
+            "type": "table column",
+            "column name": "year",
+            "data type": "numeric",
+            "description": "The year when the publication was published",
+            "sample values": [2021, 2020],
+            "synonyms": []
+          }
+        ],
+        "description": "Stores core information about academic papers, articles, or other publications.",
+        "synonyms": []
+      },
+      {
+        "name": "publications_keywords",
+        "type": "simple table",
+        "table path": "ACADEMIC.publication_keyword",
+        "unique properties": [["publication_id", "keyword_id"]],
+        "properties": [
+          {
+            "name": "publication_id",
+            "type": "table column",
+            "column name": "pid",
+            "data type": "numeric",
+            "description": "The id of the publication related to the keyword",
+            "sample values": [1, 2],
+            "synonyms": []
+          },
+          {
+            "name": "keyword_id",
+            "type": "table column",
+            "column name": "kid",
+            "data type": "numeric",
+            "description": "The id of the keyword used in the publication",
+            "sample values": [2, 3],
+            "synonyms": []
+          }
+        ],
+        "description": "Records of keyword used in publication",
+        "synonyms": []
+      },
+      {
+        "name": "writes",
+        "type": "simple table",
+        "table path": "ACADEMIC.writes",
+        "unique properties": [["author_id", "publication_id"]],
+        "properties": [
+          {
+            "name": "author_id",
+            "type": "table column",
+            "column name": "aid",
+            "data type": "numeric",
+            "description": "The author or co-author of the publication",
+            "sample values": [1, 2, 3],
+            "synonyms": []
+          },
+          {
+            "name": "publication_id",
+            "type": "table column",
+            "column name": "pid",
+            "data type": "numeric",
+            "description": "The publication related to the author",
+            "sample values": [1, 2, 3],
+            "synonyms": []
+          }
+        ],
+        "description": "Records of authors and its publications",
+        "synonyms": []
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "authors",
+        "parent collection": "organizations",
+        "child collection": "authors",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "organization_id": [
+            "organization_id"
+          ]
+        },
+        "description": "All authors that belongs to this organization",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "organization",
+        "original parent": "organizations",
+        "original property": "authors",
+        "singular": true,
+        "always matches": false,
+        "description": "The oranization that the author belongs to",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "references",
+        "parent collection": "publications",
+        "child collection": "citations",
+        "singular": true,
+        "always matches": false,
+        "keys": {
+          "publication_id": [
+            "citing"
+          ]
+        },
+        "description": "All the citations this publication contains",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "publication_citing",
+        "original parent": "publications",
+        "original property": "references",
+        "singular": true,
+        "always matches": true,
+        "description": "The publication citing",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "cited_by",
+        "parent collection": "publications",
+        "child collection": "citations",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "publication_id": [
+            "cited"
+          ]
+        },
+        "description": "All citations of the publication",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "publication_cited",
+        "original parent": "publications",
+        "original property": "cited_by",
+        "singular": true,
+        "always matches": true,
+        "description": "The publication cited",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "domain_authors",
+        "parent collection": "domains",
+        "child collection": "domains_authors",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "domain_id": [
+            "domain_id"
+          ]
+        },
+        "description": "The id of the authors related to the domain",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_authors",
+        "singular": true,
+        "always matches": true,
+        "description": "The domain related to the author id",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "author_domains",
+        "parent collection": "authors",
+        "child collection": "domains_authors",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "author_id": [
+            "author_id"
+          ]
+        },
+        "description": "The domains id for this author",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "author",
+        "original parent": "authors",
+        "original property": "author_domains",
+        "singular": true,
+        "always matches": true,
+        "description": "The author related to this domain_author",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "domain_conferences",
+        "parent collection": "domains",
+        "child collection": "domains_conferences",
+        "singular": false,
+        "always matches": true,
+        "keys": {
+          "domain_id": [
+            "domain_id"
+          ]
+        },
+        "description": "The domain_conferences related to the domain",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_conferences",
+        "singular": true,
+        "always matches": true,
+        "description": "The domain related to the domain_conference",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "conference_domains",
+        "parent collection": "conferences",
+        "child collection": "domains_conferences",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "conference_id": [
+            "conference_id"
+          ]
+        },
+        "description": "The domain_conference related to the conference",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "conference",
+        "original parent": "conferences",
+        "original property": "conference_domains",
+        "singular": true,
+        "always matches": true,
+        "description": "The conference related to the domain_conference",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "journal_domains",
+        "parent collection": "journals",
+        "child collection": "domains_journals",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "journal_id": [
+            "journal_id"
+          ]
+        },
+        "description": "The domains_journal related to the journal",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "journal",
+        "original parent": "journals",
+        "original property": "journal_domains",
+        "singular": true,
+        "always matches": true,
+        "description": "The journal related to the domain_journal",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "domain_journals",
+        "parent collection": "domains",
+        "child collection": "domains_journals",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "domain_id": [
+            "domain_id"
+          ]
+        },
+        "description": "The domain_journal related to the domain",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_journals",
+        "singular": true,
+        "always matches": true,
+        "description": "The domain linked with the domain_journal",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "keyword_domains",
+        "parent collection": "keywords",
+        "child collection": "domains_keywords",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "keyword_id": [
+            "keyword_id"
+          ]
+        },
+        "description": "The domain_keywords related to the keyword",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "keyword",
+        "original parent": "keywords",
+        "original property": "keyword_domains",
+        "singular": true,
+        "always matches": true,
+        "description": "The keyword related to the domain_keyword",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "domain_keywords",
+        "parent collection": "domains",
+        "child collection": "domains_keywords",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "domain_id": [
+            "domain_id"
+          ]
+        },
+        "description": "The domain_keywords related to the domain",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_keywords",
+        "singular": true,
+        "always matches": true,
+        "description": "The keyword linked to the domain_keyword",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "publication_domains",
+        "parent collection": "publications",
+        "child collection": "domains_publications",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "publication_id": [
+            "publication_id"
+          ]
+        },
+        "description": "The domain_publications related to the publication",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "publication",
+        "original parent": "publications",
+        "original property": "publication_domains",
+        "singular": true,
+        "always matches": true,
+        "description": "The publication related to the domain_publication",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "domain_publications",
+        "parent collection": "domains",
+        "child collection": "domains_publications",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "domain_id": [
+            "domain_id"
+          ]
+        },
+        "description": "The domain_publications related to the domain",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "domain",
+        "original parent": "domains",
+        "original property": "domain_publications",
+        "singular": true,
+        "always matches": true,
+        "description": "The domain related to the domain_publication",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "archives",
+        "parent collection": "journals",
+        "child collection": "publications",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "journal_id": [
+            "journal_id"
+          ]
+        },
+        "description": "The publications related to the journal",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "publisher",
+        "original parent": "journals",
+        "original property": "archives",
+        "singular": true,
+        "always matches": true,
+        "description": "The journal the published the publication",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "proceedings",
+        "parent collection": "conferences",
+        "child collection": "publications",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "conference_id": [
+            "conference_id"
+          ]
+        },
+        "description": "The publications presented in the conference",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "conference",
+        "original parent": "conferences",
+        "original property": "proceedings",
+        "singular": true,
+        "always matches": false,
+        "description": "The conference where the publication was presented",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "keyword_publications",
+        "parent collection": "keywords",
+        "child collection": "publications_keywords",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "keyword_id": [
+            "keyword_id"
+          ]
+        },
+        "description": "All publication_keywords related to the keyword",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "keyword",
+        "original parent": "keywords",
+        "original property": "keyword_publications",
+        "singular": true,
+        "always matches": true,
+        "description": "The keyword linked to the publication_keyword",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "publication_keywords",
+        "parent collection": "publications",
+        "child collection": "publications_keywords",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "publication_id": [
+            "publication_id"
+          ]
+        },
+        "description": "All publication_keywords related to the publication",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "publication",
+        "original parent": "publications",
+        "original property": "publication_keywords",
+        "singular": true,
+        "always matches": true,
+        "description": "The publication linked to the publication_keyword",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "publication_authors",
+        "parent collection": "publications",
+        "child collection": "writes",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "publication_id": [
+            "publication_id"
+          ]
+        },
+        "description": "All authors id related to the publication",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "publication",
+        "original parent": "publications",
+        "original property": "publication_authors",
+        "singular": true,
+        "always matches": true,
+        "description": "The publication linked to the writes",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "author_publications",
+        "parent collection": "authors",
+        "child collection": "writes",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "author_id": [
+            "author_id"
+          ]
+        },
+        "description": "The publications' id of the write related to the author",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "author",
+        "original parent": "authors",
+        "original property": "author_publications",
+        "singular": true,
+        "always matches": true,
+        "description": "The author related to the written",
+        "synonyms": []
+      }
+    ]
   }
 ]

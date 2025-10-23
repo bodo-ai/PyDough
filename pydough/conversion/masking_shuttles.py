@@ -1,81 +1,66 @@
 """
-TODO
+Logic for replacing `UNMASK(x) == literal` (and similar expressions) with
+`x == MASK(literal)`.
 """
 
 __all__ = ["MaskLiteralComparisonShuttle"]
 
-from sqlglot import expressions as sqlglot_expressions
-from sqlglot import parse_one
-
 import pydough.pydough_operators as pydop
-from pydough.configs import PyDoughConfigs
 from pydough.relational import (
     CallExpression,
     LiteralExpression,
     RelationalExpression,
     RelationalExpressionShuttle,
 )
-from pydough.sqlglot import convert_sqlglot_to_relational
-
-from .relational_simplification import SimplificationShuttle
+from pydough.types import ArrayType, PyDoughType, UnknownType
 
 
 class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
     """
-    TODO
+    A shuttle that recursively performs the following replacements:
+    - `UNMASK(x) == literal`  -> `x == MASK(literal)`
+    - `literal == UNMASK(x)`  -> `MASK(literal) == x`
+    - `UNMASK(x) != literal`  -> `x != MASK(literal)`
+    - `literal != UNMASK(x)`  -> `MASK(literal) != x`
+    - `UNMASK(x) IN (literal1, ..., literalN)`  -> `x IN (MASK(literal1), ..., MASK(literalN))`
     """
 
-    def __init__(self, configs: PyDoughConfigs):
-        self.simplifier: SimplificationShuttle = SimplificationShuttle(configs)
-
-    def simplify_masked_literal(
-        self, value: RelationalExpression
-    ) -> RelationalExpression:
-        """
-        TODO
-        """
-        if (
-            not isinstance(value, CallExpression)
-            or not isinstance(value.op, pydop.MaskedExpressionFunctionOperator)
-            or value.op.is_unprotect
-            or len(value.inputs) != 1
-            or not isinstance(value.inputs[0], LiteralExpression)
-        ):
-            return value
-        try:
-            arg_sql_str: str = sqlglot_expressions.convert(value.inputs[0].value).sql()
-            total_sql_str: str = value.op.format_string.format(arg_sql_str)
-            glot_expr: sqlglot_expressions.Expression = parse_one(total_sql_str)
-            new_expr: RelationalExpression | None = convert_sqlglot_to_relational(
-                glot_expr
-            )
-            if new_expr is not None:
-                return new_expr
-            self.simplifier.reset()
-            return value.accept_shuttle(self.simplifier)
-        except Exception:
-            return value
-
-        return value
-
-    def protect_literal_comparison(
+    def rewrite_masked_literal_comparison(
         self,
         original_call: CallExpression,
         call_arg: CallExpression,
         literal_arg: LiteralExpression,
     ) -> CallExpression:
         """
-        TODO
+        Performs a rewrite of a comparison between a call to UNMASK and a
+        literal, which is either equality, inequality, or containment.
+
+        Args:
+            `original_call`: The original call expression representing the
+            comparison.
+            `call_arg`: The argument to the comparison that is a call to
+            UNMASK, which is treated as the left-hand side of the comparison.
+            `literal_arg`: The argument to the comparison that is a literal,
+            which is treated as the right-hand side of the comparison.
+
+        Returns:
+            A new call expression representing the rewritten comparison, or
+            the original call expression if no rewrite was performed.
         """
+
+        # Verify that the call argument is indeed an UNMASK operation, otherwise
+        # fall back to the original.
         if (
             not isinstance(call_arg.op, pydop.MaskedExpressionFunctionOperator)
-            or not call_arg.op.is_unprotect
+            or not call_arg.op.is_unmask
         ):
             return original_call
 
         masked_literal: RelationalExpression
 
         if original_call.op in (pydop.EQU, pydop.NEQ):
+            # If the operation is equality or inequality, we can simply wrap the
+            # literal in a call to MASK by toggling is_unmask to False.
             masked_literal = CallExpression(
                 pydop.MaskedExpressionFunctionOperator(
                     call_arg.op.masking_metadata, False
@@ -83,26 +68,38 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
                 call_arg.data_type,
                 [literal_arg],
             )
-            masked_literal = self.simplify_masked_literal(masked_literal)
         elif original_call.op == pydop.ISIN and isinstance(
             literal_arg.value, (list, tuple)
         ):
-            new_elems: list[RelationalExpression] = []
-            for val in literal_arg.value:
-                new_val: RelationalExpression = CallExpression(
-                    pydop.MaskedExpressionFunctionOperator(
-                        call_arg.op.masking_metadata, False
-                    ),
-                    call_arg.data_type,
-                    [LiteralExpression(val, literal_arg.data_type)],
-                )
-                new_val = self.simplify_masked_literal(new_val)
-                new_elems.append(new_val)
-
-            masked_literal = LiteralExpression(new_elems, original_call.data_type)
+            # If the operation is containment, and the literal is a list/tuple,
+            # we need to build a list by wrapping each element of the tuple in
+            # a MASK call.
+            inner_type: PyDoughType
+            if isinstance(literal_arg.data_type, ArrayType):
+                inner_type = literal_arg.data_type.elem_type
+            else:
+                inner_type = UnknownType()
+            masked_literal = LiteralExpression(
+                [
+                    CallExpression(
+                        pydop.MaskedExpressionFunctionOperator(
+                            call_arg.op.masking_metadata, False
+                        ),
+                        call_arg.data_type,
+                        [LiteralExpression(v, inner_type)],
+                    )
+                    for v in literal_arg.value
+                ],
+                original_call.data_type,
+            )
         else:
+            # Otherwise, return the original.
             return original_call
 
+        # Now that we have the masked literal, we can return a new call
+        # expression with the same operators as before, but where the left hand
+        # side argument is the expression that was being unmasked, and the right
+        # hand side is the masked literal.
         return CallExpression(
             original_call.op,
             original_call.data_type,
@@ -112,34 +109,39 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
     def visit_call_expression(
         self, call_expression: CallExpression
     ) -> RelationalExpression:
+        # If the call expression is equality or inequality, dispatch to the
+        # rewrite logic if one argument is a call expression and the other is
+        # a literal.
         if call_expression.op in (pydop.EQU, pydop.NEQ):
-            # UNMASK(expr) = literal  -->  expr = MASK(literal)
-            # UNMASK(expr) != literal  -->  expr != MASK(literal)
             if isinstance(call_expression.inputs[0], CallExpression) and isinstance(
                 call_expression.inputs[1], LiteralExpression
             ):
-                call_expression = self.protect_literal_comparison(
+                call_expression = self.rewrite_masked_literal_comparison(
                     call_expression,
                     call_expression.inputs[0],
                     call_expression.inputs[1],
                 )
-            # literal = UNMASK(expr)  -->  MASK(literal) = expr
-            # literal != UNMASK(expr)  -->  MASK(literal) != expr
             if isinstance(call_expression.inputs[1], CallExpression) and isinstance(
                 call_expression.inputs[0], LiteralExpression
             ):
-                call_expression = self.protect_literal_comparison(
+                call_expression = self.rewrite_masked_literal_comparison(
                     call_expression,
                     call_expression.inputs[1],
                     call_expression.inputs[0],
                 )
-        # UNMASK(expr) IN (x, y, z)  -->  expr IN (MASK(x), MASK(y), MASK(z))
+
+        # If the call expression is containment, dispatch to the rewrite logic
+        # if the first argument is a call expression and the second is a
+        # literal.
         if (
             call_expression.op == pydop.ISIN
             and isinstance(call_expression.inputs[0], CallExpression)
             and isinstance(call_expression.inputs[1], LiteralExpression)
         ):
-            call_expression = self.protect_literal_comparison(
+            call_expression = self.rewrite_masked_literal_comparison(
                 call_expression, call_expression.inputs[0], call_expression.inputs[1]
             )
+
+        # Regardless of whether the rewrite occurred or not, invoke the regular
+        # logic which will recursively transform the arguments.
         return super().visit_call_expression(call_expression)

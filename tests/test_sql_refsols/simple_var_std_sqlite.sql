@@ -23,7 +23,7 @@ WITH _s1 AS (
           POWER(SUM(s_acctbal), 2)
         ) AS REAL) / COUNT(s_acctbal)
       )
-    ) AS REAL) / COUNT(s_acctbal) AS population_variance_s_acctbal,
+    ) AS REAL) / COUNT(s_acctbal) AS population_var_s_acctbal,
     POWER(
       (
         CAST((
@@ -50,18 +50,18 @@ WITH _s1 AS (
       )
     ) AS REAL) / (
       COUNT(s_acctbal) - 1
-    ) AS sample_variance_s_acctbal
+    ) AS sample_var_s_acctbal
   FROM tpch.supplier
   GROUP BY
     1
 )
 SELECT
   nation.n_name AS name,
-  _s1.population_variance_s_acctbal AS var,
+  _s1.population_var_s_acctbal AS var,
   _s1.population_std_s_acctbal AS std,
-  _s1.sample_variance_s_acctbal AS sample_var,
+  _s1.sample_var_s_acctbal AS sample_var,
   _s1.sample_std_s_acctbal AS sample_std,
-  _s1.population_variance_s_acctbal AS pop_var,
+  _s1.population_var_s_acctbal AS pop_var,
   _s1.population_std_s_acctbal AS pop_std
 FROM tpch.nation AS nation
 JOIN _s1 AS _s1

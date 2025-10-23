@@ -202,19 +202,19 @@ INSERT INTO `sbTransaction` (`sbTxId`, `sbTxCustId`, `sbTxTickerId`, `sbTxDateTi
 ('TX028', 'C008', 'T008', CAST('2023-04-03 14:45:00' AS DATETIME), 'sell', 90, 132.75, 11947.50, 'USD', 59.74, 7.50, 'KP028', '20230403 14:45:00', 'success'),
 ('TX029', 'C009', 'T009', CAST('2023-04-03 15:30:00' AS DATETIME), 'buy', 40, 222.25, 8890.00, 'USD', 44.45, 10.00, 'KP029', '20230403 15:30:00', 'success'),
 ('TX030', 'C010', 'T010', CAST('2023-04-03 16:15:00' AS DATETIME), 'sell', 70, 142.50, 9975.00, 'USD', 49.88, 10.00, 'KP030', '20230403 16:15:00', 'success'),
-('TX031', 'C001', 'T001', SUBDATE(CURDATE(), INTERVAL 9 DAY), 'buy', 100, 150.00, 15000.00, 'USD', 75.00, 10.00, 'KP031', NULL, 'fail'),
-('TX032', 'C002', 'T002', SUBDATE(CURDATE(), INTERVAL 8 DAY), 'sell', 80, 280.00, 14000.00, 'USD', 70.00, 10.00, 'KP032', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX033', 'C003', 'T001', SUBDATE(CURDATE(), INTERVAL 7 DAY), 'buy', 120, 200.00, 24000.00, 'USD', 120.00, 15.00, 'KP033', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 7 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX034', 'C004', 'T004', SUBDATE(CURDATE(), INTERVAL 6 DAY), 'sell', 90, 320.00, 28800.00, 'USD', 144.00, 12.00, 'KP034', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 6 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX035', 'C005', 'T001', SUBDATE(CURDATE(), INTERVAL 5 DAY), 'buy', 150, 180.00, 27000.00, 'USD', 135.00, 20.00, 'KP035', NULL, 'fail'),
-('TX036', 'C006', 'T006', SUBDATE(CURDATE(), INTERVAL 4 DAY), 'sell', 70, 300.00, 21000.00, 'USD', 105.00, 15.00, 'KP036', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 4 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX037', 'C007', 'T007', SUBDATE(CURDATE(), INTERVAL 3 DAY), 'buy', 110, 220.00, 24200.00, 'USD', 121.00, 10.00, 'KP037', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 3 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX038', 'C008', 'T008', SUBDATE(CURDATE(), INTERVAL 2 DAY), 'sell', 100, 350.00, 35000.00, 'USD', 175.00, 25.00, 'KP038', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 2 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX039', 'C009', 'T007', SUBDATE(CURDATE(), INTERVAL 1 DAY), 'buy', 80, 230.00, 18400.00, 'USD', 92.00, 18.00, 'KP039', NULL, 'pending'),
-('TX040', 'C001', 'T011', SUBDATE(CURDATE(), INTERVAL 10 DAY), 'buy', 50, 400.00, 20000.00, 'USD', 100.00, 20.00, 'KP040', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 10 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX041', 'C002', 'T012', SUBDATE(CURDATE(), INTERVAL 9 DAY), 'sell', 30, 320.00, 9600.00, 'USD', 48.00, 15.00, 'KP041', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 9 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX042', 'C003', 'T013', SUBDATE(CURDATE(), INTERVAL 8 DAY), 'buy', 80, 180.00, 14400.00, 'USD', 72.00, 10.00, 'KP042', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
-('TX043', 'C004', 'T014', SUBDATE(CURDATE(), INTERVAL 7 DAY), 'sell', 60, 220.00, 13200.00, 'USD', 66.00, 12.00, 'KP043', NULL, 'pending'),
+('TX031', 'C001', 'T001', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 9 DAY), 'buy', 100, 150.00, 15000.00, 'USD', 75.00, 10.00, 'KP031', NULL, 'fail'),
+('TX032', 'C002', 'T002', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 8 DAY), 'sell', 80, 280.00, 14000.00, 'USD', 70.00, 10.00, 'KP032', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX033', 'C003', 'T001', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), 'buy', 120, 200.00, 24000.00, 'USD', 120.00, 15.00, 'KP033', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 7 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX034', 'C004', 'T004', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 6 DAY), 'sell', 90, 320.00, 28800.00, 'USD', 144.00, 12.00, 'KP034', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 6 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX035', 'C005', 'T001', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 5 DAY), 'buy', 150, 180.00, 27000.00, 'USD', 135.00, 20.00, 'KP035', NULL, 'fail'),
+('TX036', 'C006', 'T006', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 4 DAY), 'sell', 70, 300.00, 21000.00, 'USD', 105.00, 15.00, 'KP036', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 4 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX037', 'C007', 'T007', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 3 DAY), 'buy', 110, 220.00, 24200.00, 'USD', 121.00, 10.00, 'KP037', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 3 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX038', 'C008', 'T008', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 2 DAY), 'sell', 100, 350.00, 35000.00, 'USD', 175.00, 25.00, 'KP038', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 2 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX039', 'C009', 'T007', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 1 DAY), 'buy', 80, 230.00, 18400.00, 'USD', 92.00, 18.00, 'KP039', NULL, 'pending'),
+('TX040', 'C001', 'T011', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 10 DAY), 'buy', 50, 400.00, 20000.00, 'USD', 100.00, 20.00, 'KP040', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 10 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX041', 'C002', 'T012', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 9 DAY), 'sell', 30, 320.00, 9600.00, 'USD', 48.00, 15.00, 'KP041', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 9 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX042', 'C003', 'T013', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 8 DAY), 'buy', 80, 180.00, 14400.00, 'USD', 72.00, 10.00, 'KP042', DATE_FORMAT(SUBDATE(NOW(), INTERVAL 8 DAY), '%Y%m%d %H:%i:%s'), 'success'),
+('TX043', 'C004', 'T014', SUBDATE(CURRENT_TIMESTAMP(), INTERVAL 7 DAY), 'sell', 60, 220.00, 13200.00, 'USD', 66.00, 12.00, 'KP043', NULL, 'pending'),
 ('TX044', 'C012', 'T001', CAST('2023-01-15 10:00:00' AS DATETIME), 'buy', 80, 155.00, 12400.00, 'USD', 62.00, 10.00, 'KP044', '20230115 10:00:00', 'success'),
 ('TX045', 'C012', 'T001', CAST('2023-01-16 10:30:00' AS DATETIME), 'buy', 80, 155.00, 12400.00, 'USD', 62.00, 10.00, 'KP045', '20230116 10:30:00', 'success'),
 ('TX046', 'C013', 'T002', CAST('2023-02-20 11:30:00' AS DATETIME), 'sell', 60, 285.00, 17100.00, 'USD', 85.50, 15.00, 'KP046', '20230220 11:30:00', 'success'),
@@ -634,3 +634,761 @@ INSERT INTO `payments_made` (`_id`, `vendor_name`, `payment_date`, `payment_amou
  (15, 'Ford Supplier Co', SUBDATE(CURDATE(), INTERVAL 2 DAY), 22000.00, 'bank_transfer', 'INV-015', SUBDATE(CURDATE(), INTERVAL 7 DAY), SUBDATE(CURDATE(), INTERVAL -23 DAY)),
  (16, 'Tesla Parts Inc', SUBDATE(CURDATE(), INTERVAL 1 DAY), 15000.00, 'credit_card', 'INV-016', SUBDATE(CURDATE(), INTERVAL 6 DAY), SUBDATE(CURDATE(), INTERVAL -24 DAY)),
  (17, 'Chevrolet Auto', CURDATE(), 20000.00, 'bank_transfer', 'INV-017', SUBDATE(CURDATE(), INTERVAL 5 DAY), SUBDATE(CURDATE(), INTERVAL -25 DAY));
+
+
+-- DERM TREATMENT SCHEMA
+
+-- Create and use the `DermTreatment` database
+DROP DATABASE IF EXISTS `dermtreatment`;
+CREATE DATABASE `dermtreatment`;
+USE `dermtreatment`;
+
+-- doctor dimension table
+DROP TABLE IF EXISTS `doctors`;
+CREATE TABLE `doctors` (
+  doc_id INT PRIMARY KEY AUTO_INCREMENT,
+  first_name VARCHAR(50),
+  last_name VARCHAR(50),
+  specialty VARCHAR(50),
+  year_reg INT,
+  med_school_name VARCHAR(100),
+  loc_city VARCHAR(50),
+  loc_state CHAR(2),
+  loc_zip VARCHAR(10),
+  bd_cert_num VARCHAR(20)
+);
+
+-- patient dimension table
+DROP TABLE IF EXISTS `patients`;
+CREATE TABLE `patients` (
+  patient_id INT PRIMARY KEY AUTO_INCREMENT,
+  first_name VARCHAR(50),
+  last_name VARCHAR(50),
+  date_of_birth DATE,
+  date_of_registration DATE,
+  gender VARCHAR(10),
+  email VARCHAR(100),
+  phone VARCHAR(20),
+  addr_street VARCHAR(100),
+  addr_city VARCHAR(50),
+  addr_state CHAR(2), 
+  addr_zip VARCHAR(10),
+  ins_type VARCHAR(50),
+  ins_policy_num VARCHAR(20),
+  height_cm FLOAT,
+  weight_kg FLOAT
+);
+
+-- drug dimension table
+DROP TABLE IF EXISTS `drugs`;
+CREATE TABLE `drugs` (
+  drug_id INT PRIMARY KEY AUTO_INCREMENT,
+  drug_name VARCHAR(100),
+  manufacturer VARCHAR(100),
+  drug_type VARCHAR(50),
+  moa VARCHAR(100),
+  fda_appr_dt DATE,
+  admin_route VARCHAR(50),
+  dos_amt DECIMAL(10,2),
+  dos_unit VARCHAR(20),
+  dos_freq_hrs INT,
+  ndc VARCHAR(20)
+);
+
+-- diagnosis dimension table
+DROP TABLE IF EXISTS `diagnoses`;
+CREATE TABLE `diagnoses` (
+  diag_id INT PRIMARY KEY AUTO_INCREMENT,  
+  diag_code VARCHAR(10),
+  diag_name VARCHAR(100),
+  diag_desc VARCHAR(255)
+);
+
+-- treatment fact table
+DROP TABLE IF EXISTS `treatments`;
+CREATE TABLE `treatments` (
+  treatment_id INT PRIMARY KEY AUTO_INCREMENT,
+  patient_id INT,
+  doc_id INT, 
+  drug_id INT,
+  diag_id INT,
+  start_dt DATE,
+  end_dt DATE,
+  is_placebo TINYINT(1),
+  tot_drug_amt DECIMAL(10,2),
+  drug_unit VARCHAR(20),
+  FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+  FOREIGN KEY (doc_id) REFERENCES doctors(doc_id),
+  FOREIGN KEY (drug_id) REFERENCES drugs(drug_id),
+  FOREIGN KEY (diag_id) REFERENCES diagnoses(diag_id)
+);
+
+-- outcome fact table
+DROP TABLE IF EXISTS `outcomes`;
+CREATE TABLE `outcomes` (
+  outcome_id INT PRIMARY KEY AUTO_INCREMENT,
+  treatment_id INT,
+  assess_dt DATE,
+  day7_lesion_cnt INT,
+  day30_lesion_cnt INT,
+  day100_lesion_cnt INT,
+  day7_pasi_score DECIMAL(4,1),
+  day30_pasi_score DECIMAL(4,1),
+  day100_pasi_score DECIMAL(4,1),
+  day7_tewl DECIMAL(5,2),
+  day30_tewl DECIMAL(5,2),
+  day100_tewl DECIMAL(5,2),
+  day7_itch_vas INT,
+  day30_itch_vas INT,
+  day100_itch_vas INT,
+  day7_hfg DECIMAL(4,1),
+  day30_hfg DECIMAL(4,1),
+  day100_hfg DECIMAL(4,1),
+  FOREIGN KEY (treatment_id) REFERENCES treatments(treatment_id)
+);
+
+DROP TABLE IF EXISTS `adverse_events`;
+CREATE TABLE `adverse_events` (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  treatment_id INT,
+  reported_dt DATE,
+  description VARCHAR(255),
+  FOREIGN KEY (treatment_id) REFERENCES treatments(treatment_id)
+);
+
+DROP TABLE IF EXISTS `concomitant_meds`;
+CREATE TABLE `concomitant_meds` (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  treatment_id INT,
+  med_name VARCHAR(100),
+  start_dt DATE,
+  end_dt DATE,
+  dose_amt DECIMAL(10,2),
+  dose_unit VARCHAR(20),
+  freq_hrs INT,
+  FOREIGN KEY (treatment_id) REFERENCES treatments(treatment_id)
+);
+
+-- insert into dimension tables first
+
+INSERT INTO doctors (doc_id, first_name, last_name, specialty, year_reg, med_school_name, loc_city, loc_state, loc_zip, bd_cert_num) 
+VALUES
+(1, 'John', 'Doe', 'dermatology', 2023, 'Johns Hopkins University', 'Baltimore', 'MD', '21201', 'ABC123'),
+(2, 'Jane', 'Smith', 'immunology', 2023, 'Harvard Medical School', 'Boston', 'MA', '02115', 'XYZ789'),
+(3, 'David', 'Johnson', 'general', 1998, 'University of Pennsylvania', 'Philadelphia', 'PA', '19104', 'DEF456'),
+(4, 'Emily', 'Brown', 'dermatology', 2015, 'Stanford University', 'Palo Alto', 'CA', '94304', 'GHI012'),
+(5, 'Michael', 'Davis', 'immunology', 2008, 'Duke University', 'Durham', 'NC', '27708', 'JKL345'),
+(6, 'Sarah', 'Wilson', 'oncology', 2024, 'University of California, San Francisco', 'San Francisco', 'CA', '94143', 'MNO678'),
+(7, 'Robert', 'Taylor', 'dermatology', 2012, 'Yale University', 'New Haven', 'CT', '06510', 'PQR901'),
+(8, 'Laura', 'Martinez', 'immunology', 2006, 'University of Michigan', 'Ann Arbor', 'MI', '48109', 'STU234'),
+(9, 'Daniel', 'Garcia', 'general', 2022, 'University of Chicago', 'Chicago', 'IL', '60637', 'VWX567'),
+(10, 'Olivia', 'Anderson', 'dermatology', 2018, 'Columbia University', 'New York', 'NY', '10027', 'YZA890');
+
+INSERT INTO patients (patient_id, first_name, last_name, date_of_birth, date_of_registration, gender, email, phone, addr_street, addr_city, addr_state, addr_zip, ins_type, ins_policy_num, height_cm, weight_kg)
+VALUES
+(1, 'Alice', 'Johnson', '1985-03-15', '2023-01-03', 'Female', 'alice@email.com', '555-123-4567', '123 Main St', 'Anytown', 'CA', '12345', 'private', 'ABC123456', 165, 60),
+(2, 'Bob', 'Smith', '1978-11-23', '2023-01-10', 'Male', 'bob@email.com', '555-987-6543', '456 Oak Ave', 'Somecity', 'NY', '54321', 'medicare', 'XYZ789012', 180, 85),
+(3, 'Carol', 'Davis', '1992-07-08', '2022-01-03', 'Female', 'carol@email.com', '555-246-8135', '789 Elm Rd', 'Anothercity', 'TX', '67890', 'private', 'DEF345678', 158, 52),  
+(4, 'David', 'Wilson', '1965-09-30', '2022-07-12', 'Male', 'david@email.com', '555-369-2580', '321 Pine Ln', 'Somewhere', 'FL', '13579', 'medicaid', 'GHI901234', 175, 78),
+(5, 'Eve', 'Brown', '2000-01-01', '2023-08-03', 'Female', 'eve@email.com', '555-147-2589', '654 Cedar St', 'Nowhere', 'WA', '97531', 'uninsured', NULL, 160, 55),
+(6, 'Frank', 'Taylor', '1988-05-12', '2021-12-21', 'Male', 'frank@email.com', '555-753-9514', '987 Birch Dr', 'Anyplace', 'CO', '24680', 'private', 'JKL567890', 183, 90),
+(7, 'Grace', 'Anderson', '1975-12-25', '2023-09-04', 'Others', 'grace@email.com', '555-951-7532', '159 Maple Rd', 'Somewhere', 'OH', '86420', 'medicare', 'MNO246810', 170, 68),
+(8, 'Hannah', 'Garcia', '1982-08-05', '2023-03-23', 'Female', 'hannah@email.com', '555-369-1470', '753 Walnut Ave', 'Somewhere', 'CA', '97531', 'private', 'PQR135790', 162, 57),
+(9, 'Isaac', 'Martinez', '1995-02-18', '2021-11-13', 'Male', 'isaac@email.com', '555-147-8520', '951 Spruce Blvd', 'Anytown', 'TX', '13579', 'medicaid', 'STU024680', 178, 82),
+(10, 'John', 'Richter', '1980-01-01', '2021-11-24', 'Male', 'john@qwik.com', '555-123-4567', '123 Main St', 'Anytown', 'CA', '12345', 'private', 'ABC123456', 180, 80),
+(11, 'Kelly', 'Smith', '1985-05-15', '2024-02-28', 'Female', 'kelly@fsda.org', '555-987-6543', '456 Oak Ave', 'Somecity', 'NY', '54321', 'medicare', 'XYZ789012', 165, 60);
+
+INSERT INTO drugs (drug_id, drug_name, manufacturer, drug_type, moa, fda_appr_dt, admin_route, dos_amt, dos_unit, dos_freq_hrs, ndc)
+VALUES  
+(1, 'Drugalin', 'Pharma Inc', 'biologic', 'TNF-alpha inhibitor', '2010-01-15', 'injection', 40, 'mg', 336, '12345-678-90'),
+(2, 'Medicol', 'Acme Pharma', 'small molecule', 'IL-17A inhibitor', '2015-06-30', 'oral', 30, 'mg', 24, '54321-012-34'),
+(3, 'Topizol', 'BioMed Ltd', 'topical', 'PDE4 inhibitor', '2018-11-01', 'topical', 15, 'g', 12, '98765-432-10'),
+(4, 'Biologic-X', 'Innova Biologics', 'biologic', 'IL-23 inhibitor', NULL, 'injection', 100, 'mg', 672, '13579-246-80'), 
+(5, 'Smallazine', 'Chem Co', 'small molecule', 'JAK inhibitor', '2020-03-15', 'oral', 5, 'mg', 24, '97531-864-20'),
+(6, 'Topicort', 'Derma Rx', 'topical', 'Corticosteroid', '2005-09-30', 'topical', 30, 'g', 12, '24680-135-79'),
+(7, 'Biologic-Y', 'BioPharm Inc', 'biologic', 'IL-12/23 inhibitor', '2012-07-01', 'injection', 50, 'mg', 504, '75319-951-46'),
+(8, 'Smallitol', 'PharmaGen', 'small molecule', 'IL-6 inhibitor', '2017-04-15', 'oral', 10, 'mg', 24, '36915-258-07'),
+(9, 'Topicalin', 'DermiCare', 'topical', 'Calcineurin inhibitor', '2019-10-01', 'topical', 20, 'g', 12, '14785-369-02'),
+(10, 'Biologic-Z', 'BioMed Ltd', 'biologic', 'IL-17F inhibitor', '2021-01-01', 'injection', 80, 'mg', 336, '95146-753-19');
+
+INSERT INTO diagnoses (diag_id, diag_code, diag_name, diag_desc)
+VALUES
+(1, 'L40.0', 'Psoriasis vulgaris', 'Plaque psoriasis, the most common form'),  
+(2, 'L40.1', 'Generalized pustular psoriasis', 'Widespread pustules on top of red skin'),
+(3, 'L40.4', 'Guttate psoriasis', 'Small, teardrop-shaped lesions'), 
+(4, 'L40.8', 'Other psoriasis', 'Includes flexural, erythrodermic, and other rare types'),
+(5, 'L40.9', 'Psoriasis, unspecified', 'Psoriasis not further specified'),
+(6, 'L40.50', 'Arthropathic psoriasis, unspecified', 'Psoriatic arthritis, unspecified'),
+(7, 'L40.51', 'Distal interphalangeal psoriatic arthropathy', 'Psoriatic arthritis mainly affecting the ends of fingers and toes'),
+(8, 'L40.52', 'Psoriatic arthritis mutilans', 'Severe, deforming psoriatic arthritis'),   
+(9, 'L40.53', 'Psoriatic spondylitis', 'Psoriatic arthritis of the spine'),
+(10, 'L40.59', 'Other psoriatic arthropathy', 'Other specified types of psoriatic arthritis');
+
+-- insert into fact tables
+INSERT INTO treatments (treatment_id, patient_id, doc_id, drug_id, diag_id, start_dt, end_dt, is_placebo, tot_drug_amt, drug_unit)
+VALUES
+(1, 1, 1, 1, 1, '2022-01-01', '2022-06-30', 0, 240, 'mg'),
+(2, 2, 2, 2, 2, '2022-02-15', '2022-08-14', 1, 180, 'mg'),
+(3, 3, 3, 3, 3, '2022-03-10', '2022-09-09', 0, 360, 'g'),
+(4, 4, 4, 4, 4, '2022-04-01', NULL, 0, 200, 'mg'),
+(5, 5, 5, 5, 5, '2022-05-01', '2022-10-31', 0, 180, 'mg'),
+(6, 6, 6, 6, 6, '2022-06-15', '2022-12-14', 0, 720, 'g'),
+(7, 1, 7, 1, 7, '2022-07-01', '2022-12-31', 1, 240, 'mg'),
+(8, 2, 1, 2, 8, '2022-08-01', '2023-01-31', 0, 180, 'mg'),
+(9, 3, 2, 3, 9, '2022-09-01', '2023-02-28', 0, 360, 'g'),
+(10, 4, 3, 4, 10, '2022-10-01', NULL, 1, 0, NULL),
+(11, 5, 4, 5, 1, '2022-11-01', '2023-04-30', 1, 180, 'mg'),
+(12, 6, 5, 6, 2, '2022-12-01', '2023-05-31', 0, 720, 'g'),
+(13, 7, 6, 1, 3, '2023-01-01', '2023-06-30', 0, 240, 'mg'),
+(14, 1, 7, 2, 4, '2023-02-01', '2023-07-31', 0, 180, 'mg'),
+(15, 2, 1, 3, 5, '2023-03-01', '2023-08-31', 0, 360, 'g'),
+(16, 1, 2, 4, 6, DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 24 MONTH), DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 2 MONTH), 0, 300, 'mg'),
+(17, 2, 5, 1, 8, DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 12 MONTH), DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 4 MONTH), 0, 80, 'mg'),
+(18, 3, 6, 2, 9, DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 5 MONTH), NULL, 1, 200, 'mg'),
+(19, 1, 7, 3, 10, DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 4 MONTH), NULL, 0, 150, 'g'),
+(20, 2, 1, 4, 1, DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 3 MONTH), NULL, 0, 100, 'mg'),
+(21, 3, 2, 5, 2, DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 2 MONTH), NULL, 0, 250, 'mg'),
+(22, 1, 3, 6, 3, DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 1 MONTH), NULL, 0, 300, 'g'),
+(23, 2, 4, 1, 4, CURDATE(), NULL, 1, 200, 'mg'),
+(24, 3, 5, 2, 5, CURDATE(), NULL, 0, 150, 'mg'),
+(25, 9, 1, 1, 1, DATE_SUB(CURDATE(), INTERVAL 6 MONTH), DATE_SUB(CURDATE(), INTERVAL 3 MONTH), 0, 240, 'mg'),
+(26, 10, 2, 2, 2, DATE_SUB(CURDATE(), INTERVAL 5 MONTH), DATE_SUB(CURDATE(), INTERVAL 2 MONTH), 0, 180, 'mg');
+
+INSERT INTO outcomes (outcome_id, treatment_id, assess_dt, day7_lesion_cnt, day30_lesion_cnt, day100_lesion_cnt, day7_pasi_score, day30_pasi_score, day100_pasi_score, day7_tewl, day30_tewl, day100_tewl, day7_itch_vas, day30_itch_vas, day100_itch_vas, day7_hfg, day30_hfg, day100_hfg)  
+VALUES
+(1, 1, '2022-01-08', 20, 15, 5, 12.5, 8.2, 2.1, 18.2, 15.6, 12.1, 60, 40, 20, 1.5, 2.5, 4.0),
+(2, 2, '2022-02-22', 25, 18, 8, 15.0, 10.1, 3.5, 20.1, 17.2, 13.5, 70, 50, 30, 1.0, 2.0, 3.5),
+(3, 3, '2022-03-17', 18, 12, 3, 10.8, 6.4, 1.2, 16.5, 14.0, 10.8, 55, 35, 15, 2.0, 3.0, 4.5),
+(4, 4, '2022-04-08', 30, 25, 12, 18.2, 13.9, 5.8, 22.4, 19.1, 15.2, 80, 60, 40, 0.5, 1.5, 3.0),
+(5, 5, '2022-05-08', 22, 16, 6, 13.1, 8.7, 2.6, 19.0, 16.3, 12.7, 65, 45, 25, 1.2, 2.2, 3.8),
+(6, 6, '2022-06-22', 28, 21, 10, 16.7, 11.5, 4.3, 21.3, 18.1, 14.3, 75, 55, 35, 0.8, 1.8, 3.3),
+(7, 7, '2022-07-08', 19, 13, 4, 11.2, 6.9, 1.5, 17.1, 14.5, 11.2, 58, 38, 18, 1.8, 2.8, 4.3),
+(8, 8, '2022-08-08', 26, 19, 9, 15.6, 10.6, 3.8, 20.7, 17.6, 13.9, 72, 52, 32, 0.7, 1.7, 3.2),
+(9, 9, '2022-09-08', 21, 15, 5, 12.3, 8.0, 2.0, 18.6, 15.9, 12.4, 62, 42, 22, 1.4, 2.4, 3.9),
+(10, 10, '2022-10-08', 32, 30, 25, 19.5, 17.8, 14.1, 23.2, 21.4, 18.7, 85, 80, 70, 0.2, 0.4, 0.8),
+(11, 11, '2022-11-08', 23, 17, 7, 13.7, 9.2, 2.9, 19.5, 16.8, 13.1, 68, 48, 28, 1.1, 2.1, 3.6),
+(12, 12, '2022-12-08', 29, 23, 11, 17.4, 12.3, 4.9, 21.8, 18.7, 14.8, 78, 58, 38, 0.6, 1.6, 3.1),
+(13, 13, '2023-01-08', 18, 12, 3, 10.5, 6.1, 1.0, 16.9, 14.3, 11.0, 56, 36, 16, 1.9, 2.9, 4.4),
+(14, 14, '2023-02-08', 27, 20, 10, 16.2, 11.1, 4.1, 21.0, 17.9, 14.1, 74, 54, 34, 0.5, 1.5, 3.0), 
+(15, 15, '2023-03-08', 20, 14, 4, 11.8, 7.3, 1.7, 17.8, 15.2, 11.8, 60, 40, 20, 1.6, 2.6, 4.1),
+(16, 16, DATE_ADD(DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), '%Y-%m-01'), INTERVAL 7 DAY), 24, 18, 8, 14.4, 9.6, 3.2, 20.4, 17.4, 13.7, 70, 50, 30, 0.9, 1.9, 3.4),
+(17, 17, DATE_ADD(DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH), '%Y-%m-01'), INTERVAL 7 DAY), 22, 16, NULL, 13.2, 8.8, NULL, 19.1, 16.3, NULL, 65, 45, NULL, 1.3, 2.3, NULL),
+(18, 25, DATE_ADD(DATE_SUB(CURDATE(), INTERVAL 6 MONTH), INTERVAL 7 DAY), 30, NULL, NULL, 18.0, NULL, NULL, 22.0, NULL, NULL, 80, NULL, NULL, 1.0, NULL, NULL),  
+(19, 25, DATE_SUB(CURDATE(), INTERVAL 2 MONTH), 30, 18, 10, 18.0, 12.0, 4.0, 22.0, 19.0, 15.0, 80, 60, 40, 1.0, 2.0, 3.0),
+(20, 26, DATE_ADD(DATE_SUB(CURDATE(), INTERVAL 5 MONTH), INTERVAL 7 DAY), 25, NULL, NULL, 15.0, NULL, NULL, 20.0, NULL, NULL, 75, NULL, NULL, 0.5, NULL, NULL),
+(21, 26, DATE_SUB(CURDATE(), INTERVAL 1 MONTH), 25, 18, 10, 15.0, 10.0, 5.0, 20.0, 17.0, 13.0, 75, 55, 35, 0.5, 1.5, 3.0);
+
+INSERT INTO adverse_events (id, treatment_id, reported_dt, description)
+VALUES  
+(1, 1, '2022-01-15', 'Mild injection site reaction'),
+(2, 2, '2022-02-28', 'Headache, nausea'),
+(3, 4, '2022-04-10', 'Severe allergic reaction, hospitalization required'),
+(4, 5, '2022-05-20', 'Upper respiratory infection'),
+(5, 7, '2022-07-22', 'Mild injection site reaction'), 
+(6, 9, '2022-09-18', 'Diarrhea'),
+(7, 11, '2022-11-12', 'Elevated liver enzymes'),
+(8, 14, '2023-02-05', 'Mild skin rash');
+
+INSERT INTO concomitant_meds (id, treatment_id, med_name, start_dt, end_dt, dose_amt, dose_unit, freq_hrs)
+VALUES
+(1, 1, 'Acetaminophen', '2022-01-01', '2022-01-07', 500, 'mg', 6),
+(2, 1, 'Ibuprofen', '2022-01-08', '2022-01-14', 200, 'mg', 8), 
+(3, 2, 'Loratadine', '2022-02-15', '2022-03-15', 10, 'mg', 24),
+(4, 3, 'Multivitamin', '2022-03-10', NULL, 1, 'tablet', 24),
+(5, 4, 'Epinephrine', '2022-04-10', '2022-04-10', 0.3, 'mg', NULL),
+(6, 4, 'Diphenhydramine', '2022-04-10', '2022-04-17', 50, 'mg', 6),
+(7, 5, 'Amoxicillin', '2022-05-20', '2022-05-30', 500, 'mg', 8),
+(8, 6, 'Calcium supplement', '2022-06-15', NULL, 600, 'mg', 24), 
+(9, 7, 'Acetaminophen', '2022-07-15', '2022-07-21', 500, 'mg', 6),
+(10, 8, 'Cetirizine', '2022-08-01', '2022-08-14', 10, 'mg', 24),
+(11, 9, 'Loperamide', '2022-09-18', '2022-09-20', 4, 'mg', 6),
+(12, 11, 'Ursodiol', '2022-11-30', '2022-12-30', 300, 'mg', 8),
+(13, 12, 'Vitamin D', '2022-12-01', NULL, 1000, 'IU', 24),
+(14, 13, 'Acetaminophen', '2023-01-08', '2023-01-14', 500, 'mg', 6),
+(15, 14, 'Hydrocortisone cream', '2023-02-25', '2023-03-07', 10, 'g', 12);
+
+-- CUSTOM DATASETS SCHEMEA
+-- Create and use the `keywords` database
+DROP DATABASE IF EXISTS `keywords`;
+CREATE DATABASE `keywords`;
+USE `keywords`;
+
+CREATE TABLE `UPPERCASE_MASTER` (
+    ID BIGINT NOT NULL PRIMARY KEY,
+    NAME VARCHAR(30) NOT NULL,
+    `CAST` VARCHAR(30),
+    `WHERE` VARCHAR(30),
+    `FROM` VARCHAR(30),
+    `VARCHAR` VARCHAR(30),
+    `INTEGER` VARCHAR(30),
+    `TWO WORDS` VARCHAR(30),
+    `ORDER BY` VARCHAR(30)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- lowercase_detail table
+CREATE TABLE lowercase_detail (
+    id BIGINT NOT NULL PRIMARY KEY,
+    master_id BIGINT NOT NULL,
+    `two words` VARCHAR(30),
+    `select` VARCHAR(30),
+    `as` VARCHAR(30),
+    `0 = 0 and '` VARCHAR(30),
+    result NUMERIC(10,2),
+    is_active SMALLINT,
+    CONSTRAINT lowercase_to_UPPERCASE FOREIGN KEY (master_id) REFERENCES `UPPERCASE_MASTER`(ID)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- MixedCase_1:1 table
+
+CREATE TABLE `MixedCase_1:1` (
+    Id BIGINT NOT NULL PRIMARY KEY,
+    `(parentheses)` VARCHAR(30),
+    `In` SMALLINT,
+    LowerCaseId BIGINT NOT NULL,
+    CONSTRAINT `MixedCase_1:1_to_UPPERCASE` FOREIGN KEY (Id) REFERENCES `UPPERCASE_MASTER`(ID),
+    CONSTRAINT `MixedCase_1:1_to_lowercase_detail` FOREIGN KEY (LowerCaseId) REFERENCES lowercase_detail(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- CAST table
+CREATE TABLE `CAST` (
+    PK_FIELD_NAME BIGINT NOT NULL PRIMARY KEY,
+    ID BIGINT NOT NULL,
+    ID2 BIGINT,
+    is_active SMALLINT,
+    types VARCHAR(30),
+    CONSTRAINT CAST_to_lowercase_detail1 FOREIGN KEY (ID) REFERENCES lowercase_detail(id),
+    CONSTRAINT CAST_to_lowercase_detail2 FOREIGN KEY (ID2) REFERENCES lowercase_detail(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Quoted table and columns
+CREATE TABLE `"QUOTED TABLE_NAME"` (
+    ID BIGINT NOT NULL PRIMARY KEY,
+    ```cast``` BIGINT NOT NULL,
+    `= "QUOTE"` BIGINT NOT NULL,
+    ```name"[` BIGINT NOT NULL,
+    description VARCHAR(30),
+    CONSTRAINT QUOTED_UNIQUE UNIQUE (```cast```),
+    CONSTRAINT QUOTED_to_UPPERCASE_MASTER FOREIGN KEY (```cast```) REFERENCES `UPPERCASE_MASTER`(ID),
+    CONSTRAINT QUOTED_to_lowercase_detail1 FOREIGN KEY (`= "QUOTE"`) REFERENCES lowercase_detail(id),
+    CONSTRAINT QUOTED_to_lowercase_detail2 FOREIGN KEY (```name"[`) REFERENCES lowercase_detail(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- CALCULATE table
+CREATE TABLE `CALCULATE` (
+    `.WHERE` BIGINT NOT NULL PRIMARY KEY,
+    `LOWER` INT,
+    `UPPER` INT,
+    `LENGTH` INT,
+    `STARTSWITH` INT,
+    `ENDSWITH` INT,
+    `CONTAINS` INT,
+    `LIKE` INT,
+    `JOIN_STRINGS` INT,
+    `LPAD` INT,
+    `RPAD` INT,
+    `FIND` INT,
+    `STRIP` INT,
+    `REPLACE` INT,
+    `STRCOUNT` INT,
+    `GETPART` INT,
+    `DATETIME` INT,
+    `YEAR` INT,
+    `QUARTER` INT,
+    `MONTH` INT,
+    `DAY` INT,
+    `HOUR` INT,
+    `MINUTE` INT,
+    `SECOND` INT,
+    `DATEDIFF` INT,
+    `DAYOFWEEK` INT,
+    `DAYNAME` INT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- WHERE table
+CREATE TABLE `WHERE` (
+    `.CALCULATE` BIGINT NOT NULL PRIMARY KEY,
+    `IFF` INT,
+    `ISIN` INT,
+    `DEFAULT_TO` INT,
+    `PRESENT` INT,
+    `ABSENT` INT,
+    `KEEP_IF` INT,
+    `MONOTONIC` INT,
+    `ABS` INT,
+    `ROUND` INT,
+    `CEIL` INT,
+    `FLOOR` INT,
+    `POWER` INT,
+    `SQRT` INT,
+    `SIGN` INT,
+    `SMALLEST` INT,
+    `LARGEST` INT,
+    `SUM` INT,
+    `AVG` INT,
+    `MEDIAN` INT,
+    `MIN` INT,
+    `MAX` INT,
+    `QUANTILE` INT,
+    `ANYTHING` INT,
+    `COUNT` INT,
+    `NDISTINCT` INT,
+    `HAS` INT,
+    `HASNOT` INT,
+    `VAR` INT,
+    `STD` INT,
+    CONSTRAINT WHERE_to_CALCULATE FOREIGN KEY (`.CALCULATE`) REFERENCES `CALCULATE`(`.WHERE`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- PARTITION table
+CREATE TABLE `PARTITION` (
+    `ORDER_BY` BIGINT NOT NULL PRIMARY KEY,
+    `CALCULATE` BIGINT NOT NULL,
+    `WHERE` BIGINT NOT NULL,
+    `TOP_K` INT,
+    `SINGULAR` INT,
+    `BEST` INT,
+    `CROSS` INT,
+    `RANKING` INT,
+    `PERCENTILE` INT,
+    `PREV` INT,
+    `NEXT` INT,
+    `RELSUM` INT,
+    `RELAVG` INT,
+    `RELCOUNT` INT,
+    `RELSIZE` INT,
+    `STRING` INT,
+    `INTEGER` INT,
+    `FLOAT` INT,
+    `NUMERIC` INT,
+    `DECIMAL` INT,
+    `CHAR` INT,
+    `VARCHAR` INT,
+    CONSTRAINT PARTITION_to_CALCULATE FOREIGN KEY (`CALCULATE`) REFERENCES `CALCULATE`(`.WHERE`),
+    CONSTRAINT PARTITION_to_WHERE FOREIGN KEY (`WHERE`) REFERENCES `WHERE`(`.CALCULATE`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- COUNT table
+CREATE TABLE `COUNT` (
+    `this` BIGINT NOT NULL,
+    `class` BIGINT NOT NULL,
+    `import` INT,
+    `def` INT,
+    `%%pydough` INT,
+    `node` INT,
+    `",` INT,
+    `.` INT,
+    `bool` INT,
+    `__call__` INT,
+    `int` INT,
+    `FLOAT` INT,
+    `__init__` INT,
+    `new` INT,
+    `del` INT,
+    `__col__` INT,
+    `__col1__` INT,
+    `__class__` INT,
+    `str` INT,
+    `dict` INT,
+    `__add__` INT,
+    `__mul__` INT,
+    CONSTRAINT PK_COUNT PRIMARY KEY (`this`,`class`),
+    CONSTRAINT COUNT_to_CAST FOREIGN KEY (`this`) REFERENCES `CAST`(PK_FIELD_NAME)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Additional tables for foreign key relationships
+CREATE TABLE master (
+    ID1 INT NOT NULL,
+    ID2 INT NOT NULL,
+    ALT_KEY1 INT NOT NULL,
+    ALT_KEY2 INT NOT NULL,
+    DESCRIPTION VARCHAR(30),
+    CONSTRAINT PK_master PRIMARY KEY (ID1, ID2),
+    CONSTRAINT AK_master_1 UNIQUE (ALT_KEY1, ALT_KEY2)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- detail1 table 
+CREATE TABLE detail1 (
+    `key` INT,
+    id1 INT NOT NULL,
+    id2 INT NOT NULL,
+    description VARCHAR(30),
+    CONSTRAINT PK_detail1 PRIMARY KEY (`key`),
+    CONSTRAINT FK_detail1_to_master FOREIGN KEY (id1, id2) REFERENCES master(ID1, ID2),
+    CONSTRAINT AK_detail1_1 UNIQUE (id1, id2)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- detail2 table
+CREATE TABLE detail2 (
+    `key` INT,
+    alt_key1 INT NULL,
+    alt_key2 INT NULL,
+    description VARCHAR(30),
+    CONSTRAINT PK_detail2 PRIMARY KEY (`key`),
+    CONSTRAINT FK_detail2_to_master FOREIGN KEY (alt_key1, alt_key2) REFERENCES master(ALT_KEY1, ALT_KEY2)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert data in the tables
+INSERT INTO `UPPERCASE_MASTER` (ID, NAME, `CAST`, `WHERE`, `FROM`, `VARCHAR`, `INTEGER`, `TWO WORDS`, `ORDER BY`) VALUES
+(1, 'FIRST_RECORD', '1 CAST RESERVED WORD', '1 WHERE RESERVED WORD', '1 FROM RESERVED WORD', '1 VARCHAR RESERVED WORD', '1 INTEGER RESERVED WORD', '1 TWO WORDS FIELD NAME', '1 TWO WORDS RESERVED'),
+(2, 'SECOND_RECORD', '2 CAST RESERVED WORD', '2 WHERE RESERVED WORD', '2 FROM RESERVED WORD', '2 VARCHAR RESERVED WORD', '2 INTEGER RESERVED WORD', '2 TWO WORDS FIELD NAME', '2 TWO WORDS RESERVED'),
+(3, 'THIRD_RECORD', '3 CAST RESERVED WORD', '3 WHERE RESERVED WORD', '3 FROM RESERVED WORD', '3 VARCHAR RESERVED WORD', '3 INTEGER RESERVED WORD', '3 TWO WORDS FIELD NAME', '3 TWO WORDS RESERVED'),
+(4, 'FOURTH_RECORD', '4 CAST RESERVED WORD', '4 WHERE RESERVED WORD', '4 FROM RESERVED WORD', '4 VARCHAR RESERVED WORD', '4 INTEGER RESERVED WORD', '4 TWO WORDS FIELD NAME', '4 TWO WORDS RESERVED'),
+(5, 'FIFTH_RECORD', '5 CAST RESERVED WORD', '5 WHERE RESERVED WORD', '5 FROM RESERVED WORD', '5 VARCHAR RESERVED WORD', '5 INTEGER RESERVED WORD', '5 TWO WORDS FIELD NAME', '5 TWO WORDS RESERVED');
+
+INSERT INTO lowercase_detail (id, master_id, `two words`, `select`, `as`, `0 = 0 and '`, result, is_active) VALUES
+(1, 1, '1 two words field name', '1 select reserved word', '1 as reserved word', '1 "0 = 0 and ''" field name', 1234.56, 1),
+(2, 1, '2 two words field name', '2 select reserved word', '2 as reserved word', '2 "0 = 0 and ''" field name', 2345.67, 1),
+(3, 1, '3 two words field name', '3 select reserved word', '3 as reserved word', '3 "0 = 0 and ''" field name', 3456.78, 1),
+(4, 3, '4 two words field name', '4 select reserved word', '4 as reserved word', '4 "0 = 0 and ''" field name', 456.78, 0),
+(5, 3, '5 two words field name', '5 select reserved word', '5 as reserved word', '5 "0 = 0 and ''" field name', 567.89, 0),
+(6, 3, '6 two words field name', '6 select reserved word', '6 as reserved word', '6 "0 = 0 and ''" field name', 678.90, 0),
+(7, 4, '7 two words field name', '7 select reserved word', '7 as reserved word', '7 "0 = 0 and ''" field name', 789.01, 0),
+(8, 5, '8 two words field name', '8 select reserved word', '8 as reserved word', '8 "0 = 0 and ''" field name', 8910.11, 1),
+(9, 5, '9 two words field name', '9 select reserved word', '9 as reserved word', '9 "0 = 0 and ''" field name', 910.11, 0),
+(10, 5, '10 two words field name', '10 select reserved word', '10 as reserved word', '10 "0 = 0 and ''" field name', 1011.12, 1),
+(11, 5, '11 two words field name', '11 select reserved word', '11 as reserved word', '11 "0 = 0 and ''" field name', 1112.13, 0);
+
+INSERT INTO `MixedCase_1:1` (Id, `(parentheses)`, `In`, LowerCaseId) VALUES
+(1, '1 (parentheses)', 1, 2),
+(2, '2 (parentheses)', 1, 4),
+(3, '3 (parentheses)', 1, 6),
+(4, '4 (parentheses)', 1, 8),
+(5, '5 (parentheses)', 1, 10);
+
+INSERT INTO `CAST` (PK_FIELD_NAME, ID, ID2, is_active, types) VALUES
+(1, 1, 2, 1, '1_types_#438'),
+(2, 2, 4, 0, '2_types_#438'),
+(3, 3, 6, 1, '3_types_#438'),
+(4, 4, 8, 0, '4_types_#438'),
+(5, 5, 10, 1, '5_types_#438'),
+(6, 6, 11, 0, '6_types_#438'),
+(7, 7, 9, 1, '7_types_#438'),
+(8, 8, 7, 0, '8_types_#438'),
+(9, 9, 5, 1, '9_types_#438'),
+(10, 10, 3, 0, '10_types_#438'),
+(11, 11, 1, 1, '11_types_#438'),
+(12, 1, 11, 0, '12_types_#438'),
+(13, 2, 9, 1, '13_types_#438'),
+(14, 3, 7, 0, '14_types_#438'),
+(15, 4, 5, 1, '15_types_#438'),
+(16, 5, 3, 0, '16_types_#438'),
+(17, 6, 1, 1, '17_types_#438'),
+(18, 7, 2, 0, '18_types_#438'),
+(19, 8, 4, 1, '19_types_#438'), 
+(20, 9, 6, 0, '20_types_#438'),
+(21, 10, 8, 1, '21_types_#438'),
+(22, 11, 10, 0, '22_types_#438');
+
+INSERT INTO `"QUOTED TABLE_NAME"` (ID, ```cast```, `= "QUOTE"`, ```name"[`, description) VALUES
+(1, 1, 1, 11, 'RECORD 1'),
+(2, 2, 2, 9, 'RECORD 2'),
+(3, 3, 4, 7, 'RECORD 3'),
+(4, 4, 6, 5, 'RECORD 4'),
+(5, 5, 8, 3, 'RECORD 5');
+
+INSERT INTO `CALCULATE` (`.WHERE`) VALUES
+(1),
+(2),
+(3),
+(4),
+(5);
+
+INSERT INTO `WHERE` (`.CALCULATE`) VALUES
+(1),
+(2),
+(3),
+(4),
+(5);
+
+INSERT INTO `PARTITION` (`ORDER_BY`, `CALCULATE`, `WHERE`, `TOP_K`, `SINGULAR`, `STRING`) VALUES
+(1, 2, 5, 1, 1, 1),
+(2, 3, 1, 1, 1, 1),
+(3, 4, 2, 1, 1, 1),
+(4, 5, 3, 1, 1, 1),
+(5, 1, 4, 1, 1, 1),
+(6, 5, 2, 1, 1, 1),
+(7, 4, 1, 1, 1, 1),
+(8, 3, 5, 1, 1, 1),
+(9, 2, 4, 1, 1, 1),
+(10, 1, 3, 1, 1, 1);
+
+INSERT INTO `COUNT` (`this`, `class`, `import`, `def`, `%%pydough`, `node`, `",`, `.`, `__init__`, `int`, `dict`, `__col__`, `__col1__`) VALUES
+(1, 1, 1011, 2011, 3011, 4011, 5011, 6011, 7011, 8011, 9011, 10011, 11011),
+(2, 1, 1021, 2021, 3021, 4021, 5021, 6021, 7021, 8021, 9021, 10021, 11021),
+(3, 1, 1031, 2031, 3031, 4031, 5031, 6031, 7031, 8031, 9031, 10031, 11031),
+(4, 1, 1041, 2041, 3041, 4041, 5041, 6041, 7041, 8041, 9041, 10041, 11041),
+(5, 1, 1051, 2051, 3051, 4051, 5051, 6051, 7051, 8051, 9051, 10051, 11051),
+(6, 1, 1061, 2061, 3061, 4061, 5061, 6061, 7061, 8061, 9061, 10061, 11061),
+(7, 1, 1071, 2071, 3071, 4071, 5071, 6071, 7071, 8071, 9071, 10071, 11071),
+(8, 1, 1081, 2081, 3081, 4081, 5081, 6081, 7081, 8081, 9081, 10081, 11081),
+(10, 1, 1091, 2091, 3091, 4091, 5091, 6091, 7091, 8091, 9091, 10091, 11091),
+(11, 1, 1101, 2101, 3101, 4101, 5101, 6101, 7101, 8101, 9101, 10101, 11101);
+
+INSERT INTO master (ID1, ID2, ALT_KEY1, ALT_KEY2, DESCRIPTION) VALUES
+(1, 1, 1, 1, 'One-One master row'),
+(1, 2, 1, 2, 'One-Two master row'),
+(2, 1, 2, 1, 'Two-One master row'),
+(2, 2, 2, 2, 'Two-Two master row'),
+(3, 1, 3, 1, 'Three-One master row');
+
+INSERT INTO detail1 (`key`, id1, id2, description) VALUES 
+(1, 1, 1, '1 One-One AK-PK'),
+(2, 1, 2, '2 One-Two AK-PK'),
+(3, 2, 1, '3 Two-One AK-PK'),
+(4, 3, 1, '4 Three-One AK-PK');
+
+INSERT INTO detail2 (`key`, alt_key1, alt_key2, description) VALUES 
+(1, 1, 1, '1 One-One FK-PK'),
+(2, 1, 2, '2 One-Two FK-PK'),
+(3, 2, 1, '3 Two-One FK-PK'),
+(4, 3, 1, '4 Three-One FK-PK'),
+(5, 3, 1, '5 Three-One FK-PK'),
+(6, 1, 1, '6 One-One FK-PK'),
+(7, 1, 1, '7 One-One FK-PK');
+
+DROP DATABASE IF EXISTS `academic`;
+CREATE DATABASE `academic`;
+USE `academic`;
+
+CREATE TABLE `author` (
+  `aid` BIGINT NOT NULL,
+  `homepage` TEXT,
+  `name` TEXT,
+  `oid` BIGINT,
+  PRIMARY KEY (`aid`)
+);
+
+CREATE TABLE `cite` (
+    `cited` BIGINT,
+    `citing` BIGINT
+);
+
+CREATE TABLE `conference` (
+    `cid` BIGINT NOT NULL,
+    `homepage` TEXT,
+    `name` TEXT,
+    PRIMARY KEY (`cid`)
+);
+
+CREATE TABLE `domain` (
+    `did` BIGINT NOT NULL,
+    `name` TEXT,
+    PRIMARY KEY (`did`)
+);
+
+CREATE TABLE `domain_author` (
+    `aid` BIGINT NOT NULL,
+    `did` BIGINT NOT NULL
+);
+
+CREATE TABLE `domain_conference` (
+    `cid` BIGINT NOT NULL,
+    `did` BIGINT NOT NULL
+);
+
+CREATE TABLE `domain_journal` (
+    `did` BIGINT NOT NULL,
+    `jid` BIGINT NOT NULL
+);
+
+CREATE TABLE `domain_keyword` (
+    `did` BIGINT NOT NULL,
+    `kid` BIGINT NOT NULL
+);
+
+CREATE TABLE `domain_publication` (
+    `did` BIGINT NOT NULL,
+    `pid` BIGINT NOT NULL
+);
+
+CREATE TABLE `journal` (
+    `homepage` TEXT,
+    `jid` BIGINT NOT NULL,
+    `name` TEXT,
+    PRIMARY KEY (`jid`)
+);
+
+CREATE TABLE `keyword` (
+    `keyword` TEXT,
+    `kid` BIGINT NOT NULL,
+    PRIMARY KEY (`kid`)
+);
+
+CREATE TABLE `organization` (
+    `continent` TEXT,
+    `homepage` TEXT,
+    `name` TEXT,
+    `oid` BIGINT NOT NULL,
+    PRIMARY KEY (`oid`)
+);
+
+CREATE TABLE `publication` (
+    `abstract` TEXT,
+    `cid` BIGINT,
+    `citation_num` BIGINT,
+    `jid` BIGINT,
+    `pid` BIGINT NOT NULL,
+    `reference_num` BIGINT,
+    `title` TEXT,
+    `year` BIGINT,
+    PRIMARY KEY (`pid`)
+);
+
+CREATE TABLE `publication_keyword` (
+    `pid` BIGINT NOT NULL,
+    `kid` BIGINT NOT NULL
+);
+
+CREATE TABLE `writes` (
+    `aid` BIGINT NOT NULL,
+    `pid` BIGINT NOT NULL
+);
+
+INSERT INTO `author` (`aid`, `homepage`, `name`, `oid`) VALUES
+(1, 'www.larry.com', 'Larry Summers', 2),
+(2, 'www.ashish.com', 'Ashish Vaswani', 3),
+(3, 'www.noam.com', 'Noam Shazeer', 3),
+(4, 'www.martin.com', 'Martin Odersky', 4),
+(5, NULL, 'Kempinski', NULL);
+
+INSERT INTO `cite` (`cited`, `citing`) VALUES
+(1, 2), (1, 3), (1, 4), (1, 5), (2, 3), (2, 5), (3, 4), (3, 5), (4, 5);
+
+INSERT INTO `conference` (`cid`, `homepage`, `name`) VALUES
+(1, 'www.isa.com', 'ISA'), (2, 'www.aaas.com', 'AAAS'), (3, 'www.icml.com', 'ICML');
+
+INSERT INTO `domain` (`did`, `name`) VALUES
+(1, 'Data Science'), (2, 'Natural Sciences'), (3, 'Computer Science'), (4, 'Sociology'), (5, 'Machine Learning');
+
+INSERT INTO `domain_author` (`aid`, `did`) VALUES
+(1, 2), (1, 4), (2, 3), (2, 1), (2, 5), (3, 5), (3, 3), (4, 3);
+
+INSERT INTO `domain_conference` (`cid`, `did`) VALUES
+(1, 2), (2, 4), (3, 5);
+
+INSERT INTO `domain_journal` (`did`, `jid`) VALUES
+(1, 2), (2, 3), (5, 4);
+
+INSERT INTO `domain_keyword` (`did`, `kid`) VALUES
+(1, 2), (2, 3);
+
+INSERT INTO `domain_publication` (`did`, `pid`) VALUES
+(4, 1), (2, 2), (1, 3), (3, 4), (3, 5), (5, 5);
+
+INSERT INTO `journal` (`homepage`, `jid`, `name`) VALUES
+('www.aijournal.com', 1, 'Journal of Artificial Intelligence Research'), ('www.nature.com', 2, 'Nature'), ('www.science.com', 3, 'Science'), ('www.ml.com', 4, 'Journal of Machine Learning Research');
+
+INSERT INTO `keyword` (`keyword`, `kid`) VALUES
+('AI', 1), ('Neuroscience', 2), ('Machine Learning', 3), ('Keyword 4', 4);
+
+INSERT INTO `organization` (`continent`, `homepage`, `name`, `oid`) VALUES
+('Asia', 'www.organization1.com', 'Organization 1', 1), ('North America', 'www.organization2.com', 'Organization 2', 2), ('North America', 'www.organization3.com', 'Organization 3', 3), ('Europe', 'www.epfl.com', 'École Polytechnique Fédérale de Lausanne 4', 4), ('Europe', 'www.organization5.com', 'Organization 5', 5);
+
+INSERT INTO `publication` (`abstract`, `cid`, `citation_num`, `jid`, `pid`, `reference_num`, `title`, `year`) VALUES
+('Abstract 1', 1, 4, 1, 1, 0, 'The Effects of Climate Change on Agriculture', 2020), ('Abstract 2', 2, 2, 2, 2, 1, 'A Study on the Effects of Social Media on Mental Health', 2020), ('Abstract 3', 3, 2, 2, 3, 2, 'Data Mining Techniques', 2021), ('Abstract 4', 3, 1, 2, 4, 2, 'Optimizing GPU Throughput', 2021), ('Abstract 5', 3, 0, 4, 5, 4, 'Attention is all you need', 2021);
+
+INSERT INTO `publication_keyword` (`pid`, `kid`) VALUES
+(1, 2), (2, 3);
+
+INSERT INTO `writes` (`aid`, `pid`) VALUES
+(1, 1), (1, 2), (2, 3), (2, 4), (2, 5), (3, 5);

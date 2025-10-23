@@ -5,7 +5,7 @@ WITH _s1 AS (
     SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   WHERE
-    sbtxdatetime >= DATE_ADD(CURRENT_TIMESTAMP(), -1, 'MONTH') AND sbtxtype = 'sell'
+    sbtxdatetime >= DATE_SUB(CURRENT_TIMESTAMP(), 1, MONTH) AND sbtxtype = 'sell'
   GROUP BY
     1
 )
