@@ -287,7 +287,7 @@ def impl_defog_broker_adv8():
         & (date_time >= DATETIME("now", "start of week", "-1 week"))
     )
     return Broker.CALCULATE(
-        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) > 0),
+        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) != 0),
         total_amount=SUM(selected_txns.amount),
     )
 
@@ -743,12 +743,14 @@ def impl_defog_dealership_adv4():
     """
     date_threshold = DATETIME("now", "-30 days")
 
-    selected_sales = sale_records.WHERE(sale_date >= date_threshold)
+    selected_sales = cars.WHERE(CONTAINS(LOWER(make), "toyota")).sale_records.WHERE(
+        sale_date >= date_threshold
+    )
 
-    return cars.WHERE(CONTAINS(LOWER(make), "toyota")).CALCULATE(
+    return Dealership.CALCULATE(
         num_sales=COUNT(selected_sales),
         total_revenue=KEEP_IF(
-            SUM(selected_sales.sale_price), COUNT(selected_sales) > 0
+            SUM(selected_sales.sale_price), COUNT(selected_sales) != 0
         ),
     )
 
@@ -1331,7 +1333,7 @@ def impl_defog_ewallet_adv4():
     # Calculate the number of transactions and the total amount for the filtered transactions
     return Ewallet.CALCULATE(
         num_transactions=COUNT(us_transactions),
-        total_amount=KEEP_IF(SUM(us_transactions.amount), COUNT(us_transactions) > 0),
+        total_amount=KEEP_IF(SUM(us_transactions.amount), COUNT(us_transactions) != 0),
     )
 
 
@@ -2564,7 +2566,7 @@ def impl_defog_academic_gen11():
     n_pub = COUNT(publications)
     n_auth = COUNT(authors)
     return Academic.CALCULATE(
-        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth > 0)
+        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth != 0)
     )
 
 
@@ -2578,7 +2580,7 @@ def impl_defog_academic_gen12():
     """
     n_confs = SUM(PRESENT(publications.conference_id))
     n_jours = SUM(PRESENT(publications.journal_id))
-    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours > 0))
+    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours != 0))
 
 
 def impl_defog_academic_gen13():
@@ -2592,7 +2594,7 @@ def impl_defog_academic_gen13():
 
     n_pubs = COUNT(domain_publications)
     n_keys = COUNT(domain_keywords)
-    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys > 0))
+    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys != 0))
 
 
 def impl_defog_academic_gen14():
@@ -2609,7 +2611,7 @@ def impl_defog_academic_gen14():
         year,
         num_publications=n_pubs,
         num_journals=n_jours,
-        ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0),
+        ratio=n_pubs / KEEP_IF(n_jours, n_jours != 0),
     )
 
 

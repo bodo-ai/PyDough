@@ -728,7 +728,7 @@ def common_prefix_al():
         .WHERE(HAS(selected_lines))
         .TOP_K(10, by=key.ASC())
         .CALCULATE(cust_key=key, n_orders=n_orders, n_no_tax_discount=n_no_tax_discount)
-        .WHERE(HAS(selected_part_purchase) & (COUNT(selected_part_purchase) > 0))
+        .WHERE(HAS(selected_part_purchase) & (COUNT(selected_part_purchase) != 0))
     )
 
 
@@ -745,7 +745,7 @@ def common_prefix_am():
         .WHERE(
             HAS(selected_lines)
             & HAS(selected_part_purchase)
-            & (COUNT(selected_part_purchase) > 0)
+            & (COUNT(selected_part_purchase) != 0)
         )
         .CALCULATE(
             cust_key=key, n_orders=n_orders, n_no_tax_discount=COUNT(selected_lines)
@@ -765,7 +765,7 @@ def common_prefix_an():
         .WHERE(
             (COUNT(orders) > RELAVG(COUNT(orders), per="nations"))
             & HAS(selected_part_purchase)
-            & (COUNT(selected_part_purchase) > 0)
+            & (COUNT(selected_part_purchase) != 0)
         )
         .CALCULATE(
             cust_key=key,

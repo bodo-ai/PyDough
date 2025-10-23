@@ -1,4 +1,7 @@
-""" """
+"""
+Logical plan transformation to pull aggregates above joins when possible for
+optimization purposes.
+"""
 
 __all__ = ["pull_aggregates_above_joins"]
 
@@ -31,7 +34,9 @@ from pydough.types import BooleanType, NumericType
 
 class JoinAggregateTransposeShuttle(RelationalShuttle):
     """
-    TODO
+    Relational shuttle Transposes joins and aggregates in the relational
+    algebra, moving the currently aggregate underneath the join to be above
+    the join instead for performance gains.
     """
 
     left_join_case_ops = {
@@ -48,7 +53,8 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         pydop.POPULATION_STD,
     }
     """
-    TODO: add description
+    The set of aggregation operators that are safe transpose under a LEFT JOIN
+    when the aggregate is on the right side of the join.
     """
 
     def __init__(self):
@@ -175,7 +181,8 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         if not is_left:
             agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
 
-        # TODO ADD COMMENTS
+        # Obtain the input aliases for both sides of the join, identified with
+        # which one belongs to the aggregate versus the other input.
         agg_alias: str | None = (
             join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
         )
@@ -214,6 +221,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         ):
             sentinel_join_name: str | None = None
             if existing_sentinel is not None:
+                # If there is an existing sentinel column from before, use it.
                 for col_name, col_expr in join.columns.items():
                     if (
                         isinstance(col_expr, ColumnReference)
@@ -222,6 +230,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                         sentinel_join_name = col_name
                         break
             else:
+                # Otherwise, create a new COUNT(*) column for that purpose.
                 agg_name = self.generate_name("n_rows", aggregate.columns)
                 aggregate.columns[agg_name] = aggregate.aggregations[agg_name] = (
                     CallExpression(
@@ -247,7 +256,15 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         else:
             new_cardinality = new_cardinality.add_plural()
 
-        # TODO ADD COMMENTS
+        # Build up the new columns for the join and aggregate, as well as a
+        # substitution mapping to remap references from the old join to the new
+        # join and aggregate, and another to remap references used by the join
+        # condition. The columns for the new aggregate will start out with the
+        # same keys and aggregations as the old one, since the columns from the
+        # aggregate's input will be passed through the join without any
+        # renaming, then all of the other columns from the non-aggregate side of
+        # the join will be added as ANYTHING aggregations to the new aggregate
+        # so that they can be referenced in the final projection.
         new_join_columns: dict[str, RelationalExpression] = {}
         new_aggregate_keys: dict[str, RelationalExpression] = dict(aggregate.keys)
         new_aggregate_aggs: dict[str, CallExpression] = dict(aggregate.aggregations)
@@ -259,14 +276,14 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 add_input_name(key_expr, agg_alias)
             )
 
-        # TODO ADD COMMENTS
+        # Extract the node that is the input to the aggregate, as well as the
+        # other input to the join, as these shall be the two inputs to the new
+        # join.
         agg_input: RelationalNode = aggregate.inputs[0]
         non_agg_input: RelationalNode = join.inputs[1] if is_left else join.inputs[0]
         new_join_inputs: list[RelationalNode] = (
             [agg_input, non_agg_input] if is_left else [non_agg_input, agg_input]
         )
-
-        new_project_columns: dict[str, RelationalExpression] = {}
 
         # Start by placing all of the columns from the aggregate node's input
         # into the join's columns so that the aggregate keys/aggregations can
@@ -285,7 +302,10 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 ColumnReference(col_name, col_expr.data_type)
             )
 
-        # TODO ADD COMMENTS
+        # Iterate through all of the columns from the non-aggregate side of
+        # the join, adding them as ANYTHING aggregations to the new aggregate
+        # so that they can be referenced in the final projection, while also
+        # adding them as regular columns to the new join.
         for col_name, col_expr in non_agg_input.columns.items():
             join_name = self.generate_name(col_name, new_join_columns)
             new_join_columns[join_name] = ColumnReference(
@@ -327,6 +347,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                 [sentinel_column, LiteralExpression(0, NumericType())],
             )
 
+            # A function to transform `X` -> `KEEP_IF(X, sentinel_column != 0)``
             def sentinel_fn(expr: RelationalExpression) -> RelationalExpression:
                 return CallExpression(
                     pydop.KEEP_IF, expr.data_type, [expr, sentinel_cmp]
@@ -339,11 +360,18 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
                     )
                     join_sub[agg_ref_expr] = sentinel_fn(join_sub[agg_ref_expr])
 
-        # TODO ADD COMMENTS
+        # Create the columns of the final projection which will occur after
+        # the aggregate to rename columns as needed. This is done by finding
+        # all of the columns from the original join's output, and applying
+        # the join substitution to them so that they refer to the correct
+        # columns from the new aggregate.
+        new_project_columns: dict[str, RelationalExpression] = {}
         for col_name, col_expr in join.columns.items():
             new_project_columns[col_name] = apply_substitution(col_expr, join_sub, {})
 
-        # TODO ADD COMMENTS
+        # Build the new Join by joining the aggregate's input with the other
+        # side of the join, using the remapped join condition, and the new
+        # columns and cardinalities.
         new_join: Join = Join(
             new_join_inputs,
             apply_substitution(join.condition, join_cond_sub, {}),
@@ -354,19 +382,28 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
             join.correl_name,
         )
 
-        # TODO ADD COMMENTS
+        # Build the new Aggregate node on top of the new Join, using the
+        # remapped keys and additional aggregations.
         new_aggregate: Aggregate = Aggregate(
             new_join, new_aggregate_keys, new_aggregate_aggs
         )
 
-        # TODO ADD COMMENTS
+        # Build the new Project node on top of the new Aggregate, using the
+        # remapped columns.
         new_project: Project = Project(new_aggregate, new_project_columns)
         return new_project
 
 
 def pull_aggregates_above_joins(node: RelationalRoot) -> RelationalNode:
     """
-    TODO
+    Runs the logical plan transformation to pull aggregates above joins when
+    possible for optimization purposes.
+
+    Args:
+        `node`: The root relational node to transform.
+
+    Returns:
+        The transformed relational tree.
     """
     shuttle: JoinAggregateTransposeShuttle = JoinAggregateTransposeShuttle()
     return node.accept_shuttle(shuttle)
