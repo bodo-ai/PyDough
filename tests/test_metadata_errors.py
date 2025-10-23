@@ -334,6 +334,11 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="BAD_TABLE_COLUMN_SAMPLE_VALUES",
         ),
         pytest.param(
+            "BAD_TABLE_COLUMN_ADDITIONAL_DEFINITIONS",
+            "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_ADDITIONAL_DEFINITIONS' must be a JSON object containing a field 'additional definitions' and field 'additional definitions' must be a JSON array",
+            id="BAD_TABLE_COLUMN_ADDITIONAL_DEFINITIONS",
+        ),
+        pytest.param(
             "BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO",
             "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
             id="BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO",
@@ -341,7 +346,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "BAD_TABLE_COLUMN_EXTRA_FIELDS",
             re.escape(
-                "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'sample values', 'synonyms', 'type']"
+                "table column property 'key' of simple table collection 'collection' in graph 'BAD_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'column name', 'data type', 'description', 'extra semantic info', 'name', 'sample values', 'synonyms', 'type']"
             ),
             id="BAD_TABLE_COLUMN_EXTRA_FIELDS",
         ),
@@ -356,6 +361,11 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="BAD_SIMPLE_TABLE_SYNONYMS",
         ),
         pytest.param(
+            "BAD_SIMPLE_TABLE_ADDITIONAL_DEFINITIONS",
+            "simple table collection 'collection' in graph 'BAD_SIMPLE_TABLE_ADDITIONAL_DEFINITIONS' must be a JSON object containing a field 'additional definitions' and field 'additional definitions' must be a JSON array",
+            id="BAD_SIMPLE_TABLE_ADDITIONAL_DEFINITIONS",
+        ),
+        pytest.param(
             "BAD_SIMPLE_TABLE_EXTRA_SEMANTIC_INFO",
             "simple table collection 'collection' in graph 'BAD_SIMPLE_TABLE_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
             id="BAD_SIMPLE_TABLE_EXTRA_SEMANTIC_INFO",
@@ -363,7 +373,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "BAD_SIMPLE_TABLE_EXTRA_FIELDS",
             re.escape(
-                "simple table collection 'collection' in graph 'BAD_SIMPLE_TABLE_EXTRA_FIELDS' must be a JSON object containing no fields except for ['description', 'extra semantic info', 'name', 'properties', 'synonyms', 'table path', 'type', 'unique properties']"
+                "simple table collection 'collection' in graph 'BAD_SIMPLE_TABLE_EXTRA_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'description', 'extra semantic info', 'name', 'properties', 'synonyms', 'table path', 'type', 'unique properties']"
             ),
             id="BAD_SIMPLE_TABLE_EXTRA_FIELDS",
         ),
@@ -413,6 +423,11 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="BAD_CARTESIAN_PRODUCT_SYNONYMS",
         ),
         pytest.param(
+            "BAD_CARTESIAN_PRODUCT_ADDITIONAL_DEFINITIONS",
+            "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_ADDITIONAL_DEFINITIONS' must be a JSON object containing a field 'additional definitions' and field 'additional definitions' must be a JSON array",
+            id="BAD_CARTESIAN_PRODUCT_ADDITIONAL_DEFINITIONS",
+        ),
+        pytest.param(
             "BAD_CARTESIAN_PRODUCT_EXTRA_SEMANTIC_INFO",
             "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
             id="BAD_CARTESIAN_PRODUCT_EXTRA_SEMANTIC_INFO",
@@ -420,7 +435,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS",
             re.escape(
-                "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS' must be a JSON object containing no fields except for ['always matches', 'child collection', 'description', 'extra semantic info', 'name', 'parent collection', 'synonyms', 'type']"
+                "cartesian property 'cross' of simple table collection 'parent' in graph 'BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'always matches', 'child collection', 'description', 'extra semantic info', 'name', 'parent collection', 'synonyms', 'type']"
             ),
             id="BAD_CARTESIAN_PRODUCT_EXTRA_FIELDS",
         ),
@@ -510,6 +525,11 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
             id="BAD_SIMPLE_JOIN_SYNONYMS",
         ),
         pytest.param(
+            "BAD_SIMPLE_JOIN_ADDITIONAL_DEFINITIONS",
+            "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_ADDITIONAL_DEFINITIONS' must be a JSON object containing a field 'additional definitions' and field 'additional definitions' must be a JSON array",
+            id="BAD_SIMPLE_JOIN_ADDITIONAL_DEFINITIONS",
+        ),
+        pytest.param(
             "BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO",
             "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO' must be a JSON object containing a field 'extra semantic info' and field 'extra semantic info' must be a JSON object",
             id="BAD_SIMPLE_JOIN_EXTRA_SEMANTIC_INFO",
@@ -517,7 +537,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "BAD_SIMPLE_JOIN_EXTRA_FIELDS",
             re.escape(
-                "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['always matches', 'child collection', 'description', 'extra semantic info', 'keys', 'name', 'parent collection', 'singular', 'synonyms', 'type']"
+                "simple join property 'children' of simple table collection 'parent' in graph 'BAD_SIMPLE_JOIN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'always matches', 'child collection', 'description', 'extra semantic info', 'keys', 'name', 'parent collection', 'singular', 'synonyms', 'type']"
             ),
             id="BAD_SIMPLE_JOIN_EXTRA_FIELDS",
         ),
@@ -875,7 +895,7 @@ def test_missing_property(get_sample_graph: graph_fetcher) -> None:
         pytest.param(
             "MASKED_TABLE_COLUMN_EXTRA_FIELDS",
             re.escape(
-                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'protected data type', 'sample values', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
+                "masked table column property 'name' of simple table collection 'customers' in graph 'MASKED_TABLE_COLUMN_EXTRA_FIELDS' must be a JSON object containing no fields except for ['additional definitions', 'column name', 'data type', 'description', 'extra semantic info', 'name', 'protect protocol', 'protected data type', 'sample values', 'server masked', 'synonyms', 'type', 'unprotect protocol']"
             ),
             id="MASKED_TABLE_COLUMN_EXTRA_FIELDS",
         ),

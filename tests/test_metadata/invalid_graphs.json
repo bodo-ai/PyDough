@@ -924,6 +924,29 @@
       "relationships": []
     },
     {
+      "name": "BAD_TABLE_COLUMN_ADDITIONAL_DEFINITIONS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string",
+              "additional definitions": "must be an array of strings",
+              "extra semantic info": {"key": "value"}
+            }
+          ]
+        }
+      ],
+      "relationships": []
+    },
+    {
       "name": "BAD_TABLE_COLUMN_EXTRA_SEMANTIC_INFO",
       "version": "V2",
       "collections": [
@@ -1007,6 +1030,29 @@
             }
           ],
           "synonyms": 42
+        }
+      ],
+      "relationships": []
+    },
+    {
+      "name": "BAD_SIMPLE_TABLE_ADDITIONAL_DEFINITIONS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "collection",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ],
+          "additional definitions": "must be an array of strings",
+          "extra semantic info": {"key": "value"}
         }
       ],
       "relationships": []
@@ -1431,6 +1477,50 @@
           "parent collection": "parent",
           "child collection": "child",
           "synonyms": 42
+        }
+      ]
+    },
+    {
+      "name": "BAD_CARTESIAN_PRODUCT_ADDITIONAL_DEFINITIONS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "cross",
+          "type": "cartesian product",
+          "parent collection": "parent",
+          "child collection": "child",
+          "additional definitions": "must be an array of strings",
+          "extra semantic info": {"key": "value"}
         }
       ]
     },
@@ -2257,6 +2347,52 @@
           "singular": false,
           "keys": {"key": ["key"]},
           "synonyms": "spawn"
+        }
+      ]
+    },
+    {
+      "name": "BAD_SIMPLE_JOIN_ADDITIONAL_DEFINITIONS",
+      "version": "V2",
+      "collections": [
+        {
+          "name": "parent",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        },
+        {
+          "name": "child",
+          "type": "simple table",
+          "table path": "TableName",
+          "unique properties": ["key"],
+          "properties": [
+            {
+              "name": "key",
+              "type": "table column",
+              "column name": "column_name",
+              "data type": "string"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "name": "children",
+          "type": "simple join",
+          "parent collection": "parent",
+          "child collection": "child",
+          "singular": false,
+          "keys": {"key": ["key"]},
+          "additional definitions": "must be an array of strings",
+          "extra semantic info": {"key": "value"}
         }
       ]
     },
