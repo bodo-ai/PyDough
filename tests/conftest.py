@@ -875,8 +875,8 @@ def mysql_docker_setup() -> None:
     except ImportError as e:
         raise RuntimeError("mysql-connector-python is not installed") from e
 
-    # Wait for MySQL to be ready
-    for _ in range(30):
+    # Wait for MySQL to be ready for 3 minutes
+    for _ in range(180):
         try:
             conn = mysql_connector.connect(
                 host=MYSQL_HOST,
@@ -889,6 +889,7 @@ def mysql_docker_setup() -> None:
             break
         except mysql_connector.Error as e:
             print("Error occurred while connecting to MySQL:", e)
+            print(f"Waiting {_ + 1}/180 seconds for MySQL to be ready...")
             time.sleep(1)
     else:
         subprocess.run(["docker", "rm", "-f", MYSQL_DOCKER_CONTAINER])
@@ -906,29 +907,6 @@ def mysql_conn_db_context(
     """
     # The first time, set up the defog data
     import mysql.connector as mysql_connector
-
-    mysql_username = os.getenv("MYSQL_USERNAME")
-    mysql_password = os.getenv("MYSQL_PASSWORD")
-    mysql_host = MYSQL_HOST
-
-    connection: mysql_connector.connection.MySQLConnection = mysql_connector.connect(
-        user=mysql_username,
-        password=mysql_password,
-        host=mysql_host,
-        use_pure=True,
-    )
-
-    # Loads the defog data into the MySQL engine.
-    base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    path: str = os.path.join(base_dir, "tests/gen_data/init_defog_mysql.sql")
-    with open(path) as f:
-        init_defog_script: str = f.read()
-    cursor: mysql_connector.connection.MySQLCursor = connection.cursor()
-    for statement in init_defog_script.split(";\n"):
-        if statement.strip():
-            cursor.execute(statement.strip())
-    connection.commit()
-    cursor.close()
 
     @cache
     def _impl(database_name: str) -> DatabaseContext:
@@ -1046,8 +1024,8 @@ def postgres_docker_setup() -> None:
     except ImportError as e:
         raise RuntimeError("psycopg2 is not installed") from e
 
-    # Wait for Postgres to be ready
-    for _ in range(30):
+    # Wait for Postgres to be ready for 3 minutes max
+    for _ in range(180):
         try:
             conn = psycopg2.connect(
                 host=POSTGRES_HOST,
@@ -1060,6 +1038,7 @@ def postgres_docker_setup() -> None:
             break
         except psycopg2.Error as e:
             print("Error occurred while connecting to Postgres:", e)
+            print(f"Waiting {_ + 1}/180 seconds for Postgres to be ready...")
             time.sleep(1)
     else:
         subprocess.run(["docker", "rm", "-f", POSTGRES_DOCKER_CONTAINER])
@@ -1090,19 +1069,6 @@ def postgres_conn_db_context(
         host=postgres_host,
         port=postgres_port,
     )
-    connection.autocommit = True  # It avoids getting stuck when DROP/CREATE
-    # Loads the defog data into the Postgres engine.
-    base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    path: str = os.path.join(base_dir, "tests/gen_data/init_defog_postgres.sql")
-    with open(path) as f:
-        init_defog_script: str = f.read()
-    cursor: psycopg2.connection.PostgresCursor = connection.cursor()
-    for statement in init_defog_script.split(";\n"):
-        if statement.strip():
-            cursor.execute(statement.strip())
-
-    connection.commit()
-    cursor.close()
 
     return load_database_context(
         "postgres",
