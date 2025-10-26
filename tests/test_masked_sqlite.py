@@ -3,6 +3,7 @@ Integration tests for the PyDough workflow with custom questions on the custom
 CRYPTBANK sqlite database.
 """
 
+import datetime
 import io
 from collections.abc import Callable
 from contextlib import redirect_stdout
@@ -427,6 +428,28 @@ from tests.testing_utilities import (
                 "cryptbank_filter_count_30",
             ),
             id="cryptbank_filter_count_30",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(birthday, [datetime.date(1991, 11, 15), datetime.date(1978, 2, 11), datetime.date(2005, 3, 14), datetime.date(1985, 4, 12)]))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [3]}),
+                "cryptbank_filter_count_31",
+                kwargs={"datetime": datetime, "pd": pd},
+            ),
+            id="cryptbank_filter_count_31",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(MONOTONIC(pd.Timestamp('2020-03-28 09:20:00'), creation_timestamp, datetime.datetime(2020, 9, 20, 8, 30, 0)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_32",
+                kwargs={"datetime": datetime, "pd": pd},
+            ),
+            id="cryptbank_filter_count_32",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -889,6 +912,26 @@ def test_pipeline_e2e_cryptbank(
             id="cryptbank_filter_count_30",
         ),
         pytest.param(
+            "selected_customers = customers.WHERE(ISIN(birthday, [datetime.date(1991, 11, 15), datetime.date(1978, 2, 11), datetime.date(2005, 3, 14), datetime.date(1985, 4, 12)]))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_birthday: ['IN', 5, '__col__', '1991-11-15', '1978-02-11', '2005-03-14', '1985-04-12']",
+                }
+            ],
+            id="cryptbank_filter_count_31",
+        ),
+        pytest.param(
+            "selected_accounts = accounts.WHERE(MONOTONIC(pd.Timestamp('2020-03-28 09:20:00'), creation_timestamp, datetime.datetime(2020, 9, 20, 8, 30, 0)))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+            [
+                {
+                    "CRBNK.ACCOUNTS.a_open_ts: ['BETWEEN', 3, '2020-03-28 09:20:00', '__col__', '2020-09-20 08:30:00']",
+                }
+            ],
+            id="cryptbank_filter_count_32",
+        ),
+        pytest.param(
             "result = CRYPTBANK.CALCULATE(n_neg=SUM(transactions.amount < 0), n_positive=SUM(transactions.amount > 0))",
             [
                 {
@@ -919,7 +962,9 @@ def test_cryptbank_mask_server_logging(
     # Obtain the graph and the unqualified node
     graph: GraphMetadata = masked_graphs("CRYPTBANK")
     root: UnqualifiedNode = transform_and_exec_pydough(
-        pydough_code, masked_graphs("CRYPTBANK"), {}
+        pydough_code,
+        masked_graphs("CRYPTBANK"),
+        {"datetime": datetime, "pd": pd},
     )
 
     # Convert the PyDough code to SQL text.

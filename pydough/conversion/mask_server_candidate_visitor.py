@@ -5,6 +5,8 @@ for Mask Server rewrite conversion.
 
 __all__ = ["MaskServerCandidateVisitor"]
 
+import datetime
+
 import pydough.pydough_operators as pydop
 from pydough.relational import (
     CallExpression,
@@ -351,5 +353,9 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             return ["TRUE" if literal.value else "FALSE"]
         elif isinstance(literal.value, (int, float, str)):
             return [literal.value]
+        elif isinstance(literal.value, datetime.datetime):
+            return [literal.value.strftime("%Y-%m-%d %H:%M:%S")]
+        elif isinstance(literal.value, datetime.date):
+            return [literal.value.isoformat()]
         else:
             return None
