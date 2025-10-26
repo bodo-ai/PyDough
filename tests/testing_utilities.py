@@ -23,11 +23,13 @@ __all__ = [
     "TableCollectionInfo",
     "TopKInfo",
     "WhereInfo",
+    "extract_batch_requests_from_logs",
     "graph_fetcher",
     "map_over_dict_values",
 ]
 
 import datetime
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -1496,3 +1498,63 @@ def run_e2e_error_test(
         if columns is not None:
             call_kwargs["columns"] = columns
         to_df(root, **call_kwargs)
+
+
+def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
+    """
+    Extracts the batch requests made to a mask server from the provided log
+    string. Each batch request will have a corresponding sequence of log lines
+    in the following format:
+
+    ```
+    INFO     pydough.mask_server.mask_server:mask_server.py:149 Batch request to Mask Server (2 items):
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (1) CRBNK.CUSTOMERS.c_lname: ['EQUAL', 2, '__col__', 'lee']
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (2) CRBNK.CUSTOMERS.c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]
+    ```
+
+    A log message string with those lines would return the following list of
+    sets:
+
+    ```
+    [
+        {
+            "CRBNK.CUSTOMERS.c_lname: ['EQUAL', 2, '__col__', 'lee']",
+            "CRBNK.CUSTOMERS.c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]",
+        }
+    ]
+    ```
+
+    Args:
+        `log_str`: The log string to extract batch requests from.
+
+    Returns:
+        A list of sets, each set indicating one of the batch requests made to
+        the mask server during the conversion process and logged in the logger
+        that was dumped into the log string. The format for each set entry is
+        `db_name.table_name.column_name: [expression_list]`.
+    """
+    header_pattern: re.Pattern = re.compile(
+        r"Batch request to Mask Server \((\d+) items?\):"
+    )
+    entry_pattern: re.Pattern = re.compile(r"\(\d+\) (.+)")
+    result: list[set[str]] = []
+    current_set: set[str] = set()
+    lines_remaining: int = 0
+    for line in log_str.splitlines():
+        header_match = re.findall(header_pattern, line)
+        if header_match:
+            assert lines_remaining == 0, (
+                "Malformed log: new batch request started before previous one ended."
+            )
+            current_set = set()
+            lines_remaining = int(header_match[0])
+            result.append(current_set)
+        elif lines_remaining > 0:
+            entry_match = re.findall(entry_pattern, line)
+            assert entry_match, "Malformed log: expected batch request entry line."
+            current_set.add(entry_match[0])
+            lines_remaining -= 1
+    assert lines_remaining == 0, (
+        "Malformed log: batch request did not have expected number of entries."
+    )
+    return result

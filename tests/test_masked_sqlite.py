@@ -3,14 +3,24 @@ Integration tests for the PyDough workflow with custom questions on the custom
 CRYPTBANK sqlite database.
 """
 
+import io
 from collections.abc import Callable
+from contextlib import redirect_stdout
 
 import pandas as pd
 import pytest
 
+from pydough import to_sql
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
 from pydough.mask_server import MaskServerInfo
-from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
+from tests.testing_utilities import (
+    PyDoughPandasTest,
+    extract_batch_requests_from_logs,
+    graph_fetcher,
+    transform_and_exec_pydough,
+)
 
 
 @pytest.fixture(
@@ -719,9 +729,11 @@ def test_pipeline_until_relational_cryptbank(
     file_path: str = get_plan_test_filename(
         f"{cryptbank_pipeline_test_data.test_name}_{enable_mask_rewrites}"
     )
-    cryptbank_pipeline_test_data.run_relational_test(
-        masked_graphs, file_path, update_tests, mask_server=mock_server_info
-    )
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        cryptbank_pipeline_test_data.run_relational_test(
+            masked_graphs, file_path, update_tests, mask_server=mock_server_info
+        )
 
 
 def test_pipeline_until_sql_cryptbank(
@@ -741,13 +753,15 @@ def test_pipeline_until_sql_cryptbank(
         f"{cryptbank_pipeline_test_data.test_name}_{enable_mask_rewrites}",
         sqlite_tpch_db_context.dialect,
     )
-    cryptbank_pipeline_test_data.run_sql_test(
-        masked_graphs,
-        file_path,
-        update_tests,
-        sqlite_tpch_db_context,
-        mask_server=mock_server_info,
-    )
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        cryptbank_pipeline_test_data.run_sql_test(
+            masked_graphs,
+            file_path,
+            update_tests,
+            sqlite_tpch_db_context,
+            mask_server=mock_server_info,
+        )
 
 
 @pytest.mark.execute
@@ -762,8 +776,171 @@ def test_pipeline_e2e_cryptbank(
     Test executing the the custom queries with the custom cryptbank dataset
     against the refsol DataFrame.
     """
-    cryptbank_pipeline_test_data.run_e2e_test(
-        masked_graphs,
-        sqlite_cryptbank_connection,
-        mask_server=mock_server_info,
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        cryptbank_pipeline_test_data.run_e2e_test(
+            masked_graphs,
+            sqlite_cryptbank_connection,
+            mask_server=mock_server_info,
+        )
+
+
+@pytest.mark.parametrize(
+    ["pydough_code", "batch_requests"],
+    [
+        pytest.param(
+            "selected_customers = customers.WHERE(last_name == 'lee')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {"CRBNK.CUSTOMERS.c_lname: ['EQUAL', 2, '__col__', 'lee']"},
+            ],
+            id="cryptbank_filter_count_01",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(ISIN(last_name, ('lee', 'smith', 'rodriguez')))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']"
+                }
+            ],
+            id="cryptbank_filter_count_03",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(~ISIN(last_name, ('lee', 'smith', 'rodriguez')))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                    "CRBNK.CUSTOMERS.c_lname: ['NOT', 1, 'IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                }
+            ],
+            id="cryptbank_filter_count_04",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE("
+            " ("
+            "  PRESENT(address) &"
+            "  PRESENT(birthday) &"
+            "  (last_name != 'lopez') &"
+            "  (ENDSWITH(first_name, 'a') | ENDSWITH(first_name, 'e') | ENDSWITH(first_name, 's'))"
+            ") | (ABSENT(birthday) & ENDSWITH(phone_number, '5'))"
+            ")\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK.CUSTOMERS.c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['OR', 2, 'OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e', 'ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK.CUSTOMERS.c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
+                    "CRBNK.CUSTOMERS.c_phone: ['ENDSWITH', 2, '__col__', '5']",
+                }
+            ],
+            id="cryptbank_filter_count_27",
+        ),
+        pytest.param(
+            "selected_accounts = accounts.WHERE("
+            + " & ".join(
+                [
+                    "((account_type == 'retirement') | (account_type == 'savings'))",
+                    "(balance >= 5000)",
+                    "(CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail'))",
+                    "(YEAR(creation_timestamp) < 2020)",
+                ]
+            )
+            + ")\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+            [
+                {
+                    "CRBNK.ACCOUNTS.a_balance: ['GTE', 2, '__col__', 5000]",
+                    "CRBNK.ACCOUNTS.a_open_ts: ['LT', 2, 'YEAR', 1, '__col__', 2020]",
+                    "CRBNK.ACCOUNTS.a_open_ts: ['YEAR', 1, '__col__']",
+                    "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'retirement']",
+                    "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'savings']",
+                    "CRBNK.ACCOUNTS.a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
+                }
+            ],
+            id="cryptbank_filter_count_28",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(birthday <= '1925-01-01')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_birthday: ['LTE', 2, '__col__', '1925-01-01']",
+                }
+            ],
+            id="cryptbank_filter_count_29",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE("
+            " ISIN(YEAR(birthday) - 2, (1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993))"
+            " & ISIN(MONTH(birthday) + 1, (2, 4, 6, 8, 10, 12))"
+            ")\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_birthday: ['ADD', 2, 'MONTH', 1, '__col__', 1]",
+                    "CRBNK.CUSTOMERS.c_birthday: ['AND', 2, 'IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12, 'IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
+                    "CRBNK.CUSTOMERS.c_birthday: ['IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
+                    "CRBNK.CUSTOMERS.c_birthday: ['IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12]",
+                    "CRBNK.CUSTOMERS.c_birthday: ['MONTH', 1, '__col__']",
+                    "CRBNK.CUSTOMERS.c_birthday: ['SUB', 2, 'YEAR', 1, '__col__', 2]",
+                    "CRBNK.CUSTOMERS.c_birthday: ['YEAR', 1, '__col__']",
+                }
+            ],
+            id="cryptbank_filter_count_30",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE(n_neg=SUM(transactions.amount < 0), n_positive=SUM(transactions.amount > 0))",
+            [
+                {
+                    "CRBNK.TRANSACTIONS.t_amount: ['LT', 2, '__col__', 0]",
+                    "CRBNK.TRANSACTIONS.t_amount: ['GT', 2, '__col__', 0]",
+                }
+            ],
+            id="cryptbank_agg_06",
+        ),
+    ],
+)
+def test_cryptbank_mask_server_logging(
+    pydough_code: str,
+    batch_requests: list[set[str]],
+    masked_graphs: graph_fetcher,
+    enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
+    caplog,
+):
+    """
+    Tests whether, during the conversion of the PyDough queries on the custom
+    cryptbank dataset into SQL text, the correct logging calls are made
+    regarding batches sent to the mask server.
+    """
+    # Obtain the graph and the unqualified node
+    graph: GraphMetadata = masked_graphs("CRYPTBANK")
+    root: UnqualifiedNode = transform_and_exec_pydough(
+        pydough_code, masked_graphs("CRYPTBANK"), {}
     )
+
+    # Convert the PyDough code to SQL text.
+    to_sql(root, metadata=graph, mask_server=mock_server_info)
+
+    # Retrieve the output from the captured logger output, while capturing
+    # stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        batch_requests_made: list[set[str]] = extract_batch_requests_from_logs(
+            caplog.text
+        )
+
+    # If in raw mode, make sure no requests were made. Otherwise, compare the
+    # expected batch requests to those made.
+    if enable_mask_rewrites == "raw":
+        assert batch_requests_made == [], (
+            "Expected no batch requests to be made in 'raw' mode."
+        )
+    else:
+        assert batch_requests_made == batch_requests, (
+            "The batch requests made do not match the expected batch requests."
+        )

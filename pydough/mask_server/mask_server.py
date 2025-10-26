@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from pydough.logger import get_logger
 from pydough.mask_server.server_connection import (
     RequestMethod,
     ServerConnection,
@@ -142,11 +143,19 @@ class MaskServerInfo:
         Returns:
             An output list containing the response case and payload.
         """
+
+        # Log the batch request
+        pyd_logger = get_logger(__name__)
+        pyd_logger.info(f"Batch request to Mask Server ({len(batch)} items):")
+        for idx, item in enumerate(batch):
+            pyd_logger.info(
+                f"({idx + 1}) {item.table_path}.{item.column_name}: {item.expression}"
+            )
+
         assert batch != [], "Batch cannot be empty."
 
         path: str = "v1/predicates/batch-evaluate"
         method: RequestMethod = RequestMethod.POST
-
         request: ServerRequest = self.generate_request(batch, path, method)
         response_json = self.connection.send_server_request(request)
         result: list[MaskServerOutput] = self.generate_result(response_json)
