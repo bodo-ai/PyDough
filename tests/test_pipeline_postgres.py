@@ -31,6 +31,7 @@ from tests.testing_utilities import (
     harmonize_types,
 )
 
+from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
 
@@ -555,3 +556,23 @@ def test_pipeline_e2e_postgres_defog(
         reference_database=sqlite_defog_connection,
         coerce_types=True,
     )
+
+
+@pytest.mark.postgres
+@pytest.mark.execute
+def test_pipeline_e2e_postgres_custom_datasets(
+    custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
+    get_test_graph_by_name: graph_fetcher,
+    postgres_conn_db_context: DatabaseContext,
+):
+    """
+    Test executing the the custom queries with the custom datasets against the
+    refsol DataFrame.
+    """
+    # Just run the "keywords" tests
+    if custom_datasets_test_data.graph_name.lower() == "keywords":
+        custom_datasets_test_data.run_e2e_test(
+            get_test_graph_by_name, postgres_conn_db_context, coerce_types=True
+        )
+    else:
+        pytest.skip("Skipping non-keywords custom dataset tests for Postgres.")
