@@ -68,6 +68,27 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
     Note: ISIN is handled separately.
     """
 
+    PREDICATE_OPERATORS: set[str] = {
+        "EQUAL",
+        "NOT_EQUAL",
+        "GT",
+        "GTE",
+        "LT",
+        "LTE",
+        "STARTSWITH",
+        "ENDSWITH",
+        "IN",
+        "BETWEEN",
+        "AND",
+        "OR",
+        "NOT",
+    }
+    """
+    The set of strings from `OPERATORS_TO_SERVER_NAMES` that correspond to
+    predicate operators. Only expressions whose outermost layer is a predicate
+    operator will be added to the candidate pool.
+    """
+
     def __init__(self) -> None:
         self.candidate_pool: dict[
             RelationalExpression,
@@ -121,7 +142,11 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         self.stack.clear()
 
     def visit_call_expression(self, expr: CallExpression) -> None:
-        # TODO: ADD COMMENTS
+        # First, recursively visit all of the inputs to the function call, then
+        # extract the data from the stack to determine whether this expression
+        # is a candidate for Mask Server rewrite conversion. Reverse the order
+        # of the stack entries since they were pushed in order of visitation,
+        # but need to be processed in the original input order.
         for arg in expr.inputs:
             arg.accept_shuttle(self)
         mask_ops: set[
@@ -138,18 +163,36 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         input_op: pydop.MaskedExpressionFunctionOperator
         input_expr: RelationalExpression
         combined_exprs: list[str | int | float | None | bool] | None
+
+        # A call in the form `UNMASK(input_expr)` is the atomic `__col__`
+        # expression.
         if (
             isinstance(expr.op, pydop.MaskedExpressionFunctionOperator)
             and expr.op.is_unmask
         ):
             self.stack.append(((expr.op, expr.inputs[0]), ["__col__"]))
+
+        # If there are zero unmasking operators in the inputs, or more than
+        # one, this expression is not a candidate.
         elif len(mask_ops) != 1:
             self.stack.append((None, None))
+
+        # Otherwise, verify that the function call operator is one that can be
+        # handled by the Mask Server, and if so, build the linear serialization
+        # for the entire expression. If it cannot be handled, return None.
         else:
             input_op, input_expr = mask_ops.pop()
             combined_exprs = self.convert_call_to_server_expression(expr, arg_exprs)
             if combined_exprs is not None and expr not in self.processed_candidates:
-                self.candidate_pool[expr] = (input_op, input_expr, combined_exprs)
+                # Insert the expression and its corresponding data (the unmask
+                # operator, the input expression, and the linear serialization)
+                # into the candidate pool, but only if the expression's
+                # outermost layer is a predicate call.
+                if (
+                    len(combined_exprs) > 0
+                    and combined_exprs[0] in self.PREDICATE_OPERATORS
+                ):
+                    self.candidate_pool[expr] = (input_op, input_expr, combined_exprs)
                 self.processed_candidates.add(expr)
             self.stack.append(((input_op, input_expr), combined_exprs))
 

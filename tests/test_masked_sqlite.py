@@ -856,7 +856,6 @@ def test_pipeline_e2e_cryptbank(
                 {
                     "CRBNK.ACCOUNTS.a_balance: ['GTE', 2, '__col__', 5000]",
                     "CRBNK.ACCOUNTS.a_open_ts: ['LT', 2, 'YEAR', 1, '__col__', 2020]",
-                    "CRBNK.ACCOUNTS.a_open_ts: ['YEAR', 1, '__col__']",
                     "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'retirement']",
                     "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'savings']",
                     "CRBNK.ACCOUNTS.a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
@@ -882,13 +881,9 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
                 {
-                    "CRBNK.CUSTOMERS.c_birthday: ['ADD', 2, 'MONTH', 1, '__col__', 1]",
                     "CRBNK.CUSTOMERS.c_birthday: ['AND', 2, 'IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12, 'IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
                     "CRBNK.CUSTOMERS.c_birthday: ['IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
                     "CRBNK.CUSTOMERS.c_birthday: ['IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12]",
-                    "CRBNK.CUSTOMERS.c_birthday: ['MONTH', 1, '__col__']",
-                    "CRBNK.CUSTOMERS.c_birthday: ['SUB', 2, 'YEAR', 1, '__col__', 2]",
-                    "CRBNK.CUSTOMERS.c_birthday: ['YEAR', 1, '__col__']",
                 }
             ],
             id="cryptbank_filter_count_30",
@@ -916,7 +911,10 @@ def test_cryptbank_mask_server_logging(
     """
     Tests whether, during the conversion of the PyDough queries on the custom
     cryptbank dataset into SQL text, the correct logging calls are made
-    regarding batches sent to the mask server.
+    regarding batches sent to the mask server. This is to ensure that the calls
+    are being batched as expected, the right calls are being sent to the server,
+    and expressions that are non-predicates are not being sent, even if they are
+    a valid sub-expression of a predicate that can be sent.
     """
     # Obtain the graph and the unqualified node
     graph: GraphMetadata = masked_graphs("CRYPTBANK")
