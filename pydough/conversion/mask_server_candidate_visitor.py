@@ -261,7 +261,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         # Build up the list with the first two entries: the name of the function
         # call operator, and the number of inputs to the function call.
         result: list[str | int | float | None | bool] = []
-        operator_name = self.OPERATORS_TO_SERVER_NAMES[call.op]
+        operator_name: str = self.OPERATORS_TO_SERVER_NAMES[call.op]
         result.append(operator_name)
         result.append(len(call.inputs))
 
