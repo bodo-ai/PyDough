@@ -19,6 +19,7 @@ from pydough.unqualified import UnqualifiedNode
 from tests.testing_utilities import (
     PyDoughPandasTest,
     extract_batch_requests_from_logs,
+    extract_masking_warning_logs,
     graph_fetcher,
     transform_and_exec_pydough,
 )
@@ -986,4 +987,135 @@ def test_cryptbank_mask_server_logging(
     else:
         assert batch_requests_made == batch_requests, (
             "The batch requests made do not match the expected batch requests."
+        )
+
+
+@pytest.mark.parametrize(
+    ["pydough_code", "raw_warnings", "rewrite_warnings"],
+    [
+        pytest.param(
+            "result = customers",
+            {
+                "MASK": set(),
+                "UNMASK": set(),
+            },
+            {
+                "MASK": set(),
+                "UNMASK": set(),
+            },
+            id="cryptbank_customers",
+        ),
+        pytest.param(
+            "result = customers.TOP_K(3, by=key)",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_key"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_key"},
+            },
+            id="cryptbank_basic_scan_topk",
+        ),
+        pytest.param(
+            "result = transactions.CALCULATE(key, time_stamp).TOP_K(5, by=time_stamp.DESC())",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.TRANSACTIONS.t_ts"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.TRANSACTIONS.t_ts"},
+            },
+            id="cryptbank_partially_encrypted_scan_topk",
+        ),
+        pytest.param(
+            "result = ("
+            " branches"
+            " .CALCULATE(source_branch_key=key)"
+            " .CALCULATE("
+            "  branch_key=key,"
+            "  n_local_cust=COUNT(same_state_customers),"
+            "  n_local_cust_local_acct=COUNT(same_state_customers.accounts_held.WHERE(branch_key == source_branch_key)),"
+            "))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_addr", "CRBNK.CUSTOMERS.c_key"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_addr", "CRBNK.CUSTOMERS.c_key"},
+            },
+            id="cryptbank_general_join_01",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE(n=COUNT("
+            " accounts"
+            " .CALCULATE(source_branch_key=branch_key)"
+            " .WHERE(HAS(account_holder.same_state_branches.WHERE(key == source_branch_key))),"
+            "))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_addr", "CRBNK.CUSTOMERS.c_key"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_addr", "CRBNK.CUSTOMERS.c_key"},
+            },
+            id="cryptbank_general_join_02",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(last_name == 'lee')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_lname"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": set(),
+            },
+            id="cryptbank_filter_count_01",
+        ),
+    ],
+)
+def test_cryptbank_mask_permission_logs(
+    pydough_code: str,
+    raw_warnings: dict[str, dict[str, set[str]]],
+    rewrite_warnings: dict[str, dict[str, set[str]]],
+    masked_graphs: graph_fetcher,
+    enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
+    caplog,
+):
+    """
+    Tests whether, during the conversion of the PyDough queries on the custom
+    cryptbank dataset into SQL text, the correct logging calls are made
+    regarding warnings of which columns we must have protect/unprotect
+    permissions in order for the query to be valid.
+    """
+    # Obtain the graph and the unqualified node
+    graph: GraphMetadata = masked_graphs("CRYPTBANK")
+    root: UnqualifiedNode = transform_and_exec_pydough(
+        pydough_code,
+        masked_graphs("CRYPTBANK"),
+        {"datetime": datetime, "pd": pd},
+    )
+
+    # Convert the PyDough code to SQL text, while capturing
+    # stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        to_sql(root, metadata=graph, mask_server=mock_server_info)
+
+    # Retrieve the output from the captured logger output
+    warning_logs: dict[str, set[str]] = extract_masking_warning_logs(caplog.text)
+
+    # Compare the expected warning logs for the current mode to those made.
+    if enable_mask_rewrites == "raw":
+        assert warning_logs == raw_warnings, (
+            "The permission warning logs do not match the expected warnings in raw mode."
+        )
+    else:
+        assert warning_logs == rewrite_warnings, (
+            "The permission warning logs do not match the expected warnings in rewrite mode."
         )
