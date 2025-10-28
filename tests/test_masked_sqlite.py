@@ -1100,14 +1100,12 @@ def test_cryptbank_mask_server_logging(
     )
 
     # Convert the PyDough code to SQL text.
-    to_sql(root, metadata=graph, mask_server=mock_server_info)
+    with redirect_stdout(io.StringIO()):
+        to_sql(root, metadata=graph, mask_server=mock_server_info)
 
     # Retrieve the output from the captured logger output, while capturing
     # stdout to avoid polluting the console with logging calls
-    with redirect_stdout(io.StringIO()):
-        batch_requests_made: list[set[str]] = extract_batch_requests_from_logs(
-            caplog.text
-        )
+    batch_requests_made: list[set[str]] = extract_batch_requests_from_logs(caplog.text)
 
     # If in raw mode, make sure no requests were made. Otherwise, compare the
     # expected batch requests to those made.

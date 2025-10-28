@@ -1565,7 +1565,7 @@ def extract_masking_warning_logs(log_str: str) -> dict[str, set[str]]:
     TODO
     """
     header_pattern: re.Pattern = re.compile(
-        r"Warning: query will not produce a valid output unless user has permission to (mask|unmask) column `(.+)`"
+        r"Query will not produce a valid output unless user has permission to (mask|unmask) column `(.+)`"
     )
     result: dict[str, set[str]] = {
         "MASK": set(),
