@@ -4432,5 +4432,207 @@
         "synonyms": []
       }
     ]
+  },
+  {
+    "name": "Restaurants",
+    "version": "V2",
+    "collections": [
+      {
+        "name": "geographies",
+        "type": "simple table",
+        "table path": "restaurants.geographic",
+        "unique properties": [
+          "city_name"
+        ],
+        "properties": [
+          {
+            "name": "city_name",
+            "type": "table column",
+            "column name": "city_name",
+            "data type": "string",
+            "description": "The name of the city",
+            "sample values": ["Los Angeles", "Miami"],
+            "synonyms": ["city"]
+          },
+          {
+            "name": "county",
+            "type": "table column",
+            "column name": "county",
+            "data type": "string",
+            "description": "The name of the county",
+            "sample values": ["New York", "San Francisco"],
+            "synonyms": ["division"]
+          },
+          {
+            "name": "region",
+            "type": "table column",
+            "column name": "region",
+            "data type": "string",
+            "description": "The name of the region",
+            "sample values": ["California", "New York"],
+            "synonyms": ["territory"]
+          }
+        ],
+        "description": "Contains records of geographic locations including city name, county and region",
+        "synonyms": ["locations", "places"]
+      },
+      {
+        "name": "locations",
+        "type": "simple table",
+        "table path": "restaurants.location",
+        "unique properties": [
+          "restaurant_id"
+        ],
+        "properties": [
+          {
+            "name": "restaurant_id",
+            "type": "table column",
+            "column name": "restaurant_id",
+            "data type": "numeric",
+            "description": "Unique identifier for each restaurant",
+            "sample values": [1, 2, 3],
+            "synonyms": ["restaurant_id", "diner_id"]
+          },
+          {
+            "name": "house_number",
+            "type": "table column",
+            "column name": "house_number",
+            "data type": "numeric",
+            "description": "The number assigned to the building where the restaurant is located",
+            "sample values": [123, 789, 12],
+            "synonyms": ["street_number"]
+          },
+          {
+            "name": "street_name",
+            "type": "table column",
+            "column name": "street_name",
+            "data type": "string",
+            "description": "The name of the street where the restaurant is located",
+            "sample values": ["Main St", "Oak St", "Pine Ave"],
+            "synonyms": ["avenue"]
+          },
+          {
+            "name": "city_name",
+            "type": "table column",
+            "column name": "city_name",
+            "data type": "string",
+            "description": "The name of the city where the restaurant is located",
+            "sample values": ["New York", "Los Angeles", "Miami"],
+            "synonyms": []
+          }
+        ],
+        "description": "Contains the location of each restaurant",
+        "synonyms": ["address"]
+      },
+      {
+        "name": "restaurants",
+        "type": "simple table",
+        "table path": "restaurants.restaurant",
+        "unique properties": [
+          "id_"
+        ],
+        "properties": [
+          {
+            "name": "id_",
+            "type": "table column",
+            "column name": "id",
+            "data type": "numeric",
+            "description": "Unique identifier for each restaurant",
+            "sample values": [1, 2, 3],
+            "synonyms": ["identifier"]
+          },
+          {
+            "name": "name",
+            "type": "table column",
+            "column name": "name",
+            "data type": "string",
+            "description": "The name of the restaurant",
+            "sample values": ["The Pasta House", "The Burger Joint", "The Seafood Shack"],
+            "synonyms": ["restaurant"]
+          },
+          {
+            "name": "food_type",
+            "type": "table column",
+            "column name": "food_type",
+            "data type": "string",
+            "description": "The type of food served at the restaurant",
+            "sample values": ["Seafood", "American", "Japanese"],
+            "synonyms": ["specialty", "menu type"]
+          },
+          {
+            "name": "city_name",
+            "type": "table column",
+            "column name": "city_name",
+            "data type": "string",
+            "description": "The city where the restaurant is located",
+            "sample values": ["San Francisco", "New York", "Miami"],
+            "synonyms": ["locality", "town"]
+          },
+          {
+            "name": "rating",
+            "type": "table column",
+            "column name": "rating",
+            "data type": "numeric",
+            "description": "The rating of the restaurant on a scale of 0 to 5",
+            "sample values": [4.2, 3.9, 4.5],
+            "synonyms": ["score", "review"]
+          }
+        ],
+        "description": "Contains the information of the restaurants",
+        "synonyms": ["diner"]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "simple join",
+        "name": "locations",
+        "parent collection": "geographies",
+        "child collection": "locations",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "city_name": [
+            "city_name"
+          ]
+        },
+        "description": "All restaurant locations related to this geographic",
+        "synonyms": ["restaurant locations"]
+      },
+      {
+        "type": "reverse",
+        "name": "geographic",
+        "original parent": "geographies",
+        "original property": "locations",
+        "singular": true,
+        "always matches": false,
+        "description": "The geographic linked with this location",
+        "synonyms": ["geography", "town"]
+      },
+      {
+        "type": "simple join",
+        "name": "locations",
+        "parent collection": "restaurants",
+        "child collection": "locations",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "id_": [
+            "restaurant_id"
+          ]
+        },
+        "description": "All locations of this restaurant",
+        "synonyms": ["stores", "units"]
+      },
+      {
+        "type": "reverse",
+        "name": "restaurant",
+        "original parent": "restaurants",
+        "original property": "locations",
+        "singular": true,
+        "always matches": false,
+        "description": "The restaurant related to this location",
+        "synonyms": ["franchise", "chain"]
+      }
+    ]
   }
 ]

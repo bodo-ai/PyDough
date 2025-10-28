@@ -163,6 +163,16 @@ from tests.test_pydough_functions.defog_outputs import (
     defog_sql_text_ewallet_gen3,
     defog_sql_text_ewallet_gen4,
     defog_sql_text_ewallet_gen5,
+    defog_sql_text_restaurants_gen1,
+    defog_sql_text_restaurants_gen2,
+    defog_sql_text_restaurants_gen3,
+    defog_sql_text_restaurants_gen4,
+    defog_sql_text_restaurants_gen5,
+    defog_sql_text_restaurants_gen6,
+    defog_sql_text_restaurants_gen7,
+    defog_sql_text_restaurants_gen8,
+    defog_sql_text_restaurants_gen9,
+    defog_sql_text_restaurants_gen10,
 )
 from tests.test_pydough_functions.defog_test_functions import (
     impl_defog_academic_gen1,
@@ -314,6 +324,16 @@ from tests.test_pydough_functions.defog_test_functions import (
     impl_defog_ewallet_gen3,
     impl_defog_ewallet_gen4,
     impl_defog_ewallet_gen5,
+    impl_defog_restaurants_gen1,
+    impl_defog_restaurants_gen2,
+    impl_defog_restaurants_gen3,
+    impl_defog_restaurants_gen4,
+    impl_defog_restaurants_gen5,
+    impl_defog_restaurants_gen6,
+    impl_defog_restaurants_gen7,
+    impl_defog_restaurants_gen8,
+    impl_defog_restaurants_gen9,
+    impl_defog_restaurants_gen10,
 )
 from tests.testing_utilities import (
     PyDoughSQLComparisonTest,
@@ -1723,6 +1743,102 @@ def test_graph_structure_defog(defog_graphs: graph_fetcher, graph_name: str) -> 
                 "academic_gen25",
             ),
             id="academic_gen25",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen1,
+                "Restaurants",
+                defog_sql_text_restaurants_gen1,
+                "restaurants_gen1",
+            ),
+            id="restaurants_gen1",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen2,
+                "Restaurants",
+                defog_sql_text_restaurants_gen2,
+                "restaurants_gen2",
+            ),
+            id="restaurants_gen2",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen3,
+                "Restaurants",
+                defog_sql_text_restaurants_gen3,
+                "restaurants_gen3",
+                order_sensitive=True,
+            ),
+            id="restaurants_gen3",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen4,
+                "Restaurants",
+                defog_sql_text_restaurants_gen4,
+                "restaurants_gen4",
+                order_sensitive=True,
+            ),
+            id="restaurants_gen4",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen5,
+                "Restaurants",
+                defog_sql_text_restaurants_gen5,
+                "restaurants_gen5",
+                order_sensitive=True,
+            ),
+            id="restaurants_gen5",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen6,
+                "Restaurants",
+                defog_sql_text_restaurants_gen6,
+                "restaurants_gen6",
+            ),
+            id="restaurants_gen6",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen7,
+                "Restaurants",
+                defog_sql_text_restaurants_gen7,
+                "restaurants_gen7",
+            ),
+            id="restaurants_gen7",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen8,
+                "Restaurants",
+                defog_sql_text_restaurants_gen8,
+                "restaurants_gen8",
+                order_sensitive=True,
+            ),
+            id="restaurants_gen8",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen9,
+                "Restaurants",
+                defog_sql_text_restaurants_gen9,
+                "restaurants_gen9",
+                order_sensitive=True,
+            ),
+            id="restaurants_gen9",
+        ),
+        pytest.param(
+            PyDoughSQLComparisonTest(
+                impl_defog_restaurants_gen10,
+                "Restaurants",
+                defog_sql_text_restaurants_gen10,
+                "restaurants_gen10",
+                order_sensitive=True,
+            ),
+            id="restaurants_gen10",
         ),
     ],
 )

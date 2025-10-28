@@ -1033,6 +1033,7 @@ class PyDoughSQLComparisonTest:
 
         # If the query does not care about column names, update the answer to use
         # the column names in the refsol.
+        # breakpoint()
         if self.fix_column_names:
             assert len(result.columns) == len(refsol.columns)
             result.columns = refsol.columns

@@ -2777,3 +2777,135 @@ def impl_defog_academic_gen25():
         .PARTITION(name="authors", by=author_name)
         .CALCULATE(author_name)
     )
+
+
+def impl_defog_restaurants_gen1():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the total number of restaurants serving each type of food?
+    """
+    return restaurants.PARTITION(name="food", by=food_type).CALCULATE(
+        food_type, restaurants=COUNT(restaurants)
+    )
+
+
+def impl_defog_restaurants_gen2():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the total count of restaurants in each city?
+    """
+    return locations.PARTITION(name="city", by=city_name).CALCULATE(
+        city_name, total_count=NDISTINCT(locations.restaurant_id)
+    )
+
+
+def impl_defog_restaurants_gen3():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants serving each type of food?
+    """
+    return (
+        restaurants.PARTITION(name="food", by=food_type)
+        .CALCULATE(food_type, avg_rating=AVG(restaurants.rating))
+        .ORDER_BY(avg_rating.DESC(), food_type.DESC())
+    )
+
+
+def impl_defog_restaurants_gen4():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants serve Italian food in each city?
+    """
+    return (
+        restaurants.WHERE(LOWER(food_type) == "italian")
+        .PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, num_restaurants=COUNT(restaurants))
+        .ORDER_BY(num_restaurants.DESC(), city_name.DESC())
+    )
+
+
+def impl_defog_restaurants_gen5():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants are there in each city? Order the results by the
+    number of restaurants in descending order.
+    """
+    return (
+        locations.PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, num_restaurants=COUNT(locations))
+        .ORDER_BY(num_restaurants.DESC(), city_name.DESC())
+    )
+
+
+def impl_defog_restaurants_gen6():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which street has the most number of restaurants?
+    """
+    return (
+        locations.PARTITION(name="streets", by=street_name)
+        .CALCULATE(street_name, num_restaurants=NDISTINCT(locations.restaurant_id))
+        .TOP_K(1, by=num_restaurants.DESC())
+        .CALCULATE(street_name)
+    )
+
+
+def impl_defog_restaurants_gen7():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which restaurants serve Italian cuisine or are located in New York? Order
+    the results by the restaurant name.
+    """
+    return restaurants.WHERE(
+        (LOWER(food_type) == "italian") | (LOWER(city_name) == "new york")
+    ).CALCULATE(name)
+
+
+def impl_defog_restaurants_gen8():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants in each region? Order the results
+    by the region name.
+    """
+    return (
+        locations.CALCULATE(region_name=geographic.region)
+        .PARTITION(name="region", by=region_name)
+        .CALCULATE(region_name, avg_rating=AVG(locations.restaurant.rating))
+        .ORDER_BY(region_name.ASC(), avg_rating.DESC())
+    )
+
+
+def impl_defog_restaurants_gen9():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What are the names of the top 3 restaurants with the highest ratings?
+    """
+    return restaurants.CALCULATE(name).TOP_K(3, by=(rating.DESC(), name.DESC()))
+
+
+def impl_defog_restaurants_gen10():
+    """
+     PyDough implementation of the following question for the Restaurants
+     graph:
+
+    List the restaurants starting from the best ratings to the lowest
+    """
+    return restaurants.CALCULATE(name, rating).ORDER_BY(rating.DESC(), name.DESC())
