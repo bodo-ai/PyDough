@@ -728,6 +728,137 @@ from tests.testing_utilities import (
             ),
             id="cryptbank_analysis_04",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "transaction_info = ("
+                " branches"
+                " .accounts_managed"
+                " .transactions_received"
+                " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+                " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+                ")\n"
+                "result = CRYPTBANK.CALCULATE(avg_delta=ROUND(AVG(transaction_info.cumavg - SQRT(transaction_info.amount)), 2))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"avg_delta": [6.67]}),
+                "cryptbank_bubbleprop_01",
+            ),
+            id="cryptbank_bubbleprop_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "transaction_info = ("
+                " branches"
+                " .accounts_managed"
+                " .transactions_received"
+                " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+                " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+                ")\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(transaction_info.WHERE(cumavg > 50.0)))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [13]}),
+                "cryptbank_bubbleprop_02",
+            ),
+            id="cryptbank_bubbleprop_02",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "transaction_info = ("
+                " branches"
+                " .accounts_managed"
+                " .transactions_received"
+                " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+                " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+                ")\n"
+                "max_info = CROSS(CRYPTBANK.CALCULATE(max_cumavg=MAX(transaction_info.cumavg))).SINGULAR()\n"
+                "selected_accounts = accounts.CALCULATE(balance).WHERE(MONOTONIC(balance - 1000.0, max_info.max_cumavg ** 2, balance + 1000.0))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [9]}),
+                "cryptbank_bubbleprop_03",
+            ),
+            id="cryptbank_bubbleprop_03",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "transaction_info = ("
+                " branches"
+                " .accounts_managed"
+                " .transactions_received"
+                " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+                " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+                ")\n"
+                "result = ("
+                " transaction_info"
+                " .CALCULATE(key, time_stamp, cumavg=ROUND(cumavg, 2))"
+                " .TOP_K(1, by=cumavg.DESC())"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [101],
+                        "time_stamp": ["2022-01-25 18:09:15"],
+                        "cumavg": [73.30],
+                    }
+                ),
+                "cryptbank_bubbleprop_04",
+            ),
+            id="cryptbank_bubbleprop_04",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "transaction_info = ("
+                " branches"
+                " .accounts_managed"
+                " .transactions_received"
+                " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+                " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+                ")\n"
+                "result = ("
+                " transaction_info"
+                " .CALCULATE(key, time_stamp, cumavg=ROUND(cumavg, 2))"
+                " .TOP_K(3, by=key.ASC())"
+                " .ORDER_BY(cumavg.ASC())"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [1, 21, 6],
+                        "time_stamp": [
+                            "2019-11-11 18:00:52",
+                            "2022-09-11 20:58:47",
+                            "2022-07-27 18:41:17",
+                        ],
+                        "cumavg": [60.9, 66.49, 72.5],
+                    }
+                ),
+                "cryptbank_bubbleprop_05",
+                order_sensitive=True,
+            ),
+            id="cryptbank_bubbleprop_05",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "transaction_info = ("
+                " branches"
+                " .accounts_managed"
+                " .transactions_received"
+                " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+                " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+                " .CALCULATE(bucket=ROUND(cumavg / 10.0, 0) * 10)"
+                ")\n"
+                "result = ("
+                " transaction_info"
+                " .PARTITION(name='buckets', by=bucket)"
+                " .CALCULATE(bucket, n=COUNT(transactions_received))"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {"avgbucket": [40.0, 50.0, 60.0, 70.0], "n": [1, 2, 7, 5]}
+                ),
+                "cryptbank_bubbleprop_06",
+            ),
+            id="cryptbank_bubbleprop_06",
+        ),
     ],
 )
 def cryptbank_pipeline_test_data(request) -> PyDoughPandasTest:
@@ -1030,6 +1161,58 @@ def test_cryptbank_mask_server_logging(
             id="cryptbank_partially_encrypted_scan_topk",
         ),
         pytest.param(
+            "result = CRYPTBANK.CALCULATE(n_neg=SUM(transactions.amount < 0), n_positive=SUM(transactions.amount > 0))",
+            {
+                "MASK": set(),
+                "UNMASK": set(),
+            },
+            {
+                "MASK": set(),
+                "UNMASK": set(),
+            },
+            id="cryptbank_agg_06",
+        ),
+        pytest.param(
+            "result = ("
+            " accounts"
+            " .CALCULATE(partkey=(account_type == 'retirement') | (account_type == 'savings'))"
+            " .PARTITION(name='actyp', by=partkey)"
+            " .accounts"
+            " .BEST(per='actyp', by=balance.DESC())"
+            " .CALCULATE(account_type, key, balance)"
+            " .ORDER_BY(account_type.ASC())"
+            ")",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.ACCOUNTS.a_balance", "CRBNK.ACCOUNTS.a_type"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.ACCOUNTS.a_balance", "CRBNK.ACCOUNTS.a_type"},
+            },
+            id="cryptbank_window_01",
+        ),
+        pytest.param(
+            "result = ("
+            " branches"
+            " .WHERE(CONTAINS(address, ';CA;'))"
+            " .CALCULATE(branch_name=name)"
+            " .accounts_managed"
+            " .BEST(per='branches', by=((YEAR(creation_timestamp) == 2021).ASC(), key.ASC()))"
+            " .CALCULATE(branch_name, key, creation_timestamp)"
+            " .ORDER_BY(branch_name.ASC())"
+            ")",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.ACCOUNTS.a_key", "CRBNK.ACCOUNTS.a_open_ts"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.ACCOUNTS.a_key"},
+            },
+            id="cryptbank_window_02",
+        ),
+        pytest.param(
             "result = ("
             " branches"
             " .CALCULATE(source_branch_key=key)"
@@ -1076,6 +1259,302 @@ def test_cryptbank_mask_server_logging(
                 "UNMASK": set(),
             },
             id="cryptbank_filter_count_01",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(birthday == '1985-04-12')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_birthday"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": set(),
+            },
+            id="cryptbank_filter_count_08",
+        ),
+        pytest.param(
+            "selected_transactions = transactions.WHERE(MONOTONIC(8000, amount, 9000))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.TRANSACTIONS.t_amount"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.TRANSACTIONS.t_amount"},
+            },
+            id="cryptbank_filter_count_09",
+        ),
+        pytest.param(
+            "selected_transactions = transactions.WHERE(MONOTONIC('2021-05-10 12:00:00', time_stamp, '2021-05-20 12:00:00'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.TRANSACTIONS.t_ts"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.TRANSACTIONS.t_ts"},
+            },
+            id="cryptbank_filter_count_10",
+        ),
+        pytest.param(
+            "selected_transactions = transactions.WHERE(sender_account.account_holder.first_name == 'alice')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.CUSTOMERS.c_fname",
+                    "CRBNK.CUSTOMERS.c_key",
+                },
+            },
+            {
+                "MASK": {"CRBNK.CUSTOMERS.c_fname"},
+                "UNMASK": {"CRBNK.ACCOUNTS.a_key", "CRBNK.CUSTOMERS.c_key"},
+            },
+            id="cryptbank_filter_count_11",
+        ),
+        pytest.param(
+            "selected_transactions = transactions.WHERE(YEAR(time_stamp) == YEAR(sender_account.creation_timestamp))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.ACCOUNTS.a_open_ts",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.ACCOUNTS.a_open_ts",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            id="cryptbank_filter_count_12",
+        ),
+        pytest.param(
+            "selected_transactions = transactions.WHERE(time_stamp < DATETIME(receiver_account.creation_timestamp, '+2 years'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.ACCOUNTS.a_open_ts",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.ACCOUNTS.a_open_ts",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            id="cryptbank_filter_count_13",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(ENDSWITH(first_name, 'e') | ENDSWITH(last_name, 'e'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.CUSTOMERS.c_fname", "CRBNK.CUSTOMERS.c_lname"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": set(),
+            },
+            id="cryptbank_filter_count_14",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(HAS(accounts_held.WHERE(account_type == 'retirement')))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.ACCOUNTS.a_type", "CRBNK.CUSTOMERS.c_key"},
+            },
+            {
+                "MASK": {"CRBNK.ACCOUNTS.a_type"},
+                "UNMASK": {"CRBNK.CUSTOMERS.c_key"},
+            },
+            id="cryptbank_filter_count_15",
+        ),
+        pytest.param(
+            "transaction_info = ("
+            " branches"
+            " .accounts_managed"
+            " .transactions_received"
+            " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+            " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+            ")\n"
+            "result = CRYPTBANK.CALCULATE(avg_delta=ROUND(AVG(transaction_info.cumavg - SQRT(transaction_info.amount)), 2))",
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.ACCOUNTS.a_key"},
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {"CRBNK.ACCOUNTS.a_key"},
+            },
+            id="cryptbank_bubbleprop_01",
+        ),
+        pytest.param(
+            "transaction_info = ("
+            " branches"
+            " .accounts_managed"
+            " .transactions_received"
+            " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+            " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+            ")\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(transaction_info.WHERE(cumavg > 50.0)))",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            id="cryptbank_bubbleprop_02",
+        ),
+        pytest.param(
+            "transaction_info = ("
+            " branches"
+            " .accounts_managed"
+            " .transactions_received"
+            " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+            " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+            ")\n"
+            "max_info = CROSS(CRYPTBANK.CALCULATE(max_cumavg=MAX(transaction_info.cumavg))).SINGULAR()\n"
+            "selected_accounts = accounts.CALCULATE(balance).WHERE(MONOTONIC(balance - 1000.0, max_info.max_cumavg ** 2, balance + 1000.0))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_balance",
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_balance",
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            id="cryptbank_bubbleprop_03",
+        ),
+        pytest.param(
+            "transaction_info = ("
+            " branches"
+            " .accounts_managed"
+            " .transactions_received"
+            " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+            " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+            ")\n"
+            "result = ("
+            " transaction_info"
+            " .CALCULATE(key, time_stamp, cumavg=ROUND(cumavg, 2))"
+            " .TOP_K(1, by=cumavg.DESC())"
+            ")",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            id="cryptbank_bubbleprop_04",
+        ),
+        pytest.param(
+            "transaction_info = ("
+            " branches"
+            " .accounts_managed"
+            " .transactions_received"
+            " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+            " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+            ")\n"
+            "result = ("
+            " transaction_info"
+            " .CALCULATE(key, time_stamp, cumavg=ROUND(cumavg, 2))"
+            " .TOP_K(3, by=key.ASC())"
+            " .ORDER_BY(cumavg.ASC())"
+            ")",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            id="cryptbank_bubbleprop_05",
+        ),
+        pytest.param(
+            "transaction_info = ("
+            " branches"
+            " .accounts_managed"
+            " .transactions_received"
+            " .CALCULATE(cumavg=RELAVG(SQRT(amount), by=time_stamp.ASC(), per='branches', cumulative=True))"
+            " .WHERE(sender_account.branch.name == 'Tucson University Branch')"
+            " .CALCULATE(bucket=ROUND(cumavg / 10.0, 0) * 10)"
+            ")\n"
+            "result = ("
+            " transaction_info"
+            " .PARTITION(name='buckets', by=bucket)"
+            " .CALCULATE(bucket, n=COUNT(transactions_received))"
+            ")",
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            {
+                "MASK": set(),
+                "UNMASK": {
+                    "CRBNK.ACCOUNTS.a_key",
+                    "CRBNK.TRANSACTIONS.t_amount",
+                    "CRBNK.TRANSACTIONS.t_ts",
+                },
+            },
+            id="cryptbank_bubbleprop_06",
         ),
     ],
 )
