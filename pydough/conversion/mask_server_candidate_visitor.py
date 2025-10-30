@@ -64,6 +64,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         pydop.UPPER: "UPPER",
         pydop.MONOTONIC: "BETWEEN",
         pydop.YEAR: "YEAR",
+        pydop.QUARTER: "QUARTER",
         pydop.MONTH: "MONTH",
         pydop.DAY: "DAY",
         pydop.HOUR: "HOUR",

@@ -45,17 +45,7 @@ ADD TESTS FOR:
 - DATETIME - GOOD (trunc minute)
 - DATETIME - GOOD (add second)
 - DATETIME - GOOD (trunc second)
-- QUARTER
-- HOUR
-- MINUTE
-- SECOND
-- COALESCE
 - IFF
-- JOIN_STRINGS (empty)
-- JOIN_STRINGS (nonempty)
-- SMALLEST
-- LARGEST
-- ABS
 """
 
 
@@ -488,6 +478,186 @@ ADD TESTS FOR:
         ),
         pytest.param(
             PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(QUARTER(creation_timestamp) == 1)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [11]}),
+                "cryptbank_filter_count_33",
+            ),
+            id="cryptbank_filter_count_33",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(QUARTER(creation_timestamp) == DAY(creation_timestamp))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_34",
+            ),
+            id="cryptbank_filter_count_34",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE((HOUR(creation_timestamp) < 10) & (MINUTE(creation_timestamp) < 20))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [6]}),
+                "cryptbank_filter_count_35",
+            ),
+            id="cryptbank_filter_count_35",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_transactions = transactions.WHERE(SECOND(time_stamp) == 23)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [3]}),
+                "cryptbank_filter_count_36",
+            ),
+            id="cryptbank_filter_count_36",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(MONOTONIC(200, ABS(balance - 7250), 600))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [2]}),
+                "cryptbank_filter_count_37",
+            ),
+            id="cryptbank_filter_count_37",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(LARGEST(HOUR(creation_timestamp), MINUTE(creation_timestamp), SECOND(creation_timestamp)) == 10)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [2]}),
+                "cryptbank_filter_count_38",
+            ),
+            id="cryptbank_filter_count_38",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(SMALLEST(HOUR(creation_timestamp), MINUTE(creation_timestamp)) == 15)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_39",
+            ),
+            id="cryptbank_filter_count_39",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('', '1-', phone_number), '1-5'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [20]}),
+                "cryptbank_filter_count_40",
+            ),
+            id="cryptbank_filter_count_40",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number), '1-5'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [20]}),
+                "cryptbank_filter_count_41",
+            ),
+            id="cryptbank_filter_count_41",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number, '1'), '5-1'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_42",
+            ),
+            id="cryptbank_filter_count_42",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(JOIN_STRINGS(' ', first_name, last_name) == 'olivia anderson')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_43",
+            ),
+            id="cryptbank_filter_count_43",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(YEAR(COALESCE(birthday)) == )\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_43",
+            ),
+            id="cryptbank_filter_count_43",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 1991)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_44",
+            ),
+            id="cryptbank_filter_count_44",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 2005)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [3]}),
+                "cryptbank_filter_count_45",
+            ),
+            id="cryptbank_filter_count_45",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(DEFAULT_TO(YEAR(birthday), 2005), (2005, 2006)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [2]}),
+                "cryptbank_filter_count_46",
+            ),
+            id="cryptbank_filter_count_46",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 1991)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [16]}),
+                "cryptbank_filter_count_47",
+            ),
+            id="cryptbank_filter_count_47",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 2005)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [17]}),
+                "cryptbank_filter_count_48",
+            ),
+            id="cryptbank_filter_count_48",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 2005), (2005, 2006)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [18]}),
+                "cryptbank_filter_count_49",
+            ),
+            id="cryptbank_filter_count_49",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "selected_transactions = transactions.WHERE((YEAR(time_stamp) == 2022) & (MONTH(time_stamp) == 6))\n"
                 "result = CRYPTBANK.CALCULATE(n=ROUND(AVG(selected_transactions.amount), 2))",
                 "CRYPTBANK",
@@ -835,12 +1005,12 @@ def test_pipeline_e2e_cryptbank(
     against the refsol DataFrame.
     """
     # Capture stdout to avoid polluting the console with logging calls
-    with redirect_stdout(io.StringIO()):
-        cryptbank_pipeline_test_data.run_e2e_test(
-            masked_graphs,
-            sqlite_cryptbank_connection,
-            mask_server=mock_server_info,
-        )
+    # with redirect_stdout(io.StringIO()):
+    cryptbank_pipeline_test_data.run_e2e_test(
+        masked_graphs,
+        sqlite_cryptbank_connection,
+        mask_server=mock_server_info,
+    )
 
 
 @pytest.mark.parametrize(
@@ -978,6 +1148,52 @@ def test_pipeline_e2e_cryptbank(
                 }
             ],
             id="cryptbank_agg_06",
+        ),
+        pytest.param(
+            "selected_accounts = accounts.WHERE(QUARTER(creation_timestamp) == DAY(creation_timestamp))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+            [
+                {
+                    "CRBNK.ACCOUNTS.a_open_ts: ['EQUAL', 2, 'QUARTER', 1, '__col__', 'DAY', 1, '__col__']"
+                }
+            ],
+            id="cryptbank_filter_count_34",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('', '1-', phone_number), '1-5'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 2, '1-', '__col__', '1-5']"
+                }
+            ],
+            id="cryptbank_filter_count_40",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number), '1-5'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 3, '1', '-', '__col__', '1-5']"
+                }
+            ],
+            id="cryptbank_filter_count_41",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number, '1'), '5-1'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 5, '1', '-', '__col__', '-', '1', '5-1']"
+                }
+            ],
+            id="cryptbank_filter_count_42",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(JOIN_STRINGS(' ', first_name, last_name) == 'olivia anderson')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [],
+            id="cryptbank_filter_count_43",
         ),
     ],
 )

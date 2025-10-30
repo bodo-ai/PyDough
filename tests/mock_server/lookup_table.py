@@ -488,4 +488,247 @@ LOOKUP_TABLE: dict = {
         ],
         "count": 8,
     },
+    ("srv.CRBNK.ACCOUNTS.a_open_ts", ("IN", 4, "MONTH", 1, "__col__", 1, 2, 3)): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2013-04-22 11:37:51",
+            "2017-02-11 10:59:51",
+            "2011-04-30 15:16:51",
+            "2016-03-23 12:41:51",
+            "2013-02-15 12:46:51",
+            "2018-03-15 10:36:51",
+            "2014-04-07 14:21:51",
+            "2015-02-08 17:26:51",
+            "2016-04-29 11:46:51",
+            "2012-03-22 12:16:51",
+            "2015-04-06 13:46:51",
+        ],
+        "count": 8,
+    },
+    (
+        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        ("EQUAL", 2, "QUARTER", 1, "__col__", "DAY", 1, "__col__"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["2015-05-04 18:01:51"],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        (
+            "AND",
+            2,
+            "LT",
+            2,
+            "HOUR",
+            1,
+            "__col__",
+            10,
+            "LT",
+            2,
+            "MINUTE",
+            1,
+            "__col__",
+            20,
+        ),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2013-04-22 11:37:51",
+            "2017-09-15 11:26:51",
+            "2018-03-15 10:36:51",
+            "2014-05-23 11:31:51",
+            "2016-08-22 10:41:51",
+            "2014-08-15 11:31:51",
+        ],
+        "count": 6,
+    },
+    ("srv.CRBNK.TRANSACTIONS.t_ts", ("EQUAL", 2, "SECOND", 1, "__col__", 23)): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2020-11-11 09:03:02",
+            "2023-09-15 09:00:02",
+            "2024-07-21 23:24:02",
+        ],
+        "count": 3,
+    },
+    (
+        "srv.CRBNK.ACCOUNTS.a_balance",
+        ("BETWEEN", 3, 200, "ABS", 1, "SUB", 2, "__col__", 7250, 600),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            46240000.0,
+            57760000.0,
+        ],
+        "count": 2,
+    },
+    (
+        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        (
+            "EQUAL",
+            2,
+            "GREATEST",
+            3,
+            "HOUR",
+            1,
+            "__col__",
+            "MINUTE",
+            1,
+            "__col__",
+            "SECOND",
+            1,
+            "__col__",
+            10,
+        ),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2018-03-15 10:36:51",
+            "2018-01-02 12:26:51",
+        ],
+        "count": 2,
+    },
+    (
+        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        ("EQUAL", 2, "LEAST", 2, "HOUR", 1, "__col__", "MINUTE", 1, "__col__", 15),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2015-08-10 18:11:51",
+            "2015-05-04 18:01:51",
+            "2015-10-19 18:11:51",
+            "2014-10-03 17:41:51",
+        ],
+        "count": 4,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_phone",
+        ("CONTAINS", 2, "CONCAT", 2, "1-", "__col__", "1-5"),
+    ): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": [],
+        "count": 0,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_phone",
+        ("CONTAINS", 2, "CONCAT", 3, "1", "-", "__col__", "1-5"),
+    ): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": [],
+        "count": 0,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_phone",
+        ("CONTAINS", 2, "CONCAT", 5, "1", "-", "__col__", "-", "1", "5-1"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "555-112-3456",
+            "555-901-2345",
+            "555-091-2345",
+            "555-123-4567",
+        ],
+        "count": 4,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_birthday",
+        ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 1991),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "1990-07-31",
+            "1989-04-07",
+            None,
+        ],
+        "count": 3,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_birthday",
+        ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 2005),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "1989-04-07",
+            None,
+        ],
+        "count": 2,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_birthday",
+        ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 2005, 2005, 2006),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            None,
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_birthday",
+        ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 1991),
+    ): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": [
+            "1990-07-31",
+            "1989-04-07",
+            None,
+        ],
+        "count": 3,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_birthday",
+        ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 2005),
+    ): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": [
+            "1989-04-07",
+            None,
+        ],
+        "count": 2,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_birthday",
+        ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 2005, 2005, 2006),
+    ): {
+        "type": "literal",
+        "operator": "NOT_IN",
+        "values": [
+            None,
+        ],
+        "count": 1,
+    },
 }
+
+
+"""
+SELECT c_birthday, DATE(c_birthday, '+472 days')
+FROM customers
+WHERE STRFTIME('%Y', COALESCE(DATE(c_birthday, '+472 days'), '1990-01-01')) IN ('1990', '1991')
+;
+
+SELECT c_birthday, DATE(c_birthday, '+472 days')
+FROM customers
+WHERE STRFTIME('%Y', COALESCE(DATE(c_birthday, '+472 days'), '1990-01-01')) IN ('1990')
+;
+
+SELECT c_birthday, DATE(c_birthday, '+472 days')
+FROM customers
+WHERE STRFTIME('%Y', COALESCE(DATE(c_birthday, '+472 days'), '1990-01-01')) IN ('2005')
+;
+"""
