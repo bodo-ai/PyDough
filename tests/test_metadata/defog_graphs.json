@@ -4632,6 +4632,31 @@
         "always matches": false,
         "description": "The restaurant related to this location",
         "synonyms": ["franchise", "chain"]
+      },
+      {
+        "type": "simple join",
+        "name": "restaurants",
+        "parent collection": "geographies",
+        "child collection": "restaurants",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "city_name": [
+            "city_name"
+          ]
+        },
+        "description": "The restaurants located in this geographic territory",
+        "synonyms": ["diners"]
+      },
+      {
+        "type": "reverse",
+        "name": "geographic",
+        "original parent": "geographies",
+        "original property": "restaurants",
+        "singular": true,
+        "always matches": false,
+        "description": "The geographic territory related to this restaurant",
+        "synonyms": ["location", "territory"]
       }
     ]
   }
