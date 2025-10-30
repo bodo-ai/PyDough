@@ -23,6 +23,41 @@ from tests.testing_utilities import (
     transform_and_exec_pydough,
 )
 
+"""
+ADD TESTS FOR:
+- DATETIME - BAD (singleton)
+- DATETIME - BAD (using current ts)
+- DATETIME - BAD (nested )
+- DATETIME - BAD (add week)
+- DATETIME - BAD (trunc week)
+- DATETIME - GOOD (nested)
+- DATETIME - GOOD (add year)
+- DATETIME - GOOD (trunc year)
+- DATETIME - GOOD (add quarter)
+- DATETIME - GOOD (trunc quarter)
+- DATETIME - GOOD (add month)
+- DATETIME - GOOD (trunc month)
+- DATETIME - GOOD (add day)
+- DATETIME - GOOD (trunc day)
+- DATETIME - GOOD (add hour)
+- DATETIME - GOOD (trunc hour)
+- DATETIME - GOOD (add minute)
+- DATETIME - GOOD (trunc minute)
+- DATETIME - GOOD (add second)
+- DATETIME - GOOD (trunc second)
+- QUARTER
+- HOUR
+- MINUTE
+- SECOND
+- COALESCE
+- IFF
+- JOIN_STRINGS (empty)
+- JOIN_STRINGS (nonempty)
+- SMALLEST
+- LARGEST
+- ABS
+"""
+
 
 @pytest.fixture(
     params=[
@@ -881,7 +916,10 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK.ACCOUNTS.a_open_ts: ['LT', 2, 'YEAR', 1, '__col__', 2020]",
                     "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'retirement']",
                     "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'savings']",
+                    "CRBNK.CUSTOMERS.c_email: ['CONTAINS', 2, '__col__', 'gmail']",
+                    "CRBNK.CUSTOMERS.c_email: ['CONTAINS', 2, '__col__', 'outlook']",
                     "CRBNK.ACCOUNTS.a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
+                    "CRBNK.CUSTOMERS.c_email: ['OR', 2, 'CONTAINS', 2, '__col__', 'outlook', 'CONTAINS', 2, '__col__', 'gmail']",
                 }
             ],
             id="cryptbank_filter_count_28",

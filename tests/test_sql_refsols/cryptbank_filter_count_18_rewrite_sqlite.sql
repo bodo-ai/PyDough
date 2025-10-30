@@ -2,6 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM crbnk.customers
 WHERE
-  (
-    SUBSTRING(c_email, -1) || SUBSTRING(c_email, 1, LENGTH(c_email) - 1)
-  ) LIKE '%.%@%mail%'
+  c_email IN ('ophia.jackson@mail.org', 'livia.a22@gmail.como', '.gonzalez@ymail.comm', 'opez.luke99@gmail.coml', 'enry.g@fastmail.comh', 'rank.k@protonmail.comf', 'mily.jones@mail.come', 'ob.smith77@gmail.comb')

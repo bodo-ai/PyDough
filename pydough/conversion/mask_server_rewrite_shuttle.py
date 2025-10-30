@@ -84,6 +84,10 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
             expression_list,
         ) in self.candidate_visitor.candidate_pool.items():
             ancillary_info.append((expr, input_expr))
+            print(
+                f"srv.{mask_op.table_path}.{mask_op.masking_metadata.column_name}",
+                tuple(expression_list),
+            )
             batch.append(
                 MaskServerInput(
                     table_path=mask_op.table_path,
