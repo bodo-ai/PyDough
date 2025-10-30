@@ -86,6 +86,7 @@ from .hybrid_operations import (
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
 from .join_aggregate_transpose import pull_aggregates_above_joins
+from .join_key_substitution import join_key_substitution
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
@@ -1607,6 +1608,8 @@ def optimize_relational_tree(
         root = confirm_root(pullup_projections(root))
         root = remove_redundant_aggs(root)
         root = pruner.prune_unused_columns(root)
+
+    root = confirm_root(join_key_substitution(root))
 
     # Re-run projection merging, without pushing into joins. This will allow
     # some redundant projections created by pullup to be removed entirely.
