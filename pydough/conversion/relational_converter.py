@@ -1547,6 +1547,12 @@ def optimize_relational_tree(
     pruner: ColumnPruner = ColumnPruner()
     root = pruner.prune_unused_columns(root)
 
+    # Run a pass that substitutes join keys when the only columns used by one
+    # side of the join are the join keys. This will make some joins redundant
+    # and allow them to be deleted later. Then, re-run column pruning.
+    root = confirm_root(join_key_substitution(root))
+    root = pruner.prune_unused_columns(root)
+
     # Bubble up names from the leaf nodes to further encourage simpler naming
     # without aliases, and also to delete duplicate columns where possible.
     # This is done early to maximize the chances that a nicer name will be used

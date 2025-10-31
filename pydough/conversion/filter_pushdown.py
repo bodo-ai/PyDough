@@ -201,7 +201,6 @@ class FilterPushdownShuttle(RelationalShuttle):
         # Extract all equality conditions from the join condition, then build
         # up equality sets via a union find structure.
         lhs_keys, rhs_keys = extract_equijoin_keys(join)
-
         equality_sets: dict[RelationalExpression, RelationalExpression] = {}
         for lhs_key in lhs_keys:
             equality_sets[lhs_key] = lhs_key
@@ -222,8 +221,10 @@ class FilterPushdownShuttle(RelationalShuttle):
             root1 = find(expr1)
             root2 = find(expr2)
             if root1 != root2:
-                equality_sets[root2] = root1
+                equality_sets[root1] = root2
 
+        # The equality sets are built by uniting all of the lhs and rhs keys
+        # that are equated in the join condition.
         for lhs_key, rhs_key in zip(lhs_keys, rhs_keys):
             union(lhs_key, rhs_key)
 
@@ -297,6 +298,8 @@ class FilterPushdownShuttle(RelationalShuttle):
         transposer: ExpressionTranspositionShuttle = ExpressionTranspositionShuttle(
             join, False
         )
+        # TODO: BREAK UP INTO VARIABLES FOR PUSH_0 VS PUSH_1 VS REMAINING SO
+        # THAT THE PUSH_0 AND PUSH_1 SETS CAN BE PROVIDED TO infer_extra_join_filters
         for idx, child in enumerate(join.inputs):
             if idx > 0 and join_type == JoinType.LEFT:
                 # If doing a left join, only push filters into the RHS if
