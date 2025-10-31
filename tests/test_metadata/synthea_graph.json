@@ -18,11 +18,11 @@
             "data type": "string",
             "description": "The prevalent disease.",
             "sample values": [
-              "0.3 Ml Epinephrine 0.5 Mg/Ml Auto Inj...",
-              "0.65 Ml Depo Subq Provera 160 Mg/Ml P...",
-              "1 Ml Depo Provera 150 Mg/Ml Injection",
-              "12 Hr Cefaclor 500 Mg Extended Releas...",
-              "120 Actuat Fluticasone Propionate 0.0..."
+              "Viral sinusitis (disorder)",
+              "Streptococcal sore throat (disorder)",
+              "Laceration of thigh",
+              "Acute bronchitis (disorder)",
+              "Cystitis"
             ],
             "synonyms": [
               "ITEM"
