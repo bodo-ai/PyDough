@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(t_ts, ['2020-11-11 09:03:02', '2023-09-15 09:00:02', '2024-07-21 23:24:02']:array[unknown]), columns={})
+   SCAN(table=CRBNK.TRANSACTIONS, columns={'t_ts': t_ts})

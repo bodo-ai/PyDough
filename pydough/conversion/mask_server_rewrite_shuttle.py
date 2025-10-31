@@ -165,34 +165,83 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
             MaskServerResponse.NOT_IN_ARRAY,
         )
         assert isinstance(response.payload, list)
-        if len(response.payload) == 0:
+        # Extract the list of literals from the response payload. If the list
+        # contains a NULL, remove it since SQL IN lists cannot contain NULLs,
+        # then mark it as such so we can add the null check later.
+        in_list: list = response.payload
+        contains_null: bool = None in in_list
+        while None in in_list:
+            in_list.remove(None)
+        result: RelationalExpression
+        if len(in_list) == 0:
             # If the payload is empty, we can return a literal true/false
-            # depending on whether it is IN or NOT IN
-            return LiteralExpression(
-                response.response_case == MaskServerResponse.NOT_IN_ARRAY, BooleanType()
-            )
-        elif len(response.payload) == 1:
+            # depending on whether it is IN or NOT IN. If there was a null, then
+            # instead we just check if the expression is/isn't null.
+            if contains_null:
+                result = CallExpression(
+                    pydop.ABSENT
+                    if response.response_case == MaskServerResponse.IN_ARRAY
+                    else pydop.PRESENT,
+                    BooleanType(),
+                    [input_expr],
+                )
+            else:
+                result = LiteralExpression(
+                    response.response_case == MaskServerResponse.NOT_IN_ARRAY,
+                    BooleanType(),
+                )
+        elif len(in_list) == 1:
             # If the payload has one element, we can return a simple equality
-            # or inequality, depending on whether it is IN or NOT IN
-            return CallExpression(
+            # or inequality, depending on whether it is IN or NOT IN.
+            result = CallExpression(
                 pydop.EQU
                 if response.response_case == MaskServerResponse.IN_ARRAY
                 else pydop.NEQ,
                 BooleanType(),
                 [
                     input_expr,
-                    LiteralExpression(response.payload[0], UnknownType()),
+                    LiteralExpression(in_list[0], UnknownType()),
                 ],
             )
         else:
             # Otherwise, we need to return an ISIN expression with an array
             # literal, and if doing NOT IN then negate the whole thing.
             array_literal: LiteralExpression = LiteralExpression(
-                response.payload, ArrayType(UnknownType())
+                in_list, ArrayType(UnknownType())
             )
-            result: RelationalExpression = CallExpression(
+            result = CallExpression(
                 pydop.ISIN, BooleanType(), [input_expr, array_literal]
             )
             if response.response_case == MaskServerResponse.NOT_IN_ARRAY:
                 result = CallExpression(pydop.NOT, BooleanType(), [result])
-            return result
+
+        # If the original payload contained a NULL, we need to add an extra
+        # check to the result to account for that, since SQL IN lists cannot
+        # contain NULLs.
+        # - If the list is empty after removing nulls, then the present/absent
+        #   check has already been added.
+        # - Otherwise, if doing IN -> `ABSENT(x) OR ISIN(x, ...)`.
+        # - Otherwise, if doing NOT_IN -> `PRESENT(x) AND NOT(ISIN(x, ...))`.
+        if contains_null and len(in_list) > 0:
+            null_op = (
+                pydop.ABSENT
+                if response.response_case == MaskServerResponse.IN_ARRAY
+                else pydop.PRESENT
+            )
+            bool_op = (
+                pydop.BOR
+                if response.response_case == MaskServerResponse.IN_ARRAY
+                else pydop.BAN
+            )
+            is_null_check: CallExpression = CallExpression(
+                null_op,
+                BooleanType(),
+                [input_expr],
+            )
+            result = CallExpression(
+                bool_op,
+                BooleanType(),
+                [is_null_check, result],
+            )
+
+        return result
