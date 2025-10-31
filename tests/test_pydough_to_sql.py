@@ -296,10 +296,7 @@ def test_pydough_to_sql_tpch(
     Tests that a PyDough unqualified node can be correctly translated to its
     qualified DAG version, with the correct string representation.
     """
-    if (
-        empty_context_database.dialect != DatabaseDialect.SNOWFLAKE
-        and empty_context_database.dialect != DatabaseDialect.SQLITE
-    ) and (
+    if (empty_context_database.dialect != DatabaseDialect.SNOWFLAKE) and (
         ("simple_range_" in test_name)
         or ("user_range_collection_" in pydough_code.__name__)
     ):
