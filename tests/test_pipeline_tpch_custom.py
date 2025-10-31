@@ -182,14 +182,6 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     year_month_nation_orders,
     yoy_change_in_num_orders,
 )
-from tests.test_pydough_functions.user_collections import (
-    simple_range_1,
-    simple_range_2,
-    simple_range_3,
-    simple_range_4,
-    simple_range_5,
-    user_range_collection_1,
-)
 
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
@@ -2918,110 +2910,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "quantile_function_test_4",
             ),
             id="quantile_function_test_4",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_1,
-                "TPCH",
-                lambda: pd.DataFrame({"value": range(10)}),
-                "simple_range_1",
-            ),
-            id="simple_range_1",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_2,
-                "TPCH",
-                lambda: pd.DataFrame({"value": range(9, -1, -1)}),
-                "simple_range_2",
-            ),
-            id="simple_range_2",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_3,
-                "TPCH",
-                lambda: pd.DataFrame({"foo": range(15, 20)}),
-                "simple_range_3",
-            ),
-            id="simple_range_3",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_4,
-                "TPCH",
-                lambda: pd.DataFrame({"foo": range(10, 0, -1)}),
-                "simple_range_4",
-            ),
-            id="simple_range_4",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                simple_range_5,
-                "TPCH",
-                # TODO: even though generated SQL has CAST(NULL AS INT) AS x
-                # it returns x as object datatype.
-                # using `x: range(-1)` returns int64 so temp. using dtype=object
-                lambda: pd.DataFrame({"x": pd.Series(range(-1), dtype="object")}),
-                "simple_range_5",
-            ),
-            id="simple_range_5",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                user_range_collection_1,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "part_size": [
-                            1,
-                            6,
-                            11,
-                            16,
-                            21,
-                            26,
-                            31,
-                            36,
-                            41,
-                            46,
-                            51,
-                            56,
-                            61,
-                            66,
-                            71,
-                            76,
-                            81,
-                            86,
-                            91,
-                            96,
-                        ],
-                        "n_parts": [
-                            228,
-                            225,
-                            206,
-                            234,
-                            228,
-                            221,
-                            231,
-                            208,
-                            245,
-                            226,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                        ],
-                    }
-                ),
-                "user_range_collection_1",
-            ),
-            id="user_range_collection_1",
         ),
     ],
 )

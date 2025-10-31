@@ -576,58 +576,11 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_generated_table(self, generated_table: "GeneratedTable") -> None:
-        """convert the `GeneratedTable` to SQL code based on which underlying
-        `PyDoughUserGeneratedCollection` it uses
-
-        Args:
-            generated_table: The generated table node to visit.
-
-        """
-        # TODO: match on the type of `generated_table.collection` to determine
-        # how to convert it to SQLGlot. For now, assume it only range case.
-
-        # Step 1: Build the column expression list (only one column in a range)
-        column_names: list[str] = []
-        for column in generated_table.columns.keys():
-            column_names.append(column)
-
-        rows = [(i,) for i in generated_table.collection.data]
-
-        # Handle empty range by injecting a single NULL row
-        if not rows:
-            from sqlglot import exp
-
-            query = (
-                Select()
-                .select(
-                    SQLGlotAlias(
-                        this=exp.Cast(
-                            this=exp.Null(), to=exp.DataType.build("INTEGER")
-                        ),
-                        alias=Identifier(this=column_names[0]),
-                    )
-                )
-                .where(exp.false())
+        query: SQLGlotExpression = (
+            self._expr_visitor._bindings.convert_user_generated_collection(
+                generated_table.collection
             )
-        else:
-            # Step 2: Build VALUES expression WITHOUT column names
-            values_expr = values(values=rows, alias=generated_table.name)
-
-            # Step 3: Create a SELECT statement from the VALUES expression
-            # and alias the values column (named "column1" in SQLite) to the first column name.
-            # TODO: Handle other dialects that may not use "column1" as the default name.
-            query = (
-                Select()
-                .from_(values_expr)
-                .select(
-                    SQLGlotAlias(
-                        this=SQLGlotColumn(this=Identifier(this="column1")),
-                        alias=Identifier(this=column_names[0]),
-                    )
-                )
-            )
-
-        # Step 4: Append to stack
+        )
         self._stack.append(query)
 
     def relational_to_sqlglot(self, root: RelationalRoot) -> SQLGlotExpression:

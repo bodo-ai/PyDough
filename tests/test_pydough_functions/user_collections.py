@@ -8,6 +8,12 @@ PyDough code snippets for testing purposes.
 
 import pydough
 
+import pytest
+
+# Snowflake only.
+# Other dialects does not support range collections yet.
+pytestmark = pytest.mark.snowflake
+
 
 def simple_range_1():
     # Generates a table with column named `value` containing integers from 0 to 9.
@@ -95,15 +101,51 @@ def user_range_collection_3():
 
 
 def user_range_collection_4():
-    # For every part size 1-10, find the name & retail price of the cheapest part
-    # of that size that is azure, plated, and has a small drum container
-    sizes = pydough.range_collection("sizes", "part_size", 10)
-    turquoise_parts = parts.WHERE(CONTAINS(name, "turquoise"))
+    # For every part size 1-10, find the name &
+    # retail price of the cheapest part of that size that
+    # is azure, plated, and has a small drum container
+    sizes = pydough.range_collection("sizes", "part_size", 1, 11)
+    azure_parts = parts.WHERE(
+        CONTAINS(name, "azure")
+        & CONTAINS(part_type, "PLATED")
+        & CONTAINS(container, "SM DRUM")
+    )
     return (
         sizes.CALCULATE(part_size)
-        .CROSS(turquoise_parts)
+        .CROSS(azure_parts)
         .WHERE(size == part_size)
         .BEST(per="sizes", by=retail_price.ASC())
         .CALCULATE(part_size, name, retail_price)
         .ORDER_BY(part_size.ASC())
+    )
+
+
+def user_range_collection_5():
+    # Creates a collection `sizes` with a single property `part_size` whose values are the
+    # integers from 1 (inclusive) to 60 (exclusive), skipping by 5s, then for each size value,
+    # counts how many almond parts are in the interval of 5 sizes starting with that size
+    sizes = pydough.range_collection("sizes", "part_size", 1, 60, 5)
+    almond_parts = parts.WHERE(CONTAINS(name, "almond"))
+    return sizes.CALCULATE(part_size).CALCULATE(
+        part_size,
+        n_parts=COUNT(
+            CROSS(almond_parts).WHERE(MONOTONIC(part_size, size, part_size + 4))
+        ),
+    )
+
+
+def user_range_collection_6():
+    # For every year from 1990 to 2000, how many orders were made in that year
+    # by a Japanese customer in the automobile market segment, processed by clerk 925
+    years = pydough.range_collection("years", "year", 1990, 2001)
+    selected_orders = orders.WHERE(
+        (clerk == "Clerk#000000925")
+        & (customer.market_segment == "AUTOMOBILE")
+        & (customer.nation.name == "JAPAN")
+    ).CALCULATE(order_year=YEAR(order_date))
+    order_years = selected_orders.PARTITION(name="yrs", by=order_year)
+    return (
+        years.CALCULATE(year)
+        .CALCULATE(year, n_orders=COUNT(CROSS(order_years).WHERE(order_year == year)))
+        .ORDER_BY(year.ASC())
     )

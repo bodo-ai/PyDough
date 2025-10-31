@@ -39,17 +39,17 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
         self._step = self._range.step
 
     @property
-    def start(self) -> int | None:
+    def start(self) -> int:
         """Return the start of the range."""
         return self._start
 
     @property
-    def end(self) -> int | None:
+    def end(self) -> int:
         """Return the end of the range."""
         return self._end
 
     @property
-    def step(self) -> int | None:
+    def step(self) -> int:
         """Return the step of the range."""
         return self._step
 
@@ -61,6 +61,14 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
     @property
     def column_names_and_types(self) -> list[tuple[str, PyDoughType]]:
         return [(self.columns[0], NumericType())]
+
+    @property
+    def column_name(self) -> str:
+        return self.columns[0]
+
+    @property
+    def unique_column_names(self) -> list[str]:
+        return [self.columns[0]]
 
     @property
     def data(self) -> Any:
@@ -80,13 +88,12 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
 
     def to_string(self) -> str:
         """Return a string representation of the range collection."""
-        return f"RangeCollection({self.name}!r, {self.columns[0]}={self.range})"
+        return f"RangeCollection({self.name!r}, {self.columns[0]}={self.range})"
 
     def equals(self, other) -> bool:
-        if not isinstance(other, RangeGeneratedCollection):
-            return False
         return (
-            self.name == other.name
+            isinstance(other, RangeGeneratedCollection)
+            and self.name == other.name
             and self.columns == other.columns
             and self.start == other.start
             and self.end == other.end

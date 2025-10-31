@@ -1,8 +1,8 @@
 from functools import cache
 
+from pydough.errors import PyDoughQDAGException
 from pydough.qdag import PyDoughCollectionQDAG
 from pydough.qdag.abstract_pydough_qdag import PyDoughQDAG
-from pydough.qdag.errors import PyDoughQDAGException
 from pydough.qdag.expressions.back_reference_expression import BackReferenceExpression
 from pydough.qdag.expressions.reference import Reference
 from pydough.types import NumericType
@@ -114,14 +114,10 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
 
     @property
     def unique_terms(self) -> list[str]:
-        return self.collection.columns
+        return self.collection.unique_column_names
 
     @property
     def standalone_string(self) -> str:
-        """
-        Returns a string representation of the collection in a standalone form.
-        This is used for debugging and logging purposes.
-        """
         return self.to_string()
 
     @property
@@ -129,8 +125,8 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         return f"USER_GENERATED_COLLECTION-{self.name}"
 
     def to_string(self) -> str:
-        return self.collection.to_string()
+        return f"range_collection(table={self.name}, column={self.collection.columns}, range=({self.collection.data.start}, {self.collection.data.stop}, {self.collection.data.step}))"
 
     @property
     def tree_item_string(self) -> str:
-        return self.to_string()
+        return self.collection.to_string()

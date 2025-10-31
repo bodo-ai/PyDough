@@ -6,12 +6,11 @@ input. Shuttles are defined to be stateless by default.
 
 from abc import ABC
 
-from pydough.relational import GeneratedTable
-
 from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
 from .filter import Filter
+from .generated_table import GeneratedTable
 from .join import Join
 from .limit import Limit
 from .project import Project

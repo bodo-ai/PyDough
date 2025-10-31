@@ -1,5 +1,5 @@
 SELECT
-  column1 AS N
+  n AS N
 FROM (VALUES
   (10),
   (9),
@@ -10,6 +10,6 @@ FROM (VALUES
   (4),
   (3),
   (2),
-  (1)) AS t2
+  (1)) AS _values
 ORDER BY
-  n
+  1

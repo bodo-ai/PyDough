@@ -188,6 +188,21 @@ def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope) -> boo
     return result
 
 
+def has_seq4_or_table(expr: Scope) -> bool:
+    """Check if the expression contains SEQ4() or TABLE().
+
+    Args:
+        `expr` (Scope): The SQLGlot expression walk and check.
+
+    Returns:
+        True if SEQ4() or TABLE() is found, False otherwise.
+    """
+    for e in expr.walk():
+        if isinstance(e, exp.Anonymous) and e.this.upper() in {"SEQ4", "TABLE"}:
+            return True
+    return False
+
+
 def _mergeable(
     outer_scope: Scope,
     inner_scope: Scope,
@@ -209,6 +224,18 @@ def _mergeable(
         and outer_scope.expression.args.get("joins") is not None
     ):
         return False
+
+    # PYDOUGH CHANGE: avoid merging CTEs when the inner scope uses
+    # SEQ4()/TABLE() and if any of these exist in the outer query:
+    # - joins - window functions - aggregations - limit/offset
+    if has_seq4_or_table(inner_scope.expression):
+        if (
+            outer_scope.expression.args.get("joins") is not None
+            or outer_scope.expression.find(exp.Window)
+            or outer_scope.expression.find(exp.Limit)
+            or outer_scope.expression.find(exp.AggFunc)
+        ):
+            return False
 
     inner_select = inner_scope.expression.unnest()
 

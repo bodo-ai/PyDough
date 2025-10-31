@@ -1,2 +1,2 @@
 ROOT(columns=[('N', N)], orderings=[(N):asc_first])
- GENERATED_TABLE(table=T2, columns={'N': N})
+ GENERATED_TABLE(RangeCollection('T2', N=range(10, 0, -1)))

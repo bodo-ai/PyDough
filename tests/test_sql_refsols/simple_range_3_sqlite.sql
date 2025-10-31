@@ -1,10 +1,10 @@
 SELECT
-  column1 AS foo
+  foo
 FROM (VALUES
   (15),
   (16),
   (17),
   (18),
-  (19)) AS t1
+  (19)) AS _values
 ORDER BY
-  foo
+  1

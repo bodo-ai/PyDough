@@ -517,4 +517,4 @@ class HybridUserGeneratedCollection(HybridOperation):
         return self._user_collection
 
     def __repr__(self):
-        return f"USER_GEN_COLLECTION[{self.user_collection.name}]"
+        return self.user_collection.to_string()

@@ -28,6 +28,8 @@ def get_glot_name(expr: SQLGlotExpression) -> str | None:
     elif isinstance(expr, Identifier):
         return expr.this
     if isinstance(expr, SQLGlotColumn):
+        if isinstance(expr.this, Identifier):
+            return expr.this.this
         return expr.this
     else:
         return None

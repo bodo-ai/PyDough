@@ -61,7 +61,7 @@ class GeneratedTable(RelationalNode):
         return shuttle.visit_generated_table(self)
 
     def to_string(self, compact=False) -> str:
-        return f"GENERATED_TABLE(table={self.name}, columns={self.make_column_string(self.columns, compact)})"
+        return f"GENERATED_TABLE({self.collection})"
 
     def node_copy(
         self,

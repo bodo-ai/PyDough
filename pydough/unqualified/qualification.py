@@ -1266,7 +1266,6 @@ class Qualifier:
         unqualified: UnqualifiedGeneratedCollection,
         context: PyDoughCollectionQDAG,
         is_child: bool,
-        is_cross: bool,
     ) -> PyDoughCollectionQDAG:
         """
         Transforms an `UnqualifiedGeneratedCollection` into a PyDoughCollectionQDAG node.
@@ -1277,7 +1276,6 @@ class Qualifier:
             evaluated within.
             `is_child`: whether the collection is being qualified as a child
             of a child operator context, such as CALCULATE or PARTITION.
-            `is_cross`: whether the collection being qualified is a CROSS JOIN operation
 
         Returns:
             The PyDough QDAG object for the qualified collection node.
@@ -1360,6 +1358,10 @@ class Qualifier:
                 answer = self.qualify_best(unqualified, context, is_child)
             case UnqualifiedCross():
                 answer = self.qualify_cross(unqualified, context, is_child)
+            case UnqualifiedGeneratedCollection():
+                answer = self.qualify_generated_collection(
+                    unqualified, context, is_child
+                )
             case _:
                 raise PyDoughUnqualifiedException(
                     f"Cannot qualify {unqualified.__class__.__name__}: {unqualified!r}"

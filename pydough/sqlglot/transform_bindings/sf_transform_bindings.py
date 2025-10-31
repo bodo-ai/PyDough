@@ -5,12 +5,15 @@ Definition of SQLGlot transformation bindings for the Snowflake dialect.
 __all__ = ["SnowflakeTransformBindings"]
 
 
+import math
+
 import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 from pydough.types.boolean_type import BooleanType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import DateTimeUnit
@@ -162,3 +165,96 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         else:
             # For other units, use base implementation
             return super().convert_datediff(args, types)
+
+    def _convert_user_generated_range(
+        self, collection: RangeGeneratedCollection
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range collection to its Snowflake SQLGlot
+        representation.
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+
+        # Calculate the number of rows needed for the range (end-start)/step
+        row_count: int = math.ceil(
+            (collection.end - collection.start) / collection.step
+        )
+
+        # Handle empty range by injecting a single NULL row
+        # SELECT CAST(NULL AS INT) AS x WHERE FALSE
+        if row_count <= 0:
+            query = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Null(),
+                            to=sqlglot_expressions.DataType.build("INTEGER"),
+                        ),
+                        alias=sqlglot_expressions.Identifier(
+                            this=collection.column_name
+                        ),
+                    )
+                ],
+            ).where(sqlglot_expressions.false())
+        # Build the SQLGlot query using Snowflake's GENERATOR function
+        # " SELECT start + (SEQ4() * step) AS value FROM TABLE(
+        #   GENERATOR(ROWCOUNT => row_count))"
+        else:
+            # Build the inner SELECT
+            inner_select = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Add(
+                            this=sqlglot_expressions.Literal.number(collection.start),
+                            expression=sqlglot_expressions.Mul(
+                                this=sqlglot_expressions.Anonymous(this="SEQ4"),
+                                expression=sqlglot_expressions.Literal.number(
+                                    collection.step
+                                ),
+                            ),
+                        ),
+                        alias=sqlglot_expressions.Identifier(
+                            this=collection.column_name
+                        ),
+                    )
+                ]
+            ).from_(
+                sqlglot_expressions.Table(
+                    this=sqlglot_expressions.Anonymous(
+                        this="TABLE",
+                        expressions=[
+                            sqlglot_expressions.Anonymous(
+                                this="GENERATOR",
+                                expressions=[
+                                    sqlglot_expressions.Kwarg(
+                                        this=sqlglot_expressions.Var(this="ROWCOUNT"),
+                                        expression=sqlglot_expressions.Literal.number(
+                                            row_count
+                                        ),
+                                    )
+                                ],
+                            )
+                        ],
+                    )
+                )
+            )
+
+            # Wrap it as a subquery with alias
+            subquery = sqlglot_expressions.Subquery(
+                this=inner_select,
+                alias=sqlglot_expressions.Identifier(this=collection.name),
+            )
+
+            # Outer SELECT that references the subquery
+            query = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Column(
+                        this=collection.column_name, table=collection.name
+                    )
+                ]
+            ).from_(subquery)
+
+        return query

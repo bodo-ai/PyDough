@@ -17,6 +17,8 @@ import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.errors import PyDoughSQLException
 from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
@@ -2153,3 +2155,61 @@ class BaseTransformBindings:
             A SQLGlotExpression representing the order key transformed in any necessary way.
         """
         return arg
+
+    def convert_user_generated_collection(
+        self,
+        collection: PyDoughUserGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
+
+        Args:
+            `collection`: The user-generated collection to convert.
+
+        Returns:
+            A SQLGlotExpression representing the user-generated collection.
+        """
+
+        match collection:
+            case RangeGeneratedCollection():
+                return self._convert_user_generated_range(collection)
+            case _:
+                raise PyDoughSQLException(
+                    f"Unsupported user-generated collection type: {type(collection)}"
+                )
+
+    def _convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range into a SQLGlot expression.
+        Args:
+            `collection`: The user-generated range to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+        # Step 1: Create rows for each value in the range
+        rows = [(i,) for i in collection.range]
+
+        # Handle empty range by injecting a single NULL row
+        if not rows:
+            query = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Null(),
+                            to=sqlglot_expressions.DataType.build("INTEGER"),
+                        ),
+                        alias=sqlglot_expressions.Identifier(
+                            this=collection.column_name
+                        ),
+                    )
+                ],
+            ).where(sqlglot_expressions.false())
+        else:
+            breakpoint()
+            row_values = ", ".join(f"({i[0]})" for i in rows)
+            query_text = f"WITH {collection.name}({collection.column_name}) AS (VALUES {row_values}) select {collection.column_name} from {collection.name}"
+            query = parse_one(query_text)
+        return query

@@ -54,6 +54,11 @@ class PyDoughUserGeneratedCollection(ABC):
 
     @property
     @abstractmethod
+    def unique_column_names(self) -> list[str]:
+        """Return the set of unique column names in the collection."""
+
+    @property
+    @abstractmethod
     def data(self) -> Any:
         """Return information about data in the collection."""
 

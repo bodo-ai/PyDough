@@ -62,6 +62,8 @@ from tests.test_pydough_functions.user_collections import (
     user_range_collection_2,
     user_range_collection_3,
     user_range_collection_4,
+    user_range_collection_5,
+    user_range_collection_6,
 )
 from tests.testing_utilities import (
     graph_fetcher,
@@ -202,34 +204,82 @@ from tests.testing_utilities import (
         pytest.param(
             casting_functions, None, "casting_functions", id="casting_functions"
         ),
-        pytest.param(simple_range_1, None, "simple_range_1", id="simple_range_1"),
-        pytest.param(simple_range_2, None, "simple_range_2", id="simple_range_2"),
-        pytest.param(simple_range_3, None, "simple_range_3", id="simple_range_3"),
-        pytest.param(simple_range_4, None, "simple_range_4", id="simple_range_4"),
-        pytest.param(simple_range_5, None, "simple_range_5", id="simple_range_5"),
+        pytest.param(
+            simple_range_1,
+            None,
+            "simple_range_1",
+            id="simple_range_1",
+            marks=pytest.mark.snowflake,
+        ),
+        pytest.param(
+            simple_range_2,
+            None,
+            "simple_range_2",
+            id="simple_range_2",
+            marks=pytest.mark.snowflake,
+        ),
+        pytest.param(
+            simple_range_3,
+            None,
+            "simple_range_3",
+            id="simple_range_3",
+            marks=pytest.mark.snowflake,
+        ),
+        pytest.param(
+            simple_range_4,
+            None,
+            "simple_range_4",
+            id="simple_range_4",
+            marks=pytest.mark.snowflake,
+        ),
+        pytest.param(
+            simple_range_5,
+            None,
+            "simple_range_5",
+            id="simple_range_5",
+            marks=pytest.mark.snowflake,
+        ),
         pytest.param(
             user_range_collection_1,
             None,
             "user_range_collection_1",
             id="user_range_collection_1",
+            marks=pytest.mark.snowflake,
         ),
         pytest.param(
             user_range_collection_2,
             None,
             "user_range_collection_2",
             id="user_range_collection_2",
+            marks=pytest.mark.snowflake,
         ),
         pytest.param(
             user_range_collection_3,
             None,
             "user_range_collection_3",
             id="user_range_collection_3",
+            marks=pytest.mark.snowflake,
         ),
         pytest.param(
             user_range_collection_4,
             None,
             "user_range_collection_4",
             id="user_range_collection_4",
+            marks=pytest.mark.snowflake,
+        ),
+        pytest.param(
+            user_range_collection_5,
+            None,
+            "user_range_collection_5",
+            id="user_range_collection_5",
+            marks=pytest.mark.snowflake,
+        ),
+        pytest.param(
+            user_range_collection_6,
+            None,
+            "user_range_collection_6",
+            id="user_range_collection_6",
+            marks=pytest.mark.snowflake,
         ),
     ],
 )
@@ -246,6 +296,16 @@ def test_pydough_to_sql_tpch(
     Tests that a PyDough unqualified node can be correctly translated to its
     qualified DAG version, with the correct string representation.
     """
+    if (
+        empty_context_database.dialect != DatabaseDialect.SNOWFLAKE
+        and empty_context_database.dialect != DatabaseDialect.SQLITE
+    ) and (
+        ("simple_range_" in test_name)
+        or ("user_range_collection_" in pydough_code.__name__)
+    ):
+        pytest.skip(
+            f"Skipping test {empty_context_database.dialect}-{test_name} since it is only supported on Snowflake"
+        )
     graph: GraphMetadata = get_sample_graph("TPCH")
     root: UnqualifiedNode = init_pydough_context(graph)(pydough_code)()
     actual_sql: str = to_sql(

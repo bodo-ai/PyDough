@@ -1,5 +1,5 @@
 SELECT
-  column1 AS value
+  value
 FROM (VALUES
   (0),
   (1),
@@ -10,6 +10,6 @@ FROM (VALUES
   (6),
   (7),
   (8),
-  (9)) AS simple_range
+  (9)) AS _values
 ORDER BY
-  value DESC
+  1 DESC
