@@ -16,9 +16,10 @@ from pydough.mask_server.mask_server import (
 
 @pytest.mark.server
 @pytest.mark.parametrize(
-    "token, batch, answer",
+    "token, api_key, batch, answer",
     [
         pytest.param(
+            None,
             None,
             [
                 MaskServerInput(
@@ -82,6 +83,7 @@ from pydough.mask_server.mask_server import (
         ),
         pytest.param(
             None,
+            None,
             [
                 MaskServerInput(
                     table_path="srv.db.tbl",
@@ -103,6 +105,7 @@ from pydough.mask_server.mask_server import (
         ),
         pytest.param(
             None,
+            None,
             [
                 MaskServerInput(
                     table_path="srv.db.tbl",
@@ -120,6 +123,7 @@ from pydough.mask_server.mask_server import (
         ),
         pytest.param(
             "test-token-123",
+            None,
             [
                 MaskServerInput(
                     table_path="srv.db.orders",
@@ -142,7 +146,56 @@ from pydough.mask_server.mask_server import (
             id="with_token",
         ),
         pytest.param(
+            None,
+            "api-key-123",
+            [
+                MaskServerInput(
+                    table_path="srv.db.orders",
+                    column_name="order_date",
+                    expression=["BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"],
+                ),
+            ],
+            [
+                MaskServerOutput(
+                    response_case=MaskServerResponse.IN_ARRAY,
+                    payload=[
+                        "2025-01-01",
+                        "2025-01-02",
+                        "2025-01-03",
+                        "2025-01-04",
+                        "2025-01-05",
+                    ],
+                ),
+            ],
+            id="with_api_key",
+        ),
+        pytest.param(
             "test-token-123",
+            "api-key-123",
+            [
+                MaskServerInput(
+                    table_path="srv.db.orders",
+                    column_name="order_date",
+                    expression=["BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"],
+                ),
+            ],
+            [
+                MaskServerOutput(
+                    response_case=MaskServerResponse.IN_ARRAY,
+                    payload=[
+                        "2025-01-01",
+                        "2025-01-02",
+                        "2025-01-03",
+                        "2025-01-04",
+                        "2025-01-05",
+                    ],
+                ),
+            ],
+            id="with_token_and_api_key",
+        ),
+        pytest.param(
+            "test-token-123",
+            None,
             [
                 MaskServerInput(
                     table_path="srv.db.tbl",
@@ -159,6 +212,7 @@ from pydough.mask_server.mask_server import (
             id="booleans",
         ),
         pytest.param(
+            None,
             None,
             [
                 MaskServerInput(
@@ -197,6 +251,7 @@ from pydough.mask_server.mask_server import (
         ),
         pytest.param(
             None,
+            None,
             [
                 MaskServerInput(
                     table_path="srv.db.tbl",
@@ -232,7 +287,8 @@ from pydough.mask_server.mask_server import (
     ],
 )
 def test_mock_mask_server(
-    token: str,
+    token: str | None,
+    api_key: str | None,
     batch: list[MaskServerInput],
     answer: list[MaskServerOutput],
     mock_server_setup,
@@ -243,7 +299,7 @@ def test_mock_mask_server(
     """
 
     mask_server: MaskServerInfo = MaskServerInfo(
-        base_url="http://localhost:8000", token=token
+        base_url="http://localhost:8000", token=token, api_key=api_key
     )
 
     # Doing the request
@@ -258,18 +314,18 @@ def test_mock_mask_server(
 
 @pytest.mark.server
 @pytest.mark.parametrize(
-    "base_url, token, batch, error_msg",
+    "token, api_key, batch, error_msg",
     [
         pytest.param(
-            "http://localhost:8000",
+            None,
             None,
             [],
             "Batch cannot be empty.",
             id="empty_list_request",
         ),
         pytest.param(
-            "http://localhost:8000",
             "bad_token_123",
+            None,
             [
                 MaskServerInput(
                     table_path="srv.db.tbl",
@@ -280,11 +336,37 @@ def test_mock_mask_server(
             "Bad response 401: Unauthorized request",
             id="wrong_token",
         ),
+        pytest.param(
+            None,
+            "bad_api_key_123",
+            [
+                MaskServerInput(
+                    table_path="srv.db.tbl",
+                    column_name="col",
+                    expression=["OR", 2, "__col__", 5],
+                )
+            ],
+            "Bad response 401: Unauthorized request",
+            id="wrong_api_key",
+        ),
+        pytest.param(
+            "bad_token_123",
+            "bad_api-key-123",
+            [
+                MaskServerInput(
+                    table_path="srv.db.tbl",
+                    column_name="col",
+                    expression=["OR", 2, "__col__", 5],
+                )
+            ],
+            "Bad response 401: Unauthorized request",
+            id="wrong_token_and_api_key",
+        ),
     ],
 )
 def test_mock_mask_server_errors(
-    base_url: str,
     token: str | None,
+    api_key: str | None,
     batch: list[MaskServerInput],
     error_msg: str,
     mock_server_setup,
@@ -293,7 +375,9 @@ def test_mock_mask_server_errors(
     Testing that the MaskServer raises an exception with the expected error message
     """
     with pytest.raises(Exception, match=re.escape(error_msg)):
-        mask_server: MaskServerInfo = MaskServerInfo(base_url=base_url, token=token)
+        mask_server: MaskServerInfo = MaskServerInfo(
+            base_url="http://localhost:8000", token=token, api_key=api_key
+        )
         mask_server.connection.set_timeout(0.5)
 
         # Doing the request

@@ -50,13 +50,21 @@ class ServerRequest:
     Optional headers to include in the request.
     """
 
+    def add_header(self, header: dict[str, str]) -> None:
+        """
+        Adds or updates headers.
+        """
+        self.headers.update(header)
+
 
 class ServerConnection:
     """
     Class that manages the connection to the server.
     """
 
-    def __init__(self, base_url: str, token: str | None = None):
+    def __init__(
+        self, base_url: str, token: str | None = None, api_key: str | None = None
+    ):
         """
         Initialize the server connection with the given base URL and token if
         given.
@@ -67,6 +75,7 @@ class ServerConnection:
         """
         self.base_url = base_url.rstrip("/")
         self.token = token
+        self.api_key = api_key
         self._client = httpx.Client(base_url=self.base_url)
 
     def set_timeout(self, timeout: float) -> None:
@@ -111,9 +120,11 @@ class ServerConnection:
         try:
             method: Callable[..., Response] = self.method_mapping(request.method)
 
-            headers = request.headers.copy() if request.headers else {}
             if self.token:
-                headers.setdefault("Authorization", f"Bearer {self.token}")
+                request.add_header({"Authorization": f"Bearer {self.token}"})
+            if self.api_key:
+                request.add_header({"X-API-Key": self.api_key})
+            headers = request.headers.copy() if request.headers else {}
             kwargs = {"headers": headers}
 
             # Choose params vs json depending on method

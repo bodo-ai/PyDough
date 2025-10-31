@@ -93,7 +93,9 @@ class MaskServerInfo:
     perform the evaluation.
     """
 
-    def __init__(self, base_url: str, token: str | None = None):
+    def __init__(
+        self, base_url: str, token: str | None = None, api_key: str | None = None
+    ):
         """
         Initialize the MaskServerInfo with the given server URL.
 
@@ -102,7 +104,7 @@ class MaskServerInfo:
             `token`: Optional authentication token for the server.
         """
         self.connection: ServerConnection = ServerConnection(
-            base_url=base_url, token=token
+            base_url=base_url, token=token, api_key=api_key
         )
 
     def get_server_response_case(self, server_case: str) -> MaskServerResponse:
