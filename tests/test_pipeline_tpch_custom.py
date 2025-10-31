@@ -1451,6 +1451,65 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = ("
+                " regions"
+                " .nations"
+                " .customers"
+                " .BEST(by=account_balance.DESC(), per='regions')"
+                " .CALCULATE(key)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame({"key": [2487, 61453, 76011, 81976, 144232]}),
+                "richest_customer_key_per_region",
+            ),
+            id="richest_customer_key_per_region",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " lines"
+                " .TOP_K(7, by=(order_key.ASC(), line_number.ASC()))"
+                " .CALCULATE(order_key, line_number, part_size=part_and_supplier.part.size, supplier_nation=part_and_supplier.supplier.nation.key)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_key": [1, 1, 1, 1, 1, 1, 2],
+                        "line_number": [1, 2, 3, 4, 5, 6, 1],
+                        "part_size": [9, 47, 16, 20, 44, 46, 19],
+                        "supplier_nation": [23, 13, 5, 24, 20, 8, 0],
+                    }
+                ),
+                "top_lineitems_info_1",
+            ),
+            id="top_lineitems_info_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " parts"
+                " .CALCULATE(part_size=size, selected_part_key=key)"
+                " .supply_records.CALCULATE(selected_supplier_key=supplier_key)"
+                " .CROSS(nations.CALCULATE(supplier_nation=key).suppliers.supply_records.lines)"
+                " .WHERE((part_key == selected_part_key) & (supplier_key == selected_supplier_key))"
+                " .TOP_K(7, by=(order_key.ASC(), line_number.ASC()))"
+                " .CALCULATE(order_key, line_number, part_size, supplier_nation)"
+                ")",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "order_key": [1, 1, 1, 1, 1, 1, 2],
+                        "line_number": [1, 2, 3, 4, 5, 6, 1],
+                        "part_size": [9, 47, 16, 20, 44, 46, 19],
+                        "supplier_nation": [23, 13, 5, 24, 20, 8, 0],
+                    }
+                ),
+                "top_lineitems_info_2",
+            ),
+            id="top_lineitems_info_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 window_filter_order_1,
                 "TPCH",
                 lambda: pd.DataFrame({"n": [969]}),

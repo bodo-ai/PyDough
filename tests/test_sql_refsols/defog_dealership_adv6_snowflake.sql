@@ -14,8 +14,8 @@ FROM main.cars AS cars
 JOIN _t2 AS _t2
   ON _t2.car_id = cars._id
 LEFT JOIN main.sales AS sales
-  ON cars._id = sales.car_id
+  ON _t2.car_id = sales.car_id
 GROUP BY
-  cars._id
+  _t2.car_id
 ORDER BY
   3 DESC NULLS LAST

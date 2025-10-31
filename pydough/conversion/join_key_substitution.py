@@ -19,11 +19,20 @@ from pydough.relational.rel_util import (
 
 
 class JoinKeySubstitutionShuttle(RelationalShuttle):
+    """
+    TODO
+    """
+
     def visit_join(self, join: Join) -> RelationalNode:
+        # Build up a mapping of join key substitutions mapping input columns
+        # from one input to another when the optimization case is detected:
+        # requires an inner join with equi-join keys.
         join_substitution: dict[RelationalExpression, RelationalExpression] = {}
         if join.join_type == JoinType.INNER:
             lhs_keys_list, rhs_keys_list = extract_equijoin_keys(join)
             if len(lhs_keys_list) > 0 and len(rhs_keys_list) > 0:
+                # Identify which columns are used by the join columns that come
+                # from the left and right inputs.
                 lhs_keys: set[ColumnReference] = set(lhs_keys_list)
                 rhs_keys: set[ColumnReference] = set(rhs_keys_list)
                 col_finder = ColumnReferenceFinder()
@@ -36,19 +45,28 @@ class JoinKeySubstitutionShuttle(RelationalShuttle):
                     if ref.input_name == join.default_input_aliases[0]
                 }
                 rhs_refs = col_refs - lhs_refs
+                # If the left side is singular access, and all the columns used
+                # from the right side are just the join keys, then we can
+                # substitute the right join keys with the left join keys.
                 if (
                     join.cardinality == JoinCardinality.SINGULAR_ACCESS
-                    and rhs_keys == rhs_refs
+                    and rhs_refs <= rhs_keys
                 ):
                     for lhs_key, rhs_key in zip(lhs_keys_list, rhs_keys_list):
                         join_substitution[rhs_key] = lhs_key
+
+                # If the right side is singular access, and all the columns used
+                # from the left side are just the join keys, then we can
+                # substitute the left join keys with the right join keys.
                 elif (
                     join.reverse_cardinality == JoinCardinality.SINGULAR_ACCESS
-                    and lhs_keys == rhs_refs
+                    and rhs_refs <= lhs_keys
                 ):
                     for lhs_key, rhs_key in zip(lhs_keys_list, rhs_keys_list):
                         join_substitution[lhs_key] = rhs_key
 
+        # If any substitutions were identified, create a new Join node
+        # with the substitutions applied to its columns.
         if len(join_substitution) > 0:
             join = Join(
                 join.inputs,
@@ -63,28 +81,7 @@ class JoinKeySubstitutionShuttle(RelationalShuttle):
                 join.correl_name,
             )
 
-        # # Find all column references in the join condition
-        # col_finder = ColumnReferenceFinder()
-        # col_finder.visit(join.condition)
-        # col_refs = col_finder.get_column_references()
-
-        # substitution = {}
-        # for col_ref in col_refs:
-        #     if add_input_name(col_ref, join.left.schema) in join.left.schema:
-        #         substitution[col_ref] = add_input_name(col_ref, join.left.schema)
-        #     elif add_input_name(col_ref, join.right.schema) in join.right.schema:
-        #         substitution[col_ref] = add_input_name(col_ref, join.right.schema)
-
-        # new_condition = apply_substitution(join.condition, substitution)
-
-        # new_join: Join = Join(
-        #     left=left,
-        #     right=right,
-        #     condition=new_condition,
-        #     join_type=join.join_type,
-        #     schema=join.schema
-        # )
-
+        # Recursively visit the inputs to the join to transform them as well.
         return super().visit_join(join)
 
 
