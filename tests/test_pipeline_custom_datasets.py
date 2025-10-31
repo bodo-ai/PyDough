@@ -21,8 +21,8 @@ result = (
     patients
     .WHERE((gender == 'F') & (ethnicity == 'italian'))
     .conditions
-    .PARTITION(name='condition_groups', by=DESCRIPTION)
-    .CALCULATE(condition_description=DESCRIPTION, occurrence_count=COUNT(conditions))
+    .PARTITION(name='condition_groups', by=description)
+    .CALCULATE(condition_description=description, occurrence_count=COUNT(conditions))
     .TOP_K(1, by=(occurrence_count.DESC(), condition_description.ASC()))
     .CALCULATE(condition_description)
 )
@@ -42,9 +42,9 @@ result = (
                 """
 result = (
     world_development_indicators
-    .Country
-    .WHERE((IncomeGroup == 'Low income') & HAS(CountryNotes.WHERE(Series.SeriesCode == 'DT.DOD.DECT.CD')))
-    .CALCULATE(country_code=CountryCode)
+    .country
+    .WHERE((incomegroup == 'Low income') & HAS(countrynotes.WHERE(series.seriescode == 'DT.DOD.DECT.CD')))
+    .CALCULATE(country_code=countrycode)
 )
                 """,
                 "world_development_indicators",
@@ -92,11 +92,11 @@ result = (
                 """
 result = (
     world_development_indicators
-    .Country
-    .WHERE(ShortName == 'Albania')
-    .Footnotes
-    .WHERE(Year == 'YR2012')
-    .CALCULATE(footnote_description=Description)
+    .country
+    .WHERE(shortname == 'Albania')
+    .footnotes
+    .WHERE(year_ == 'YR2012')
+    .CALCULATE(footnote_description=description)
 )
                 """,
                 "world_development_indicators",
