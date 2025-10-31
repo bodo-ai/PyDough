@@ -1558,3 +1558,24 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
         "Malformed log: batch request did not have expected number of entries."
     )
     return result
+
+
+def extract_masking_warning_logs(log_str: str) -> dict[str, set[str]]:
+    """
+    TODO
+    """
+    header_pattern: re.Pattern = re.compile(
+        r"Query will not produce a valid output unless user has permission to (mask|unmask) column `(.+)`"
+    )
+    result: dict[str, set[str]] = {
+        "MASK": set(),
+        "UNMASK": set(),
+    }
+    for line in log_str.splitlines():
+        header_match = re.findall(header_pattern, line)
+        if header_match:
+            if header_match[0][0].upper() == "UNMASK":
+                result["UNMASK"].add(header_match[0][1])
+            else:
+                result["MASK"].add(header_match[0][1])
+    return result

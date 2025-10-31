@@ -90,6 +90,7 @@ from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
 from .mask_server_candidate_visitor import MaskServerCandidateVisitor
 from .mask_server_rewrite_shuttle import MaskServerRewriteShuttle
+from .masking_critical_detection_visitor import MaskingCriticalDetectionVisitor
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
@@ -1628,6 +1629,14 @@ def optimize_relational_tree(
     # Re-run column pruning one last time to remove any columns that are no
     # longer used after the final round of transformations.
     root = pruner.prune_unused_columns(root)
+
+    # Run a post-processing visitor pass to identify any critical sensitivity
+    # mask/unmask calls and dump them in the logger.
+    critical_visitor: MaskingCriticalDetectionVisitor = (
+        MaskingCriticalDetectionVisitor()
+    )
+    root.accept(critical_visitor)
+    critical_visitor.log_critical_calls()
 
     return root
 
