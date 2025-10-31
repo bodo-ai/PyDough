@@ -1792,7 +1792,7 @@ def impl_defog_dermtreatment_basic1():
 
     # Find the treatments from the doctors within the specialty in the past 6 months
     recent_treatments = doctors.prescribed_treatments.WHERE(
-        DATEDIFF("months", start_date, DATETIME("now")) <= 6
+        start_date >= DATETIME("now", "-6 months", "start of day")
     )
 
     # Calculate totals for each specialty
