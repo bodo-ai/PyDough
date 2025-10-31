@@ -1,4 +1,4 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  FILTER(condition=ISIN(c_email, ['ophia.jackson@mail.org', 'livia.a22@gmail.como', '.gonzalez@ymail.comm', 'opez.luke99@gmail.coml', 'enry.g@fastmail.comh', 'rank.k@protonmail.comf', 'mily.jones@mail.come', 'ob.smith77@gmail.comb']:array[unknown]), columns={})
+  FILTER(condition=ISIN(c_email, ['ophia.jackson@mail.orgs', 'livia.a22@gmail.como', '.gonzalez@ymail.comm', 'opez.luke99@gmail.coml', 'enry.g@fastmail.comh', 'rank.k@protonmail.comf', 'mily.jones@mail.come', 'ob.smith77@gmail.comb']:array[unknown]), columns={})
    SCAN(table=CRBNK.CUSTOMERS, columns={'c_email': c_email})

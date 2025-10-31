@@ -477,7 +477,7 @@ LOOKUP_TABLE: dict = {
         "type": "literal",
         "operator": "IN",
         "values": [
-            "ophia.jackson@mail.org",
+            "ophia.jackson@mail.orgs",
             "livia.a22@gmail.como",
             ".gonzalez@ymail.comm",
             "opez.luke99@gmail.coml",
@@ -713,22 +713,337 @@ LOOKUP_TABLE: dict = {
         ],
         "count": 1,
     },
+    (
+        "srv.CRBNK.CUSTOMERS.c_fname",
+        ("IN", 4, "SLICE", 3, "__col__", 0, 1, "q", "r", "s"),
+    ): {"type": "literal", "operator": "IN", "values": ["QUEENIE", "ROBERT", "SOPHIA"]},
+    (
+        "srv.CRBNK.CUSTOMERS.c_lname",
+        (
+            "CONTAINS",
+            2,
+            "__col__",
+            "CONCAT",
+            2,
+            "e",
+            "IFF",
+            3,
+            "IN",
+            4,
+            "SLICE",
+            3,
+            "__col__",
+            0,
+            1,
+            "q",
+            "r",
+            "s",
+            "z",
+            "e",
+        ),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["LEE", "RODRIGUEZ"],
+        "count": 2,
+    },
+    ("srv.CRBNK.CUSTOMERS.c_fname", ("EQUAL", 2, "SLICE", 3, "__col__", 0, 1, "i")): {
+        "type": "literal",
+        "operator": "IN",
+        "values": ["ISABEL"],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.CUSTOMERS.c_fname",
+        ("IN", 6, "SLICE", 3, "__col__", 1, 2, "ar", "li", "ra", "to", "am"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "ALICE",
+            "CAROL",
+            "FRANK",
+            "GRACE",
+            "JAMES",
+            "KAREN",
+            "MARIA",
+            "OLIVIA",
+        ],
+        "count": 5,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATETRUNC", 2, "year", "__col__", "2023-01-01"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2022-12-31 17:42:54",
+            "2023-01-04 12:05:15",
+            "2023-01-07 22:11:27",
+            "2023-01-20 04:38:03",
+            "2023-01-20 16:40:54",
+            "2023-01-27 15:13:18",
+            "2023-01-30 19:58:26",
+            "2023-02-02 19:12:58",
+            "2023-02-11 11:13:53",
+            "2023-02-11 12:32:55",
+            "2023-02-15 21:54:29",
+            "2023-02-16 14:18:36",
+            "2023-02-28 07:11:29",
+            "2023-03-07 01:26:10",
+            "2023-03-08 18:58:18",
+            "2023-03-14 14:23:33",
+            "2023-03-16 06:17:44",
+            "2023-03-17 08:48:16",
+            "2023-03-24 03:33:40",
+            "2023-03-26 06:52:52",
+            "2023-04-18 00:35:40",
+            "2023-04-25 18:54:26",
+            "2023-04-29 04:58:30",
+            "2023-05-04 23:30:10",
+            "2023-05-12 04:42:28",
+            "2023-05-17 18:54:12",
+            "2023-05-19 10:10:44",
+            "2023-05-21 13:52:14",
+            "2023-05-24 03:51:10",
+            "2023-06-01 13:50:10",
+            "2023-06-01 13:50:14",
+            "2023-06-04 10:35:26",
+            "2023-06-11 21:53:04",
+            "2023-06-25 15:06:06",
+            "2023-06-25 21:58:37",
+            "2023-06-27 03:21:19",
+            "2023-06-27 10:34:20",
+            "2023-06-30 15:27:03",
+            "2023-07-07 15:17:47",
+            "2023-07-17 03:23:15",
+            "2023-07-18 14:41:26",
+            "2023-08-03 20:24:35",
+            "2023-08-11 20:25:39",
+            "2023-08-29 03:07:18",
+            "2023-09-01 16:50:48",
+            "2023-09-08 09:30:23",
+            "2023-09-13 06:42:39",
+            "2023-09-15 09:00:02",
+            "2023-09-30 08:57:30",
+            "2023-10-15 02:47:04",
+            "2023-10-19 09:40:06",
+            "2023-10-30 00:20:45",
+            "2023-11-08 12:52:24",
+            "2023-11-10 17:20:29",
+            "2023-11-16 11:30:24",
+            "2023-11-21 15:17:10",
+            "2023-11-28 06:34:03",
+            "2023-12-07 14:11:33",
+            "2023-12-15 05:57:23",
+            "2023-12-16 00:51:23",
+            "2023-12-23 07:54:22",
+        ],
+        "count": 61,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATETRUNC", 2, "quarter", "__col__", "2023-04-01"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2023-04-18 00:35:40",
+            "2023-04-25 18:54:26",
+            "2023-04-29 04:58:30",
+            "2023-05-04 23:30:10",
+            "2023-05-12 04:42:28",
+            "2023-05-17 18:54:12",
+            "2023-05-19 10:10:44",
+            "2023-05-21 13:52:14",
+            "2023-05-24 03:51:10",
+            "2023-06-01 13:50:10",
+            "2023-06-01 13:50:14",
+            "2023-06-04 10:35:26",
+            "2023-06-11 21:53:04",
+            "2023-06-25 15:06:06",
+            "2023-06-25 21:58:37",
+            "2023-06-27 03:21:19",
+            "2023-06-27 10:34:20",
+        ],
+        "count": 17,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATETRUNC", 2, "month", "__col__", "2023-06-01"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2023-06-01 13:50:10",
+            "2023-06-01 13:50:14",
+            "2023-06-04 10:35:26",
+            "2023-06-11 21:53:04",
+            "2023-06-25 15:06:06",
+            "2023-06-25 21:58:37",
+            "2023-06-27 03:21:19",
+            "2023-06-27 10:34:20",
+        ],
+        "count": 8,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATETRUNC", 2, "day", "__col__", "2023-06-02"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2023-06-01 13:50:10",
+            "2023-06-01 13:50:14",
+        ],
+        "count": 2,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATETRUNC", 2, "hour", "__col__", "2023-06-02 04:00:00"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2023-06-01 13:50:10",
+            "2023-06-01 13:50:14",
+        ],
+        "count": 2,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATETRUNC", 2, "minute", "__col__", "2023-06-02 04:55:00"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2023-06-01 13:50:10",
+            "2023-06-01 13:50:14",
+        ],
+        "count": 2,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATETRUNC", 2, "second", "__col__", "2023-06-02 04:55:31"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2023-06-01 13:50:10",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATEADD", 3, 1, "years", "__col__", "2020-11-11 18:00:52"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-11 02:55:31",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATEADD", 3, 2, "quarters", "__col__", "2020-05-11 18:00:52"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-11 02:55:31",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATEADD", 3, -5, "months", "__col__", "2019-06-11 18:00:52"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-11 02:55:31",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATEADD", 3, 10, "days", "__col__", "2019-11-21 18:00:52"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-11 02:55:31",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATEADD", 3, 1000, "hours", "__col__", "2019-12-23 10:00:52"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-11 02:55:31",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        ("EQUAL", 2, "DATEADD", 3, 10000, "minutes", "__col__", "2019-11-18 16:40:52"),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-11 02:55:31",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        (
+            "EQUAL",
+            2,
+            "DATEADD",
+            3,
+            -1000000,
+            "seconds",
+            "__col__",
+            "2019-10-31 04:14:12",
+        ),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-11 02:55:31",
+        ],
+        "count": 1,
+    },
+    (
+        "srv.CRBNK.TRANSACTIONS.t_ts",
+        (
+            "EQUAL",
+            2,
+            "DATEADD",
+            3,
+            -1,
+            "days",
+            "DATETRUNC",
+            2,
+            "month",
+            "__col__",
+            "2019-10-31",
+        ),
+    ): {
+        "type": "literal",
+        "operator": "IN",
+        "values": [
+            "2019-11-02 11:58:37",
+            "2019-11-02 12:54:09",
+            "2019-11-11 02:55:31",
+            "2019-11-11 15:44:22",
+        ],
+        "count": 4,
+    },
 }
-
-
-"""
-SELECT c_birthday, DATE(c_birthday, '+472 days')
-FROM customers
-WHERE STRFTIME('%Y', COALESCE(DATE(c_birthday, '+472 days'), '1990-01-01')) IN ('1990', '1991')
-;
-
-SELECT c_birthday, DATE(c_birthday, '+472 days')
-FROM customers
-WHERE STRFTIME('%Y', COALESCE(DATE(c_birthday, '+472 days'), '1990-01-01')) IN ('1990')
-;
-
-SELECT c_birthday, DATE(c_birthday, '+472 days')
-FROM customers
-WHERE STRFTIME('%Y', COALESCE(DATE(c_birthday, '+472 days'), '1990-01-01')) IN ('2005')
-;
-"""

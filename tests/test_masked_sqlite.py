@@ -23,31 +23,6 @@ from tests.testing_utilities import (
     transform_and_exec_pydough,
 )
 
-"""
-ADD TESTS FOR:
-- DATETIME - BAD (singleton)
-- DATETIME - BAD (using current ts)
-- DATETIME - BAD (nested )
-- DATETIME - BAD (add week)
-- DATETIME - BAD (trunc week)
-- DATETIME - GOOD (nested)
-- DATETIME - GOOD (add year)
-- DATETIME - GOOD (trunc year)
-- DATETIME - GOOD (add quarter)
-- DATETIME - GOOD (trunc quarter)
-- DATETIME - GOOD (add month)
-- DATETIME - GOOD (trunc month)
-- DATETIME - GOOD (add day)
-- DATETIME - GOOD (trunc day)
-- DATETIME - GOOD (add hour)
-- DATETIME - GOOD (trunc hour)
-- DATETIME - GOOD (add minute)
-- DATETIME - GOOD (trunc minute)
-- DATETIME - GOOD (add second)
-- DATETIME - GOOD (trunc second)
-- IFF
-"""
-
 
 @pytest.fixture(
     params=[
@@ -588,16 +563,6 @@ ADD TESTS FOR:
         ),
         pytest.param(
             PyDoughPandasTest(
-                "selected_customers = customers.WHERE(YEAR(COALESCE(birthday)) == )\n"
-                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
-                "CRYPTBANK",
-                lambda: pd.DataFrame({"n": [1]}),
-                "cryptbank_filter_count_43",
-            ),
-            id="cryptbank_filter_count_43",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
                 "selected_customers = customers.WHERE(ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 1991)))\n"
                 "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
                 "CRYPTBANK",
@@ -655,6 +620,96 @@ ADD TESTS FOR:
                 "cryptbank_filter_count_49",
             ),
             id="cryptbank_filter_count_49",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 2005), (2005, 2006)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [18]}),
+                "cryptbank_filter_count_50",
+            ),
+            id="cryptbank_filter_count_50",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(IFF(ISIN(first_name[:1], ('q', 'r', 's')), first_name, last_name), 'ee'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_51",
+            ),
+            id="cryptbank_filter_count_51",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(last_name, JOIN_STRINGS('', 'e', IFF(ISIN(last_name[:1], ('q', 'r', 's')), 'z', 'e'))))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_52",
+            ),
+            id="cryptbank_filter_count_52",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(first_name[0:1] == 'i')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_53",
+            ),
+            id="cryptbank_filter_count_53",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(first_name[-1:], list('aeiou')))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [7]}),
+                "cryptbank_filter_count_54",
+            ),
+            id="cryptbank_filter_count_54",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(first_name[1:3], ['ar', 'li', 'ra', 'to', 'am']))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [8]}),
+                "cryptbank_filter_count_55",
+            ),
+            id="cryptbank_filter_count_55",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(first_name[-2:-1], ['a', 'c', 'l']))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_56",
+            ),
+            id="cryptbank_filter_count_56",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(first_name[:-1], 'e'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [8]}),
+                "cryptbank_filter_count_57",
+            ),
+            id="cryptbank_filter_count_57",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(first_name[1:-1], 'e'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [7]}),
+                "cryptbank_filter_count_58",
+            ),
+            id="cryptbank_filter_count_58",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -766,6 +821,59 @@ ADD TESTS FOR:
                 "cryptbank_agg_06",
             ),
             id="cryptbank_agg_06",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = CRYPTBANK.CALCULATE("
+                " n_yr=SUM(DATETIME(transactions.time_stamp, 'start of year') == '2023-01-01'),"
+                " n_qu=SUM(DATETIME(transactions.time_stamp, 'start of quarter') == '2023-04-01'),"
+                " n_mo=SUM(DATETIME(transactions.time_stamp, 'start of month') == '2023-06-01'),"
+                " n_we=SUM(DATETIME(transactions.time_stamp, 'start of week') == '2023-05-28'),"
+                " n_da=SUM(DATETIME(transactions.time_stamp, 'start of day') == '2023-06-02'),"
+                " n_ho=SUM(DATETIME(transactions.time_stamp, 'start of hour') == '2023-06-02 04:00:00'),"
+                " n_mi=SUM(DATETIME(transactions.time_stamp, 'start of minute') == '2023-06-02 04:55:00'),"
+                " n_se=SUM(DATETIME(transactions.time_stamp, 'start of second') == '2023-06-02 04:55:31'),"
+                " n_cts=SUM(transactions.time_stamp == DATETIME('now', 'start of day')),"
+                " n_dts=SUM(transactions.time_stamp == DATETIME(JOIN_STRINGS('-', '2025', '12', '31'))),"
+                " n_nst=SUM(DATETIME(transactions.time_stamp, 'start of week', '+3 days') == '2023-05-31'),"
+                " n_ayr=SUM(DATETIME(transactions.time_stamp, '+1 Y') == '2020-11-11 18:00:52'),"
+                " n_aqu=SUM(DATETIME(transactions.time_stamp, '+2 q') == '2020-05-11 18:00:52'),"
+                " n_amo=SUM(DATETIME(transactions.time_stamp, '-5 Mm') == '2019-06-11 18:00:52'),"
+                " n_awe=SUM(DATETIME(transactions.time_stamp, 'start of day', '+1 week') == '2023-06-09'),"
+                " n_ada=SUM(DATETIME(transactions.time_stamp, '+10 DAYS') == '2019-11-21 18:00:52'),"
+                " n_aho=SUM(DATETIME(transactions.time_stamp, '+1000 hour') == '2019-12-23 10:00:52'),"
+                " n_ami=SUM(DATETIME(transactions.time_stamp, '+10000 minute') == '2019-11-18 16:40:52'),"
+                " n_ase=SUM(DATETIME(transactions.time_stamp, '-1000000 s') == '2019-10-31 04:14:12'),"
+                " n_ldm=SUM(DATETIME(transactions.time_stamp, 'start of month', '-1 day') == '2019-10-31'),"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "n_yr": [61],
+                        "n_qu": [17],
+                        "n_mo": [8],
+                        "n_we": [2],
+                        "n_da": [2],
+                        "n_ho": [2],
+                        "n_mi": [2],
+                        "n_se": [1],
+                        "n_cts": [0],
+                        "n_dts": [0],
+                        "n_nst": [2],
+                        "n_ayr": [1],
+                        "n_aqu": [1],
+                        "n_amo": [1],
+                        "n_awe": [2],
+                        "n_ada": [1],
+                        "n_aho": [1],
+                        "n_ami": [1],
+                        "n_ase": [1],
+                        "n_ldm": [4],
+                    }
+                ),
+                "cryptbank_agg_07",
+            ),
+            id="cryptbank_agg_07",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -1005,12 +1113,12 @@ def test_pipeline_e2e_cryptbank(
     against the refsol DataFrame.
     """
     # Capture stdout to avoid polluting the console with logging calls
-    # with redirect_stdout(io.StringIO()):
-    cryptbank_pipeline_test_data.run_e2e_test(
-        masked_graphs,
-        sqlite_cryptbank_connection,
-        mask_server=mock_server_info,
-    )
+    with redirect_stdout(io.StringIO()):
+        cryptbank_pipeline_test_data.run_e2e_test(
+            masked_graphs,
+            sqlite_cryptbank_connection,
+            mask_server=mock_server_info,
+        )
 
 
 @pytest.mark.parametrize(
@@ -1148,6 +1256,50 @@ def test_pipeline_e2e_cryptbank(
                 }
             ],
             id="cryptbank_agg_06",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            " n_yr=SUM(DATETIME(transactions.time_stamp, 'start of year') == '2023-01-01'),"
+            " n_qu=SUM(DATETIME(transactions.time_stamp, 'start of quarter') == '2023-04-01'),"
+            " n_mo=SUM(DATETIME(transactions.time_stamp, 'start of month') == '2023-06-01'),"
+            " n_we=SUM(DATETIME(transactions.time_stamp, 'start of week') == '2023-05-28'),"
+            " n_da=SUM(DATETIME(transactions.time_stamp, 'start of day') == '2023-06-02'),"
+            " n_ho=SUM(DATETIME(transactions.time_stamp, 'start of hour') == '2023-06-02 04:00:00'),"
+            " n_mi=SUM(DATETIME(transactions.time_stamp, 'start of minute') == '2023-06-02 04:55:00'),"
+            " n_se=SUM(DATETIME(transactions.time_stamp, 'start of second') == '2023-06-02 04:55:31'),"
+            " n_cts=SUM(transactions.time_stamp == DATETIME('now', 'start of day')),"
+            " n_dts=SUM(transactions.time_stamp == DATETIME(JOIN_STRINGS('-', '2025', '12', '31'))),"
+            " n_nst=SUM(DATETIME(transactions.time_stamp, 'start of week', '+3 days') == '2023-05-31'),"
+            " n_ayr=SUM(DATETIME(transactions.time_stamp, '+1 Y') == '2020-11-11 18:00:52'),"
+            " n_aqu=SUM(DATETIME(transactions.time_stamp, '+2 q') == '2020-05-11 18:00:52'),"
+            " n_amo=SUM(DATETIME(transactions.time_stamp, '-5 Mm') == '2019-06-11 18:00:52'),"
+            " n_awe=SUM(DATETIME(transactions.time_stamp, 'start of day', '+1 week') == '2023-06-09'),"
+            " n_ada=SUM(DATETIME(transactions.time_stamp, '+10 DAYS') == '2019-11-21 18:00:52'),"
+            " n_aho=SUM(DATETIME(transactions.time_stamp, '+1000 hour') == '2019-12-23 10:00:52'),"
+            " n_ami=SUM(DATETIME(transactions.time_stamp, '+10000 minute') == '2019-11-18 16:40:52'),"
+            " n_ase=SUM(DATETIME(transactions.time_stamp, '-1000000 s') == '2019-10-31 04:14:12'),"
+            " n_ldm=SUM(DATETIME(transactions.time_stamp, 'start of month', '-1 day') == '2019-10-31'),"
+            ")",
+            [
+                {
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'day', '__col__', '2023-06-02']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'hour', '__col__', '2023-06-02 04:00:00']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'minute', '__col__', '2023-06-02 04:55:00']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'month', '__col__', '2023-06-01']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'quarter', '__col__', '2023-04-01']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'second', '__col__', '2023-06-02 04:55:31']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'year', '__col__', '2023-01-01']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 1, 'years', '__col__', '2020-11-11 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 2, 'quarters', '__col__', '2020-05-11 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -5, 'months', '__col__', '2019-06-11 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 10, 'days', '__col__', '2019-11-21 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 1000, 'hours', '__col__', '2019-12-23 10:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 10000, 'minutes', '__col__', '2019-11-18 16:40:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -1000000, 'seconds', '__col__', '2019-10-31 04:14:12']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -1, 'days', 'DATETRUNC', 2, 'month', '__col__', '2019-10-31']",
+                }
+            ],
+            id="cryptbank_agg_07",
         ),
         pytest.param(
             "selected_accounts = accounts.WHERE(QUARTER(creation_timestamp) == DAY(creation_timestamp))\n"

@@ -419,22 +419,17 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         if (
             start_literal is None
             or stop_literal is None
-            or step_literal is None
             or len(start_literal) != 1
             or len(stop_literal) != 1
-            or len(step_literal) != 1
+            or step_literal not in ([1], ["NULL"])
         ):
             return None
-        match (start_literal[0], stop_literal[0], step_literal[0]):
-            case (int(start), int(stop), int(step)) if (
-                start >= 0 and stop > start and step == 1
-            ):
+        print(start_literal, stop_literal, step_literal)
+        match (start_literal[0], stop_literal[0]):
+            case (int(start), int(stop)) if start >= 0 and stop > start:
                 start_int = start
                 length_int = stop - start
-            case (int(start), int(stop), None) if start >= 0 and stop > start:
-                start_int = start
-                length_int = stop - start
-            case (None, int(stop), None) if stop > 0:
+            case ("NULL", int(stop)) if stop > 0:
                 start_int = 0
                 length_int = stop
             case _:
@@ -600,7 +595,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             `unit_str`: The string representing the unit to add.
         """
         unit = DateTimeUnit.from_string(unit_str)
-        if unit is None:
+        if unit is None or unit == DateTimeUnit.WEEK:
             return None
         result: list[str | int | float | None | bool] = ["DATEADD", 3]
         if sign_str == "-":
