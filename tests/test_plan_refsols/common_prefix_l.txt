@@ -12,7 +12,7 @@ ROOT(columns=[('cust_name', c_name), ('nation_name', n_name), ('n_selected_suppl
       SCAN(table=tpch.SUPPLIER, columns={'s_acctbal': s_acctbal, 's_nationkey': s_nationkey, 's_suppkey': s_suppkey})
       FILTER(condition=n_rows >= 5:numeric, columns={'ps_suppkey': ps_suppkey})
        AGGREGATE(keys={'ps_suppkey': ps_suppkey}, aggregations={'n_rows': COUNT()})
-        JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ps_suppkey': t0.ps_suppkey})
+        JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'ps_suppkey': t0.ps_suppkey})
          SCAN(table=tpch.PARTSUPP, columns={'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey})
          FILTER(condition=CONTAINS(p_name, 'mint':string), columns={'p_partkey': p_partkey})
           SCAN(table=tpch.PART, columns={'p_name': p_name, 'p_partkey': p_partkey})

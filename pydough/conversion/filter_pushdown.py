@@ -27,13 +27,16 @@ from pydough.relational import (
 )
 from pydough.relational.rel_util import (
     ExpressionTranspositionShuttle,
+    add_input_name,
     build_filter,
     contains_window,
+    extract_equijoin_keys,
     false_when_null_columns,
     get_conjunctions,
     only_references_columns,
     partition_expressions,
 )
+from pydough.types import BooleanType
 
 from .relational_simplification import SimplificationShuttle
 
@@ -172,6 +175,73 @@ class FilterPushdownShuttle(RelationalShuttle):
             aggregate, remaining_filters, pushable_filters
         )
 
+    def infer_extra_join_filters(
+        self, join: Join, input_idx: int
+    ) -> set[RelationalExpression]:
+        """
+        Infers any extra filters that can be deduced from the join condition
+        that can be pushed into one of the join inputs.
+
+        Args:
+            `join`: The join node whose condition is to be analyzed.
+            `input_idx`: The index of the input for which to infer extra filters.
+
+        Returns:
+            A set of relational expressions representing the inferred filters.
+        """
+        inferred_filters: set[RelationalExpression] = set()
+
+        # Cannot infer any extra filters for ANTI joins, or for LEFT joins
+        # pushing into the right-hand side.
+        if join.join_type == JoinType.ANTI or (
+            join.join_type == JoinType.LEFT and input_idx == 1
+        ):
+            return inferred_filters
+
+        # Extract all equality conditions from the join condition, then build
+        # up equality sets via a union find structure.
+        lhs_keys, rhs_keys = extract_equijoin_keys(join)
+
+        equality_sets: dict[RelationalExpression, RelationalExpression] = {}
+        for lhs_key in lhs_keys:
+            equality_sets[lhs_key] = lhs_key
+        for rhs_key in rhs_keys:
+            equality_sets[rhs_key] = rhs_key
+
+        def find(expr: RelationalExpression) -> RelationalExpression:
+            # Finds the root representative of the equality set containing
+            # `expr`, applying path compression along the way.
+            parent = equality_sets[expr]
+            if parent != expr:
+                parent = find(parent)
+                equality_sets[expr] = parent
+            return parent
+
+        def union(expr1: RelationalExpression, expr2: RelationalExpression) -> None:
+            # Unites the equality sets containing `expr1` and `expr2`.
+            root1 = find(expr1)
+            root2 = find(expr2)
+            if root1 != root2:
+                equality_sets[root2] = root1
+
+        for lhs_key, rhs_key in zip(lhs_keys, rhs_keys):
+            union(lhs_key, rhs_key)
+
+        # Iterate through all the keys from the specified input side. If any
+        # are in the same equality set as one another, add such a condition.
+        keys = lhs_keys if input_idx == 0 else rhs_keys
+        for i in range(len(keys)):
+            for j in range(i + 1, len(keys)):
+                if keys[i] != keys[j] and find(keys[i]) == find(keys[j]):
+                    new_cond: RelationalExpression = CallExpression(
+                        pydop.EQU,
+                        BooleanType(),
+                        [add_input_name(keys[i], None), add_input_name(keys[j], None)],
+                    )
+                    inferred_filters.add(new_cond)
+
+        return inferred_filters
+
     def visit_join(self, join: Join) -> RelationalNode:
         # Identify the set of all column names that correspond to a reference
         # to a column from one side of the join.
@@ -252,6 +322,18 @@ class FilterPushdownShuttle(RelationalShuttle):
             pushable_filters = {
                 expr.accept_shuttle(transposer) for expr in pushable_filters
             }
+
+            # Find any extra filters that can be deduced from the join
+            # condition, e.g. if `t0.a = t1.b` and `t0.a = t1.c` are in the join
+            # condition, then we can infer an extra filter `t1.b = t1.c`. Add
+            # these filters to the pushable filters.
+            pushable_filters.update(
+                self.infer_extra_join_filters(
+                    join,
+                    idx,
+                )
+            )
+
             # Transform the child input with the filters that can be
             # pushed down.
             self.filters = pushable_filters
