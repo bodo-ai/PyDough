@@ -2208,8 +2208,9 @@ class BaseTransformBindings:
                 ],
             ).where(sqlglot_expressions.false())
         else:
-            breakpoint()
+            # TODO: in next PR, find better way to build VALUES clause with SQLGlot
             row_values = ", ".join(f"({i[0]})" for i in rows)
             query_text = f"WITH {collection.name}({collection.column_name}) AS (VALUES {row_values}) select {collection.column_name} from {collection.name}"
             query = parse_one(query_text)
+
         return query

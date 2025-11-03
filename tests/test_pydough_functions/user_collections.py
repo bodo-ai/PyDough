@@ -143,7 +143,7 @@ def user_range_collection_6():
         & (customer.market_segment == "AUTOMOBILE")
         & (customer.nation.name == "JAPAN")
     ).CALCULATE(order_year=YEAR(order_date))
-    order_years = selected_orders.PARTITION(name="yrs", by=order_year)
+    order_years = selected_orders.PARTITION(name="yrs", by=(order_year, customer_key))
     return (
         years.CALCULATE(year)
         .CALCULATE(year, n_orders=COUNT(CROSS(order_years).WHERE(order_year == year)))
