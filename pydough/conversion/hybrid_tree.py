@@ -855,11 +855,6 @@ class HybridTree:
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.is_singular()
 
-    # def is_singular_reverse(self) -> bool:
-    #     """
-    #     TODO
-    #     """
-
     def equals_ignoring_successors(self, other: "HybridTree") -> bool:
         """
         Compares two hybrid trees without taking into account their
