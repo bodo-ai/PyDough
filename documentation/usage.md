@@ -15,6 +15,8 @@ This document describes how to set up & interact with PyDough. For instructions 
    * [`pydough.to_df`](#pydoughto_df)
 - [Transformation APIs](#transformation-apis)
    * [`pydough.from_string`](#pydoughfrom_string)
+- [User Collection APIs](#user-collection-apis)
+   * [`pydough.range_collection`](#pydough_range_collection)
 - [Exploration APIs](#exploration-apis)
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
@@ -442,7 +444,7 @@ You can find a full example of using Postgres database with PyDough in [this usa
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 
-This sections describes various APIs you can use to execute PyDough code. 
+This section describes various APIs you can use to execute PyDough code. 
 
 <!-- TOC --><a name="pydoughto_sql"></a>
 ### `pydough.to_sql`
@@ -548,10 +550,10 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
 
-<!-- TOC --><a name="evaluation-apis"></a>
+<!-- TOC --><a name="transformation-apis"></a>
 ## Transformation APIs
 
-This sections describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
+This section describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
 
 <!-- TOC --><a name="pydoughfrom_string"></a>
 ### `pydough.from_string`
@@ -723,10 +725,54 @@ ORDER BY
   3 DESC
 ```
 
+<!-- TOC --><a name="user-collection-apis"></a>
+## User Collection APIs
+
+> [! WARNING]
+> NOTE: User collections are currently supported **only in the Snowflake context**.
+
+This section describes APIs for dynamically creating PyDough collections and using them alongside other data sources.
+
+<!-- TOC --><a name="pydough_range_collection"></a>
+### `pydough.range_collection`
+
+The `range_collection` creates a collection that generates a sequence of integers within a specified range. This is useful for building numeric datasets dynamically.
+It takes in the following arguments:
+
+- `name`: The name of the range collection.
+- `column_name`: The name of the column in the collection.
+- `start`: The starting value of the range (inclusive).
+- `end`: The ending value of the range (exclusive).
+- `step`: The increment between consecutive values (default: 1).
+
+Supported Signatures:
+- `range_collection(end)`: generates integers from 0 to `end-1` with a step of 1.
+- `range_collection(start, end)`: generates integers from `start` to `end-1` with a step of 1.
+- `range_collection(start, end, step)`: generates integers from `start` to `end-1` with the specified `step`.
+
+#### Example
+
+```python
+import pydough
+
+my_range = pydough.range_collection("simple_range", "col1", 1, 10, 2)
+df = pydough.to_df(my_range)
+print(df)
+```
+Output
+```
+    col1
+0     1
+1     3
+2     5
+3     7
+4     9
+```
+
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
-This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
+This section describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
 
 See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 
