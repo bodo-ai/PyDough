@@ -855,10 +855,57 @@ class HybridTree:
         # The current level is fine, so check any levels above it next.
         return True if self.parent is None else self.parent.is_singular()
 
-    # def is_singular_reverse(self) -> bool:
-    #     """
-    #     TODO
-    #     """
+    def search_reverse_cardinality(self) -> JoinCardinality:
+        """
+        TODO
+        """
+        if self.parent is None:
+            return JoinCardinality.SINGULAR_ACCESS
+        parent_cardinality: JoinCardinality = self.parent.search_reverse_cardinality()
+
+        current_cardinality: JoinCardinality
+        match self.pipeline[0]:
+            case HybridRoot():
+                # If the parent of the child is a root, it means a cross join
+                # is occurring, so the cardinality depends on whether
+                # the parent context is singular or plural.
+                current_cardinality = (
+                    JoinCardinality.SINGULAR_ACCESS
+                    if self.is_singular()
+                    else JoinCardinality.PLURAL_ACCESS
+                )
+            case HybridCollectionAccess():
+                # For non sub-collection accesses, use plural access.
+                # For a sub-collection, infer from the reverse property.
+                if isinstance(self.pipeline[0].collection, SubCollection):
+                    current_cardinality = self.infer_metadata_reverse_cardinality(
+                        self.pipeline[0].collection.subcollection_property
+                    )
+                else:
+                    current_cardinality = JoinCardinality.PLURAL_ACCESS
+            # For partition & partition child, infer from the underlying child.
+            case HybridPartition():
+                current_cardinality = JoinCardinality.SINGULAR_ACCESS
+            case HybridPartitionChild():
+                current_cardinality = self.pipeline[
+                    0
+                ].subtree.infer_root_reverse_cardinality(self)
+            case HybridChildPullUp():
+                current_cardinality = self.children[
+                    self.pipeline[0].child_idx
+                ].subtree.search_reverse_cardinality()
+            case _:
+                raise NotImplementedError(
+                    f"Invalid start of pipeline: {self.pipeline[0].__class__.__name__}"
+                )
+
+        if current_cardinality.plural:
+            parent_cardinality = parent_cardinality.add_plural()
+
+        if current_cardinality.filters:
+            parent_cardinality = parent_cardinality.add_filter()
+
+        return parent_cardinality
 
     def equals_ignoring_successors(self, other: "HybridTree") -> bool:
         """
