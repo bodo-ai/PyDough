@@ -946,7 +946,7 @@ from tests.test_pydough_functions.user_collections import (
             simple_range_1,
             """
 ──┬─ TPCH
-  └─── RangeCollection(simple_range!r, value=range(0, 10))
+  └─── RangeCollection('simple_range', value=range(0, 10))
             """,
             id="simple_range_1",
         ),
@@ -954,7 +954,7 @@ from tests.test_pydough_functions.user_collections import (
             simple_range_2,
             """
 ──┬─ TPCH
-  ├─── RangeCollection(simple_range!r, value=range(0, 10))
+  ├─── RangeCollection('simple_range', value=range(0, 10))
   └─── OrderBy[value.DESC(na_pos='last')]
             """,
             id="simple_range_2",
