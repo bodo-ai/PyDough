@@ -924,6 +924,12 @@ class RelTranslation:
         if (not reverse_cardinality.filters) and (not parent.always_exists()):
             reverse_cardinality = reverse_cardinality.add_filter()
 
+        ancestral_reverse_cardinality: JoinCardinality = (
+            parent.search_reverse_cardinality()
+        )
+        if ancestral_reverse_cardinality.plural:
+            reverse_cardinality = reverse_cardinality.add_plural()
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         join_cond: HybridExpr | None = None
         match collection_access.subcollection_property:
@@ -1351,7 +1357,8 @@ class RelTranslation:
                             result,
                             JoinType.INNER,
                             JoinCardinality.PLURAL_ACCESS,
-                            JoinCardinality.SINGULAR_ACCESS,
+                            # JoinCardinality.SINGULAR_ACCESS,
+                            preceding_hybrid[0].search_reverse_cardinality(),
                             join_keys,
                             None,
                             None,
@@ -1545,6 +1552,12 @@ def optimize_relational_tree(
     # It also speeds up all subsequent steps by reducing the total number of
     # objects inside the plan.
     pruner: ColumnPruner = ColumnPruner()
+    root = pruner.prune_unused_columns(root)
+
+    # Run a pass that substitutes join keys when the only columns used by one
+    # side of the join are the join keys. This will make some joins redundant
+    # and allow them to be deleted later. Then, re-run column pruning.
+    root = confirm_root(join_key_substitution(root))
     root = pruner.prune_unused_columns(root)
 
     # Bubble up names from the leaf nodes to further encourage simpler naming

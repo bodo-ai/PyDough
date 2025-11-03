@@ -15,7 +15,7 @@ WITH _s0 AS (
     1
 )
 SELECT
-  COUNT(*) AS n_events
+  COUNT(DISTINCT _s0.ev_key) AS n_events
 FROM _s0 AS _s0
 JOIN times AS times
   ON times.t_end_hour > HOUR(CAST(_s0.ev_dt AS TIMESTAMP))
