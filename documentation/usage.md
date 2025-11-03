@@ -728,7 +728,7 @@ ORDER BY
 <!-- TOC --><a name="user-collection-apis"></a>
 ## User Collection APIs
 
-> [! WARNING]
+> [!WARNING]  
 > NOTE: User collections are currently supported **only in the Snowflake context**.
 
 This section describes APIs for dynamically creating PyDough collections and using them alongside other data sources.
@@ -759,7 +759,7 @@ my_range = pydough.range_collection("simple_range", "col1", 1, 10, 2)
 df = pydough.to_df(my_range)
 print(df)
 ```
-Output
+Output:
 ```
     col1
 0     1
