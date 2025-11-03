@@ -60,7 +60,7 @@ class JoinKeySubstitutionShuttle(RelationalShuttle):
                 # substitute the left join keys with the right join keys.
                 elif (
                     join.reverse_cardinality == JoinCardinality.SINGULAR_ACCESS
-                    and rhs_refs <= lhs_keys
+                    and lhs_refs <= lhs_keys
                 ):
                     for lhs_key, rhs_key in zip(lhs_keys_list, rhs_keys_list):
                         join_substitution[lhs_key] = rhs_key
