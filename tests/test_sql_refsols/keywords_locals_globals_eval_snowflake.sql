@@ -1,9 +1,9 @@
 SELECT
-  count.node,
-  cast.types,
+  "COUNT".node,
+  "CAST".types,
   2.0 AS expr
-FROM keywords."COUNT" AS count
-JOIN keywords."CAST" AS cast
-  ON cast.pk_field_name = count.this
+FROM keywords."COUNT" AS "COUNT"
+JOIN keywords."CAST" AS "CAST"
+  ON "CAST".pk_field_name = "COUNT".this
 WHERE
-  count.node = 4071
+  "COUNT".node = 4071

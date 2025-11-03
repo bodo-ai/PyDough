@@ -6,7 +6,7 @@
       {
         "name": "quoted_table_name",
         "type": "simple table",
-        "table path": "keywords.`\"QUOTED TABLE_NAME\"`",
+        "table path": "keywords.\"\"\"QUOTED TABLE_NAME\"\"\"",
         "unique properties": [
           "id_"
         ],
@@ -53,7 +53,7 @@
           {
             "name": "name",
             "type": "table column",
-            "column name": "```name\"[`",
+            "column name": "\"`name\"\"[\"",
             "data type": "numeric",
             "description": "Column name normalized from unusual identifier '```name\"[`'",
             "sample values": [
@@ -632,7 +632,7 @@
           {
             "name": "init",
             "type": "table column",
-            "column name": "__init__",
+            "column name": "\"__init__\"",
             "data type": "numeric",
             "description": "Column name normalized from '__init__'",
             "sample values": [
@@ -667,7 +667,7 @@
           {
             "name": "col",
             "type": "table column",
-            "column name": "__col__",
+            "column name": "\"__col__\"",
             "data type": "numeric",
             "description": "Column name normalized from predicate format reserved word '__col__'",
             "sample values": [
@@ -678,7 +678,7 @@
           {
             "name": "col1",
             "type": "table column",
-            "column name": "__col1__",
+            "column name": "\"__col1__\"",
             "data type": "numeric",
             "description": "Column name normalized from predicate format reserved word '__col1__'",
             "sample values": [
@@ -756,7 +756,7 @@
           {
             "name": "id_",
             "type": "table column",
-            "column name": "Id",
+            "column name": "\"Id\"",
             "data type": "numeric",
             "description": "Column name normalized from SQL reserved word 'ID' (foreign key referencing UPPERCASE_MASTER.ID)",
             "sample values": [
@@ -789,7 +789,7 @@
           {
             "name": "lowercaseid",
             "type": "table column",
-            "column name": "LowerCaseId",
+            "column name": "\"LowerCaseId\"",
             "data type": "numeric",
             "description": "Column from mixedcase_1_1 (foreign key referencing lowercase_detail.id)",
             "sample values": [
@@ -1064,7 +1064,7 @@
       {
         "name": "uppercase_master",
         "type": "simple table",
-        "table path": "keywords.UPPERCASE_MASTER",
+        "table path": "keywords.\"UPPERCASE_MASTER\"",
         "unique properties": [
           "id_"
         ],
@@ -1663,7 +1663,7 @@
       {
         "name": "lowercase_detail",
         "type": "simple table",
-        "table path": "keywords.lowercase_detail",
+        "table path": "keywords.\"lowercase_detail\"",
         "unique properties": [
           "id_"
         ],

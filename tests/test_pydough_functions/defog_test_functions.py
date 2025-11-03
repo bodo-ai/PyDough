@@ -2430,3 +2430,350 @@ def impl_defog_dermtreatment_gen5():
             )
         )
     )
+
+
+def impl_defog_academic_gen1():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which authors have written publications in both the domain
+    'Machine Learning' and the domain 'Data Science'?
+    """
+    selected_domains = author_publications.publication.publication_domains.WHERE(
+        ISIN(domain.name, ("Data Science", "Machine Learning"))
+    )
+    return authors.WHERE(NDISTINCT(selected_domains.domain_id) == 2).CALCULATE(name)
+
+
+def impl_defog_academic_gen2():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of citations received by each author?
+    """
+    publications_selected = author_publications.publication
+    return authors.WHERE(HAS(publications_selected)).CALCULATE(
+        name, total_citations=SUM(publications_selected.citation_num)
+    )
+
+
+def impl_defog_academic_gen3():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of publications published in each year?
+    """
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year, COUNT(publications)
+    )
+
+
+def impl_defog_academic_gen4():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the average number of references cited by publications in each
+    domain name?
+    """
+    return domains.CALCULATE(
+        name, average_references=AVG(domain_publications.publication.reference_num)
+    )
+
+
+def impl_defog_academic_gen5():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the average number of citations received by publications in each year?
+    """
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year, average_citations=AVG(publications.citation_num)
+    )
+
+
+def impl_defog_academic_gen6():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the title of the publication that has received the highest number of
+    citations?
+    """
+    return publications.CALCULATE(title).TOP_K(1, by=citation_num.DESC())
+
+
+def impl_defog_academic_gen7():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the top 5 domains with the highest number of authors associated
+    with them?
+    """
+    return domains.CALCULATE(
+        name, author_count=NDISTINCT(domain_authors.author_id)
+    ).TOP_K(5, by=(author_count.DESC(), name.DESC()))
+
+
+def impl_defog_academic_gen8():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the top 3 titles of the publications that have the highest number
+    of references cited, ordered by the number of references cited in descending
+    order?
+    """
+    return publications.CALCULATE(title).TOP_K(3, by=reference_num.DESC())
+
+
+def impl_defog_academic_gen9():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the top 3 publications with the highest number of citations?
+    """
+    return publications.CALCULATE(title, citation_num).TOP_K(3, by=citation_num.DESC())
+
+
+def impl_defog_academic_gen10():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the titles of all publications ordered alphabetically?
+    """
+    return publications.CALCULATE(title).ORDER_BY(title.ASC())
+
+
+def impl_defog_academic_gen11():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+
+    What is the ratio of publications to authors in the database?
+    """
+    n_pub = COUNT(publications)
+    n_auth = COUNT(authors)
+    return Academic.CALCULATE(
+        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth > 0)
+    )
+
+
+def impl_defog_academic_gen12():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the ratio of publications presented in conferences to publications
+    published in journals?
+    """
+    n_confs = SUM(PRESENT(publications.conference_id))
+    n_jours = SUM(PRESENT(publications.journal_id))
+    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours > 0))
+
+
+def impl_defog_academic_gen13():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the ratio of the total number of publications to the total number of
+    keywords within each domain ID? Show all domain IDs.
+    """
+
+    n_pubs = COUNT(domain_publications)
+    n_keys = COUNT(domain_keywords)
+    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys > 0))
+
+
+def impl_defog_academic_gen14():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How does the ratio of publications to journals change over the years? Return
+    the annual numbers of publications and journals as well.
+    """
+    n_pubs = COUNT(publications)
+    n_jours = NDISTINCT(publications.journal_id)
+    return publications.PARTITION(name="years", by=year).CALCULATE(
+        year,
+        num_publications=n_pubs,
+        num_journals=n_jours,
+        ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0),
+    )
+
+
+def impl_defog_academic_gen15():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How does the ratio of authors to organizations differ by continent?
+    """
+    return (
+        organizations.PARTITION(name="continents", by=continent)
+        .CALCULATE(
+            continent,
+            ratio=COUNT(organizations.authors) / COUNT(organizations),
+        )
+        .ORDER_BY(ratio.DESC())
+    )
+
+
+def impl_defog_academic_gen16():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which author had the most publications in the year 2021 and how many
+    publications did he/she have that year?
+    """
+    selected_pubs = author_publications.publication.WHERE(year == 2021)
+    return (
+        authors.WHERE(HAS(selected_pubs))
+        .CALCULATE(
+            name,
+            count_publication=NDISTINCT(selected_pubs.publication_id),
+        )
+        .TOP_K(1, by=count_publication.DESC())
+    )
+
+
+def impl_defog_academic_gen17():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of publications presented in each conference?
+    """
+    return conferences.CALCULATE(name, count_publications=COUNT(proceedings)).ORDER_BY(
+        count_publications.DESC(), name.DESC()
+    )
+
+
+def impl_defog_academic_gen18():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What is the total number of publications in each journal, ordered by the
+    number of publications in descending order?
+    """
+    return journals.CALCULATE(
+        name, journal_id, num_publications=COUNT(archives)
+    ).ORDER_BY(num_publications.DESC())
+
+
+def impl_defog_academic_gen19():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How many publications were presented at each conference, ordered by the
+    number of publications in descending order? Give the names of the conferences
+    and their corresponding number of publications.
+    """
+    return conferences.CALCULATE(name, num_publications=COUNT(proceedings)).ORDER_BY(
+        num_publications.DESC(), name.ASC()
+    )
+
+
+def impl_defog_academic_gen20():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    How many publications were published in journals whose names start with the
+    letter 'J'?
+    """
+    selected_publications = publications.WHERE(STARTSWITH(LOWER(publisher.name), "j"))
+    return Academic.CALCULATE(n=COUNT(selected_publications))
+
+
+def impl_defog_academic_gen21():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which organizations have authors who have written publications in the
+    domain 'Machine Learning'?
+    """
+    ml_publications = (
+        authors.author_publications.publication.publication_domains.domain.WHERE(
+            name == "Machine Learning"
+        )
+    )
+    return organizations.CALCULATE(
+        oranization_name=name, organization_id=organization_id
+    ).WHERE(HAS(ml_publications))
+
+
+def impl_defog_academic_gen22():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which authors belong to the same domain as Martin?,Always filter names using
+    LIKE with percent sign wildcards
+    """
+    martin_domains = author_domains.domain.domain_authors.author.WHERE(
+        CONTAINS(LOWER(name), "martin")
+    )
+
+    return authors.WHERE(HAS(martin_domains)).CALCULATE(name, author_id)
+
+
+def impl_defog_academic_gen23():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    Which authors are not part of any organization?
+    """
+    return authors.WHERE(HASNOT(organization)).CALCULATE(name, author_id)
+
+
+def impl_defog_academic_gen24():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the publications written by authors from the 'Sociology' domain and
+    presented at conferences in the year 2020?
+    """
+
+    sociology_author = publication_authors.author.author_domains.domain.WHERE(
+        CONTAINS(LOWER(name), "sociology")
+    ).domain_conferences.WHERE((conference_id == publication_conference_id))
+    return (
+        publications.CALCULATE(publication_conference_id=conference_id)
+        .WHERE((year == 2020) & HAS(sociology_author))
+        .CALCULATE(title)
+    )
+
+
+def impl_defog_academic_gen25():
+    """
+    PyDough implementation of the following question for the Academic
+    graph:
+
+    What are the names of the authors who have written publications in the
+    domain 'Computer Science'?
+    """
+    return (
+        authors.CALCULATE(author_name=name)
+        .author_publications.publication.publication_domains.domain.WHERE(
+            name == "Computer Science"
+        )
+        .PARTITION(name="authors", by=author_name)
+        .CALCULATE(author_name)
+    )

@@ -1,0 +1,12 @@
+SELECT
+  COALESCE(`WHERE`.default_to, `WHERE`.`.CALCULATE`) AS calculate2,
+  CALCULATE.`.WHERE` AS _where,
+  CALCULATE.`LIKE` AS _like,
+  CALCULATE.datetime,
+  `WHERE`.abs,
+  `WHERE`.has
+FROM keywords.`WHERE` AS `WHERE`
+JOIN keywords.CALCULATE AS CALCULATE
+  ON `WHERE`.`.CALCULATE` = CALCULATE.`.WHERE`
+WHERE
+  `WHERE`.`.CALCULATE` = 4 AND `WHERE`.present IS NULL
