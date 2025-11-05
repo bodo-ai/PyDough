@@ -12,7 +12,8 @@ WITH _s1 AS (
 ), _s7 AS (
   SELECT
     _s3.region,
-    AVG(CAST(restaurant.rating AS DECIMAL)) AS avg_rating
+    SUM(CASE WHEN NOT restaurant.rating IS NULL THEN 1 ELSE 0 END) AS sum_expr,
+    SUM(restaurant.rating) AS sum_rating
   FROM main.location AS location
   LEFT JOIN _s1 AS _s3
     ON _s3.city_name = location.city_name
@@ -23,9 +24,9 @@ WITH _s1 AS (
 )
 SELECT
   _s6.region AS region_name,
-  _s7.avg_rating
+  CAST(_s7.sum_rating AS DOUBLE PRECISION) / _s7.sum_expr AS avg_rating
 FROM _s6 AS _s6
-LEFT JOIN _s7 AS _s7
+JOIN _s7 AS _s7
   ON _s6.region = _s7.region
 ORDER BY
   1 NULLS FIRST,

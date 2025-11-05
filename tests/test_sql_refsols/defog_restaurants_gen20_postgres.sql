@@ -1,15 +1,17 @@
-WITH _s1 AS (
+WITH _s0 AS (
   SELECT
     city_name,
-    region
-  FROM main.geographic
+    COUNT(*) AS n_rows
+  FROM main.restaurant
+  GROUP BY
+    1
 )
 SELECT
-  _s1.region AS rest_region,
-  COUNT(*) AS n_restaurants
-FROM main.restaurant AS restaurant
-LEFT JOIN _s1 AS _s1
-  ON _s1.city_name = restaurant.city_name
+  geographic.region AS rest_region,
+  SUM(_s0.n_rows) AS n_restaurants
+FROM _s0 AS _s0
+JOIN main.geographic AS geographic
+  ON _s0.city_name = geographic.city_name
 GROUP BY
   1
 ORDER BY

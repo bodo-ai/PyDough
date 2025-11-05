@@ -1,15 +1,9 @@
-WITH _s1 AS (
-  SELECT
-    food_type,
-    id,
-    name
-  FROM main.restaurant
-)
 SELECT
-  _s1.name,
-  _s1.food_type
+  restaurant.name,
+  restaurant.food_type
 FROM main.location AS location
-LEFT JOIN _s1 AS _s1
-  ON _s1.id = location.restaurant_id
+JOIN main.restaurant AS restaurant
+  ON location.restaurant_id = restaurant.id
 WHERE
-  LOWER(location.street_name) = 'market st'
+  LOWER(location.city_name) = 'san francisco'
+  AND LOWER(location.street_name) = 'market st'

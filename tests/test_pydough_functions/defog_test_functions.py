@@ -2799,7 +2799,7 @@ def impl_defog_restaurants_gen2():
     What is the total count of restaurants in each city?
     """
     return locations.PARTITION(name="city", by=city_name).CALCULATE(
-        city_name, total_count=NDISTINCT(locations.restaurant_id)
+        city_name, total_count=COUNT(locations)
     )
 
 
@@ -2856,8 +2856,7 @@ def impl_defog_restaurants_gen6():
     """
     return (
         locations.PARTITION(name="streets", by=street_name)
-        .CALCULATE(street_name, num_restaurants=NDISTINCT(locations.restaurant_id))
-        .TOP_K(1, by=num_restaurants.DESC())
+        .TOP_K(1, by=COUNT(locations).DESC())
         .CALCULATE(street_name)
     )
 
@@ -2884,7 +2883,7 @@ def impl_defog_restaurants_gen8():
     by the region name.
     """
     return (
-        locations.CALCULATE(region_name=geographic.region)
+        locations.CALCULATE(region_name=city.region)
         .PARTITION(name="region", by=region_name)
         .CALCULATE(region_name, avg_rating=AVG(locations.restaurant.rating))
         .ORDER_BY(region_name.ASC(), avg_rating.DESC())
@@ -2933,10 +2932,10 @@ def impl_defog_restaurants_gen12():
     What is the ratio of restaurants with a rating above 4.0 to restaurants with
     a rating below 4.0 overall?
     """
-    high_rated_restaurants = restaurants.WHERE(rating > 4.0)
-    low_rated_restaurants = restaurants.WHERE(rating < 4.0)
+    n_hi_rating = SUM(restaurants.rating > 4.0)
+    n_lo_rating = SUM(restaurants.rating < 4.0)
     return Restaurants.CALCULATE(
-        ratio=(COUNT(high_rated_restaurants) / COUNT(low_rated_restaurants))
+        ratio=n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0)
     )
 
 
@@ -2948,17 +2947,11 @@ def impl_defog_restaurants_gen13():
     What is the ratio of restaurants with a rating above 4 to restaurants with
     a rating below 4 in New York?
     """
-    high_rated_restaurants = COUNT(
-        restaurants.WHERE((rating > 4.0) & (LOWER(city_name) == "new york"))
-    )
-    low_rated_restaurants = COUNT(
-        restaurants.WHERE((rating < 4.0) & (LOWER(city_name) == "new york"))
-    )
+    nyc_restaurants = restaurants.WHERE(LOWER(city_name) == "new york")
+    n_hi_rating = SUM(nyc_restaurants.rating > 4.0)
+    n_lo_rating = SUM(nyc_restaurants.rating < 4.0)
     return Restaurants.CALCULATE(
-        ratio=(
-            high_rated_restaurants
-            / KEEP_IF(low_rated_restaurants, low_rated_restaurants > 0)
-        )
+        ratio=(n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0))
     )
 
 
@@ -2970,18 +2963,11 @@ def impl_defog_restaurants_gen14():
     What is the ratio of restaurants serving vegan food to restaurants serving
     non-vegan food in San Francisco? Match food_type case insensitively
     """
-    vegan_sf_rest = COUNT(
-        restaurants.WHERE(
-            (LOWER(food_type) == "vegan") & (LOWER(city_name) == "san francisco")
-        )
-    )
-    no_vegan_sf_rest = COUNT(
-        restaurants.WHERE(
-            (LOWER(food_type) != "vegan") & (LOWER(city_name) == "san francisco")
-        )
-    )
+    sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
+    n_vegan = SUM(LOWER(sf_restaurants.food_type) == "vegan")
+    n_non_vegan = SUM(LOWER(sf_restaurants.food_type) != "vegan")
     return Restaurants.CALCULATE(
-        ratio=(vegan_sf_rest / KEEP_IF(no_vegan_sf_rest, no_vegan_sf_rest > 0))
+        ratio=(n_vegan / KEEP_IF(n_non_vegan, n_non_vegan != 0))
     )
 
 
@@ -2993,15 +2979,10 @@ def impl_defog_restaurants_gen15():
     What is the ratio of Italian restaurants out of all restaurants in
     Los Angeles?
     """
-    italian_la_rest = COUNT(
-        restaurants.WHERE(
-            (LOWER(food_type) == "italian") & (LOWER(city_name) == "los angeles")
-        )
-    )
-    no_italian_la_rest = COUNT(restaurants.WHERE((LOWER(city_name) == "los angeles")))
-    return Restaurants.CALCULATE(
-        ratio=(italian_la_rest / KEEP_IF(no_italian_la_rest, no_italian_la_rest > 0))
-    )
+    la_restaurants = restaurants.WHERE(LOWER(city_name) == "los angeles")
+    n_la_italian = SUM(LOWER(la_restaurants.food_type) == "italian")
+    n_la = COUNT(la_restaurants)
+    return Restaurants.CALCULATE(ratio=(n_la_italian / KEEP_IF(n_la, n_la != 0)))
 
 
 def impl_defog_restaurants_gen16():
@@ -3043,9 +3024,9 @@ def impl_defog_restaurants_gen18():
     What is the average rating of restaurants in each region?
     """
     return (
-        geographies.WHERE(COUNT(restaurants) > 0)
+        cities.WHERE(HAS(restaurants))
         .PARTITION(name="regions", by=region)
-        .CALCULATE(rest_region=region, avg_rating=AVG(geographies.restaurants.rating))
+        .CALCULATE(rest_region=region, avg_rating=AVG(cities.restaurants.rating))
         .ORDER_BY(region.ASC())
     )
 
@@ -3059,7 +3040,7 @@ def impl_defog_restaurants_gen19():
     """
     return (
         restaurants.WHERE(LOWER(food_type) == "italian")
-        .CALCULATE(rest_region=geographic.region)
+        .CALCULATE(rest_region=city.region)
         .PARTITION(name="regions", by=rest_region)
         .CALCULATE(rest_region, n_restaurants=COUNT(restaurants))
         .ORDER_BY(n_restaurants.DESC(), rest_region.ASC())
@@ -3074,7 +3055,7 @@ def impl_defog_restaurants_gen20():
     How many restaurants are there in each region?
     """
     return (
-        restaurants.CALCULATE(rest_region=geographic.region)
+        restaurants.CALCULATE(rest_region=city.region)
         .PARTITION(name="regions", by=rest_region)
         .CALCULATE(rest_region, n_restaurants=COUNT(restaurants))
         .ORDER_BY(n_restaurants.DESC(), rest_region.ASC())
@@ -3112,9 +3093,9 @@ def impl_defog_restaurants_gen23():
     What's the name and food type of all the restaurants located on Market St in
     San Francisco?
     """
-    return locations.WHERE((LOWER(street_name) == "market st")).CALCULATE(
-        restaurant.name, restaurant.food_type
-    )
+    return locations.WHERE(
+        (LOWER(street_name) == "market st") & (LOWER(city_name) == "san francisco")
+    ).CALCULATE(restaurant.name, restaurant.food_type)
 
 
 def impl_defog_restaurants_gen24():

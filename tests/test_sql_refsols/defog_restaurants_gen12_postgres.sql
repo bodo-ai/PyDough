@@ -1,17 +1,10 @@
-WITH _s0 AS (
-  SELECT
-    COUNT(*) AS n_rows
-  FROM main.restaurant
-  WHERE
-    rating > 4.0
-), _s1 AS (
-  SELECT
-    COUNT(*) AS n_rows
-  FROM main.restaurant
-  WHERE
-    rating < 4.0
-)
 SELECT
-  CAST(_s0.n_rows AS DOUBLE PRECISION) / _s1.n_rows AS ratio
-FROM _s0 AS _s0
-CROSS JOIN _s1 AS _s1
+  CAST(COALESCE(SUM(CASE WHEN rating > 4.0 THEN 1 ELSE 0 END), 0) AS DOUBLE PRECISION) / CASE
+    WHEN (
+      NOT SUM(CASE WHEN rating < 4.0 THEN 1 ELSE 0 END) IS NULL
+      AND SUM(CASE WHEN rating < 4.0 THEN 1 ELSE 0 END) <> 0
+    )
+    THEN COALESCE(SUM(CASE WHEN rating < 4.0 THEN 1 ELSE 0 END), 0)
+    ELSE NULL
+  END AS ratio
+FROM main.restaurant

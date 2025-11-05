@@ -1,17 +1,9 @@
-WITH _s0 AS (
-  SELECT
-    COUNT(*) AS n_rows
-  FROM main.restaurant
-  WHERE
-    rating > 4.0
-), _s1 AS (
-  SELECT
-    COUNT(*) AS n_rows
-  FROM main.restaurant
-  WHERE
-    rating < 4.0
-)
 SELECT
-  _s0.n_rows / _s1.n_rows AS ratio
-FROM _s0 AS _s0
-CROSS JOIN _s1 AS _s1
+  COALESCE(COUNT_IF(rating > 4.0), 0) / CASE
+    WHEN (
+      COUNT_IF(rating < 4.0) <> 0 AND NOT COUNT_IF(rating < 4.0) IS NULL
+    )
+    THEN COALESCE(COUNT_IF(rating < 4.0), 0)
+    ELSE NULL
+  END AS ratio
+FROM main.restaurant

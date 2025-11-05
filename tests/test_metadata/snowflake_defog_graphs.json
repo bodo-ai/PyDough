@@ -4438,7 +4438,7 @@
     "version": "V2",
     "collections": [
       {
-        "name": "geographies",
+        "name": "cities",
         "type": "simple table",
         "table path": "restaurants.geographic",
         "unique properties": [
@@ -4460,7 +4460,7 @@
             "column name": "county",
             "data type": "string",
             "description": "The name of the county",
-            "sample values": ["New York", "San Francisco"],
+            "sample values": ["Miami-Dade", "Cook", "New York"],
             "synonyms": ["division"]
           },
           {
@@ -4473,7 +4473,7 @@
             "synonyms": ["territory"]
           }
         ],
-        "description": "Contains records of geographic locations including city name, county and region",
+        "description": "Contains records of cities locations including its name, county and region",
         "synonyms": ["locations", "places"]
       },
       {
@@ -4481,7 +4481,7 @@
         "type": "simple table",
         "table path": "restaurants.location",
         "unique properties": [
-          "restaurant_id"
+          ["restaurant_id", "house_number", "street_name","city_name"]
         ],
         "properties": [
           {
@@ -4585,8 +4585,8 @@
     "relationships": [
       {
         "type": "simple join",
-        "name": "locations",
-        "parent collection": "geographies",
+        "name": "restaurant_locations",
+        "parent collection": "cities",
         "child collection": "locations",
         "singular": false,
         "always matches": false,
@@ -4595,48 +4595,48 @@
             "city_name"
           ]
         },
-        "description": "All restaurant locations related to this geographic",
+        "description": "All restaurant locations within the city",
         "synonyms": ["restaurant locations"]
       },
       {
         "type": "reverse",
-        "name": "geographic",
-        "original parent": "geographies",
-        "original property": "locations",
+        "name": "city",
+        "original parent": "cities",
+        "original property": "restaurant_locations",
         "singular": true,
         "always matches": false,
-        "description": "The geographic linked with this location",
+        "description": "The geographic information for the city that the location belongs to",
         "synonyms": ["geography", "town"]
       },
       {
         "type": "simple join",
-        "name": "locations",
+        "name": "location",
         "parent collection": "restaurants",
         "child collection": "locations",
-        "singular": false,
-        "always matches": false,
+        "singular": true,
+        "always matches": true,
         "keys": {
           "id_": [
             "restaurant_id"
           ]
         },
-        "description": "All locations of this restaurant",
-        "synonyms": ["stores", "units"]
+        "description": "The location of this restaurant",
+        "synonyms": ["place", "diner"]
       },
       {
         "type": "reverse",
         "name": "restaurant",
         "original parent": "restaurants",
-        "original property": "locations",
+        "original property": "location",
         "singular": true,
-        "always matches": false,
+        "always matches": true,
         "description": "The restaurant related to this location",
         "synonyms": ["franchise", "chain"]
       },
       {
         "type": "simple join",
         "name": "restaurants",
-        "parent collection": "geographies",
+        "parent collection": "cities",
         "child collection": "restaurants",
         "singular": false,
         "always matches": false,
@@ -4650,11 +4650,11 @@
       },
       {
         "type": "reverse",
-        "name": "geographic",
-        "original parent": "geographies",
+        "name": "city",
+        "original parent": "cities",
         "original property": "restaurants",
         "singular": true,
-        "always matches": false,
+        "always matches": true,
         "description": "The geographic territory related to this restaurant",
         "synonyms": ["location", "territory"]
       }

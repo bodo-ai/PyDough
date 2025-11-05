@@ -4,5 +4,5 @@ FROM main.location
 GROUP BY
   1
 ORDER BY
-  COUNT(DISTINCT restaurant_id) DESC
+  COUNT(*) DESC
 LIMIT 1

@@ -1,17 +1,12 @@
-WITH _s0 AS (
-  SELECT
-    COUNT(*) AS n_rows
-  FROM main.restaurant
-  WHERE
-    LOWER(city_name) = 'san francisco' AND LOWER(food_type) = 'vegan'
-), _s1 AS (
-  SELECT
-    COUNT(*) AS n_rows
-  FROM main.restaurant
-  WHERE
-    LOWER(city_name) = 'san francisco' AND LOWER(food_type) <> 'vegan'
-)
 SELECT
-  _s0.n_rows / CASE WHEN _s1.n_rows > 0 THEN _s1.n_rows ELSE NULL END AS ratio
-FROM _s0 AS _s0
-CROSS JOIN _s1 AS _s1
+  COALESCE(COUNT_IF(LOWER(food_type) = 'vegan'), 0) / CASE
+    WHEN (
+      COUNT_IF(LOWER(food_type) <> 'vegan') <> 0
+      AND NOT COUNT_IF(LOWER(food_type) <> 'vegan') IS NULL
+    )
+    THEN COALESCE(COUNT_IF(LOWER(food_type) <> 'vegan'), 0)
+    ELSE NULL
+  END AS ratio
+FROM main.restaurant
+WHERE
+  LOWER(city_name) = 'san francisco'
