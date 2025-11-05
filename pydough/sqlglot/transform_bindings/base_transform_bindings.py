@@ -2189,28 +2189,6 @@ class BaseTransformBindings:
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
-        # Step 1: Create rows for each value in the range
-        rows = [(i,) for i in collection.range]
-
-        # Handle empty range by injecting a single NULL row
-        if not rows:
-            query = sqlglot_expressions.Select(
-                expressions=[
-                    sqlglot_expressions.Alias(
-                        this=sqlglot_expressions.Cast(
-                            this=sqlglot_expressions.Null(),
-                            to=sqlglot_expressions.DataType.build("INTEGER"),
-                        ),
-                        alias=sqlglot_expressions.Identifier(
-                            this=collection.column_name
-                        ),
-                    )
-                ],
-            ).where(sqlglot_expressions.false())
-        else:
-            # TODO: in next PR, find better way to build VALUES clause with SQLGlot
-            row_values = ", ".join(f"({i[0]})" for i in rows)
-            query_text = f"WITH {collection.name}({collection.column_name}) AS (VALUES {row_values}) select {collection.column_name} from {collection.name}"
-            query = parse_one(query_text)
-
-        return query
+        raise NotImplementedError(
+            "range_collections are not supported for this dialect"
+        )
