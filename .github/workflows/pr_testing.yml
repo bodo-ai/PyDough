@@ -150,9 +150,22 @@ jobs:
       - name: Run Tests
         run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked)" -rs
 
+  run-defog-daily-update:
+    name: Run DEFOG Daily Update
+    needs: [get-msg]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
+    uses: ./.github/workflows/defog_daily_update.yml
+    secrets:
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+      SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+
   run-sf-tests:
     name: Snowflake Tests
-    needs: [get-msg, get-py-ver-matrix]
+    needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
