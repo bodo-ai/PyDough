@@ -127,7 +127,9 @@ class MaskServerInfo:
                 return MaskServerResponse.UNSUPPORTED
 
     def simplify_simple_expression_batch(
-        self, batch: list[MaskServerInput]
+        self,
+        batch: list[MaskServerInput],
+        dry_run: bool,
     ) -> list[MaskServerOutput]:
         """
         Sends a batch of predicate expressions to the mask server for evaluation.
@@ -139,6 +141,7 @@ class MaskServerInfo:
 
         Args:
             `batch`: The list of inputs to be sent to the server.
+            `dry_run`: Whether to perform a dry run or not.
 
         Returns:
             An output list containing the response case and payload.
@@ -156,38 +159,48 @@ class MaskServerInfo:
 
         path: str = "v1/predicates/batch-evaluate"
         method: RequestMethod = RequestMethod.POST
-        request: ServerRequest = self.generate_request(batch, path, method)
+        request: ServerRequest = self.generate_request(batch, path, method, dry_run)
         response_json = self.connection.send_server_request(request)
         result: list[MaskServerOutput] = self.generate_result(response_json)
 
         return result
 
     def generate_request(
-        self, batch: list[MaskServerInput], path: str, method: RequestMethod
+        self,
+        batch: list[MaskServerInput],
+        path: str,
+        method: RequestMethod,
+        dry_run: bool,
     ) -> ServerRequest:
         """
         Generate a server request from the given batch of server inputs and path.
 
         Args:
             `batch`: A list of MaskServerInput objects.
-            `path`: The API endpoint path.
+            `path`: The server path for the request.
+            `method`: The HTTP method for the request.
+            `dry_run`: Whether the request is a dry run or not.
 
         Returns:
             A server request including payload to be sent.
 
         Example payload:
+        ```
         {
             "items": [
                 {
-                    "column_reference": "srv.db.tbl.col",
+                    "column_ref": {"kind": "fqn", "value": "srv.db.schema.table.name"},
                     "predicate": ["EQUAL", 2, "__col__", 1],
                     "mode": "dynamic",
-                    "dry_run": false
+                    "predicate_format": "linear_with_arity",
+                    "output_mode": "cell_encrypted",
+                    "dry_run": true/false,
                 },
                 ...
             ],
             "expression_format": {"name": "linear", "version": "0.2.0"}
         }
+        ```
         """
 
         payload: dict = {
@@ -197,10 +210,14 @@ class MaskServerInfo:
 
         for item in batch:
             evaluate_request: dict = {
-                "column_reference": f"{self.server_address}.{item.table_path}.{item.column_name}",
+                "column_ref": {
+                    "kind": "fqn",
+                    "value": f"{self.server_address}.{item.table_path}.{item.column_name}",
+                },
                 "predicate": item.expression,
+                "output_mode": "cell_encrypted",
                 "mode": "dynamic",
-                "dry_run": False,
+                "dry_run": dry_run,
             }
             payload["items"].append(evaluate_request)
 
@@ -208,15 +225,14 @@ class MaskServerInfo:
 
     def generate_result(self, response: dict) -> list[MaskServerOutput]:
         """
-        Generate a list of server outputs from the server response.
+        Generate a list of server outputs from the server response of a
+        non-dry-run request.
 
         Args:
             `response`: The response from the mask server.
 
-        Returns:
-            A list of server outputs objects.
-
         Example response:
+        ```
         {
             "result": "SUCCESS",
             "items": [
@@ -236,6 +252,10 @@ class MaskServerInfo:
                 ...
             ]
         }
+        ```
+
+        Returns:
+            A list of server outputs objects.
         """
         result: list[MaskServerOutput] = []
 

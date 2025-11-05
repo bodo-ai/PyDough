@@ -98,7 +98,7 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         # to None in the case of failure, or the rewritten expression in the
         # case of success.
         responses: list[MaskServerOutput] = (
-            self.server_info.simplify_simple_expression_batch(batch)
+            self.server_info.simplify_simple_expression_batch(batch, False)
         )
         assert len(responses) == len(ancillary_info)
         for (expr, input_expr), response in zip(ancillary_info, responses):
