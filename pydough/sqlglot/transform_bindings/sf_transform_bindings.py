@@ -186,7 +186,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
         # Handle empty range by injecting a single NULL row
         # SELECT CAST(NULL AS INT) AS x WHERE FALSE
         if row_count <= 0:
-            query = sqlglot_expressions.Select(
+            query: SQLGlotExpression = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Alias(
                         this=sqlglot_expressions.Cast(
@@ -199,12 +199,18 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                     )
                 ],
             ).where(sqlglot_expressions.false())
-        # Build the SQLGlot query using Snowflake's GENERATOR function
-        # " SELECT start + (SEQ4() * step) AS value FROM TABLE(
-        #   GENERATOR(ROWCOUNT => row_count))"
+
         else:
-            # Build the inner SELECT
-            inner_select = sqlglot_expressions.Select(
+            # Build the SQLGlot query using Snowflake's GENERATOR function
+            #   WITH table_name AS (
+            #       SELECT
+            #           start + SEQ4() * step AS column_name
+            #       FROM TABLE(GENERATOR(ROWCOUNT => row_count))
+            #   )
+            #   SELECT column_name FROM table_name
+
+            # 1. Build the inner SELECT
+            inner_select: SQLGlotExpression = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Alias(
                         this=sqlglot_expressions.Add(
@@ -242,13 +248,13 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 )
             )
 
-            # Wrap it as a subquery with alias
-            subquery = sqlglot_expressions.Subquery(
+            # 2. Wrap it as a subquery with alias
+            subquery: SQLGlotExpression = sqlglot_expressions.Subquery(
                 this=inner_select,
                 alias=sqlglot_expressions.Identifier(this=collection.name),
             )
 
-            # Outer SELECT that references the subquery
+            # 3. Outer SELECT that references the subquery
             query = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Column(

@@ -746,9 +746,9 @@ It takes in the following arguments:
 - `step`: The increment between consecutive values (default: 1).
 
 Supported Signatures:
-- `range_collection(end)`: generates integers from 0 to `end-1` with a step of 1.
-- `range_collection(start, end)`: generates integers from `start` to `end-1` with a step of 1.
-- `range_collection(start, end, step)`: generates integers from `start` to `end-1` with the specified `step`.
+- `range_collection(name, column_name, end)`: generates integers from 0 to `end-1` with a step of 1.
+- `range_collection(name, column_name, start, end)`: generates integers from `start` to `end-1` with a step of 1.
+- `range_collection(name, column_name, start, end, step)`: generates integers from `start` to `end-1` with the specified `step`.
 
 #### Example
 
