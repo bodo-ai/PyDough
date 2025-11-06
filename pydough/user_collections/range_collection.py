@@ -8,8 +8,6 @@ with a specified `step`. The user must specify the name of the collection and th
 name of the column that will hold the integer values.
 """
 
-from typing import Any
-
 from pydough.types import NumericType
 from pydough.types.pydough_type import PyDoughType
 from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
@@ -69,11 +67,6 @@ class RangeGeneratedCollection(PyDoughUserGeneratedCollection):
     @property
     def unique_column_names(self) -> list[str]:
         return [self.columns[0]]
-
-    @property
-    def data(self) -> Any:
-        """Return the range as the data of the collection."""
-        return self.range
 
     def __len__(self) -> int:
         return len(self._range)

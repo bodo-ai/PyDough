@@ -894,7 +894,7 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
             result = "generated_collection("
             result += f"name={unqualified._parcel[0].name!r}, "
             result += f"columns=[{', '.join(unqualified._parcel[0].columns)}],"
-            result += f"data={unqualified._parcel[0].data}"
+            result += f"data={unqualified._parcel[0].to_string()}"
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(

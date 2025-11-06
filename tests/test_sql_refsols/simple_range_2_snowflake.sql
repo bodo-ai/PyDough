@@ -1,6 +1,6 @@
 WITH simple_range AS (
   SELECT
-    0 + SEQ4() * 1 AS value
+    SEQ4() AS value
   FROM TABLE(GENERATOR(ROWCOUNT => 10))
 )
 SELECT

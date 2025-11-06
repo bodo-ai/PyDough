@@ -166,7 +166,7 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             # For other units, use base implementation
             return super().convert_datediff(args, types)
 
-    def _convert_user_generated_range(
+    def convert_user_generated_range(
         self, collection: RangeGeneratedCollection
     ) -> SQLGlotExpression:
         """
@@ -209,19 +209,33 @@ class SnowflakeTransformBindings(BaseTransformBindings):
             #   )
             #   SELECT column_name FROM table_name
 
-            # 1. Build the inner SELECT
+            # Step 1. Build the base expression: SEQ4() * step
+            # (or just SEQ4() if step == 1)
+            if collection.step == 1:
+                seq4_expr = sqlglot_expressions.Anonymous(this="SEQ4")
+            else:
+                seq4_expr = sqlglot_expressions.Mul(
+                    this=sqlglot_expressions.Anonymous(this="SEQ4"),
+                    expression=sqlglot_expressions.Literal.number(collection.step),
+                )
+
+            # Step 2. Add start if start != 0
+            # Final expression: start + SEQ4() * step
+            if collection.start != 0:
+                final_expr = sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Literal.number(collection.start),
+                    expression=seq4_expr,
+                )
+            else:
+                final_expr = seq4_expr
+
+            # 3. Build the inner SELECT
+            # SELECT start + SEQ4() * step AS column_name
+            # FROM TABLE(GENERATOR(ROWCOUNT => row_count))
             inner_select: SQLGlotExpression = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Alias(
-                        this=sqlglot_expressions.Add(
-                            this=sqlglot_expressions.Literal.number(collection.start),
-                            expression=sqlglot_expressions.Mul(
-                                this=sqlglot_expressions.Anonymous(this="SEQ4"),
-                                expression=sqlglot_expressions.Literal.number(
-                                    collection.step
-                                ),
-                            ),
-                        ),
+                        this=final_expr,
                         alias=sqlglot_expressions.Identifier(
                             this=collection.column_name
                         ),
@@ -248,13 +262,15 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 )
             )
 
-            # 2. Wrap it as a subquery with alias
+            # 4. Wrap it as a subquery with alias
+            # WITH table_name AS ( ...inner_select... )
             subquery: SQLGlotExpression = sqlglot_expressions.Subquery(
                 this=inner_select,
                 alias=sqlglot_expressions.Identifier(this=collection.name),
             )
 
-            # 3. Outer SELECT that references the subquery
+            # 5. Outer SELECT that references the subquery
+            # SELECT column_name FROM table_name
             query = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Column(

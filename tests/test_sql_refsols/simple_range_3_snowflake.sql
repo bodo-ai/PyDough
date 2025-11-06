@@ -1,6 +1,6 @@
 WITH t1 AS (
   SELECT
-    15 + SEQ4() * 1 AS foo
+    15 + SEQ4() AS foo
   FROM TABLE(GENERATOR(ROWCOUNT => 5))
 )
 SELECT

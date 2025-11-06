@@ -19,10 +19,13 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
     ):
         assert ancestor is not None
         super().__init__(ancestor)
-        self._collection = collection
+        self._collection: PyDoughUserGeneratedCollection = collection
+        self._all_property_names: set[str] = set()
         self._ancestral_mapping: dict[str, int] = {
             name: level + 1 for name, level in ancestor.ancestral_mapping.items()
         }
+        self._all_property_names.update(self._ancestral_mapping)
+        self._all_property_names.update(self.calc_terms)
 
     def clone_with_parent(
         self, new_ancestor: PyDoughCollectionQDAG
@@ -100,7 +103,7 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         """
         The set of expression/subcollection names accessible by the context.
         """
-        return self.calc_terms
+        return self._all_property_names
 
     def is_singular(self, context: "PyDoughCollectionQDAG") -> bool:
         return False
@@ -125,7 +128,7 @@ class PyDoughUserGeneratedCollectionQDag(ChildAccess):
         return f"USER_GENERATED_COLLECTION-{self.name}"
 
     def to_string(self) -> str:
-        return f"range_collection(table={self.name}, column={self.collection.columns}, range=({self.collection.data.start}, {self.collection.data.stop}, {self.collection.data.step}))"
+        return f"UserCollection[{self.collection.to_string()}]"
 
     @property
     def tree_item_string(self) -> str:

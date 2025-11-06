@@ -225,18 +225,6 @@ def _mergeable(
     ):
         return False
 
-    # PYDOUGH CHANGE: avoid merging CTEs when the inner scope uses
-    # SEQ4()/TABLE() and if any of these exist in the outer query:
-    # - joins - window functions - aggregations - limit/offset
-    if has_seq4_or_table(inner_scope.expression):
-        if (
-            outer_scope.expression.args.get("joins") is not None
-            or outer_scope.expression.find(exp.Window)
-            or outer_scope.expression.find(exp.Limit)
-            or outer_scope.expression.find(exp.AggFunc)
-        ):
-            return False
-
     inner_select = inner_scope.expression.unnest()
 
     def _is_a_window_expression_in_unmergable_operation():
@@ -336,4 +324,25 @@ def _mergeable(
         and not _is_a_window_expression_in_unmergable_operation()
         and not _is_recursive()
         and not (inner_select.args.get("order") and outer_scope.is_union)
+        # PYDOUGH CHANGE: avoid merging CTEs when the inner scope uses
+        # SEQ4()/TABLE() and if any of these exist in the outer query:
+        # - joins
+        # - window functions
+        # - aggregations
+        # - limit/offset
+        # - where/having/qualify clauses
+        # - group by
+        and not (
+            has_seq4_or_table(inner_scope.expression)
+            and (
+                outer_scope.expression.args.get("joins") is not None
+                or outer_scope.expression.find(exp.Window)
+                or outer_scope.expression.find(exp.Limit)
+                or outer_scope.expression.find(exp.AggFunc)
+                or outer_scope.expression.find(exp.Where)
+                or outer_scope.expression.find(exp.Having)
+                or outer_scope.expression.find(exp.Qualify)
+                or outer_scope.expression.find(exp.Group)
+            )
+        )
     )

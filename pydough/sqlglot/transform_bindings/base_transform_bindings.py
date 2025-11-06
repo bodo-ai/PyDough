@@ -2172,13 +2172,13 @@ class BaseTransformBindings:
 
         match collection:
             case RangeGeneratedCollection():
-                return self._convert_user_generated_range(collection)
+                return self.convert_user_generated_range(collection)
             case _:
                 raise PyDoughSQLException(
                     f"Unsupported user-generated collection type: {type(collection)}"
                 )
 
-    def _convert_user_generated_range(
+    def convert_user_generated_range(
         self,
         collection: RangeGeneratedCollection,
     ) -> SQLGlotExpression:

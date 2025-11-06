@@ -1,10 +1,10 @@
 WITH a AS (
   SELECT
-    0 + SEQ4() * 1 AS x
+    SEQ4() AS x
   FROM TABLE(GENERATOR(ROWCOUNT => 10))
 ), b AS (
   SELECT
-    0 + SEQ4() * 2 AS y
+    SEQ4() * 2 AS y
   FROM TABLE(GENERATOR(ROWCOUNT => 501))
 ), _s4 AS (
   SELECT
@@ -17,11 +17,11 @@ WITH a AS (
     1
 ), a_2 AS (
   SELECT
-    0 + SEQ4() * 1 AS x
+    SEQ4() AS x
   FROM TABLE(GENERATOR(ROWCOUNT => 10))
 ), b_2 AS (
   SELECT
-    0 + SEQ4() * 2 AS y
+    SEQ4() * 2 AS y
   FROM TABLE(GENERATOR(ROWCOUNT => 501))
 ), _s5 AS (
   SELECT

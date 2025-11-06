@@ -15,8 +15,6 @@ This document describes how to set up & interact with PyDough. For instructions 
    * [`pydough.to_df`](#pydoughto_df)
 - [Transformation APIs](#transformation-apis)
    * [`pydough.from_string`](#pydoughfrom_string)
-- [User Collection APIs](#user-collection-apis)
-   * [`pydough.range_collection`](#pydough_range_collection)
 - [Exploration APIs](#exploration-apis)
    * [`pydough.explain_structure`](#pydoughexplain_structure)
    * [`pydough.explain`](#pydoughexplain)
@@ -723,50 +721,6 @@ JOIN _s1 AS _s1
   ON _s1.o_custkey = customer.c_custkey
 ORDER BY
   3 DESC
-```
-
-<!-- TOC --><a name="user-collection-apis"></a>
-## User Collection APIs
-
-> [!WARNING]  
-> NOTE: User collections are currently supported **only in the Snowflake context**.
-
-This section describes APIs for dynamically creating PyDough collections and using them alongside other data sources.
-
-<!-- TOC --><a name="pydough_range_collection"></a>
-### `pydough.range_collection`
-
-The `range_collection` creates a collection that generates a sequence of integers within a specified range. This is useful for building numeric datasets dynamically.
-It takes in the following arguments:
-
-- `name`: The name of the range collection.
-- `column_name`: The name of the column in the collection.
-- `start`: The starting value of the range (inclusive).
-- `end`: The ending value of the range (exclusive).
-- `step`: The increment between consecutive values (default: 1).
-
-Supported Signatures:
-- `range_collection(name, column_name, end)`: generates integers from 0 to `end-1` with a step of 1.
-- `range_collection(name, column_name, start, end)`: generates integers from `start` to `end-1` with a step of 1.
-- `range_collection(name, column_name, start, end, step)`: generates integers from `start` to `end-1` with the specified `step`.
-
-#### Example
-
-```python
-import pydough
-
-my_range = pydough.range_collection("simple_range", "col1", 1, 10, 2)
-df = pydough.to_df(my_range)
-print(df)
-```
-Output:
-```
-    col1
-0     1
-1     3
-2     5
-3     7
-4     9
 ```
 
 <!-- TOC --><a name="exploration-apis"></a>

@@ -1,6 +1,6 @@
 WITH years AS (
   SELECT
-    1990 + SEQ4() * 1 AS year
+    1990 + SEQ4() AS year
   FROM TABLE(GENERATOR(ROWCOUNT => 11))
 ), _s5 AS (
   SELECT

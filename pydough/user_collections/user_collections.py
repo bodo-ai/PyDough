@@ -4,7 +4,6 @@ collection of the current context.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
 
 from pydough.types.pydough_type import PyDoughType
 
@@ -56,11 +55,6 @@ class PyDoughUserGeneratedCollection(ABC):
     @abstractmethod
     def unique_column_names(self) -> list[str]:
         """Return the set of unique column names in the collection."""
-
-    @property
-    @abstractmethod
-    def data(self) -> Any:
-        """Return information about data in the collection."""
 
     @abstractmethod
     def always_exists(self) -> bool:

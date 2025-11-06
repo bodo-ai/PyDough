@@ -1,6 +1,6 @@
 WITH sizes AS (
   SELECT
-    1 + SEQ4() * 1 AS part_size
+    1 + SEQ4() AS part_size
   FROM TABLE(GENERATOR(ROWCOUNT => 10))
 ), _t0 AS (
   SELECT
