@@ -17,7 +17,11 @@ from pydough.pydough_operators import (
     PyDoughOperator,
     builtin_registered_operators,
 )
+from pydough.qdag.collections.user_collection_qdag import (
+    PyDoughUserGeneratedCollectionQDag,
+)
 from pydough.types import PyDoughType
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .abstract_pydough_qdag import PyDoughQDAG
 from .collections import (
@@ -396,3 +400,26 @@ class AstNodeBuilder:
             The newly created PyDough SINGULAR instance.
         """
         return Singular(preceding_context)
+
+    def build_generated_collection(
+        self,
+        preceding_context: PyDoughCollectionQDAG,
+        user_collection: PyDoughUserGeneratedCollection,
+    ) -> PyDoughUserGeneratedCollectionQDag:
+        """
+        Creates a new user-defined collection.
+
+        Args:
+            `preceding_context`: the preceding collection that the
+            user-defined collection is based on.
+            `user_collection`: the user-defined collection to be created.
+
+        Returns:
+            The newly created user-defined collection.
+        """
+        collection_qdag: PyDoughUserGeneratedCollectionQDag = (
+            PyDoughUserGeneratedCollectionQDag(
+                ancestor=preceding_context, collection=user_collection
+            )
+        )
+        return collection_qdag

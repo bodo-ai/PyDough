@@ -728,25 +728,27 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
             database=database_name,
             schema=schema_name,
         )
-        # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day
-        with connection.cursor() as cur:
-            cur.execute("""
-                DECLARE last_mod DATE;
 
-            BEGIN
-                -- Get table last modified date
-                SELECT DATE(LAST_ALTERED) INTO last_mod
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE table_catalog='DEFOG' 
-                    AND table_schema = 'BROKER'
-                    AND table_name = 'SBDAILYPRICE';
+        if not is_ci():
+            # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day
+            with connection.cursor() as cur:
+                cur.execute("""
+                    DECLARE last_mod DATE;
 
-                -- If last modified is before today, call the procedure
-                IF (last_mod < CURRENT_DATE()) THEN
-                    CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
-                END IF;
-            END;
-            """)
+                BEGIN
+                    -- Get table last modified date
+                    SELECT DATE(LAST_ALTERED) INTO last_mod
+                    FROM INFORMATION_SCHEMA.TABLES
+                    WHERE table_catalog='DEFOG' 
+                        AND table_schema = 'BROKER'
+                        AND table_name = 'SBDAILYPRICE';
+
+                    -- If last modified is before today, call the procedure
+                    IF (last_mod < CURRENT_DATE()) THEN
+                        CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
+                    END IF;
+                END;
+                """)
 
         return load_database_context("snowflake", connection=connection)
 

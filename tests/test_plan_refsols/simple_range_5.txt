@@ -1,0 +1,2 @@
+ROOT(columns=[('x', x)], orderings=[])
+ GENERATED_TABLE(RangeCollection('T3', x=range(0, -1)))
