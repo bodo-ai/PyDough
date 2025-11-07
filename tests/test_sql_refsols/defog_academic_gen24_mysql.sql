@@ -3,10 +3,8 @@ WITH _u_0 AS (
     domain_conference.cid AS _u_1,
     writes.pid AS _u_2
   FROM main.writes AS writes
-  JOIN main.author AS author
-    ON author.aid = writes.aid
   JOIN main.domain_author AS domain_author
-    ON author.aid = domain_author.aid
+    ON domain_author.aid = writes.aid
   JOIN main.domain AS domain
     ON LOWER(domain.name) LIKE '%sociology%' AND domain.did = domain_author.did
   JOIN main.domain_conference AS domain_conference

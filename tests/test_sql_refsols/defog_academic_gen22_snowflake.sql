@@ -7,12 +7,10 @@ WITH _s0 AS (
   SELECT
     _s0.aid AS _u_1
   FROM _s0 AS _s0
-  JOIN main.domain AS domain
-    ON _s0.did = domain.did
-  JOIN _s0 AS _s3
-    ON _s3.did = domain.did
+  JOIN _s0 AS _s1
+    ON _s0.did = _s1.did
   JOIN main.author AS author
-    ON CONTAINS(LOWER(author.name), 'martin') AND _s3.aid = author.aid
+    ON CONTAINS(LOWER(author.name), 'martin') AND _s1.aid = author.aid
   GROUP BY
     1
 )
