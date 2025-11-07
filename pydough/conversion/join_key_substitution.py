@@ -1,5 +1,7 @@
 """
-TODO
+Logic for switching references to join keys from one side of a join to the other
+when certain conditions are met, thus allowing the join to be removed by the
+column pruner.
 """
 
 from pydough.relational import (
@@ -20,7 +22,7 @@ from pydough.relational.rel_util import (
 
 class JoinKeySubstitutionShuttle(RelationalShuttle):
     """
-    TODO
+    The relational shuttle that performs join key substitution optimization.
     """
 
     def visit_join(self, join: Join) -> RelationalNode:
@@ -87,7 +89,13 @@ class JoinKeySubstitutionShuttle(RelationalShuttle):
 
 def join_key_substitution(root: RelationalNode) -> RelationalNode:
     """
-    TODO
+    The main entry point for join key substitution optimization.
+
+    Args:
+        `root`: The root of the relational tree being optimized.
+
+    Returns:
+        The optimized relational tree.
     """
     shuttle: JoinKeySubstitutionShuttle = JoinKeySubstitutionShuttle()
     return root.accept_shuttle(shuttle)
