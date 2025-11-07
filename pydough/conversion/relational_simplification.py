@@ -24,6 +24,7 @@ from pydough.relational import (
     CorrelatedReference,
     EmptySingleton,
     Filter,
+    GeneratedTable,
     Join,
     JoinType,
     Limit,
@@ -1282,8 +1283,14 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         )
 
                     case _:
-                        # All other cases remain non-simplified.
-                        pass
+                        # Simplify comparing an expression to itself as
+                        # True/False. All other cases remain non-simplified.
+                        if expr.inputs[0] == expr.inputs[1]:
+                            is_eq: bool = expr.op in (pydop.EQU, pydop.LEQ, pydop.GEQ)
+                            output_expr = LiteralExpression(is_eq, expr.data_type)
+                            output_predicates |= PredicateSet(
+                                not_null=True, not_negative=True, positive=is_eq
+                            )
 
                 output_predicates.not_negative = True
 
@@ -1564,6 +1571,12 @@ class SimplificationVisitor(RelationalVisitor):
         self.stack.append(output_predicates)
 
     def visit_empty_singleton(self, node: EmptySingleton) -> None:
+        output_predicates: dict[RelationalExpression, PredicateSet] = (
+            self.generic_visit(node)
+        )
+        self.stack.append(output_predicates)
+
+    def visit_generated_table(self, node: GeneratedTable) -> None:
         output_predicates: dict[RelationalExpression, PredicateSet] = (
             self.generic_visit(node)
         )

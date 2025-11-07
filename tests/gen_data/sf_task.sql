@@ -527,6 +527,75 @@ VALUES
 ('TX054', 'C018', 'T004', DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' + INTERVAL '4 days', 'sell', 30, 180.00, 5400.00, 'USD', 27.00, 5.00, 'KP054', TO_CHAR(DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months' + INTERVAL '4 days', '%Y%m%d %H:%i:%s'), 'success'),
 ('TX055', 'C019', 'T005', DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month' + INTERVAL '5 days', 'buy', 10, 2500.00, 25000.00, 'USD', 125.00, 15.00, 'KP055', TO_CHAR(DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month' + INTERVAL '5 days', '%Y%m%d %H:%i:%s'), 'success'),
 ('TX056', 'C002', 'T006', DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 day', 'sell', 20, 200.00, 4000.00, 'USD', 20.00, 10.00, 'KP056', TO_CHAR(DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 day', '%Y%m%d %H:%i:%s'), 'success');
+-------------------------------------------------------------------------------
+  DELETE FROM DEFOG.DERMTREATMENT.DOCTORS;
+  INSERT INTO DEFOG.DERMTREATMENT.DOCTORS (doc_id, first_name, last_name, specialty, year_reg, med_school_name, loc_city, loc_state, loc_zip, bd_cert_num) 
+VALUES
+(1, 'John', 'Doe', 'dermatology', EXTRACT(YEAR FROM CURRENT_DATE) - 2, 'Johns Hopkins University', 'Baltimore', 'MD', '21201', 'ABC123'),
+(2,'Jane', 'Smith', 'immunology', EXTRACT(YEAR FROM CURRENT_DATE) - 2, 'Harvard Medical School', 'Boston', 'MA', '02115', 'XYZ789'),
+(3, 'David', 'Johnson', 'general', 1998, 'University of Pennsylvania', 'Philadelphia', 'PA', '19104', 'DEF456'),
+(4, 'Emily', 'Brown', 'dermatology', 2015, 'Stanford University', 'Palo Alto', 'CA', '94304', 'GHI012'),
+(5, 'Michael', 'Davis', 'immunology', 2008, 'Duke University', 'Durham', 'NC', '27708', 'JKL345'),
+(6, 'Sarah', 'Wilson', 'oncology', EXTRACT(YEAR FROM CURRENT_DATE) - 1, 'University of California, San Francisco', 'San Francisco', 'CA', '94143', 'MNO678'),
+(7, 'Robert', 'Taylor', 'dermatology', 2012, 'Yale University', 'New Haven', 'CT', '06510', 'PQR901'),
+(8, 'Laura', 'Martinez', 'immunology', 2006, 'University of Michigan', 'Ann Arbor', 'MI', '48109', 'STU234'),
+(9, 'Daniel', 'Garcia', 'general', EXTRACT(YEAR FROM CURRENT_DATE) - 3, 'University of Chicago', 'Chicago', 'IL', '60637', 'VWX567'),
+(10, 'Olivia', 'Anderson', 'dermatology', 2018, 'Columbia University', 'New York', 'NY', '10027', 'YZA890');
+
+  DELETE FROM DEFOG.DERMTREATMENT.TREATMENTS;
+  INSERT INTO DEFOG.DERMTREATMENT.TREATMENTS (treatment_id, patient_id, doc_id, drug_id, diag_id, start_dt, end_dt, is_placebo, tot_drug_amt, drug_unit)
+VALUES
+(1, 1, 1, 1, 1, '2022-01-01', '2022-06-30', false, 240, 'mg'),
+(2, 2, 2, 2, 2, '2022-02-15', '2022-08-14', true, 180, 'mg'),
+(3, 3, 3, 3, 3, '2022-03-10', '2022-09-09', false, 360, 'g'),
+(4, 4, 4, 4, 4, '2022-04-01', NULL, false, 200, 'mg'),
+(5, 5, 5, 5, 5, '2022-05-01', '2022-10-31', false, 180, 'mg'),
+(6, 6, 6, 6, 6, '2022-06-15', '2022-12-14', false, 720, 'g'),
+(7, 1, 7, 1, 7, '2022-07-01', '2022-12-31', true, 240, 'mg'),
+(8, 2, 1, 2, 8, '2022-08-01', '2023-01-31', false, 180, 'mg'),
+(9, 3, 2, 3, 9, '2022-09-01', '2023-02-28', false, 360, 'g'),
+(10, 4, 3, 4, 10, '2022-10-01', NULL, true, 0, NULL),
+(11, 5, 4, 5, 1, '2022-11-01', '2023-04-30', true, 180, 'mg'),
+(12, 6, 5, 6, 2, '2022-12-01', '2023-05-31', false, 720, 'g'),
+(13, 7, 6, 1, 3, '2023-01-01', '2023-06-30', false, 240, 'mg'),
+(14, 1, 7, 2, 4, '2023-02-01', '2023-07-31', false, 180, 'mg'),
+(15, 2, 1, 3, 5, '2023-03-01', '2023-08-31', false, 360, 'g'),
+(16, 1, 2, 4, 6, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 year', DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months', false, 300, 'mg'),
+(17, 2, 5, 1, 8, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 year', DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '4 months', false, 80, 'mg'),
+(18, 3, 6, 2, 9, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months', NULL, true, 200, 'mg'),
+(19, 1, 7, 3, 10, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '4 months', NULL, false, 150, 'g'),
+(20, 2, 1, 4, 1, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '3 months', NULL, false, 100, 'mg'),
+(21, 3, 2, 5, 2, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '2 months', NULL, false, 250, 'mg'),
+(22, 1, 3, 6, 3, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month', NULL, false, 300, 'g'),
+(23, 2, 4, 1, 4, CURRENT_DATE, NULL, true, 200, 'mg'),
+(24, 3, 5, 2, 5, CURRENT_DATE, NULL, false, 150, 'mg'),
+(25, 9, 1, 1, 1, CURRENT_DATE - INTERVAL '6 months', CURRENT_DATE - INTERVAL '3 months', false, 240, 'mg'),
+(26, 10, 2, 2, 2, CURRENT_DATE - INTERVAL '5 months', CURRENT_DATE - INTERVAL '2 months', false, 180, 'mg');
+
+  DELETE FROM DEFOG.DERMTREATMENT.OUTCOMES;
+  INSERT INTO DEFOG.DERMTREATMENT.OUTCOMES (outcome_id, treatment_id, assess_dt, day7_lesion_cnt, day30_lesion_cnt, day100_lesion_cnt, day7_pasi_score, day30_pasi_score, day100_pasi_score, day7_tewl, day30_tewl, day100_tewl, day7_itch_vas, day30_itch_vas, day100_itch_vas, day7_hfg, day30_hfg, day100_hfg)  
+VALUES
+(1, 1, '2022-01-08', 20, 15, 5, 12.5, 8.2, 2.1, 18.2, 15.6, 12.1, 60, 40, 20, 1.5, 2.5, 4.0),
+(2, 2, '2022-02-22', 25, 18, 8, 15.0, 10.1, 3.5, 20.1, 17.2, 13.5, 70, 50, 30, 1.0, 2.0, 3.5),
+(3, 3, '2022-03-17', 18, 12, 3, 10.8, 6.4, 1.2, 16.5, 14.0, 10.8, 55, 35, 15, 2.0, 3.0, 4.5),
+(4, 4, '2022-04-08', 30, 25, 12, 18.2, 13.9, 5.8, 22.4, 19.1, 15.2, 80, 60, 40, 0.5, 1.5, 3.0),
+(5, 5, '2022-05-08', 22, 16, 6, 13.1, 8.7, 2.6, 19.0, 16.3, 12.7, 65, 45, 25, 1.2, 2.2, 3.8),
+(6, 6, '2022-06-22', 28, 21, 10, 16.7, 11.5, 4.3, 21.3, 18.1, 14.3, 75, 55, 35, 0.8, 1.8, 3.3),
+(7, 7, '2022-07-08', 19, 13, 4, 11.2, 6.9, 1.5, 17.1, 14.5, 11.2, 58, 38, 18, 1.8, 2.8, 4.3),
+(8, 8, '2022-08-08', 26, 19, 9, 15.6, 10.6, 3.8, 20.7, 17.6, 13.9, 72, 52, 32, 0.7, 1.7, 3.2),
+(9, 9, '2022-09-08', 21, 15, 5, 12.3, 8.0, 2.0, 18.6, 15.9, 12.4, 62, 42, 22, 1.4, 2.4, 3.9),
+(10, 10, '2022-10-08', 32, 30, 25, 19.5, 17.8, 14.1, 23.2, 21.4, 18.7, 85, 80, 70, 0.2, 0.4, 0.8),
+(11, 11, '2022-11-08', 23, 17, 7, 13.7, 9.2, 2.9, 19.5, 16.8, 13.1, 68, 48, 28, 1.1, 2.1, 3.6),
+(12, 12, '2022-12-08', 29, 23, 11, 17.4, 12.3, 4.9, 21.8, 18.7, 14.8, 78, 58, 38, 0.6, 1.6, 3.1),
+(13, 13, '2023-01-08', 18, 12, 3, 10.5, 6.1, 1.0, 16.9, 14.3, 11.0, 56, 36, 16, 1.9, 2.9, 4.4),
+(14, 14, '2023-02-08', 27, 20, 10, 16.2, 11.1, 4.1, 21.0, 17.9, 14.1, 74, 54, 34, 0.5, 1.5, 3.0), 
+(15, 15, '2023-03-08', 20, 14, 4, 11.8, 7.3, 1.7, 17.8, 15.2, 11.8, 60, 40, 20, 1.6, 2.6, 4.1),
+(16, 16, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months' + INTERVAL '7 days', 24, 18, 8, 14.4, 9.6, 3.2, 20.4, 17.4, 13.7, 70, 50, 30, 0.9, 1.9, 3.4),
+(17, 17, DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month' + INTERVAL '7 days', 22, 16, NULL, 13.2, 8.8, NULL, 19.1, 16.3, NULL, 65, 45, NULL, 1.3, 2.3, NULL),
+(18, 25, CURRENT_DATE - INTERVAL '6 months' + INTERVAL '7 days', 30, NULL, NULL, 18.0, NULL, NULL, 22.0, NULL, NULL, 80, NULL, NULL, 1.0, NULL, NULL),  
+(19, 25, CURRENT_DATE - INTERVAL '2 months', 30, 18, 10, 18.0, 12.0, 4.0, 22.0, 19.0, 15.0, 80, 60, 40, 1.0, 2.0, 3.0),
+(20, 26, CURRENT_DATE - INTERVAL '5 months' + INTERVAL '7 days', 25, NULL, NULL, 15.0, NULL, NULL, 20.0, NULL, NULL, 75, NULL, NULL, 0.5, NULL, NULL),
+(21, 26, CURRENT_DATE - INTERVAL '1 month', 25, 18, 10, 15.0, 10.0, 5.0, 20.0, 17.0, 13.0, 75, 55, 35, 0.5, 1.5, 3.0);
 
 END
 $$;

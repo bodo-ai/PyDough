@@ -1,0 +1,72 @@
+name: Run DEFOG Daily Update
+
+on:
+  workflow_call:
+    secrets:
+      SF_USERNAME:
+        required: true
+      SF_PASSWORD:
+        required: true
+      SF_ACCOUNT:
+        required: true
+
+jobs:
+  defog-daily-update:
+    name: DEFOG Daily Update
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Snowflake Connector
+        run: pip install snowflake-connector-python
+
+      - name: Run DEFOG_DAILY_UPDATE if table is older than 1 day
+        env:
+          SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+        run: |
+          python << 'EOF'
+          import snowflake.connector
+          import os
+
+          conn = snowflake.connector.connect(
+              user=os.environ['SF_USERNAME'],
+              password=os.environ['SF_PASSWORD'],
+              account=os.environ['SF_ACCOUNT'],
+              warehouse='DEMO_WH',
+              database='DEFOG',
+              schema='BROKER',
+          )
+
+          cursor = conn.cursor()
+          
+          # Check if table data is a day or more old. 
+          # If so, run the stored procedure to update it.
+          cursor.execute("""
+                DECLARE last_mod DATE;
+
+                BEGIN
+                    -- Get table last modified date
+                    SELECT DATE(LAST_ALTERED) INTO last_mod
+                    FROM INFORMATION_SCHEMA.TABLES
+                    WHERE table_catalog='DEFOG' 
+                        AND table_schema = 'BROKER'
+                        AND table_name = 'SBDAILYPRICE';
+
+                    -- If last modified is before today, call the procedure
+                    IF (last_mod < CURRENT_DATE()) THEN
+                        CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
+                    END IF;
+                END;
+          """)
+          
+          cursor.close()
+          conn.close()
+          EOF

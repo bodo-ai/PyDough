@@ -48,6 +48,7 @@ from .hybrid_operations import (
     HybridPartition,
     HybridPartitionChild,
     HybridRoot,
+    HybridUserGeneratedCollection,
 )
 
 
@@ -798,6 +799,8 @@ class HybridTree:
                 # Stepping into a partition child always has a matching data
                 # record for each parent, by definition.
                 pass
+            case HybridUserGeneratedCollection():
+                return start_operation.user_collection.collection.always_exists()
             case _:
                 raise NotImplementedError(
                     f"Invalid start of pipeline: {start_operation.__class__.__name__}"
@@ -848,12 +851,14 @@ class HybridTree:
             case HybridChildPullUp():
                 if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
                     return False
+            case HybridUserGeneratedCollection():
+                return self.pipeline[0].user_collection.collection.is_singular()
             case HybridRoot():
                 pass
             case _:
                 return False
         # The current level is fine, so check any levels above it next.
-        return True if self.parent is None else self.parent.always_exists()
+        return True if self.parent is None else self.parent.is_singular()
 
     def equals_ignoring_successors(self, other: "HybridTree") -> bool:
         """

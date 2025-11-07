@@ -9,7 +9,13 @@ from sqlglot.expressions import AggFunc as SQLGlotAggFunc
 from sqlglot.expressions import Alias as SQLGlotAlias
 from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
-from sqlglot.expressions import Identifier, Select, Subquery, TableAlias, values
+from sqlglot.expressions import (
+    Identifier,
+    Select,
+    Subquery,
+    TableAlias,
+    values,
+)
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
 from sqlglot.expressions import Star as SQLGlotStar
@@ -26,6 +32,7 @@ from pydough.relational import (
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
+    GeneratedTable,
     Join,
     Limit,
     LiteralExpression,
@@ -566,6 +573,14 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
                 root.limit
             )
             query = query.limit(limit_expr)
+        self._stack.append(query)
+
+    def visit_generated_table(self, generated_table: "GeneratedTable") -> None:
+        query: SQLGlotExpression = (
+            self._expr_visitor._bindings.convert_user_generated_collection(
+                generated_table.collection
+            )
+        )
         self._stack.append(query)
 
     def relational_to_sqlglot(self, root: RelationalRoot) -> SQLGlotExpression:

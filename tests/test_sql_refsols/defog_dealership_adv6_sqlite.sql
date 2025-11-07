@@ -13,8 +13,8 @@ FROM main.cars AS cars
 JOIN _t AS _t
   ON NOT _t.is_in_inventory AND _t._w = 1 AND _t.car_id = cars._id
 LEFT JOIN main.sales AS sales
-  ON _t.car_id = sales.car_id
+  ON cars._id = sales.car_id
 GROUP BY
-  _t.car_id
+  cars._id
 ORDER BY
   3 DESC
