@@ -4,15 +4,18 @@ available.
 """
 
 import os
+import shutil
 import sqlite3
 import subprocess
 import time
 from collections.abc import Callable
 from functools import cache
 
+import boto3
 import httpx
 import pandas as pd
 import pytest
+from botocore.exceptions import ClientError
 
 import pydough
 import pydough.pydough_operators as pydop
@@ -641,6 +644,110 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     connection: sqlite3.Connection = sqlite3.connect(":memory:")
     connection.execute(f"attach database '{path}' as CRBNK")
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+
+#  Custom datasets helpers
+def get_s3_client() -> boto3.Session.client:
+    """
+    Generates an S3 client with the stablished credentials
+
+    Creates an S3 client.
+    - In CI: assumes OIDC credentials (provided by GitHub Actions)
+    - Locally: uses AWS credentials from environment or ~/.aws/credentials
+    """
+    if is_ci():
+        # Running in GitHub Actions CI — OIDC role will be assumed automatically
+        # Assuming in CI has aws-actions/configure-aws-credentials
+        session = boto3.Session()
+    else:
+        # Local development — use credentials stored in environment variables or ~/.aws/credentials
+        session = boto3.Session(
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name="us-east-2",
+        )
+
+    return session.client("s3")
+
+
+def get_s3_custom_datasets(
+    s3_client: boto3.Session.client,
+    data_folder: str,
+    metadata_folder: str,
+    datasets: list[str],
+) -> None:
+    """
+    Downloads data from a test S3 bucket.
+    """
+
+    bucket: str = "llm-fixtures"
+
+    for dataset in datasets:
+        local_data_path: str = f"{data_folder}/{dataset}.db"
+        local_metadata_path: str = f"{metadata_folder}/{dataset}.json"
+
+        key_data: str = f"data/{dataset}.db"
+        key_metadata: str = f"metadata/{dataset}.json"
+        try:
+            s3_client.download_file(bucket, key_data, local_data_path)
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                print(
+                    f"The file {key_data} or {key_metadata} does not exist in bucket {bucket}."
+                )
+            else:
+                raise
+        try:
+            s3_client.download_file(bucket, key_metadata, local_metadata_path)
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                print(
+                    f"The file {key_data} or {key_metadata} does not exist in bucket {bucket}."
+                )
+            else:
+                raise
+
+        breakpoint()
+
+
+def remove_s3_custom_datasets(data_folder: str, metadata_folder: str) -> None:
+    """
+    TODO
+    """
+
+    try:
+        shutil.rmtree(data_folder)
+        shutil.rmtree(metadata_folder)
+    except OSError as e:
+        print(f"Error removing the folders: {e}")
+
+
+@pytest.fixture(scope="session")
+def custom_datasets_setup():
+    """
+    TODO
+    """
+    datasets: list[str] = ["synthea", "academic"]
+    data_folder: str = "./tests/gen_data/custom"
+    metadata_folder: str = "./tests/test_metadata/custom"
+
+    # Create the folders
+    try:
+        os.makedirs(data_folder, exist_ok=True)
+        os.makedirs(metadata_folder, exist_ok=True)
+    except PermissionError:
+        print(f"Permission denied: Unable to create '{data_folder}'.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    # Create the client
+    s3_client: boto3.Session.client = get_s3_client()
+
+    get_s3_custom_datasets(s3_client, data_folder, metadata_folder, datasets)
+    print("datasetes downloaded")
+    yield
+    print("removing datasetes")
+    remove_s3_custom_datasets(data_folder, metadata_folder)
 
 
 @pytest.fixture(scope="session")

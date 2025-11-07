@@ -348,6 +348,7 @@ def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_test_graph_by_name: graph_fetcher,
     sqlite_custom_datasets_connection: DatabaseContext,
+    custom_datasets_setup,
 ):
     """
     Test executing the the custom queries with the custom datasets against the
