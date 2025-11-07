@@ -24,6 +24,7 @@ from pydough.relational import (
     CorrelatedReference,
     EmptySingleton,
     Filter,
+    GeneratedTable,
     Join,
     JoinType,
     Limit,
@@ -1570,6 +1571,12 @@ class SimplificationVisitor(RelationalVisitor):
         self.stack.append(output_predicates)
 
     def visit_empty_singleton(self, node: EmptySingleton) -> None:
+        output_predicates: dict[RelationalExpression, PredicateSet] = (
+            self.generic_visit(node)
+        )
+        self.stack.append(output_predicates)
+
+    def visit_generated_table(self, node: GeneratedTable) -> None:
         output_predicates: dict[RelationalExpression, PredicateSet] = (
             self.generic_visit(node)
         )

@@ -442,7 +442,7 @@ You can find a full example of using Postgres database with PyDough in [this usa
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 
-This sections describes various APIs you can use to execute PyDough code. 
+This section describes various APIs you can use to execute PyDough code. 
 
 <!-- TOC --><a name="pydoughto_sql"></a>
 ### `pydough.to_sql`
@@ -548,10 +548,10 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
 
-<!-- TOC --><a name="evaluation-apis"></a>
+<!-- TOC --><a name="transformation-apis"></a>
 ## Transformation APIs
 
-This sections describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
+This section describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
 
 <!-- TOC --><a name="pydoughfrom_string"></a>
 ### `pydough.from_string`
@@ -726,7 +726,7 @@ ORDER BY
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
-This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
+This section describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
 
 See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 

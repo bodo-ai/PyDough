@@ -3,9 +3,8 @@ This file contains functionality for interacting with SQLGlot expressions
 that can act as wrappers around the internal implementation of SQLGlot.
 """
 
-from sqlglot.expressions import (
-    Alias as SQLGlotAlias,
-)
+from sqlglot.expressions import Alias as SQLGlotAlias
+from sqlglot.expressions import Column as SQLGlotColumn
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.expressions import (
     Identifier,
@@ -32,6 +31,10 @@ def get_glot_name(expr: SQLGlotExpression) -> str | None:
     if expr.alias:
         return expr.alias
     elif isinstance(expr, Identifier):
+        return expr.this
+    if isinstance(expr, SQLGlotColumn):
+        if isinstance(expr.this, Identifier):
+            return expr.this.this
         return expr.this
     else:
         return None
