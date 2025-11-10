@@ -429,12 +429,15 @@ def add_expr_uses(
 
 def extract_equijoin_keys(
     join: Join,
+    extra_filters: set[RelationalExpression] | None = None,
 ) -> tuple[list[ColumnReference], list[ColumnReference]]:
     """
     Extracts the equi-join keys from a join condition with two inputs.
 
     Args:
         `join`: the Join node whose condition is being parsed.
+        `extra_filters`: an optional set of extra filter expressions to
+        consider as part of the join condition, or applied after it.
 
     Returns:
         A tuple where the first element are the equi-join keys from the LHS,
@@ -444,6 +447,8 @@ def extract_equijoin_keys(
     lhs_keys: list[ColumnReference] = []
     rhs_keys: list[ColumnReference] = []
     stack: list[RelationalExpression] = [join.condition]
+    if extra_filters is not None:
+        stack.extend(list(extra_filters))
     lhs_name: str | None = join.default_input_aliases[0]
     rhs_name: str | None = join.default_input_aliases[1]
     while stack:

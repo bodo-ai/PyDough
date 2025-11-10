@@ -10,3 +10,5 @@ JOIN keywords.`lowercase_detail` AS `lowercase_detail`
   AND `lowercase_detail`.`0 = 0 and '` = '2 "0 = 0 and ''" field name'
 JOIN keywords.`lowercase_detail` AS lowercase_detail_2
   ON `CAST`.id = lowercase_detail_2.id AND lowercase_detail_2.id = 1
+WHERE
+  `CAST`.id = 1
