@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(DEFAULT_TO(YEAR(UNMASK::(DATE([c_birthday], '+472 days'))), 1990:numeric), [1990, 2005]:array[unknown]), columns={})
+   SCAN(table=CRBNK.CUSTOMERS, columns={'c_birthday': c_birthday})

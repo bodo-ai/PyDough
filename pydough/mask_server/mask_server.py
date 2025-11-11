@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from pydough.logger import get_logger
 from pydough.mask_server.server_connection import (
     RequestMethod,
     ServerConnection,
@@ -88,22 +89,25 @@ class MaskServerOutput:
 
 class MaskServerInfo:
     """
-    The MaskServeraInfo class is responsible for evaluating predicates against a
+    The MaskServerInfo class is responsible for evaluating predicates against a
     given table and column. It interacts with an external mask server to
     perform the evaluation.
     """
 
-    def __init__(self, base_url: str, token: str | None = None):
+    def __init__(self, base_url: str, server_address: str, token: str | None = None):
         """
         Initialize the MaskServerInfo with the given server URL.
 
         Args:
             `base_url`: The URL of the mask server.
+            `server_address`: The server address to place at the front of all
+            qualified table paths.
             `token`: Optional authentication token for the server.
         """
         self.connection: ServerConnection = ServerConnection(
             base_url=base_url, token=token
         )
+        self.server_address: str = server_address
 
     def get_server_response_case(self, server_case: str) -> MaskServerResponse:
         """
@@ -139,13 +143,20 @@ class MaskServerInfo:
         Returns:
             An output list containing the response case and payload.
         """
+
+        # Log the batch request
+        pyd_logger = get_logger(__name__)
+        pyd_logger.info(f"Batch request to Mask Server ({len(batch)} items):")
+        for idx, item in enumerate(batch):
+            pyd_logger.info(
+                f"({idx + 1}) {item.table_path}.{item.column_name}: {item.expression}"
+            )
+
         assert batch != [], "Batch cannot be empty."
 
         path: str = "v1/predicates/batch-evaluate"
         method: RequestMethod = RequestMethod.POST
-
         request: ServerRequest = self.generate_request(batch, path, method)
-
         response_json = self.connection.send_server_request(request)
         result: list[MaskServerOutput] = self.generate_result(response_json)
 
@@ -186,7 +197,7 @@ class MaskServerInfo:
 
         for item in batch:
             evaluate_request: dict = {
-                "column_reference": f"{item.table_path}.{item.column_name}",
+                "column_reference": f"{self.server_address}.{item.table_path}.{item.column_name}",
                 "predicate": item.expression,
                 "mode": "dynamic",
                 "dry_run": False,
