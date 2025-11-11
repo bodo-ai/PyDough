@@ -1,0 +1,7 @@
+SELECT
+  name
+FROM main.restaurant
+ORDER BY
+  rating DESC NULLS LAST,
+  1 DESC NULLS LAST
+LIMIT 3
