@@ -4,7 +4,6 @@ available.
 """
 
 import os
-import shutil
 import sqlite3
 import subprocess
 import time
@@ -205,21 +204,14 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
-def get_test_graph_by_name() -> graph_fetcher:
+def get_custom_datasets_graph() -> graph_fetcher:
     """
-    Returns a known test graph requested if the graph location was included in test_graph_location.
+    Returns the graph for the given custom dataset.
     """
-    test_graph_location: dict[str, str] = {
-        "synthea": "synthea_graph.json",
-        "world_development_indicators": "world_development_indicators_graph.json",
-        "keywords": "reserved_words_graph.json",
-        "keywords_case_insensitive": "reserved_words_graph.json",
-    }
 
     @cache
     def impl(name: str) -> GraphMetadata:
-        file_name: str = test_graph_location[name]
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/{file_name}"
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
@@ -646,21 +638,38 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
-#  Custom datasets helpers
+CUSTOM_DATASETS = ["synthea", "soccer_2016", "wdi", "keywords"]
+"""
+    Contains the name of all the custom datasets that will be used for testing.
+    This includes the datasets from S3 and initialized with a .sql file.
+"""
+CUSTOM_DATASETS_SCRIPTS = {
+    "synthea": "init_synthea_sqlite",
+    "keywords": "init_reserved_words_sqlite",
+    "wdi": "init_world_indicators_sqlite",
+}
+"""
+    Maps the datasets that need to be built with a sql script, with the name of
+    the script file. These datasets are NOT downloaded from S3.
+"""
+
+
 def get_s3_client() -> boto3.Session.client:
     """
-    Generates an S3 client with the stablished credentials
+    Generates an S3 client with the stablished credentials. For CI assumes OIDC
+    credentials provided by Github Actions
 
-    Creates an S3 client.
-    - In CI: assumes OIDC credentials (provided by GitHub Actions)
-    - Locally: uses AWS credentials from environment or ~/.aws/credentials
+    Returns:
+        The client of the created boto3 session
     """
+    session: boto3.Session
     if is_ci():
         # Running in GitHub Actions CI — OIDC role will be assumed automatically
         # Assuming in CI has aws-actions/configure-aws-credentials
         session = boto3.Session()
     else:
-        # Local development — use credentials stored in environment variables or ~/.aws/credentials
+        # Local development — use credentials stored in environment
+        # variables or ~/.aws/credentials
         session = boto3.Session(
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
@@ -675,120 +684,134 @@ def get_s3_custom_datasets(
     data_folder: str,
     metadata_folder: str,
     datasets: list[str],
+    scripts: dict[str, str],
 ) -> None:
     """
-    Downloads data from a test S3 bucket.
+    Sets up the data and metadata for custom datasets testing. This includes
+    downloading the data (.db file) and metadata (.json file) from llm-fixtures
+    bucket and place them in data_folder and metadata_folder respectvely.Also,
+    includes executing the init script avaliable in CUSTOM_DATASETS_SCRIPTS,
+    when the script is executed the metadata must be created manually for testing
     """
 
     bucket: str = "llm-fixtures"
 
     for dataset in datasets:
-        local_data_path: str = f"{data_folder}/{dataset}.db"
-        local_metadata_path: str = f"{metadata_folder}/{dataset}.json"
+        db_file: str = f"{data_folder}/{dataset}.db"
 
-        key_data: str = f"data/{dataset}.db"
-        key_metadata: str = f"metadata/{dataset}.json"
-        try:
-            s3_client.download_file(bucket, key_data, local_data_path)
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                print(
-                    f"The file {key_data} or {key_metadata} does not exist in bucket {bucket}."
-                )
-            else:
-                raise
-        try:
-            s3_client.download_file(bucket, key_metadata, local_metadata_path)
-        except ClientError as e:
-            if e.response["Error"]["Code"] == "404":
-                print(
-                    f"The file {key_data} or {key_metadata} does not exist in bucket {bucket}."
-                )
-            else:
-                raise
+        if dataset in scripts:
+            # setting up with script
+            # assuming the metadata is already in the repo
+            init_sql = f"{data_folder}/{scripts[dataset]}.sql"
+            subprocess.run(f"sqlite3 {db_file} < {init_sql}", shell=True, check=True)
+        else:
+            # download from s3
+            local_metadata_path: str = f"{metadata_folder}/{dataset}_graph.json"
 
-        breakpoint()
+            key_data: str = f"data/{dataset}.db"
+            key_metadata: str = f"metadata/{dataset}.json"
+            try:
+                s3_client.download_file(bucket, key_data, db_file)
+            except ClientError as e:
+                if e.response["Error"]["Code"] == "404":
+                    print(f"The file {key_data} does not exist in bucket {bucket}.")
+                else:
+                    raise
+            try:
+                s3_client.download_file(bucket, key_metadata, local_metadata_path)
+            except ClientError as e:
+                if e.response["Error"]["Code"] == "404":
+                    print(f"The file {key_metadata} does not exist in bucket {bucket}.")
+                else:
+                    raise
 
 
-def remove_s3_custom_datasets(data_folder: str, metadata_folder: str) -> None:
+def remove_s3_custom_datasets(
+    db_folder: str, metadata_folder: str, datasets: list[str], scripts: dict[str, str]
+) -> None:
     """
-    TODO
+    Removes the custom datasets (.db and .json for s3 datasets)
     """
+    database_path: str
+    metadata_path: str
 
-    try:
-        shutil.rmtree(data_folder)
-        shutil.rmtree(metadata_folder)
-    except OSError as e:
-        print(f"Error removing the folders: {e}")
+    for dataset in datasets:
+        if dataset not in scripts:
+            # delete the metadata only for datasets from s3
+            metadata_path = f"{metadata_folder}/{dataset}_graph.json"
+            try:
+                os.remove(metadata_path)
+            except FileNotFoundError:
+                print(f"Error: File '{metadata_path}' not found.")
+            except Exception as e:
+                print(f"An error occurred: {e}")
+
+        database_path = f"{db_folder}/{dataset}.db"
+        try:
+            os.remove(database_path)
+        except FileNotFoundError:
+            print(f"Error: File '{database_path}' not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
 
 @pytest.fixture(scope="session")
 def custom_datasets_setup():
     """
-    TODO
+    Sets up all custom datasets for testing downloading or running the init
+    script. After the test are done it removes everithing
     """
-    datasets: list[str] = ["synthea", "academic"]
-    data_folder: str = "./tests/gen_data/custom"
-    metadata_folder: str = "./tests/test_metadata/custom"
-
-    # Create the folders
-    try:
-        os.makedirs(data_folder, exist_ok=True)
-        os.makedirs(metadata_folder, exist_ok=True)
-    except PermissionError:
-        print(f"Permission denied: Unable to create '{data_folder}'.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    data_folder: str = "./tests/gen_data"
+    metadata_folder: str = "./tests/test_metadata"
 
     # Create the client
     s3_client: boto3.Session.client = get_s3_client()
 
-    get_s3_custom_datasets(s3_client, data_folder, metadata_folder, datasets)
-    print("datasetes downloaded")
+    get_s3_custom_datasets(
+        s3_client,
+        data_folder,
+        metadata_folder,
+        CUSTOM_DATASETS,
+        CUSTOM_DATASETS_SCRIPTS,
+    )
+    print("Datasetes downloaded")
     yield
-    print("removing datasetes")
-    remove_s3_custom_datasets(data_folder, metadata_folder)
+    print("\nRemoving datasetes")
+    remove_s3_custom_datasets(
+        data_folder, metadata_folder, CUSTOM_DATASETS, CUSTOM_DATASETS_SCRIPTS
+    )
 
 
 @pytest.fixture(scope="session")
-def sqlite_custom_datasets_connection() -> DatabaseContext:
+def sqlite_custom_datasets_connection(
+    custom_datasets_setup,
+) -> Callable[[str], DatabaseContext]:
     """
-    Returns the SQLITE database connection with all the custom datasets attached.
+    This fixture is used to connect to the sqlite database of the custom datasets.
+    Returns a DatabaseContext for the MySQL TPCH database.
     """
-    gen_data_path: str = "tests/gen_data"
-    # Dataset tuple format: (schema_name, db_file_name, init_sql_file_name)
-    SQLite_datasets: list[tuple[str, str, str]] = [
-        ("synthea", "synthea.db", "init_synthea_sqlite.sql"),
-        ("wdi", "world_development_indicators.db", "init_world_indicators_sqlite.sql"),
-        ("keywords", "reserved_words.db", "init_reserved_words_sqlite.sql"),
-    ]
-
-    # List of shell commands required to re-create all the db files
-    commands: list[str] = [f"cd {gen_data_path}"]
-    # Collect all db_file_names into the rm command
-    rm_command: str = "rm -fv " + " ".join(
-        db_file for (_, db_file, _) in SQLite_datasets
-    )
-    commands.append(rm_command)
-    # Add one sqlite3 command per dataset
-    for _, db_file, init_sql in SQLite_datasets:
-        commands.append(f"sqlite3 {db_file} < {init_sql}")
-    # Get the shell commands required to re-create all the db files
-    shell_cmd: str = "; ".join(commands)
-
+    custom_datasets_dir: str = "tests/gen_data"
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    # Setup the world development indicators database.
-    subprocess.run(shell_cmd, shell=True, check=True)
-    # Central in-memory connection
-    connection: sqlite3.Connection = sqlite3.connect(":memory:")
 
-    # Use (schema_name, db_file_name info) on SQLite_datasets to ATTACH DBs
-    for schema, db_file, _ in SQLite_datasets:
-        path: str = os.path.join(base_dir, gen_data_path, db_file)
-        connection.execute(f"ATTACH DATABASE '{path}' AS {schema}")
+    # Construct the full path to the datasets directory
+    full_dir_path: str = os.path.join(base_dir, custom_datasets_dir)
 
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    @cache
+    def _impl(database_name: str) -> DatabaseContext:
+        connection: sqlite3.Connection
+
+        file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
+
+        if database_name not in CUSTOM_DATASETS_SCRIPTS:
+            connection = sqlite3.connect(file_path)
+        else:
+            connection = sqlite3.connect(":memory:")
+            connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
+
+        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+    return _impl
 
 
 SF_ENVS = ["SF_USERNAME", "SF_PASSWORD", "SF_ACCOUNT"]

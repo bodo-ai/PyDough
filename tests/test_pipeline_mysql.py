@@ -563,7 +563,7 @@ def test_pipeline_e2e_mysql_defog(
 @pytest.mark.execute
 def test_pipeline_e2e_mysql_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
-    get_test_graph_by_name: graph_fetcher,
+    get_custom_datasets_graph: graph_fetcher,
     mysql_conn_db_context: Callable[[str], DatabaseContext],
 ):
     """
@@ -573,7 +573,7 @@ def test_pipeline_e2e_mysql_custom_datasets(
     # Just run the "keywords" tests
     if custom_datasets_test_data.graph_name.lower() == "keywords":
         custom_datasets_test_data.run_e2e_test(
-            get_test_graph_by_name,
+            get_custom_datasets_graph,
             mysql_conn_db_context(custom_datasets_test_data.graph_name.lower()),
             coerce_types=True,
         )

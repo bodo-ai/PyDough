@@ -562,7 +562,7 @@ def test_pipeline_e2e_postgres_defog(
 @pytest.mark.execute
 def test_pipeline_e2e_postgres_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
-    get_test_graph_by_name: graph_fetcher,
+    get_custom_datasets_graph: graph_fetcher,
     postgres_conn_db_context: DatabaseContext,
 ):
     """
@@ -572,7 +572,7 @@ def test_pipeline_e2e_postgres_custom_datasets(
     # Just run the "keywords" tests
     if custom_datasets_test_data.graph_name.lower() == "keywords":
         custom_datasets_test_data.run_e2e_test(
-            get_test_graph_by_name, postgres_conn_db_context, coerce_types=True
+            get_custom_datasets_graph, postgres_conn_db_context, coerce_types=True
         )
     else:
         pytest.skip("Skipping non-keywords custom dataset tests for Postgres.")
