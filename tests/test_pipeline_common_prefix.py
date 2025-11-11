@@ -623,12 +623,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher
                     {
                         "name": [
                             f"Customer#{i:09}"
-                            for i in (138841, 36091, 54952, 103768, 46081)
+                            for i in (6434, 45280, 60493, 87616, 132775)
                         ],
-                        "n_orders": [21, 20, 19, 19, 17],
+                        "n_orders": [2, 2, 2, 2, 2],
                     }
                 ),
                 "common_prefix_y",
+                order_sensitive=True,
             ),
             id="common_prefix_y",
         ),

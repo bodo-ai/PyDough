@@ -1,5 +1,5 @@
 ROOT(columns=[('user_name', user_name), ('n_cold_war_searches', n_rows)], orderings=[(n_rows):desc_last, (user_name):asc_first], limit=3:numeric)
- JOIN(condition=t0.user_id == t1.anything_search_user_id, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'n_rows': t1.n_rows, 'user_name': t0.user_name})
+ JOIN(condition=t0.user_id == t1.anything_search_user_id, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'n_rows': t1.n_rows, 'user_name': t0.user_name})
   SCAN(table=USERS, columns={'user_id': user_id, 'user_name': user_name})
   AGGREGATE(keys={'anything_search_user_id': anything_search_user_id}, aggregations={'n_rows': COUNT()})
    AGGREGATE(keys={'search_id': search_id}, aggregations={'anything_search_user_id': ANYTHING(search_user_id)})

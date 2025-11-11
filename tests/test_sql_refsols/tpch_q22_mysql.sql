@@ -5,10 +5,9 @@ WITH _s0 AS (
   WHERE
     c_acctbal > 0.0
     AND SUBSTRING(c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
-), _s3 AS (
+), _u_0 AS (
   SELECT
-    o_custkey,
-    COUNT(*) AS n_rows
+    o_custkey AS _u_1
   FROM tpch.ORDERS
   GROUP BY
     1
@@ -21,10 +20,10 @@ FROM _s0 AS _s0
 JOIN tpch.CUSTOMER AS CUSTOMER
   ON CUSTOMER.c_acctbal > _s0.avg_c_acctbal
   AND SUBSTRING(CUSTOMER.c_phone, 1, 2) IN ('13', '31', '23', '29', '30', '18', '17')
-LEFT JOIN _s3 AS _s3
-  ON CUSTOMER.c_custkey = _s3.o_custkey
+LEFT JOIN _u_0 AS _u_0
+  ON CUSTOMER.c_custkey = _u_0._u_1
 WHERE
-  _s3.n_rows = 0 OR _s3.n_rows IS NULL
+  _u_0._u_1 IS NULL
 GROUP BY
   1
 ORDER BY

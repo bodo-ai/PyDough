@@ -59,6 +59,6 @@ SELECT
   COALESCE(sum_n_rows, 0) AS incidents
 FROM _t1
 WHERE
-  NOT sum_expr_3 IS NULL AND sum_expr_3 > 0
+  NOT sum_expr_3 IS NULL AND sum_expr_3 <> 0
 ORDER BY
   1

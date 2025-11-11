@@ -224,7 +224,7 @@ class HybridSyncretizer:
             HybridFilter(
                 tree.pipeline[-1],
                 HybridFunctionExpr(
-                    pydop.GRT if is_semi else pydop.EQU,
+                    pydop.NEQ if is_semi else pydop.EQU,
                     [agg_ref, literal_zero],
                     BooleanType(),
                 ),

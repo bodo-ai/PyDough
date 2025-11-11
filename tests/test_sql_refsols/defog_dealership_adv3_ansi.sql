@@ -1,17 +1,21 @@
-WITH _s1 AS (
+WITH _t1 AS (
   SELECT
-    car_id,
-    COUNT(*) AS n_rows
-  FROM main.sales
+    ANY_VALUE(cars.make) AS anything_make,
+    ANY_VALUE(cars.model) AS anything_model,
+    COUNT(sales.car_id) AS count_car_id
+  FROM main.cars AS cars
+  LEFT JOIN main.sales AS sales
+    ON cars._id = sales.car_id
+  WHERE
+    LOWER(cars.vin_number) LIKE '%m5%'
   GROUP BY
-    1
+    cars._id
 )
 SELECT
-  cars.make,
-  cars.model,
-  COALESCE(_s1.n_rows, 0) AS num_sales
-FROM main.cars AS cars
-LEFT JOIN _s1 AS _s1
-  ON _s1.car_id = cars._id
-WHERE
-  LOWER(cars.vin_number) LIKE '%m5%'
+  anything_make AS make,
+  anything_model AS model,
+  COALESCE(SUM(count_car_id), 0) AS num_sales
+FROM _t1
+GROUP BY
+  1,
+  2

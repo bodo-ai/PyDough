@@ -25,7 +25,7 @@ SELECT
   COALESCE(sum_sum_tot_drug_amt, 0) AS total_drug_amount
 FROM _t1
 WHERE
-  sum_n_rows > 0
+  sum_n_rows <> 0
 ORDER BY
   3 DESC
 LIMIT 3

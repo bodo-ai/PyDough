@@ -1,3 +1,3 @@
 SELECT
-  SUM(NOT cid IS NULL) / CASE WHEN SUM(NOT jid IS NULL) > 0 THEN SUM(NOT jid IS NULL) ELSE NULL END AS ratio
+  SUM(NOT cid IS NULL) / NULLIF(SUM(NOT jid IS NULL), 0) AS ratio
 FROM main.publication

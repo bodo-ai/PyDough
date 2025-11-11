@@ -158,7 +158,7 @@ def year_cumulative_incident_rate_overall():
             n_devices=COUNT(calendar.devices_sold),
             n_incidents=COUNT(calendar.incidents_reported),
         )
-        .WHERE(n_devices > 0)
+        .WHERE(n_devices != 0)
         .CALCULATE(
             yr=year,
             cum_ir=ROUND(

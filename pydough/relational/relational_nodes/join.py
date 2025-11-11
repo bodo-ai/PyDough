@@ -90,6 +90,23 @@ class JoinCardinality(Enum):
         else:
             return self
 
+    def add_plural(self) -> "JoinCardinality":
+        """
+        Returns a new JoinCardinality referring to the current value but with
+        plural cardinality added.
+        """
+        if self in (JoinCardinality.SINGULAR_FILTER, JoinCardinality.UNKNOWN_FILTER):
+            return JoinCardinality.PLURAL_FILTER
+        elif self in (JoinCardinality.SINGULAR_ACCESS, JoinCardinality.UNKNOWN_ACCESS):
+            return JoinCardinality.PLURAL_ACCESS
+        elif self in (
+            JoinCardinality.SINGULAR_UNKNOWN,
+            JoinCardinality.UNKNOWN_UNKNOWN,
+        ):
+            return JoinCardinality.PLURAL_UNKNOWN
+        else:
+            return self
+
     @property
     def accesses(self) -> bool:
         """
