@@ -46,6 +46,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-custom:
+        description: "Run Custom Datasets Tests"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -107,8 +112,6 @@ jobs:
 
           # Output to GitHub Actions expected format
           echo "matrix=$joined" >> $GITHUB_OUTPUT
-
-
 
   run-python-tests:
     name: Main Python Tests
@@ -232,3 +235,51 @@ jobs:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
                       || '["3.10", "3.11", "3.12"]' }}
+
+  run-custom-tests:
+    name: Custom datasets Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run custom]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-custom))
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        python-version: ${{ github.event_name == 'workflow_dispatch'
+                        && fromJSON(needs.get-py-ver-matrix.outputs.matrix)
+                        || fromJSON('["3.10", "3.11", "3.12"]') }}
+    steps:
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.READ_LLM_FIXTURES_ROLE }}
+          aws-region: us-east-2
+      
+      - uses: actions/checkout@v4
+
+      - name: Setup Python ${{ matrix.python-version }}
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.4.23"
+
+      - name: Create virtual environment
+        run: uv venv
+
+      - name: Install dependencies
+        run: uv pip install -e ".[boto3]"
+
+      - name: Confirm Snowflake connector is installed
+        run: uv run python -c "import boto3; print('boto3 installed')"
+
+      - name: Run Snowflake Tests
+        run: uv run pytest -m custom tests/ -rs

@@ -560,6 +560,7 @@ def test_pipeline_e2e_mysql_defog(
 
 
 @pytest.mark.mysql
+@pytest.mark.custom
 @pytest.mark.execute
 def test_pipeline_e2e_mysql_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811

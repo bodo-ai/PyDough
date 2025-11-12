@@ -554,6 +554,7 @@ def test_defog_e2e(
 
 
 @pytest.mark.snowflake
+@pytest.mark.custom
 @pytest.mark.execute
 def test_pipeline_e2e_snowflake_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
