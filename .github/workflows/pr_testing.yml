@@ -276,10 +276,10 @@ jobs:
         run: uv venv
 
       - name: Install dependencies
-        run: uv pip install -e ".[boto3]"
+        run: uv pip install -e ".[boto3, snowflake, mysql, postgres]"
 
       - name: Confirm Snowflake connector is installed
-        run: uv run python -c "import boto3; print('boto3 installed')"
+        run: uv run python -c "import boto3; import mysql.connector; import snowflake.connector; import psycopg2; print('All connectors installed')"
 
       - name: Run Snowflake Tests
         run: uv run pytest -m custom tests/ -rs
