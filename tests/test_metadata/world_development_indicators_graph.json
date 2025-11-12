@@ -4,1104 +4,1390 @@
     "version": "V2",
     "collections": [
       {
-        "name": "Country",
+        "name": "country",
         "type": "simple table",
         "table path": "wdi.Country",
         "unique properties": [
-          "CountryCode"
+          "countrycode"
         ],
         "properties": [
           {
-            "name": "CountryCode",
+            "name": "countrycode",
             "type": "table column",
             "column name": "CountryCode",
             "data type": "string",
-            "description": "Unique 3-letter World Bank country code",
+            "description": "Unique three-letter code identifying countries and regions.",
             "sample values": [
+              "ABW",
+              "ADO",
               "AFG",
-              "ALB",
-              "DZA"
+              "AGO",
+              "ALB"
             ],
-            "synonyms": []
+            "synonyms": [
+              "CountryCode"
+            ]
           },
           {
-            "name": "ShortName",
+            "name": "shortname",
             "type": "table column",
             "column name": "ShortName",
             "data type": "string",
-            "description": "Common short name of the country",
+            "description": "Short name of the country or region.",
             "sample values": [
               "Afghanistan",
               "Albania",
-              "Algeria"
+              "Algeria",
+              "American Samoa",
+              "Andorra"
             ],
-            "synonyms": []
+            "synonyms": [
+              "ShortName"
+            ]
           },
           {
-            "name": "TableName",
+            "name": "tablename",
             "type": "table column",
             "column name": "TableName",
             "data type": "string",
-            "description": "Table-friendly country name",
+            "description": "The table name for the country, often the same as the short name.",
             "sample values": [
               "Afghanistan",
               "Albania",
-              "Algeria"
+              "Algeria",
+              "American Samoa",
+              "Andorra"
             ],
-            "synonyms": []
+            "synonyms": [
+              "TableName"
+            ]
           },
           {
-            "name": "LongName",
+            "name": "longname",
             "type": "table column",
             "column name": "LongName",
             "data type": "string",
-            "description": "Official long form of the country name",
+            "description": "The full, formal name of the country or region.",
             "sample values": [
               "Islamic State of Afghanistan",
               "Republic of Albania",
-              "People's Democratic Republic of Algeria"
+              "People's Democratic Republic of Algeria",
+              "American Samoa",
+              "Principality of Andorra"
             ],
-            "synonyms": []
+            "synonyms": [
+              "LongName"
+            ]
           },
           {
-            "name": "Alpha2Code",
+            "name": "alpha2code",
             "type": "table column",
             "column name": "Alpha2Code",
             "data type": "string",
-            "description": "ISO two-letter country code",
+            "description": "The two-letter ISO 3166-1 alpha-2 country code.",
             "sample values": [
               "AF",
               "AL",
-              "DZ"
+              "DZ",
+              "AS",
+              "AD"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Alpha2Code"
+            ]
           },
           {
-            "name": "CurrencyUnit",
+            "name": "currencyunit",
             "type": "table column",
             "column name": "CurrencyUnit",
             "data type": "string",
-            "description": "Official currency unit of the country",
+            "description": "The official currency unit of the country.",
             "sample values": [
               "Afghan afghani",
               "Albanian lek",
-              "Algerian dinar"
+              "Algerian dinar",
+              "U.S. dollar",
+              "Euro"
             ],
-            "synonyms": []
+            "synonyms": [
+              "CurrencyUnit"
+            ]
           },
           {
-            "name": "SpecialNotes",
+            "name": "specialnotes",
             "type": "table column",
             "column name": "SpecialNotes",
             "data type": "string",
-            "description": "Special notes or remarks about the country data",
+            "description": "Special notes or comments regarding the country's data.",
             "sample values": [
-              "Fiscal year end: March 20",
-              "Original chained constant price data are rescaled.",
-              ""
+              "Fiscal year end: March 20; reporting ...",
+              "",
+              "April 2013 database update: Based on ...",
+              "April 2012 database update: Based on ...",
+              "Arab World aggregate. Arab World is c..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "SpecialNotes"
+            ]
           },
           {
-            "name": "Region",
+            "name": "region",
             "type": "table column",
             "column name": "Region",
             "data type": "string",
-            "description": "Geographic region classification",
+            "description": "The geographical region the country belongs to.",
             "sample values": [
               "South Asia",
               "Europe & Central Asia",
-              "Middle East & North Africa"
+              "Middle East & North Africa",
+              "East Asia & Pacific",
+              "Sub-Saharan Africa"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Region"
+            ]
           },
           {
-            "name": "IncomeGroup",
+            "name": "incomegroup",
             "type": "table column",
             "column name": "IncomeGroup",
             "data type": "string",
-            "description": "World Bank income group classification",
+            "description": "The income level classification of the country (e.g., Low income, High income).",
             "sample values": [
               "Low income",
               "Upper middle income",
-              "Upper middle income"
+              "High income: nonOECD",
+              "",
+              "Lower middle income"
             ],
-            "synonyms": []
+            "synonyms": [
+              "IncomeGroup"
+            ]
           },
           {
-            "name": "Wb2Code",
+            "name": "wb2code",
             "type": "table column",
             "column name": "Wb2Code",
             "data type": "string",
-            "description": "Alternative World Bank country code",
+            "description": "Two-letter World Bank country code.",
             "sample values": [
               "AF",
               "AL",
-              "DZ"
+              "DZ",
+              "AS",
+              "AD"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Wb2Code"
+            ]
           },
           {
-            "name": "NationalAccountsBaseYear",
+            "name": "nationalaccountsbaseyear",
             "type": "table column",
             "column name": "NationalAccountsBaseYear",
             "data type": "string",
-            "description": "Base year used for national accounts",
+            "description": "The year used as the base period for constant price calculations in the country's national accounts.",
             "sample values": [
               "2002/03",
-              "Original chained constant price data are rescaled.",
-              "1980"
+              "Original chained constant price data ...",
+              "1980",
+              "",
+              "2000"
             ],
-            "synonyms": []
+            "synonyms": [
+              "NationalAccountsBaseYear"
+            ]
           },
           {
-            "name": "NationalAccountsReferenceYear",
+            "name": "nationalaccountsreferenceyear",
             "type": "table column",
             "column name": "NationalAccountsReferenceYear",
             "data type": "string",
-            "description": "Reference year for national accounts",
+            "description": "The reference year for the country's national accounts data.",
             "sample values": [
               "",
               "1996",
-              ""
+              "2013/14",
+              "2010",
+              "2000"
             ],
-            "synonyms": []
+            "synonyms": [
+              "NationalAccountsReferenceYear"
+            ]
           },
           {
-            "name": "SnaPriceValuation",
+            "name": "snapricevaluation",
             "type": "table column",
             "column name": "SnaPriceValuation",
             "data type": "string",
-            "description": "System of National Accounts price valuation method",
+            "description": "The System of National Accounts (SNA) price valuation method used.",
             "sample values": [
               "Value added at basic prices (VAB)",
-              "Value added at basic prices (VAB)",
-              "Value added at basic prices (VAB)"
+              "",
+              "Value added at producer prices (VAP)"
             ],
-            "synonyms": []
+            "synonyms": [
+              "SnaPriceValuation"
+            ]
           },
           {
-            "name": "LendingCategory",
+            "name": "lendingcategory",
             "type": "table column",
             "column name": "LendingCategory",
             "data type": "string",
-            "description": "World Bank lending category",
+            "description": "The World Bank lending category for the country.",
             "sample values": [
               "IDA",
               "IBRD",
-              "IBRD"
+              "",
+              "Blend"
             ],
-            "synonyms": []
+            "synonyms": [
+              "LendingCategory"
+            ],
+            "extra semantic info": {
+              "value_descriptions": {
+                "IDA": "International Development Association, the part of the World Bank that helps the world's poorest countries.",
+                "IBRD": "The International Bank for Reconstruction and Development, a global development cooperative.",
+                "Blend": "Countries eligible for IDA loans that also have some creditworthiness for IBRD borrowing."
+              }
+            }
           },
           {
-            "name": "OtherGroups",
+            "name": "othergroups",
             "type": "table column",
             "column name": "OtherGroups",
             "data type": "string",
-            "description": "Other World Bank classification groups",
+            "description": "Membership in other economic or political groups.",
             "sample values": [
               "HIPC",
               "",
-              ""
+              "Euro area"
             ],
-            "synonyms": []
+            "synonyms": [
+              "OtherGroups"
+            ],
+            "extra semantic info": {
+              "value_descriptions": {
+                "HIPC": "Heavily Indebted Poor Countries.",
+                "Euro area": "Member States of the European Union that have adopted the euro as their currency."
+              }
+            }
           },
           {
-            "name": "SystemOfNationalAccounts",
+            "name": "systemofnationalaccounts",
             "type": "table column",
             "column name": "SystemOfNationalAccounts",
             "data type": "string",
-            "description": "System of National Accounts methodology used",
+            "description": "The version of the System of National Accounts (SNA) the country uses.",
             "sample values": [
-              "Country uses the 1993 System",
-              "Country uses the 1993 System",
-              "Country uses the 1968 System"
+              "Country uses the 1993 System of Natio...",
+              "Country uses the 1968 System of Natio...",
+              "",
+              "Country uses the 2008 System of Natio..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "SystemOfNationalAccounts"
+            ]
           },
           {
-            "name": "AlternativeConversionFactor",
+            "name": "alternativeconversionfactor",
             "type": "table column",
             "column name": "AlternativeConversionFactor",
             "data type": "string",
-            "description": "Alternative currency conversion factor",
+            "description": "The underlying annual exchange rate used for the World Bank Atlas method.",
             "sample values": [
               "",
-              "",
-              ""
+              "1991\u009696",
+              "1971\u009684",
+              "1990\u009695",
+              "1992\u009695"
             ],
-            "synonyms": []
+            "synonyms": [
+              "AlternativeConversionFactor"
+            ]
           },
           {
-            "name": "PppSurveyYear",
+            "name": "pppsurveyyear",
             "type": "table column",
             "column name": "PppSurveyYear",
             "data type": "string",
-            "description": "Year of last PPP survey",
+            "description": "The year of the Purchasing Power Parity (PPP) survey.",
             "sample values": [
               "",
               "Rolling",
-              "2011"
+              "2011",
+              "2011 (household consumption only)."
             ],
-            "synonyms": []
+            "synonyms": [
+              "PppSurveyYear"
+            ]
           },
           {
-            "name": "BalanceOfPaymentsManualInUse",
+            "name": "balanceofpaymentsmanualinuse",
             "type": "table column",
             "column name": "BalanceOfPaymentsManualInUse",
             "data type": "string",
-            "description": "Version of IMF Balance of Payments manual used",
+            "description": "The edition of the Balance of Payments Manual in use.",
             "sample values": [
-              "IMF Balance of Payments Manual, 6th edition.",
-              "IMF Balance of Payments Manual, 6th edition.",
-              "IMF Balance of Payments Manual, 6th edition."
+              "",
+              "IMF Balance of Payments Manual, 6th e..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "BalanceOfPaymentsManualInUse"
+            ]
           },
           {
-            "name": "ExternalDebtReportingStatus",
+            "name": "externaldebtreportingstatus",
             "type": "table column",
             "column name": "ExternalDebtReportingStatus",
             "data type": "string",
-            "description": "Status of external debt reporting",
+            "description": "The status of the external debt reporting.",
             "sample values": [
               "Actual",
-              "Actual",
-              "Actual"
+              "",
+              "Preliminary",
+              "Estimate"
             ],
-            "synonyms": []
+            "synonyms": [
+              "ExternalDebtReportingStatus"
+            ],
+            "extra semantic info": {
+              "commonsense evidence": {
+                "Actual": "The external debt reporting is final and based on actual figures.",
+                "Estimate": "The external debt reporting is based on an estimation.",
+                "Preliminary": "The external debt reporting is not yet final."
+              }
+            }
           },
           {
-            "name": "SystemOfTrade",
+            "name": "systemoftrade",
             "type": "table column",
             "column name": "SystemOfTrade",
             "data type": "string",
-            "description": "Type of trade system reported",
+            "description": "The system of trade accounting used (General or Special).",
             "sample values": [
               "General trade system",
-              "General trade system",
-              "Special trade system"
+              "Special trade system",
+              ""
             ],
-            "synonyms": []
+            "synonyms": [
+              "SystemOfTrade"
+            ]
           },
           {
-            "name": "GovernmentAccountingConcept",
+            "name": "governmentaccountingconcept",
             "type": "table column",
             "column name": "GovernmentAccountingConcept",
             "data type": "string",
-            "description": "Concept of government accounting used",
+            "description": "The accounting concept used for government finances.",
             "sample values": [
               "Consolidated central government",
               "Budgetary central government",
-              "Budgetary central government"
+              ""
             ],
-            "synonyms": []
+            "synonyms": [
+              "GovernmentAccountingConcept"
+            ]
           },
           {
-            "name": "ImfDataDisseminationStandard",
+            "name": "imfdatadisseminationstandard",
             "type": "table column",
             "column name": "ImfDataDisseminationStandard",
             "data type": "string",
-            "description": "IMF statistical dissemination standard applied",
+            "description": "The IMF data dissemination standard the country adheres to.",
             "sample values": [
               "General Data Dissemination System (GDDS)",
-              "General Data Dissemination System (GDDS)",
-              "General Data Dissemination System (GDDS)"
+              "",
+              "Special Data Dissemination Standard (..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "ImfDataDisseminationStandard"
+            ]
           },
           {
-            "name": "LatestPopulationCensus",
+            "name": "latestpopulationcensus",
             "type": "table column",
             "column name": "LatestPopulationCensus",
             "data type": "string",
-            "description": "Year of most recent population census",
+            "description": "The year or period of the latest population census.",
             "sample values": [
               "1979",
               "2011",
-              "2008"
+              "2008",
+              "2010",
+              "2011. Population data compiled from a..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "LatestPopulationCensus"
+            ]
           },
           {
-            "name": "LatestHouseholdSurvey",
+            "name": "latesthouseholdsurvey",
             "type": "table column",
             "column name": "LatestHouseholdSurvey",
             "data type": "string",
-            "description": "Year and type of latest household survey",
+            "description": "Information on the latest household survey conducted.",
             "sample values": [
-              "Multiple Indicator Cluster Survey (MICS), 2010/11",
-              "Demographic and Health Survey (DHS), 2008/09",
-              "Multiple Indicator Cluster Survey (MICS), 2012"
+              "Multiple Indicator Cluster Survey (MI...",
+              "Demographic and Health Survey (DHS), ...",
+              "Multiple Indicator Cluster Survey (MI...",
+              "",
+              "Malaria Indicator Survey (MIS), 2011"
             ],
-            "synonyms": []
+            "synonyms": [
+              "LatestHouseholdSurvey"
+            ]
           },
           {
-            "name": "SourceOfMostRecentIncomeAndExpenditureData",
+            "name": "sourceofmostrecentincomeandexpendituredata",
             "type": "table column",
             "column name": "SourceOfMostRecentIncomeAndExpenditureData",
             "data type": "string",
-            "description": "Source of latest income and expenditure survey",
+            "description": "The source of the most recent income and expenditure data.",
             "sample values": [
               "Integrated household survey (IHS), 2008",
-              "Living Standards Measurement Study Survey (LSMS), 2011/12",
-              "Integrated household survey (IHS), 1995"
+              "Living Standards Measurement Study Su...",
+              "Integrated household survey (IHS), 1995",
+              "",
+              "Integrated household survey (IHS), 20..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "SourceOfMostRecentIncomeAndExpenditureData"
+            ]
           },
           {
-            "name": "VitalRegistrationComplete",
+            "name": "vitalregistrationcomplete",
             "type": "table column",
             "column name": "VitalRegistrationComplete",
             "data type": "string",
-            "description": "Whether vital registration is complete",
+            "description": "Indicates if the country's vital registration system is complete.",
             "sample values": [
               "",
               "Yes",
-              ""
+              "Yes. Vital registration for Guernsey ..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "VitalRegistrationComplete"
+            ]
           },
           {
-            "name": "LatestAgriculturalCensus",
+            "name": "latestagriculturalcensus",
             "type": "table column",
             "column name": "LatestAgriculturalCensus",
             "data type": "string",
-            "description": "Year of latest agricultural census",
+            "description": "The year or period of the latest agricultural census.",
             "sample values": [
               "2013/14",
               "2012",
-              ""
+              "",
+              "2007",
+              "2015"
             ],
-            "synonyms": []
+            "synonyms": [
+              "LatestAgriculturalCensus"
+            ]
           },
           {
-            "name": "LatestIndustrialData",
+            "name": "latestindustrialdata",
             "type": "table column",
             "column name": "LatestIndustrialData",
             "data type": "numeric",
-            "description": "Year of most recent industrial data",
+            "description": "The year of the latest available industrial data.",
             "sample values": [
-              2013,
               2011,
-              2010
+              2010,
+              2002,
+              2008,
+              2007
             ],
-            "synonyms": []
+            "synonyms": [
+              "LatestIndustrialData"
+            ]
           },
           {
-            "name": "LatestTradeData",
+            "name": "latesttradedata",
             "type": "table column",
             "column name": "LatestTradeData",
             "data type": "numeric",
-            "description": "Year of most recent trade data",
+            "description": "The year of the latest available trade data.",
             "sample values": [
-              2000,
               2013,
-              2013
+              2006,
+              2012,
+              2011,
+              2007
             ],
-            "synonyms": []
+            "synonyms": [
+              "LatestTradeData"
+            ]
           },
           {
-            "name": "LatestWaterWithdrawalData",
+            "name": "latestwaterwithdrawaldata",
             "type": "table column",
             "column name": "LatestWaterWithdrawalData",
             "data type": "numeric",
-            "description": "Year of most recent water withdrawal data",
+            "description": "The year of the latest available water withdrawal data.",
             "sample values": [
               2000,
               2006,
-              2001
+              2001,
+              2005,
+              2011
             ],
-            "synonyms": []
+            "synonyms": [
+              "LatestWaterWithdrawalData"
+            ]
           }
         ],
-        "description": "",
-        "synonyms": []
+        "description": "Contains information about countries and regions recognized by the World Bank.",
+        "synonyms": [
+          "Country"
+        ]
       },
       {
-        "name": "CountryNotes",
+        "name": "countrynotes",
         "type": "simple table",
         "table path": "wdi.CountryNotes",
         "unique properties": [
-          "Countrycode",
-          "Seriescode"
+          [
+            "countrycode",
+            "seriescode"
+          ]
         ],
         "properties": [
           {
-            "name": "Countrycode",
+            "name": "countrycode",
             "type": "table column",
             "column name": "Countrycode",
             "data type": "string",
-            "description": "3-letter country code the note refers to",
+            "description": "The three-letter code of the country the note applies to.",
             "sample values": [
+              "ABW",
+              "ADO",
               "AFG",
-              "ALB",
-              "DZA"
+              "AGO",
+              "ALB"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Countrycode"
+            ]
           },
           {
-            "name": "Seriescode",
+            "name": "seriescode",
             "type": "table column",
             "column name": "Seriescode",
             "data type": "string",
-            "description": "Indicator series code referenced by the note",
+            "description": "The code of the data series the note applies to.",
             "sample values": [
-              "NY.GDP.MKTP.CD",
-              "SP.POP.TOTL",
-              "EN.ATM.CO2E.KT"
+              "EG.EGY.PRIM.PP.KD",
+              "EG.ELC.RNEW.ZS",
+              "EG.FEC.RNEW.ZS",
+              "SM.POP.NETM",
+              "SM.POP.TOTL"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Seriescode"
+            ]
           },
           {
-            "name": "Description",
+            "name": "description",
             "type": "table column",
             "column name": "Description",
             "data type": "string",
-            "description": "Country-specific note for the series",
+            "description": "The text of the note providing additional context or information about the data for the specified country and series.",
             "sample values": [
-              "Methodology note",
-              "Coverage note",
-              "Break in series"
+              "Sources: Estimated based on UN Energy...",
+              "Sources: UN Energy Statistics (2014)",
+              "Data sources : United Nations World P...",
+              "Estimates are derived from data on fo...",
+              "Data source : United Nations World Po..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "Description"
+            ]
           }
         ],
-        "description": "",
-        "synonyms": []
+        "description": "Provides specific notes for a country regarding a particular data series.",
+        "synonyms": [
+          "CountryNotes"
+        ]
       },
       {
-        "name": "Footnotes",
+        "name": "footnotes",
         "type": "simple table",
         "table path": "wdi.Footnotes",
         "unique properties": [
-          "Countrycode",
-          "Seriescode",
-          "Year"
+          [
+            "countrycode",
+            "seriescode",
+            "year_"
+          ]
         ],
         "properties": [
           {
-            "name": "Countrycode",
+            "name": "countrycode",
             "type": "table column",
             "column name": "Countrycode",
             "data type": "string",
-            "description": "3-letter country code for which the footnote applies",
+            "description": "The three-letter code of the country the footnote applies to.",
             "sample values": [
+              "ABW",
+              "ADO",
               "AFG",
-              "ALB",
-              "DZA"
+              "AGO",
+              "ALB"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Countrycode"
+            ]
           },
           {
-            "name": "Seriescode",
+            "name": "seriescode",
             "type": "table column",
             "column name": "Seriescode",
             "data type": "string",
-            "description": "Indicator series code referenced by the footnote",
+            "description": "The code of the data series the footnote applies to.",
             "sample values": [
-              "NY.GDP.MKTP.CD",
-              "SP.POP.TOTL",
-              "EN.ATM.CO2E.KT"
+              "AG.LND.FRST.K2",
+              "BX.KLT.DINV.CD.WD",
+              "DC.DAC.AUSL.CD",
+              "DC.DAC.AUTL.CD",
+              "DC.DAC.BELL.CD"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Seriescode"
+            ]
           },
           {
-            "name": "Year",
+            "name": "year_",
             "type": "table column",
-            "column name": "Year",
+            "column name": "\"Year\"",
             "data type": "string",
-            "description": "Year of the footnote (text)",
+            "description": "The specific year or time period the footnote applies to, prefixed with 'YR'.",
             "sample values": [
-              "2010",
-              "2011",
-              "2012"
+              "YR1990",
+              "YR2000",
+              "YR2005",
+              "YR1987",
+              "YR1988"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Year"
+            ]
           },
           {
-            "name": "Description",
+            "name": "description",
             "type": "table column",
             "column name": "Description",
             "data type": "string",
-            "description": "Footnote text providing additional context",
+            "description": "The text of the footnote.",
             "sample values": [
-              "Data revised",
-              "Preliminary estimate",
-              "Method change"
+              "Not specified",
+              "Source: United Nations Conference on ...",
+              "Data are classified as official aid.",
+              "Source: Estimate",
+              "Source:Estimate"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Description"
+            ]
           }
         ],
-        "description": "",
-        "synonyms": []
+        "description": "Contains footnotes for specific data points, identified by country, series, and year.",
+        "synonyms": [
+          "Footnotes"
+        ]
       },
       {
-        "name": "Indicators",
+        "name": "indicators",
         "type": "simple table",
         "table path": "wdi.Indicators",
         "unique properties": [
-          "CountryCode",
-          "IndicatorCode",
-          "Year"
+          [
+            "countrycode",
+            "indicatorcode",
+            "year_"
+          ]
         ],
         "properties": [
           {
-            "name": "CountryName",
+            "name": "countryname",
             "type": "table column",
             "column name": "CountryName",
             "data type": "string",
-            "description": "Name of the country",
+            "description": "The name of the country or region.",
             "sample values": [
-              "Afghanistan",
-              "Albania",
-              "Algeria"
+              "Arab World",
+              "Caribbean small states",
+              "Central Europe and the Baltics",
+              "East Asia & Pacific (all income levels)",
+              "East Asia & Pacific (developing only)"
             ],
-            "synonyms": []
+            "synonyms": [
+              "CountryName"
+            ]
           },
           {
-            "name": "CountryCode",
+            "name": "countrycode",
             "type": "table column",
             "column name": "CountryCode",
             "data type": "string",
-            "description": "Unique 3-letter country code",
+            "description": "The three-letter code of the country or region.",
             "sample values": [
+              "ABW",
+              "ADO",
               "AFG",
-              "ALB",
-              "DZA"
+              "AGO",
+              "ALB"
             ],
-            "synonyms": []
+            "synonyms": [
+              "CountryCode"
+            ]
           },
           {
-            "name": "IndicatorName",
+            "name": "indicatorname",
             "type": "table column",
             "column name": "IndicatorName",
             "data type": "string",
-            "description": "Name of the development indicator",
+            "description": "The full name of the development indicator.",
             "sample values": [
-              "GDP (current US$)",
-              "Population, total",
-              "CO2 emissions"
+              "Adolescent fertility rate (births per...",
+              "Age dependency ratio (% of working-ag...",
+              "Age dependency ratio, old (% of worki...",
+              "Age dependency ratio, young (% of wor...",
+              "Arms exports (SIPRI trend indicator v..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "IndicatorName"
+            ]
           },
           {
-            "name": "IndicatorCode",
+            "name": "indicatorcode",
             "type": "table column",
             "column name": "IndicatorCode",
             "data type": "string",
-            "description": "Unique code for the indicator",
+            "description": "The unique code for the development indicator.",
             "sample values": [
-              "NY.GDP.MKTP.CD",
-              "SP.POP.TOTL",
-              "EN.ATM.CO2E.KT"
+              "AG.LND.AGRI.K2",
+              "AG.LND.AGRI.ZS",
+              "AG.LND.ARBL.HA",
+              "AG.LND.ARBL.HA.PC",
+              "AG.LND.ARBL.ZS"
             ],
-            "synonyms": []
+            "synonyms": [
+              "IndicatorCode"
+            ]
           },
           {
-            "name": "Year",
+            "name": "year_",
             "type": "table column",
-            "column name": "Year",
+            "column name": "\"Year\"",
             "data type": "numeric",
-            "description": "Year of observation",
+            "description": "The year the data value was recorded.",
             "sample values": [
-              2010,
-              2011,
-              2012
+              1961,
+              1962,
+              1963,
+              1964,
+              1965
             ],
-            "synonyms": []
+            "synonyms": [
+              "Year"
+            ]
           },
           {
-            "name": "Value",
+            "name": "value",
             "type": "table column",
             "column name": "Value",
             "data type": "numeric",
-            "description": "Value of the indicator for the given year",
+            "description": "The numerical value of the indicator for the given country and year.",
             "sample values": [
-              15900000000,
-              2900000,
-              35000
+              133,
+              87,
+              6,
+              81,
+              3000000
             ],
-            "synonyms": []
+            "synonyms": [
+              "Value"
+            ]
           }
         ],
-        "description": "",
-        "synonyms": []
+        "description": "Stores the actual data values for various development indicators for each country over the years.",
+        "synonyms": [
+          "Indicators"
+        ]
       },
       {
-        "name": "Series",
+        "name": "series",
         "type": "simple table",
         "table path": "wdi.Series",
         "unique properties": [
-          "SeriesCode"
+          "seriescode"
         ],
         "properties": [
           {
-            "name": "SeriesCode",
+            "name": "seriescode",
             "type": "table column",
             "column name": "SeriesCode",
             "data type": "string",
-            "description": "Unique code identifying the indicator series",
+            "description": "Unique code identifying the data series.",
             "sample values": [
-              "NY.GDP.MKTP.CD",
-              "SP.POP.TOTL",
-              "EN.ATM.CO2E.KT"
+              "AG.AGR.TRAC.NO",
+              "AG.CON.FERT.PT.ZS",
+              "AG.CON.FERT.ZS",
+              "AG.LND.AGRI.K2",
+              "AG.LND.AGRI.ZS"
             ],
-            "synonyms": []
+            "synonyms": [
+              "SeriesCode"
+            ]
           },
           {
-            "name": "Topic",
+            "name": "topic",
             "type": "table column",
             "column name": "Topic",
             "data type": "string",
-            "description": "Topic or theme of the indicator",
+            "description": "The topic or category the series belongs to.",
             "sample values": [
-              "Economy & Growth",
-              "Population",
-              "Environment"
+              "Economic Policy & Debt: Balance of pa...",
+              "Economic Policy & Debt: Balance of pa...",
+              "Economic Policy & Debt: Balance of pa...",
+              "Economic Policy & Debt: Balance of pa...",
+              "Economic Policy & Debt: Balance of pa..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "Topic"
+            ]
           },
           {
-            "name": "IndicatorName",
+            "name": "indicatorname",
             "type": "table column",
             "column name": "IndicatorName",
             "data type": "string",
-            "description": "Name of the indicator series",
+            "description": "The full name of the indicator for this series.",
             "sample values": [
-              "GDP (current US$)",
-              "Population, total",
-              "CO2 emissions (kt)"
+              "Foreign direct investment, net (BoP, ...",
+              "Foreign direct investment, net inflow...",
+              "Foreign direct investment, net inflow...",
+              "Foreign direct investment, net outflo...",
+              "Net capital account (BoP, current US$)"
             ],
-            "synonyms": []
+            "synonyms": [
+              "IndicatorName"
+            ]
           },
           {
-            "name": "ShortDefinition",
+            "name": "shortdefinition",
             "type": "table column",
             "column name": "ShortDefinition",
             "data type": "string",
-            "description": "Brief definition of the indicator",
+            "description": "A brief definition of the indicator.",
             "sample values": [
-              "Gross domestic product at current prices",
-              "Total population count",
-              "Carbon dioxide emissions in kilotons"
+              "",
+              "Total external debt is debt owed to n...",
+              "Debt service is the sum of principle ...",
+              "Total external debt stocks to gross n...",
+              "Multilateral debt service is the repa..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "ShortDefinition"
+            ]
           },
           {
-            "name": "LongDefinition",
+            "name": "longdefinition",
             "type": "table column",
             "column name": "LongDefinition",
             "data type": "string",
-            "description": "Detailed definition of the indicator",
+            "description": "A detailed, long-form definition of the indicator.",
             "sample values": [
-              "GDP at purchaser's prices is the sum of gross value...",
-              "Population count based on de facto definition...",
-              "CO2 emissions from fossil fuel combustion and industrial processes"
+              "Foreign direct investment are the net...",
+              "Foreign direct investment refers to d...",
+              "Net capital account records acquisiti...",
+              "Net errors and omissions constitute a...",
+              "The net financial account shows net a..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "LongDefinition"
+            ]
           },
           {
-            "name": "UnitOfMeasure",
+            "name": "unitofmeasure",
             "type": "table column",
             "column name": "UnitOfMeasure",
             "data type": "string",
-            "description": "Unit of measurement",
+            "description": "The unit in which the indicator's values are measured.",
             "sample values": [
-              "US$",
-              "People",
-              "kt"
+              "",
+              "`",
+              "%",
+              "2005 PPP $",
+              "2011 PPP $"
             ],
-            "synonyms": []
+            "synonyms": [
+              "UnitOfMeasure"
+            ]
           },
           {
-            "name": "Periodicity",
+            "name": "periodicity",
             "type": "table column",
             "column name": "Periodicity",
             "data type": "string",
-            "description": "Frequency of data reporting",
+            "description": "The frequency at which the data is collected (e.g., Annual).",
             "sample values": [
-              "Annual",
-              "Annual",
               "Annual"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Periodicity"
+            ]
           },
           {
-            "name": "BasePeriod",
+            "name": "baseperiod",
             "type": "table column",
             "column name": "BasePeriod",
             "data type": "string",
-            "description": "Base period of the series",
+            "description": "The base period used for calculations or indexing.",
             "sample values": [
+              "",
               "2005",
-              "2000",
-              "1990"
+              "varies by country",
+              "2011",
+              "2004-06"
             ],
-            "synonyms": []
+            "synonyms": [
+              "BasePeriod"
+            ]
           },
           {
-            "name": "OtherNotes",
+            "name": "othernotes",
             "type": "table column",
             "column name": "OtherNotes",
             "data type": "numeric",
-            "description": "Other notes associated with the series",
-            "sample values": [
-              null,
-              null,
-              null
-            ],
-            "synonyms": []
+            "description": "Any other relevant notes about the series.",
+            "sample values": [],
+            "synonyms": [
+              "OtherNotes"
+            ]
           },
           {
-            "name": "AggregationMethod",
+            "name": "aggregationmethod",
             "type": "table column",
             "column name": "AggregationMethod",
             "data type": "string",
-            "description": "Method used to aggregate data",
+            "description": "The method used to aggregate data for country groups.",
             "sample values": [
+              "",
+              "Weighted average",
               "Sum",
-              "Sum",
-              "Sum"
+              "Gap-filled total",
+              "Median"
             ],
-            "synonyms": []
+            "synonyms": [
+              "AggregationMethod"
+            ]
           },
           {
-            "name": "LimitationsAndExceptions",
+            "name": "limitationsandexceptions",
             "type": "table column",
             "column name": "LimitationsAndExceptions",
             "data type": "string",
-            "description": "Known limitations or exceptions of the indicator",
+            "description": "Known limitations and exceptions for the data in this series.",
             "sample values": [
-              "Data may differ due to national methods",
               "",
-              ""
+              "FDI data do not give a complete pictu...",
+              "Portfolio investors typically have le...",
+              "Discrepancies may arise in the balanc...",
+              "Remittance transactions have grown in..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "LimitationsAndExceptions"
+            ]
           },
           {
-            "name": "NotesFromOriginalSource",
+            "name": "notesfromoriginalsource",
             "type": "table column",
             "column name": "NotesFromOriginalSource",
             "data type": "string",
-            "description": "Notes from the original source",
+            "description": "Notes provided by the original data source.",
             "sample values": [
               "",
-              "",
-              ""
+              "Estimates are presented with uncertai...",
+              "In some cases, the sum of public and ...",
+              "All the indicators refer to expenditu...",
+              "PPP series resulting from the 2005 In..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "NotesFromOriginalSource"
+            ]
           },
           {
-            "name": "GeneralComments",
+            "name": "generalcomments",
             "type": "table column",
             "column name": "GeneralComments",
             "data type": "string",
-            "description": "General comments on the series",
+            "description": "General comments about the series.",
             "sample values": [
+              "Note: Data are based on the sixth edi...",
+              "Note: Data starting from 2005 are bas...",
+              "Note: Data are based on the sixth edi...",
               "",
-              "",
-              ""
+              "Note: Data are based on the sixth edi..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "GeneralComments"
+            ]
           },
           {
-            "name": "Source",
+            "name": "source",
             "type": "table column",
             "column name": "Source",
             "data type": "string",
-            "description": "Primary source of the indicator",
+            "description": "The primary source of the data for this series.",
             "sample values": [
-              "World Bank national accounts data",
-              "UN Population Division",
-              "IEA Statistics"
+              "International Monetary Fund, Balance ...",
+              "International Monetary Fund, Internat...",
+              "International Monetary Fund, Balance ...",
+              "International Monetary Fund, Balance ...",
+              "World Bank, International Debt Statis..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "Source"
+            ]
           },
           {
-            "name": "StatisticalConceptAndMethodology",
+            "name": "statisticalconceptandmethodology",
             "type": "table column",
             "column name": "StatisticalConceptAndMethodology",
             "data type": "string",
-            "description": "Statistical methods used",
+            "description": "Description of the statistical concepts and methodology used.",
             "sample values": [
-              "GDP is measured by...",
-              "Population counted by...",
-              "Emissions estimated by..."
+              "",
+              "Data on equity flows are based on bal...",
+              "Data on equity flows are based on bal...",
+              "The balance of payments (BoP) is a do...",
+              "The two main components of personal r..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "StatisticalConceptAndMethodology"
+            ]
           },
           {
-            "name": "DevelopmentRelevance",
+            "name": "developmentrelevance",
             "type": "table column",
             "column name": "DevelopmentRelevance",
             "data type": "string",
-            "description": "Relevance to development studies",
+            "description": "Explanation of the indicator's relevance to development.",
             "sample values": [
-              "Important for economic analysis",
-              "Demographics influence development",
-              "Environmental sustainability relevance"
+              "",
+              "Private financial flows - equity and ...",
+              "The balance of payments records an ec...",
+              "Movement of people, most often throug...",
+              "DAC exists to help its members coordi..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "DevelopmentRelevance"
+            ]
           },
           {
-            "name": "RelatedSourceLinks",
+            "name": "relatedsourcelinks",
             "type": "table column",
             "column name": "RelatedSourceLinks",
             "data type": "string",
-            "description": "Related source links for the series",
+            "description": "URL links to related sources.",
             "sample values": [
               "",
-              "",
-              ""
+              "World Bank, PovcalNet: an online pove..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "RelatedSourceLinks"
+            ]
           },
           {
-            "name": "OtherWebLinks",
+            "name": "otherweblinks",
             "type": "table column",
             "column name": "OtherWebLinks",
             "data type": "numeric",
-            "description": "Other web links for reference",
-            "sample values": [
-              null,
-              null,
-              null
-            ],
-            "synonyms": []
+            "description": "Other relevant web links.",
+            "sample values": [],
+            "synonyms": [
+              "OtherWebLinks"
+            ]
           },
           {
-            "name": "RelatedIndicators",
+            "name": "relatedindicators",
             "type": "table column",
             "column name": "RelatedIndicators",
             "data type": "numeric",
-            "description": "Other related indicators",
-            "sample values": [
-              null,
-              null,
-              null
-            ],
-            "synonyms": []
+            "description": "Codes of related indicators.",
+            "sample values": [],
+            "synonyms": [
+              "RelatedIndicators"
+            ]
           },
           {
-            "name": "LicenseType",
+            "name": "licensetype",
             "type": "table column",
             "column name": "LicenseType",
             "data type": "string",
-            "description": "Data license type",
+            "description": "The license under which the data is provided (e.g., Open, Restricted).",
             "sample values": [
-              "CC BY-4.0",
-              "CC BY-4.0",
-              "CC BY-4.0"
+              "Open",
+              "Restricted"
             ],
-            "synonyms": []
+            "synonyms": [
+              "LicenseType"
+            ]
           }
         ],
-        "description": "",
-        "synonyms": []
+        "description": "Defines and describes each development indicator series, including metadata like source, methodology, and topic.",
+        "synonyms": [
+          "Series"
+        ]
       },
       {
-        "name": "SeriesNotes",
+        "name": "seriesnotes",
         "type": "simple table",
         "table path": "wdi.SeriesNotes",
         "unique properties": [
-          "Seriescode",
-          "Year"
+          [
+            "seriescode",
+            "year_"
+          ]
         ],
         "properties": [
           {
-            "name": "Seriescode",
+            "name": "seriescode",
             "type": "table column",
             "column name": "Seriescode",
             "data type": "string",
-            "description": "Indicator series code the note applies to",
+            "description": "The code of the data series the note applies to.",
             "sample values": [
-              "NY.GDP.MKTP.CD",
-              "SP.POP.TOTL",
-              "EN.ATM.CO2E.KT"
+              "DT.DOD.PVLX.CD",
+              "IC.CUS.DURS.EX",
+              "IC.FRM.BNKS.ZS",
+              "IC.FRM.CORR.ZS",
+              "IC.FRM.CRIM.ZS"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Seriescode"
+            ]
           },
           {
-            "name": "Year",
+            "name": "year_",
             "type": "table column",
-            "column name": "Year",
+            "column name": "\"Year\"",
             "data type": "string",
-            "description": "Year of the series note (text)",
+            "description": "The specific year or time period the note applies to, prefixed with 'YR'.",
             "sample values": [
-              "2010",
-              "2011",
-              "2012"
+              "YR2014",
+              "YR2002",
+              "YR2003",
+              "YR2004",
+              "YR2005"
             ],
-            "synonyms": []
+            "synonyms": [
+              "Year"
+            ]
           },
           {
-            "name": "Description",
+            "name": "description",
             "type": "table column",
             "column name": "Description",
             "data type": "string",
-            "description": "Series-level note providing context or changes",
+            "description": "The text of the note providing additional context or information about the series for a specific year.",
             "sample values": [
-              "Definition updated",
-              "Back series adjusted",
-              "Source changed"
+              "Interpolated using data for 1957 and ...",
+              "Interpolated using data for 1957 and ...",
+              "The data refer to 1960-1965.",
+              "The data refer to 1960-1965, if the d...",
+              "The data refer to five-year periods r..."
             ],
-            "synonyms": []
+            "synonyms": [
+              "Description"
+            ]
           }
         ],
-        "description": "",
-        "synonyms": []
+        "description": "Contains general notes about a data series for a specific year.",
+        "synonyms": [
+          "SeriesNotes"
+        ]
       }
     ],
     "relationships": [
       {
         "type": "simple join",
-        "name": "Country",
-        "parent collection": "CountryNotes",
-        "child collection": "Country",
-        "singular": true,
-        "always matches": true,
-        "keys": {
-          "Countrycode": [
-            "CountryCode"
-          ]
-        },
-        "description": "The country that the country note belongs to.",
-        "synonyms": []
-      },
-      {
-        "type": "reverse",
-        "name": "CountryNotes",
-        "original parent": "CountryNotes",
-        "original property": "Country",
-        "singular": false,
-        "always matches": true,
-        "description": "The notes for each country.",
-        "synonyms": []
-      },
-      {
-        "type": "simple join",
-        "name": "Series",
-        "parent collection": "CountryNotes",
-        "child collection": "Series",
-        "singular": true,
-        "always matches": true,
-        "keys": {
-          "Seriescode": [
-            "SeriesCode"
-          ]
-        },
-        "description": "The series for each country note.",
-        "synonyms": []
-      },
-      {
-        "type": "reverse",
-        "name": "CountryNotes",
-        "original parent": "CountryNotes",
-        "original property": "Series",
-        "singular": false,
-        "always matches": true,
-        "description": "The country notes for each series.",
-        "synonyms": []
-      },
-      {
-        "type": "simple join",
-        "name": "Country",
-        "parent collection": "Footnotes",
-        "child collection": "Country",
-        "singular": true,
-        "always matches": true,
-        "keys": {
-          "Countrycode": [
-            "CountryCode"
-          ]
-        },
-        "description": "The country that the footnote belongs to.",
-        "synonyms": []
-      },
-      {
-        "type": "reverse",
-        "name": "Footnotes",
-        "original parent": "Footnotes",
-        "original property": "Country",
-        "singular": false,
-        "always matches": true,
-        "description": "The footnotes for the country.",
-        "synonyms": []
-      },
-      {
-        "type": "simple join",
-        "name": "Series",
-        "parent collection": "Footnotes",
-        "child collection": "Series",
-        "singular": true,
-        "always matches": true,
-        "keys": {
-          "Seriescode": [
-            "SeriesCode"
-          ]
-        },
-        "description": "The Series that the footnote belongs to.",
-        "synonyms": []
-      },
-      {
-        "type": "reverse",
-        "name": "Footnotes",
-        "original parent": "Footnotes",
-        "original property": "Series",
+        "name": "countrynotes",
+        "parent collection": "country",
+        "child collection": "countrynotes",
         "singular": false,
         "always matches": false,
-        "description": "The footnotes of the series.",
-        "synonyms": []
-      },
-      {
-        "type": "simple join",
-        "name": "Country",
-        "parent collection": "Indicators",
-        "child collection": "Country",
-        "singular": true,
-        "always matches": true,
         "keys": {
-          "CountryCode": [
-            "CountryCode"
+          "countrycode": [
+            "countrycode"
           ]
         },
-        "description": "The country that the indicator belongs to.",
+        "description": "The specific notes related to this country's data series.",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "Indicators",
-        "original parent": "Indicators",
-        "original property": "Country",
-        "singular": false,
+        "name": "country",
+        "original parent": "country",
+        "original property": "countrynotes",
+        "singular": true,
         "always matches": true,
-        "description": "The indicators for the country.",
+        "description": "The country to which this note applies.",
         "synonyms": []
       },
       {
         "type": "simple join",
-        "name": "Series",
-        "parent collection": "SeriesNotes",
-        "child collection": "Series",
-        "singular": true,
-        "always matches": true,
+        "name": "footnotes",
+        "parent collection": "country",
+        "child collection": "footnotes",
+        "singular": false,
+        "always matches": false,
         "keys": {
-          "Seriescode": [
-            "SeriesCode"
+          "countrycode": [
+            "countrycode"
           ]
         },
-        "description": "The series that the series note belongs to.",
+        "description": "Footnotes associated with this country's data points.",
         "synonyms": []
       },
       {
         "type": "reverse",
-        "name": "SeriesNotes",
-        "original parent": "SeriesNotes",
-        "original property": "Series",
-        "singular": false,
+        "name": "country",
+        "original parent": "country",
+        "original property": "footnotes",
+        "singular": true,
         "always matches": true,
-        "description": "The series notes for the series.",
+        "description": "The country to which this footnote applies.",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "indicators",
+        "parent collection": "country",
+        "child collection": "indicators",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "countrycode": [
+            "countrycode"
+          ]
+        },
+        "description": "The development indicators recorded for this country.",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "country",
+        "original parent": "country",
+        "original property": "indicators",
+        "singular": true,
+        "always matches": true,
+        "description": "The country for which this indicator value was recorded.",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "countrynotes",
+        "parent collection": "series",
+        "child collection": "countrynotes",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "seriescode": [
+            "seriescode"
+          ]
+        },
+        "description": "Country-specific notes associated with this data series.",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "series",
+        "original parent": "series",
+        "original property": "countrynotes",
+        "singular": true,
+        "always matches": true,
+        "description": "The data series to which this country note applies.",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "footnotes",
+        "parent collection": "series",
+        "child collection": "footnotes",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "seriescode": [
+            "seriescode"
+          ]
+        },
+        "description": "Footnotes associated with this data series.",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "series",
+        "original parent": "series",
+        "original property": "footnotes",
+        "singular": true,
+        "always matches": true,
+        "description": "The data series to which this footnote applies.",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "indicators",
+        "parent collection": "series",
+        "child collection": "indicators",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "seriescode": [
+            "indicatorcode"
+          ]
+        },
+        "description": "The indicator data values associated with this series definition.",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "series",
+        "original parent": "series",
+        "original property": "indicators",
+        "singular": true,
+        "always matches": false,
+        "description": "The series definition for this indicator.",
+        "synonyms": []
+      },
+      {
+        "type": "simple join",
+        "name": "seriesnotes",
+        "parent collection": "series",
+        "child collection": "seriesnotes",
+        "singular": false,
+        "always matches": false,
+        "keys": {
+          "seriescode": [
+            "seriescode"
+          ]
+        },
+        "description": "General notes associated with this data series for specific years.",
+        "synonyms": []
+      },
+      {
+        "type": "reverse",
+        "name": "series",
+        "original parent": "series",
+        "original property": "seriesnotes",
+        "singular": true,
+        "always matches": true,
+        "description": "The data series to which this note applies.",
         "synonyms": []
       }
     ]
