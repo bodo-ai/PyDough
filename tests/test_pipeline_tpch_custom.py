@@ -1510,6 +1510,220 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
         ),
         pytest.param(
             PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key).WHERE(nation_key == 1)"
+                " .nation"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [18],
+                    }
+                ),
+                "many_net_filter_1",
+            ),
+            id="many_net_filter_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation.WHERE(key == 2)"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [10],
+                    }
+                ),
+                "many_net_filter_2",
+            ),
+            id="many_net_filter_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .customers.WHERE(nation_key == 3)"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [14],
+                    }
+                ),
+                "many_net_filter_3",
+            ),
+            id="many_net_filter_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key).WHERE(nation_key == 4)"
+                " .nation"
+                " .region"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [88],
+                    }
+                ),
+                "many_net_filter_4",
+            ),
+            id="many_net_filter_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation.WHERE(key == 5)"
+                " .region"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [81],
+                    }
+                ),
+                "many_net_filter_5",
+            ),
+            id="many_net_filter_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region"
+                " .nations.WHERE(key == 6)"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [77],
+                    }
+                ),
+                "many_net_filter_6",
+            ),
+            id="many_net_filter_6",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region"
+                " .nations"
+                " .customers.WHERE(nation_key == 7)"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [81],
+                    }
+                ),
+                "many_net_filter_7",
+            ),
+            id="many_net_filter_7",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation.WHERE(region_key == 0)"
+                " .region"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [403],
+                    }
+                ),
+                "many_net_filter_8",
+            ),
+            id="many_net_filter_8",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region.WHERE(key == 1)"
+                " .nations"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [399],
+                    }
+                ),
+                "many_net_filter_9",
+            ),
+            id="many_net_filter_9",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key)"
+                " .nation"
+                " .region"
+                " .nations.WHERE(region_key == 2)"
+                " .customers"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [401],
+                    }
+                ),
+                "many_net_filter_10",
+            ),
+            id="many_net_filter_10",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = TPCH.CALCULATE(n=COUNT("
+                " suppliers.CALCULATE(sk = key).WHERE(~ISIN(nation_key, list(range(0, 25, 3))))"
+                " .nation.WHERE(region_key < 3)"
+                " .region"
+                " .nations.WHERE(region_key > 0)"
+                " .customers.WHERE(~ISIN(nation_key, list(range(1, 25, 3))))"
+                " .WHERE(key == sk)"
+                "))",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "n": [269],
+                    }
+                ),
+                "many_net_filter_11",
+            ),
+            id="many_net_filter_11",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 window_filter_order_1,
                 "TPCH",
                 lambda: pd.DataFrame({"n": [969]}),

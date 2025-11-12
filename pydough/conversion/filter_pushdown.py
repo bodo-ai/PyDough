@@ -316,7 +316,7 @@ class FilterPushdownShuttle(RelationalShuttle):
                 new_cond: RelationalExpression = apply_substitution(
                     cond, key_substitution, {}
                 )
-                filter_set.add(new_cond)
+                filter_set.add(add_input_name(new_cond, None))
 
     def visit_join(self, join: Join) -> RelationalNode:
         # Identify the set of all column names that correspond to a reference
