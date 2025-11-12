@@ -30,7 +30,7 @@ result = (
                 "synthea",
                 lambda: pd.DataFrame(
                     {
-                        "condition_description": ["Normal pregnancy"],
+                        "condition_description": ["Viral sinusitis (disorder)"],
                     }
                 ),
                 "synthea_most_common_conditions",
@@ -294,6 +294,24 @@ result = quoted_table_name.WHERE(
                 "keywords_quoted_table_name",
             ),
             id="keywords_quoted_table_name",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = keywords.CALCULATE(
+    max_len=MAX(partition_.integer)
+).calculate_.WHERE(
+    where_ == max_len
+).CALCULATE(key=where_, len=length)
+                """,
+                "keywords",
+                lambda: pd.DataFrame({"key": [3], "len": [7]}),
+                "keywords_function_quoted_name",
+            ),
+            id="keywords_function_quoted_name",
+            marks=pytest.mark.skip(
+                "FIX: (issue #458): Invalid composed SQL alias where column_name is quoted."
+            ),
         ),
     ],
 )

@@ -204,7 +204,7 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
-def get_custom_datasets_graph() -> graph_fetcher:
+def get_custom_datasets_graph(custom_datasets_setup) -> graph_fetcher:
     """
     Returns the graph for the given custom dataset.
     """
@@ -644,7 +644,6 @@ CUSTOM_DATASETS = ["synthea", "soccer_2016", "wdi", "keywords"]
     This includes the datasets from S3 and initialized with a .sql file.
 """
 CUSTOM_DATASETS_SCRIPTS = {
-    "synthea": "init_synthea_sqlite",
     "keywords": "init_reserved_words_sqlite",
     "wdi": "init_world_indicators_sqlite",
 }
