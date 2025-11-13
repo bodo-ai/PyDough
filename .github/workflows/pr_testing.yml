@@ -151,7 +151,7 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or custom)" -rs
 
   run-defog-daily-update:
     name: Run DEFOG Daily Update
