@@ -243,7 +243,7 @@ jobs:
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run custom]')) ||
       (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-custom))
-    secrets:
+    env:
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
       SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
       SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
