@@ -76,7 +76,25 @@ def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> lis
         if len(expr.inputs) == 1:
             input_expr = expr.inputs[0]
             if isinstance(input_expr, ColumnReference):
-                result.append(f"{expr.op.function_name.lower()}_{input_expr.name}")
+                input_name: str = input_expr.name
+                quoted: bool = False
+                # If the name is quoted, remove the quotes and quote the entire
+                # generated name later.
+                if (
+                    input_expr.name.startswith('"')
+                    and input_expr.name.endswith('"')
+                    or input_expr.name.startswith("`")
+                    and input_expr.name.endswith("`")
+                ):
+                    input_name = input_name[1:-1]
+                    quoted = True
+
+                cleaner_name: str = f"{expr.op.function_name.lower()}_{input_name}"
+                if quoted:
+                    cleaner_name = f'"{cleaner_name}"'
+
+                result.append(cleaner_name)
+
         if len(expr.inputs) == 0 and expr.op.function_name.lower() == "count":
             result.append("n_rows")
 

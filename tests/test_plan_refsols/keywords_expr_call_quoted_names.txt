@@ -1,0 +1,6 @@
+ROOT(columns=[('max_where', "max_WHERE"), ('min_quote', "min_= "QUOTE""), ('max_name', "max_`name""["), ('count_cast', "count_``cast``"), ('quote_avg', "avg_= "QUOTE""), ('sum_name', DEFAULT_TO("sum_`name""[", 0:numeric))], orderings=[])
+ JOIN(condition=True:bool, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'"avg_= "QUOTE""': t1."avg_= "QUOTE"", '"count_``cast``"': t1."count_``cast``", '"max_WHERE"': t0."max_WHERE", '"max_`name""["': t1."max_`name""[", '"min_= "QUOTE""': t1."min_= "QUOTE"", '"sum_`name""["': t1."sum_`name""["})
+  AGGREGATE(keys={}, aggregations={'"max_WHERE"': MAX("WHERE")})
+   SCAN(table=keywords."PARTITION", columns={'"WHERE"': "WHERE"})
+  AGGREGATE(keys={}, aggregations={'"avg_= "QUOTE""': AVG(`= "QUOTE"`), '"count_``cast``"': COUNT(```cast```), '"max_`name""["': MAX("`name""["), '"min_= "QUOTE""': MIN(`= "QUOTE"`), '"sum_`name""["': SUM("`name""[")})
+   SCAN(table=keywords."""QUOTED TABLE_NAME""", columns={'"`name""["': "`name""[", '`= "QUOTE"`': `= "QUOTE"`, '```cast```': ```cast```})
