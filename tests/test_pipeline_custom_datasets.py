@@ -309,9 +309,9 @@ result = keywords.CALCULATE(
                 "keywords_function_quoted_name",
             ),
             id="keywords_function_quoted_name",
-            marks=pytest.mark.skip(
-                "FIX: (issue #458): Invalid composed SQL alias where column_name is quoted."
-            ),
+            # marks=pytest.mark.skip(
+            #     "FIX: (issue #458): Invalid composed SQL alias where column_name is quoted."
+            # ),
         ),
     ],
 )

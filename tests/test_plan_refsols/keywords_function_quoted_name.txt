@@ -1,0 +1,5 @@
+ROOT(columns=[('key', `.WHERE`), ('len', "LENGTH")], orderings=[])
+ JOIN(condition=t1.`.WHERE` == t0.max_INTEGER, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'"LENGTH"': t1."LENGTH", '`.WHERE`': t1.`.WHERE`})
+  AGGREGATE(keys={}, aggregations={'max_INTEGER': MAX("INTEGER")})
+   SCAN(table=keywords."PARTITION", columns={'"INTEGER"': "INTEGER"})
+  SCAN(table=keywords.CALCULATE, columns={'"LENGTH"': "LENGTH", '`.WHERE`': `.WHERE`})
