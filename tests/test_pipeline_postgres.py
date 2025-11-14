@@ -558,7 +558,6 @@ def test_pipeline_e2e_postgres_defog(
     )
 
 
-@pytest.mark.postgres
 @pytest.mark.custom
 @pytest.mark.execute
 def test_pipeline_e2e_postgres_custom_datasets(

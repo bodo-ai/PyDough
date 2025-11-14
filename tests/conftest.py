@@ -758,7 +758,7 @@ def remove_s3_custom_datasets(
 def custom_datasets_setup():
     """
     Sets up all custom datasets for testing downloading or running the init
-    script. After the test are done it removes everithing
+    script. After the test are done it removes everything
     """
     data_folder: str = "./tests/gen_data"
     metadata_folder: str = "./tests/test_metadata"
