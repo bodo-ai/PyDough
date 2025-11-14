@@ -30,7 +30,7 @@ result = (
                 "synthea",
                 lambda: pd.DataFrame(
                     {
-                        "condition_description": ["Normal pregnancy"],
+                        "condition_description": ["Viral sinusitis (disorder)"],
                     }
                 ),
                 "synthea_most_common_conditions",
@@ -41,13 +41,13 @@ result = (
             PyDoughPandasTest(
                 """
 result = (
-    world_development_indicators
+    wdi
     .Country
     .WHERE((IncomeGroup == 'Low income') & HAS(CountryNotes.WHERE(Series.SeriesCode == 'DT.DOD.DECT.CD')))
     .CALCULATE(country_code=CountryCode)
 )
                 """,
-                "world_development_indicators",
+                "wdi",
                 lambda: pd.DataFrame(
                     {
                         "country_code": [
@@ -91,7 +91,7 @@ result = (
             PyDoughPandasTest(
                 """
 result = (
-    world_development_indicators
+    wdi
     .Country
     .WHERE(ShortName == 'Albania')
     .Footnotes
@@ -99,7 +99,7 @@ result = (
     .CALCULATE(footnote_description=Description)
 )
                 """,
-                "world_development_indicators",
+                "wdi",
                 lambda: pd.DataFrame(
                     {
                         "condition_description": [
@@ -295,6 +295,24 @@ result = quoted_table_name.WHERE(
             ),
             id="keywords_quoted_table_name",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                """
+result = keywords.CALCULATE(
+    max_len=MAX(partition_.integer)
+).calculate_.WHERE(
+    where_ == max_len
+).CALCULATE(key=where_, len=length)
+                """,
+                "keywords",
+                lambda: pd.DataFrame({"key": [3], "len": [7]}),
+                "keywords_function_quoted_name",
+            ),
+            id="keywords_function_quoted_name",
+            marks=pytest.mark.skip(
+                "FIX: (issue #458): Invalid composed SQL alias where column_name is quoted."
+            ),
+        ),
     ],
 )
 def custom_datasets_test_data(request) -> PyDoughPandasTest:
@@ -305,9 +323,10 @@ def custom_datasets_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
+@pytest.mark.custom
 def test_pipeline_until_relational_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
-    get_test_graph_by_name: graph_fetcher,
+    get_custom_datasets_graph: graph_fetcher,
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
 ) -> None:
@@ -317,13 +336,14 @@ def test_pipeline_until_relational_custom_datasets(
     """
     file_path: str = get_plan_test_filename(custom_datasets_test_data.test_name)
     custom_datasets_test_data.run_relational_test(
-        get_test_graph_by_name, file_path, update_tests
+        get_custom_datasets_graph, file_path, update_tests
     )
 
 
+@pytest.mark.custom
 def test_pipeline_until_sql_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
-    get_test_graph_by_name: graph_fetcher,
+    get_custom_datasets_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
@@ -336,23 +356,26 @@ def test_pipeline_until_sql_custom_datasets(
         custom_datasets_test_data.test_name, empty_context_database.dialect
     )
     custom_datasets_test_data.run_sql_test(
-        get_test_graph_by_name,
+        get_custom_datasets_graph,
         file_path,
         update_tests,
         empty_context_database,
     )
 
 
+@pytest.mark.custom
 @pytest.mark.execute
 def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
-    get_test_graph_by_name: graph_fetcher,
-    sqlite_custom_datasets_connection: DatabaseContext,
+    get_custom_datasets_graph: graph_fetcher,
+    sqlite_custom_datasets_connection: Callable[[str], DatabaseContext],
 ):
     """
     Test executing the the custom queries with the custom datasets against the
     refsol DataFrame.
     """
     custom_datasets_test_data.run_e2e_test(
-        get_test_graph_by_name, sqlite_custom_datasets_connection, coerce_types=True
+        get_custom_datasets_graph,
+        sqlite_custom_datasets_connection(custom_datasets_test_data.graph_name.lower()),
+        coerce_types=True,
     )
