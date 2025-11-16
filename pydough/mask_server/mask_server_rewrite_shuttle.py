@@ -6,12 +6,6 @@ identified by the candidate visitor.
 __all__ = ["MaskServerRewriteShuttle"]
 
 import pydough.pydough_operators as pydop
-from pydough.mask_server import (
-    MaskServerInfo,
-    MaskServerInput,
-    MaskServerOutput,
-    MaskServerResponse,
-)
 from pydough.relational import (
     CallExpression,
     LiteralExpression,
@@ -20,6 +14,12 @@ from pydough.relational import (
 )
 from pydough.types import ArrayType, BooleanType, UnknownType
 
+from .mask_server import (
+    MaskServerInfo,
+    MaskServerInput,
+    MaskServerOutput,
+    MaskServerResponse,
+)
 from .mask_server_candidate_visitor import MaskServerCandidateVisitor
 
 
@@ -98,7 +98,7 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         # to None in the case of failure, or the rewritten expression in the
         # case of success.
         responses: list[MaskServerOutput] = (
-            self.server_info.simplify_simple_expression_batch(batch, False)
+            self.server_info.simplify_simple_expression_batch(batch, False, 1000)
         )
         assert len(responses) == len(ancillary_info)
         for (expr, input_expr), response in zip(ancillary_info, responses):

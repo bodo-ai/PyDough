@@ -48,6 +48,8 @@ def batch_evaluate(
     request: Request, payload: RequestPayload, authorized: bool = Depends(verify_token)
 ):
     responses: list[dict] = []
+    successful_responses: int = 0
+    # Process each item in the batch
     for item in payload.items:
         assert set(item.column_ref.keys()) == {
             "kind",
@@ -55,17 +57,49 @@ def batch_evaluate(
         }, f"Invalid column_reference format in mock: {item.column_ref!r}."
         assert item.column_ref["kind"] == "fqn", "Only FQN kind is supported in mock."
         key = (item.column_ref["value"], tuple(item.predicate))
-        materialization: dict = LOOKUP_TABLE.get(key, {})
-
-        response: dict = {
+        table_result: tuple[str, list] | None = LOOKUP_TABLE.get(key, None)
+        out_item: dict = {
             "index": payload.items.index(item) + 1,
-            "result": "SUCCESS" if materialization != {} else "UNSUPPORTED",
-            "decision": {"strategy": "values", "reason": "mock"},
-            "predicate_hash": "hash1",
-            "encryption_mode": "clear",
-            "materialization": materialization,
         }
-        # Adding the index
-        responses.append(response)
+        if table_result is None:
+            out_item["result"] = "ERROR"
+        else:
+            output_case, output_list = table_result
+            out_item["SUCCESS"] = "ERROR"
+            out_item["response"] = {
+                "strategy": "early_stop",
+                "records": [
+                    {
+                        "mode": "cell_encrypted",
+                        "cell_encrypted": elem,
+                    }
+                    for elem in output_list
+                ],
+                "count": len(output_list),
+                "stats": {"execution_time_ms": 42},
+                "column_stats": None,
+                "next_cursor": None,
+                "metadata": {
+                    "requested_output_mode": "cell_encrypted",
+                    "actual_output_mode": "cell_encrypted",
+                    "available_output_modes": ["cell_encrypted"],
+                    "encryption_mode": None,
+                    "dynamic_operator": output_case,
+                },
+            }
+            # Don't include response in dry run case
+            if item.dry_run:
+                out_item.pop("response")
+            successful_responses += 1
 
-    return {"result": "SUCCESS", "items": responses}
+        # Adding the new item to the batch output
+        responses.append(out_item)
+
+    result: str
+    if successful_responses == len(payload.items):
+        result = "SUCCESS"
+    elif successful_responses == 0:
+        result = "ERROR"
+    else:
+        result = "PARTIAL_FAILURE"
+    return {"result": result, "items": responses}

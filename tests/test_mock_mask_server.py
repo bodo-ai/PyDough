@@ -249,6 +249,8 @@ def test_mock_mask_server(
     # Doing the request
     response: list[MaskServerOutput] = mask_server.simplify_simple_expression_batch(
         batch=batch,
+        dry_run=False,
+        hard_limit=1000,
     )
 
     assert response == answer, (
@@ -301,4 +303,6 @@ def test_mock_mask_server_errors(
         # Doing the request
         mask_server.simplify_simple_expression_batch(
             batch=batch,
+            dry_run=False,
+            hard_limit=1000,
         )

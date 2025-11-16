@@ -3,70 +3,57 @@ A lookup table for the mock server to return predefined responses based on
 request column reference and predicate.
 """
 
-LOOKUP_TABLE: dict = {
+LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
     # key: (column_reference, tuple(predicate))
-    ("srv.db.tbl.col", ("EQUAL", 2, "__col__", 0)): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [
+    # value: (response_case, payload)
+    ("srv.db.tbl.col", ("EQUAL", 2, "__col__", 0)): (
+        "NOT_IN",
+        [
             "value1",
             "value2",
             "value3",
         ],
-        "count": 3,
-    },
+    ),
     (
         "srv.db.orders.order_date",
         ("BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2025-01-01",
             "2025-01-02",
             "2025-01-03",
             "2025-01-04",
             "2025-01-05",
         ],
-        "count": 5,
-    },
-    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", "LOWER", 1, "Smith")): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ["smith"],
-        "count": 1,
-    },
+    ),
+    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", "LOWER", 1, "Smith")): (
+        "NOT_IN",
+        ["smith"],
+    ),
     # booleans,
-    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", True)): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [False],
-        "count": 1,
-    },
+    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", True)): (
+        "IN",
+        [False],
+    ),
     # decimals (string format)
-    ("srv.db.tbl.col", ("LT", 2, "__col__", "123.654445")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["123.121123", "123.654444", "123.654445"],
-        "count": 3,
-    },
+    ("srv.db.tbl.col", ("LT", 2, "__col__", "123.654445")): (
+        "IN",
+        ["123.121123", "123.654444", "123.654445"],
+    ),
     # json embedded
-    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", '{"key": "value"}')): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ['{"key": "value"}'],
-        "count": 1,
-    },
+    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", '("key": "value")')): (
+        "NOT_IN",
+        ['("key": "value")'],
+    ),
     # NULLs and Money
     (
         "srv.db.tbl.col",
         ("AND", 2, "NOT_EQUAL", 2, "__col__", None, "GT", 2, "__col__", "$45.00"),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [None, "$44.50", "$43.20", "$44.99"],
-        "count": 4,
-    },
+    ): (
+        "NOT_IN",
+        [None, "$44.50", "$43.20", "$44.99"],
+    ),
     # Result with Regex, Bytea, Backslash in really nested expression.
     (
         "srv.db.tbl.col",
@@ -88,38 +75,31 @@ LOOKUP_TABLE: dict = {
             "__col__",
             '"Hello World"',
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ['"Hello"', "HelloWorld", "SGVsbG9Xb3JsZA=="],
-        "count": 3,
-    },
+    ): (
+        "IN",
+        ['"Hello"', "HelloWorld", "SGVsbG9Xb3JsZA=="],
+    ),
     # CRYPTBANK hardcoded responses
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("EQUAL", 2, "__col__", "lee")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["LEE"],
-        "count": 1,
-    },
+    ("srv.CRBNK.CUSTOMERS.c_lname", ("EQUAL", 2, "__col__", "lee")): (
+        "IN",
+        ["LEE"],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("BETWEEN", 3, 1980, "YEAR", 1, "__col__", 1985),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "1980-01-18",
             "1981-07-21",
             "1981-11-15",
             "1982-11-07",
             "1983-12-27",
         ],
-        "count": 5,
-    },
-    ("srv.CRBNK.TRANSACTIONS.t_amount", ("GT", 2, "__col__", 9000.0)): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ),
+    ("srv.CRBNK.TRANSACTIONS.t_amount", ("GT", 2, "__col__", 9000.0)): (
+        "IN",
+        [
             -8934.44,
             -8881.98,
             -8736.83,
@@ -142,8 +122,7 @@ LOOKUP_TABLE: dict = {
             -8077.89,
             -8067.8,
         ],
-        "count": 21,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         (
@@ -162,10 +141,9 @@ LOOKUP_TABLE: dict = {
             "__col__",
             2022,
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2022-06-03 05:08:58",
             "2022-06-12 00:24:06",
             "2022-06-13 05:50:39",
@@ -177,8 +155,7 @@ LOOKUP_TABLE: dict = {
             "2022-06-29 05:40:38",
             "2022-06-29 19:53:42",
         ],
-        "count": 10,
-    },
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_type",
         (
@@ -193,104 +170,76 @@ LOOKUP_TABLE: dict = {
             "__col__",
             "savings",
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["avingss", "etirementr"],
-        "count": 2,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_phone", ("ENDSWITH", 2, "__col__", "5")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["555-091-2345", "555-901-2345"],
-        "count": 2,
-    },
+    ): (
+        "IN",
+        ["avingss", "etirementr"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_phone", ("ENDSWITH", 2, "__col__", "5")): (
+        "IN",
+        ["555-091-2345", "555-901-2345"],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_fname",
         ("OR", 2, "ENDSWITH", 2, "__col__", "a", "ENDSWITH", 2, "__col__", "e"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["ALICE", "GRACE", "LUKE", "MARIA", "OLIVIA", "QUEENIE", "SOPHIA"],
-        "count": 8,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("ENDSWITH", 2, "__col__", "s")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["JAMES", "NICHOLAS", "THOMAS"],
-        "count": 3,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("NOT_EQUAL", 2, "__col__", "lopez")): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ["LOPEZ"],
-        "count": 1,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("NOT_EQUAL", 2, "__col__", "lee")): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ["LEE"],
-        "count": 1,
-    },
+    ): (
+        "IN",
+        ["ALICE", "GRACE", "LUKE", "MARIA", "OLIVIA", "QUEENIE", "SOPHIA"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_fname", ("ENDSWITH", 2, "__col__", "s")): (
+        "IN",
+        ["JAMES", "NICHOLAS", "THOMAS"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_lname", ("NOT_EQUAL", 2, "__col__", "lopez")): (
+        "NOT_IN",
+        ["LOPEZ"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_lname", ("NOT_EQUAL", 2, "__col__", "lee")): (
+        "NOT_IN",
+        ["LEE"],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_lname",
         ("IN", 4, "__col__", "lee", "smith", "rodriguez"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["LEE", "SMITH", "RODRIGUEZ"],
-        "count": 3,
-    },
+    ): (
+        "IN",
+        ["LEE", "SMITH", "RODRIGUEZ"],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_lname",
         ("NOT", 1, "IN", 4, "__col__", "lee", "smith", "rodriguez"),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ["LEE", "SMITH", "RODRIGUEZ"],
-        "count": 3,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_phone", ("STARTSWITH", 2, "__col__", "555-8")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["555-809-1234", "555-870-9123"],
-        "count": 2,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_email", ("ENDSWITH", 2, "__col__", "gmail.com")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "NOT_IN",
+        ["LEE", "SMITH", "RODRIGUEZ"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_phone", ("STARTSWITH", 2, "__col__", "555-8")): (
+        "IN",
+        ["555-809-1234", "555-870-9123"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_email", ("ENDSWITH", 2, "__col__", "gmail.com")): (
+        "IN",
+        [
             "livia.a22@gmail.como",
             "ob.smith77@gmail.comb",
             "ob_moore78@gmail.comr",
             "opez.luke99@gmail.coml",
         ],
-        "count": 4,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "YEAR", 1, "__col__", 1978)): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["1976-10-27", "1976-12-02"],
-        "count": 2,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "__col__", "1985-04-12")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["1983-12-27"],
-        "count": 1,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("ENDSWITH", 2, "__col__", "e")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["ALICE", "GRACE", "LUKE", "QUEENIE"],
-        "count": 4,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("ENDSWITH", 2, "__col__", "e")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["LEE", "MOORE"],
-        "count": 2,
-    },
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "YEAR", 1, "__col__", 1978)): (
+        "IN",
+        ["1976-10-27", "1976-12-02"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "__col__", "1985-04-12")): (
+        "IN",
+        ["1983-12-27"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_fname", ("ENDSWITH", 2, "__col__", "e")): (
+        "IN",
+        ["ALICE", "GRACE", "LUKE", "QUEENIE"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_lname", ("ENDSWITH", 2, "__col__", "e")): (
+        "IN",
+        ["LEE", "MOORE"],
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_type",
         (
@@ -305,82 +254,61 @@ LOOKUP_TABLE: dict = {
             "__col__",
             "savings",
         ),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ["avingss", "heckingc"],
-        "count": 2,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("NOT_EQUAL", 2, "__col__", "1991-11-15")): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ["1990-07-31"],
-        "count": 1,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1991-11-15")): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
-        "count": 4,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("GT", 2, "__col__", "1991-11-15")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
-        "count": 4,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LT", 2, "__col__", "1991-11-15")): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [
+    ): (
+        "NOT_IN",
+        ["avingss", "heckingc"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("NOT_EQUAL", 2, "__col__", "1991-11-15")): (
+        "NOT_IN",
+        ["1990-07-31"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1991-11-15")): (
+        "NOT_IN",
+        ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("GT", 2, "__col__", "1991-11-15")): (
+        "IN",
+        ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LT", 2, "__col__", "1991-11-15")): (
+        "NOT_IN",
+        [
             "1990-07-31",
             "1991-03-13",
             "1992-05-06",
             "1993-01-01",
             "1994-06-15",
         ],
-        "count": 4,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("GTE", 2, "__col__", "1991-11-15")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("GTE", 2, "__col__", "1991-11-15")): (
+        "IN",
+        [
             "1990-07-31",
             "1991-03-13",
             "1992-05-06",
             "1993-01-01",
             "1994-06-15",
         ],
-        "count": 4,
-    },
-    ("srv.CRBNK.TRANSACTIONS.t_amount", ("LT", 2, "__col__", 0)): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [],
-        "count": 0,
-    },
-    ("srv.CRBNK.TRANSACTIONS.t_amount", ("GT", 2, "__col__", 0)): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [],
-        "count": 0,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1925-01-01")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [],
-        "count": 0,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_phone", ("EQUAL", 2, "__col__", "555-123-456")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [],
-        "count": 0,
-    },
-    ("srv.CRBNK.ACCOUNTS.a_open_ts", ("EQUAL", 2, "YEAR", 1, "__col__", 2021)): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ),
+    ("srv.CRBNK.TRANSACTIONS.t_amount", ("LT", 2, "__col__", 0)): (
+        "IN",
+        [],
+    ),
+    ("srv.CRBNK.TRANSACTIONS.t_amount", ("GT", 2, "__col__", 0)): (
+        "NOT_IN",
+        [],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1925-01-01")): (
+        "IN",
+        [],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_phone", ("EQUAL", 2, "__col__", "555-123-456")): (
+        "IN",
+        [],
+    ),
+    ("srv.CRBNK.ACCOUNTS.a_open_ts", ("EQUAL", 2, "YEAR", 1, "__col__", 2021)): (
+        "IN",
+        [
             "2017-02-11 10:59:51",
             "2017-06-15 12:41:51",
             "2017-07-07 14:26:51",
@@ -388,8 +316,7 @@ LOOKUP_TABLE: dict = {
             "2017-09-15 11:26:51",
             "2018-01-02 12:26:51",
         ],
-        "count": 6,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         (
@@ -428,40 +355,33 @@ LOOKUP_TABLE: dict = {
             1991,
             1993,
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["1980-01-18", "1981-11-15", "1990-07-31", "1994-06-15"],
-        "count": 4,
-    },
+    ): (
+        "IN",
+        ["1980-01-18", "1981-11-15", "1990-07-31", "1994-06-15"],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("IN", 5, "__col__", "1991-11-15", "1978-02-11", "2005-03-14", "1985-04-12"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["1990-07-31", "1976-10-27", "1983-12-27"],
-        "count": 3,
-    },
+    ): (
+        "IN",
+        ["1990-07-31", "1976-10-27", "1983-12-27"],
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_open_ts",
         ("BETWEEN", 3, "2020-03-28 09:20:00", "__col__", "2020-09-20 08:30:00"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2016-04-29 11:46:51",
             "2016-06-10 12:56:51",
             "2016-07-20 15:46:51",
             "2016-08-22 10:41:51",
             "2016-09-03 12:01:51",
         ],
-        "count": 5,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_email", ("CONTAINS", 2, "__col__", "mail")): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_email", ("CONTAINS", 2, "__col__", "mail")): (
+        "NOT_IN",
+        [
             "homasl@outlook.comt",
             "ueenie.t@outlook.netq",
             ".hernandez@icloud.comk",
@@ -471,12 +391,10 @@ LOOKUP_TABLE: dict = {
             ".lee@outlook.comc",
             "lice_j@example.orga",
         ],
-        "count": 8,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_email", ("LIKE", 2, "__col__", "%.%@%mail%")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_email", ("LIKE", 2, "__col__", "%.%@%mail%")): (
+        "IN",
+        [
             "ophia.jackson@mail.orgs",
             "livia.a22@gmail.como",
             ".gonzalez@ymail.comm",
@@ -486,12 +404,10 @@ LOOKUP_TABLE: dict = {
             "mily.jones@mail.come",
             "ob.smith77@gmail.comb",
         ],
-        "count": 8,
-    },
-    ("srv.CRBNK.ACCOUNTS.a_open_ts", ("IN", 4, "MONTH", 1, "__col__", 1, 2, 3)): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ),
+    ("srv.CRBNK.ACCOUNTS.a_open_ts", ("IN", 4, "MONTH", 1, "__col__", 1, 2, 3)): (
+        "IN",
+        [
             "2013-04-22 11:37:51",
             "2017-02-11 10:59:51",
             "2011-04-30 15:16:51",
@@ -504,17 +420,14 @@ LOOKUP_TABLE: dict = {
             "2012-03-22 12:16:51",
             "2015-04-06 13:46:51",
         ],
-        "count": 8,
-    },
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_open_ts",
         ("EQUAL", 2, "QUARTER", 1, "__col__", "DAY", 1, "__col__"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["2015-05-04 18:01:51"],
-        "count": 1,
-    },
+    ): (
+        "IN",
+        ["2015-05-04 18:01:51"],
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_open_ts",
         (
@@ -533,10 +446,9 @@ LOOKUP_TABLE: dict = {
             "__col__",
             20,
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2013-04-22 11:37:51",
             "2017-09-15 11:26:51",
             "2018-03-15 10:36:51",
@@ -544,30 +456,25 @@ LOOKUP_TABLE: dict = {
             "2016-08-22 10:41:51",
             "2014-08-15 11:31:51",
         ],
-        "count": 6,
-    },
-    ("srv.CRBNK.TRANSACTIONS.t_ts", ("EQUAL", 2, "SECOND", 1, "__col__", 23)): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ),
+    ("srv.CRBNK.TRANSACTIONS.t_ts", ("EQUAL", 2, "SECOND", 1, "__col__", 23)): (
+        "IN",
+        [
             "2020-11-11 09:03:02",
             "2023-09-15 09:00:02",
             "2024-07-21 23:24:02",
         ],
-        "count": 3,
-    },
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_balance",
         ("BETWEEN", 3, 200, "ABS", 1, "SUB", 2, "__col__", 7250, 600),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             46240000.0,
             57760000.0,
         ],
-        "count": 2,
-    },
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_open_ts",
         (
@@ -586,137 +493,115 @@ LOOKUP_TABLE: dict = {
             "__col__",
             10,
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2018-03-15 10:36:51",
             "2018-01-02 12:26:51",
         ],
-        "count": 2,
-    },
+    ),
     (
         "srv.CRBNK.ACCOUNTS.a_open_ts",
         ("EQUAL", 2, "LEAST", 2, "HOUR", 1, "__col__", "MINUTE", 1, "__col__", 15),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2015-08-10 18:11:51",
             "2015-05-04 18:01:51",
             "2015-10-19 18:11:51",
             "2014-10-03 17:41:51",
         ],
-        "count": 4,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_phone",
         ("CONTAINS", 2, "CONCAT", 2, "1-", "__col__", "1-5"),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [],
-        "count": 0,
-    },
+    ): (
+        "NOT_IN",
+        [],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_phone",
         ("CONTAINS", 2, "CONCAT", 3, "1", "-", "__col__", "1-5"),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [],
-        "count": 0,
-    },
+    ): (
+        "NOT_IN",
+        [],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_phone",
         ("CONTAINS", 2, "CONCAT", 5, "1", "-", "__col__", "-", "1", "5-1"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "555-112-3456",
             "555-901-2345",
             "555-091-2345",
             "555-123-4567",
         ],
-        "count": 4,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 1991),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "1990-07-31",
             "1989-04-07",
             None,
         ],
-        "count": 3,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 2005),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "1989-04-07",
             None,
         ],
-        "count": 2,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 2005, 2005, 2006),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             None,
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 1991),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [
+    ): (
+        "NOT_IN",
+        [
             "1990-07-31",
             "1989-04-07",
             None,
         ],
-        "count": 3,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 2005),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [
+    ): (
+        "NOT_IN",
+        [
             "1989-04-07",
             None,
         ],
-        "count": 2,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_birthday",
         ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 2005, 2005, 2006),
-    ): {
-        "type": "literal",
-        "operator": "NOT_IN",
-        "values": [
+    ): (
+        "NOT_IN",
+        [
             None,
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_fname",
         ("IN", 4, "SLICE", 3, "__col__", 0, 1, "q", "r", "s"),
-    ): {"type": "literal", "operator": "IN", "values": ["QUEENIE", "ROBERT", "SOPHIA"]},
+    ): ("IN", ["QUEENIE", "ROBERT", "SOPHIA"]),
     (
         "srv.CRBNK.CUSTOMERS.c_lname",
         (
@@ -741,25 +626,20 @@ LOOKUP_TABLE: dict = {
             "z",
             "e",
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["LEE", "RODRIGUEZ"],
-        "count": 2,
-    },
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("EQUAL", 2, "SLICE", 3, "__col__", 0, 1, "i")): {
-        "type": "literal",
-        "operator": "IN",
-        "values": ["ISABEL"],
-        "count": 1,
-    },
+    ): (
+        "IN",
+        ["LEE", "RODRIGUEZ"],
+    ),
+    ("srv.CRBNK.CUSTOMERS.c_fname", ("EQUAL", 2, "SLICE", 3, "__col__", 0, 1, "i")): (
+        "IN",
+        ["ISABEL"],
+    ),
     (
         "srv.CRBNK.CUSTOMERS.c_fname",
         ("IN", 6, "SLICE", 3, "__col__", 1, 2, "ar", "li", "ra", "to", "am"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "ALICE",
             "CAROL",
             "FRANK",
@@ -769,15 +649,13 @@ LOOKUP_TABLE: dict = {
             "MARIA",
             "OLIVIA",
         ],
-        "count": 5,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "year", "__col__", "2023-01-01"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2022-12-31 17:42:54",
             "2023-01-04 12:05:15",
             "2023-01-07 22:11:27",
@@ -840,15 +718,13 @@ LOOKUP_TABLE: dict = {
             "2023-12-16 00:51:23",
             "2023-12-23 07:54:22",
         ],
-        "count": 61,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "quarter", "__col__", "2023-04-01"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2023-04-18 00:35:40",
             "2023-04-25 18:54:26",
             "2023-04-29 04:58:30",
@@ -867,15 +743,13 @@ LOOKUP_TABLE: dict = {
             "2023-06-27 03:21:19",
             "2023-06-27 10:34:20",
         ],
-        "count": 17,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "month", "__col__", "2023-06-01"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2023-06-01 13:50:10",
             "2023-06-01 13:50:14",
             "2023-06-04 10:35:26",
@@ -885,121 +759,100 @@ LOOKUP_TABLE: dict = {
             "2023-06-27 03:21:19",
             "2023-06-27 10:34:20",
         ],
-        "count": 8,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "day", "__col__", "2023-06-02"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2023-06-01 13:50:10",
             "2023-06-01 13:50:14",
         ],
-        "count": 2,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "hour", "__col__", "2023-06-02 04:00:00"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2023-06-01 13:50:10",
             "2023-06-01 13:50:14",
         ],
-        "count": 2,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "minute", "__col__", "2023-06-02 04:55:00"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2023-06-01 13:50:10",
             "2023-06-01 13:50:14",
         ],
-        "count": 2,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "second", "__col__", "2023-06-02 04:55:31"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2023-06-01 13:50:10",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATEADD", 3, 1, "years", "__col__", "2020-11-11 18:00:52"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-11 02:55:31",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATEADD", 3, 2, "quarters", "__col__", "2020-05-11 18:00:52"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-11 02:55:31",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATEADD", 3, -5, "months", "__col__", "2019-06-11 18:00:52"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-11 02:55:31",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATEADD", 3, 10, "days", "__col__", "2019-11-21 18:00:52"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-11 02:55:31",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATEADD", 3, 1000, "hours", "__col__", "2019-12-23 10:00:52"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-11 02:55:31",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         ("EQUAL", 2, "DATEADD", 3, 10000, "minutes", "__col__", "2019-11-18 16:40:52"),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-11 02:55:31",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         (
@@ -1012,14 +865,12 @@ LOOKUP_TABLE: dict = {
             "__col__",
             "2019-10-31 04:14:12",
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-11 02:55:31",
         ],
-        "count": 1,
-    },
+    ),
     (
         "srv.CRBNK.TRANSACTIONS.t_ts",
         (
@@ -1035,15 +886,13 @@ LOOKUP_TABLE: dict = {
             "__col__",
             "2019-10-31",
         ),
-    ): {
-        "type": "literal",
-        "operator": "IN",
-        "values": [
+    ): (
+        "IN",
+        [
             "2019-11-02 11:58:37",
             "2019-11-02 12:54:09",
             "2019-11-11 02:55:31",
             "2019-11-11 15:44:22",
         ],
-        "count": 4,
-    },
+    ),
 }

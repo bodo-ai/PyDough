@@ -130,6 +130,7 @@ class MaskServerInfo:
         self,
         batch: list[MaskServerInput],
         dry_run: bool,
+        hard_limit: int,
     ) -> list[MaskServerOutput]:
         """
         Sends a batch of predicate expressions to the mask server for evaluation.
@@ -142,6 +143,8 @@ class MaskServerInfo:
         Args:
             `batch`: The list of inputs to be sent to the server.
             `dry_run`: Whether to perform a dry run or not.
+            `hard_limit`: The maximum number of items that can be returned for
+            each predicate.
 
         Returns:
             An output list containing the response case and payload.
@@ -159,7 +162,9 @@ class MaskServerInfo:
 
         path: str = "v1/predicates/batch-evaluate"
         method: RequestMethod = RequestMethod.POST
-        request: ServerRequest = self.generate_request(batch, path, method, dry_run)
+        request: ServerRequest = self.generate_request(
+            batch, path, method, dry_run, hard_limit
+        )
         response_json = self.connection.send_server_request(request)
         result: list[MaskServerOutput] = self.generate_result(response_json)
 
@@ -171,6 +176,7 @@ class MaskServerInfo:
         path: str,
         method: RequestMethod,
         dry_run: bool,
+        hard_limit: int,
     ) -> ServerRequest:
         """
         Generate a server request from the given batch of server inputs and path.
@@ -180,6 +186,8 @@ class MaskServerInfo:
             `path`: The server path for the request.
             `method`: The HTTP method for the request.
             `dry_run`: Whether the request is a dry run or not.
+            `hard_limit`: The maximum number of items that can be returned for
+            each predicate.
 
         Returns:
             A server request including payload to be sent.
@@ -194,11 +202,12 @@ class MaskServerInfo:
                     "mode": "dynamic",
                     "predicate_format": "linear_with_arity",
                     "output_mode": "cell_encrypted",
-                    "dry_run": true/false,
+                    "dry_run": true,
                 },
                 ...
             ],
             "expression_format": {"name": "linear", "version": "0.2.0"}
+            "hard_limit": 1000,
         }
         ```
         """
@@ -206,6 +215,7 @@ class MaskServerInfo:
         payload: dict = {
             "items": [],
             "expression_format": {"name": "linear", "version": "0.2.0"},
+            "hard_limit": hard_limit,
         }
 
         for item in batch:
@@ -223,13 +233,13 @@ class MaskServerInfo:
 
         return ServerRequest(path=path, payload=payload, method=method)
 
-    def generate_result(self, response: dict) -> list[MaskServerOutput]:
+    def generate_result(self, response_dict: dict) -> list[MaskServerOutput]:
         """
         Generate a list of server outputs from the server response of a
         non-dry-run request.
 
         Args:
-            `response`: The response from the mask server.
+            `response_dict`: The response from the mask server.
 
         Example response:
         ```
@@ -239,14 +249,28 @@ class MaskServerInfo:
                 {
                     "index": 0,
                     "result": "SUCCESS",
-                    "decision": {"strategy": "values", "reason": "mock"},
-                    "predicate_hash": "hash0",
-                    "encryption_mode": "clear",
-                    "materialization": {
-                        "type": "literal",
-                        "operator": "IN",
-                        "values": [0],
-                        "count": 1
+                    "response": {
+                        "strategy": ...,
+
+                        "records": [
+                            {
+                                "mode": "cell_encrypted",
+                                "cell_encrypted": "abcE1dsa",
+                            }
+                        ],
+
+                        "count": ...,
+
+                        "stats": ...,
+
+                        "column_stats": ...,
+
+                        "next_cursor": ...,
+
+                        "metadata": {
+                            "dynamic_operator": "IN",
+                            ...
+                        }
                     }
                 },
                 ...
@@ -259,7 +283,7 @@ class MaskServerInfo:
         """
         result: list[MaskServerOutput] = []
 
-        for item in response.get("items", []):
+        for item in response_dict.get("items", []):
             """
             Case on whether operator is ERROR or not
                 If ERROR, then response_case is unsupported and payload is None
@@ -273,10 +297,20 @@ class MaskServerInfo:
                     )
                 )
             else:
-                materialization: dict = item.get("materialization", {})
-                response_case: MaskServerResponse = self.get_server_response_case(
-                    materialization.get("operator", "ERROR")
-                )
+                response: dict = item.get("response", None)
+                if response is None:
+                    # In this case, use a dummy value as a default to indicate
+                    # the dry run was successful
+                    result.append(
+                        MaskServerOutput(
+                            response_case=MaskServerResponse.IN_ARRAY,
+                            payload=None,
+                        )
+                    )
+                else:
+                    response_case: MaskServerResponse = self.get_server_response_case(
+                        response["metadata"]["dynamic_operator"]
+                    )
 
                 payload: Any = None
 
@@ -284,7 +318,10 @@ class MaskServerInfo:
                     MaskServerResponse.IN_ARRAY,
                     MaskServerResponse.NOT_IN_ARRAY,
                 ):
-                    payload = materialization.get("values", [])
+                    payload = [
+                        record.get("cell_encrypted")
+                        for record in response.get("records", [])
+                    ]
 
                 result.append(
                     MaskServerOutput(

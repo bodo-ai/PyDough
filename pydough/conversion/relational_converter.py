@@ -12,6 +12,8 @@ from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
+from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
+from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
@@ -88,8 +90,6 @@ from .hybrid_operations import (
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
-from .mask_server_candidate_visitor import MaskServerCandidateVisitor
-from .mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
