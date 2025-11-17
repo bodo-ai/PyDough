@@ -243,7 +243,9 @@ jobs:
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run custom]')) ||
       (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-custom))
-    env:
+    uses: ./.github/workflows/custom_testing.yml
+    secrets:
+      AWS_LLM_FIXTURES_ROLE: ${{ secrets.READ_LLM_FIXTURES_ROLE }}
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
       SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
       SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
@@ -251,44 +253,7 @@ jobs:
       MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
       POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
       POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    strategy:
-      matrix:
-        python-version: ${{ github.event_name == 'workflow_dispatch'
-                        && fromJSON(needs.get-py-ver-matrix.outputs.matrix)
-                        || fromJSON('["3.10", "3.11", "3.12"]') }}
-    steps:
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.READ_LLM_FIXTURES_ROLE }}
-          aws-region: us-east-2
-      
-      - uses: actions/checkout@v4
-
-      - name: Setup Python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "0.4.23"
-
-      - name: Create virtual environment
-        run: uv venv
-
-      - name: Install dependencies
-        run: uv pip install -e ".[boto3, snowflake, mysql, postgres]"
-
-      - name: Confirm all connectors are installed
-        run: uv run python -c "import boto3; import mysql.connector; import snowflake.connector; import psycopg2; print('All connectors installed')"
-
-      - name: Run Custom Tests for all dialects
-        run: uv run pytest -m custom tests/ -rs
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
