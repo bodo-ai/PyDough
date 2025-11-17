@@ -81,10 +81,10 @@ def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> lis
                 # If the name is quoted, remove the quotes and quote the entire
                 # generated name later.
                 if (
-                    input_expr.name.startswith('"')
-                    and input_expr.name.endswith('"')
-                    or input_expr.name.startswith("`")
-                    and input_expr.name.endswith("`")
+                    input_name.startswith('"')
+                    and input_name.endswith('"')
+                    or input_name.startswith("`")
+                    and input_name.endswith("`")
                 ):
                     input_name = input_name[1:-1]
                     quoted = True
