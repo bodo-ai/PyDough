@@ -706,9 +706,9 @@ def get_s3_custom_datasets(
         else:
             # download from s3
             local_metadata_path: str = f"{metadata_folder}/{dataset}_graph.json"
-
             key_data: str = f"data/{dataset}.db"
             key_metadata: str = f"metadata/{dataset}.json"
+
             try:
                 s3_client.download_file(bucket, key_data, db_file)
             except ClientError as e:
@@ -773,9 +773,9 @@ def custom_datasets_setup():
         CUSTOM_DATASETS,
         CUSTOM_DATASETS_SCRIPTS,
     )
-    print("Datasetes downloaded")
+    print("Datasets downloaded")
     yield
-    print("\nRemoving datasetes")
+    print("\nRemoving datasets")
     remove_s3_custom_datasets(
         data_folder, metadata_folder, CUSTOM_DATASETS, CUSTOM_DATASETS_SCRIPTS
     )
