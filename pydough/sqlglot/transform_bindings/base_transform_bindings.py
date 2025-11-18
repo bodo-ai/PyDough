@@ -2203,66 +2203,75 @@ class BaseTransformBindings:
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
+        start: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.start)
+        end: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.end)
+        step: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.step)
 
-        """
-        Select(
+        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.column_name, quoted=False
+        )
+
+        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.name, quoted=False
+        )
+
+        range_case: SQLGlotExpression = sqlglot_expressions.Case(
+            ifs=[
+                sqlglot_expressions.If(
+                    this=sqlglot_expressions.GT(
+                        this=step,
+                        expression=sqlglot_expressions.Literal.number(0),
+                    ),
+                    true=sqlglot_expressions.LTE(
+                        this=sqlglot_expressions.Add(
+                            this=sqlglot_expressions.Column(this=column_name),
+                            expression=step,
+                        ),
+                        expression=end,
+                    ),
+                )
+            ],
+            default=sqlglot_expressions.GTE(
+                this=sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Column(this=column_name), expression=step
+                ),
+                expression=end,
+            ),
+        )
+
+        union_expression: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
-                Column(
-                this=Identifier(this=column_name, quoted=False))],
-            from=From(
-                this=Table(
-                this=Identifier(this=user_range, quoted=False))),
-            with=With(
-                expressions=[
-                CTE(
-                    this=Union(
-                    this=Select(
-                        expressions=[
-                        Column(
-                            this=Identifier(this=start, quoted=False))]),
-                    distinct=False,
-                    expression=Select(
-                        expressions=[
-                        Add(
-                            this=Column(
-                            this=Identifier(this=column_name, quoted=False)),
-                            expression=Column(
-                            this=Identifier(this=step, quoted=False)))],
-                        from=From(
-                        this=Table(
-                            this=Identifier(this=user_range, quoted=False))),
-                        where=Where(
-                        this=Case(
-                            ifs=[
-                            If(
-                                this=GT(
-                                this=Column(
-                                    this=Identifier(this=step, quoted=False)),
-                                expression=Literal(this=0, is_string=False)),
-                                true=LTE(
-                                this=Add(
-                                    this=Column(
-                                    this=Identifier(this=column_name, quoted=False)),
-                                    expression=Column(
-                                    this=Identifier(this=step, quoted=False))),
-                                expression=Column(
-                                    this=Identifier(this=stop, quoted=False))))],
-                            default=GTE(
-                            this=Add(
-                                this=Column(
-                                this=Identifier(this=column_name, quoted=False)),
-                                expression=Column(
-                                this=Identifier(this=step, quoted=False))),
-                            expression=Column(
-                                this=Identifier(this=stop, quoted=False))))))),
-                    alias=TableAlias(
-                    this=Identifier(this=user_range, quoted=False),
-                    columns=[
-                        Identifier(this=column_name, quoted=False)]))],
-                recursive=True)
+                sqlglot_expressions.Add(
+                    this=sqlglot_expressions.Column(this=column_name), expression=step
+                )
+            ],
+            from_=sqlglot_expressions.From(
+                this=sqlglot_expressions.Table(this=table_name)
+            ),
+            where=sqlglot_expressions.Where(this=range_case),
         )
-        """
 
-        raise NotImplementedError(
-            "range_collections are not supported for this dialect"
+        cte_union: SQLGlotExpression = sqlglot_expressions.Union(
+            this=sqlglot_expressions.Select(expressions=[start]),
+            distinct=False,
+            expression=union_expression,
         )
+
+        cte_expression: SQLGlotExpression = sqlglot_expressions.CTE(
+            this=cte_union,
+            alias=sqlglot_expressions.TableAlias(
+                this=table_name, columns=[column_name]
+            ),
+        )
+
+        result: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[sqlglot_expressions.Column(this=column_name)],
+            from_=sqlglot_expressions.From(
+                this=sqlglot_expressions.Table(this=table_name)
+            ),
+            with_=sqlglot_expressions.With(
+                expressions=[cte_expression], recursive=True
+            ),
+        )
+
+        return result
