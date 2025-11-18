@@ -2184,11 +2184,85 @@ class BaseTransformBindings:
     ) -> SQLGlotExpression:
         """
         Converts a user-generated range into a SQLGlot expression.
+        SQL equivalent:
+        WITH RECURSIVE
+            user_range (column_name) AS (
+                SELECT start
+                UNION ALL
+                SELECT column_name + step
+                FROM user_range
+                WHERE CASE WHEN step > 0 THEN column_name + step <= stop ELSE column_name + step >= stop END
+            )
+        SELECT
+            column_name
+        FROM
+            user_range;
+
         Args:
             `collection`: The user-generated range to convert.
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
+
+        """
+        Select(
+            expressions=[
+                Column(
+                this=Identifier(this=column_name, quoted=False))],
+            from=From(
+                this=Table(
+                this=Identifier(this=user_range, quoted=False))),
+            with=With(
+                expressions=[
+                CTE(
+                    this=Union(
+                    this=Select(
+                        expressions=[
+                        Column(
+                            this=Identifier(this=start, quoted=False))]),
+                    distinct=False,
+                    expression=Select(
+                        expressions=[
+                        Add(
+                            this=Column(
+                            this=Identifier(this=column_name, quoted=False)),
+                            expression=Column(
+                            this=Identifier(this=step, quoted=False)))],
+                        from=From(
+                        this=Table(
+                            this=Identifier(this=user_range, quoted=False))),
+                        where=Where(
+                        this=Case(
+                            ifs=[
+                            If(
+                                this=GT(
+                                this=Column(
+                                    this=Identifier(this=step, quoted=False)),
+                                expression=Literal(this=0, is_string=False)),
+                                true=LTE(
+                                this=Add(
+                                    this=Column(
+                                    this=Identifier(this=column_name, quoted=False)),
+                                    expression=Column(
+                                    this=Identifier(this=step, quoted=False))),
+                                expression=Column(
+                                    this=Identifier(this=stop, quoted=False))))],
+                            default=GTE(
+                            this=Add(
+                                this=Column(
+                                this=Identifier(this=column_name, quoted=False)),
+                                expression=Column(
+                                this=Identifier(this=step, quoted=False))),
+                            expression=Column(
+                                this=Identifier(this=stop, quoted=False))))))),
+                    alias=TableAlias(
+                    this=Identifier(this=user_range, quoted=False),
+                    columns=[
+                        Identifier(this=column_name, quoted=False)]))],
+                recursive=True)
+        )
+        """
+
         raise NotImplementedError(
             "range_collections are not supported for this dialect"
         )
