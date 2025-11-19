@@ -652,13 +652,13 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
-S3_DATASETS = ["synthea", "wdi"]
+S3_DATASETS = ["synthea", "world_development_indicators"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.
 """
 S3_DATASETS_SCRIPTS = {
-    "wdi": "init_world_indicators_sqlite",
+    "world_development_indicators": "init_world_indicators_sqlite",
 }
 """
     Maps the datasets that need to be built with a sql script, with the name of
@@ -813,12 +813,7 @@ def sqlite_s3_datasets_connection(
         connection: sqlite3.Connection
 
         file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
-
-        if database_name not in S3_DATASETS_SCRIPTS:
-            connection = sqlite3.connect(file_path)
-        else:
-            connection = sqlite3.connect(":memory:")
-            connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
+        connection = sqlite3.connect(file_path)
 
         return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 

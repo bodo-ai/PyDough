@@ -41,13 +41,13 @@ result = (
             PyDoughPandasTest(
                 """
 result = (
-    wdi
+    world_development_indicators
     .Country
     .WHERE((IncomeGroup == 'Low income') & HAS(CountryNotes.WHERE(Series.SeriesCode == 'DT.DOD.DECT.CD')))
     .CALCULATE(country_code=CountryCode)
 )
                 """,
-                "wdi",
+                "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
                         "country_code": [
@@ -91,7 +91,7 @@ result = (
             PyDoughPandasTest(
                 """
 result = (
-    wdi
+    world_development_indicators
     .Country
     .WHERE(ShortName == 'Albania')
     .Footnotes
@@ -99,7 +99,7 @@ result = (
     .CALCULATE(footnote_description=Description)
 )
                 """,
-                "wdi",
+                "world_development_indicators",
                 lambda: pd.DataFrame(
                     {
                         "condition_description": [
