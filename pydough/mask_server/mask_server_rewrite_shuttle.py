@@ -91,6 +91,25 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
                     expression=expression_list,
                 )
             )
+            self.candidate_visitor.processed_candidates.add(expr)
+
+        # Wipe the candidate pool to prevent duplicate processing, since every
+        # candidate already in the pool has now been handled.
+        self.candidate_visitor.candidate_pool.clear()
+
+        # First, send the dry response batch to the Mask Server to identify
+        # which predicates can be re-written.
+        dry_run_results: list[MaskServerOutput] = (
+            self.server_info.simplify_simple_expression_batch(batch, True, 1000)
+        )
+
+        batch, ancillary_info = self.identify_predicates_to_send(
+            dry_run_results, batch, ancillary_info
+        )
+
+        # Abort if the batch is now empty after filtering.
+        if len(batch) == 0:
+            return
 
         # Send the batch to the Mask Server, and process each response
         # alongside the ancillary info. Afterwards, self.responses should
@@ -108,11 +127,31 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
                 )
             else:
                 self.responses[expr] = None
-            self.candidate_visitor.processed_candidates.add(expr)
 
-        # Wipe the candidate pool to prevent duplicate processing, since every
-        # candidate already in the pool has now been added to self.responses.
-        self.candidate_visitor.candidate_pool.clear()
+    def identify_predicates_to_send(
+        self,
+        dry_run_results: list[MaskServerOutput],
+        batch: list[MaskServerInput],
+        ancillary_info: list[tuple[RelationalExpression, RelationalExpression]],
+    ) -> tuple[
+        list[MaskServerInput], list[tuple[RelationalExpression, RelationalExpression]]
+    ]:
+        """
+        TODO
+        """
+        keep_idxs: set[int] = set(range(len(dry_run_results)))
+
+        for idx, dry_run_result in enumerate(dry_run_results):
+            if dry_run_result.response_case != MaskServerResponse.UNSUPPORTED:
+                keep_idxs.add(idx)
+
+        new_batch: list[MaskServerInput] = [
+            elem for idx, elem in enumerate(batch) if idx in keep_idxs
+        ]
+        new_ancillary_info: list[tuple[RelationalExpression, RelationalExpression]] = [
+            anc_elem for idx, anc_elem in enumerate(ancillary_info) if idx in keep_idxs
+        ]
+        return new_batch, new_ancillary_info
 
     def convert_response_to_relational(
         self, input_expr: RelationalExpression, response: MaskServerOutput

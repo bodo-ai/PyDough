@@ -1128,6 +1128,7 @@ def test_pipeline_e2e_cryptbank(
             "selected_customers = customers.WHERE(last_name == 'lee')\n"
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
+                {"CRBNK.CUSTOMERS.c_lname: ['EQUAL', 2, '__col__', 'lee']", "DRY_RUN"},
                 {"CRBNK.CUSTOMERS.c_lname: ['EQUAL', 2, '__col__', 'lee']"},
             ],
             id="cryptbank_filter_count_01",
@@ -1137,8 +1138,12 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
                 {
+                    "CRBNK.CUSTOMERS.c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                    "DRY_RUN",
+                },
+                {
                     "CRBNK.CUSTOMERS.c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']"
-                }
+                },
             ],
             id="cryptbank_filter_count_03",
         ),
@@ -1149,7 +1154,12 @@ def test_pipeline_e2e_cryptbank(
                 {
                     "CRBNK.CUSTOMERS.c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
                     "CRBNK.CUSTOMERS.c_lname: ['NOT', 1, 'IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                    "CRBNK.CUSTOMERS.c_lname: ['NOT', 1, 'IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                },
             ],
             id="cryptbank_filter_count_04",
         ),
@@ -1172,7 +1182,17 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK.CUSTOMERS.c_fname: ['OR', 2, 'OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e', 'ENDSWITH', 2, '__col__', 's']",
                     "CRBNK.CUSTOMERS.c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
                     "CRBNK.CUSTOMERS.c_phone: ['ENDSWITH', 2, '__col__', '5']",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK.CUSTOMERS.c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['OR', 2, 'OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e', 'ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK.CUSTOMERS.c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
+                    "CRBNK.CUSTOMERS.c_phone: ['ENDSWITH', 2, '__col__', '5']",
+                },
             ],
             id="cryptbank_filter_count_27",
         ),
@@ -1198,7 +1218,18 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK.CUSTOMERS.c_email: ['CONTAINS', 2, '__col__', 'outlook']",
                     "CRBNK.ACCOUNTS.a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
                     "CRBNK.CUSTOMERS.c_email: ['OR', 2, 'CONTAINS', 2, '__col__', 'outlook', 'CONTAINS', 2, '__col__', 'gmail']",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.ACCOUNTS.a_balance: ['GTE', 2, '__col__', 5000]",
+                    "CRBNK.ACCOUNTS.a_open_ts: ['LT', 2, 'YEAR', 1, '__col__', 2020]",
+                    "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'retirement']",
+                    "CRBNK.ACCOUNTS.a_type: ['EQUAL', 2, '__col__', 'savings']",
+                    "CRBNK.CUSTOMERS.c_email: ['CONTAINS', 2, '__col__', 'gmail']",
+                    "CRBNK.CUSTOMERS.c_email: ['CONTAINS', 2, '__col__', 'outlook']",
+                    "CRBNK.ACCOUNTS.a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
+                    "CRBNK.CUSTOMERS.c_email: ['OR', 2, 'CONTAINS', 2, '__col__', 'outlook', 'CONTAINS', 2, '__col__', 'gmail']",
+                },
             ],
             id="cryptbank_filter_count_28",
         ),
@@ -1208,7 +1239,11 @@ def test_pipeline_e2e_cryptbank(
             [
                 {
                     "CRBNK.CUSTOMERS.c_birthday: ['LTE', 2, '__col__', '1925-01-01']",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_birthday: ['LTE', 2, '__col__', '1925-01-01']",
+                },
             ],
             id="cryptbank_filter_count_29",
         ),
@@ -1223,7 +1258,13 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK.CUSTOMERS.c_birthday: ['AND', 2, 'IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12, 'IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
                     "CRBNK.CUSTOMERS.c_birthday: ['IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
                     "CRBNK.CUSTOMERS.c_birthday: ['IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12]",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_birthday: ['AND', 2, 'IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12, 'IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
+                    "CRBNK.CUSTOMERS.c_birthday: ['IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
+                    "CRBNK.CUSTOMERS.c_birthday: ['IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12]",
+                },
             ],
             id="cryptbank_filter_count_30",
         ),
@@ -1233,7 +1274,11 @@ def test_pipeline_e2e_cryptbank(
             [
                 {
                     "CRBNK.CUSTOMERS.c_birthday: ['IN', 5, '__col__', '1991-11-15', '1978-02-11', '2005-03-14', '1985-04-12']",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_birthday: ['IN', 5, '__col__', '1991-11-15', '1978-02-11', '2005-03-14', '1985-04-12']",
+                },
             ],
             id="cryptbank_filter_count_31",
         ),
@@ -1243,7 +1288,11 @@ def test_pipeline_e2e_cryptbank(
             [
                 {
                     "CRBNK.ACCOUNTS.a_open_ts: ['BETWEEN', 3, '2020-03-28 09:20:00', '__col__', '2020-09-20 08:30:00']",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.ACCOUNTS.a_open_ts: ['BETWEEN', 3, '2020-03-28 09:20:00', '__col__', '2020-09-20 08:30:00']",
+                },
             ],
             id="cryptbank_filter_count_32",
         ),
@@ -1253,7 +1302,12 @@ def test_pipeline_e2e_cryptbank(
                 {
                     "CRBNK.TRANSACTIONS.t_amount: ['LT', 2, '__col__', 0]",
                     "CRBNK.TRANSACTIONS.t_amount: ['GT', 2, '__col__', 0]",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.TRANSACTIONS.t_amount: ['LT', 2, '__col__', 0]",
+                    "CRBNK.TRANSACTIONS.t_amount: ['GT', 2, '__col__', 0]",
+                },
             ],
             id="cryptbank_agg_06",
         ),
@@ -1297,7 +1351,25 @@ def test_pipeline_e2e_cryptbank(
                     "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 10000, 'minutes', '__col__', '2019-11-18 16:40:52']",
                     "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -1000000, 'seconds', '__col__', '2019-10-31 04:14:12']",
                     "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -1, 'days', 'DATETRUNC', 2, 'month', '__col__', '2019-10-31']",
-                }
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'day', '__col__', '2023-06-02']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'hour', '__col__', '2023-06-02 04:00:00']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'minute', '__col__', '2023-06-02 04:55:00']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'month', '__col__', '2023-06-01']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'quarter', '__col__', '2023-04-01']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'second', '__col__', '2023-06-02 04:55:31']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'year', '__col__', '2023-01-01']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 1, 'years', '__col__', '2020-11-11 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 2, 'quarters', '__col__', '2020-05-11 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -5, 'months', '__col__', '2019-06-11 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 10, 'days', '__col__', '2019-11-21 18:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 1000, 'hours', '__col__', '2019-12-23 10:00:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, 10000, 'minutes', '__col__', '2019-11-18 16:40:52']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -1000000, 'seconds', '__col__', '2019-10-31 04:14:12']",
+                    "CRBNK.TRANSACTIONS.t_ts: ['EQUAL', 2, 'DATEADD', 3, -1, 'days', 'DATETRUNC', 2, 'month', '__col__', '2019-10-31']",
+                },
             ],
             id="cryptbank_agg_07",
         ),
@@ -1306,8 +1378,12 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
             [
                 {
+                    "CRBNK.ACCOUNTS.a_open_ts: ['EQUAL', 2, 'QUARTER', 1, '__col__', 'DAY', 1, '__col__']",
+                    "DRY_RUN",
+                },
+                {
                     "CRBNK.ACCOUNTS.a_open_ts: ['EQUAL', 2, 'QUARTER', 1, '__col__', 'DAY', 1, '__col__']"
-                }
+                },
             ],
             id="cryptbank_filter_count_34",
         ),
@@ -1316,8 +1392,12 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
                 {
+                    "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 2, '1-', '__col__', '1-5']",
+                    "DRY_RUN",
+                },
+                {
                     "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 2, '1-', '__col__', '1-5']"
-                }
+                },
             ],
             id="cryptbank_filter_count_40",
         ),
@@ -1326,8 +1406,12 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
                 {
+                    "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 3, '1', '-', '__col__', '1-5']",
+                    "DRY_RUN",
+                },
+                {
                     "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 3, '1', '-', '__col__', '1-5']"
-                }
+                },
             ],
             id="cryptbank_filter_count_41",
         ),
@@ -1336,8 +1420,12 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
                 {
+                    "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 5, '1', '-', '__col__', '-', '1', '5-1']",
+                    "DRY_RUN",
+                },
+                {
                     "CRBNK.CUSTOMERS.c_phone: ['CONTAINS', 2, 'CONCAT', 5, '1', '-', '__col__', '-', '1', '5-1']"
-                }
+                },
             ],
             id="cryptbank_filter_count_42",
         ),
@@ -1373,15 +1461,13 @@ def test_cryptbank_mask_server_logging(
         {"datetime": datetime, "pd": pd},
     )
 
-    # Convert the PyDough code to SQL text.
-    to_sql(root, metadata=graph, mask_server=mock_server_info)
-
-    # Retrieve the output from the captured logger output, while capturing
+    # Convert the PyDough code to SQL text, while capturing
     # stdout to avoid polluting the console with logging calls
     with redirect_stdout(io.StringIO()):
-        batch_requests_made: list[set[str]] = extract_batch_requests_from_logs(
-            caplog.text
-        )
+        to_sql(root, metadata=graph, mask_server=mock_server_info)
+
+    # Retrieve the output from the captured logger output
+    batch_requests_made: list[set[str]] = extract_batch_requests_from_logs(caplog.text)
 
     # If in raw mode, make sure no requests were made. Otherwise, compare the
     # expected batch requests to those made.

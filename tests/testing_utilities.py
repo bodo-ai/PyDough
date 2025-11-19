@@ -1504,7 +1504,8 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
     """
     Extracts the batch requests made to a mask server from the provided log
     string. Each batch request will have a corresponding sequence of log lines
-    in the following format:
+    in the following format (the phrase "Batch request" sometimes followed by
+    the text "(dry run)" if the mask server is in dry run mode):
 
     ```
     INFO     pydough.mask_server.mask_server:mask_server.py:149 Batch request to Mask Server (2 items):
@@ -1513,7 +1514,7 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
     ```
 
     A log message string with those lines would return the following list of
-    sets:
+    sets (if doing a dry run, then "DRY_RUN" is also included in the set):
 
     ```
     [
@@ -1534,7 +1535,7 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
         `db_name.table_name.column_name: [expression_list]`.
     """
     header_pattern: re.Pattern = re.compile(
-        r"Batch request to Mask Server \((\d+) items?\):"
+        r"Batch request( \(dry run\))? to Mask Server \((\d+) items?\):"
     )
     entry_pattern: re.Pattern = re.compile(r"\(\d+\) (.+)")
     result: list[set[str]] = []
@@ -1547,7 +1548,9 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
                 "Malformed log: new batch request started before previous one ended."
             )
             current_set = set()
-            lines_remaining = int(header_match[0])
+            if bool(header_match[0][0]):
+                current_set.add("DRY_RUN")
+            lines_remaining = int(header_match[0][1])
             result.append(current_set)
         elif lines_remaining > 0:
             entry_match = re.findall(entry_pattern, line)

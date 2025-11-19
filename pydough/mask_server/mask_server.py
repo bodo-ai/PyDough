@@ -152,7 +152,12 @@ class MaskServerInfo:
 
         # Log the batch request
         pyd_logger = get_logger(__name__)
-        pyd_logger.info(f"Batch request to Mask Server ({len(batch)} items):")
+        if dry_run:
+            pyd_logger.info(
+                f"Batch request (dry run) to Mask Server ({len(batch)} items):"
+            )
+        else:
+            pyd_logger.info(f"Batch request to Mask Server ({len(batch)} items):")
         for idx, item in enumerate(batch):
             pyd_logger.info(
                 f"({idx + 1}) {item.table_path}.{item.column_name}: {item.expression}"
@@ -312,22 +317,22 @@ class MaskServerInfo:
                         response["metadata"]["dynamic_operator"]
                     )
 
-                payload: Any = None
+                    payload: Any = None
 
-                if response_case in (
-                    MaskServerResponse.IN_ARRAY,
-                    MaskServerResponse.NOT_IN_ARRAY,
-                ):
-                    payload = [
-                        record.get("cell_encrypted")
-                        for record in response.get("records", [])
-                    ]
+                    if response_case in (
+                        MaskServerResponse.IN_ARRAY,
+                        MaskServerResponse.NOT_IN_ARRAY,
+                    ):
+                        payload = [
+                            record.get("cell_encrypted")
+                            for record in response.get("records", [])
+                        ]
 
-                result.append(
-                    MaskServerOutput(
-                        response_case=response_case,
-                        payload=payload,
+                    result.append(
+                        MaskServerOutput(
+                            response_case=response_case,
+                            payload=payload,
+                        )
                     )
-                )
 
         return result
