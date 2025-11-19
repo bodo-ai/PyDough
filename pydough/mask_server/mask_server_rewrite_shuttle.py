@@ -139,7 +139,7 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         """
         TODO
         """
-        keep_idxs: set[int] = set(range(len(dry_run_results)))
+        keep_idxs: set[int] = set()
 
         for idx, dry_run_result in enumerate(dry_run_results):
             if dry_run_result.response_case != MaskServerResponse.UNSUPPORTED:
