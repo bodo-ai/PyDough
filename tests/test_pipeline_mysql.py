@@ -559,7 +559,7 @@ def test_pipeline_e2e_mysql_defog(
     )
 
 
-@pytest.mark.custom
+@pytest.mark.mysql
 @pytest.mark.execute
 def test_pipeline_e2e_mysql_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
@@ -570,12 +570,8 @@ def test_pipeline_e2e_mysql_custom_datasets(
     Test executing the the custom queries with the custom datasets against the
     refsol DataFrame.
     """
-    # Just run the "keywords" tests
-    if custom_datasets_test_data.graph_name.lower() == "keywords":
-        custom_datasets_test_data.run_e2e_test(
-            get_custom_datasets_graph,
-            mysql_conn_db_context(custom_datasets_test_data.graph_name.lower()),
-            coerce_types=True,
-        )
-    else:
-        pytest.skip("Skipping non-keywords custom dataset tests for MySQL.")
+    custom_datasets_test_data.run_e2e_test(
+        get_custom_datasets_graph,
+        mysql_conn_db_context(custom_datasets_test_data.graph_name.lower()),
+        coerce_types=True,
+    )
