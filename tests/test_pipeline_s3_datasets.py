@@ -1,6 +1,6 @@
 """
 Integration tests for the PyDough workflow with custom questions on diverse
-datasets.
+s3 datasets.
 """
 
 from collections.abc import Callable
@@ -131,7 +131,7 @@ def test_pipeline_until_relational_s3_datasets(
     update_tests: bool,
 ) -> None:
     """
-    Tests the conversion of the PyDough queries on the custom datasets into
+    Tests the conversion of the PyDough queries on the s3 datasets into
     relational plans.
     """
     file_path: str = get_plan_test_filename(s3_datasets_test_data.test_name)
@@ -141,7 +141,7 @@ def test_pipeline_until_relational_s3_datasets(
 
 
 @pytest.mark.s3
-def test_pipeline_until_sql_custom_datasets(
+def test_pipeline_until_sql_s3_datasets(
     s3_datasets_test_data: PyDoughPandasTest,
     get_s3_datasets_graph: graph_fetcher,
     empty_context_database: DatabaseContext,
@@ -149,7 +149,7 @@ def test_pipeline_until_sql_custom_datasets(
     update_tests: bool,
 ):
     """
-    Tests the conversion of the PyDough queries on the custom datasets into
+    Tests the conversion of the PyDough queries on the s3 datasets into
     SQL text.
     """
     file_path: str = get_sql_test_filename(
@@ -165,13 +165,13 @@ def test_pipeline_until_sql_custom_datasets(
 
 @pytest.mark.s3
 @pytest.mark.execute
-def test_pipeline_e2e_custom_datasets(
+def test_pipeline_e2e_s3_datasets(
     s3_datasets_test_data: PyDoughPandasTest,
     get_s3_datasets_graph: graph_fetcher,
     sqlite_s3_datasets_connection: Callable[[str], DatabaseContext],
 ):
     """
-    Test executing the the custom queries with the custom datasets against the
+    Test executing the e2e queries with the s3 datasets against the
     refsol DataFrame.
     """
     s3_datasets_test_data.run_e2e_test(

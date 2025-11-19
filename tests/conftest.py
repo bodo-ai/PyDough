@@ -670,6 +670,11 @@ def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
         connection: sqlite3.Connection
 
         file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
+        if not os.path.exists(file_path):
+            raise PyDoughTestingException(
+                f"Custom dataset database file '{file_path}' does not exist."
+            )
+
         connection = sqlite3.connect(":memory:")
         connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
 
