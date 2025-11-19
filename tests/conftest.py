@@ -697,25 +697,35 @@ def get_s3_custom_datasets(
 
     for dataset in datasets:
         db_file: str = f"{data_folder}/{dataset}.db"
+        exists_db_file: bool = os.path.exists(db_file)
 
-        if dataset in scripts:
-            # setting up with script
-            # assuming the metadata is already in the repo
-            init_sql = f"{data_folder}/{scripts[dataset]}.sql"
-            subprocess.run(f"sqlite3 {db_file} < {init_sql}", shell=True, check=True)
-        else:
-            # download from s3
+        # Database setup
+        if not exists_db_file:
+            if dataset in scripts:
+                # setting up with script
+                # assuming the metadata is already available in the metadata folder
+                init_sql = f"{data_folder}/{scripts[dataset]}.sql"
+                subprocess.run(
+                    f"sqlite3 {db_file} < {init_sql}", shell=True, check=True
+                )
+
+            else:
+                # Download from s3
+
+                key_data: str = f"data/{dataset}.db"
+
+                try:
+                    s3_client.download_file(bucket, key_data, db_file)
+                except ClientError as e:
+                    if e.response["Error"]["Code"] == "404":
+                        print(f"The file {key_data} does not exist in bucket {bucket}.")
+                    else:
+                        raise
+
+        # Download metadata from S3
+        if dataset not in scripts:
             local_metadata_path: str = f"{metadata_folder}/{dataset}_graph.json"
-            key_data: str = f"data/{dataset}.db"
             key_metadata: str = f"metadata/{dataset}.json"
-
-            try:
-                s3_client.download_file(bucket, key_data, db_file)
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "404":
-                    print(f"The file {key_data} does not exist in bucket {bucket}.")
-                else:
-                    raise
             try:
                 s3_client.download_file(bucket, key_metadata, local_metadata_path)
             except ClientError as e:
@@ -725,13 +735,12 @@ def get_s3_custom_datasets(
                     raise
 
 
-def remove_s3_custom_datasets(
-    db_folder: str, metadata_folder: str, datasets: list[str], scripts: dict[str, str]
+def remove_s3_custom_metadata(
+    metadata_folder: str, datasets: list[str], scripts: dict[str, str]
 ) -> None:
     """
     Removes the custom datasets (.db and .json for s3 datasets)
     """
-    database_path: str
     metadata_path: str
 
     for dataset in datasets:
@@ -744,14 +753,6 @@ def remove_s3_custom_datasets(
                 print(f"Error: File '{metadata_path}' not found.")
             except Exception as e:
                 print(f"An error occurred: {e}")
-
-        database_path = f"{db_folder}/{dataset}.db"
-        try:
-            os.remove(database_path)
-        except FileNotFoundError:
-            print(f"Error: File '{database_path}' not found.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
 
 
 @pytest.fixture(scope="session")
@@ -776,9 +777,7 @@ def custom_datasets_setup():
     print("Datasets downloaded")
     yield
     print("\nRemoving datasets")
-    remove_s3_custom_datasets(
-        data_folder, metadata_folder, CUSTOM_DATASETS, CUSTOM_DATASETS_SCRIPTS
-    )
+    remove_s3_custom_metadata(metadata_folder, CUSTOM_DATASETS, CUSTOM_DATASETS_SCRIPTS)
 
 
 @pytest.fixture(scope="session")
