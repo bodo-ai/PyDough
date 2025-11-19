@@ -652,6 +652,32 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
+@pytest.fixture(scope="session")
+def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
+    """
+    This fixture is used to connect to the sqlite database of the custom datasets.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+    custom_datasets_dir: str = "tests/gen_data"
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+
+    # Construct the full path to the datasets directory
+    full_dir_path: str = os.path.join(base_dir, custom_datasets_dir)
+
+    @cache
+    def _impl(database_name: str) -> DatabaseContext:
+        connection: sqlite3.Connection
+
+        file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
+        connection = sqlite3.connect(":memory:")
+        connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
+
+        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+    return _impl
+
+
 S3_DATASETS = ["synthea", "world_development_indicators"]
 """
     Contains the name of all the custom datasets that will be used for testing.
