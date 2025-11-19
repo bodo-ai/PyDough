@@ -37,6 +37,7 @@ from pydough.relational import (
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
+    GeneratedTable,
     Join,
     JoinCardinality,
     JoinType,
@@ -82,6 +83,7 @@ from .hybrid_operations import (
     HybridPartition,
     HybridPartitionChild,
     HybridRoot,
+    HybridUserGeneratedCollection,
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
@@ -1267,6 +1269,29 @@ class RelTranslation:
                 new_expressions[shifted_expr] = column_ref
         return TranslationOutput(context.relational_node, new_expressions)
 
+    def build_user_generated_table(
+        self, node: HybridUserGeneratedCollection
+    ) -> TranslationOutput:
+        """Builds a user-generated table from the given hybrid user-generated collection.
+
+        Args:
+            `node`: The user-generated collection node to translate.
+
+        Returns:
+            The translated output payload.
+        """
+        collection = node._user_collection.collection
+        out_columns: dict[HybridExpr, ColumnReference] = {}
+        gen_columns: dict[str, RelationalExpression] = {}
+        for column_name, column_type in collection.column_names_and_types:
+            hybrid_ref = HybridRefExpr(column_name, column_type)
+            col_ref = ColumnReference(column_name, column_type)
+            out_columns[hybrid_ref] = col_ref
+            gen_columns[column_name] = col_ref
+
+        answer = GeneratedTable(collection)
+        return TranslationOutput(answer, out_columns)
+
     def rel_translation(
         self,
         hybrid: HybridTree,
@@ -1395,6 +1420,19 @@ class RelTranslation:
             case HybridRoot():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_hybridroot(context)
+            case HybridUserGeneratedCollection():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.build_user_generated_table(operation)
+                result = self.join_outputs(
+                    context,
+                    result,
+                    JoinType.INNER,
+                    JoinCardinality.PLURAL_ACCESS,
+                    JoinCardinality.SINGULAR_ACCESS,
+                    [],
+                    None,
+                    None,
+                )
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"

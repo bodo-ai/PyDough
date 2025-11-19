@@ -8,6 +8,7 @@ __all__ = [
     "UnqualifiedBinaryOperation",
     "UnqualifiedCalculate",
     "UnqualifiedCross",
+    "UnqualifiedGeneratedCollection",
     "UnqualifiedLiteral",
     "UnqualifiedNode",
     "UnqualifiedOperation",
@@ -40,6 +41,7 @@ from pydough.types import (
     StringType,
     UnknownType,
 )
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 
 class UnqualifiedNode(ABC):
@@ -784,6 +786,13 @@ class UnqualifiedBest(UnqualifiedNode):
         ] = (data, by, per, allow_ties, n_best)
 
 
+class UnqualifiedGeneratedCollection(UnqualifiedNode):
+    """Represents a user-generated collection of values."""
+
+    def __init__(self, user_collection: PyDoughUserGeneratedCollection):
+        self._parcel: tuple[PyDoughUserGeneratedCollection] = (user_collection,)
+
+
 def display_raw(unqualified: UnqualifiedNode) -> str:
     """
     Prints an unqualified node in a human-readable manner that shows its
@@ -880,6 +889,12 @@ def display_raw(unqualified: UnqualifiedNode) -> str:
                 result += ", allow_ties=True"
             if unqualified._parcel[4] > 1:
                 result += f", n_best={unqualified._parcel[4]}"
+            return result + ")"
+        case UnqualifiedGeneratedCollection():
+            result = "generated_collection("
+            result += f"name={unqualified._parcel[0].name!r}, "
+            result += f"columns=[{', '.join(unqualified._parcel[0].columns)}],"
+            result += f"data={unqualified._parcel[0].to_string()}"
             return result + ")"
         case _:
             raise PyDoughUnqualifiedException(

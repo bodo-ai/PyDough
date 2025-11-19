@@ -17,6 +17,8 @@ import pydough.pydough_operators as pydop
 from pydough.configs import DayOfWeek, PyDoughConfigs
 from pydough.errors import PyDoughSQLException
 from pydough.types import BooleanType, NumericType, PyDoughType, StringType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
+from pydough.user_collections.user_collections import PyDoughUserGeneratedCollection
 
 from .sqlglot_transform_utils import (
     DateTimeUnit,
@@ -2153,3 +2155,40 @@ class BaseTransformBindings:
             A SQLGlotExpression representing the order key transformed in any necessary way.
         """
         return arg
+
+    def convert_user_generated_collection(
+        self,
+        collection: PyDoughUserGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated collection (e.g., range or dataframe) into a SQLGlot expression.
+
+        Args:
+            `collection`: The user-generated collection to convert.
+
+        Returns:
+            A SQLGlotExpression representing the user-generated collection.
+        """
+
+        match collection:
+            case RangeGeneratedCollection():
+                return self.convert_user_generated_range(collection)
+            case _:
+                raise PyDoughSQLException(
+                    f"Unsupported user-generated collection type: {type(collection)}"
+                )
+
+    def convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range into a SQLGlot expression.
+        Args:
+            `collection`: The user-generated range to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+        raise NotImplementedError(
+            "range_collections are not supported for this dialect"
+        )
