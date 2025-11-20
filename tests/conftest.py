@@ -642,7 +642,7 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
 def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     """
     This fixture is used to connect to the sqlite database of the custom datasets.
-    Returns a DatabaseContext for the MySQL TPCH database.
+    Returns a DatabaseContext for the given custom database name.
     """
     custom_datasets_dir: str = "tests/gen_data"
     # Setup the directory to be the main PyDough directory.
