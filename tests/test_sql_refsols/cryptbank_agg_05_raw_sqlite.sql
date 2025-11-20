@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     t_sourceaccount,
-    MIN(DATETIME(t_ts, '+54321 seconds')) AS min_unmasktts
+    MIN(DATETIME(t_ts, '+54321 seconds')) AS min_unmask_t_ts
   FROM crbnk.transactions
   GROUP BY
     1
@@ -12,10 +12,10 @@ SELECT
       (
         (
           CAST((
-            JULIANDAY(DATE(_s1.min_unmasktts, 'start of day')) - JULIANDAY(DATE(DATETIME(accounts.a_open_ts, '+123456789 seconds'), 'start of day'))
-          ) AS INTEGER) * 24 + CAST(STRFTIME('%H', _s1.min_unmasktts) AS INTEGER) - CAST(STRFTIME('%H', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER)
-        ) * 60 + CAST(STRFTIME('%M', _s1.min_unmasktts) AS INTEGER) - CAST(STRFTIME('%M', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER)
-      ) * 60 + CAST(STRFTIME('%S', _s1.min_unmasktts) AS INTEGER) - CAST(STRFTIME('%S', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER)
+            JULIANDAY(DATE(_s1.min_unmask_t_ts, 'start of day')) - JULIANDAY(DATE(DATETIME(accounts.a_open_ts, '+123456789 seconds'), 'start of day'))
+          ) AS INTEGER) * 24 + CAST(STRFTIME('%H', _s1.min_unmask_t_ts) AS INTEGER) - CAST(STRFTIME('%H', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER)
+        ) * 60 + CAST(STRFTIME('%M', _s1.min_unmask_t_ts) AS INTEGER) - CAST(STRFTIME('%M', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER)
+      ) * 60 + CAST(STRFTIME('%S', _s1.min_unmask_t_ts) AS INTEGER) - CAST(STRFTIME('%S', DATETIME(accounts.a_open_ts, '+123456789 seconds')) AS INTEGER)
     ),
     2
   ) AS avg_secs

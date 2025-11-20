@@ -1,5 +1,5 @@
-ROOT(columns=[('AVG_YEARLY', DEFAULT_TO(sum_lextendedprice, 0:numeric) / 7.0:numeric)], orderings=[])
- AGGREGATE(keys={}, aggregations={'sum_lextendedprice': SUM(l_extendedprice)})
+ROOT(columns=[('AVG_YEARLY', DEFAULT_TO(sum_l_extendedprice, 0:numeric) / 7.0:numeric)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'sum_l_extendedprice': SUM(l_extendedprice)})
   FILTER(condition=l_quantity < 0.2:numeric * RELAVG(args=[l_quantity], partition=[l_partkey], order=[]), columns={'l_extendedprice': l_extendedprice})
    JOIN(condition=t0.p_partkey == t1.l_partkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'l_extendedprice': t1.l_extendedprice, 'l_partkey': t1.l_partkey, 'l_quantity': t1.l_quantity})
     FILTER(condition=p_brand == 'Brand#23':string & p_container == 'MED BOX':string, columns={'p_partkey': p_partkey})

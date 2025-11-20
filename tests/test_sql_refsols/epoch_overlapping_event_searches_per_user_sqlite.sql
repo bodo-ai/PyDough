@@ -6,8 +6,8 @@ WITH _s0 AS (
 ), _t2 AS (
   SELECT
     _s0.user_id,
-    MAX(searches.search_user_id) AS anything_searchuserid,
-    MAX(_s0.user_name) AS anything_username
+    MAX(searches.search_user_id) AS anything_search_user_id,
+    MAX(_s0.user_name) AS anything_user_name
   FROM _s0 AS _s0
   JOIN searches AS searches
     ON _s0.user_id = searches.search_user_id
@@ -26,11 +26,11 @@ WITH _s0 AS (
     1
 )
 SELECT
-  MAX(anything_username) AS user_name,
+  MAX(anything_user_name) AS user_name,
   COUNT(*) AS n_searches
 FROM _t2
 WHERE
-  anything_searchuserid = user_id
+  anything_search_user_id = user_id
 GROUP BY
   user_id
 ORDER BY

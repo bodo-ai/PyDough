@@ -1,6 +1,6 @@
 ROOT(columns=[('n', n_rows)], orderings=[])
  AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  JOIN(condition=t0.o_orderdate == t1.min_oorderdate, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
+  JOIN(condition=t0.o_orderdate == t1.min_o_orderdate, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
    SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})
-   AGGREGATE(keys={}, aggregations={'min_oorderdate': MIN(o_orderdate)})
+   AGGREGATE(keys={}, aggregations={'min_o_orderdate': MIN(o_orderdate)})
     SCAN(table=tpch.ORDERS, columns={'o_orderdate': o_orderdate})

@@ -21,7 +21,7 @@ WITH _s0 AS (
 ), _s9 AS (
   SELECT
     partsupp.ps_partkey,
-    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr2
+    SUM(partsupp.ps_supplycost * partsupp.ps_availqty) AS sum_expr
   FROM tpch.partsupp AS partsupp
   JOIN _s0 AS _s4
     ON _s4.s_suppkey = partsupp.ps_suppkey
@@ -32,12 +32,12 @@ WITH _s0 AS (
 )
 SELECT
   _s9.ps_partkey AS PS_PARTKEY,
-  COALESCE(_s9.sum_expr2, 0) AS VALUE
+  COALESCE(_s9.sum_expr, 0) AS VALUE
 FROM _s8 AS _s8
 JOIN _s9 AS _s9
   ON (
     COALESCE(_s8.sum_metric, 0) * 0.0001
-  ) < COALESCE(_s9.sum_expr2, 0)
+  ) < COALESCE(_s9.sum_expr, 0)
 ORDER BY
   2 DESC
 LIMIT 10

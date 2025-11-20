@@ -6,8 +6,8 @@ WITH _s0 AS (
 ), _t2 AS (
   SELECT
     _s0.user_id,
-    ANY_VALUE(SEARCHES.search_user_id) AS anything_searchuserid,
-    ANY_VALUE(_s0.user_name) AS anything_username
+    ANY_VALUE(SEARCHES.search_user_id) AS anything_search_user_id,
+    ANY_VALUE(_s0.user_name) AS anything_user_name
   FROM _s0 AS _s0
   JOIN SEARCHES AS SEARCHES
     ON SEARCHES.search_user_id = _s0.user_id
@@ -22,11 +22,11 @@ WITH _s0 AS (
     1
 )
 SELECT
-  ANY_VALUE(anything_username) COLLATE utf8mb4_bin AS user_name,
+  ANY_VALUE(anything_user_name) COLLATE utf8mb4_bin AS user_name,
   COUNT(*) AS n_searches
 FROM _t2
 WHERE
-  anything_searchuserid = user_id
+  anything_search_user_id = user_id
 GROUP BY
   user_id
 ORDER BY

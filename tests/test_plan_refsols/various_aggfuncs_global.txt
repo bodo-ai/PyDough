@@ -1,3 +1,3 @@
-ROOT(columns=[('total_bal', sum_cacctbal), ('num_bal', count_cacctbal), ('avg_bal', DEFAULT_TO(avg_cacctbal, 0:numeric)), ('min_bal', min_cacctbal), ('max_bal', max_cacctbal), ('num_cust', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'avg_cacctbal': AVG(c_acctbal), 'count_cacctbal': COUNT(c_acctbal), 'max_cacctbal': MAX(c_acctbal), 'min_cacctbal': MIN(c_acctbal), 'n_rows': COUNT(), 'sum_cacctbal': SUM(c_acctbal)})
+ROOT(columns=[('total_bal', sum_c_acctbal), ('num_bal', count_c_acctbal), ('avg_bal', DEFAULT_TO(avg_c_acctbal, 0:numeric)), ('min_bal', min_c_acctbal), ('max_bal', max_c_acctbal), ('num_cust', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'avg_c_acctbal': AVG(c_acctbal), 'count_c_acctbal': COUNT(c_acctbal), 'max_c_acctbal': MAX(c_acctbal), 'min_c_acctbal': MIN(c_acctbal), 'n_rows': COUNT(), 'sum_c_acctbal': SUM(c_acctbal)})
   SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal})

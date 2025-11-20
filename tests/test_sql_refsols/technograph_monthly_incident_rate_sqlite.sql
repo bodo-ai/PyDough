@@ -39,10 +39,10 @@ WITH _t2 AS (
     1
 ), _t0 AS (
   SELECT
-    CAST(STRFTIME('%m', _t2.ca_dt) AS INTEGER) AS month_cadt,
-    CAST(STRFTIME('%Y', _t2.ca_dt) AS INTEGER) AS year_cadt,
-    SUM(_s7.n_rows) AS sum_expr3,
-    SUM(_s15.n_rows) AS sum_nrows
+    CAST(STRFTIME('%m', _t2.ca_dt) AS INTEGER) AS month_ca_dt,
+    CAST(STRFTIME('%Y', _t2.ca_dt) AS INTEGER) AS year_ca_dt,
+    SUM(_s7.n_rows) AS sum_expr_3,
+    SUM(_s15.n_rows) AS sum_n_rows
   FROM _t2 AS _t2
   LEFT JOIN _s7 AS _s7
     ON _s7.ca_dt = _t2.ca_dt
@@ -55,16 +55,19 @@ WITH _t2 AS (
 SELECT
   CONCAT_WS(
     '-',
-    year_cadt,
+    year_ca_dt,
     CASE
-      WHEN LENGTH(month_cadt) >= 2
-      THEN SUBSTRING(month_cadt, 1, 2)
-      ELSE SUBSTRING('00' || month_cadt, -2)
+      WHEN LENGTH(month_ca_dt) >= 2
+      THEN SUBSTRING(month_ca_dt, 1, 2)
+      ELSE SUBSTRING('00' || month_ca_dt, -2)
     END
   ) AS month,
-  ROUND(CAST((
-    1000000.0 * COALESCE(sum_nrows, 0)
-  ) AS REAL) / COALESCE(sum_expr3, 0), 2) AS ir
+  ROUND(
+    CAST((
+      1000000.0 * COALESCE(sum_n_rows, 0)
+    ) AS REAL) / COALESCE(sum_expr_3, 0),
+    2
+  ) AS ir
 FROM _t0
 ORDER BY
-  month_cadt
+  month_ca_dt

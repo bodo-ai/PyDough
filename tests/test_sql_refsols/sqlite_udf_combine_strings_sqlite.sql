@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     GROUP_CONCAT(CASE WHEN r_name <> 'EUROPE' THEN r_name ELSE NULL END, ', ') AS agg_1,
-    GROUP_CONCAT(r_name) AS combine_strings_rname
+    GROUP_CONCAT(r_name) AS combine_strings_r_name
   FROM tpch.region
 ), _s1 AS (
   SELECT
@@ -19,7 +19,7 @@ WITH _s0 AS (
   FROM _t2
 )
 SELECT
-  _s0.combine_strings_rname AS s1,
+  _s0.combine_strings_r_name AS s1,
   _s0.agg_1 AS s2,
   _s1.agg_2 AS s3,
   _s3.agg_3 AS s4

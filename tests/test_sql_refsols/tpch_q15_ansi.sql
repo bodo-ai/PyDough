@@ -13,13 +13,13 @@ WITH _t3 AS (
     l_suppkey,
     SUM(l_extendedprice * (
       1 - l_discount
-    )) AS sum_expr2
+    )) AS sum_expr
   FROM _t3
   GROUP BY
     1
 ), _s2 AS (
   SELECT
-    MAX(COALESCE(_s1.sum_expr2, 0)) AS max_totalrevenue
+    MAX(COALESCE(_s1.sum_expr, 0)) AS max_total_revenue
   FROM tpch.supplier AS supplier
   JOIN _s1 AS _s1
     ON _s1.l_suppkey = supplier.s_suppkey
@@ -28,7 +28,7 @@ WITH _t3 AS (
     l_suppkey,
     SUM(l_extendedprice * (
       1 - l_discount
-    )) AS sum_expr3
+    )) AS sum_expr
   FROM _t3
   GROUP BY
     1
@@ -38,11 +38,11 @@ SELECT
   supplier.s_name AS S_NAME,
   supplier.s_address AS S_ADDRESS,
   supplier.s_phone AS S_PHONE,
-  COALESCE(_s5.sum_expr3, 0) AS TOTAL_REVENUE
+  COALESCE(_s5.sum_expr, 0) AS TOTAL_REVENUE
 FROM _s2 AS _s2
 CROSS JOIN tpch.supplier AS supplier
 JOIN _s5 AS _s5
-  ON _s2.max_totalrevenue = COALESCE(_s5.sum_expr3, 0)
+  ON _s2.max_total_revenue = COALESCE(_s5.sum_expr, 0)
   AND _s5.l_suppkey = supplier.s_suppkey
 ORDER BY
   1

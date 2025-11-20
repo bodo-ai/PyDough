@@ -7,7 +7,7 @@ WITH _s3 AS (
     1
 ), _s5 AS (
   SELECT
-    COALESCE(SUM(_s3.n_rows), 0) AS sum_nincidents,
+    COALESCE(SUM(_s3.n_rows), 0) AS sum_n_incidents,
     devices.de_production_country_id,
     COUNT(*) AS n_rows
   FROM main.devices AS devices
@@ -21,7 +21,7 @@ WITH _s3 AS (
 SELECT
   countries.co_name AS country,
   ROUND(
-    CAST(CAST(COALESCE(_s5.sum_nincidents, 0) AS DOUBLE PRECISION) / COALESCE(_s5.n_rows, 0) AS DECIMAL),
+    CAST(CAST(COALESCE(_s5.sum_n_incidents, 0) AS DOUBLE PRECISION) / COALESCE(_s5.n_rows, 0) AS DECIMAL),
     2
   ) AS ir
 FROM main.countries AS countries

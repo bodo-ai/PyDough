@@ -41,7 +41,7 @@ WITH _t2 AS (
         ) % 3
       ) AS TEXT) || ' months'
     ) AS quarter,
-    SUM(_s7.n_rows) AS sum_nrows
+    SUM(_s7.n_rows) AS sum_n_rows
   FROM _t2 AS _t2
   JOIN _s1 AS _s1
     ON _s1.ca_dt < DATE(
@@ -99,7 +99,7 @@ WITH _t2 AS (
 ), _s23 AS (
   SELECT
     _s13.quarter,
-    COUNT(DISTINCT incidents.in_device_id) AS ndistinct_indeviceid
+    COUNT(DISTINCT incidents.in_device_id) AS ndistinct_in_device_id
   FROM main.products AS products
   JOIN main.countries AS countries
     ON countries.co_name = 'CN'
@@ -126,10 +126,10 @@ WITH _t2 AS (
 )
 SELECT
   _s22.quarter,
-  COALESCE(_s23.ndistinct_indeviceid, 0) AS n_incidents,
-  COALESCE(_s22.sum_nrows, 0) AS n_sold,
+  COALESCE(_s23.ndistinct_in_device_id, 0) AS n_incidents,
+  COALESCE(_s22.sum_n_rows, 0) AS n_sold,
   ROUND(
-    CAST(SUM(COALESCE(_s23.ndistinct_indeviceid, 0)) OVER (ORDER BY _s22.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(_s22.sum_nrows, 0)) OVER (ORDER BY _s22.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    CAST(SUM(COALESCE(_s23.ndistinct_in_device_id, 0)) OVER (ORDER BY _s22.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS REAL) / SUM(COALESCE(_s22.sum_n_rows, 0)) OVER (ORDER BY _s22.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS quarter_cum
 FROM _s22 AS _s22

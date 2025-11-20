@@ -6,7 +6,7 @@ WITH _s4 AS (
 ), _t2 AS (
   SELECT
     _s0.r_regionkey,
-    MAX(nation.n_regionkey) AS anything_nregionkey
+    MAX(nation.n_regionkey) AS anything_n_regionkey
   FROM _s4 AS _s0
   JOIN tpch.nation AS nation
     ON _s0.r_regionkey = nation.n_regionkey
@@ -22,7 +22,7 @@ WITH _s4 AS (
     COUNT(*) AS n_rows
   FROM _t2
   WHERE
-    anything_nregionkey = r_regionkey
+    anything_n_regionkey = r_regionkey
   GROUP BY
     1
 )

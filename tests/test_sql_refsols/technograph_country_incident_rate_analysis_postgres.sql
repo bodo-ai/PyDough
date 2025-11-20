@@ -13,7 +13,7 @@ WITH _t2 AS (
   SELECT
     devices.de_production_country_id,
     COUNT(*) AS n_rows,
-    SUM(_s1.n_rows) AS sum_nrows
+    SUM(_s1.n_rows) AS sum_n_rows
   FROM main.devices AS devices
   LEFT JOIN _s1 AS _s1
     ON _s1.in_device_id = devices.de_id
@@ -30,7 +30,7 @@ WITH _t2 AS (
   SELECT
     devices.de_purchase_country_id,
     COUNT(*) AS n_rows,
-    SUM(_s5.n_rows) AS sum_nrows
+    SUM(_s5.n_rows) AS sum_n_rows
   FROM main.devices AS devices
   LEFT JOIN _s5 AS _s5
     ON _s5.in_device_id = devices.de_id
@@ -47,7 +47,7 @@ WITH _t2 AS (
   SELECT
     users.us_country_id,
     COUNT(*) AS n_rows,
-    SUM(_s11.n_rows) AS sum_nrows
+    SUM(_s11.n_rows) AS sum_n_rows
   FROM main.users AS users
   JOIN main.devices AS devices
     ON devices.de_owner_id = users.us_id
@@ -59,15 +59,15 @@ WITH _t2 AS (
 SELECT
   countries.co_name AS country_name,
   ROUND(
-    CAST(CAST(COALESCE(_s3.sum_nrows, 0) AS DOUBLE PRECISION) / _s3.n_rows AS DECIMAL),
+    CAST(CAST(COALESCE(_s3.sum_n_rows, 0) AS DOUBLE PRECISION) / _s3.n_rows AS DECIMAL),
     2
   ) AS made_ir,
   ROUND(
-    CAST(CAST(COALESCE(_s7.sum_nrows, 0) AS DOUBLE PRECISION) / _s7.n_rows AS DECIMAL),
+    CAST(CAST(COALESCE(_s7.sum_n_rows, 0) AS DOUBLE PRECISION) / _s7.n_rows AS DECIMAL),
     2
   ) AS sold_ir,
   ROUND(
-    CAST(CAST(COALESCE(_s13.sum_nrows, 0) AS DOUBLE PRECISION) / COALESCE(_s13.n_rows, 0) AS DECIMAL),
+    CAST(CAST(COALESCE(_s13.sum_n_rows, 0) AS DOUBLE PRECISION) / COALESCE(_s13.n_rows, 0) AS DECIMAL),
     2
   ) AS user_ir
 FROM main.countries AS countries

@@ -1,5 +1,5 @@
 ROOT(columns=[('part_name', p_name), ('part_type', p_type), ('retail_price', p_retailprice)], orderings=[])
- JOIN(condition=t1.p_retailprice < t0.avg_pretailprice & t0.p_type == t1.p_type, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'p_name': t1.p_name, 'p_retailprice': t1.p_retailprice, 'p_type': t1.p_type})
-  AGGREGATE(keys={'p_type': p_type}, aggregations={'avg_pretailprice': AVG(p_retailprice)})
+ JOIN(condition=t1.p_retailprice < t0.avg_p_retailprice & t0.p_type == t1.p_type, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'p_name': t1.p_name, 'p_retailprice': t1.p_retailprice, 'p_type': t1.p_type})
+  AGGREGATE(keys={'p_type': p_type}, aggregations={'avg_p_retailprice': AVG(p_retailprice)})
    SCAN(table=tpch.PART, columns={'p_retailprice': p_retailprice, 'p_type': p_type})
   SCAN(table=tpch.PART, columns={'p_name': p_name, 'p_retailprice': p_retailprice, 'p_type': p_type})

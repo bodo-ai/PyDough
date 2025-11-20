@@ -47,22 +47,22 @@ WITH _t1 AS (
 ), _s3 AS (
   SELECT
     n_regionkey,
-    AVG(expr_5) AS avg_expr5,
-    AVG(expr_6) AS avg_expr6,
-    AVG(expr_7) AS avg_expr7,
-    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negativeacctbal,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_nonnegativeacctbal
+    AVG(expr_5) AS avg_expr_5,
+    AVG(expr_6) AS avg_expr_6,
+    AVG(expr_7) AS avg_expr_7,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal
   FROM _t1
   GROUP BY
     1
 )
 SELECT
   region.r_name AS region_name,
-  _s3.count_negativeacctbal AS n_red_acctbal,
-  _s3.count_nonnegativeacctbal AS n_black_acctbal,
-  _s3.avg_expr7 AS median_red_acctbal,
-  _s3.avg_expr5 AS median_black_acctbal,
-  _s3.avg_expr6 AS median_overall_acctbal
+  _s3.count_negative_acctbal AS n_red_acctbal,
+  _s3.count_non_negative_acctbal AS n_black_acctbal,
+  _s3.avg_expr_7 AS median_red_acctbal,
+  _s3.avg_expr_5 AS median_black_acctbal,
+  _s3.avg_expr_6 AS median_overall_acctbal
 FROM tpch.region AS region
 JOIN _s3 AS _s3
   ON _s3.n_regionkey = region.r_regionkey

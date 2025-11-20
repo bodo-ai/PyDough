@@ -53,7 +53,7 @@ WITH _t2 AS (
       ) END
     ) AS expr_1,
     n_nationkey,
-    AVG(expr_2) AS avg_expr2
+    AVG(expr_2) AS avg_expr_2
   FROM _t2
   GROUP BY
     1,
@@ -61,7 +61,7 @@ WITH _t2 AS (
 )
 SELECT
   customer.c_name AS customer_name,
-  ABS(customer.c_acctbal - _s5.avg_expr2) AS delta
+  ABS(customer.c_acctbal - _s5.avg_expr_2) AS delta
 FROM tpch.customer AS customer
 JOIN _s5 AS _s5
   ON _s5.expr_1 = SUBSTRING(

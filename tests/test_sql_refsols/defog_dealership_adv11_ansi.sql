@@ -1,7 +1,7 @@
 WITH _s0 AS (
   SELECT
     car_id,
-    SUM(sale_price) AS sum_saleprice
+    SUM(sale_price) AS sum_sale_price
   FROM main.sales
   WHERE
     EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
@@ -11,7 +11,7 @@ WITH _s0 AS (
 SELECT
   (
     (
-      COALESCE(SUM(_s0.sum_saleprice), 0) - COALESCE(SUM(cars.cost), 0)
+      COALESCE(SUM(_s0.sum_sale_price), 0) - COALESCE(SUM(cars.cost), 0)
     ) / COALESCE(SUM(cars.cost), 0)
   ) * 100 AS GPM
 FROM _s0 AS _s0

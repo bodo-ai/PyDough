@@ -1,6 +1,6 @@
 WITH _s14 AS (
   SELECT
-    MAX(pr_release) AS anything_prrelease
+    MAX(pr_release) AS anything_pr_release
   FROM main.products
   WHERE
     pr_name = 'GoldCopper-Star'
@@ -41,9 +41,9 @@ WITH _s14 AS (
     1
 ), _s15 AS (
   SELECT
-    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS TIMESTAMP)) AS year_cadt,
-    SUM(_s7.n_rows) AS sum_expr4,
-    SUM(_s13.n_rows) AS sum_nrows
+    EXTRACT(YEAR FROM CAST(_s6.ca_dt AS TIMESTAMP)) AS year_ca_dt,
+    SUM(_s7.n_rows) AS sum_expr_4,
+    SUM(_s13.n_rows) AS sum_n_rows
   FROM _s6 AS _s6
   LEFT JOIN _s7 AS _s7
     ON _s6.ca_dt = _s7.ca_dt
@@ -53,31 +53,31 @@ WITH _s14 AS (
     1
 )
 SELECT
-  _s15.year_cadt - EXTRACT(YEAR FROM CAST(_s14.anything_prrelease AS TIMESTAMP)) AS years_since_release,
+  _s15.year_ca_dt - EXTRACT(YEAR FROM CAST(_s14.anything_pr_release AS TIMESTAMP)) AS years_since_release,
   ROUND(
-    CAST(CAST(SUM(COALESCE(_s15.sum_expr4, 0)) OVER (ORDER BY _s15.year_cadt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(COALESCE(_s15.sum_nrows, 0)) OVER (ORDER BY _s15.year_cadt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DECIMAL),
+    CAST(CAST(SUM(COALESCE(_s15.sum_expr_4, 0)) OVER (ORDER BY _s15.year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DOUBLE PRECISION) / SUM(COALESCE(_s15.sum_n_rows, 0)) OVER (ORDER BY _s15.year_ca_dt ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS DECIMAL),
     2
   ) AS cum_ir,
   ROUND(
     CAST(CAST((
       100.0 * (
-        COALESCE(_s15.sum_nrows, 0) - LAG(COALESCE(_s15.sum_nrows, 0), 1) OVER (ORDER BY _s15.year_cadt)
+        COALESCE(_s15.sum_n_rows, 0) - LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_nrows, 0), 1) OVER (ORDER BY _s15.year_cadt) AS DECIMAL),
+    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_n_rows, 0), 1) OVER (ORDER BY _s15.year_ca_dt) AS DECIMAL),
     2
   ) AS pct_bought_change,
   ROUND(
     CAST(CAST((
       100.0 * (
-        COALESCE(_s15.sum_expr4, 0) - LAG(COALESCE(_s15.sum_expr4, 0), 1) OVER (ORDER BY _s15.year_cadt)
+        COALESCE(_s15.sum_expr_4, 0) - LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt)
       )
-    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_expr4, 0), 1) OVER (ORDER BY _s15.year_cadt) AS DECIMAL),
+    ) AS DOUBLE PRECISION) / LAG(COALESCE(_s15.sum_expr_4, 0), 1) OVER (ORDER BY _s15.year_ca_dt) AS DECIMAL),
     2
   ) AS pct_incident_change,
-  COALESCE(_s15.sum_nrows, 0) AS bought,
-  COALESCE(_s15.sum_expr4, 0) AS incidents
+  COALESCE(_s15.sum_n_rows, 0) AS bought,
+  COALESCE(_s15.sum_expr_4, 0) AS incidents
 FROM _s14 AS _s14
 JOIN _s15 AS _s15
-  ON _s15.year_cadt >= EXTRACT(YEAR FROM CAST(_s14.anything_prrelease AS TIMESTAMP))
+  ON _s15.year_ca_dt >= EXTRACT(YEAR FROM CAST(_s14.anything_pr_release AS TIMESTAMP))
 ORDER BY
   1 NULLS FIRST

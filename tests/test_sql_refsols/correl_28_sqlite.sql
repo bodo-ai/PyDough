@@ -7,8 +7,8 @@ WITH _s9 AS (
     ON nation.n_nationkey = supplier.s_nationkey
 ), _s10 AS (
   SELECT
-    MAX(nation.n_name) AS anything_nname,
-    MAX(nation.n_regionkey) AS anything_nregionkey,
+    MAX(nation.n_name) AS anything_n_name,
+    MAX(nation.n_regionkey) AS anything_n_regionkey,
     COUNT(*) AS n_rows
   FROM tpch.nation AS nation
   JOIN tpch.customer AS customer
@@ -25,10 +25,10 @@ WITH _s9 AS (
     nation.n_nationkey
 )
 SELECT
-  _s10.anything_nname AS nation_name,
+  _s10.anything_n_name AS nation_name,
   _s10.n_rows AS n_selected_purchases
 FROM _s10 AS _s10
 JOIN tpch.region AS region
-  ON _s10.anything_nregionkey = region.r_regionkey AND region.r_name = 'EUROPE'
+  ON _s10.anything_n_regionkey = region.r_regionkey AND region.r_name = 'EUROPE'
 ORDER BY
   1

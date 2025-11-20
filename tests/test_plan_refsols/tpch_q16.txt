@@ -1,5 +1,5 @@
-ROOT(columns=[('P_BRAND', p_brand), ('P_TYPE', p_type), ('P_SIZE', p_size), ('SUPPLIER_COUNT', ndistinct_pssuppkey)], orderings=[(ndistinct_pssuppkey):desc_last, (p_brand):asc_first, (p_type):asc_first, (p_size):asc_first], limit=10:numeric)
- AGGREGATE(keys={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type}, aggregations={'ndistinct_pssuppkey': NDISTINCT(ps_suppkey)})
+ROOT(columns=[('P_BRAND', p_brand), ('P_TYPE', p_type), ('P_SIZE', p_size), ('SUPPLIER_COUNT', ndistinct_ps_suppkey)], orderings=[(ndistinct_ps_suppkey):desc_last, (p_brand):asc_first, (p_type):asc_first, (p_size):asc_first], limit=10:numeric)
+ AGGREGATE(keys={'p_brand': p_brand, 'p_size': p_size, 'p_type': p_type}, aggregations={'ndistinct_ps_suppkey': NDISTINCT(ps_suppkey)})
   JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'p_brand': t1.p_brand, 'p_size': t1.p_size, 'p_type': t1.p_type, 'ps_suppkey': t0.ps_suppkey})
    JOIN(condition=t0.ps_suppkey == t1.s_suppkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'ps_partkey': t0.ps_partkey, 'ps_suppkey': t0.ps_suppkey})
     SCAN(table=tpch.PARTSUPP, columns={'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey})

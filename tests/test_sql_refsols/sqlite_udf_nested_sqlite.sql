@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     o_custkey,
-    MIN(o_orderdate) AS min_oorderdate,
+    MIN(o_orderdate) AS min_o_orderdate,
     COUNT(*) AS n_rows
   FROM tpch.orders
   GROUP BY
@@ -11,7 +11,7 @@ WITH _s1 AS (
     MIN(customer.c_acctbal) OVER () AS min_bal,
     customer.c_acctbal,
     customer.c_mktsegment,
-    _s1.min_oorderdate,
+    _s1.min_o_orderdate,
     _s1.n_rows
   FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
@@ -28,7 +28,7 @@ SELECT
             WHEN c_mktsegment = 'MACHINERY'
             THEN ABS(min_bal - c_acctbal) <= 500
             WHEN c_mktsegment = 'HOUSEHOLD'
-            THEN CAST(STRFTIME('%j', min_oorderdate) AS INTEGER) = '366'
+            THEN CAST(STRFTIME('%j', min_o_orderdate) AS INTEGER) = '366'
             ELSE FALSE
           END
           THEN 1

@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     sbtxtickerid,
-    SUM(sbtxtax + sbtxcommission) AS sum_expr2,
+    SUM(sbtxtax + sbtxcommission) AS sum_expr,
     SUM(sbtxamount) AS sum_sbtxamount
   FROM main.sbtransaction
   WHERE
@@ -13,7 +13,7 @@ SELECT
   sbticker.sbtickersymbol AS symbol,
   CAST((
     100.0 * (
-      COALESCE(_s1.sum_sbtxamount, 0) - COALESCE(_s1.sum_expr2, 0)
+      COALESCE(_s1.sum_sbtxamount, 0) - COALESCE(_s1.sum_expr, 0)
     )
   ) AS REAL) / COALESCE(_s1.sum_sbtxamount, 0) AS SPM
 FROM main.sbticker AS sbticker

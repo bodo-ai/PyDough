@@ -6,7 +6,7 @@ WITH _t2 AS (
 ), _s0 AS (
   SELECT
     p_brand,
-    AVG(p_retailprice) AS avg_pretailprice
+    AVG(p_retailprice) AS avg_p_retailprice
   FROM _t2
   GROUP BY
     1
@@ -17,7 +17,7 @@ WITH _t2 AS (
   JOIN _t2 AS _s1
     ON _s0.p_brand = _s1.p_brand
     AND _s1.p_retailprice > (
-      1.4 * _s0.avg_pretailprice
+      1.4 * _s0.avg_p_retailprice
     )
 )
 SELECT

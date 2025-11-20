@@ -4,8 +4,8 @@ WITH years AS (
   FROM TABLE(GENERATOR(ROWCOUNT => 11))
 ), _s5 AS (
   SELECT
-    YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS year_oorderdate,
-    COUNT(DISTINCT orders.o_custkey) AS ndistinct_ocustkey
+    YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) AS year_o_orderdate,
+    COUNT(DISTINCT orders.o_custkey) AS ndistinct_o_custkey
   FROM tpch.orders AS orders
   JOIN tpch.customer AS customer
     ON customer.c_custkey = orders.o_custkey AND customer.c_mktsegment = 'AUTOMOBILE'
@@ -18,9 +18,9 @@ WITH years AS (
 )
 SELECT
   years.year,
-  COALESCE(_s5.ndistinct_ocustkey, 0) AS n_orders
+  COALESCE(_s5.ndistinct_o_custkey, 0) AS n_orders
 FROM years AS years
 LEFT JOIN _s5 AS _s5
-  ON _s5.year_oorderdate = years.year
+  ON _s5.year_o_orderdate = years.year
 ORDER BY
   1 NULLS FIRST

@@ -10,7 +10,7 @@ WITH _t2 AS (
     p_size
 ), _s0 AS (
   SELECT
-    AVG(n_rows) AS avg_nrows
+    AVG(n_rows) AS avg_n_rows
   FROM _t1
 ), _s1 AS (
   SELECT
@@ -23,4 +23,4 @@ SELECT
   COUNT(*) AS n_sizes
 FROM _s0 AS _s0
 JOIN _s1 AS _s1
-  ON _s0.avg_nrows < _s1.n_rows
+  ON _s0.avg_n_rows < _s1.n_rows

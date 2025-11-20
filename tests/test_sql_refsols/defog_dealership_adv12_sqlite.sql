@@ -1,10 +1,10 @@
 WITH _t1 AS (
   SELECT
     cars._id AS _id_1,
-    MAX(sales.car_id) AS anything_carid,
+    MAX(sales.car_id) AS anything_car_id,
     MAX(cars.make) AS anything_make,
     MAX(cars.model) AS anything_model,
-    MAX(sales.sale_price) AS anything_saleprice
+    MAX(sales.sale_price) AS anything_sale_price
   FROM main.sales AS sales
   JOIN main.cars AS cars
     ON cars._id = sales.car_id
@@ -19,10 +19,10 @@ WITH _t1 AS (
 SELECT
   anything_make AS make,
   anything_model AS model,
-  anything_saleprice AS sale_price
+  anything_sale_price AS sale_price
 FROM _t1
 WHERE
-  _id_1 = anything_carid
+  _id_1 = anything_car_id
 ORDER BY
   3 DESC
 LIMIT 1
