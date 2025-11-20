@@ -77,21 +77,9 @@ def generate_cleaner_names(expr: RelationalExpression, current_name: str) -> lis
             input_expr = expr.inputs[0]
             if isinstance(input_expr, ColumnReference):
                 input_name: str = input_expr.name
-                quoted: bool = False
-                # If the name is quoted, remove the quotes and quote the entire
-                # generated name later.
-                if (
-                    input_name.startswith('"')
-                    and input_name.endswith('"')
-                    or input_name.startswith("`")
-                    and input_name.endswith("`")
-                ):
-                    input_name = input_name[1:-1]
-                    quoted = True
-
+                # Remove any non-alphanumeric characters to make a cleaner name.
+                input_name = re.sub(r"[^a-zA-Z0-9]", "", input_name)
                 cleaner_name: str = f"{expr.op.function_name.lower()}_{input_name}"
-                if quoted:
-                    cleaner_name = f'"{cleaner_name}"'
 
                 result.append(cleaner_name)
 
