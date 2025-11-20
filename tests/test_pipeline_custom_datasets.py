@@ -200,19 +200,28 @@ result = quoted_table_name.WHERE(
             PyDoughPandasTest(
                 """
 result = keywords.CALCULATE(
-    max_len=MAX(partition_.integer)
-).calculate_.WHERE(
-    where_ == max_len
-).CALCULATE(key=where_, len=length)
+    max_where=MAX(partition_.where_),
+    min_quote=MIN(quoted_table_name.quote_),
+    max_name=MAX(quoted_table_name.name),
+    count_cast=COUNT(quoted_table_name.cast_),
+    quote_avg=AVG(quoted_table_name.quote_),
+    sum_name=SUM(quoted_table_name.name),
+)
                 """,
                 "keywords",
-                lambda: pd.DataFrame({"key": [3], "len": [7]}),
-                "keywords_function_quoted_name",
+                lambda: pd.DataFrame(
+                    {
+                        "max_where": [5],
+                        "min_quote": [1],
+                        "max_name": [11],
+                        "count_cast": [5],
+                        "quote_avg": [4.2],
+                        "sum_name": [35],
+                    }
+                ),
+                "keywords_expr_call_quoted_names",
             ),
-            id="keywords_function_quoted_name",
-            marks=pytest.mark.skip(
-                "FIX: (issue #458): Invalid composed SQL alias where column_name is quoted."
-            ),
+            id="keywords_expr_call_quoted_names",
         ),
     ],
 )
