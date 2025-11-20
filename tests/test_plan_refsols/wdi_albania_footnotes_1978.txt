@@ -1,6 +1,6 @@
 ROOT(columns=[('footnote_description', Description)], orderings=[])
  JOIN(condition=t0.CountryCode == t1.Countrycode, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'Description': t1.Description})
   FILTER(condition=ShortName == 'Albania':string, columns={'CountryCode': CountryCode})
-   SCAN(table=wdi.Country, columns={'CountryCode': CountryCode, 'ShortName': ShortName})
+   SCAN(table=main.Country, columns={'CountryCode': CountryCode, 'ShortName': ShortName})
   FILTER(condition=Year == 'YR2012':string, columns={'Countrycode': Countrycode, 'Description': Description})
-   SCAN(table=wdi.Footnotes, columns={'Countrycode': Countrycode, 'Description': Description, 'Year': Year})
+   SCAN(table=main.Footnotes, columns={'Countrycode': Countrycode, 'Description': Description, 'Year': Year})
