@@ -13,8 +13,8 @@ WITH _t5 AS (
     _t5.l_linenumber,
     _t5.l_orderkey,
     ORDERS.o_orderkey,
-    ANY_VALUE(_t5.l_suppkey) AS anything_l_suppkey,
-    ANY_VALUE(ORDERS.o_orderstatus) AS anything_o_orderstatus
+    ANY_VALUE(_t5.l_suppkey) AS anything_lsuppkey,
+    ANY_VALUE(ORDERS.o_orderstatus) AS anything_oorderstatus
   FROM _t5 AS _t5
   JOIN tpch.ORDERS AS ORDERS
     ON ORDERS.o_orderkey = _t5.l_orderkey
@@ -42,7 +42,7 @@ WITH _t5 AS (
     3
 ), _s13 AS (
   SELECT
-    _t3.anything_l_suppkey,
+    _t3.anything_lsuppkey,
     COUNT(*) AS n_rows
   FROM _t3 AS _t3
   LEFT JOIN _u_0 AS _u_0
@@ -50,7 +50,7 @@ WITH _t5 AS (
     AND _t3.l_orderkey = _u_0._u_2
     AND _t3.o_orderkey = _u_0._u_3
   WHERE
-    _t3.anything_o_orderstatus = 'F' AND _u_0._u_1 IS NULL
+    _t3.anything_oorderstatus = 'F' AND _u_0._u_1 IS NULL
   GROUP BY
     1
 )
@@ -61,7 +61,7 @@ FROM tpch.SUPPLIER AS SUPPLIER
 JOIN tpch.NATION AS NATION
   ON NATION.n_name = 'SAUDI ARABIA' AND NATION.n_nationkey = SUPPLIER.s_nationkey
 LEFT JOIN _s13 AS _s13
-  ON SUPPLIER.s_suppkey = _s13.anything_l_suppkey
+  ON SUPPLIER.s_suppkey = _s13.anything_lsuppkey
 ORDER BY
   2 DESC,
   1

@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     sale_id,
-    MAX(payment_date) AS max_payment_date
+    MAX(payment_date) AS max_paymentdate
   FROM main.payments_received
   GROUP BY
     1
@@ -9,7 +9,7 @@ WITH _s1 AS (
 SELECT
   ROUND(
     AVG(
-      DATEDIFF(CAST(_s1.max_payment_date AS DATETIME), CAST(sales.sale_date AS DATETIME), DAY)
+      DATEDIFF(CAST(_s1.max_paymentdate AS DATETIME), CAST(sales.sale_date AS DATETIME), DAY)
     ),
     2
   ) AS avg_days_to_payment

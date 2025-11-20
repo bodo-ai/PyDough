@@ -18,10 +18,10 @@ WITH _s0 AS (
   SELECT
     _s0.month,
     sbticker.sbtickersymbol,
-    MAX(_s0.max_sbdphigh) AS max_max_sbdphigh,
-    MIN(_s0.min_sbdplow) AS min_min_sbdplow,
-    SUM(_s0.count_sbdpclose) AS sum_count_sbdpclose,
-    SUM(_s0.sum_sbdpclose) AS sum_sum_sbdpclose
+    MAX(_s0.max_sbdphigh) AS max_maxsbdphigh,
+    MIN(_s0.min_sbdplow) AS min_minsbdplow,
+    SUM(_s0.count_sbdpclose) AS sum_countsbdpclose,
+    SUM(_s0.sum_sbdpclose) AS sum_sumsbdpclose
   FROM _s0 AS _s0
   JOIN main.sbticker AS sbticker
     ON _s0.sbdptickerid = sbticker.sbtickerid
@@ -32,12 +32,12 @@ WITH _s0 AS (
 SELECT
   sbtickersymbol AS symbol,
   month,
-  sum_sum_sbdpclose / sum_count_sbdpclose AS avg_close,
-  max_max_sbdphigh AS max_high,
-  min_min_sbdplow AS min_low,
+  sum_sumsbdpclose / sum_countsbdpclose AS avg_close,
+  max_maxsbdphigh AS max_high,
+  min_minsbdplow AS min_low,
   (
     (
-      sum_sum_sbdpclose / sum_count_sbdpclose
-    ) - LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
-  ) / LAG(sum_sum_sbdpclose / sum_count_sbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month) AS momc
+      sum_sumsbdpclose / sum_countsbdpclose
+    ) - LAG(sum_sumsbdpclose / sum_countsbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month)
+  ) / LAG(sum_sumsbdpclose / sum_countsbdpclose, 1) OVER (PARTITION BY sbtickersymbol ORDER BY month) AS momc
 FROM _t0

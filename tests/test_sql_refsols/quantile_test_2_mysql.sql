@@ -82,15 +82,15 @@ WITH _s0 AS (
 ), _s5 AS (
   SELECT
     c_nationkey,
-    MAX(expr_10) AS max_expr_10,
-    MAX(expr_11) AS max_expr_11,
-    MAX(expr_12) AS max_expr_12,
-    MAX(expr_13) AS max_expr_13,
-    MAX(expr_14) AS max_expr_14,
-    MAX(expr_16) AS max_expr_16,
-    MAX(expr_17) AS max_expr_17,
-    MAX(expr_9) AS max_expr_9,
-    MAX(o_totalprice) AS max_o_totalprice
+    MAX(expr_10) AS max_expr10,
+    MAX(expr_11) AS max_expr11,
+    MAX(expr_12) AS max_expr12,
+    MAX(expr_13) AS max_expr13,
+    MAX(expr_14) AS max_expr14,
+    MAX(expr_16) AS max_expr16,
+    MAX(expr_17) AS max_expr17,
+    MAX(expr_9) AS max_expr9,
+    MAX(o_totalprice) AS max_ototalprice
   FROM _t2
   GROUP BY
     1
@@ -98,15 +98,15 @@ WITH _s0 AS (
 SELECT
   REGION.r_name AS region_name,
   _s0.n_name COLLATE utf8mb4_bin AS nation_name,
-  _s5.max_expr_17 AS orders_min,
-  _s5.max_expr_10 AS orders_1_percent,
-  _s5.max_expr_9 AS orders_10_percent,
-  _s5.max_expr_11 AS orders_25_percent,
-  _s5.max_expr_16 AS orders_median,
-  _s5.max_expr_12 AS orders_75_percent,
-  _s5.max_expr_13 AS orders_90_percent,
-  _s5.max_expr_14 AS orders_99_percent,
-  _s5.max_o_totalprice AS orders_max
+  _s5.max_expr17 AS orders_min,
+  _s5.max_expr10 AS orders_1_percent,
+  _s5.max_expr9 AS orders_10_percent,
+  _s5.max_expr11 AS orders_25_percent,
+  _s5.max_expr16 AS orders_median,
+  _s5.max_expr12 AS orders_75_percent,
+  _s5.max_expr13 AS orders_90_percent,
+  _s5.max_expr14 AS orders_99_percent,
+  _s5.max_ototalprice AS orders_max
 FROM _s0 AS _s0
 JOIN tpch.REGION AS REGION
   ON REGION.r_regionkey = _s0.n_regionkey

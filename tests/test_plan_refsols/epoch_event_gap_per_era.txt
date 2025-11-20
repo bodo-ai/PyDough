@@ -1,5 +1,5 @@
-ROOT(columns=[('era_name', er_name), ('avg_event_gap', avg_day_gap)], orderings=[(anything_er_start_year):asc_first])
- AGGREGATE(keys={'er_name': er_name}, aggregations={'anything_er_start_year': ANYTHING(er_start_year), 'avg_day_gap': AVG(day_gap)})
+ROOT(columns=[('era_name', er_name), ('avg_event_gap', avg_daygap)], orderings=[(anything_erstartyear):asc_first])
+ AGGREGATE(keys={'er_name': er_name}, aggregations={'anything_erstartyear': ANYTHING(er_start_year), 'avg_daygap': AVG(day_gap)})
   FILTER(condition=er_start_year <= YEAR(ev_dt) & YEAR(ev_dt) < er_end_year, columns={'day_gap': day_gap, 'er_name': er_name, 'er_start_year': er_start_year})
    PROJECT(columns={'day_gap': DATEDIFF('days':string, PREV(args=[ev_dt], partition=[er_name, er_name], order=[(ev_dt):asc_last]), ev_dt), 'er_end_year': er_end_year, 'er_name': er_name, 'er_start_year': er_start_year, 'ev_dt': ev_dt})
     JOIN(condition=t0.er_start_year <= YEAR(t1.ev_dt) & YEAR(t1.ev_dt) < t0.er_end_year, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'er_end_year': t0.er_end_year, 'er_name': t0.er_name, 'er_start_year': t0.er_start_year, 'ev_dt': t1.ev_dt})

@@ -1,13 +1,13 @@
 WITH _s3 AS (
   SELECT
     patient_id,
-    MIN(EXTRACT(YEAR FROM CAST(start_dt AS DATETIME))) AS min_year_start_dt
+    MIN(EXTRACT(YEAR FROM CAST(start_dt AS DATETIME))) AS min_yearstartdt
   FROM main.treatments
   GROUP BY
     1
 ), _t0 AS (
   SELECT
-    _s3.min_year_start_dt,
+    _s3.min_yearstartdt,
     COUNT(*) AS n_rows
   FROM main.patients AS patients
   JOIN main.treatments AS treatments
@@ -18,13 +18,13 @@ WITH _s3 AS (
     1
 )
 SELECT
-  CAST(min_year_start_dt AS TEXT) AS year,
+  CAST(min_yearstartdt AS TEXT) AS year,
   n_rows AS number_of_new_patients,
   CASE
     WHEN (
-      n_rows - COALESCE(LAG(n_rows, 1) OVER (ORDER BY min_year_start_dt NULLS LAST), n_rows)
+      n_rows - COALESCE(LAG(n_rows, 1) OVER (ORDER BY min_yearstartdt NULLS LAST), n_rows)
     ) <> 0
-    THEN n_rows - COALESCE(LAG(n_rows, 1) OVER (ORDER BY min_year_start_dt NULLS LAST), n_rows)
+    THEN n_rows - COALESCE(LAG(n_rows, 1) OVER (ORDER BY min_yearstartdt NULLS LAST), n_rows)
     ELSE NULL
   END AS npi
 FROM _t0

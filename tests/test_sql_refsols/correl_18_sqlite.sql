@@ -11,7 +11,7 @@ WITH _t3 AS (
     o_custkey,
     o_orderdate,
     COUNT(*) AS n_rows,
-    SUM(o_totalprice) AS sum_o_totalprice
+    SUM(o_totalprice) AS sum_ototalprice
   FROM _t3
   GROUP BY
     1,
@@ -24,7 +24,7 @@ JOIN _t3 AS _t4
   ON _t1.o_custkey = _t4.o_custkey
   AND _t1.o_orderdate = _t4.o_orderdate
   AND _t4.o_totalprice >= (
-    0.5 * COALESCE(_t1.sum_o_totalprice, 0)
+    0.5 * COALESCE(_t1.sum_ototalprice, 0)
   )
 WHERE
   _t1.n_rows > 1

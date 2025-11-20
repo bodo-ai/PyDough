@@ -57,7 +57,7 @@ WITH _s0 AS (
       ),
       '%Y %c %e'
     ) AS quarter,
-    COUNT(DISTINCT INCIDENTS.in_device_id) AS ndistinct_in_device_id
+    COUNT(DISTINCT INCIDENTS.in_device_id) AS ndistinct_indeviceid
   FROM _s0 AS _s2
   JOIN _t2 AS _t4
     ON _s2.ca_dt < STR_TO_DATE(
@@ -111,10 +111,10 @@ WITH _s0 AS (
 )
 SELECT
   _s12.quarter,
-  COALESCE(_s13.ndistinct_in_device_id, 0) AS n_incidents,
+  COALESCE(_s13.ndistinct_indeviceid, 0) AS n_incidents,
   COALESCE(_s21.n_rows, 0) AS n_sold,
   ROUND(
-    SUM(COALESCE(_s13.ndistinct_in_device_id, 0)) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s21.n_rows, 0)) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+    SUM(COALESCE(_s13.ndistinct_indeviceid, 0)) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) / SUM(COALESCE(_s21.n_rows, 0)) OVER (ORDER BY _s12.quarter ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
     2
   ) AS quarter_cum
 FROM _s12 AS _s12

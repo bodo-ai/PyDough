@@ -2,7 +2,7 @@ WITH _t0 AS (
   SELECT
     DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP)) AS start_month,
     COUNT(*) AS n_rows,
-    COUNT(DISTINCT diag_id) AS ndistinct_diag_id
+    COUNT(DISTINCT diag_id) AS ndistinct_diagid
   FROM main.treatments
   WHERE
     DATEADD(MONTH, -12, DATE_TRUNC('MONTH', CURRENT_TIMESTAMP())) <= DATE_TRUNC('MONTH', CAST(start_dt AS TIMESTAMP))
@@ -16,7 +16,7 @@ SELECT
     YEAR(CAST(start_month AS TIMESTAMP)),
     LPAD(MONTH(CAST(start_month AS TIMESTAMP)), 2, '0')
   ) AS start_month,
-  ndistinct_diag_id AS PMPD,
+  ndistinct_diagid AS PMPD,
   n_rows AS PMTC
 FROM _t0
 ORDER BY

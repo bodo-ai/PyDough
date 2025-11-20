@@ -7,7 +7,7 @@ WITH _t AS (
 ), _s3 AS (
   SELECT
     car_id,
-    MAX(sale_price) AS max_sale_price
+    MAX(sale_price) AS max_saleprice
   FROM main.sales
   GROUP BY
     1
@@ -15,7 +15,7 @@ WITH _t AS (
 SELECT
   cars.make,
   cars.model,
-  _s3.max_sale_price AS highest_sale_price
+  _s3.max_saleprice AS highest_sale_price
 FROM main.cars AS cars
 JOIN _t AS _t
   ON NOT _t.is_in_inventory AND _t._w = 1 AND _t.car_id = cars._id

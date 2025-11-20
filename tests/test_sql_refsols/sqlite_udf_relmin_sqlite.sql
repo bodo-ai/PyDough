@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month_o_orderdate,
+    CAST(STRFTIME('%m', o_orderdate) AS INTEGER) AS month_oorderdate,
     COUNT(*) AS n_rows
   FROM tpch.orders
   WHERE
@@ -10,11 +10,11 @@ WITH _t0 AS (
     1
 )
 SELECT
-  month_o_orderdate AS month,
+  month_oorderdate AS month,
   n_rows AS n_orders,
   MIN(n_rows) OVER () AS m1,
-  MIN(n_rows) OVER (ORDER BY month_o_orderdate ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS m2,
-  MIN(n_rows) OVER (ORDER BY month_o_orderdate ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS m3
+  MIN(n_rows) OVER (ORDER BY month_oorderdate ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS m2,
+  MIN(n_rows) OVER (ORDER BY month_oorderdate ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) AS m3
 FROM _t0
 ORDER BY
   1

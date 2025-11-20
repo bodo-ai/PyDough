@@ -1,5 +1,5 @@
-ROOT(columns=[('supplier_region', anything_r_name), ('customer_region', anything_customer_region), ('region_combinations', n_rows)], orderings=[])
- AGGREGATE(keys={'key_2': key_2, 'r_regionkey': r_regionkey}, aggregations={'anything_customer_region': ANYTHING(customer_region), 'anything_r_name': ANYTHING(r_name), 'n_rows': COUNT()})
+ROOT(columns=[('supplier_region', anything_rname), ('customer_region', anything_customerregion), ('region_combinations', n_rows)], orderings=[])
+ AGGREGATE(keys={'key_2': key_2, 'r_regionkey': r_regionkey}, aggregations={'anything_customerregion': ANYTHING(customer_region), 'anything_rname': ANYTHING(r_name), 'n_rows': COUNT()})
   JOIN(condition=t0.l_suppkey == t1.s_suppkey & t1.r_name == t0.r_name, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'customer_region': t0.customer_region, 'key_2': t0.key_2, 'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
    JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'customer_region': t0.customer_region, 'key_2': t0.key_2, 'l_suppkey': t1.l_suppkey, 'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})
     JOIN(condition=t0.c_custkey == t1.o_custkey, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'customer_region': t0.customer_region, 'key_2': t0.key_2, 'o_orderkey': t1.o_orderkey, 'r_name': t0.r_name, 'r_regionkey': t0.r_regionkey})

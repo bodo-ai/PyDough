@@ -5,7 +5,7 @@ WITH _s2 AS (
 ), _s3 AS (
   SELECT
     searches.search_engine,
-    COUNT(DISTINCT users.user_id) AS ndistinct_user_id
+    COUNT(DISTINCT users.user_id) AS ndistinct_userid
   FROM searches AS searches
   JOIN users AS users
     ON searches.search_user_id = users.user_id
@@ -17,7 +17,7 @@ WITH _s2 AS (
 )
 SELECT
   _s2.search_engine AS engine,
-  COALESCE(_s3.ndistinct_user_id, 0) AS n_users
+  COALESCE(_s3.ndistinct_userid, 0) AS n_users
 FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
   ON _s2.search_engine = _s3.search_engine

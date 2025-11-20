@@ -27,7 +27,7 @@ WITH _t2 AS (
 ), _s10 AS (
   SELECT
     _s3.ins_type,
-    COUNT(DISTINCT _t2.patient_id) AS ndistinct_patient_id
+    COUNT(DISTINCT _t2.patient_id) AS ndistinct_patientid
   FROM _t2 AS _t2
   LEFT JOIN _u_0 AS _u_0
     ON _t2.treatment_id = _u_0._u_1
@@ -46,14 +46,14 @@ WITH _t2 AS (
 ), _s9 AS (
   SELECT
     treatment_id,
-    COUNT(day100_pasi_score) AS count_day100_pasi_score,
-    SUM(day100_pasi_score) AS sum_day100_pasi_score
+    COUNT(day100_pasi_score) AS count_day100pasiscore,
+    SUM(day100_pasi_score) AS sum_day100pasiscore
   FROM main.outcomes
   GROUP BY
     1
 ), _s11 AS (
   SELECT
-    SUM(_s9.sum_day100_pasi_score) / SUM(_s9.count_day100_pasi_score) AS avg_day100_pasi_score,
+    SUM(_s9.sum_day100pasiscore) / SUM(_s9.count_day100pasiscore) AS avg_day100pasiscore,
     _s7.ins_type
   FROM _t2 AS _t6
   LEFT JOIN _u_2 AS _u_2
@@ -69,8 +69,8 @@ WITH _t2 AS (
 )
 SELECT
   _s10.ins_type AS insurance_type,
-  _s10.ndistinct_patient_id AS num_distinct_patients,
-  _s11.avg_day100_pasi_score AS avg_pasi_score_day100
+  _s10.ndistinct_patientid AS num_distinct_patients,
+  _s11.avg_day100pasiscore AS avg_pasi_score_day100
 FROM _s10 AS _s10
 LEFT JOIN _s11 AS _s11
   ON _s10.ins_type = _s11.ins_type

@@ -10,7 +10,7 @@ WITH _s0 AS (
       '%Y %c %e'
     ) AS quarter,
     customer_id,
-    SUM(sale_price) AS sum_sale_price
+    SUM(sale_price) AS sum_saleprice
   FROM main.sales
   WHERE
     EXTRACT(YEAR FROM CAST(sale_date AS DATETIME)) = 2023
@@ -21,7 +21,7 @@ WITH _s0 AS (
   SELECT
     _s0.quarter,
     customers.state,
-    SUM(_s0.sum_sale_price) AS sum_sum_sale_price
+    SUM(_s0.sum_saleprice) AS sum_sumsaleprice
   FROM _s0 AS _s0
   JOIN main.customers AS customers
     ON _s0.customer_id = customers._id
@@ -32,10 +32,10 @@ WITH _s0 AS (
 SELECT
   quarter,
   state COLLATE utf8mb4_bin AS customer_state,
-  sum_sum_sale_price AS total_sales
+  sum_sumsaleprice AS total_sales
 FROM _t1
 WHERE
-  NOT sum_sum_sale_price IS NULL AND sum_sum_sale_price > 0
+  NOT sum_sumsaleprice IS NULL AND sum_sumsaleprice > 0
 ORDER BY
   1,
   2

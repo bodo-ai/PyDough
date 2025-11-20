@@ -2,7 +2,7 @@ WITH _s1 AS (
   SELECT
     doc_id,
     COUNT(*) AS n_rows,
-    SUM(tot_drug_amt) AS sum_tot_drug_amt
+    SUM(tot_drug_amt) AS sum_totdrugamt
   FROM main.treatments
   WHERE
     start_dt >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 6, MONTH))
@@ -11,8 +11,8 @@ WITH _s1 AS (
 ), _t1 AS (
   SELECT
     doctors.specialty,
-    SUM(_s1.n_rows) AS sum_n_rows,
-    SUM(_s1.sum_tot_drug_amt) AS sum_sum_tot_drug_amt
+    SUM(_s1.n_rows) AS sum_nrows,
+    SUM(_s1.sum_totdrugamt) AS sum_sumtotdrugamt
   FROM main.doctors AS doctors
   LEFT JOIN _s1 AS _s1
     ON _s1.doc_id = doctors.doc_id
@@ -21,11 +21,11 @@ WITH _s1 AS (
 )
 SELECT
   specialty,
-  sum_n_rows AS num_treatments,
-  COALESCE(sum_sum_tot_drug_amt, 0) AS total_drug_amount
+  sum_nrows AS num_treatments,
+  COALESCE(sum_sumtotdrugamt, 0) AS total_drug_amount
 FROM _t1
 WHERE
-  sum_n_rows > 0
+  sum_nrows > 0
 ORDER BY
   3 DESC
 LIMIT 3

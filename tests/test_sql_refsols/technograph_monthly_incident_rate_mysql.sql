@@ -39,10 +39,10 @@ WITH _t2 AS (
     1
 ), _t0 AS (
   SELECT
-    EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)) AS month_ca_dt,
-    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)) AS year_ca_dt,
-    SUM(_s7.n_rows) AS sum_expr_3,
-    SUM(_s15.n_rows) AS sum_n_rows
+    EXTRACT(MONTH FROM CAST(_t2.ca_dt AS DATETIME)) AS month_cadt,
+    EXTRACT(YEAR FROM CAST(_t2.ca_dt AS DATETIME)) AS year_cadt,
+    SUM(_s7.n_rows) AS sum_expr3,
+    SUM(_s15.n_rows) AS sum_nrows
   FROM _t2 AS _t2
   LEFT JOIN _s7 AS _s7
     ON _s7.ca_dt = _t2.ca_dt
@@ -53,10 +53,10 @@ WITH _t2 AS (
     2
 )
 SELECT
-  CONCAT_WS('-', year_ca_dt, LPAD(month_ca_dt, 2, '0')) AS month,
+  CONCAT_WS('-', year_cadt, LPAD(month_cadt, 2, '0')) AS month,
   ROUND((
-    1000000.0 * COALESCE(sum_n_rows, 0)
-  ) / COALESCE(sum_expr_3, 0), 2) AS ir
+    1000000.0 * COALESCE(sum_nrows, 0)
+  ) / COALESCE(sum_expr3, 0), 2) AS ir
 FROM _t0
 ORDER BY
-  month_ca_dt
+  month_cadt

@@ -1,7 +1,7 @@
 WITH _s3 AS (
   SELECT
     l_partkey,
-    SUM(l_quantity) AS sum_l_quantity
+    SUM(l_quantity) AS sum_lquantity
   FROM tpch.LINEITEM
   WHERE
     EXTRACT(YEAR FROM CAST(l_shipdate AS DATETIME)) = 1994
@@ -10,7 +10,7 @@ WITH _s3 AS (
 ), _s5 AS (
   SELECT
     PART.p_partkey,
-    _s3.sum_l_quantity
+    _s3.sum_lquantity
   FROM tpch.PART AS PART
   JOIN _s3 AS _s3
     ON PART.p_partkey = _s3.l_partkey
@@ -22,7 +22,7 @@ WITH _s3 AS (
   FROM tpch.PARTSUPP AS PARTSUPP
   JOIN _s5 AS _s5
     ON PARTSUPP.ps_availqty > (
-      0.5 * COALESCE(_s5.sum_l_quantity, 0)
+      0.5 * COALESCE(_s5.sum_lquantity, 0)
     )
     AND PARTSUPP.ps_partkey = _s5.p_partkey
 )

@@ -5,7 +5,7 @@ WITH _s2 AS (
       EXTRACT(YEAR FROM CAST(start_dt AS DATETIME)),
       LPAD(EXTRACT(MONTH FROM CAST(start_dt AS DATETIME)), 2, '0')
     ) AS treatment_month,
-    COUNT(DISTINCT patient_id) AS ndistinct_patient_id
+    COUNT(DISTINCT patient_id) AS ndistinct_patientid
   FROM main.treatments
   WHERE
     start_dt < STR_TO_DATE(
@@ -28,7 +28,7 @@ WITH _s2 AS (
       EXTRACT(YEAR FROM CAST(treatments.start_dt AS DATETIME)),
       LPAD(EXTRACT(MONTH FROM CAST(treatments.start_dt AS DATETIME)), 2, '0')
     ) AS treatment_month,
-    COUNT(DISTINCT treatments.patient_id) AS ndistinct_patient_id
+    COUNT(DISTINCT treatments.patient_id) AS ndistinct_patientid
   FROM main.treatments AS treatments
   JOIN main.drugs AS drugs
     ON drugs.drug_id = treatments.drug_id AND drugs.drug_type = 'biologic'
@@ -49,8 +49,8 @@ WITH _s2 AS (
 )
 SELECT
   _s2.treatment_month COLLATE utf8mb4_bin AS month,
-  _s2.ndistinct_patient_id AS patient_count,
-  COALESCE(_s3.ndistinct_patient_id, 0) AS biologic_treatment_count
+  _s2.ndistinct_patientid AS patient_count,
+  COALESCE(_s3.ndistinct_patientid, 0) AS biologic_treatment_count
 FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
   ON _s2.treatment_month = _s3.treatment_month

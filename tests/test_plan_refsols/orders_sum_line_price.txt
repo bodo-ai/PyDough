@@ -1,5 +1,5 @@
-ROOT(columns=[('okey', o_orderkey), ('lsum', DEFAULT_TO(sum_l_extendedprice, 0:numeric))], orderings=[])
- JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'o_orderkey': t0.o_orderkey, 'sum_l_extendedprice': t1.sum_l_extendedprice})
+ROOT(columns=[('okey', o_orderkey), ('lsum', DEFAULT_TO(sum_lextendedprice, 0:numeric))], orderings=[])
+ JOIN(condition=t0.o_orderkey == t1.l_orderkey, type=INNER, cardinality=SINGULAR_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'o_orderkey': t0.o_orderkey, 'sum_lextendedprice': t1.sum_lextendedprice})
   SCAN(table=tpch.ORDERS, columns={'o_orderkey': o_orderkey})
-  AGGREGATE(keys={'l_orderkey': l_orderkey}, aggregations={'sum_l_extendedprice': SUM(l_extendedprice)})
+  AGGREGATE(keys={'l_orderkey': l_orderkey}, aggregations={'sum_lextendedprice': SUM(l_extendedprice)})
    SCAN(table=tpch.LINEITEM, columns={'l_extendedprice': l_extendedprice, 'l_orderkey': l_orderkey})

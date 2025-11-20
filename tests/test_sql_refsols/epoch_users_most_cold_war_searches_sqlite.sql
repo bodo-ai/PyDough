@@ -1,6 +1,6 @@
 WITH _t1 AS (
   SELECT
-    MAX(searches.search_user_id) AS anything_search_user_id
+    MAX(searches.search_user_id) AS anything_searchuserid
   FROM searches AS searches
   JOIN events AS events
     ON LOWER(searches.search_string) LIKE (
@@ -14,7 +14,7 @@ WITH _t1 AS (
     searches.search_id
 ), _s5 AS (
   SELECT
-    anything_search_user_id,
+    anything_searchuserid,
     COUNT(*) AS n_rows
   FROM _t1
   GROUP BY
@@ -25,7 +25,7 @@ SELECT
   _s5.n_rows AS n_cold_war_searches
 FROM users AS users
 JOIN _s5 AS _s5
-  ON _s5.anything_search_user_id = users.user_id
+  ON _s5.anything_searchuserid = users.user_id
 ORDER BY
   2 DESC,
   1

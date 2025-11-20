@@ -1,25 +1,25 @@
 WITH _s3 AS (
   SELECT
     c_nationkey,
-    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negative_acctbal,
-    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_non_negative_acctbal,
+    COUNT(CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS count_negativeacctbal,
+    COUNT(CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS count_nonnegativeacctbal,
     PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
-      c_acctbal) AS median_c_acctbal,
+      c_acctbal) AS median_cacctbal,
     PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
-      CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS median_negative_acctbal,
+      CASE WHEN c_acctbal < 0 THEN c_acctbal ELSE NULL END) AS median_negativeacctbal,
     PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
-      CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS median_non_negative_acctbal
+      CASE WHEN c_acctbal >= 0 THEN c_acctbal ELSE NULL END) AS median_nonnegativeacctbal
   FROM tpch.customer
   GROUP BY
     1
 )
 SELECT
   nation.n_name AS nation_name,
-  _s3.count_negative_acctbal AS n_red_acctbal,
-  _s3.count_non_negative_acctbal AS n_black_acctbal,
-  _s3.median_negative_acctbal AS median_red_acctbal,
-  _s3.median_non_negative_acctbal AS median_black_acctbal,
-  _s3.median_c_acctbal AS median_overall_acctbal
+  _s3.count_negativeacctbal AS n_red_acctbal,
+  _s3.count_nonnegativeacctbal AS n_black_acctbal,
+  _s3.median_negativeacctbal AS median_red_acctbal,
+  _s3.median_nonnegativeacctbal AS median_black_acctbal,
+  _s3.median_cacctbal AS median_overall_acctbal
 FROM tpch.nation AS nation
 JOIN tpch.region AS region
   ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AMERICA'

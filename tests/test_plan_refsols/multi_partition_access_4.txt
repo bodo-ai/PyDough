@@ -1,6 +1,6 @@
 ROOT(columns=[('transaction_id', sbTxId)], orderings=[(sbTxId):asc_first])
- JOIN(condition=t1.sbTxShares < t0.max_max_sbTxShares & t0.sbTxCustId == t1.sbTxCustId & t0.sbTxTickerId == t1.sbTxTickerId & t1.sbTxShares >= t0.max_sbTxShares, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'sbTxId': t1.sbTxId})
-  JOIN(condition=t0.sbTxCustId == t1.sbTxCustId, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'max_max_sbTxShares': t0.max_sbTxShares, 'max_sbTxShares': t1.max_sbTxShares, 'sbTxCustId': t1.sbTxCustId, 'sbTxTickerId': t1.sbTxTickerId})
+ JOIN(condition=t1.sbTxShares < t0.max_maxsbTxShares & t0.sbTxCustId == t1.sbTxCustId & t0.sbTxTickerId == t1.sbTxTickerId & t1.sbTxShares >= t0.max_sbTxShares, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_FILTER, columns={'sbTxId': t1.sbTxId})
+  JOIN(condition=t0.sbTxCustId == t1.sbTxCustId, type=INNER, cardinality=PLURAL_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'max_maxsbTxShares': t0.max_sbTxShares, 'max_sbTxShares': t1.max_sbTxShares, 'sbTxCustId': t1.sbTxCustId, 'sbTxTickerId': t1.sbTxTickerId})
    AGGREGATE(keys={'sbTxCustId': sbTxCustId}, aggregations={'max_sbTxShares': MAX(sbTxShares)})
     SCAN(table=main.sbTransaction, columns={'sbTxCustId': sbTxCustId, 'sbTxShares': sbTxShares})
    AGGREGATE(keys={'sbTxCustId': sbTxCustId, 'sbTxTickerId': sbTxTickerId}, aggregations={'max_sbTxShares': MAX(sbTxShares)})

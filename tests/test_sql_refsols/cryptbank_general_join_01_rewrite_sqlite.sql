@@ -14,7 +14,7 @@ WITH _s0 AS (
       42 - (
         _s3.c_key
       )
-    ) AS unmask_c_key,
+    ) AS unmask_ckey,
     _s2.b_key,
     COUNT(*) AS n_rows
   FROM _s0 AS _s2
@@ -148,7 +148,7 @@ JOIN _s1 AS _s1
     END
   )
 LEFT JOIN _s7 AS _s7
-  ON _s0.b_key = _s7.b_key AND _s7.unmask_c_key = (
+  ON _s0.b_key = _s7.b_key AND _s7.unmask_ckey = (
     42 - _s1.c_key
   )
 GROUP BY

@@ -1,7 +1,7 @@
 WITH _t0 AS (
   SELECT
     times.t_name,
-    ANY_VALUE(times.t_start_hour) AS anything_t_start_hour,
+    ANY_VALUE(times.t_start_hour) AS anything_tstarthour,
     COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches
@@ -17,4 +17,4 @@ SELECT
   ) / SUM(n_rows) OVER (), 2) AS pct_searches
 FROM _t0
 ORDER BY
-  anything_t_start_hour
+  anything_tstarthour

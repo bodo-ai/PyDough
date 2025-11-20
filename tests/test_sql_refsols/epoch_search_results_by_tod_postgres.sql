@@ -1,8 +1,8 @@
 WITH _t0 AS (
   SELECT
     times.t_name,
-    MAX(times.t_start_hour) AS anything_t_start_hour,
-    AVG(CAST(searches.search_num_results AS DECIMAL)) AS avg_search_num_results,
+    MAX(times.t_start_hour) AS anything_tstarthour,
+    AVG(CAST(searches.search_num_results AS DECIMAL)) AS avg_searchnumresults,
     COUNT(*) AS n_rows
   FROM times AS times
   JOIN searches AS searches
@@ -16,7 +16,7 @@ SELECT
   ROUND(CAST((
     100.0 * n_rows
   ) / SUM(n_rows) OVER () AS DECIMAL), 2) AS pct_searches,
-  ROUND(CAST(avg_search_num_results AS DECIMAL), 2) AS avg_results
+  ROUND(CAST(avg_searchnumresults AS DECIMAL), 2) AS avg_results
 FROM _t0
 ORDER BY
-  anything_t_start_hour NULLS FIRST
+  anything_tstarthour NULLS FIRST

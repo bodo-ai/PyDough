@@ -1,7 +1,7 @@
 WITH _s1 AS (
   SELECT
     sale_id,
-    MAX(payment_date) AS max_payment_date
+    MAX(payment_date) AS max_paymentdate
   FROM main.payments_received
   GROUP BY
     1
@@ -10,7 +10,7 @@ SELECT
   ROUND(
     AVG(
       CAST((
-        JULIANDAY(DATE(_s1.max_payment_date, 'start of day')) - JULIANDAY(DATE(sales.sale_date, 'start of day'))
+        JULIANDAY(DATE(_s1.max_paymentdate, 'start of day')) - JULIANDAY(DATE(sales.sale_date, 'start of day'))
       ) AS INTEGER)
     ),
     2

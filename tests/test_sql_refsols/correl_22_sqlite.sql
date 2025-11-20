@@ -1,11 +1,11 @@
 WITH _s0 AS (
   SELECT
-    AVG(p_retailprice) AS avg_p_retailprice
+    AVG(p_retailprice) AS avg_pretailprice
   FROM tpch.part
 ), _s1 AS (
   SELECT
     p_container,
-    AVG(p_retailprice) AS avg_p_retailprice
+    AVG(p_retailprice) AS avg_pretailprice
   FROM tpch.part
   GROUP BY
     p_type,
@@ -16,7 +16,7 @@ SELECT
   COUNT(*) AS n_types
 FROM _s0 AS _s0
 JOIN _s1 AS _s1
-  ON _s0.avg_p_retailprice < _s1.avg_p_retailprice
+  ON _s0.avg_pretailprice < _s1.avg_pretailprice
 GROUP BY
   1
 ORDER BY
