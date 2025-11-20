@@ -16,105 +16,6 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
     params=[
         pytest.param(
             PyDoughPandasTest(
-                """
-result = (
-    patients
-    .WHERE((gender == 'F') & (ethnicity == 'italian'))
-    .conditions
-    .PARTITION(name='condition_groups', by=DESCRIPTION)
-    .CALCULATE(condition_description=DESCRIPTION, occurrence_count=COUNT(conditions))
-    .TOP_K(1, by=(occurrence_count.DESC(), condition_description.ASC()))
-    .CALCULATE(condition_description)
-)
-                """,
-                "synthea",
-                lambda: pd.DataFrame(
-                    {
-                        "condition_description": ["Viral sinusitis (disorder)"],
-                    }
-                ),
-                "synthea_most_common_conditions",
-            ),
-            id="synthea_most_common_conditions",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                """
-result = (
-    wdi
-    .Country
-    .WHERE((IncomeGroup == 'Low income') & HAS(CountryNotes.WHERE(Series.SeriesCode == 'DT.DOD.DECT.CD')))
-    .CALCULATE(country_code=CountryCode)
-)
-                """,
-                "wdi",
-                lambda: pd.DataFrame(
-                    {
-                        "country_code": [
-                            "AFG",
-                            "BDI",
-                            "BEN",
-                            "BFA",
-                            "CAF",
-                            "COM",
-                            "ERI",
-                            "ETH",
-                            "GIN",
-                            "GMB",
-                            "GNB",
-                            "HTI",
-                            "KHM",
-                            "LBR",
-                            "MDG",
-                            "MLI",
-                            "MOZ",
-                            "MWI",
-                            "NER",
-                            "NPL",
-                            "RWA",
-                            "SLE",
-                            "SOM",
-                            "TCD",
-                            "TGO",
-                            "TZA",
-                            "UGA",
-                            "ZAR",
-                            "ZWE",
-                        ],
-                    }
-                ),
-                "wdi_low_income_country_with_series",
-            ),
-            id="wdi_low_income_country_with_series",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                """
-result = (
-    wdi
-    .Country
-    .WHERE(ShortName == 'Albania')
-    .Footnotes
-    .WHERE(Year == 'YR2012')
-    .CALCULATE(footnote_description=Description)
-)
-                """,
-                "wdi",
-                lambda: pd.DataFrame(
-                    {
-                        "condition_description": [
-                            "As reported",
-                            "Period: 2008-2012.Grouped consumption data.Growth rates are based on survey means of 2011 PPP$.Survey reference CPI years for the initial and final years are 2008 and 2012, respectively.",
-                            "Source: Labour force survey. Coverage: Civilian. Coverage (unemployment): Not available. Age: 15-74. Coverage limitation: Excluding institutional population. Education: International Standard Classification of Education, 1997 version.",
-                        ]
-                    }
-                ),
-                "wdi_albania_footnotes_1978",
-            ),
-            id="wdi_albania_footnotes_1978",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
                 r"""
 result = cast_.WHERE(
     (lowercase_detail_3._0_0_and == '2 "0 = 0 and \'" field name') & (lowercase_detail_4.id_ == 1)
@@ -332,7 +233,6 @@ def custom_datasets_test_data(request) -> PyDoughPandasTest:
     return request.param
 
 
-@pytest.mark.custom
 def test_pipeline_until_relational_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_custom_datasets_graph: graph_fetcher,
@@ -349,7 +249,6 @@ def test_pipeline_until_relational_custom_datasets(
     )
 
 
-@pytest.mark.custom
 def test_pipeline_until_sql_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,
     get_custom_datasets_graph: graph_fetcher,
@@ -372,7 +271,6 @@ def test_pipeline_until_sql_custom_datasets(
     )
 
 
-@pytest.mark.custom
 @pytest.mark.execute
 def test_pipeline_e2e_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,

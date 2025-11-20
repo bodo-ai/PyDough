@@ -32,6 +32,7 @@ dev-dependencies = [
     "pytest",
     "ruff==0.6.7",
     "pytest-repeat",
+    "boto3",
     "pydough[snowflake]",
     "pydough[mysql]",
     "pydough[postgres]",
@@ -43,7 +44,6 @@ snowflake = ["snowflake-connector-python[pandas]"]
 mysql = ["mysql-connector-python"]
 postgres = ["psycopg2-binary"]
 server = ["fastapi", "httpx", "uvicorn"]
-boto3 = ["boto3"]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

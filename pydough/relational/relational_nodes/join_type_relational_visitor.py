@@ -35,6 +35,9 @@ class JoinTypeRelationalVisitor(RelationalVisitor):
     def visit_scan(self, scan: Scan) -> None:
         pass
 
+    def visit_generated_table(self, generated_table) -> None:
+        pass
+
     def visit_join(self, join: Join) -> None:
         """
         Visit a Join node, collecting join types.

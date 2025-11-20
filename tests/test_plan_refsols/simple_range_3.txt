@@ -1,0 +1,2 @@
+ROOT(columns=[('foo', foo)], orderings=[(foo):asc_first])
+ GENERATED_TABLE(RangeCollection('T1', foo=range(15, 20)))

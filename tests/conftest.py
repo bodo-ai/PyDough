@@ -204,9 +204,23 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
-def get_custom_datasets_graph(custom_datasets_setup) -> graph_fetcher:
+def get_s3_datasets_graph(s3_datasets_setup) -> graph_fetcher:
     """
-    Returns the graph for the given custom dataset.
+    Returns the graph for the given s3 dataset name.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def get_custom_datasets_graph() -> graph_fetcher:
+    """
+    Returns the graph for the given custom dataset name.
     """
 
     @cache
@@ -638,14 +652,51 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
     return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 
 
-CUSTOM_DATASETS = ["synthea", "soccer_2016", "wdi", "keywords"]
+@pytest.fixture(scope="session")
+def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
+    """
+    This fixture is used to connect to the sqlite database of the custom datasets.
+    Returns a DatabaseContext for the MySQL TPCH database.
+    """
+    custom_datasets_dir: str = "tests/gen_data"
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+
+    # Construct the full path to the datasets directory
+    full_dir_path: str = os.path.join(base_dir, custom_datasets_dir)
+
+    @cache
+    def _impl(database_name: str) -> DatabaseContext:
+        connection: sqlite3.Connection
+
+        file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
+
+        if not os.path.exists(file_path):
+            init_sql: str = f"{full_dir_path}/init_{database_name}_sqlite.sql"
+
+            if not os.path.exists(init_sql):
+                raise PyDoughTestingException(
+                    f"Cannot find database file '{file_path}' or "
+                    f"initialization script '{init_sql}'"
+                )
+
+            subprocess.run(f"sqlite3 {file_path} < {init_sql}", shell=True, check=True)
+
+        connection = sqlite3.connect(":memory:")
+        connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
+
+        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+    return _impl
+
+
+S3_DATASETS = ["synthea", "world_development_indicators"]
 """
     Contains the name of all the custom datasets that will be used for testing.
     This includes the datasets from S3 and initialized with a .sql file.
 """
-CUSTOM_DATASETS_SCRIPTS = {
-    "keywords": "init_reserved_words_sqlite",
-    "wdi": "init_world_indicators_sqlite",
+S3_DATASETS_SCRIPTS = {
+    "world_development_indicators": "init_world_indicators_sqlite",
 }
 """
     Maps the datasets that need to be built with a sql script, with the name of
@@ -678,7 +729,7 @@ def get_s3_client() -> boto3.Session.client:
     return session.client("s3")
 
 
-def get_s3_custom_datasets(
+def get_s3_datasets(
     s3_client: boto3.Session.client,
     data_folder: str,
     metadata_folder: str,
@@ -686,10 +737,10 @@ def get_s3_custom_datasets(
     scripts: dict[str, str],
 ) -> None:
     """
-    Sets up the data and metadata for custom datasets testing. This includes
+    Sets up the data and metadata for s3 datasets testing. This includes
     downloading the data (.db file) and metadata (.json file) from llm-fixtures
-    bucket and place them in data_folder and metadata_folder respectvely.Also,
-    includes executing the init script avaliable in CUSTOM_DATASETS_SCRIPTS,
+    bucket and place them in data_folder and metadata_folder respectvely. Also,
+    includes executing the init script avaliable in S3_DATASETS_SCRIPTS,
     when the script is executed the metadata must be created manually for testing
     """
 
@@ -697,25 +748,35 @@ def get_s3_custom_datasets(
 
     for dataset in datasets:
         db_file: str = f"{data_folder}/{dataset}.db"
+        exists_db_file: bool = os.path.exists(db_file)
 
-        if dataset in scripts:
-            # setting up with script
-            # assuming the metadata is already in the repo
-            init_sql = f"{data_folder}/{scripts[dataset]}.sql"
-            subprocess.run(f"sqlite3 {db_file} < {init_sql}", shell=True, check=True)
-        else:
-            # download from s3
+        # Database setup
+        if not exists_db_file:
+            if dataset in scripts:
+                # setting up with script
+                # assuming the metadata is already available in the metadata folder
+                init_sql = f"{data_folder}/{scripts[dataset]}.sql"
+                subprocess.run(
+                    f"sqlite3 {db_file} < {init_sql}", shell=True, check=True
+                )
+
+            else:
+                # Download from s3
+
+                key_data: str = f"data/{dataset}.db"
+
+                try:
+                    s3_client.download_file(bucket, key_data, db_file)
+                except ClientError as e:
+                    if e.response["Error"]["Code"] == "404":
+                        print(f"The file {key_data} does not exist in bucket {bucket}.")
+                    else:
+                        raise
+
+        # Download metadata from S3
+        if dataset not in scripts:
             local_metadata_path: str = f"{metadata_folder}/{dataset}_graph.json"
-
-            key_data: str = f"data/{dataset}.db"
             key_metadata: str = f"metadata/{dataset}.json"
-            try:
-                s3_client.download_file(bucket, key_data, db_file)
-            except ClientError as e:
-                if e.response["Error"]["Code"] == "404":
-                    print(f"The file {key_data} does not exist in bucket {bucket}.")
-                else:
-                    raise
             try:
                 s3_client.download_file(bucket, key_metadata, local_metadata_path)
             except ClientError as e:
@@ -725,13 +786,12 @@ def get_s3_custom_datasets(
                     raise
 
 
-def remove_s3_custom_datasets(
-    db_folder: str, metadata_folder: str, datasets: list[str], scripts: dict[str, str]
+def remove_s3_custom_metadata(
+    metadata_folder: str, datasets: list[str], scripts: dict[str, str]
 ) -> None:
     """
-    Removes the custom datasets (.db and .json for s3 datasets)
+    Removes the metadata file of s3 datasets
     """
-    database_path: str
     metadata_path: str
 
     for dataset in datasets:
@@ -745,20 +805,12 @@ def remove_s3_custom_datasets(
             except Exception as e:
                 print(f"An error occurred: {e}")
 
-        database_path = f"{db_folder}/{dataset}.db"
-        try:
-            os.remove(database_path)
-        except FileNotFoundError:
-            print(f"Error: File '{database_path}' not found.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-
 
 @pytest.fixture(scope="session")
-def custom_datasets_setup():
+def s3_datasets_setup():
     """
-    Sets up all custom datasets for testing downloading or running the init
-    script. After the test are done it removes everything
+    Sets up all s3 datasets for testing downloading or running the init
+    script. After the test are done it removes the metadata files.
     """
     data_folder: str = "./tests/gen_data"
     metadata_folder: str = "./tests/test_metadata"
@@ -766,47 +818,40 @@ def custom_datasets_setup():
     # Create the client
     s3_client: boto3.Session.client = get_s3_client()
 
-    get_s3_custom_datasets(
+    get_s3_datasets(
         s3_client,
         data_folder,
         metadata_folder,
-        CUSTOM_DATASETS,
-        CUSTOM_DATASETS_SCRIPTS,
+        S3_DATASETS,
+        S3_DATASETS_SCRIPTS,
     )
-    print("Datasetes downloaded")
+    print("Datasets downloaded")
     yield
-    print("\nRemoving datasetes")
-    remove_s3_custom_datasets(
-        data_folder, metadata_folder, CUSTOM_DATASETS, CUSTOM_DATASETS_SCRIPTS
-    )
+    print("\nRemoving datasets")
+    remove_s3_custom_metadata(metadata_folder, S3_DATASETS, S3_DATASETS_SCRIPTS)
 
 
 @pytest.fixture(scope="session")
-def sqlite_custom_datasets_connection(
-    custom_datasets_setup,
+def sqlite_s3_datasets_connection(
+    s3_datasets_setup,
 ) -> Callable[[str], DatabaseContext]:
     """
     This fixture is used to connect to the sqlite database of the custom datasets.
     Returns a DatabaseContext for the MySQL TPCH database.
     """
-    custom_datasets_dir: str = "tests/gen_data"
+    s3_datasets_dir: str = "tests/gen_data"
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
 
     # Construct the full path to the datasets directory
-    full_dir_path: str = os.path.join(base_dir, custom_datasets_dir)
+    full_dir_path: str = os.path.join(base_dir, s3_datasets_dir)
 
     @cache
     def _impl(database_name: str) -> DatabaseContext:
         connection: sqlite3.Connection
 
         file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
-
-        if database_name not in CUSTOM_DATASETS_SCRIPTS:
-            connection = sqlite3.connect(file_path)
-        else:
-            connection = sqlite3.connect(":memory:")
-            connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
+        connection = sqlite3.connect(file_path)
 
         return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
 

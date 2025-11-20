@@ -32,6 +32,10 @@ The relational_nodes module provides functionality to define and manage various 
 
 - `Filter`: The relational node representing a filter operation in the relational tree.
 
+### [generated_table.py](generated_table.py)
+
+- `GeneratedTable`: The relational node representing a generated table collection in the relational tree.
+
 ### [project.py](project.py)
 
 - `Project`: The relational node representing a project operation in the relational tree.
