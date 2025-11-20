@@ -204,20 +204,6 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
-def get_s3_datasets_graph(s3_datasets_setup) -> graph_fetcher:
-    """
-    Returns the graph for the given s3 dataset name.
-    """
-
-    @cache
-    def impl(name: str) -> GraphMetadata:
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
-        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
-
-    return impl
-
-
-@pytest.fixture(scope="session")
 def get_custom_datasets_graph() -> graph_fetcher:
     """
     Returns the graph for the given custom dataset name.
@@ -825,10 +811,24 @@ def s3_datasets_setup():
         S3_DATASETS,
         S3_DATASETS_SCRIPTS,
     )
-    print("Datasets downloaded")
+
     yield
-    print("\nRemoving datasets")
+
     remove_s3_custom_metadata(metadata_folder, S3_DATASETS, S3_DATASETS_SCRIPTS)
+
+
+@pytest.fixture(scope="session")
+def get_s3_datasets_graph(s3_datasets_setup) -> graph_fetcher:
+    """
+    Returns the graph for the given s3 dataset name.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
 
 
 @pytest.fixture(scope="session")
@@ -836,8 +836,8 @@ def sqlite_s3_datasets_connection(
     s3_datasets_setup,
 ) -> Callable[[str], DatabaseContext]:
     """
-    This fixture is used to connect to the sqlite database of the custom datasets.
-    Returns a DatabaseContext for the MySQL TPCH database.
+    This fixture is used to connect the sqlite database of the s3 datasets.
+    Returns a DatabaseContext for the given S3 database_name.
     """
     s3_datasets_dir: str = "tests/gen_data"
     # Setup the directory to be the main PyDough directory.
