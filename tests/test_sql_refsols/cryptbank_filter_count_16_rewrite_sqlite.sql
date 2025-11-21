@@ -3,12 +3,7 @@ WITH _u_0 AS (
     a_custkey AS _u_1
   FROM crbnk.accounts
   WHERE
-    a_type <> (
-      SUBSTRING('checking', 2) || SUBSTRING('checking', 1, 1)
-    )
-    AND a_type <> (
-      SUBSTRING('savings', 2) || SUBSTRING('savings', 1, 1)
-    )
+    NOT a_type IN ('avingss', 'heckingc')
   GROUP BY
     1
 )

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+from pydough.logger import get_logger
 from pydough.mask_server.server_connection import (
     RequestMethod,
     ServerConnection,
@@ -88,22 +89,25 @@ class MaskServerOutput:
 
 class MaskServerInfo:
     """
-    The MaskServeraInfo class is responsible for evaluating predicates against a
+    The MaskServerInfo class is responsible for evaluating predicates against a
     given table and column. It interacts with an external mask server to
     perform the evaluation.
     """
 
-    def __init__(self, base_url: str, token: str | None = None):
+    def __init__(self, base_url: str, server_address: str, token: str | None = None):
         """
         Initialize the MaskServerInfo with the given server URL.
 
         Args:
             `base_url`: The URL of the mask server.
+            `server_address`: The server address to place at the front of all
+            qualified table paths.
             `token`: Optional authentication token for the server.
         """
         self.connection: ServerConnection = ServerConnection(
             base_url=base_url, token=token
         )
+        self.server_address: str = server_address
 
     def get_server_response_case(self, server_case: str) -> MaskServerResponse:
         """
@@ -123,7 +127,10 @@ class MaskServerInfo:
                 return MaskServerResponse.UNSUPPORTED
 
     def simplify_simple_expression_batch(
-        self, batch: list[MaskServerInput]
+        self,
+        batch: list[MaskServerInput],
+        dry_run: bool,
+        hard_limit: int,
     ) -> list[MaskServerOutput]:
         """
         Sends a batch of predicate expressions to the mask server for evaluation.
@@ -135,100 +142,153 @@ class MaskServerInfo:
 
         Args:
             `batch`: The list of inputs to be sent to the server.
+            `dry_run`: Whether to perform a dry run or not.
+            `hard_limit`: The maximum number of items that can be returned for
+            each predicate.
 
         Returns:
             An output list containing the response case and payload.
         """
+
+        # Log the batch request
+        pyd_logger = get_logger(__name__)
+        if dry_run:
+            pyd_logger.info(
+                f"Batch request (dry run) to Mask Server ({len(batch)} items):"
+            )
+        else:
+            pyd_logger.info(f"Batch request to Mask Server ({len(batch)} items):")
+        for idx, item in enumerate(batch):
+            pyd_logger.info(
+                f"({idx + 1}) {item.table_path}.{item.column_name}: {item.expression}"
+            )
+
         assert batch != [], "Batch cannot be empty."
 
         path: str = "v1/predicates/batch-evaluate"
         method: RequestMethod = RequestMethod.POST
-
-        request: ServerRequest = self.generate_request(batch, path, method)
-
+        request: ServerRequest = self.generate_request(
+            batch, path, method, dry_run, hard_limit
+        )
         response_json = self.connection.send_server_request(request)
         result: list[MaskServerOutput] = self.generate_result(response_json)
 
         return result
 
     def generate_request(
-        self, batch: list[MaskServerInput], path: str, method: RequestMethod
+        self,
+        batch: list[MaskServerInput],
+        path: str,
+        method: RequestMethod,
+        dry_run: bool,
+        hard_limit: int,
     ) -> ServerRequest:
         """
         Generate a server request from the given batch of server inputs and path.
 
         Args:
             `batch`: A list of MaskServerInput objects.
-            `path`: The API endpoint path.
+            `path`: The server path for the request.
+            `method`: The HTTP method for the request.
+            `dry_run`: Whether the request is a dry run or not.
+            `hard_limit`: The maximum number of items that can be returned for
+            each predicate.
 
         Returns:
             A server request including payload to be sent.
 
         Example payload:
+        ```
         {
             "items": [
                 {
-                    "column_reference": "srv.db.tbl.col",
+                    "column_ref": {"kind": "fqn", "value": "srv.db.schema.table.name"},
                     "predicate": ["EQUAL", 2, "__col__", 1],
                     "mode": "dynamic",
-                    "dry_run": false
+                    "predicate_format": "linear_with_arity",
+                    "output_mode": "cell_encrypted",
+                    "dry_run": true,
                 },
                 ...
             ],
             "expression_format": {"name": "linear", "version": "0.2.0"}
+            "hard_limit": 1000,
         }
+        ```
         """
 
         payload: dict = {
             "items": [],
             "expression_format": {"name": "linear", "version": "0.2.0"},
+            "hard_limit": hard_limit,
         }
 
         for item in batch:
             evaluate_request: dict = {
-                "column_reference": f"{item.table_path}.{item.column_name}",
+                "column_ref": {
+                    "kind": "fqn",
+                    "value": f"{self.server_address}.{item.table_path}.{item.column_name}",
+                },
                 "predicate": item.expression,
+                "output_mode": "cell_encrypted",
                 "mode": "dynamic",
-                "dry_run": False,
+                "dry_run": dry_run,
             }
             payload["items"].append(evaluate_request)
 
         return ServerRequest(path=path, payload=payload, method=method)
 
-    def generate_result(self, response: dict) -> list[MaskServerOutput]:
+    def generate_result(self, response_dict: dict) -> list[MaskServerOutput]:
         """
-        Generate a list of server outputs from the server response.
+        Generate a list of server outputs from the server response of a
+        non-dry-run request.
 
         Args:
-            `response`: The response from the mask server.
-
-        Returns:
-            A list of server outputs objects.
+            `response_dict`: The response from the mask server.
 
         Example response:
+        ```
         {
             "result": "SUCCESS",
             "items": [
                 {
                     "index": 0,
                     "result": "SUCCESS",
-                    "decision": {"strategy": "values", "reason": "mock"},
-                    "predicate_hash": "hash0",
-                    "encryption_mode": "clear",
-                    "materialization": {
-                        "type": "literal",
-                        "operator": "IN",
-                        "values": [0],
-                        "count": 1
+                    "response": {
+                        "strategy": ...,
+
+                        "records": [
+                            {
+                                "mode": "cell_encrypted",
+                                "cell_encrypted": "abcE1dsa",
+                            }
+                        ],
+
+                        "count": ...,
+
+                        "stats": ...,
+
+                        "column_stats": ...,
+
+                        "next_cursor": ...,
+
+                        "metadata": {
+                            "dynamic_operator": "IN",
+                            ...
+                        }
                     }
                 },
                 ...
             ]
         }
+        ```
+
+        Returns:
+            A list of server outputs objects.
         """
         result: list[MaskServerOutput] = []
 
-        for item in response.get("items", []):
+        for item in response_dict.get("items", []):
             """
             Case on whether operator is ERROR or not
                 If ERROR, then response_case is unsupported and payload is None
@@ -242,24 +302,37 @@ class MaskServerInfo:
                     )
                 )
             else:
-                materialization: dict = item.get("materialization", {})
-                response_case: MaskServerResponse = self.get_server_response_case(
-                    materialization.get("operator", "ERROR")
-                )
-
-                payload: Any = None
-
-                if response_case in (
-                    MaskServerResponse.IN_ARRAY,
-                    MaskServerResponse.NOT_IN_ARRAY,
-                ):
-                    payload = materialization.get("values", [])
-
-                result.append(
-                    MaskServerOutput(
-                        response_case=response_case,
-                        payload=payload,
+                response: dict = item.get("response", None)
+                if response is None:
+                    # In this case, use a dummy value as a default to indicate
+                    # the dry run was successful
+                    result.append(
+                        MaskServerOutput(
+                            response_case=MaskServerResponse.IN_ARRAY,
+                            payload=None,
+                        )
                     )
-                )
+                else:
+                    response_case: MaskServerResponse = self.get_server_response_case(
+                        response["metadata"]["dynamic_operator"]
+                    )
+
+                    payload: Any = None
+
+                    if response_case in (
+                        MaskServerResponse.IN_ARRAY,
+                        MaskServerResponse.NOT_IN_ARRAY,
+                    ):
+                        payload = [
+                            record.get("cell_encrypted")
+                            for record in response.get("records", [])
+                        ]
+
+                    result.append(
+                        MaskServerOutput(
+                            response_case=response_case,
+                            payload=payload,
+                        )
+                    )
 
         return result
