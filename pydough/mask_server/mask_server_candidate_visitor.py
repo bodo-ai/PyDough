@@ -168,8 +168,19 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
            the token "__col__".
         """
 
+        self.heritage_tree: dict[
+            RelationalExpression, set[RelationalExpression | None]
+        ] = {}
+        """
+        TODO
+        """
+
+        self.ancestry_stack: list[RelationalExpression | None] = [None]
+
     def reset(self):
         self.stack.clear()
+        self.heritage_tree.clear()
+        self.ancestry_stack = [None]
 
     def visit_call_expression(self, expr: CallExpression) -> None:
         # First, recursively visit all of the inputs to the function call, then
@@ -177,8 +188,10 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         # is a candidate for Mask Server rewrite conversion. Reverse the order
         # of the stack entries since they were pushed in order of visitation,
         # but need to be processed in the original input order.
+        self.ancestry_stack.append(expr)
         for arg in expr.inputs:
             arg.accept_shuttle(self)
+        self.ancestry_stack.pop()
         mask_ops: set[
             tuple[pydop.MaskedExpressionFunctionOperator, RelationalExpression]
         ] = set()
@@ -189,6 +202,9 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
                 mask_ops.add(stack_term)
             arg_exprs.append(expression_list)
         arg_exprs.reverse()
+
+        self.heritage_tree[expr] = self.heritage_tree.get(expr, set())
+        self.heritage_tree[expr].add(self.ancestry_stack[-1])
 
         input_op: pydop.MaskedExpressionFunctionOperator
         input_expr: RelationalExpression
@@ -424,7 +440,6 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             or step_literal not in ([1], ["NULL"])
         ):
             return None
-        print(start_literal, stop_literal, step_literal)
         match (start_literal[0], stop_literal[0]):
             case (int(start), int(stop)) if start >= 0 and stop > start:
                 start_int = start

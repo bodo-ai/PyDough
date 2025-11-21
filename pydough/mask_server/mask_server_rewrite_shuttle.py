@@ -21,6 +21,7 @@ from .mask_server import (
     MaskServerResponse,
 )
 from .mask_server_candidate_visitor import MaskServerCandidateVisitor
+from .min_cover_set import choose_minimal_covering_set
 
 
 class MaskServerRewriteShuttle(RelationalExpressionShuttle):
@@ -104,8 +105,12 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         )
 
         batch, ancillary_info = self.identify_predicates_to_send(
-            dry_run_results, batch, ancillary_info
+            dry_run_results,
+            batch,
+            ancillary_info,
+            heritage_tree=self.candidate_visitor.heritage_tree,
         )
+        self.candidate_visitor.heritage_tree.clear()
 
         # Abort if the batch is now empty after filtering.
         if len(batch) == 0:
@@ -133,17 +138,22 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         dry_run_results: list[MaskServerOutput],
         batch: list[MaskServerInput],
         ancillary_info: list[tuple[RelationalExpression, RelationalExpression]],
+        heritage_tree: dict[RelationalExpression, set[RelationalExpression | None]],
     ) -> tuple[
         list[MaskServerInput], list[tuple[RelationalExpression, RelationalExpression]]
     ]:
         """
         TODO
         """
-        keep_idxs: set[int] = set()
-
-        for idx, dry_run_result in enumerate(dry_run_results):
-            if dry_run_result.response_case != MaskServerResponse.UNSUPPORTED:
-                keep_idxs.add(idx)
+        expressions = [expr for expr, _ in ancillary_info]
+        successes = [
+            idx
+            for idx, result in enumerate(dry_run_results)
+            if result.response_case != MaskServerResponse.UNSUPPORTED
+        ]
+        keep_idxs: set[int] = choose_minimal_covering_set(
+            expressions, successes, heritage_tree
+        )
 
         new_batch: list[MaskServerInput] = [
             elem for idx, elem in enumerate(batch) if idx in keep_idxs

@@ -1157,7 +1157,6 @@ def test_pipeline_e2e_cryptbank(
                     "DRY_RUN",
                 },
                 {
-                    "CRBNK.CUSTOMERS.c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
                     "CRBNK.CUSTOMERS.c_lname: ['NOT', 1, 'IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
                 },
             ],
@@ -1185,7 +1184,6 @@ def test_pipeline_e2e_cryptbank(
                     "DRY_RUN",
                 },
                 {
-                    "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 'e']",
                     "CRBNK.CUSTOMERS.c_fname: ['ENDSWITH', 2, '__col__', 's']",
                     "CRBNK.CUSTOMERS.c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
                     "CRBNK.CUSTOMERS.c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
