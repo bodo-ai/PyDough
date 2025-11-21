@@ -1060,4 +1060,24 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         "IN",
         [],
     ),
+    (
+        "srv.CRBNK.CUSTOMERS.c_fname",
+        (
+            "NOT",
+            1,
+            "AND",
+            2,
+            "CONTAINS",
+            2,
+            "__col__",
+            "e",
+            "CONTAINS",
+            2,
+            "__col__",
+            "i",
+        ),
+    ): (
+        "NOT_IN",
+        ["ALICE", "EMILY", "ISABEL", "QUEENIE"],
+    ),
 }
