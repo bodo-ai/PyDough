@@ -1422,6 +1422,229 @@ def test_pipeline_e2e_cryptbank(
             [],
             id="cryptbank_filter_count_43",
         ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a')",
+                        "CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'u')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_01",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'i') & CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'o') & CONTAINS(first_name, 'u')",
+                        "CONTAINS(first_name, 'u') & CONTAINS(first_name, 'a')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
+                    "'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
+                    "'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', "
+                    "'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', "
+                    "'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', "
+                    "'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_02",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'u')",
+                        "CONTAINS(first_name, 'a')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_03",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'i') & CONTAINS(first_name, 'u')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'i')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_04",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i') & CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'i') & CONTAINS(first_name, 'o') & CONTAINS(first_name, 'u')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_05",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "~(CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')) & CONTAINS(first_name, 'i')",
+                        "~(CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')) & CONTAINS(first_name, 'o')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', "
+                    "'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK.CUSTOMERS.c_fname: ['NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK.CUSTOMERS.c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK.CUSTOMERS.c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                },
+            ],
+            id="cryptbank_multi_fcount_06",
+        ),
     ],
 )
 def test_cryptbank_mask_server_logging(
