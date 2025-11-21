@@ -428,12 +428,14 @@ def common_prefix_x():
 
 
 def common_prefix_y():
-    # For each customer who has NEVER made a zero-tax purchase, count how
-    # many total orders they have made. Keep the top 5 customers by number
-    # of orders, breaking ties by customer name.
+    # For each customer who has NEVER made a zero-tax purchase through clerk
+    # number 1, count how many total orders they have made through that clerk.
+    # Keep the top 5 customers by number of orders, breaking ties by customer
+    # name.
+    clerk_one_orders = orders.WHERE(clerk == "Clerk#000000001")
     return (
-        customers.WHERE(HASNOT(orders.lines.WHERE(tax == 0)))
-        .CALCULATE(name, n_orders=COUNT(orders))
+        customers.WHERE(HASNOT(clerk_one_orders.lines.WHERE(tax == 0)))
+        .CALCULATE(name, n_orders=COUNT(clerk_one_orders))
         .TOP_K(5, by=(n_orders.DESC(), name.ASC()))
     )
 
@@ -698,7 +700,26 @@ def common_prefix_al():
     # For each remaining customer, list their key, number of orders made, and
     # number of lineitems without tax/discount made. When choosing the top 10
     # customers, pick the 10 with the lowest key values.
-    selected_lines = orders.lines.WHERE((tax == 0) & (discount == 0))
+    selected_lines = orders.lines.WHERE(
+        (tax == 0)
+        & (discount == 0)
+        & ISIN(
+            part_key,
+            (
+                53360,
+                123069,
+                132776,
+                62217,
+                67393,
+                87784,
+                148252,
+                176947,
+                196620,
+                103099,
+                169275,
+            ),
+        )
+    )
     selected_part_purchase = selected_lines.part.WHERE(size < 15)
     return (
         nations.customers.CALCULATE(n_orders=COUNT(orders))
@@ -707,7 +728,7 @@ def common_prefix_al():
         .WHERE(HAS(selected_lines))
         .TOP_K(10, by=key.ASC())
         .CALCULATE(cust_key=key, n_orders=n_orders, n_no_tax_discount=n_no_tax_discount)
-        .WHERE(HAS(selected_part_purchase) & (COUNT(selected_part_purchase) > 0))
+        .WHERE(HAS(selected_part_purchase) & (COUNT(selected_part_purchase) != 0))
     )
 
 
@@ -724,7 +745,7 @@ def common_prefix_am():
         .WHERE(
             HAS(selected_lines)
             & HAS(selected_part_purchase)
-            & (COUNT(selected_part_purchase) > 0)
+            & (COUNT(selected_part_purchase) != 0)
         )
         .CALCULATE(
             cust_key=key, n_orders=n_orders, n_no_tax_discount=COUNT(selected_lines)
@@ -744,7 +765,7 @@ def common_prefix_an():
         .WHERE(
             (COUNT(orders) > RELAVG(COUNT(orders), per="nations"))
             & HAS(selected_part_purchase)
-            & (COUNT(selected_part_purchase) > 0)
+            & (COUNT(selected_part_purchase) != 0)
         )
         .CALCULATE(
             cust_key=key,

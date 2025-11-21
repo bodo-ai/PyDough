@@ -1,5 +1,5 @@
 ROOT(columns=[('container', p_container), ('highest_price_ship_date', max_anything_l_shipdate)], orderings=[(max_anything_l_shipdate):asc_first, (p_container):asc_first], limit=5:numeric)
- FILTER(condition=sum_n_rows > 0:numeric, columns={'max_anything_l_shipdate': max_anything_l_shipdate, 'p_container': p_container})
+ FILTER(condition=sum_n_rows != 0:numeric, columns={'max_anything_l_shipdate': max_anything_l_shipdate, 'p_container': p_container})
   AGGREGATE(keys={'p_container': p_container}, aggregations={'max_anything_l_shipdate': MAX(anything_l_shipdate), 'sum_n_rows': SUM(n_rows)})
    JOIN(condition=t0.p_partkey == t1.p_partkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'anything_l_shipdate': t1.anything_l_shipdate, 'n_rows': t1.n_rows, 'p_container': t0.p_container})
     FILTER(condition=p_brand == 'Brand#13':string, columns={'p_container': p_container, 'p_partkey': p_partkey})

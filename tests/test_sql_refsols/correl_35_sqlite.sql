@@ -54,6 +54,6 @@ JOIN _t3 AS _t3
   AND _t3.c_custkey = orders.o_custkey
   AND _t3.c_nationkey = supplier.s_nationkey
   AND _t3.o_orderpriority = orders.o_orderpriority
-  AND _t3.sum_n_rows > 0
+  AND _t3.sum_n_rows <> 0
 WHERE
   CAST(STRFTIME('%Y', lineitem.l_shipdate) AS INTEGER) = 1998

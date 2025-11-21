@@ -214,7 +214,11 @@ def _mergeable(
     """
 
     # PYDOUGH CHANGE: avoid merging CTEs when it would break a left join.
-    if isinstance(from_or_join, exp.Join) and from_or_join.side not in ("INNER", ""):
+    if (
+        isinstance(from_or_join, exp.Join)
+        and from_or_join.side not in ("INNER", "")
+        and len(inner_scope.expression.args.get("joins", [])) > 0
+    ):
         return False
 
     # PYDOUGH CHANGE: avoid merging CTEs when the inner scope has a window

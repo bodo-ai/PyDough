@@ -1,17 +1,17 @@
-WITH _s1 AS (
+WITH _t1 AS (
   SELECT
-    oid,
-    COUNT(*) AS n_rows
-  FROM main.author
+    MAX(organization.continent) AS anything_continent,
+    COUNT(author.oid) AS count_oid
+  FROM main.organization AS organization
+  LEFT JOIN main.author AS author
+    ON author.oid = organization.oid
   GROUP BY
-    1
+    organization.oid
 )
 SELECT
-  organization.continent,
-  CAST(COALESCE(SUM(_s1.n_rows), 0) AS REAL) / COUNT(*) AS ratio
-FROM main.organization AS organization
-LEFT JOIN _s1 AS _s1
-  ON _s1.oid = organization.oid
+  anything_continent AS continent,
+  CAST(COALESCE(SUM(count_oid), 0) AS REAL) / COUNT(*) AS ratio
+FROM _t1
 GROUP BY
   1
 ORDER BY

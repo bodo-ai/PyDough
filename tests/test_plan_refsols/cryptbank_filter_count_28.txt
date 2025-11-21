@@ -1,7 +1,0 @@
-ROOT(columns=[('n', n_rows)], orderings=[])
- AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
-  JOIN(condition=t0.a_custkey == t1.c_key, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={})
-   FILTER(condition=YEAR(a_open_ts) < 2020:numeric & a_balance >= 5000:numeric & a_type == 'retirement':string | a_type == 'savings':string, columns={'a_custkey': a_custkey})
-    SCAN(table=CRBNK.ACCOUNTS, columns={'a_balance': a_balance, 'a_custkey': a_custkey, 'a_open_ts': a_open_ts, 'a_type': a_type})
-   FILTER(condition=CONTAINS(c_email, 'outlook':string) | CONTAINS(c_email, 'gmail':string), columns={'c_key': c_key})
-    SCAN(table=CRBNK.CUSTOMERS, columns={'c_email': c_email, 'c_key': c_key})

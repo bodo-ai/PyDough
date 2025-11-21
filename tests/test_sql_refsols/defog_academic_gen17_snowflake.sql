@@ -1,17 +1,11 @@
-WITH _s1 AS (
-  SELECT
-    cid,
-    COUNT(*) AS n_rows
-  FROM main.publication
-  GROUP BY
-    1
-)
 SELECT
-  conference.name,
-  COALESCE(_s1.n_rows, 0) AS count_publications
+  ANY_VALUE(conference.name) AS name,
+  COUNT(publication.cid) AS count_publications
 FROM main.conference AS conference
-LEFT JOIN _s1 AS _s1
-  ON _s1.cid = conference.cid
+LEFT JOIN main.publication AS publication
+  ON conference.cid = publication.cid
+GROUP BY
+  conference.cid
 ORDER BY
   2 DESC NULLS LAST,
   1 DESC NULLS LAST
