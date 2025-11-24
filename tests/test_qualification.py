@@ -62,6 +62,10 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+)
 
 
 @pytest.mark.parametrize(
@@ -937,6 +941,23 @@ from tests.test_pydough_functions.tpch_test_functions import (
         └─── Where[(customer_key == original_customer_key) & (key > original_order_key) & (order_date == original_order_date)]
   """,
             id="simple_cross_6",
+        ),
+        pytest.param(
+            simple_range_1,
+            """
+──┬─ TPCH
+  └─── RangeCollection('simple_range', value=range(0, 10))
+            """,
+            id="simple_range_1",
+        ),
+        pytest.param(
+            simple_range_2,
+            """
+──┬─ TPCH
+  ├─── RangeCollection('simple_range', value=range(0, 10))
+  └─── OrderBy[value.DESC(na_pos='last')]
+            """,
+            id="simple_range_2",
         ),
     ],
 )

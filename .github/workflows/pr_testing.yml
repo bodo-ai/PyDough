@@ -46,6 +46,11 @@ on:
         type: boolean
         required: false
         default: false
+      run-s3:
+        description: "Run S3 Datasets Tests"
+        type: boolean
+        required: false
+        default: false
 
 # Limit CI to cancel previous runs in the same PR
 concurrency:
@@ -108,8 +113,6 @@ jobs:
           # Output to GitHub Actions expected format
           echo "matrix=$joined" >> $GITHUB_OUTPUT
 
-
-
   run-python-tests:
     name: Main Python Tests
     needs: [get-msg, get-py-ver-matrix]
@@ -148,11 +151,24 @@ jobs:
         run: uv run ruff check .
 
       - name: Run Tests
-        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked)" -rs
+        run: uv run pytest tests/ -m "not (snowflake or mysql or postgres or sf_masked or s3)" -rs
+
+  run-defog-daily-update:
+    name: Run DEFOG Daily Update
+    needs: [get-msg]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-sf))
+    uses: ./.github/workflows/defog_daily_update.yml
+    secrets:
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_PASSWORD: ${{ secrets.SF_PASSWORD }}
+      SF_ACCOUNT: ${{ secrets.SF_ACCOUNT }}
 
   run-sf-tests:
     name: Snowflake Tests
-    needs: [get-msg, get-py-ver-matrix]
+    needs: [run-defog-daily-update, get-msg, get-py-ver-matrix]
     if: |
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
       (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run sf]')) ||
@@ -215,6 +231,21 @@ jobs:
       SF_NONE_USERNAME: ${{ secrets.SF_NONE_USERNAME }}
       SF_NONE_PASSWORD: ${{ secrets.SF_NONE_PASSWORD }}
       SF_MASKED_ACCOUNT: ${{ secrets.SF_MASKED_ACCOUNT }}
+    with:
+      python-versions: ${{ github.event_name == 'workflow_dispatch'
+                      && needs.get-py-ver-matrix.outputs.matrix
+                      || '["3.10", "3.11", "3.12"]' }}
+
+  run-s3-tests:
+    name: S3 datasets Tests
+    needs: [get-msg, get-py-ver-matrix]
+    if: |
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run all]')) ||
+      (github.event_name == 'pull_request' && contains(needs.get-msg.outputs.commitMsg, '[run s3]')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.run-all || inputs.run-s3))
+    uses: ./.github/workflows/s3_testing.yml
+    secrets:
+      READ_LLM_FIXTURES_ROLE: ${{ secrets.READ_LLM_FIXTURES_ROLE }}
     with:
       python-versions: ${{ github.event_name == 'workflow_dispatch'
                       && needs.get-py-ver-matrix.outputs.matrix
