@@ -1,7 +1,7 @@
 WITH _u_0 AS (
   SELECT
     countrycode AS _u_1
-  FROM wdi.CountryNotes
+  FROM main.CountryNotes
   WHERE
     seriescode = 'DT.DOD.DECT.CD'
   GROUP BY
@@ -9,7 +9,7 @@ WITH _u_0 AS (
 )
 SELECT
   Country.countrycode AS country_code
-FROM wdi.Country AS Country
+FROM main.Country AS Country
 LEFT JOIN _u_0 AS _u_0
   ON Country.countrycode = _u_0._u_1
 WHERE

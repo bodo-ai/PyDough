@@ -5,7 +5,7 @@ WITH _s1 AS (
     SUM(tot_drug_amt) AS sum_tot_drug_amt
   FROM main.treatments
   WHERE
-    DATEDIFF(CURRENT_TIMESTAMP(), CAST(start_dt AS DATETIME), MONTH) <= 6
+    start_dt >= DATE_TRUNC('DAY', DATE_SUB(CURRENT_TIMESTAMP(), 6, MONTH))
   GROUP BY
     1
 ), _t1 AS (
