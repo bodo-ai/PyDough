@@ -1,7 +1,7 @@
 SELECT
   lineitem.l_shipmode AS L_SHIPMODE,
-  COALESCE(COUNT_IF(orders.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS HIGH_LINE_COUNT,
-  COALESCE(COUNT_IF(NOT orders.o_orderpriority IN ('1-URGENT', '2-HIGH')), 0) AS LOW_LINE_COUNT
+  COUNT_IF(orders.o_orderpriority IN ('1-URGENT', '2-HIGH')) AS HIGH_LINE_COUNT,
+  COUNT_IF(NOT orders.o_orderpriority IN ('1-URGENT', '2-HIGH')) AS LOW_LINE_COUNT
 FROM tpch.lineitem AS lineitem
 JOIN tpch.orders AS orders
   ON lineitem.l_orderkey = orders.o_orderkey

@@ -93,15 +93,15 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         """
         if base not in used_names:
             return base
-        i = 0
+        i: int = 0
         while True:
-            name = f"{base}_{i}"
+            name: str = f"{base}_{i}"
             if name not in used_names:
                 return name
             i += 1
 
     def join_aggregate_transpose(
-        self, join: Join, aggregate: Aggregate, is_left: bool
+        self, join: Join, aggregate: Aggregate, is_left_agg: bool
     ) -> RelationalNode | None:
         """
         Transposes a Join above an Aggregate into an Aggregate above a Join,
@@ -111,7 +111,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         Args:
             `join`: the Join node above the Aggregate.
             `aggregate`: the Aggregate node that is the left input to the Join.
-            `is_left`: whether the Aggregate is the left input to the Join
+            `is_left_agg`: whether the Aggregate is the left input to the Join
             (True) or the right input (False).
 
         Returns:
@@ -126,12 +126,12 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # filtering (since the point of joining before aggregation is to reduce
         # the number of rows to aggregate).
         cardinality: JoinCardinality = (
-            join.cardinality if is_left else join.reverse_cardinality
+            join.cardinality if is_left_agg else join.reverse_cardinality
         )
 
-        left_join_case = (
+        left_join_case: bool = (
             join.join_type == JoinType.LEFT
-            and not is_left
+            and not is_left_agg
             and all(
                 agg.op in JoinAggregateTransposeShuttle.left_join_case_ops
                 for agg in aggregate.aggregations.values()
@@ -144,7 +144,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         if not (
             (
                 (join.join_type == JoinType.INNER)
-                or (join.join_type == JoinType.SEMI and is_left)
+                or (join.join_type == JoinType.SEMI and is_left_agg)
                 or left_join_case
             )
             and cardinality.filters
@@ -155,7 +155,9 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # The alias of the input to the join that corresponds to the
         # aggregate.
         desired_alias: str | None = (
-            join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
+            join.default_input_aliases[0]
+            if is_left_agg
+            else join.default_input_aliases[1]
         )
 
         # Find all of the columns used in the join condition that come from the
@@ -177,17 +179,23 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
 
         # Extract the join key references from both sides of the join in the
         # order they appear in the join condition.
+        agg_key_refs: list[ColumnReference]
+        non_agg_key_refs: list[ColumnReference]
         agg_key_refs, non_agg_key_refs = extract_equijoin_keys(join)
-        if not is_left:
+        if not is_left_agg:
             agg_key_refs, non_agg_key_refs = non_agg_key_refs, agg_key_refs
 
         # Obtain the input aliases for both sides of the join, identified with
         # which one belongs to the aggregate versus the other input.
         agg_alias: str | None = (
-            join.default_input_aliases[0] if is_left else join.default_input_aliases[1]
+            join.default_input_aliases[0]
+            if is_left_agg
+            else join.default_input_aliases[1]
         )
         non_agg_alias: str | None = (
-            join.default_input_aliases[1] if is_left else join.default_input_aliases[0]
+            join.default_input_aliases[1]
+            if is_left_agg
+            else join.default_input_aliases[0]
         )
 
         # Now that the transpose is deemed possible, if in the left join
@@ -251,7 +259,7 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # happening before the join.
         new_cardinality: JoinCardinality = join.cardinality
         new_reverse_cardinality: JoinCardinality = join.reverse_cardinality
-        if is_left:
+        if is_left_agg:
             new_reverse_cardinality = new_reverse_cardinality.add_plural()
         else:
             new_cardinality = new_cardinality.add_plural()
@@ -280,9 +288,11 @@ class JoinAggregateTransposeShuttle(RelationalShuttle):
         # other input to the join, as these shall be the two inputs to the new
         # join.
         agg_input: RelationalNode = aggregate.inputs[0]
-        non_agg_input: RelationalNode = join.inputs[1] if is_left else join.inputs[0]
+        non_agg_input: RelationalNode = (
+            join.inputs[1] if is_left_agg else join.inputs[0]
+        )
         new_join_inputs: list[RelationalNode] = (
-            [agg_input, non_agg_input] if is_left else [non_agg_input, agg_input]
+            [agg_input, non_agg_input] if is_left_agg else [non_agg_input, agg_input]
         )
 
         # Start by placing all of the columns from the aggregate node's input

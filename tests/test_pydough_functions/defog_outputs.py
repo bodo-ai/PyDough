@@ -2903,3 +2903,399 @@ def defog_sql_text_academic_gen25() -> str:
         JOIN domain ON domain_publication.did = domain.did 
     WHERE LOWER(domain.name) LIKE LOWER('%computer%science%');
     """
+
+
+def defog_sql_text_restaurants_gen1() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the total number of restaurants serving each type of food?
+    """
+    return """
+    SELECT 
+        restaurant.food_type, 
+        COUNT(DISTINCT restaurant.id) AS total_number_of_restaurants 
+    FROM restaurant GROUP BY restaurant.food_type;
+    """
+
+
+def defog_sql_text_restaurants_gen2() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the total count of restaurants in each city?
+    """
+    return """
+    SELECT 
+        location.city_name, 
+        COUNT(DISTINCT location.restaurant_id) AS total_count 
+        FROM LOCATION GROUP BY location.city_name;
+    """
+
+
+def defog_sql_text_restaurants_gen3() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants serving each type of food?
+    """
+    return """
+    SELECT 
+        restaurant.food_type, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM restaurant 
+    GROUP BY restaurant.food_type 
+    ORDER BY average_rating DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen4() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants serve Italian food in each city?
+    """
+    return """
+    SELECT 
+        restaurant.city_name, 
+        COUNT(*) AS number_of_restaurants 
+    FROM restaurant 
+    WHERE LOWER(restaurant.food_type) LIKE LOWER('%Italian%') 
+    GROUP BY restaurant.city_name 
+    ORDER BY number_of_restaurants DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen5() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants are there in each city? Order the results by the
+    number of restaurants in descending order.
+    """
+    return """
+    SELECT 
+        location.city_name, 
+        COUNT(DISTINCT location.restaurant_id) AS number_of_restaurants 
+    FROM LOCATION 
+    GROUP BY location.city_name 
+    ORDER BY number_of_restaurants DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen6() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    Which street has the most number of restaurants?
+    """
+    return """
+    SELECT street_name 
+    FROM location 
+    GROUP BY street_name 
+    ORDER BY COUNT(restaurant_id) DESC NULLS FIRST LIMIT 1;
+    """
+
+
+def defog_sql_text_restaurants_gen7() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    Which restaurants serve Italian cuisine or are located in New York? Order
+    the results by the restaurant name.
+    """
+    return """
+    SELECT name
+    FROM restaurant 
+    WHERE LOWER(food_type) LIKE LOWER('%Italian%') 
+        OR LOWER(city_name) LIKE LOWER('%New York%') 
+    ORDER BY name NULLS LAST;
+    """
+
+
+def defog_sql_text_restaurants_gen8() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants in each region? Order the results
+    by the region name.
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM restaurant 
+        JOIN geographic ON restaurant.city_name = geographic.city_name 
+    GROUP BY geographic.region 
+    ORDER BY geographic.region NULLS LAST;
+    """
+
+
+def defog_sql_text_restaurants_gen9() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What are the names of the top 3 restaurants with the highest ratings?
+    """
+    return """
+    SELECT restaurant.name 
+    FROM restaurant 
+    ORDER BY restaurant.rating DESC LIMIT 3;
+    """
+
+
+def defog_sql_text_restaurants_gen10() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    List the restaurants starting from the best ratings to the lowest
+    """
+    return """
+    SELECT name, rating 
+    FROM restaurant 
+    ORDER BY rating DESC NULLS FIRST;
+    """
+
+
+def defog_sql_text_restaurants_gen11() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants with rating > 4.5 to the total number of
+    restaurants in the database.
+    """
+    return """
+    SELECT 
+        CAST(COUNT(*) AS REAL) / NULLIF((SELECT COUNT(*) FROM restaurant), 0) AS rating_ratio 
+    FROM restaurant WHERE rating > 4.5;
+    """
+
+
+def defog_sql_text_restaurants_gen12() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants with a rating above 4.0 to restaurants with
+    a rating below 4.0 overall?
+    """
+    return """
+    SELECT CAST(
+        SUM(CASE WHEN restaurant.rating > 4.0 THEN 1 ELSE 0 END) AS REAL
+    ) / NULLIF(
+        SUM(CASE WHEN restaurant.rating < 4.0 THEN 1 ELSE 0 END), 0
+    ) AS ratio 
+    FROM restaurant;
+    """
+
+
+def defog_sql_text_restaurants_gen13() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants with a rating above 4 to restaurants with
+    a rating below 4 in New York?
+    """
+    return """
+    SELECT CAST(
+        COUNT(CASE WHEN rating > 4 THEN 1 END) AS REAL
+    ) / NULLIF(
+        COUNT(CASE WHEN rating < 4 THEN 1 END), 0
+    ) AS ratio 
+    FROM restaurant WHERE LOWER(city_name) LIKE LOWER('New York');
+    """
+
+
+def defog_sql_text_restaurants_gen14() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of restaurants serving vegan food to restaurants serving
+    non-vegan food in San Francisco? Match food_type case insensitively
+    """
+    return """
+    SELECT CAST(
+        SUM(CASE WHEN LOWER(restaurant.food_type) LIKE '%vegan%' THEN 1 ELSE 0 END) AS REAL
+    ) / NULLIF(
+        SUM(CASE WHEN NOT LOWER(restaurant.food_type) LIKE '%vegan%' THEN 1 ELSE 0 END), 0
+    ) AS ratio 
+    FROM restaurant 
+    WHERE LOWER(LOWER(restaurant.city_name)) LIKE LOWER('%san francisco%');
+    """
+
+
+def defog_sql_text_restaurants_gen15() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the ratio of Italian restaurants out of all restaurants in
+    Los Angeles?
+    """
+    return """
+    SELECT CAST(
+        COUNT(CASE WHEN LOWER(food_type) LIKE LOWER('%Italian%') THEN 1 END) AS REAL
+    ) / NULLIF(
+        COUNT(food_type), 0
+    ) AS ratio 
+    FROM restaurant 
+    WHERE LOWER(city_name) LIKE LOWER('%Los Angeles%');
+    """
+
+
+def defog_sql_text_restaurants_gen16() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What cities have more than one restaurants with the same name, and how many
+    of them are there? Return the city name, restaurant name, and restaurant
+    count
+    """
+    return """
+    SELECT 
+        r.city_name, 
+        r.name, 
+        COUNT(r.id) AS restaurant_count 
+    FROM restaurant AS r 
+    GROUP BY r.city_name, r.name 
+    HAVING COUNT(r.id) > 1;
+    """
+
+
+def defog_sql_text_restaurants_gen17() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants that serve Mexican food in each
+    city?
+    """
+    return """
+    SELECT 
+        location.city_name, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM restaurant JOIN LOCATION ON restaurant.id = location.restaurant_id 
+    WHERE LOWER(restaurant.food_type) LIKE '%mexican%' 
+    GROUP BY location.city_name;
+    """
+
+
+def defog_sql_text_restaurants_gen18() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What is the average rating of restaurants in each region?
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        AVG(restaurant.rating) AS average_rating 
+    FROM geographic 
+        JOIN restaurant ON geographic.city_name = restaurant.city_name 
+    GROUP BY 1;
+    """
+
+
+def defog_sql_text_restaurants_gen19() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants serve Italian food in each region?
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        COUNT(restaurant.id) AS number_of_restaurants 
+    FROM restaurant 
+        JOIN geographic ON restaurant.city_name = geographic.city_name 
+    WHERE LOWER(restaurant.food_type) LIKE '%italian%' 
+    GROUP BY geographic.region 
+    ORDER BY number_of_restaurants DESC;
+    """
+
+
+def defog_sql_text_restaurants_gen20() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    How many restaurants are there in each region?
+    """
+    return """
+    SELECT 
+        geographic.region, 
+        COUNT(DISTINCT restaurant.id) AS number_of_restaurants 
+    FROM geographic 
+        JOIN restaurant ON geographic.city_name = restaurant.city_name 
+    GROUP BY geographic.region 
+    ORDER BY number_of_restaurants DESC NULLS FIRST;
+    """
+
+
+def defog_sql_text_restaurants_gen21() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    Which city has the highest-rated restaurant?
+    """
+    return """
+    SELECT DISTINCT restaurant.city_name 
+    FROM restaurant 
+    WHERE rating = (SELECT MAX(rating) FROM restaurant);
+    """
+
+
+def defog_sql_text_restaurants_gen22() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What's the name and rating of all the restaurants that have a rating greater
+    than 4 and are located in the city of New York?
+    """
+    return """
+    SELECT restaurant.name, restaurant.rating 
+    FROM restaurant 
+    WHERE restaurant.rating > 4 
+        AND LOWER(restaurant.city_name) LIKE LOWER('%New York%');
+    """
+
+
+def defog_sql_text_restaurants_gen23() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What's the name and food type of all the restaurants located on Market St in
+    San Francisco?
+    """
+    return """
+    SELECT restaurant.name, restaurant.food_type 
+    FROM restaurant 
+        JOIN LOCATION ON restaurant.id = location.restaurant_id 
+    WHERE LOWER(location.street_name) LIKE LOWER('%Market St%') 
+        AND LOWER(location.city_name) LIKE LOWER('%San Francisco%');
+    """
+
+
+def defog_sql_text_restaurants_gen24() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What are the names of the restaurants that serve Italian food?
+    """
+    return """
+    SELECT restaurant.name 
+    FROM restaurant 
+    WHERE LOWER(LOWER(restaurant.food_type)) LIKE LOWER('%italian%');
+    """
+
+
+def defog_sql_text_restaurants_gen25() -> str:
+    """
+    SQLite query text for the following question for the Restaurants graph:
+
+    What are the names of the restaurants in Los Angeles that have a rating
+    higher than 4?
+    """
+    return """
+    SELECT DISTINCT restaurant.name 
+    FROM restaurant 
+    WHERE LOWER(restaurant.city_name) LIKE LOWER('%Los Angeles%') 
+        AND restaurant.rating > 4 
+    ORDER BY restaurant.name NULLS LAST;
+    """
