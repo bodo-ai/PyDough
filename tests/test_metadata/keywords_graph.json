@@ -126,7 +126,7 @@
           {
             "name": "length",
             "type": "table column",
-            "column name": "LENGTH",
+            "column name": "\"LENGTH\"",
             "data type": "numeric",
             "description": "Column name normalized from PyDough reserved word 'LENGTH'",
             "sample values": [

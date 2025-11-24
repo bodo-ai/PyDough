@@ -6,7 +6,7 @@
       {
         "name": "Country",
         "type": "simple table",
-        "table path": "wdi.Country",
+        "table path": "main.Country",
         "unique properties": [
           "CountryCode"
         ],
@@ -421,7 +421,7 @@
       {
         "name": "CountryNotes",
         "type": "simple table",
-        "table path": "wdi.CountryNotes",
+        "table path": "main.CountryNotes",
         "unique properties": [
           "Countrycode",
           "Seriescode"
@@ -473,7 +473,7 @@
       {
         "name": "Footnotes",
         "type": "simple table",
-        "table path": "wdi.Footnotes",
+        "table path": "main.Footnotes",
         "unique properties": [
           "Countrycode",
           "Seriescode",
@@ -539,7 +539,7 @@
       {
         "name": "Indicators",
         "type": "simple table",
-        "table path": "wdi.Indicators",
+        "table path": "main.Indicators",
         "unique properties": [
           "CountryCode",
           "IndicatorCode",
@@ -631,7 +631,7 @@
       {
         "name": "Series",
         "type": "simple table",
-        "table path": "wdi.Series",
+        "table path": "main.Series",
         "unique properties": [
           "SeriesCode"
         ],
@@ -903,7 +903,7 @@
       {
         "name": "SeriesNotes",
         "type": "simple table",
-        "table path": "wdi.SeriesNotes",
+        "table path": "main.SeriesNotes",
         "unique properties": [
           "Seriescode",
           "Year"
