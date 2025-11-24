@@ -324,7 +324,7 @@ class HybridTree:
         condition: HybridExpr
         if is_semi:
             condition = HybridFunctionExpr(
-                pydop.GRT,
+                pydop.NEQ,
                 [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
                 BooleanType(),
             )
@@ -588,6 +588,16 @@ class HybridTree:
             self
         )
 
+        # Augment the reverse cardinality if the parent does not always exist.
+        if not reverse_cardinality.filters:
+            if len(self.pipeline) == 1 and isinstance(
+                self.pipeline[0], HybridPartition
+            ):
+                if self.parent is not None and not self.parent.always_exists():
+                    reverse_cardinality = reverse_cardinality.add_filter()
+            elif not self.always_exists():
+                reverse_cardinality = reverse_cardinality.add_filter()
+
         # Create and insert the new child connection.
         new_child_idx = len(self.children)
         connection: HybridConnection = HybridConnection(
@@ -600,10 +610,6 @@ class HybridTree:
             reverse_cardinality,
         )
         self._children.append(connection)
-
-        # Augment the reverse cardinality if the parent does not always exist.
-        if (not reverse_cardinality.filters) and (not self.always_exists()):
-            connection.reverse_cardinality = reverse_cardinality.add_filter()
 
         # If an operation prevents the child's presence from directly
         # filtering the current level, update its connection type to be either

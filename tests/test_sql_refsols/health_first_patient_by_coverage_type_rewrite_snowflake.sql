@@ -39,6 +39,6 @@ SELECT
   max_anything_unmask_date_of_birth AS date_of_birth
 FROM _t0
 WHERE
-  sum_n_rows > 0
+  sum_n_rows <> 0
 ORDER BY
   1 NULLS FIRST
