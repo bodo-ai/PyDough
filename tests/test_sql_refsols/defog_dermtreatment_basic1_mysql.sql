@@ -5,13 +5,7 @@ WITH _s1 AS (
     SUM(tot_drug_amt) AS sum_tot_drug_amt
   FROM main.treatments
   WHERE
-    (
-      (
-        YEAR(CURRENT_TIMESTAMP()) - YEAR(start_dt)
-      ) * 12 + (
-        MONTH(CURRENT_TIMESTAMP()) - MONTH(start_dt)
-      )
-    ) <= 6
+    start_dt >= CAST(DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL '6' MONTH) AS DATE)
   GROUP BY
     1
 ), _t1 AS (

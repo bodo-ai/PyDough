@@ -19,10 +19,8 @@ This page describes the specification of the PyDough DSL. The specification incl
    * [SINGULAR](#singular)
    * [BEST](#best)
    * [CROSS](#cross)
-- [Induced Properties](#induced-properties)
-   * [Induced Scalar Properties](#induced-scalar-properties)
-   * [Induced Subcollection Properties](#induced-subcollection-properties)
-   * [Induced Arbitrary Joins](#induced-arbitrary-joins)
+- [User Generated Collections](#user-generated-collections)
+    * [range_collection](#range_collection)
 - [Larger Examples](#larger-examples)
    * [Example 1: Highest Residency Density States](#example-1-highest-residency-density-states)
    * [Example 2: Yearly Trans-Coastal Shipments](#example-2-yearly-trans-coastal-shipments)
@@ -1536,25 +1534,49 @@ People.CALCULATE(Packages=COUNT(People.packages)).CROSS(Packages)
 People.CROSS(Addresses).current_address
 ```
 
-<!-- TOC --><a name="induced-properties"></a>
-## Induced Properties
+<!-- TOC --><a name="user-generated-collections"></a>
+## User Generated Collections
 
-This section of the PyDough specification has not yet been defined.
+> [!WARNING]  
+> NOTE: User collections are currently supported **only in the Snowflake context**.
 
-<!-- TOC --><a name="induced-scalar-properties"></a>
-### Induced Scalar Properties
+This section describes APIs for dynamically creating PyDough collections and using them alongside other data sources.
 
-This section of the PyDough specification has not yet been defined.
+<!-- TOC --><a name="range_collection"></a>
+### `pydough.range_collection`
 
-<!-- TOC --><a name="induced-subcollection-properties"></a>
-### Induced Subcollection Properties
+The `range_collection` creates a collection that generates a sequence of integers within a specified range. This is useful for building numeric datasets dynamically.
+It takes in the following arguments:
 
-This section of the PyDough specification has not yet been defined.
+- `name`: The name of the range collection.
+- `column_name`: The name of the column in the collection.
+- `start`: The starting value of the range (inclusive).
+- `end`: The ending value of the range (exclusive).
+- `step`: The increment between consecutive values (default: 1).
 
-<!-- TOC --><a name="induced-arbitrary-joins"></a>
-### Induced Arbitrary Joins
+Supported Signatures:
+- `range_collection(name, column_name, end)`: generates integers from 0 to `end-1` with a step of 1.
+- `range_collection(name, column_name, start, end)`: generates integers from `start` to `end-1` with a step of 1.
+- `range_collection(name, column_name, start, end, step)`: generates integers from `start` to `end-1` with the specified `step`.
 
-This section of the PyDough specification has not yet been defined.
+#### Example
+
+```python
+import pydough
+
+my_range = pydough.range_collection("simple_range", "col1", 1, 10, 2)
+df = pydough.to_df(my_range)
+print(df)
+```
+Output:
+```
+    col1
+0     1
+1     3
+2     5
+3     7
+4     9
+```
 
 <!-- TOC --><a name="larger-examples"></a>
 ## Larger Examples

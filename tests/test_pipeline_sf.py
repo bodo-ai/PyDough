@@ -6,6 +6,7 @@ Integration tests for the PyDough workflow on the TPC-H queries using Snowflake.
 # mypy: ignore-errors
 # ruff & mypy should not try to typecheck or verify any of this
 
+from collections.abc import Callable
 import pandas as pd
 import pytest
 import datetime
@@ -34,6 +35,22 @@ from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 
 from .testing_utilities import PyDoughPandasTest
 from pydough import init_pydough_context, to_df, to_sql
+
+# NOTE: this should move to test_pipeline_tpch_custom.py once the
+# other dialects are supported
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+    simple_range_3,
+    simple_range_4,
+    simple_range_5,
+    user_range_collection_1,
+    user_range_collection_2,
+    user_range_collection_3,
+    user_range_collection_4,
+    user_range_collection_5,
+    user_range_collection_6,
+)
 
 
 @pytest.fixture(
@@ -557,19 +574,285 @@ def test_defog_e2e(
 @pytest.mark.execute
 def test_pipeline_e2e_snowflake_custom_datasets(
     custom_datasets_test_data: PyDoughPandasTest,  # noqa: F811
-    get_test_graph_by_name: graph_fetcher,
+    get_custom_datasets_graph: graph_fetcher,
     sf_conn_db_context: DatabaseContext,
 ):
     """
     Test executing the the custom queries with the custom datasets against the
     refsol DataFrame.
     """
-    # Just run the "keywords" tests
-    if custom_datasets_test_data.graph_name.lower() == "keywords":
-        custom_datasets_test_data.run_e2e_test(
-            get_test_graph_by_name,
-            sf_conn_db_context("DEFOG", custom_datasets_test_data.graph_name),
-            coerce_types=True,
-        )
-    else:
-        pytest.skip("Skipping non-keywords custom dataset tests for Snowflake.")
+    custom_datasets_test_data.run_e2e_test(
+        get_custom_datasets_graph,
+        sf_conn_db_context("DEFOG", custom_datasets_test_data.graph_name),
+        coerce_types=True,
+    )
+
+
+# NOTE: this should move and be part of tpch_custom_pipeline_test_data once the
+# other dialects are supported
+@pytest.fixture(
+    params=[
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_1,
+                "TPCH",
+                lambda: pd.DataFrame({"value": range(10)}),
+                "simple_range_1",
+            ),
+            id="simple_range_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_2,
+                "TPCH",
+                lambda: pd.DataFrame({"value": range(9, -1, -1)}),
+                "simple_range_2",
+            ),
+            id="simple_range_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_3,
+                "TPCH",
+                lambda: pd.DataFrame({"foo": range(15, 20)}),
+                "simple_range_3",
+            ),
+            id="simple_range_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_4,
+                "TPCH",
+                lambda: pd.DataFrame({"foo": range(10, 0, -1)}),
+                "simple_range_4",
+            ),
+            id="simple_range_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                simple_range_5,
+                "TPCH",
+                # TODO: even though generated SQL has CAST(NULL AS INT) AS x
+                # it returns x as object datatype.
+                # using `x: range(-1)` returns int64 so temp. using dtype=object
+                lambda: pd.DataFrame({"x": pd.Series(range(-1), dtype="object")}),
+                "simple_range_5",
+            ),
+            id="simple_range_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_1,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_size": [
+                            1,
+                            6,
+                            11,
+                            16,
+                            21,
+                            26,
+                            31,
+                            36,
+                            41,
+                            46,
+                            51,
+                            56,
+                            61,
+                            66,
+                            71,
+                            76,
+                            81,
+                            86,
+                            91,
+                            96,
+                        ],
+                        "n_parts": [
+                            228,
+                            225,
+                            206,
+                            234,
+                            228,
+                            221,
+                            231,
+                            208,
+                            245,
+                            226,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                        ],
+                    }
+                ),
+                "user_range_collection_1",
+            ),
+            id="user_range_collection_1",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_2,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "x": [0, 2, 4, 6, 8],
+                        "n_prefix": [1, 56, 56, 56, 56],
+                        "n_suffix": [101, 100, 100, 100, 100],
+                    }
+                ),
+                "user_range_collection_2",
+            ),
+            id="user_range_collection_2",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_3,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "x": [0, 2, 4, 6, 8],
+                        "n_prefix": [1, 56, 56, 56, 56],
+                        "n_suffix": [101, 100, 100, 100, 100],
+                    }
+                ),
+                "user_range_collection_3",
+            ),
+            id="user_range_collection_3",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_4,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_size": [1, 2, 4, 5, 6, 10],
+                        "name": [
+                            "azure lime burnished blush salmon",
+                            "spring green chocolate azure navajo",
+                            "cornflower bisque thistle floral azure",
+                            "azure aquamarine tomato lace peru",
+                            "antique cyan tomato azure dim",
+                            "red cream rosy hot azure",
+                        ],
+                        "retail_price": [
+                            1217.13,
+                            1666.60,
+                            1863.87,
+                            1114.16,
+                            1716.72,
+                            1746.81,
+                        ],
+                    }
+                ),
+                "user_range_collection_4",
+            ),
+            id="user_range_collection_4",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_5,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "part_size": [1, 11, 21, 31, 41, 51, 6, 16, 26, 36, 46, 56],
+                        "n_parts": [
+                            1135,
+                            1067,
+                            1128,
+                            1109,
+                            1038,
+                            0,
+                            1092,
+                            1154,
+                            1065,
+                            1094,
+                            1088,
+                            0,
+                        ],
+                    }
+                ),
+                "user_range_collection_5",
+            ),
+            id="user_range_collection_5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                user_range_collection_6,
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "year": [
+                            1990,
+                            1991,
+                            1992,
+                            1993,
+                            1994,
+                            1995,
+                            1996,
+                            1997,
+                            1998,
+                            1999,
+                            2000,
+                        ],
+                        "n_orders": [0, 0, 1, 2, 0, 0, 1, 1, 2, 0, 0],
+                    }
+                ),
+                "user_range_collection_6",
+            ),
+            id="user_range_collection_6",
+        ),
+    ],
+)
+def sf_user_generated_data(request) -> PyDoughPandasTest:
+    """
+    Test data for e2e tests for user generated collections on Snowflake. Returns an instance of
+    PyDoughPandasTest containing information about the test.
+    """
+    return request.param
+
+
+@pytest.mark.snowflake
+@pytest.mark.execute
+def test_e2e_sf_user_generated_data(
+    sf_user_generated_data: PyDoughPandasTest,
+    get_sf_sample_graph: graph_fetcher,
+    sf_conn_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H queries from the original code generation,
+    with Snowflake as the executing database.
+    Using the `connection` as keyword argument to the DatabaseContext.
+    """
+    sf_user_generated_data.run_e2e_test(
+        get_sf_sample_graph,
+        sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
+        coerce_types=True,
+    )
+
+
+# TODO: delete this test once the other dialects are supported
+# and moved to tpch_custom_pipeline_test_data
+# It's needed here to access sf_user_generated_data fixture
+# that has user-generated test cases.
+def test_pipeline_until_relational_tpch_custom_sf(
+    sf_user_generated_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    get_plan_test_filename: Callable[[str], str],
+    update_tests: bool,
+) -> None:
+    """
+    Tests that a PyDough unqualified node can be correctly translated to its
+    qualified DAG version, with the correct string representation. Run on
+    custom queries with the TPC-H graph.
+    """
+    file_path: str = get_plan_test_filename(sf_user_generated_data.test_name)
+    sf_user_generated_data.run_relational_test(
+        get_sample_graph, file_path, update_tests
+    )

@@ -1,7 +1,7 @@
 SELECT
   conditions.description COLLATE utf8mb4_bin AS condition_description
-FROM synthea.patients AS patients
-JOIN synthea.conditions AS conditions
+FROM main.patients AS patients
+JOIN main.conditions AS conditions
   ON conditions.patient = patients.patient
 WHERE
   patients.ethnicity = 'italian' AND patients.gender = 'F'
