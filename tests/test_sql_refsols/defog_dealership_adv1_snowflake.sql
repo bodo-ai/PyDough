@@ -12,14 +12,11 @@ SELECT
     )
   ) AS payment_week,
   COUNT(*) AS total_payments,
-  COALESCE(
-    COUNT_IF((
-      (
-        DAYOFWEEK(payments_received.payment_date) + 6
-      ) % 7
-    ) IN (5, 6)),
-    0
-  ) AS weekend_payments
+  COUNT_IF((
+    (
+      DAYOFWEEK(payments_received.payment_date) + 6
+    ) % 7
+  ) IN (5, 6)) AS weekend_payments
 FROM main.payments_received AS payments_received
 JOIN main.sales AS sales
   ON payments_received.sale_id = sales._id AND sales.sale_price > 30000
