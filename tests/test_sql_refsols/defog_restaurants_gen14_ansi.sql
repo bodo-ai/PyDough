@@ -1,12 +1,5 @@
 SELECT
-  COALESCE(SUM(LOWER(food_type) = 'vegan'), 0) / CASE
-    WHEN (
-      NOT SUM(LOWER(food_type) <> 'vegan') IS NULL
-      AND SUM(LOWER(food_type) <> 'vegan') <> 0
-    )
-    THEN COALESCE(SUM(LOWER(food_type) <> 'vegan'), 0)
-    ELSE NULL
-  END AS ratio
+  COALESCE(SUM(LOWER(food_type) = 'vegan'), 0) / NULLIF(SUM(LOWER(food_type) <> 'vegan'), 0) AS ratio
 FROM main.restaurant
 WHERE
   LOWER(city_name) = 'san francisco'

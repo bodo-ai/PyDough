@@ -38,8 +38,7 @@ WITH _t5 AS (
     AND lineitem.l_orderkey = orders.o_orderkey
 ), _s13 AS (
   SELECT
-    _t3.anything_l_suppkey,
-    COUNT(*) AS n_rows
+    _t3.anything_l_suppkey
   FROM _t3 AS _t3
   JOIN _s11 AS _s11
     ON _s11.l_linenumber = _t3.l_linenumber
@@ -47,17 +46,17 @@ WITH _t5 AS (
     AND _s11.o_orderkey = _t3.o_orderkey
   WHERE
     _t3.anything_o_orderstatus = 'F'
-  GROUP BY
-    1
 )
 SELECT
-  supplier.s_name AS S_NAME,
-  COALESCE(_s13.n_rows, 0) AS NUMWAIT
+  ANY_VALUE(supplier.s_name) AS S_NAME,
+  COUNT(_s13.anything_l_suppkey) AS NUMWAIT
 FROM tpch.supplier AS supplier
 JOIN tpch.nation AS nation
   ON nation.n_name = 'SAUDI ARABIA' AND nation.n_nationkey = supplier.s_nationkey
 LEFT JOIN _s13 AS _s13
   ON _s13.anything_l_suppkey = supplier.s_suppkey
+GROUP BY
+  supplier.s_suppkey
 ORDER BY
   2 DESC,
   1

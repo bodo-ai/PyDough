@@ -4,24 +4,23 @@ WITH _u_0 AS (
   FROM main.treatments
   GROUP BY
     1
-), _s3 AS (
+), _t1 AS (
   SELECT
-    patient_id,
-    MIN(CAST(STRFTIME('%Y', start_dt) AS INTEGER)) AS min_year_start_dt
-  FROM main.treatments
-  GROUP BY
-    1
-), _t0 AS (
-  SELECT
-    _s3.min_year_start_dt,
-    COUNT(*) AS n_rows
+    MIN(CAST(STRFTIME('%Y', treatments.start_dt) AS INTEGER)) AS min_year_start_dt
   FROM main.patients AS patients
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = patients.patient_id
-  LEFT JOIN _s3 AS _s3
-    ON _s3.patient_id = patients.patient_id
+  LEFT JOIN main.treatments AS treatments
+    ON patients.patient_id = treatments.patient_id
   WHERE
     NOT _u_0._u_1 IS NULL
+  GROUP BY
+    patients.patient_id
+), _t0 AS (
+  SELECT
+    min_year_start_dt,
+    COUNT(*) AS n_rows
+  FROM _t1
   GROUP BY
     1
 )

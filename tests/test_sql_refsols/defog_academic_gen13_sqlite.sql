@@ -15,13 +15,7 @@ WITH _s1 AS (
 )
 SELECT
   domain.did AS domain_id,
-  CAST(COALESCE(_s1.n_rows, 0) AS REAL) / CASE
-    WHEN (
-      NOT _s3.n_rows IS NULL AND _s3.n_rows > 0
-    )
-    THEN COALESCE(_s3.n_rows, 0)
-    ELSE NULL
-  END AS ratio
+  CAST(COALESCE(_s1.n_rows, 0) AS REAL) / NULLIF(_s3.n_rows, 0) AS ratio
 FROM main.domain AS domain
 LEFT JOIN _s1 AS _s1
   ON _s1.did = domain.did

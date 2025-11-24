@@ -12,6 +12,7 @@ from .abstract_node import RelationalNode
 from .aggregate import Aggregate
 from .empty_singleton import EmptySingleton
 from .filter import Filter
+from .generated_table import GeneratedTable
 from .join import Join
 from .limit import Limit
 from .project import Project
@@ -72,6 +73,9 @@ class RelationalExpressionShuttleDispatcher(RelationalVisitor):
             order.expr = order.expr.accept_shuttle(self.shuttle)
 
     def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
+        pass
+
+    def visit_generated_table(self, generated_table: GeneratedTable) -> None:
         pass
 
     def visit_root(self, root: RelationalRoot) -> None:
