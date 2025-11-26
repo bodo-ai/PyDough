@@ -1,6 +1,6 @@
 ROOT(columns=[('name', s_name), ('region_name', r_name), ('acctbal_delta', s_acctbal - PREV(args=[s_acctbal], partition=[n_regionkey], order=[(s_acctbal):asc_last]))], orderings=[(s_acctbal - PREV(args=[s_acctbal], partition=[n_regionkey], order=[(s_acctbal):asc_last])):desc_last], limit=5:numeric)
- JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'n_regionkey': t0.n_regionkey, 'r_name': t0.r_name, 's_acctbal': t1.s_acctbal, 's_name': t1.s_name})
-  JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=SINGULAR_ACCESS, columns={'n_nationkey': t1.n_nationkey, 'n_regionkey': t1.n_regionkey, 'r_name': t0.r_name})
+ JOIN(condition=t0.n_nationkey == t1.s_nationkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_regionkey': t0.n_regionkey, 'r_name': t0.r_name, 's_acctbal': t1.s_acctbal, 's_name': t1.s_name})
+  JOIN(condition=t0.r_regionkey == t1.n_regionkey, type=INNER, cardinality=PLURAL_ACCESS, reverse_cardinality=PLURAL_ACCESS, columns={'n_nationkey': t1.n_nationkey, 'n_regionkey': t1.n_regionkey, 'r_name': t0.r_name})
    SCAN(table=tpch.REGION, columns={'r_name': r_name, 'r_regionkey': r_regionkey})
    SCAN(table=tpch.NATION, columns={'n_nationkey': n_nationkey, 'n_regionkey': n_regionkey})
   SCAN(table=tpch.SUPPLIER, columns={'s_acctbal': s_acctbal, 's_name': s_name, 's_nationkey': s_nationkey})
