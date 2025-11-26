@@ -1,7 +1,12 @@
 """
 Logic for switching references to join keys from one side of a join to the other
 when certain conditions are met, thus allowing the join to be removed by the
-column pruner.
+column pruner. The conditions are:
+- The join is an inner join.
+- The join has equi-join keys.
+- The cardinality in either direction is singular-access.
+- The only columns used from one side of the join (the one being referenced in
+  a singular-access manner) are the join keys (or a subset thereof).
 """
 
 from pydough.relational import (
