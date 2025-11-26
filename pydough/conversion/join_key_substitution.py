@@ -1,7 +1,12 @@
 """
 Logic for switching references to join keys from one side of a join to the other
 when certain conditions are met, thus allowing the join to be removed by the
-column pruner.
+column pruner. The conditions are:
+- The join is an inner join.
+- The join has equi-join keys.
+- The cardinality in either direction is singular-access.
+- The only columns used from one side of the join (the one being referenced in
+  a singular-access manner) are the join keys (or a subset thereof).
 """
 
 from pydough.relational import (
@@ -47,9 +52,11 @@ class JoinKeySubstitutionShuttle(RelationalShuttle):
                     if ref.input_name == join.default_input_aliases[0]
                 }
                 rhs_refs = col_refs - lhs_refs
-                # If the left side is singular access, and all the columns used
-                # from the right side are just the join keys, then we can
-                # substitute the right join keys with the left join keys.
+                # If each row on the left side (LHS) matches exactly one row on the right side (RHS)
+                # (i.e., singular access)
+                # and the query only references columns from the RHS that are join keys,
+                # then we can substitute the RHS join keys with the corresponding LHS join keys.
+                # This allows the join to potentially be removed later since it adds no new data.
                 if (
                     join.cardinality == JoinCardinality.SINGULAR_ACCESS
                     and rhs_refs <= rhs_keys
