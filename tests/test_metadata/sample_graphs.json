@@ -673,7 +673,7 @@
         "parent collection": "parts",
         "child collection": "supply_records",
         "singular": false,
-        "always matches": false,
+        "always matches": true,
         "keys": {"key": ["part_key"]},
         "description": "The records indicating which companies supply the part",
         "synonyms": ["producers", "vendors", "suppliers of part"]

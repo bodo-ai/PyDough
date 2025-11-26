@@ -1,10 +1,9 @@
 WITH _u_0 AS (
   SELECT
-    countrynotes.countrycode AS _u_1
-  FROM main.countrynotes AS countrynotes
-  JOIN main.series AS series
-    ON countrynotes.seriescode = series.seriescode
-    AND series.seriescode = 'DT.DOD.DECT.CD'
+    countrycode AS _u_1
+  FROM main.countrynotes
+  WHERE
+    seriescode = 'DT.DOD.DECT.CD'
   GROUP BY
     1
 )

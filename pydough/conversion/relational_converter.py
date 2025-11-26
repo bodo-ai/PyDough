@@ -93,6 +93,7 @@ from .hybrid_operations import (
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
 from .join_aggregate_transpose import pull_aggregates_above_joins
+from .join_key_substitution import join_key_substitution
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
 from .projection_pullup import pullup_projections
@@ -1593,6 +1594,12 @@ def optimize_relational_tree(
     pruner: ColumnPruner = ColumnPruner()
     root = pruner.prune_unused_columns(root)
 
+    # Run a pass that substitutes join keys when the only columns used by one
+    # side of the join are the join keys. This will make some joins redundant
+    # and allow them to be deleted later. Then, re-run column pruning.
+    root = confirm_root(join_key_substitution(root))
+    root = pruner.prune_unused_columns(root)
+
     # Bubble up names from the leaf nodes to further encourage simpler naming
     # without aliases, and also to delete duplicate columns where possible.
     # This is done early to maximize the chances that a nicer name will be used
@@ -1640,7 +1647,8 @@ def optimize_relational_tree(
     #   D: join-aggregate transpose
     #   E: projection pullup again
     #   F: redundant aggregation removal
-    #   G: column pruning
+    #   G: join key substitution
+    #   H: column pruning
     # This is done because pullup will create more opportunities for expression
     # simplification, which will allow more filters to be pushed further down,
     # and the combination of those together will create more opportunities for
@@ -1659,6 +1667,7 @@ def optimize_relational_tree(
         root = confirm_root(pull_aggregates_above_joins(root))
         root = confirm_root(pullup_projections(root))
         root = remove_redundant_aggs(root)
+        root = confirm_root(join_key_substitution(root))
         root = pruner.prune_unused_columns(root)
 
     # Re-run projection merging, without pushing into joins. This will allow
