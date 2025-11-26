@@ -54,7 +54,7 @@ class JoinKeySubstitutionShuttle(RelationalShuttle):
                 rhs_refs = col_refs - lhs_refs
                 # If each row on the left side (LHS) matches exactly one row on the right side (RHS)
                 # (i.e., singular access)
-                # and the query only references columns from the RHS that are join keys, 
+                # and the query only references columns from the RHS that are join keys,
                 # then we can substitute the RHS join keys with the corresponding LHS join keys.
                 # This allows the join to potentially be removed later since it adds no new data.
                 if (
