@@ -80,12 +80,12 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ['"Hello"', "HelloWorld", "SGVsbG9Xb3JsZA=="],
     ),
     # CRYPTBANK hardcoded responses
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("EQUAL", 2, "__col__", "lee")): (
+    ("srv/CRBNK/CUSTOMERS/c_lname", ("EQUAL", 2, "__col__", "lee")): (
         "IN",
         ["LEE"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("BETWEEN", 3, 1980, "YEAR", 1, "__col__", 1985),
     ): (
         "IN",
@@ -97,7 +97,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "1983-12-27",
         ],
     ),
-    ("srv.CRBNK.TRANSACTIONS.t_amount", ("GT", 2, "__col__", 9000.0)): (
+    ("srv/CRBNK/TRANSACTIONS/t_amount", ("GT", 2, "__col__", 9000.0)): (
         "IN",
         [
             -8934.44,
@@ -124,7 +124,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         (
             "AND",
             2,
@@ -157,7 +157,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_type",
+        "srv/CRBNK/ACCOUNTS/a_type",
         (
             "OR",
             2,
@@ -174,48 +174,48 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         "IN",
         ["avingss", "etirementr"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_phone", ("ENDSWITH", 2, "__col__", "5")): (
+    ("srv/CRBNK/CUSTOMERS/c_phone", ("ENDSWITH", 2, "__col__", "5")): (
         "IN",
         ["555-091-2345", "555-901-2345"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("OR", 2, "ENDSWITH", 2, "__col__", "a", "ENDSWITH", 2, "__col__", "e"),
     ): (
         "IN",
         ["ALICE", "GRACE", "LUKE", "MARIA", "OLIVIA", "QUEENIE", "SOPHIA"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("ENDSWITH", 2, "__col__", "s")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("ENDSWITH", 2, "__col__", "s")): (
         "IN",
         ["JAMES", "NICHOLAS", "THOMAS"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("NOT_EQUAL", 2, "__col__", "lopez")): (
+    ("srv/CRBNK/CUSTOMERS/c_lname", ("NOT_EQUAL", 2, "__col__", "lopez")): (
         "NOT_IN",
         ["LOPEZ"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("NOT_EQUAL", 2, "__col__", "lee")): (
+    ("srv/CRBNK/CUSTOMERS/c_lname", ("NOT_EQUAL", 2, "__col__", "lee")): (
         "NOT_IN",
         ["LEE"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_lname",
+        "srv/CRBNK/CUSTOMERS/c_lname",
         ("IN", 4, "__col__", "lee", "smith", "rodriguez"),
     ): (
         "IN",
         ["LEE", "SMITH", "RODRIGUEZ"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_lname",
+        "srv/CRBNK/CUSTOMERS/c_lname",
         ("NOT", 1, "IN", 4, "__col__", "lee", "smith", "rodriguez"),
     ): (
         "NOT_IN",
         ["LEE", "SMITH", "RODRIGUEZ"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_phone", ("STARTSWITH", 2, "__col__", "555-8")): (
+    ("srv/CRBNK/CUSTOMERS/c_phone", ("STARTSWITH", 2, "__col__", "555-8")): (
         "IN",
         ["555-809-1234", "555-870-9123"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_email", ("ENDSWITH", 2, "__col__", "gmail.com")): (
+    ("srv/CRBNK/CUSTOMERS/c_email", ("ENDSWITH", 2, "__col__", "gmail.com")): (
         "IN",
         [
             "livia.a22@gmail.como",
@@ -224,24 +224,24 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "opez.luke99@gmail.coml",
         ],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "YEAR", 1, "__col__", 1978)): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("EQUAL", 2, "YEAR", 1, "__col__", 1978)): (
         "IN",
         ["1976-10-27", "1976-12-02"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("EQUAL", 2, "__col__", "1985-04-12")): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("EQUAL", 2, "__col__", "1985-04-12")): (
         "IN",
         ["1983-12-27"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("ENDSWITH", 2, "__col__", "e")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("ENDSWITH", 2, "__col__", "e")): (
         "IN",
         ["ALICE", "GRACE", "LUKE", "QUEENIE"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_lname", ("ENDSWITH", 2, "__col__", "e")): (
+    ("srv/CRBNK/CUSTOMERS/c_lname", ("ENDSWITH", 2, "__col__", "e")): (
         "IN",
         ["LEE", "MOORE"],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_type",
+        "srv/CRBNK/ACCOUNTS/a_type",
         (
             "AND",
             2,
@@ -258,19 +258,19 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         "NOT_IN",
         ["avingss", "heckingc"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("NOT_EQUAL", 2, "__col__", "1991-11-15")): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("NOT_EQUAL", 2, "__col__", "1991-11-15")): (
         "NOT_IN",
         ["1990-07-31"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1991-11-15")): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("LTE", 2, "__col__", "1991-11-15")): (
         "NOT_IN",
         ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("GT", 2, "__col__", "1991-11-15")): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("GT", 2, "__col__", "1991-11-15")): (
         "IN",
         ["1991-03-13", "1992-05-06", "1993-01-01", "1994-06-15"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LT", 2, "__col__", "1991-11-15")): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("LT", 2, "__col__", "1991-11-15")): (
         "NOT_IN",
         [
             "1990-07-31",
@@ -280,7 +280,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "1994-06-15",
         ],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("GTE", 2, "__col__", "1991-11-15")): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("GTE", 2, "__col__", "1991-11-15")): (
         "IN",
         [
             "1990-07-31",
@@ -290,23 +290,23 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "1994-06-15",
         ],
     ),
-    ("srv.CRBNK.TRANSACTIONS.t_amount", ("LT", 2, "__col__", 0)): (
+    ("srv/CRBNK/TRANSACTIONS/t_amount", ("LT", 2, "__col__", 0)): (
         "IN",
         [],
     ),
-    ("srv.CRBNK.TRANSACTIONS.t_amount", ("GT", 2, "__col__", 0)): (
+    ("srv/CRBNK/TRANSACTIONS/t_amount", ("GT", 2, "__col__", 0)): (
         "NOT_IN",
         [],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_birthday", ("LTE", 2, "__col__", "1925-01-01")): (
+    ("srv/CRBNK/CUSTOMERS/c_birthday", ("LTE", 2, "__col__", "1925-01-01")): (
         "IN",
         [],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_phone", ("EQUAL", 2, "__col__", "555-123-456")): (
+    ("srv/CRBNK/CUSTOMERS/c_phone", ("EQUAL", 2, "__col__", "555-123-456")): (
         "IN",
         [],
     ),
-    ("srv.CRBNK.ACCOUNTS.a_open_ts", ("EQUAL", 2, "YEAR", 1, "__col__", 2021)): (
+    ("srv/CRBNK/ACCOUNTS/a_open_ts", ("EQUAL", 2, "YEAR", 1, "__col__", 2021)): (
         "IN",
         [
             "2017-02-11 10:59:51",
@@ -318,7 +318,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         (
             "AND",
             2,
@@ -360,14 +360,14 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ["1980-01-18", "1981-11-15", "1990-07-31", "1994-06-15"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("IN", 5, "__col__", "1991-11-15", "1978-02-11", "2005-03-14", "1985-04-12"),
     ): (
         "IN",
         ["1990-07-31", "1976-10-27", "1983-12-27"],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        "srv/CRBNK/ACCOUNTS/a_open_ts",
         ("BETWEEN", 3, "2020-03-28 09:20:00", "__col__", "2020-09-20 08:30:00"),
     ): (
         "IN",
@@ -379,7 +379,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "2016-09-03 12:01:51",
         ],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_email", ("CONTAINS", 2, "__col__", "mail")): (
+    ("srv/CRBNK/CUSTOMERS/c_email", ("CONTAINS", 2, "__col__", "mail")): (
         "NOT_IN",
         [
             "homasl@outlook.comt",
@@ -392,7 +392,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "lice_j@example.orga",
         ],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_email", ("LIKE", 2, "__col__", "%.%@%mail%")): (
+    ("srv/CRBNK/CUSTOMERS/c_email", ("LIKE", 2, "__col__", "%.%@%mail%")): (
         "IN",
         [
             "ophia.jackson@mail.orgs",
@@ -405,7 +405,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "ob.smith77@gmail.comb",
         ],
     ),
-    ("srv.CRBNK.ACCOUNTS.a_open_ts", ("IN", 4, "MONTH", 1, "__col__", 1, 2, 3)): (
+    ("srv/CRBNK/ACCOUNTS/a_open_ts", ("IN", 4, "MONTH", 1, "__col__", 1, 2, 3)): (
         "IN",
         [
             "2013-04-22 11:37:51",
@@ -422,14 +422,14 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        "srv/CRBNK/ACCOUNTS/a_open_ts",
         ("EQUAL", 2, "QUARTER", 1, "__col__", "DAY", 1, "__col__"),
     ): (
         "IN",
         ["2015-05-04 18:01:51"],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        "srv/CRBNK/ACCOUNTS/a_open_ts",
         (
             "AND",
             2,
@@ -457,7 +457,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "2014-08-15 11:31:51",
         ],
     ),
-    ("srv.CRBNK.TRANSACTIONS.t_ts", ("EQUAL", 2, "SECOND", 1, "__col__", 23)): (
+    ("srv/CRBNK/TRANSACTIONS/t_ts", ("EQUAL", 2, "SECOND", 1, "__col__", 23)): (
         "IN",
         [
             "2020-11-11 09:03:02",
@@ -466,7 +466,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_balance",
+        "srv/CRBNK/ACCOUNTS/a_balance",
         ("BETWEEN", 3, 200, "ABS", 1, "SUB", 2, "__col__", 7250, 600),
     ): (
         "IN",
@@ -476,7 +476,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        "srv/CRBNK/ACCOUNTS/a_open_ts",
         (
             "EQUAL",
             2,
@@ -501,7 +501,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.ACCOUNTS.a_open_ts",
+        "srv/CRBNK/ACCOUNTS/a_open_ts",
         ("EQUAL", 2, "LEAST", 2, "HOUR", 1, "__col__", "MINUTE", 1, "__col__", 15),
     ): (
         "IN",
@@ -513,21 +513,21 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_phone",
+        "srv/CRBNK/CUSTOMERS/c_phone",
         ("CONTAINS", 2, "CONCAT", 2, "1-", "__col__", "1-5"),
     ): (
         "NOT_IN",
         [],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_phone",
+        "srv/CRBNK/CUSTOMERS/c_phone",
         ("CONTAINS", 2, "CONCAT", 3, "1", "-", "__col__", "1-5"),
     ): (
         "NOT_IN",
         [],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_phone",
+        "srv/CRBNK/CUSTOMERS/c_phone",
         ("CONTAINS", 2, "CONCAT", 5, "1", "-", "__col__", "-", "1", "5-1"),
     ): (
         "IN",
@@ -539,7 +539,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 1991),
     ): (
         "IN",
@@ -550,7 +550,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 2005),
     ): (
         "IN",
@@ -560,7 +560,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 2005, 2005, 2006),
     ): (
         "IN",
@@ -569,7 +569,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 1991),
     ): (
         "NOT_IN",
@@ -580,7 +580,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 1990, 1990, 2005),
     ): (
         "NOT_IN",
@@ -590,7 +590,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_birthday",
+        "srv/CRBNK/CUSTOMERS/c_birthday",
         ("NOT", 1, "IN", 3, "COALESCE", 2, "YEAR", 1, "__col__", 2005, 2005, 2006),
     ): (
         "NOT_IN",
@@ -599,11 +599,11 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("IN", 4, "SLICE", 3, "__col__", 0, 1, "q", "r", "s"),
     ): ("IN", ["QUEENIE", "ROBERT", "SOPHIA"]),
     (
-        "srv.CRBNK.CUSTOMERS.c_lname",
+        "srv/CRBNK/CUSTOMERS/c_lname",
         (
             "CONTAINS",
             2,
@@ -630,12 +630,12 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         "IN",
         ["LEE", "RODRIGUEZ"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("EQUAL", 2, "SLICE", 3, "__col__", 0, 1, "i")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("EQUAL", 2, "SLICE", 3, "__col__", 0, 1, "i")): (
         "IN",
         ["ISABEL"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("IN", 6, "SLICE", 3, "__col__", 1, 2, "ar", "li", "ra", "to", "am"),
     ): (
         "IN",
@@ -651,7 +651,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "year", "__col__", "2023-01-01"),
     ): (
         "IN",
@@ -720,7 +720,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "quarter", "__col__", "2023-04-01"),
     ): (
         "IN",
@@ -745,7 +745,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "month", "__col__", "2023-06-01"),
     ): (
         "IN",
@@ -761,7 +761,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "day", "__col__", "2023-06-02"),
     ): (
         "IN",
@@ -771,7 +771,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "hour", "__col__", "2023-06-02 04:00:00"),
     ): (
         "IN",
@@ -781,7 +781,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "minute", "__col__", "2023-06-02 04:55:00"),
     ): (
         "IN",
@@ -791,7 +791,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATETRUNC", 2, "second", "__col__", "2023-06-02 04:55:31"),
     ): (
         "IN",
@@ -800,7 +800,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATEADD", 3, 1, "years", "__col__", "2020-11-11 18:00:52"),
     ): (
         "IN",
@@ -809,7 +809,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATEADD", 3, 2, "quarters", "__col__", "2020-05-11 18:00:52"),
     ): (
         "IN",
@@ -818,7 +818,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATEADD", 3, -5, "months", "__col__", "2019-06-11 18:00:52"),
     ): (
         "IN",
@@ -827,7 +827,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATEADD", 3, 10, "days", "__col__", "2019-11-21 18:00:52"),
     ): (
         "IN",
@@ -836,7 +836,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATEADD", 3, 1000, "hours", "__col__", "2019-12-23 10:00:52"),
     ): (
         "IN",
@@ -845,7 +845,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         ("EQUAL", 2, "DATEADD", 3, 10000, "minutes", "__col__", "2019-11-18 16:40:52"),
     ): (
         "IN",
@@ -854,7 +854,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         (
             "EQUAL",
             2,
@@ -872,7 +872,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.CRBNK.TRANSACTIONS.t_ts",
+        "srv/CRBNK/TRANSACTIONS/t_ts",
         (
             "EQUAL",
             2,
@@ -895,11 +895,11 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "2019-11-11 15:44:22",
         ],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("CONTAINS", 2, "__col__", "a")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("CONTAINS", 2, "__col__", "a")): (
         "NOT_IN",
         ["BOB", "EMILY", "HENRY", "LUKE", "PETER", "QUEENIE", "ROBERT"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("CONTAINS", 2, "__col__", "e")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("CONTAINS", 2, "__col__", "e")): (
         "NOT_IN",
         [
             "BOB",
@@ -913,7 +913,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "THOMAS",
         ],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("CONTAINS", 2, "__col__", "i")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("CONTAINS", 2, "__col__", "i")): (
         "IN",
         [
             "ALICE",
@@ -927,51 +927,51 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "SOPHIA",
         ],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("CONTAINS", 2, "__col__", "o")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("CONTAINS", 2, "__col__", "o")): (
         "IN",
         ["BOB", "CAROL", "NICHOLAS", "OLIVIA", "ROBERT", "SOPHIA", "THOMAS"],
     ),
-    ("srv.CRBNK.CUSTOMERS.c_fname", ("CONTAINS", 2, "__col__", "u")): (
+    ("srv/CRBNK/CUSTOMERS/c_fname", ("CONTAINS", 2, "__col__", "u")): (
         "IN",
         ["LUKE", "QUEENIE"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("AND", 2, "CONTAINS", 2, "__col__", "a", "CONTAINS", 2, "__col__", "e"),
     ): (
         "IN",
         ["ALICE", "GRACE", "ISABEL", "JAMES", "KAREN"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("AND", 2, "CONTAINS", 2, "__col__", "e", "CONTAINS", 2, "__col__", "i"),
     ): (
         "IN",
         ["ALICE", "EMILY", "ISABEL", "QUEENIE"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("AND", 2, "CONTAINS", 2, "__col__", "i", "CONTAINS", 2, "__col__", "o"),
     ): (
         "IN",
         ["NICHOLAS", "OLIVIA", "SOPHIA"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("AND", 2, "CONTAINS", 2, "__col__", "o", "CONTAINS", 2, "__col__", "u"),
     ): (
         "IN",
         [],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         ("AND", 2, "CONTAINS", 2, "__col__", "u", "CONTAINS", 2, "__col__", "a"),
     ): (
         "IN",
         [],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         (
             "AND",
             3,
@@ -993,7 +993,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ["ALICE", "ISABEL"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         (
             "AND",
             3,
@@ -1015,7 +1015,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         [],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         (
             "NOT",
             1,
@@ -1035,7 +1035,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ["NICHOLAS", "OLIVIA", "SOPHIA"],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         (
             "AND",
             2,
@@ -1061,7 +1061,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         [],
     ),
     (
-        "srv.CRBNK.CUSTOMERS.c_fname",
+        "srv/CRBNK/CUSTOMERS/c_fname",
         (
             "NOT",
             1,

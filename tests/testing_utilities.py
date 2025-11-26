@@ -1509,8 +1509,8 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
 
     ```
     INFO     pydough.mask_server.mask_server:mask_server.py:149 Batch request to Mask Server (2 items):
-    INFO     pydough.mask_server.mask_server:mask_server.py:151 (1) CRBNK.CUSTOMERS.c_lname: ['EQUAL', 2, '__col__', 'lee']
-    INFO     pydough.mask_server.mask_server:mask_server.py:151 (2) CRBNK.CUSTOMERS.c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (1) CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']
+    INFO     pydough.mask_server.mask_server:mask_server.py:151 (2) CRBNK/CUSTOMERS/c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]
     ```
 
     A log message string with those lines would return the following list of
@@ -1519,8 +1519,8 @@ def extract_batch_requests_from_logs(log_str: str) -> list[set[str]]:
     ```
     [
         {
-            "CRBNK.CUSTOMERS.c_lname: ['EQUAL', 2, '__col__', 'lee']",
-            "CRBNK.CUSTOMERS.c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]",
+            "CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']",
+            "CRBNK/CUSTOMERS/c_birthday: ['EQUAL', 2, 'YEAR', 1, '__col__', 1980]",
         }
     ]
     ```

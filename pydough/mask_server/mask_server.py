@@ -14,6 +14,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
+import sqlglot.expressions as exp
+from sqlglot import parse_one
+
 from pydough.logger import get_logger
 from pydough.mask_server.server_connection import (
     RequestMethod,
@@ -64,6 +67,42 @@ class MaskServerInput:
     """
     The linear serialization of the predicate expression.
     """
+
+    def fully_qualified_name(self) -> str:
+        """
+        Returns the fully qualified name of the column in the format
+        'table_path/column_name', with `/` as the separator used to modify the
+        `table_path` appropriately.
+        """
+        table_path_chunks: list[str] = []
+        parsed: exp.Expression = parse_one(self.table_path, dialect="mysql")
+        self.dump_identifier_chunks(parsed, table_path_chunks)
+        return f"{'/'.join(table_path_chunks)}/{self.column_name}"
+
+    def dump_identifier_chunks(
+        self,
+        expression: exp.Expression,
+        chunks: list[str],
+    ) -> None:
+        """
+        Recursively dumps the identifier chunks from the parsed SQL expression.
+
+        Args:
+            `expression`: The parsed SQL expression.
+            `chunks`: The list to append the identifier chunks to.
+        """
+        match expression:
+            case exp.Identifier():
+                chunks.append(expression.sql())
+            case exp.Literal() if expression.is_string:
+                chunks.append(expression.sql())
+            case exp.Column() | exp.Dot():
+                for part in expression.parts:
+                    self.dump_identifier_chunks(part, chunks)
+            case _:
+                raise ValueError(
+                    f"Unexpected expression type in table path parse tree: {expression.__class__.__name__}"
+                )
 
 
 @dataclass
@@ -160,7 +199,7 @@ class MaskServerInfo:
             pyd_logger.info(f"Batch request to Mask Server ({len(batch)} items):")
         for idx, item in enumerate(batch):
             pyd_logger.info(
-                f"({idx + 1}) {item.table_path}.{item.column_name}: {item.expression}"
+                f"({idx + 1}) {item.fully_qualified_name}: {item.expression}"
             )
 
         assert batch != [], "Batch cannot be empty."
@@ -227,7 +266,7 @@ class MaskServerInfo:
             evaluate_request: dict = {
                 "column_ref": {
                     "kind": "fqn",
-                    "value": f"{self.server_address}.{item.table_path}.{item.column_name}",
+                    "value": f"{self.server_address}/{item.fully_qualified_name}",
                 },
                 "predicate": item.expression,
                 "output_mode": "cell_encrypted",
