@@ -5,6 +5,8 @@ Logic used to transpose filters lower into relational trees.
 __all__ = ["push_filters"]
 
 
+import itertools
+
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
 from pydough.relational import (
@@ -226,7 +228,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         def find(expr: RelationalExpression) -> RelationalExpression:
             # Finds the root representative of the equality set containing
             # `expr`, applying path compression along the way.
-            parent = equality_sets[expr]
+            parent = equality_sets.get(expr, expr)
             if parent != expr:
                 parent = find(parent)
                 equality_sets[expr] = parent
@@ -239,10 +241,32 @@ class FilterPushdownShuttle(RelationalShuttle):
             if root1 != root2:
                 equality_sets[root1] = root2
 
-        # The equality sets are built by uniting all of the lhs and rhs keys
-        # that are equated in the join condition.
-        for lhs_key, rhs_key in zip(lhs_keys, rhs_keys):
-            union(lhs_key, rhs_key)
+        # The equality sets are built by uniting all of the equality operations
+        # in the join condition.
+        for expr in get_conjunctions(join.condition):
+            if isinstance(expr, CallExpression) and expr.op == pydop.EQU:
+                union(expr.inputs[0], expr.inputs[1])
+
+        rev_equality_sets: dict[RelationalExpression, set[RelationalExpression]] = {}
+        for key, value in equality_sets.items():
+            rev_equality_sets.setdefault(value, set()).add(key)
+
+        finder: ColumnReferenceFinder = ColumnReferenceFinder()
+        for eq_set in rev_equality_sets.values():
+            if len(eq_set) > 1:
+                for a, b in itertools.combinations(eq_set, 2):
+                    finder.reset()
+                    new_cond: RelationalExpression = CallExpression(
+                        pydop.EQU,
+                        BooleanType(),
+                        [a, b],
+                    )
+                    new_cond.accept(finder)
+                    col_refs: set[ColumnReference] = finder.get_column_references()
+                    if {c.input_name for c in col_refs} == {
+                        join.default_input_aliases[input_idx]
+                    }:
+                        inferred_filters.add(new_cond)
 
         # Iterate through all the keys from the specified input side. If any
         # are in the same equality set as one another, add such a condition.
@@ -253,7 +277,7 @@ class FilterPushdownShuttle(RelationalShuttle):
         for i in range(len(keys)):
             for j in range(i + 1, len(keys)):
                 if keys[i] != keys[j] and find(keys[i]) == find(keys[j]):
-                    new_cond: RelationalExpression = CallExpression(
+                    new_cond = CallExpression(
                         pydop.EQU,
                         BooleanType(),
                         [add_input_name(keys[i], None), add_input_name(keys[j], None)],
