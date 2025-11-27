@@ -10,6 +10,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 from pydough.types.string_type import StringType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -694,3 +695,144 @@ class MySQLTransformBindings(BaseTransformBindings):
                 expression=sqlglot_expressions.Identifier(this="utf8mb4_bin"),
             )
         return arg
+
+    def convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range into a SQLGlot expression.
+        SQL equivalent:
+        WITH table_name(column_name) AS (
+            VALUES (
+                (0),
+                (1),
+                (2) ...
+            )
+        ) SELECT column_name FROM table_name;
+        -----------------------------
+        WITH simple_range(value) AS (
+            VALUES ROW(0), ROW(1), ROW(2)
+        )
+        SELECT value
+        FROM simple_range;
+        -----------------------------
+        WITH simple_range(value) AS (VALUES ROW(0), ROW(1), ROW(2)) SELECT value FROM simple_range;
+        -----------------------------
+        SELECT t.value FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9)) AS t(value);
+        ------------------------------
+        WITH simple_range(value) AS (TABLE (VALUES ROW(0), ROW(1), ROW(2), ROW(3), ROW(4), ROW(5), ROW(6), ROW(7), ROW(8), ROW(9))) SELECT value FROM simple_range;
+        -----------------------------
+        WITH simple_range AS (SELECT * FROM (VALUES ROW(0), ROW(8), ROW(9)) AS t(value)) SELECT value FROM simple_range;
+        WITH simple_range AS (SELECT * FROM (VALUES ROW(0), ROW(8), ROW(9)) AS simple_range(value)) SELECT value FROM simple_range
+
+
+        Args:
+            `collection`: The user-generated range to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+
+        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.column_name, quoted=False
+        )
+
+        sqlglot_expressions.Identifier(this=collection.name, quoted=False)
+
+        empty_range = (
+            (collection.step > 0 and collection.start >= collection.end)
+            or (collection.step < 0 and collection.start <= collection.end)
+            or (collection.step == 0)
+        )
+
+        if empty_range:
+            return sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Null(),
+                            to=sqlglot_expressions.DataType.build("INT"),
+                        ),
+                        alias=column_name,
+                    )
+                ]
+            ).where(sqlglot_expressions.Boolean(this=False))
+
+        rows: list[SQLGlotExpression] = []
+        current = collection.start
+
+        if collection.step > 0:
+
+            def condition(x):
+                return x < collection.end
+        else:
+
+            def condition(x):
+                return x > collection.end
+
+        while condition(current):
+            rows.append(
+                sqlglot_expressions.Anonymous(
+                    this="ROW",
+                    expressions=[sqlglot_expressions.Literal.number(current)],
+                )
+            )
+            current += collection.step
+
+        # VALUES (...) , (...) ...
+        values_expr: SQLGlotExpression = sqlglot_expressions.Values(
+            expressions=rows,
+            # alias=sqlglot_expressions.TableAlias(
+            #     this=sqlglot_expressions.Identifier(this="table0", quoted=False),
+            #     columns=[sqlglot_expressions.Identifier(this="column0", quoted=False)]
+            # )
+        )
+
+        with_select: SQLGlotExpression = sqlglot_expressions.Select(
+            expressions=[sqlglot_expressions.Star()]
+        ).from_(values_expr)
+
+        result: SQLGlotExpression = (
+            sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Column(
+                        this=sqlglot_expressions.Identifier(
+                            this=collection.column_name, quoted=False
+                        )
+                    )
+                ],
+                # from_=sqlglot_expressions.Table(this=table_name),
+                # with_=sqlglot_expressions.With(
+                #     expressions=[cte_expr]
+                # )
+            )
+            .from_(
+                sqlglot_expressions.Table(
+                    this=sqlglot_expressions.Identifier(
+                        this=collection.name, quoted=False
+                    )
+                )
+            )
+            .with_(
+                alias=sqlglot_expressions.TableAlias(
+                    this=sqlglot_expressions.Identifier(
+                        this=collection.name, quoted=False
+                    ),
+                    columns=[
+                        sqlglot_expressions.Identifier(
+                            this=collection.column_name, quoted=False
+                        )
+                    ],
+                ),
+                as_=with_select,
+            )
+        )
+        # breakpoint()
+        print()
+        print("------------ result: ---------------------- \n", result)
+        print(
+            "------------ result mysql: ---------------------- \n",
+            result.sql(dialect="mysql"),
+        )
+        print()
+        return result

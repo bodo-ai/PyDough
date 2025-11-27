@@ -2185,27 +2185,19 @@ class BaseTransformBindings:
         """
         Converts a user-generated range into a SQLGlot expression.
         SQL equivalent:
-        WITH RECURSIVE
-            user_range (column_name) AS (
-                SELECT start
-                UNION ALL
-                SELECT column_name + step
-                FROM user_range
-                WHERE CASE WHEN step > 0 THEN column_name + step <= stop ELSE column_name + step >= stop END
+        WITH table_name(column_name) AS (
+            VALUES (
+                (0),
+                (1),
+                (2) ...
             )
-        SELECT
-            column_name
-        FROM
-            user_range;
+        ) SELECT column_name FROM table_name;
 
         Args:
             `collection`: The user-generated range to convert.
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
-        start: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.start)
-        end: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.end)
-        step: SQLGlotExpression = sqlglot_expressions.Literal.number(collection.step)
 
         column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
             this=collection.column_name, quoted=False
@@ -2215,63 +2207,69 @@ class BaseTransformBindings:
             this=collection.name, quoted=False
         )
 
-        range_case: SQLGlotExpression = sqlglot_expressions.Case(
-            ifs=[
-                sqlglot_expressions.If(
-                    this=sqlglot_expressions.GT(
-                        this=step,
-                        expression=sqlglot_expressions.Literal.number(0),
-                    ),
-                    true=sqlglot_expressions.LTE(
-                        this=sqlglot_expressions.Add(
-                            this=sqlglot_expressions.Column(this=column_name),
-                            expression=step,
+        empty_range = (
+            (collection.step > 0 and collection.start >= collection.end)
+            or (collection.step < 0 and collection.start <= collection.end)
+            or (collection.step == 0)
+        )
+
+        if empty_range:
+            return sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Null(),
+                            to=sqlglot_expressions.DataType.build("INT"),
                         ),
-                        expression=end,
-                    ),
-                )
-            ],
-            default=sqlglot_expressions.GTE(
-                this=sqlglot_expressions.Add(
-                    this=sqlglot_expressions.Column(this=column_name), expression=step
-                ),
-                expression=end,
-            ),
-        )
+                        alias=column_name,
+                    )
+                ]
+            ).where(sqlglot_expressions.Boolean(this=False))
 
-        union_expression: SQLGlotExpression = sqlglot_expressions.Select(
+        rows: list[SQLGlotExpression] = []
+        current = collection.start
+
+        if collection.step > 0:
+
+            def condition(x):
+                return x < collection.end
+        else:
+
+            def condition(x):
+                return x > collection.end
+
+        while condition(current):
+            rows.append(
+                sqlglot_expressions.Tuple(
+                    expressions=[sqlglot_expressions.Literal.number(current)]
+                )
+            )
+            current += collection.step
+
+        # VALUES (...) , (...) ...
+        values_expr: SQLGlotExpression = sqlglot_expressions.Values(expressions=rows)
+
+        select_cte: SQLGlotExpression = sqlglot_expressions.Select(
             expressions=[
-                sqlglot_expressions.Add(
-                    this=sqlglot_expressions.Column(this=column_name), expression=step
+                sqlglot_expressions.Alias(
+                    this=sqlglot_expressions.Column(this="column1"),
+                    alias=column_name,
                 )
-            ],
-            from_=sqlglot_expressions.From(
-                this=sqlglot_expressions.Table(this=table_name)
-            ),
-            where=sqlglot_expressions.Where(this=range_case),
-        )
+            ]
+        ).from_(values_expr)
 
-        cte_union: SQLGlotExpression = sqlglot_expressions.Union(
-            this=sqlglot_expressions.Select(expressions=[start]),
-            distinct=False,
-            expression=union_expression,
+        result = (
+            sqlglot_expressions.Select(
+                expressions=[sqlglot_expressions.Column(this=column_name)]
+            )
+            .from_(sqlglot_expressions.Table(this=table_name))
+            .with_(
+                alias=sqlglot_expressions.TableAlias(
+                    this=table_name,
+                    columns=[column_name],
+                ),
+                as_=select_cte,
+            )
         )
-
-        cte_expression: SQLGlotExpression = sqlglot_expressions.CTE(
-            this=cte_union,
-            alias=sqlglot_expressions.TableAlias(
-                this=table_name, columns=[column_name]
-            ),
-        )
-
-        result: SQLGlotExpression = sqlglot_expressions.Select(
-            expressions=[sqlglot_expressions.Column(this=column_name)],
-            from_=sqlglot_expressions.From(
-                this=sqlglot_expressions.Table(this=table_name)
-            ),
-            with_=sqlglot_expressions.With(
-                expressions=[cte_expression], recursive=True
-            ),
-        )
-
+        # breakpoint()
         return result

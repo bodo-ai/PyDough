@@ -1,0 +1,36 @@
+WITH _q_0 AS (
+  SELECT
+    10 AS `10`
+  UNION ALL
+  SELECT
+    9 AS `9`
+  UNION ALL
+  SELECT
+    8 AS `8`
+  UNION ALL
+  SELECT
+    7 AS `7`
+  UNION ALL
+  SELECT
+    6 AS `6`
+  UNION ALL
+  SELECT
+    5 AS `5`
+  UNION ALL
+  SELECT
+    4 AS `4`
+  UNION ALL
+  SELECT
+    3 AS `3`
+  UNION ALL
+  SELECT
+    2 AS `2`
+  UNION ALL
+  SELECT
+    1 AS `1`
+)
+SELECT
+  `10` AS N
+FROM _q_0
+ORDER BY
+  1
