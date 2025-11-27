@@ -724,8 +724,9 @@ class MySQLTransformBindings(BaseTransformBindings):
         WITH simple_range(value) AS (TABLE (VALUES ROW(0), ROW(1), ROW(2), ROW(3), ROW(4), ROW(5), ROW(6), ROW(7), ROW(8), ROW(9))) SELECT value FROM simple_range;
         -----------------------------
         WITH simple_range AS (SELECT * FROM (VALUES ROW(0), ROW(8), ROW(9)) AS t(value)) SELECT value FROM simple_range;
-        WITH simple_range AS (SELECT * FROM (VALUES ROW(0), ROW(8), ROW(9)) AS simple_range(value)) SELECT value FROM simple_range
+        WITH simple_range AS (SELECT * FROM (VALUES ROW(0), ROW(8), ROW(9)) AS simple_range(value)) SELECT value FROM simple_range;
 
+        SELECT value FROM (VALUES ROW(0), ROW(1), ROW(2), ROW(3), ROW(4), ROW(5), ROW(6), ROW(7), ROW(8), ROW(9)) AS _q_0(value);
 
         Args:
             `collection`: The user-generated range to convert.
@@ -737,7 +738,9 @@ class MySQLTransformBindings(BaseTransformBindings):
             this=collection.column_name, quoted=False
         )
 
-        sqlglot_expressions.Identifier(this=collection.name, quoted=False)
+        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.name, quoted=False
+        )
 
         empty_range = (
             (collection.step > 0 and collection.start >= collection.end)
@@ -772,6 +775,12 @@ class MySQLTransformBindings(BaseTransformBindings):
 
         while condition(current):
             rows.append(
+                # sqlglot_expressions.Tuple(
+                #     expressions=[sqlglot_expressions.Anonymous(
+                #         this="ROW",
+                #         expressions=[sqlglot_expressions.Literal.number(current)],
+                #     )]
+                # )
                 sqlglot_expressions.Anonymous(
                     this="ROW",
                     expressions=[sqlglot_expressions.Literal.number(current)],
@@ -780,59 +789,25 @@ class MySQLTransformBindings(BaseTransformBindings):
             current += collection.step
 
         # VALUES (...) , (...) ...
-        values_expr: SQLGlotExpression = sqlglot_expressions.Values(
-            expressions=rows,
-            # alias=sqlglot_expressions.TableAlias(
-            #     this=sqlglot_expressions.Identifier(this="table0", quoted=False),
-            #     columns=[sqlglot_expressions.Identifier(this="column0", quoted=False)]
-            # )
+        values_expr: SQLGlotExpression = sqlglot_expressions.Subquery(
+            this=sqlglot_expressions.Values(expressions=rows),
+            alias=sqlglot_expressions.TableAlias(
+                this=table_name, columns=[column_name]
+            ),
         )
 
-        with_select: SQLGlotExpression = sqlglot_expressions.Select(
-            expressions=[sqlglot_expressions.Star()]
+        result = sqlglot_expressions.Select(
+            expressions=[sqlglot_expressions.Column(this=column_name)],
         ).from_(values_expr)
 
-        result: SQLGlotExpression = (
-            sqlglot_expressions.Select(
-                expressions=[
-                    sqlglot_expressions.Column(
-                        this=sqlglot_expressions.Identifier(
-                            this=collection.column_name, quoted=False
-                        )
-                    )
-                ],
-                # from_=sqlglot_expressions.Table(this=table_name),
-                # with_=sqlglot_expressions.With(
-                #     expressions=[cte_expr]
-                # )
-            )
-            .from_(
-                sqlglot_expressions.Table(
-                    this=sqlglot_expressions.Identifier(
-                        this=collection.name, quoted=False
-                    )
-                )
-            )
-            .with_(
-                alias=sqlglot_expressions.TableAlias(
-                    this=sqlglot_expressions.Identifier(
-                        this=collection.name, quoted=False
-                    ),
-                    columns=[
-                        sqlglot_expressions.Identifier(
-                            this=collection.column_name, quoted=False
-                        )
-                    ],
-                ),
-                as_=with_select,
-            )
-        )
-        # breakpoint()
-        print()
-        print("------------ result: ---------------------- \n", result)
+        # FIX: Dont use union all for mysql
+        from sqlglot.dialects.mysql import MySQL
+
+        MySQL.Generator.VALUES_AS_TABLE = True
+
         print(
             "------------ result mysql: ---------------------- \n",
             result.sql(dialect="mysql"),
         )
-        print()
+        breakpoint()
         return result
