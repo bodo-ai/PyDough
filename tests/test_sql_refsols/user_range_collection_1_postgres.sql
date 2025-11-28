@@ -9,28 +9,8 @@ WITH _s1 AS (
     1
 )
 SELECT
-  column1 AS part_size,
+  sizes.part_size,
   COALESCE(_s1.n_rows, 0) AS n_parts
-FROM (VALUES
-  (1),
-  (6),
-  (11),
-  (16),
-  (21),
-  (26),
-  (31),
-  (36),
-  (41),
-  (46),
-  (51),
-  (56),
-  (61),
-  (66),
-  (71),
-  (76),
-  (81),
-  (86),
-  (91),
-  (96)) AS _q_0(_col_0)
+FROM GENERATE_SERIES(1, 99, 5) AS sizes(part_size)
 LEFT JOIN _s1 AS _s1
-  ON _s1.p_size = column1
+  ON _s1.p_size = sizes.part_size

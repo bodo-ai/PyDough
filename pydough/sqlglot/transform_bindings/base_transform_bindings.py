@@ -2212,9 +2212,10 @@ class BaseTransformBindings:
             or (collection.step < 0 and collection.start <= collection.end)
             or (collection.step == 0)
         )
+        result: SQLGlotExpression
 
         if empty_range:
-            return sqlglot_expressions.Select(
+            result = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Alias(
                         this=sqlglot_expressions.Cast(
@@ -2225,51 +2226,41 @@ class BaseTransformBindings:
                     )
                 ]
             ).where(sqlglot_expressions.Boolean(this=False))
-
-        rows: list[SQLGlotExpression] = []
-        current = collection.start
-
-        if collection.step > 0:
-
-            def condition(x):
-                return x < collection.end
         else:
+            rows: list[SQLGlotExpression] = []
 
-            def condition(x):
-                return x > collection.end
+            for i in range(collection.start, collection.end, collection.step):
+                rows.append(
+                    sqlglot_expressions.Tuple(
+                        expressions=[sqlglot_expressions.Literal.number(i)]
+                    )
+                )
 
-        while condition(current):
-            rows.append(
-                sqlglot_expressions.Tuple(
-                    expressions=[sqlglot_expressions.Literal.number(current)]
+            values_expr: SQLGlotExpression = sqlglot_expressions.Values(
+                expressions=rows
+            )
+
+            select_cte: SQLGlotExpression = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Column(this="column1"),
+                        alias=column_name,
+                    )
+                ]
+            ).from_(values_expr)
+
+            result = (
+                sqlglot_expressions.Select(
+                    expressions=[sqlglot_expressions.Column(this=column_name)]
+                )
+                .from_(sqlglot_expressions.Table(this=table_name))
+                .with_(
+                    alias=sqlglot_expressions.TableAlias(
+                        this=table_name,
+                        columns=[column_name],
+                    ),
+                    as_=select_cte,
                 )
             )
-            current += collection.step
 
-        # VALUES (...) , (...) ...
-        values_expr: SQLGlotExpression = sqlglot_expressions.Values(expressions=rows)
-
-        select_cte: SQLGlotExpression = sqlglot_expressions.Select(
-            expressions=[
-                sqlglot_expressions.Alias(
-                    this=sqlglot_expressions.Column(this="column1"),
-                    alias=column_name,
-                )
-            ]
-        ).from_(values_expr)
-
-        result = (
-            sqlglot_expressions.Select(
-                expressions=[sqlglot_expressions.Column(this=column_name)]
-            )
-            .from_(sqlglot_expressions.Table(this=table_name))
-            .with_(
-                alias=sqlglot_expressions.TableAlias(
-                    this=table_name,
-                    columns=[column_name],
-                ),
-                as_=select_cte,
-            )
-        )
-        # breakpoint()
         return result

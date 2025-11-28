@@ -213,11 +213,10 @@ def qualify_tables(
                     # Example: keywords."CAST" should become keywords."CAST" AS "CAST"
                     # Only do this if the source is not an Anonymous expression
                     # e.g. TABLE(GENERATOR(...)) is not a named table
-                    quoted = (
-                        source.this.quoted
-                        if not isinstance(source.this, exp.Anonymous)
-                        else quoted
-                    )
+                    if not isinstance(source.this, exp.Anonymous) and not isinstance(
+                        source.this, exp.ExplodingGenerateSeries
+                    ):
+                        quoted = source.this.quoted
 
                     # Mutates the source by attaching an alias to it
                     # PYDOUGH CHANGE: pass along quoting information

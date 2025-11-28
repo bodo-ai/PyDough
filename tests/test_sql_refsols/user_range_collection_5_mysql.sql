@@ -1,56 +1,36 @@
-WITH _q_0 AS (
+WITH _s2 AS (
   SELECT
-    1 AS `1`
-  UNION ALL
-  SELECT
-    6 AS `6`
-  UNION ALL
-  SELECT
-    11 AS `11`
-  UNION ALL
-  SELECT
-    16 AS `16`
-  UNION ALL
-  SELECT
-    21 AS `21`
-  UNION ALL
-  SELECT
-    26 AS `26`
-  UNION ALL
-  SELECT
-    31 AS `31`
-  UNION ALL
-  SELECT
-    36 AS `36`
-  UNION ALL
-  SELECT
-    41 AS `41`
-  UNION ALL
-  SELECT
-    46 AS `46`
-  UNION ALL
-  SELECT
-    51 AS `51`
-  UNION ALL
-  SELECT
-    56 AS `56`
+    sizes.part_size
+  FROM VALUES
+    (ROW(1)),
+    (ROW(6)),
+    (ROW(11)),
+    (ROW(16)),
+    (ROW(21)),
+    (ROW(26)),
+    (ROW(31)),
+    (ROW(36)),
+    (ROW(41)),
+    (ROW(46)),
+    (ROW(51)),
+    (ROW(56)) AS sizes(part_size)
 ), _s3 AS (
   SELECT
-    _q_1.`1` AS part_size,
+    _s0.part_size,
     COUNT(*) AS n_rows
-  FROM _q_0 AS _q_1
+  FROM _s2 AS _s0
   JOIN tpch.PART AS PART
     ON PART.p_name LIKE '%almond%'
     AND PART.p_size <= (
-      _q_1.`1` + 4
+      _s0.part_size + 4
     )
-    AND PART.p_size >= _q_1.`1`
+    AND PART.p_size >= _s0.part_size
   GROUP BY
     1
 )
 SELECT
-  _q_0.`1` AS part_size,
+  _s2.part_size,
   COALESCE(_s3.n_rows, 0) AS n_parts
-FROM _q_0 AS _q_0
+FROM _s2 AS _s2
 LEFT JOIN _s3 AS _s3
-  ON _q_0.`1` = _s3.part_size
+  ON _s2.part_size = _s3.part_size

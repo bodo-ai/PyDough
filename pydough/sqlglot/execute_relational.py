@@ -100,10 +100,10 @@ def apply_sqlglot_optimizer(
     # Convert the SQLGlot AST to a SQL string and back to an AST hoping that
     # SQLGlot will "clean" up the AST to make it more compatible with the
     # optimizer.
-    print("BEFORE PARSE: ", glot_expr.sql(dialect="mysql"))
+    # print("BEFORE PARSE: ", glot_expr.sql(dialect="mysql"))
     glot_expr = parse_one(glot_expr.sql(dialect), dialect=dialect)
-    print("AFTER PARSE: ", glot_expr.sql(dialect="mysql"))
-    breakpoint()
+    # print("AFTER PARSE: ", glot_expr.sql(dialect="mysql"))
+    # breakpoint()
     # Apply each rule explicitly with appropriate kwargs
 
     kwargs: dict[str, Any] = {
@@ -346,7 +346,11 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
             if len(alias) != 0:  # alias exists for the table
                 # Remove cases like `..FROM t1 as t1..` or `..FROM t1 as t2..`
                 # to get `..FROM t1..`.
-                table.args.pop("alias")
+                # breakpoint()
+                if not isinstance(
+                    table.this, sqlglot_expressions.ExplodingGenerateSeries
+                ):
+                    table.args.pop("alias")
 
                 # "Scope" represents the current context of a Select statement.
                 # For example, if we have a SELECT statement with a FROM clause

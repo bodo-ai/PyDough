@@ -2,23 +2,13 @@ WITH _t AS (
   SELECT
     part.p_name,
     part.p_retailprice,
-    column1 AS part_size,
-    ROW_NUMBER() OVER (PARTITION BY column1 ORDER BY part.p_retailprice) AS _w
-  FROM (VALUES
-    (1),
-    (2),
-    (3),
-    (4),
-    (5),
-    (6),
-    (7),
-    (8),
-    (9),
-    (10)) AS _q_0(_col_0)
+    sizes.part_size,
+    ROW_NUMBER() OVER (PARTITION BY sizes.part_size ORDER BY part.p_retailprice) AS _w
+  FROM GENERATE_SERIES(1, 10, 1) AS sizes(part_size)
   JOIN tpch.part AS part
-    ON column1 = part.p_size
-    AND part.p_container LIKE '%SM DRUM%'
+    ON part.p_container LIKE '%SM DRUM%'
     AND part.p_name LIKE '%azure%'
+    AND part.p_size = sizes.part_size
     AND part.p_type LIKE '%PLATED%'
 )
 SELECT

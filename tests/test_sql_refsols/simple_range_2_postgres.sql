@@ -1,15 +1,5 @@
 SELECT
-  column1 AS value
-FROM (VALUES
-  (0),
-  (1),
-  (2),
-  (3),
-  (4),
-  (5),
-  (6),
-  (7),
-  (8),
-  (9)) AS _q_0(_col_0)
+  value
+FROM GENERATE_SERIES(0, 9, 1) AS simple_range(value)
 ORDER BY
   1 DESC NULLS LAST

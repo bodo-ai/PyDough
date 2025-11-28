@@ -1,15 +1,5 @@
 SELECT
-  column1 AS N
-FROM (VALUES
-  (10),
-  (9),
-  (8),
-  (7),
-  (6),
-  (5),
-  (4),
-  (3),
-  (2),
-  (1)) AS _q_0(_col_0)
+  n AS N
+FROM GENERATE_SERIES(10, 1, -1) AS t2(n)
 ORDER BY
   1 NULLS FIRST

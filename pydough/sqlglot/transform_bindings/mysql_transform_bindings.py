@@ -809,5 +809,5 @@ class MySQLTransformBindings(BaseTransformBindings):
             "------------ result mysql: ---------------------- \n",
             result.sql(dialect="mysql"),
         )
-        breakpoint()
+        # breakpoint()
         return result

@@ -1,21 +1,10 @@
-WITH _q_0 AS (
-  SELECT
-    15 AS `15`
-  UNION ALL
-  SELECT
-    16 AS `16`
-  UNION ALL
-  SELECT
-    17 AS `17`
-  UNION ALL
-  SELECT
-    18 AS `18`
-  UNION ALL
-  SELECT
-    19 AS `19`
-)
 SELECT
-  `15` AS foo
-FROM _q_0
+  T1.foo
+FROM VALUES
+  (ROW(15)),
+  (ROW(16)),
+  (ROW(17)),
+  (ROW(18)),
+  (ROW(19)) AS T1(foo)
 ORDER BY
   1

@@ -13,21 +13,10 @@ WITH _s5 AS (
     1
 )
 SELECT
-  column1 AS year,
+  years.year,
   COALESCE(_s5.ndistinct_o_custkey, 0) AS n_orders
-FROM (VALUES
-  (1990),
-  (1991),
-  (1992),
-  (1993),
-  (1994),
-  (1995),
-  (1996),
-  (1997),
-  (1998),
-  (1999),
-  (2000)) AS _q_0(_col_0)
+FROM GENERATE_SERIES(1990, 2000, 1) AS years(year)
 LEFT JOIN _s5 AS _s5
-  ON _s5.year_o_orderdate = column1
+  ON _s5.year_o_orderdate = years.year
 ORDER BY
   1 NULLS FIRST
