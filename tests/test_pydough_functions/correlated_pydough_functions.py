@@ -209,7 +209,7 @@ def correl_13():
     supplier_info = suppliers.WHERE(nation_key <= 3).CALCULATE(
         avg_price=AVG(supply_records.part.retail_price)
     )
-    selected_suppliers = supplier_info.WHERE(COUNT(selected_supply_records) > 0)
+    selected_suppliers = supplier_info.WHERE(COUNT(selected_supply_records) != 0)
     return TPCH.CALCULATE(n=COUNT(selected_suppliers))
 
 
@@ -748,7 +748,7 @@ def correl_35():
             )
             .order.WHERE(YEAR(order_date) == 1998)
             .CALCULATE(original_priority=order_priority)
-            .WHERE(COUNT(alt_orders) > 0)
+            .WHERE(COUNT(alt_orders) != 0)
         )
     )
 
@@ -778,7 +778,7 @@ def correl_36():
             )
             .order.WHERE(YEAR(order_date) == 1998)
             .CALCULATE(original_priority=order_priority)
-            .WHERE(COUNT(alt_orders) > 0)
+            .WHERE(COUNT(alt_orders) != 0)
         )
     )
 

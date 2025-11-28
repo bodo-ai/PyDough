@@ -26,6 +26,7 @@ from sqlglot.optimizer.simplify import (
     extract_date,
     extract_type,
     flatten,
+    is_null,
     logger,
     propagate_constants,
     remove_complements,
@@ -124,6 +125,12 @@ def simplify(
         node = simplify_concat(node)
         node = simplify_conditionals(node)
 
+        # PyDough Change: new pre-order transformations
+        node = rewrite_case_to_nullif(node)
+        node = rewrite_coalesce_nullif(node)
+        node = rewrite_sum_nullif(node)
+        node = rewrite_coalesce_count(node)
+
         if constant_propagation:
             node = propagate_constants(node, root)
 
@@ -142,6 +149,9 @@ def simplify(
         node = simplify_datetrunc(node, dialect)
         node = sort_comparison(node)
         node = simplify_startswith(node)
+
+        # PyDough Change: new post-order transformations
+        node = rewrite_nullif_coalesce(node)
 
         if root:
             expression.replace(node)
@@ -225,3 +235,153 @@ def simplify_datetrunc(expression: exp.Expression, dialect: Dialect) -> exp.Expr
             )
 
     return expression
+
+
+def rewrite_case_to_nullif(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite expressions like `CASE WHEN x != y THEN x ELSE NULL END` to
+    `NULLIF(x, y)`
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Case):
+        return expr
+
+    if (
+        not (expr.args.get("this") is None and is_null(expr.args.get("default", None)))
+        and len(expr.args.get("ifs", [])) == 1
+    ):
+        return expr
+
+    if_expr = expr.args["ifs"][0]
+    condition = if_expr.args.get("this")
+    result = if_expr.args.get("true")
+
+    if not isinstance(condition, exp.NEQ):
+        return expr
+
+    lhs = condition.args.get("this")
+    rhs = condition.args.get("expression")
+
+    if lhs == result:
+        return exp.Nullif(this=lhs, expression=rhs, copy=False)
+
+    if rhs == result:
+        return exp.Nullif(this=rhs, expression=lhs, copy=False)
+
+    return expr
+
+
+def rewrite_coalesce_nullif(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite expressions like `COALESCE(NULLIF(x, y), z)` to
+    `CASE WHEN x = y THEN z ELSE x END`, or if `y` and `z` are the same then
+    just to `COALESCE(x, z)`.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Coalesce):
+        return expr
+
+    if len(expr.expressions) != 1 or expr.args.get("is_nvl"):
+        return expr
+
+    first = expr.this
+    second = expr.expressions[0]
+
+    if not isinstance(first, exp.Nullif):
+        return expr
+
+    lhs: exp.Expression = first.args.get("this")
+    rhs: exp.Expression = first.args.get("expression")
+
+    if rhs == second:
+        return exp.Coalesce(this=lhs, expressions=[second], copy=False)
+
+    return exp.Case(
+        whens=[
+            exp.When(
+                this=exp.EQ(this=lhs, expression=rhs, copy=False),
+                true=second,
+                copy=False,
+            )
+        ],
+        default=lhs,
+        copy=False,
+    )
+
+
+def rewrite_sum_nullif(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite `SUM(NULLIF(x, 0))` to `SUM(x)`.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Sum):
+        return expr
+
+    arg = expr.this
+    if not isinstance(arg, exp.Nullif):
+        return expr
+
+    lhs: exp.Expression = arg.args.get("this")
+    rhs: exp.Expression = arg.args.get("expression")
+
+    if isinstance(rhs, exp.Literal) and rhs.is_number and float(rhs.this) == 0:
+        return exp.Sum(this=lhs, copy=False)
+
+    return expr
+
+
+def rewrite_coalesce_count(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite `COALESCE(COUNT(x), 0)` to `COUNT(x)`, and does the same for
+    `COALESCE(COUNT_IF(x), 0)`.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Coalesce):
+        return expr
+
+    return expr.this if isinstance(expr.this, (exp.Count, exp.CountIf)) else expr
+
+
+def rewrite_nullif_coalesce(expr: exp.Expression) -> exp.Expression:
+    """
+    Rewrite `NULLIF(COALESCE(x, y), y)` to `NULLIF(x, y)`.
+
+    Args:
+        `expr`: The expression to rewrite.
+
+    Returns:
+        The rewritten expression.
+    """
+    if not isinstance(expr, exp.Nullif):
+        return expr
+
+    lhs: exp.Expression = expr.args.get("this")
+    rhs: exp.Expression = expr.args.get("expression")
+
+    if not isinstance(lhs, exp.Coalesce) or len(lhs.expressions) != 1:
+        return expr
+
+    if lhs.expressions[0] == rhs:
+        return exp.Nullif(this=lhs.args.get("this"), expression=rhs, copy=False)
+    else:
+        return expr

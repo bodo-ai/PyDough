@@ -1178,11 +1178,15 @@ class SimplificationShuttle(RelationalExpressionShuttle):
             case pydop.EQU | pydop.NEQ | pydop.GEQ | pydop.GRT | pydop.LET | pydop.LEQ:
                 match (expr.inputs[0], expr.op, expr.inputs[1]):
                     # x > y is True if x is positive and y is a literal that is
-                    # zero or negative. The same goes for x >= y.
-                    case (_, pydop.GRT, LiteralExpression()) | (
-                        _,
-                        pydop.GEQ,
-                        LiteralExpression(),
+                    # zero or negative. The same goes for x != y and x >= y.
+                    case (
+                        (_, pydop.GRT, LiteralExpression())
+                        | (_, pydop.NEQ, LiteralExpression())
+                        | (
+                            _,
+                            pydop.GEQ,
+                            LiteralExpression(),
+                        )
                     ) if (
                         isinstance(expr.inputs[1].value, (int, float, bool))
                         and expr.inputs[1].value <= 0
@@ -1199,6 +1203,19 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                     case (_, pydop.GEQ, LiteralExpression()) if (
                         isinstance(expr.inputs[1].value, (int, float, bool))
                         and expr.inputs[1].value <= 0
+                        and arg_predicates[0].not_null
+                        and arg_predicates[0].not_negative
+                    ):
+                        output_expr = LiteralExpression(True, expr.data_type)
+                        output_predicates |= PredicateSet(
+                            not_null=True, not_negative=True, positive=True
+                        )
+
+                    # x != y is True if x is non-negative and y is a literal
+                    # that is negative
+                    case (_, pydop.NEQ, LiteralExpression()) if (
+                        isinstance(expr.inputs[1].value, (int, float, bool))
+                        and expr.inputs[1].value < 0
                         and arg_predicates[0].not_null
                         and arg_predicates[0].not_negative
                     ):
@@ -1266,8 +1283,14 @@ class SimplificationShuttle(RelationalExpressionShuttle):
                         )
 
                     case _:
-                        # All other cases remain non-simplified.
-                        pass
+                        # Simplify comparing an expression to itself as
+                        # True/False. All other cases remain non-simplified.
+                        if expr.inputs[0] == expr.inputs[1]:
+                            is_eq: bool = expr.op in (pydop.EQU, pydop.LEQ, pydop.GEQ)
+                            output_expr = LiteralExpression(is_eq, expr.data_type)
+                            output_predicates |= PredicateSet(
+                                not_null=True, not_negative=True, positive=is_eq
+                            )
 
                 output_predicates.not_negative = True
 

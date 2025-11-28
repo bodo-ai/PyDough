@@ -7,7 +7,7 @@
         "name": "customers",
         "type": "simple table",
         "table path": "main.sbCustomer",
-        "unique properties": ["_id"],
+        "unique properties": ["_id", "name", "email", "address1"],
         "properties": [
           {
             "name": "_id",
@@ -620,7 +620,7 @@
         "name": "salespeople",
         "type": "simple table",
         "table path": "main.salespersons",
-        "unique properties": ["_id", "email"],
+        "unique properties": ["_id", "email", "phone", ["first_name", "last_name"]],
         "properties": [
           {
             "name": "_id",
@@ -698,7 +698,7 @@
         "name": "customers",
         "type": "simple table",
         "table path": "main.customers",
-        "unique properties": ["_id", "email"],
+        "unique properties": ["_id", "email", "phone", "address", ["first_name", "last_name"]],
         "properties": [
           {
             "name": "_id",
@@ -1013,7 +1013,7 @@
         "name": "inventory_snapshots",
         "type": "simple table",
         "table path": "main.inventory_snapshots",
-        "unique properties": ["_id"],
+        "unique properties": ["_id", ["car_id", "snapshot_date"]],
         "properties": [
           {
             "name": "_id",
@@ -1201,7 +1201,7 @@
         "name": "doctors",
         "type": "simple table",
         "table path": "main.doctors",
-        "unique properties": ["doc_id"],
+        "unique properties": ["doc_id", "first_name", "last_name", "board_certification_number"],
         "properties": [
           {
             "name": "doc_id",
@@ -1300,7 +1300,7 @@
         "name": "patients",
         "type": "simple table",
         "table path": "main.patients",
-        "unique properties": ["patient_id", "email", "phone"],
+        "unique properties": ["patient_id", "email", "phone", "first_name"],
         "properties": [
           {
             "name": "patient_id",
@@ -1374,7 +1374,7 @@
           {
             "name": "street_address",
             "type": "table column",
-            "column name": "addr_city",
+            "column name": "addr_street",
             "data type": "string",
             "description": "The street address of the patient's home, including street name and number",
             "sample values": ["987 Birch Dr", "753 Walnut Ave", "951 Spruce Blvd"],
@@ -1451,7 +1451,7 @@
         "name": "drugs",
         "type": "simple table",
         "table path": "main.drugs",
-        "unique properties": ["drug_id", "national_drug_code"],
+        "unique properties": ["drug_id", "national_drug_code", "drug_name"],
         "properties": [
           {
             "name": "drug_id",
@@ -1559,7 +1559,7 @@
         "name": "diagnoses",
         "type": "simple table",
         "table path": "main.diagnoses",
-        "unique properties": ["_id", "code", "name"],
+        "unique properties": ["_id", "code", "name", "description"],
         "properties": [
           {
             "name": "_id",
@@ -1702,7 +1702,7 @@
         "name": "outcomes",
         "type": "simple table",
         "table path": "main.outcomes",
-        "unique properties": ["outcome_id"],
+        "unique properties": ["outcome_id", ["treatment_id", "assessment_date"]],
         "properties": [
           {
             "name": "outcome_id",
@@ -1953,7 +1953,7 @@
         "name": "adverse_events",
         "type": "simple table",
         "table path": "main.adverse_events",
-        "unique properties": ["_id"],
+        "unique properties": ["_id", "treatment_id"],
         "properties": [
           {
             "name": "_id",
