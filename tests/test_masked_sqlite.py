@@ -713,6 +713,16 @@ from tests.testing_utilities import (
         ),
         pytest.param(
             PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS('SLICE', UPPER(first_name[:1])))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_59",
+            ),
+            id="cryptbank_filter_count_59",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "selected_transactions = transactions.WHERE((YEAR(time_stamp) == 2022) & (MONTH(time_stamp) == 6))\n"
                 "result = CRYPTBANK.CALCULATE(n=ROUND(AVG(selected_transactions.amount), 2))",
                 "CRYPTBANK",
@@ -1421,6 +1431,31 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [],
             id="cryptbank_filter_count_43",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS('SLICE', UPPER(first_name[:1])))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'QUOTE', 1, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'QUOTE', 1, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]"
+                },
+            ],
+            id="cryptbank_filter_count_59",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(ISIN(first_name, ['Datediff', 'YEAR', 'IN', 'NOT IN', 'NEQ', 'NOT_EQUAL', 'lower']))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['IN', 8, '__col__', 'QUOTE', 1, 'Datediff', 'QUOTE', 1, 'YEAR', 'IN', 'NOT IN', 'NEQ', 'QUOTE', 1, 'NOT_EQUAL', 'QUOTE', 1, 'lower']",
+                    "DRY_RUN",
+                },
+            ],
+            id="cryptbank_quote_list",
         ),
         pytest.param(
             "result = CRYPTBANK.CALCULATE("

@@ -101,7 +101,7 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         # First, send the dry response batch to the Mask Server to identify
         # which predicates can be re-written.
         dry_run_results: list[MaskServerOutput] = (
-            self.server_info.simplify_simple_expression_batch(batch, True, 1000)
+            self.server_info.simplify_simple_expression_batch(batch, True)
         )
 
         batch, ancillary_info = self.identify_predicates_to_send(
@@ -122,7 +122,7 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         # to None in the case of failure, or the rewritten expression in the
         # case of success.
         responses: list[MaskServerOutput] = (
-            self.server_info.simplify_simple_expression_batch(batch, False, 1000)
+            self.server_info.simplify_simple_expression_batch(batch, False)
         )
         assert len(responses) == len(ancillary_info)
         for (expr, input_expr), response in zip(ancillary_info, responses):
@@ -143,18 +143,42 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         list[MaskServerInput], list[tuple[RelationalExpression, RelationalExpression]]
     ]:
         """
-        TODO
+        Takes in the results of a dry run to the Mask Server, and identifies
+        which predicates should actually be sent to the server for processing in
+        order to minimize the total number of requests while still ensuring
+        that all necessary predicates are covered.
+
+        Args:
+            `dry_run_results`: The results from the dry run to the Mask Server.
+            `batch`: The original batch of Mask Server inputs sent in the dry
+            run.
+            `ancillary_info`: The original ancillary info sent in the dry run.
+            `heritage_tree`: A mapping of each expression to its set of parent
+            expressions in the relational tree. `None` is also included in the
+            set if the expression ever appears standalone without a parent.
+
+        Returns:
+            A tuple containing the new batch of Mask Server inputs to send, and
+            the new ancillary info corresponding to that batch.
         """
-        expressions = [expr for expr, _ in ancillary_info]
-        successes = [
+        # Extract the underlying expressions from the ancillary info, and
+        # identify  the indices of the expressions that were successful in the
+        # dry run by checking the response cases.
+        expressions: list[RelationalExpression] = [expr for expr, _ in ancillary_info]
+        successes: list[int] = [
             idx
             for idx, result in enumerate(dry_run_results)
             if result.response_case != MaskServerResponse.UNSUPPORTED
         ]
+
+        # Run the algorithm to identify the indices of which successful dry run
+        # responses from the list should be kept.
         keep_idxs: set[int] = choose_minimal_covering_set(
             expressions, successes, heritage_tree
         )
 
+        # Build the new batch and ancillary info lists by filtering to only
+        # those indices.
         new_batch: list[MaskServerInput] = [
             elem for idx, elem in enumerate(batch) if idx in keep_idxs
         ]
@@ -272,12 +296,12 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
         # - Otherwise, if doing IN -> `ABSENT(x) OR ISIN(x, ...)`.
         # - Otherwise, if doing NOT_IN -> `PRESENT(x) AND NOT(ISIN(x, ...))`.
         if contains_null and len(in_list) > 0:
-            null_op = (
+            null_op: pydop.PyDoughExpressionOperator = (
                 pydop.ABSENT
                 if response.response_case == MaskServerResponse.IN_ARRAY
                 else pydop.PRESENT
             )
-            bool_op = (
+            bool_op: pydop.PyDoughExpressionOperator = (
                 pydop.BOR
                 if response.response_case == MaskServerResponse.IN_ARRAY
                 else pydop.BAN

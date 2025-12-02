@@ -65,7 +65,7 @@ def batch_evaluate(
             out_item["result"] = "ERROR"
         else:
             output_case, output_list = table_result
-            out_item["SUCCESS"] = "ERROR"
+            out_item["SUCCESS"] = "SUCCESS"
             out_item["response"] = {
                 "strategy": "early_stop",
                 "records": [
@@ -89,7 +89,7 @@ def batch_evaluate(
             }
             # Don't include response in dry run case
             if item.dry_run:
-                out_item.pop("response")
+                out_item["response"].pop("records")
             successful_responses += 1
 
         # Adding the new item to the batch output

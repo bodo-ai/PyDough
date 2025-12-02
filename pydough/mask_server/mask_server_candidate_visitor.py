@@ -119,6 +119,23 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
     in PyDough becomes the `IN` operator in the mask server.
     """
 
+    SERVER_OPERATOR_NAMES: set[str] = {
+        *OPERATORS_TO_SERVER_NAMES.values(),
+        "NOT_ININ",
+        "SLICE",
+        "CONCAT",
+        "DATETIME",
+        "DATEDIFF",
+        "DATETRUNC",
+        "REGEXP",
+    }
+    """
+    The set of all operator names recognized by the Mask Server in its linear
+    serialization format, needed because when a string literal is used that
+    matches one of these reserved names, it must be wrapped in the QUOTE
+    function to avoid confusion.
+    """
+
     def __init__(self) -> None:
         self.candidate_pool: dict[
             RelationalExpression,
@@ -172,10 +189,21 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             RelationalExpression, set[RelationalExpression | None]
         ] = {}
         """
-        TODO
+        A mapping of each expression to its set of parent expressions in the
+        relational tree. `None` is also included in the set if the expression
+        ever appears standalone (i.e., as the root of a relational expression in
+        the tree). This is used later as a core part of the algorithm for
+        `choose_minimal_covering_set`. Each expression can map to multiple
+        parents since the same expression instance can appear in multiple places
+        within the relational tree.
         """
 
         self.ancestry_stack: list[RelationalExpression | None] = [None]
+        """
+        A stack used to keep track of the ancestry of the current expression
+        being visited. The top of the stack is always the parent of the current
+        expression. This is used to build the `heritage_tree` mapping.
+        """
 
     def reset(self):
         self.stack.clear()
@@ -581,7 +609,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             serialization of the DATETRUNC operation, or None if the DATETRUNC
             operation could not be converted.
         """
-        unit = DateTimeUnit.from_string(unit_str)
+        unit: DateTimeUnit | None = DateTimeUnit.from_string(unit_str)
         # Reject if the unit is not recognized, or is a WEEK (for now).
         if unit is None or unit == DateTimeUnit.WEEK:
             return None
@@ -609,7 +637,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             `amount`: The integer amount to add (can be negative).
             `unit_str`: The string representing the unit to add.
         """
-        unit = DateTimeUnit.from_string(unit_str)
+        unit: DateTimeUnit | None = DateTimeUnit.from_string(unit_str)
         if unit is None or unit == DateTimeUnit.WEEK:
             return None
         result: list[str | int | float | None | bool] = ["DATEADD", 3]
@@ -659,7 +687,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             or not isinstance(unit_expr[0], str)
         ):
             return None
-        unit = DateTimeUnit.from_string(unit_expr[0])
+        unit: DateTimeUnit | None = DateTimeUnit.from_string(unit_expr[0])
         if unit is None or unit == DateTimeUnit.WEEK:
             return None
         result.append(unit.value + "s")
@@ -693,6 +721,12 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             return ["NULL"]
         elif isinstance(literal.value, bool):
             return ["TRUE" if literal.value else "FALSE"]
+        elif (
+            isinstance(literal.value, str)
+            and literal.value.upper()
+            in MaskServerCandidateVisitor.SERVER_OPERATOR_NAMES
+        ):
+            return ["QUOTE", 1, literal.value]
         elif isinstance(literal.value, (int, float, str)):
             return [literal.value]
         elif isinstance(literal.value, datetime.datetime):

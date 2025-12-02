@@ -6,7 +6,7 @@ request column reference and predicate.
 LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
     # key: (column_reference, tuple(predicate))
     # value: (response_case, payload)
-    ("srv.db.tbl.col", ("EQUAL", 2, "__col__", 0)): (
+    ("srv/db/tbl/col", ("EQUAL", 2, "__col__", 0)): (
         "NOT_IN",
         [
             "value1",
@@ -15,7 +15,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv.db.orders.order_date",
+        "srv/db/tbl/order_date",
         ("BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"),
     ): (
         "IN",
@@ -27,28 +27,28 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
             "2025-01-05",
         ],
     ),
-    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", "LOWER", 1, "Smith")): (
+    ("srv/db/tbl/col", ("NOT_EQUAL", 2, "__col__", "LOWER", 1, "Smith")): (
         "NOT_IN",
         ["smith"],
     ),
     # booleans,
-    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", True)): (
+    ("srv/db/tbl/col", ("NOT_EQUAL", 2, "__col__", True)): (
         "IN",
         [False],
     ),
     # decimals (string format)
-    ("srv.db.tbl.col", ("LT", 2, "__col__", "123.654445")): (
+    ("srv/db/tbl/col", ("LT", 2, "__col__", "123.654445")): (
         "IN",
         ["123.121123", "123.654444", "123.654445"],
     ),
     # json embedded
-    ("srv.db.tbl.col", ("NOT_EQUAL", 2, "__col__", '("key": "value")')): (
+    ("srv/db/tbl/col", ("NOT_EQUAL", 2, "__col__", '("key": "value")')): (
         "NOT_IN",
         ['("key": "value")'],
     ),
     # NULLs and Money
     (
-        "srv.db.tbl.col",
+        "srv/db/tbl/col",
         ("AND", 2, "NOT_EQUAL", 2, "__col__", None, "GT", 2, "__col__", "$45.00"),
     ): (
         "NOT_IN",
@@ -56,7 +56,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
     ),
     # Result with Regex, Bytea, Backslash in really nested expression.
     (
-        "srv.db.tbl.col",
+        "srv/db/tbl/col",
         (
             "OR",
             2,
@@ -1080,4 +1080,8 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         "NOT_IN",
         ["ALICE", "EMILY", "ISABEL", "QUEENIE"],
     ),
+    (
+        "srv/CRBNK/CUSTOMERS/c_fname",
+        ("CONTAINS", 2, "QUOTE", 1, "SLICE", "UPPER", 1, "SLICE", 3, "__col__", 0, 1),
+    ): ("IN", ["CAROL", "EMILY", "ISABEL", "LUKE", "SOPHIA"]),
 }
