@@ -15,7 +15,7 @@ LOOKUP_TABLE: dict[tuple[str, tuple], tuple[str, list]] = {
         ],
     ),
     (
-        "srv/db/tbl/order_date",
+        "srv/db/orders/order_date",
         ("BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"),
     ): (
         "IN",

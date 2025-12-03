@@ -2,7 +2,9 @@
 Unit tests for the PyDough mask server module.
 """
 
+import io
 import re
+from contextlib import redirect_stdout
 
 import pytest
 
@@ -32,12 +34,12 @@ from pydough.mask_server.mask_server import (
                     expression=["OR", 2, "__col__", 5],
                 ),
                 MaskServerInput(
-                    table_path="db.orders",
+                    table_path="db/orders",
                     column_name="order_date",
                     expression=["BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"],
                 ),
                 MaskServerInput(
-                    table_path="db.tbl",
+                    table_path="db/tbl",
                     column_name="col",
                     expression=["GT", 2, "__col__", 45.67],
                 ),
@@ -246,11 +248,13 @@ def test_mock_mask_server(
         base_url="http://localhost:8000", server_address="srv", token=token
     )
 
-    # Doing the request
-    response: list[MaskServerOutput] = mask_server.simplify_simple_expression_batch(
-        batch=batch,
-        dry_run=False,
-    )
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        # Doing the request
+        response: list[MaskServerOutput] = mask_server.simplify_simple_expression_batch(
+            batch=batch,
+            dry_run=False,
+        )
 
     assert response == answer, (
         f"Mismatch between the response {response!r} and the answer {answer!r}"
