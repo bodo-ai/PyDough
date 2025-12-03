@@ -203,7 +203,8 @@ class ValidSQLName(PyDoughPredicate):
             "sql_keyword": "must have a SQL name that is not a reserved word",
         }
 
-    def _split_identifier(self, name: str) -> list[str]:
+    @staticmethod
+    def _split_identifier(name: str) -> list[str]:
         """
         Split a potentially qualified SQL identifier into parts.
 
