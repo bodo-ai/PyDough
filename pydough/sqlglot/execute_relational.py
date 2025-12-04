@@ -15,7 +15,13 @@ from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
 from sqlglot.errors import SqlglotError
-from sqlglot.expressions import Alias, Column, Select, Table, With
+from sqlglot.expressions import (
+    Alias,
+    Column,
+    Select,
+    Table,
+    With,
+)
 from sqlglot.expressions import Collate as SQLGlotCollate
 from sqlglot.expressions import Expression as SQLGlotExpression
 from sqlglot.optimizer import find_all_in_scope
@@ -100,10 +106,8 @@ def apply_sqlglot_optimizer(
     # Convert the SQLGlot AST to a SQL string and back to an AST hoping that
     # SQLGlot will "clean" up the AST to make it more compatible with the
     # optimizer.
-    # print("BEFORE PARSE: ", glot_expr.sql(dialect="mysql"))
     glot_expr = parse_one(glot_expr.sql(dialect), dialect=dialect)
-    # print("AFTER PARSE: ", glot_expr.sql(dialect="mysql"))
-    # breakpoint()
+
     # Apply each rule explicitly with appropriate kwargs
 
     kwargs: dict[str, Any] = {
@@ -177,6 +181,9 @@ def apply_sqlglot_optimizer(
 
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
+
+    # Transforme the values expression
+    remove_tuple_row_values(glot_expr)
 
     return glot_expr
 
@@ -391,6 +398,37 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
             for item in arg:
                 if isinstance(item, SQLGlotExpression):
                     remove_table_aliases_conditional(item)
+
+
+def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
+    """
+    Visits the AST and removes the tuple if there is only one item and it is
+    a ROW. This remove the unneccesary tuple wrapper for each row.
+
+    Args:
+        expr: The SQLGlot expression to visit.
+
+    Returns:
+        None (The AST is modified in place.)
+    """
+    if isinstance(expr, sqlglot_expressions.Tuple) and len(expr.expressions) == 1:
+        # Tuple with just one expression
+        inner: SQLGlotExpression = expr.expressions[0]
+
+        # If this inner expression is an Anonymous ROW, replace the tuple with
+        # the ROW unwrapping it from the tuple.
+        # (ROW(...)) -> ROW(...)
+        if isinstance(inner, sqlglot_expressions.Anonymous) and inner.this == "ROW":
+            expr.replace(inner)
+
+    # Recursively visit the AST.
+    for arg in expr.args.values():
+        if isinstance(arg, SQLGlotExpression):
+            remove_tuple_row_values(arg)
+        if isinstance(arg, list):
+            for item in arg:
+                if isinstance(item, SQLGlotExpression):
+                    remove_tuple_row_values(item)
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:

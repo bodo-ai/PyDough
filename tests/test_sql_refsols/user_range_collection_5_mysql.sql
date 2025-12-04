@@ -1,19 +1,19 @@
 WITH _s2 AS (
   SELECT
     sizes.part_size
-  FROM VALUES
-    (ROW(1)),
-    (ROW(6)),
-    (ROW(11)),
-    (ROW(16)),
-    (ROW(21)),
-    (ROW(26)),
-    (ROW(31)),
-    (ROW(36)),
-    (ROW(41)),
-    (ROW(46)),
-    (ROW(51)),
-    (ROW(56)) AS sizes(part_size)
+  FROM (VALUES
+    ROW(1),
+    ROW(6),
+    ROW(11),
+    ROW(16),
+    ROW(21),
+    ROW(26),
+    ROW(31),
+    ROW(36),
+    ROW(41),
+    ROW(46),
+    ROW(51),
+    ROW(56)) AS sizes(part_size)
 ), _s3 AS (
   SELECT
     _s0.part_size,

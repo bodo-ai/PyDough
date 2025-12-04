@@ -703,30 +703,12 @@ class MySQLTransformBindings(BaseTransformBindings):
         """
         Converts a user-generated range into a SQLGlot expression.
         SQL equivalent:
-        WITH table_name(column_name) AS (
-            VALUES (
-                (0),
-                (1),
-                (2) ...
-            )
-        ) SELECT column_name FROM table_name;
-        -----------------------------
-        WITH simple_range(value) AS (
-            VALUES ROW(0), ROW(1), ROW(2)
-        )
         SELECT value
-        FROM simple_range;
-        -----------------------------
-        WITH simple_range(value) AS (VALUES ROW(0), ROW(1), ROW(2)) SELECT value FROM simple_range;
-        -----------------------------
-        SELECT t.value FROM (VALUES (0), (1), (2), (3), (4), (5), (6), (7), (8), (9)) AS t(value);
-        ------------------------------
-        WITH simple_range(value) AS (TABLE (VALUES ROW(0), ROW(1), ROW(2), ROW(3), ROW(4), ROW(5), ROW(6), ROW(7), ROW(8), ROW(9))) SELECT value FROM simple_range;
-        -----------------------------
-        WITH simple_range AS (SELECT * FROM (VALUES ROW(0), ROW(8), ROW(9)) AS t(value)) SELECT value FROM simple_range;
-        WITH simple_range AS (SELECT * FROM (VALUES ROW(0), ROW(8), ROW(9)) AS simple_range(value)) SELECT value FROM simple_range;
-
-        SELECT value FROM (VALUES ROW(0), ROW(1), ROW(2), ROW(3), ROW(4), ROW(5), ROW(6), ROW(7), ROW(8), ROW(9)) AS _q_0(value);
+        FROM (
+            VALUES
+                ROW(0),
+                ROW(1), ROW(9)
+        ) AS simple_range(value)
 
         Args:
             `collection`: The user-generated range to convert.
@@ -742,14 +724,18 @@ class MySQLTransformBindings(BaseTransformBindings):
             this=collection.name, quoted=False
         )
 
+        # Empty range if step == 0 or (step > 0 and start >= end) or
+        # (step < 0 and start <= end)
         empty_range = (
             (collection.step > 0 and collection.start >= collection.end)
             or (collection.step < 0 and collection.start <= collection.end)
             or (collection.step == 0)
         )
 
+        result: SQLGlotExpression
+
         if empty_range:
-            return sqlglot_expressions.Select(
+            result = sqlglot_expressions.Select(
                 expressions=[
                     sqlglot_expressions.Alias(
                         this=sqlglot_expressions.Cast(
@@ -760,54 +746,33 @@ class MySQLTransformBindings(BaseTransformBindings):
                     )
                 ]
             ).where(sqlglot_expressions.Boolean(this=False))
-
-        rows: list[SQLGlotExpression] = []
-        current = collection.start
-
-        if collection.step > 0:
-
-            def condition(x):
-                return x < collection.end
         else:
+            rows: list[SQLGlotExpression] = []
 
-            def condition(x):
-                return x > collection.end
-
-        while condition(current):
-            rows.append(
-                # sqlglot_expressions.Tuple(
-                #     expressions=[sqlglot_expressions.Anonymous(
-                #         this="ROW",
-                #         expressions=[sqlglot_expressions.Literal.number(current)],
-                #     )]
-                # )
-                sqlglot_expressions.Anonymous(
-                    this="ROW",
-                    expressions=[sqlglot_expressions.Literal.number(current)],
+            for i in range(collection.start, collection.end, collection.step):
+                rows.append(
+                    sqlglot_expressions.Anonymous(
+                        this="ROW",
+                        expressions=[sqlglot_expressions.Literal.number(i)],
+                    )
                 )
+
+            values_expr: SQLGlotExpression = sqlglot_expressions.Subquery(
+                this=sqlglot_expressions.Values(expressions=rows),
+                alias=sqlglot_expressions.TableAlias(
+                    this=table_name, columns=[column_name]
+                ),
             )
-            current += collection.step
 
-        # VALUES (...) , (...) ...
-        values_expr: SQLGlotExpression = sqlglot_expressions.Subquery(
-            this=sqlglot_expressions.Values(expressions=rows),
-            alias=sqlglot_expressions.TableAlias(
-                this=table_name, columns=[column_name]
-            ),
-        )
+            result = sqlglot_expressions.Select(
+                expressions=[sqlglot_expressions.Column(this=column_name)],
+            ).from_(values_expr)
 
-        result = sqlglot_expressions.Select(
-            expressions=[sqlglot_expressions.Column(this=column_name)],
-        ).from_(values_expr)
+            from sqlglot.dialects.mysql import MySQL
 
-        # FIX: Dont use union all for mysql
-        from sqlglot.dialects.mysql import MySQL
+            # Avoid the generation of UNION ALL for values
+            MySQL.Generator.VALUES_AS_TABLE = True
+            # Keep the parenthesis around the values
+            MySQL.Generator.WRAP_DERIVED_VALUES = True
 
-        MySQL.Generator.VALUES_AS_TABLE = True
-
-        print(
-            "------------ result mysql: ---------------------- \n",
-            result.sql(dialect="mysql"),
-        )
-        # breakpoint()
         return result
