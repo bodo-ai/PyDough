@@ -10,6 +10,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 import pydough.pydough_operators as pydop
 from pydough.types import PyDoughType
 from pydough.types.string_type import StringType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
@@ -694,3 +695,84 @@ class MySQLTransformBindings(BaseTransformBindings):
                 expression=sqlglot_expressions.Identifier(this="utf8mb4_bin"),
             )
         return arg
+
+    def convert_user_generated_range(
+        self,
+        collection: RangeGeneratedCollection,
+    ) -> SQLGlotExpression:
+        """
+        Converts a user-generated range into a SQLGlot expression.
+        SQL equivalent:
+        SELECT value
+        FROM (
+            VALUES
+                ROW(0),
+                ROW(1), ROW(9)
+        ) AS simple_range(value)
+
+        Args:
+            `collection`: The user-generated range to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
+
+        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.column_name, quoted=False
+        )
+
+        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.name, quoted=False
+        )
+
+        # Empty range if step == 0 or (step > 0 and start >= end) or
+        # (step < 0 and start <= end)
+        empty_range = (
+            (collection.step > 0 and collection.start >= collection.end)
+            or (collection.step < 0 and collection.start <= collection.end)
+            or (collection.step == 0)
+        )
+
+        result: SQLGlotExpression
+
+        if empty_range:
+            result = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Null(),
+                            to=sqlglot_expressions.DataType.build("INT"),
+                        ),
+                        alias=column_name,
+                    )
+                ]
+            ).where(sqlglot_expressions.Boolean(this=False))
+        else:
+            rows: list[SQLGlotExpression] = []
+
+            for i in range(collection.start, collection.end, collection.step):
+                rows.append(
+                    sqlglot_expressions.Anonymous(
+                        this="ROW",
+                        expressions=[sqlglot_expressions.Literal.number(i)],
+                    )
+                )
+
+            values_expr: SQLGlotExpression = sqlglot_expressions.Subquery(
+                this=sqlglot_expressions.Values(expressions=rows),
+                alias=sqlglot_expressions.TableAlias(
+                    this=table_name, columns=[column_name]
+                ),
+            )
+
+            result = sqlglot_expressions.Select(
+                expressions=[sqlglot_expressions.Column(this=column_name)],
+            ).from_(values_expr)
+
+            from sqlglot.dialects.mysql import MySQL
+
+            # Avoid the generation of UNION ALL for values
+            MySQL.Generator.VALUES_AS_TABLE = True
+            # Keep the parenthesis around the values
+            MySQL.Generator.WRAP_DERIVED_VALUES = True
+
+        return result

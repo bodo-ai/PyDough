@@ -2184,11 +2184,83 @@ class BaseTransformBindings:
     ) -> SQLGlotExpression:
         """
         Converts a user-generated range into a SQLGlot expression.
+        SQL equivalent:
+        WITH table_name(column_name) AS (
+            VALUES (
+                (0),
+                (1),
+                (2) ...
+            )
+        ) SELECT column_name FROM table_name;
+
         Args:
             `collection`: The user-generated range to convert.
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
-        raise NotImplementedError(
-            "range_collections are not supported for this dialect"
+
+        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.column_name, quoted=False
         )
+
+        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.name, quoted=False
+        )
+
+        empty_range = (
+            (collection.step > 0 and collection.start >= collection.end)
+            or (collection.step < 0 and collection.start <= collection.end)
+            or (collection.step == 0)
+        )
+        result: SQLGlotExpression
+
+        if empty_range:
+            result = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Cast(
+                            this=sqlglot_expressions.Null(),
+                            to=sqlglot_expressions.DataType.build("INT"),
+                        ),
+                        alias=column_name,
+                    )
+                ]
+            ).where(sqlglot_expressions.Boolean(this=False))
+        else:
+            rows: list[SQLGlotExpression] = []
+
+            for i in range(collection.start, collection.end, collection.step):
+                rows.append(
+                    sqlglot_expressions.Tuple(
+                        expressions=[sqlglot_expressions.Literal.number(i)]
+                    )
+                )
+
+            values_expr: SQLGlotExpression = sqlglot_expressions.Values(
+                expressions=rows
+            )
+
+            select_cte: SQLGlotExpression = sqlglot_expressions.Select(
+                expressions=[
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Column(this="column1"),
+                        alias=column_name,
+                    )
+                ]
+            ).from_(values_expr)
+
+            result = (
+                sqlglot_expressions.Select(
+                    expressions=[sqlglot_expressions.Column(this=column_name)]
+                )
+                .from_(sqlglot_expressions.Table(this=table_name))
+                .with_(
+                    alias=sqlglot_expressions.TableAlias(
+                        this=table_name,
+                        columns=[column_name],
+                    ),
+                    as_=select_cte,
+                )
+            )
+
+        return result
