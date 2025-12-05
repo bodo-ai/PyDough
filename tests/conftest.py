@@ -77,9 +77,6 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
-
-# NOTE: this should move to test_pipeline_tpch_custom.py once tpch custom tests
-# are executing in all dialect.
 from tests.test_pydough_functions.user_collections import (
     simple_range_1,
     simple_range_2,
