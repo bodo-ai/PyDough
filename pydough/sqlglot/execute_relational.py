@@ -86,7 +86,9 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
         ) from e
 
     # Convert the optimized AST back to a SQL string.
-    return glot_expr.sql(sqlglot_dialect, pretty=True)
+    sql: str = glot_expr.sql(sqlglot_dialect, pretty=True)
+    reset_sqlglot_dialect_configuration(session.database.dialect)
+    return sql
 
 
 def apply_sqlglot_optimizer(
@@ -353,7 +355,6 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
             if len(alias) != 0:  # alias exists for the table
                 # Remove cases like `..FROM t1 as t1..` or `..FROM t1 as t2..`
                 # to get `..FROM t1..`.
-                # breakpoint()
                 if not isinstance(
                     table.this, sqlglot_expressions.ExplodingGenerateSeries
                 ):
@@ -455,6 +456,19 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return PostgresDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
+
+
+def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
+    """
+    Restore the configuration if was changed at some point of the execution
+    for this dialect in sqlglot
+    """
+
+    if dialect == DatabaseDialect.MYSQL:
+        from sqlglot.dialects.mysql import MySQL
+
+        MySQL.Generator.VALUES_AS_TABLE = False
+        MySQL.Generator.WRAP_DERIVED_VALUES = False
 
 
 def execute_df(
