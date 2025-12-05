@@ -34,6 +34,7 @@ from tests.testing_utilities import (
 from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
+from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
 
 
 @pytest.fixture(
@@ -509,6 +510,24 @@ def test_pipeline_e2e_postgres_tpch_simple_week(
         )
     pd.testing.assert_frame_equal(
         result, expected_df, check_dtype=False, check_exact=False, atol=1e-8
+    )
+
+
+@pytest.mark.postgres
+@pytest.mark.execute
+def test_pipeline_e2e_postgres_tpch_custom(
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
+    get_sample_graph: graph_fetcher,
+    postgres_conn_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H custom queries from the original code generation on
+    Postgres.
+    """
+    tpch_custom_pipeline_test_data.run_e2e_test(
+        get_sample_graph,
+        postgres_conn_db_context,
+        coerce_types=True,
     )
 
 

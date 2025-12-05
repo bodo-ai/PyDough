@@ -32,6 +32,7 @@ from tests.testing_utilities import (
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data
 from .test_pipeline_defog import defog_pipeline_test_data
 from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
+from .test_pipeline_tpch_custom import tpch_custom_pipeline_test_data  # noqa
 
 from .testing_utilities import PyDoughPandasTest
 from pydough import init_pydough_context, to_df, to_sql
@@ -231,6 +232,24 @@ def test_pipeline_e2e_tpch_simple_week(
             result[col_name], expected_df[col_name]
         )
     pd.testing.assert_frame_equal(result, expected_df, check_dtype=False)
+
+
+@pytest.mark.snowflake
+@pytest.mark.execute
+def test_pipeline_e2e_snowflake_tpch_custom(
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,  # noqa: F811
+    get_sf_sample_graph: graph_fetcher,
+    sf_conn_db_context: DatabaseContext,
+):
+    """
+    Test executing the TPC-H custom queries from the original code generation on
+    Postgres.
+    """
+    tpch_custom_pipeline_test_data.run_e2e_test(
+        get_sf_sample_graph,
+        sf_conn_db_context("SNOWFLAKE_SAMPLE_DATA", "TPCH_SF1"),
+        coerce_types=True,
+    )
 
 
 @pytest.fixture

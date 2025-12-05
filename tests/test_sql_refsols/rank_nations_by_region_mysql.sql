@@ -1,0 +1,6 @@
+SELECT
+  NATION.n_name AS name,
+  RANK() OVER (ORDER BY CASE WHEN REGION.r_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, REGION.r_name COLLATE utf8mb4_bin) AS `rank`
+FROM tpch.NATION AS NATION
+JOIN tpch.REGION AS REGION
+  ON NATION.n_regionkey = REGION.r_regionkey

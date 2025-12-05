@@ -1,0 +1,25 @@
+SELECT
+  1 AS i1,
+  CAST(2.2 AS BIGINT) AS i2,
+  CAST('3' AS BIGINT) AS i3,
+  CAST('4.3' AS BIGINT) AS i4,
+  CAST('-5.888' AS BIGINT) AS i5,
+  CAST(-6.0 AS BIGINT) AS i6,
+  1.0 AS f1,
+  2.2 AS f2,
+  CAST('3' AS DOUBLE) AS f3,
+  CAST('4.3' AS DOUBLE) AS f4,
+  CAST('-5.888' AS DOUBLE) AS f5,
+  -6.0 AS f6,
+  0.0 AS f7,
+  CAST(1 AS TEXT) AS s1,
+  CAST(2.2 AS TEXT) AS s2,
+  CAST('3' AS TEXT) AS s3,
+  CAST('4.3' AS TEXT) AS s4,
+  CAST('-5.888' AS TEXT) AS s5,
+  CAST(-6.0 AS TEXT) AS s6,
+  CAST(0.0 AS TEXT) AS s7,
+  CAST('0.0' AS TEXT) AS s8,
+  CAST('abc def' AS TEXT) AS s9
+FROM (VALUES
+  (NULL)) AS _q_0(_col_0)
