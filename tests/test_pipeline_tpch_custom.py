@@ -1417,38 +1417,35 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
-                            "Supplier#000009271",
-                            "Supplier#000000543",
-                            "Supplier#000007718",
-                            "Supplier#000006460",
-                            "Supplier#000002509",
+                            "Supplier#000002367",
+                            "Supplier#000003027",
+                            "Supplier#000004494",
+                            "Supplier#000005363",
+                            "Supplier#000005639",
                         ],
                         "nation_name": [
-                            "MOZAMBIQUE",
+                            "ALGERIA",
+                            "ALGERIA",
+                            "ALGERIA",
                             "MOROCCO",
-                            "MOZAMBIQUE",
-                            "MOROCCO",
-                            "ETHIOPIA",
+                            "KENYA",
                         ],
-                        "supplier_quantity": [
-                            49,
-                            46,
-                            39,
-                            27,
-                            68,
-                        ],
+                        "supplier_quantity": [11, 23, 17, 24, 32],
                         "national_qty_pct": [
-                            41.88034188,
-                            36.80000000,
-                            33.33333333,
-                            21.60000000,
-                            21.58730159,
+                            15.068493150684931,
+                            31.506849315068493,
+                            23.28767123287671,
+                            100.0,
+                            100.0,
                         ],
                     }
                 ),
                 "supplier_pct_national_qty",
             ),
             id="supplier_pct_national_qty",
+            # marks=pytest.mark.skip(
+            #     "Getting stuck in mysql dialect"
+            # )
         ),
         pytest.param(
             PyDoughPandasTest(

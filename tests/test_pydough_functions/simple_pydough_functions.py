@@ -785,17 +785,22 @@ def supplier_pct_national_qty():
         & (ship_mode == "SHIP")
         & CONTAINS(part.name, "tomato")
         & STARTSWITH(part.container, "LG")
+        & (QUARTER(ship_date) < 3)
     )
     supp_qty = SUM(selected_lines.quantity)
     return (
-        nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
+        nations.WHERE(region.name == "AFRICA")
         .CALCULATE(nation_name=name)
-        .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
+        .suppliers.WHERE((account_balance >= 8000.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
             nation_name=nation_name,
             supplier_quantity=supp_qty,
-            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
+            national_qty_pct=100.0
+            * supp_qty
+            / KEEP_IF(
+                RELSUM(supp_qty, per="nations"), RELSUM(supp_qty, per="nations") > 0
+            ),
         )
         .TOP_K(5, by=national_qty_pct.DESC())
     )

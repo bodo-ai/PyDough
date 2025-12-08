@@ -8,7 +8,8 @@ WITH _s7 AS (
     AND part.p_container LIKE 'LG%'
     AND part.p_name LIKE '%tomato%'
   WHERE
-    EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1995
+    EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS DATETIME)) < 7
+    AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1995
     AND lineitem.l_shipmode = 'SHIP'
 ), _t0 AS (
   SELECT
@@ -21,7 +22,7 @@ WITH _s7 AS (
     ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AFRICA'
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
-    AND supplier.s_acctbal >= 0.0
+    AND supplier.s_acctbal >= 8000.0
     AND supplier.s_comment LIKE '%careful%'
   LEFT JOIN _s7 AS _s7
     ON _s7.l_suppkey = supplier.s_suppkey
@@ -34,7 +35,11 @@ SELECT
   COALESCE(sum_l_quantity, 0) AS supplier_quantity,
   (
     100.0 * COALESCE(sum_l_quantity, 0)
-  ) / SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey) AS national_qty_pct
+  ) / CASE
+    WHEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey) > 0
+    THEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey)
+    ELSE NULL
+  END AS national_qty_pct
 FROM _t0
 ORDER BY
   4 DESC

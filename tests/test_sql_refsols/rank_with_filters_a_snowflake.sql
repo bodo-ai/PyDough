@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    ROW_NUMBER() OVER (ORDER BY c_acctbal DESC) AS r,
+    ROW_NUMBER() OVER (ORDER BY c_acctbal DESC, c_name) AS r,
     c_name
   FROM tpch.customer
 )

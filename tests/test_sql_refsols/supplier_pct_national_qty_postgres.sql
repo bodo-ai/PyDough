@@ -1,12 +1,4 @@
-WITH _u_0 AS (
-  SELECT
-    r_regionkey AS _u_1
-  FROM tpch.region
-  WHERE
-    r_name = 'AFRICA'
-  GROUP BY
-    1
-), _s7 AS (
+WITH _s7 AS (
   SELECT
     lineitem.l_quantity,
     lineitem.l_suppkey
@@ -16,7 +8,8 @@ WITH _u_0 AS (
     AND part.p_container LIKE 'LG%'
     AND part.p_name LIKE '%tomato%'
   WHERE
-    EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1995
+    EXTRACT(MONTH FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) < 7
+    AND EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS TIMESTAMP)) = 1995
     AND lineitem.l_shipmode = 'SHIP'
 ), _t0 AS (
   SELECT
@@ -25,16 +18,14 @@ WITH _u_0 AS (
     MAX(supplier.s_nationkey) AS anything_s_nationkey,
     SUM(_s7.l_quantity) AS sum_l_quantity
   FROM tpch.nation AS nation
-  LEFT JOIN _u_0 AS _u_0
-    ON _u_0._u_1 = nation.n_regionkey
+  JOIN tpch.region AS region
+    ON nation.n_regionkey = region.r_regionkey AND region.r_name = 'AFRICA'
   JOIN tpch.supplier AS supplier
     ON nation.n_nationkey = supplier.s_nationkey
-    AND supplier.s_acctbal >= 0.0
+    AND supplier.s_acctbal >= 8000.0
     AND supplier.s_comment LIKE '%careful%'
   LEFT JOIN _s7 AS _s7
     ON _s7.l_suppkey = supplier.s_suppkey
-  WHERE
-    NOT _u_0._u_1 IS NULL
   GROUP BY
     supplier.s_suppkey
 )
@@ -44,7 +35,11 @@ SELECT
   COALESCE(sum_l_quantity, 0) AS supplier_quantity,
   (
     100.0 * COALESCE(sum_l_quantity, 0)
-  ) / SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey) AS national_qty_pct
+  ) / CASE
+    WHEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey) > 0
+    THEN SUM(COALESCE(sum_l_quantity, 0)) OVER (PARTITION BY anything_s_nationkey)
+    ELSE NULL
+  END AS national_qty_pct
 FROM _t0
 ORDER BY
   4 DESC NULLS LAST

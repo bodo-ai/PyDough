@@ -1,6 +1,6 @@
 WITH _t0 AS (
   SELECT
-    ROW_NUMBER() OVER (ORDER BY CASE WHEN c_acctbal IS NULL THEN 1 ELSE 0 END DESC, c_acctbal DESC) AS r,
+    ROW_NUMBER() OVER (ORDER BY CASE WHEN c_acctbal IS NULL THEN 1 ELSE 0 END DESC, c_acctbal DESC, CASE WHEN c_name COLLATE utf8mb4_bin IS NULL THEN 1 ELSE 0 END, c_name COLLATE utf8mb4_bin) AS r,
     c_name
   FROM tpch.CUSTOMER
 )

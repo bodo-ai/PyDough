@@ -22,6 +22,12 @@ LEFT JOIN _s1 AS _s1
 WHERE
   CUSTOMER.c_nationkey = 6
 ORDER BY
-  CASE WHEN _s1.o_orderdate IS NULL THEN 1 ELSE 0 END,
-  _s1.o_orderdate
+  CASE
+    WHEN (
+      CAST('2000-01-01' AS DATE) IS NULL AND _s1.o_orderdate IS NULL
+    )
+    THEN 1
+    ELSE 0
+  END,
+  COALESCE(_s1.o_orderdate, CAST('2000-01-01' AS DATE))
 LIMIT 5

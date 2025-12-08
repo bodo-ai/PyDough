@@ -22,5 +22,5 @@ LEFT JOIN _s1 AS _s1
 WHERE
   customer.c_nationkey = 6
 ORDER BY
-  _s1.o_orderdate
+  COALESCE(_s1.o_orderdate, CAST('2000-01-01' AS DATE))
 LIMIT 5
