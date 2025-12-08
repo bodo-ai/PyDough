@@ -1035,11 +1035,11 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000018",
-                            "Customer#000000153",
-                            "Customer#000000204",
-                            "Customer#000000284",
-                            "Customer#000000312",
+                            "Customer#000047056",
+                            "Customer#000019210",
+                            "Customer#000094175",
+                            "Customer#000012947",
+                            "Customer#000139547",
                         ]
                     }
                 ),

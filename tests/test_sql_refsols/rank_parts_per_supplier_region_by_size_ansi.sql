@@ -12,5 +12,6 @@ JOIN tpch.partsupp AS partsupp
 JOIN tpch.part AS part
   ON part.p_partkey = partsupp.ps_partkey
 ORDER BY
-  1
+  1,
+  2
 LIMIT 15
