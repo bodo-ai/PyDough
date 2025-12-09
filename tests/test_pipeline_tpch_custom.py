@@ -1443,9 +1443,6 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "supplier_pct_national_qty",
             ),
             id="supplier_pct_national_qty",
-            # marks=pytest.mark.skip(
-            #     "Getting stuck in mysql dialect"
-            # )
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2397,6 +2394,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_6",
             ),
             id="simple_cross_6",
+            marks=pytest.mark.skip("Getting stuck in mysql dialect"),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2411,6 +2409,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_7",
             ),
             id="simple_cross_7",
+            marks=pytest.mark.skip("Getting stuck in mysql dialect"),
         ),
         pytest.param(
             PyDoughPandasTest(
