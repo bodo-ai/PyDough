@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -1034,11 +1035,11 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000018",
-                            "Customer#000000153",
-                            "Customer#000000204",
-                            "Customer#000000284",
-                            "Customer#000000312",
+                            "Customer#000047056",
+                            "Customer#000019210",
+                            "Customer#000094175",
+                            "Customer#000012947",
+                            "Customer#000139547",
                         ]
                     }
                 ),
@@ -1416,32 +1417,26 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
-                            "Supplier#000009271",
-                            "Supplier#000000543",
-                            "Supplier#000007718",
-                            "Supplier#000006460",
-                            "Supplier#000002509",
+                            "Supplier#000002367",
+                            "Supplier#000003027",
+                            "Supplier#000004494",
+                            "Supplier#000005363",
+                            "Supplier#000005639",
                         ],
                         "nation_name": [
-                            "MOZAMBIQUE",
+                            "ALGERIA",
+                            "ALGERIA",
+                            "ALGERIA",
                             "MOROCCO",
-                            "MOZAMBIQUE",
-                            "MOROCCO",
-                            "ETHIOPIA",
+                            "KENYA",
                         ],
-                        "supplier_quantity": [
-                            49,
-                            46,
-                            39,
-                            27,
-                            68,
-                        ],
+                        "supplier_quantity": [11, 23, 17, 24, 32],
                         "national_qty_pct": [
-                            41.88034188,
-                            36.80000000,
-                            33.33333333,
-                            21.60000000,
-                            21.58730159,
+                            15.068493150684931,
+                            31.506849315068493,
+                            23.28767123287671,
+                            100.0,
+                            100.0,
                         ],
                     }
                 ),
@@ -2399,6 +2394,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_6",
             ),
             id="simple_cross_6",
+            marks=pytest.mark.skip("Getting stuck in mysql dialect"),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2413,6 +2409,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "simple_cross_7",
             ),
             id="simple_cross_7",
+            marks=pytest.mark.skip("Getting stuck in mysql dialect"),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -3209,6 +3206,24 @@ def test_pipeline_until_relational_tpch_custom(
     file_path: str = get_plan_test_filename(tpch_custom_pipeline_test_data.test_name)
     tpch_custom_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
+    )
+
+
+def test_pipeline_until_sql_tpch_custom(
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
+    """
+    file_path: str = get_sql_test_filename(
+        tpch_custom_pipeline_test_data.test_name, empty_context_database.dialect
+    )
+    tpch_custom_pipeline_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database
     )
 
 

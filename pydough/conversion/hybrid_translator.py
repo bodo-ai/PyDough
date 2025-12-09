@@ -161,6 +161,10 @@ class HybridTranslator:
             aggregation function.
         """
         match expr:
+            case CollationExpression():
+                HybridTranslator.identify_connection_types(
+                    expr.expr, child_idx, reference_types, inside_aggregation
+                )
             # If `expr` is a reference to the child in question, add
             # a reference that is either singular or aggregation depending
             # on the `inside_aggregation` argument
@@ -1059,7 +1063,7 @@ class HybridTranslator:
         hybrid_arg: HybridExpr
         collection: PyDoughCollectionQDAG
         match expr:
-            case PartitionKey():
+            case PartitionKey() | CollationExpression():
                 return self.make_hybrid_expr(
                     hybrid, expr.expr, child_ref_mapping, inside_agg
                 )

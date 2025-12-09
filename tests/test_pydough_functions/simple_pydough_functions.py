@@ -254,24 +254,20 @@ def rank_parts_per_supplier_region_by_size():
                 dense=True,
             ),
         )
-        .TOP_K(15, by=key.ASC())
+        .TOP_K(15, by=(key.ASC(), region.ASC()))
     )
 
 
 def rank_with_filters_a():
-    return (
-        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
-        .WHERE(ENDSWITH(name, "0"))
-        .WHERE(r <= 30)
-    )
+    return customers.CALCULATE(
+        n=name, r=RANKING(by=(account_balance.DESC(), name.ASC()))
+    ).WHERE((ENDSWITH(n, "0")) & (r <= 30))
 
 
 def rank_with_filters_b():
-    return (
-        customers.CALCULATE(n=name, r=RANKING(by=account_balance.DESC()))
-        .WHERE(r <= 30)
-        .WHERE(ENDSWITH(name, "0"))
-    )
+    return customers.CALCULATE(
+        n=name, r=RANKING(by=(account_balance.DESC(), name.ASC()))
+    ).WHERE((ENDSWITH(name, "0")) & (r <= 30))
 
 
 def rank_with_filters_c():
@@ -370,7 +366,9 @@ def yoy_change_in_num_orders():
     return years.CALCULATE(
         year,
         current_year_orders=current_year_orders,
-        pct_change=100.0 * (current_year_orders - prev_year_orders) / prev_year_orders,
+        pct_change=100.0
+        * FLOAT(current_year_orders - prev_year_orders)
+        / prev_year_orders,
     ).ORDER_BY(year.ASC())
 
 
@@ -787,17 +785,22 @@ def supplier_pct_national_qty():
         & (ship_mode == "SHIP")
         & CONTAINS(part.name, "tomato")
         & STARTSWITH(part.container, "LG")
+        & (QUARTER(ship_date) < 3)
     )
     supp_qty = SUM(selected_lines.quantity)
     return (
-        nations.WHERE(HAS(region.WHERE(name == "AFRICA")))
+        nations.WHERE(region.name == "AFRICA")
         .CALCULATE(nation_name=name)
-        .suppliers.WHERE((account_balance >= 0.0) & CONTAINS(comment, "careful"))
+        .suppliers.WHERE((account_balance >= 8000.0) & CONTAINS(comment, "careful"))
         .CALCULATE(
             supplier_name=name,
             nation_name=nation_name,
             supplier_quantity=supp_qty,
-            national_qty_pct=100.0 * supp_qty / RELSUM(supp_qty, per="nations"),
+            national_qty_pct=100.0
+            * supp_qty
+            / KEEP_IF(
+                RELSUM(supp_qty, per="nations"), RELSUM(supp_qty, per="nations") > 0
+            ),
         )
         .TOP_K(5, by=national_qty_pct.DESC())
     )
@@ -2386,10 +2389,13 @@ def singular4():
         customers.WHERE(nation_key == 6)
         .TOP_K(
             5,
-            by=orders.WHERE(order_priority == "1-URGENT")
-            .WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
-            .SINGULAR()
-            .order_date.ASC(na_pos="last"),
+            by=DEFAULT_TO(
+                orders.WHERE(order_priority == "1-URGENT")
+                .WHERE(RANKING(by=total_price.DESC(), per="customers") == 1)
+                .SINGULAR()
+                .order_date,
+                datetime.date(2000, 1, 1),
+            ).ASC(na_pos="last"),
         )
         .CALCULATE(name)
     )
