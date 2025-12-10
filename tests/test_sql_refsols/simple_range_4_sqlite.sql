@@ -10,6 +10,6 @@ FROM (VALUES
   (4),
   (3),
   (2),
-  (1)) AS _q_0
+  (1)) AS t2
 ORDER BY
   1

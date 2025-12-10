@@ -26,7 +26,7 @@ FROM (VALUES
   (1997),
   (1998),
   (1999),
-  (2000)) AS _q_0
+  (2000)) AS years
 LEFT JOIN _s5 AS _s5
   ON _s5.year_o_orderdate = column1
 ORDER BY

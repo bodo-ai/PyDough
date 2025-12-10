@@ -18,6 +18,7 @@ from .sqlglot_transform_utils import (
     apply_parens,
     expand_std,
     expand_variance,
+    generate_user_collection,
 )
 
 
@@ -700,22 +701,6 @@ class MySQLTransformBindings(BaseTransformBindings):
         self,
         collection: RangeGeneratedCollection,
     ) -> SQLGlotExpression:
-        """
-        Converts a user-generated range into a SQLGlot expression.
-        SQL equivalent:
-        SELECT value
-        FROM (
-            VALUES
-                ROW(0),
-                ROW(1), ROW(9)
-        ) AS simple_range(value)
-
-        Args:
-            `collection`: The user-generated range to convert.
-        Returns:
-            A SQLGlotExpression representing the user-generated range as table.
-        """
-
         column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
             this=collection.column_name, quoted=False
         )
@@ -732,47 +717,19 @@ class MySQLTransformBindings(BaseTransformBindings):
             or (collection.step == 0)
         )
 
-        result: SQLGlotExpression
-
-        if empty_range:
-            result = sqlglot_expressions.Select(
-                expressions=[
-                    sqlglot_expressions.Alias(
-                        this=sqlglot_expressions.Cast(
-                            this=sqlglot_expressions.Null(),
-                            to=sqlglot_expressions.DataType.build("INT"),
-                        ),
-                        alias=column_name,
-                    )
-                ]
-            ).where(sqlglot_expressions.Boolean(this=False))
-        else:
-            rows: list[SQLGlotExpression] = []
-
-            for i in range(collection.start, collection.end, collection.step):
-                rows.append(
-                    sqlglot_expressions.Anonymous(
-                        this="ROW",
-                        expressions=[sqlglot_expressions.Literal.number(i)],
-                    )
+        range_rows: list[SQLGlotExpression] = (
+            []
+            if empty_range
+            else [
+                sqlglot_expressions.Anonymous(
+                    this="ROW", expressions=[sqlglot_expressions.Literal.number(i)]
                 )
+                for i in range(collection.start, collection.end, collection.step)
+            ]
+        )
 
-            values_expr: SQLGlotExpression = sqlglot_expressions.Subquery(
-                this=sqlglot_expressions.Values(expressions=rows),
-                alias=sqlglot_expressions.TableAlias(
-                    this=table_name, columns=[column_name]
-                ),
-            )
-
-            result = sqlglot_expressions.Select(
-                expressions=[sqlglot_expressions.Column(this=column_name)],
-            ).from_(values_expr)
-
-            from sqlglot.dialects.mysql import MySQL
-
-            # Avoid the generation of UNION ALL for values
-            MySQL.Generator.VALUES_AS_TABLE = True
-            # Keep the parenthesis around the values
-            MySQL.Generator.WRAP_DERIVED_VALUES = True
+        result: SQLGlotExpression = generate_user_collection(
+            table_name, [column_name], range_rows
+        )
 
         return result

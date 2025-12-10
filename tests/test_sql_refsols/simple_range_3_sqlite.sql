@@ -5,6 +5,6 @@ FROM (VALUES
   (16),
   (17),
   (18),
-  (19)) AS _q_0
+  (19)) AS t1
 ORDER BY
   1

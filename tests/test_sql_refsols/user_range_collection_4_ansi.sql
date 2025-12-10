@@ -13,7 +13,7 @@ WITH _t0 AS (
     (7),
     (8),
     (9),
-    (10)) AS _q_0(_col_0)
+    (10)) AS sizes(part_size)
   JOIN tpch.part AS part
     ON column1 = part.p_size
     AND part.p_container LIKE '%SM DRUM%'

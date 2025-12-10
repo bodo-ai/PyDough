@@ -31,6 +31,6 @@ FROM (VALUES
   (81),
   (86),
   (91),
-  (96)) AS _q_0
+  (96)) AS sizes
 LEFT JOIN _s1 AS _s1
   ON _s1.p_size = column1

@@ -616,11 +616,13 @@ class PostgresTransformBindings(BaseTransformBindings):
         Converts a user-generated range collection to its Postgres SQLGlot
         representation.
 
+        For example, `pydough.range_collection("table_name", "column_name", 1, 10, 2)` becomes:
         SELECT column_name
-        FROM generate_series(10, 1, 1) AS table_name(column_name);
+        FROM generate_series(1, 10, 2) AS table_name(column_name);
 
         Arguments:
             `collection` : The user-generated range collection to convert.
+
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
@@ -640,22 +642,24 @@ class PostgresTransformBindings(BaseTransformBindings):
             this=table_name, columns=[column_name]
         )
 
+        # Number that adjusts the end depending if the step is positive or
+        # negative
         adjustment_num: SQLGlotExpression = (
             sqlglot_expressions.Literal.number(1)
             if collection.step > 0
             else sqlglot_expressions.Literal.number(-1)
         )
 
+        # The range collection end minus the adjustment number excluding the
+        # last number. Example: generate_series(1, 5, 1) ->
+        # generate_series(1, 5-1, 1) -> [1, 2, 3, 4]
         effective_end = sqlglot_expressions.Sub(
             this=end,
             expression=adjustment_num,
         )
 
         generate_series: SQLGlotExpression = sqlglot_expressions.GenerateSeries(
-            start=start,
-            end=effective_end,
-            step=step,
-            is_end_exclusive=True,
+            start=start, end=effective_end, step=step
         )
 
         table = sqlglot_expressions.Table(this=generate_series, alias=alias_table)

@@ -10,6 +10,6 @@ FROM (VALUES
   (6),
   (7),
   (8),
-  (9)) AS _q_0(_col_0)
+  (9)) AS simple_range(value)
 ORDER BY
   1 DESC
