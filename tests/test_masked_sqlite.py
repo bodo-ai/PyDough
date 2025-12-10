@@ -1284,11 +1284,11 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
             [
                 {
-                    "CRBNK/ACCOUNTS/a_open_ts: ['BETWEEN', 3, '2020-03-28 09:20:00', '__col__', '2020-09-20 08:30:00']",
+                    "CRBNK/ACCOUNTS/a_open_ts: ['AND', 2, 'LTE', 2, '2020-03-28 09:20:00', '__col__', 'LTE', 2, '__col__', '2020-09-20 08:30:00']",
                     "DRY_RUN",
                 },
                 {
-                    "CRBNK/ACCOUNTS/a_open_ts: ['BETWEEN', 3, '2020-03-28 09:20:00', '__col__', '2020-09-20 08:30:00']",
+                    "CRBNK/ACCOUNTS/a_open_ts: ['AND', 2, 'LTE', 2, '2020-03-28 09:20:00', '__col__', 'LTE', 2, '__col__', '2020-09-20 08:30:00']",
                 },
             ],
             id="cryptbank_filter_count_32",

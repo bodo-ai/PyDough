@@ -62,7 +62,6 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         pydop.LIKE: "LIKE",
         pydop.LOWER: "LOWER",
         pydop.UPPER: "UPPER",
-        pydop.MONOTONIC: "BETWEEN",
         pydop.YEAR: "YEAR",
         pydop.QUARTER: "QUARTER",
         pydop.MONTH: "MONTH",
@@ -91,6 +90,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
     - `JOIN_STRINGS`
     - `DATETIME`
     - `DATEDIFF`
+    - `MONOTONIC`
     """
 
     PREDICATE_OPERATORS: set[str] = {
@@ -105,7 +105,6 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         "CONTAINS",
         "LIKE",
         "IN",
-        "BETWEEN",
         "AND",
         "OR",
         "NOT",
@@ -121,7 +120,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
 
     SERVER_OPERATOR_NAMES: set[str] = {
         *OPERATORS_TO_SERVER_NAMES.values(),
-        "NOT_ININ",
+        "NOT_IN",
         "SLICE",
         "CONCAT",
         "DATETIME",
@@ -239,10 +238,13 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         combined_exprs: list[str | int | float | None | bool] | None
 
         # A call in the form `UNMASK(input_expr)` is the atomic `__col__`
-        # expression.
+        # expression that forms the base case for all candidate expressions, if
+        # the column is server-masked.
         if (
             isinstance(expr.op, pydop.MaskedExpressionFunctionOperator)
             and expr.op.is_unmask
+            and expr.op.masking_metadata.server_masked
+            and expr.op.masking_metadata.server_dataset_id is not None
         ):
             self.stack.append(((expr.op, expr.inputs[0]), ["__col__"]))
 
@@ -335,6 +337,8 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         # Dispatch to the specified conversion method for each operator that
         # has dedicated logic, besides ISIN which was already handled.
         match call.op:
+            case pydop.MONOTONIC:
+                return self.convert_monotonic_call_to_server_expression(input_exprs)
             case pydop.SLICE:
                 return self.convert_slice_call_to_server_expression(input_exprs)
             case pydop.JOIN_STRINGS:
@@ -418,6 +422,35 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         result.extend(input_exprs[0])
         result.extend(in_list)
         return result
+
+    def convert_monotonic_call_to_server_expression(
+        self, input_exprs: list[list[str | int | float | None | bool] | None]
+    ) -> list[str | int | float | None | bool] | None:
+        """
+        Converts a PyDough MONOTONIC operation to the linear serialization
+        format recognized by the Mask Server. MONOTONIC(a, b, c) is converted to
+        be equivalent to `(a <= b) AND (b <= c)`.
+
+        Args:
+            `input_exprs`: A list of linear serializations for each input to
+            the MONOTONIC call, where each input serialization is either a
+            list of strings/ints/floats/bools/None, or None if the input
+            could not be converted.
+
+        Returns:
+            A list of strings/ints/floats/bools/None representing the linear
+            serialization of the MONOTONIC operation, or None if the MONOTONIC
+            operation could not be converted.
+        """
+        assert len(input_exprs) == 3, (
+            "MONOTONIC operator requires exactly three inputs."
+        )
+        if input_exprs[0] is None or input_exprs[1] is None or input_exprs[2] is None:
+            return None
+        arg0: list[str | int | float | None | bool] = input_exprs[0]
+        arg1: list[str | int | float | None | bool] = input_exprs[1]
+        arg2: list[str | int | float | None | bool] = input_exprs[2]
+        return ["AND", 2, "LTE", 2, *arg0, *arg1, "LTE", 2, *arg1, *arg2]
 
     def convert_slice_call_to_server_expression(
         self, input_exprs: list[list[str | int | float | None | bool] | None]

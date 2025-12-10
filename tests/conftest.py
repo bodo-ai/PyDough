@@ -2015,4 +2015,15 @@ def mock_server_info(mock_server_setup: str) -> MaskServerInfo:
     """
     Returns the MaskServerInfo for the mock server.
     """
-    return MaskServerInfo(base_url=mock_server_setup, server_address="srv", token=None)
+    return MaskServerInfo(base_url=mock_server_setup, token=None)
+
+
+@pytest.fixture(scope="session")
+def true_mask_server_info() -> MaskServerInfo:
+    """
+    Returns the MaskServerInfo for the true Mask server.
+    """
+    if not os.getenv("PYDOUGH_MASK_SERVER_PATH"):
+        raise RuntimeError("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
+
+    return MaskServerInfo(base_url=os.environ["PYDOUGH_MASK_SERVER_PATH"], token=None)

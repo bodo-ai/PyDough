@@ -85,8 +85,11 @@ class MaskServerRewriteShuttle(RelationalExpressionShuttle):
             expression_list,
         ) in self.candidate_visitor.candidate_pool.items():
             ancillary_info.append((expr, input_expr))
+            assert mask_op.masking_metadata.server_masked
+            assert mask_op.masking_metadata.server_dataset_id is not None
             batch.append(
                 MaskServerInput(
+                    dataset_id=mask_op.masking_metadata.server_dataset_id,
                     table_path=mask_op.table_path,
                     column_name=mask_op.masking_metadata.column_name,
                     expression=expression_list,

@@ -52,6 +52,11 @@ class MaskServerInput:
     Input data structure for the MaskServer.
     """
 
+    dataset_id: str
+    """
+    The dataset ID to use when querying the mask server.
+    """
+
     table_path: str
     """
     The fully qualified SQL table path, given from the metadata.
@@ -111,20 +116,17 @@ class MaskServerInfo:
     The API path for batch evaluating predicates on the mask server.
     """
 
-    def __init__(self, base_url: str, server_address: str, token: str | None = None):
+    def __init__(self, base_url: str, token: str | None = None):
         """
         Initialize the MaskServerInfo with the given server URL.
 
         Args:
             `base_url`: The URL of the mask server.
-            `server_address`: The server address to place at the front of all
-            qualified table paths.
             `token`: Optional authentication token for the server.
         """
         self.connection: ServerConnection = ServerConnection(
             base_url=base_url, token=token
         )
-        self.server_address: str = server_address
 
     def get_server_response_case(self, server_case: str) -> MaskServerResponse:
         """
@@ -216,7 +218,8 @@ class MaskServerInfo:
         {
             "items": [
                 {
-                    "column_ref": {"kind": "fqn", "value": "srv/db/schema/table/name"},
+                    "dataset_id": "snowflake.bodo.blah_blah_blah",
+                    "column_ref": {"kind": "fqn", "value": "db/schema/table/name"},
                     "predicate": ["EQUAL", 2, "__col__", 1],
                     "mode": "dynamic",
                     "predicate_format": "linear_with_arity",
@@ -239,13 +242,15 @@ class MaskServerInfo:
 
         for item in batch:
             evaluate_request: dict = {
+                "dataset_id": item.dataset_id,
                 "column_ref": {
                     "kind": "fqn",
-                    "value": f"{self.server_address}/{item.fully_qualified_name}",
+                    "value": item.fully_qualified_name,
                 },
                 "predicate": item.expression,
                 "output_mode": "cell_encrypted",
                 "mode": "dynamic",
+                "predicate_format": "linear_with_arity",
                 "dry_run": dry_run,
             }
             payload["items"].append(evaluate_request)

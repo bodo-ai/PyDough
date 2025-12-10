@@ -17,6 +17,7 @@ app: FastAPI = FastAPI()
 
 
 class EvaluateRequest(BaseModel):
+    dataset_id: str
     column_ref: dict[str, str]
     predicate: list[str | int | float | None | bool]
     output_mode: str
@@ -56,7 +57,7 @@ def batch_evaluate(
             "value",
         }, f"Invalid column_reference format in mock: {item.column_ref!r}."
         assert item.column_ref["kind"] == "fqn", "Only FQN kind is supported in mock."
-        key = (item.column_ref["value"], tuple(item.predicate))
+        key = (item.dataset_id, item.column_ref["value"], tuple(item.predicate))
         table_result: tuple[str, list] | None = LOOKUP_TABLE.get(key, None)
         out_item: dict = {
             "index": payload.items.index(item) + 1,

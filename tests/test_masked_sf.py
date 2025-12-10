@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from tests.testing_utilities import graph_fetcher
+from pydough.mask_server import MaskServerInfo
+from tests.testing_utilities import graph_fetcher, temp_env_override
 
 from .testing_sf_masked_utilities import (
     PyDoughSnowflakeMaskedTest,
@@ -825,6 +826,7 @@ def sf_masked_test_data(
     return request.param
 
 
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "20"})
 @pytest.mark.sf_masked
 def test_pipeline_until_relational_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
@@ -832,6 +834,7 @@ def test_pipeline_until_relational_masked_sf(
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    true_mask_server_info: MaskServerInfo,
 ) -> None:
     """
     Tests the conversion of the PyDough queries on the masked dataset
@@ -841,10 +844,14 @@ def test_pipeline_until_relational_masked_sf(
         f"{sf_masked_test_data.test_name}_{enable_mask_rewrites}"
     )
     sf_masked_test_data.run_relational_test(
-        get_sf_masked_graphs, file_path, update_tests
+        get_sf_masked_graphs,
+        file_path,
+        update_tests,
+        mask_server=true_mask_server_info,
     )
 
 
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "20"})
 @pytest.mark.sf_masked
 def test_pipeline_until_sql_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
@@ -853,6 +860,7 @@ def test_pipeline_until_sql_masked_sf(
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    true_mask_server_info: MaskServerInfo,
 ):
     """
     Tests the conversion of the PyDough queries on the custom masked dataset
@@ -867,9 +875,11 @@ def test_pipeline_until_sql_masked_sf(
         file_path,
         update_tests,
         sf_data,
+        mask_server=true_mask_server_info,
     )
 
 
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "20"})
 @pytest.mark.execute
 @pytest.mark.sf_masked
 @pytest.mark.parametrize("account_type", ["NONE", "PARTIAL", "FULL"])
@@ -879,6 +889,7 @@ def test_pipeline_e2e_masked_sf(
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
     sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
     enable_mask_rewrites: str,  # noqa: F811
+    true_mask_server_info: MaskServerInfo,
 ) -> None:
     """
     End-to-end test for Snowflake with masked columns.
@@ -890,4 +901,5 @@ def test_pipeline_e2e_masked_sf(
         get_sf_masked_graphs,
         sf_masked_context("BODO", sf_masked_test_data.graph_name, account_type),
         coerce_types=True,
+        mask_server=true_mask_server_info,
     )

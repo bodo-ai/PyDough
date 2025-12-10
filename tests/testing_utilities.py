@@ -26,12 +26,15 @@ __all__ = [
     "extract_batch_requests_from_logs",
     "graph_fetcher",
     "map_over_dict_values",
+    "temp_env_override",
 ]
 
 import datetime
+import os
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass
 from decimal import Decimal
 from typing import Any
@@ -77,6 +80,39 @@ from pydough.unqualified import (
 # Type alias for a function that takes in a string and generates metadata
 # for a graph based on it.
 graph_fetcher = Callable[[str], GraphMetadata]
+
+
+@contextmanager
+def temp_env_override(env_vars: dict[str, str | None]):
+    """Update the current environment variables with key-value pairs provided
+    in a dictionary and then restore it after.
+
+    Args
+        env_vars (dict(str, str or None)): A dictionary of environment variables to set.
+            A value of None indicates a variable should be removed.
+    """
+
+    def update_env_vars(env_vars):
+        old_env_vars: dict[str, str | None] = {}
+        for k, v in env_vars.items():
+            if k in os.environ:
+                old_env_vars[k] = os.environ[k]
+            else:
+                old_env_vars[k] = None
+
+            if v is None:
+                if k in os.environ:
+                    del os.environ[k]
+            else:
+                os.environ[k] = v
+        return old_env_vars
+
+    old_env = {}
+    try:
+        old_env = update_env_vars(env_vars)
+        yield
+    finally:
+        update_env_vars(old_env)
 
 
 def map_over_dict_values(
