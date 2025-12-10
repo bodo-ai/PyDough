@@ -1,7 +1,3 @@
-WITH _q_0 AS (
-  SELECT
-    1 AS _
-)
 SELECT
   LEAST(20, 10) AS s1,
   LEAST(20, 20) AS s2,
@@ -29,4 +25,5 @@ SELECT
   ) AS l7,
   GREATEST('', 'alphabet soup', 'Hello World') AS l8,
   NULL AS l9
-FROM _q_0
+FROM (VALUES
+  (NULL)) AS _q_0(_col_0)
