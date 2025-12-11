@@ -68,7 +68,6 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
     Returns:
         The SQL string representing the relational tree.
     """
-    change_sqlglot_dialect_configuration(session.database.dialect)
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         session
     ).relational_to_sqlglot(relational)

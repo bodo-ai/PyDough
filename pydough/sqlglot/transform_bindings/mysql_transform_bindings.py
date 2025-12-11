@@ -732,4 +732,11 @@ class MySQLTransformBindings(BaseTransformBindings):
             table_name, [column_name], range_rows
         )
 
+        from sqlglot.dialects.mysql import MySQL
+
+        # Avoid the generation of UNION ALL for values
+        MySQL.Generator.VALUES_AS_TABLE = True
+        # Keep the parenthesis around the values
+        MySQL.Generator.WRAP_DERIVED_VALUES = True
+
         return result

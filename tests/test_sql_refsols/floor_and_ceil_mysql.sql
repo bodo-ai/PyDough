@@ -1,3 +1,7 @@
+WITH _q_0 AS (
+  SELECT
+    1 AS _
+)
 SELECT
   FLOOR(5.6) AS floor_frac,
   CEIL(5.4) AS ceil_frac,
@@ -7,5 +11,4 @@ SELECT
   CEIL(6) AS ceil_int,
   FLOOR(-6) AS floor_int_neg,
   CEIL(-6) AS ceil_int_neg
-FROM (VALUES
-  (NULL)) AS _q_0(_col_0)
+FROM _q_0
