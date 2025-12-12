@@ -24,6 +24,7 @@ from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
     current_ts_pattern,
+    generate_user_collection,
     offset_pattern,
     pad_helper,
     positive_index,
@@ -2156,6 +2157,21 @@ class BaseTransformBindings:
         """
         return arg
 
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        """
+        Return a SQLGlot expression that represents a single-row, empty (NULL)
+        singleton.
+
+        Returns:
+            A SQLGlotExpression that selects from a one-row VALUES tuple
+            containing a single NULL.
+        """
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
+        )
+
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,
@@ -2179,16 +2195,35 @@ class BaseTransformBindings:
                 )
 
     def convert_user_generated_range(
-        self,
-        collection: RangeGeneratedCollection,
+        self, collection: RangeGeneratedCollection
     ) -> SQLGlotExpression:
-        """
-        Converts a user-generated range into a SQLGlot expression.
-        Args:
-            `collection`: The user-generated range to convert.
-        Returns:
-            A SQLGlotExpression representing the user-generated range as table.
-        """
-        raise NotImplementedError(
-            "range_collections are not supported for this dialect"
+        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.column_name, quoted=False
         )
+
+        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
+            this=collection.name, quoted=False
+        )
+
+        empty_range = (
+            (collection.step > 0 and collection.start >= collection.end)
+            or (collection.step < 0 and collection.start <= collection.end)
+            or (collection.step == 0)
+        )
+
+        range_rows: list[SQLGlotExpression] = (
+            []
+            if empty_range
+            else [
+                sqlglot_expressions.Tuple(
+                    expressions=[sqlglot_expressions.Literal.number(i)]
+                )
+                for i in range(collection.start, collection.end, collection.step)
+            ]
+        )
+
+        result: SQLGlotExpression = generate_user_collection(
+            table_name, [column_name], range_rows
+        )
+
+        return result

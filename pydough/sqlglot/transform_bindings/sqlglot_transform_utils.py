@@ -386,3 +386,93 @@ def expand_std(
     return sqlglot_expressions.Pow(
         this=variance, expression=sqlglot_expressions.Literal.number(0.5)
     )
+
+
+def generate_user_collection(
+    table_name: SQLGlotExpression,
+    column_names: list[SQLGlotExpression],
+    rows: list[SQLGlotExpression],
+) -> SQLGlotExpression:
+    """
+    Generate a SQL that represents a user collection using the given list of
+    columns and rows.
+
+    Args:
+        `table_name`: The name of the table
+        `column_names`: List with all column names
+        `rows`: The data for each row
+    """
+    assert column_names != []
+
+    result: SQLGlotExpression
+
+    if rows == []:
+        result = generate_empty_user_collection(column_names, ["INT"])
+    else:
+        values_expr: SQLGlotExpression = sqlglot_expressions.Values(expressions=rows)
+
+        table_alias = sqlglot_expressions.TableAlias(
+            this=table_name, columns=column_names
+        )
+
+        aliased_values = sqlglot_expressions.Subquery(
+            this=values_expr, alias=table_alias
+        )
+
+        select_columns: list[SQLGlotExpression] = []
+        use_rows: bool = isinstance(rows[0], sqlglot_expressions.Tuple)
+
+        for idx, column in enumerate(column_names):
+            colum_enum: str = f"column{idx + 1}"
+            if use_rows:
+                select_columns.append(
+                    sqlglot_expressions.Alias(
+                        this=sqlglot_expressions.Column(this=colum_enum), alias=column
+                    )
+                )
+            else:
+                select_columns.append(sqlglot_expressions.Column(this=column))
+
+        result = sqlglot_expressions.Select(expressions=select_columns).from_(
+            aliased_values
+        )
+
+    return result
+
+
+def generate_empty_user_collection(
+    column_names: list[SQLGlotExpression], types: list[str]
+) -> SQLGlotExpression:
+    """
+    Construct a SQLGlot expression representing an empty user-defined collection
+    with specified columns and types.
+
+    Args:
+        `column_names`: List of all the column names.
+        `types`: List of types for each column respectively.
+
+    Notes:
+        - The length of column_names and types must match.
+
+    Returns:
+        The SQLGlot expression for an empty user collection.
+    """
+
+    assert len(column_names) == len(types)
+
+    expressions: list[SQLGlotExpression] = []
+
+    for idx, column in enumerate(column_names):
+        expressions.append(
+            sqlglot_expressions.Alias(
+                this=sqlglot_expressions.Cast(
+                    this=sqlglot_expressions.Null(),
+                    to=sqlglot_expressions.DataType.build(types[idx]),
+                ),
+                alias=column,
+            )
+        )
+
+    return sqlglot_expressions.Select(expressions=expressions).where(
+        sqlglot_expressions.Boolean(this=False)
+    )
