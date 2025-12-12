@@ -185,7 +185,7 @@ def apply_sqlglot_optimizer(
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
 
-    # Transforme the values expression
+    # Remove the parenthesis around each row in values
     remove_tuple_row_values(glot_expr)
 
     return glot_expr
