@@ -68,6 +68,7 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
     Returns:
         The SQL string representing the relational tree.
     """
+    change_sqlglot_dialect_configuration(session.database.dialect)
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         session
     ).relational_to_sqlglot(relational)
@@ -456,6 +457,25 @@ def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
             return PostgresDialect()
         case _:
             raise NotImplementedError(f"Unsupported dialect: {dialect}")
+
+
+def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
+    """
+    Update the configuration of the sqlglot dialect for the given dialect
+
+    Args:
+        `dialect`: Dialect to be changed
+
+    Note: Specify what each of the changes do in a coment above the new value
+    """
+
+    if dialect == DatabaseDialect.MYSQL:
+        from sqlglot.dialects.mysql import MySQL
+
+        # Avoid the generation of UNION ALL for values
+        MySQL.Generator.VALUES_AS_TABLE = True
+        # Keep the parenthesis around the values
+        MySQL.Generator.WRAP_DERIVED_VALUES = True
 
 
 def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:

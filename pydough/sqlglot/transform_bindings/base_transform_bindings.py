@@ -2157,6 +2157,21 @@ class BaseTransformBindings:
         """
         return arg
 
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        """
+        Return a SQLGlot expression that represents a single-row, empty (NULL)
+        singleton.
+
+        Returns:
+            A SQLGlotExpression that selects from a one-row VALUES tuple
+            containing a single NULL.
+        """
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(sqlglot_expressions.values([sqlglot_expressions.convert((None,))]))
+        )
+
     def convert_user_generated_collection(
         self,
         collection: PyDoughUserGeneratedCollection,

@@ -8,7 +8,6 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
-from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.types import PyDoughType
 from pydough.types.string_type import StringType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -17,7 +16,6 @@ from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
-    change_sqlglot_dialect_configuration,
     expand_std,
     expand_variance,
     generate_user_collection,
@@ -699,6 +697,22 @@ class MySQLTransformBindings(BaseTransformBindings):
             )
         return arg
 
+    def create_empty_singleton(self) -> SQLGlotExpression:
+        return (
+            sqlglot_expressions.Select()
+            .select(sqlglot_expressions.Star())
+            .from_(
+                sqlglot_expressions.values(
+                    [
+                        sqlglot_expressions.Anonymous(
+                            this="ROW",
+                            expressions=[sqlglot_expressions.convert((None,))],
+                        )
+                    ]
+                )
+            )
+        )
+
     def convert_user_generated_range(
         self,
         collection: RangeGeneratedCollection,
@@ -733,7 +747,5 @@ class MySQLTransformBindings(BaseTransformBindings):
         result: SQLGlotExpression = generate_user_collection(
             table_name, [column_name], range_rows
         )
-
-        change_sqlglot_dialect_configuration(DatabaseDialect.MYSQL)
 
         return result
