@@ -8,6 +8,7 @@ import sqlglot.expressions as sqlglot_expressions
 from sqlglot.expressions import Expression as SQLGlotExpression
 
 import pydough.pydough_operators as pydop
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.types import PyDoughType
 from pydough.types.string_type import StringType
 from pydough.user_collections.range_collection import RangeGeneratedCollection
@@ -16,6 +17,7 @@ from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    change_sqlglot_dialect_configuration,
     expand_std,
     expand_variance,
     generate_user_collection,
@@ -732,11 +734,6 @@ class MySQLTransformBindings(BaseTransformBindings):
             table_name, [column_name], range_rows
         )
 
-        from sqlglot.dialects.mysql import MySQL
-
-        # Avoid the generation of UNION ALL for values
-        MySQL.Generator.VALUES_AS_TABLE = True
-        # Keep the parenthesis around the values
-        MySQL.Generator.WRAP_DERIVED_VALUES = True
+        change_sqlglot_dialect_configuration(DatabaseDialect.MYSQL)
 
         return result
