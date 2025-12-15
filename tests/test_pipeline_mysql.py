@@ -524,6 +524,16 @@ def test_pipeline_e2e_mysql_tpch_custom(
     Test executing the TPC-H custom queries from the original code generation on
     MySQL.
     """
+    if (
+        "string_format_specifiers" in tpch_custom_pipeline_test_data.test_name
+        and "mysql" not in tpch_custom_pipeline_test_data.test_name
+    ):
+        pytest.skip(
+            "Skipping string format specifiers test for Other dialects exept "
+            "for MySQL due to inconsistent behavior with date formatting through "
+            "dialects."
+        )
+
     tpch_custom_pipeline_test_data.run_e2e_test(
         get_sample_graph,
         mysql_conn_db_context("tpch"),

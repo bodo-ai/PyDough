@@ -1406,6 +1406,10 @@ Orders.CALCULATE(
 Here is a list of reference links for the format strings of different databases:
 
 - [SQLite](https://www.sqlite.org/lang_datefunc.html)
+- [Snowflake](TODO: Link here)
+- [MySQL](https://dev.mysql.com/doc/refman/8.4/en/date-and-time-functions.html#function_date-format)
+- [Postgres](TODO: Link here)
+
 
 <!-- TOC --><a name="integer"></a>
 

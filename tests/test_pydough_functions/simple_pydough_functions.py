@@ -2659,6 +2659,83 @@ def string_format_specifiers_sqlite():
     )
 
 
+def string_format_specifiers_mysql():
+    # String format specifiers for date/time with a static datetime
+    # Works for MySQL versions >= v8.0.31
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # Abbreviated weekday name: Sun-Sat
+        d1=STRING(static_date, "%a"),
+        # Abbreviated month name: Jan-Dec
+        d2=STRING(static_date, "%b"),
+        # Month numeric (1-12)
+        d3=STRING(static_date, "%c"),
+        # Day of the month with English suffix: 1st, 2nd, 3rd, 4th
+        d4=STRING(static_date, "%D"),
+        # day of month: 00-31
+        d5=STRING(static_date, "%d"),
+        # day of month without leading zero: 0-31
+        d6=STRING(static_date, "%e"),
+        # Microseconds (000000-999999)
+        d7=STRING(static_date, "%f"),
+        # Hour (00-23)
+        d8=STRING(static_date, "%H"),
+        # Hour (01-12)
+        d9=STRING(static_date, "%h"),
+        # Hour (1-12)
+        d10=STRING(static_date, "%I"),
+        # Minutes (00-59)
+        d11=STRING(static_date, "%i"),
+        # Day of year (001-366)
+        d12=STRING(static_date, "%j"),
+        # Hour (0-23)
+        d13=STRING(static_date, "%k"),
+        # Hour (1-12)
+        d14=STRING(static_date, "%l"),
+        # Month name
+        d15=STRING(static_date, "%M"),
+        # Month numeric (01-12)
+        d16=STRING(static_date, "%m"),
+        # AM or PM
+        d17=STRING(static_date, "%p"),
+        # Time, 12-hour (hh:mm:ss followed by AM or PM)
+        d18=STRING(static_date, "%r"),
+        # Seconds (00-59)
+        d19=STRING(static_date, "%S"),
+        # Seconds since Unix epoch (1970-01-01 00:00:00
+        d20=STRING(static_date, "%s"),
+        # Time, 24-hour (hh:mm:ss)
+        d21=STRING(static_date, "%T"),
+        # Week (00..53), where Sunday is the first day of the week; WEEK() mode 0
+        d22=STRING(static_date, "%U"),
+        # Week (00..53), where Monday is the first day of the week; WEEK() mode 1
+        d23=STRING(static_date, "%u"),
+        # Week (01..53), where Sunday is the first day of the week; WEEK() mode 2; used with %X
+        d24=STRING(static_date, "%V"),
+        # Week (01..53), where Monday is the first day of the week; WEEK() mode 3; used with %x
+        d25=STRING(static_date, "%v"),
+        # Weekday name (Sunday..Saturday)
+        d26=STRING(static_date, "%W"),
+        # Day of the week (0=Sunday..6=Saturday)
+        d27=STRING(static_date, "%w"),
+        # Year for the week where Sunday is the first day of the week, numeric,
+        # four digits; used with %V
+        d28=STRING(static_date, "%X"),
+        # Year for the week where Monday is the first day of the week, numeric,
+        # four digits; used with %v
+        d29=STRING(static_date, "%x"),
+        # Year, numeric, four digits
+        d30=STRING(static_date, "%Y"),
+        # Year, numeric, two digits
+        d31=STRING(static_date, "%y"),
+        # ISO 8601 date: YYYY-MM-DD
+        d32=STRING(static_date, "%Y-%m-%d"),
+        # ISO 8601 time: HH:MM
+        d33=STRING(static_date, "%H:%i"),
+    )
+
+
 def part_reduced_size():
     # What are the top 5 line items with the highest discounts
     # on parts with the lowest retail prices casted to integers?
