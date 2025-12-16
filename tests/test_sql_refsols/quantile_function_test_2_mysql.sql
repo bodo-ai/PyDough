@@ -17,68 +17,55 @@ WITH _s0 AS (
     AND EXTRACT(YEAR FROM CAST(ORDERS.o_orderdate AS DATETIME)) = 1998
 ), _t1 AS (
   SELECT
+    CASE
+      WHEN FLOOR(0) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
+      THEN _s5.o_totalprice
+      ELSE NULL
+    END AS expr_15,
     _s0.n_name,
     _s0.n_nationkey,
-    _s5.o_totalprice,
     REGION.r_name,
     CASE
-      WHEN TRUNCATE(
-        CAST(0.99 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT),
-        0
-      ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
+      WHEN FLOOR(0.99 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_10,
     CASE
-      WHEN TRUNCATE(
-        CAST(0.75 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT),
-        0
-      ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
+      WHEN FLOOR(0.75 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_11,
     CASE
-      WHEN TRUNCATE(
-        CAST(0.25 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT),
-        0
-      ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
+      WHEN FLOOR(0.25 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_12,
     CASE
-      WHEN TRUNCATE(
-        CAST(0.09999999999999998 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT),
-        0
+      WHEN FLOOR(
+        0.09999999999999998 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)
       ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_13,
     CASE
-      WHEN TRUNCATE(
-        CAST(0.010000000000000009 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT),
-        0
+      WHEN FLOOR(
+        0.010000000000000009 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)
       ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_14,
     CASE
-      WHEN TRUNCATE(
-        CAST(0.5 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT),
-        0
-      ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
+      WHEN FLOOR(0.5 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_16,
     CASE
-      WHEN TRUNCATE(CAST(COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT), 0) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
+      WHEN FLOOR(COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_17,
     CASE
-      WHEN TRUNCATE(
-        CAST(0.9 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS FLOAT),
-        0
-      ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
+      WHEN FLOOR(0.9 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
     END AS expr_9
@@ -99,7 +86,7 @@ SELECT
   MAX(expr_12) AS orders_75_percent,
   MAX(expr_13) AS orders_90_percent,
   MAX(expr_14) AS orders_99_percent,
-  MAX(o_totalprice) AS orders_max
+  MAX(expr_15) AS orders_max
 FROM _t1
 GROUP BY
   n_nationkey

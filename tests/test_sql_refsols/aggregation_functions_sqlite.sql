@@ -24,7 +24,13 @@ WITH _s1 AS (
       ELSE NULL
     END AS expr_17,
     CASE
-      WHEN CAST(0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS INTEGER) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC)
+      WHEN (
+        CAST(0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS INTEGER) - CASE
+          WHEN 0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) < CAST(0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+          THEN 1
+          ELSE 0
+        END
+      ) < ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC)
       THEN customer.c_acctbal
       ELSE NULL
     END AS expr_18

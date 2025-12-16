@@ -854,7 +854,7 @@ class HybridTranslator:
 
         # INTEGER((1.0-args[1]) * N)
         cast_integer: HybridExpr = HybridFunctionExpr(
-            pydop.INTEGER, [product], NumericType()
+            pydop.FLOOR, [product], NumericType()
         )
 
         # R > INTEGER((1.0-args[1]) * N)

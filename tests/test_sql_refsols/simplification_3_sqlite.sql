@@ -35,7 +35,13 @@ WITH _t2 AS (
     rsum1,
     rsum2,
     CASE
-      WHEN CAST(0.75 * COUNT(expr_13) OVER () AS INTEGER) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
+      WHEN (
+        CAST(0.75 * COUNT(expr_13) OVER () AS INTEGER) - CASE
+          WHEN 0.75 * COUNT(expr_13) OVER () < CAST(0.75 * COUNT(expr_13) OVER () AS INTEGER)
+          THEN 1
+          ELSE 0
+        END
+      ) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
       THEN expr_13
       ELSE NULL
     END AS expr_15,
