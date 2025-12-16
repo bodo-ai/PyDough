@@ -163,7 +163,6 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     singular5,
     singular6,
     singular7,
-    string_format_specifiers_mysql,
     string_format_specifiers_sqlite,
     supplier_best_part,
     supplier_pct_national_qty,
@@ -185,6 +184,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     yoy_change_in_num_orders,
 )
 
+from .conftest import tpch_custom_test_data_dialect_replacements
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
@@ -2065,54 +2065,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "d23": ["07-15-2023"],
                     }
                 ),
-                "string_format_specifiers_sqlite",
+                "string_format_specifiers",
             ),
-            id="string_format_specifiers_sqlite",
-        ),
-        pytest.param(
-            PyDoughPandasTest(
-                string_format_specifiers_mysql,
-                "TPCH",
-                lambda: pd.DataFrame(
-                    {
-                        "d1": ["Sat"],
-                        "d2": ["Jul"],
-                        "d3": ["7"],
-                        "d4": ["15th"],
-                        "d5": ["15"],
-                        "d6": ["15"],
-                        "d7": ["000000"],
-                        "d8": ["14"],
-                        "d9": ["02"],
-                        "d10": ["02"],
-                        "d11": ["30"],
-                        "d12": ["196"],
-                        "d13": ["14"],
-                        "d14": ["2"],
-                        "d15": ["30"],
-                        "d16": ["07"],
-                        "d17": ["PM"],
-                        "d18": ["02:30:45 PM"],
-                        "d19": ["45"],
-                        "d20": ["45"],
-                        "d21": ["14:30:45"],
-                        "d22": ["28"],
-                        "d23": ["28"],
-                        "d24": ["28"],
-                        "d25": ["28"],
-                        "d26": ["28"],
-                        "d27": ["6"],
-                        "d28": ["2023"],
-                        "d29": ["2023"],
-                        "d30": ["2023"],
-                        "d31": ["23"],
-                        "d32": ["2023-07-15"],
-                        "d33": ["14:30"],
-                    }
-                ),
-                "string_format_specifiers_mysql",
-            ),
-            id="string_format_specifiers_mysql",
+            id="string_format_specifiers",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -3265,6 +3220,11 @@ def test_pipeline_until_sql_tpch_custom(
     """
     Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
     """
+
+    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
+        empty_context_database.dialect, tpch_custom_pipeline_test_data
+    )
+
     file_path: str = get_sql_test_filename(
         tpch_custom_pipeline_test_data.test_name, empty_context_database.dialect
     )

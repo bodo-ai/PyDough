@@ -608,7 +608,7 @@ from tests.test_pydough_functions.user_collections import (
 ──┬─ TPCH
   ├─── TableCollection[customers]
   ├─── Where[nation_key == 6]
-  ├─┬─ TopK[5, $1.order_date.ASC(na_pos='last')]
+  ├─┬─ TopK[5, DEFAULT_TO($1.order_date, datetime.date(2000, 1, 1)).ASC(na_pos='last')]
   │ └─┬─ AccessChild
   │   ├─── SubCollection[orders]
   │   ├─── Where[order_priority == '1-URGENT']

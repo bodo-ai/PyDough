@@ -33,6 +33,7 @@ from tests.testing_utilities import (
     harmonize_types,
 )
 
+from .conftest import tpch_custom_test_data_dialect_replacements
 from .test_pipeline_custom_datasets import custom_datasets_test_data  # noqa
 from .test_pipeline_defog import defog_pipeline_test_data  # noqa
 from .test_pipeline_defog_custom import defog_custom_pipeline_test_data  # noqa
@@ -524,15 +525,9 @@ def test_pipeline_e2e_mysql_tpch_custom(
     Test executing the TPC-H custom queries from the original code generation on
     MySQL.
     """
-    if (
-        "string_format_specifiers" in tpch_custom_pipeline_test_data.test_name
-        and "mysql" not in tpch_custom_pipeline_test_data.test_name
-    ):
-        pytest.skip(
-            "Skipping string format specifiers test for Other dialects exept "
-            "for MySQL due to inconsistent behavior with date formatting through "
-            "dialects."
-        )
+    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
+        mysql_conn_db_context("tpch").dialect, tpch_custom_pipeline_test_data
+    )
 
     tpch_custom_pipeline_test_data.run_e2e_test(
         get_sample_graph,
