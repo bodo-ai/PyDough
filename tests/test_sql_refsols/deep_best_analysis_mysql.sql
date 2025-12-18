@@ -85,7 +85,7 @@ WITH _t2 AS (
 )
 SELECT
   REGION.r_name,
-  n_name COLLATE utf8mb4_bin AS n_name,
+  NATION.n_name COLLATE utf8mb4_bin AS n_name,
   _t.c_custkey AS c_key,
   _t.c_acctbal AS c_bal,
   _s7.c_acctbal AS cr_bal,

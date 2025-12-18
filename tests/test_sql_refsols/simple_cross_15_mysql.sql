@@ -20,10 +20,10 @@ WITH _t1 AS (
   FROM _t1
 )
 SELECT
-  a COLLATE utf8mb4_bin AS a,
-  e COLLATE utf8mb4_bin AS e,
-  i COLLATE utf8mb4_bin AS i,
-  o COLLATE utf8mb4_bin AS o
+  _s0.a COLLATE utf8mb4_bin AS a,
+  _s1.e COLLATE utf8mb4_bin AS e,
+  _s3.i COLLATE utf8mb4_bin AS i,
+  _s5.o COLLATE utf8mb4_bin AS o
 FROM _s0 AS _s0
 CROSS JOIN _s1 AS _s1
 CROSS JOIN _s3 AS _s3
