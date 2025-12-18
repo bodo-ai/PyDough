@@ -826,7 +826,7 @@ def sf_masked_test_data(
     return request.param
 
 
-@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "20"})
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50"})
 @pytest.mark.sf_masked
 def test_pipeline_until_relational_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
@@ -851,7 +851,7 @@ def test_pipeline_until_relational_masked_sf(
     )
 
 
-@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "20"})
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50"})
 @pytest.mark.sf_masked
 def test_pipeline_until_sql_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
@@ -879,7 +879,7 @@ def test_pipeline_until_sql_masked_sf(
     )
 
 
-@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "20"})
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50"})
 @pytest.mark.execute
 @pytest.mark.sf_masked
 @pytest.mark.parametrize("account_type", ["NONE", "PARTIAL", "FULL"])

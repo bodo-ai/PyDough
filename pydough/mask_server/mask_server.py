@@ -10,6 +10,7 @@ __all__ = [
     "MaskServerResponse",
 ]
 
+import base64
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -225,10 +226,11 @@ class MaskServerInfo:
                     "predicate_format": "linear_with_arity",
                     "output_mode": "cell_encrypted",
                     "dry_run": true,
+                    "limits": {"dedup": True},
                 },
                 ...
             ],
-            "expression_format": {"name": "linear", "version": "0.2.0"}
+            "expression_format": {"name": "linear", "version": "0.2.0"},
             "hard_limit": 1000,
         }
         ```
@@ -252,6 +254,7 @@ class MaskServerInfo:
                 "mode": "dynamic",
                 "predicate_format": "linear_with_arity",
                 "dry_run": dry_run,
+                "limits": {"dedup": True},
             }
             payload["items"].append(evaluate_request)
 
@@ -348,10 +351,15 @@ class MaskServerInfo:
                         MaskServerResponse.IN_ARRAY,
                         MaskServerResponse.NOT_IN_ARRAY,
                     ):
-                        payload = [
-                            record.get("cell_encrypted")
-                            for record in response.get("records", [])
-                        ]
+                        payload = []
+                        for record in response.get("records", []):
+                            record_raw: str = record["cell_encrypted"]
+                            padded = (
+                                record_raw + "=" * (4 - len(record_raw) % 4)
+                                if len(record_raw) % 4
+                                else record_raw
+                            )
+                            payload.append(base64.b64decode(padded).decode("utf-8"))
 
                     result.append(
                         MaskServerOutput(
