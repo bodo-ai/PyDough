@@ -95,6 +95,23 @@ from .testing_utilities import PyDoughPandasTest
             6,
             id="nations_top3_max6",
         ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = customers.CALCULATE(ck=key).TOP_K(10, by=account_balance.DESC()).orders.CALCULATE(ck, ok=key, tp=total_price).ORDER_BY(tp.DESC())",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "ck": [61453, 23828, 61453, 144232, 129934],
+                        "ok": [4056323, 5349568, 5503299, 5343141, 1808867],
+                        "tp": [424918.3, 322586.39, 308661.75, 307284.63, 306708.79],
+                    }
+                ),
+                "richest_customers_orders_max5",
+                order_sensitive=True,
+            ),
+            5,
+            id="richest_customers_orders_max5",
+        ),
     ],
 )
 def test_max_rows(
