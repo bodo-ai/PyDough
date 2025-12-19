@@ -1,5 +1,5 @@
 """
-Integration tests for the PyDough workflow on the TPC-H queries.
+Integration tests for the PyDough workflow with `max_rows` using TPC-H
 """
 
 from collections.abc import Callable
