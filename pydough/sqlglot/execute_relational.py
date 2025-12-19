@@ -51,7 +51,7 @@ __all__ = ["convert_relation_to_sql", "execute_df"]
 
 
 def convert_relation_to_sql(
-    relational: RelationalRoot, session: PyDoughSession, max_rows: int | None
+    relational: RelationalRoot, session: PyDoughSession, max_rows: int | None = None
 ) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
