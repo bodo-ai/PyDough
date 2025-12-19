@@ -14,6 +14,7 @@ from sqlglot.dialects import MySQL as MySQLDialect
 from sqlglot.dialects import Postgres as PostgresDialect
 from sqlglot.dialects import Snowflake as SnowflakeDialect
 from sqlglot.dialects import SQLite as SQLiteDialect
+from sqlglot.dialects.mysql import MySQL
 from sqlglot.errors import SqlglotError
 from sqlglot.expressions import (
     Alias,
@@ -423,14 +424,10 @@ def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
         if isinstance(inner, sqlglot_expressions.Anonymous) and inner.this == "ROW":
             expr.replace(inner)
 
-    # Recursively visit the AST.
-    for arg in expr.args.values():
+    # Recursively visit the subexpressions.
+    for arg in expr.iter_expressions():
         if isinstance(arg, SQLGlotExpression):
             remove_tuple_row_values(arg)
-        if isinstance(arg, list):
-            for item in arg:
-                if isinstance(item, SQLGlotExpression):
-                    remove_tuple_row_values(item)
 
 
 def convert_dialect_to_sqlglot(dialect: DatabaseDialect) -> SQLGlotDialect:
@@ -469,13 +466,14 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
     Note: Specify what each of the changes do in a coment above the new value
     """
 
-    if dialect == DatabaseDialect.MYSQL:
-        from sqlglot.dialects.mysql import MySQL
-
-        # Avoid the generation of UNION ALL for values
-        MySQL.Generator.VALUES_AS_TABLE = True
-        # Keep the parenthesis around the values
-        MySQL.Generator.WRAP_DERIVED_VALUES = True
+    match dialect:
+        case DatabaseDialect.MYSQL:
+            # Avoid the generation of UNION ALL for values
+            MySQL.Generator.VALUES_AS_TABLE = True
+            # Keep the parenthesis around the values
+            MySQL.Generator.WRAP_DERIVED_VALUES = True
+        case _:
+            pass
 
 
 def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
@@ -484,11 +482,12 @@ def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
     for this dialect in sqlglot
     """
 
-    if dialect == DatabaseDialect.MYSQL:
-        from sqlglot.dialects.mysql import MySQL
-
-        MySQL.Generator.VALUES_AS_TABLE = False
-        MySQL.Generator.WRAP_DERIVED_VALUES = False
+    match dialect:
+        case DatabaseDialect.MYSQL:
+            MySQL.Generator.VALUES_AS_TABLE = False
+            MySQL.Generator.WRAP_DERIVED_VALUES = False
+        case _:
+            pass
 
 
 def execute_df(

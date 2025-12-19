@@ -16,9 +16,9 @@ from .base_transform_bindings import BaseTransformBindings
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
     expand_std,
     expand_variance,
-    generate_user_collection,
 )
 
 
@@ -744,7 +744,7 @@ class MySQLTransformBindings(BaseTransformBindings):
             ]
         )
 
-        result: SQLGlotExpression = generate_user_collection(
+        result: SQLGlotExpression = create_constant_table(
             table_name, [column_name], range_rows
         )
 

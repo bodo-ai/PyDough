@@ -388,13 +388,13 @@ def expand_std(
     )
 
 
-def generate_user_collection(
+def create_constant_table(
     table_name: SQLGlotExpression,
     column_names: list[SQLGlotExpression],
     rows: list[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
-    Generate a SQL that represents a user collection using the given list of
+    Generate a SQL that represents a constant table using the given list of
     columns and rows.
 
     Args:
@@ -406,25 +406,31 @@ def generate_user_collection(
 
     result: SQLGlotExpression
 
-    if rows == []:
-        result = generate_empty_user_collection(column_names, ["INT"])
+    if len(rows) == 0:
+        result = create_empty_constant_table(column_names, ["INT"] * len(column_names))
     else:
+        # Create the VALUES expression
         values_expr: SQLGlotExpression = sqlglot_expressions.Values(expressions=rows)
 
         table_alias = sqlglot_expressions.TableAlias(
             this=table_name, columns=column_names
         )
 
+        # Subquery with alias for the VALUES expression
         aliased_values = sqlglot_expressions.Subquery(
             this=values_expr, alias=table_alias
         )
 
+        # List of columns to select
         select_columns: list[SQLGlotExpression] = []
-        use_rows: bool = isinstance(rows[0], sqlglot_expressions.Tuple)
+        # Determine if ROWS() are used
+        rows_used: bool = isinstance(rows[0], sqlglot_expressions.Anonymous)
 
         for idx, column in enumerate(column_names):
-            colum_enum: str = f"column{idx + 1}"
-            if use_rows:
+            if not rows_used:
+                # Sqlite names the values' columns as column1, column2, ... by
+                # default
+                colum_enum: str = f"column{idx + 1}"
                 select_columns.append(
                     sqlglot_expressions.Alias(
                         this=sqlglot_expressions.Column(this=colum_enum), alias=column
@@ -440,12 +446,16 @@ def generate_user_collection(
     return result
 
 
-def generate_empty_user_collection(
+def create_empty_constant_table(
     column_names: list[SQLGlotExpression], types: list[str]
 ) -> SQLGlotExpression:
     """
-    Construct a SQLGlot expression representing an empty user-defined collection
-    with specified columns and types.
+    Construct a SQLGlot expression representing an empty user-defined constant
+    table with specified columns and types.
+    For example, for column_names = ['X', 'Y'] and types = ['INT', 'VARCHAR'],
+    the resulting SQLGlot expression corresponds to the SQL:
+        SELECT CAST(NULL AS INT) AS X, CAST(NULL AS VARCHAR) AS Y
+        WHERE FALSE
 
     Args:
         `column_names`: List of all the column names.

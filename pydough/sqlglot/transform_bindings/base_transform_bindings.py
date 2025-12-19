@@ -23,8 +23,8 @@ from pydough.user_collections.user_collections import PyDoughUserGeneratedCollec
 from .sqlglot_transform_utils import (
     DateTimeUnit,
     apply_parens,
+    create_constant_table,
     current_ts_pattern,
-    generate_user_collection,
     offset_pattern,
     pad_helper,
     positive_index,
@@ -2205,6 +2205,10 @@ class BaseTransformBindings:
             this=collection.name, quoted=False
         )
 
+        # Determine if the range is empty. An empty range occurs when:
+        # - step > 0 and start >= end
+        # - step < 0 and start <= end
+        # - step == 0
         empty_range = (
             (collection.step > 0 and collection.start >= collection.end)
             or (collection.step < 0 and collection.start <= collection.end)
@@ -2222,7 +2226,7 @@ class BaseTransformBindings:
             ]
         )
 
-        result: SQLGlotExpression = generate_user_collection(
+        result: SQLGlotExpression = create_constant_table(
             table_name, [column_name], range_rows
         )
 
