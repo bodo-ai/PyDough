@@ -50,7 +50,9 @@ from .sqlglot_relational_visitor import SQLGlotRelationalVisitor
 __all__ = ["convert_relation_to_sql", "execute_df"]
 
 
-def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession) -> str:
+def convert_relation_to_sql(
+    relational: RelationalRoot, session: PyDoughSession, max_rows: int | None
+) -> str:
     """
     Convert the given relational tree to a SQL string using the given dialect.
 
@@ -58,6 +60,7 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
         `relational`: The relational tree to convert.
         `session`: The PyDough session encapsulating the logic used to execute
         the logic, including the PyDough configs and the database context.
+        `max_rows`: An optional limit on the number of rows to return.
 
     Returns:
         The SQL string representing the relational tree.
@@ -65,6 +68,24 @@ def convert_relation_to_sql(relational: RelationalRoot, session: PyDoughSession)
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         session
     ).relational_to_sqlglot(relational)
+
+    # If `max_rows` is specified, add a LIMIT clause to the SQLGlot expression.
+    if max_rows is not None:
+        assert isinstance(glot_expr, Select)
+        # If a limit does not already exist, add one.
+        if glot_expr.args.get("limit") is None:
+            glot_expr = glot_expr.limit(sqlglot_expressions.Literal.number(max_rows))
+        # If one does exist, update its value to be the minimum of the
+        # existing limit and `max_rows`.
+        else:
+            existing_limit_expr = glot_expr.args.get("limit").expression
+            assert isinstance(existing_limit_expr, sqlglot_expressions.Literal)
+            glot_expr = glot_expr.limit(
+                sqlglot_expressions.Literal.number(
+                    min(int(existing_limit_expr.this), max_rows)
+                )
+            )
+
     sqlglot_dialect: SQLGlotDialect = convert_dialect_to_sqlglot(
         session.database.dialect
     )
@@ -417,6 +438,7 @@ def execute_df(
     relational: RelationalRoot,
     session: PyDoughSession,
     display_sql: bool = False,
+    max_rows: int | None = None,
 ) -> pd.DataFrame:
     """
     Execute the given relational tree on the given database access
@@ -428,11 +450,12 @@ def execute_df(
         the logic, including the database context.
         `display_sql`: if True, prints out the SQL that will be run before
         it is executed.
+        `max_rows`: An optional limit on the number of rows to return.
 
     Returns:
         The result of the query as a Pandas DataFrame
     """
-    sql: str = convert_relation_to_sql(relational, session)
+    sql: str = convert_relation_to_sql(relational, session, max_rows)
     if display_sql:
         pyd_logger = get_logger(__name__)
         pyd_logger.info(f"SQL query:\n {sql}")

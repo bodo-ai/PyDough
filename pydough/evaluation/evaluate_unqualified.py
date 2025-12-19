@@ -148,6 +148,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
         The SQL string corresponding to the unqualified query.
     """
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
+    max_rows: int | None = kwargs.pop("max_rows", None)
     session: PyDoughSession = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, session)
     if not isinstance(qualified, PyDoughCollectionQDAG):
@@ -155,7 +156,7 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, column_selection, session
     )
-    return convert_relation_to_sql(relational, session)
+    return convert_relation_to_sql(relational, session, max_rows)
 
 
 def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
@@ -175,6 +176,7 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
         The DataFrame corresponding to the unqualified query.
     """
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
+    max_rows: int | None = kwargs.pop("max_rows", None)
     display_sql: bool = bool(kwargs.pop("display_sql", False))
     session: PyDoughSession = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, session)
@@ -183,4 +185,4 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     relational: RelationalRoot = convert_ast_to_relational(
         qualified, column_selection, session
     )
-    return execute_df(relational, session, display_sql)
+    return execute_df(relational, session, display_sql, max_rows)
