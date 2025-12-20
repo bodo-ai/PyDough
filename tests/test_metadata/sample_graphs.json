@@ -721,7 +721,14 @@
         "always matches": false,
         "keys": {"key": ["part_key"]},
         "description": "The line items for shipments of the part",
-        "synonyms": ["shipments", "packages", "purchases", "deliveries", "sales"]
+        "synonyms": ["shipments", "packages", "purchases", "deliveries", "sales"],
+        "extra semantic info": {
+          "unmatched rows": 0,
+          "min matches per row": 9,
+          "max matches per row": 57,
+          "avg matches per row": 30.01,
+          "classification": "one-to-many"
+        }
       },
       {
         "type": "reverse",
