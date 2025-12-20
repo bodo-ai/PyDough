@@ -98,13 +98,14 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
     """
     verified_analysis: list[dict] = []
     additional_definitions: list[str] = []
+    extra_info: dict = {}
     graph: GraphMetadata = GraphMetadata(
         graph_name,
         additional_definitions,
         verified_analysis,
         None,
         None,
-        {},
+        extra_info,
     )
 
     # Parse and extract the metadata for all of the collections in the graph.
@@ -140,6 +141,7 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
                 defn,
                 f"metadata for additional definitions inside {graph.error_name}",
             )
+            additional_definitions.append(defn)
     if "verified pydough analysis" in graph_json:
         verified_analysis_json: list = extract_array(
             graph_json, "verified pydough analysis", graph.error_name
@@ -156,6 +158,12 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
             HasPropertyWith("code", is_string).verify(
                 verified_json, "metadata for verified pydough analysis"
             )
+            verified_analysis.append(verified_json)
+    if "extra semantic info" in graph_json:
+        extra_info_json: dict = extract_object(
+            graph_json, "extra semantic info", graph.error_name
+        )
+        extra_info.update(extra_info_json)
 
     # Add all of the UDF definitions to the graph.
     if "functions" in graph_json:
