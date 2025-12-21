@@ -76,6 +76,7 @@ from .testing_utilities import PyDoughPandasTest
                     }
                 ),
                 "nations_top3_max2",
+                order_sensitive=True,
             ),
             2,
             id="nations_top3_max2",
@@ -91,6 +92,7 @@ from .testing_utilities import PyDoughPandasTest
                     }
                 ),
                 "nations_top3_max6",
+                order_sensitive=True,
             ),
             6,
             id="nations_top3_max6",
@@ -111,6 +113,22 @@ from .testing_utilities import PyDoughPandasTest
             ),
             5,
             id="richest_customers_orders_max5",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = nations.TOP_K(8, by=name.ASC()).WHERE(region.name != 'AMERICA').CALCULATE(key, name)",
+                "TPCH",
+                lambda: pd.DataFrame(
+                    {
+                        "key": [0, 18, 4],
+                        "name": ["ALGERIA", "CHINA", "EGYPT"],
+                    }
+                ),
+                "nested_topk_nations_max_3",
+                order_sensitive=True,
+            ),
+            3,
+            id="nested_topk_nations_max_3",
         ),
     ],
 )
