@@ -149,6 +149,9 @@ def to_sql(node: UnqualifiedNode, **kwargs) -> str:
     """
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
     max_rows: int | None = kwargs.pop("max_rows", None)
+    assert (isinstance(max_rows, int) and max_rows > 0) or max_rows is None, (
+        "`max_rows` must be a positive integer or None."
+    )
     session: PyDoughSession = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, session)
     if not isinstance(qualified, PyDoughCollectionQDAG):
@@ -177,6 +180,9 @@ def to_df(node: UnqualifiedNode, **kwargs) -> pd.DataFrame:
     """
     column_selection: list[tuple[str, str]] | None = _load_column_selection(kwargs)
     max_rows: int | None = kwargs.pop("max_rows", None)
+    assert (isinstance(max_rows, int) and max_rows > 0) or max_rows is None, (
+        "`max_rows` must be a positive integer or None."
+    )
     display_sql: bool = bool(kwargs.pop("display_sql", False))
     session: PyDoughSession = _load_session_info(**kwargs)
     qualified: PyDoughQDAG = qualify_node(node, session)
