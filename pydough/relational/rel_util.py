@@ -7,6 +7,7 @@ __all__ = [
     "add_expr_uses",
     "add_input_name",
     "apply_substitution",
+    "bubble_expression",
     "bubble_uniqueness",
     "build_filter",
     "contains_window",
@@ -429,12 +430,15 @@ def add_expr_uses(
 
 def extract_equijoin_keys(
     join: Join,
+    extra_filters: set[RelationalExpression] | None = None,
 ) -> tuple[list[ColumnReference], list[ColumnReference]]:
     """
     Extracts the equi-join keys from a join condition with two inputs.
 
     Args:
         `join`: the Join node whose condition is being parsed.
+        `extra_filters`: an optional set of extra filter expressions to
+        consider as part of the join condition, or applied after it.
 
     Returns:
         A tuple where the first element are the equi-join keys from the LHS,
@@ -444,6 +448,8 @@ def extract_equijoin_keys(
     lhs_keys: list[ColumnReference] = []
     rhs_keys: list[ColumnReference] = []
     stack: list[RelationalExpression] = [join.condition]
+    if extra_filters is not None:
+        stack.extend(list(extra_filters))
     lhs_name: str | None = join.default_input_aliases[0]
     rhs_name: str | None = join.default_input_aliases[1]
     while stack:
@@ -623,6 +629,75 @@ def bubble_uniqueness(
                     isomorphisms[name2].add(name1)
     include_isomorphisms(output_uniqueness, isomorphisms)
     return output_uniqueness
+
+
+def bubble_expression(
+    expr: RelationalExpression,
+    revmap: dict[RelationalExpression, RelationalExpression],
+) -> RelationalExpression | None:
+    """
+    Attempts to bubble an expression up through a relational node using a
+    reverse mapping of column references to their corresponding expressions in
+    the child node.
+
+    Args:
+        `expr`: The expression to bubble up.
+        `revmap`: A mapping of column references from the parent node to their
+        corresponding expressions in the child node.
+
+    Returns:
+        The bubbled up expression, or None if it could not be bubbled up.
+    """
+    if expr in revmap:
+        return revmap[expr]
+    match expr:
+        case CallExpression():
+            new_inputs: list[RelationalExpression] = []
+            for arg in expr.inputs:
+                new_arg: RelationalExpression | None = bubble_expression(arg, revmap)
+                if new_arg is None:
+                    return None
+                new_inputs.append(new_arg)
+            return CallExpression(expr.op, expr.data_type, new_inputs)
+        case WindowCallExpression():
+            new_inputs = []
+            new_partition_inputs: list[RelationalExpression] = []
+            new_order_inputs: list[ExpressionSortInfo] = []
+            for arg in expr.inputs:
+                new_arg = bubble_expression(arg, revmap)
+                if new_arg is None:
+                    return None
+                new_inputs.append(new_arg)
+            for part_arg in expr.partition_inputs:
+                new_part_arg: RelationalExpression | None = bubble_expression(
+                    part_arg, revmap
+                )
+                if new_part_arg is None:
+                    return None
+                new_partition_inputs.append(new_part_arg)
+            for order_arg in expr.order_inputs:
+                new_order_expr: RelationalExpression | None = bubble_expression(
+                    order_arg.expr, revmap
+                )
+                if new_order_expr is None:
+                    return None
+                new_order_inputs.append(
+                    ExpressionSortInfo(
+                        new_order_expr, order_arg.ascending, order_arg.nulls_first
+                    )
+                )
+            return WindowCallExpression(
+                expr.op,
+                expr.data_type,
+                new_inputs,
+                new_partition_inputs,
+                new_order_inputs,
+                expr.kwargs,
+            )
+        case LiteralExpression():
+            return expr
+        case _:
+            return None
 
 
 def apply_substitution(
