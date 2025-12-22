@@ -63,8 +63,12 @@ def batch_evaluate(
             "index": payload.items.index(item) + 1,
         }
         if table_result is None:
+            # If the key is not found in the lookup table, return an error for
+            # this item of the batch.
             out_item["result"] = "ERROR"
         else:
+            # Otherwise, generate a successful response based on the lookup
+            # table.
             output_case, output_list = table_result
             out_item["SUCCESS"] = "SUCCESS"
             out_item["response"] = {
@@ -96,6 +100,10 @@ def batch_evaluate(
         # Adding the new item to the batch output
         responses.append(out_item)
 
+    # Determine overall result:
+    # - SUCCESS if all items succeeded
+    # - ERROR if all items failed
+    # - PARTIAL_FAILURE otherwise
     result: str
     if successful_responses == len(payload.items):
         result = "SUCCESS"
