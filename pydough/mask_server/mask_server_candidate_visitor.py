@@ -158,7 +158,7 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         self.processed_candidates: set[RelationalExpression] = set()
         """
         The set of all relational expressions that have already been added to
-        the candidate pool at lest once. This is used to avoid adding the same
+        the candidate pool at least once. This is used to avoid adding the same
         candidate multiple times if it is encountered multiple times during a
         traversal of the relational tree, since the candidate pool will be
         cleared once all of the candidates in the pool are processed in a batch
@@ -525,12 +525,25 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
 
         `JOIN_STRINGS('', a, b, c)` becomes `CONCAT(3, a, b, c)`
         `JOIN_STRINGS(s, a, b, c)` becomes `CONCAT(5, a, s, b, s, c)`
+
+        Args:
+            `input_exprs`: A list of linear serializations for each input to
+            the JOIN_STRINGS call, where each input serialization is either a
+            list of strings/ints/floats/bools/None, or None if the input
+            could not be converted. The first input is the delimiter
+            expression, and each subsequent input is a string expression to
+            be joined.
+
+        Returns:
+            A list of strings/ints/floats/bools/None representing the linear
+            serialization of the JOIN_STRINGS operation, or None if the
+            JOIN_STRINGS operation could not be converted.
         """
         assert len(input_exprs) >= 3, (
             "JOIN_STRINGS operator requires at least three inputs."
         )
         # If the delimiter expression could not be converted, return None.
-        delimiter_expr = input_exprs[0]
+        delimiter_expr: list[str | int | float | None | bool] | None = input_exprs[0]
         if delimiter_expr is None:
             return None
 
@@ -540,7 +553,9 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
         # If the delimiter is the empty string, then the number of arguments
         # is simply the number of input expressions minus one (the delimiter),
         # and all of the remaining arguments should just be appended directly.
-        remaining_args = input_exprs[1:]
+        remaining_args: list[list[str | int | float | None | bool] | None] = (
+            input_exprs[1:]
+        )
         if delimiter_expr == [""]:
             result.append(len(remaining_args))
             for expr in remaining_args:
@@ -669,6 +684,11 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             either "+", "-", or "", with empty being the same as "+").
             `amount`: The integer amount to add (can be negative).
             `unit_str`: The string representing the unit to add.
+
+        Returns:
+            A list of strings/ints/floats/bools/None representing the linear
+            serialization of the DATEADD operation, or None if the DATEADD
+            operation could not be converted.
         """
         unit: DateTimeUnit | None = DateTimeUnit.from_string(unit_str)
         if unit is None or unit == DateTimeUnit.WEEK:
@@ -759,6 +779,8 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             and literal.value.upper()
             in MaskServerCandidateVisitor.SERVER_OPERATOR_NAMES
         ):
+            # If the string literal matches a reserved operator name, wrap it
+            # in a QUOTE function to avoid confusion. E.g. `['QUOTE', 1, 'AND']`
             return ["QUOTE", 1, literal.value]
         elif isinstance(literal.value, (int, float, str)):
             return [literal.value]

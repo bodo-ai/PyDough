@@ -236,12 +236,15 @@ class MaskServerInfo:
         ```
         """
 
+        # Create the payload for the overall batch request, then populate the
+        # items list with each individual request.
         payload: dict = {
             "items": [],
             "expression_format": {"name": "linear", "version": "0.2.0"},
             "hard_limit": hard_limit,
         }
 
+        # Populate each individual request in the batch in the specified format.
         for item in batch:
             evaluate_request: dict = {
                 "dataset_id": item.dataset_id,
@@ -351,6 +354,9 @@ class MaskServerInfo:
                         MaskServerResponse.IN_ARRAY,
                         MaskServerResponse.NOT_IN_ARRAY,
                     ):
+                        # If the response is an IN_ARRAY or NOT_IN_ARRAY,
+                        # extract all the records to get the cell encrypted
+                        # values, and decode them from base64.
                         payload = []
                         for record in response.get("records", []):
                             record_raw: str = record["cell_encrypted"]
