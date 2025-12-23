@@ -2389,13 +2389,12 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "n_pairs": [22],
+                        "n_pairs": [100],
                     }
                 ),
                 "simple_cross_6",
             ),
             id="simple_cross_6",
-            marks=pytest.mark.skip("Getting stuck in mysql dialect"),
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2403,14 +2402,13 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "original_order_key": [13569, 74754, 112352, 113347, 122566],
-                        "n_other_orders": [1] * 5,
+                        "original_part_key": [12850, 7635, 14848, 51810, 914],
+                        "n_other_parts": [9, 8, 8, 8, 7],
                     }
                 ),
                 "simple_cross_7",
             ),
             id="simple_cross_7",
-            marks=pytest.mark.skip("Getting stuck in mysql dialect"),
         ),
         pytest.param(
             PyDoughPandasTest(

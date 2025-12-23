@@ -932,13 +932,13 @@ from tests.test_pydough_functions.user_collections import (
 ┌─── TPCH
 └─┬─ Calculate[n_pairs=COUNT($1)]
   └─┬─ AccessChild
-    ├─── TableCollection[orders]
-    ├─── Calculate[original_customer_key=customer_key, original_order_key=key, original_order_date=order_date]
-    └─┬─ Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
+    ├─── TableCollection[customers]
+    ├─── Calculate[original_customer_key=key, original_customer_nation_key=nation_key, original_customer_segment=market_segment]
+    └─┬─ Where[account_balance > 9990]
       └─┬─ TPCH
-        ├─── TableCollection[orders]
-        ├─── Where[INTEGER(SLICE(clerk, 6, None, None)) >= 900]
-        └─── Where[(customer_key == original_customer_key) & (key > original_order_key) & (order_date == original_order_date)]
+        ├─── TableCollection[customers]
+        ├─── Where[account_balance > 9990]
+        └─── Where[(nation_key == original_customer_nation_key) & (key > original_customer_key) & (market_segment == original_customer_segment)]
   """,
             id="simple_cross_6",
         ),

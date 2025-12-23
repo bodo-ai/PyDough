@@ -2979,48 +2979,55 @@ def simple_cross_5():
 
 
 def simple_cross_6():
-    # Count how many combinations of 2 DISTINCT orders exist that were from the
-    # same day from the same customer, only considering orders handled
-    # by any of the clerks whose numbers is at least 900.
-    predicates = INTEGER(clerk[6:]) >= 900
-    original_orders = orders.CALCULATE(
-        original_customer_key=customer_key,
-        original_order_key=key,
-        original_order_date=order_date,
+    # Count how many combinations of 2 DISTINCT customers exist that were from the
+    # same nation, same market segment, only considering customers with an account balance
+    # over 9990, where the first customer has a lower key than the second customer
+    predicates = account_balance > 9990
+    original_customers = customers.CALCULATE(
+        original_customer_key=key,
+        original_customer_nation_key=nation_key,
+        original_customer_segment=market_segment,
     ).WHERE(predicates)
-    other_orders_by_same_customer_same_date = original_orders.CROSS(
-        orders.WHERE(predicates)
+    other_customers_by_same_customer_balance = original_customers.CROSS(
+        customers.WHERE(predicates)
     ).WHERE(
-        (customer_key == original_customer_key)
-        & (key > original_order_key)
-        & (order_date == original_order_date)
+        (nation_key == original_customer_nation_key)
+        & (key > original_customer_key)
+        & (market_segment == original_customer_segment)
     )
-    return TPCH.CALCULATE(n_pairs=COUNT(other_orders_by_same_customer_same_date))
+    return TPCH.CALCULATE(n_pairs=COUNT(other_customers_by_same_customer_balance))
 
 
 def simple_cross_7():
-    # For every order with status P, count how many DIFFERENT orders with
-    # status "P" were made by the same
-    # customer on the same date, considering only the first 5 orders
-    # with the highest number of other orders, breaking ties by key
-    original_orders = orders.WHERE(order_status == "P").CALCULATE(
-        original_customer_key=customer_key,
-        original_order_key=key,
-        original_order_date=order_date,
+    # For every part from Manufacturer#3 of Brand#35
+    # with "tomato" in the name, count how many OTHER parts
+    # from the same manufacturer & brand with "tomato" in the name
+    # have difference of 5 dolars in its retail price, considering only the f
+    # irst 5 parts with the highest number of other parts, breaking ties by part key
+    original_parts = parts.WHERE(
+        (manufacturer == "Manufacturer#3")
+        & (brand == "Brand#35")
+        & (CONTAINS(name, "tomato"))
+    ).CALCULATE(
+        original_part_key=key,
+        original_manufacturer=manufacturer,
+        original_brand=brand,
+        original_price=retail_price,
     )
-    return original_orders.CALCULATE(
-        original_order_key,
-        n_other_orders=COUNT(
+    return original_parts.CALCULATE(
+        original_part_key,
+        n_other_parts=COUNT(
             CROSS(
-                orders.WHERE(
-                    (customer_key == original_customer_key)
-                    & (order_status == "P")
-                    & (key > original_order_key)
-                    & (order_date == original_order_date)
+                parts.WHERE(
+                    (manufacturer == original_manufacturer)
+                    & (brand == original_brand)
+                    & (CONTAINS(name, "tomato"))
+                    & (key > original_part_key)
+                    & (ABS(retail_price - original_price) < 5.0)
                 )
             )
         ),
-    ).TOP_K(5, by=[n_other_orders.DESC(), original_order_key.ASC()])
+    ).TOP_K(5, by=[n_other_parts.DESC(), original_part_key.ASC()])
 
 
 def simple_cross_8():

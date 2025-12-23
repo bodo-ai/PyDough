@@ -1,32 +1,31 @@
-WITH _t3 AS (
+WITH _s3 AS (
   SELECT
-    o_custkey,
-    o_orderdate,
-    o_orderkey,
-    o_orderstatus
-  FROM tpch.ORDERS
-  WHERE
-    o_orderstatus = 'P'
-), _s3 AS (
-  SELECT
-    _t3.o_orderkey,
+    PART.p_partkey,
     COUNT(*) AS n_rows
-  FROM _t3 AS _t3
-  JOIN _t3 AS _t4
-    ON _t3.o_custkey = _t4.o_custkey
-    AND _t3.o_orderdate = _t4.o_orderdate
-    AND _t3.o_orderkey < _t4.o_orderkey
+  FROM tpch.PART AS PART
+  JOIN tpch.PART AS PART_2
+    ON ABS(PART_2.p_retailprice - PART.p_retailprice) < 5.0
+    AND PART.p_brand = PART_2.p_brand
+    AND PART.p_mfgr = PART_2.p_mfgr
+    AND PART.p_partkey < PART_2.p_partkey
+    AND PART_2.p_name LIKE '%tomato%'
+  WHERE
+    PART.p_brand = 'Brand#35'
+    AND PART.p_mfgr = 'Manufacturer#3'
+    AND PART.p_name LIKE '%tomato%'
   GROUP BY
     1
 )
 SELECT
-  ORDERS.o_orderkey AS original_order_key,
-  COALESCE(_s3.n_rows, 0) AS n_other_orders
-FROM tpch.ORDERS AS ORDERS
+  PART.p_partkey AS original_part_key,
+  COALESCE(_s3.n_rows, 0) AS n_other_parts
+FROM tpch.PART AS PART
 LEFT JOIN _s3 AS _s3
-  ON ORDERS.o_orderkey = _s3.o_orderkey
+  ON PART.p_partkey = _s3.p_partkey
 WHERE
-  ORDERS.o_orderstatus = 'P'
+  PART.p_brand = 'Brand#35'
+  AND PART.p_mfgr = 'Manufacturer#3'
+  AND PART.p_name LIKE '%tomato%'
 ORDER BY
   2 DESC,
   1
