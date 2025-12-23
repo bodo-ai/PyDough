@@ -193,6 +193,10 @@ class MaskServerInfo:
         request: ServerRequest = self.generate_request(batch, dry_run, hard_limit)
         response_json = self.connection.send_server_request(request)
         result: list[MaskServerOutput] = self.generate_result(response_json)
+        print()
+        print(request.payload)
+        print()
+        print(response_json)
 
         return result
 
