@@ -98,14 +98,14 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
     """
     verified_analysis: list[dict] = []
     additional_definitions: list[str] = []
-    extra_info: dict = {}
+    extra_semantic_info: dict = {}
     graph: GraphMetadata = GraphMetadata(
         graph_name,
         additional_definitions,
         verified_analysis,
         None,
         None,
-        extra_info,
+        extra_semantic_info,
     )
 
     # Parse and extract the metadata for all of the collections in the graph.
@@ -163,7 +163,7 @@ def parse_graph_v2(graph_name: str, graph_json: dict) -> GraphMetadata:
         extra_info_json: dict = extract_object(
             graph_json, "extra semantic info", graph.error_name
         )
-        extra_info.update(extra_info_json)
+        extra_semantic_info.update(extra_info_json)
 
     # Add all of the UDF definitions to the graph.
     if "functions" in graph_json:
