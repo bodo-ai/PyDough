@@ -48,7 +48,10 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         unprotect_protocol: str,
         protect_protocol: str,
         server_masked: bool,
-        sample_values: list | None = None,
+        sample_values: list | None,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
         super().__init__(
             name,
@@ -56,6 +59,9 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
             protected_data_type,
             column_name,
             sample_values,
+            description,
+            synonyms,
+            extra_semantic_info,
         )
         self._unprotected_data_type: PyDoughType = data_type
         self._unprotect_protocol: str = unprotect_protocol
@@ -172,6 +178,10 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
             unprotect_protocol,
             protect_protocol,
             server_masked,
+            None,
+            None,
+            None,
+            None,
         )
         # Parse the optional common semantic properties like the description.
         property.parse_optional_properties(property_json)
