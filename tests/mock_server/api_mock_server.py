@@ -8,6 +8,8 @@ This server provides endpoints to:
 Intended for use in unit and integration tests.
 """
 
+import base64
+
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel
 
@@ -76,7 +78,9 @@ def batch_evaluate(
                 "records": [
                     {
                         "mode": "cell_encrypted",
-                        "cell_encrypted": elem,
+                        "cell_encrypted": base64.b64encode(str(elem).encode("utf-8"))
+                        if isinstance(elem, str)
+                        else elem,
                     }
                     for elem in output_list
                 ],
@@ -89,9 +93,11 @@ def batch_evaluate(
                     "actual_output_mode": "cell_encrypted",
                     "available_output_modes": ["cell_encrypted"],
                     "encryption_mode": None,
-                    "dynamic_operator": output_case,
+                    "dynamic_operator": "IN",
                 },
             }
+            if output_case == "NOT_IN":
+                out_item["response"]["metadata"]["representation"] = "NOT_IN"
             # Don't include response in dry run case
             if item.dry_run:
                 out_item["response"].pop("records")

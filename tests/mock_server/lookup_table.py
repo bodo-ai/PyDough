@@ -1256,6 +1256,6 @@ LOOKUP_TABLE: dict[tuple[str, str, tuple], tuple[str, list]] = {
     (
         "dummy_server",
         "CRBNK/CUSTOMERS/c_fname",
-        ("CONTAINS", 2, "QUOTE", 1, "SLICE", "UPPER", 1, "SLICE", 3, "__col__", 0, 1),
+        ("CONTAINS", 2, "SLICE", "UPPER", 1, "SLICE", 3, "__col__", 0, 1),
     ): ("IN", ["CAROL", "EMILY", "ISABEL", "LUKE", "SOPHIA"]),
 }

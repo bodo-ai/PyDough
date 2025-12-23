@@ -1437,11 +1437,11 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
                 {
-                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'QUOTE', 1, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]",
                     "DRY_RUN",
                 },
                 {
-                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'QUOTE', 1, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]"
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]"
                 },
             ],
             id="cryptbank_filter_count_59",
@@ -1451,7 +1451,7 @@ def test_pipeline_e2e_cryptbank(
             "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
             [
                 {
-                    "CRBNK/CUSTOMERS/c_fname: ['IN', 8, '__col__', 'QUOTE', 1, 'Datediff', 'QUOTE', 1, 'YEAR', 'IN', 'NOT IN', 'NEQ', 'QUOTE', 1, 'NOT_EQUAL', 'QUOTE', 1, 'lower']",
+                    "CRBNK/CUSTOMERS/c_fname: ['IN', 8, '__col__', 'Datediff', 'YEAR', 'IN', 'NOT IN', 'NEQ', 'NOT_EQUAL', 'lower']",
                     "DRY_RUN",
                 },
             ],

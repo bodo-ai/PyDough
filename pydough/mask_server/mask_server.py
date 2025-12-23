@@ -129,22 +129,24 @@ class MaskServerInfo:
             base_url=base_url, token=token
         )
 
-    def get_server_response_case(self, server_case: str) -> MaskServerResponse:
+    def get_server_response_case(self, response_metadata: dict) -> MaskServerResponse:
         """
         Mapping from server response strings to MaskServerResponse enum values.
 
         Args:
-            `server_case`: The response string from the server.
+            `response_metadata`: The metadata field from the server response.
         Returns:
             The corresponding MaskServerResponse enum value.
         """
-        match server_case:
-            case "IN":
-                return MaskServerResponse.IN_ARRAY
-            case "NOT_IN":
-                return MaskServerResponse.NOT_IN_ARRAY
-            case _:
-                return MaskServerResponse.UNSUPPORTED
+        if response_metadata.get("dynamic_operator", None) == "IN":
+            match response_metadata.get("representation", None):
+                case "IN" | None:
+                    return MaskServerResponse.IN_ARRAY
+                case "NOT_IN":
+                    return MaskServerResponse.NOT_IN_ARRAY
+                case _:
+                    return MaskServerResponse.UNSUPPORTED
+        return MaskServerResponse.UNSUPPORTED
 
     def simplify_simple_expression_batch(
         self,
@@ -349,7 +351,7 @@ class MaskServerInfo:
                 else:
                     # In this case, parse the response normally.
                     response_case: MaskServerResponse = self.get_server_response_case(
-                        response["metadata"]["dynamic_operator"]
+                        response["metadata"]
                     )
 
                     payload: Any = None
@@ -363,13 +365,16 @@ class MaskServerInfo:
                         # values, and decode them from base64.
                         payload = []
                         for record in response.get("records", []):
-                            record_raw: str = record["cell_encrypted"]
-                            padded = (
-                                record_raw + "=" * (4 - len(record_raw) % 4)
-                                if len(record_raw) % 4
-                                else record_raw
-                            )
-                            payload.append(base64.b64decode(padded).decode("utf-8"))
+                            record_raw = record["cell_encrypted"]
+                            if isinstance(record_raw, str):
+                                padded = (
+                                    record_raw + "=" * (4 - len(record_raw) % 4)
+                                    if len(record_raw) % 4
+                                    else record_raw
+                                )
+                                payload.append(base64.b64decode(padded).decode("utf-8"))
+                            else:
+                                payload.append(record_raw)
 
                     result.append(
                         MaskServerOutput(

@@ -774,14 +774,6 @@ class MaskServerCandidateVisitor(RelationalExpressionVisitor):
             return ["NULL"]
         elif isinstance(literal.value, bool):
             return ["TRUE" if literal.value else "FALSE"]
-        elif (
-            isinstance(literal.value, str)
-            and literal.value.upper()
-            in MaskServerCandidateVisitor.SERVER_OPERATOR_NAMES
-        ):
-            # If the string literal matches a reserved operator name, wrap it
-            # in a QUOTE function to avoid confusion. E.g. `['QUOTE', 1, 'AND']`
-            return ["QUOTE", 1, literal.value]
         elif isinstance(literal.value, (int, float, str)):
             return [literal.value]
         elif isinstance(literal.value, datetime.datetime):
