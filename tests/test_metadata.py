@@ -8,6 +8,7 @@ from pydough.metadata import (
     CollectionMetadata,
     GraphMetadata,
     PropertyMetadata,
+    ScalarAttributeMetadata,
     SimpleJoinMetadata,
     SimpleTableMetadata,
     TableColumnMetadata,
@@ -296,3 +297,130 @@ def test_simple_join_info(
     assert property.keys == keys, (
         f"Mismatch between 'keys' of {property!r} and expected value"
     )
+
+
+def test_semantic_info(get_sample_graph: graph_fetcher) -> None:
+    """
+    Testing that the semantic fields of the metadata are set correctly.
+    """
+    graph: GraphMetadata = get_sample_graph("TPCH")
+
+    # Verify the semantic info fields of the overall grapah
+    assert graph.verified_pydough_analysis == [
+        {
+            "question": "How many customers are in China?",
+            "code": "TPCH.CALCULATE(n_chinese_customers=COUNT(customers.WHERE(nation.name == 'CHINA')))",
+        },
+        {
+            "question": "What was the most ordered part in 1995, by quantity, by Brazilian customers?",
+            "code": "parts.CALCULATE(name, quantity=SUM(lines.WHERE((YEAR(ship_date) == 1995) & (order.customer.nation.name == 'BRAZIL')).quantity)).TOP_K(1, by=quantity)",
+        },
+        {
+            "question": "Who is the wealthiest customer in each nation in Africa?",
+            "code": "nations.WHERE(region.name == 'AFRICA').CALCULATE(nation_name=name, richest_customer=customers.BEST(per='nation', by=account_balance.DESC()).name)",
+        },
+    ]
+
+    assert graph.additional_definitions == [
+        "Revenue for a lineitem is the extended_price * (1 - discount) * (1 - tax) minus quantity * supply_cost from the corresponding supply record",
+        "A domestic shipment is a lineitem where the customer and supplier are from the same nation",
+        "Frequent buyers are customers that have placed more than 5 orders in a single year for at least two different years",
+    ]
+
+    assert graph.extra_semantic_info == {
+        "data source": "TPC-H Benchmark Dataset",
+        "data generation tool": "TPC-H dbgen tool",
+        "dataset download link": "https://github.com/lovasoa/TPCH-sqlite/releases/download/v1.0/TPC-H.db",
+        "schema diagram link": "https://docs.snowflake.com/en/user-guide/sample-data-tpch",
+        "dataset specification link": "https://www.tpc.org/TPC_Documents_Current_Versions/pdf/TPC-H_v3.0.1.pdf",
+        "data scale factor": 1,
+        "intended use": "Simulating decision support systems for complex ad-hoc queries and concurrent data modifications",
+        "notable characteristics": "Highly normalized schema with multiple tables and relationships, designed to represent a wholesale supplier's business environment",
+        "data description": "Contains information about orders. Every order has one or more lineitems, each representing the purchase and shipment of a specific part from a specific supplier. Each order is placed by a customer, and both customers and suppliers belong to nations which in turn belong to regions. Additionally, there are supply records indicating every combination of a supplier and the parts they supply.",
+    }
+
+    # Verify the semantic info fields for a collection (parts)
+    collection = graph.get_collection("parts")
+    assert isinstance(collection, CollectionMetadata)
+    assert (
+        collection.description
+        == "The various products supplied by various companies in shipments to different customers"
+    )
+    assert collection.synonyms == [
+        "products",
+        "components",
+        "items",
+        "goods",
+    ]
+    assert collection.extra_semantic_info == {
+        "nrows": 200000,
+        "distinct values": {
+            "key": 200000,
+            "name": 200000,
+            "manufacturer": 5,
+            "brand": 25,
+            "part_type": 150,
+            "size": 50,
+            "container": 40,
+            "retail_price": 20899,
+            "comment": 131753,
+        },
+        "correlations": {
+            "brand": "each brand is associated with exactly one manufacturer, and each manufacturer has exactly 5 distinct brands"
+        },
+    }
+
+    # Verify the semantic info fields for a scalar property (part.size)
+    scalar_property = collection.get_property("size")
+    assert isinstance(scalar_property, ScalarAttributeMetadata)
+    assert scalar_property.sample_values == [1, 10, 31, 46, 50]
+    assert scalar_property.description == "The size of the part"
+    assert scalar_property.synonyms == [
+        "dimension",
+        "measurement",
+        "length",
+        "width",
+        "height",
+        "volume",
+    ]
+    assert scalar_property.extra_semantic_info == {
+        "minimum value": 1,
+        "maximum value": 50,
+        "is dense": True,
+        "distinct values": 50,
+        "correlated fields": [],
+    }
+
+    # Test the semantic information for a relationship property (part.lines)
+    join_property = collection.get_property("lines")
+    assert isinstance(join_property, SimpleJoinMetadata)
+    assert join_property.description == ("The line items for shipments of the part")
+    assert join_property.synonyms == [
+        "shipments",
+        "packages",
+        "purchases",
+        "deliveries",
+        "sales",
+    ]
+    assert join_property.extra_semantic_info == {
+        "unmatched rows": 0,
+        "min matches per row": 9,
+        "max matches per row": 57,
+        "avg matches per row": 30.01,
+        "classification": "one-to-many",
+    }
+
+    # Test the semantic information for a property that does not have some
+    # semantic information defined for it (part.supply_records)
+    empty_semantic_property = collection.get_property("supply_records")
+    assert isinstance(empty_semantic_property, SimpleJoinMetadata)
+    assert (
+        empty_semantic_property.description
+        == "The records indicating which companies supply the part"
+    )
+    assert empty_semantic_property.synonyms == [
+        "producers",
+        "vendors",
+        "suppliers of part",
+    ]
+    assert empty_semantic_property.extra_semantic_info is None

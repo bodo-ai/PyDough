@@ -50,10 +50,10 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         protect_protocol: str,
         server_masked: bool,
         server_dataset_id: str | None,
-        sample_values: list | None = None,
-        description: str | None = None,
-        synonyms: list[str] | None = None,
-        extra_semantic_info: dict | None = None,
+        sample_values: list | None,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
         super().__init__(
             name,
@@ -197,6 +197,10 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
             protect_protocol,
             server_masked,
             server_dataset_id,
+            None,
+            None,
+            None,
+            None,
         )
         # Parse the optional common semantic properties like the description.
         property.parse_optional_properties(property_json)
