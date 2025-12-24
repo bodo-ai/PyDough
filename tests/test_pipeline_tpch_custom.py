@@ -2951,7 +2951,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [1052.98, 1085.81, 1062.33, 1040.95, 1146.71],
                         "orders_1_percent": [
                             5999.3,
                             7003.64,
@@ -3034,7 +3034,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [1052.98, 1085.81, 1062.33, 1040.95, 1146.71],
                         "orders_1_percent": [
                             5999.3,
                             7003.64,
@@ -3117,7 +3117,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [5390.99, 2622.17, 10183.86, 10722.74, 15050.91],
                         "orders_1_percent": [
                             5390.99,
                             2622.17,
@@ -3158,7 +3158,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             298230.29,
                             263862.04,
                             230003.53,
-                            252977.53,
+                            246470.76,
                         ],
                         "orders_99_percent": [
                             389176.08,

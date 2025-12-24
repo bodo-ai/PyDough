@@ -5,6 +5,7 @@ Definition of the logic to convert QDAG nodes into a HybridTree
 __all__ = ["HybridTranslator", "HybridTree"]
 
 from collections.abc import Iterable
+from decimal import Decimal
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
@@ -793,7 +794,7 @@ class HybridTranslator:
         """
         Rewrites a QUANTILE aggregation call into an equivalent expression using
         window functions. This is typically used for dialects that do not natively
-        support the PERCENTILE_DISCaggregate function.
+        support the PERCENTILE_DISC aggregate function.
 
         The rewritten expression selects the value at the specified quantile by:
         - Ranking the rows within each partition.
@@ -831,6 +832,20 @@ class HybridTranslator:
         # MAX(KEEP_IF(args[0], R > INTEGER((1.0-args[1]) * N)))
         data_expr: HybridExpr = expr.args[0]  # Column
 
+        max_call: HybridFunctionExpr
+
+        if expr.args[1].literal.value == 0.0:
+            # Shortcut for p=0 case: just return the MIN
+            min_call: HybridFunctionExpr = HybridFunctionExpr(
+                pydop.MIN, [data_expr], expr.typ
+            )
+            return min_call
+
+        if expr.args[1].literal.value == 1.0:
+            # Shortcut for p=1 case: just return the MAX
+            max_call = HybridFunctionExpr(pydop.MAX, [data_expr], expr.typ)
+            return max_call
+
         assert child_connection.subtree.agg_keys is not None
         partition_args: list[HybridExpr] = child_connection.subtree.agg_keys
         order_args: list[HybridCollation] = [HybridCollation(data_expr, False, False)]
@@ -845,8 +860,11 @@ class HybridTranslator:
         )
 
         # (1.0-args[1])
+        # Decimal aviods floating point precision issues
         sub: HybridExpr = HybridLiteralExpr(
-            Literal(1.0 - float(expr.args[1].literal.value), NumericType())
+            Literal(
+                Decimal("1.0") - Decimal(str(expr.args[1].literal.value)), NumericType()
+            )
         )
 
         # (1.0-args[1]) * N
@@ -871,10 +889,8 @@ class HybridTranslator:
         max_input_arg = self.inject_expression(
             child_connection.subtree, keep_largest, create_new_calc
         )
-        max_call: HybridFunctionExpr = HybridFunctionExpr(
-            pydop.MAX, [max_input_arg], expr.typ
-        )
-
+        max_call = HybridFunctionExpr(pydop.MAX, [max_input_arg], expr.typ)
+        # breakpoint()
         return max_call
 
     def add_unique_terms(

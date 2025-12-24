@@ -16,15 +16,9 @@ WITH _s0 AS (
     ON customer.c_custkey = orders.o_custkey AND orders.o_clerk = 'Clerk#000000272'
 ), _t1 AS (
   SELECT
-    CASE
-      WHEN (
-        CAST(0 AS INTEGER) - 0
-      ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
-      THEN _s5.o_totalprice
-      ELSE NULL
-    END AS expr_15,
     _s0.n_name,
     _s0.n_nationkey,
+    _s5.o_totalprice,
     region.r_name,
     CASE
       WHEN (
@@ -61,8 +55,8 @@ WITH _s0 AS (
     END AS expr_12,
     CASE
       WHEN (
-        CAST(0.09999999999999998 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER) - CASE
-          WHEN 0.09999999999999998 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) < CAST(0.09999999999999998 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER)
+        CAST(0.1 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER) - CASE
+          WHEN 0.1 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) < CAST(0.1 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER)
           THEN 1
           ELSE 0
         END
@@ -72,8 +66,8 @@ WITH _s0 AS (
     END AS expr_13,
     CASE
       WHEN (
-        CAST(0.010000000000000009 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER) - CASE
-          WHEN 0.010000000000000009 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) < CAST(0.010000000000000009 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER)
+        CAST(0.01 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER) - CASE
+          WHEN 0.01 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) < CAST(0.01 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER)
           THEN 1
           ELSE 0
         END
@@ -91,18 +85,7 @@ WITH _s0 AS (
       ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
       THEN _s5.o_totalprice
       ELSE NULL
-    END AS expr_16,
-    CASE
-      WHEN (
-        CAST(COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER) - CASE
-          WHEN CAST(COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER) > COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey)
-          THEN 1
-          ELSE 0
-        END
-      ) < ROW_NUMBER() OVER (PARTITION BY _s5.c_nationkey ORDER BY _s5.o_totalprice DESC)
-      THEN _s5.o_totalprice
-      ELSE NULL
-    END AS expr_17,
+    END AS expr_15,
     CASE
       WHEN (
         CAST(0.9 * COUNT(_s5.o_totalprice) OVER (PARTITION BY _s5.c_nationkey) AS INTEGER) - CASE
@@ -123,15 +106,15 @@ WITH _s0 AS (
 SELECT
   MAX(r_name) AS region_name,
   MAX(n_name) AS nation_name,
-  MAX(expr_17) AS orders_min,
+  MIN(o_totalprice) AS orders_min,
   MAX(expr_10) AS orders_1_percent,
   MAX(expr_9) AS orders_10_percent,
   MAX(expr_11) AS orders_25_percent,
-  MAX(expr_16) AS orders_median,
+  MAX(expr_15) AS orders_median,
   MAX(expr_12) AS orders_75_percent,
   MAX(expr_13) AS orders_90_percent,
   MAX(expr_14) AS orders_99_percent,
-  MAX(expr_15) AS orders_max
+  MAX(o_totalprice) AS orders_max
 FROM _t1
 GROUP BY
   n_nationkey
