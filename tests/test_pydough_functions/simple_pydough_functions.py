@@ -275,7 +275,7 @@ def rank_with_filters_c():
         parts.PARTITION(name="sizes", by=size)
         .TOP_K(5, by=size.DESC())
         .parts.CALCULATE(size, name)
-        .WHERE(RANKING(by=retail_price.DESC(), per="sizes") == 1)
+        .WHERE(RANKING(by=(retail_price.DESC(), key.ASC()), per="sizes") == 1)
     )
 
 

@@ -13,7 +13,7 @@ WITH _s0 AS (
   JOIN tpch.part AS part
     ON _s0.p_size = part.p_size
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY p_size ORDER BY part.p_retailprice DESC) = 1
+    ROW_NUMBER() OVER (PARTITION BY p_size ORDER BY part.p_retailprice DESC, part.p_partkey) = 1
 )
 SELECT
   p_name AS pname,
