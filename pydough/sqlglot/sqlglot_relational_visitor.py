@@ -14,7 +14,6 @@ from sqlglot.expressions import (
     Select,
     Subquery,
     TableAlias,
-    values,
 )
 from sqlglot.expressions import Literal as SQLGlotLiteral
 from sqlglot.expressions import Null as SQLGlotNull
@@ -536,9 +535,7 @@ class SQLGlotRelationalVisitor(RelationalVisitor):
         self._stack.append(query)
 
     def visit_empty_singleton(self, singleton: EmptySingleton) -> None:
-        self._stack.append(
-            Select().select(SQLGlotStar()).from_(values([sqlglot_convert((None,))]))
-        )
+        self._stack.append(self._expr_visitor._bindings.create_empty_singleton())
 
     def visit_root(self, root: RelationalRoot) -> None:
         self.visit_inputs(root)
