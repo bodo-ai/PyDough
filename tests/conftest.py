@@ -2026,4 +2026,17 @@ def true_mask_server_info() -> MaskServerInfo:
     if not os.getenv("PYDOUGH_MASK_SERVER_PATH"):
         raise RuntimeError("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
 
+    # Send a health request to ensure the server is reachable and functioning.
+    # If not, then halt testing early.
+    response: httpx.Response = httpx.get(
+        os.environ["PYDOUGH_MASK_SERVER_PATH"] + "/health", timeout=1
+    )
+    json: dict = response.json()
+    if (
+        response.status_code != 200
+        or json.get("status", None) != "ok"
+        or json.get("column_store", {}).get("status", "down") != "up"
+    ):
+        pytest.fail("Mask server is not reachable (health check failed)")
+
     return MaskServerInfo(base_url=os.environ["PYDOUGH_MASK_SERVER_PATH"], token=None)

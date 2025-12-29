@@ -904,6 +904,81 @@ from .testing_sf_masked_utilities import (
             ),
             id="retail_none",
         ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(MONOTONIC('JULIA', UPPER(first_name), 'KIM'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_a",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [58]}),
+                },
+            ),
+            id="name_range_a",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(MONOTONIC('JULIA', UPPER(first_name), 'MATTHEW') & ~MONOTONIC('KIM', UPPER(first_name), 'LARRY'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_b",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [57]}),
+                },
+            ),
+            id="name_range_b",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(MONOTONIC('JULIA', UPPER(first_name), 'LARRY') & MONOTONIC('KIM', UPPER(first_name), 'MATTHEW'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_c",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [26]}),
+                },
+            ),
+            id="name_range_c",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(~MONOTONIC('BOB', UPPER(first_name), 'YOLANDA'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_d",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [124]}),
+                },
+            ),
+            id="name_range_d",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(~MONOTONIC('STEEVE', UPPER(first_name), 'TIM'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_e",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [880]}),
+                },
+            ),
+            id="name_range_e",
+        ),
     ],
 )
 def sf_masked_test_data(
