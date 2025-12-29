@@ -2,21 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM bodo.fsi.accounts
 WHERE
-  (
-    PTY_UNPROTECT_DOB(createddate) <= '2020-03-13'
-    OR PTY_UNPROTECT_DOB(createddate) >= '2022-12-25'
-  )
-  AND (
-    PTY_UNPROTECT_DOB(createddate) <= '2023-01-15'
-    OR PTY_UNPROTECT_DOB(createddate) >= '2024-08-04'
-  )
-  AND (
-    PTY_UNPROTECT_DOB(createddate) <= '2024-11-08'
-    OR PTY_UNPROTECT_DOB(createddate) >= '2022-12-25'
-  )
-  AND (
-    PTY_UNPROTECT_DOB(createddate) <= '2024-11-08'
-    OR PTY_UNPROTECT_DOB(createddate) >= '2025-06-07'
-  )
-  AND PTY_UNPROTECT_DOB(createddate) <= '2026-03-07'
-  AND PTY_UNPROTECT_DOB(createddate) >= '2020-01-31'
+  createddate IN ('3149-05-04', '1478-09-27', '2396-11-12', '0714-10-12', '2461-03-25', '2326-07-19', '2883-05-12', '1368-06-18', '2386-05-20', '2241-06-04', '2413-07-10', '1464-06-25', '2308-05-18', '2690-01-11', '0937-05-21', '0794-10-27', '2856-02-06', '1335-02-11', '1605-10-12', '2456-12-12', '1610-12-28', '1267-04-15', '2133-09-29', '3337-02-07', '1403-12-19', '1484-05-22')

@@ -15,6 +15,7 @@ from pydough.database_connectors import DatabaseContext
 from pydough.errors import (
     PyDoughSessionException,
 )
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata import GraphMetadata
 from pydough.qdag import PyDoughCollectionQDAG, PyDoughQDAG
 from pydough.relational import RelationalRoot
@@ -32,8 +33,8 @@ def _load_session_info(**kwargs) -> PyDoughSession:
     Load the session information from the active session unless it is found
     in the keyword arguments. The following variants are accepted:
     - If `session` is found, it is used directly.
-    - If `metadata`, `config` and/or `database` are found, they are used to
-      construct a new session.
+    - If `metadata`, `config`, `mask_server`, and/or `database` are found, they
+      are used to construct a new session.
     - If none of these are found, the active session is used.
 
     Args:
@@ -88,6 +89,11 @@ def _load_session_info(**kwargs) -> PyDoughSession:
         database = kwargs.pop("database")
     else:
         database = pydough.active_session.database
+    mask_server: MaskServerInfo | None
+    if "mask_server" in kwargs:
+        mask_server = kwargs.pop("mask_server")
+    else:
+        mask_server = pydough.active_session.mask_server
     assert not kwargs, f"Unexpected keyword arguments: {kwargs}"
 
     # Construct the new session
@@ -95,6 +101,7 @@ def _load_session_info(**kwargs) -> PyDoughSession:
     new_session._metadata = metadata
     new_session._config = config
     new_session._database = database
+    new_session._mask_server = mask_server
     return new_session
 
 

@@ -22,6 +22,8 @@ on:
         required: true
       SF_MASKED_ACCOUNT:
         required: true
+      PYDOUGH_MASK_SERVER_PATH:
+        required: true
 
 jobs:
   sf-tests:

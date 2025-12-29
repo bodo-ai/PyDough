@@ -3,13 +3,25 @@ Integration tests for the PyDough workflow with custom questions on the custom
 CRYPTBANK sqlite database.
 """
 
+import datetime
+import io
 from collections.abc import Callable
+from contextlib import redirect_stdout
 
 import pandas as pd
 import pytest
 
+from pydough import to_sql
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
+from pydough.mask_server import MaskServerInfo
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
+from tests.testing_utilities import (
+    PyDoughPandasTest,
+    extract_batch_requests_from_logs,
+    graph_fetcher,
+    transform_and_exec_pydough,
+)
 
 
 @pytest.fixture(
@@ -396,6 +408,321 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
         ),
         pytest.param(
             PyDoughPandasTest(
+                "selected_customers = customers.WHERE(birthday <= '1925-01-01')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [0]}),
+                "cryptbank_filter_count_29",
+            ),
+            id="cryptbank_filter_count_29",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE("
+                " ISIN(YEAR(birthday) - 2, (1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993))"
+                " & ISIN(MONTH(birthday) + 1, (2, 4, 6, 8, 10, 12))"
+                ")\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_30",
+            ),
+            id="cryptbank_filter_count_30",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(birthday, [datetime.date(1991, 11, 15), datetime.date(1978, 2, 11), datetime.date(2005, 3, 14), datetime.date(1985, 4, 12)]))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [3]}),
+                "cryptbank_filter_count_31",
+                kwargs={"datetime": datetime, "pd": pd},
+            ),
+            id="cryptbank_filter_count_31",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(MONOTONIC(pd.Timestamp('2020-03-28 09:20:00'), creation_timestamp, datetime.datetime(2020, 9, 20, 8, 30, 0)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_32",
+                kwargs={"datetime": datetime, "pd": pd},
+            ),
+            id="cryptbank_filter_count_32",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(QUARTER(creation_timestamp) == 1)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [11]}),
+                "cryptbank_filter_count_33",
+            ),
+            id="cryptbank_filter_count_33",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(QUARTER(creation_timestamp) == DAY(creation_timestamp))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_34",
+            ),
+            id="cryptbank_filter_count_34",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE((HOUR(creation_timestamp) < 10) & (MINUTE(creation_timestamp) < 20))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [6]}),
+                "cryptbank_filter_count_35",
+            ),
+            id="cryptbank_filter_count_35",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_transactions = transactions.WHERE(SECOND(time_stamp) == 23)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_transactions))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [3]}),
+                "cryptbank_filter_count_36",
+            ),
+            id="cryptbank_filter_count_36",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(MONOTONIC(200, ABS(balance - 7250), 600))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [2]}),
+                "cryptbank_filter_count_37",
+            ),
+            id="cryptbank_filter_count_37",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(LARGEST(HOUR(creation_timestamp), MINUTE(creation_timestamp), SECOND(creation_timestamp)) == 10)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [2]}),
+                "cryptbank_filter_count_38",
+            ),
+            id="cryptbank_filter_count_38",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_accounts = accounts.WHERE(SMALLEST(HOUR(creation_timestamp), MINUTE(creation_timestamp)) == 15)\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_39",
+            ),
+            id="cryptbank_filter_count_39",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('', '1-', phone_number), '1-5'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [20]}),
+                "cryptbank_filter_count_40",
+            ),
+            id="cryptbank_filter_count_40",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number), '1-5'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [20]}),
+                "cryptbank_filter_count_41",
+            ),
+            id="cryptbank_filter_count_41",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number, '1'), '5-1'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_42",
+            ),
+            id="cryptbank_filter_count_42",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(JOIN_STRINGS(' ', first_name, last_name) == 'olivia anderson')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_43",
+            ),
+            id="cryptbank_filter_count_43",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 1991)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_44",
+            ),
+            id="cryptbank_filter_count_44",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 2005)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [3]}),
+                "cryptbank_filter_count_45",
+            ),
+            id="cryptbank_filter_count_45",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(DEFAULT_TO(YEAR(birthday), 2005), (2005, 2006)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [2]}),
+                "cryptbank_filter_count_46",
+            ),
+            id="cryptbank_filter_count_46",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 1991)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [16]}),
+                "cryptbank_filter_count_47",
+            ),
+            id="cryptbank_filter_count_47",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 1990), (1990, 2005)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [17]}),
+                "cryptbank_filter_count_48",
+            ),
+            id="cryptbank_filter_count_48",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 2005), (2005, 2006)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [18]}),
+                "cryptbank_filter_count_49",
+            ),
+            id="cryptbank_filter_count_49",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(~ISIN(DEFAULT_TO(YEAR(birthday), 2005), (2005, 2006)))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [18]}),
+                "cryptbank_filter_count_50",
+            ),
+            id="cryptbank_filter_count_50",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(IFF(ISIN(first_name[:1], ('q', 'r', 's')), first_name, last_name), 'ee'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [4]}),
+                "cryptbank_filter_count_51",
+            ),
+            id="cryptbank_filter_count_51",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(last_name, JOIN_STRINGS('', 'e', IFF(ISIN(last_name[:1], ('q', 'r', 's')), 'z', 'e'))))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_52",
+            ),
+            id="cryptbank_filter_count_52",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(first_name[0:1] == 'i')\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [1]}),
+                "cryptbank_filter_count_53",
+            ),
+            id="cryptbank_filter_count_53",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(first_name[-1:], list('aeiou')))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [7]}),
+                "cryptbank_filter_count_54",
+            ),
+            id="cryptbank_filter_count_54",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(first_name[1:3], ['ar', 'li', 'ra', 'to', 'am']))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [8]}),
+                "cryptbank_filter_count_55",
+            ),
+            id="cryptbank_filter_count_55",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(ISIN(first_name[-2:-1], ['a', 'c', 'l']))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_56",
+            ),
+            id="cryptbank_filter_count_56",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(first_name[:-1], 'e'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [8]}),
+                "cryptbank_filter_count_57",
+            ),
+            id="cryptbank_filter_count_57",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS(first_name[1:-1], 'e'))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [7]}),
+                "cryptbank_filter_count_58",
+            ),
+            id="cryptbank_filter_count_58",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "selected_customers = customers.WHERE(CONTAINS('SLICE', UPPER(first_name[:1])))\n"
+                "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n": [5]}),
+                "cryptbank_filter_count_59",
+            ),
+            id="cryptbank_filter_count_59",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
                 "selected_transactions = transactions.WHERE((YEAR(time_stamp) == 2022) & (MONTH(time_stamp) == 6))\n"
                 "result = CRYPTBANK.CALCULATE(n=ROUND(AVG(selected_transactions.amount), 2))",
                 "CRYPTBANK",
@@ -495,6 +822,120 @@ from tests.testing_utilities import PyDoughPandasTest, graph_fetcher
                 "cryptbank_agg_05",
             ),
             id="cryptbank_agg_05",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = CRYPTBANK.CALCULATE(n_neg=SUM(transactions.amount < 0), n_positive=SUM(transactions.amount > 0))",
+                "CRYPTBANK",
+                lambda: pd.DataFrame({"n_neg": [0], "n_positive": [300]}),
+                "cryptbank_agg_06",
+            ),
+            id="cryptbank_agg_06",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = CRYPTBANK.CALCULATE("
+                " n_yr=SUM(DATETIME(transactions.time_stamp, 'start of year') == '2023-01-01'),"
+                " n_qu=SUM(DATETIME(transactions.time_stamp, 'start of quarter') == '2023-04-01'),"
+                " n_mo=SUM(DATETIME(transactions.time_stamp, 'start of month') == '2023-06-01'),"
+                " n_we=SUM(DATETIME(transactions.time_stamp, 'start of week') == '2023-05-28'),"
+                " n_da=SUM(DATETIME(transactions.time_stamp, 'start of day') == '2023-06-02'),"
+                " n_ho=SUM(DATETIME(transactions.time_stamp, 'start of hour') == '2023-06-02 04:00:00'),"
+                " n_mi=SUM(DATETIME(transactions.time_stamp, 'start of minute') == '2023-06-02 04:55:00'),"
+                " n_se=SUM(DATETIME(transactions.time_stamp, 'start of second') == '2023-06-02 04:55:31'),"
+                " n_cts=SUM(transactions.time_stamp == DATETIME('now', 'start of day')),"
+                " n_dts=SUM(transactions.time_stamp == DATETIME(JOIN_STRINGS('-', '2025', '12', '31'))),"
+                " n_nst=SUM(DATETIME(transactions.time_stamp, 'start of week', '+3 days') == '2023-05-31'),"
+                " n_ayr=SUM(DATETIME(transactions.time_stamp, '+1 Y') == '2020-11-11 18:00:52'),"
+                " n_aqu=SUM(DATETIME(transactions.time_stamp, '+2 q') == '2020-05-11 18:00:52'),"
+                " n_amo=SUM(DATETIME(transactions.time_stamp, '-5 Mm') == '2019-06-11 18:00:52'),"
+                " n_awe=SUM(DATETIME(transactions.time_stamp, 'start of day', '+1 week') == '2023-06-09'),"
+                " n_ada=SUM(DATETIME(transactions.time_stamp, '+10 DAYS') == '2019-11-21 18:00:52'),"
+                " n_aho=SUM(DATETIME(transactions.time_stamp, '+1000 hour') == '2019-12-23 10:00:52'),"
+                " n_ami=SUM(DATETIME(transactions.time_stamp, '+10000 minute') == '2019-11-18 16:40:52'),"
+                " n_ase=SUM(DATETIME(transactions.time_stamp, '-1000000 s') == '2019-10-31 04:14:12'),"
+                " n_ldm=SUM(DATETIME(transactions.time_stamp, 'start of month', '-1 day') == '2019-10-31'),"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "n_yr": [61],
+                        "n_qu": [17],
+                        "n_mo": [8],
+                        "n_we": [2],
+                        "n_da": [2],
+                        "n_ho": [2],
+                        "n_mi": [2],
+                        "n_se": [1],
+                        "n_cts": [0],
+                        "n_dts": [0],
+                        "n_nst": [2],
+                        "n_ayr": [1],
+                        "n_aqu": [1],
+                        "n_amo": [1],
+                        "n_awe": [2],
+                        "n_ada": [1],
+                        "n_aho": [1],
+                        "n_ami": [1],
+                        "n_ase": [1],
+                        "n_ldm": [4],
+                    }
+                ),
+                "cryptbank_agg_07",
+            ),
+            id="cryptbank_agg_07",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " accounts"
+                " .CALCULATE(partkey=(account_type == 'retirement') | (account_type == 'savings'))"
+                " .PARTITION(name='actyp', by=partkey)"
+                " .accounts"
+                " .BEST(per='actyp', by=balance.DESC())"
+                " .CALCULATE(account_type, key, balance)"
+                " .ORDER_BY(account_type.ASC())"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "account_type": ["mma", "retirement"],
+                        "key": [8, 28],
+                        "balance": [5500.0, 25000.0],
+                    }
+                ),
+                "cryptbank_window_01",
+            ),
+            id="cryptbank_window_01",
+        ),
+        pytest.param(
+            PyDoughPandasTest(
+                "result = ("
+                " branches"
+                " .WHERE(CONTAINS(address, ';CA;'))"
+                " .CALCULATE(branch_name=name)"
+                " .accounts_managed"
+                " .BEST(per='branches', by=((YEAR(creation_timestamp) == 2021).ASC(), key.ASC()))"
+                " .CALCULATE(branch_name, key, creation_timestamp)"
+                " .ORDER_BY(branch_name.ASC())"
+                ")",
+                "CRYPTBANK",
+                lambda: pd.DataFrame(
+                    {
+                        "branch_name": [
+                            "Downtown Los Angeles Branch",
+                            "San Francisco Financial Branch",
+                        ],
+                        "key": [14, 8],
+                        "creation_timestamp": [
+                            "2016-05-12 14:00:00",
+                            "2018-07-19 14:10:00",
+                        ],
+                    }
+                ),
+                "cryptbank_window_02",
+            ),
+            id="cryptbank_window_02",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -625,6 +1066,7 @@ def test_pipeline_until_relational_cryptbank(
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
 ) -> None:
     """
     Tests the conversion of the PyDough queries on the custom cryptbank dataset
@@ -633,9 +1075,11 @@ def test_pipeline_until_relational_cryptbank(
     file_path: str = get_plan_test_filename(
         f"{cryptbank_pipeline_test_data.test_name}_{enable_mask_rewrites}"
     )
-    cryptbank_pipeline_test_data.run_relational_test(
-        masked_graphs, file_path, update_tests
-    )
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        cryptbank_pipeline_test_data.run_relational_test(
+            masked_graphs, file_path, update_tests, mask_server=mock_server_info
+        )
 
 
 def test_pipeline_until_sql_cryptbank(
@@ -645,6 +1089,7 @@ def test_pipeline_until_sql_cryptbank(
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
 ):
     """
     Tests the conversion of the PyDough queries on the custom cryptbank dataset
@@ -654,12 +1099,15 @@ def test_pipeline_until_sql_cryptbank(
         f"{cryptbank_pipeline_test_data.test_name}_{enable_mask_rewrites}",
         sqlite_tpch_db_context.dialect,
     )
-    cryptbank_pipeline_test_data.run_sql_test(
-        masked_graphs,
-        file_path,
-        update_tests,
-        sqlite_tpch_db_context,
-    )
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        cryptbank_pipeline_test_data.run_sql_test(
+            masked_graphs,
+            file_path,
+            update_tests,
+            sqlite_tpch_db_context,
+            mask_server=mock_server_info,
+        )
 
 
 @pytest.mark.execute
@@ -668,12 +1116,610 @@ def test_pipeline_e2e_cryptbank(
     masked_graphs: graph_fetcher,
     sqlite_cryptbank_connection: DatabaseContext,
     enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
 ):
     """
     Test executing the the custom queries with the custom cryptbank dataset
     against the refsol DataFrame.
     """
-    cryptbank_pipeline_test_data.run_e2e_test(
-        masked_graphs,
-        sqlite_cryptbank_connection,
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        cryptbank_pipeline_test_data.run_e2e_test(
+            masked_graphs,
+            sqlite_cryptbank_connection,
+            mask_server=mock_server_info,
+        )
+
+
+@pytest.mark.parametrize(
+    ["pydough_code", "batch_requests"],
+    [
+        pytest.param(
+            "selected_customers = customers.WHERE(last_name == 'lee')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {"CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']", "DRY_RUN"},
+                {"CRBNK/CUSTOMERS/c_lname: ['EQUAL', 2, '__col__', 'lee']"},
+            ],
+            id="cryptbank_filter_count_01",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(ISIN(last_name, ('lee', 'smith', 'rodriguez')))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']"
+                },
+            ],
+            id="cryptbank_filter_count_03",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(~ISIN(last_name, ('lee', 'smith', 'rodriguez')))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_lname: ['IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                    "CRBNK/CUSTOMERS/c_lname: ['NOT', 1, 'IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_lname: ['NOT', 1, 'IN', 4, '__col__', 'lee', 'smith', 'rodriguez']",
+                },
+            ],
+            id="cryptbank_filter_count_04",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE("
+            " ("
+            "  PRESENT(address) &"
+            "  PRESENT(birthday) &"
+            "  (last_name != 'lopez') &"
+            "  (ENDSWITH(first_name, 'a') | ENDSWITH(first_name, 'e') | ENDSWITH(first_name, 's'))"
+            ") | (ABSENT(birthday) & ENDSWITH(phone_number, '5'))"
+            ")\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e', 'ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK/CUSTOMERS/c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
+                    "CRBNK/CUSTOMERS/c_phone: ['ENDSWITH', 2, '__col__', '5']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['ENDSWITH', 2, '__col__', 's']",
+                    "CRBNK/CUSTOMERS/c_fname: ['OR', 2, 'ENDSWITH', 2, '__col__', 'a', 'ENDSWITH', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_lname: ['NOT_EQUAL', 2, '__col__', 'lopez']",
+                    "CRBNK/CUSTOMERS/c_phone: ['ENDSWITH', 2, '__col__', '5']",
+                },
+            ],
+            id="cryptbank_filter_count_27",
+        ),
+        pytest.param(
+            "selected_accounts = accounts.WHERE("
+            + " & ".join(
+                [
+                    "((account_type == 'retirement') | (account_type == 'savings'))",
+                    "(balance >= 5000)",
+                    "(CONTAINS(account_holder.email, 'outlook') | CONTAINS(account_holder.email, 'gmail'))",
+                    "(YEAR(creation_timestamp) < 2020)",
+                ]
+            )
+            + ")\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+            [
+                {
+                    "CRBNK/ACCOUNTS/a_balance: ['GTE', 2, '__col__', 5000]",
+                    "CRBNK/ACCOUNTS/a_open_ts: ['LT', 2, 'YEAR', 1, '__col__', 2020]",
+                    "CRBNK/ACCOUNTS/a_type: ['EQUAL', 2, '__col__', 'retirement']",
+                    "CRBNK/ACCOUNTS/a_type: ['EQUAL', 2, '__col__', 'savings']",
+                    "CRBNK/CUSTOMERS/c_email: ['CONTAINS', 2, '__col__', 'gmail']",
+                    "CRBNK/CUSTOMERS/c_email: ['CONTAINS', 2, '__col__', 'outlook']",
+                    "CRBNK/ACCOUNTS/a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
+                    "CRBNK/CUSTOMERS/c_email: ['OR', 2, 'CONTAINS', 2, '__col__', 'outlook', 'CONTAINS', 2, '__col__', 'gmail']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/ACCOUNTS/a_type: ['OR', 2, 'EQUAL', 2, '__col__', 'retirement', 'EQUAL', 2, '__col__', 'savings']",
+                },
+            ],
+            id="cryptbank_filter_count_28",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(birthday <= '1925-01-01')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_birthday: ['LTE', 2, '__col__', '1925-01-01']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_birthday: ['LTE', 2, '__col__', '1925-01-01']",
+                },
+            ],
+            id="cryptbank_filter_count_29",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE("
+            " ISIN(YEAR(birthday) - 2, (1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993))"
+            " & ISIN(MONTH(birthday) + 1, (2, 4, 6, 8, 10, 12))"
+            ")\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_birthday: ['AND', 2, 'IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12, 'IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
+                    "CRBNK/CUSTOMERS/c_birthday: ['IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
+                    "CRBNK/CUSTOMERS/c_birthday: ['IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12]",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_birthday: ['AND', 2, 'IN', 7, 'ADD', 2, 'MONTH', 1, '__col__', 1, 2, 4, 6, 8, 10, 12, 'IN', 11, 'SUB', 2, 'YEAR', 1, '__col__', 2, 1975, 1977, 1979, 1981, 1983, 1985, 1987, 1989, 1991, 1993]",
+                },
+            ],
+            id="cryptbank_filter_count_30",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(ISIN(birthday, [datetime.date(1991, 11, 15), datetime.date(1978, 2, 11), datetime.date(2005, 3, 14), datetime.date(1985, 4, 12)]))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_birthday: ['IN', 5, '__col__', '1991-11-15', '1978-02-11', '2005-03-14', '1985-04-12']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_birthday: ['IN', 5, '__col__', '1991-11-15', '1978-02-11', '2005-03-14', '1985-04-12']",
+                },
+            ],
+            id="cryptbank_filter_count_31",
+        ),
+        pytest.param(
+            "selected_accounts = accounts.WHERE(MONOTONIC(pd.Timestamp('2020-03-28 09:20:00'), creation_timestamp, datetime.datetime(2020, 9, 20, 8, 30, 0)))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+            [
+                {
+                    "CRBNK/ACCOUNTS/a_open_ts: ['AND', 2, 'LTE', 2, '2020-03-28 09:20:00', '__col__', 'LTE', 2, '__col__', '2020-09-20 08:30:00']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/ACCOUNTS/a_open_ts: ['AND', 2, 'LTE', 2, '2020-03-28 09:20:00', '__col__', 'LTE', 2, '__col__', '2020-09-20 08:30:00']",
+                },
+            ],
+            id="cryptbank_filter_count_32",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE(n_neg=SUM(transactions.amount < 0), n_positive=SUM(transactions.amount > 0))",
+            [
+                {
+                    "CRBNK/TRANSACTIONS/t_amount: ['LT', 2, '__col__', 0]",
+                    "CRBNK/TRANSACTIONS/t_amount: ['GT', 2, '__col__', 0]",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/TRANSACTIONS/t_amount: ['LT', 2, '__col__', 0]",
+                    "CRBNK/TRANSACTIONS/t_amount: ['GT', 2, '__col__', 0]",
+                },
+            ],
+            id="cryptbank_agg_06",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            " n_yr=SUM(DATETIME(transactions.time_stamp, 'start of year') == '2023-01-01'),"
+            " n_qu=SUM(DATETIME(transactions.time_stamp, 'start of quarter') == '2023-04-01'),"
+            " n_mo=SUM(DATETIME(transactions.time_stamp, 'start of month') == '2023-06-01'),"
+            " n_we=SUM(DATETIME(transactions.time_stamp, 'start of week') == '2023-05-28'),"
+            " n_da=SUM(DATETIME(transactions.time_stamp, 'start of day') == '2023-06-02'),"
+            " n_ho=SUM(DATETIME(transactions.time_stamp, 'start of hour') == '2023-06-02 04:00:00'),"
+            " n_mi=SUM(DATETIME(transactions.time_stamp, 'start of minute') == '2023-06-02 04:55:00'),"
+            " n_se=SUM(DATETIME(transactions.time_stamp, 'start of second') == '2023-06-02 04:55:31'),"
+            " n_cts=SUM(transactions.time_stamp == DATETIME('now', 'start of day')),"
+            " n_dts=SUM(transactions.time_stamp == DATETIME(JOIN_STRINGS('-', '2025', '12', '31'))),"
+            " n_nst=SUM(DATETIME(transactions.time_stamp, 'start of week', '+3 days') == '2023-05-31'),"
+            " n_ayr=SUM(DATETIME(transactions.time_stamp, '+1 Y') == '2020-11-11 18:00:52'),"
+            " n_aqu=SUM(DATETIME(transactions.time_stamp, '+2 q') == '2020-05-11 18:00:52'),"
+            " n_amo=SUM(DATETIME(transactions.time_stamp, '-5 Mm') == '2019-06-11 18:00:52'),"
+            " n_awe=SUM(DATETIME(transactions.time_stamp, 'start of day', '+1 week') == '2023-06-09'),"
+            " n_ada=SUM(DATETIME(transactions.time_stamp, '+10 DAYS') == '2019-11-21 18:00:52'),"
+            " n_aho=SUM(DATETIME(transactions.time_stamp, '+1000 hour') == '2019-12-23 10:00:52'),"
+            " n_ami=SUM(DATETIME(transactions.time_stamp, '+10000 minute') == '2019-11-18 16:40:52'),"
+            " n_ase=SUM(DATETIME(transactions.time_stamp, '-1000000 s') == '2019-10-31 04:14:12'),"
+            " n_ldm=SUM(DATETIME(transactions.time_stamp, 'start of month', '-1 day') == '2019-10-31'),"
+            ")",
+            [
+                {
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'day', '__col__', '2023-06-02']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'hour', '__col__', '2023-06-02 04:00:00']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'minute', '__col__', '2023-06-02 04:55:00']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'month', '__col__', '2023-06-01']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'quarter', '__col__', '2023-04-01']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'second', '__col__', '2023-06-02 04:55:31']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'year', '__col__', '2023-01-01']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 1, 'years', '__col__', '2020-11-11 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 2, 'quarters', '__col__', '2020-05-11 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, -5, 'months', '__col__', '2019-06-11 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 10, 'days', '__col__', '2019-11-21 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 1000, 'hours', '__col__', '2019-12-23 10:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 10000, 'minutes', '__col__', '2019-11-18 16:40:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, -1000000, 'seconds', '__col__', '2019-10-31 04:14:12']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, -1, 'days', 'DATETRUNC', 2, 'month', '__col__', '2019-10-31']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'day', '__col__', '2023-06-02']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'hour', '__col__', '2023-06-02 04:00:00']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'minute', '__col__', '2023-06-02 04:55:00']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'month', '__col__', '2023-06-01']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'quarter', '__col__', '2023-04-01']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'second', '__col__', '2023-06-02 04:55:31']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATETRUNC', 2, 'year', '__col__', '2023-01-01']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 1, 'years', '__col__', '2020-11-11 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 2, 'quarters', '__col__', '2020-05-11 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, -5, 'months', '__col__', '2019-06-11 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 10, 'days', '__col__', '2019-11-21 18:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 1000, 'hours', '__col__', '2019-12-23 10:00:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, 10000, 'minutes', '__col__', '2019-11-18 16:40:52']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, -1000000, 'seconds', '__col__', '2019-10-31 04:14:12']",
+                    "CRBNK/TRANSACTIONS/t_ts: ['EQUAL', 2, 'DATEADD', 3, -1, 'days', 'DATETRUNC', 2, 'month', '__col__', '2019-10-31']",
+                },
+            ],
+            id="cryptbank_agg_07",
+        ),
+        pytest.param(
+            "selected_accounts = accounts.WHERE(QUARTER(creation_timestamp) == DAY(creation_timestamp))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_accounts))",
+            [
+                {
+                    "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'QUARTER', 1, '__col__', 'DAY', 1, '__col__']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/ACCOUNTS/a_open_ts: ['EQUAL', 2, 'QUARTER', 1, '__col__', 'DAY', 1, '__col__']"
+                },
+            ],
+            id="cryptbank_filter_count_34",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('', '1-', phone_number), '1-5'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_phone: ['CONTAINS', 2, 'CONCAT', 2, '1-', '__col__', '1-5']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_phone: ['CONTAINS', 2, 'CONCAT', 2, '1-', '__col__', '1-5']"
+                },
+            ],
+            id="cryptbank_filter_count_40",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number), '1-5'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_phone: ['CONTAINS', 2, 'CONCAT', 3, '1', '-', '__col__', '1-5']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_phone: ['CONTAINS', 2, 'CONCAT', 3, '1', '-', '__col__', '1-5']"
+                },
+            ],
+            id="cryptbank_filter_count_41",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS(JOIN_STRINGS('-', '1', phone_number, '1'), '5-1'))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_phone: ['CONTAINS', 2, 'CONCAT', 5, '1', '-', '__col__', '-', '1', '5-1']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_phone: ['CONTAINS', 2, 'CONCAT', 5, '1', '-', '__col__', '-', '1', '5-1']"
+                },
+            ],
+            id="cryptbank_filter_count_42",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(JOIN_STRINGS(' ', first_name, last_name) == 'olivia anderson')\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [],
+            id="cryptbank_filter_count_43",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(CONTAINS('SLICE', UPPER(first_name[:1])))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, 'SLICE', 'UPPER', 1, 'SLICE', 3, '__col__', 0, 1]"
+                },
+            ],
+            id="cryptbank_filter_count_59",
+        ),
+        pytest.param(
+            "selected_customers = customers.WHERE(ISIN(first_name, ['Datediff', 'YEAR', 'IN', 'NOT IN', 'NEQ', 'NOT_EQUAL', 'lower']))\n"
+            "result = CRYPTBANK.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['IN', 8, '__col__', 'Datediff', 'YEAR', 'IN', 'NOT IN', 'NEQ', 'NOT_EQUAL', 'lower']",
+                    "DRY_RUN",
+                },
+            ],
+            id="cryptbank_quote_list",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a')",
+                        "CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'u')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_01",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'i') & CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'o') & CONTAINS(first_name, 'u')",
+                        "CONTAINS(first_name, 'u') & CONTAINS(first_name, 'a')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
+                    "'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', "
+                    "'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', "
+                    "'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', "
+                    "'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', "
+                    "'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_02",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'u')",
+                        "CONTAINS(first_name, 'a')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_03",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')",
+                        "CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'i') & CONTAINS(first_name, 'u')",
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'i')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_04",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')",
+                        "CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i') & CONTAINS(first_name, 'o')",
+                        "CONTAINS(first_name, 'i') & CONTAINS(first_name, 'o') & CONTAINS(first_name, 'u')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o', 'CONTAINS', 2, '__col__', 'u']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 3, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i', 'CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'u']",
+                },
+            ],
+            id="cryptbank_multi_fcount_05",
+        ),
+        pytest.param(
+            "result = CRYPTBANK.CALCULATE("
+            + ", ".join(
+                f"n{idx}=COUNT(customers.WHERE({cond}))"
+                for idx, cond in enumerate(
+                    [
+                        "~(CONTAINS(first_name, 'a') & CONTAINS(first_name, 'e')) & CONTAINS(first_name, 'i')",
+                        "~(CONTAINS(first_name, 'e') & CONTAINS(first_name, 'i')) & CONTAINS(first_name, 'o')",
+                    ]
+                )
+            )
+            + ")",
+            [
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'o', 'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'a']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'i']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                    "DRY_RUN",
+                },
+                {
+                    "CRBNK/CUSTOMERS/c_fname: ['AND', 2, 'CONTAINS', 2, '__col__', 'i', 'NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'a', 'CONTAINS', 2, '__col__', 'e']",
+                    "CRBNK/CUSTOMERS/c_fname: ['CONTAINS', 2, '__col__', 'o']",
+                    "CRBNK/CUSTOMERS/c_fname: ['NOT', 1, 'AND', 2, 'CONTAINS', 2, '__col__', 'e', 'CONTAINS', 2, '__col__', 'i']",
+                },
+            ],
+            id="cryptbank_multi_fcount_06",
+        ),
+    ],
+)
+def test_cryptbank_mask_server_logging(
+    pydough_code: str,
+    batch_requests: list[set[str]],
+    masked_graphs: graph_fetcher,
+    enable_mask_rewrites: str,
+    mock_server_info: MaskServerInfo,
+    caplog,
+):
+    """
+    Tests whether, during the conversion of the PyDough queries on the custom
+    cryptbank dataset into SQL text, the correct logging calls are made
+    regarding batches sent to the mask server. This is to ensure that the calls
+    are being batched as expected, the right calls are being sent to the server,
+    and expressions that are non-predicates are not being sent, even if they are
+    a valid sub-expression of a predicate that can be sent.
+    """
+    # Obtain the graph and the unqualified node
+    graph: GraphMetadata = masked_graphs("CRYPTBANK")
+    root: UnqualifiedNode = transform_and_exec_pydough(
+        pydough_code,
+        masked_graphs("CRYPTBANK"),
+        {"datetime": datetime, "pd": pd},
     )
+
+    # Convert the PyDough code to SQL text, while capturing
+    # stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        to_sql(root, metadata=graph, mask_server=mock_server_info)
+
+    # Retrieve the output from the captured logger output
+    batch_requests_made: list[set[str]] = extract_batch_requests_from_logs(caplog.text)
+
+    # If in raw mode, make sure no requests were made. Otherwise, compare the
+    # expected batch requests to those made.
+    if enable_mask_rewrites == "raw":
+        assert batch_requests_made == [], (
+            "Expected no batch requests to be made in 'raw' mode."
+        )
+    else:
+        assert batch_requests_made == batch_requests, (
+            "The batch requests made do not match the expected batch requests."
+        )

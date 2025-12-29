@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(first_name, ['cDTeJ', 'xyLof', 'kiKNKR', 'srXHQOs', 'wNgU', 'culTf', 'WAnqWpJ', 'StqmwCvYW', 'ejgYoaOj', 'uIAoglX', 'dITcC', 'FHyaKck', 'fbxYQ', 'sbktR', 'OtfUs', 'BrsuCS', 'pkpimjV', 'cNTVC', 'BCcSEm', 'dmWqq', 'WBObiw', 'GYVw', 'gYR', 'OQMeTN', 'lOGP', 'RuOHJ', 'mublfhb', 'YobcLHV', 'JYiQ', 'nsLY', 'oivbknRk', 'mMLMo', 'fGzC', 'CzDuFde', 'YivjA', 'AYZbGb', 'QnzW', 'ZMuLn', 'dwKLWM', 'jLHnwiTH', 'CricE', 'XkohKQB', 'cOLtT', 'xDkCYu', 'bmgtuNK', 'fCsj', 'zrhoqK', 'HrIFed', 'cvsv', 'PghcwKp']:array[unknown]), columns={})
+   SCAN(table=bodo.health.protected_patients, columns={'first_name': first_name})
