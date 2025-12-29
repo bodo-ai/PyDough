@@ -19,6 +19,7 @@ from .sqlglot_transform_utils import (
     create_constant_table,
     expand_std,
     expand_variance,
+    is_empty_range,
 )
 
 
@@ -717,22 +718,19 @@ class MySQLTransformBindings(BaseTransformBindings):
         self,
         collection: RangeGeneratedCollection,
     ) -> SQLGlotExpression:
-        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
-            this=collection.column_name, quoted=False
-        )
+        """
+        Converts a user-generated range collection to its MySQL SQLGlot
+        representation. Using ROW constructs to represent each row.
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
 
-        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
-            this=collection.name, quoted=False
-        )
+        empty_range: bool = is_empty_range(collection)
 
-        # Empty range if step == 0 or (step > 0 and start >= end) or
-        # (step < 0 and start <= end)
-        empty_range = (
-            (collection.step > 0 and collection.start >= collection.end)
-            or (collection.step < 0 and collection.start <= collection.end)
-            or (collection.step == 0)
-        )
-
+        # Generate rows for the range [] if empty_range is True,
+        # [ROW(i)] for i in range otherwise
         range_rows: list[SQLGlotExpression] = (
             []
             if empty_range
@@ -745,7 +743,7 @@ class MySQLTransformBindings(BaseTransformBindings):
         )
 
         result: SQLGlotExpression = create_constant_table(
-            table_name, [column_name], range_rows
+            collection.name, [collection.column_name], range_rows
         )
 
         return result

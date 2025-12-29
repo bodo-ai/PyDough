@@ -25,6 +25,7 @@ from .sqlglot_transform_utils import (
     apply_parens,
     create_constant_table,
     current_ts_pattern,
+    is_empty_range,
     offset_pattern,
     pad_helper,
     positive_index,
@@ -2197,24 +2198,20 @@ class BaseTransformBindings:
     def convert_user_generated_range(
         self, collection: RangeGeneratedCollection
     ) -> SQLGlotExpression:
-        column_name: SQLGlotExpression = sqlglot_expressions.Identifier(
-            this=collection.column_name, quoted=False
-        )
+        """
+        Converts a user-generated range collection to its SQLGlot
+        representation.
 
-        table_name: SQLGlotExpression = sqlglot_expressions.Identifier(
-            this=collection.name, quoted=False
-        )
+        Arguments:
+            `collection` : The user-generated range collection to convert.
+        Returns:
+            A SQLGlotExpression representing the user-generated range as table.
+        """
 
-        # Determine if the range is empty. An empty range occurs when:
-        # - step > 0 and start >= end
-        # - step < 0 and start <= end
-        # - step == 0
-        empty_range = (
-            (collection.step > 0 and collection.start >= collection.end)
-            or (collection.step < 0 and collection.start <= collection.end)
-            or (collection.step == 0)
-        )
+        empty_range: bool = is_empty_range(collection)
 
+        # Generate rows for the range [] if empty_range is True,
+        # [ROW(i)] for i in range otherwise
         range_rows: list[SQLGlotExpression] = (
             []
             if empty_range
@@ -2227,7 +2224,7 @@ class BaseTransformBindings:
         )
 
         result: SQLGlotExpression = create_constant_table(
-            table_name, [column_name], range_rows
+            collection.name, [collection.column_name], range_rows
         )
 
         return result

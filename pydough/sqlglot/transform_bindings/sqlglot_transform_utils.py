@@ -23,6 +23,7 @@ from sqlglot.expressions import Expression as SQLGlotExpression
 
 from pydough.errors import PyDoughSQLException
 from pydough.types import PyDoughType
+from pydough.user_collections.range_collection import RangeGeneratedCollection
 
 PAREN_EXPRESSIONS = (Binary, Unary, Concat, Is, Case)
 """
@@ -389,31 +390,48 @@ def expand_std(
 
 
 def create_constant_table(
-    table_name: SQLGlotExpression,
-    column_names: list[SQLGlotExpression],
+    table_name: str,
+    column_names: list[str],
     rows: list[SQLGlotExpression],
 ) -> SQLGlotExpression:
     """
     Generate a SQL that represents a constant table using the given list of
-    columns and rows.
+    columns and rows. The final SQLGlot expression corresponds to the SQL:
+    SELECT [column_names] FROM ( VALUES [rows] ) AS table_name ([column_names])
 
     Args:
         `table_name`: The name of the table
         `column_names`: List with all column names
         `rows`: The data for each row
+
+    Returns:
+        The SQLGlot expression for the constant table.
+
     """
     assert column_names != []
+
+    expr_table: SQLGlotExpression = sqlglot_expressions.Identifier(
+        this=table_name, quoted=False
+    )
+
+    columns_list: list[SQLGlotExpression] = [
+        sqlglot_expressions.Identifier(this=column, quoted=False)
+        for column in column_names
+    ]
 
     result: SQLGlotExpression
 
     if len(rows) == 0:
-        result = create_empty_constant_table(column_names, ["INT"] * len(column_names))
+        # Example:
+        # column_list = ['X', 'Y'] and types = ['INT', 'VARCHAR']
+        # SELECT CAST(NULL AS INT) AS X, CAST(NULL AS VARCHAR) AS Y WHERE FALSE
+        result = create_empty_constant_table(columns_list, ["INT"] * len(columns_list))
     else:
         # Create the VALUES expression
         values_expr: SQLGlotExpression = sqlglot_expressions.Values(expressions=rows)
 
         table_alias = sqlglot_expressions.TableAlias(
-            this=table_name, columns=column_names
+            this=expr_table, columns=columns_list
         )
 
         # Subquery with alias for the VALUES expression
@@ -426,7 +444,7 @@ def create_constant_table(
         # Determine if ROWS() are used
         rows_used: bool = isinstance(rows[0], sqlglot_expressions.Anonymous)
 
-        for idx, column in enumerate(column_names):
+        for idx, column in enumerate(columns_list):
             if not rows_used:
                 # Sqlite names the values' columns as column1, column2, ... by
                 # default
@@ -447,32 +465,33 @@ def create_constant_table(
 
 
 def create_empty_constant_table(
-    column_names: list[SQLGlotExpression], types: list[str]
+    column_list: list[SQLGlotExpression], types: list[str]
 ) -> SQLGlotExpression:
     """
     Construct a SQLGlot expression representing an empty user-defined constant
     table with specified columns and types.
-    For example, for column_names = ['X', 'Y'] and types = ['INT', 'VARCHAR'],
+
+    For example, for column_list = ['X', 'Y'] and types = ['INT', 'VARCHAR'],
     the resulting SQLGlot expression corresponds to the SQL:
         SELECT CAST(NULL AS INT) AS X, CAST(NULL AS VARCHAR) AS Y
         WHERE FALSE
 
     Args:
-        `column_names`: List of all the column names.
+        `column_list`: List of all the column names.
         `types`: List of types for each column respectively.
 
     Notes:
-        - The length of column_names and types must match.
+        - The length of column_list and types must match.
 
     Returns:
         The SQLGlot expression for an empty user collection.
     """
 
-    assert len(column_names) == len(types)
+    assert len(column_list) == len(types)
 
     expressions: list[SQLGlotExpression] = []
 
-    for idx, column in enumerate(column_names):
+    for idx, column in enumerate(column_list):
         expressions.append(
             sqlglot_expressions.Alias(
                 this=sqlglot_expressions.Cast(
@@ -485,4 +504,25 @@ def create_empty_constant_table(
 
     return sqlglot_expressions.Select(expressions=expressions).where(
         sqlglot_expressions.Boolean(this=False)
+    )
+
+
+def is_empty_range(collection: RangeGeneratedCollection) -> bool:
+    """
+    Helper function to determine if a range collection is empty.
+
+    Args:
+        `collection`: The RangeGeneratedCollection to check.
+    Returns:
+        True if the range is empty, False otherwise.
+    """
+
+    # Determine if the range is empty. An empty range occurs when:
+    # - step > 0 and start >= end
+    # - step < 0 and start <= end
+    # - step == 0
+    return (
+        (collection.step > 0 and collection.start >= collection.end)
+        or (collection.step < 0 and collection.start <= collection.end)
+        or (collection.step == 0)
     )

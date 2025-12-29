@@ -642,8 +642,12 @@ class PostgresTransformBindings(BaseTransformBindings):
             this=table_name, columns=[column_name]
         )
 
-        # Number that adjusts the end depending if the step is positive or
-        # negative
+        # Because Postgres generate_series includes the last number in the range,
+        # we need to adjust the end to exclude the last number.
+        # Example:
+        # generate_series(1, 5, 1) -> [1, 2, 3, 4, 5] but we want [1, 2, 3, 4]
+        # For positive step, we subtract 1 from the end.
+        # For negative step, we add 1 to the end.
         adjustment_num: SQLGlotExpression = (
             sqlglot_expressions.Literal.number(1)
             if collection.step > 0
@@ -651,7 +655,9 @@ class PostgresTransformBindings(BaseTransformBindings):
         )
 
         # The range collection end minus the adjustment number excluding the
-        # last number. Example: generate_series(1, 5, 1) ->
+        # last number. Example:
+        # generate_series(1, 5, 1) -> [1, 2, 3, 4, 5]
+        # With adjustment:
         # generate_series(1, 5-1, 1) -> [1, 2, 3, 4]
         effective_end = sqlglot_expressions.Sub(
             this=end,

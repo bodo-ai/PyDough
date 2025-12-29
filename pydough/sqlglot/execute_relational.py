@@ -186,7 +186,8 @@ def apply_sqlglot_optimizer(
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
 
-    # Remove the parenthesis around each row in values
+    # Remove the Tuple around each row in values,
+    # this avoids unnecessary tuple wrappers for ROW expressions using MySQL
     remove_tuple_row_values(glot_expr)
 
     return glot_expr
@@ -357,6 +358,8 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
             if len(alias) != 0:  # alias exists for the table
                 # Remove cases like `..FROM t1 as t1..` or `..FROM t1 as t2..`
                 # to get `..FROM t1..`.
+                # This deleted the alias for generate_series, we keep the
+                # alias in order to be used with the expected name and columns.
                 if not isinstance(
                     table.this, sqlglot_expressions.ExplodingGenerateSeries
                 ):
@@ -406,7 +409,11 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
 def remove_tuple_row_values(expr: SQLGlotExpression) -> None:
     """
     Visits the AST and removes the tuple if there is only one item and it is
-    a ROW. This remove the unneccesary tuple wrapper for each row.
+    a ROW. This remove the unneccesary tuple wrapper for each row. Which cause
+    incorrect SQL generation.
+    For example:
+        invalid -> `(VALUES (ROW(1)), (ROW(2)), ... )`
+        correct -> `(VALUES ROW(1), ROW(2), ... )`
 
     Args:
         expr: The SQLGlot expression to visit.
@@ -478,8 +485,7 @@ def change_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
 
 def reset_sqlglot_dialect_configuration(dialect: DatabaseDialect) -> None:
     """
-    Restore the configuration if was changed at some point of the execution
-    for this dialect in sqlglot
+    Restore the configuration for this dialect in sqlglot.
     """
 
     match dialect:

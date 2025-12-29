@@ -1833,6 +1833,9 @@ def sqlite_pagerank_db_contexts() -> dict[str, DatabaseContext]:
             ),
             id="smoke_d",
         ),
+        # NOTE: All range collection tests should move to
+        # test_pipeline_tpch_custom.py after adding tpch_custom test for all
+        # dialects
         pytest.param(
             PyDoughPandasTest(
                 simple_range_1,
