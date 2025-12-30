@@ -2,14 +2,14 @@ WITH _t1 AS (
   SELECT
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
     sbcustpostalcode,
-    AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER () AS ravg1,
+    AVG(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0))) OVER () AS ravg1,
     COALESCE(
-      AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
     ) AS ravg2,
-    COUNT(CAST(sbcustpostalcode AS INT)) OVER () AS rcnt1,
+    COUNT(TRUNC(CAST(sbcustpostalcode AS DECIMAL))) OVER () AS rcnt1,
     COALESCE(
-      COUNT(CAST(sbcustpostalcode AS INT)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      COUNT(TRUNC(CAST(sbcustpostalcode AS DECIMAL))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rcnt2,
     COUNT(*) OVER () AS rsiz1,
@@ -17,9 +17,9 @@ WITH _t1 AS (
       COUNT(*) OVER (ORDER BY sbcustname ROWS BETWEEN 1 FOLLOWING AND UNBOUNDED FOLLOWING),
       0.1
     ) AS rsiz2,
-    SUM(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER () AS rsum1,
+    SUM(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0))) OVER () AS rsum1,
     COALESCE(
-      SUM(ABS(COALESCE(CAST(sbcustpostalcode AS INT), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
+      SUM(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),
       0.1
     ) AS rsum2
   FROM main.sbcustomer
@@ -51,9 +51,9 @@ SELECT
   FALSE AS s23,
   TRUE AS s24,
   PERCENTILE_DISC(0.25) WITHIN GROUP (ORDER BY
-    ABS(CAST(sbcustpostalcode AS INT))) AS s25,
+    ABS(TRUNC(CAST(sbcustpostalcode AS DECIMAL)))) AS s25,
   PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
-    ABS(CAST(sbcustpostalcode AS INT))) AS s26,
+    ABS(TRUNC(CAST(sbcustpostalcode AS DECIMAL)))) AS s26,
   MIN(rank) AS s27,
   MAX(rank) AS s28,
   MAX(rsum1) AS s29,

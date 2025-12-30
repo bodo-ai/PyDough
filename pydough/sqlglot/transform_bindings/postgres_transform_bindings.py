@@ -577,8 +577,13 @@ class PostgresTransformBindings(BaseTransformBindings):
     def convert_integer(
         self, args: list[SQLGlotExpression], types: list[PyDoughType]
     ) -> SQLGlotExpression:
-        return sqlglot_expressions.Cast(
-            this=args[0], to=sqlglot_expressions.DataType.build("INTEGER")
+        return sqlglot_expressions.Anonymous(
+            this="TRUNC",
+            expressions=[
+                sqlglot_expressions.Cast(
+                    this=args[0], to=sqlglot_expressions.DataType.build("NUMERIC")
+                )
+            ],
         )
 
     def convert_lpad(

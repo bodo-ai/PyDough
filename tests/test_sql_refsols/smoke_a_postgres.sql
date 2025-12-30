@@ -1,11 +1,13 @@
 SELECT
   p_partkey AS key,
-  CAST(CONCAT_WS(
-    '',
-    SUBSTRING(p_brand FROM GREATEST(LENGTH(p_brand) + -1, 1)),
-    SUBSTRING(p_brand FROM 8),
-    SUBSTRING(p_brand FROM GREATEST(LENGTH(p_brand) + -1, 1) FOR GREATEST(LENGTH(p_brand) + -1 - GREATEST(LENGTH(p_brand) + -2, 0), 0))
-  ) AS INT) AS a,
+  TRUNC(
+    CAST(CONCAT_WS(
+      '',
+      SUBSTRING(p_brand FROM GREATEST(LENGTH(p_brand) + -1, 1)),
+      SUBSTRING(p_brand FROM 8),
+      SUBSTRING(p_brand FROM GREATEST(LENGTH(p_brand) + -1, 1) FOR GREATEST(LENGTH(p_brand) + -1 - GREATEST(LENGTH(p_brand) + -2, 0), 0))
+    ) AS DECIMAL)
+  ) AS a,
   UPPER(LEAST(SPLIT_PART(p_name, ' ', 2), SPLIT_PART(p_name, ' ', -1))) AS b,
   TRIM('o' FROM SUBSTRING(p_name FROM 1 FOR 2)) AS c,
   LPAD(CAST(p_size AS TEXT), 3, '0') AS d,
