@@ -2736,6 +2736,176 @@ def string_format_specifiers_mysql():
     )
 
 
+def string_format_specifiers_postgres():
+    # String format specifiers for date/time with a static datetime
+    # Works for Postgres
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # hour of day (01–12)
+        h1=STRING(static_date, "HH"),
+        # hour of day (01–12)
+        h2=STRING(static_date, "HH12"),
+        # hour of day (00–23)
+        h3=STRING(static_date, "HH24"),
+        # minute (00–59)
+        m1=STRING(static_date, "MI"),
+        # second (00–59)
+        s1=STRING(static_date, "SS"),
+        # millisecond (000–999)
+        ms1=STRING(static_date, "MS"),
+        # microsecond (000000–999999)
+        us1=STRING(static_date, "US"),
+        # tenth of second (0–9)
+        ff1=STRING(static_date, "FF1"),
+        # hundredth of second (00–99)
+        ff2=STRING(static_date, "FF2"),
+        # millisecond (000–999)
+        ff3=STRING(static_date, "FF3"),
+        # tenth of a millisecond (0000–9999)
+        ff4=STRING(static_date, "FF4"),
+        # hundredth of a millisecond (00000–99999)
+        ff5=STRING(static_date, "FF5"),
+        # microsecond (000000–999999)
+        ff6=STRING(static_date, "FF6"),
+        # seconds past midnight (0–86399)
+        ssss1=STRING(static_date, "SSSS"),
+        # seconds past midnight (0–86399)
+        ssss2=STRING(static_date, "SSSSS"),
+        # AM / PM (no periods)
+        am1=STRING(static_date, "AM"),
+        # am / pm (lowercase)
+        am2=STRING(static_date, "am"),
+        # A.M. / P.M. (with periods)
+        am3=STRING(static_date, "A.M."),
+        # a.m. / p.m. (with periods)
+        am4=STRING(static_date, "a.m."),
+        # year with comma (4+ digits)
+        y1=STRING(static_date, "Y,YYY"),
+        # year (4+ digits)
+        y2=STRING(static_date, "YYYY"),
+        # last 3 digits of year
+        y3=STRING(static_date, "YYY"),
+        # last 2 digits of year
+        y4=STRING(static_date, "YY"),
+        # last digit of year
+        y5=STRING(static_date, "Y"),
+        # ISO week-numbering year
+        iy1=STRING(static_date, "IYYY"),
+        # last 3 digits of ISO year
+        iy2=STRING(static_date, "IYY"),
+        # last 2 digits of ISO year
+        iy3=STRING(static_date, "IY"),
+        # last digit of ISO year
+        iy4=STRING(static_date, "I"),
+        # BC / AD (no periods)
+        era1=STRING(static_date, "AD"),
+        # B.C. / A.D. (with periods)
+        era2=STRING(static_date, "A.D."),
+        # full upper-case month name (blank-padded)
+        mon1=STRING(static_date, "MONTH"),
+        # full capitalized month name (blank-padded)
+        mon2=STRING(static_date, "Month"),
+        # full lower-case month name (blank-padded)
+        mon3=STRING(static_date, "month"),
+        # abbreviated upper-case month name
+        mon4=STRING(static_date, "MON"),
+        # abbreviated capitalized month name
+        mon5=STRING(static_date, "Mon"),
+        # abbreviated lower-case month name
+        mon6=STRING(static_date, "mon"),
+        # month number (01–12)
+        mon7=STRING(static_date, "MM"),
+        # full upper-case day name (blank-padded)
+        day1=STRING(static_date, "DAY"),
+        # full capitalized day name (blank-padded)
+        day2=STRING(static_date, "Day"),
+        # full lower-case day name (blank-padded)
+        day3=STRING(static_date, "day"),
+        # abbreviated upper-case day name
+        day4=STRING(static_date, "DY"),
+        # abbreviated capitalized day name
+        day5=STRING(static_date, "Dy"),
+        # abbreviated lower-case day name
+        day6=STRING(static_date, "dy"),
+        # day of year (001–366)
+        doy1=STRING(static_date, "DDD"),
+        # day of ISO year (001–371)
+        doy2=STRING(static_date, "IDDD"),
+        # day of month (01–31)
+        dom1=STRING(static_date, "DD"),
+        # day of week, Sunday (1) to Saturday (7)
+        dow1=STRING(static_date, "D"),
+        # ISO day of week, Monday (1) to Sunday (7)
+        dow2=STRING(static_date, "ID"),
+        # week of month (1–5)
+        wom1=STRING(static_date, "W"),
+        # week of year (1–53)
+        woy1=STRING(static_date, "WW"),
+        # ISO week of year (01–53)
+        woy2=STRING(static_date, "IW"),
+        # century (2 digits)
+        c1=STRING(static_date, "CC"),
+        # Julian Date
+        j1=STRING(static_date, "J"),
+        # quarter
+        q1=STRING(static_date, "Q"),
+        # month in Roman numerals (upper-case)
+        rm1=STRING(static_date, "RM"),
+        # month in Roman numerals (lower-case)
+        rm2=STRING(static_date, "rm"),
+        # time-zone abbreviation (upper-case)
+        tz1=STRING(static_date, "TZ"),
+        # time-zone abbreviation (lower-case)
+        tz2=STRING(static_date, "tz"),
+        # time-zone hours
+        tz3=STRING(static_date, "TZH"),
+        # time-zone minutes
+        tz4=STRING(static_date, "TZM"),
+        # time-zone offset from UTC
+        tz5=STRING(static_date, "OF"),
+    )
+
+
+def string_format_specifiers_snowflake():
+    # String format specifiers for date/time with a static datetime
+    # Works for Snowflake
+    # Using a specific date: 2023-07-15 14:30:45
+    static_date = pd.Timestamp("2023-07-15 14:30:45")
+    return TPCH.CALCULATE(
+        # four-digit year
+        d1=STRING(static_date, "YYYY"),
+        # last two digits of the year
+        d2=STRING(static_date, "YY"),
+        # two-digit month (01–12)
+        d3=STRING(static_date, "MM"),
+        # abbreviated month name
+        d4=STRING(static_date, "Mon"),
+        # full month name
+        d5=STRING(static_date, "MMMM"),
+        # two-digit day of month (01–31)
+        d6=STRING(static_date, "DD"),
+        # abbreviated day of week
+        d7=STRING(static_date, "DY"),
+        # full day of week
+        d8=STRING(static_date, "DYDY"),
+        # hour in 24-hour format (00–23)
+        d9=STRING(static_date, "HH24"),
+        # hour in 12-hour format (01–12)
+        d10=STRING(static_date, "HH12"),
+        # minute (00–59)
+        d11=STRING(static_date, "MI"),
+        # second (00–59)
+        d12=STRING(static_date, "SS"),
+        # meridian indicator
+        d13=STRING(static_date, "PM"),
+        # fractional seconds (up to 9 digits)
+        d14=STRING(static_date, ".FF"),
+        # timezone hour and minute
+        d15=STRING(static_date, "TZH:TZM"),
+    )
+
+
 def part_reduced_size():
     # What are the top 5 line items with the highest discounts
     # on parts with the lowest retail prices casted to integers?
