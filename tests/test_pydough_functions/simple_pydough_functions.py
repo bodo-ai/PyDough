@@ -237,7 +237,8 @@ def rank_nations_by_region():
 
 def rank_nations_per_region_by_customers():
     return regions.nations.CALCULATE(
-        name, rank=RANKING(by=COUNT(customers).DESC(), per="regions")
+        nation_name=name,
+        rank=RANKING(by=(COUNT(customers).DESC(), region.name), per="regions"),
     ).TOP_K(5, by=rank.ASC())
 
 
