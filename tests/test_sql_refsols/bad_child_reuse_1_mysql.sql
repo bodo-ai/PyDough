@@ -7,14 +7,14 @@ WITH _s1 AS (
     1
 ), _t1 AS (
   SELECT
-    CUSTOMER.c_acctbal,
     CUSTOMER.c_custkey,
     _s1.n_rows
   FROM tpch.CUSTOMER AS CUSTOMER
   LEFT JOIN _s1 AS _s1
     ON CUSTOMER.c_custkey = _s1.o_custkey
   ORDER BY
-    1 DESC
+    CUSTOMER.c_acctbal DESC,
+    COALESCE(_s1.n_rows, 0)
   LIMIT 10
 )
 SELECT
@@ -24,4 +24,4 @@ FROM _t1
 WHERE
   n_rows <> 0
 ORDER BY
-  c_acctbal DESC
+  1

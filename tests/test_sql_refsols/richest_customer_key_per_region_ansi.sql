@@ -5,7 +5,7 @@ WITH _t0 AS (
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY n_regionkey ORDER BY customer.c_acctbal DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal DESC NULLS FIRST) = 1
 )
 SELECT
   c_custkey AS key

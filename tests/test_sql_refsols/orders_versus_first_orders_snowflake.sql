@@ -15,7 +15,7 @@ WITH _s4 AS (
   JOIN _s4 AS _s3
     ON _s3.o_custkey = customer.c_custkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY o_custkey ORDER BY _s3.o_orderdate, _s3.o_orderkey) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s3.o_custkey ORDER BY _s3.o_orderdate, _s3.o_orderkey) = 1
 )
 SELECT
   _t1.c_name AS customer_name,

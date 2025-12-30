@@ -1100,8 +1100,9 @@ def bad_child_reuse_1():
     # number of orders, only keep ones that have orders.
     return (
         customers.CALCULATE(cust_key=key, n_orders=COUNT(orders))
-        .TOP_K(10, by=account_balance.DESC())
+        .TOP_K(10, by=(account_balance.DESC(), n_orders.ASC()))
         .WHERE(HAS(orders))
+        .ORDER_BY(cust_key.ASC())
     )
 
 

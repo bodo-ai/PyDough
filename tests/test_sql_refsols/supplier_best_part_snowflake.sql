@@ -20,7 +20,7 @@ WITH _s2 AS (
   JOIN tpch.part AS part
     ON _s2.l_partkey = part.p_partkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY l_suppkey ORDER BY COALESCE(_s2.sum_l_quantity, 0) DESC) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s2.l_suppkey ORDER BY COALESCE(_s2.sum_l_quantity, 0) DESC) = 1
 )
 SELECT
   supplier.s_name AS supplier_name,

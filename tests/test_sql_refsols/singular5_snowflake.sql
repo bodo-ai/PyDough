@@ -1,16 +1,22 @@
-WITH _t5 AS (
+WITH _t3 AS (
+  SELECT
+    p_brand,
+    p_container,
+    p_partkey
+  FROM tpch.part
+  WHERE
+    p_brand = 'Brand#13'
+), _t5 AS (
   SELECT
     lineitem.l_shipdate,
-    part.p_partkey
-  FROM tpch.part AS part
+    _t7.p_partkey
+  FROM _t3 AS _t7
   JOIN tpch.lineitem AS lineitem
-    ON lineitem.l_partkey = part.p_partkey
+    ON _t7.p_partkey = lineitem.l_partkey
     AND lineitem.l_shipmode = 'RAIL'
     AND lineitem.l_tax = 0
-  WHERE
-    part.p_brand = 'Brand#13'
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY p_container ORDER BY lineitem.l_extendedprice DESC, lineitem.l_shipdate) = 1
+    ROW_NUMBER() OVER (PARTITION BY _t7.p_container ORDER BY lineitem.l_extendedprice DESC, lineitem.l_shipdate) = 1
 ), _s3 AS (
   SELECT
     p_partkey,
@@ -21,14 +27,12 @@ WITH _t5 AS (
     1
 ), _t1 AS (
   SELECT
-    part.p_container,
+    _t3.p_container,
     MAX(_s3.anything_l_shipdate) AS max_anything_l_shipdate,
     SUM(_s3.n_rows) AS sum_n_rows
-  FROM tpch.part AS part
+  FROM _t3 AS _t3
   LEFT JOIN _s3 AS _s3
-    ON _s3.p_partkey = part.p_partkey
-  WHERE
-    part.p_brand = 'Brand#13'
+    ON _s3.p_partkey = _t3.p_partkey
   GROUP BY
     1
 )

@@ -6,7 +6,7 @@ WITH _s3 AS (
     EXTRACT(YEAR FROM CAST(o_orderdate AS DATETIME)) = 1992
 ), _t2 AS (
   SELECT
-    MAX(1) AS "_"
+    COUNT(_s3.o_custkey) AS count_o_custkey
   FROM tpch.customer AS customer
   JOIN tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'GERMANY'

@@ -41,7 +41,7 @@ WITH _t1 AS (
     1,
     2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY p_size ORDER BY COALESCE(SUM(lineitem.l_quantity), 0) DESC) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s0.p_size ORDER BY COALESCE(SUM(lineitem.l_quantity), 0) DESC) = 1
 )
 SELECT
   _s6.p_size AS part_size,

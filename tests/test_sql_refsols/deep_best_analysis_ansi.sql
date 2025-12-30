@@ -26,13 +26,14 @@ WITH _t2 AS (
   JOIN _t2 AS _s5
     ON _s4.n_nationkey = _s5.c_nationkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY n_regionkey ORDER BY _s5.c_acctbal DESC NULLS FIRST, _s5.c_custkey NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s4.n_regionkey ORDER BY _s5.c_acctbal DESC NULLS FIRST, _s5.c_custkey NULLS LAST) = 1
 ), _t7 AS (
   SELECT
     _s8.n_nationkey,
     _s8.n_regionkey,
     partsupp.ps_availqty,
     partsupp.ps_partkey,
+    supplier.s_nationkey,
     supplier.s_suppkey
   FROM _s4 AS _s8
   JOIN tpch.supplier AS supplier
@@ -40,7 +41,7 @@ WITH _t2 AS (
   JOIN tpch.partsupp AS partsupp
     ON partsupp.ps_suppkey = supplier.s_suppkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY n_regionkey ORDER BY partsupp.ps_availqty DESC NULLS FIRST, partsupp.ps_partkey NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s8.n_regionkey ORDER BY partsupp.ps_availqty DESC NULLS FIRST, partsupp.ps_partkey NULLS LAST) = 1
 ), _t5 AS (
   SELECT
     n_nationkey,

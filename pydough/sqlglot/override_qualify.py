@@ -482,9 +482,10 @@ def get_scope_columns(scope: Scope) -> list[exp.Column]:
                 and not isinstance(ancestor.this, exp.Func)
             )
             or (
-                isinstance(ancestor, exp.Order)
+                isinstance(ancestor, exp.Order) or isinstance(ancestor, exp.Qualify)
                 # PYDOUGH CHANGE: not checking for instance of Window or WithinGroup
-                # or not column.name in named_selects
+                # or not column.name in named_selects. Allowing qualification
+                # for columns in Qualify
             )
             or (isinstance(ancestor, exp.Star) and not column.arg_key == "except")
         ):

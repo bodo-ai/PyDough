@@ -5,8 +5,8 @@ WITH _t1 AS (
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
-    ENDSWITH(c_phone, '00')
-    AND NTILE(100) OVER (PARTITION BY n_regionkey ORDER BY customer.c_acctbal) = 95
+    ENDSWITH(customer.c_phone, '00')
+    AND NTILE(100) OVER (PARTITION BY nation.n_regionkey ORDER BY customer.c_acctbal) = 95
 )
 SELECT
   c_name AS name

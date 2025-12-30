@@ -1,5 +1,7 @@
 WITH _s1 AS (
   SELECT
+    1 AS expr_0,
+    c_acctbal,
     c_custkey
   FROM tpch.customer
   WHERE
@@ -13,7 +15,8 @@ WITH _s1 AS (
   WHERE
     YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
   QUALIFY
-    NOT expr_0 IS NULL AND c_acctbal < AVG(COALESCE(c_acctbal, 0)) OVER ()
+    NOT _s1.expr_0 IS NULL
+    AND _s1.c_acctbal < AVG(COALESCE(_s1.c_acctbal, 0)) OVER ()
 )
 SELECT
   COUNT(*) AS n

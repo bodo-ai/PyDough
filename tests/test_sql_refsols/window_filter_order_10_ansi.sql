@@ -7,7 +7,7 @@ WITH _t1 AS (
   WHERE
     orders.o_clerk = 'Clerk#000000001'
   QUALIFY
-    o_totalprice < (
+    orders.o_totalprice < (
       0.05 * AVG(CAST(NULL AS INT)) OVER ()
     )
 )

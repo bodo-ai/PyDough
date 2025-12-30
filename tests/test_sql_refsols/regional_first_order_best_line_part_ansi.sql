@@ -9,7 +9,7 @@ WITH _t3 AS (
     ON EXTRACT(YEAR FROM CAST(orders.o_orderdate AS DATETIME)) = 1992
     AND customer.c_custkey = orders.o_custkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY n_regionkey ORDER BY orders.o_orderdate NULLS LAST, orders.o_orderkey NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY nation.n_regionkey ORDER BY orders.o_orderdate NULLS LAST, orders.o_orderkey NULLS LAST) = 1
 ), _t1 AS (
   SELECT
     lineitem.l_partkey,
@@ -19,7 +19,7 @@ WITH _t3 AS (
     ON EXTRACT(YEAR FROM CAST(lineitem.l_shipdate AS DATETIME)) = 1992
     AND _t3.o_orderkey = lineitem.l_orderkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY n_regionkey ORDER BY lineitem.l_quantity DESC NULLS FIRST, lineitem.l_linenumber NULLS LAST) = 1
+    ROW_NUMBER() OVER (PARTITION BY _t3.n_regionkey ORDER BY lineitem.l_quantity DESC NULLS FIRST, lineitem.l_linenumber NULLS LAST) = 1
 ), _s9 AS (
   SELECT
     _t1.n_regionkey,

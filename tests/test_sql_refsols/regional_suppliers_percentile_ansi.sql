@@ -14,7 +14,7 @@ WITH _s3 AS (
   JOIN _s3 AS _s3
     ON _s3.ps_suppkey = supplier.s_suppkey
   QUALIFY
-    NTILE(1000) OVER (PARTITION BY n_regionkey ORDER BY _s3.n_rows NULLS LAST, supplier.s_name NULLS LAST) = 1000
+    NTILE(1000) OVER (PARTITION BY nation.n_regionkey ORDER BY _s3.n_rows NULLS LAST, supplier.s_name NULLS LAST) = 1000
 )
 SELECT
   s_name AS name

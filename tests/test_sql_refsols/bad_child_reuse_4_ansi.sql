@@ -14,8 +14,8 @@ WITH _s1 AS (
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey
   QUALIFY
-    COALESCE(n_rows, 0) < AVG(COALESCE(n_rows, 0)) OVER (PARTITION BY c_nationkey)
-    AND n_rows <> 0
+    COALESCE(_s1.n_rows, 0) < AVG(COALESCE(_s1.n_rows, 0)) OVER (PARTITION BY customer.c_nationkey)
+    AND _s1.n_rows <> 0
 )
 SELECT
   c_custkey AS cust_key,

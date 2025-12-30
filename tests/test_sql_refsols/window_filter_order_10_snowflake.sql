@@ -15,7 +15,7 @@ WITH _u_0 AS (
   WHERE
     _u_0._u_1 IS NULL AND orders.o_clerk = 'Clerk#000000001'
   QUALIFY
-    o_totalprice < (
+    orders.o_totalprice < (
       0.05 * AVG(CAST(NULL AS INT)) OVER ()
     )
 )

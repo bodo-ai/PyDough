@@ -6,7 +6,7 @@ WITH _t2 AS (
   JOIN tpch.customer AS customer
     ON customer.c_nationkey = nation.n_nationkey
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY c_nationkey ORDER BY customer.c_acctbal DESC, customer.c_name) = 1
+    ROW_NUMBER() OVER (PARTITION BY customer.c_nationkey ORDER BY customer.c_acctbal DESC, customer.c_name) = 1
 ), _s3 AS (
   SELECT
     o_custkey,

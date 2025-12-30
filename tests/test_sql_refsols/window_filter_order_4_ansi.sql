@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    MAX(1) AS "_"
+    COUNT(*) AS n_rows
   FROM tpch.customer AS customer
   JOIN tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'GERMANY'
