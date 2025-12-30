@@ -1,6 +1,6 @@
 WITH _t1 AS (
   SELECT
-    1 AS _
+    1 AS "_"
   FROM tpch.orders
   WHERE
     o_clerk = 'Clerk#000000001'

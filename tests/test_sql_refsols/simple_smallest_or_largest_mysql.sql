@@ -1,6 +1,6 @@
 WITH _q_0 AS (
   SELECT
-    1 AS _
+    1 AS `_`
 )
 SELECT
   LEAST(20, 10) AS s1,

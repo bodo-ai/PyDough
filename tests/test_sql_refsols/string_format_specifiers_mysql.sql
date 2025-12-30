@@ -1,6 +1,6 @@
 WITH _q_0 AS (
   SELECT
-    1 AS _
+    1 AS `_`
 )
 SELECT
   DATE_FORMAT(CAST('2023-07-15 14:30:45' AS DATETIME), '%a') AS d1,

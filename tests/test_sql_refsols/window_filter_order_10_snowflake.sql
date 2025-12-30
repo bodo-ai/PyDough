@@ -8,7 +8,7 @@ WITH _u_0 AS (
     1
 ), _t1 AS (
   SELECT
-    1 AS _
+    1 AS "_"
   FROM tpch.orders AS orders
   LEFT JOIN _u_0 AS _u_0
     ON _u_0._u_1 = orders.o_custkey
@@ -16,7 +16,7 @@ WITH _u_0 AS (
     _u_0._u_1 IS NULL AND orders.o_clerk = 'Clerk#000000001'
   QUALIFY
     o_totalprice < (
-      0.05 * AVG(NULL) OVER ()
+      0.05 * AVG(CAST(NULL AS INT)) OVER ()
     )
 )
 SELECT

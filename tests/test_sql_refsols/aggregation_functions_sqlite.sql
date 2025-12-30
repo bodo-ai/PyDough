@@ -25,8 +25,8 @@ WITH _s1 AS (
     END AS expr_17,
     CASE
       WHEN (
-        CAST(0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS INTEGER) - CASE
-          WHEN 0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) < CAST(0.19999999999999996 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
+        CAST(0.2 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS INTEGER) - CASE
+          WHEN 0.2 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) < CAST(0.2 * COUNT(customer.c_acctbal) OVER (PARTITION BY customer.c_nationkey) AS INTEGER)
           THEN 1
           ELSE 0
         END

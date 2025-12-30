@@ -1,6 +1,6 @@
 WITH _t2 AS (
   SELECT
-    MAX(1) AS _
+    MAX(1) AS "_"
   FROM tpch.customer AS customer
   JOIN tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'GERMANY'
@@ -11,7 +11,7 @@ WITH _t2 AS (
     orders.o_custkey
 ), _t1 AS (
   SELECT
-    1 AS _
+    1 AS "_"
   FROM _t2
   QUALIFY
     n_rows < AVG(n_rows) OVER ()

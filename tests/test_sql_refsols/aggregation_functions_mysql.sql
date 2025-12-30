@@ -24,9 +24,7 @@ WITH _s1 AS (
       ELSE NULL
     END AS expr_17,
     CASE
-      WHEN FLOOR(
-        0.19999999999999996 * COUNT(CUSTOMER.c_acctbal) OVER (PARTITION BY CUSTOMER.c_nationkey)
-      ) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC)
+      WHEN FLOOR(0.2 * COUNT(CUSTOMER.c_acctbal) OVER (PARTITION BY CUSTOMER.c_nationkey)) < ROW_NUMBER() OVER (PARTITION BY CUSTOMER.c_nationkey ORDER BY CUSTOMER.c_acctbal DESC)
       THEN CUSTOMER.c_acctbal
       ELSE NULL
     END AS expr_18

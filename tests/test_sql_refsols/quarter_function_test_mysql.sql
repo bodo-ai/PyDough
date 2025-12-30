@@ -1,6 +1,6 @@
 WITH _q_0 AS (
   SELECT
-    1 AS _
+    1 AS `_`
 )
 SELECT
   1 AS _expr0,

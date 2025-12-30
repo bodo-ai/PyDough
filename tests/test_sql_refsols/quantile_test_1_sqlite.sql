@@ -2,8 +2,8 @@ WITH _t0 AS (
   SELECT
     CASE
       WHEN (
-        CAST(0.30000000000000004 * COUNT(o_totalprice) OVER () AS INTEGER) - CASE
-          WHEN 0.30000000000000004 * COUNT(o_totalprice) OVER () < CAST(0.30000000000000004 * COUNT(o_totalprice) OVER () AS INTEGER)
+        CAST(0.3 * COUNT(o_totalprice) OVER () AS INTEGER) - CASE
+          WHEN 0.3 * COUNT(o_totalprice) OVER () < CAST(0.3 * COUNT(o_totalprice) OVER () AS INTEGER)
           THEN 1
           ELSE 0
         END

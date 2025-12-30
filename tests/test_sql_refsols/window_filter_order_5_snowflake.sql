@@ -6,7 +6,7 @@ WITH _s1 AS (
     c_mktsegment = 'BUILDING'
 ), _t1 AS (
   SELECT
-    1 AS _
+    1 AS "_"
   FROM tpch.orders AS orders
   LEFT JOIN _s1 AS _s1
     ON _s1.c_custkey = orders.o_custkey

@@ -176,9 +176,14 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
         # Visit the inputs in reverse order so we can pop them off in order.
         for arg in reversed(window_expression.inputs):
             arg.accept(self)
-        arg_exprs: list[SQLGlotExpression] = [
-            self._stack.pop() for _ in range(len(window_expression.inputs))
-        ]
+        arg_exprs: list[SQLGlotExpression] = []
+        for _ in range(len(window_expression.inputs)):
+            expr: SQLGlotExpression = self._stack.pop()
+            if isinstance(expr, sqlglot_expressions.Null):
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("INTEGER")
+                )
+            arg_exprs.append(expr)
         # Do the same with the partition expressions.
         for arg in reversed(window_expression.partition_inputs):
             arg.accept(self)

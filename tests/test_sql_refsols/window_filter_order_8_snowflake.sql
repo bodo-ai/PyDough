@@ -7,7 +7,7 @@ WITH _s3 AS (
     AND YEAR(CAST(o_orderdate AS TIMESTAMP)) = 1998
 ), _t2 AS (
   SELECT
-    MAX(1) AS _
+    MAX(1) AS "_"
   FROM tpch.customer AS customer
   JOIN tpch.nation AS nation
     ON customer.c_nationkey = nation.n_nationkey AND nation.n_name = 'FRANCE'
@@ -17,7 +17,7 @@ WITH _s3 AS (
     customer.c_custkey
 ), _t1 AS (
   SELECT
-    1 AS _
+    1 AS "_"
   FROM _t2
   QUALIFY
     NULLIF(count_o_custkey, 0) IS NULL

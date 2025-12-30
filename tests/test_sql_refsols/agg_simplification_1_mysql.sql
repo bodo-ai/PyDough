@@ -136,7 +136,7 @@ WITH _t1 AS (
     END AS expr_85,
     CASE
       WHEN FLOOR(
-        0.19999999999999996 * COUNT(CHAR_LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY CHAR_LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))
+        0.2 * COUNT(CHAR_LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY CHAR_LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')))
       ) < ROW_NUMBER() OVER (PARTITION BY CHAR_LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) ORDER BY CHAR_LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca')) DESC)
       THEN CHAR_LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))
       ELSE NULL

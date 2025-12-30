@@ -9,7 +9,7 @@ WITH _u_0 AS (
 ), _t AS (
   SELECT
     ORDERS.o_totalprice,
-    AVG(NULL) OVER () AS _w
+    AVG(CAST(NULL AS SIGNED)) OVER () AS _w
   FROM tpch.ORDERS AS ORDERS
   LEFT JOIN _u_0 AS _u_0
     ON ORDERS.o_custkey = _u_0._u_1

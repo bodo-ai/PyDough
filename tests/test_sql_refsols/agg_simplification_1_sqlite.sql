@@ -160,8 +160,8 @@ WITH _t1 AS (
     END AS expr_85,
     CASE
       WHEN (
-        CAST(0.19999999999999996 * COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) AS INTEGER) - CASE
-          WHEN 0.19999999999999996 * COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) < CAST(0.19999999999999996 * COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) AS INTEGER)
+        CAST(0.2 * COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) AS INTEGER) - CASE
+          WHEN 0.2 * COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) < CAST(0.2 * COUNT(LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) OVER (PARTITION BY LENGTH(NULLIF(sbtickerexchange, 'NYSE Arca'))) AS INTEGER)
           THEN 1
           ELSE 0
         END
