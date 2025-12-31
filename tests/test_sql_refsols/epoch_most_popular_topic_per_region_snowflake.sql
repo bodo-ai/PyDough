@@ -12,7 +12,7 @@ WITH _t0 AS (
     1,
     2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY user_region ORDER BY COUNT(DISTINCT searches.search_id) DESC) = 1
+    ROW_NUMBER() OVER (PARTITION BY users.user_region ORDER BY COUNT(DISTINCT searches.search_id) DESC) = 1
 )
 SELECT
   user_region AS region,

@@ -35,7 +35,7 @@ WITH _t2 AS (
     rsum1,
     rsum2,
     CASE
-      WHEN TRUNCATE(CAST(0.75 * COUNT(expr_13) OVER () AS FLOAT), 0) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
+      WHEN FLOOR(0.75 * COUNT(expr_13) OVER ()) < ROW_NUMBER() OVER (ORDER BY expr_13 DESC)
       THEN expr_13
       ELSE NULL
     END AS expr_15,

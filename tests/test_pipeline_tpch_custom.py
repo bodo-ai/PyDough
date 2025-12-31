@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 
 from pydough.database_connectors import DatabaseContext
+from pydough.database_connectors.database_connector import DatabaseDialect
 from pydough.metadata import GraphMetadata
 from pydough.unqualified import (
     UnqualifiedNode,
@@ -183,6 +184,7 @@ from tests.test_pydough_functions.simple_pydough_functions import (
     yoy_change_in_num_orders,
 )
 
+from .conftest import tpch_custom_test_data_dialect_replacements
 from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_test
 
 
@@ -1034,11 +1036,11 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "name": [
-                            "Customer#000000018",
-                            "Customer#000000153",
-                            "Customer#000000204",
-                            "Customer#000000284",
-                            "Customer#000000312",
+                            "Customer#000047056",
+                            "Customer#000019210",
+                            "Customer#000094175",
+                            "Customer#000012947",
+                            "Customer#000139547",
                         ]
                     }
                 ),
@@ -1416,32 +1418,26 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 lambda: pd.DataFrame(
                     {
                         "supplier_name": [
-                            "Supplier#000009271",
-                            "Supplier#000000543",
-                            "Supplier#000007718",
-                            "Supplier#000006460",
-                            "Supplier#000002509",
+                            "Supplier#000002367",
+                            "Supplier#000003027",
+                            "Supplier#000004494",
+                            "Supplier#000005363",
+                            "Supplier#000005639",
                         ],
                         "nation_name": [
-                            "MOZAMBIQUE",
+                            "ALGERIA",
+                            "ALGERIA",
+                            "ALGERIA",
                             "MOROCCO",
-                            "MOZAMBIQUE",
-                            "MOROCCO",
-                            "ETHIOPIA",
+                            "KENYA",
                         ],
-                        "supplier_quantity": [
-                            49,
-                            46,
-                            39,
-                            27,
-                            68,
-                        ],
+                        "supplier_quantity": [11, 23, 17, 24, 32],
                         "national_qty_pct": [
-                            41.88034188,
-                            36.80000000,
-                            33.33333333,
-                            21.60000000,
-                            21.58730159,
+                            15.068493150684931,
+                            31.506849315068493,
+                            23.28767123287671,
+                            100.0,
+                            100.0,
                         ],
                     }
                 ),
@@ -2069,9 +2065,9 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "d23": ["07-15-2023"],
                     }
                 ),
-                "string_format_specifiers_sqlite",
+                "string_format_specifiers",
             ),
-            id="string_format_specifiers_sqlite",
+            id="string_format_specifiers",
         ),
         pytest.param(
             PyDoughPandasTest(
@@ -2393,7 +2389,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "n_pairs": [22],
+                        "n_pairs": [100],
                     }
                 ),
                 "simple_cross_6",
@@ -2406,8 +2402,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                 "TPCH",
                 lambda: pd.DataFrame(
                     {
-                        "original_order_key": [13569, 74754, 112352, 113347, 122566],
-                        "n_other_orders": [1] * 5,
+                        "original_part_key": [12850, 7635, 14848, 51810, 914],
+                        "n_other_parts": [9, 8, 8, 8, 7],
                     }
                 ),
                 "simple_cross_7",
@@ -2955,7 +2951,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [1052.98, 1085.81, 1062.33, 1040.95, 1146.71],
                         "orders_1_percent": [
                             5999.3,
                             7003.64,
@@ -3038,7 +3034,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [1052.98, 1085.81, 1062.33, 1040.95, 1146.71],
                         "orders_1_percent": [
                             5999.3,
                             7003.64,
@@ -3121,7 +3117,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             "CANADA",
                             "CHINA",
                         ],
-                        "orders_min": [None, None, None, None, None],
+                        "orders_min": [5390.99, 2622.17, 10183.86, 10722.74, 15050.91],
                         "orders_1_percent": [
                             5390.99,
                             2622.17,
@@ -3162,7 +3158,7 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                             298230.29,
                             263862.04,
                             230003.53,
-                            252977.53,
+                            246470.76,
                         ],
                         "orders_99_percent": [
                             389176.08,
@@ -3209,6 +3205,29 @@ def test_pipeline_until_relational_tpch_custom(
     file_path: str = get_plan_test_filename(tpch_custom_pipeline_test_data.test_name)
     tpch_custom_pipeline_test_data.run_relational_test(
         get_sample_graph, file_path, update_tests
+    )
+
+
+def test_pipeline_until_sql_tpch_custom(
+    tpch_custom_pipeline_test_data: PyDoughPandasTest,
+    get_sample_graph: graph_fetcher,
+    empty_context_database: DatabaseContext,
+    get_sql_test_filename: Callable[[str, DatabaseDialect], str],
+    update_tests: bool,
+) -> None:
+    """
+    Same as test_pipeline_until_relational_tpch, but for the generated SQL text.
+    """
+
+    tpch_custom_pipeline_test_data = tpch_custom_test_data_dialect_replacements(
+        empty_context_database.dialect, tpch_custom_pipeline_test_data
+    )
+
+    file_path: str = get_sql_test_filename(
+        tpch_custom_pipeline_test_data.test_name, empty_context_database.dialect
+    )
+    tpch_custom_pipeline_test_data.run_sql_test(
+        get_sample_graph, file_path, update_tests, empty_context_database
     )
 
 

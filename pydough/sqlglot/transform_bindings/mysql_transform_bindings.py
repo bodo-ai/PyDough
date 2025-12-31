@@ -48,8 +48,6 @@ class MySQLTransformBindings(BaseTransformBindings):
         pydop.MINUTE: "MINUTE",
         pydop.SECOND: "SECOND",
         pydop.DAYNAME: "DAYNAME",
-        pydop.SMALLEST: "LEAST",
-        pydop.LARGEST: "GREATEST",
     }
 
     """
@@ -694,3 +692,22 @@ class MySQLTransformBindings(BaseTransformBindings):
                 expression=sqlglot_expressions.Identifier(this="utf8mb4_bin"),
             )
         return arg
+
+    def convert_smallest_or_largest(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType], largest: bool
+    ) -> SQLGlotExpression:
+        collated_args: list[SQLGlotExpression] = []
+        for arg in args[1:]:
+            if isinstance(types[args.index(arg)], StringType):
+                collated_args.append(
+                    sqlglot_expressions.Collate(
+                        this=arg,
+                        expression=sqlglot_expressions.Identifier(this="utf8mb4_bin"),
+                    )
+                )
+            else:
+                collated_args.append(arg)
+        if largest:
+            return sqlglot_expressions.Greatest(this=args[0], expressions=collated_args)
+        else:
+            return sqlglot_expressions.Least(this=args[0], expressions=collated_args)
