@@ -72,6 +72,21 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
 
+    def convert_current_timestamp(self) -> SQLGlotExpression:
+        """
+        Create a SQLGlot expression to obtain the current timestamp removing the
+        timezone and not DST-aware specifically for Snowflake.
+        SQL:
+            CAST(CONVERT_TIMEZONE('UTC', CURRENT_TIMESTAMP()) AS TIMESTAMP_NTZ)
+        """
+        return sqlglot_expressions.Cast(
+            this=sqlglot_expressions.ConvertTimezone(
+                target_tz=sqlglot_expressions.Literal.string("UTC"),
+                timestamp=sqlglot_expressions.CurrentTimestamp(),
+            ),
+            to=sqlglot_expressions.DataType.build("TIMESTAMPNTZ"),
+        )
+
     def convert_extract_datetime(
         self,
         args: list[SQLGlotExpression],
