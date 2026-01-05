@@ -339,10 +339,10 @@ def prev_next_regions():
     return regions.CALCULATE(
         two_preceding=PREV(name, n=2, by=name.ASC()),
         one_preceding=PREV(name, by=name.ASC()),
-        current=name,
+        current_region=name,
         one_following=NEXT(name, by=name.ASC()),
         two_following=PREV(name, n=-2, by=name.ASC()),
-    ).ORDER_BY(current.ASC())
+    ).ORDER_BY(current_region.ASC())
 
 
 def avg_order_diff_per_customer():
