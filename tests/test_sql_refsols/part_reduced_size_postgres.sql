@@ -20,5 +20,6 @@ FROM _s0 AS _s0
 JOIN tpch.lineitem AS lineitem
   ON _s0.p_partkey = lineitem.l_partkey
 ORDER BY
-  4 DESC NULLS LAST
+  4 DESC NULLS LAST,
+  5 NULLS FIRST
 LIMIT 5

@@ -2936,7 +2936,7 @@ def part_reduced_size():
             # AM or PM
             am_pm=STRING(receipt_date, "%H:%M%p"),
         )
-        .TOP_K(5, by=discount.DESC())
+        .TOP_K(5, by=(discount.DESC(), date_dmy.ASC()))
     )
 
 
