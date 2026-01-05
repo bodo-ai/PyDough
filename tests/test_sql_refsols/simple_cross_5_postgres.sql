@@ -45,11 +45,23 @@ WITH _t1 AS (
     o_orderpriority,
     p_size,
     sum_l_quantity,
-    ROW_NUMBER() OVER (PARTITION BY p_size ORDER BY COALESCE(sum_l_quantity, 0) DESC) AS _w
+    ROW_NUMBER() OVER (PARTITION BY p_size ORDER BY CASE
+      WHEN (
+        NOT sum_l_quantity IS NULL AND sum_l_quantity > 0
+      )
+      THEN COALESCE(sum_l_quantity, 0)
+      ELSE NULL
+    END DESC) AS _w
   FROM _t4
 ), _s7 AS (
   SELECT
-    COALESCE(sum_l_quantity, 0) AS total_qty,
+    CASE
+      WHEN (
+        NOT sum_l_quantity IS NULL AND sum_l_quantity > 0
+      )
+      THEN COALESCE(sum_l_quantity, 0)
+      ELSE NULL
+    END AS total_qty,
     o_orderpriority,
     p_size
   FROM _t

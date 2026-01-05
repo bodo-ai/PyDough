@@ -41,12 +41,24 @@ WITH _t1 AS (
     1,
     2
   QUALIFY
-    ROW_NUMBER() OVER (PARTITION BY _s0.p_size ORDER BY COALESCE(SUM(lineitem.l_quantity), 0) DESC NULLS FIRST) = 1
+    ROW_NUMBER() OVER (PARTITION BY _s0.p_size ORDER BY CASE
+      WHEN (
+        NOT SUM(lineitem.l_quantity) IS NULL AND SUM(lineitem.l_quantity) > 0
+      )
+      THEN COALESCE(SUM(lineitem.l_quantity), 0)
+      ELSE NULL
+    END DESC NULLS FIRST) = 1
 )
 SELECT
   _s6.p_size AS part_size,
   _t3.o_orderpriority AS best_order_priority,
-  COALESCE(_t3.sum_l_quantity, 0) AS best_order_priority_qty
+  CASE
+    WHEN (
+      NOT _t3.sum_l_quantity IS NULL AND _t3.sum_l_quantity > 0
+    )
+    THEN COALESCE(_t3.sum_l_quantity, 0)
+    ELSE NULL
+  END AS best_order_priority_qty
 FROM _s6 AS _s6
 LEFT JOIN _t3 AS _t3
   ON _s6.p_size = _t3.p_size

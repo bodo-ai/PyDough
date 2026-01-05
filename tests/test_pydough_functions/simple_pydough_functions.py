@@ -3140,7 +3140,7 @@ def simple_cross_5():
     )
     best_priority = (
         CROSS(order_info.PARTITION(name="priorities", by=order_priority))
-        .CALCULATE(total_qty=SUM(lines.quantity))
+        .CALCULATE(total_qty=KEEP_IF(SUM(lines.quantity), SUM(lines.quantity) > 0))
         .BEST(by=total_qty.DESC(), per="sizes")
     )
     return sizes.CALCULATE(

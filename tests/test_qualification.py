@@ -918,7 +918,7 @@ from tests.test_pydough_functions.user_collections import (
         │     └─┬─ Where[($1.size == part_size) & (tax == 0) & (discount == 0) & (ship_mode == 'SHIP') & STARTSWITH($1.container, 'LG')]
         │       └─┬─ AccessChild
         │         └─── SubCollection[part]
-        ├─┬─ Calculate[total_qty=SUM($1.quantity)]
+        ├─┬─ Calculate[total_qty=KEEP_IF(SUM($1.quantity), SUM($1.quantity) > 0)]
         │ └─┬─ AccessChild
         │   └─── PartitionChild[lines]
         ├─── Where[RANKING(by=(total_qty.DESC(na_pos='last')), levels=2, allow_ties=False) == 1]
