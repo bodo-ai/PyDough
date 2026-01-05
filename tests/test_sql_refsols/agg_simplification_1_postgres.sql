@@ -31,7 +31,7 @@ SELECT
   1 AS nd5,
   1 AS nd6,
   0 AS nd7,
-  TRUNC(CAST(NOT aug_exchange IS NULL AS DECIMAL)) AS nd8,
+  CAST(NOT aug_exchange IS NULL AS INT) AS nd8,
   1 AS av1,
   2 AS av2,
   -1 AS av3,

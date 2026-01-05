@@ -2599,8 +2599,8 @@ def simple_int_float_string_cast():
         s3=STRING("3"),
         s4=STRING("4.3"),
         s5=STRING("-5.888"),
-        s6=STRING(-6.0),
-        s7=STRING(0.0),
+        s6=STRING(-6.1),
+        s7=STRING(0.1),
         s8=STRING("0.0"),
         s9=STRING("abc def"),
     )

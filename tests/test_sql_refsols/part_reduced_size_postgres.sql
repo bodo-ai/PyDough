@@ -5,12 +5,12 @@ WITH _s0 AS (
     p_size
   FROM tpch.part
   ORDER BY
-    TRUNC(CAST(p_retailprice AS DECIMAL)) NULLS FIRST
+    CAST(p_retailprice AS INT) NULLS FIRST
   LIMIT 2
 )
 SELECT
   CAST(_s0.p_size AS DOUBLE PRECISION) / 2.5 AS reduced_size,
-  TRUNC(CAST(_s0.p_retailprice AS DECIMAL)) AS retail_price_int,
+  CAST(_s0.p_retailprice AS INT) AS retail_price_int,
   CONCAT_WS('', 'old size: ', CAST(_s0.p_size AS TEXT)) AS message,
   lineitem.l_discount AS discount,
   TO_CHAR(lineitem.l_receiptdate, 'DD-MM-YYYY') AS date_dmy,

@@ -72,6 +72,24 @@ class SnowflakeTransformBindings(BaseTransformBindings):
                 # For other types, use SUM directly
                 return sqlglot_expressions.Sum(this=arg[0])
 
+    def convert_integer(
+        self, args: list[SQLGlotExpression], types: list[PyDoughType]
+    ) -> SQLGlotExpression:
+        assert len(args) == 1
+        if isinstance(args[0], sqlglot_expressions.Literal):
+            return sqlglot_expressions.Anonymous(
+                this="TRUNCATE",
+                expressions=[
+                    sqlglot_expressions.Cast(
+                        this=args[0], to=sqlglot_expressions.DataType.build("DOUBLE")
+                    )
+                ],
+            )
+        else:
+            return sqlglot_expressions.Cast(
+                this=args[0], to=sqlglot_expressions.DataType.build("BIGINT")
+            )
+
     def convert_current_timestamp(self) -> SQLGlotExpression:
         """
         Create a SQLGlot expression to obtain the current timestamp removing the

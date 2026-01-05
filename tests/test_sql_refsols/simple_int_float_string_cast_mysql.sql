@@ -21,8 +21,8 @@ SELECT
   CAST('3' AS CHAR) AS s3,
   CAST('4.3' AS CHAR) AS s4,
   CAST('-5.888' AS CHAR) AS s5,
-  CAST(-6.0 AS CHAR) AS s6,
-  CAST(0.0 AS CHAR) AS s7,
+  CAST(-6.1 AS CHAR) AS s6,
+  CAST(0.1 AS CHAR) AS s7,
   CAST('0.0' AS CHAR) AS s8,
   CAST('abc def' AS CHAR) AS s9
 FROM _q_0

@@ -2024,8 +2024,8 @@ from .testing_utilities import PyDoughPandasTest, graph_fetcher, run_e2e_error_t
                         "s3": ["3"],
                         "s4": ["4.3"],
                         "s5": ["-5.888"],
-                        "s6": ["-6.0"],
-                        "s7": ["0.0"],
+                        "s6": ["-6.1"],
+                        "s7": ["0.1"],
                         "s8": ["0.0"],
                         "s9": ["abc def"],
                     }
