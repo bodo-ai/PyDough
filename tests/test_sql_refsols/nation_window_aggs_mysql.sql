@@ -1,7 +1,7 @@
 SELECT
   n_name COLLATE utf8mb4_bin AS nation_name,
   SUM(n_nationkey) OVER () AS key_sum,
-  AVG(n_nationkey) OVER () AS key_avg,
+  AVG(CAST(n_nationkey AS DOUBLE)) OVER () AS key_avg,
   COUNT(CASE WHEN CHAR_LENGTH(n_comment) < 75 THEN n_comment ELSE NULL END) OVER () AS n_short_comment,
   COUNT(*) OVER () AS n_nations
 FROM tpch.NATION

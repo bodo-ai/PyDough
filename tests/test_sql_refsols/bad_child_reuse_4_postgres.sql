@@ -10,7 +10,7 @@ WITH _s1 AS (
     customer.c_acctbal,
     customer.c_custkey,
     _s1.n_rows,
-    AVG(COALESCE(_s1.n_rows, 0)) OVER (PARTITION BY customer.c_nationkey) AS _w
+    AVG(CAST(COALESCE(_s1.n_rows, 0) AS DOUBLE PRECISION)) OVER (PARTITION BY customer.c_nationkey) AS _w
   FROM tpch.customer AS customer
   LEFT JOIN _s1 AS _s1
     ON _s1.o_custkey = customer.c_custkey

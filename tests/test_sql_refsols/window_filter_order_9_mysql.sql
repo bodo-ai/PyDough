@@ -14,7 +14,7 @@ WITH _s3 AS (
   SELECT
     _s3.expr_0,
     ORDERS.o_totalprice,
-    AVG(_s3.total_spent) OVER () AS _w
+    AVG(CAST(_s3.total_spent AS DOUBLE)) OVER () AS _w
   FROM tpch.ORDERS AS ORDERS
   LEFT JOIN _s3 AS _s3
     ON ORDERS.o_custkey = _s3.c_custkey

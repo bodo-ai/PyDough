@@ -1,7 +1,7 @@
 WITH _t AS (
   SELECT
     CUSTOMER.c_acctbal,
-    AVG(CUSTOMER.c_acctbal) OVER () AS _w
+    AVG(CAST(CUSTOMER.c_acctbal AS DOUBLE)) OVER () AS _w
   FROM tpch.ORDERS AS ORDERS
   JOIN tpch.CUSTOMER AS CUSTOMER
     ON CUSTOMER.c_custkey = ORDERS.o_custkey AND CUSTOMER.c_mktsegment = 'BUILDING'

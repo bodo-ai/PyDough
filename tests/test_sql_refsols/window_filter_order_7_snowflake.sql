@@ -7,7 +7,7 @@ WITH _t1 AS (
   WHERE
     YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
   QUALIFY
-    customer.c_acctbal < AVG(customer.c_acctbal) OVER ()
+    customer.c_acctbal < AVG(CAST(customer.c_acctbal AS DOUBLE)) OVER ()
 )
 SELECT
   COUNT(*) AS n

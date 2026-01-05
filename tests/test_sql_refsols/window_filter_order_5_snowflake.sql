@@ -16,7 +16,7 @@ WITH _s1 AS (
     YEAR(CAST(orders.o_orderdate AS TIMESTAMP)) = 1995
   QUALIFY
     NOT _s1.expr_0 IS NULL
-    AND _s1.c_acctbal < AVG(COALESCE(_s1.c_acctbal, 0)) OVER ()
+    AND _s1.c_acctbal < AVG(CAST(COALESCE(_s1.c_acctbal, 0) AS DOUBLE)) OVER ()
 )
 SELECT
   COUNT(*) AS n

@@ -17,7 +17,7 @@ WITH _s3 AS (
 ), _t AS (
   SELECT
     count_o_custkey,
-    AVG(COALESCE(count_o_custkey, 0)) OVER () AS _w
+    AVG(CAST(COALESCE(count_o_custkey, 0) AS DOUBLE)) OVER () AS _w
   FROM _t2
 )
 SELECT

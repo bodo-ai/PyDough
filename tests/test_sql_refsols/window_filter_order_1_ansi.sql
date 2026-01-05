@@ -19,7 +19,7 @@ WITH _s3 AS (
     1 AS "_"
   FROM _t2
   QUALIFY
-    COALESCE(count_o_custkey, 0) < AVG(COALESCE(count_o_custkey, 0)) OVER ()
+    COALESCE(count_o_custkey, 0) < AVG(CAST(COALESCE(count_o_custkey, 0) AS DOUBLE)) OVER ()
     AND NULLIF(count_o_custkey, 0) <> 0
 )
 SELECT

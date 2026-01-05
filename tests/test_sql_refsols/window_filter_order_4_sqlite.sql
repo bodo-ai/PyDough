@@ -12,7 +12,7 @@ WITH _t2 AS (
 ), _t AS (
   SELECT
     n_rows,
-    AVG(n_rows) OVER () AS _w
+    AVG(CAST(n_rows AS REAL)) OVER () AS _w
   FROM _t2
 )
 SELECT

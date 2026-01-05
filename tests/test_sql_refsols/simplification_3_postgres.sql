@@ -2,9 +2,13 @@ WITH _t1 AS (
   SELECT
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
     sbcustpostalcode,
-    AVG(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0))) OVER () AS ravg1,
+    AVG(
+      CAST(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0)) AS DOUBLE PRECISION)
+    ) OVER () AS ravg1,
     COALESCE(
-      AVG(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(
+        CAST(ABS(COALESCE(TRUNC(CAST(sbcustpostalcode AS DECIMAL)), 0)) AS DOUBLE PRECISION)
+      ) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
     ) AS ravg2,
     COUNT(TRUNC(CAST(sbcustpostalcode AS DECIMAL))) OVER () AS rcnt1,

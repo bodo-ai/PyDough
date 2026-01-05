@@ -14,7 +14,7 @@ WITH _t2 AS (
     1 AS "_"
   FROM _t2
   QUALIFY
-    n_rows < AVG(n_rows) OVER ()
+    n_rows < AVG(CAST(n_rows AS DOUBLE)) OVER ()
 )
 SELECT
   COUNT(*) AS n

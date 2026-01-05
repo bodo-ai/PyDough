@@ -183,6 +183,10 @@ class SQLGlotRelationalExpressionVisitor(RelationalExpressionVisitor):
                 expr = sqlglot_expressions.Cast(
                     this=expr, to=sqlglot_expressions.DataType.build("INTEGER")
                 )
+            elif window_expression.op.function_name == "RELAVG":
+                expr = sqlglot_expressions.Cast(
+                    this=expr, to=sqlglot_expressions.DataType.build("DOUBLE")
+                )
             arg_exprs.append(expr)
         # Do the same with the partition expressions.
         for arg in reversed(window_expression.partition_inputs):

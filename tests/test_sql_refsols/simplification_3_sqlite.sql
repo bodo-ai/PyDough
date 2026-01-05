@@ -2,9 +2,9 @@ WITH _t2 AS (
   SELECT
     ABS(CAST(sbcustpostalcode AS INTEGER)) AS expr_13,
     ROW_NUMBER() OVER (ORDER BY sbcustname) AS rank,
-    AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INTEGER), 0))) OVER () AS ravg1,
+    AVG(CAST(ABS(COALESCE(CAST(sbcustpostalcode AS INTEGER), 0)) AS REAL)) OVER () AS ravg1,
     COALESCE(
-      AVG(ABS(COALESCE(CAST(sbcustpostalcode AS INTEGER), 0))) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
+      AVG(CAST(ABS(COALESCE(CAST(sbcustpostalcode AS INTEGER), 0)) AS REAL)) OVER (ORDER BY sbcustname ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),
       0.1
     ) AS ravg2,
     COUNT(CAST(sbcustpostalcode AS INTEGER)) OVER () AS rcnt1,

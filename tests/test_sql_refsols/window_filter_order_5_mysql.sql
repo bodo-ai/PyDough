@@ -10,7 +10,7 @@ WITH _s1 AS (
   SELECT
     _s1.c_acctbal,
     _s1.expr_0,
-    AVG(COALESCE(_s1.c_acctbal, 0)) OVER () AS _w
+    AVG(CAST(COALESCE(_s1.c_acctbal, 0) AS DOUBLE)) OVER () AS _w
   FROM tpch.ORDERS AS ORDERS
   LEFT JOIN _s1 AS _s1
     ON ORDERS.o_custkey = _s1.c_custkey

@@ -21,7 +21,7 @@ WITH _s3 AS (
   QUALIFY
     _s3.expr_0 IS NULL
     AND orders.o_totalprice < (
-      0.05 * AVG(_s3.total_spent) OVER ()
+      0.05 * AVG(CAST(_s3.total_spent AS DOUBLE)) OVER ()
     )
 )
 SELECT
