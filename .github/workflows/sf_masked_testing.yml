@@ -41,6 +41,7 @@ jobs:
       SF_NONE_USERNAME: ${{ secrets.SF_NONE_USERNAME }}
       SF_NONE_PASSWORD: ${{ secrets.SF_NONE_PASSWORD }}
       SF_MASKED_ACCOUNT: ${{ secrets.SF_MASKED_ACCOUNT }}
+      PYDOUGH_MASK_SERVER_PATH: ${{ secrets.PYDOUGH_MASK_SERVER_PATH }}
 
     steps:
       - uses: actions/checkout@v4
