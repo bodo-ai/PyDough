@@ -870,12 +870,12 @@ class HybridTranslator:
         # (1.0-args[1]) * N
         product: HybridExpr = HybridFunctionExpr(pydop.MUL, [sub, rows], NumericType())
 
-        # INTEGER((1.0-args[1]) * N)
+        # FLOOR((1.0-args[1]) * N)
         cast_integer: HybridExpr = HybridFunctionExpr(
             pydop.FLOOR, [product], NumericType()
         )
 
-        # R > INTEGER((1.0-args[1]) * N)
+        # R > FLOOR((1.0-args[1]) * N)
         greater: HybridExpr = HybridFunctionExpr(
             pydop.GRT, [rank, cast_integer], expr.typ
         )
