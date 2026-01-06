@@ -63,7 +63,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
             # literal in a call to MASK by toggling is_unmask to False.
             masked_literal = CallExpression(
                 pydop.MaskedExpressionFunctionOperator(
-                    call_arg.op.masking_metadata, False
+                    call_arg.op.masking_metadata, call_arg.op.table_path, False
                 ),
                 call_arg.data_type,
                 [literal_arg],
@@ -83,7 +83,7 @@ class MaskLiteralComparisonShuttle(RelationalExpressionShuttle):
                 [
                     CallExpression(
                         pydop.MaskedExpressionFunctionOperator(
-                            call_arg.op.masking_metadata, False
+                            call_arg.op.masking_metadata, call_arg.op.table_path, False
                         ),
                         call_arg.data_type,
                         [LiteralExpression(v, inner_type)],

@@ -19,6 +19,8 @@ swap out the active session for a brand new one if they want to preserve
 existing state.
 """
 
+from typing import TYPE_CHECKING, Union
+
 from pydough.database_connectors import (
     DatabaseContext,
     DatabaseDialect,
@@ -29,6 +31,9 @@ from pydough.errors import PyDoughErrorBuilder
 from pydough.metadata import GraphMetadata, parse_json_metadata_from_file
 
 from .pydough_configs import PyDoughConfigs
+
+if TYPE_CHECKING:
+    from pydough.mask_server import MaskServerInfo
 
 
 class PyDoughSession:
@@ -50,6 +55,7 @@ class PyDoughSession:
             connection=empty_connection, dialect=DatabaseDialect.ANSI
         )
         self._error_builder: PyDoughErrorBuilder = PyDoughErrorBuilder()
+        self._mask_server: MaskServerInfo | None = None
 
     @property
     def metadata(self) -> GraphMetadata | None:
@@ -130,6 +136,26 @@ class PyDoughSession:
             The error builder to set.
         """
         self._error_builder = builder
+
+    @property
+    def mask_server(self) -> Union["MaskServerInfo", None]:
+        """
+        Get the active mask server information.
+
+        Returns:
+            The active mask server information.
+        """
+        return self._mask_server
+
+    @mask_server.setter
+    def mask_server(self, server_info: Union["MaskServerInfo", None]) -> None:
+        """
+        Set the active mask server information.
+
+        Args:
+            The mask server information to set.
+        """
+        self._mask_server = server_info
 
     def connect_database(self, database_name: str, **kwargs) -> DatabaseContext:
         """

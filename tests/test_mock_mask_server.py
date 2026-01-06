@@ -2,7 +2,9 @@
 Unit tests for the PyDough mask server module.
 """
 
+import io
 import re
+from contextlib import redirect_stdout
 
 import pytest
 
@@ -22,27 +24,43 @@ from pydough.mask_server.mask_server import (
             None,
             [
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["EQUAL", 2, "__col__", 0],
                 ),
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 ),
                 MaskServerInput(
-                    table_path="srv.db.orders",
+                    dataset_id="dummy_server",
+                    table_path="db/orders",
                     column_name="order_date",
-                    expression=["BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"],
+                    expression=[
+                        "AND",
+                        2,
+                        "LTE",
+                        2,
+                        "2025-01-01",
+                        "__col__",
+                        "LTE",
+                        2,
+                        "__col__",
+                        "2025-02-01",
+                    ],
                 ),
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db/tbl",
                     column_name="col",
                     expression=["GT", 2, "__col__", 45.67],
                 ),
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["NOT_EQUAL", 2, "__col__", "LOWER", 1, "Smith"],
                 ),
@@ -84,7 +102,8 @@ from pydough.mask_server.mask_server import (
             None,
             [
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["EQUAL", 2, "__col__", 0],
                 ),
@@ -105,7 +124,8 @@ from pydough.mask_server.mask_server import (
             None,
             [
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 ),
@@ -122,9 +142,21 @@ from pydough.mask_server.mask_server import (
             "test-token-123",
             [
                 MaskServerInput(
-                    table_path="srv.db.orders",
+                    dataset_id="dummy_server",
+                    table_path="db.orders",
                     column_name="order_date",
-                    expression=["BETWEEN", 3, "__col__", "2025-01-01", "2025-02-01"],
+                    expression=[
+                        "AND",
+                        2,
+                        "LTE",
+                        2,
+                        "2025-01-01",
+                        "__col__",
+                        "LTE",
+                        2,
+                        "__col__",
+                        "2025-02-01",
+                    ],
                 ),
             ],
             [
@@ -145,7 +177,8 @@ from pydough.mask_server.mask_server import (
             "test-token-123",
             [
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["NOT_EQUAL", 2, "__col__", True],
                 ),
@@ -162,12 +195,14 @@ from pydough.mask_server.mask_server import (
             None,
             [
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["LT", 2, "__col__", "123.654445"],
                 ),
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=[
                         "AND",
@@ -199,7 +234,8 @@ from pydough.mask_server.mask_server import (
             None,
             [
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=[
                         "OR",
@@ -246,10 +282,13 @@ def test_mock_mask_server(
         base_url="http://localhost:8000", token=token
     )
 
-    # Doing the request
-    response: list[MaskServerOutput] = mask_server.simplify_simple_expression_batch(
-        batch=batch,
-    )
+    # Capture stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        # Doing the request
+        response: list[MaskServerOutput] = mask_server.simplify_simple_expression_batch(
+            batch=batch,
+            dry_run=False,
+        )
 
     assert response == answer, (
         f"Mismatch between the response {response!r} and the answer {answer!r}"
@@ -272,7 +311,8 @@ def test_mock_mask_server(
             "bad_token_123",
             [
                 MaskServerInput(
-                    table_path="srv.db.tbl",
+                    dataset_id="dummy_server",
+                    table_path="db.tbl",
                     column_name="col",
                     expression=["OR", 2, "__col__", 5],
                 )
@@ -299,4 +339,5 @@ def test_mock_mask_server_errors(
         # Doing the request
         mask_server.simplify_simple_expression_batch(
             batch=batch,
+            dry_run=False,
         )

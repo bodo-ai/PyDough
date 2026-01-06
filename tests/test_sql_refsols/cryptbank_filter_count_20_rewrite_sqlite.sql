@@ -2,4 +2,4 @@ SELECT
   COUNT(*) AS n
 FROM crbnk.customers
 WHERE
-  DATE(c_birthday, '+472 days') > DATE('1991-11-15')
+  c_birthday IN ('1991-03-13', '1992-05-06', '1993-01-01', '1994-06-15')
