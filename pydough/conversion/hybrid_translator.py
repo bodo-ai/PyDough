@@ -890,7 +890,6 @@ class HybridTranslator:
             child_connection.subtree, keep_largest, create_new_calc
         )
         max_call = HybridFunctionExpr(pydop.MAX, [max_input_arg], expr.typ)
-        # breakpoint()
         return max_call
 
     def add_unique_terms(
