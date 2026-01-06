@@ -1,11 +1,23 @@
 import datetime
+import io
+import os
 from collections.abc import Callable
+from contextlib import redirect_stdout
 
 import pandas as pd
 import pytest
 
+from pydough import to_sql
 from pydough.database_connectors import DatabaseContext, DatabaseDialect
-from tests.testing_utilities import graph_fetcher
+from pydough.mask_server import MaskServerInfo
+from pydough.metadata import GraphMetadata
+from pydough.unqualified import UnqualifiedNode
+from tests.testing_utilities import (
+    extract_batch_requests_from_logs,
+    graph_fetcher,
+    temp_env_override,
+    transform_and_exec_pydough,
+)
 
 from .testing_sf_masked_utilities import (
     PyDoughSnowflakeMaskedTest,
@@ -320,6 +332,26 @@ from .testing_sf_masked_utilities import (
         ),
         pytest.param(
             PyDoughSnowflakeMaskedTest(
+                "t1 = transactions.WHERE((DAY(transaction_date) == 1) & (HOUR(transaction_date) == 7))\n"
+                "t2 = transactions.WHERE((DAY(transaction_date) == 2) & (HOUR(transaction_date) == 7))\n"
+                "t3 = transactions.WHERE((DAY(transaction_date) == 1) & (HOUR(transaction_date) == 8))\n"
+                "t4 = transactions.WHERE((DAY(transaction_date) == 2) & (HOUR(transaction_date) == 8))\n"
+                "t5 = transactions.WHERE(((DAY(transaction_date) < 4) & (HOUR(transaction_date) < 3)) | ((MINUTE(transaction_date) == SECOND(transaction_date)) & (HOUR(transaction_date) < 3)))\n"
+                "result = RETAIL.CALCULATE(n1=COUNT(t1), n2=COUNT(t2), n3=COUNT(t3), n4=COUNT(t4), n5=COUNT(t5))",
+                "RETAIL",
+                "retail_transactions_ts",
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame(
+                        {"n1": [2], "n2": [6], "n3": [3], "n4": [6], "n5": [52]}
+                    ),
+                },
+            ),
+            id="retail_transactions_ts",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
                 "acc_typs = accounts.PARTITION(name='account_types', by=account_type)\n"
                 "result = acc_typs.CALCULATE(account_type, n=COUNT(accounts), avg_bal=ROUND(AVG(accounts.balance), 2))\n",
                 "FSI",
@@ -523,8 +555,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_a",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [860]}),
+                    "PARTIAL": pd.DataFrame({"n": [860]}),
                     "FULL": pd.DataFrame({"n": [860]}),
                 },
             ),
@@ -537,8 +569,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_b",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [2544]}),
+                    "PARTIAL": pd.DataFrame({"n": [2544]}),
                     "FULL": pd.DataFrame({"n": [2544]}),
                 },
             ),
@@ -551,8 +583,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_c",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [1704]}),
+                    "PARTIAL": pd.DataFrame({"n": [1704]}),
                     "FULL": pd.DataFrame({"n": [1704]}),
                 },
             ),
@@ -565,8 +597,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_d",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [1716]}),
+                    "PARTIAL": pd.DataFrame({"n": [1716]}),
                     "FULL": pd.DataFrame({"n": [1716]}),
                 },
             ),
@@ -595,8 +627,8 @@ from .testing_sf_masked_utilities import (
                 "retail_members_compound_b",
                 kwargs={"datetime": datetime},
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [2]}),
+                    "PARTIAL": pd.DataFrame({"n": [2]}),
                     "FULL": pd.DataFrame({"n": [2]}),
                 },
             ),
@@ -813,6 +845,176 @@ from .testing_sf_masked_utilities import (
             ),
             id="fsi_accounts_customers_compound_c",
         ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(CONTAINS('GT', UPPER(first_name[:1])))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_names_analysis_a",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [25]}),
+                },
+            ),
+            id="retail_names_analysis_a",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(CONTAINS('day', LOWER(first_name[:2])))\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_names_analysis_b",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [11]}),
+                },
+            ),
+            id="retail_names_analysis_b",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(YEAR(date_of_birth) < 2026)\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_all",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [500]}),
+                },
+            ),
+            id="retail_all",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_members = loyalty_members.WHERE(YEAR(date_of_birth) >= 2026)\n"
+                "result = RETAIL.CALCULATE(n=COUNT(selected_members))",
+                "RETAIL",
+                "retail_none",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [0]}),
+                },
+            ),
+            id="retail_none",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(MONOTONIC('JULIA', UPPER(first_name), 'KIM'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_a",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [58]}),
+                },
+            ),
+            id="name_range_a",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(MONOTONIC('JULIA', UPPER(first_name), 'MATTHEW') & ~MONOTONIC('KIM', UPPER(first_name), 'LARRY'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_b",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [141]}),
+                },
+            ),
+            id="name_range_b",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(MONOTONIC('JULIA', UPPER(first_name), 'LARRY') & MONOTONIC('KIM', UPPER(first_name), 'MATTHEW'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_c",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [26]}),
+                },
+            ),
+            id="name_range_c",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(~MONOTONIC('BOB', UPPER(first_name), 'YOLANDA'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_d",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [125]}),
+                },
+            ),
+            id="name_range_d",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE(~MONOTONIC('STEEVE', UPPER(first_name), 'TIM'))\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "name_range_e",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [948]}),
+                },
+            ),
+            id="name_range_e",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE("
+                + " | ".join(
+                    [
+                        f"ISIN(last_name, {repr(names)})"
+                        for names in [
+                            ["Bailey", "Baker", "Ball", "Banks", "Barajas", "Barnett"],
+                            ["Barrera", "Barron", "Barton", "Cabrera", "Calderon"],
+                            ["Caldwell", "Callahan", "Campbell", "Campos", "Cardenas"],
+                            ["Carey", "Carlson", "Carney", "Carpenter", "Carr"],
+                            ["Carroll", "Carter", "Casey", "Castillo", "Castro"],
+                            ["Daniels", "Davenport", "Davis", "Dawson", "Day"],
+                            ["Eaton", "Farrell", "Galvan", "Garcia", "Garrett"],
+                            ["Garrison", "Gates", "Hahn", "Hale", "Hall", "Hampton"],
+                            ["Hansen", "Hanson", "Hardy", "Harris", "Harrison"],
+                            ["Harvey", "Hatfield", "Hawkins", "Hayden", "Hayes"],
+                            ["Jackson", "Jacobs", "Jacobson", "James"],
+                            ["Kane", "Lara", "Larsen", "Larson"],
+                        ]
+                    ]
+                )
+                + ")\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "large_name_list",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [126]}),
+                },
+            ),
+            id="large_name_list",
+        ),
     ],
 )
 def sf_masked_test_data(
@@ -825,6 +1027,7 @@ def sf_masked_test_data(
     return request.param
 
 
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50"})
 @pytest.mark.sf_masked
 def test_pipeline_until_relational_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
@@ -832,6 +1035,7 @@ def test_pipeline_until_relational_masked_sf(
     get_plan_test_filename: Callable[[str], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    true_mask_server_info: MaskServerInfo,
 ) -> None:
     """
     Tests the conversion of the PyDough queries on the masked dataset
@@ -840,11 +1044,16 @@ def test_pipeline_until_relational_masked_sf(
     file_path: str = get_plan_test_filename(
         f"{sf_masked_test_data.test_name}_{enable_mask_rewrites}"
     )
-    sf_masked_test_data.run_relational_test(
-        get_sf_masked_graphs, file_path, update_tests
-    )
+    with redirect_stdout(io.StringIO()):
+        sf_masked_test_data.run_relational_test(
+            get_sf_masked_graphs,
+            file_path,
+            update_tests,
+            mask_server=true_mask_server_info,
+        )
 
 
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50"})
 @pytest.mark.sf_masked
 def test_pipeline_until_sql_masked_sf(
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
@@ -853,6 +1062,7 @@ def test_pipeline_until_sql_masked_sf(
     get_sql_test_filename: Callable[[str, DatabaseDialect], str],
     update_tests: bool,
     enable_mask_rewrites: str,
+    true_mask_server_info: MaskServerInfo,
 ):
     """
     Tests the conversion of the PyDough queries on the custom masked dataset
@@ -862,32 +1072,146 @@ def test_pipeline_until_sql_masked_sf(
     file_path: str = get_sql_test_filename(
         f"{sf_masked_test_data.test_name}_{enable_mask_rewrites}", sf_data.dialect
     )
+    # with redirect_stdout(io.StringIO()):
     sf_masked_test_data.run_sql_test(
         get_sf_masked_graphs,
         file_path,
         update_tests,
         sf_data,
+        mask_server=true_mask_server_info,
     )
 
 
+@pytest.fixture(
+    params=[
+        pytest.param(("1", "NONE"), id="rewrite-none"),
+        pytest.param(("1", "PARTIAL"), id="rewrite-partial"),
+        pytest.param(("0", "FULL"), id="raw-full"),
+        pytest.param(("1", "FULL"), id="rewrite-full"),
+    ]
+)
+def context_rewrite_combination(request):
+    """
+    Variant of `enable_mask_rewrites` that is co-parameterized with the three
+    account types: NONE, PARTIAL and FULL. This is to ensure that all three are
+    tested with rewrite enabled, but only FULL is tested with rewrite disabled.
+    """
+    old_value: str = os.environ.get("PYDOUGH_ENABLE_MASK_REWRITES", "0")
+    os.environ["PYDOUGH_ENABLE_MASK_REWRITES"] = request.param[0]
+    yield request.param[1]
+    os.environ["PYDOUGH_ENABLE_MASK_REWRITES"] = old_value
+
+
+@temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50"})
 @pytest.mark.execute
 @pytest.mark.sf_masked
-@pytest.mark.parametrize("account_type", ["NONE", "PARTIAL", "FULL"])
 def test_pipeline_e2e_masked_sf(
-    account_type: str,
+    context_rewrite_combination: str,
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
     sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
-    enable_mask_rewrites: str,  # noqa: F811
+    true_mask_server_info: MaskServerInfo,
 ) -> None:
     """
     End-to-end test for Snowflake with masked columns.
     """
+    account_type: str = context_rewrite_combination
     sf_masked_test_data.account_type = account_type
     if sf_masked_test_data.answers.get(account_type) is None:
         pytest.skip(f"No reference solution for account_type={account_type}")
-    sf_masked_test_data.run_e2e_test(
-        get_sf_masked_graphs,
-        sf_masked_context("BODO", sf_masked_test_data.graph_name, account_type),
-        coerce_types=True,
+    with redirect_stdout(io.StringIO()):
+        sf_masked_test_data.run_e2e_test(
+            get_sf_masked_graphs,
+            sf_masked_context("BODO", sf_masked_test_data.graph_name, account_type),
+            coerce_types=True,
+            mask_server=true_mask_server_info,
+        )
+
+
+@pytest.mark.sf_masked
+@temp_env_override(
+    {"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50", "PYDOUGH_ENABLE_MASK_REWRITES": "1"}
+)
+@pytest.mark.parametrize(
+    ["graph_name", "pydough_code", "batch_requests"],
+    [
+        pytest.param(
+            "FSI",
+            "selected_customers = customers.WHERE(last_name == 'Adams')\n"
+            "result = FSI.CALCULATE(n=COUNT(selected_customers))",
+            [
+                {
+                    "DRY_RUN",
+                    "bodo/fsi/protected_customers/lastname: ['EQUAL', 2, '__col__', 'Adams']",
+                },
+                {
+                    "bodo/fsi/protected_customers/lastname: ['EQUAL', 2, '__col__', 'Adams']",
+                },
+            ],
+            id="fsi_customers_a",
+        ),
+        pytest.param(
+            "FSI",
+            "c1 = customers.WHERE((MONTH(date_of_birth) == 6) & (DAY(date_of_birth) == 15))\n"
+            "c2 = customers.WHERE((YEAR(date_of_birth) == 1970) & (MONTH(date_of_birth) == 6))\n"
+            "c3 = customers.WHERE((YEAR(date_of_birth) == 1970) & (DAY(date_of_birth) == 15))\n"
+            "c4 = customers.WHERE((YEAR(date_of_birth) == 1970) & (MONTH(date_of_birth) == 6) & (DAY(date_of_birth) == 15))\n"
+            "result = FSI.CALCULATE(n1=COUNT(c1), n2=COUNT(c2), n3=COUNT(c3), n4=COUNT(c4))",
+            [
+                {
+                    "DRY_RUN",
+                    "bodo/fsi/protected_customers/dob: ['AND', 2, 'EQUAL', 2, 'DAY', 1, '__col__', 15, 'EQUAL', 2, 'MONTH', 1, '__col__', 6]",
+                    "bodo/fsi/protected_customers/dob: ['AND', 2, 'EQUAL', 2, 'DAY', 1, '__col__', 15, 'EQUAL', 2, 'YEAR', 1, '__col__', 1970]",
+                    "bodo/fsi/protected_customers/dob: ['AND', 2, 'EQUAL', 2, 'MONTH', 1, '__col__', 6, 'EQUAL', 2, 'YEAR', 1, '__col__', 1970]",
+                    "bodo/fsi/protected_customers/dob: ['AND', 3, 'EQUAL', 2, 'DAY', 1, '__col__', 15, 'EQUAL', 2, 'MONTH', 1, '__col__', 6, 'EQUAL', 2, 'YEAR', 1, '__col__', 1970]",
+                    "bodo/fsi/protected_customers/dob: ['EQUAL', 2, 'DAY', 1, '__col__', 15]",
+                    "bodo/fsi/protected_customers/dob: ['EQUAL', 2, 'MONTH', 1, '__col__', 6]",
+                    "bodo/fsi/protected_customers/dob: ['EQUAL', 2, 'YEAR', 1, '__col__', 1970]",
+                },
+                {
+                    "bodo/fsi/protected_customers/dob: ['AND', 2, 'EQUAL', 2, 'DAY', 1, '__col__', 15, 'EQUAL', 2, 'MONTH', 1, '__col__', 6]",
+                    "bodo/fsi/protected_customers/dob: ['AND', 2, 'EQUAL', 2, 'DAY', 1, '__col__', 15, 'EQUAL', 2, 'YEAR', 1, '__col__', 1970]",
+                    "bodo/fsi/protected_customers/dob: ['AND', 2, 'EQUAL', 2, 'MONTH', 1, '__col__', 6, 'EQUAL', 2, 'YEAR', 1, '__col__', 1970]",
+                    "bodo/fsi/protected_customers/dob: ['AND', 3, 'EQUAL', 2, 'DAY', 1, '__col__', 15, 'EQUAL', 2, 'MONTH', 1, '__col__', 6, 'EQUAL', 2, 'YEAR', 1, '__col__', 1970]",
+                },
+            ],
+            id="fsi_customers_b",
+        ),
+    ],
+)
+def test_masked_sf_mask_server_logging(
+    graph_name: str,
+    pydough_code: str,
+    batch_requests: list[set[str]],
+    get_sf_masked_graphs: graph_fetcher,  # noqa: F811
+    true_mask_server_info: MaskServerInfo,
+    caplog,
+):
+    """
+    Tests whether, during the conversion of the PyDough queries on the masked
+    Snowflake dataset into SQL text, the correct logging calls are made
+    regarding batches sent to the mask server. This is to ensure that the calls
+    are being batched as expected, the right calls are being sent to the server,
+    and expressions that are non-predicates are not being sent, even if they are
+    a valid sub-expression of a predicate that can be sent.
+    """
+    # Obtain the graph and the unqualified node
+    graph: GraphMetadata = get_sf_masked_graphs(graph_name)
+    root: UnqualifiedNode = transform_and_exec_pydough(
+        pydough_code,
+        graph,
+        {"datetime": datetime, "pd": pd},
+    )
+
+    # Convert the PyDough code to SQL text, while capturing
+    # stdout to avoid polluting the console with logging calls
+    with redirect_stdout(io.StringIO()):
+        to_sql(root, metadata=graph, mask_server=true_mask_server_info)
+
+    # Retrieve the output from the captured logger output
+    batch_requests_made: list[set[str]] = extract_batch_requests_from_logs(caplog.text)
+
+    # Compare the expected batch requests to those made.
+    assert batch_requests_made == batch_requests, (
+        "The batch requests made do not match the expected batch requests."
     )

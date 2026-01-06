@@ -1,0 +1,4 @@
+ROOT(columns=[('n', n_rows)], orderings=[])
+ AGGREGATE(keys={}, aggregations={'n_rows': COUNT()})
+  FILTER(condition=ISIN(a_open_ts, ['2018-03-15 10:36:51', '2018-01-02 12:26:51']:array[unknown]), columns={})
+   SCAN(table=CRBNK.ACCOUNTS, columns={'a_open_ts': a_open_ts})

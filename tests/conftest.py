@@ -27,6 +27,7 @@ from pydough.database_connectors import (
     load_database_context,
 )
 from pydough.errors import PyDoughTestingException
+from pydough.mask_server import MaskServerInfo
 from pydough.metadata.graphs import GraphMetadata
 from pydough.qdag import AstNodeBuilder
 from tests.test_pydough_functions.simple_pydough_functions import (
@@ -2170,3 +2171,35 @@ def tpch_custom_test_data_dialect_replacements(
                 "string_format_specifiers",
             )
     return test
+
+
+@pytest.fixture(scope="session")
+def mock_server_info(mock_server_setup: str) -> MaskServerInfo:
+    """
+    Returns the MaskServerInfo for the mock server.
+    """
+    return MaskServerInfo(base_url=mock_server_setup, token=None)
+
+
+@pytest.fixture(scope="session")
+def true_mask_server_info() -> MaskServerInfo:
+    """
+    Returns the MaskServerInfo for the true Mask server.
+    """
+    if not os.getenv("PYDOUGH_MASK_SERVER_PATH"):
+        raise RuntimeError("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
+
+    # Send a health request to ensure the server is reachable and functioning.
+    # If not, then halt testing early.
+    response: httpx.Response = httpx.get(
+        os.environ["PYDOUGH_MASK_SERVER_PATH"] + "/health", timeout=1
+    )
+    json: dict = response.json()
+    if (
+        response.status_code != 200
+        or json.get("status", None) != "ok"
+        or json.get("column_store", {}).get("status", "down") != "up"
+    ):
+        pytest.fail(f"Mask server is not reachable (health check failed: {json})")
+
+    return MaskServerInfo(base_url=os.environ["PYDOUGH_MASK_SERVER_PATH"], token=None)

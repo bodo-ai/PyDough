@@ -29,6 +29,7 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
     def __init__(
         self,
         masking_metadata: MaskedTableColumnMetadata,
+        table_path: str,
         is_unmask: bool,
     ):
         # Create a dummy verifier that requires exactly one argument, since all
@@ -49,6 +50,7 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
             "UNMASK" if is_unmask else "MASK", False, verifier, deducer, False
         )
         self._masking_metadata: MaskedTableColumnMetadata = masking_metadata
+        self._table_path: str = table_path
         self._is_unmask: bool = is_unmask
 
     @property
@@ -57,6 +59,13 @@ class MaskedExpressionFunctionOperator(ExpressionFunctionOperator):
         The metadata for the masked column.
         """
         return self._masking_metadata
+
+    @property
+    def table_path(self) -> str:
+        """
+        The fully qualified SQL table path for the masked column.
+        """
+        return self._table_path
 
     @property
     def is_unmask(self) -> bool:
