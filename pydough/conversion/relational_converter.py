@@ -933,6 +933,12 @@ class RelTranslation:
         if (not reverse_cardinality.filters) and (not parent.always_exists()):
             reverse_cardinality = reverse_cardinality.add_filter()
 
+        ancestral_reverse_cardinality: JoinCardinality = (
+            parent.search_reverse_cardinality()
+        )
+        if ancestral_reverse_cardinality.plural:
+            reverse_cardinality = reverse_cardinality.add_plural()
+
         join_keys: list[tuple[HybridExpr, HybridExpr]] | None = None
         join_cond: HybridExpr | None = None
         match collection_access.subcollection_property:
@@ -1383,7 +1389,8 @@ class RelTranslation:
                             result,
                             JoinType.INNER,
                             JoinCardinality.PLURAL_ACCESS,
-                            JoinCardinality.SINGULAR_ACCESS,
+                            # JoinCardinality.SINGULAR_ACCESS,
+                            preceding_hybrid[0].search_reverse_cardinality(),
                             join_keys,
                             None,
                             None,
