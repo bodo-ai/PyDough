@@ -192,22 +192,22 @@ class MaskServerInfo:
             )
 
         assert batch != [], "Batch cannot be empty."
-        request: ServerRequest = self.generate_request(batch, dry_run, hard_limit)
-        response_json = self.connection.send_server_request(request)
-        result: list[MaskServerOutput] = self.generate_result(response_json)
-        print()
-        print(request.payload)
-        print()
-        print(response_json)
+
+        # Break down the batch into multiple requests if necessary, send them to
+        # the server, and collect the results.
+        result: list[MaskServerOutput] = []
+        for req in self.generate_requests(batch, dry_run, hard_limit):
+            response_json = self.connection.send_server_request(req)
+            result.extend(self.generate_result(response_json))
 
         return result
 
-    def generate_request(
+    def generate_requests(
         self,
         batch: list[MaskServerInput],
         dry_run: bool,
         hard_limit: int,
-    ) -> ServerRequest:
+    ) -> list[ServerRequest]:
         """
         Generate a server request from the given batch of server inputs.
 
@@ -218,7 +218,8 @@ class MaskServerInfo:
             each predicate.
 
         Returns:
-            A server request including payload to be sent.
+            A server request including payload to be sent. Returned as a list
+            in case multiple requests are needed.
 
         Example payload:
         ```
@@ -241,37 +242,43 @@ class MaskServerInfo:
         }
         ```
         """
-
-        # Create the payload for the overall batch request, then populate the
-        # items list with each individual request.
-        payload: dict = {
-            "items": [],
-            "expression_format": {"name": "linear", "version": "0.2.0"},
-            "hard_limit": hard_limit,
-        }
-
-        # Populate each individual request in the batch in the specified format.
-        for item in batch:
-            evaluate_request: dict = {
-                "dataset_id": item.dataset_id,
-                "column_ref": {
-                    "kind": "fqn",
-                    "value": item.fully_qualified_name,
-                },
-                "predicate": item.expression,
-                "output_mode": "cell_encrypted",
-                "mode": "dynamic",
-                "predicate_format": "linear_with_arity",
-                "dry_run": dry_run,
-                "limits": {"dedup": True},
+        result: list[ServerRequest] = []
+        step_size = 16  # Max 16 items per batch request
+        for start_idx in range(0, len(batch), step_size):
+            # Create the payload for the overall batch request, then populate the
+            # items list with each individual request.
+            payload: dict = {
+                "items": [],
+                "expression_format": {"name": "linear", "version": "0.2.0"},
+                "hard_limit": hard_limit,
             }
-            payload["items"].append(evaluate_request)
 
-        return ServerRequest(
-            path=self.batch_evaluate_api_path,
-            payload=payload,
-            method=RequestMethod.POST,
-        )
+            # Populate each individual request in the batch in the specified format.
+            for idx in range(start_idx, min(start_idx + step_size, len(batch))):
+                item: MaskServerInput = batch[idx]
+                evaluate_request: dict = {
+                    "dataset_id": item.dataset_id,
+                    "column_ref": {
+                        "kind": "fqn",
+                        "value": item.fully_qualified_name,
+                    },
+                    "predicate": item.expression,
+                    "output_mode": "cell_encrypted",
+                    "mode": "dynamic",
+                    "predicate_format": "linear_with_arity",
+                    "dry_run": dry_run,
+                    "limits": {"dedup": True},
+                }
+                payload["items"].append(evaluate_request)
+
+            result.append(
+                ServerRequest(
+                    path=self.batch_evaluate_api_path,
+                    payload=payload,
+                    method=RequestMethod.POST,
+                )
+            )
+        return result
 
     def generate_result(self, response_dict: dict) -> list[MaskServerOutput]:
         """

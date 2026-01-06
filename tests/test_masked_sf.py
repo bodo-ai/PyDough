@@ -1,5 +1,6 @@
 import datetime
 import io
+import os
 from collections.abc import Callable
 from contextlib import redirect_stdout
 
@@ -554,8 +555,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_a",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [860]}),
+                    "PARTIAL": pd.DataFrame({"n": [860]}),
                     "FULL": pd.DataFrame({"n": [860]}),
                 },
             ),
@@ -568,8 +569,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_b",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [2544]}),
+                    "PARTIAL": pd.DataFrame({"n": [2544]}),
                     "FULL": pd.DataFrame({"n": [2544]}),
                 },
             ),
@@ -582,8 +583,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_c",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [1704]}),
+                    "PARTIAL": pd.DataFrame({"n": [1704]}),
                     "FULL": pd.DataFrame({"n": [1704]}),
                 },
             ),
@@ -596,8 +597,8 @@ from .testing_sf_masked_utilities import (
                 "RETAIL",
                 "retail_transactions_payment_method_cmp_d",
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [1716]}),
+                    "PARTIAL": pd.DataFrame({"n": [1716]}),
                     "FULL": pd.DataFrame({"n": [1716]}),
                 },
             ),
@@ -626,8 +627,8 @@ from .testing_sf_masked_utilities import (
                 "retail_members_compound_b",
                 kwargs={"datetime": datetime},
                 answers={
-                    "NONE": None,
-                    "PARTIAL": None,
+                    "NONE": pd.DataFrame({"n": [2]}),
+                    "PARTIAL": pd.DataFrame({"n": [2]}),
                     "FULL": pd.DataFrame({"n": [2]}),
                 },
             ),
@@ -929,7 +930,7 @@ from .testing_sf_masked_utilities import (
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"n": [57]}),
+                    "FULL": pd.DataFrame({"n": [141]}),
                 },
             ),
             id="name_range_b",
@@ -959,7 +960,7 @@ from .testing_sf_masked_utilities import (
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"n": [124]}),
+                    "FULL": pd.DataFrame({"n": [125]}),
                 },
             ),
             id="name_range_d",
@@ -974,10 +975,45 @@ from .testing_sf_masked_utilities import (
                 answers={
                     "NONE": None,
                     "PARTIAL": None,
-                    "FULL": pd.DataFrame({"n": [880]}),
+                    "FULL": pd.DataFrame({"n": [948]}),
                 },
             ),
             id="name_range_e",
+        ),
+        pytest.param(
+            PyDoughSnowflakeMaskedTest(
+                "selected_patients = patients.WHERE("
+                + " | ".join(
+                    [
+                        f"ISIN(last_name, {repr(names)})"
+                        for names in [
+                            ["Bailey", "Baker", "Ball", "Banks", "Barajas", "Barnett"],
+                            ["Barrera", "Barron", "Barton", "Cabrera", "Calderon"],
+                            ["Caldwell", "Callahan", "Campbell", "Campos", "Cardenas"],
+                            ["Carey", "Carlson", "Carney", "Carpenter", "Carr"],
+                            ["Carroll", "Carter", "Casey", "Castillo", "Castro"],
+                            ["Daniels", "Davenport", "Davis", "Dawson", "Day"],
+                            ["Eaton", "Farrell", "Galvan", "Garcia", "Garrett"],
+                            ["Garrison", "Gates", "Hahn", "Hale", "Hall", "Hampton"],
+                            ["Hansen", "Hanson", "Hardy", "Harris", "Harrison"],
+                            ["Harvey", "Hatfield", "Hawkins", "Hayden", "Hayes"],
+                            ["Jackson", "Jacobs", "Jacobson", "James"],
+                            ["Kane", "Lara", "Larsen", "Larson"],
+                        ]
+                    ]
+                )
+                + ")\n"
+                "result = HEALTH.CALCULATE(n=COUNT(selected_patients))",
+                "HEALTH",
+                "large_name_list",
+                order_sensitive=True,
+                answers={
+                    "NONE": None,
+                    "PARTIAL": None,
+                    "FULL": pd.DataFrame({"n": [126]}),
+                },
+            ),
+            id="large_name_list",
         ),
     ],
 )
@@ -1036,41 +1072,60 @@ def test_pipeline_until_sql_masked_sf(
     file_path: str = get_sql_test_filename(
         f"{sf_masked_test_data.test_name}_{enable_mask_rewrites}", sf_data.dialect
     )
-    with redirect_stdout(io.StringIO()):
-        sf_masked_test_data.run_sql_test(
-            get_sf_masked_graphs,
-            file_path,
-            update_tests,
-            sf_data,
-            mask_server=true_mask_server_info,
-        )
+    # with redirect_stdout(io.StringIO()):
+    sf_masked_test_data.run_sql_test(
+        get_sf_masked_graphs,
+        file_path,
+        update_tests,
+        sf_data,
+        mask_server=true_mask_server_info,
+    )
+
+
+@pytest.fixture(
+    params=[
+        pytest.param(("1", "NONE"), id="rewrite-none"),
+        pytest.param(("1", "PARTIAL"), id="rewrite-partial"),
+        pytest.param(("0", "FULL"), id="raw-full"),
+        pytest.param(("1", "FULL"), id="rewrite-full"),
+    ]
+)
+def context_rewrite_combination(request):
+    """
+    Variant of `enable_mask_rewrites` that is co-parameterized with the three
+    account types: NONE, PARTIAL and FULL. This is to ensure that all three are
+    tested with rewrite enabled, but only FULL is tested with rewrite disabled.
+    """
+    old_value: str = os.environ.get("PYDOUGH_ENABLE_MASK_REWRITES", "0")
+    os.environ["PYDOUGH_ENABLE_MASK_REWRITES"] = request.param[0]
+    yield request.param[1]
+    os.environ["PYDOUGH_ENABLE_MASK_REWRITES"] = old_value
 
 
 @temp_env_override({"PYDOUGH_MASK_SERVER_HARD_LIMIT": "50"})
 @pytest.mark.execute
 @pytest.mark.sf_masked
-@pytest.mark.parametrize("account_type", ["NONE", "PARTIAL", "FULL"])
 def test_pipeline_e2e_masked_sf(
-    account_type: str,
+    context_rewrite_combination: str,
     sf_masked_test_data: PyDoughSnowflakeMaskedTest,
     get_sf_masked_graphs: graph_fetcher,  # noqa: F811
     sf_masked_context: Callable[[str, str, str], DatabaseContext],  # noqa: F811
-    enable_mask_rewrites: str,  # noqa: F811
     true_mask_server_info: MaskServerInfo,
 ) -> None:
     """
     End-to-end test for Snowflake with masked columns.
     """
+    account_type: str = context_rewrite_combination
     sf_masked_test_data.account_type = account_type
     if sf_masked_test_data.answers.get(account_type) is None:
         pytest.skip(f"No reference solution for account_type={account_type}")
-    # with redirect_stdout(io.StringIO()):
-    sf_masked_test_data.run_e2e_test(
-        get_sf_masked_graphs,
-        sf_masked_context("BODO", sf_masked_test_data.graph_name, account_type),
-        coerce_types=True,
-        mask_server=true_mask_server_info,
-    )
+    with redirect_stdout(io.StringIO()):
+        sf_masked_test_data.run_e2e_test(
+            get_sf_masked_graphs,
+            sf_masked_context("BODO", sf_masked_test_data.graph_name, account_type),
+            coerce_types=True,
+            mask_server=true_mask_server_info,
+        )
 
 
 @pytest.mark.sf_masked

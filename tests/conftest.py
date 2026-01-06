@@ -2037,6 +2037,6 @@ def true_mask_server_info() -> MaskServerInfo:
         or json.get("status", None) != "ok"
         or json.get("column_store", {}).get("status", "down") != "up"
     ):
-        pytest.fail("Mask server is not reachable (health check failed)")
+        pytest.fail(f"Mask server is not reachable (health check failed: {json})")
 
     return MaskServerInfo(base_url=os.environ["PYDOUGH_MASK_SERVER_PATH"], token=None)
