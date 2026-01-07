@@ -12,11 +12,11 @@ SELECT
     )
   ) AS week,
   COUNT(*) AS num_notifs,
-  COALESCE(COUNT_IF((
+  COUNT_IF((
     (
       DAYOFWEEK(notifications.created_at) + 6
     ) % 7
-  ) IN (5, 6)), 0) AS weekend_notifs
+  ) IN (5, 6)) AS weekend_notifs
 FROM main.notifications AS notifications
 JOIN main.users AS users
   ON notifications.user_id = users.uid AND users.country IN ('US', 'CA')

@@ -442,7 +442,7 @@ You can find a full example of using Postgres database with PyDough in [this usa
 <!-- TOC --><a name="evaluation-apis"></a>
 ## Evaluation APIs
 
-This sections describes various APIs you can use to execute PyDough code. 
+This section describes various APIs you can use to execute PyDough code. 
 
 <!-- TOC --><a name="pydoughto_sql"></a>
 ### `pydough.to_sql`
@@ -454,6 +454,7 @@ The `to_sql` API takes in PyDough code and transforms it into SQL query text wit
 - `config`: the PyDough configuration settings to use for the conversion (if omitted, `pydough.active_session.config` is used instead).
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
 - `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
+- `max_rows`: a positive integer which, if provided, indicates that the SQL query should produce at most that many rows. E.g. `max_rows=10` will ensure the SQL query ends in `LIMIT 10` (unless the query already ends in a smaller limit).
 
 Below is an example of using `pydough.to_sql` and the output (the SQL output may be outdated if PyDough's SQL conversion process has been updated):
 
@@ -497,6 +498,7 @@ The `to_df` API does all the same steps as the [`to_sql` API](#pydoughto_sql), b
 - `database`: the database context to use for the conversion (if omitted, `pydough.active_session.database` is used instead). The database context matters because it controls which SQL dialect is used for the translation.
 - `session`: a PyDough session object which, if provided, is used instead of `pydough.active_session` or the `metadata` / `config` / `database` arguments. Note: this argument cannot be used alongside those arguments.
 - `display_sql`: displays the sql before executing in a logger.
+- `max_rows`: a positive integer which, if provided, indicates that the output should produce at most that many rows. E.g. `max_rows=10` will ensure the result returns at most 10 rows, as if the SQL query ended with `LIMIT 10`.
 
 Below is an example of using `pydough.to_df` and the output, attached to a sqlite database containing data for the TPC-H schema:
 
@@ -548,10 +550,10 @@ pydough.to_df(result, columns={"name": "name", "n_custs": "n"})
 
 See the [demo notebooks](../demos/notebooks/1_introduction.ipynb) for more instances of how to use the `to_df` API.
 
-<!-- TOC --><a name="evaluation-apis"></a>
+<!-- TOC --><a name="transformation-apis"></a>
 ## Transformation APIs
 
-This sections describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
+This section describes various APIs you can use to transform PyDough source code into a result that can be used as input for other evaluation or exploration APIs.
 
 <!-- TOC --><a name="pydoughfrom_string"></a>
 ### `pydough.from_string`
@@ -726,7 +728,7 @@ ORDER BY
 <!-- TOC --><a name="exploration-apis"></a>
 ## Exploration APIs
 
-This sections describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
+This section describes various APIs you can use to explore PyDough code and figure out what each component is doing without having PyDough fully evaluate it. The following APIs take an optional `config` argument which can be used to specify the PyDough configuration settings to use for the exploration.
 
 See the [demo notebooks](../demos/notebooks/2_exploration.ipynb) for more instances of how to use the exploration APIs.
 

@@ -1,5 +1,5 @@
 ROOT(columns=[('cust_key', c_custkey), ('n_orders', n_rows)], orderings=[(c_acctbal):desc_last], limit=10:numeric)
- FILTER(condition=DEFAULT_TO(n_rows, 0:numeric) < RELAVG(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[c_nationkey], order=[]) & n_rows > 0:numeric, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'n_rows': n_rows})
+ FILTER(condition=n_rows != 0:numeric & DEFAULT_TO(n_rows, 0:numeric) < RELAVG(args=[DEFAULT_TO(n_rows, 0:numeric)], partition=[c_nationkey], order=[]), columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'n_rows': n_rows})
   JOIN(condition=t0.c_custkey == t1.o_custkey, type=LEFT, cardinality=SINGULAR_FILTER, reverse_cardinality=SINGULAR_ACCESS, columns={'c_acctbal': t0.c_acctbal, 'c_custkey': t0.c_custkey, 'c_nationkey': t0.c_nationkey, 'n_rows': t1.n_rows})
    SCAN(table=tpch.CUSTOMER, columns={'c_acctbal': c_acctbal, 'c_custkey': c_custkey, 'c_nationkey': c_nationkey})
    AGGREGATE(keys={'o_custkey': o_custkey}, aggregations={'n_rows': COUNT()})

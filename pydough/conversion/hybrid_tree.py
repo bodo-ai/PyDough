@@ -48,6 +48,7 @@ from .hybrid_operations import (
     HybridPartition,
     HybridPartitionChild,
     HybridRoot,
+    HybridUserGeneratedCollection,
 )
 
 
@@ -323,7 +324,7 @@ class HybridTree:
         condition: HybridExpr
         if is_semi:
             condition = HybridFunctionExpr(
-                pydop.GRT,
+                pydop.NEQ,
                 [result_ref, HybridLiteralExpr(Literal(0, NumericType()))],
                 BooleanType(),
             )
@@ -587,6 +588,16 @@ class HybridTree:
             self
         )
 
+        # Augment the reverse cardinality if the parent does not always exist.
+        if not reverse_cardinality.filters:
+            if len(self.pipeline) == 1 and isinstance(
+                self.pipeline[0], HybridPartition
+            ):
+                if self.parent is not None and not self.parent.always_exists():
+                    reverse_cardinality = reverse_cardinality.add_filter()
+            elif not self.always_exists():
+                reverse_cardinality = reverse_cardinality.add_filter()
+
         # Create and insert the new child connection.
         new_child_idx = len(self.children)
         connection: HybridConnection = HybridConnection(
@@ -599,10 +610,6 @@ class HybridTree:
             reverse_cardinality,
         )
         self._children.append(connection)
-
-        # Augment the reverse cardinality if the parent does not always exist.
-        if (not reverse_cardinality.filters) and (not self.always_exists()):
-            connection.reverse_cardinality = reverse_cardinality.add_filter()
 
         # If an operation prevents the child's presence from directly
         # filtering the current level, update its connection type to be either
@@ -792,6 +799,8 @@ class HybridTree:
                 # Stepping into a partition child always has a matching data
                 # record for each parent, by definition.
                 pass
+            case HybridUserGeneratedCollection():
+                return start_operation.user_collection.collection.always_exists()
             case _:
                 raise NotImplementedError(
                     f"Invalid start of pipeline: {start_operation.__class__.__name__}"
@@ -842,12 +851,14 @@ class HybridTree:
             case HybridChildPullUp():
                 if not self.children[self.pipeline[0].child_idx].subtree.is_singular():
                     return False
+            case HybridUserGeneratedCollection():
+                return self.pipeline[0].user_collection.collection.is_singular()
             case HybridRoot():
                 pass
             case _:
                 return False
         # The current level is fine, so check any levels above it next.
-        return True if self.parent is None else self.parent.always_exists()
+        return True if self.parent is None else self.parent.is_singular()
 
     def equals_ignoring_successors(self, other: "HybridTree") -> bool:
         """

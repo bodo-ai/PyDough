@@ -5,7 +5,7 @@ WITH _s1 AS (
     SUM(tot_drug_amt) AS sum_tot_drug_amt
   FROM main.treatments
   WHERE
-    DATEDIFF(MONTH, CAST(start_dt AS DATETIME), CURRENT_TIMESTAMP()) <= 6
+    start_dt >= DATE_TRUNC('DAY', DATEADD(MONTH, -6, CURRENT_TIMESTAMP()))
   GROUP BY
     1
 ), _t1 AS (
@@ -25,7 +25,7 @@ SELECT
   COALESCE(sum_sum_tot_drug_amt, 0) AS total_drug_amount
 FROM _t1
 WHERE
-  sum_n_rows > 0
+  sum_n_rows <> 0
 ORDER BY
   3 DESC NULLS LAST
 LIMIT 3

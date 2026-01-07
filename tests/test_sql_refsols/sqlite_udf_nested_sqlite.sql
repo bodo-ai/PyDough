@@ -39,4 +39,4 @@ SELECT
   ) AS p
 FROM _t2
 WHERE
-  n_rows > 0
+  n_rows <> 0

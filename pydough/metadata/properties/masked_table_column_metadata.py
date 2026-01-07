@@ -36,6 +36,7 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         "protect protocol",
         "unprotect protocol",
         "server masked",
+        "server dataset id",
     }
 
     def __init__(
@@ -48,7 +49,11 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         unprotect_protocol: str,
         protect_protocol: str,
         server_masked: bool,
-        sample_values: list | None = None,
+        server_dataset_id: str | None,
+        sample_values: list | None,
+        description: str | None,
+        synonyms: list[str] | None,
+        extra_semantic_info: dict | None,
     ):
         super().__init__(
             name,
@@ -56,11 +61,15 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
             protected_data_type,
             column_name,
             sample_values,
+            description,
+            synonyms,
+            extra_semantic_info,
         )
         self._unprotected_data_type: PyDoughType = data_type
         self._unprotect_protocol: str = unprotect_protocol
         self._protect_protocol: str = protect_protocol
         self._server_masked: bool = server_masked
+        self._server_dataset_id: str | None = server_dataset_id
 
     @property
     def unprotected_data_type(self) -> PyDoughType:
@@ -95,6 +104,14 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         """
         return self._server_masked
 
+    @property
+    def server_dataset_id(self) -> str | None:
+        """
+        Returns the dataset ID to use when querying the mask server for this
+        column, if any.
+        """
+        return self._server_dataset_id
+
     @staticmethod
     def create_error_name(name: str, collection_error_name: str) -> str:
         return f"masked table column property {name!r} of {collection_error_name}"
@@ -106,6 +123,7 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         comp.append(self.unprotect_protocol)
         comp.append(self.protect_protocol)
         comp.append(self.server_masked)
+        comp.append(self.server_dataset_id)
         return comp
 
     @staticmethod
@@ -158,6 +176,12 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
         if "server masked" in property_json:
             server_masked = extract_bool(property_json, "server masked", error_name)
 
+        server_dataset_id: str | None = None
+        if "server dataset id" in property_json:
+            server_dataset_id = extract_string(
+                property_json, "server dataset id", error_name
+            )
+
         NoExtraKeys(MaskedTableColumnMetadata.allowed_fields).verify(
             property_json, error_name
         )
@@ -172,6 +196,11 @@ class MaskedTableColumnMetadata(TableColumnMetadata):
             unprotect_protocol,
             protect_protocol,
             server_masked,
+            server_dataset_id,
+            None,
+            None,
+            None,
+            None,
         )
         # Parse the optional common semantic properties like the description.
         property.parse_optional_properties(property_json)

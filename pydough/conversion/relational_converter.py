@@ -12,6 +12,8 @@ from dataclasses import dataclass
 
 import pydough.pydough_operators as pydop
 from pydough.configs import PyDoughSession
+from pydough.mask_server.mask_server_candidate_visitor import MaskServerCandidateVisitor
+from pydough.mask_server.mask_server_rewrite_shuttle import MaskServerRewriteShuttle
 from pydough.metadata import (
     CartesianProductMetadata,
     GeneralJoinMetadata,
@@ -37,6 +39,7 @@ from pydough.relational import (
     EmptySingleton,
     ExpressionSortInfo,
     Filter,
+    GeneratedTable,
     Join,
     JoinCardinality,
     JoinType,
@@ -85,11 +88,12 @@ from .hybrid_operations import (
     HybridPartition,
     HybridPartitionChild,
     HybridRoot,
+    HybridUserGeneratedCollection,
 )
 from .hybrid_translator import HybridTranslator
 from .hybrid_tree import HybridTree
-from .mask_server_candidate_visitor import MaskServerCandidateVisitor
-from .mask_server_rewrite_shuttle import MaskServerRewriteShuttle
+from .join_aggregate_transpose import pull_aggregates_above_joins
+from .join_key_substitution import join_key_substitution
 from .masking_critical_detection_visitor import MaskingCriticalDetectionVisitor
 from .masking_shuttles import MaskLiteralComparisonShuttle
 from .merge_projects import merge_projects
@@ -1275,6 +1279,29 @@ class RelTranslation:
                 new_expressions[shifted_expr] = column_ref
         return TranslationOutput(context.relational_node, new_expressions)
 
+    def build_user_generated_table(
+        self, node: HybridUserGeneratedCollection
+    ) -> TranslationOutput:
+        """Builds a user-generated table from the given hybrid user-generated collection.
+
+        Args:
+            `node`: The user-generated collection node to translate.
+
+        Returns:
+            The translated output payload.
+        """
+        collection = node._user_collection.collection
+        out_columns: dict[HybridExpr, ColumnReference] = {}
+        gen_columns: dict[str, RelationalExpression] = {}
+        for column_name, column_type in collection.column_names_and_types:
+            hybrid_ref = HybridRefExpr(column_name, column_type)
+            col_ref = ColumnReference(column_name, column_type)
+            out_columns[hybrid_ref] = col_ref
+            gen_columns[column_name] = col_ref
+
+        answer = GeneratedTable(collection)
+        return TranslationOutput(answer, out_columns)
+
     def rel_translation(
         self,
         hybrid: HybridTree,
@@ -1403,6 +1430,19 @@ class RelTranslation:
             case HybridRoot():
                 assert context is not None, "Malformed HybridTree pattern."
                 result = self.translate_hybridroot(context)
+            case HybridUserGeneratedCollection():
+                assert context is not None, "Malformed HybridTree pattern."
+                result = self.build_user_generated_table(operation)
+                result = self.join_outputs(
+                    context,
+                    result,
+                    JoinType.INNER,
+                    JoinCardinality.PLURAL_ACCESS,
+                    JoinCardinality.SINGULAR_ACCESS,
+                    [],
+                    None,
+                    None,
+                )
             case _:
                 raise NotImplementedError(
                     f"TODO: support relational conversion on {operation.__class__.__name__}"
@@ -1555,6 +1595,12 @@ def optimize_relational_tree(
     pruner: ColumnPruner = ColumnPruner()
     root = pruner.prune_unused_columns(root)
 
+    # Run a pass that substitutes join keys when the only columns used by one
+    # side of the join are the join keys. This will make some joins redundant
+    # and allow them to be deleted later. Then, re-run column pruning.
+    root = confirm_root(join_key_substitution(root))
+    root = pruner.prune_unused_columns(root)
+
     # Bubble up names from the leaf nodes to further encourage simpler naming
     # without aliases, and also to delete duplicate columns where possible.
     # This is done early to maximize the chances that a nicer name will be used
@@ -1599,7 +1645,11 @@ def optimize_relational_tree(
     #   A: projection pullup
     #   B: expression simplification (followed by additional shuttles)
     #   C: filter pushdown
-    #   D: column pruning
+    #   D: join-aggregate transpose
+    #   E: projection pullup again
+    #   F: redundant aggregation removal
+    #   G: join key substitution
+    #   H: column pruning
     # This is done because pullup will create more opportunities for expression
     # simplification, which will allow more filters to be pushed further down,
     # and the combination of those together will create more opportunities for
@@ -1615,6 +1665,10 @@ def optimize_relational_tree(
             else:
                 root.accept(RelationalExpressionDispatcher(shuttle_or_visitor, True))
         root = confirm_root(push_filters(root, session))
+        root = confirm_root(pull_aggregates_above_joins(root))
+        root = confirm_root(pullup_projections(root))
+        root = remove_redundant_aggs(root)
+        root = confirm_root(join_key_substitution(root))
         root = pruner.prune_unused_columns(root)
 
     # Re-run projection merging, without pushing into joins. This will allow

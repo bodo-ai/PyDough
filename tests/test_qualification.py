@@ -62,6 +62,10 @@ from tests.test_pydough_functions.tpch_test_functions import (
     impl_tpch_q21,
     impl_tpch_q22,
 )
+from tests.test_pydough_functions.user_collections import (
+    simple_range_1,
+    simple_range_2,
+)
 
 
 @pytest.mark.parametrize(
@@ -544,7 +548,7 @@ from tests.test_pydough_functions.tpch_test_functions import (
   │ └─┬─ AccessChild
   │   ├─── TableCollection[customers]
   │   ├─── Calculate[cntry_code=SLICE(phone, None, 2, None)]
-  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance) & (COUNT($1) == 0)]
+  │   └─┬─ Where[ISIN(cntry_code, ['13', '31', '23', '29', '30', '18', '17']) & (account_balance > global_avg_balance) & HASNOT($1)]
   │     └─┬─ AccessChild
   │       └─── SubCollection[orders]
   ├─┬─ Calculate[CNTRY_CODE=cntry_code, NUM_CUSTS=COUNT($1), TOTACCTBAL=SUM($1.account_balance)]
@@ -937,6 +941,23 @@ from tests.test_pydough_functions.tpch_test_functions import (
         └─── Where[(customer_key == original_customer_key) & (key > original_order_key) & (order_date == original_order_date)]
   """,
             id="simple_cross_6",
+        ),
+        pytest.param(
+            simple_range_1,
+            """
+──┬─ TPCH
+  └─── RangeCollection('simple_range', value=range(0, 10))
+            """,
+            id="simple_range_1",
+        ),
+        pytest.param(
+            simple_range_2,
+            """
+──┬─ TPCH
+  ├─── RangeCollection('simple_range', value=range(0, 10))
+  └─── OrderBy[value.DESC(na_pos='last')]
+            """,
+            id="simple_range_2",
         ),
     ],
 )

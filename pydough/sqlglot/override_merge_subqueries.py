@@ -188,6 +188,21 @@ def invalid_aggregate_convolution(inner_scope: Scope, outer_scope: Scope) -> boo
     return result
 
 
+def has_seq4_or_table(expr: Scope) -> bool:
+    """Check if the expression contains SEQ4() or TABLE().
+
+    Args:
+        `expr` (Scope): The SQLGlot expression walk and check.
+
+    Returns:
+        True if SEQ4() or TABLE() is found, False otherwise.
+    """
+    for e in expr.walk():
+        if isinstance(e, exp.Anonymous) and e.this.upper() in {"SEQ4", "TABLE"}:
+            return True
+    return False
+
+
 def _mergeable(
     outer_scope: Scope,
     inner_scope: Scope,
@@ -199,7 +214,11 @@ def _mergeable(
     """
 
     # PYDOUGH CHANGE: avoid merging CTEs when it would break a left join.
-    if isinstance(from_or_join, exp.Join) and from_or_join.side not in ("INNER", ""):
+    if (
+        isinstance(from_or_join, exp.Join)
+        and from_or_join.side not in ("INNER", "")
+        and len(inner_scope.expression.args.get("joins", [])) > 0
+    ):
         return False
 
     # PYDOUGH CHANGE: avoid merging CTEs when the inner scope has a window
@@ -309,4 +328,25 @@ def _mergeable(
         and not _is_a_window_expression_in_unmergable_operation()
         and not _is_recursive()
         and not (inner_select.args.get("order") and outer_scope.is_union)
+        # PYDOUGH CHANGE: avoid merging CTEs when the inner scope uses
+        # SEQ4()/TABLE() and if any of these exist in the outer query:
+        # - joins
+        # - window functions
+        # - aggregations
+        # - limit/offset
+        # - where/having/qualify clauses
+        # - group by
+        and not (
+            has_seq4_or_table(inner_scope.expression)
+            and (
+                outer_scope.expression.args.get("joins") is not None
+                or outer_scope.expression.find(exp.Window)
+                or outer_scope.expression.find(exp.Limit)
+                or outer_scope.expression.find(exp.AggFunc)
+                or outer_scope.expression.find(exp.Where)
+                or outer_scope.expression.find(exp.Having)
+                or outer_scope.expression.find(exp.Qualify)
+                or outer_scope.expression.find(exp.Group)
+            )
+        )
     )

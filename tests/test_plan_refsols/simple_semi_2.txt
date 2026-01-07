@@ -1,7 +1,7 @@
 ROOT(columns=[('name', s_name)], orderings=[])
  JOIN(condition=t0.s_suppkey == t1.ps_suppkey, type=SEMI, columns={'s_name': t0.s_name})
   SCAN(table=tpch.SUPPLIER, columns={'s_name': s_name, 's_suppkey': s_suppkey})
-  JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_FILTER, columns={'ps_suppkey': t0.ps_suppkey})
+  JOIN(condition=t0.ps_partkey == t1.p_partkey, type=INNER, cardinality=SINGULAR_FILTER, reverse_cardinality=PLURAL_ACCESS, columns={'ps_suppkey': t0.ps_suppkey})
    SCAN(table=tpch.PARTSUPP, columns={'ps_partkey': ps_partkey, 'ps_suppkey': ps_suppkey})
    FILTER(condition=p_size < 10:numeric, columns={'p_partkey': p_partkey})
     SCAN(table=tpch.PART, columns={'p_partkey': p_partkey, 'p_size': p_size})

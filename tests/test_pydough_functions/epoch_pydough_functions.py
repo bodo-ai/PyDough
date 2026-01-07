@@ -204,7 +204,7 @@ def overlapping_event_searches_per_user():
     # most such searches, breaking ties alphabetically.
     same_event_other_user = events.searches.user.WHERE(name != original_user_name)
     selected_searches = searches.WHERE(
-        (COUNT(same_event_other_user) > 0) & HAS(same_event_other_user)
+        (COUNT(same_event_other_user) != 0) & HAS(same_event_other_user)
     )
     return (
         users.CALCULATE(original_user_name=name)

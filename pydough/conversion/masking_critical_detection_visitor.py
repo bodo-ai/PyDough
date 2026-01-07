@@ -15,6 +15,7 @@ from pydough.relational import (
     CorrelatedReference,
     EmptySingleton,
     Filter,
+    GeneratedTable,
     Join,
     Limit,
     LiteralExpression,
@@ -275,6 +276,12 @@ class MaskingCriticalDetectionVisitor(RelationalVisitor):
         # their columns relative to an empty input.
         self.expression_visitor.input_dependencies = {}
         self.add_output_dependencies(scan)
+
+    def visit_generated_table(self, generated_table: GeneratedTable) -> None:
+        # GeneratedTable nodes have no inputs, so they propagate dependencies based on
+        # their columns relative to an empty input.
+        self.expression_visitor.input_dependencies = {}
+        self.add_output_dependencies(generated_table)
 
     def visit_empty_singleton(self, empty_singleton: EmptySingleton) -> None:
         # Empty singletons have no inputs, so they propagate dependencies based

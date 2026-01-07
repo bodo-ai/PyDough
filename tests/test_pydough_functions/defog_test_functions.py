@@ -287,7 +287,7 @@ def impl_defog_broker_adv8():
         & (date_time >= DATETIME("now", "start of week", "-1 week"))
     )
     return Broker.CALCULATE(
-        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) > 0),
+        n_transactions=KEEP_IF(COUNT(selected_txns), COUNT(selected_txns) != 0),
         total_amount=SUM(selected_txns.amount),
     )
 
@@ -727,8 +727,9 @@ def impl_defog_dealership_adv3():
     model names, engine_type and vin_number, match case-insensitively and allow
     partial matches using LIKE with wildcards.
     """
-    return cars.WHERE(CONTAINS(LOWER(vin_number), "m5")).CALCULATE(
-        make, model, num_sales=COUNT(sale_records)
+    selected_cars = cars.WHERE(CONTAINS(LOWER(vin_number), "m5"))
+    return selected_cars.PARTITION(name="car_models", by=(make, model)).CALCULATE(
+        make, model, num_sales=COUNT(cars.sale_records)
     )
 
 
@@ -742,12 +743,14 @@ def impl_defog_dealership_adv4():
     """
     date_threshold = DATETIME("now", "-30 days")
 
-    selected_sales = sale_records.WHERE(sale_date >= date_threshold)
+    selected_sales = cars.WHERE(CONTAINS(LOWER(make), "toyota")).sale_records.WHERE(
+        sale_date >= date_threshold
+    )
 
-    return cars.WHERE(CONTAINS(LOWER(make), "toyota")).CALCULATE(
+    return Dealership.CALCULATE(
         num_sales=COUNT(selected_sales),
         total_revenue=KEEP_IF(
-            SUM(selected_sales.sale_price), COUNT(selected_sales) > 0
+            SUM(selected_sales.sale_price), COUNT(selected_sales) != 0
         ),
     )
 
@@ -1330,7 +1333,7 @@ def impl_defog_ewallet_adv4():
     # Calculate the number of transactions and the total amount for the filtered transactions
     return Ewallet.CALCULATE(
         num_transactions=COUNT(us_transactions),
-        total_amount=KEEP_IF(SUM(us_transactions.amount), COUNT(us_transactions) > 0),
+        total_amount=KEEP_IF(SUM(us_transactions.amount), COUNT(us_transactions) != 0),
     )
 
 
@@ -1792,7 +1795,7 @@ def impl_defog_dermtreatment_basic1():
 
     # Find the treatments from the doctors within the specialty in the past 6 months
     recent_treatments = doctors.prescribed_treatments.WHERE(
-        DATEDIFF("months", start_date, DATETIME("now")) <= 6
+        start_date >= DATETIME("now", "-6 months", "start of day")
     )
 
     # Calculate totals for each specialty
@@ -2563,7 +2566,7 @@ def impl_defog_academic_gen11():
     n_pub = COUNT(publications)
     n_auth = COUNT(authors)
     return Academic.CALCULATE(
-        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth > 0)
+        publication_to_author_ratio=n_pub / KEEP_IF(n_auth, n_auth != 0)
     )
 
 
@@ -2577,7 +2580,7 @@ def impl_defog_academic_gen12():
     """
     n_confs = SUM(PRESENT(publications.conference_id))
     n_jours = SUM(PRESENT(publications.journal_id))
-    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours > 0))
+    return Academic.CALCULATE(ratio=n_confs / KEEP_IF(n_jours, n_jours != 0))
 
 
 def impl_defog_academic_gen13():
@@ -2591,7 +2594,7 @@ def impl_defog_academic_gen13():
 
     n_pubs = COUNT(domain_publications)
     n_keys = COUNT(domain_keywords)
-    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys > 0))
+    return domains.CALCULATE(domain_id, ratio=n_pubs / KEEP_IF(n_keys, n_keys != 0))
 
 
 def impl_defog_academic_gen14():
@@ -2608,7 +2611,7 @@ def impl_defog_academic_gen14():
         year,
         num_publications=n_pubs,
         num_journals=n_jours,
-        ratio=n_pubs / KEEP_IF(n_jours, n_jours > 0),
+        ratio=n_pubs / KEEP_IF(n_jours, n_jours != 0),
     )
 
 
@@ -2777,3 +2780,345 @@ def impl_defog_academic_gen25():
         .PARTITION(name="authors", by=author_name)
         .CALCULATE(author_name)
     )
+
+
+def impl_defog_restaurants_gen1():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the total number of restaurants serving each type of food?
+    """
+    return restaurants.PARTITION(name="food", by=food_type).CALCULATE(
+        food_type, restaurants=COUNT(restaurants)
+    )
+
+
+def impl_defog_restaurants_gen2():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the total count of restaurants in each city?
+    """
+    return locations.PARTITION(name="city", by=city_name).CALCULATE(
+        city_name, total_count=COUNT(locations)
+    )
+
+
+def impl_defog_restaurants_gen3():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants serving each type of food?
+    """
+    return (
+        restaurants.PARTITION(name="food", by=food_type)
+        .CALCULATE(food_type, avg_rating=AVG(restaurants.rating))
+        .ORDER_BY(avg_rating.DESC(), food_type.DESC())
+    )
+
+
+def impl_defog_restaurants_gen4():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants serve Italian food in each city?
+    """
+    return (
+        restaurants.WHERE(LOWER(food_type) == "italian")
+        .PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, num_restaurants=COUNT(restaurants))
+        .ORDER_BY(num_restaurants.DESC(), city_name.DESC())
+    )
+
+
+def impl_defog_restaurants_gen5():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants are there in each city? Order the results by the
+    number of restaurants in descending order.
+    """
+    return (
+        locations.PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, num_restaurants=COUNT(locations))
+        .ORDER_BY(num_restaurants.DESC(), city_name.DESC())
+    )
+
+
+def impl_defog_restaurants_gen6():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which street has the most number of restaurants?
+    """
+    return (
+        locations.PARTITION(name="streets", by=street_name)
+        .TOP_K(1, by=COUNT(locations).DESC())
+        .CALCULATE(street_name)
+    )
+
+
+def impl_defog_restaurants_gen7():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which restaurants serve Italian cuisine or are located in New York? Order
+    the results by the restaurant name.
+    """
+    return restaurants.WHERE(
+        (LOWER(food_type) == "italian") | (LOWER(city_name) == "new york")
+    ).CALCULATE(name)
+
+
+def impl_defog_restaurants_gen8():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants in each region? Order the results
+    by the region name.
+    """
+    return (
+        locations.CALCULATE(region_name=city.region)
+        .PARTITION(name="region", by=region_name)
+        .CALCULATE(region_name, avg_rating=AVG(locations.restaurant.rating))
+        .ORDER_BY(region_name.ASC(), avg_rating.DESC())
+    )
+
+
+def impl_defog_restaurants_gen9():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What are the names of the top 3 restaurants with the highest ratings?
+    """
+    return restaurants.CALCULATE(name).TOP_K(3, by=(rating.DESC(), name.DESC()))
+
+
+def impl_defog_restaurants_gen10():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    List the restaurants starting from the best ratings to the lowest
+    """
+    return restaurants.CALCULATE(name, rating).ORDER_BY(rating.DESC(), name.DESC())
+
+
+def impl_defog_restaurants_gen11():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants with rating > 4.5 to the total number of
+    restaurants in the database.
+    """
+    high_rated_restaurants = restaurants.WHERE(rating > 4.5)
+    return Restaurants.CALCULATE(
+        ratio=(COUNT(high_rated_restaurants) / COUNT(restaurants))
+    )
+
+
+def impl_defog_restaurants_gen12():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants with a rating above 4.0 to restaurants with
+    a rating below 4.0 overall?
+    """
+    n_hi_rating = SUM(restaurants.rating > 4.0)
+    n_lo_rating = SUM(restaurants.rating < 4.0)
+    return Restaurants.CALCULATE(
+        ratio=n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0)
+    )
+
+
+def impl_defog_restaurants_gen13():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants with a rating above 4 to restaurants with
+    a rating below 4 in New York?
+    """
+    nyc_restaurants = restaurants.WHERE(LOWER(city_name) == "new york")
+    n_hi_rating = SUM(nyc_restaurants.rating > 4.0)
+    n_lo_rating = SUM(nyc_restaurants.rating < 4.0)
+    return Restaurants.CALCULATE(
+        ratio=(n_hi_rating / KEEP_IF(n_lo_rating, n_lo_rating != 0))
+    )
+
+
+def impl_defog_restaurants_gen14():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of restaurants serving vegan food to restaurants serving
+    non-vegan food in San Francisco? Match food_type case insensitively
+    """
+    sf_restaurants = restaurants.WHERE(LOWER(city_name) == "san francisco")
+    n_vegan = SUM(LOWER(sf_restaurants.food_type) == "vegan")
+    n_non_vegan = SUM(LOWER(sf_restaurants.food_type) != "vegan")
+    return Restaurants.CALCULATE(
+        ratio=(n_vegan / KEEP_IF(n_non_vegan, n_non_vegan != 0))
+    )
+
+
+def impl_defog_restaurants_gen15():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the ratio of Italian restaurants out of all restaurants in
+    Los Angeles?
+    """
+    la_restaurants = restaurants.WHERE(LOWER(city_name) == "los angeles")
+    n_la_italian = SUM(LOWER(la_restaurants.food_type) == "italian")
+    n_la = COUNT(la_restaurants)
+    return Restaurants.CALCULATE(ratio=(n_la_italian / KEEP_IF(n_la, n_la != 0)))
+
+
+def impl_defog_restaurants_gen16():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What cities have more than one restaurants with the same name, and how many
+    of them are there? Return the city name, restaurant name, and restaurant
+    count
+    """
+    return (
+        restaurants.PARTITION(name="cities", by=(city_name, name))
+        .CALCULATE(city_name, name, n_restaurants=COUNT(restaurants))
+        .WHERE(n_restaurants > 1)
+    )
+
+
+def impl_defog_restaurants_gen17():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants that serve Mexican food in each
+    city?
+    """
+    return (
+        restaurants.WHERE(LOWER(food_type) == "mexican")
+        .PARTITION(name="cities", by=city_name)
+        .CALCULATE(city_name, avg_rating=AVG(restaurants.rating))
+    )
+
+
+def impl_defog_restaurants_gen18():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What is the average rating of restaurants in each region?
+    """
+    return (
+        cities.WHERE(HAS(restaurants))
+        .PARTITION(name="regions", by=region)
+        .CALCULATE(rest_region=region, avg_rating=AVG(cities.restaurants.rating))
+        .ORDER_BY(region.ASC())
+    )
+
+
+def impl_defog_restaurants_gen19():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants serve Italian food in each region?
+    """
+    return (
+        restaurants.WHERE(LOWER(food_type) == "italian")
+        .CALCULATE(rest_region=city.region)
+        .PARTITION(name="regions", by=rest_region)
+        .CALCULATE(rest_region, n_restaurants=COUNT(restaurants))
+        .ORDER_BY(n_restaurants.DESC(), rest_region.ASC())
+    )
+
+
+def impl_defog_restaurants_gen20():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    How many restaurants are there in each region?
+    """
+    return (
+        restaurants.CALCULATE(rest_region=city.region)
+        .PARTITION(name="regions", by=rest_region)
+        .CALCULATE(rest_region, n_restaurants=COUNT(restaurants))
+        .ORDER_BY(n_restaurants.DESC(), rest_region.ASC())
+    )
+
+
+def impl_defog_restaurants_gen21():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    Which city has the highest-rated restaurant?
+    """
+    return restaurants.TOP_K(1, by=rating.DESC()).CALCULATE(city_name)
+
+
+def impl_defog_restaurants_gen22():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What's the name and rating of all the restaurants that have a rating greater
+    than 4 and are located in the city of New York?
+    """
+    return restaurants.WHERE((rating > 4) & (LOWER(city_name) == "new york")).CALCULATE(
+        name, rating
+    )
+
+
+def impl_defog_restaurants_gen23():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What's the name and food type of all the restaurants located on Market St in
+    San Francisco?
+    """
+    return locations.WHERE(
+        (LOWER(street_name) == "market st") & (LOWER(city_name) == "san francisco")
+    ).CALCULATE(restaurant.name, restaurant.food_type)
+
+
+def impl_defog_restaurants_gen24():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    What are the names of the restaurants that serve Italian food?
+    """
+    return restaurants.WHERE((LOWER(food_type) == "italian")).CALCULATE(name)
+
+
+def impl_defog_restaurants_gen25():
+    """
+    PyDough implementation of the following question for the Restaurants
+    graph:
+
+    WWhat are the names of the restaurants in Los Angeles that have a rating
+    higher than 4?
+    """
+    return restaurants.WHERE(
+        (rating > 4) & (LOWER(city_name) == "los angeles")
+    ).CALCULATE(name)

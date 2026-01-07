@@ -10,9 +10,11 @@ import time
 from collections.abc import Callable
 from functools import cache
 
+import boto3
 import httpx
 import pandas as pd
 import pytest
+from botocore.exceptions import ClientError
 
 import pydough
 import pydough.pydough_operators as pydop
@@ -203,21 +205,14 @@ def sample_graph_names(request) -> str:
 
 
 @pytest.fixture(scope="session")
-def get_test_graph_by_name() -> graph_fetcher:
+def get_custom_datasets_graph() -> graph_fetcher:
     """
-    Returns a known test graph requested if the graph location was included in test_graph_location.
+    Returns the graph for the given custom dataset name.
     """
-    test_graph_location: dict[str, str] = {
-        "synthea": "synthea_graph.json",
-        "world_development_indicators": "world_development_indicators_graph.json",
-        "keywords": "reserved_words_graph.json",
-        "keywords_case_insensitive": "reserved_words_graph.json",
-    }
 
     @cache
     def impl(name: str) -> GraphMetadata:
-        file_name: str = test_graph_location[name]
-        path: str = f"{os.path.dirname(__file__)}/test_metadata/{file_name}"
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
         return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
 
     return impl
@@ -645,44 +640,223 @@ def sqlite_cryptbank_connection() -> DatabaseContext:
 
 
 @pytest.fixture(scope="session")
-def sqlite_custom_datasets_connection() -> DatabaseContext:
+def sqlite_custom_datasets_connection() -> Callable[[str], DatabaseContext]:
     """
-    Returns the SQLITE database connection with all the custom datasets attached.
+    This fixture is used to connect to the sqlite database of the custom datasets.
+    Returns a DatabaseContext for the given custom database name.
     """
-    gen_data_path: str = "tests/gen_data"
-    # Dataset tuple format: (schema_name, db_file_name, init_sql_file_name)
-    SQLite_datasets: list[tuple[str, str, str]] = [
-        ("synthea", "synthea.db", "init_synthea_sqlite.sql"),
-        ("wdi", "world_development_indicators.db", "init_world_indicators_sqlite.sql"),
-        ("keywords", "reserved_words.db", "init_reserved_words_sqlite.sql"),
-    ]
-
-    # List of shell commands required to re-create all the db files
-    commands: list[str] = [f"cd {gen_data_path}"]
-    # Collect all db_file_names into the rm command
-    rm_command: str = "rm -fv " + " ".join(
-        db_file for (_, db_file, _) in SQLite_datasets
-    )
-    commands.append(rm_command)
-    # Add one sqlite3 command per dataset
-    for _, db_file, init_sql in SQLite_datasets:
-        commands.append(f"sqlite3 {db_file} < {init_sql}")
-    # Get the shell commands required to re-create all the db files
-    shell_cmd: str = "; ".join(commands)
-
+    custom_datasets_dir: str = "tests/gen_data"
     # Setup the directory to be the main PyDough directory.
     base_dir: str = os.path.dirname(os.path.dirname(__file__))
-    # Setup the world development indicators database.
-    subprocess.run(shell_cmd, shell=True, check=True)
-    # Central in-memory connection
-    connection: sqlite3.Connection = sqlite3.connect(":memory:")
 
-    # Use (schema_name, db_file_name info) on SQLite_datasets to ATTACH DBs
-    for schema, db_file, _ in SQLite_datasets:
-        path: str = os.path.join(base_dir, gen_data_path, db_file)
-        connection.execute(f"ATTACH DATABASE '{path}' AS {schema}")
+    # Construct the full path to the datasets directory
+    full_dir_path: str = os.path.join(base_dir, custom_datasets_dir)
 
-    return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+    @cache
+    def _impl(database_name: str) -> DatabaseContext:
+        connection: sqlite3.Connection
+
+        file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
+
+        if not os.path.exists(file_path):
+            init_sql: str = f"{full_dir_path}/init_{database_name}_sqlite.sql"
+
+            if not os.path.exists(init_sql):
+                raise PyDoughTestingException(
+                    f"Cannot find database file '{file_path}' or "
+                    f"initialization script '{init_sql}'"
+                )
+
+            subprocess.run(f"sqlite3 {file_path} < {init_sql}", shell=True, check=True)
+
+        connection = sqlite3.connect(":memory:")
+        connection.execute(f"ATTACH DATABASE '{file_path}' AS {database_name}")
+
+        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+    return _impl
+
+
+S3_DATASETS = ["synthea", "world_development_indicators"]
+"""
+    Contains the name of all the custom datasets that will be used for testing.
+    This includes the datasets from S3 and initialized with a .sql file.
+"""
+S3_DATASETS_SCRIPTS = {
+    "world_development_indicators": "init_world_indicators_sqlite",
+}
+"""
+    Maps the datasets that need to be built with a sql script, with the name of
+    the script file. These datasets are NOT downloaded from S3.
+"""
+
+
+def get_s3_client() -> boto3.Session.client:
+    """
+    Generates an S3 client with the stablished credentials. For CI assumes OIDC
+    credentials provided by Github Actions
+
+    Returns:
+        The client of the created boto3 session
+    """
+    session: boto3.Session
+    if is_ci():
+        # Running in GitHub Actions CI — OIDC role will be assumed automatically
+        # Assuming in CI has aws-actions/configure-aws-credentials
+        session = boto3.Session()
+    else:
+        # Local development — use credentials stored in environment
+        # variables or ~/.aws/credentials
+        session = boto3.Session(
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name="us-east-2",
+        )
+
+    return session.client("s3")
+
+
+def get_s3_datasets(
+    s3_client: boto3.Session.client,
+    data_folder: str,
+    metadata_folder: str,
+    datasets: list[str],
+    scripts: dict[str, str],
+) -> None:
+    """
+    Sets up the data and metadata for s3 datasets testing. This includes
+    downloading the data (.db file) and metadata (.json file) from llm-fixtures
+    bucket and place them in data_folder and metadata_folder respectvely. Also,
+    includes executing the init script avaliable in S3_DATASETS_SCRIPTS,
+    when the script is executed the metadata must be created manually for testing
+    """
+
+    bucket: str = "llm-fixtures"
+
+    for dataset in datasets:
+        db_file: str = f"{data_folder}/{dataset}.db"
+        exists_db_file: bool = os.path.exists(db_file)
+
+        # Database setup
+        if not exists_db_file:
+            if dataset in scripts:
+                # setting up with script
+                # assuming the metadata is already available in the metadata folder
+                init_sql = f"{data_folder}/{scripts[dataset]}.sql"
+                subprocess.run(
+                    f"sqlite3 {db_file} < {init_sql}", shell=True, check=True
+                )
+
+            else:
+                # Download from s3
+
+                key_data: str = f"data/{dataset}.db"
+
+                try:
+                    s3_client.download_file(bucket, key_data, db_file)
+                except ClientError as e:
+                    if e.response["Error"]["Code"] == "404":
+                        print(f"The file {key_data} does not exist in bucket {bucket}.")
+                    else:
+                        raise
+
+        # Download metadata from S3
+        if dataset not in scripts:
+            local_metadata_path: str = f"{metadata_folder}/{dataset}_graph.json"
+            key_metadata: str = f"metadata/{dataset}.json"
+            try:
+                s3_client.download_file(bucket, key_metadata, local_metadata_path)
+            except ClientError as e:
+                if e.response["Error"]["Code"] == "404":
+                    print(f"The file {key_metadata} does not exist in bucket {bucket}.")
+                else:
+                    raise
+
+
+def remove_s3_custom_metadata(
+    metadata_folder: str, datasets: list[str], scripts: dict[str, str]
+) -> None:
+    """
+    Removes the metadata file of s3 datasets
+    """
+    metadata_path: str
+
+    for dataset in datasets:
+        if dataset not in scripts:
+            # delete the metadata only for datasets from s3
+            metadata_path = f"{metadata_folder}/{dataset}_graph.json"
+            try:
+                os.remove(metadata_path)
+            except FileNotFoundError:
+                print(f"Error: File '{metadata_path}' not found.")
+            except Exception as e:
+                print(f"An error occurred: {e}")
+
+
+@pytest.fixture(scope="session")
+def s3_datasets_setup():
+    """
+    Sets up all s3 datasets for testing downloading or running the init
+    script. After the test are done it removes the metadata files.
+    """
+    data_folder: str = "./tests/gen_data"
+    metadata_folder: str = "./tests/test_metadata"
+
+    # Create the client
+    s3_client: boto3.Session.client = get_s3_client()
+
+    get_s3_datasets(
+        s3_client,
+        data_folder,
+        metadata_folder,
+        S3_DATASETS,
+        S3_DATASETS_SCRIPTS,
+    )
+
+    yield
+
+    remove_s3_custom_metadata(metadata_folder, S3_DATASETS, S3_DATASETS_SCRIPTS)
+
+
+@pytest.fixture(scope="session")
+def get_s3_datasets_graph(s3_datasets_setup) -> graph_fetcher:
+    """
+    Returns the graph for the given s3 dataset name.
+    """
+
+    @cache
+    def impl(name: str) -> GraphMetadata:
+        path: str = f"{os.path.dirname(__file__)}/test_metadata/{name}_graph.json"
+        return pydough.parse_json_metadata_from_file(file_path=path, graph_name=name)
+
+    return impl
+
+
+@pytest.fixture(scope="session")
+def sqlite_s3_datasets_connection(
+    s3_datasets_setup,
+) -> Callable[[str], DatabaseContext]:
+    """
+    This fixture is used to connect the sqlite database of the s3 datasets.
+    Returns a DatabaseContext for the given S3 database_name.
+    """
+    s3_datasets_dir: str = "tests/gen_data"
+    # Setup the directory to be the main PyDough directory.
+    base_dir: str = os.path.dirname(os.path.dirname(__file__))
+
+    # Construct the full path to the datasets directory
+    full_dir_path: str = os.path.join(base_dir, s3_datasets_dir)
+
+    @cache
+    def _impl(database_name: str) -> DatabaseContext:
+        connection: sqlite3.Connection
+
+        file_path: str = os.path.join(full_dir_path, f"{database_name}.db")
+        connection = sqlite3.connect(file_path)
+
+        return DatabaseContext(DatabaseConnection(connection), DatabaseDialect.SQLITE)
+
+    return _impl
 
 
 SF_ENVS = ["SF_USERNAME", "SF_PASSWORD", "SF_ACCOUNT"]
@@ -729,25 +903,27 @@ def sf_conn_db_context() -> Callable[[str, str], DatabaseContext]:
             database=database_name,
             schema=schema_name,
         )
-        # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day
-        with connection.cursor() as cur:
-            cur.execute("""
-                DECLARE last_mod DATE;
 
-            BEGIN
-                -- Get table last modified date
-                SELECT DATE(LAST_ALTERED) INTO last_mod
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE table_catalog='DEFOG' 
-                    AND table_schema = 'BROKER'
-                    AND table_name = 'SBDAILYPRICE';
+        if not is_ci():
+            # Run DEFOG_DAILY_UPDATE() only if data is older than 1 day
+            with connection.cursor() as cur:
+                cur.execute("""
+                    DECLARE last_mod DATE;
 
-                -- If last modified is before today, call the procedure
-                IF (last_mod < CURRENT_DATE()) THEN
-                    CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
-                END IF;
-            END;
-            """)
+                BEGIN
+                    -- Get table last modified date
+                    SELECT DATE(LAST_ALTERED) INTO last_mod
+                    FROM INFORMATION_SCHEMA.TABLES
+                    WHERE table_catalog='DEFOG' 
+                        AND table_schema = 'BROKER'
+                        AND table_name = 'SBDAILYPRICE';
+
+                    -- If last modified is before today, call the procedure
+                    IF (last_mod < CURRENT_DATE()) THEN
+                        CALL DEFOG.BROKER.DEFOG_DAILY_UPDATE();
+                    END IF;
+                END;
+                """)
 
         return load_database_context("snowflake", connection=connection)
 
@@ -1839,4 +2015,28 @@ def mock_server_info(mock_server_setup: str) -> MaskServerInfo:
     """
     Returns the MaskServerInfo for the mock server.
     """
-    return MaskServerInfo(base_url=mock_server_setup, server_address="srv", token=None)
+    return MaskServerInfo(base_url=mock_server_setup, token=None)
+
+
+@pytest.fixture(scope="session")
+def true_mask_server_info() -> MaskServerInfo:
+    """
+    Returns the MaskServerInfo for the true Mask server.
+    """
+    if not os.getenv("PYDOUGH_MASK_SERVER_PATH"):
+        raise RuntimeError("PYDOUGH_MASK_SERVER_PATH environment variable is not set")
+
+    # Send a health request to ensure the server is reachable and functioning.
+    # If not, then halt testing early.
+    response: httpx.Response = httpx.get(
+        os.environ["PYDOUGH_MASK_SERVER_PATH"] + "/health", timeout=1
+    )
+    json: dict = response.json()
+    if (
+        response.status_code != 200
+        or json.get("status", None) != "ok"
+        or json.get("column_store", {}).get("status", "down") != "up"
+    ):
+        pytest.fail(f"Mask server is not reachable (health check failed: {json})")
+
+    return MaskServerInfo(base_url=os.environ["PYDOUGH_MASK_SERVER_PATH"], token=None)

@@ -8,6 +8,7 @@ __all__ = [
     "ColumnPruner",
     "EmptySingleton",
     "Filter",
+    "GeneratedTable",
     "Join",
     "JoinCardinality",
     "JoinType",
@@ -27,6 +28,7 @@ from .aggregate import Aggregate
 from .column_pruner import ColumnPruner
 from .empty_singleton import EmptySingleton
 from .filter import Filter
+from .generated_table import GeneratedTable
 from .join import Join, JoinCardinality, JoinType
 from .join_type_relational_visitor import JoinTypeRelationalVisitor
 from .limit import Limit
