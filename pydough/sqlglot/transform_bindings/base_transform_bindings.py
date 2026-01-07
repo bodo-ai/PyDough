@@ -25,7 +25,7 @@ from .sqlglot_transform_utils import (
     apply_parens,
     create_constant_table,
     current_ts_pattern,
-    is_empty_range,
+    generate_range_rows,
     offset_pattern,
     pad_helper,
     positive_index,
@@ -2207,21 +2207,8 @@ class BaseTransformBindings:
         Returns:
             A SQLGlotExpression representing the user-generated range as table.
         """
-
-        empty_range: bool = is_empty_range(collection)
-
-        # Generate rows for the range [] if empty_range is True,
-        # [ROW(i)] for i in range otherwise
-        range_rows: list[SQLGlotExpression] = (
-            []
-            if empty_range
-            else [
-                sqlglot_expressions.Tuple(
-                    expressions=[sqlglot_expressions.Literal.number(i)]
-                )
-                for i in range(collection.start, collection.end, collection.step)
-            ]
-        )
+        # Generate rows for the range, using Tuple.
+        range_rows: list[SQLGlotExpression] = generate_range_rows(collection, True)
 
         result: SQLGlotExpression = create_constant_table(
             collection.name, [collection.column_name], range_rows

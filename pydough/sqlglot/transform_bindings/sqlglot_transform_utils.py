@@ -397,7 +397,10 @@ def create_constant_table(
     """
     Generate a SQL that represents a constant table using the given list of
     columns and rows. The final SQLGlot expression corresponds to the SQL:
-    SELECT [column_names] FROM ( VALUES [rows] ) AS table_name ([column_names])
+    For MySQL:
+    SELECT {column_names} FROM ( VALUES {rows} ) AS table_name ({column_names})
+    For sqlite:
+    SELECT {column1 as column_names[0], ...} FROM ( VALUES {rows} ) AS {table_name}
 
     Args:
         `table_name`: The name of the table
@@ -407,6 +410,8 @@ def create_constant_table(
     Returns:
         The SQLGlot expression for the constant table.
 
+    Note: This function is only used to generate tables for MySQL and Sqlite
+    dialects
     """
     assert column_names != []
 
@@ -441,17 +446,18 @@ def create_constant_table(
 
         # List of columns to select
         select_columns: list[SQLGlotExpression] = []
-        # Determine if ROWS() are used
+        # Determine if ROWS() are used. MySQL uses ROWS and sqlite doesn't
         rows_used: bool = isinstance(rows[0], sqlglot_expressions.Anonymous)
 
         for idx, column in enumerate(columns_list):
+            # Sqlite referred by default its values' columns as column1, column2
+            # and so on. Aliases are used to rename those. MySQL can rename
+            # their columns directly.
             if not rows_used:
-                # Sqlite names the values' columns as column1, column2, ... by
-                # default
-                colum_enum: str = f"column{idx + 1}"
+                column_enum: str = f"column{idx + 1}"
                 select_columns.append(
                     sqlglot_expressions.Alias(
-                        this=sqlglot_expressions.Column(this=colum_enum), alias=column
+                        this=sqlglot_expressions.Column(this=column_enum), alias=column
                     )
                 )
             else:
@@ -526,3 +532,35 @@ def is_empty_range(collection: RangeGeneratedCollection) -> bool:
         or (collection.step < 0 and collection.start <= collection.end)
         or (collection.step == 0)
     )
+
+
+def generate_range_rows(
+    collection: RangeGeneratedCollection, use_tuple: bool
+) -> list[SQLGlotExpression]:
+    """
+    Helper function to generate the rows for a given range collection
+
+    Args:
+        `collection`: The RangeGeneratedCollection to check.
+        `use_tuple`: If `True` the rows are build with Tuple (used with sqlite).
+        If `False` the rows are build with ROW (used with MySQL)
+
+    Returns:
+        List of sqlglot expressions for the range, empty if it is an empty range
+    """
+
+    if is_empty_range(collection):
+        return []
+
+    range_rows: list[SQLGlotExpression] = [
+        # [(i), ... ]
+        sqlglot_expressions.Tuple(expressions=[sqlglot_expressions.Literal.number(i)])
+        if use_tuple
+        # [ROW(i), ... ]
+        else sqlglot_expressions.Anonymous(
+            this="ROW", expressions=[sqlglot_expressions.Literal.number(i)]
+        )
+        for i in range(collection.start, collection.end, collection.step)
+    ]
+
+    return range_rows

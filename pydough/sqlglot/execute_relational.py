@@ -72,6 +72,8 @@ def convert_relation_to_sql(
     Returns:
         The SQL string representing the relational tree.
     """
+    # Update the default configuration for the sqlglot dialect.
+    # Preventing undesire sqlglot behaviour for a specific dialect
     change_sqlglot_dialect_configuration(session.database.dialect)
     glot_expr: SQLGlotExpression = SQLGlotRelationalVisitor(
         session
@@ -207,8 +209,9 @@ def apply_sqlglot_optimizer(
     # Remove table aliases if there is only one Table source in the FROM clause.
     remove_table_aliases_conditional(glot_expr)
 
-    # Remove the Tuple around each row in values,
-    # this avoids unnecessary tuple wrappers for ROW expressions using MySQL
+    # Remove the Tuple generated around each row in VALUES during the parsing step.
+    # For example `(ROW(i))` becomes `ROW(i)`. The tuple would generate invalid
+    # SQL.
     remove_tuple_row_values(glot_expr)
 
     return glot_expr
@@ -380,7 +383,8 @@ def remove_table_aliases_conditional(expr: SQLGlotExpression) -> None:
                 # Remove cases like `..FROM t1 as t1..` or `..FROM t1 as t2..`
                 # to get `..FROM t1..`.
                 # This deleted the alias for generate_series, we keep the
-                # alias in order to be used with the expected name and columns.
+                # alias in order to be used with the expected name and columns
+                # as a subquery.
                 if not isinstance(
                     table.this, sqlglot_expressions.ExplodingGenerateSeries
                 ):
